@@ -128,7 +128,7 @@ class AccountV2Subsystem:
         # Ok; no workspace to worry about; carry on.
         if not self._initial_sign_in_completed:
             self._initial_sign_in_completed = True
-            _babase.app.on_initial_sign_in_completed()
+            _babase.app.on_initial_sign_in_complete()
 
     def on_active_logins_changed(self, logins: dict[LoginType, str]) -> None:
         """Should be called when logins for the active account change."""
@@ -163,7 +163,7 @@ class AccountV2Subsystem:
         """
         if not self._initial_sign_in_completed:
             self._initial_sign_in_completed = True
-            _babase.app.on_initial_sign_in_completed()
+            _babase.app.on_initial_sign_in_complete()
 
     @staticmethod
     def _hashstr(val: str) -> str:
@@ -409,7 +409,7 @@ class AccountV2Subsystem:
     def _on_set_active_workspace_completed(self) -> None:
         if not self._initial_sign_in_completed:
             self._initial_sign_in_completed = True
-            _babase.app.on_initial_sign_in_completed()
+            _babase.app.on_initial_sign_in_complete()
 
 
 class AccountV2Handle:

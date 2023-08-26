@@ -516,6 +516,9 @@ static auto PyQuit(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
 
+  // Log(LogLevel::kDebug,
+  //     "QUIT soft=" + std::to_string(soft) + " back=" + std::to_string(back));
+
   // FIXME this should all just go through platform and/or app-adapter.
 
   if (g_buildconfig.ostype_ios_tvos()) {

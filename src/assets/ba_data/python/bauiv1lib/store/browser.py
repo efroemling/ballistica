@@ -1406,11 +1406,11 @@ def _check_merch_availability_in_bg_thread() -> None:
         time.sleep(1.1934)  # A bit randomized to avoid aliasing.
 
 
-# Slight hack; start checking merch availability in the bg
-# (but only if it looks like we're part of a running app; don't want to
-# do this during docs generation/etc.)
+# Slight hack; start checking merch availability in the bg (but only if
+# it looks like we've been imported for use in a running app; don't want
+# to do this during docs generation/etc.)
 if (
     os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') != '1'
-    and bui.app.state is not bui.app.State.BOOTSTRAPPING
+    and bui.app.state is not bui.app.State.NOT_RUNNING
 ):
     Thread(target=_check_merch_availability_in_bg_thread, daemon=True).start()

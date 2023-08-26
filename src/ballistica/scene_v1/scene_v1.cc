@@ -50,8 +50,8 @@ void SceneV1FeatureSet::OnModuleExec(PyObject* module) {
   assert(g_scene_v1 == nullptr);
   g_scene_v1 = new SceneV1FeatureSet();
 
-  // Store our C++ front-end with our Python module.
-  // This is what allows others to 'import' our C++ front end.
+  // Store our C++ front-end with our Python module. This is what allows
+  // other C++ code to 'import' our C++ front end and talk to us directly.
   g_scene_v1->StoreOnPythonModule(module);
 
   // Define our classes.

@@ -199,7 +199,11 @@ class QuitWindow:
         )
         bui.lock_all_input()
 
-        # Unlock and fade back in shortly.. just in case something goes wrong
-        # (or on android where quit just backs out of our activity and
-        # we may come back)
-        bui.apptimer(0.3, bui.unlock_all_input)
+        # Unlock and fade back in shortly. Just in case something goes
+        # wrong (or on Android where quit just backs out of our activity
+        # and we may come back after).
+        def _come_back() -> None:
+            bui.unlock_all_input()
+            bui.fade_screen(True, time=0.1)
+
+        bui.apptimer(0.3, _come_back)

@@ -86,15 +86,7 @@ EventLoop::EventLoop(EventLoopID identifier_in, ThreadSource source)
       // Block until the thread is bootstrapped.
       // (maybe not necessary, but let's be cautious in case we'd
       // try to use things like thread_id before they're known).
-      if (identifier_ == EventLoopID::kLogic) {
-        g_core->LifecycleLog("logic thread bootstrap wait begin");
-      }
-
       client_listener_cv_.wait(lock, [this] { return bootstrapped_; });
-
-      if (identifier_ == EventLoopID::kLogic) {
-        g_core->LifecycleLog("logic thread bootstrap wait end");
-      }
 
       break;
     }
@@ -758,20 +750,12 @@ void EventLoop::PushRunnableSynchronous(Runnable* runnable) {
     PushCrossThreadRunnable_(runnable, &complete);
   }
 
-  if (identifier_ == EventLoopID::kLogic) {
-    g_core->LifecycleLog("logic thread sync run push begin");
-  }
-
   // Now listen until our completion flag gets set.
   client_listener_cv_.wait(lock, [complete_ptr] {
     // Go back to sleep on spurious wakeups
     // (if we're not actually complete yet).
     return *complete_ptr;
   });
-
-  if (identifier_ == EventLoopID::kLogic) {
-    g_core->LifecycleLog("logic thread sync run push end");
-  }
 }
 
 auto EventLoop::CheckPushSafety() -> bool {

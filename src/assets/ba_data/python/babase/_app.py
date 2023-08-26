@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 import os
-from enum import Enum
 import logging
+from enum import Enum
 from typing import TYPE_CHECKING
 from concurrent.futures import ThreadPoolExecutor
 from functools import cached_property
@@ -58,31 +58,41 @@ class App:
 
     health_monitor: AppHealthMonitor
 
+    # How long we allow shutdown tasks to run before killing them.
+    # Currently the entire app hard-exits if shutdown takes 10 seconds,
+    # so we need to keep it under that.
+    SHUTDOWN_TASK_TIMEOUT_SECONDS = 5
+
     class State(Enum):
         """High level state the app can be in."""
 
-        # Waiting on the native layer to finish spinning up; our launch
-        # process here has not yet started.
-        BOOTSTRAPPING = 0
+        # The app has not yet begun starting and should not be used in
+        # any way.
+        NOT_RUNNING = 'not_running'
 
-        # Our app subsystems are being inited but should not yet
-        # interact.
-        LAUNCHING = 1
+        # The native layer is spinning up its machinery (screens,
+        # renderers, etc.). Nothing should happen in the Python layer
+        # until this completes.
+        NATIVE_BOOTSTRAPPING = 'native_bootstrapping'
 
-        # App subsystems are inited and interacting, but the app has not
-        # yet embarked on a high level course of action. It is doing
-        # initial account logins, workspace & asset downloads, etc. in
-        # order to prepare for this.
-        LOADING = 2
+        # Python app subsystems are being inited but should not yet
+        # interact or do any work.
+        INITING = 'initing'
+
+        # Python app subsystems are inited and interacting, but the app
+        # has not yet embarked on a high level course of action. It is
+        # doing initial account logins, workspace & asset downloads,
+        # etc.
+        LOADING = 'loading'
 
         # All pieces are in place and the app is now doing its thing.
-        RUNNING = 3
+        RUNNING = 'running'
 
         # The app is backgrounded or otherwise suspended.
-        PAUSED = 4
+        PAUSED = 'paused'
 
         # The app is shutting down.
-        SHUTTING_DOWN = 5
+        SHUTTING_DOWN = 'shutting_down'
 
     @property
     def aioloop(self) -> asyncio.AbstractEventLoop:
@@ -236,19 +246,20 @@ class App:
         if os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') == '1':
             return
 
-        self.state = self.State.BOOTSTRAPPING
+        self.state = self.State.NOT_RUNNING
 
         self._subsystems: list[AppSubsystem] = []
 
-        self._native_bootstrapped = False
+        self._native_bootstrapping_completed = False
+        self._init_completed = False
+        self._meta_scan_completed = False
+        self._native_start_called = False
         self._native_paused = False
         self._native_shutdown_called = False
-        self._launch_completed = False
         self._initial_sign_in_completed = False
-        self._meta_scan_completed = False
-        self._called_on_app_launching = False
-        self._called_on_app_loading = False
-        self._called_on_app_running = False
+        self._called_on_initing = False
+        self._called_on_loading = False
+        self._called_on_running = False
         self._subsystem_registration_ended = False
         self._pending_apply_app_config = False
 
@@ -484,13 +495,13 @@ class App:
     def run(self) -> None:
         """Run the app to completion.
 
-        Note that this only works on platforms where ballistica
+        Note that this only works on platforms where Ballistica
         manages its own event loop.
         """
         _babase.run_app()
 
-    def _on_app_launching(self) -> None:
-        """Called when the app enters the launching state.
+    def _on_initing(self) -> None:
+        """Called when the app enters the initing state.
 
         Here we can put together subsystems and other pieces for the
         app, but most things should not be doing any work yet.
@@ -503,7 +514,7 @@ class App:
 
         assert _babase.in_logic_thread()
 
-        _env.on_app_launching()
+        _env.on_app_state_initing()
 
         self._aioloop = _asyncio.setup_asyncio()
         self.health_monitor = AppHealthMonitor()
@@ -531,27 +542,24 @@ class App:
 
         # __FEATURESET_APP_SUBSYSTEM_CREATE_END__
 
-        self._launch_completed = True
+        # We're a pretty short-lived state. This should flip us to
+        # 'loading'.
+        self._init_completed = True
         self._update_state()
 
-    def _on_app_loading(self) -> None:
-        """Called when the app enters the loading state.
+    def _on_loading(self) -> None:
+        """Called when we enter the loading state.
 
         At this point, all built-in pieces of the app should be in place
-        and can start doing 'work'. Though at a high level, the goal of
-        the app at this point is only to sign in to initial accounts,
-        download workspaces, and otherwise prepare itself to really
-        'run'.
+        and can start talking to each other and doing work. Though at a
+        high level, the goal of the app at this point is only to sign in
+        to initial accounts, download workspaces, and otherwise prepare
+        itself to really 'run'.
         """
-        from babase._apputils import log_dumped_app_state
-
         assert _babase.in_logic_thread()
 
         # Get meta-system scanning built-in stuff in the bg.
         self.meta.start_scan(scan_complete_cb=self._on_meta_scan_complete)
-
-        # If any traceback dumps happened last run, log and clear them.
-        log_dumped_app_state()
 
         # Inform all app subsystems in the same order they were inited.
         # Operate on a copy here because subsystems can still be added
@@ -568,7 +576,7 @@ class App:
         # is not present, however, we just do it ourself so we can
         # proceed on to the running state.
         if self.plus is None:
-            _babase.pushcall(self.on_initial_sign_in_completed)
+            _babase.pushcall(self.on_initial_sign_in_complete)
 
     def _on_meta_scan_complete(self) -> None:
         """Called when meta-scan is done doing its thing."""
@@ -581,8 +589,8 @@ class App:
         self._meta_scan_completed = True
         self._update_state()
 
-    def _on_app_running(self) -> None:
-        """Called when the app enters the running state.
+    def _on_running(self) -> None:
+        """Called when we enter the running state.
 
         At this point, all workspaces, initial accounts, etc. are in place
         and we can actually get started doing whatever we're gonna do.
@@ -704,51 +712,61 @@ class App:
         # pylint: disable=too-many-branches
         assert _babase.in_logic_thread()
 
-        # Can't shut down until we've got our asyncio machinery spun up.
-        if self._native_shutdown_called and self._aioloop is not None:
+        # Shutdown trumps all. Though we can't shut down until init is
+        # completed since we need our asyncio stuff to exist for the
+        # shutdown process.
+        if self._native_shutdown_called and self._init_completed:
             # Entering shutdown state:
             if self.state is not self.State.SHUTTING_DOWN:
                 self.state = self.State.SHUTTING_DOWN
-                self._on_app_shutdown()
+                self._on_shutting_down()
 
         elif self._native_paused:
             # Entering paused state:
             if self.state is not self.State.PAUSED:
                 self.state = self.State.PAUSED
-                self._on_app_pause()
+                self._on_pause()
         else:
             # Leaving paused state:
             if self.state is self.State.PAUSED:
-                self._on_app_resume()
+                self._on_resume()
 
             # Handle initially entering or returning to other states.
             if self._initial_sign_in_completed and self._meta_scan_completed:
                 if self.state != self.State.RUNNING:
                     self.state = self.State.RUNNING
                     _babase.lifecyclelog('app state running')
-                    if not self._called_on_app_running:
-                        self._called_on_app_running = True
-                        self._on_app_running()
-            elif self._launch_completed:
+                    if not self._called_on_running:
+                        self._called_on_running = True
+                        self._on_running()
+            elif self._init_completed:
                 if self.state is not self.State.LOADING:
                     self.state = self.State.LOADING
                     _babase.lifecyclelog('app state loading')
-                    if not self._called_on_app_loading:
-                        self._called_on_app_loading = True
-                        self._on_app_loading()
+                    if not self._called_on_loading:
+                        self._called_on_loading = True
+                        self._on_loading()
+            elif self._native_bootstrapping_completed:
+                if self.state is not self.State.INITING:
+                    self.state = self.State.INITING
+                    _babase.lifecyclelog('app state initing')
+                    if not self._called_on_initing:
+                        self._called_on_initing = True
+                        self._on_initing()
             else:
-                # Only thing left is launching. We shouldn't be getting
-                # called before at least that is complete.
-                assert self._native_bootstrapped
-                if self.state is not self.State.LAUNCHING:
-                    self.state = self.State.LAUNCHING
-                    _babase.lifecyclelog('app state launching')
-                    if not self._called_on_app_launching:
-                        self._called_on_app_launching = True
-                        self._on_app_launching()
+                # Only possibility left is app-start. We shouldn't be
+                # getting called before at least that happens.
+                assert self._native_start_called
+                assert self.state is self.State.NOT_RUNNING
+                if bool(True):
+                    self.state = self.State.NATIVE_BOOTSTRAPPING
 
     def add_shutdown_task(self, coro: Coroutine[None, None, None]) -> None:
-        """Add a task to be run on app shutdown."""
+        """Add a task to be run on app shutdown.
+
+        Note that tasks will be killed after
+        App.SHUTDOWN_TASK_TIMEOUT_SECONDS if they are still running.
+        """
         if self.state is self.State.SHUTTING_DOWN:
             raise RuntimeError(
                 'Cannot add shutdown tasks with state SHUTTING_DOWN.'
@@ -780,15 +798,22 @@ class App:
 
         task = asyncio.create_task(coro)
         try:
-            await asyncio.wait_for(task, 5.0)
+            await asyncio.wait_for(task, self.SHUTDOWN_TASK_TIMEOUT_SECONDS)
         except Exception:
             logging.exception('Error in shutdown task.')
 
-    def on_native_bootstrapped(self) -> None:
+    def on_native_start(self) -> None:
+        """Called by the native layer when the app is being started."""
+        assert _babase.in_logic_thread()
+        assert not self._native_start_called
+        self._native_start_called = True
+        self._update_state()
+
+    def on_native_bootstrapping_complete(self) -> None:
         """Called by the native layer once its ready to rock."""
         assert _babase.in_logic_thread()
-        assert not self._native_bootstrapped
-        self._native_bootstrapped = True
+        assert not self._native_bootstrapping_completed
+        self._native_bootstrapping_completed = True
         self._update_state()
 
     def on_native_pause(self) -> None:
@@ -811,7 +836,7 @@ class App:
         self._native_shutdown_called = True
         self._update_state()
 
-    def _on_app_pause(self) -> None:
+    def _on_pause(self) -> None:
         """Called when the app goes to a paused state."""
         assert _babase.in_logic_thread()
 
@@ -824,7 +849,7 @@ class App:
                     'Error in on_app_pause for subsystem %s.', subsystem
                 )
 
-    def _on_app_resume(self) -> None:
+    def _on_resume(self) -> None:
         """Called when resuming."""
         assert _babase.in_logic_thread()
         self.fg_state += 1
@@ -838,7 +863,7 @@ class App:
                     'Error in on_app_resume for subsystem %s.', subsystem
                 )
 
-    def _on_app_shutdown(self) -> None:
+    def _on_shutting_down(self) -> None:
         """(internal)"""
         assert _babase.in_logic_thread()
 
@@ -882,7 +907,7 @@ class App:
             except ImportError:
                 pass
 
-    def on_initial_sign_in_completed(self) -> None:
+    def on_initial_sign_in_complete(self) -> None:
         """Called when initial sign-in (or lack thereof) completes.
 
         This normally gets called by the plus subsystem. The

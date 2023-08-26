@@ -62,7 +62,6 @@ void Logic::OnAppStart() {
   g_base->audio->OnAppStart();
   g_base->input->OnAppStart();
   g_base->ui->OnAppStart();
-  g_core->platform->OnAppStart();
   g_base->app_mode()->OnAppStart();
   if (g_base->HavePlus()) {
     g_base->plus()->OnAppStart();
@@ -80,7 +79,7 @@ void Logic::OnInitialScreenCreated() {
   // business logic.
 
   // Let the Python layer know the native layer is now fully functional.
-  // This will probably result in the Python layer flipping to the LAUNCHING
+  // This will probably result in the Python layer flipping to the INITING
   // state.
   CompleteAppBootstrapping();
 
@@ -109,7 +108,7 @@ void Logic::CompleteAppBootstrapping() {
   assert(!app_bootstrapping_complete_);
   app_bootstrapping_complete_ = true;
 
-  g_core->LifecycleLog("app bootstrapping complete");
+  g_core->LifecycleLog("app native bootstrapping complete");
 
   // Let the assets system know it can start loading stuff now that
   // we have a screen and thus know texture formats/etc.
@@ -143,7 +142,7 @@ void Logic::CompleteAppBootstrapping() {
   // Let Python know we're done bootstrapping so it can flip the app
   // into the 'launching' state.
   g_base->python->objs()
-      .Get(BasePython::ObjID::kAppOnNativeBootstrappedCall)
+      .Get(BasePython::ObjID::kAppOnNativeBootstrappingCompleteCall)
       .Call();
 
   UpdatePendingWorkTimer();
@@ -181,7 +180,6 @@ void Logic::OnAppPause() {
     g_base->plus()->OnAppPause();
   }
   g_base->app_mode()->OnAppPause();
-  g_core->platform->OnAppPause();
   g_base->ui->OnAppPause();
   g_base->input->OnAppPause();
   g_base->audio->OnAppPause();
@@ -197,7 +195,6 @@ void Logic::OnAppResume() {
   g_base->audio->OnAppResume();
   g_base->input->OnAppResume();
   g_base->ui->OnAppResume();
-  g_core->platform->OnAppResume();
   g_base->app_mode()->OnAppResume();
   if (g_base->HavePlus()) {
     g_base->plus()->OnAppResume();
@@ -234,7 +231,6 @@ void Logic::OnAppShutdown() {
     g_base->plus()->OnAppShutdown();
   }
   g_base->app_mode()->OnAppShutdown();
-  g_core->platform->OnAppShutdown();
   g_base->ui->OnAppShutdown();
   g_base->input->OnAppShutdown();
   g_base->audio->OnAppShutdown();
@@ -269,7 +265,6 @@ void Logic::DoApplyAppConfig() {
   g_base->audio->DoApplyAppConfig();
   g_base->input->DoApplyAppConfig();
   g_base->ui->DoApplyAppConfig();
-  g_core->platform->DoApplyAppConfig();
   g_base->app_mode()->DoApplyAppConfig();
   if (g_base->HavePlus()) {
     g_base->plus()->DoApplyAppConfig();
@@ -585,15 +580,20 @@ void Logic::UpdatePendingWorkTimer() {
 void Logic::HandleInterruptSignal() {
   assert(g_base->InLogicThread());
 
+  // Interrupt signals are 'gentle' requests to shut down.
+
   // Special case; when running under the server-wrapper, we completely
   // ignore interrupt signals (the wrapper acts on them).
   if (g_base->server_wrapper_managed()) {
     return;
   }
+  Shutdown();
+}
 
-  // Go with a low level process shutdown here. In situations where we're
-  // getting interrupt signals I don't think we'd ever want high level
-  // 'soft' quits.
+void Logic::HandleTerminateSignal() {
+  // Interrupt signals are slightly more stern requests to shut down.
+  // We always respond to these.
+  assert(g_base->InLogicThread());
   Shutdown();
 }
 

@@ -1376,10 +1376,7 @@ void SceneV1AppMode::HandleQuitOnIdle() {
       idle_exiting_ = true;
 
       Log(LogLevel::kInfo, "Quitting due to reaching idle-exit-minutes.");
-      g_base->logic->event_loop()->PushCall([] {
-        assert(g_base->InLogicThread());
-        g_base->python->objs().Get(base::BasePython::ObjID::kQuitCall).Call();
-      });
+      g_base->logic->event_loop()->PushCall([] { g_base->logic->Shutdown(); });
     }
   }
 }

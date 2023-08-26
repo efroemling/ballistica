@@ -644,22 +644,6 @@ auto CorePlatform::GetTextTextureData(void* tex) -> uint8_t* {
   throw Exception();
 }
 
-void CorePlatform::OnAppStart() {
-  assert(g_base_soft && g_base_soft->InLogicThread());
-}
-
-void CorePlatform::OnAppPause() {
-  assert(g_base_soft && g_base_soft->InLogicThread());
-}
-
-void CorePlatform::OnAppResume() {
-  assert(g_base_soft && g_base_soft->InLogicThread());
-}
-
-void CorePlatform::OnAppShutdown() {
-  assert(g_base_soft && g_base_soft->InLogicThread());
-}
-
 void CorePlatform::OnScreenSizeChange() {
   assert(g_base_soft && g_base_soft->InLogicThread());
 }
@@ -699,8 +683,6 @@ void CorePlatform::ShowOnlineScoreUI(const std::string& show,
 void CorePlatform::AndroidSetResString(const std::string& res) {
   throw Exception();
 }
-
-void CorePlatform::DoApplyAppConfig() {}
 
 void CorePlatform::AndroidSynthesizeBackPress() {
   Log(LogLevel::kError, "AndroidSynthesizeBackPress() unimplemented");

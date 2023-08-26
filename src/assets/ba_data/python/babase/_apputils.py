@@ -378,6 +378,10 @@ class AppHealthMonitor(AppSubsystem):
         self._response = False
         self._first_check = True
 
+    def on_app_loading(self) -> None:
+        # If any traceback dumps happened last run, log and clear them.
+        log_dumped_app_state()
+
     def _app_monitor_thread_main(self) -> None:
         try:
             self._monitor_app()

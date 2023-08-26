@@ -4,8 +4,9 @@
 from __future__ import annotations
 
 import copy
-import threading
+import logging
 import weakref
+import threading
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -36,7 +37,9 @@ class MasterServerV1CallThread(threading.Thread):
         callback: MasterServerCallback | None,
         response_type: MasterServerResponseType,
     ):
-        super().__init__()
+        # Set daemon=True so long-running requests don't keep us from
+        # quitting the app.
+        super().__init__(daemon=True)
         self._request = request
         self._request_type = request_type
         if not isinstance(response_type, MasterServerResponseType):
@@ -75,6 +78,16 @@ class MasterServerV1CallThread(threading.Thread):
         import json
 
         from efro.error import is_urllib_communication_error
+
+        # If the app is going down, this is a no-op. Trying to avoid the
+        # rare odd crash I see from (presumably) SSL stuff getting used
+        # while the app is being torn down.
+        if babase.app.state is babase.app.State.SHUTTING_DOWN:
+            logging.warning(
+                'MasterServerV1CallThread.run() during app'
+                ' shutdown is a no-op.'
+            )
+            return
 
         plus = babase.app.plus
         assert plus is not None

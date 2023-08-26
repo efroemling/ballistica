@@ -140,7 +140,6 @@ void AppAdapter::OnAppPause_() {
     g_base->network_reader->OnAppPause();
   }
   g_base->networking->OnAppPause();
-  g_core->platform->OnAppPause();
 }
 
 void AppAdapter::OnAppResume_() {
@@ -151,7 +150,6 @@ void AppAdapter::OnAppResume_() {
   EventLoop::SetEventLoopsPaused(false);
 
   // Run resumes that expect to happen in the main thread.
-  g_core->platform->OnAppResume();
   g_base->network_reader->OnAppResume();
   g_base->networking->OnAppResume();
 

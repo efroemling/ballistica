@@ -75,12 +75,12 @@ BaseFeatureSet::BaseFeatureSet()
 }
 
 void BaseFeatureSet::OnModuleExec(PyObject* module) {
-  // Ok, our feature-set's Python module is getting imported. Like any
-  // normal Python module, we take this opportunity to import/create the
+  // Ok, our feature-set's Python module is getting imported. Just like a
+  // pure Python module would, we take this opportunity to import/create the
   // stuff we use.
 
   // Importing core should always be the first thing we do. Various
-  // ballistica functionality will fail if this has not been done.
+  // Ballistica functionality will fail if this has not been done.
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
@@ -106,17 +106,18 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   g_base->python->AddPythonClasses(module);
 
   // Store our C++ front-end with our Python module. This is what allows
-  // others to 'import' our C++ front end.
+  // other C++ code to 'import' our C++ front end and talk to us directly.
   g_base->StoreOnPythonModule(module);
 
   // Import all the Python stuff we use.
   g_base->python->ImportPythonObjs();
 
   // Run some sanity checks, wire up our log handler, etc.
-  auto result = g_base->python->objs()
-                    .Get(BasePython::ObjID::kOnNativeModuleImportCall)
-                    .Call();
-  if (!result.Exists()) {
+  bool success = g_base->python->objs()
+                     .Get(BasePython::ObjID::kEnvOnNativeModuleImportCall)
+                     .Call()
+                     .Exists();
+  if (!success) {
     FatalError("babase._env.on_native_module_import() call failed.");
   }
 

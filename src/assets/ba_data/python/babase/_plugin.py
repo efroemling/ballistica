@@ -81,7 +81,7 @@ class PluginSubsystem(AppSubsystem):
                     config_changed = True
                     found_new = True
 
-        # If we're *not* auto-enabling, just let the user know if we
+        # If we're *not* auto-enabling, simply let the user know if we
         # found new ones.
         if found_new and not auto_enable_new_plugins:
             _babase.screenmessage(
@@ -131,10 +131,10 @@ class PluginSubsystem(AppSubsystem):
                 disappeared_plugs.add(class_path)
                 continue
 
-        # If plugins disappeared, let the user know gently and remove them
-        # from the config so we'll again let the user know if they later
-        # reappear. This makes it much smoother to switch between users
-        # or workspaces.
+        # If plugins disappeared, let the user know gently and remove
+        # them from the config so we'll again let the user know if they
+        # later reappear. This makes it much smoother to switch between
+        # users or workspaces.
         if disappeared_plugs:
             _babase.getsimplesound('shieldDown').play()
             _babase.screenmessage(
@@ -217,7 +217,7 @@ class PluginSpec:
     key. Remember to commit the app-config after making any changes.
 
     The 'attempted_load' attr will be True if the engine has attempted
-    to load the plugin. If 'attempted_load' is True for a plugin-spec
+    to load the plugin. If 'attempted_load' is True for a PluginSpec
     but the 'plugin' attr is None, it means there was an error loading
     the plugin. If a plugin's api-version does not match the running
     app, if a new plugin is detected with auto-enable-plugins disabled,
@@ -249,7 +249,7 @@ class PluginSpec:
         plugstate['enabled'] = val
 
     def attempt_load_if_enabled(self) -> Plugin | None:
-        """Possibly load the plugin and report errors."""
+        """Possibly load the plugin and log any errors."""
         from babase._general import getclass
         from babase._language import Lstr
 
@@ -308,8 +308,8 @@ class Plugin:
     Category: **App Classes**
 
     Plugins are discoverable by the meta-tag system
-    and the user can select which ones they want to activate.
-    Active plugins are then called at specific times as the
+    and the user can select which ones they want to enable.
+    Enabled plugins are then called at specific times as the
     app is running in order to modify its behavior in some way.
     """
 

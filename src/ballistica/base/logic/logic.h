@@ -69,7 +69,9 @@ class Logic {
     return app_bootstrapping_complete_;
   }
   void NotifyOfPendingAssetLoads();
+
   void HandleInterruptSignal();
+  void HandleTerminateSignal();
 
   auto NewAppTimer(millisecs_t length, bool repeat,
                    const Object::Ref<Runnable>& runnable) -> int;

@@ -257,11 +257,21 @@ void BasePlatform::DoOpenURL(const std::string& url) {
 
 #if !BA_OSTYPE_WINDOWS
 static void HandleSIGINT(int s) {
-  if (g_base->logic) {
+  if (g_base && g_base->logic->event_loop()) {
     g_base->logic->event_loop()->PushCall(
         [] { g_base->logic->HandleInterruptSignal(); });
   } else {
-    Log(LogLevel::kError, "SigInt handler called before g_logic exists.");
+    Log(LogLevel::kError,
+        "SigInt handler called before g_base->logic->event_loop exists.");
+  }
+}
+static void HandleSIGTERM(int s) {
+  if (g_base && g_base->logic->event_loop()) {
+    g_base->logic->event_loop()->PushCall(
+        [] { g_base->logic->HandleTerminateSignal(); });
+  } else {
+    Log(LogLevel::kError,
+        "SigInt handler called before g_base->logic->event_loop exists.");
   }
 }
 #endif
@@ -271,11 +281,20 @@ void BasePlatform::SetupInterruptHandling() {
 #if BA_OSTYPE_WINDOWS
   throw Exception();
 #else
-  struct sigaction handler {};
-  handler.sa_handler = HandleSIGINT;
-  sigemptyset(&handler.sa_mask);
-  handler.sa_flags = 0;
-  sigaction(SIGINT, &handler, nullptr);
+  {
+    struct sigaction handler {};
+    handler.sa_handler = HandleSIGINT;
+    sigemptyset(&handler.sa_mask);
+    handler.sa_flags = 0;
+    sigaction(SIGINT, &handler, nullptr);
+  }
+  {
+    struct sigaction handler {};
+    handler.sa_handler = HandleSIGTERM;
+    sigemptyset(&handler.sa_mask);
+    handler.sa_flags = 0;
+    sigaction(SIGTERM, &handler, nullptr);
+  }
 #endif
 }
 

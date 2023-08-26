@@ -1,4 +1,4 @@
-### 1.7.26 (build 21250, api 8, 2023-08-23)
+### 1.7.26 (build 21256, api 8, 2023-08-25)
 
 - Android should now be better at detecting hardware keyboards (you will see
   'Configure Keyboard' and 'Configure Keyboard P2' buttons under
@@ -24,14 +24,19 @@
   functionality, but rather adapt the app to a particular paradigm or api (VR,
   Headless, SDL GUI, etc.). Also am trying to move any functionality out of
   those classes that does not fit that definition.
-- Started cleaning up the app exit process. This will allow the app to
+- Started cleaning up the app shutdown process. This will allow the app to
   gracefully run tasks such as syncing account data to the cloud or disk or
   properly closing the audio system when shutting down. It also means there
   should be more consistent use of the 'Quit?' confirm window. Please holler if
   you see any odd behavior when trying to quit the app.
+- Unix TERM signal now triggers graceful app shutdown.
 - Added `ba.app.add_shutdown_task()` to register coroutines to be run as part of
   shutdown.
 - Removed `babase.app.iircade_mode`. RIP iiRcade :(.
+- Changed `AppState.INITIAL` to `AppState.NOT_RUNNING`, added a
+  `AppState.NATIVE_BOOTSTRAPPING`, and changed `AppState.LAUNCHING` to
+  `AppState.INITING`. These better describe what the app is actually doing while
+  in those states.
 
 ### 1.7.25 (build 21211, api 8, 2023-08-03)
 

@@ -23,8 +23,8 @@ void TemplateFsFeatureSet::OnModuleExec(PyObject* module) {
   // Create our feature-set's C++ front-end.
   g_template_fs = new TemplateFsFeatureSet();
 
-  // Store our C++ front-end on our Python module.
-  // This is what allows others to 'import' our C++ front end.
+  // Store our C++ front-end with our Python module. This is what allows
+  // other C++ code to 'import' our C++ front end and talk to us directly.
   g_template_fs->StoreOnPythonModule(module);
 
   // Import any Python stuff we use into objs_.

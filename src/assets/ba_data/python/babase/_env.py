@@ -149,14 +149,15 @@ def on_main_thread_start_app() -> None:
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
-def on_app_launching() -> None:
-    """Called when the app reaches the launching state."""
+def on_app_state_initing() -> None:
+    """Called when the app reaches the initing state."""
     import _babase
     import baenv
 
     assert _babase.in_logic_thread()
 
-    # Let the user know if the app Python dir is a 'user' one.
+    # Let the user know if the app Python dir is a 'user' one. This is a
+    # risky thing to be doing so don't let them forget they're doing it.
     envconfig = baenv.get_config()
     if envconfig.is_user_app_python_dir:
         _babase.screenmessage(
@@ -192,12 +193,13 @@ def _feed_logs_to_babase(log_handler: LogHandler) -> None:
     # cache. This will feed the engine any logs that happened between
     # baenv.configure() and now.
 
-    # FIXME: while this works for now, the downside is that these
+    # FIXME: while this setup works for now, the downside is that these
     #  callbacks fire in a bg thread so certain things like android
-    #  logging will be delayed compared to code that uses native logging
-    #  calls directly. Perhaps we should add some sort of 'immediate'
-    #  callback option to better handle such cases (similar to the
-    #  immediate echofile stderr print that already occurs).
+    #  logging will be delayed relative to code that uses native logging
+    #  calls directly. Ideally we should add some sort of 'immediate'
+    #  callback option to better handle such cases (analogous to the
+    #  immediate echofile stderr print that LogHandler already
+    #  supports).
     log_handler.add_callback(_on_log, feed_existing_logs=True)
 
 

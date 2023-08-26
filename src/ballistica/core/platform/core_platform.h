@@ -51,11 +51,6 @@ class CorePlatform {
 
   virtual void WillExitMain(bool errored);
 
-  virtual void OnAppStart();
-  virtual void OnAppPause();
-  virtual void OnAppResume();
-  virtual void OnAppShutdown();
-  virtual void DoApplyAppConfig();
   virtual void OnScreenSizeChange();
   virtual void StepDisplayTime();
 

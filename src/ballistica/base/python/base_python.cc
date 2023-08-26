@@ -142,7 +142,10 @@ void BasePython::OnMainThreadStartApp() {
   }
 }
 
-void BasePython::OnAppStart() { assert(g_base->InLogicThread()); }
+void BasePython::OnAppStart() {
+  assert(g_base->InLogicThread());
+  objs().Get(BasePython::ObjID::kAppOnNativeStartCall).Call();
+}
 
 void BasePython::OnAppPause() {
   assert(g_base->InLogicThread());

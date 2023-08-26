@@ -12,7 +12,8 @@ values = [
     app.lang.get_resource,  # kGetResourceCall
     app.lang.translate,  # kTranslateCall
     app.push_apply_app_config,  # kAppPushApplyAppConfigCall
-    app.on_native_bootstrapped,  # kAppOnNativeBootstrappedCall
+    app.on_native_start,  # kAppOnNativeStartCall
+    app.on_native_bootstrapping_complete,  # kAppOnNativeBootstrappingCompleteCall
     app.on_native_pause,  # kAppOnNativePauseCall
     app.on_native_resume,  # kAppOnNativeResumeCall
     app.on_native_shutdown,  # kAppOnNativeShutdownCall
