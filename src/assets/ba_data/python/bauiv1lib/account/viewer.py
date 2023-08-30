@@ -141,7 +141,7 @@ class AccountViewerWindow(PopupWindow):
         bui.app.classic.master_server_v1_get(
             'bsAccountInfo',
             {
-                'buildNumber': bui.app.build_number,
+                'buildNumber': bui.app.env.build_number,
                 'accountID': self._account_id,
                 'profileID': self._profile_id,
             },

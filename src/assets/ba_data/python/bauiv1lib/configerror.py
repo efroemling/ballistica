@@ -11,7 +11,7 @@ class ConfigErrorWindow(bui.Window):
     """Window for dealing with a broken config."""
 
     def __init__(self) -> None:
-        self._config_file_path = bui.app.config_file_path
+        self._config_file_path = bui.app.env.config_file_path
         width = 800
         super().__init__(
             bui.containerwidget(size=(width, 400), transition='in_right')

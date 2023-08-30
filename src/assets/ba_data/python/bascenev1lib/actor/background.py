@@ -74,7 +74,7 @@ class Background(bs.Actor):
                 self.node.connectattr('opacity', self.logo, 'opacity')
                 # add jitter/pulse for a stop-motion-y look unless we're in VR
                 # in which case stillness is better
-                if not bs.app.vr_mode:
+                if not bs.app.env.vr:
                     self.cmb = bs.newnode(
                         'combine', owner=self.node, attrs={'size': 2}
                     )

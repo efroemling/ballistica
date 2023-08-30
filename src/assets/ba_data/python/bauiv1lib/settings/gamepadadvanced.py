@@ -91,7 +91,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
         self._sub_height = (
             940 if self._parent_window.get_is_secondary() else 1040
         )
-        if app.vr_mode:
+        if app.env.vr:
             self._sub_height += 50
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
@@ -183,7 +183,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
         )
 
         # in vr mode, allow assigning a reset-view button
-        if app.vr_mode:
+        if app.env.vr:
             v -= 50
             self._capture_button(
                 pos=(h2, v),

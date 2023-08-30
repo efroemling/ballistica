@@ -396,7 +396,7 @@ auto CorePython::FetchPythonArgs(std::vector<std::string>* buffer)
   // argv pointers to it.
   std::vector<char*> out;
   out.reserve(buffer->size());
-  for (int i = 0; i < buffer->size(); ++i) {
+  for (size_t i = 0; i < buffer->size(); ++i) {
     out.push_back(const_cast<char*>((*buffer)[i].c_str()));
   }
   return out;

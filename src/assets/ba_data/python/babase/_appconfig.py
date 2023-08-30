@@ -109,7 +109,7 @@ def read_app_config() -> tuple[AppConfig, bool]:
 
     # NOTE: it is assumed that this only gets called once and the
     # config object will not change from here on out
-    config_file_path = _babase.app.config_file_path
+    config_file_path = _babase.app.env.config_file_path
     config_contents = ''
     try:
         if os.path.exists(config_file_path):

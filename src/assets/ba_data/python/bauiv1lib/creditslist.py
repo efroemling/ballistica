@@ -212,7 +212,10 @@ class CreditsListWindow(bui.Window):
         try:
             with open(
                 os.path.join(
-                    bui.app.data_directory, 'ba_data', 'data', 'langdata.json'
+                    bui.app.env.data_directory,
+                    'ba_data',
+                    'data',
+                    'langdata.json',
                 ),
                 encoding='utf-8',
             ) as infile:

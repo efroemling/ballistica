@@ -108,7 +108,7 @@ class CoopGameActivity(GameActivity[PlayerT, TeamT]):
             )
             if not a.complete
         ]
-        vrmode = babase.app.vr_mode
+        vrmode = babase.app.env.vr
         if achievements:
             Text(
                 babase.Lstr(resource='achievementsRemainingText'),

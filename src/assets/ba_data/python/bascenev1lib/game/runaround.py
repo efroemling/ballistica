@@ -478,7 +478,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         )
         # FIXME; should not set things based on vr mode.
         #  (won't look right to non-vr connected clients, etc)
-        vrmode = bs.app.vr_mode
+        vrmode = bs.app.env.vr
         self._lives_text = bs.NodeActor(
             bs.newnode(
                 'text',

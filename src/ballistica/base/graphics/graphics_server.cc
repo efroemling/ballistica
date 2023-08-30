@@ -419,9 +419,10 @@ void GraphicsServer::HandleFullContextScreenRebuild(
 
     UpdateVirtualScreenRes();
 
-    // Inform the logic thread of the latest values.
+    // Inform graphics client and logic thread subsystems of the change.
     g_base->logic->event_loop()->PushCall(
         [vx = res_x_virtual_, vy = res_y_virtual_, x = res_x_, y = res_y_] {
+          g_base->graphics->SetScreenSize(vx, vy, x, y);
           g_base->logic->OnScreenSizeChange(vx, vy, x, y);
         });
   }
@@ -568,9 +569,10 @@ void GraphicsServer::SetScreenResolution(float h, float v) {
     renderer_->ScreenSizeChanged();
   }
 
-  // Inform logic thread of the change.
+  // Inform graphics client and logic thread subsystems of the change.
   g_base->logic->event_loop()->PushCall(
       [vx = res_x_virtual_, vy = res_y_virtual_, x = res_x_, y = res_y_] {
+        g_base->graphics->SetScreenSize(vx, vy, x, y);
         g_base->logic->OnScreenSizeChange(vx, vy, x, y);
       });
 }

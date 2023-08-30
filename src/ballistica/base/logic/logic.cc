@@ -7,6 +7,7 @@
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/networking/networking.h"
+#include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/support/stdio_console.h"
@@ -58,6 +59,7 @@ void Logic::OnAppStart() {
   // it will be the most variable; that way it will interact with other
   // subsystems in their normal states which is less likely to lead to
   // problems.
+  g_base->platform->OnAppStart();
   g_base->graphics->OnAppStart();
   g_base->audio->OnAppStart();
   g_base->input->OnAppStart();
@@ -184,6 +186,7 @@ void Logic::OnAppPause() {
   g_base->input->OnAppPause();
   g_base->audio->OnAppPause();
   g_base->graphics->OnAppPause();
+  g_base->platform->OnAppPause();
 }
 
 void Logic::OnAppResume() {
@@ -191,6 +194,7 @@ void Logic::OnAppResume() {
   assert(g_base->CurrentContext().IsEmpty());
 
   // Note: keep these in the same order as OnAppStart.
+  g_base->platform->OnAppResume();
   g_base->graphics->OnAppResume();
   g_base->audio->OnAppResume();
   g_base->input->OnAppResume();
@@ -235,6 +239,7 @@ void Logic::OnAppShutdown() {
   g_base->input->OnAppShutdown();
   g_base->audio->OnAppShutdown();
   g_base->graphics->OnAppShutdown();
+  g_base->platform->OnAppShutdown();
 }
 
 void Logic::CompleteShutdown() {
@@ -283,12 +288,10 @@ void Logic::OnScreenSizeChange(float virtual_width, float virtual_height,
                                float pixel_width, float pixel_height) {
   assert(g_base->InLogicThread());
 
-  // First, pass the new values to the graphics subsystem. Then inform
-  // everyone else simply that they changed; they can ask g_graphics for
-  // whatever specific values they need. Note: keep these in the same order
-  // as OnAppStart.
-  g_base->graphics->OnScreenSizeChange(virtual_width, virtual_height,
-                                       pixel_width, pixel_height);
+  // Inform all subsystems.
+  // Note: keep these in the same order as OnAppStart.
+  g_base->platform->OnScreenSizeChange();
+  g_base->graphics->OnScreenSizeChange();
   g_base->audio->OnScreenSizeChange();
   g_base->input->OnScreenSizeChange();
   g_base->ui->OnScreenSizeChange();

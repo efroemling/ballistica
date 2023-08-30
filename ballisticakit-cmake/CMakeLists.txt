@@ -393,6 +393,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_context_ref.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_display_timer.cc
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_display_timer.h
+  ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_env.cc
+  ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_env.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_feature_set_data.cc
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_feature_set_data.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_simple_sound.cc

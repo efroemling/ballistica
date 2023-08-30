@@ -71,13 +71,19 @@ def get_current_version() -> tuple[str, int]:
 def get_current_api_version() -> int:
     """Pull current api version from the project."""
     with open(
-        'src/assets/ba_data/python/babase/_meta.py', encoding='utf-8'
+        'src/ballistica/shared/ballistica.cc', encoding='utf-8'
     ) as infile:
         lines = infile.readlines()
-    linestart = 'CURRENT_API_VERSION = '
+    linestart = 'const int kEngineApiVersion = '
+    lineend = ';'
     for line in lines:
         if line.startswith(linestart):
-            return int(line.strip().removeprefix(linestart).strip())
+            return int(
+                line.strip()
+                .removeprefix(linestart)
+                .removesuffix(lineend)
+                .strip()
+            )
     raise RuntimeError('Api version line not found.')
 
 

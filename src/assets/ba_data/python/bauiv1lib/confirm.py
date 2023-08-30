@@ -197,13 +197,19 @@ class QuitWindow:
             time=0.2,
             endcall=lambda: bui.quit(soft=True, back=self._back),
         )
+
+        # Prevent the user from doing anything else while we're on our
+        # way out.
         bui.lock_all_input()
 
-        # Unlock and fade back in shortly. Just in case something goes
-        # wrong (or on Android where quit just backs out of our activity
-        # and we may come back after).
-        def _come_back() -> None:
-            bui.unlock_all_input()
-            bui.fade_screen(True, time=0.1)
+        # On systems supporting soft-quit, unlock and fade back in shortly
+        # (soft-quit basically just backgrounds/hides the app).
+        if bui.app.env.supports_soft_quit:
+            # Unlock and fade back in shortly. Just in case something goes
+            # wrong (or on Android where quit just backs out of our activity
+            # and we may come back after).
+            def _come_back() -> None:
+                bui.unlock_all_input()
+                bui.fade_screen(True)
 
-        bui.apptimer(0.3, _come_back)
+            bui.apptimer(0.5, _come_back)

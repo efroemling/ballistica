@@ -26,6 +26,13 @@ class BasePlatform {
   /// start talking to them.
   virtual void OnMainThreadStartAppComplete();
 
+  virtual void OnAppStart();
+  virtual void OnAppPause();
+  virtual void OnAppResume();
+  virtual void OnAppShutdown();
+  virtual void OnScreenSizeChange();
+  virtual void DoApplyAppConfig();
+
 #pragma mark IN APP PURCHASES --------------------------------------------------
 
   void Purchase(const std::string& item);

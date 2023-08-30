@@ -6,6 +6,7 @@ from __future__ import annotations
 import sys
 import signal
 import logging
+import warnings
 from typing import TYPE_CHECKING
 
 from efro.log import LogLevel
@@ -102,6 +103,12 @@ def on_main_thread_start_app() -> None:
     # it wipes out our existing C handler.
     signal.signal(signal.SIGINT, signal.SIG_DFL)  # Do default handling.
     _babase.setup_sigint()
+
+    # Turn on deprecation warnings. By default these are off for release
+    # builds except for in __main__. However this is a key way to
+    # communicate api changes to modders and most modders are running
+    # release builds so its good to have this on everywhere.
+    warnings.simplefilter('default', DeprecationWarning)
 
     # Turn off fancy-pants cyclic garbage-collection. We run it only at
     # explicit times to avoid random hitches and keep things more

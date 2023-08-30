@@ -571,6 +571,12 @@
     <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_display_timer.h">
       <Filter>ballistica\base\python\class</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_env.cc">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_env.h">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_feature_set_data.cc">
       <Filter>ballistica\base\python\class</Filter>
     </ClCompile>

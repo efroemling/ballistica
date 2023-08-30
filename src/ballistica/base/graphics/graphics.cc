@@ -1931,8 +1931,10 @@ auto Graphics::ScreenMessageEntry::GetText() -> TextGroup& {
   return *s_mesh_;
 }
 
-void Graphics::OnScreenSizeChange(float virtual_width, float virtual_height,
-                                  float pixel_width, float pixel_height) {
+void Graphics::OnScreenSizeChange() {}
+
+void Graphics::SetScreenSize(float virtual_width, float virtual_height,
+                             float pixel_width, float pixel_height) {
   assert(g_base->InLogicThread());
   res_x_virtual_ = virtual_width;
   res_y_virtual_ = virtual_height;

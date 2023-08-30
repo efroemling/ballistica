@@ -54,9 +54,11 @@ class Graphics {
   void OnAppPause();
   void OnAppResume();
   void OnAppShutdown();
+  void OnScreenSizeChange();
   void DoApplyAppConfig();
-  void OnScreenSizeChange(float virtual_width, float virtual_height,
-                          float physical_width, float physical_height);
+
+  void SetScreenSize(float virtual_width, float virtual_height,
+                     float physical_width, float physical_height);
   void StepDisplayTime();
 
   static auto IsShaderTransparent(ShadingType c) -> bool;

@@ -49,7 +49,7 @@ class JoinInfo:
         if keyboard is not None:
             self._update_for_keyboard(keyboard)
 
-        flatness = 1.0 if babase.app.vr_mode else 0.0
+        flatness = 1.0 if babase.app.env.vr else 0.0
         self._text = NodeActor(
             _bascenev1.newnode(
                 'text',

@@ -61,7 +61,7 @@ class GraphicsSettingsWindow(bui.Window):
             show_vsync = True
 
         show_resolution = True
-        if app.vr_mode:
+        if app.env.vr:
             show_resolution = (
                 app.classic.platform == 'android'
                 and app.classic.subplatform == 'cardboard'
@@ -400,7 +400,7 @@ class GraphicsSettingsWindow(bui.Window):
         )
 
         # (tv mode doesnt apply to vr)
-        if not bui.app.vr_mode:
+        if not bui.app.env.vr:
             tvc = ConfigCheckBox(
                 parent=self._root_widget,
                 position=(240, v - 6),

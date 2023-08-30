@@ -76,7 +76,7 @@ class CoopJoinActivity(bs.JoinActivity):
             ]
             have_achievements = bool(achievements)
             achievements = [a for a in achievements if not a.complete]
-            vrmode = bs.app.vr_mode
+            vrmode = bs.app.env.vr
             if have_achievements:
                 Text(
                     bs.Lstr(resource='achievementsRemainingText'),

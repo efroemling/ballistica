@@ -68,7 +68,10 @@ class LanguageSubsystem(AppSubsystem):
         try:
             names = os.listdir(
                 os.path.join(
-                    _babase.app.data_directory, 'ba_data', 'data', 'languages'
+                    _babase.app.env.data_directory,
+                    'ba_data',
+                    'data',
+                    'languages',
                 )
             )
             names = [n.replace('.json', '').capitalize() for n in names]
@@ -121,7 +124,7 @@ class LanguageSubsystem(AppSubsystem):
 
         with open(
             os.path.join(
-                _babase.app.data_directory,
+                _babase.app.env.data_directory,
                 'ba_data',
                 'data',
                 'languages',
@@ -139,7 +142,7 @@ class LanguageSubsystem(AppSubsystem):
                 lmodvalues = None
             else:
                 lmodfile = os.path.join(
-                    _babase.app.data_directory,
+                    _babase.app.env.data_directory,
                     'ba_data',
                     'data',
                     'languages',

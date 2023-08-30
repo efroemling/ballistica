@@ -353,7 +353,7 @@ class HelpWindow(bui.Window):
             v -= spacing * 45.0
             txt = (
                 bui.Lstr(resource=self._r + '.devicesText').evaluate()
-                if app.vr_mode
+                if app.env.vr
                 else bui.Lstr(resource=self._r + '.controllersText').evaluate()
             )
             txt_scale = 0.74
@@ -372,7 +372,7 @@ class HelpWindow(bui.Window):
             )
 
             txt_scale = 0.7
-            if not app.vr_mode:
+            if not app.env.vr:
                 infotxt = '.controllersInfoText'
                 txt = bui.Lstr(
                     resource=self._r + infotxt,

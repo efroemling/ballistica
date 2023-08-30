@@ -1,4 +1,32 @@
-### 1.7.26 (build 21256, api 8, 2023-08-25)
+### 1.7.27 (build 21269, api 8, 2023-08-30)
+
+- Fixed a rare crash that could occur if the app shuts down while a background
+  thread is making a web request. The app will now try to wait for any such
+  attempts to complete.
+- Added `babase.app.env` which is a type-friendly object containing various
+  environment/runtime values. Values directly under `app` such as
+  `babase.app.debug_build` will either be consolidated here or moved to classic
+  if they are considered deprecated.
+- Started using Python's `warnings` module to announce deprecations, and turned
+  on deprecation warnings for the release build (by default in Python they are
+  mostly only on for debug builds). This way, when making minor changes, I can
+  keep old code paths intact for a few versions and warn modders that they
+  should transition to new code paths before the old ones disappear. I'd prefer
+  to avoid incrementing api-version again if at all possible since that is such
+  a dramatic event, so this alternative will hopefully allow gently evolving
+  some things without too much breakage.
+- Following up on the above two entries, several attributes under `babase.app`
+  have been relocated to `babase.app.env` and the originals have been given
+  deprecation warnings and will disappear sometime soon. This includes
+  `build_number`, `device_name`, `config_file_path`, `version`, `debug_build`,
+  `test_build`, `data_directory`, `python_directory_user`,
+  `python_directory_app`, `python_directory_app_site`, `api_version`.
+- Reverting the Android keyboard changes from 1.7.26, as I've received a few
+  reports of bluetooth game controllers now thinking they are keyboards. I'm
+  thinking I'll have to bite the bullet and implement something that asks the
+  user what the thing is to solve cases like that.
+
+### 1.7.26 (build 21259, api 8, 2023-08-29)
 
 - Android should now be better at detecting hardware keyboards (you will see
   'Configure Keyboard' and 'Configure Keyboard P2' buttons under
@@ -30,9 +58,9 @@
   should be more consistent use of the 'Quit?' confirm window. Please holler if
   you see any odd behavior when trying to quit the app.
 - Unix TERM signal now triggers graceful app shutdown.
-- Added `ba.app.add_shutdown_task()` to register coroutines to be run as part of
+- Added `app.add_shutdown_task()` to register coroutines to be run as part of
   shutdown.
-- Removed `babase.app.iircade_mode`. RIP iiRcade :(.
+- Removed `app.iircade_mode`. RIP iiRcade :(.
 - Changed `AppState.INITIAL` to `AppState.NOT_RUNNING`, added a
   `AppState.NATIVE_BOOTSTRAPPING`, and changed `AppState.LAUNCHING` to
   `AppState.INITING`. These better describe what the app is actually doing while

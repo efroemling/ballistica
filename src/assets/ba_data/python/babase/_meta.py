@@ -18,11 +18,6 @@ import _babase
 if TYPE_CHECKING:
     from typing import Callable
 
-# The meta api version of this build of the game.
-# Only packages and modules requiring this exact api version
-# will be considered when scanning directories.
-# See: https://ballistica.net/wiki/Meta-Tag-System
-CURRENT_API_VERSION = 8
 
 # Meta export lines can use these names to represent these classes.
 # This is purely a convenience; it is possible to use full class paths
@@ -76,14 +71,15 @@ class MetadataSubsystem:
         """
         assert self._scan_complete_cb is None
         assert self._scan is None
+        env = _babase.app.env
 
         self._scan_complete_cb = scan_complete_cb
         self._scan = DirectoryScan(
             [
                 path
                 for path in [
-                    _babase.app.python_directory_app,
-                    _babase.app.python_directory_user,
+                    env.python_directory_app,
+                    env.python_directory_user,
                 ]
                 if path is not None
             ]
@@ -212,7 +208,7 @@ class MetadataSubsystem:
                             '${NUM}',
                             str(len(results.incorrect_api_modules) - 1),
                         ),
-                        ('${API}', str(CURRENT_API_VERSION)),
+                        ('${API}', str(_babase.app.env.api_version)),
                     ],
                 )
             else:
@@ -220,7 +216,7 @@ class MetadataSubsystem:
                     resource='scanScriptsSingleModuleNeedsUpdatesText',
                     subs=[
                         ('${PATH}', results.incorrect_api_modules[0]),
-                        ('${API}', str(CURRENT_API_VERSION)),
+                        ('${API}', str(_babase.app.env.api_version)),
                     ],
                 )
             _babase.screenmessage(msg, color=(1, 0, 0))
@@ -344,13 +340,16 @@ class DirectoryScan:
 
         # If we find a module requiring a different api version, warn
         # and ignore.
-        if required_api is not None and required_api != CURRENT_API_VERSION:
+        if (
+            required_api is not None
+            and required_api != _babase.app.env.api_version
+        ):
             logging.warning(
                 'metascan: %s requires api %s but we are running'
                 ' %s. Ignoring module.',
                 subpath,
                 required_api,
-                CURRENT_API_VERSION,
+                _babase.app.env.api_version,
             )
             self.results.incorrect_api_modules.append(
                 self._module_name_for_subpath(subpath)

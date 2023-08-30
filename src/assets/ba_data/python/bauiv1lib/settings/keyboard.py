@@ -301,7 +301,7 @@ class ConfigKeyboardWindow(bui.Window):
                 {
                     'ua': bui.app.classic.legacy_user_agent_string,
                     'name': self._name,
-                    'b': bui.app.build_number,
+                    'b': bui.app.env.build_number,
                     'config': dst2,
                     'v': 2,
                 },

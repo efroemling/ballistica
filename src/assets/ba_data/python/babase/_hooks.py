@@ -354,7 +354,7 @@ def show_client_too_old_error() -> None:
     # a newer build.
     if (
         _babase.app.config.get('SuppressClientTooOldErrorForBuild')
-        == _babase.app.build_number
+        == _babase.app.env.build_number
     ):
         return
 

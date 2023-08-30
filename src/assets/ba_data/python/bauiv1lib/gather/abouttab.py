@@ -43,7 +43,7 @@ class AboutGatherTab(GatherTab):
 
         # Let's not talk about sharing in vr-mode; its tricky to fit more
         # than one head in a VR-headset ;-)
-        if not bui.app.vr_mode:
+        if not bui.app.env.vr:
             message = bui.Lstr(
                 value='${A}\n\n${B}',
                 subs=[

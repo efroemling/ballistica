@@ -45,7 +45,7 @@ class _Entry:
 
         # FIXME: Should not do things conditionally for vr-mode, as there may
         #  be non-vr clients connected which will also get these value.
-        vrmode = bs.app.vr_mode
+        vrmode = bs.app.env.vr
 
         if self._do_cover:
             if vrmode:

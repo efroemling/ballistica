@@ -69,7 +69,7 @@ class ZoomText(bs.Actor):
         )
 
         # we never jitter in vr mode..
-        if bs.app.vr_mode:
+        if bs.app.env.vr:
             jitter = 0.0
 
         # if they want jitter, animate its position slightly...

@@ -690,6 +690,9 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   void DoPushObjCall(const PythonObjectSetBase* objset, int id,
                      const std::string& arg) override;
   void OnReachedEndOfBaBaseImport();
+  void ShutdownSuppressBegin();
+  void ShutdownSuppressEnd();
+  auto shutdown_suppress_count() const { return shutdown_suppress_count_; }
 
   /// Called in the logic thread once our screen is up and assets are
   /// loading.
@@ -748,6 +751,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   StressTest* stress_test_;
 
   std::string console_startup_messages_;
+  int shutdown_suppress_count_{};
   bool tried_importing_plus_{};
   bool tried_importing_classic_{};
   bool tried_importing_ui_v1_{};

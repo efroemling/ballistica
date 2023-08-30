@@ -113,7 +113,7 @@ def get_all_tips() -> list[str]:
     if (
         app.classic is not None
         and app.classic.platform in ('android', 'ios')
-        and not app.on_tv
+        and not app.env.tv
     ):
         tips += [
             (

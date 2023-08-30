@@ -134,7 +134,7 @@ auto CoreFeatureSet::core_config() const -> const CoreConfig& {
   // we don't interfere with low-level stuff like FatalError handling that
   // might need core_config access at any time.
   if (!g_buildconfig.monolithic_build()) {
-    if (!HaveBaEnvVals()) {
+    if (!have_ba_env_vals()) {
       static bool did_warn = false;
       if (!did_warn) {
         did_warn = true;

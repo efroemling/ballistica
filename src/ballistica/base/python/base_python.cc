@@ -7,6 +7,7 @@
 #include "ballistica/base/python/class/python_class_context_call.h"
 #include "ballistica/base/python/class/python_class_context_ref.h"
 #include "ballistica/base/python/class/python_class_display_timer.h"
+#include "ballistica/base/python/class/python_class_env.h"
 #include "ballistica/base/python/class/python_class_feature_set_data.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
 #include "ballistica/base/python/class/python_class_vec3.h"
@@ -45,6 +46,7 @@ void BasePython::AddPythonClasses(PyObject* module) {
   PythonModuleBuilder::AddClass<PythonClassContextRef>(module);
   PythonModuleBuilder::AddClass<PythonClassAppTimer>(module);
   PythonModuleBuilder::AddClass<PythonClassDisplayTimer>(module);
+  PythonModuleBuilder::AddClass<PythonClassEnv>(module);
   PythonModuleBuilder::AddClass<PythonClassSimpleSound>(module);
   PythonModuleBuilder::AddClass<PythonClassContextCall>(module);
   PyObject* vec3 = PythonModuleBuilder::AddClass<PythonClassVec3>(module);

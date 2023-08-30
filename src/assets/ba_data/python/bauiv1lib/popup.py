@@ -34,7 +34,7 @@ class PopupWindow:
             focus_size = size
 
         # In vr mode we can't have windows going outside the screen.
-        if bui.app.vr_mode:
+        if bui.app.env.vr:
             focus_size = size
             focus_position = (0, 0)
 

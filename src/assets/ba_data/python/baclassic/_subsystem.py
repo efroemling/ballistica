@@ -153,6 +153,7 @@ class ClassicSubsystem(babase.AppSubsystem):
         plus = babase.app.plus
         assert plus is not None
 
+        env = babase.app.env
         cfg = babase.app.config
 
         self.music.on_app_loading()
@@ -161,11 +162,7 @@ class ClassicSubsystem(babase.AppSubsystem):
 
         # Non-test, non-debug builds should generally be blessed; warn if not.
         # (so I don't accidentally release a build that can't play tourneys)
-        if (
-            not babase.app.debug_build
-            and not babase.app.test_build
-            and not plus.is_blessed()
-        ):
+        if not env.debug and not env.test and not plus.is_blessed():
             babase.screenmessage('WARNING: NON-BLESSED BUILD', color=(1, 0, 0))
 
         # FIXME: This should not be hard-coded.

@@ -115,7 +115,7 @@ class CoreFeatureSet {
   /// Return true if baenv values have been locked in: python paths, log
   /// handling, etc. Early-running code may wish to explicitly avoid making log
   /// calls until this condition is met to ensure predictable behavior.
-  auto HaveBaEnvVals() const { return have_ba_env_vals_; }
+  auto have_ba_env_vals() const { return have_ba_env_vals_; }
 
   /// Return the directory where the app expects to find its bundled Python
   /// files.

@@ -379,6 +379,8 @@
     <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_context_ref.h" />
     <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_display_timer.cc" />
     <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_display_timer.h" />
+    <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_env.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_env.h" />
     <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_feature_set_data.cc" />
     <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_feature_set_data.h" />
     <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_simple_sound.cc" />

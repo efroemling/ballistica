@@ -117,7 +117,7 @@ class MainMenuWindow(bui.Window):
                 force_test = False
                 bs.get_local_active_input_devices_count()
                 if (
-                    (app.on_tv or app.classic.platform == 'mac')
+                    (app.env.tv or app.classic.platform == 'mac')
                     and bui.app.config.get('launchCount', 0) <= 1
                 ) or force_test:
 

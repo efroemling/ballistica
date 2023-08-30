@@ -185,7 +185,7 @@ def show_damage_count(
     #  (connected clients may have differing configs so they won't
     #  get the intended results).
     assert app.classic is not None
-    do_big = app.ui_v1.uiscale is babase.UIScale.SMALL or app.vr_mode
+    do_big = app.ui_v1.uiscale is babase.UIScale.SMALL or app.env.vr
     txtnode = _bascenev1.newnode(
         'text',
         attrs={

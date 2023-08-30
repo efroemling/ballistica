@@ -960,6 +960,7 @@
       <w>linearsize</w>
       <w>linearstep</w>
       <w>linebegin</w>
+      <w>lineend</w>
       <w>linemax</w>
       <w>linestart</w>
       <w>linestripped</w>
@@ -1643,6 +1644,7 @@
       <w>sssssssi</w>
       <w>ssssssssssss</w>
       <w>ssval</w>
+      <w>stacklevel</w>
       <w>stager</w>
       <w>standin</w>
       <w>startedptr</w>
@@ -1690,6 +1692,7 @@
       <w>subsys</w>
       <w>subtypestr</w>
       <w>successmsg</w>
+      <w>suppressions</w>
       <w>sval</w>
       <w>swidth</w>
       <w>swiftc</w>

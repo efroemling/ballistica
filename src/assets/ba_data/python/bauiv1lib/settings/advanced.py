@@ -88,7 +88,7 @@ class AdvancedSettingsWindow(bui.Window):
 
         # In vr-mode, the internal keyboard is currently the *only* option,
         # so no need to show this.
-        self._show_always_use_internal_keyboard = not app.vr_mode
+        self._show_always_use_internal_keyboard = not app.env.vr
 
         self._scroll_width = self._width - (100 + 2 * x_inset)
         self._scroll_height = self._height - 115.0
@@ -102,7 +102,7 @@ class AdvancedSettingsWindow(bui.Window):
         if self._show_disable_gyro:
             self._sub_height += 42
 
-        self._do_vr_test_button = app.vr_mode
+        self._do_vr_test_button = app.env.vr
         self._do_net_test_button = True
         self._extra_button_spacing = self._spacing * 2.5
 
@@ -178,7 +178,7 @@ class AdvancedSettingsWindow(bui.Window):
         # Fetch the list of completed languages.
         bui.app.classic.master_server_v1_get(
             'bsLangGetCompleted',
-            {'b': app.build_number},
+            {'b': app.env.build_number},
             callback=bui.WeakCall(self._completed_langs_cb),
         )
 
@@ -322,7 +322,10 @@ class AdvancedSettingsWindow(bui.Window):
 
             with open(
                 os.path.join(
-                    bui.app.data_directory, 'ba_data', 'data', 'langdata.json'
+                    bui.app.env.data_directory,
+                    'ba_data',
+                    'data',
+                    'langdata.json',
                 ),
                 encoding='utf-8',
             ) as infile:

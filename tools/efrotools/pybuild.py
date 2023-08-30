@@ -35,6 +35,7 @@ OPENSSL_VER_APPLE = '3.0.8'
 OPENSSL_VER_ANDROID = '3.0.8'
 
 ZLIB_VER_ANDROID = '1.3'
+XZ_VER_ANDROID = '5.4.4'
 
 # Filenames we prune from Python lib dirs in source repo to cut down on size.
 PRUNE_LIB_NAMES = [
@@ -298,6 +299,14 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         ftxt,
         "source = 'https://www.zlib.net/zlib-1.2.13.tar.gz'",
         f"source = 'https://www.zlib.net/zlib-{ZLIB_VER_ANDROID}.tar.gz'",
+        count=1,
+    )
+
+    # Set specific XZ version.
+    ftxt = replace_exact(
+        ftxt,
+        "source = 'https://tukaani.org/xz/xz-5.2.7.tar.xz'",
+        f"source = 'https://tukaani.org/xz/xz-{XZ_VER_ANDROID}.tar.xz'",
         count=1,
     )
 

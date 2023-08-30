@@ -1265,7 +1265,7 @@ static PyMethodDef PyIsOSPlayingMusicDef = {
     "\n"
     "Tells whether the OS is currently playing music of some sort.\n"
     "\n"
-    "(Used to determine whether the game should avoid playing its own)",
+    "(Used to determine whether the app should avoid playing its own)",
 };
 
 // -------------------------------- exec_arg -----------------------------------
@@ -1491,6 +1491,67 @@ static PyMethodDef PyGetImmediateReturnCodeDef = {
     "(internal)\n",
 };
 
+// ----------------------- shutdown_suppress_begin -----------------------------
+
+static auto PyShutdownSuppressBegin(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base);
+  g_base->ShutdownSuppressBegin();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyShutdownSuppressBeginDef = {
+    "shutdown_suppress_begin",             // name
+    (PyCFunction)PyShutdownSuppressBegin,  // method
+    METH_NOARGS,                           // flags
+
+    "shutdown_suppress_begin() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// ------------------------ shutdown_suppress_end ------------------------------
+
+static auto PyShutdownSuppressEnd(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base);
+  g_base->ShutdownSuppressEnd();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyShutdownSuppressEndDef = {
+    "shutdown_suppress_end",             // name
+    (PyCFunction)PyShutdownSuppressEnd,  // method
+    METH_NOARGS,                         // flags
+
+    "shutdown_suppress_end() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// ------------------------ shutdown_suppress_count
+// ------------------------------
+
+static auto PyShutdownSuppressCount(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base);
+  return PyLong_FromLong(g_base->shutdown_suppress_count());
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyShutdownSuppressCountDef = {
+    "shutdown_suppress_count",             // name
+    (PyCFunction)PyShutdownSuppressCount,  // method
+    METH_NOARGS,                           // flags
+
+    "shutdown_suppress_count() -> int\n"
+    "\n"
+    "(internal)\n",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
@@ -1540,6 +1601,9 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyEmptyAppModeHandleIntentExecDef,
       PyGetImmediateReturnCodeDef,
       PyCompleteShutdownDef,
+      PyShutdownSuppressBeginDef,
+      PyShutdownSuppressEndDef,
+      PyShutdownSuppressCountDef,
   };
 }
 

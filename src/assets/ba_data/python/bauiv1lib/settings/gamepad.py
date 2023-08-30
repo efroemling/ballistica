@@ -829,7 +829,7 @@ class GamepadSettingsWindow(bui.Window):
                 'controllerConfig',
                 {
                     'ua': classic.legacy_user_agent_string,
-                    'b': bui.app.build_number,
+                    'b': bui.app.env.build_number,
                     'name': self._name,
                     'inputMapHash': inputhash,
                     'config': dst2,

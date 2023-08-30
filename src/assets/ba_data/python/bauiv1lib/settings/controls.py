@@ -47,14 +47,14 @@ class ControlsSettingsWindow(bui.Window):
 
         space_height = spacing * 0.3
 
-        # FIXME: should create vis settings in platform for these,
-        #  not hard code them here.
+        # FIXME: should create vis settings under platform or app-adapter
+        # to determine whether to show this stuff; not hard code it.
 
         show_gamepads = False
         platform = app.classic.platform
         subplatform = app.classic.subplatform
         non_vr_windows = platform == 'windows' and (
-            subplatform != 'oculus' or not app.vr_mode
+            subplatform != 'oculus' or not app.env.vr
         )
         if platform in ('linux', 'android', 'mac') or non_vr_windows:
             show_gamepads = True
@@ -70,11 +70,12 @@ class ControlsSettingsWindow(bui.Window):
             show_space_1 = True
             height += space_height
 
+        print('hello')
         show_keyboard = False
         if bs.getinputdevice('Keyboard', '#1', doraise=False) is not None:
             show_keyboard = True
             height += spacing
-        show_keyboard_p2 = False if app.vr_mode else show_keyboard
+        show_keyboard_p2 = False if app.env.vr else show_keyboard
         if show_keyboard_p2:
             height += spacing
 
@@ -91,7 +92,7 @@ class ControlsSettingsWindow(bui.Window):
 
         # On windows (outside of oculus/vr), show an option to disable xinput.
         show_xinput_toggle = False
-        if platform == 'windows' and not app.vr_mode:
+        if platform == 'windows' and not app.env.vr:
             show_xinput_toggle = True
 
         # On mac builds, show an option to switch between generic and
@@ -352,6 +353,7 @@ class ControlsSettingsWindow(bui.Window):
                 maxwidth=width * 0.8,
             )
             v -= spacing * 1.5
+
         self._restore_state()
 
     def _set_mac_controller_subsystem(self, val: str) -> None:

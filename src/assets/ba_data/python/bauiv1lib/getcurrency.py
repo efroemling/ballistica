@@ -621,7 +621,7 @@ class GetCurrencyWindow(bui.Window):
         app = bui.app
         assert app.classic is not None
         if (
-            app.test_build
+            app.env.test
             or (
                 app.classic.platform == 'android'
                 and app.classic.subplatform in ['oculus', 'cardboard']
@@ -664,8 +664,8 @@ class GetCurrencyWindow(bui.Window):
                 'item': item,
                 'platform': app.classic.platform,
                 'subplatform': app.classic.subplatform,
-                'version': app.version,
-                'buildNumber': app.build_number,
+                'version': app.env.version,
+                'buildNumber': app.env.build_number,
             },
             callback=bui.WeakCall(self._purchase_check_result, item),
         )

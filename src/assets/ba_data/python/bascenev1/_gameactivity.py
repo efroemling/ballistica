@@ -600,7 +600,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
             translate=('gameDescriptions', sb_desc_l[0]), subs=subs
         )
         sb_desc = translation
-        vrmode = babase.app.vr_mode
+        vrmode = babase.app.env.vr
         yval = -34 if is_empty else -20
         yval -= 16
         sbpos = (
@@ -706,7 +706,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
                 resource='epicDescriptionFilterText',
                 subs=[('${DESCRIPTION}', translation)],
             )
-        vrmode = babase.app.vr_mode
+        vrmode = babase.app.env.vr
         dnode = _bascenev1.newnode(
             'text',
             attrs={
@@ -761,7 +761,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
             base_position = (75, 50)
             tip_scale = 0.8
             tip_title_scale = 1.2
-            vrmode = babase.app.vr_mode
+            vrmode = babase.app.env.vr
 
             t_offs = -350.0
             tnode = _bascenev1.newnode(

@@ -715,5 +715,10 @@ void BaseFeatureSet::DoPushObjCall(const PythonObjectSetBase* objset, int id,
 }
 
 auto BaseFeatureSet::IsAppStarted() const -> bool { return app_started_; }
+void BaseFeatureSet::ShutdownSuppressBegin() { shutdown_suppress_count_++; }
+void BaseFeatureSet::ShutdownSuppressEnd() {
+  shutdown_suppress_count_--;
+  assert(shutdown_suppress_count_ >= 0);
+}
 
 }  // namespace ballistica::base

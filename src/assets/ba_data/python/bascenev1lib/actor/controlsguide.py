@@ -208,13 +208,13 @@ class ControlsGuide(bs.Actor):
         clr = (0.9, 0.9, 2.0, 1.0) if bright else (0.8, 0.8, 2.0, 1.0)
         self._run_text_pos_top = (position[0], position[1] - 135.0 * scale)
         self._run_text_pos_bottom = (position[0], position[1] - 172.0 * scale)
-        sval = 1.0 * scale if bs.app.vr_mode else 0.8 * scale
+        sval = 1.0 * scale if bs.app.env.vr else 0.8 * scale
         self._run_text = bs.newnode(
             'text',
             attrs={
                 'scale': sval,
                 'host_only': True,
-                'shadow': 1.0 if bs.app.vr_mode else 0.5,
+                'shadow': 1.0 if bs.app.env.vr else 0.5,
                 'flatness': 1.0,
                 'maxwidth': 380,
                 'v_align': 'top',

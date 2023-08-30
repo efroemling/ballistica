@@ -566,8 +566,8 @@ class StoreBrowserWindow(bui.Window):
                 'item': item,
                 'platform': app.classic.platform,
                 'subplatform': app.classic.subplatform,
-                'version': app.version,
-                'buildNumber': app.build_number,
+                'version': app.env.version,
+                'buildNumber': app.env.build_number,
                 'purchaseType': 'ticket' if is_ticket_purchase else 'real',
             },
             callback=bui.WeakCall(

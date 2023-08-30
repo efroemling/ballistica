@@ -50,6 +50,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         super().on_transition_in()
         random.seed(123)
         app = bs.app
+        env = app.env
         assert app.classic is not None
 
         plus = bui.app.plus
@@ -59,7 +60,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         #  the host is VR mode or not (clients may differ in that regard).
         #  Any differences need to happen at the engine level so everyone
         #  sees things in their own optimal way.
-        vr_mode = bs.app.vr_mode
+        vr_mode = bs.app.env.vr
 
         if not bs.app.toolbar_test:
             color = (1.0, 1.0, 1.0, 1.0) if vr_mode else (0.5, 0.6, 0.5, 0.6)
@@ -117,7 +118,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         #  the host is vr mode or not (clients may not be or vice versa).
         #  Any differences need to happen at the engine level so everyone sees
         #  things in their own optimal way.
-        vr_mode = app.vr_mode
+        vr_mode = app.env.vr
         uiscale = app.ui_v1.uiscale
 
         # In cases where we're doing lots of dev work lets always show the
@@ -125,13 +126,13 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         force_show_build_number = False
 
         if not bs.app.toolbar_test:
-            if app.debug_build or app.test_build or force_show_build_number:
-                if app.debug_build:
+            if env.debug or env.test or force_show_build_number:
+                if env.debug:
                     text = bs.Lstr(
                         value='${V} (${B}) (${D})',
                         subs=[
-                            ('${V}', app.version),
-                            ('${B}', str(app.build_number)),
+                            ('${V}', app.env.version),
+                            ('${B}', str(app.env.build_number)),
                             ('${D}', bs.Lstr(resource='debugText')),
                         ],
                     )
@@ -139,12 +140,12 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     text = bs.Lstr(
                         value='${V} (${B})',
                         subs=[
-                            ('${V}', app.version),
-                            ('${B}', str(app.build_number)),
+                            ('${V}', app.env.version),
+                            ('${B}', str(app.env.build_number)),
                         ],
                     )
             else:
-                text = bs.Lstr(value='${V}', subs=[('${V}', app.version)])
+                text = bs.Lstr(value='${V}', subs=[('${V}', app.env.version)])
             scale = 0.9 if (uiscale is bs.UIScale.SMALL or vr_mode) else 0.7
             color = (1, 1, 1, 1) if vr_mode else (0.5, 0.6, 0.5, 0.7)
             self.version = bs.NodeActor(
@@ -170,7 +171,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
 
         # Throw in test build info.
         self.beta_info = self.beta_info_2 = None
-        if app.test_build and not (app.demo_mode or app.arcade_mode):
+        if env.test and not (app.demo_mode or app.arcade_mode):
             pos = (230, 35)
             self.beta_info = bs.NodeActor(
                 bs.newnode(
@@ -655,7 +656,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         # Add a bit of stop-motion-y jitter to the logo
         # (unless we're in VR mode in which case its best to
         # leave things still).
-        if not bs.app.vr_mode:
+        if not bs.app.env.vr:
             cmb: bs.Node | None
             cmb2: bs.Node | None
             if not shadow:
@@ -774,7 +775,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         # (unless we're in VR mode in which case its best to
         # leave things still).
         assert logo.node
-        if not bs.app.vr_mode:
+        if not bs.app.env.vr:
             cmb = bs.newnode('combine', owner=logo.node, attrs={'size': 2})
             cmb.connectattr('output', logo.node, 'position')
             keys = {}
@@ -882,7 +883,7 @@ class NewsDisplay:
                         self._phrases.insert(0, phr)
                 val = self._phrases.pop()
                 if val == '__ACH__':
-                    vrmode = app.vr_mode
+                    vrmode = app.env.vr
                     Text(
                         bs.Lstr(resource='nextAchievementsText'),
                         color=((1, 1, 1, 1) if vrmode else (0.95, 0.9, 1, 0.4)),
@@ -948,7 +949,7 @@ class NewsDisplay:
 
             # Show upcoming achievements in non-vr versions
             # (currently too hard to read in vr).
-            self._used_phrases = (['__ACH__'] if not bs.app.vr_mode else []) + [
+            self._used_phrases = (['__ACH__'] if not bs.app.env.vr else []) + [
                 s for s in news.split('<br>\n') if s != ''
             ]
             self._phrase_change_timer = bs.Timer(
@@ -960,12 +961,12 @@ class NewsDisplay:
             assert bs.app.classic is not None
             scl = (
                 1.2
-                if (bs.app.ui_v1.uiscale is bs.UIScale.SMALL or bs.app.vr_mode)
+                if (bs.app.ui_v1.uiscale is bs.UIScale.SMALL or bs.app.env.vr)
                 else 0.8
             )
 
-            color2 = (1, 1, 1, 1) if bs.app.vr_mode else (0.7, 0.65, 0.75, 1.0)
-            shadow = 1.0 if bs.app.vr_mode else 0.4
+            color2 = (1, 1, 1, 1) if bs.app.env.vr else (0.7, 0.65, 0.75, 1.0)
+            shadow = 1.0 if bs.app.env.vr else 0.4
             self._text = bs.NodeActor(
                 bs.newnode(
                     'text',

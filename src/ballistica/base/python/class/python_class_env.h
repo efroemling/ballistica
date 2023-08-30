@@ -1,26 +1,27 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_TEMPLATE_FS_PYTHON_CLASS_PYTHON_CLASS_HELLO_H_
-#define BALLISTICA_TEMPLATE_FS_PYTHON_CLASS_PYTHON_CLASS_HELLO_H_
+#ifndef BALLISTICA_BASE_PYTHON_CLASS_PYTHON_CLASS_ENV_H_
+#define BALLISTICA_BASE_PYTHON_CLASS_PYTHON_CLASS_ENV_H_
 
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_class.h"
 
-namespace ballistica::template_fs {
+namespace ballistica::base {
 
 /// A simple example native class.
-class PythonClassHello : public PythonClass {
+class PythonClassEnv : public PythonClass {
  public:
   static void SetupType(PyTypeObject* cls);
   static auto type_name() -> const char*;
+  static auto tp_getattro(PythonClassEnv* self, PyObject* attr) -> PyObject*;
   static auto Check(PyObject* o) -> bool {
     return PyObject_TypeCheck(o, &type_obj);
   }
 
   /// Cast raw Python pointer to our type; throws an exception on wrong types.
-  static auto FromPyObj(PyObject* o) -> PythonClassHello& {
+  static auto FromPyObj(PyObject* o) -> PythonClassEnv& {
     if (Check(o)) {
-      return *reinterpret_cast<PythonClassHello*>(o);
+      return *reinterpret_cast<PythonClassEnv*>(o);
     }
     throw Exception(std::string("Expected a ") + type_name() + "; got a "
                         + Python::ObjTypeToString(o),
@@ -30,16 +31,14 @@ class PythonClassHello : public PythonClass {
   static PyTypeObject type_obj;
 
  private:
-  PythonClassHello();
-  ~PythonClassHello();
+  PythonClassEnv();
+  ~PythonClassEnv();
   static PyMethodDef tp_methods[];
   static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
       -> PyObject*;
-  static void tp_dealloc(PythonClassHello* self);
-  static auto TestMethod(PythonClassHello* self, PyObject* args,
-                         PyObject* keywds) -> PyObject*;
+  static void tp_dealloc(PythonClassEnv* self);
 };
 
-}  // namespace ballistica::template_fs
+}  // namespace ballistica::base
 
-#endif  // BALLISTICA_TEMPLATE_FS_PYTHON_CLASS_PYTHON_CLASS_HELLO_H_
+#endif  // BALLISTICA_BASE_PYTHON_CLASS_PYTHON_CLASS_ENV_H_

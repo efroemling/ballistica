@@ -29,6 +29,7 @@ namespace ballistica {
 
 extern const int kEngineBuildNumber;
 extern const char* kEngineVersion;
+extern const int kEngineApiVersion;
 
 // Protocol version we host games with and write replays to.
 // This should be incremented whenever there are changes made to the

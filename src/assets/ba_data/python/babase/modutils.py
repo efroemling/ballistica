@@ -18,7 +18,7 @@ def get_human_readable_user_scripts_path() -> str:
     This is NOT a valid filesystem path; may be something like "(SD Card)".
     """
     app = _babase.app
-    path: str | None = app.python_directory_user
+    path: str | None = app.env.python_directory_user
     if path is None:
         return '<Not Available>'
 
@@ -66,19 +66,20 @@ def _request_storage_permission() -> bool:
 def show_user_scripts() -> None:
     """Open or nicely print the location of the user-scripts directory."""
     app = _babase.app
+    env = app.env
 
     # First off, if we need permission for this, ask for it.
     if _request_storage_permission():
         return
 
     # If we're running in a nonstandard environment its possible this is unset.
-    if app.python_directory_user is None:
+    if env.python_directory_user is None:
         _babase.screenmessage('<unset>')
         return
 
     # Secondly, if the dir doesn't exist, attempt to make it.
-    if not os.path.exists(app.python_directory_user):
-        os.makedirs(app.python_directory_user)
+    if not os.path.exists(env.python_directory_user):
+        os.makedirs(env.python_directory_user)
 
     # On android, attempt to write a file in their user-scripts dir telling
     # them about modding. This also has the side-effect of allowing us to
@@ -88,7 +89,7 @@ def show_user_scripts() -> None:
     # they can see it.
     if app.classic is not None and app.classic.platform == 'android':
         try:
-            usd: str | None = app.python_directory_user
+            usd: str | None = env.python_directory_user
             if usd is not None and os.path.isdir(usd):
                 file_name = usd + '/about_this_folder.txt'
                 with open(file_name, 'w', encoding='utf-8') as outfile:
@@ -105,7 +106,7 @@ def show_user_scripts() -> None:
 
     # On a few platforms we try to open the dir in the UI.
     if app.classic is not None and app.classic.platform in ['mac', 'windows']:
-        _babase.open_dir_externally(app.python_directory_user)
+        _babase.open_dir_externally(env.python_directory_user)
 
     # Otherwise we just print a pretty version of it.
     else:
@@ -120,18 +121,19 @@ def create_user_system_scripts() -> None:
     import shutil
 
     app = _babase.app
+    env = app.env
 
     # First off, if we need permission for this, ask for it.
     if _request_storage_permission():
         return
 
     # Its possible these are unset in non-standard environments.
-    if app.python_directory_user is None:
+    if env.python_directory_user is None:
         raise RuntimeError('user python dir unset')
-    if app.python_directory_app is None:
+    if env.python_directory_app is None:
         raise RuntimeError('app python dir unset')
 
-    path = app.python_directory_user + '/sys/' + app.version
+    path = f'{env.python_directory_user}/sys/{env.version}'
     pathtmp = path + '_tmp'
     if os.path.exists(path):
         shutil.rmtree(path)
@@ -147,8 +149,8 @@ def create_user_system_scripts() -> None:
         # /Knowledge-Nuggets#python-cache-files-gotcha
         return ('__pycache__',)
 
-    print(f'COPYING "{app.python_directory_app}" -> "{pathtmp}".')
-    shutil.copytree(app.python_directory_app, pathtmp, ignore=_ignore_filter)
+    print(f'COPYING "{env.python_directory_app}" -> "{pathtmp}".')
+    shutil.copytree(env.python_directory_app, pathtmp, ignore=_ignore_filter)
 
     print(f'MOVING "{pathtmp}" -> "{path}".')
     shutil.move(pathtmp, path)
@@ -168,12 +170,12 @@ def delete_user_system_scripts() -> None:
     """Clean out the scripts created by create_user_system_scripts()."""
     import shutil
 
-    app = _babase.app
+    env = _babase.app.env
 
-    if app.python_directory_user is None:
+    if env.python_directory_user is None:
         raise RuntimeError('user python dir unset')
 
-    path = app.python_directory_user + '/sys/' + app.version
+    path = f'{env.python_directory_user}/sys/{env.version}'
     if os.path.exists(path):
         shutil.rmtree(path)
         print(
@@ -185,6 +187,6 @@ def delete_user_system_scripts() -> None:
         print(f"User system scripts not found at '{path}'.")
 
     # If the sys path is empty, kill it.
-    dpath = app.python_directory_user + '/sys'
+    dpath = env.python_directory_user + '/sys'
     if os.path.isdir(dpath) and not os.listdir(dpath):
         os.rmdir(dpath)

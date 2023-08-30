@@ -1622,6 +1622,7 @@
       <w>linearstep</w>
       <w>linebegin</w>
       <w>linebits</w>
+      <w>lineend</w>
       <w>lineheight</w>
       <w>linemax</w>
       <w>lineno</w>
@@ -2777,6 +2778,7 @@
       <w>sslcontext</w>
       <w>sslproto</w>
       <w>ssval</w>
+      <w>stacklevel</w>
       <w>stackstr</w>
       <w>stager</w>
       <w>standin</w>
@@ -2857,6 +2859,7 @@
       <w>successmsg</w>
       <w>suiciding</w>
       <w>sunau</w>
+      <w>suppressions</w>
       <w>suter</w>
       <w>sval</w>
       <w>svalin</w>

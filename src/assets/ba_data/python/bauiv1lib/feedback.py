@@ -15,7 +15,7 @@ def ask_for_rating() -> bui.Widget | None:
     subplatform = app.classic.subplatform
 
     # FIXME: should whitelist platforms we *do* want this for.
-    if bui.app.test_build:
+    if bui.app.env.test:
         return None
     if not (
         platform == 'mac'

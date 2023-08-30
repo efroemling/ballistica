@@ -44,14 +44,14 @@ class SpecialOfferWindow(bui.Window):
             real_price = plus.get_price(
                 'pro' if offer['item'] == 'pro_fullprice' else 'pro_sale'
             )
-            if real_price is None and bui.app.debug_build:
+            if real_price is None and bui.app.env.debug:
                 print('NOTE: Faking prices for debug build.')
                 real_price = '$1.23'
             zombie = real_price is None
         elif isinstance(offer['price'], str):
             # (a string price implies IAP id)
             real_price = plus.get_price(offer['price'])
-            if real_price is None and bui.app.debug_build:
+            if real_price is None and bui.app.env.debug:
                 print('NOTE: Faking price for debug build.')
                 real_price = '$1.23'
             zombie = real_price is None
