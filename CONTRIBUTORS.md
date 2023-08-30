@@ -41,9 +41,8 @@
 - Modder
 
 ### Era0S
-- Fixed a single bug
+- Bug Fixer
 - Modder
-- Made a SUPER important change
 
 ### VinniTR
 - Fixes
