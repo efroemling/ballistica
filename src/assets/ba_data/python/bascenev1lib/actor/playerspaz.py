@@ -209,7 +209,7 @@ class PlayerSpaz(Spaz):
             picked_up_by = msg.node.source_player
             if picked_up_by:
                 self.last_player_attacked_by = picked_up_by
-                self.last_attacked_time = bs.apptime()
+                self.last_attacked_time = bs.time()
                 self.last_attacked_type = ('picked_up', 'default')
         elif isinstance(msg, bs.StandMessage):
             super().handlemessage(msg)  # Augment standard behavior.
@@ -247,7 +247,7 @@ class PlayerSpaz(Spaz):
                         #  something like last_actor_attacked_by to fix that.
                         if (
                             self.last_player_attacked_by
-                            and bs.apptime() - self.last_attacked_time < 4.0
+                            and bs.time() - self.last_attacked_time < 4.0
                         ):
                             killerplayer = self.last_player_attacked_by
                         else:
@@ -278,7 +278,7 @@ class PlayerSpaz(Spaz):
             source_player = msg.get_source_player(type(self._player))
             if source_player:
                 self.last_player_attacked_by = source_player
-                self.last_attacked_time = bs.apptime()
+                self.last_attacked_time = bs.time()
                 self.last_attacked_type = (msg.hit_type, msg.hit_subtype)
             super().handlemessage(msg)  # Augment standard behavior.
             activity = self._activity()
