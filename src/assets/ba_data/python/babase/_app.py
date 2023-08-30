@@ -58,8 +58,6 @@ class App:
 
     plugins: PluginSubsystem
     lang: LanguageSubsystem
-    env: babase.Env
-
     health_monitor: AppHealthMonitor
 
     # How long we allow shutdown tasks to run before killing them.
@@ -154,7 +152,6 @@ class App:
         self.env: babase.Env = _babase.Env()
 
         self._subsystems: list[AppSubsystem] = []
-
         self._native_bootstrapping_completed = False
         self._init_completed = False
         self._meta_scan_completed = False
@@ -180,8 +177,8 @@ class App:
         self._env = _babase.env()
         self.protocol_version: int = self._env['protocol_version']
         assert isinstance(self.protocol_version, int)
-        self.toolbar_test: bool = self._env['toolbar_test']
-        assert isinstance(self.toolbar_test, bool)
+        # self.toolbar_test: bool = self._env['toolbar_test']
+        # assert isinstance(self.toolbar_test, bool)
         self.demo_mode: bool = self._env['demo_mode']
         assert isinstance(self.demo_mode, bool)
         self.arcade_mode: bool = self._env['arcade_mode']
@@ -1000,3 +997,17 @@ class App:
             stacklevel=2,
         )
         return self.env.vr
+
+    # __SPINOFF_REQUIRE_UI_V1_BEGIN__
+
+    @property
+    def toolbar_test(self) -> bool:
+        """(internal)."""
+        warnings.warn(
+            'app.toolbar_test is deprecated; use app.ui_v1.use_toolbars',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.ui_v1.use_toolbars
+
+    # __SPINOFF_REQUIRE_UI_V1_END__

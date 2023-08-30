@@ -33,13 +33,6 @@ if TYPE_CHECKING:
 
     from batools.project import ProjectUpdater
 
-# Tags that default_filter_file() looks for; these can be used to strip
-# out sections that should never be included in spinoff projects.
-STRIP_TAG_PAIRS: list[tuple[str, str]] = [
-    ('# __SPINOFF_STRIP_BEGIN__', '# __SPINOFF_STRIP_END__'),
-    ('// __SPINOFF_STRIP_BEGIN__', '// __SPINOFF_STRIP_END__'),
-]
-
 
 class SpinoffContext:
     """Guts of the spinoff system."""
@@ -119,6 +112,27 @@ class SpinoffContext:
         self._src_all_feature_sets = {
             f.name: f for f in FeatureSet.get_all_for_project(self._src_root)
         }
+
+        # Generate our list of tags for selectively stripping out code.
+        # __SPINOFF_STRIP_BEGIN__ / __SPINOFF_STRIP_END__ will *always*
+        # strip code in spinoff projects and
+        # __SPINOFF_REQUIRE_FOO_BEGIN__ / __SPINOFF_REQUIRE_FOO_END__ will
+        # strip code only when feature-set foo is not present in the
+        # spinoff project.
+
+        # begin-tag / end-tag / associated-feature-set-name
+        self._strip_tags: list[tuple[str, str, str | None]] = [
+            ('__SPINOFF_STRIP_BEGIN__', '__SPINOFF_STRIP_END__', None)
+        ]
+        for fsetname in sorted(self._src_all_feature_sets.keys()):
+            fnsu = fsetname.upper()
+            self._strip_tags.append(
+                (
+                    f'__SPINOFF_REQUIRE_{fnsu}_BEGIN__',
+                    f'__SPINOFF_REQUIRE_{fnsu}_END__',
+                    fsetname,
+                )
+            )
 
         self._src_git_files: set[str] | None = None
         self._dst_git_files: set[str] | None = None
@@ -259,7 +273,10 @@ class SpinoffContext:
 
         # Based on feature-sets they requested, calc which feature-sets
         # from src we *exclude*.
-        self._src_omit_feature_sets = self._calc_src_omit_feature_sets()
+        (
+            self._src_retain_feature_sets,
+            self._src_omit_feature_sets,
+        ) = self._calc_src_retain_omit_feature_sets()
 
         # Generate a version of src_omit_paths that includes our feature-set
         # omissions. Basically, omitting a feature set simply omits
@@ -289,10 +306,10 @@ class SpinoffContext:
         self._sanity_test_setup()
         self._generate_env_hash()
 
-    def _calc_src_omit_feature_sets(self) -> set[str]:
+    def _calc_src_retain_omit_feature_sets(self) -> tuple[set[str], set[str]]:
         # If they want everything, omit nothing.
         if self.src_feature_sets is None:
-            return set()
+            return set(self._src_all_feature_sets.keys()), set()
 
         # Based on the requested set, calc the total sets we'll need.
         # Also always include 'core' since we'd be totally broken
@@ -303,7 +320,8 @@ class SpinoffContext:
         )
 
         # Now simply return any sets *not* included in our resolved set.
-        return {s for s in self._src_all_feature_sets.keys() if s not in reqs}
+        omits = {s for s in self._src_all_feature_sets.keys() if s not in reqs}
+        return (reqs, omits)
 
     def _add_feature_set_omit_paths(self, paths: set[str]) -> None:
         for fsname in sorted(self._src_omit_feature_sets):
@@ -725,14 +743,37 @@ class SpinoffContext:
         # pylint: disable=too-many-branches
 
         # Strip out any sections frames by our strip-begin/end tags.
-        if any(t[0] in text for t in STRIP_TAG_PAIRS):
+
+        # strip_tag_pairs: list[tuple[str, str]] = []
+        # print('HELLO WORLD')
+
+        def _first_index_containing_string(
+            items: list[str], substring: str
+        ) -> int | None:
+            for f_index, f_item in enumerate(items):
+                if substring in f_item:
+                    return f_index
+            return None
+
+        # Quick-out if no begin-tags are found in the entire text.
+        if any(t[0] in text for t in self._strip_tags):
             lines = text.splitlines()
 
-            for begin_tag, end_tag in STRIP_TAG_PAIRS:
-                while begin_tag in lines:
-                    index = lines.index(begin_tag)
+            for begin_tag, end_tag, fsetname in self._strip_tags:
+                # For sections requiring a specific fset, don't touch
+                # it if we're keeping that set.
+                if (
+                    fsetname is not None
+                    and fsetname in self._src_retain_feature_sets
+                ):
+                    continue
+                while (
+                    index := _first_index_containing_string(lines, begin_tag)
+                ) is not None:
+                    # while begin_tag in lines:
+                    # index = lines.index(begin_tag)
                     endindex = index
-                    while lines[endindex] != end_tag:
+                    while end_tag not in lines[endindex]:
                         endindex += 1
 
                     # If the line after us is blank,

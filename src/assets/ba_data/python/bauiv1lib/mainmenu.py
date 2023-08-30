@@ -219,7 +219,7 @@ class MainMenuWindow(bui.Window):
         self._have_store_button = not self._in_game
 
         self._have_settings_button = (
-            not self._in_game or not app.toolbar_test
+            not self._in_game or not app.ui_v1.use_toolbars
         ) and not (self._is_demo or self._is_arcade)
 
         self._input_device = input_device = bs.get_ui_input_device()

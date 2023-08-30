@@ -62,7 +62,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         #  sees things in their own optimal way.
         vr_mode = bs.app.env.vr
 
-        if not bs.app.toolbar_test:
+        if not bs.app.ui_v1.use_toolbars:
             color = (1.0, 1.0, 1.0, 1.0) if vr_mode else (0.5, 0.6, 0.5, 0.6)
 
             # FIXME: Need a node attr for vr-specific-scale.
@@ -125,7 +125,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         # build number.
         force_show_build_number = False
 
-        if not bs.app.toolbar_test:
+        if not bs.app.ui_v1.use_toolbars:
             if env.debug or env.test or force_show_build_number:
                 if env.debug:
                     text = bs.Lstr(
@@ -292,7 +292,10 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
 
         random.seed()
 
-        if not (app.demo_mode or app.arcade_mode) and not app.toolbar_test:
+        if (
+            not (app.demo_mode or app.arcade_mode)
+            and not app.ui_v1.use_toolbars
+        ):
             self._news = NewsDisplay(self)
 
         # Bring up the last place we were, or start at the main menu otherwise.

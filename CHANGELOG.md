@@ -1,8 +1,10 @@
-### 1.7.27 (build 21269, api 8, 2023-08-30)
+### 1.7.27 (build 21272, api 8, 2023-08-30)
 
 - Fixed a rare crash that could occur if the app shuts down while a background
   thread is making a web request. The app will now try to wait for any such
   attempts to complete.
+- Fixed a bug where PlayerSpaz used `bs.apptime()` where `bs.time()` should have
+  been used (thanks EraOSBeta!).
 - Added `babase.app.env` which is a type-friendly object containing various
   environment/runtime values. Values directly under `app` such as
   `babase.app.debug_build` will either be consolidated here or moved to classic
@@ -20,11 +22,16 @@
   deprecation warnings and will disappear sometime soon. This includes
   `build_number`, `device_name`, `config_file_path`, `version`, `debug_build`,
   `test_build`, `data_directory`, `python_directory_user`,
-  `python_directory_app`, `python_directory_app_site`, `api_version`.
+  `python_directory_app`, `python_directory_app_site`, `api_version`, `on_tv`,
+  `vr_mode`.
 - Reverting the Android keyboard changes from 1.7.26, as I've received a few
   reports of bluetooth game controllers now thinking they are keyboards. I'm
   thinking I'll have to bite the bullet and implement something that asks the
   user what the thing is to solve cases like that.
+- Added tags allowing easily stripping code out of spinoff projects when a
+  specific feature-set is not present. For example, for feature-set 'foo', one
+  can strip lines out by adding `__SPINOFF_REQUIRE_FOO_BEGIN__` and
+  `__SPINOFF_REQUIRE_FOO_END__` tags.
 
 ### 1.7.26 (build 21259, api 8, 2023-08-29)
 

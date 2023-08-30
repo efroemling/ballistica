@@ -753,7 +753,7 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "ss"  // ui_scale
         "sO"  // on_tv
         "sO"  // vr_mode
-        "sO"  // toolbar_test
+        // "sO"  // toolbar_test
         "sO"  // demo_mode
         "sO"  // arcade_mode
         "sO"  // iircade_mode
@@ -779,7 +779,7 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "ui_scale", ui_scale,
         "on_tv", g_core->platform->IsRunningOnTV() ? Py_True : Py_False,
         "vr_mode", g_core->IsVRMode() ? Py_True : Py_False,
-        "toolbar_test", BA_TOOLBAR_TEST ? Py_True : Py_False,
+        // "toolbar_test", BA_TOOLBAR_TEST ? Py_True : Py_False,
         "demo_mode", g_buildconfig.demo_build() ? Py_True : Py_False,
         "arcade_mode", g_buildconfig.arcade_build() ? Py_True : Py_False,
         "iircade_mode", g_buildconfig.iircade_build() ? Py_True: Py_False,

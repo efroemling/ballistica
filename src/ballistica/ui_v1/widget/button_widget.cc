@@ -231,7 +231,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
       float l_border, r_border, b_border, t_border;
 
-      bool doDraw = true;
+      bool do_draw = true;
 
       base::MeshAsset* mesh;
 
@@ -255,7 +255,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           }
           c.SetMaskTexture(mask_texture_.Get());
         } else {
-          doDraw = false;
+          do_draw = false;
         }
         l_border = r_border = 0.04f * width_;
         b_border = t_border = 0.04f * height_;
@@ -351,7 +351,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.SetTexture(g_base->assets->SysTexture(tex_id));
         mesh = g_base->assets->SysMesh(mesh_id);
       }
-      if (doDraw) {
+      if (do_draw) {
         c.PushTransform();
         c.Translate((l - l_border + r + r_border) * 0.5f + extra_offs_x,
                     (b - b_border + t + t_border) * 0.5f + extra_offs_y, 0);

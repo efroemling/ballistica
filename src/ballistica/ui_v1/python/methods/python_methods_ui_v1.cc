@@ -2821,8 +2821,7 @@ static PyMethodDef PyConsolePrintDef = {
 
 // ------------------------ is_party_icon_visible ------------------------------
 
-static auto PyIsPartyIconVisible(PyObject* self, PyObject* args,
-                                 PyObject* keywds) -> PyObject* {
+static auto PyIsPartyIconVisible(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   bool party_button_active = (g_base->app_mode()->HasConnectionToClients()
                               || g_base->app_mode()->HasConnectionToHost()
@@ -2838,9 +2837,31 @@ static auto PyIsPartyIconVisible(PyObject* self, PyObject* args,
 static PyMethodDef PyIsPartyIconVisibleDef = {
     "is_party_icon_visible",            // name
     (PyCFunction)PyIsPartyIconVisible,  // method
-    METH_VARARGS | METH_KEYWORDS,       // flags
+    METH_NOARGS,                        // flags
 
     "is_party_icon_visible() -> bool\n"
+    "\n"
+    "(internal)",
+};
+
+// ------------------------ is_party_icon_visible ------------------------------
+
+static auto PyToolbarTest(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (BA_TOOLBAR_TEST) {
+    Py_RETURN_TRUE;
+  } else {
+    Py_RETURN_FALSE;
+  }
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyToolbarTestDef = {
+    "toolbar_test",              // name
+    (PyCFunction)PyToolbarTest,  // method
+    METH_NOARGS,                 // flags
+
+    "toolbar_test() -> bool\n"
     "\n"
     "(internal)",
 };
@@ -2880,6 +2901,7 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyGetSoundDef,
       PyGetTextureDef,
       PyGetMeshDef,
+      PyToolbarTestDef,
   };
 }
 

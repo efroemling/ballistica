@@ -150,6 +150,7 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
 
   envs["vr"] = BoolEntry_(g_core->IsVRMode(),
                           "Whether the app is currently running in VR.");
+
   bool first = true;
   for (auto&& entry : envs) {
     if (!first) {

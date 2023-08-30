@@ -55,7 +55,9 @@ class UIV1Subsystem(babase.AppSubsystem):
         self.have_party_queue_window = False
         self.cleanupchecks: list[UICleanupCheck] = []
         self.upkeeptimer: babase.AppTimer | None = None
-        self.use_toolbars = env.get('toolbar_test', True)
+        self.use_toolbars = _bauiv1.toolbar_test()
+        # self.use_toolbars = env.get('toolbar_test', True)
+
         self.title_color = (0.72, 0.7, 0.75)
         self.heading_color = (0.72, 0.7, 0.75)
         self.infotextcolor = (0.7, 0.9, 0.7)
