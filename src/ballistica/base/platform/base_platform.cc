@@ -321,4 +321,6 @@ void BasePlatform::OnAppShutdown() { assert(g_base->InLogicThread()); }
 void BasePlatform::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
 void BasePlatform::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
 
+void BasePlatform::QuitApp() { exit(g_base->return_value()); }
+
 }  // namespace ballistica::base

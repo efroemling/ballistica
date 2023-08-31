@@ -164,7 +164,6 @@ class CoreFeatureSet {
   bool should_pause{};
   bool reset_vr_orientation{};
   bool user_ran_commands{};
-  int return_value{};
   std::thread::id main_thread_id{};
 
   bool vr_mode;

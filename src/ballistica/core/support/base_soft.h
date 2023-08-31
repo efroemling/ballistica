@@ -8,10 +8,9 @@
 
 namespace ballistica::core {
 
-/// 'Soft' interface to the base feature-set.
-/// Feature-sets listing base as a soft requirement must limit their use of
-/// base to these methods and should be prepared to handle the not-present
-/// case.
+/// 'Soft' interface to the base feature-set. Feature-sets listing base as a
+/// soft requirement must limit their use of base to these methods and
+/// should be prepared to handle the not-present case.
 class BaseSoftInterface {
  public:
   virtual void ScreenMessage(const std::string& s, const Vector3f& color) = 0;
@@ -44,6 +43,7 @@ class BaseSoftInterface {
   virtual void DoPushObjCall(const PythonObjectSetBase* objset, int id,
                              const std::string& arg) = 0;
   virtual auto IsAppStarted() const -> bool = 0;
+  virtual auto GetReturnValue() const -> int = 0;
 };
 
 }  // namespace ballistica::core

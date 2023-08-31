@@ -70,7 +70,6 @@ class ControlsSettingsWindow(bui.Window):
             show_space_1 = True
             height += space_height
 
-        print('hello')
         show_keyboard = False
         if bs.getinputdevice('Keyboard', '#1', doraise=False) is not None:
             show_keyboard = True

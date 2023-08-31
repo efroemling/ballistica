@@ -33,6 +33,9 @@ class BasePlatform {
   virtual void OnScreenSizeChange();
   virtual void DoApplyAppConfig();
 
+  /// Quit the app (can be immediate or via posting some high level event).
+  virtual void QuitApp();
+
 #pragma mark IN APP PURCHASES --------------------------------------------------
 
   void Purchase(const std::string& item);

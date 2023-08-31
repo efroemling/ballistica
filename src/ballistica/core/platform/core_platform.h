@@ -49,8 +49,6 @@ class CorePlatform {
   /// class versions can go here.
   virtual void PostInit();
 
-  virtual void WillExitMain(bool errored);
-
   virtual void OnScreenSizeChange();
   virtual void StepDisplayTime();
 
@@ -429,9 +427,6 @@ class CorePlatform {
 
   /// Show/hide the hardware cursor.
   virtual void SetHardwareCursorVisible(bool visible);
-
-  /// Quit the app (can be immediate or via posting some high level event).
-  virtual void QuitApp();
 
   /// Open a file using the system default method (in another app, etc.)
   virtual void OpenFileExternally(const std::string& path);

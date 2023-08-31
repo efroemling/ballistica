@@ -25,26 +25,25 @@ class BaseFeatureSet;
 
 namespace ballistica::scene_v1 {
 
-// Protocol version we host games with and write replays to.
-// This should be incremented whenever there are changes made to the
-// session-commands layer (new/removed/changed nodes, attrs, data files,
-// behavior, etc.)
-// Note that the packet/gamepacket/message layer can vary more organically based
-// on build-numbers of connected clients/servers since none of that data is
-// stored; this just needs to be observed for all the scene stuff that
-// goes into replays since a single stream can get played/replayed on different
-// builds (as long as they support that protocol version).
+// Protocol version we host games with and write replays to. This should be
+// incremented whenever there are changes made to the session-commands layer
+// (new/removed/changed nodes, attrs, data files, behavior, etc.)
+
+// Note that the packet/gamepacket/message layer can vary more organically
+// based on build-numbers of connected clients/servers since none of that
+// data is stored; this just needs to be observed for all the scene stuff
+// that goes into replays since a single stream can get played/replayed on
+// different builds (as long as they support that protocol version).
 const int kProtocolVersion = 33;
 
-// Oldest protocol version we can act as a client to.
-// This can generally be left as-is as long as only
-// new nodes/attrs/commands are added and existing
-// stuff is unchanged.
+// Oldest protocol version we can act as a client to. This can generally be
+// left as-is as long as only new nodes/attrs/commands are added and
+// existing stuff is unchanged.
 const int kProtocolVersionMin = 24;
 
 // FIXME: We should separate out connection protocol from scene protocol. We
-//  want to be able to watch really old replays if possible but being able to
-//  connect to old clients is much less important (and slows progress).
+//  want to be able to watch really old replays if possible but being able
+//  to connect to old clients is much less important (and slows progress).
 
 // Protocol additions:
 // 25: added a few new achievement graphics and new node attrs for displaying

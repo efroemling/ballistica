@@ -39,8 +39,8 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 21281;
-const char* kEngineVersion = "1.7.27";
+const int kEngineBuildNumber = 21289;
+const char* kEngineVersion = "1.7.28";
 const int kEngineApiVersion = 8;
 
 #if BA_MONOLITHIC_BUILD
@@ -156,9 +156,8 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
       }
     }
   }
-  if (l_core) {
-    l_core->platform->WillExitMain(false);
-    return l_core->return_value;
+  if (l_base) {
+    return l_base->GetReturnValue();
   }
   return -1;  // Didn't even get core; something clearly wrong.
 }

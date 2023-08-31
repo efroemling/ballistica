@@ -170,10 +170,6 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
   envs["demo"] = BoolEntry_(g_buildconfig.demo_build(),
                             "Whether the app is targeting a demo experience.");
 
-  auto* envval = getenv("BA_RUNNING_WITH_DUMMY_MODULES");
-  envs["running_with_dummy_modules"] =
-      BoolEntry_(envval && !strcmp(envval, "1"), "(internal)");
-
   bool first = true;
   for (auto&& entry : envs) {
     if (!first) {
@@ -239,9 +235,33 @@ PythonClassEnv::PythonClassEnv() = default;
 
 PythonClassEnv::~PythonClassEnv() = default;
 
+auto PythonClassEnv::Dir(PythonClassEnv* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  // Start with the standard Python dir listing.
+  PyObject* dir_list = Python::generic_dir(reinterpret_cast<PyObject*>(self));
+  assert(PyList_Check(dir_list));
+
+  assert(g_entries_);
+
+  // ..and add in our custom attr names.
+  for (auto&& env : *g_entries_) {
+    PyList_Append(dir_list, PythonRef(PyUnicode_FromString(env.first.c_str()),
+                                      PythonRef::kSteal)
+                                .Get());
+  }
+  PyList_Sort(dir_list);
+  return dir_list;
+
+  BA_PYTHON_CATCH;
+}
+
 PyTypeObject PythonClassEnv::type_obj;
 
 // Any methods for our class go here.
-PyMethodDef PythonClassEnv::tp_methods[] = {{nullptr}};
+PyMethodDef PythonClassEnv::tp_methods[] = {
+    {"__dir__", (PyCFunction)Dir, METH_NOARGS,
+     "allows inclusion of our custom attrs in standard python dir()"},
+    {nullptr}};
 
 }  // namespace ballistica::base

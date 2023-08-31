@@ -297,14 +297,6 @@ void CorePlatformApple::SetHardwareCursorVisible(bool visible) {
 #endif
 }
 
-void CorePlatformApple::QuitApp() {
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_HEADLESS_BUILD
-  AppleUtils::Quit();  // will post a cocoa terminate
-#else
-  CorePlatform::QuitApp();
-#endif
-}
-
 void CorePlatformApple::OpenFileExternally(const std::string& path) {
 #if BA_XCODE_BUILD
   AppleUtils::EditTextFile(path.c_str());

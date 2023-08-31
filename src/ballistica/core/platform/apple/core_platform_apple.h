@@ -50,7 +50,6 @@ class CorePlatformApple : public CorePlatform {
   void GameCenterLogin() override;
   auto IsOSPlayingMusic() -> bool override;
   void SetHardwareCursorVisible(bool visible) override;
-  void QuitApp() override;
   void OpenFileExternally(const std::string& path) override;
   void OpenDirExternally(const std::string& path) override;
   void MacMusicAppInit() override;

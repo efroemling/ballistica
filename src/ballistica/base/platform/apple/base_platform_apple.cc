@@ -63,6 +63,14 @@ void BasePlatformApple::DoOpenURL(const std::string& url) {
 #endif
 }
 
+void BasePlatformApple::QuitApp() {
+#if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_HEADLESS_BUILD
+  core::AppleUtils::Quit();  // will post a cocoa terminate
+#else
+  BasePlatform::QuitApp();
+#endif
+}
+
 }  // namespace ballistica::base
 
 #endif  // BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS

@@ -1,4 +1,6 @@
-### 1.7.27 (build 21281, api 8, 2023-08-30)
+### 1.7.28 (build 21289, api 8, 2023-08-31)
+
+### 1.7.27 (build 21282, api 8, 2023-08-30)
 
 - Fixed a rare crash that could occur if the app shuts down while a background
   thread is making a web request. The app will now try to wait for any such

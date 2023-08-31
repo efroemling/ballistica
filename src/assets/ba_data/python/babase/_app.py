@@ -4,10 +4,10 @@
 # pylint: disable=too-many-lines
 from __future__ import annotations
 
+import os
 import logging
-from enum import Enum
-
 import warnings
+from enum import Enum
 from typing import TYPE_CHECKING
 from concurrent.futures import ThreadPoolExecutor
 from functools import cached_property
@@ -143,9 +143,10 @@ class App:
         the single shared instance.
         """
 
-        self.env: babase.Env = _babase.Env()
-        if self.env.running_with_dummy_modules:
+        if os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') == '1':
             return
+
+        self.env: babase.Env = _babase.Env()
 
         self.state = self.State.NOT_RUNNING
 
@@ -199,7 +200,7 @@ class App:
     def postinit(self) -> None:
         """Called after we've been inited and assigned to babase.app."""
 
-        if self.env.running_with_dummy_modules:
+        if os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') == '1':
             return
 
         # NOTE: the reason we need a postinit here is that

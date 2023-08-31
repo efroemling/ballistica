@@ -16,6 +16,7 @@ class BasePlatformApple : public BasePlatform {
   void RestorePurchases() override;
   void PurchaseAck(const std::string& purchase,
                    const std::string& order_id) override;
+  void QuitApp() override;
 
   void DoOpenURL(const std::string& url) override;
 

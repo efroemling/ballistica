@@ -221,7 +221,7 @@ auto PythonClassMaterial::tp_setattro(PythonClassMaterial* self, PyObject* attr,
 auto PythonClassMaterial::Dir(PythonClassMaterial* self) -> PyObject* {
   BA_PYTHON_TRY;
 
-  // Start with the standard python dir listing.
+  // Start with the standard Python dir listing.
   PyObject* dir_list = Python::generic_dir(reinterpret_cast<PyObject*>(self));
   assert(PyList_Check(dir_list));
 

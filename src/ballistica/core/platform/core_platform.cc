@@ -470,8 +470,6 @@ void CorePlatform::SleepMillisecs(millisecs_t ms) {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "NullDereferences"
 
-void CorePlatform::WillExitMain(bool errored) {}
-
 auto CorePlatform::GetUIScale() -> UIScale {
   // Handles mac/pc/linux cases.
   return UIScale::kLarge;
@@ -809,8 +807,6 @@ void CorePlatform::SetHardwareCursorVisible(bool visible) {
   SDL_ShowCursor(visible ? SDL_ENABLE : SDL_DISABLE);
 #endif
 }
-
-void CorePlatform::QuitApp() { exit(g_core->return_value); }
 
 void CorePlatform::OpenFileExternally(const std::string& path) {
   Log(LogLevel::kError, "OpenFileExternally() unimplemented");

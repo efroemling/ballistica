@@ -736,6 +736,11 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   // Non-const bits (fixme: clean up access to these).
   TouchInput* touch_input{};
 
+  auto return_value() const { return return_value_; }
+  void set_return_value(int val) { return_value_ = val; }
+
+  auto GetReturnValue() const -> int override;
+
  private:
   BaseFeatureSet();
   void LogVersionInfo_();
@@ -762,6 +767,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   bool base_native_import_completed_{};
   bool basn_log_behavior_{};
   bool server_wrapper_managed_{};
+  int return_value_{};
 };
 
 }  // namespace ballistica::base

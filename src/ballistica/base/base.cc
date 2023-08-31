@@ -234,7 +234,7 @@ void BaseFeatureSet::OnAppShutdownComplete() {
   if (app_adapter->ManagesEventLoop()) {
     g_core->main_event_loop()->Quit();
   } else {
-    g_core->platform->QuitApp();
+    platform->QuitApp();
   }
 }
 
@@ -720,5 +720,6 @@ void BaseFeatureSet::ShutdownSuppressEnd() {
   shutdown_suppress_count_--;
   assert(shutdown_suppress_count_ >= 0);
 }
+auto BaseFeatureSet::GetReturnValue() const -> int { return return_value(); }
 
 }  // namespace ballistica::base

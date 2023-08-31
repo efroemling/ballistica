@@ -37,6 +37,7 @@ class PythonClassEnv : public PythonClass {
   static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
       -> PyObject*;
   static void tp_dealloc(PythonClassEnv* self);
+  static auto Dir(PythonClassEnv* self) -> PyObject*;
 };
 
 }  // namespace ballistica::base

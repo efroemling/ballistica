@@ -148,6 +148,7 @@ auto CoreFeatureSet::core_config() const -> const CoreConfig& {
 }
 
 void CoreFeatureSet::ApplyBaEnvConfig() {
+  // Ask baenv for the config we should use.
   auto envcfg =
       python->objs().Get(core::CorePython::ObjID::kBaEnvGetConfigCall).Call();
   BA_PRECONDITION_FATAL(envcfg.Exists());
@@ -155,7 +156,7 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
   assert(!have_ba_env_vals_);
   have_ba_env_vals_ = true;
 
-  // Grab everything baenv shipped us.
+  // Pull everything we want out of it.
   ba_env_config_dir_ = envcfg.GetAttr("config_dir").ValueAsString();
   ba_env_data_dir_ = envcfg.GetAttr("data_dir").ValueAsString();
   ba_env_app_python_dir_ =
@@ -173,7 +174,8 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
       ba_env_app_python_dir_.has_value()
       && *ba_env_app_python_dir_ != standard_app_python_dir;
 
-  // Ok, now look for the existence of ba_data in the dir we've got.
+  // As a sanity check, die if the data dir we were given doesn't contain a
+  // 'ba_data' dir.
   auto fullpath = ba_env_data_dir_ + BA_DIRSLASH + "ba_data";
   if (!platform->FilePathExists(fullpath)) {
     FatalError("ba_data directory not found at '" + fullpath + "'.");
@@ -335,14 +337,15 @@ void CoreFeatureSet::UpdateAppTime() {
     std::scoped_lock lock(app_time_mutex_);
     microsecs_t passed = t - last_app_time_measure_microsecs_;
 
-    // The time calls we're using are supposed to be monotonic, but I've seen
-    // 'passed' equal -1 even when it is using std::chrono::steady_clock. Let's
-    // do our own filtering here to make 100% sure we don't go backwards.
+    // The time calls we're using are supposed to be monotonic, but I've
+    // seen 'passed' equal -1 even when it is using
+    // std::chrono::steady_clock. Let's do our own filtering here to make
+    // 100% sure we don't go backwards.
     if (passed < 0) {
       passed = 0;
     } else {
-      // Very large times-passed probably means we went to sleep or something;
-      // clamp to a reasonable value.
+      // Very large times-passed probably means we went to sleep or
+      // something; clamp to a reasonable value.
       if (passed > 250000) {
         passed = 250000;
       }
@@ -355,8 +358,8 @@ void CoreFeatureSet::UpdateAppTime() {
 void CoreFeatureSet::UpdateMainThreadID() {
   auto current_id = std::this_thread::get_id();
 
-  // This gets called a lot and it may happen before we are spun up,
-  // so just ignore it in that case..
+  // This gets called a lot and it may happen before we are spun up, so just
+  // ignore it in that case.
   main_thread_id = current_id;
   main_event_loop_->set_thread_id(current_id);
 }
