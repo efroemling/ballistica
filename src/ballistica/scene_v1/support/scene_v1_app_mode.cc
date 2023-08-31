@@ -556,11 +556,6 @@ void SceneV1AppMode::UpdateGameRoster() {
 
   bool include_self = (connections()->GetConnectedClientCount() > 0);
 
-  // Previously were gonna enable this with the UI revision.
-  // #if BA_TOOLBAR_TEST
-  //   include_self = true;
-  // #endif  // BA_TOOLBAR_TEST
-
   if (auto* hs = dynamic_cast<HostSession*>(GetForegroundSession())) {
     // Add our host-y self.
     if (include_self) {

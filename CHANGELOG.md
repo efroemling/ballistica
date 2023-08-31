@@ -1,4 +1,4 @@
-### 1.7.27 (build 21272, api 8, 2023-08-30)
+### 1.7.27 (build 21281, api 8, 2023-08-30)
 
 - Fixed a rare crash that could occur if the app shuts down while a background
   thread is making a web request. The app will now try to wait for any such
@@ -29,9 +29,9 @@
   thinking I'll have to bite the bullet and implement something that asks the
   user what the thing is to solve cases like that.
 - Added tags allowing easily stripping code out of spinoff projects when a
-  specific feature-set is not present. For example, for feature-set 'foo', one
-  can strip lines out by adding `__SPINOFF_REQUIRE_FOO_BEGIN__` and
-  `__SPINOFF_REQUIRE_FOO_END__` tags.
+  specific feature-set is not present. For example, to strip lines out when
+  feature-set 'foo' is not present, surround them by lines containing
+  `__SPINOFF_REQUIRE_FOO_BEGIN__` and `__SPINOFF_REQUIRE_FOO_END__`.
 
 ### 1.7.26 (build 21259, api 8, 2023-08-29)
 

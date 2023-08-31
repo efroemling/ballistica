@@ -1718,6 +1718,24 @@ static PyMethodDef PyHandleAppIntentExecDef = {
     "(internal)",
 };
 
+// ----------------------- handle_app_intent_default ---------------------------
+
+static auto PyProtocolVersion(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  return PyLong_FromLong(kProtocolVersion);
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyProtocolVersionDef = {
+    "protocol_version",              // name
+    (PyCFunction)PyProtocolVersion,  // method
+    METH_NOARGS,                     // flags
+
+    "protocol_version() -> int\n"
+    "\n"
+    "(internal)\n",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
@@ -1757,6 +1775,7 @@ auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
       PyAppModeDeactivateDef,
       PyHandleAppIntentDefaultDef,
       PyHandleAppIntentExecDef,
+      PyProtocolVersionDef,
   };
 }
 

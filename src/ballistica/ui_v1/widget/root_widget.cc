@@ -313,7 +313,7 @@ void RootWidget::AddMeter(float h_align, float x, int type, float r, float g,
 #pragma clang diagnostic pop
 
 void RootWidget::Setup() {
-  if (!explicit_bool(BA_TOOLBAR_TEST)) {
+  if (!explicit_bool(BA_UI_V1_TOOLBAR_TEST)) {
     return;
   }
 
@@ -1096,7 +1096,7 @@ void RootWidget::SetScreenWidget(StackWidget* w) {
 
 void RootWidget::SetOverlayWidget(StackWidget* w) {
   // this needs to happen after our buttons and things get added..
-  if (explicit_bool(BA_TOOLBAR_TEST)) {
+  if (explicit_bool(BA_UI_V1_TOOLBAR_TEST)) {
     assert(!buttons_.empty());
   }
   AddWidget(w);

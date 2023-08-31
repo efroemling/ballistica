@@ -351,6 +351,8 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
         assert bui.app.classic is not None
 
+        env = bui.app.env
+
         delay = 0.7 if (self._score is not None) else 0.0
 
         # If there's no players left in the game, lets not show the UI
@@ -406,9 +408,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         else:
             pass
 
-        show_next_button = self._is_more_levels and not (
-            bui.app.demo_mode or bui.app.arcade_mode
-        )
+        show_next_button = self._is_more_levels and not (env.demo or env.arcade)
 
         if not show_next_button:
             h_offs += 70
@@ -486,7 +486,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             v_offs + 560.0,
         )
 
-        if bui.app.demo_mode or bui.app.arcade_mode:
+        if env.demo or env.arcade:
             self._league_rank_button = None
             self._store_button_instance = None
         else:
@@ -595,7 +595,9 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         # pylint: disable=too-many-locals
         super().on_begin()
 
-        plus = bs.app.plus
+        app = bs.app
+        env = app.env
+        plus = app.plus
         assert plus is not None
 
         self._begin_time = bs.time()
@@ -624,7 +626,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             # If this is the first time we completed it, set the next one
             # as current.
             if self._newly_complete:
-                cfg = bs.app.config
+                cfg = app.config
                 cfg['Selected Coop Game'] = (
                     self._campaign.name + ':' + self._next_level_name
                 )
@@ -637,7 +639,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             self._is_complete
             and self._victory
             and self._is_more_levels
-            and not (bs.app.demo_mode or bs.app.arcade_mode)
+            and not (env.demo or env.arcade)
         ):
             Text(
                 bs.Lstr(
@@ -715,7 +717,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             position=(0, 230),
         ).autoretain()
 
-        if bs.app.classic is not None and bs.app.classic.server is None:
+        if app.classic is not None and app.classic.server is None:
             # If we're running in normal non-headless build, show this text
             # because only host can continue the game.
             adisp = plus.get_v1_account_display_string()
@@ -828,7 +830,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             )
         if plus.get_v1_account_state() != 'signed_in':
             # We expect this only in kiosk mode; complain otherwise.
-            if not (bs.app.demo_mode or bs.app.arcade_mode):
+            if not (env.demo or env.arcade):
                 logging.error('got not-signed-in at score-submit; unexpected')
             bs.pushcall(bs.WeakCall(self._got_score_results, None))
         else:

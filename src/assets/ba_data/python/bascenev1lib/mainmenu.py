@@ -171,7 +171,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
 
         # Throw in test build info.
         self.beta_info = self.beta_info_2 = None
-        if env.test and not (app.demo_mode or app.arcade_mode):
+        if env.test and not (env.demo or env.arcade):
             pos = (230, 35)
             self.beta_info = bs.NodeActor(
                 bs.newnode(
@@ -292,10 +292,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
 
         random.seed()
 
-        if (
-            not (app.demo_mode or app.arcade_mode)
-            and not app.ui_v1.use_toolbars
-        ):
+        if not (env.demo or env.arcade) and not app.ui_v1.use_toolbars:
             self._news = NewsDisplay(self)
 
         # Bring up the last place we were, or start at the main menu otherwise.
@@ -312,7 +309,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
 
                 # When coming back from a kiosk-mode game, jump to
                 # the kiosk start screen.
-                if bs.app.demo_mode or bs.app.arcade_mode:
+                if env.demo or env.arcade:
                     # pylint: disable=cyclic-import
                     from bauiv1lib.kiosk import KioskWindow
 
@@ -399,6 +396,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         app = bs.app
+        env = app.env
         assert app.classic is not None
 
         # Update logo in case it changes.
@@ -442,7 +440,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 base_x = -270.0
                 x = base_x - 20.0
                 spacing = 85.0 * base_scale
-                y_extra = 0.0 if (app.demo_mode or app.arcade_mode) else 0.0
+                y_extra = 0.0 if (env.demo or env.arcade) else 0.0
                 self._make_logo(
                     x - 110 + 50,
                     113 + y + 1.2 * y_extra,
@@ -507,7 +505,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 base_x = -170
                 x = base_x - 20
                 spacing = 55 * base_scale
-                y_extra = 0 if (app.demo_mode or app.arcade_mode) else 0
+                y_extra = 0 if (env.demo or env.arcade) else 0
                 xv1 = x
                 delay1 = delay
                 for shadow in (True, False):

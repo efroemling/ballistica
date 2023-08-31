@@ -84,11 +84,6 @@ namespace ballistica {
 #define BA_XCODE_BUILD 0
 #endif
 
-// Is this our android iircade build?
-#ifndef BA_IIRCADE_BUILD
-#define BA_IIRCADE_BUILD 0
-#endif
-
 // Does this build use SDL 1.x? (old mac only)
 #ifndef BA_SDL_BUILD
 #define BA_SDL_BUILD 0
@@ -268,7 +263,6 @@ class BuildConfig {
   bool google_build() const { return EXPBOOL_(BA_GOOGLE_BUILD); }
   bool demo_build() const { return EXPBOOL_(BA_DEMO_BUILD); }
   bool arcade_build() const { return EXPBOOL_(BA_ARCADE_BUILD); }
-  bool iircade_build() const { return EXPBOOL_(BA_IIRCADE_BUILD); }
   bool contains_python_dist() const {
     return EXPBOOL_(BA_CONTAINS_PYTHON_DIST);
   }

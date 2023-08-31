@@ -50,8 +50,8 @@ class MainMenuWindow(bui.Window):
         )
 
         # Grab this stuff in case it changes.
-        self._is_demo = bui.app.demo_mode
-        self._is_arcade = bui.app.arcade_mode
+        self._is_demo = bui.app.env.demo
+        self._is_arcade = bui.app.env.arcade
 
         self._tdelay = 0.0
         self._t_delay_inc = 0.02
@@ -617,7 +617,7 @@ class MainMenuWindow(bui.Window):
                 )
             )
         # In kiosk mode, provide a button to get back to the kiosk menu.
-        if bui.app.demo_mode or bui.app.arcade_mode:
+        if bui.app.env.demo or bui.app.env.arcade:
             h, v, scale = positions[self._p_index]
             this_b_width = self._button_width * 0.4 * scale
             demo_menu_delay = (
@@ -634,7 +634,7 @@ class MainMenuWindow(bui.Window):
                 textcolor=(0.7, 0.8, 0.7),
                 label=bui.Lstr(
                     resource='modeArcadeText'
-                    if bui.app.arcade_mode
+                    if bui.app.env.arcade
                     else 'modeDemoText'
                 ),
                 transition_delay=demo_menu_delay,

@@ -36,9 +36,7 @@ UI::UI() {
   }
   if (!force_scale_) {
     // Use automatic val.
-    if (g_buildconfig.iircade_build()) {  // NOLINT(bugprone-branch-clone)
-      scale_ = UIScale::kMedium;
-    } else if (g_core->IsVRMode() || g_core->platform->IsRunningOnTV()) {
+    if (g_core->IsVRMode() || g_core->platform->IsRunningOnTV()) {
       // VR and tv builds always use medium.
       scale_ = UIScale::kMedium;
     } else {

@@ -92,7 +92,7 @@ def connection_failed_message() -> None:
 def temporarily_unavailable_message() -> None:
     from babase._language import Lstr
 
-    if not _babase.app.headless_mode:
+    if _babase.app.env.gui:
         _babase.getsimplesound('error').play()
         _babase.screenmessage(
             Lstr(resource='getTicketsWindow.unavailableTemporarilyText'),
@@ -103,7 +103,7 @@ def temporarily_unavailable_message() -> None:
 def in_progress_message() -> None:
     from babase._language import Lstr
 
-    if not _babase.app.headless_mode:
+    if _babase.app.env.gui:
         _babase.getsimplesound('error').play()
         _babase.screenmessage(
             Lstr(resource='getTicketsWindow.inProgressText'),
@@ -114,7 +114,7 @@ def in_progress_message() -> None:
 def error_message() -> None:
     from babase._language import Lstr
 
-    if not _babase.app.headless_mode:
+    if _babase.app.env.gui:
         _babase.getsimplesound('error').play()
         _babase.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
 
@@ -122,7 +122,7 @@ def error_message() -> None:
 def purchase_not_valid_error() -> None:
     from babase._language import Lstr
 
-    if not _babase.app.headless_mode:
+    if _babase.app.env.gui:
         _babase.getsimplesound('error').play()
         _babase.screenmessage(
             Lstr(
@@ -136,7 +136,7 @@ def purchase_not_valid_error() -> None:
 def purchase_already_in_progress_error() -> None:
     from babase._language import Lstr
 
-    if not _babase.app.headless_mode:
+    if _babase.app.env.gui:
         _babase.getsimplesound('error').play()
         _babase.screenmessage(
             Lstr(resource='store.purchaseAlreadyInProgressText'),
@@ -195,7 +195,7 @@ def award_dual_wielding_achievement() -> None:
 
 
 def play_gong_sound() -> None:
-    if not _babase.app.headless_mode:
+    if _babase.app.env.gui:
         _babase.getsimplesound('gong').play()
 
 
@@ -263,7 +263,7 @@ def ui_remote_press() -> None:
     """Handle a press by a remote device that is only usable for nav."""
     from babase._language import Lstr
 
-    if _babase.app.headless_mode:
+    if _babase.app.env.headless:
         return
 
     # Can be called without a context; need a context for getsound.
@@ -358,7 +358,7 @@ def show_client_too_old_error() -> None:
     ):
         return
 
-    if not _babase.app.headless_mode:
+    if _babase.app.env.gui:
         _babase.getsimplesound('error').play()
 
     _babase.screenmessage(

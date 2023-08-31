@@ -1526,9 +1526,6 @@ auto JoystickInput::GetDeviceIdentifier() -> std::string {
 }
 
 auto JoystickInput::GetPartyButtonName() const -> std::string {
-  if (g_buildconfig.iircade_build()) {
-    return "X";
-  }
   return g_base->assets->CharStr(SpecialChar::kTopButton);
 }
 

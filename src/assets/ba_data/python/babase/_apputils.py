@@ -222,8 +222,7 @@ def garbage_collect() -> None:
 def print_corrupt_file_error() -> None:
     """Print an error if a corrupt file is found."""
 
-    # FIXME - filter this out for builds without bauiv1.
-    if not _babase.app.headless_mode:
+    if _babase.app.env.gui:
         _babase.apptimer(
             2.0,
             lambda: _babase.screenmessage(

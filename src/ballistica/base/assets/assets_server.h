@@ -15,7 +15,7 @@ class AssetsServer {
  public:
   AssetsServer();
   void OnMainThreadStartApp();
-  void PushBeginWriteReplayCall();
+  void PushBeginWriteReplayCall(uint16_t protocol_version);
   void PushEndWriteReplayCall();
   void PushAddMessageToReplayCall(const std::vector<uint8_t>& data);
   void PushPendingPreload(Object::Ref<Asset>* asset_ref_ptr);

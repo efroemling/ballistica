@@ -211,7 +211,7 @@ class CoopSession(Session):
         # Hmm; no players anywhere. Let's end the entire session if we're
         # running a GUI (or just the current game if we're running headless).
         else:
-            if not babase.app.headless_mode:
+            if babase.app.env.gui:
                 self.end()
             else:
                 if isinstance(activity, GameActivity):
@@ -277,6 +277,7 @@ class CoopSession(Session):
         from bascenev1._score import ScoreType
 
         app = babase.app
+        env = app.env
         classic = app.classic
         assert classic is not None
 
@@ -291,7 +292,7 @@ class CoopSession(Session):
         # If we're running with a gui and at any point we have no
         # in-game players, quit out of the session (this can happen if
         # someone leaves in the tutorial for instance).
-        if not babase.app.headless_mode:
+        if env.gui:
             active_players = [p for p in self.sessionplayers if p.in_game]
             if not active_players:
                 self.end()
@@ -317,7 +318,7 @@ class CoopSession(Session):
             if (
                 isinstance(activity, JoinActivity)
                 and self.campaign_level_name == 'Onslaught Training'
-                and not (app.demo_mode or app.arcade_mode)
+                and not (env.demo or env.arcade)
             ):
                 if self._tutorial_activity is None:
                     raise RuntimeError('Tutorial not preloaded properly.')
@@ -339,7 +340,7 @@ class CoopSession(Session):
                 # Now flip the current activity..
                 self.setactivity(next_game)
 
-                if not (app.demo_mode or app.arcade_mode):
+                if not (env.demo or env.arcade):
                     if self.tournament_id is not None:
                         self._custom_menu_ui = [
                             {

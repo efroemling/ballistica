@@ -487,8 +487,8 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
 
         super().on_begin()
 
-        # Show controls help in kiosk mode.
-        if bs.app.demo_mode or bs.app.arcade_mode:
+        # Show controls help in demo or arcade mode.
+        if bs.app.env.demo or bs.app.env.arcade:
             controlsguide.ControlsGuide(
                 delay=3.0, lifespan=10.0, bright=True
             ).autoretain()

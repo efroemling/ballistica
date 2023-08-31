@@ -42,7 +42,7 @@ class AccountV1Subsystem:
             if babase.app.plus is None:
                 return
             if (
-                babase.app.headless_mode
+                babase.app.env.headless
                 or babase.app.config.get('Auto Account State') == 'Local'
             ):
                 babase.app.plus.sign_in_v1('Local')

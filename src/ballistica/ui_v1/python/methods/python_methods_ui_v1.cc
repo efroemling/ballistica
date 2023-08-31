@@ -2848,7 +2848,7 @@ static PyMethodDef PyIsPartyIconVisibleDef = {
 
 static auto PyToolbarTest(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  if (BA_TOOLBAR_TEST) {
+  if (BA_UI_V1_TOOLBAR_TEST) {
     Py_RETURN_TRUE;
   } else {
     Py_RETURN_FALSE;

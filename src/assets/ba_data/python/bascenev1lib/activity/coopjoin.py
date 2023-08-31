@@ -45,6 +45,9 @@ class CoopJoinActivity(bs.JoinActivity):
     def _show_remaining_achievements(self) -> None:
         from bascenev1lib.actor.text import Text
 
+        app = bs.app
+        env = app.env
+
         # We only show achievements and challenges for CoopGameActivities.
         session = self.session
         assert isinstance(session, bs.CoopSession)
@@ -64,19 +67,15 @@ class CoopJoinActivity(bs.JoinActivity):
         ts_h_offs = 60
 
         # Show remaining achievements in some cases.
-        if bs.app.classic is not None and not (
-            bs.app.demo_mode or bs.app.arcade_mode
-        ):
+        if app.classic is not None and not (env.demo or env.arcade):
             achievements = [
                 a
-                for a in bs.app.classic.ach.achievements_for_coop_level(
-                    levelname
-                )
+                for a in app.classic.ach.achievements_for_coop_level(levelname)
                 if not a.complete
             ]
             have_achievements = bool(achievements)
             achievements = [a for a in achievements if not a.complete]
-            vrmode = bs.app.env.vr
+            vrmode = env.vr
             if have_achievements:
                 Text(
                     bs.Lstr(resource='achievementsRemainingText'),

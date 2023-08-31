@@ -4,7 +4,6 @@
 # pylint: disable=too-many-lines
 from __future__ import annotations
 
-import os
 import logging
 from enum import Enum
 
@@ -144,12 +143,34 @@ class App:
         the single shared instance.
         """
 
-        if os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') == '1':
+        self.env: babase.Env = _babase.Env()
+        if self.env.running_with_dummy_modules:
             return
 
         self.state = self.State.NOT_RUNNING
 
-        self.env: babase.Env = _babase.Env()
+        # Controls which app-modes we use for handling given
+        # app-intents. Plugins can override this to change high level
+        # app behavior and spinoff projects can change the default
+        # implementation for the same effect.
+        self.mode_selector: babase.AppModeSelector | None = None
+
+        # Default executor which can be used for misc background
+        # processing. It should also be passed to any additional asyncio
+        # loops we create so that everything shares the same single set
+        # of worker threads.
+        self.threadpool = ThreadPoolExecutor(thread_name_prefix='baworker')
+
+        self.meta = MetadataSubsystem()
+        self.net = NetworkSubsystem()
+        self.workspaces = WorkspaceSubsystem()
+        self.components = AppComponentSubsystem()
+
+        # This is incremented any time the app is backgrounded or
+        # foregrounded; can be a simple way to determine if network data
+        # should be refreshed/etc.
+        self.fg_state = 0
+        self.config_file_healthy: bool = False
 
         self._subsystems: list[AppSubsystem] = []
         self._native_bootstrapping_completed = False
@@ -164,43 +185,9 @@ class App:
         self._called_on_running = False
         self._subsystem_registration_ended = False
         self._pending_apply_app_config = False
-
-        self.config_file_healthy: bool = False
-
-        # This is incremented any time the app is backgrounded or
-        # foregrounded; can be a simple way to determine if network data
-        # should be refreshed/etc.
-        self.fg_state = 0
-
         self._aioloop: asyncio.AbstractEventLoop | None = None
-
-        self._env = _babase.env()
-        self.protocol_version: int = self._env['protocol_version']
-        assert isinstance(self.protocol_version, int)
-        # self.toolbar_test: bool = self._env['toolbar_test']
-        # assert isinstance(self.toolbar_test, bool)
-        self.demo_mode: bool = self._env['demo_mode']
-        assert isinstance(self.demo_mode, bool)
-        self.arcade_mode: bool = self._env['arcade_mode']
-        assert isinstance(self.arcade_mode, bool)
-        self.headless_mode: bool = self._env['headless_mode']
-        assert isinstance(self.headless_mode, bool)
-
-        # Default executor which can be used for misc background
-        # processing. It should also be passed to any additional asyncio
-        # loops we create so that everything shares the same single set
-        # of worker threads.
-        self.threadpool = ThreadPoolExecutor(thread_name_prefix='baworker')
-
+        self._asyncio_timer: babase.AppTimer | None = None
         self._config: babase.AppConfig | None = None
-
-        self.components = AppComponentSubsystem()
-
-        # Testing this.
-        self.meta = MetadataSubsystem()
-
-        self.net = NetworkSubsystem()
-        self.workspaces = WorkspaceSubsystem()
         self._pending_intent: AppIntent | None = None
         self._intent: AppIntent | None = None
         self._mode: AppMode | None = None
@@ -209,18 +196,10 @@ class App:
             self._wait_for_shutdown_suppressions()
         ]
 
-        # Controls which app-modes we use for handling given
-        # app-intents. Plugins can override this to change high level
-        # app behavior and spinoff projects can change the default
-        # implementation for the same effect.
-        self.mode_selector: babase.AppModeSelector | None = None
-
-        self._asyncio_timer: babase.AppTimer | None = None
-
     def postinit(self) -> None:
         """Called after we've been inited and assigned to babase.app."""
 
-        if os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') == '1':
+        if self.env.running_with_dummy_modules:
             return
 
         # NOTE: the reason we need a postinit here is that
@@ -1011,3 +990,50 @@ class App:
         return self.ui_v1.use_toolbars
 
     # __SPINOFF_REQUIRE_UI_V1_END__
+
+    @property
+    def arcade_mode(self) -> bool:
+        """Whether the app is currently running on arcade hardware."""
+        warnings.warn(
+            'app.arcade_mode is deprecated; use app.env.arcade',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.env.arcade
+
+    @property
+    def headless_mode(self) -> bool:
+        """Whether the app is running headlessly."""
+        warnings.warn(
+            'app.headless_mode is deprecated; use app.env.headless',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.env.headless
+
+    @property
+    def demo_mode(self) -> bool:
+        """Whether the app is targeting a demo experience."""
+        warnings.warn(
+            'app.demo_mode is deprecated; use app.env.demo',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.env.demo
+
+    # __SPINOFF_REQUIRE_SCENE_V1_BEGIN__
+
+    @property
+    def protocol_version(self) -> int:
+        """(internal)."""
+        import bascenev1
+
+        warnings.warn(
+            'app.protocol_version is deprecated;'
+            ' use bascenev1.protocol_version()',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return bascenev1.protocol_version()
+
+    # __SPINOFF_REQUIRE_SCENE_V1_END__

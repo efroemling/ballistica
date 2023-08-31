@@ -545,7 +545,7 @@ class StoreSubsystem:
         """
         plus = babase.app.plus
         unowned_maps: set[str] = set()
-        if not babase.app.headless_mode:
+        if babase.app.env.gui:
             for map_section in self.get_store_layout()['maps']:
                 for mapitem in map_section['items']:
                     if plus is None or not plus.get_purchased(mapitem):
@@ -558,7 +558,7 @@ class StoreSubsystem:
         try:
             plus = babase.app.plus
             unowned_games: set[type[bascenev1.GameActivity]] = set()
-            if not babase.app.headless_mode:
+            if babase.app.env.gui:
                 for section in self.get_store_layout()['minigames']:
                     for mname in section['items']:
                         if plus is None or not plus.get_purchased(mname):

@@ -29,7 +29,6 @@
       <file path="$PROJECT_DIR$/../src/ballistica/config/config_android_demo.h" />
       <file path="$PROJECT_DIR$/../src/ballistica/config/config_android_generic.h" />
       <file path="$PROJECT_DIR$/../src/ballistica/config/config_android_google.h" />
-      <file path="$PROJECT_DIR$/../src/ballistica/config/config_android_iircade.h" />
       <file path="$PROJECT_DIR$/../src/ballistica/config/config_android_oculus.h" />
       <file path="$PROJECT_DIR$/../src/ballistica/config/config_android_template.h" />
       <file path="$PROJECT_DIR$/../src/ballistica/config/config_windows_common.h" />

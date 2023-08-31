@@ -756,8 +756,8 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         // "sO"  // toolbar_test
         "sO"  // demo_mode
         "sO"  // arcade_mode
-        "sO"  // iircade_mode
-        "si"  // protocol_version
+        // "sO"  // iircade_mode
+        // "si"  // protocol_version
         "sO"  // headless_mode
         "sO"  // python_directory_app_site
         "ss"  // device_name
@@ -779,11 +779,10 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "ui_scale", ui_scale,
         "on_tv", g_core->platform->IsRunningOnTV() ? Py_True : Py_False,
         "vr_mode", g_core->IsVRMode() ? Py_True : Py_False,
-        // "toolbar_test", BA_TOOLBAR_TEST ? Py_True : Py_False,
         "demo_mode", g_buildconfig.demo_build() ? Py_True : Py_False,
         "arcade_mode", g_buildconfig.arcade_build() ? Py_True : Py_False,
-        "iircade_mode", g_buildconfig.iircade_build() ? Py_True: Py_False,
-        "protocol_version", kProtocolVersion,
+        // "iircade_mode", g_buildconfig.iircade_build() ? Py_True: Py_False,
+        // "protocol_version", kProtocolVersion,
         "headless_mode", g_core->HeadlessMode() ? Py_True : Py_False,
         "python_directory_app_site",
           site_py_dir ? *PythonRef::FromString(*site_py_dir) : Py_None,

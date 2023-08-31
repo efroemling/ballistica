@@ -88,7 +88,7 @@ class KioskWindow(bui.Window):
                         resource='demoText',
                         fallback_resource='mainMenu.demoMenuText',
                     )
-                    if bui.app.demo_mode
+                    if bui.app.env.demo
                     else 'ARCADE'
                 ),
                 flatness=1.0,
@@ -332,7 +332,7 @@ class KioskWindow(bui.Window):
             self._b4 = self._b5 = self._b6 = None
 
         self._b7: bui.Widget | None
-        if bui.app.arcade_mode:
+        if bui.app.env.arcade:
             self._b7 = bui.buttonwidget(
                 parent=self._root_widget,
                 autoselect=True,

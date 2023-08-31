@@ -32,7 +32,7 @@ SessionStream::SessionStream(HostSession* host_session, bool save_replay)
           "g_replay_open true at replay start; shouldn't happen.");
     }
     assert(g_base->assets_server);
-    g_base->assets_server->PushBeginWriteReplayCall();
+    g_base->assets_server->PushBeginWriteReplayCall(kProtocolVersion);
     writing_replay_ = true;
     g_core->replay_open = true;
   }

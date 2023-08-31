@@ -1169,7 +1169,7 @@ class PublicGatherTab(GatherTab):
                 plus.add_v1_account_transaction(
                     {
                         'type': 'PUBLIC_PARTY_QUERY',
-                        'proto': bui.app.protocol_version,
+                        'proto': bs.protocol_version(),
                         'lang': bui.app.lang.language,
                     },
                     callback=bui.WeakCall(self._on_public_party_query_result),

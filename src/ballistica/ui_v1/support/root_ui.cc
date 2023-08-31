@@ -13,7 +13,7 @@
 namespace ballistica::ui_v1 {
 
 // Phasing these out; replaced by buttons in our rootwidget.
-#define DO_OLD_MENU_PARTY_BUTTONS (!BA_TOOLBAR_TEST)
+#define DO_OLD_MENU_PARTY_BUTTONS (!BA_UI_V1_TOOLBAR_TEST)
 
 const float kMenuButtonSize = 40.0f;
 const float kMenuButtonDrawDepth = -0.07f;

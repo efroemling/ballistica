@@ -145,11 +145,34 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
       "a non-standard environment, and that python-path modifications may\n"
       "cause modules to be loaded from other locations.");
 
-  envs["tv"] = BoolEntry_(g_core->platform->IsRunningOnTV(),
-                          "Whether the app is currently running on a TV.");
+  envs["tv"] =
+      BoolEntry_(g_core->platform->IsRunningOnTV(),
+                 "Whether the app is targeting a TV-centric experience.");
 
   envs["vr"] = BoolEntry_(g_core->IsVRMode(),
                           "Whether the app is currently running in VR.");
+
+  envs["arcade"] =
+      BoolEntry_(g_buildconfig.arcade_build(),
+                 "Whether the app is targeting an arcade-centric experience.");
+
+  envs["headless"] =
+      BoolEntry_(g_buildconfig.headless_build(),
+                 "Whether the app is running headlessly (without a gui).\n"
+                 "\n"
+                 "This is the opposite of `gui`.");
+
+  envs["gui"] = BoolEntry_(!g_buildconfig.headless_build(),
+                           "Whether the app is running with a gui.\n"
+                           "\n"
+                           "This is the opposite of `headless`.");
+
+  envs["demo"] = BoolEntry_(g_buildconfig.demo_build(),
+                            "Whether the app is targeting a demo experience.");
+
+  auto* envval = getenv("BA_RUNNING_WITH_DUMMY_MODULES");
+  envs["running_with_dummy_modules"] =
+      BoolEntry_(envval && !strcmp(envval, "1"), "(internal)");
 
   bool first = true;
   for (auto&& entry : envs) {

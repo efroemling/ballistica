@@ -588,8 +588,6 @@ auto CorePlatform::GetLegacyUserAgentString() -> std::string {
     subplatform = "DeMo";
   } else if (g_buildconfig.arcade_build()) {
     subplatform = "ArCd";
-  } else if (g_buildconfig.iircade_build()) {
-    subplatform = "iiRcd";
   } else {
     subplatform = "TstB";
   }
@@ -699,9 +697,6 @@ auto CorePlatform::GetDeviceV1AccountID() -> std::string {
 
   // Everything else is just considered a 'local' account, though we may
   // give unique ids for unique builds..
-  if (g_buildconfig.iircade_build()) {
-    return "L-iRc" + GetLegacyDeviceUUID();
-  }
   return "L-" + GetLegacyDeviceUUID();
 }
 

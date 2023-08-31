@@ -1088,6 +1088,7 @@
       <w>fnames</w>
       <w>fnmatch</w>
       <w>fnode</w>
+      <w>fnsu</w>
       <w>fnum</w>
       <w>fobjc</w>
       <w>foof</w>
@@ -1335,6 +1336,7 @@
       <w>hdpi</w>
       <w>headercheckline</w>
       <w>headerregistry</w>
+      <w>headlessly</w>
       <w>heapqmodule</w>
       <w>hehe</w>
       <w>heldfile</w>
@@ -1393,7 +1395,6 @@
       <w>ignorevar</w>
       <w>iiarcade</w>
       <w>iiiiisssi</w>
-      <w>iircade</w>
       <w>ilang</w>
       <w>ilck</w>
       <w>ilogput</w>
