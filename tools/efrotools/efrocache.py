@@ -298,6 +298,7 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
 def update_cache(makefile_dirs: list[str]) -> None:
     """Given a list of directories containing Makefiles, update caches."""
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-branches
 
     import multiprocessing
 
@@ -309,9 +310,9 @@ def update_cache(makefile_dirs: list[str]) -> None:
     fnames_starter_server: list[str] = []
     fnames_all: list[str] = []
 
-    # If a path contains any of these substrings it will be included in
-    # the server starter cache.
-    add_to_server_starter_paths = {
+    # If a path contains any of these substrings it will always be included
+    # in starter caches.
+    starter_cache_always_include_paths = {
         'build/assets/ba_data/fonts',
         'build/assets/ba_data/data',
         'build/assets/ba_data/python',
@@ -373,6 +374,11 @@ def update_cache(makefile_dirs: list[str]) -> None:
 
             # Now selectively add to starter cache lists.
 
+            always_include = False
+
+            if any(p in fullpath for p in starter_cache_always_include_paths):
+                always_include = True
+
             # Always keep certain file types out of starter caches.
             if any(
                 fullpath.endswith(ending)
@@ -380,30 +386,33 @@ def update_cache(makefile_dirs: list[str]) -> None:
             ):
                 continue
 
-            # Keep big files out of starter caches. The main benefits of
-            # the cache is that we can reduce the overhead for
-            # downloading individual tiny files by grabbing them all at
-            # once, but that advantage diminishes as the files get
-            # bigger. And not all platforms will use all files, so it
-            # generally more efficient to grab bigger ones as needed.
-            if os.path.getsize(fullpath) > 300_000:
+            # Keep big files out of starter caches (unless flagged as
+            # always-include). The main benefits of starter-caches is
+            # that we can reduce the overhead for downloading individual
+            # tiny files by grabbing them all at once, but that
+            # advantage diminishes as the files get bigger. And not all
+            # platforms will use all files, so it generally more
+            # efficient to grab bigger ones as needed.
+            if os.path.getsize(fullpath) > 50_000 and not always_include:
                 continue
 
             # Gui starter gets everything that made it this far.
             fnames_starter_gui.append(fullpath)
 
-            # For server starter, limit to a few key dirs.
-            if not any(p in fullpath for p in add_to_server_starter_paths):
+            # Server starter cuts out everything not explicitly
+            # always-included.
+            if not always_include:
                 continue
 
-            # Also exclude some endings from server starters.
+            # Server starter also exclude some things from within
+            # always-included dirs.
             if any(
                 fullpath.endswith(ending)
                 for ending in never_add_to_starter_endings_server
             ):
                 continue
 
-            # Ok this one qualifies for the server starter too.
+            # If it made it this far, add it to the server cache.
             fnames_starter_server.append(fullpath)
 
     # Ok, we've got a big list of filenames we need to cache in the
