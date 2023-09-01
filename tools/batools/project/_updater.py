@@ -611,7 +611,6 @@ class ProjectUpdater:
         self._generated_files[fname] = '\n'.join(lines) + '\n'
 
     def _update_cmake_files(self) -> None:
-
         # Our regular cmake build.
         self.enqueue_update('ballisticakit-cmake/CMakeLists.txt')
 
