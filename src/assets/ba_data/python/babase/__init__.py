@@ -109,6 +109,7 @@ from babase._apputils import (
     is_browser_likely_available,
     garbage_collect,
     get_remote_app_name,
+    AppHealthMonitor,
 )
 from babase._cloud import CloudSubsystem
 from babase._emptyappmode import EmptyAppMode
@@ -176,6 +177,7 @@ __all__ = [
     'app',
     'App',
     'AppConfig',
+    'AppHealthMonitor',
     'AppIntent',
     'AppIntentDefault',
     'AppIntentExec',

@@ -512,6 +512,7 @@
       <w>dstdir</w>
       <w>dstdirfull</w>
       <w>dstent</w>
+      <w>dstfs</w>
       <w>dstnode</w>
       <w>dstpath</w>
       <w>dstr</w>
@@ -662,6 +663,7 @@
       <w>flopsy</w>
       <w>flushhhhh</w>
       <w>fname</w>
+      <w>fnamefilt</w>
       <w>fnode</w>
       <w>fnsu</w>
       <w>fnumc</w>
@@ -1619,9 +1621,11 @@
       <w>spinups</w>
       <w>spivak</w>
       <w>spwd</w>
+      <w>src's</w>
       <w>srcabs</w>
       <w>srcattr</w>
       <w>srcfolder</w>
+      <w>srcfs</w>
       <w>srcgrp</w>
       <w>srcid</w>
       <w>srcname</w>
@@ -1683,6 +1687,7 @@
       <w>subargs</w>
       <w>subc</w>
       <w>subclsssing</w>
+      <w>subdst</w>
       <w>subentities</w>
       <w>subfieldpath</w>
       <w>subitems</w>
@@ -1691,6 +1696,7 @@
       <w>subplatform</w>
       <w>subscale</w>
       <w>subscr</w>
+      <w>subsrc</w>
       <w>subsys</w>
       <w>subtypestr</w>
       <w>successmsg</w>

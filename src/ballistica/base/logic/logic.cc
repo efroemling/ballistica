@@ -226,7 +226,10 @@ void Logic::OnAppShutdown() {
   // Nuke the app from orbit if we get stuck while shutting down.
   g_core->StartSuicideTimer("shutdown", 10000);
 
-  // Let our subsystems know we're shutting down.
+  // Tell base to disallow shutdown-suppressors from here on out.
+  g_base->ShutdownSuppressDisallow();
+
+  // Let our logic thread subsystems know we're shutting down.
   // Note: Keep these in opposite order of OnAppStart.
   // Note2: Any shutdown processes that take a non-zero amount of time
   // should be registered as shutdown-tasks

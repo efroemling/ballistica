@@ -52,7 +52,7 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 21289
+TARGET_BALLISTICA_BUILD = 21293
 TARGET_BALLISTICA_VERSION = '1.7.28'
 
 
@@ -461,11 +461,12 @@ def _modular_main() -> None:
     # First baenv sets up things like Python paths the way the engine
     # needs them, and then we import and run the engine.
     #
-    # Below we're doing a slightly fancier version of that. Namely we do
-    # some processing of command line args to allow overriding of paths
-    # or running explicit commands or whatever else. Our goal is that
-    # this modular form of the app should be basically indistinguishable
-    # from the monolithic form when used from the command line.
+    # Below we're doing a slightly fancier version of that. Namely, we
+    # do some processing of command line args to allow overriding of
+    # paths or running explicit commands or whatever else. Our goal is
+    # that this modular form of the app should be basically
+    # indistinguishable from the monolithic form when used from the
+    # command line.
 
     try:
         # Take note that we're running via modular-main. The native

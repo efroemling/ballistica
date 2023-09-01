@@ -823,6 +823,7 @@
       <w>dstent</w>
       <w>dstfile</w>
       <w>dstfin</w>
+      <w>dstfs</w>
       <w>dstjson</w>
       <w>dstlines</w>
       <w>dstname</w>
@@ -1085,6 +1086,7 @@
       <w>flycheck</w>
       <w>fmod</w>
       <w>fname</w>
+      <w>fnamefilt</w>
       <w>fnamefull</w>
       <w>fnames</w>
       <w>fnmatch</w>
@@ -2669,6 +2671,7 @@
       <w>shobs</w>
       <w>shortname</w>
       <w>shouldn</w>
+      <w>shouldnt</w>
       <w>showbuffer</w>
       <w>showpoints</w>
       <w>showstats</w>
@@ -2753,11 +2756,13 @@
       <w>splitnumstr</w>
       <w>spwd</w>
       <w>squadcore</w>
+      <w>src's</w>
       <w>srcabs</w>
       <w>srcattr</w>
       <w>srcdata</w>
       <w>srcdir</w>
       <w>srcfolder</w>
+      <w>srcfs</w>
       <w>srcgrp</w>
       <w>srcid</w>
       <w>srcjson</w>
@@ -2840,6 +2845,7 @@
       <w>subdep</w>
       <w>subdeps</w>
       <w>subdirs</w>
+      <w>subdst</w>
       <w>subfieldpath</w>
       <w>subfolders</w>
       <w>submpath</w>
@@ -2852,6 +2858,7 @@
       <w>subprocesses</w>
       <w>subrepos</w>
       <w>subsel</w>
+      <w>subsrc</w>
       <w>subsys</w>
       <w>subtypestr</w>
       <w>subval</w>

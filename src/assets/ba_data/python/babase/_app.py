@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import cached_property
 
 from efro.call import tpartial
+
 import _babase
 from babase._language import LanguageSubsystem
 from babase._plugin import PluginSubsystem

@@ -15,9 +15,8 @@ CoreFeatureSet* g_core{};
 BaseSoftInterface* g_base_soft{};
 
 auto CoreFeatureSet::Import(const CoreConfig* config) -> CoreFeatureSet* {
-  // In monolithic builds we can accept an explicit core-config the first
-  // time we're imported. In this case, Python is not even spun up yet so
-  // it can influence even that.
+  // In monolithic builds, we accept an explicit core-config the first time
+  // we're imported. It is fully up to the caller to build the config.
   if (g_buildconfig.monolithic_build()) {
     if (config != nullptr) {
       if (g_core != nullptr) {
@@ -29,17 +28,17 @@ auto CoreFeatureSet::Import(const CoreConfig* config) -> CoreFeatureSet* {
         DoImport(*config);
       }
     } else {
-      // No config passed; use a default.
+      // If no config is passed, use a default. If the user wants env vars
+      // or anything else factored in, they should do so themselves in the
+      // config they pass (CoreConfig::ForEnvVars(), etc.).
       if (g_core == nullptr) {
         DoImport({});
       }
     }
   } else {
-    // In modular builds we autogenerate a CoreConfig that takes into
-    // account only env-vars (or env-vars plus Python args if we're being
-    // run via the baenv script). In this case, Python is already spun up
-    // and baenv already handled any Python environment stuff so we have
-    // less to do.
+    // In modular builds, we generate a CoreConfig *after* Python is spun
+    // up, implicitly using Python's sys args and/or env vars when
+    // applicable.
     if (config != nullptr) {
       FatalError("CoreConfig can't be explicitly passed in modular builds.");
     }
@@ -57,6 +56,7 @@ auto CoreFeatureSet::Import(const CoreConfig* config) -> CoreFeatureSet* {
         DoImport(CoreConfig::ForArgsAndEnvVars(static_cast<int>(argv.size()),
                                                argv.data()));
       } else {
+        // Not using Python sys args but we still want to process env vars.
         DoImport(CoreConfig::ForEnvVars());
       }
     }

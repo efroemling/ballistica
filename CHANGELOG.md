@@ -1,5 +1,13 @@
-### 1.7.28 (build 21289, api 8, 2023-08-31)
+### 1.7.28 (build 21293, api 8, 2023-08-31)
 
+- Added some high level functionality for copying and deleting feature-sets to
+  the `tools/spinoff` tool. For example, to create your own `poo` feature-set,
+  do `tools/spinoff fset-copy template_fs poo`. Then do `make update` and `make
+  cmake` to build and run the app, and from within it you should be able to do
+  `import bapoo` to get at your nice shiny poo feature-set. When you are done
+  playing, you can do `tools/spinoff fset-delete poo` to blow away any traces of
+  it.
+  
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 
 - Fixed a rare crash that could occur if the app shuts down while a background

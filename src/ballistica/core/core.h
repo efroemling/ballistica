@@ -24,27 +24,26 @@ class CoreFeatureSet;
 class BaseSoftInterface;
 
 // Our feature-set's globals.
-// Feature-sets should NEVER directly access globals in another feature-set's
-// namespace. All functionality we need from other feature-sets should be
-// imported into globals in our own namespace. Generally we do this when we
-// are initially imported (just as regular Python modules do).
+//
+// Feature-sets should NEVER directly access globals in another
+// feature-set's namespace. All functionality we need from other
+// feature-sets should be imported into globals in our own namespace.
+// Generally we do this when we are initially imported (just as regular
+// Python modules do).
+
+// Our pointer to our own feature-set.
 extern CoreFeatureSet* g_core;
 
-// We don't require the base feature-set but can use it if present.
-// Base will supply us with this pointer if/when it spins up.
-// So we must never assume this pointer is valid and must check for it
-// with each use.
+// We don't require the base feature-set but can use it if present. Base
+// will supply us with this pointer if/when it spins up. So we must never
+// assume this pointer is valid and must check for it with each use.
 extern BaseSoftInterface* g_base_soft;
 
-/// Platform-agnostic global state for our overall system.
-/// This gets created whenever we are used in any capacity, even if
-/// we don't create/run an app.
-/// Ideally most things here should be migrated to more specific
-/// subsystems.
+/// Core engine functionality.
 class CoreFeatureSet {
  public:
-  /// Import the core feature set. A core-config can be passed ONLY
-  /// in monolithic builds when it is guaranteed that the Import will be
+  /// Import the core feature set. A core-config can be passed ONLY in
+  /// monolithic builds when it is guaranteed that the Import will be
   /// allocating the CoreFeatureSet singleton.
   static auto Import(const CoreConfig* config = nullptr) -> CoreFeatureSet*;
 
@@ -76,32 +75,35 @@ class CoreFeatureSet {
   auto HeadlessMode() -> bool;
 
   /// Return current app-time in milliseconds.
+  ///
   /// App-time is basically the total time that the engine has been actively
-  /// running. (The 'App' here is a slight misnomer). It will stop progressing
-  /// while the app is suspended and will never go backwards.
+  /// running. (The 'App' here is a slight misnomer). It will stop
+  /// progressing while the app is suspended and will never go backwards.
   auto GetAppTimeMillisecs() -> millisecs_t;
 
   /// Return current app-time in microseconds.
+  ///
   /// App-time is basically the total time that the engine has been actively
-  /// running. (The 'App' here is a slight misnomer). It will stop progressing
-  /// while the app is suspended and will never go backwards.
+  /// running. (The 'App' here is a slight misnomer). It will stop
+  /// progressing while the app is suspended and will never go backwards.
   auto GetAppTimeMicrosecs() -> microsecs_t;
 
   /// Return current app-time in seconds.
+  ///
   /// App-time is basically the total time that the engine has been actively
-  /// running. (The 'App' here is a slight misnomer). It will stop progressing
-  /// while the app is suspended and will never go backwards.
+  /// running. (The 'App' here is a slight misnomer). It will stop
+  /// progressing while the app is suspended and will never go backwards.
   auto GetAppTimeSeconds() -> double;
 
-  /// Are we in the thread the main event loop is running on?
-  /// Generally this is the thread that runs graphics and os event processing.
+  /// Are we in the thread the main event loop is running on? Generally this
+  /// is the thread that runs graphics and os event processing.
   auto InMainThread() -> bool;
 
   /// Log a boot-related message (only if core_config.lifecycle_log is true).
   void LifecycleLog(const char* msg, double offset_seconds = 0.0);
 
-  /// Base path of build src dir so we can attempt to remove it from
-  /// any source file paths we print.
+  /// Base path of build src dir so we can attempt to remove it from any
+  /// source file paths we print.
   auto build_src_dir() const { return build_src_dir_; }
 
   const auto& legacy_user_agent_string() const {
@@ -113,8 +115,8 @@ class CoreFeatureSet {
   }
 
   /// Return true if baenv values have been locked in: python paths, log
-  /// handling, etc. Early-running code may wish to explicitly avoid making log
-  /// calls until this condition is met to ensure predictable behavior.
+  /// handling, etc. Early-running code may wish to explicitly avoid making
+  /// log calls until this condition is met to ensure predictable behavior.
   auto have_ba_env_vals() const { return have_ba_env_vals_; }
 
   /// Return the directory where the app expects to find its bundled Python
@@ -138,8 +140,8 @@ class CoreFeatureSet {
   /// Return the directory where bundled 3rd party Python files live.
   auto GetSitePythonDirectory() -> std::optional<std::string>;
 
-  // Are we using a non-standard app python dir (such as a 'sys' dir within a
-  // user-python-dir).
+  // Are we using a non-standard app python dir (such as a 'sys' dir within
+  // a user-python-dir).
   auto using_custom_app_python_dir() const {
     return using_custom_app_python_dir_;
   }
@@ -165,7 +167,6 @@ class CoreFeatureSet {
   bool reset_vr_orientation{};
   bool user_ran_commands{};
   std::thread::id main_thread_id{};
-
   bool vr_mode;
   std::mutex thread_name_map_mutex;
   std::unordered_map<std::thread::id, std::string> thread_name_map;
@@ -177,11 +178,11 @@ class CoreFeatureSet {
 #endif
 
  private:
+  explicit CoreFeatureSet(CoreConfig config);
+  static void DoImport(const CoreConfig& config);
   static auto CalcBuildSrcDir() -> std::string;
   void RunSanityChecks();
-  static void DoImport(const CoreConfig& config);
   void UpdateAppTime();
-  explicit CoreFeatureSet(CoreConfig config);
   void PostInit();
   bool tried_importing_base_{};
   EventLoop* main_event_loop_{};

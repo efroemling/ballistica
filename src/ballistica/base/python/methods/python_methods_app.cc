@@ -1495,8 +1495,12 @@ static PyMethodDef PyGetImmediateReturnCodeDef = {
 static auto PyShutdownSuppressBegin(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base);
-  g_base->ShutdownSuppressBegin();
-  Py_RETURN_NONE;
+  auto val = g_base->ShutdownSuppressBegin();
+  if (val) {
+    Py_RETURN_TRUE;
+  } else {
+    Py_RETURN_FALSE;
+  }
   BA_PYTHON_CATCH;
 }
 
@@ -1505,7 +1509,7 @@ static PyMethodDef PyShutdownSuppressBeginDef = {
     (PyCFunction)PyShutdownSuppressBegin,  // method
     METH_NOARGS,                           // flags
 
-    "shutdown_suppress_begin() -> None\n"
+    "shutdown_suppress_begin() -> bool\n"
     "\n"
     "(internal)\n",
 };
@@ -1536,7 +1540,7 @@ static PyMethodDef PyShutdownSuppressEndDef = {
 static auto PyShutdownSuppressCount(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base);
-  return PyLong_FromLong(g_base->shutdown_suppress_count());
+  return PyLong_FromLong(g_base->ShutdownSuppressGetCount());
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

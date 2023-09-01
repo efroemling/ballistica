@@ -27,8 +27,9 @@
 
 // ------------------------- PLATFORM SELECTION --------------------------------
 
-// This ugly chunk of macros simply pulls in the correct platform class header
-// for each platform and defines the actual class g_core->platform will be.
+// This ugly chunk of macros simply pulls in the correct platform class
+// header for each platform and defines the actual class g_core->platform
+// will be.
 
 // Android ---------------------------------------------------------------------
 
@@ -85,6 +86,7 @@
 
 // A call that can be used by custom built native libraries (Python, etc.)
 // to forward along debug messages to us.
+//
 // FIXME: Reconcile this with our existing C++ version. This one does not
 //  require the engine to be spun up so it better suited for things like
 //  debugging native libs.

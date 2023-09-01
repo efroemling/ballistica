@@ -715,11 +715,33 @@ void BaseFeatureSet::DoPushObjCall(const PythonObjectSetBase* objset, int id,
 }
 
 auto BaseFeatureSet::IsAppStarted() const -> bool { return app_started_; }
-void BaseFeatureSet::ShutdownSuppressBegin() { shutdown_suppress_count_++; }
+
+auto BaseFeatureSet::ShutdownSuppressBegin() -> bool {
+  std::scoped_lock lock(shutdown_suppress_lock_);
+  if (!shutdown_suppress_disallowed_) {
+    return false;
+  }
+  shutdown_suppress_count_++;
+  return true;
+}
+
 void BaseFeatureSet::ShutdownSuppressEnd() {
+  std::scoped_lock lock(shutdown_suppress_lock_);
   shutdown_suppress_count_--;
   assert(shutdown_suppress_count_ >= 0);
 }
+
+auto BaseFeatureSet::ShutdownSuppressGetCount() -> int {
+  std::scoped_lock lock(shutdown_suppress_lock_);
+  return shutdown_suppress_count_;
+}
+
+void BaseFeatureSet::ShutdownSuppressDisallow() {
+  std::scoped_lock lock(shutdown_suppress_lock_);
+  assert(!shutdown_suppress_disallowed_);
+  shutdown_suppress_disallowed_ = true;
+}
+
 auto BaseFeatureSet::GetReturnValue() const -> int { return return_value(); }
 
 }  // namespace ballistica::base

@@ -85,7 +85,9 @@ class MasterServerV1CallThread(threading.Thread):
 
         # Tearing the app down while this is running can lead to
         # rare crashes in LibSSL, so avoid that if at all possible.
-        babase.shutdown_suppress_begin()
+        if not babase.shutdown_suppress_begin():
+            # App is already shutting down, so we're a no-op.
+            return
 
         try:
             classic = babase.app.classic

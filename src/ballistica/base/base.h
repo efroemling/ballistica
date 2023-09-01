@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_BASE_H_
 #define BALLISTICA_BASE_BASE_H_
 
+#include <mutex>
 #include <set>
 #include <string>
 
@@ -690,9 +691,18 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   void DoPushObjCall(const PythonObjectSetBase* objset, int id,
                      const std::string& arg) override;
   void OnReachedEndOfBaBaseImport();
-  void ShutdownSuppressBegin();
+
+  /// Begin a shutdown-suppressing operation. Returns true if the operation
+  /// can proceed; otherwise shutdown has already begun and the operation
+  /// should be aborted.
+  auto ShutdownSuppressBegin() -> bool;
+
+  /// End a shutddown-suppressing operation. Should only be called after a
+  /// successful begin.
   void ShutdownSuppressEnd();
-  auto shutdown_suppress_count() const { return shutdown_suppress_count_; }
+
+  auto ShutdownSuppressGetCount() -> int;
+  void ShutdownSuppressDisallow();
 
   /// Called in the logic thread once our screen is up and assets are
   /// loading.
@@ -756,6 +766,8 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   StressTest* stress_test_;
 
   std::string console_startup_messages_;
+  std::mutex shutdown_suppress_lock_;
+  bool shutdown_suppress_disallowed_;
   int shutdown_suppress_count_{};
   bool tried_importing_plus_{};
   bool tried_importing_classic_{};
