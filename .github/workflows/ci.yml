@@ -37,7 +37,7 @@ jobs:
         python-version: '3.11'
     - name: Install dependencies
       run: tools/pcommand install_pip_reqs
-    - name: Compile binary
+    - name: Assemble server build
       run: make cmake-server-build
     - name: Run tests
       run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 BA_APP_RUN_ENABLE_BUILDS=1 BA_APP_RUN_BUILD_HEADLESS=1 make test
@@ -59,7 +59,26 @@ jobs:
       run: make spinoff-test-core
     - name: Build spinoff project with core and base featuresets
       run: make spinoff-test-base
-      
+
+  # Test spinoff feature-set copy functionality.
+  # Make a copy of the template feature-set and build with it included.
+  feature_set_copy_test_linux:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: tools/pcommand install_pip_reqs
+    - name: Create poo feature-set
+      run: tools/spinoff fset-copy template_fs poo
+    - name: Add new feature-set to project
+      run: make update
+    - name: Assemble server build
+      run: make cmake-server-build
+
   # Most of our toolset doesn't work on raw Windows without WSL set up,
   # but we can bootstrap enough to run a few things manually. It's nice to
   # run unit tests there since some behavior (filesystem, etc) can vary
