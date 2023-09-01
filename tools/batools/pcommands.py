@@ -520,9 +520,16 @@ def warm_start_asset_build() -> None:
     import os
     import subprocess
     from pathlib import Path
+
     from efrotools import getprojectconfig
+    from efro.error import CleanError
 
     pcommand.disallow_in_batch()
+
+    args = pcommand.get_args()
+    if len(args) != 1:
+        raise CleanError('Expected a single "gui" or "server" arg.')
+    cachetype = args[0]
 
     public: bool = getprojectconfig(pcommand.PROJROOT)['public']
 
@@ -530,7 +537,7 @@ def warm_start_asset_build() -> None:
         from efrotools.efrocache import warm_start_cache
 
         os.chdir(pcommand.PROJROOT)
-        warm_start_cache()
+        warm_start_cache(cachetype)
     else:
         # For internal builds we don't use efrocache but we do use an
         # internal build cache. Download an initial cache/etc. if need be.

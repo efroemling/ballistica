@@ -40,49 +40,49 @@ endif
 
 # Build everything needed for all platforms.
 all:
-	@$(PCOMMAND) warm_start_asset_build
+	@$(PCOMMAND) warm_start_asset_build gui
 	@$(MAKE) assets
 	@$(PCOMMAND) clean_orphaned_assets
 
 # Build everything needed for our cmake builds (linux, mac).
 cmake:
-	@$(PCOMMAND) warm_start_asset_build
+	@$(PCOMMAND) warm_start_asset_build gui
 	@$(MAKE) assets-cmake
 	@$(PCOMMAND) clean_orphaned_assets
 
 # Build everything needed for our server builds.
 server:
-	@echo Note - skipping warm_start_asset_build for server target.
+	@$(PCOMMAND) warm_start_asset_build server
 	@$(MAKE) assets-server
 	@$(PCOMMAND) clean_orphaned_assets
 
 # Build everything needed for x86 windows builds.
 win-Win32:
-	@$(PCOMMAND) warm_start_asset_build
+	@$(PCOMMAND) warm_start_asset_build gui
 	@$(MAKE) assets-win-Win32
 	@$(PCOMMAND) clean_orphaned_assets
 
 # Build everything needed for x86-64 windows builds.
 win-x64:
-	@$(PCOMMAND) warm_start_asset_build
+	@$(PCOMMAND) warm_start_asset_build gui
 	@$(MAKE) assets-win-x64
 	@$(PCOMMAND) clean_orphaned_assets
 
 # Build everything needed for our mac xcode builds.
 mac:
-	@$(PCOMMAND) warm_start_asset_build
+	@$(PCOMMAND) warm_start_asset_build gui
 	@$(MAKE) assets-mac
 	@$(PCOMMAND) clean_orphaned_assets
 
 # Build everything needed for our ios/tvos builds.
 ios:
-	@$(PCOMMAND) warm_start_asset_build
+	@$(PCOMMAND) warm_start_asset_build gui
 	@$(MAKE) assets-ios
 	@$(PCOMMAND) clean_orphaned_assets
 
 # Build everything needed for android.
 android:
-	@$(PCOMMAND) warm_start_asset_build
+	@$(PCOMMAND) warm_start_asset_build gui
 	@$(MAKE) assets-android
 	@$(PCOMMAND) clean_orphaned_assets
 

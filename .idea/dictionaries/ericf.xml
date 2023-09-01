@@ -249,6 +249,7 @@
       <w>bametainternal</w>
       <w>baplus</w>
       <w>baplusmeta</w>
+      <w>bapoo</w>
       <w>barcolor</w>
       <w>barebones</w>
       <w>bargs</w>
@@ -406,8 +407,10 @@
       <w>cachedir</w>
       <w>cacheentry</w>
       <w>cachefile</w>
+      <w>cachefname</w>
       <w>cachemap</w>
       <w>cachepath</w>
+      <w>cachetype</w>
       <w>cadata</w>
       <w>cafile</w>
       <w>calced</w>
@@ -1028,6 +1031,7 @@
       <w>fflush</w>
       <w>fhash</w>
       <w>fhashes</w>
+      <w>fhashpath</w>
       <w>fhashpaths</w>
       <w>fhdr</w>
       <w>fieldattr</w>
@@ -2577,6 +2581,7 @@
       <w>sbylw</w>
       <w>sbytes</w>
       <w>scanresults</w>
+      <w>scarchivename</w>
       <w>scenefile</w>
       <w>scenefiles</w>
       <w>scenename</w>
@@ -2584,6 +2589,7 @@
       <w>sched</w>
       <w>sclx</w>
       <w>scly</w>
+      <w>scname</w>
       <w>scoreconfig</w>
       <w>scorescreen</w>
       <w>scoreteam</w>
@@ -2793,6 +2799,7 @@
       <w>standin</w>
       <w>starscale</w>
       <w>startercache</w>
+      <w>startercacheserver</w>
       <w>startms</w>
       <w>startscan</w>
       <w>startsplits</w>

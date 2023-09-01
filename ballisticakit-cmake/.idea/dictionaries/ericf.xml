@@ -152,6 +152,7 @@
       <w>bametainternal</w>
       <w>baplus</w>
       <w>baplusmeta</w>
+      <w>bapoo</w>
       <w>barebones</w>
       <w>bargs</w>
       <w>bascenev</w>
@@ -268,6 +269,8 @@
       <w>bwst</w>
       <w>cacert</w>
       <w>cachedir</w>
+      <w>cachefname</w>
+      <w>cachetype</w>
       <w>cadata</w>
       <w>cafile</w>
       <w>calced</w>
@@ -639,6 +642,7 @@
       <w>fffffffffifff</w>
       <w>fflush</w>
       <w>fgets</w>
+      <w>fhashpath</w>
       <w>fhashpaths</w>
       <w>fieldname</w>
       <w>fieldpath</w>
@@ -1532,8 +1536,10 @@
       <w>sbytes</w>
       <w>scancode</w>
       <w>scanresults</w>
+      <w>scarchivename</w>
       <w>scenepacket</w>
       <w>scenetime</w>
+      <w>scname</w>
       <w>screenmessage</w>
       <w>scriptdst</w>
       <w>scrollwidget</w>
@@ -1656,6 +1662,7 @@
       <w>stager</w>
       <w>standin</w>
       <w>startedptr</w>
+      <w>startercacheserver</w>
       <w>startms</w>
       <w>startpos</w>
       <w>startsplits</w>

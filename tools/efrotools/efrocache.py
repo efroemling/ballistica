@@ -360,7 +360,7 @@ def update_cache(makefile_dirs: list[str]) -> None:
             # prebuilt binaries tend to be larger and we don't want to
             # include a bunch of binaries for other platforms that we
             # won't use.
-            if os.path.getsize(fullpath) < 100000:
+            if os.path.getsize(fullpath) < 200_000:
                 # Gui starter gets everything.
                 fnames_starter_gui.append(fullpath)
 
@@ -659,7 +659,7 @@ def _check_warm_start_entries(entries: list[tuple[str, str]]) -> None:
         list(executor.map(_check_warm_start_entry, entries))
 
 
-def warm_start_cache() -> None:
+def warm_start_cache(cachetype: str) -> None:
     """Run a pre-pass on the efrocache to improve efficiency.
 
     This may fetch an initial cache archive, batch update mod times
@@ -667,16 +667,23 @@ def warm_start_cache() -> None:
     """
     import tempfile
 
+    if cachetype not in {'gui', 'server'}:
+        raise ValueError(f"Invalid cachetype '{cachetype}'.")
+
     base_url = get_repository_base_url()
     local_cache_dir = get_local_cache_dir()
 
-    # We maintain a starter archive on the staging server, which is simply
-    # a set of commonly used recent cache entries compressed into a
-    # single archive. If we have no local cache yet we can download and
-    # expand this to give us a nice head start and greatly reduce the
-    # initial set of individual files we have to fetch. (downloading a
-    # single compressed archive is much more efficient than downloading
-    # thousands)
+    cachefname = (
+        'startercacheserver' if cachetype == 'server' else 'startercache'
+    )
+
+    # We maintain starter-cache archives on the staging server, which
+    # are simply sets of commonly used recent cache entries compressed
+    # into a single archive. If we have no local cache yet we can
+    # download and expand this to give us a nice head start and greatly
+    # reduce the initial set of individual files we have to fetch
+    # (downloading a single compressed archive is much more efficient
+    # than downloading thousands).
     if not os.path.exists(local_cache_dir):
         print('Downloading efrocache starter-archive...', flush=True)
 
@@ -684,13 +691,13 @@ def warm_start_cache() -> None:
         # and then move it into place as our shiny new cache dir.
         with tempfile.TemporaryDirectory() as tmpdir:
             starter_cache_file_path = os.path.join(
-                tmpdir, 'startercache.tar.xz'
+                tmpdir, f'{cachefname}.tar.xz'
             )
             subprocess.run(
                 [
                     'curl',
                     '--fail',
-                    f'{base_url}/startercache.tar.xz',
+                    f'{base_url}/{cachefname}.tar.xz',
                     '--output',
                     starter_cache_file_path,
                 ],

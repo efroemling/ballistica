@@ -9,6 +9,11 @@
   it.
 - Public builds now properly reconstruct the CMakeLists.txt file for project
   changes.
+- Efrocache now supports a starter-archive when building server builds. This
+  means that if you do something like `make clean; make
+  prefab-server-release-build` you should only see a few file downloads
+  happening instead of hundreds or thousands which would happen before, which
+  should be significantly faster & more efficient.
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 
