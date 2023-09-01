@@ -79,6 +79,8 @@ jobs:
       run: make update
     - name: Assemble modular server build
       run: make cmake-modular-server-build
+    - name: Make sure poo is present in build
+      run: cd build/cmake/modular-server-debug/staged/dist && PYTHONPATH=ba_data/python ./ballisticakit_headless -c "import baenv; baenv.configure(); import bapoo; print(bapoo)"
 
   # Most of our toolset doesn't work on raw Windows without WSL set up,
   # but we can bootstrap enough to run a few things manually. It's nice to
