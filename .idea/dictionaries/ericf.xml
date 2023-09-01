@@ -1028,6 +1028,7 @@
       <w>fflush</w>
       <w>fhash</w>
       <w>fhashes</w>
+      <w>fhashpaths</w>
       <w>fhdr</w>
       <w>fieldattr</w>
       <w>fieldname</w>
@@ -1326,6 +1327,7 @@
       <w>hashobj</w>
       <w>hashopenssl</w>
       <w>hashpath</w>
+      <w>hashpaths</w>
       <w>hashstr</w>
       <w>hashtype</w>
       <w>hashval</w>

@@ -639,6 +639,7 @@
       <w>fffffffffifff</w>
       <w>fflush</w>
       <w>fgets</w>
+      <w>fhashpaths</w>
       <w>fieldname</w>
       <w>fieldpath</w>
       <w>fifteenbits</w>
@@ -803,6 +804,7 @@
       <w>handfull</w>
       <w>handlemessage</w>
       <w>hashfiles</w>
+      <w>hashpaths</w>
       <w>hastouchscreen</w>
       <w>hatmotion</w>
       <w>haveint</w>

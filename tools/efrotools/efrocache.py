@@ -297,6 +297,7 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
 
 def update_cache(makefile_dirs: list[str]) -> None:
     """Given a list of directories containing Makefiles, update caches."""
+    # pylint: disable=too-many-locals
 
     import multiprocessing
 
@@ -304,8 +305,20 @@ def update_cache(makefile_dirs: list[str]) -> None:
 
     # Build a list of files going into our starter cache, files going
     # into our headless starter cache, and all files.
-    fnames_starter: list[str] = []
+    fnames_starter_gui: list[str] = []
+    fnames_starter_server: list[str] = []
     fnames_all: list[str] = []
+
+    # If a path contains any of these substrings it will be included in
+    # the server starter cache.
+    server_starter_paths = {
+        'build/assets/ba_data/fonts',
+        'build/assets/ba_data/data',
+        'build/assets/ba_data/python',
+        'build/assets/ba_data/python-site-packages',
+        'build/assets/ba_data/meshes',
+    }
+
     for path in makefile_dirs:
         cdp = f'cd {path} && ' if path else ''
 
@@ -340,12 +353,24 @@ def update_cache(makefile_dirs: list[str]) -> None:
         for rawpath in rawpaths:
             fullpath = _project_centric_path(os.path.join(path, rawpath))
 
-            # The main reason for this cache is to reduce round trips to
-            # the staging server for tiny files, so let's include small
-            # files only here. For larger stuff its ok to have a request
-            # per file..
+            # The main reason for starter caches is to reduce overhead
+            # for downloading individual tiny files, so let's include
+            # small files only in starter lists. For larger stuff, a
+            # request per file shouldn't be too inefficient. Also,
+            # prebuilt binaries tend to be larger and we don't want to
+            # include a bunch of binaries for other platforms that we
+            # won't use.
             if os.path.getsize(fullpath) < 100000:
-                fnames_starter.append(fullpath)
+                # Gui starter gets everything.
+                fnames_starter_gui.append(fullpath)
+
+                # For server starter, limit to a few key dirs.
+                if any(p in fullpath for p in server_starter_paths):
+                    # We include the meshes dir but we only want
+                    # collision meshes; not display ones.
+                    if not fullpath.endswith('.bob'):
+                        fnames_starter_server.append(fullpath)
+
             fnames_all.append(fullpath)
 
     # Ok, we've got a big list of filenames we need to cache in the
@@ -364,7 +389,13 @@ def update_cache(makefile_dirs: list[str]) -> None:
             flush=True,
         )
     else:
-        _update_cloud_cache(fnames_starter, fnames_all, hashes, hashes_existing)
+        _update_cloud_cache(
+            fnames_starter_gui,
+            fnames_starter_server,
+            fnames_all,
+            hashes,
+            hashes_existing,
+        )
 
     print(f'{Clr.SBLU}Efrocache update successful!{Clr.RST}')
 
@@ -392,7 +423,8 @@ def _gen_complete_state_hashes(fnames: list[str]) -> str:
 
 
 def _update_cloud_cache(
-    fnames_starter: list[str],
+    fnames_starter_gui: list[str],
+    fnames_starter_server: list[str],
     fnames_all: list[str],
     hashes_str: str,
     hashes_existing_str: str,
@@ -423,11 +455,22 @@ def _update_cloud_cache(
     subprocess.run(['rm', '-rf', staging_dir], check=True)
     subprocess.run(['mkdir', '-p', staging_dir], check=True)
 
-    _gather_cache_files(fnames_starter, fnames_all, staging_dir, mapping_file)
+    _gather_cache_files(
+        fnames_starter_gui,
+        fnames_starter_server,
+        fnames_all,
+        staging_dir,
+        mapping_file,
+    )
 
     print(
-        f'{Clr.SBLU}Starter cache includes {len(fnames_starter)} items;'
-        f' excludes {len(fnames_all) - len(fnames_starter)}{Clr.RST}'
+        f'{Clr.SBLU}Starter gui cache includes {len(fnames_starter_gui)} items;'
+        f' excludes {len(fnames_all) - len(fnames_starter_gui)}{Clr.RST}'
+    )
+    print(
+        f'{Clr.SBLU}Starter server cache includes'
+        f' {len(fnames_starter_server)} items;'
+        f' excludes {len(fnames_all) - len(fnames_starter_server)}{Clr.RST}'
     )
 
     # Sync all individual cache files to the staging server.
@@ -458,7 +501,8 @@ def _update_cloud_cache(
 
 
 def _gather_cache_files(
-    fnames_starter: list[str],
+    fnames_starter_gui: list[str],
+    fnames_starter_server: list[str],
     fnames_all: list[str],
     staging_dir: str,
     mapping_file: str,
@@ -478,10 +522,13 @@ def _gather_cache_files(
             names_to_hashpaths[fname] = fhashpath
             fhashpaths_all.add(fhashpath)
 
-    # Now calc hashpaths for our starter file set.
-    fhashpaths_starter: set[str] = set()
-    for fname in fnames_starter:
-        fhashpaths_starter.add(names_to_hashpaths[fname])
+    # Now calc hashpaths for our starter file sets.
+    fhashpaths_starter_gui: set[str] = set()
+    for fname in fnames_starter_gui:
+        fhashpaths_starter_gui.add(names_to_hashpaths[fname])
+    fhashpaths_starter_server: set[str] = set()
+    for fname in fnames_starter_server:
+        fhashpaths_starter_server.add(names_to_hashpaths[fname])
 
     # We want the server to have a startercache(server).tar.xz files
     # which contain the entire subsets we were passed. It is much more
@@ -497,26 +544,33 @@ def _gather_cache_files(
         'import os\n'
         'import pathlib\n'
         'import subprocess\n'
-        f'fnames_starter = {repr(fhashpaths_starter)}\n'
+        f'fnames_starter_gui = {repr(fhashpaths_starter_gui)}\n'
+        f'fnames_starter_server = {repr(fhashpaths_starter_server)}\n'
         f'fnames_all = {repr(fhashpaths_all)}\n'
-        'subprocess.run(["rm", "-rf", "efrocache"], check=True)\n'
-        'print("Gathering starter cache files...", flush=True)\n'
-        'for fname in fnames_starter:\n'
-        '    dst = os.path.join("efrocache", fname)\n'
-        '    os.makedirs(os.path.dirname(dst), exist_ok=True)\n'
-        '    subprocess.run(["cp", fname, dst], check=True)\n'
-        'print("Touching full file set...", flush=True)\n'
+        'print("Updating modtimes on all current cache files...", flush=True)\n'
         'for fname in fnames_all:\n'
         '    fpath = pathlib.Path(fname)\n'
         '    assert fpath.exists()\n'
         '    fpath.touch()\n'
-        'print("Compressing starter cache archive...", flush=True)\n'
-        'subprocess.run(["tar", "-Jcf", "tmp.tar.xz", "efrocache"],'
+        'for scname, scarchivename, fnames_starter in [\n'
+        '      ("gui", "startercache", fnames_starter_gui),\n'
+        '      ("server", "startercacheserver", fnames_starter_server)]:\n'
+        '    print(f"Gathering {scname} starter-cache files...", flush=True)\n'
+        '    subprocess.run(["rm", "-rf", "efrocache"], check=True)\n'
+        '    for fname in fnames_starter:\n'
+        '        dst = os.path.join("efrocache", fname)\n'
+        '        os.makedirs(os.path.dirname(dst), exist_ok=True)\n'
+        '        subprocess.run(["cp", fname, dst], check=True)\n'
+        '    print(f"Compressing {scname} starter-cache archive...",'
+        ' flush=True)\n'
+        '    subprocess.run(["tar", "-Jcf", "tmp.tar.xz", "efrocache"],'
         ' check=True)\n'
-        'subprocess.run(["mv", "tmp.tar.xz", "startercache.tar.xz"],'
+        '    subprocess.run(["mv", "tmp.tar.xz", f"{scarchivename}.tar.xz"],'
         ' check=True)\n'
-        'subprocess.run(["rm", "-rf", "efrocache", "genstartercache.py"])\n'
-        'print("Starter cache generation complete!", flush=True)\n'
+        '    subprocess.run(["rm", "-rf", "efrocache"], check=True)\n'
+        '    print(scname.capitalize() + "starter-cache generation complete!",'
+        ' flush=True)\n'
+        'subprocess.run(["rm", "-rf", "genstartercache.py"])\n'
     )
 
     with open(
