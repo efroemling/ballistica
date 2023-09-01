@@ -611,20 +611,19 @@ class ProjectUpdater:
         self._generated_files[fname] = '\n'.join(lines) + '\n'
 
     def _update_cmake_files(self) -> None:
-        # Note: currently not updating cmake files at all in public
-        # builds; will need to get this working at some point.
 
-        # Top level cmake builds:
-        fname = 'ballisticakit-cmake/CMakeLists.txt'
-        if not self.public:
-            self.enqueue_update(fname)
+        # Our regular cmake build.
+        self.enqueue_update('ballisticakit-cmake/CMakeLists.txt')
 
-        # CMake android components:
+        # Our Android cmake build (Currently not included in public).
         fname = (
             'ballisticakit-android/BallisticaKit/src/main/cpp/CMakeLists.txt'
         )
         if not self.public:
             self.enqueue_update(fname)
+        else:
+            # So we don't forget to turn this on once added.
+            assert not os.path.exists(fname)
 
     def _find_sources_and_headers(self, scan_dir: str) -> None:
         src_files = set()
