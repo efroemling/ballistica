@@ -303,21 +303,38 @@ def update_cache(makefile_dirs: list[str]) -> None:
 
     cpus = multiprocessing.cpu_count()
 
-    # Build a list of files going into our starter cache, files going
-    # into our headless starter cache, and all files.
+    # Build lists of all cached paths as well as the subsets going into
+    # our starter caches.
     fnames_starter_gui: list[str] = []
     fnames_starter_server: list[str] = []
     fnames_all: list[str] = []
 
     # If a path contains any of these substrings it will be included in
     # the server starter cache.
-    server_starter_paths = {
+    add_to_server_starter_paths = {
         'build/assets/ba_data/fonts',
         'build/assets/ba_data/data',
         'build/assets/ba_data/python',
         'build/assets/ba_data/python-site-packages',
         'build/assets/ba_data/meshes',
     }
+
+    # Never add binaries to starter caches since those are specific to
+    # one platform/architecture; we should always download those
+    # as-needed.
+    never_add_to_starter_endings = {
+        '.a',
+        '.dll',
+        '.lib',
+        '.exe',
+        '.pdb',
+        '.so',
+        '.pyd',
+    }
+
+    # We do include model dirs for server starters but want to filter out
+    # display meshes there.
+    never_add_to_starter_endings_server = {'.bob'}
 
     for path in makefile_dirs:
         cdp = f'cd {path} && ' if path else ''
@@ -348,30 +365,46 @@ def update_cache(makefile_dirs: list[str]) -> None:
                     f'(absolute paths not allowed): {rawpath}'
                 )
 
-        # Break these into 2 lists, one of which will be included in the
-        # starter-cache.
         for rawpath in rawpaths:
             fullpath = _project_centric_path(os.path.join(path, rawpath))
 
-            # The main reason for starter caches is to reduce overhead
-            # for downloading individual tiny files, so let's include
-            # small files only in starter lists. For larger stuff, a
-            # request per file shouldn't be too inefficient. Also,
-            # prebuilt binaries tend to be larger and we don't want to
-            # include a bunch of binaries for other platforms that we
-            # won't use.
-            if os.path.getsize(fullpath) < 200_000:
-                # Gui starter gets everything.
-                fnames_starter_gui.append(fullpath)
-
-                # For server starter, limit to a few key dirs.
-                if any(p in fullpath for p in server_starter_paths):
-                    # We include the meshes dir but we only want
-                    # collision meshes; not display ones.
-                    if not fullpath.endswith('.bob'):
-                        fnames_starter_server.append(fullpath)
-
+            # Always add to our full list.
             fnames_all.append(fullpath)
+
+            # Now selectively add to starter cache lists.
+
+            # Always keep certain file types out of starter caches.
+            if any(
+                fullpath.endswith(ending)
+                for ending in never_add_to_starter_endings
+            ):
+                continue
+
+            # Keep big files out of starter caches. The main benefits of
+            # the cache is that we can reduce the overhead for
+            # downloading individual tiny files by grabbing them all at
+            # once, but that advantage diminishes as the files get
+            # bigger. And not all platforms will use all files, so it
+            # generally more efficient to grab bigger ones as needed.
+            if os.path.getsize(fullpath) > 300_000:
+                continue
+
+            # Gui starter gets everything that made it this far.
+            fnames_starter_gui.append(fullpath)
+
+            # For server starter, limit to a few key dirs.
+            if not any(p in fullpath for p in add_to_server_starter_paths):
+                continue
+
+            # Also exclude some endings from server starters.
+            if any(
+                fullpath.endswith(ending)
+                for ending in never_add_to_starter_endings_server
+            ):
+                continue
+
+            # Ok this one qualifies for the server starter too.
+            fnames_starter_server.append(fullpath)
 
     # Ok, we've got a big list of filenames we need to cache in the
     # cloud. First, however, let's do a big hash of everything and if

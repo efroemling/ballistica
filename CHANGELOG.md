@@ -1,4 +1,4 @@
-### 1.7.28 (build 21298, api 8, 2023-09-01)
+### 1.7.28 (build 21299, api 8, 2023-09-01)
 
 - Added some high level functionality for copying and deleting feature-sets to
   the `tools/spinoff` tool. For example, to create your own `poo` feature-set,
