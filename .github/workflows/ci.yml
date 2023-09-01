@@ -37,7 +37,7 @@ jobs:
         python-version: '3.11'
     - name: Install dependencies
       run: tools/pcommand install_pip_reqs
-    - name: Assemble server build
+    - name: Assemble monolithic server build
       run: make cmake-server-build
     - name: Run tests
       run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 BA_APP_RUN_ENABLE_BUILDS=1 BA_APP_RUN_BUILD_HEADLESS=1 make test
@@ -62,6 +62,7 @@ jobs:
 
   # Test spinoff feature-set copy functionality.
   # Make a copy of the template feature-set and build with it included.
+  # Also take the opportunity to test a modular build (we did monolithic above).
   feature_set_copy_test_linux:
     runs-on: ubuntu-22.04
     steps:
@@ -76,8 +77,8 @@ jobs:
       run: tools/spinoff fset-copy template_fs poo
     - name: Add new feature-set to project
       run: make update
-    - name: Assemble server build
-      run: make cmake-server-build
+    - name: Assemble modular server build
+      run: make cmake-modular-server-build
 
   # Most of our toolset doesn't work on raw Windows without WSL set up,
   # but we can bootstrap enough to run a few things manually. It's nice to
