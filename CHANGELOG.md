@@ -1,4 +1,4 @@
-### 1.7.28 (build 21293, api 8, 2023-08-31)
+### 1.7.28 (build 21295, api 8, 2023-09-01)
 
 - Added some high level functionality for copying and deleting feature-sets to
   the `tools/spinoff` tool. For example, to create your own `poo` feature-set,
@@ -7,6 +7,8 @@
   `import bapoo` to get at your nice shiny poo feature-set. When you are done
   playing, you can do `tools/spinoff fset-delete poo` to blow away any traces of
   it.
+- Public builds now properly reconstruct the CMakeLists.txt file for project
+  changes.
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 
