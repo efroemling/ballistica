@@ -50,7 +50,8 @@ class AppComponentSubsystem:
         # Currently limiting this to logic-thread use; can revisit if
         # needed (would need to guard access to our implementations
         # dict).
-        assert _babase.in_logic_thread()
+        if not _babase.in_logic_thread():
+            raise RuntimeError('this must be called from the logic thread.')
 
         if not issubclass(implementation, baseclass):
             raise TypeError(
@@ -73,7 +74,8 @@ class AppComponentSubsystem:
         If no custom implementation has been set, the provided
         base-class is returned.
         """
-        assert _babase.in_logic_thread()
+        if not _babase.in_logic_thread():
+            raise RuntimeError('this must be called from the logic thread.')
 
         del baseclass  # Unused.
         return cast(T, None)
@@ -87,7 +89,9 @@ class AppComponentSubsystem:
         loop. Note that any further setclass calls before the callback
         runs will not result in additional callbacks.
         """
-        assert _babase.in_logic_thread()
+        if not _babase.in_logic_thread():
+            raise RuntimeError('this must be called from the logic thread.')
+
         self._change_callbacks.setdefault(baseclass, []).append(callback)
 
     def _run_change_callbacks(self) -> None:

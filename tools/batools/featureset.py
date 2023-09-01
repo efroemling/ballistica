@@ -208,6 +208,62 @@ class FeatureSet:
                 ' not allowed.'
             )
 
+    @property
+    def path_config_file(self) -> str:
+        """Project-relative path to the file defining this feature-set."""
+        return f'config/featuresets/featureset_{self.name}.py'
+
+    @property
+    def path_python_package(self) -> str:
+        """Project-relative path for this feature-set's Python package.
+
+        Note that this does not mean that the package actually exists;
+        this just shows where it would.
+        """
+        return f'src/assets/ba_data/python/{self.name_python_package}'
+
+    @property
+    def path_python_package_meta(self) -> str:
+        """Project-relative path for this feature-set's Python meta package.
+
+        Note that this does not mean that the package actually exists;
+        this just shows where it would.
+        """
+        return f'src/meta/{self.name_python_package_meta}'
+
+    @property
+    def path_python_package_tests(self) -> str:
+        """Project-relative path for this feature-set's Python tests package.
+
+        Note that this does not mean that the package actually exists;
+        this just shows where it would.
+        """
+        return f'tests/{self.name_python_package_tests}'
+
+    @property
+    def path_native_source(self) -> str:
+        """Project-relative path for this feature-set's native source.
+
+        Note that this does not mean that such source actually exists;
+        this just shows where it would.
+        """
+        return f'src/ballistica/{self.name}'
+
+    @property
+    def paths(self) -> list[str]:
+        """Return all file/dir paths associated with this feature-set.
+
+        Paths are project relative and may not actually exist; this just
+        gives their theoretical locations.
+        """
+        return [
+            self.path_config_file,
+            self.path_python_package,
+            self.path_native_source,
+            self.path_python_package_meta,
+            self.path_python_package_tests,
+        ]
+
     @classmethod
     def get_active(cls) -> FeatureSet:
         """Return the FeatureSet currently being defined.

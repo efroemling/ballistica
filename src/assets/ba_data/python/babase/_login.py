@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, final
 
 from bacommon.login import LoginType
+
 import _babase
 
 if TYPE_CHECKING:

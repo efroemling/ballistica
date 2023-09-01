@@ -33,9 +33,9 @@ class Command(Enum):
     OVERRIDE = 'override'
     DIFF = 'diff'
     BACKPORT = 'backport'
-    FEATURESETS = 'featuresets'
     CREATE = 'create'
     ADD_SUBMODULE_PARENT = 'add-submodule-parent'
+    FEATURE_SET_LIST = 'fset-list'
     FEATURE_SET_COPY = 'fset-copy'
     FEATURE_SET_DELETE = 'fset-delete'
 
@@ -98,7 +98,7 @@ def _main() -> None:
         _do_override(src_root, dst_root)
     elif cmd is Command.BACKPORT:
         _do_backport(src_root, dst_root)
-    elif cmd is Command.FEATURESETS:
+    elif cmd is Command.FEATURE_SET_LIST:
         _do_featuresets(dst_root)
     elif cmd is Command.CREATE:
         _do_create(src_root, dst_root)
@@ -166,7 +166,9 @@ def _do_create(src_root: str | None, dst_root: str) -> None:
     if len(args) != 2:
         raise CleanError(f'Expected a name and path arg; got {args}.')
 
+    # pylint: disable=useless-suppression
     name, path = args  # pylint: disable=unbalanced-tuple-unpacking
+    # pylint: enable=useless-suppression
 
     if not name:
         raise CleanError('Name cannot be an empty string.')
@@ -260,24 +262,6 @@ def _do_featuresets(dst_root: str) -> None:
         print(f'  {Clr.BLU}{fset.name}{Clr.RST}')
 
 
-def _fset_paths() -> list[str]:
-    """Given a feature-set, return all paths associated with it."""
-    return [
-        'config/featuresets/featureset_$(NAME).py',
-        'src/assets/ba_data/python/$(NAME_PY_PKG)',
-        'src/ballistica/$(NAME)',
-        'src/meta/$(NAME_PY_PKG_META)',
-    ]
-
-
-def _filter_fset_path(path: str, fset: FeatureSet) -> str:
-    return (
-        path.replace('$(NAME)', fset.name)
-        .replace('$(NAME_PY_PKG)', fset.name_python_package)
-        .replace('$(NAME_PY_PKG_META)', fset.name_python_package_meta)
-    )
-
-
 def _do_featureset_delete() -> None:
     from batools.featureset import FeatureSet
 
@@ -294,9 +278,7 @@ def _do_featureset_delete() -> None:
     if not os.path.exists('config/featuresets'):
         raise CleanError('Cannot run from this directory.')
 
-    paths_to_delete: list[str] = []
-    for path in _fset_paths():
-        paths_to_delete.append(_filter_fset_path(path, fset))
+    paths_to_delete: list[str] = fset.paths
 
     print(
         '\n' + '⎯' * 80 + f'\n{Clr.BLD}Deleting feature-set{Clr.RST}'
@@ -309,7 +291,7 @@ def _do_featureset_delete() -> None:
     for path in paths_to_delete:
         if os.path.exists(path):
             found_something = True
-            print(f'  Deleting {Clr.MAG}{path}{Clr.RST}')
+            print(f'  Deleting {Clr.RED}{path}{Clr.RST}')
             subprocess.run(['rm', '-rf', path], check=True)
     if not found_something:
         print(
@@ -362,17 +344,15 @@ def _do_featureset_copy() -> None:
         raise CleanError(f"Src feature-set '{src}' not found.")
 
     # Make sure dst does *not* exist (unless we're forcing).
-    if os.path.exists(f'config/featuresets/featureset_{dst}.py') and not force:
+    if os.path.exists(dstfs.path_config_file) and not force:
         raise CleanError(
             f"Dst feature-set '{dst}' already exists."
             ' Use --force to blow it away.'
         )
 
     paths_to_copy: list[tuple[str, str]] = []
-    for path in _fset_paths():
-        paths_to_copy.append(
-            (_filter_fset_path(path, srcfs), _filter_fset_path(path, dstfs))
-        )
+    for srcpath, dstpath in zip(srcfs.paths, dstfs.paths):
+        paths_to_copy.append((srcpath, dstpath))
 
     # Replace variations of our name. Note that we don't have to include
     # stuff like name_python_package_meta here because that is covered
@@ -387,10 +367,10 @@ def _do_featureset_copy() -> None:
     ]
 
     # Sanity check: we don't currently support renaming subdirs, so error
-    # if that would happen.
+    # if that would need to happen.
     for srcpath, _dstpath in paths_to_copy:
-        for root, dirs, _fnames in os.walk(srcpath):
-            for dname in dirs:
+        for root, dnames, _fnames in os.walk(srcpath):
+            for dname in dnames:
                 if any(sub[0] in dname for sub in subs):
                     raise CleanError(
                         'Directory name filtering is not supported'
@@ -451,6 +431,10 @@ def _do_featureset_copy_dir(
     # Eww; reinventing the wheel here; should tap into existing
     # spinoff logic or something.
     cruft_names = ['.DS_Store', 'mgen', '_mgen']
+    cruft_exts = ['.pyc']
+
+    def _is_cruft(name: str) -> bool:
+        return name in cruft_names or any(name.endswith(x) for x in cruft_exts)
 
     # We currently just copy the full dir and then rename/filter
     # individual files. If we need to filter subdir names at some point
@@ -458,16 +442,19 @@ def _do_featureset_copy_dir(
     subprocess.run(['cp', '-r', srcpath, dstpath], check=True)
     for root, dnames, fnames in os.walk(dstpath, topdown=True):
         for dname in dnames:
-            if dname in cruft_names:
-                # Prevent us from recursing into it and blow it away.
+            if _is_cruft(dname):
+                # Blow away cruft dirs and don't recurse into them.
                 dnames.remove(dname)
                 subprocess.run(
                     ['rm', '-rf', os.path.join(root, dname)], check=True
                 )
         for fname in fnames:
-            if fname in cruft_names:
+            if _is_cruft(fname):
+                # Blow away and ignore cruft files.
                 os.unlink(os.path.join(root, fname))
                 continue
+
+            # Rename files.
             fnamefilt = fname
             for subsrc, subdst in subs:
                 fnamefilt = fnamefilt.replace(subsrc, subdst)
@@ -480,7 +467,8 @@ def _do_featureset_copy_dir(
                     ],
                     check=True,
                 )
-            # Now filter contents.
+
+            # Filter file contents.
             if not any(fname.endswith(ext) for ext in filtered_exts):
                 print(
                     f'{Clr.YLW}WARNING:'
@@ -593,8 +581,6 @@ def _print_available_commands() -> None:
             'Remove files from spinoff, leaving local copies in place.\n'
             f'  {bgn}backport [file]{end}      '
             'Help get changes to spinoff dst files back to src.\n'
-            f'  {bgn}featuresets{end}          '
-            'List featuresets present in the current project.\n'
             f'  {bgn}create [name, path]{end}  '
             'Create a new spinoff project based on this src one.\n'
             '                       Name should be passed in CamelCase form.\n'
@@ -620,13 +606,16 @@ def _print_available_commands() -> None:
             '                       achieved by passing --submodule-parent to'
             ' the \'create\'\n'
             '                       command.\n'
-            f'  {bgn}fset-copy [src, dst]{end} Copy feature-set src to dst.'
-            ' Replaces variations of src\n'
-            '                       feature-set name with dst equivalent,'
-            ' though may need\n'
+            f'  {bgn}fset-list{end}            '
+            'List featuresets present in the current project.\n'
+            f'  {bgn}fset-copy [src, dst]{end} Copy feature-set src to dst'
+            ' in the current project.\n'
+            '                       Replaces variations of src feature-set'
+            ' name with equivalent from dst, though may need\n'
             '                       some manual correction afterwards to be'
             ' functional.\n'
-            f'  {bgn}fset-delete [name]{end}   Delete a feature-set.'
+            f'  {bgn}fset-delete [name]{end}   Delete a feature-set from the'
+            ' current project.'
         ),
         file=sys.stderr,
     )
