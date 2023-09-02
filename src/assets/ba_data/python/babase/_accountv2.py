@@ -64,7 +64,7 @@ class AccountV2Subsystem:
 
     def set_primary_credentials(self, credentials: str | None) -> None:
         """Set credentials for the primary app account."""
-        raise RuntimeError('This should be overridden.')
+        raise NotImplementedError('This should be overridden.')
 
     def have_primary_credentials(self) -> bool:
         """Are credentials currently set for the primary app account?
@@ -73,7 +73,7 @@ class AccountV2Subsystem:
         only that they exist. If/when credentials are validated, the 'primary'
         account handle will be set.
         """
-        raise RuntimeError('This should be overridden.')
+        raise NotImplementedError('This should be overridden.')
 
     @property
     def primary(self) -> AccountV2Handle | None:

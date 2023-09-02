@@ -991,12 +991,13 @@ void Graphics::ClearFrameDefDeleteList() {
 }
 
 void Graphics::FadeScreen(bool to, millisecs_t time, PyObject* endcall) {
+  BA_PRECONDITION(g_base->InLogicThread());
   // If there's an ourstanding fade-end command, go ahead and run it.
   // (otherwise, overlapping fades can cause things to get lost)
   if (fade_end_call_.Exists()) {
     if (g_buildconfig.debug_build()) {
       Log(LogLevel::kWarning,
-          "2 fades overlapping; running first fade-end-call early");
+          "2 fades overlapping; running first fade-end-call early.");
     }
     fade_end_call_->Schedule();
     fade_end_call_.Clear();
@@ -1089,7 +1090,7 @@ void Graphics::ApplyCamera(FrameDef* frame_def) {
 void Graphics::DrawWorld(FrameDef* frame_def) {
   assert(!g_core->HeadlessMode());
 
-  // Draw all session contents (nodes, etc.)
+  // Draw the world.
   overlay_node_z_depth_ = -0.95f;
   g_base->app_mode()->DrawWorld(frame_def);
   g_base->bg_dynamics->Draw(frame_def);
@@ -1120,9 +1121,6 @@ void Graphics::BuildAndPushFrameDef() {
   // layer is fully bootstrapped.
   BA_PRECONDITION_FATAL(g_base->logic->app_bootstrapping_complete());
 
-  // This should no longer be necessary..
-  WaitForRendererToExist();
-
   millisecs_t app_time_millisecs = g_core->GetAppTimeMillisecs();
 
   // Store how much time this frame_def represents.
@@ -1132,8 +1130,9 @@ void Graphics::BuildAndPushFrameDef() {
       millisecs_t{50}, display_time_millisecs - last_create_frame_def_time_);
   last_create_frame_def_time_ = display_time_millisecs;
 
-  // This probably should not be here. Though I guess we get the most up-to-date
-  // values possible this way. But it should probably live in g_input.
+  // This probably should not be here. Though I guess we get the most
+  // up-to-date values possible this way. But it should probably live in
+  // g_input.
   UpdateGyro(app_time_millisecs, elapsed);
 
   FrameDef* frame_def = GetEmptyFrameDef();
@@ -1184,9 +1183,9 @@ void Graphics::BuildAndPushFrameDef() {
     // Draw our light/shadow images to the screen if desired.
     DrawDebugBuffers(overlay_pass);
 
-    // In high-quality modes we draw a screen-quad as a catch-all for blitting
-    // the world buffer to the screen (other nodes can add their own blitters
-    // such as distortion shapes which will have priority).
+    // In high-quality modes we draw a screen-quad as a catch-all for
+    // blitting the world buffer to the screen (other nodes can add their
+    // own blitters such as distortion shapes which will have priority).
     if (frame_def->quality() >= GraphicsQuality::kHigh) {
       PostProcessComponent c(frame_def->blit_pass());
       c.DrawScreenQuad();
@@ -1195,8 +1194,8 @@ void Graphics::BuildAndPushFrameDef() {
 
     DrawFades(frame_def, app_time_millisecs);
 
-    // Sanity test: If we're in VR, the only reason we should have stuff in the
-    // flat overlay pass is if there's windows present (we want to avoid
+    // Sanity test: If we're in VR, the only reason we should have stuff in
+    // the flat overlay pass is if there's windows present (we want to avoid
     // drawing/blitting the 2d UI buffer during gameplay for efficiency).
     if (g_core->IsVRMode()) {
       if (frame_def->GetOverlayFlatPass()->HasDrawCommands()) {
@@ -1219,9 +1218,9 @@ void Graphics::BuildAndPushFrameDef() {
 
   frame_def->Finalize();
 
-  // Include all mesh-data loads and unloads that have accumulated up to this
-  // point the graphics thread will have to handle these before rendering the
-  // frame_def.
+  // Include all mesh-data loads and unloads that have accumulated up to
+  // this point the graphics thread will have to handle these before
+  // rendering the frame_def.
   frame_def->set_mesh_data_creates(mesh_data_creates_);
   mesh_data_creates_.clear();
   frame_def->set_mesh_data_destroys(mesh_data_destroys_);
@@ -1327,7 +1326,7 @@ void Graphics::UpdateAndDrawProgressBar(FrameDef* frame_def,
             / static_cast<float>(progress_bar_loads_));
   DrawProgressBar(pass, 1.0f);
 
-  // If we were drawing a progress bar, see if everything is now loaded.. if
+  // If we were drawing a progress bar, see if everything is now loaded. If
   // so, start rendering normally next frame.
   int count = g_base->assets->GetGraphicalPendingLoadCount();
   if (count <= 0) {
@@ -1570,8 +1569,8 @@ void Graphics::AddMeshDataCreate(MeshData* d) {
   assert(g_base->graphics);
 
   // Add this to our list of new-mesh-datas. We'll include this with our
-  // next frame_def to have the graphics thread load before it processes
-  // the frame_def.
+  // next frame_def to have the graphics thread load before it processes the
+  // frame_def.
   mesh_data_creates_.push_back(d);
 }
 
@@ -1580,8 +1579,8 @@ void Graphics::AddMeshDataDestroy(MeshData* d) {
   assert(g_base->graphics);
 
   // Add this to our list of delete-mesh-datas; we'll include this with our
-  // next frame_def to have the graphics thread kill before it processes
-  // the frame_def.
+  // next frame_def to have the graphics thread kill before it processes the
+  // frame_def.
   mesh_data_destroys_.push_back(d);
 }
 
@@ -1634,24 +1633,6 @@ void Graphics::ToggleDebugDraw() {
 }
 
 void Graphics::ReleaseFadeEndCommand() { fade_end_call_.Clear(); }
-
-void Graphics::WaitForRendererToExist() {
-  // Conceivably we could hit this point before our graphics thread has created
-  // the renderer. In that case lets wait a moment.
-  int sleep_count = 0;
-  while (g_base->graphics_server == nullptr
-         || g_base->graphics_server->renderer() == nullptr) {
-    BA_LOG_ONCE(
-        LogLevel::kWarning,
-        "BuildAndPushFrameDef() called before renderer is up; spinning...");
-    core::CorePlatform::SleepMillisecs(100);
-    sleep_count++;
-    if (sleep_count > 100) {
-      throw Exception(
-          "Aborting waiting for renderer to come up in BuildAndPushFrameDef()");
-    }
-  }
-}
 
 auto Graphics::ValueTest(const std::string& arg, double* absval,
                          double* deltaval, double* outval) -> bool {
@@ -1737,20 +1718,17 @@ void Graphics::DoDrawBlotch(std::vector<uint16_t>* indices,
 }
 
 void Graphics::DrawRadialMeter(MeshIndexedSimpleFull* m, float amt) {
-  // FIXME - we're updating this every frame so we should use pure dynamic data;
-  //  not a mix of static and dynamic.
+  // FIXME - we're updating this every frame so we should use pure dynamic
+  //  data; not a mix of static and dynamic.
 
   if (amt >= 0.999f) {
-    // clang-format off
     uint16_t indices[] = {0, 1, 2, 1, 3, 2};
     VertexSimpleFull vertices[] = {
         {-1, -1, 0, 0, 65535},
         {1, -1, 0, 65535, 65535},
         {-1, 1, 0, 0, 0},
-        {1, 1, 0, 65535, 0,
-        }
+        {1, 1, 0, 65535, 0},
     };
-    // clang-format on
     m->SetIndexData(Object::New<MeshIndexBuffer16>(6, indices));
     m->SetData(Object::New<MeshBuffer<VertexSimpleFull>>(4, vertices));
 

@@ -3,6 +3,7 @@
 """Provides the AppConfig class."""
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 import _babase
@@ -120,33 +121,24 @@ def read_app_config() -> tuple[AppConfig, bool]:
             config = AppConfig()
         config_file_healthy = True
 
-    except Exception as exc:
-        print(
-            (
-                'error reading config file at time '
-                + str(_babase.apptime())
-                + ': \''
-                + config_file_path
-                + '\':\n'
-            ),
-            exc,
+    except Exception:
+        logging.exception(
+            "Error reading config file at time %.3f: '%s'.",
+            _babase.apptime(),
+            config_file_path,
         )
 
         # Whenever this happens lets back up the broken one just in case it
         # gets overwritten accidentally.
-        print(
-            (
-                'backing up current config file to \''
-                + config_file_path
-                + ".broken\'"
-            )
+        logging.info(
+            "Backing up current config file to '%s.broken'", config_file_path
         )
         try:
             import shutil
 
             shutil.copyfile(config_file_path, config_file_path + '.broken')
-        except Exception as exc2:
-            print('EXC copying broken config:', exc2)
+        except Exception:
+            logging.exception('Error copying broken config.')
         config = AppConfig()
 
         # Now attempt to read one of our 'prev' backup copies.
@@ -159,9 +151,9 @@ def read_app_config() -> tuple[AppConfig, bool]:
             else:
                 config = AppConfig()
             config_file_healthy = True
-            print('successfully read backup config.')
-        except Exception as exc2:
-            print('EXC reading prev backup config:', exc2)
+            logging.info('Successfully read backup config.')
+        except Exception:
+            logging.exception('Error reading prev backup config.')
     return config, config_file_healthy
 
 
@@ -176,7 +168,7 @@ def commit_app_config(force: bool = False) -> None:
     assert plus is not None
 
     if not _babase.app.config_file_healthy and not force:
-        print(
+        logging.warning(
             'Current config file is broken; '
             'skipping write to avoid losing settings.'
         )

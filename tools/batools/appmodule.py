@@ -166,12 +166,12 @@ def generate_app_module(
 
     if 'scene_v1' in fsets:
         contents += (
-            'if bascenev1.SceneV1AppMode.supports_intent(intent):\n'
+            'if bascenev1.SceneV1AppMode.can_handle_intent(intent):\n'
             '    return bascenev1.SceneV1AppMode\n\n'
         )
     if 'base' in fsets:
         contents += (
-            'if babase.EmptyAppMode.supports_intent(intent):\n'
+            'if babase.EmptyAppMode.can_handle_intent(intent):\n'
             '    return babase.EmptyAppMode\n\n'
         )
     contents += (

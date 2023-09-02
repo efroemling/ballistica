@@ -371,5 +371,5 @@ def register_map(maptype: type[Map]) -> None:
     """Register a map class with the game."""
     assert babase.app.classic is not None
     if maptype.name in babase.app.classic.maps:
-        raise RuntimeError('map "' + maptype.name + '" already registered')
+        raise RuntimeError(f'Map "{maptype.name}" is already registered.')
     babase.app.classic.maps[maptype.name] = maptype

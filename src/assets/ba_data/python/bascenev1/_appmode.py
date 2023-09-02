@@ -5,7 +5,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from bacommon.app import AppExperience
 from babase import AppMode, AppIntentExec, AppIntentDefault
+
 import _bascenev1
 
 if TYPE_CHECKING:
@@ -16,7 +18,11 @@ class SceneV1AppMode(AppMode):
     """Our app-mode."""
 
     @classmethod
-    def supports_intent(cls, intent: AppIntent) -> bool:
+    def get_app_experience(cls) -> AppExperience:
+        return AppExperience.MELEE
+
+    @classmethod
+    def _supports_intent(cls, intent: AppIntent) -> bool:
         # We support default and exec intents currently.
         return isinstance(intent, AppIntentExec | AppIntentDefault)
 
@@ -29,8 +35,8 @@ class SceneV1AppMode(AppMode):
 
     def on_activate(self) -> None:
         # Let the native layer do its thing.
-        _bascenev1.app_mode_activate()
+        _bascenev1.on_app_mode_activate()
 
     def on_deactivate(self) -> None:
         # Let the native layer do its thing.
-        _bascenev1.app_mode_deactivate()
+        _bascenev1.on_app_mode_deactivate()

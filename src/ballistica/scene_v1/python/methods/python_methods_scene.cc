@@ -1614,9 +1614,9 @@ static PyMethodDef PySetInternalMusicDef = {
     "(internal).",
 };
 
-// --------------------------- app_mode_activate -------------------------------
+// -------------------------- on_app_mode_activate -----------------------------
 
-static auto PyAppModeActivate(PyObject* self) -> PyObject* {
+static auto PyOnAppModeActivate(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   g_base->set_app_mode(SceneV1AppMode::GetSingleton());
@@ -1624,19 +1624,19 @@ static auto PyAppModeActivate(PyObject* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyAppModeActivateDef = {
-    "app_mode_activate",             // name
-    (PyCFunction)PyAppModeActivate,  // method
-    METH_NOARGS,                     // flags
+static PyMethodDef PyOnAppModeActivateDef = {
+    "on_app_mode_activate",            // name
+    (PyCFunction)PyOnAppModeActivate,  // method
+    METH_NOARGS,                       // flags
 
-    "app_mode_activate() -> None\n"
+    "on_app_mode_activate() -> None\n"
     "\n"
     "(internal)\n",
 };
 
-// -------------------------- app_mode_deactivate ------------------------------
+// ------------------------- on_app_mode_deactivate ----------------------------
 
-static auto PyAppModeDeactivate(PyObject* self) -> PyObject* {
+static auto PyOnAppModeDeactivate(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   // Currently doing nothing.
@@ -1644,12 +1644,12 @@ static auto PyAppModeDeactivate(PyObject* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyAppModeDeactivateDef = {
-    "app_mode_deactivate",             // name
-    (PyCFunction)PyAppModeDeactivate,  // method
-    METH_NOARGS,                       // flags
+static PyMethodDef PyOnAppModeDeactivateDef = {
+    "on_app_mode_deactivate",            // name
+    (PyCFunction)PyOnAppModeDeactivate,  // method
+    METH_NOARGS,                         // flags
 
-    "app_mode_deactivate() -> None\n"
+    "on_app_mode_deactivate() -> None\n"
     "\n"
     "(internal)\n",
 };
@@ -1771,8 +1771,8 @@ auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
       PyBaseTimeDef,
       PyBaseTimerDef,
       PyLsInputDevicesDef,
-      PyAppModeActivateDef,
-      PyAppModeDeactivateDef,
+      PyOnAppModeActivateDef,
+      PyOnAppModeDeactivateDef,
       PyHandleAppIntentDefaultDef,
       PyHandleAppIntentExecDef,
       PyProtocolVersionDef,

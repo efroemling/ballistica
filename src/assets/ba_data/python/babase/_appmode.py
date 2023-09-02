@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from bacommon.app import AppExperience
     from babase._appintent import AppIntent
 
 
@@ -17,16 +18,33 @@ class AppMode:
     """
 
     @classmethod
-    def supports_intent(cls, intent: AppIntent) -> bool:
-        """Return whether our mode can handle the provided intent."""
-        del intent
+    def get_app_experience(cls) -> AppExperience:
+        """Return the overall experience provided by this mode."""
+        raise NotImplementedError('AppMode subclasses must override this.')
 
-        # Say no to everything by default. Let's make mode explicitly
-        # lay out everything they *do* support.
-        return False
+    @classmethod
+    def can_handle_intent(cls, intent: AppIntent) -> bool:
+        """Return whether this mode can handle the provided intent.
+
+        For this to return True, the AppMode must claim to support the
+        provided intent (via its _supports_intent() method) AND the
+        AppExperience associated with the AppMode must be supported by
+        the current app and runtime environment.
+        """
+        return cls._supports_intent(intent)
+
+    @classmethod
+    def _supports_intent(cls, intent: AppIntent) -> bool:
+        """Return whether our mode can handle the provided intent.
+
+        AppModes should override this to define what they can handle.
+        Note that AppExperience does not have to be considered here; that
+        is handled automatically by the can_handle_intent() call."""
+        raise NotImplementedError('AppMode subclasses must override this.')
 
     def handle_intent(self, intent: AppIntent) -> None:
         """Handle an intent."""
+        raise NotImplementedError('AppMode subclasses must override this.')
 
     def on_activate(self) -> None:
         """Called when the mode is being activated."""

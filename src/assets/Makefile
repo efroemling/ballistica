@@ -712,6 +712,7 @@ $(eval $(call make-opt-pyc-target,$(element))))
 
 SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/app.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assets.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bacloud.py \
   $(BUILD_DIR)/ba_data/python/bacommon/build.py \
@@ -746,6 +747,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
 
 SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/__init__.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/app.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/assets.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/bacloud.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/build.cpython-311.opt-1.pyc \

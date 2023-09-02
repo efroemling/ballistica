@@ -322,7 +322,6 @@ class Graphics {
   void DrawCursor(RenderPass* pass, millisecs_t real_time);
   void DrawFades(FrameDef* frame_def, millisecs_t real_time);
   void DrawDebugBuffers(RenderPass* pass);
-  void WaitForRendererToExist();
 
   void UpdateAndDrawProgressBar(FrameDef* frame_def, millisecs_t real_time);
   void DoDrawBlotch(std::vector<uint16_t>* indices,
@@ -344,7 +343,7 @@ class Graphics {
   std::vector<MeshData*> mesh_data_creates_;
   std::vector<MeshData*> mesh_data_destroys_;
   bool has_supports_high_quality_graphics_value_{};
-  bool supports_high_quality_graphics_ = false;
+  bool supports_high_quality_graphics_{};
   millisecs_t last_create_frame_def_time_{};
   Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
   Vector2f shadow_scale_{1.0f, 1.0f};

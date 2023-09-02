@@ -525,8 +525,7 @@ static auto PyFadeScreen(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
 
-  // This can only be called in the UI context.
-  int fade{0};
+  int fade{};
   float time{0.25f};
   PyObject* endcall = nullptr;
   static const char* kwlist[] = {"to", "time", "endcall", nullptr};

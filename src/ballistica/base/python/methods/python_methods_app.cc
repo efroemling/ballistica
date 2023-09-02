@@ -1370,9 +1370,9 @@ static PyMethodDef PyUserAgentStringDef = {
     "(internal)\n",
 };
 
-// ----------------------- empty_app_mode_activate -----------------------------
+// --------------------- on_empty_app_mode_activate ----------------------------
 
-static auto PyEmptyAppModeActivate(PyObject* self) -> PyObject* {
+static auto PyOnEmptyAppModeActivate(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   g_base->set_app_mode(AppModeEmpty::GetSingleton());
@@ -1382,19 +1382,19 @@ static auto PyEmptyAppModeActivate(PyObject* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyEmptyAppModeActivateDef = {
-    "empty_app_mode_activate",            // name
-    (PyCFunction)PyEmptyAppModeActivate,  // method
-    METH_NOARGS,                          // flags
+static PyMethodDef PyOnEmptyAppModeActivateDef = {
+    "on_empty_app_mode_activate",           // name
+    (PyCFunction)PyOnEmptyAppModeActivate,  // method
+    METH_NOARGS,                            // flags
 
-    "empty_app_mode_activate() -> None\n"
+    "on_empty_app_mode_activate() -> None\n"
     "\n"
     "(internal)\n",
 };
 
-// ----------------------- empty_app_mode_deactivate ---------------------------
+// --------------------- on_empty_app_mode_deactivate --------------------------
 
-static auto PyEmptyAppModeDeactivate(PyObject* self) -> PyObject* {
+static auto PyOnEmptyAppModeDeactivate(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   // Currently doing nothing.
@@ -1402,12 +1402,12 @@ static auto PyEmptyAppModeDeactivate(PyObject* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyEmptyAppModeDeactivateDef = {
-    "empty_app_mode_deactivate",            // name
-    (PyCFunction)PyEmptyAppModeDeactivate,  // method
-    METH_NOARGS,                            // flags
+static PyMethodDef PyOnEmptyAppModeDeactivateDef = {
+    "on_empty_app_mode_deactivate",           // name
+    (PyCFunction)PyOnEmptyAppModeDeactivate,  // method
+    METH_NOARGS,                              // flags
 
-    "empty_app_mode_deactivate() -> None\n"
+    "on_empty_app_mode_deactivate() -> None\n"
     "\n"
     "(internal)\n",
 };
@@ -1598,8 +1598,8 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyOnInitialAppModeSetDef,
       PyReachedEndOfBaBaseDef,
       PyUserAgentStringDef,
-      PyEmptyAppModeActivateDef,
-      PyEmptyAppModeDeactivateDef,
+      PyOnEmptyAppModeActivateDef,
+      PyOnEmptyAppModeDeactivateDef,
       PyEmptyAppModeHandleIntentDefaultDef,
       PyEmptyAppModeHandleIntentExecDef,
       PyGetImmediateReturnCodeDef,

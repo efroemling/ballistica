@@ -1,19 +1,19 @@
-### 1.7.28 (build 21299, api 8, 2023-09-01)
+### 1.7.28 (build 21303, api 8, 2023-09-01)
 
 - Added some high level functionality for copying and deleting feature-sets to
-  the `tools/spinoff` tool. For example, to create your own `poo` feature-set,
-  do `tools/spinoff fset-copy template_fs poo`. Then do `make update` and `make
-  cmake` to build and run the app, and from within it you should be able to do
-  `import bapoo` to get at your nice shiny poo feature-set. When you are done
-  playing, you can do `tools/spinoff fset-delete poo` to blow away any traces of
-  it.
+  the `spinoff` tool. For example, to create your own `poo` feature-set based on
+  the existing `template_fs` one, do `tools/spinoff fset-copy template_fs poo`.
+  Then do `make update` and `make cmake` to build and run the app, and from
+  within it you should be able to do `import bapoo` to get at your nice shiny
+  poo feature-set. When you are done playing around, you can do `tools/spinoff
+  fset-delete poo` to blow away any traces of it.
 - Public builds now properly reconstruct the CMakeLists.txt file for project
   changes.
 - Efrocache now supports a starter-archive when building server builds. This
   means that if you do something like `make clean; make
-  prefab-server-release-build` you should only see a few file downloads
-  happening instead of hundreds or thousands which would happen before, which
-  should be significantly faster & more efficient.
+  prefab-server-release-build` you should see just a few file downloads
+  happening instead of the hundreds that would happen before, which should be
+  significantly faster & more efficient.
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 
@@ -40,7 +40,8 @@
   `build_number`, `device_name`, `config_file_path`, `version`, `debug_build`,
   `test_build`, `data_directory`, `python_directory_user`,
   `python_directory_app`, `python_directory_app_site`, `api_version`, `on_tv`,
-  `vr_mode`.
+  `vr_mode`, `toolbar_test`, `arcade_mode`, `headless_mode`, `demo_mode`, and
+  `protocol_version`.
 - Reverting the Android keyboard changes from 1.7.26, as I've received a few
   reports of bluetooth game controllers now thinking they are keyboards. I'm
   thinking I'll have to bite the bullet and implement something that asks the
