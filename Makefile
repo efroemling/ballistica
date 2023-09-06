@@ -186,10 +186,10 @@ pcommandbatch_speed_test: prereqs
 
 # Tell make which of these targets don't represent files.
 .PHONY: help prereqs prereqs-pre-update prereqs-clean assets assets-cmake			\
- assets-cmake-scripts assets-windows assets-windows-Win32 assets-windows-x64	\
- assets-mac assets-ios assets-android assets-clean resources resources-clean	\
- meta meta-clean clean clean-list dummymodules docs docs-pdoc									\
- pcommandbatch_speed_test
+        assets-cmake-scripts assets-windows assets-windows-Win32							\
+        assets-windows-x64 assets-mac assets-ios assets-android assets-clean	\
+        resources resources-clean meta meta-clean clean clean-list						\
+        dummymodules docs docs-pdoc pcommandbatch_speed_test
 
 
 ################################################################################
@@ -585,31 +585,35 @@ build/prefab/lib/windows/Release_%/BallisticaKitHeadlessPlus.pdb: .efrocachemap
 	@$(PCOMMANDBATCH) efrocache_get $@
 
 # Tell make which of these targets don't represent files.
-.PHONY: prefab-gui-debug prefab-gui-release prefab-gui-debug-build \
- prefab-gui-release-build prefab-server-debug prefab-server-release \
- prefab-server-debug-build prefab-server-release-build prefab-clean \
- _cmake_prefab_gui_binary _cmake_prefab_server_binary \
- prefab-mac-x86-64-gui-debug prefab-mac-arm64-gui-debug \
- prefab-mac-x86-64-gui-debug-build prefab-mac-arm64-gui-debug-build \
- prefab-mac-x86-64-gui-release prefab-mac-arm64-gui-release \
- prefab-mac-x86-64-gui-release-build prefab-mac-arm64-gui-release-build \
- prefab-mac-x86-64-server-debug prefab-mac-arm64-server-debug \
- prefab-mac-x86-64-server-debug-build prefab-mac-arm64-server-debug-build \
- prefab-mac-x86-64-server-release prefab-mac-arm64-server-release \
- prefab-mac-x86-64-server-release-build prefab-mac-arm64-server-release-build \
- prefab-linux-x86-64-gui-debug prefab-linux-arm64-gui-debug \
- prefab-linux-x86-64-gui-debug-build prefab-linux-arm64-gui-debug-build \
- prefab-linux-x86-64-gui-release prefab-linux-arm64-gui-release \
- prefab-linux-x86-64-gui-release-build prefab-linux-arm64-gui-release-build \
- prefab-linux-x86-64-server-debug prefab-linux-arm64-server-debug \
- prefab-linux-x86-64-server-debug-build prefab-linux-arm64-server-debug-build \
- prefab-linux-x86-64-server-release prefab-linux-arm64-server-release \
- prefab-linux-x86-64-server-release-build \
- prefab-linux-arm64-server-release-build \
- prefab-windows-x86-gui-debug prefab-windows-x86-gui-debug-build \
- prefab-windows-x86-gui-release prefab-windows-x86-gui-release-build \
- prefab-windows-x86-server-debug prefab-windows-x86-server-debug-build \
- prefab-windows-x86-server-release prefab-windows-x86-server-release-build
+.PHONY: prefab-gui-debug prefab-gui-release prefab-gui-debug-build						\
+        prefab-gui-release-build prefab-server-debug prefab-server-release		\
+        prefab-server-debug-build prefab-server-release-build prefab-clean		\
+        _cmake_prefab_gui_binary _cmake_prefab_server_binary									\
+        prefab-mac-x86-64-gui-debug prefab-mac-arm64-gui-debug								\
+        prefab-mac-x86-64-gui-debug-build prefab-mac-arm64-gui-debug-build		\
+        prefab-mac-x86-64-gui-release prefab-mac-arm64-gui-release						\
+        prefab-mac-x86-64-gui-release-build																		\
+        prefab-mac-arm64-gui-release-build prefab-mac-x86-64-server-debug			\
+        prefab-mac-arm64-server-debug prefab-mac-x86-64-server-debug-build		\
+        prefab-mac-arm64-server-debug-build prefab-mac-x86-64-server-release	\
+        prefab-mac-arm64-server-release																				\
+        prefab-mac-x86-64-server-release-build																\
+        prefab-mac-arm64-server-release-build prefab-linux-x86-64-gui-debug		\
+        prefab-linux-arm64-gui-debug prefab-linux-x86-64-gui-debug-build			\
+        prefab-linux-arm64-gui-debug-build prefab-linux-x86-64-gui-release		\
+        prefab-linux-arm64-gui-release prefab-linux-x86-64-gui-release-build	\
+        prefab-linux-arm64-gui-release-build prefab-linux-x86-64-server-debug	\
+        prefab-linux-arm64-server-debug																				\
+        prefab-linux-x86-64-server-debug-build																\
+        prefab-linux-arm64-server-debug-build																	\
+        prefab-linux-x86-64-server-release prefab-linux-arm64-server-release	\
+        prefab-linux-x86-64-server-release-build															\
+        prefab-linux-arm64-server-release-build prefab-windows-x86-gui-debug	\
+        prefab-windows-x86-gui-debug-build prefab-windows-x86-gui-release			\
+        prefab-windows-x86-gui-release-build prefab-windows-x86-server-debug	\
+        prefab-windows-x86-server-debug-build																	\
+        prefab-windows-x86-server-release																			\
+        prefab-windows-x86-server-release-build
 
 
 ################################################################################
@@ -751,8 +755,8 @@ format-scripts-full: prereqs
 format-makefile: prereqs
 	@$(PCOMMAND) formatmakefile
 
-.PHONY: format format-full format-code format-code-full format-scripts \
- format-scripts-full
+.PHONY: format format-full format-code format-code-full format-scripts	\
+        format-scripts-full
 
 
 ################################################################################
@@ -841,9 +845,9 @@ pycharm-full: py_check_prereqs
 py_check_prereqs: dummymodules
 
 # Tell make which of these targets don't represent files.
-.PHONY: check check-full check2 check2-full \
- cpplint cpplint-full pylint pylint-full mypy \
- mypy-full dmypy dmypy-stop pycharm pycharm-full py_check_prereqs
+.PHONY: check check-full check2 check2-full cpplint cpplint-full pylint		\
+        pylint-full mypy mypy-full dmypy dmypy-stop pycharm pycharm-full	\
+        py_check_prereqs
 
 
 ################################################################################
@@ -1137,10 +1141,11 @@ clion-staging: assets-cmake resources meta
 	$(STAGE_BUILD) -cmake -release build/clion_release
 
 # Tell make which of these targets don't represent files.
-.PHONY: cmake cmake-build cmake-clean cmake-server cmake-server-build				\
- cmake-server-clean cmake-modular-build cmake-modular cmake-modular-binary	\
- cmake-modular-clean cmake-modular-server cmake-modular-server-build				\
- cmake-modular-server-binary cmake-modular-server-clean clion-staging
+.PHONY: cmake cmake-build cmake-clean cmake-server cmake-server-build	\
+        cmake-server-clean cmake-modular-build cmake-modular					\
+        cmake-modular-binary cmake-modular-clean cmake-modular-server	\
+        cmake-modular-server-build cmake-modular-server-binary				\
+        cmake-modular-server-clean clion-staging
 
 
 ################################################################################

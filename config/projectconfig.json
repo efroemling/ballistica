@@ -18,6 +18,10 @@
     "src/ballistica/base/platform/oculus/main_rift.cc",
     "src/ballistica/core/platform/android/android_gl3.c"
   ],
+  "default_app_modes": [
+    "bascenev1.SceneV1AppMode",
+    "babase.EmptyAppMode"
+  ],
   "efrocache_repository_url": "https://files.ballistica.net/cache/ba1",
   "name": "BallisticaKit",
   "public": true,

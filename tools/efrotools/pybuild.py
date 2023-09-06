@@ -9,35 +9,55 @@ import os
 import subprocess
 from enum import Enum
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 from efrotools import readfile, writefile, replace_exact
 
-if TYPE_CHECKING:
-    pass
-
 # Python version we build here (not necessarily same as we use in repo).
 PY_VER_ANDROID = '3.11'
-PY_VER_EXACT_ANDROID = '3.11.4'
+PY_VER_EXACT_ANDROID = '3.11.5'
 PY_VER_APPLE = '3.11'
-PY_VER_EXACT_APPLE = '3.11.3'
+PY_VER_EXACT_APPLE = '3.11.5'
+
+# Can bump these up to whatever the min we need is. Though perhaps
+# leaving them at what the repo uses would lead to fewer build issues.
+VERSION_MIN_MACOS = '10.15'
+VERSION_MIN_IOS = '12.0'
+VERSION_MIN_TVOS = '9.0'
 
 # I occasionally run into openssl problems (particularly on arm systems)
 # so keeping exact control of the versions we're building here to try
 # and minimize it.
+#
 # Earlier I ran into an issue with android builds testing while OpenSSL
-# was probing for ARMV7_TICK instruction presence (see android_patch_ssl here),
-# and more recently I'm seeing a similar thing in 3.1.0 with arm_v8_sve_probe
-# on mac. Ugh.
+# was probing for ARMV7_TICK instruction presence (see android_patch_ssl
+# here), and more recently I'm seeing a similar thing in 3.1.0 with
+# arm_v8_sve_probe on mac. Ugh.
+#
 # See https://stackoverflow.com/questions/74059978/
 # why-is-lldb-generating-exc-bad-instruction-with-user-compiled-library-on-macos
-OPENSSL_VER_APPLE = '3.0.8'
-OPENSSL_VER_ANDROID = '3.0.8'
+#
+# For now will try to ride out this LTS version as long as possible.
+OPENSSL_VER_APPLE = '3.0.10'
+OPENSSL_VER_ANDROID = '3.0.10'
 
+LIBFFI_VER_APPLE = '3.4.4'
+BZIP2_VER_APPLE = '1.0.8'
+XZ_VER_APPLE = '5.4.4'
+
+# Android repo doesn't seem to be getting updated much so manually
+# bumping various versions to keep things up to date.
 ZLIB_VER_ANDROID = '1.3'
 XZ_VER_ANDROID = '5.4.4'
+BZIP2_VER_ANDROID = '1.0.8'
+GDBM_VER_ANDROID = '1.23'
+LIBFFI_VER_ANDROID = '3.4.4'
+LIBUUID_VER_ANDROID = ('2.38', '2.38.1')
+NCURSES_VER_ANDROID = '6.3'
+READLINE_VER_ANDROID = '8.2'
+SQLITE_VER_ANDROID = ('2023', '3430000')
 
-# Filenames we prune from Python lib dirs in source repo to cut down on size.
+# Filenames we prune from Python lib dirs in source repo to cut down on
+# size.
 PRUNE_LIB_NAMES = [
     'msilib',
     '__phello__',
@@ -75,12 +95,13 @@ def build_apple(arch: str, debug: bool = False) -> None:
     import platform
     from efro.error import CleanError
 
-    # IMPORTANT; seems we currently wind up building against /usr/local gettext
-    # stuff. Hopefully the maintainer fixes this, but for now I need to
-    # remind myself to blow it away while building.
-    # (via brew remove gettext --ignore-dependencies)
-    # NOTE: Should check to see if this is still necessary on Apple silicon
-    # since homebrew stuff is no longer in /usr/local there.
+    # IMPORTANT; seems we currently wind up building against /usr/local
+    # gettext stuff. Hopefully the maintainer fixes this, but for now I
+    # need to remind myself to blow it away while building. (via brew
+    # remove gettext --ignore-dependencies)
+    #
+    # NOTE: Should check to see if this is still necessary on Apple
+    # silicon since homebrew stuff is no longer in /usr/local there.
     if bool(False):
         if (
             'MacBook-Fro' in platform.node()
@@ -96,7 +117,7 @@ def build_apple(arch: str, debug: bool = False) -> None:
                     'NEED TO TEMP-KILL GETTEXT (or set SKIP_GETTEXT_WARNING=1)'
                 )
 
-    builddir = 'build/python_apple_' + arch + ('_debug' if debug else '')
+    builddir = f'build/python_apple_{arch}' + ('_debug' if debug else '')
     subprocess.run(['rm', '-rf', builddir], check=True)
     subprocess.run(['mkdir', '-p', 'build'], check=True)
     subprocess.run(
@@ -110,10 +131,11 @@ def build_apple(arch: str, debug: bool = False) -> None:
     )
     os.chdir(builddir)
 
-    # TEMP: Check out a particular commit while the branch head is broken.
-    # We can actually fix this to use the current one, but something
-    # broke in the underlying build even on old commits so keeping it
-    # locked for now...
+    # TEMP: Check out a particular commit while the branch head is
+    # broken. We can actually fix this to use the current one, but
+    # something broke in the underlying build even on old commits so
+    # keeping it locked for now...
+    #
     # run('git checkout bf1ed73d0d5ff46862ba69dd5eb2ffaeff6f19b6')
 
     # Grab the branch corresponding to our target python version.
@@ -121,30 +143,55 @@ def build_apple(arch: str, debug: bool = False) -> None:
 
     txt = readfile('Makefile')
 
-    # Turn doc strings on; looks like it only adds a few hundred k.
-    # txt = replace_exact(
-    #     txt, '--without-doc-strings', '--with-doc-strings', count=2
-    # )
+    # Sanity check; we don't actually change Python version for these
+    # builds but we need to make sure exactly what version the repo is
+    # building (for path purposes and whatnot).
+    if f'\nPYTHON_VERSION={PY_VER_EXACT_APPLE}\n' not in txt:
+        raise RuntimeError(
+            'Does not look like our PY_VER_EXACT_APPLE matches the repo;'
+            f' please update it in {__name__}.'
+        )
 
-    # Customize our minimum version requirements
+    # Same for ffi version.
+    if f'\nLIBFFI_VERSION={LIBFFI_VER_APPLE}\n' not in txt:
+        raise RuntimeError(
+            'Does not look like our LIBFFI_VER_APPLE matches the repo;'
+            f' please update it in {__name__}.'
+        )
+
+    # Same for bzip2 version.
+    if f'\nBZIP2_VERSION={BZIP2_VER_APPLE}\n' not in txt:
+        raise RuntimeError(
+            'Does not look like our BZIP2_VERSION matches the repo;'
+            f' please update it in {__name__}.'
+        )
+
+    # Same for xz version.
+    if f'\nXZ_VERSION={XZ_VER_APPLE}\n' not in txt:
+        raise RuntimeError(
+            'Does not look like our XZ_VER_APPLE matches the repo;'
+            f' please update it in {__name__}.'
+        )
+
+    # Customize our minimum OS version requirements.
     txt = replace_exact(
         txt,
         'VERSION_MIN-macOS=10.15\n',
-        'VERSION_MIN-macOS=10.15\n',
+        f'VERSION_MIN-macOS={VERSION_MIN_MACOS}\n',
     )
     txt = replace_exact(
         txt,
         'VERSION_MIN-iOS=12.0\n',
-        'VERSION_MIN-iOS=12.0\n',
+        f'VERSION_MIN-iOS={VERSION_MIN_IOS}\n',
     )
     txt = replace_exact(
         txt,
         'VERSION_MIN-tvOS=9.0\n',
-        'VERSION_MIN-tvOS=9.0\n',
+        f'VERSION_MIN-tvOS={VERSION_MIN_TVOS}\n',
     )
     txt = replace_exact(
         txt,
-        'OPENSSL_VERSION=3.1.0\n',
+        'OPENSSL_VERSION=3.1.2\n',
         f'OPENSSL_VERSION={OPENSSL_VER_APPLE}\n',
     )
 
@@ -227,9 +274,10 @@ def build_apple(arch: str, debug: bool = False) -> None:
     writefile('Makefile', txt)
 
     # Ok; let 'er rip.
-    # (we run these in parallel so limit to 1 job a piece;
-    # otherwise they inherit the -j12 or whatever from the top level)
-    # (also this build seems to fail with multiple threads)
+    #
+    # (we run these in parallel so limit to 1 job a piece; otherwise
+    # they inherit the -j12 or whatever from the top level) (also this
+    # build seems to fail with multiple threads)
     subprocess.run(
         [
             'make',
@@ -249,7 +297,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     (can be arm, arm64, x86, or x86_64)
     """
 
-    builddir = 'build/python_android_' + arch + ('_debug' if debug else '')
+    builddir = f'build/python_android_{arch}' + ('_debug' if debug else '')
     subprocess.run(['rm', '-rf', builddir], check=True)
     subprocess.run(['mkdir', '-p', 'build'], check=True)
     subprocess.run(
@@ -310,6 +358,72 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         count=1,
     )
 
+    # Set specific BZip2 version.
+    ftxt = replace_exact(
+        ftxt,
+        "source = 'https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz'",
+        f'source = '
+        f"'https://sourceware.org/pub/bzip2/bzip2-{BZIP2_VER_ANDROID}.tar.gz'",
+        count=1,
+    )
+
+    # Set specific GDBM version.
+    ftxt = replace_exact(
+        ftxt,
+        "source = 'https://ftp.gnu.org/gnu/gdbm/gdbm-1.23.tar.gz'",
+        "source = 'https://ftp.gnu.org/"
+        f"gnu/gdbm/gdbm-{GDBM_VER_ANDROID}.tar.gz'",
+        count=1,
+    )
+
+    # Set specific libffi version.
+    ftxt = replace_exact(
+        ftxt,
+        "source = 'https://github.com/libffi/libffi/releases/"
+        "download/v3.4.4/libffi-3.4.4.tar.gz'",
+        "source = 'https://github.com/libffi/libffi/releases/"
+        f"download/v{LIBFFI_VER_ANDROID}/libffi-{LIBFFI_VER_ANDROID}.tar.gz'",
+    )
+
+    # Set specific LibUUID version.
+    ftxt = replace_exact(
+        ftxt,
+        "source = 'https://mirrors.edge.kernel.org/pub/linux/utils/"
+        "util-linux/v2.38/util-linux-2.38.1.tar.xz'",
+        "source = 'https://mirrors.edge.kernel.org/pub/linux/utils/"
+        f'util-linux/v{LIBUUID_VER_ANDROID[0]}/'
+        f"util-linux-{LIBUUID_VER_ANDROID[1]}.tar.xz'",
+        count=1,
+    )
+
+    # Set specific NCurses version.
+    ftxt = replace_exact(
+        ftxt,
+        "source = 'https://ftp.gnu.org/gnu/ncurses/ncurses-6.3.tar.gz'",
+        "source = 'https://ftp.gnu.org/gnu/ncurses/"
+        f"ncurses-{NCURSES_VER_ANDROID}.tar.gz'",
+        count=1,
+    )
+
+    # Set specific ReadLine version.
+    ftxt = replace_exact(
+        ftxt,
+        "source = 'https://ftp.gnu.org/gnu/readline/readline-8.2.tar.gz'",
+        "source = 'https://ftp.gnu.org/gnu/readline/"
+        f"readline-{READLINE_VER_ANDROID}.tar.gz'",
+        count=1,
+    )
+
+    # Set specific SQLite version.
+    ftxt = replace_exact(
+        ftxt,
+        "source = 'https://sqlite.org/2022/sqlite-autoconf-3390400.tar.gz'",
+        "source = 'https://sqlite.org/"
+        f'{SQLITE_VER_ANDROID[0]}/'
+        f"sqlite-autoconf-{SQLITE_VER_ANDROID[1]}.tar.gz'",
+        count=1,
+    )
+
     # Give ourselves a handle to patch the OpenSSL build.
     ftxt = replace_exact(
         ftxt,
@@ -358,11 +472,11 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
 
     assert ' ' not in python_dir
 
-    # Use the shiny new Setup.stdlib setup (Sounds like this will be default
-    # in the future?). It looks like by mucking with Setup.stdlib.in we can
-    # make pretty minimal changes to get the results we want without having
-    # to inject platform-specific linker flags and whatnot like we had to
-    # previously.
+    # Use the shiny new Setup.stdlib setup (Sounds like this will be
+    # default in the future?). It looks like by mucking with
+    # Setup.stdlib.in we can make pretty minimal changes to get the
+    # results we want without having to inject platform-specific linker
+    # flags and whatnot like we had to previously.
     subprocess.run(
         f'cd {python_dir}/Modules && ln -sf ./Setup.stdlib ./Setup.local',
         shell=True,
@@ -384,6 +498,7 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
     # This list should contain all possible compiled modules to start.
     # If any .so files are coming out of builds or anything unrecognized
     # is showing up in the final Setup.local or the build, add it here.
+    #
     # TODO(ericf): could automate a warning for at least the last part
     #  of that.
     cmodules = {
@@ -515,9 +630,9 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
         should_enable = cmodule in enables
 
         if not should_enable:
-            # If something is enabled but we don't want it, comment it out.
-            # Also stick all disabled stuff in a *disabled* section at the
-            # bottom so it won't get built even as shared.
+            # If something is enabled but we don't want it, comment it
+            # out. Also stick all disabled stuff in a *disabled* section
+            # at the bottom so it won't get built even as shared.
             if is_enabled:
                 lines[indices[0]] = f'#{line}'
             disable_at_end.add(cmodule)
@@ -525,8 +640,9 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
             # Ok; its enabled and shouldn't be. What to do...
             if bool(False):
                 # Uncomment the line to enable it.
-                # UPDATE: Seems this doesn't work; will have to figure out
-                # the right way to get things like _ctypes compiling
+                #
+                # UPDATE: Seems this doesn't work; will have to figure
+                # out the right way to get things like _ctypes compiling
                 # statically.
                 lines[indices[0]] = replace_exact(
                     line, f'#{linebegin}', linebegin, count=1
@@ -548,20 +664,23 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
     #     '#*static*\n',
     # )
 
-    # Now for the one remaining ULTRA-HACKY bit: getting _ctypes building
-    # statically.
+    # Now for the one remaining ULTRA-HACKY bit: getting _ctypes
+    # building statically.
+    #
     # It seems that as of 3.11 it is not possible to do this through
     # Setup.stdlib.in like we do with our other stuff, as the line is
-    # commented out and we get errors if we change that. Looks like
-    # its not commented out anymore in 3.12 so we'll have to revisit
-    # this next year, but for now... hacks!
+    # commented out and we get errors if we change that. Looks like its
+    # not commented out anymore in 3.12 so we'll have to revisit this
+    # next year, but for now... hacks!
 
-    # To get this working for now we can dump an exact set of build flags
-    # for _ctypes into the Setup.stdlib.in. We just need to provide those
-    # per-platform. So, to get those:
+    # To get this working for now we can dump an exact set of build
+    # flags for _ctypes into the Setup.stdlib.in. We just need to
+    # provide those per-platform. So, to get those:
+    #
     #  - Run 'vanilla' ios/android/etc Python builds which generate .so versions
     #  - Look for the flags in the compiler command lines for those .c files
     #  - Stuff those flags in here for the associated platform.
+    #
     if baseplatform == 'android':
         ftxt = replace_exact(
             ftxt,
@@ -620,9 +739,9 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
             ' _ctypes/malloc_closure.c'
             ' -I_ctypes/darwin'
             f' -I$(srcdir)/../../../../merge/{archos}'
-            f'/{archbase}/libffi-3.4.2/include'
+            f'/{archbase}/libffi-{LIBFFI_VER_APPLE}/include'
             f' -L$(srcdir)/../../../../merge/{archos}'
-            f'/{archbase}/libffi-3.4.2/lib'
+            f'/{archbase}/libffi-{LIBFFI_VER_APPLE}/lib'
             ' -DUSING_MALLOC_CLOSURE_DOT_C'
             ' -DHAVE_FFI_PREP_CIF_VAR=1'
             ' -DHAVE_FFI_PREP_CLOSURE_LOC=1 -DHAVE_FFI_CLOSURE_ALLOC=1'
@@ -636,6 +755,7 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
     # Seems makesetup still has a bug where *any* line containing an equals
     # gets interpreted as a global DEF instead of a target, which means our
     # custom _ctypes lines above get ignored. Ugh.
+    #
     # To fix it we need to revert the *=* case to what it apparently used to
     # be: [A-Z]*=*. I wonder why this got changed and how has it not broken
     # tons of stuff? Maybe I'm missing something.
@@ -1093,11 +1213,13 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 ),
                 f'{bases2[base]}/openssl-{OPENSSL_VER_APPLE}/lib/libssl.a',
                 f'{bases2[base]}/openssl-{OPENSSL_VER_APPLE}/lib/libcrypto.a',
-                f'{bases2[base]}/xz-5.4.2/lib/liblzma.a',
-                f'{bases2[base]}/bzip2-1.0.8/lib/libbz2.a',
+                f'{bases2[base]}/xz-{XZ_VER_APPLE}/lib/liblzma.a',
+                f'{bases2[base]}/bzip2-{BZIP2_VER_APPLE}/lib/libbz2.a',
             ]
             if base != 'mac':
-                out.append(f'{bases2[base]}/libffi-3.4.2/lib/libffi.a')
+                out.append(
+                    f'{bases2[base]}/libffi-{LIBFFI_VER_APPLE}/lib/libffi.a'
+                )
             return out
 
         def _android_libs(base: str) -> list[str]:

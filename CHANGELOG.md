@@ -1,4 +1,4 @@
-### 1.7.28 (build 21303, api 8, 2023-09-01)
+### 1.7.28 (build 21306, api 8, 2023-09-06)
 
 - Added some high level functionality for copying and deleting feature-sets to
   the `spinoff` tool. For example, to create your own `poo` feature-set based on
@@ -14,6 +14,8 @@
   prefab-server-release-build` you should see just a few file downloads
   happening instead of the hundreds that would happen before, which should be
   significantly faster & more efficient.
+- Updated internal Python builds for Apple & iOS to 3.11.5, and updated a few
+  dependent libraries as well (OpenSSL bumped from 3.0.8 to 3.0.10, etc.).
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 

@@ -718,7 +718,10 @@ auto BaseFeatureSet::IsAppStarted() const -> bool { return app_started_; }
 
 auto BaseFeatureSet::ShutdownSuppressBegin() -> bool {
   std::scoped_lock lock(shutdown_suppress_lock_);
-  if (!shutdown_suppress_disallowed_) {
+
+  // Once shutdown has begun, we no longer allow things that would
+  // suppress it. Tell the caller to abort what they're trying to do.
+  if (shutdown_suppress_disallowed_) {
     return false;
   }
   shutdown_suppress_count_++;

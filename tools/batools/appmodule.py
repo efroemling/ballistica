@@ -21,6 +21,7 @@ def generate_app_module(
 
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
     import textwrap
 
     from efrotools import replace_section
@@ -154,15 +155,21 @@ def generate_app_module(
     )
 
     # Generate default app-mode-selection logic.
+    # TODO - make this customizable via project settings or whatnot.
     contents = (
-        '# Hmm; need to think about how we auto-construct this; how\n'
-        '# should we determine which app modes to check and in what\n'
-        '# order?\n'
+        '# Ask our default app modes to handle it.\n'
+        "# (based on 'default_app_modes' in projectconfig).\n"
     )
+    imports: list[str] = []
     if 'scene_v1' in fsets:
-        contents += 'import bascenev1\n\n'
+        imports.append('bascenev1')
     if 'base' in fsets:
-        contents += 'import babase\n\n'
+        imports.append('babase')
+
+    for imp in imports:
+        contents += f'import {imp}\n'
+
+    contents += '\n'
 
     if 'scene_v1' in fsets:
         contents += (
@@ -174,10 +181,7 @@ def generate_app_module(
             'if babase.EmptyAppMode.can_handle_intent(intent):\n'
             '    return babase.EmptyAppMode\n\n'
         )
-    contents += (
-        "raise RuntimeError(f'No handler found for"
-        " intent {type(intent)}.')\n"
-    )
+    contents += 'return None\n'
 
     indent = '            '
     out = replace_section(

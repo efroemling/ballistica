@@ -183,13 +183,13 @@ def get_public_license(style: str) -> str:
 
 
 def readfile(path: str | Path) -> str:
-    """Read a text file and return a str."""
+    """Read a utf-8 text file into a string."""
     with open(path, encoding='utf-8') as infile:
         return infile.read()
 
 
 def writefile(path: str | Path, txt: str) -> None:
-    """Write a string to a file."""
+    """Write a string to a utf-8 text file."""
     with open(path, 'w', encoding='utf-8') as outfile:
         outfile.write(txt)
 
