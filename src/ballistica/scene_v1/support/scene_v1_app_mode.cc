@@ -39,11 +39,10 @@ const int kKickVoteFailRetryDelay = 60000;
 /// Extra delay for the initiator of a failed vote.
 const int kKickVoteFailRetryDelayInitiatorExtra = 120000;
 
-// Minimum clients that must be present for a kick vote to count.
-// (for non-headless builds we require more votes since the host doesn't count
-// but may be playing (in a 2on2 with 3 clients, don't want 2 clients able to
-// kick).
-// NOLINTNEXTLINE(cert-err58-cpp)
+// Minimum clients that must be present for a kick vote to count. (for
+// non-headless builds we require more votes since the host doesn't count
+// but may be playing (in a 2on2 with 3 clients, don't want 2 clients able
+// to kick).
 const int kKickVoteMinimumClients = (g_buildconfig.headless_build() ? 3 : 4);
 
 struct SceneV1AppMode::ScanResultsEntryPriv {
@@ -68,7 +67,7 @@ base::InputDeviceDelegate* SceneV1AppMode::CreateInputDeviceDelegate(
 // Go with 5 minute ban.
 const int kKickBanSeconds = 5 * 60;
 
-bool SceneV1AppMode::InMainMenu() const {
+bool SceneV1AppMode::InClassicMainMenuSession() const {
   HostSession* hostsession =
       ContextRefSceneV1::FromAppForegroundContext().GetHostSession();
   return (hostsession && hostsession->is_main_menu());

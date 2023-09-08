@@ -3,31 +3,30 @@
 # pylint: disable=missing-module-docstring, invalid-name
 from __future__ import annotations
 
-# This file is exec'ed by tools/spinoff, allowing us to customize
-# how this src project gits filtered into dst projects.
+# This file is exec'ed by tools/spinoff, allowing us to customize how
+# this src project gits filtered into dst projects.
 
 from batools.spinoff import SpinoffContext
 
 # Grab the context we should apply to.
 ctx = SpinoffContext.get_active()
 
-# As a src project, we set up a baseline set of rules based on what
-# we contain. The dst project config (exec'ed after us) is then free
-# to override based on what they want of ours or what they add
-# themselves.
+# As a src project, we set up a baseline set of rules based on what we
+# contain. The dst project config (exec'ed after us) is then free to
+# override based on what they want of ours or what they add themselves.
 
-# Any files/dirs with these base names will be ignored by spinoff
-# on both src and dst.
+# Any files/dirs with these base names will be ignored by spinoff on
+# both src and dst.
 ctx.ignore_names = {
     '__pycache__',
     '.git',
     '.mypy_cache',
 }
 
-# Special set of paths managed by spinoff but ALSO stored in git in
-# the dst project. This is for bare minimum stuff needed to be always
-# present in dst for bootstrapping, indexing by github, etc). Changes
-# to these files in dst will be silently and happily overwritten by
+# Special set of paths managed by spinoff but ALSO stored in git in the
+# dst project. This is for bare minimum stuff needed to be always
+# present in dst for bootstrapping, indexing by github, etc). Changes to
+# these files in dst will be silently and happily overwritten by
 # spinoff, so tread carefully.
 ctx.git_mirrored_paths = {
     '.gitignore',
@@ -36,16 +35,16 @@ ctx.git_mirrored_paths = {
     'config/jenkins',
 }
 
-# File names that can be quietly ignored or cleared out when found.
-# This should encompass things like .DS_Store files created by the
-# Mac Finder when browsing directories. This helps spinoff remove
-# empty directories when doing a 'clean', etc.
+# File names that can be quietly ignored or cleared out when found. This
+# should encompass things like .DS_Store files created by the Mac Finder
+# when browsing directories. This helps spinoff remove empty directories
+# when doing a 'clean', etc.
 ctx.cruft_file_names = {'.DS_Store'}
 
 # These paths in the src project will be skipped over during updates and
-# not synced into the dst project. The dst project can use this to
-# trim out parts of the src project that it doesn't want or that it
-# intends to 'override' with its own versions.
+# not synced into the dst project. The dst project can use this to trim
+# out parts of the src project that it doesn't want or that it intends
+# to 'override' with its own versions.
 ctx.src_omit_paths = {
     '.gitignore',
     'config/spinoffconfig.py',
@@ -63,27 +62,27 @@ ctx.src_omit_paths = {
 # within it from being synced by spinoff; it just means that each of
 # those individual spinoff-managed files will have their own gitignore
 # entry since there is no longer one covering the whole dir. So to keep
-# things tidy, carve out the minimal set of exact file/dir paths that you
-# need.
+# things tidy, carve out the minimal set of exact file/dir paths that
+# you need.
 ctx.src_write_paths = {
     'tools/spinoff',
     'config/spinoffconfig.py',
 }
 
-# Normally spinoff errors if it finds any files in its managed dirs
-# that it did not put there. This is to prevent accidentally working
-# in these parts of a dst project; since these sections are git-ignored,
-# git itself won't raise any warnings in such cases and it would be easy
-# to accidentally lose work otherwise.
+# Normally spinoff errors if it finds any files in its managed dirs that
+# it did not put there. This is to prevent accidentally working in these
+# parts of a dst project; since these sections are git-ignored, git
+# itself won't raise any warnings in such cases and it would be easy to
+# accidentally lose work otherwise.
+#
 # This list can be used to suppress spinoff's errors for specific
 # locations. This is generally used to allow build output or other
 # dynamically generated files to exist within spinoff-managed
 # directories. It is possible to use src_write_paths for such purposes,
-# but this has the side-effect of greatly complicating the dst
-# project's gitignore list; selectively marking a few dirs as
-# unchecked makes for a cleaner setup. Just be careful to not set
-# excessively broad regions as unchecked; you don't want to mask
-# actual useful error messages.
+# but this has the side-effect of greatly complicating the dst project's
+# gitignore list; selectively marking a few dirs as unchecked makes for
+# a cleaner setup. Just be careful to not set excessively broad regions
+# as unchecked; you don't want to mask actual useful error messages.
 ctx.src_unchecked_paths = {
     'src/ballistica/mgen',
     'src/ballistica/*/mgen',
@@ -102,12 +101,12 @@ ctx.src_unchecked_paths = {
     'ballisticakit-android/BallisticaKit/.cxx',
 }
 
-# Paths/names/suffixes we consider 'project' files.
-# These files are synced after all other files and go through
-# batools.project.Updater class as part of their filtering.
-# This allows them to update themselves in the same way as they
-# do when running 'make update' for the project; adding the final
-# filtered set of project source files to themself, etc.
+# Paths/names/suffixes we consider 'project' files. These files are
+# synced after all other files and go through batools.project.Updater
+# class as part of their filtering. This allows them to update
+# themselves in the same way as they do when running 'make update' for
+# the project; adding the final filtered set of project source files to
+# themself, etc.
 ctx.project_file_paths = {'src/assets/ba_data/python/babase/_app.py'}
 ctx.project_file_names = {
     'Makefile',
@@ -124,15 +123,16 @@ ctx.project_file_suffixes = {
     '.pbxproj',
 }
 
-# Everything actually synced into dst will use the following filter rules:
+# Everything actually synced into dst will use the following filter
+# rules:
 
-# If files are 'filtered' it means they will have all instances
-# of BallisticaKit in their names and contents replaced with their
-# project name. Other custom filtering can also be applied. Obviously
-# filtering should not be run on certain files (binary data, etc.)
-# and disabling it where not needed can improve efficiency and make
-# backporting easier (editing spinoff-managed files in dst and getting
-# those changes back into src).
+# If files are 'filtered' it means they will have all instances of
+# BallisticaKit in their names and contents replaced with their project
+# name. Other custom filtering can also be applied. Obviously filtering
+# should not be run on certain files (binary data, etc.) and disabling
+# it where not needed can improve efficiency and make backporting easier
+# (editing spinoff-managed files in dst and getting those changes back
+# into src).
 
 # Anything under these dirs WILL be filtered.
 ctx.filter_dirs = {
@@ -153,8 +153,8 @@ ctx.no_filter_dirs = {
     'src/assets/windows',
 }
 
-# ELSE files matching these exact base names WILL be filtered
-# (so FOO matches a/b/FOO as well as just FOO).
+# ELSE files matching these exact base names WILL be filtered (so FOO
+# matches a/b/FOO as well as just FOO).
 ctx.filter_file_names = {
     'Makefile',
     '.gitignore',

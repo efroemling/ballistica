@@ -98,9 +98,9 @@ struct RootWidget::Text {
 };
 
 RootWidget::RootWidget() {
-  // we enable a special 'single-depth-root' mode
-  // in which we use most of our depth range for our first child
-  // (our screen stack) and the small remaining bit for the rest
+  // We enable a special 'single-depth-root' mode in which we use most of
+  // our depth range for our first child (our screen stack) and the small
+  // remaining bit for the rest.
   set_single_depth(true);
   set_single_depth_root(true);
   set_background(false);
@@ -110,7 +110,7 @@ RootWidget::~RootWidget() = default;
 
 auto RootWidget::AddCover(float h_align, VAlign v_align, float x, float y,
                           float w, float h, float o) -> RootWidget::Button* {
-  // currently just not doing these in vr mode
+  // Currently just not doing these in vr mode.
   if (g_core->IsVRMode()) {
     return nullptr;
   }
@@ -132,9 +132,9 @@ auto RootWidget::AddCover(float h_align, VAlign v_align, float x, float y,
 
   bd.visibility_mask =
       static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot);
-  // when the user specifies no backing it means they intend to cover the screen
-  // with a flat-ish window texture.. however this only applies to phone-size;
-  // for other sizes we always draw a backing.
+  // When the user specifies no backing it means they intend to cover the
+  // screen with a flat-ish window texture.. however this only applies to
+  // phone-size; for other sizes we always draw a backing.
   if (g_base->ui->scale() != UIScale::kSmall) {
     bd.visibility_mask |=
         static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull);
@@ -352,7 +352,7 @@ void RootWidget::Setup() {
     }
   }
 
-  // widen this a bit in small mode so it just covers most of the top
+  // Widen this a bit in small mode so it just covers most of the top
   // - that looks funny in medium/large mode though
   // if (g_ui->scale() == UIScale::kSmall) {
   //   AddCover(0.5f, VAlign::kTop, 0.0f, 320.0f,
@@ -838,8 +838,8 @@ auto RootWidget::AddButton(const ButtonDef& def) -> RootWidget::Button* {
   } else {
     b.widget->set_up_widget(screen_stack_widget_);
   }
-  // We wanna prevent anyone from redirecting these to point to outside widgets
-  // since we'll probably outlive those outside widgets.
+  // We wanna prevent anyone from redirecting these to point to outside
+  // widgets since we'll probably outlive those outside widgets.
   b.widget->set_neighbors_locked(true);
 
   if (!def.img.empty()) {
@@ -894,7 +894,7 @@ void RootWidget::UpdateForFocusedWindow() {
 void RootWidget::UpdateForFocusedWindow(Widget* widget) {
   // Take note if the current session is the main menu; we do a few things
   // differently there.
-  in_main_menu_ = g_base->app_mode()->InMainMenu();
+  in_main_menu_ = g_base->app_mode()->InClassicMainMenuSession();
 
   if (widget == nullptr) {
     toolbar_visibility_ = ToolbarVisibility::kInGame;
@@ -929,8 +929,8 @@ void RootWidget::StepPositions(float dt) {
         static_cast<bool>(static_cast<uint32_t>(toolbar_visibility_)
                           & static_cast<uint32_t>(b.visibility_mask));
 
-    // When we're in the main menu, always disable the menu button
-    // and shift the party button a bit to the right
+    // When we're in the main menu, always disable the menu button and shift
+    // the party button a bit to the right
     if (in_main_menu_) {
       if (&b == menu_button_) {
         enable_button = false;
@@ -940,13 +940,13 @@ void RootWidget::StepPositions(float dt) {
       }
     }
     if (&b == back_button_) {
-      // back button is always disabled in medium/large UI
+      // Back button is always disabled in medium/large UI.
       if (g_base->ui->scale() != UIScale::kSmall) {
         enable_button = false;
       }
 
-      // whenever back button is enabled, left on account button should go to
-      // it; otherwise it goes nowhere.
+      // Whenever back button is enabled, left on account button should go
+      // to it; otherwise it goes nowhere.
       Widget* ab = account_button_->widget.Get();
       ab->set_neighbors_locked(false);
       ab->set_left_widget(enable_button ? back_button_->widget.Get() : ab);
@@ -957,9 +957,10 @@ void RootWidget::StepPositions(float dt) {
       b.y_target += disable_offset;
     }
 
-    // special case: we shift buttons on the top right to the right if the menu
-    // button is hidden (and also if the button is hidden; otherwise things come
-    // in diagonally)
+    // special case: we shift buttons on the top right to the right if the
+    // menu button is hidden (and also if the button is hidden; otherwise
+    // things come in diagonally)
+    //
     // if (b.h_align == HAlign::kRight and b.v_align == VAlign::kTop
     // if (b.h_align >= 1.0f and b.v_align == VAlign::kTop
     //     and (toolbar_visibility_ != ToolbarVisibility::kInGame or not
@@ -971,15 +972,15 @@ void RootWidget::StepPositions(float dt) {
     b.x_smoothed += (b.x_target - b.x_smoothed) * 0.015f * dt;
     b.y_smoothed += (b.y_target - b.y_smoothed) * 0.015f * dt;
 
-    // Snap in place once we reach the target; otherwise note
-    // that we need to keep going.
+    // Snap in place once we reach the target; otherwise note that we need
+    // to keep going.
     if (std::abs(b.x_target - b.x_smoothed) < 0.1f
         && std::abs(b.y_target - b.y_smoothed) < 0.1f) {
       b.x_smoothed = b.x_target;
       b.y_smoothed = b.y_target;
 
-      // Also flip off visibility if we're moving offscreen and have reached our
-      // target.
+      // Also flip off visibility if we're moving offscreen and have reached
+      // our target.
       if (!enable_button) {
         b.widget->set_visible_in_container(false);
       }
@@ -989,7 +990,8 @@ void RootWidget::StepPositions(float dt) {
       b.widget->set_visible_in_container(true);
     }
 
-    // Now calc final abs x and y based on screen size, smoothed positions, etc.
+    // Now calc final abs x and y based on screen size, smoothed positions,
+    // etc.
     float x, y;
     x = width() * b.h_align
         + base_scale_ * (b.x_smoothed - b.width * b.scale * 0.5f);

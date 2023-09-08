@@ -53,7 +53,7 @@ class Camera;
 class ClassicSoftInterface;
 class CollisionMeshAsset;
 class CollisionCache;
-class Console;
+class DevConsole;
 class Context;
 class ContextRef;
 class DataAsset;
@@ -120,6 +120,18 @@ class UI;
 class UIV1SoftInterface;
 class AppAdapterVR;
 class GraphicsVR;
+
+enum class QuitType {
+  /// Leads to the process exiting.
+  kHard,
+  /// May hide/reset the app but keep the process running. Generally how
+  /// mobile apps behave.
+  kSoft,
+  /// Same as kSoft but gives 'back-button-pressed' behavior which may
+  /// differ depending on the OS (returning to a previous Activity in
+  /// Android instead of dumping to the home screen, etc.)
+  kBack,
+};
 
 enum class AssetType {
   kTexture,
@@ -601,6 +613,14 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// Start app systems in motion.
   void StartApp() override;
 
+  /// Issue a high level app quit request. Can be called from any thread.
+  /// 'soft' means the app can simply reset/hide itself instead of actually
+  /// exiting the process (common behavior on mobile platforms). 'back'
+  /// means that a soft-quit should behave as if a back-button was pressed,
+  /// whic may trigger different behavior in the OS than a standard soft
+  /// quit.
+  void QuitApp(QuitType quit_type = QuitType::kSoft);
+
   /// Called when app shutdown process completes. Sets app to exit.
   void OnAppShutdownComplete();
 
@@ -759,7 +779,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   void PrintContextUnavailable_();
 
   AppMode* app_mode_;
-  Console* console_{};
+  DevConsole* console_{};
   PlusSoftInterface* plus_soft_{};
   ClassicSoftInterface* classic_soft_{};
   UIV1SoftInterface* ui_v1_soft_{};

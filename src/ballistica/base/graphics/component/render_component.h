@@ -11,6 +11,17 @@ namespace ballistica::base {
 
 class RenderComponent {
  public:
+  class ScopedTransformObj {
+   public:
+    explicit ScopedTransformObj(RenderComponent* c) : c_{c} {
+      c_->PushTransform();
+    }
+    ~ScopedTransformObj() { c_->PopTransform(); }
+
+   private:
+    RenderComponent* c_;
+  };
+
   explicit RenderComponent(RenderPass* pass)
       : state_(State::kConfiguring), pass_(pass), cmd_buffer_(nullptr) {}
   ~RenderComponent() {
@@ -81,6 +92,9 @@ class RenderComponent {
   void PopTransform() {
     EnsureDrawing();
     cmd_buffer_->PutCommand(RenderCommandBuffer::Command::kPopTransform);
+  }
+  auto ScopedTransform() -> ScopedTransformObj {
+    return ScopedTransformObj(this);
   }
   void Translate(float x, float y) {
     EnsureDrawing();

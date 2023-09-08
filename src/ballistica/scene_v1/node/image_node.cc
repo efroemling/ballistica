@@ -71,7 +71,9 @@ auto ImageNode::InitType() -> NodeType* {
 ImageNode::ImageNode(Scene* scene) : Node(scene, node_type) {}
 
 ImageNode::~ImageNode() {
-  if (fill_screen_) scene()->decrement_bg_cover_count();
+  if (fill_screen_) {
+    scene()->decrement_bg_cover_count();
+  }
 }
 
 auto ImageNode::GetAttach() const -> std::string {
@@ -209,11 +211,11 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
   if (host_only_ && !context_ref().GetHostSession()) {
     return;
   }
-  bool vr = (g_core->IsVRMode());
+  bool vr = g_core->IsVRMode();
 
   // In vr mode we use the fixed overlay position if our scene
   // is set for that.
-  bool vr_use_fixed = (scene()->use_fixed_vr_overlay());
+  bool vr_use_fixed = scene()->use_fixed_vr_overlay();
 
   // Currently front and vr-fixed are mutually-exclusive.. need to fix.
   if (front_) {

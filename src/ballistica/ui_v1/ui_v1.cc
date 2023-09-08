@@ -134,9 +134,8 @@ void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
   auto* root_widget = root_widget_.Get();
 
   if (root_widget && root_widget->HasChildren()) {
-    // Draw our opaque and transparent parts separately.
-    // This way we can draw front-to-back for opaque and back-to-front for
-    // transparent.
+    // Draw our opaque and transparent parts separately. This way we can
+    // draw front-to-back for opaque and back-to-front for transparent.
 
     g_base->graphics->set_drawing_opaque_only(true);
 
@@ -279,6 +278,24 @@ void UIV1FeatureSet::DeleteWidget(Widget* widget) {
 void UIV1FeatureSet::DoApplyAppConfig() {
   TextWidget::set_always_use_internal_keyboard(g_base->app_config->Resolve(
       base::AppConfig::BoolID::kAlwaysUseInternalKeyboard));
+}
+
+UIV1FeatureSet::UILock::UILock(bool write) {
+  assert(g_base->ui);
+  assert(g_base->InLogicThread());
+
+  if (write && g_ui_v1->ui_lock_count_ != 0) {
+    BA_LOG_ERROR_TRACE_ONCE("Illegal operation: UI is locked");
+  }
+  g_ui_v1->ui_lock_count_++;
+}
+
+UIV1FeatureSet::UILock::~UILock() {
+  g_ui_v1->ui_lock_count_--;
+  if (g_ui_v1->ui_lock_count_ < 0) {
+    BA_LOG_ERROR_TRACE_ONCE("ui_lock_count_ < 0");
+    g_ui_v1->ui_lock_count_ = 0;
+  }
 }
 
 }  // namespace ballistica::ui_v1

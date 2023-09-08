@@ -117,6 +117,11 @@ auto GraphicsServer::GetRenderFrameDef() -> FrameDef* {
   return nullptr;
 }
 
+void GraphicsServer::ApplyFrameDefSettings(FrameDef* frame_def) {
+  assert(g_base->InGraphicsThread());
+  tv_border_ = frame_def->tv_border();
+}
+
 // Runs any mesh updates contained in the frame-def.
 void GraphicsServer::RunFrameDefMeshUpdates(FrameDef* frame_def) {
   assert(g_base->InGraphicsThread());
@@ -170,6 +175,9 @@ void GraphicsServer::TryRender() {
   assert(g_base->InGraphicsThread());
 
   if (FrameDef* frame_def = GetRenderFrameDef()) {
+    // Apply settings such as tv-mode passed along on the frame-def.
+    ApplyFrameDefSettings(frame_def);
+
     // Note: we always run mesh updates contained in the framedef
     // even if we don't actually render it.
     // (Hmm this seems flaky; will TryRender always get called

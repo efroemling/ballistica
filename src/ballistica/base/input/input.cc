@@ -12,7 +12,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
-#include "ballistica/base/ui/console.h"
+#include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -23,26 +23,14 @@ namespace ballistica::base {
 Input::Input() = default;
 
 template <typename F>
-void SafePushLogicCall(const char* desc, const F& lambda) {
-  // Note: originally this call was created to silently ignore early events
-  // coming in before app stuff was up and running, but that was a bad idea,
-  // as it caused us to ignore device-create messages sometimes which lead
-  // to other issues later. So now I'm trying to fix those problems at the
-  // source, but am leaving this intact for now as a clean way to catch
-  // anything that needs fixing.
-  if (!g_base) {
-    FatalError(std::string(desc) + " called with null g_base.");
-    return;
-  }
-  if (auto* loop = g_base->logic->event_loop()) {
-    loop->PushCall(lambda);
-  } else {
-    FatalError(std::string(desc) + " called before logic event loop created.");
-  }
+void PushLogicCall(const F& lambda) {
+  assert(g_base);
+  assert(g_base->logic->event_loop());
+  g_base->logic->event_loop()->PushCall(lambda);
 }
 
 void Input::PushCreateKeyboardInputDevices() {
-  SafePushLogicCall(__func__, [this] { CreateKeyboardInputDevices(); });
+  PushLogicCall([this] { CreateKeyboardInputDevices(); });
 }
 
 void Input::CreateKeyboardInputDevices() {
@@ -59,7 +47,7 @@ void Input::CreateKeyboardInputDevices() {
 }
 
 void Input::PushDestroyKeyboardInputDevices() {
-  SafePushLogicCall(__func__, [this] { DestroyKeyboardInputDevices(); });
+  PushLogicCall([this] { DestroyKeyboardInputDevices(); });
 }
 
 void Input::DestroyKeyboardInputDevices() {
@@ -171,13 +159,14 @@ void Input::CreateTouchInput() {
 void Input::AnnounceConnects() {
   static bool first_print = true;
 
-  // For the first announcement just say "X controllers detected" and don't have
-  // a sound.
+  // For the first announcement just say "X controllers detected" and don't
+  // have a sound.
   if (first_print && g_core->GetAppTimeMillisecs() < 10000) {
     first_print = false;
 
     // Disabling this completely for now; being more lenient with devices
-    // allowed on android means this will often come back with large numbers.
+    // allowed on Android means this will often come back with large
+    // numbers.
     bool do_print{false};
 
     // If there's been several connected, just give a number.
@@ -203,7 +192,7 @@ void Input::AnnounceConnects() {
           &s, "${COUNT}", std::to_string(newly_connected_controllers_.size()));
       ScreenMessage(s);
     } else {
-      // If its just one, name it.
+      // If its just one, give its name.
       std::string s =
           g_base->assets->GetResourceString("controllerConnectedText");
       Utils::StringReplaceOne(&s, "${CONTROLLER}",
@@ -276,7 +265,7 @@ void Input::ShowStandardInputDeviceDisconnectedMessage(InputDevice* j) {
 
 void Input::PushAddInputDeviceCall(InputDevice* input_device,
                                    bool standard_message) {
-  SafePushLogicCall(__func__, [this, input_device, standard_message] {
+  PushLogicCall([this, input_device, standard_message] {
     AddInputDevice(input_device, standard_message);
   });
 }
@@ -362,7 +351,7 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
 
 void Input::PushRemoveInputDeviceCall(InputDevice* input_device,
                                       bool standard_message) {
-  SafePushLogicCall(__func__, [this, input_device, standard_message] {
+  PushLogicCall([this, input_device, standard_message] {
     RemoveInputDevice(input_device, standard_message);
   });
 }
@@ -390,8 +379,6 @@ void Input::RemoveInputDevice(InputDevice* input, bool standard_message) {
       device->DetachFromPlayer();
 
       // This should kill the device.
-      // FIXME: since many devices get allocated in the main thread,
-      //  should we not kill it there too?...
       device.Clear();
       UpdateInputDeviceCounts();
       return;
@@ -411,10 +398,10 @@ void Input::UpdateInputDeviceCounts() {
   int total = 0;
   int controller_count = 0;
   for (auto& input_device : input_devices_) {
-    // Ok, we now limit non-keyboard non-touchscreen devices to ones that have
-    // been active recently.. (we're starting to get lots of virtual devices and
-    // other cruft on android; don't wanna show controller UIs just due to
-    // those)
+    // Ok, we now limit non-keyboard non-touchscreen devices to ones that
+    // have been active recently.. (we're starting to get lots of virtual
+    // devices and other cruft on android; don't wanna show controller UIs
+    // just due to those)
     if (input_device.Exists()
         && ((*input_device).IsTouchScreen() || (*input_device).IsKeyboard()
             || ((*input_device).last_input_time_millisecs() != 0
@@ -480,7 +467,6 @@ auto Input::GetLocalActiveInputDeviceCount() -> int {
 
 auto Input::HaveControllerWithPlayer() -> bool {
   assert(g_base->InLogicThread());
-  // NOLINTNEXTLINE(readability-use-anyofallof)
   for (auto& input_device : input_devices_) {
     if (input_device.Exists() && (*input_device).IsController()
         && (*input_device).AttachedToPlayer()) {
@@ -492,7 +478,6 @@ auto Input::HaveControllerWithPlayer() -> bool {
 
 auto Input::HaveRemoteAppController() -> bool {
   assert(g_base->InLogicThread());
-  // NOLINTNEXTLINE(readability-use-anyofallof)
   for (auto& input_device : input_devices_) {
     if (input_device.Exists() && (*input_device).IsRemoteApp()) {
       return true;
@@ -546,8 +531,8 @@ auto Input::ShouldCompletelyIgnoreInputDevice(InputDevice* input_device)
 void Input::UpdateEnabledControllerSubsystems() {
   assert(g_base);
 
-  // First off, on mac, let's update whether we want to completely ignore either
-  // the classic or the iOS/Mac controller subsystems.
+  // First off, on mac, let's update whether we want to completely ignore
+  // either the classic or the iOS/Mac controller subsystems.
   if (g_buildconfig.ostype_macos()) {
     std::string sys = g_base->app_config->Resolve(
         AppConfig::StringID::kMacControllerSubsystem);
@@ -581,9 +566,9 @@ void Input::DoApplyAppConfig() {
 
   UpdateEnabledControllerSubsystems();
 
-  // It's technically possible that updating these controls will add or remove
-  // devices, thus changing the input_devices_ list, so lets work with a copy of
-  // it.
+  // It's technically possible that updating these controls will add or
+  // remove devices, thus changing the input_devices_ list, so lets work
+  // with a copy of it.
   std::vector<Object::Ref<InputDevice> > input_devices = input_devices_;
   for (auto& input_device : input_devices) {
     if (input_device.Exists()) {
@@ -819,7 +804,7 @@ void Input::ProcessStressTesting(int player_count) {
 }
 
 void Input::PushTextInputEvent(const std::string& text) {
-  SafePushLogicCall(__func__, [this, text] {
+  PushLogicCall([this, text] {
     MarkInputActive();
 
     // Ignore  if input is locked.
@@ -837,7 +822,7 @@ void Input::PushTextInputEvent(const std::string& text) {
 
 void Input::PushJoystickEvent(const SDL_Event& event,
                               InputDevice* input_device) {
-  SafePushLogicCall(__func__, [this, event, input_device] {
+  PushLogicCall([this, event, input_device] {
     HandleJoystickEvent(event, input_device);
   });
 }
@@ -871,11 +856,11 @@ void Input::HandleJoystickEvent(const SDL_Event& event,
 }
 
 void Input::PushKeyPressEvent(const SDL_Keysym& keysym) {
-  SafePushLogicCall(__func__, [this, keysym] { HandleKeyPress(&keysym); });
+  PushLogicCall([this, keysym] { HandleKeyPress(&keysym); });
 }
 
 void Input::PushKeyReleaseEvent(const SDL_Keysym& keysym) {
-  SafePushLogicCall(__func__, [this, keysym] { HandleKeyRelease(&keysym); });
+  PushLogicCall([this, keysym] { HandleKeyRelease(&keysym); });
 }
 
 void Input::CaptureKeyboardInput(HandleKeyPressCall* press_call,
@@ -947,10 +932,9 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
       case SDLK_KP_ENTER:
       case SDLK_BACKSPACE: {
         // FIXME: I don't remember what this was put here for, but now that
-        // we
-        //  have hardware keyboards it crashes text fields by sending them a
-        //  TEXT_INPUT message with no string.. I made them resistant to
-        //  that case but wondering if we can take this out?...
+        //  we have hardware keyboards it crashes text fields by sending
+        //  them a TEXT_INPUT message with no string.. I made them resistant
+        //  to that case but wondering if we can take this out?
         g_base->ui->SendWidgetMessage(
             WidgetMessage(WidgetMessage::Type::kTextInput, keysym));
         break;
@@ -971,7 +955,7 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
       return;
     }
 
-    // Control-Q quits. On mac, the usual cmd-q gets handled by SDL/etc.
+    // Control-Q quits. On Mac, the usual cmd-q gets handled by SDL/etc.
     // implicitly.
     if (!repeat_press && keysym->sym == SDLK_q && (keysym->mod & KMOD_CTRL)) {
       g_base->ui->ConfirmQuit();
@@ -1027,14 +1011,12 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
       }
 
       case SDLK_F7:
-        SafePushLogicCall(__func__,
-                          [] { g_base->graphics->ToggleManualCamera(); });
+        PushLogicCall([] { g_base->graphics->ToggleManualCamera(); });
         handled = true;
         break;
 
       case SDLK_F8:
-        SafePushLogicCall(
-            __func__, [] { g_base->graphics->ToggleNetworkDebugDisplay(); });
+        PushLogicCall([] { g_base->graphics->ToggleNetworkDebugDisplay(); });
         handled = true;
         break;
 
@@ -1045,8 +1027,7 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
         break;
 
       case SDLK_F10:
-        SafePushLogicCall(__func__,
-                          [] { g_base->graphics->ToggleDebugDraw(); });
+        PushLogicCall([] { g_base->graphics->ToggleDebugDraw(); });
         handled = true;
         break;
 
@@ -1080,49 +1061,38 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
 }
 
 void Input::HandleKeyRelease(const SDL_Keysym* keysym) {
+  assert(g_base);
   assert(g_base->InLogicThread());
 
-  // Note: we want to let these through even if input is locked.
+  // Note: we want to let releases through even if input is locked.
 
   MarkInputActive();
 
-  // If someone is capturing these events, give them a crack at it.
-  if (keyboard_input_capture_release_) {
-    if (keyboard_input_capture_release_(*keysym)) {
-      return;
-    }
-  }
-
-  // Regardless of what else we do, keep track of mod key states.
-  // (for things like manual camera moves. For individual key presses
-  // ideally we should use the modifiers bundled with the key presses)
-  UpdateModKeyStates(keysym, false);
-
-  // In some cases we may receive duplicate key-release events
-  // (if a keyboard reset was run it deals out key releases but then the
-  // keyboard driver issues them as well)
+  // In some cases we may receive duplicate key-release events (if a
+  // keyboard reset was run, it deals out key releases, but then the
+  // keyboard driver issues them as well).
   if (keys_held_.count(keysym->sym) == 0) {
     return;
   }
 
+  // If someone is capturing these events, give them a crack at it.
+  if (keyboard_input_capture_release_) {
+    (keyboard_input_capture_release_(*keysym));
+  }
+
+  // Keep track of mod key states for things like manual camera moves. For
+  // individual key presses ideally we should instead use modifiers bundled
+  // with the key press events.
+  UpdateModKeyStates(keysym, false);
+
   keys_held_.erase(keysym->sym);
 
-  if (IsInputLocked()) {
-    return;
+  if (g_base->console() != nullptr) {
+    g_base->console()->HandleKeyRelease(keysym);
   }
 
-  bool handled = false;
-
-  if (g_base && g_base->console() != nullptr
-      && g_base->console()->HandleKeyRelease(keysym)) {
-    handled = true;
-  }
-
-  // If we haven't claimed it, pass it along as potential player input.
-  if (!handled) {
-    if (keyboard_input_) {
-      keyboard_input_->HandleKey(keysym, false, false);
-    }
+  if (keyboard_input_) {
+    keyboard_input_->HandleKey(keysym, false, false);
   }
 }
 
@@ -1155,15 +1125,17 @@ void Input::UpdateModKeyStates(const SDL_Keysym* keysym, bool press) {
 }
 
 void Input::PushMouseScrollEvent(const Vector2f& amount) {
-  SafePushLogicCall(__func__, [this, amount] { HandleMouseScroll(amount); });
+  PushLogicCall([this, amount] { HandleMouseScroll(amount); });
 }
 
 void Input::HandleMouseScroll(const Vector2f& amount) {
   assert(g_base->InLogicThread());
+
+  // If input is locked, allow it to mark us active but nothing more.
+  MarkInputActive();
   if (IsInputLocked()) {
     return;
   }
-  MarkInputActive();
 
   if (std::abs(amount.y) > 0.0001f) {
     g_base->ui->SendWidgetMessage(
@@ -1187,17 +1159,19 @@ void Input::HandleMouseScroll(const Vector2f& amount) {
 
 void Input::PushSmoothMouseScrollEvent(const Vector2f& velocity,
                                        bool momentum) {
-  SafePushLogicCall(__func__, [this, velocity, momentum] {
+  PushLogicCall([this, velocity, momentum] {
     HandleSmoothMouseScroll(velocity, momentum);
   });
 }
 
 void Input::HandleSmoothMouseScroll(const Vector2f& velocity, bool momentum) {
   assert(g_base->InLogicThread());
+
+  // If input is locked, allow it to mark us active but nothing more.
+  MarkInputActive();
   if (IsInputLocked()) {
     return;
   }
-  MarkInputActive();
 
   bool handled = false;
   handled = g_base->ui->SendWidgetMessage(
@@ -1219,14 +1193,18 @@ void Input::HandleSmoothMouseScroll(const Vector2f& velocity, bool momentum) {
 }
 
 void Input::PushMouseMotionEvent(const Vector2f& position) {
-  SafePushLogicCall(__func__,
-                    [this, position] { HandleMouseMotion(position); });
+  PushLogicCall([this, position] { HandleMouseMotion(position); });
 }
 
 void Input::HandleMouseMotion(const Vector2f& position) {
-  assert(g_base->graphics);
+  assert(g_base);
   assert(g_base->InLogicThread());
+
   MarkInputActive();
+
+  if (IsInputLocked()) {
+    return;
+  }
 
   float old_cursor_pos_x = cursor_pos_x_;
   float old_cursor_pos_y = cursor_pos_y_;
@@ -1240,8 +1218,6 @@ void Input::HandleMouseMotion(const Vector2f& position) {
   last_mouse_move_time_ = g_core->GetAppTimeMillisecs();
   mouse_move_count_++;
 
-  bool handled{};
-
   // If we have a touch-input in editing mode, pass along events to it.
   // (it usually handles its own events but here we want it to play nice
   // with stuff under it by blocking touches, etc)
@@ -1250,47 +1226,34 @@ void Input::HandleMouseMotion(const Vector2f& position) {
                                    cursor_pos_y_);
   }
 
-  // UI interaction.
-  if (!IsInputLocked()) {
-    handled = g_base->ui->SendWidgetMessage(
-        WidgetMessage(WidgetMessage::Type::kMouseMove, nullptr, cursor_pos_x_,
-                      cursor_pos_y_));
-  }
+  // Let any UI stuff handle it.
+  g_base->ui->HandleMouseMotion(cursor_pos_x_, cursor_pos_y_);
 
   // Manual camera motion.
   Camera* camera = g_base->graphics->camera();
-  if (!handled && camera && camera->manual()) {
+  if (camera && camera->manual()) {
     float move_h = (cursor_pos_x_ - old_cursor_pos_x)
                    / g_base->graphics->screen_virtual_width();
     float move_v = (cursor_pos_y_ - old_cursor_pos_y)
                    / g_base->graphics->screen_virtual_width();
     camera->ManualHandleMouseMove(move_h, move_v);
   }
-
-  // Old screen edge UI.
-  g_base->ui->HandleLegacyRootUIMouseMotion(cursor_pos_x_, cursor_pos_y_);
 }
 
 void Input::PushMouseDownEvent(int button, const Vector2f& position) {
-  SafePushLogicCall(__func__, [this, button, position] {
-    HandleMouseDown(button, position);
-  });
+  PushLogicCall(
+      [this, button, position] { HandleMouseDown(button, position); });
 }
 
 void Input::HandleMouseDown(int button, const Vector2f& position) {
   assert(g_base);
-  assert(g_base->graphics);
   assert(g_base->InLogicThread());
+
+  MarkInputActive();
 
   if (IsInputLocked()) {
     return;
   }
-
-  //  if (!g_base->ui->MainMenuVisible()) {
-  //    return;
-  //  }
-
-  MarkInputActive();
 
   last_mouse_move_time_ = g_core->GetAppTimeMillisecs();
   mouse_move_count_++;
@@ -1306,7 +1269,6 @@ void Input::HandleMouseDown(int button, const Vector2f& position) {
   last_click_time_ = click_time;
 
   bool handled{};
-  // auto* root_widget = g_base->ui->root_widget();
 
   // If we have a touch-input in editing mode, pass along events to it.
   // (it usually handles its own events but here we want it to play nice
@@ -1317,15 +1279,8 @@ void Input::HandleMouseDown(int button, const Vector2f& position) {
   }
 
   if (!handled) {
-    if (g_base->ui->HandleLegacyRootUIMouseDown(cursor_pos_x_, cursor_pos_y_)) {
-      handled = true;
-    }
-  }
-
-  if (!handled) {
-    handled = g_base->ui->SendWidgetMessage(
-        WidgetMessage(WidgetMessage::Type::kMouseDown, nullptr, cursor_pos_x_,
-                      cursor_pos_y_, double_click ? 2 : 1));
+    handled = g_base->ui->HandleMouseDown(button, cursor_pos_x_, cursor_pos_y_,
+                                          double_click);
   }
 
   // Manual camera input.
@@ -1349,8 +1304,7 @@ void Input::HandleMouseDown(int button, const Vector2f& position) {
 }
 
 void Input::PushMouseUpEvent(int button, const Vector2f& position) {
-  SafePushLogicCall(
-      __func__, [this, button, position] { HandleMouseUp(button, position); });
+  PushLogicCall([this, button, position] { HandleMouseUp(button, position); });
 }
 
 void Input::HandleMouseUp(int button, const Vector2f& position) {
@@ -1363,8 +1317,6 @@ void Input::HandleMouseUp(int button, const Vector2f& position) {
   cursor_pos_y_ = g_base->graphics->PixelToVirtualY(
       position.y * g_base->graphics->screen_pixel_height());
 
-  bool handled{};
-
   // If we have a touch-input in editing mode, pass along events to it.
   // (it usually handles its own events but here we want it to play nice
   // with stuff under it by blocking touches, etc)
@@ -1373,14 +1325,7 @@ void Input::HandleMouseUp(int button, const Vector2f& position) {
                                 cursor_pos_y_);
   }
 
-  // ui_v1::Widget* root_widget = g_base->ui->root_widget();
-  // if (root_widget) {
-  handled = g_base->ui->SendWidgetMessage(WidgetMessage(
-      WidgetMessage::Type::kMouseUp, nullptr, cursor_pos_x_, cursor_pos_y_));
-  // }
-
-  Camera* camera = g_base->graphics->camera();
-  if (!handled && camera) {
+  if (Camera* camera = g_base->graphics->camera()) {
     switch (button) {
       case SDL_BUTTON_LEFT:
         camera->set_mouse_left_down(false);
@@ -1397,11 +1342,11 @@ void Input::HandleMouseUp(int button, const Vector2f& position) {
     camera->UpdateManualMode();
   }
 
-  g_base->ui->HandleLegacyRootUIMouseUp(cursor_pos_x_, cursor_pos_y_);
+  g_base->ui->HandleMouseUp(button, cursor_pos_x_, cursor_pos_y_);
 }
 
 void Input::PushTouchEvent(const TouchEvent& e) {
-  SafePushLogicCall(__func__, [e, this] { HandleTouchEvent(e); });
+  PushLogicCall([e, this] { HandleTouchEvent(e); });
 }
 
 void Input::HandleTouchEvent(const TouchEvent& e) {
@@ -1501,19 +1446,19 @@ void Input::Draw(FrameDef* frame_def) {
 }
 
 auto Input::IsCursorVisible() const -> bool {
-  assert(g_base->InLogicThread());
-  if (!g_base->ui) {
+  if (!g_base) {
     return false;
   }
+  assert(g_base->InLogicThread());
 
-  // Keeps mouse hidden to start with..
+  // Keeps mouse hidden to start with.
   if (mouse_move_count_ < 2) {
     return false;
   }
   bool val;
 
-  // Show our cursor if any dialogs/windows are up or else if its been
-  // moved very recently.
+  // Show our cursor if any dialogs/windows are up or else if its been moved
+  // very recently.
   if (g_base->ui->MainMenuVisible()) {
     val = (g_core->GetAppTimeMillisecs() - last_mouse_move_time_ < 5000);
   } else {

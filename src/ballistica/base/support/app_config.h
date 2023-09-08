@@ -64,6 +64,7 @@ class AppConfig {
     kAlwaysUseInternalKeyboard,
     kShowFPS,
     kShowPing,
+    kShowDevConsoleButton,
     kEnableTVBorder,
     kKeyboardP2Enabled,
     kEnablePackageMods,

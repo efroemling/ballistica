@@ -63,11 +63,11 @@ void BasePlatformApple::DoOpenURL(const std::string& url) {
 #endif
 }
 
-void BasePlatformApple::QuitApp() {
+void BasePlatformApple::TerminateApp() {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_HEADLESS_BUILD
-  core::AppleUtils::Quit();  // will post a cocoa terminate
+  core::AppleUtils::TerminateApp();
 #else
-  BasePlatform::QuitApp();
+  BasePlatform::TerminateApp();
 #endif
 }
 

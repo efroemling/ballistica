@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_BASE_UI_CONSOLE_H_
-#define BALLISTICA_BASE_UI_CONSOLE_H_
+#ifndef BALLISTICA_BASE_UI_DEV_CONSOLE_H_
+#define BALLISTICA_BASE_UI_DEV_CONSOLE_H_
 
 #include <list>
 #include <string>
@@ -12,22 +12,31 @@
 
 namespace ballistica::base {
 
-class Console {
+class DevConsole {
  public:
-  Console();
-  ~Console();
-  auto active() const -> bool { return (state_ != State::kInactive); }
-  auto transition_start() const -> millisecs_t { return transition_start_; }
+  DevConsole();
+  ~DevConsole();
+  auto IsActive() const -> bool { return (state_ != State::kInactive); }
   auto HandleTextEditing(const std::string& text) -> bool;
   auto HandleKeyPress(const SDL_Keysym* keysym) -> bool;
   auto HandleKeyRelease(const SDL_Keysym* keysym) -> bool;
+  auto transition_start() const -> millisecs_t { return transition_start_; }
+
+  /// Toggle between mini, fullscreen, and inactive.
   void ToggleState();
+
+  /// Tell the console to quietly go away no matter what state it is in.
+  void Dismiss();
+
+  /// Print text to the console.
   void Print(const std::string& s_in);
   void Draw(RenderPass* pass);
+
+  /// Called when the console should start accepting Python command input.
   void EnableInput();
 
  private:
-  void PushCommand(const std::string& command);
+  void SubmitCommand_(const std::string& command);
   enum class State { kInactive, kMini, kFull };
   ImageMesh bg_mesh_;
   ImageMesh stripe_mesh_;
@@ -40,6 +49,7 @@ class Console {
   bool input_text_dirty_{true};
   millisecs_t transition_start_{};
   State state_{State::kInactive};
+  State state_prev_{State::kInactive};
 
   class Message {
    public:
@@ -71,4 +81,4 @@ class Console {
 
 }  // namespace ballistica::base
 
-#endif  // BALLISTICA_BASE_UI_CONSOLE_H_
+#endif  // BALLISTICA_BASE_UI_DEV_CONSOLE_H_

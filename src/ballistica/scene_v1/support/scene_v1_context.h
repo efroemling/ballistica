@@ -8,7 +8,7 @@
 
 namespace ballistica::scene_v1 {
 
-/// Wraps a weak-ref to a context_ref with functionality specific to scene_v1.
+/// A context-ref specific to SceneV1.
 class ContextRefSceneV1 : public base::ContextRef {
  public:
   ContextRefSceneV1() : ContextRef() {}
@@ -23,8 +23,8 @@ class ContextRefSceneV1 : public base::ContextRef {
   static auto FromAppForegroundContext() -> ContextRefSceneV1;
 
   // If the current Context is (or is part of) a HostSession, return it;
-  // otherwise return nullptr. be aware that this will return a session if the
-  // context is *either* a host-activity or a host-session
+  // otherwise return nullptr. be aware that this will return a session if
+  // the context is *either* a host-activity or a host-session
   auto GetHostSession() const -> HostSession*;
 
   // Return the current context as an HostActivity if it is one; otherwise
@@ -32,15 +32,14 @@ class ContextRefSceneV1 : public base::ContextRef {
   auto GetHostActivity() const -> HostActivity*;
 
   // If the current context contains a scene that can be manipulated by
-  // standard commands, this returns it.  This includes host-sessions,
+  // standard commands, this returns it. This includes host-sessions,
   // host-activities, and the UI context.
   auto GetMutableScene() const -> Scene*;
 };
 
-/// Object containing some sort of context_ref.
-/// App-modes can subclass this to provide the actual context_ref they desire,
-/// and then code can use GetTyped() to safely retrieve context_ref as that
-/// type.
+/// Object containing some sort of context_ref. App-modes can subclass this
+/// to provide the actual context_ref they desire, and then code can use
+/// GetTyped() to safely retrieve context_ref as that type.
 class SceneV1Context : public base::Context {
  public:
   static auto Current() -> SceneV1Context& {

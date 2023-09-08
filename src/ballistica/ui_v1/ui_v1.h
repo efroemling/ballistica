@@ -15,6 +15,19 @@
 // BA 2.0 UI testing.
 #define BA_UI_V1_TOOLBAR_TEST 0
 
+// UI-Locks: make sure widget-lists don't change under you. Use a read-lock
+// if you just need to ensure lists remain intact but won't be changing
+// anything. Use a write-lock whenever modifying a list.
+#if BA_DEBUG_BUILD
+#define BA_DEBUG_UI_READ_LOCK \
+  ::ballistica::ui_v1::UIV1FeatureSet::UILock ui_lock(false)
+#define BA_DEBUG_UI_WRITE_LOCK \
+  ::ballistica::ui_v1::UIV1FeatureSet::UILock ui_lock(true)
+#else
+#define BA_DEBUG_UI_READ_LOCK
+#define BA_DEBUG_UI_WRITE_LOCK
+#endif
+
 // Predeclared types from other feature sets that we use.
 namespace ballistica::core {
 class CoreFeatureSet;
@@ -56,6 +69,17 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   /// Instantiate our FeatureSet if needed and return the single instance of
   /// it. Basically a Python import statement.
   static auto Import() -> UIV1FeatureSet*;
+
+  /// Used to ensure widgets are not created or destroyed at certain times
+  /// (while traversing widget hierarchy, etc).
+  class UILock {
+   public:
+    explicit UILock(bool write);
+    ~UILock();
+
+   private:
+    BA_DISALLOW_CLASS_COPIES(UILock);
+  };
 
   /// Called when our associated Python module is instantiated.
   static void OnModuleExec(PyObject* module);
@@ -113,6 +137,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   Object::Ref<ContainerWidget> screen_root_widget_;
   Object::Ref<ContainerWidget> overlay_root_widget_;
   Object::Ref<RootWidget> root_widget_;
+  int ui_lock_count_{};
 };
 
 }  // namespace ballistica::ui_v1

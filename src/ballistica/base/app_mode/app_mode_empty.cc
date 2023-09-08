@@ -50,8 +50,10 @@ void AppModeEmpty::DrawWorld(base::FrameDef* frame_def) {
       sinf(static_cast<float>(frame_def->display_time_millisecs()) / 600.0f);
   auto yoffs =
       cosf(static_cast<float>(frame_def->display_time_millisecs()) / 600.0f);
+
+  // Z value -1 will draw us under most everything.
   c.Translate(pass->virtual_width() * 0.5f - 70.0f + xoffs * 200.0f,
-              pass->virtual_height() * 0.5f - 20.0f + yoffs * 200.0f);
+              pass->virtual_height() * 0.5f - 20.0f + yoffs * 200.0f, -1.0f);
   c.Scale(2.0, 2.0);
 
   int text_elem_count = grp.GetElementCount();

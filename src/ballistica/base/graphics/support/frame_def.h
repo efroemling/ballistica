@@ -154,6 +154,7 @@ class FrameDef {
   auto media_components() const -> const std::vector<Object::Ref<Asset>>& {
     return media_components_;
   }
+  auto tv_border() const { return tv_border_; }
 
   void set_camera_mode(CameraMode val) { camera_mode_ = val; }
   void set_rendering(bool val) { rendering_ = val; }
@@ -205,6 +206,7 @@ class FrameDef {
   std::unique_ptr<RenderPass> blit_pass_;
   GraphicsQuality quality_{GraphicsQuality::kLow};
   bool orbiting_{};
+  bool tv_border_{};
   millisecs_t app_time_millisecs_{};
   millisecs_t display_time_millisecs_{};
   millisecs_t display_time_elapsed_millisecs_{};

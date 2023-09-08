@@ -1,5 +1,11 @@
-### 1.7.28 (build 21306, api 8, 2023-09-06)
+### 1.7.28 (build 21322, api 8, 2023-09-07)
 
+- Renamed Console to DevConsole, and added an option under advanced settings to
+  always show an ugly 'dev' button onscreen which can be used to toggle it. The
+  backtick key still works also for anyone with a keyboard. I plan to add more
+  functionality besides just the Python console to the dev-console, and perhaps
+  improve the Python console a bit too (add support for on-screen keyboards,
+  etc.)
 - Added some high level functionality for copying and deleting feature-sets to
   the `spinoff` tool. For example, to create your own `poo` feature-set based on
   the existing `template_fs` one, do `tools/spinoff fset-copy template_fs poo`.
@@ -16,6 +22,10 @@
   significantly faster & more efficient.
 - Updated internal Python builds for Apple & iOS to 3.11.5, and updated a few
   dependent libraries as well (OpenSSL bumped from 3.0.8 to 3.0.10, etc.).
+- Cleaned up the `babase.quit()` mechanism a bit. The default for the 'soft' arg
+  is now true, so a raw `babase.quit()` should now be a good citizen on mobile
+  platforms. Also added the `g_base->QuitApp()` call which gives the C++ layer
+  an equivalent to the Python call.
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 

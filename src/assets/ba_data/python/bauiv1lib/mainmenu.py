@@ -92,7 +92,7 @@ class MainMenuWindow(bui.Window):
     # noinspection PyUnresolvedReferences
     @staticmethod
     def _preload_modules() -> None:
-        """Preload modules we use (called in bg thread)."""
+        """Preload modules we use; avoids hitches (called in bg thread)."""
         import bauiv1lib.getremote as _unused
         import bauiv1lib.confirm as _unused2
         import bauiv1lib.store.button as _unused3

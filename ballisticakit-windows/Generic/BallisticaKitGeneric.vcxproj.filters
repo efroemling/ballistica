@@ -664,10 +664,10 @@
     <ClInclude Include="..\..\src\ballistica\base\support\ui_v1_soft.h">
       <Filter>ballistica\base\support</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\ui\console.cc">
+    <ClCompile Include="..\..\src\ballistica\base\ui\dev_console.cc">
       <Filter>ballistica\base\ui</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\ui\console.h">
+    <ClInclude Include="..\..\src\ballistica\base\ui\dev_console.h">
       <Filter>ballistica\base\ui</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\ui\ui.cc">

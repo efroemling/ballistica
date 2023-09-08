@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from batools.featureset import FeatureSet
 
-# Grab the FeatureSet we should apply to.
+# Grab the FeatureSet we're defining here.
 fset = FeatureSet.get_active()
 
 fset.requirements = {'core', 'base'}

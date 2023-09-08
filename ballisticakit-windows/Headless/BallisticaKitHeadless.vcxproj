@@ -405,8 +405,8 @@
     <ClCompile Include="..\..\src\ballistica\base\support\stress_test.cc" />
     <ClInclude Include="..\..\src\ballistica\base\support\stress_test.h" />
     <ClInclude Include="..\..\src\ballistica\base\support\ui_v1_soft.h" />
-    <ClCompile Include="..\..\src\ballistica\base\ui\console.cc" />
-    <ClInclude Include="..\..\src\ballistica\base\ui\console.h" />
+    <ClCompile Include="..\..\src\ballistica\base\ui\dev_console.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\ui\dev_console.h" />
     <ClCompile Include="..\..\src\ballistica\base\ui\ui.cc" />
     <ClInclude Include="..\..\src\ballistica\base\ui\ui.h" />
     <ClInclude Include="..\..\src\ballistica\base\ui\widget_message.h" />

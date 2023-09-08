@@ -24,7 +24,7 @@
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/support/stdio_console.h"
 #include "ballistica/base/support/stress_test.h"
-#include "ballistica/base/ui/console.h"
+#include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -156,7 +156,7 @@ void BaseFeatureSet::OnAssetsAvailable() {
 
   // Spin up the in-app console.
   if (!g_core->HeadlessMode()) {
-    console_ = new Console();
+    console_ = new DevConsole();
 
     // Print any messages that have built up.
     if (!console_startup_messages_.empty()) {
@@ -234,7 +234,7 @@ void BaseFeatureSet::OnAppShutdownComplete() {
   if (app_adapter->ManagesEventLoop()) {
     g_core->main_event_loop()->Quit();
   } else {
-    platform->QuitApp();
+    platform->TerminateApp();
   }
 }
 
@@ -746,5 +746,19 @@ void BaseFeatureSet::ShutdownSuppressDisallow() {
 }
 
 auto BaseFeatureSet::GetReturnValue() const -> int { return return_value(); }
+
+void BaseFeatureSet::QuitApp(QuitType quit_type) {
+  // If they ask for 'back' and we support that, do it.
+  // Otherwise if they want 'back' or 'soft' and we support soft, do it.
+  // Otherwise go with a regular app shutdown.
+  if (quit_type == QuitType::kBack && g_base->platform->CanBackQuit()) {
+    logic->event_loop()->PushCall([this] { platform->DoBackQuit(); });
+  } else if ((quit_type == QuitType::kBack || quit_type == QuitType::kSoft)
+             && g_base->platform->CanSoftQuit()) {
+    logic->event_loop()->PushCall([this] { platform->DoSoftQuit(); });
+  } else {
+    logic->event_loop()->PushCall([this] { logic->Shutdown(); });
+  }
+}
 
 }  // namespace ballistica::base

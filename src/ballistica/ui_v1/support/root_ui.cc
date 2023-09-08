@@ -223,7 +223,7 @@ void RootUI::Draw(base::FrameDef* frame_def) {
       // Flash and show a message if we're in the main menu instructing the
       // player to start a game.
       bool flash = false;
-      bool in_main_menu = g_base->app_mode()->InMainMenu();
+      bool in_main_menu = g_base->app_mode()->InClassicMainMenuSession();
 
       if (in_main_menu && party_size > 0 && show_client_joined) flash = true;
 
@@ -255,8 +255,8 @@ void RootUI::Draw(base::FrameDef* frame_def) {
       c.PopTransform();
       c.Submit();
 
-      // Based on who has menu control, we may show a key/button below the party
-      // icon.
+      // Based on who has menu control, we may show a key/button below the
+      // party icon.
       if (!active) {
         if (base::InputDevice* uiid = g_base->ui->GetUIInputDevice()) {
           std::string party_button_name = uiid->GetPartyButtonName();
@@ -304,8 +304,8 @@ void RootUI::Draw(base::FrameDef* frame_def) {
           party_size_text_group_->set_text(
               std::to_string(party_size_text_group_num_));
 
-          // ..we also may want to update our 'someone joined' message if we're
-          // host
+          // ..we also may want to update our 'someone joined' message if
+          // we're host
           if (is_host) {
             if (!start_a_game_text_group_.Exists()) {
               start_a_game_text_group_ = Object::New<base::TextGroup>();

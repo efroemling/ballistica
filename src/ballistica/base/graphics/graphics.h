@@ -19,30 +19,32 @@
 namespace ballistica::base {
 
 // Light/shadow res is divided by this to get pure light res.
-const int kLightResDiv = 4;
+const int kLightResDiv{4};
 
 // How we divide up our z depth spectrum:
-const float kBackingDepth5 = 1.0f;
+const float kBackingDepth5{1.0f};
 
 // Background
 // blit-shapes (with cam buffer)
-const float kBackingDepth4 = 0.9f;
+const float kBackingDepth4{0.9f};
 
 // World (without cam buffer) or overlay-3d (with cam buffer)
-const float kBackingDepth3C = 0.65f;
-const float kBackingDepth3B = 0.4f;
-const float kBackingDepth3 = 0.15f;
+const float kBackingDepth3C{0.65f};
+const float kBackingDepth3B{0.4f};
+const float kBackingDepth3{0.15f};
 
 // Overlay-3d (without cam buffer) / overlay(vr)
-const float kBackingDepth2C = 0.147f;
-const float kBackingDepth2B = 0.143f;
-const float kBackingDepth2 = 0.14f;
+const float kBackingDepth2C{0.147f};
+const float kBackingDepth2B{0.143f};
+const float kBackingDepth2{0.14f};
 
 // Overlay(non-vr) // cover (vr)
-const float kBackingDepth1B = 0.01f;
-const float kBackingDepth1 = 0.0f;
+const float kBackingDepth1B{0.01f};
+const float kBackingDepth1{0.0f};
 
-const float kShadowNeutral = 0.5f;
+const float kShadowNeutral{0.5f};
+
+const float kCursorZDepth{-0.1f};
 
 // Client class for graphics operations (used from the logic thread).
 class Graphics {
@@ -218,13 +220,7 @@ class Graphics {
   void SetShadowRange(float lower_bottom, float lower_top, float upper_bottom,
                       float upper_top);
   void ReleaseFadeEndCommand();
-  void set_show_fps(bool val) { show_fps_ = val; }
-  void set_show_ping(bool val) { show_ping_ = val; }
-  // FIXME - move to graphics_server
-  void set_tv_border(bool val) {
-    assert(g_base->InLogicThread());
-    tv_border_ = val;
-  }
+
   auto tv_border() const -> bool {
     assert(g_base->InLogicThread());
     return tv_border_;
@@ -297,7 +293,12 @@ class Graphics {
   void set_drawing_transparent_only(bool val) {
     drawing_transparent_only_ = val;
   }
+
+  /// Draw regular UI.
   virtual void DrawUI(FrameDef* frame_def);
+
+  /// Draw dev console or whatever else on top of normal stuff.
+  virtual void DrawDevUI(FrameDef* frame_def);
 
   auto drawing_opaque_only() const -> bool { return drawing_opaque_only_; }
   void set_drawing_opaque_only(bool val) { drawing_opaque_only_ = val; }

@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/base/ui/console.h"
+#include "ballistica/base/ui/dev_console.h"
 
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
@@ -19,14 +19,14 @@
 namespace ballistica::base {
 
 // How much of the screen the console covers when it is at full size.
-const float kConsoleSize = 0.9f;
-const float kConsoleZDepth = 0.0f;
-const int kConsoleLineLimit = 80;
-const int kStringBreakUpSize = 1950;
-const int kActivateKey1 = SDLK_BACKQUOTE;
-const int kActivateKey2 = SDLK_F2;
+const float kDevConsoleSize = 0.9f;
+const float kDevConsoleZDepth = 0.0f;
+const int kDevConsoleLineLimit = 80;
+const int kDevConsoleStringBreakUpSize = 1950;
+const int kDevConsoleActivateKey1 = SDLK_BACKQUOTE;
+const int kDevConsoleActivateKey2 = SDLK_F2;
 
-Console::Console() {
+DevConsole::DevConsole() {
   assert(g_base->InLogicThread());
   std::string title = std::string("BallisticaKit ") + kEngineVersion + " ("
                       + std::to_string(kEngineBuildNumber) + ")";
@@ -42,15 +42,15 @@ Console::Console() {
   prompt_text_group_.set_text(">");
 }
 
-Console::~Console() = default;
+DevConsole::~DevConsole() = default;
 
-auto Console::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
+auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
   assert(g_base->InLogicThread());
 
   // Handle our toggle buttons no matter whether we're active.
   switch (keysym->sym) {
-    case kActivateKey1:
-    case kActivateKey2: {
+    case kDevConsoleActivateKey1:
+    case kDevConsoleActivateKey2: {
       if (!g_buildconfig.demo_build() && !g_buildconfig.arcade_build()) {
         // (reset input so characters don't continue walking and stuff)
         g_base->input->ResetHoldStates();
@@ -111,9 +111,7 @@ auto Console::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
     case SDLK_KP_ENTER:
     case SDLK_RETURN: {
       if (!input_enabled_) {
-        Log(LogLevel::kWarning,
-            "Console input is not allowed until the app reaches the 'running' "
-            "state.");
+        Log(LogLevel::kWarning, "Console input is not allowed yet.");
         break;
       }
       input_history_position_ = 0;
@@ -121,7 +119,7 @@ auto Console::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
         last_line_.clear();
         lines_.clear();
       } else {
-        PushCommand(input_string_);
+        SubmitCommand_(input_string_);
       }
       input_history_.push_front(input_string_);
       if (input_history_.size() > 100) {
@@ -151,7 +149,7 @@ auto Console::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
   return true;
 }
 
-void Console::PushCommand(const std::string& command) {
+void DevConsole::SubmitCommand_(const std::string& command) {
   assert(g_base);
   g_base->logic->event_loop()->PushCall([command] {
     // These are always run in whichever context is 'visible'.
@@ -172,13 +170,25 @@ void Console::PushCommand(const std::string& command) {
   });
 }
 
-void Console::EnableInput() {
+void DevConsole::EnableInput() {
   assert(g_base->InLogicThread());
   input_enabled_ = true;
 }
 
-void Console::ToggleState() {
+void DevConsole::Dismiss() {
   assert(g_base->InLogicThread());
+  if (state_ == State::kInactive) {
+    return;
+  }
+
+  state_prev_ = state_;
+  state_ = State::kInactive;
+  transition_start_ = g_core->GetAppTimeMillisecs();
+}
+
+void DevConsole::ToggleState() {
+  assert(g_base->InLogicThread());
+  state_prev_ = state_;
   switch (state_) {
     case State::kInactive:
       state_ = State::kMini;
@@ -194,7 +204,7 @@ void Console::ToggleState() {
   transition_start_ = g_core->GetAppTimeMillisecs();
 }
 
-auto Console::HandleTextEditing(const std::string& text) -> bool {
+auto DevConsole::HandleTextEditing(const std::string& text) -> bool {
   assert(g_base->InLogicThread());
   if (state_ == State::kInactive) {
     return false;
@@ -209,31 +219,32 @@ auto Console::HandleTextEditing(const std::string& text) -> bool {
   return true;
 }
 
-auto Console::HandleKeyRelease(const SDL_Keysym* keysym) -> bool {
+auto DevConsole::HandleKeyRelease(const SDL_Keysym* keysym) -> bool {
   // Always absorb our activate keys.
-  if (keysym->sym == kActivateKey1 || keysym->sym == kActivateKey2) {
+  if (keysym->sym == kDevConsoleActivateKey1
+      || keysym->sym == kDevConsoleActivateKey2) {
     return true;
   }
 
-  // Otherwise simply absorb all key-ups if we're active.
+  // Otherwise absorb *all* key-ups when we're active.
   return state_ != State::kInactive;
 }
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "LocalValueEscapesScope"
 
-void Console::Print(const std::string& s_in) {
+void DevConsole::Print(const std::string& s_in) {
   assert(g_base->InLogicThread());
   std::string s = Utils::GetValidUTF8(s_in.c_str(), "cspr");
   last_line_ += s;
   std::vector<std::string> broken_up;
-  g_base->text_graphics->BreakUpString(last_line_.c_str(), kStringBreakUpSize,
-                                       &broken_up);
+  g_base->text_graphics->BreakUpString(
+      last_line_.c_str(), kDevConsoleStringBreakUpSize, &broken_up);
 
   // Spit out all completed lines and keep the last one as lastline.
   for (size_t i = 0; i < broken_up.size() - 1; i++) {
     lines_.emplace_back(broken_up[i], g_core->GetAppTimeMillisecs());
-    if (lines_.size() > kConsoleLineLimit) {
+    if (lines_.size() > kDevConsoleLineLimit) {
       lines_.pop_front();
     }
   }
@@ -243,7 +254,7 @@ void Console::Print(const std::string& s_in) {
 
 #pragma clang diagnostic pop
 
-void Console::Draw(RenderPass* pass) {
+void DevConsole::Draw(RenderPass* pass) {
   millisecs_t transition_ticks = 100;
   if ((transition_start_ != 0)
       && (state_ != State::kInactive
@@ -257,27 +268,37 @@ void Console::Draw(RenderPass* pass) {
     if (state_ == State::kMini) {
       bottom = pass->virtual_height() - mini_size;
     } else {
-      bottom = pass->virtual_height() - pass->virtual_height() * kConsoleSize;
+      bottom =
+          pass->virtual_height() - pass->virtual_height() * kDevConsoleSize;
     }
     if (g_core->GetAppTimeMillisecs() - transition_start_ < transition_ticks) {
-      if (state_ == State::kMini) {
-        bottom = pass->virtual_height() * (1.0f - ratio) + bottom * (ratio);
-      } else if (state_ == State::kFull) {
-        bottom =
-            (pass->virtual_height() - pass->virtual_height() * kConsoleSize)
-                * (ratio)
-            + (pass->virtual_height() - mini_size) * (1.0f - ratio);
+      float from_height;
+      if (state_prev_ == State::kMini) {
+        from_height = pass->virtual_height() - mini_size;
+      } else if (state_prev_ == State::kFull) {
+        from_height =
+            pass->virtual_height() - pass->virtual_height() * kDevConsoleSize;
       } else {
-        bottom = pass->virtual_height() * ratio + bottom * (1.0f - ratio);
+        from_height = pass->virtual_height();
       }
+      float to_height;
+      if (state_ == State::kMini) {
+        to_height = pass->virtual_height() - mini_size;
+      } else if (state_ == State::kFull) {
+        to_height =
+            pass->virtual_height() - pass->virtual_height() * kDevConsoleSize;
+      } else {
+        to_height = pass->virtual_height();
+      }
+      bottom = to_height * ratio + from_height * (1.0 - ratio);
     }
     {
-      bg_mesh_.SetPositionAndSize(0, bottom, kConsoleZDepth,
+      bg_mesh_.SetPositionAndSize(0, bottom, kDevConsoleZDepth,
                                   pass->virtual_width(),
                                   (pass->virtual_height() - bottom));
-      stripe_mesh_.SetPositionAndSize(0, bottom + 15, kConsoleZDepth,
+      stripe_mesh_.SetPositionAndSize(0, bottom + 15, kDevConsoleZDepth,
                                       pass->virtual_width(), 15);
-      shadow_mesh_.SetPositionAndSize(0, bottom - 7, kConsoleZDepth,
+      shadow_mesh_.SetPositionAndSize(0, bottom - 7, kDevConsoleZDepth,
                                       pass->virtual_width(), 7);
       SimpleComponent c(pass);
       c.SetTransparent(true);
@@ -304,7 +325,8 @@ void Console::Draw(RenderPass* pass) {
       for (int e = 0; e < elem_count; e++) {
         c.SetTexture(built_text_group_.GetElementTexture(e));
         c.PushTransform();
-        c.Translate(pass->virtual_width() - 175.0f, bottom + 0, kConsoleZDepth);
+        c.Translate(pass->virtual_width() - 175.0f, bottom + 0,
+                    kDevConsoleZDepth);
         c.Scale(0.5f, 0.5f, 0.5f);
         c.DrawMesh(built_text_group_.GetElementMesh(e));
         c.PopTransform();
@@ -313,7 +335,7 @@ void Console::Draw(RenderPass* pass) {
       for (int e = 0; e < elem_count; e++) {
         c.SetTexture(title_text_group_.GetElementTexture(e));
         c.PushTransform();
-        c.Translate(20.0f, bottom + 0, kConsoleZDepth);
+        c.Translate(20.0f, bottom + 0, kDevConsoleZDepth);
         c.Scale(0.5f, 0.5f, 0.5f);
         c.DrawMesh(title_text_group_.GetElementMesh(e));
         c.PopTransform();
@@ -323,7 +345,7 @@ void Console::Draw(RenderPass* pass) {
         c.SetTexture(prompt_text_group_.GetElementTexture(e));
         c.SetColor(1, 1, 1, 1);
         c.PushTransform();
-        c.Translate(5.0f, bottom + 15.0f, kConsoleZDepth);
+        c.Translate(5.0f, bottom + 15.0f, kDevConsoleZDepth);
         c.Scale(0.5f, 0.5f, 0.5f);
         c.DrawMesh(prompt_text_group_.GetElementMesh(e));
         c.PopTransform();
@@ -332,7 +354,7 @@ void Console::Draw(RenderPass* pass) {
       for (int e = 0; e < elem_count; e++) {
         c.SetTexture(input_text_group_.GetElementTexture(e));
         c.PushTransform();
-        c.Translate(15.0f, bottom + 15.0f, kConsoleZDepth);
+        c.Translate(15.0f, bottom + 15.0f, kDevConsoleZDepth);
         c.Scale(0.5f, 0.5f, 0.5f);
         c.DrawMesh(input_text_group_.GetElementMesh(e));
         c.PopTransform();
@@ -350,7 +372,7 @@ void Console::Draw(RenderPass* pass) {
       c.PushTransform();
       c.Translate(
           19.0f + g_base->text_graphics->GetStringWidth(input_string_) * 0.5f,
-          bottom + 23.0f, kConsoleZDepth);
+          bottom + 23.0f, kDevConsoleZDepth);
       c.Scale(5, 11, 1.0f);
       c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
       c.PopTransform();
@@ -365,7 +387,7 @@ void Console::Draw(RenderPass* pass) {
       c.SetColor(1, 1, 1, 1);
       float h = 0.5f
                 * (g_base->graphics->screen_virtual_width()
-                   - (kStringBreakUpSize * draw_scale));
+                   - (kDevConsoleStringBreakUpSize * draw_scale));
       float v = bottom + 32.0f;
       if (!last_line_.empty()) {
         if (last_line_mesh_dirty_) {
@@ -379,7 +401,7 @@ void Console::Draw(RenderPass* pass) {
         for (int e = 0; e < elem_count; e++) {
           c.SetTexture(last_line_mesh_group_->GetElementTexture(e));
           c.PushTransform();
-          c.Translate(h, v + 2, kConsoleZDepth);
+          c.Translate(h, v + 2, kDevConsoleZDepth);
           c.Scale(draw_scale, draw_scale);
           c.DrawMesh(last_line_mesh_group_->GetElementMesh(e));
           c.PopTransform();
@@ -391,7 +413,7 @@ void Console::Draw(RenderPass* pass) {
         for (int e = 0; e < elem_count; e++) {
           c.SetTexture(i->GetText().GetElementTexture(e));
           c.PushTransform();
-          c.Translate(h, v + 2, kConsoleZDepth);
+          c.Translate(h, v + 2, kDevConsoleZDepth);
           c.Scale(draw_scale, draw_scale);
           c.DrawMesh(i->GetText().GetElementMesh(e));
           c.PopTransform();

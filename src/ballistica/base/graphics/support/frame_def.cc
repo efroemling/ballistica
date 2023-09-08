@@ -72,6 +72,7 @@ void FrameDef::Reset() {
 
   assert(g_base->graphics->has_supports_high_quality_graphics_value());
   orbiting_ = (g_base->graphics->camera()->mode() == CameraMode::kOrbit);
+  tv_border_ = g_base->graphics->tv_border();
 
   shadow_offset_ = g_base->graphics->shadow_offset();
   shadow_scale_ = g_base->graphics->shadow_scale();

@@ -28,6 +28,10 @@ PYVER = '3.11'
 # Update; just using the same executable used to launch us.
 PYTHON_BIN = sys.executable
 
+# Cache these since we may repeatedly fetch these in batch mode.
+_g_project_configs: dict[str, dict[str, Any]] = {}
+_g_local_configs: dict[str, dict[str, Any]] = {}
+
 
 def explicit_bool(value: bool) -> bool:
     """Simply return input value; can avoid unreachable-code type warnings."""
@@ -36,36 +40,45 @@ def explicit_bool(value: bool) -> bool:
 
 def getlocalconfig(projroot: Path | str) -> dict[str, Any]:
     """Return a project's localconfig contents (or default if missing)."""
-    localconfig: dict[str, Any]
+    projrootstr = str(projroot)
+    if projrootstr not in _g_local_configs:
+        localconfig: dict[str, Any]
 
-    # Allow overriding path via env var.
-    path = os.environ.get('EFRO_LOCALCONFIG_PATH')
-    if path is None:
-        path = 'config/localconfig.json'
+        # Allow overriding path via env var.
+        path = os.environ.get('EFRO_LOCALCONFIG_PATH')
+        if path is None:
+            path = 'config/localconfig.json'
 
-    try:
-        with open(Path(projroot, path), encoding='utf-8') as infile:
-            localconfig = json.loads(infile.read())
-    except FileNotFoundError:
-        localconfig = {}
-    return localconfig
+        try:
+            with open(Path(projroot, path), encoding='utf-8') as infile:
+                localconfig = json.loads(infile.read())
+        except FileNotFoundError:
+            localconfig = {}
+        _g_local_configs[projrootstr] = localconfig
+
+    return _g_local_configs[projrootstr]
 
 
 def getprojectconfig(projroot: Path | str) -> dict[str, Any]:
     """Return a project's projectconfig contents (or default if missing)."""
-    config: dict[str, Any]
-    try:
-        with open(
-            Path(projroot, 'config/projectconfig.json'), encoding='utf-8'
-        ) as infile:
-            config = json.loads(infile.read())
-    except FileNotFoundError:
-        config = {}
-    return config
+    projrootstr = str(projroot)
+    if projrootstr not in _g_project_configs:
+        config: dict[str, Any]
+        try:
+            with open(
+                Path(projroot, 'config/projectconfig.json'), encoding='utf-8'
+            ) as infile:
+                config = json.loads(infile.read())
+        except FileNotFoundError:
+            config = {}
+        _g_project_configs[projrootstr] = config
+    return _g_project_configs[projrootstr]
 
 
 def setprojectconfig(projroot: Path | str, config: dict[str, Any]) -> None:
     """Set the project config contents."""
+    projrootstr = str(projroot)
+    _g_project_configs[projrootstr] = config
     os.makedirs(Path(projroot, 'config'), exist_ok=True)
     with Path(projroot, 'config/projectconfig.json').open(
         'w', encoding='utf-8'

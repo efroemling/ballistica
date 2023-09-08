@@ -79,8 +79,8 @@ class AppMode {
   /// Called when language changes.
   virtual void LanguageChanged();
 
-  /// Are we currently in a 'main menu'?
-  virtual auto InMainMenu() const -> bool;
+  /// Are we currently in a classic 'main menu' session?
+  virtual auto InClassicMainMenuSession() const -> bool;
 
   /// Get current party size (for legacy parties).
   virtual auto GetPartySize() const -> int;

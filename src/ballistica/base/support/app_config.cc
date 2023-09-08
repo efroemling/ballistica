@@ -218,6 +218,8 @@ void AppConfig::SetupEntries() {
       BoolEntry("Always Use Internal Keyboard", false);
   bool_entries_[BoolID::kShowFPS] = BoolEntry("Show FPS", false);
   bool_entries_[BoolID::kShowPing] = BoolEntry("Show Ping", false);
+  bool_entries_[BoolID::kShowDevConsoleButton] =
+      BoolEntry("Show Dev Console Button", false);
   bool_entries_[BoolID::kEnableTVBorder] =
       BoolEntry("TV Border", g_core->platform->IsRunningOnTV());
   bool_entries_[BoolID::kKeyboardP2Enabled] =

@@ -513,7 +513,7 @@ class PlayWindow(bui.Window):
     # noinspection PyUnresolvedReferences
     @staticmethod
     def _preload_modules() -> None:
-        """Preload modules we use (called in bg thread)."""
+        """Preload modules we use; avoids hitches (called in bg thread)."""
         import bauiv1lib.mainmenu as _unused1
         import bauiv1lib.account as _unused2
         import bauiv1lib.coop.browser as _unused3

@@ -3,13 +3,16 @@
 #include "ballistica/base/ui/ui.h"
 
 #include "ballistica/base/audio/audio.h"
+#include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/ui_v1_soft.h"
-#include "ballistica/base/ui/console.h"
+#include "ballistica/base/ui/dev_console.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/inline.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
@@ -17,8 +20,9 @@ namespace ballistica::base {
 static const int kUIOwnerTimeoutSeconds = 30;
 
 UI::UI() {
-  // Figure out our interface type.
   assert(g_core);
+
+  // Figure out our interface scale.
 
   // Allow overriding via an environment variable.
   auto* ui_override = getenv("BA_UI_SCALE");
@@ -37,7 +41,7 @@ UI::UI() {
   if (!force_scale_) {
     // Use automatic val.
     if (g_core->IsVRMode() || g_core->platform->IsRunningOnTV()) {
-      // VR and tv builds always use medium.
+      // VR and TV modes always use medium.
       scale_ = UIScale::kMedium;
     } else {
       scale_ = g_core->platform->GetUIScale();
@@ -85,6 +89,8 @@ void UI::DoApplyAppConfig() {
   if (g_base->HaveUIV1()) {
     g_base->ui_v1()->DoApplyAppConfig();
   }
+  show_dev_console_button_ =
+      g_base->app_config->Resolve(AppConfig::BoolID::kShowDevConsoleButton);
 }
 
 auto UI::MainMenuVisible() const -> bool {
@@ -114,22 +120,56 @@ auto UI::PartyWindowOpen() -> bool {
   return false;
 }
 
-void UI::HandleLegacyRootUIMouseMotion(float x, float y) {
-  if (g_base->HaveUIV1()) {
-    g_base->ui_v1()->HandleLegacyRootUIMouseMotion(x, y);
+auto UI::HandleMouseDown(int button, float x, float y, bool double_click)
+    -> bool {
+  bool handled{};
+
+  if (show_dev_console_button_ && button == 1) {
+    float vx = g_base->graphics->screen_virtual_width();
+    float vy = g_base->graphics->screen_virtual_height();
+    if (InDevConsoleButton_(x, y)) {
+      dev_console_button_pressed_ = true;
+    }
   }
+
+  if (!handled && g_base->HaveUIV1()) {
+    handled = g_base->ui_v1()->HandleLegacyRootUIMouseDown(x, y);
+  }
+
+  if (!handled) {
+    handled = SendWidgetMessage(WidgetMessage(
+        WidgetMessage::Type::kMouseDown, nullptr, x, y, double_click ? 2 : 1));
+  }
+
+  return handled;
 }
 
-auto UI::HandleLegacyRootUIMouseDown(float x, float y) -> bool {
-  if (g_base->HaveUIV1()) {
-    return g_base->ui_v1()->HandleLegacyRootUIMouseDown(x, y);
-  }
-  return false;
-}
+void UI::HandleMouseUp(int button, float x, float y) {
+  assert(g_base->InLogicThread());
 
-void UI::HandleLegacyRootUIMouseUp(float x, float y) {
+  SendWidgetMessage(
+      WidgetMessage(WidgetMessage::Type::kMouseUp, nullptr, x, y));
+
+  if (dev_console_button_pressed_) {
+    if (InDevConsoleButton_(x, y)) {
+      if (auto* console = g_base->console()) {
+        console->ToggleState();
+      }
+    }
+    dev_console_button_pressed_ = false;
+  }
+
   if (g_base->HaveUIV1()) {
     g_base->ui_v1()->HandleLegacyRootUIMouseUp(x, y);
+  }
+}
+
+void UI::HandleMouseMotion(float x, float y) {
+  SendWidgetMessage(
+      WidgetMessage(WidgetMessage::Type::kMouseMove, nullptr, x, y));
+
+  if (g_base->HaveUIV1()) {
+    g_base->ui_v1()->HandleLegacyRootUIMouseMotion(x, y);
   }
 }
 
@@ -138,12 +178,11 @@ void UI::PushBackButtonCall(InputDevice* input_device) {
     assert(g_base->InLogicThread());
 
     // If there's a UI up, send along a cancel message.
-    if (g_base->ui->MainMenuVisible()) {
-      g_base->ui->SendWidgetMessage(
-          WidgetMessage(WidgetMessage::Type::kCancel));
+    if (MainMenuVisible()) {
+      SendWidgetMessage(WidgetMessage(WidgetMessage::Type::kCancel));
     } else {
-      // If there's no main screen or overlay windows, ask for a menu owned by
-      // this device.
+      // If there's no main screen or overlay windows, ask for a menu owned
+      // by this device.
       MainMenuPress_(input_device);
     }
   });
@@ -173,24 +212,6 @@ void UI::SetUIInputDevice(InputDevice* input_device) {
   last_input_device_use_time_ = g_core->GetAppTimeMillisecs();
 }
 
-UI::UILock::UILock(bool write) {
-  assert(g_base->ui);
-  assert(g_base->InLogicThread());
-
-  if (write && g_base->ui->ui_lock_count_ != 0) {
-    BA_LOG_ERROR_TRACE_ONCE("Illegal operation: UI is locked");
-  }
-  g_base->ui->ui_lock_count_++;
-}
-
-UI::UILock::~UILock() {
-  g_base->ui->ui_lock_count_--;
-  if (g_base->ui->ui_lock_count_ < 0) {
-    BA_LOG_ERROR_TRACE_ONCE("ui_lock_count_ < 0");
-    g_base->ui->ui_lock_count_ = 0;
-  }
-}
-
 void UI::Reset() {
   if (g_base->HaveUIV1()) {
     g_base->ui_v1()->Reset();
@@ -198,9 +219,9 @@ void UI::Reset() {
 }
 
 auto UI::ShouldHighlightWidgets() const -> bool {
-  // Show selection highlights only if we've got controllers connected and only
-  // when the main UI is visible (dont want a selection highlight for toolbar
-  // buttons during a game).
+  // Show selection highlights only if we've got controllers connected and
+  // only when the main UI is visible (dont want a selection highlight for
+  // toolbar buttons during a game).
   return g_base->input->have_non_touch_inputs() && MainMenuVisible();
 }
 
@@ -236,22 +257,24 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget* {
   assert(input_device);
   assert(g_base->InLogicThread());
 
-  // We only allow input-devices to control the UI when there's a window/dialog
-  // on the screen (even though our top/bottom bars still exist).
+  // We only allow input-devices to control the UI when there's a
+  // window/dialog on the screen (even though our top/bottom bars still
+  // exist).
   if (!MainMenuVisible()) {
     return nullptr;
   }
 
   millisecs_t time = g_core->GetAppTimeMillisecs();
 
-  bool print_menu_owner = false;
+  bool print_menu_owner{};
   ui_v1::Widget* ret_val;
 
   // Ok here's the deal:
-  // Because having 10 controllers attached to the UI is pure chaos,
-  // we only allow one input device at a time to control the menu.
-  // However, if no events are received by that device for a long time,
-  // it is up for grabs to the next device that requests it.
+  //
+  // Because having 10 controllers attached to the UI is pure chaos, we only
+  // allow one input device at a time to control the menu. However, if no
+  // events are received by that device for a long time, it is up for grabs
+  // to the next device that requests it.
 
   if (!g_base->HaveUIV1()) {
     ret_val = nullptr;
@@ -265,7 +288,6 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget* {
     // seconds ago to automatically own a newly created widget).
     last_input_device_use_time_ = time;
     ui_input_device_ = input_device;
-    // ret_val = screen_root_widget_.Get();
     ret_val = g_base->ui_v1()->GetRootWidget();
   } else {
     // For rejected input devices, play error sounds sometimes so they know
@@ -301,8 +323,8 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget* {
       } else if (input->GetDeviceName() == "TouchScreen") {
         name = g_base->assets->GetResourceString("touchScreenText");
       } else {
-        // We used to use player names here, but that's kinda sloppy and random;
-        // lets just go with device names/numbers.
+        // We used to use player names here, but that's kinda sloppy and
+        // random; lets just go with device names/numbers.
         auto devicesWithName =
             g_base->input->GetInputDevicesWithName(input->GetDeviceName());
         if (devicesWithName.size() == 1) {
@@ -328,6 +350,82 @@ void UI::Draw(FrameDef* frame_def) {
   }
 }
 
+void UI::DrawDev(FrameDef* frame_def) {
+  // Draw dev console.
+  if (g_base->console()) {
+    g_base->console()->Draw(frame_def->overlay_pass());
+  }
+
+  // Draw dev console button.
+  if (show_dev_console_button_) {
+    DrawDevConsoleButton_(frame_def);
+  }
+}
+
+auto UI::DevConsoleButtonSize_() const -> float {
+  if (scale_ == UIScale::kLarge) {
+    return 25.0f;
+  } else if (scale_ == UIScale::kMedium) {
+    return 40.0f;
+  }
+  return 60.0f;
+}
+
+auto UI::InDevConsoleButton_(float x, float y) const -> bool {
+  float vwidth = g_base->graphics->screen_virtual_width();
+  float vheight = g_base->graphics->screen_virtual_height();
+  float bsz = DevConsoleButtonSize_();
+  float bszh = bsz * 0.5f;
+  float centerx = vwidth - bsz * 0.5f;
+  float centery = vheight * 0.5f - bsz * 0.5f;
+  float diffx = ::std::abs(centerx - x);
+  float diffy = ::std::abs(centery - y);
+  return diffx <= bszh && diffy <= bszh;
+}
+
+void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
+  if (!dev_console_button_txt_.Exists()) {
+    dev_console_button_txt_ = Object::New<TextGroup>();
+    dev_console_button_txt_->set_text("dev");
+  }
+  auto& grp(*dev_console_button_txt_);
+  float vwidth = g_base->graphics->screen_virtual_width();
+  float vheight = g_base->graphics->screen_virtual_height();
+  float bsz = DevConsoleButtonSize_();
+
+  SimpleComponent c(frame_def->overlay_pass());
+  c.SetTransparent(true);
+  if (dev_console_button_pressed_) {
+    c.SetColor(1.0f, 1.0f, 1.0f, 0.8f);
+  } else {
+    c.SetColor(0.5f, 0.5f, 0.5f, 0.8f);
+  }
+  {
+    auto xf = c.ScopedTransform();
+    c.Translate(vwidth - bsz * 0.5f, vheight * 0.5f - bsz * 0.5f,
+                kCursorZDepth - 0.01f);
+    c.Scale(bsz, bsz, 1.0f);
+    c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+    {
+      auto xf = c.ScopedTransform();
+      c.Scale(0.02f, 0.02f, 1.0f);
+      c.Translate(-20.0f, -15.0f, 0.0f);
+      int text_elem_count = grp.GetElementCount();
+      if (dev_console_button_pressed_) {
+        c.SetColor(1.0f, 1.0f, 1.0f, 1.0f);
+      } else {
+        c.SetColor(0.0f, 0.0f, 0.0f, 1.0f);
+      }
+      for (int e = 0; e < text_elem_count; e++) {
+        c.SetTexture(grp.GetElementTexture(e));
+        c.SetFlatness(1.0f);
+        c.DrawMesh(grp.GetElementMesh(e));
+      }
+    }
+  }
+  c.Submit();
+}
+
 void UI::ShowURL(const std::string& url) {
   if (g_base->HaveUIV1()) {
     g_base->ui_v1()->DoShowURL(url);
@@ -339,15 +437,17 @@ void UI::ShowURL(const std::string& url) {
 
 void UI::ConfirmQuit() {
   g_base->logic->event_loop()->PushCall([] {
+    // If the in-app console is active, dismiss it.
+    if (g_base->console() != nullptr && g_base->console()->IsActive()) {
+      g_base->console()->Dismiss();
+    }
+
     assert(g_base->InLogicThread());
-    // If we're headless or input is locked or the in-app-console is up or
-    // we don't have ui-v1, just quit immediately; a confirm screen
-    // wouldn't work anyway.
+    // If we're headless or we don't have ui-v1, just quit immediately; a
+    // confirm screen wouldn't work anyway.
     if (g_core->HeadlessMode() || g_base->input->IsInputLocked()
-        || !g_base->HaveUIV1()
-        || (g_base->console() != nullptr && g_base->console()->active())) {
-      g_base->logic->Shutdown();
-      // g_base->python->objs().Get(BasePython::ObjID::kQuitCall).Call();
+        || !g_base->HaveUIV1()) {
+      g_base->QuitApp();
       return;
     } else {
       ScopedSetContext ssc(nullptr);

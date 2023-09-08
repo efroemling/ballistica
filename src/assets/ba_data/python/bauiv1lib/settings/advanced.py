@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class AdvancedSettingsWindow(bui.Window):
-    """Window for editing advanced game settings."""
+    """Window for editing advanced app settings."""
 
     def __init__(
         self,
@@ -61,6 +61,7 @@ class AdvancedSettingsWindow(bui.Window):
         self._spacing = 32
         self._menu_open = False
         top_extra = 10 if uiscale is bui.UIScale.SMALL else 0
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
@@ -93,7 +94,7 @@ class AdvancedSettingsWindow(bui.Window):
         self._scroll_width = self._width - (100 + 2 * x_inset)
         self._scroll_height = self._height - 115.0
         self._sub_width = self._scroll_width * 0.95
-        self._sub_height = 724.0
+        self._sub_height = 766.0
 
         if self._show_always_use_internal_keyboard:
             self._sub_height += 62
@@ -185,7 +186,7 @@ class AdvancedSettingsWindow(bui.Window):
     # noinspection PyUnresolvedReferences
     @staticmethod
     def _preload_modules() -> None:
-        """Preload modules we use (called in bg thread)."""
+        """Preload modules we use; avoids hitches (called in bg thread)."""
         from babase import modutils as _unused2
         from bauiv1lib import config as _unused1
         from bauiv1lib.settings import vrtesting as _unused3
@@ -470,6 +471,19 @@ class AdvancedSettingsWindow(bui.Window):
             size=(self._sub_width - 100, 30),
             configkey='Show Ping',
             displayname=bui.Lstr(resource=f'{self._r}.showInGamePingText'),
+            scale=1.0,
+            maxwidth=430,
+        )
+
+        v -= 42
+        self._show_dev_console_button_check_box = ConfigCheckBox(
+            parent=self._subcontainer,
+            position=(50, v),
+            size=(self._sub_width - 100, 30),
+            configkey='Show Dev Console Button',
+            displayname=bui.Lstr(
+                resource=f'{self._r}.showDevConsoleButtonText'
+            ),
             scale=1.0,
             maxwidth=430,
         )

@@ -217,11 +217,6 @@ class CorePlatform {
 
   virtual auto GetAndroidExecArg() -> std::string;
   virtual void AndroidSetResString(const std::string& res);
-  virtual void AndroidSynthesizeBackPress();
-  virtual void AndroidQuitActivity();
-  virtual void AndroidShowAppInvite(const std::string& title,
-                                    const std::string& message,
-                                    const std::string& code);
   virtual auto AndroidGetExternalFilesDir() -> std::string;
 
 #pragma mark PERMISSIONS -------------------------------------------------------

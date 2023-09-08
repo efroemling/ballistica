@@ -321,6 +321,11 @@ void BasePlatform::OnAppShutdown() { assert(g_base->InLogicThread()); }
 void BasePlatform::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
 void BasePlatform::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
 
-void BasePlatform::QuitApp() { exit(g_base->return_value()); }
+void BasePlatform::TerminateApp() { exit(g_base->return_value()); }
+
+auto BasePlatform::CanSoftQuit() -> bool { return false; }
+auto BasePlatform::CanBackQuit() -> bool { return false; }
+void BasePlatform::DoBackQuit() {}
+void BasePlatform::DoSoftQuit() {}
 
 }  // namespace ballistica::base

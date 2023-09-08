@@ -1378,6 +1378,7 @@
       <w>projname</w>
       <w>projpath</w>
       <w>projprefix</w>
+      <w>projrootstr</w>
       <w>projsrc</w>
       <w>projtxt</w>
       <w>prolly</w>

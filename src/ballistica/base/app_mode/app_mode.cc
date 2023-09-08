@@ -66,6 +66,6 @@ void AppMode::LanguageChanged() {}
 
 auto AppMode::LastClientJoinTime() const -> millisecs_t { return -1; }
 
-auto AppMode::InMainMenu() const -> bool { return false; }
+auto AppMode::InClassicMainMenuSession() const -> bool { return false; }
 
 }  // namespace ballistica::base

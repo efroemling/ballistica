@@ -52,6 +52,8 @@ class GraphicsServer {
   // of using the RenderFrameDef* calls
   auto GetRenderFrameDef() -> FrameDef*;
 
+  void ApplyFrameDefSettings(FrameDef* frame_def);
+
   void RunFrameDefMeshUpdates(FrameDef* frame_def);
 
   // renders shadow passes and other common parts of a frame_def
@@ -215,10 +217,6 @@ class GraphicsServer {
     assert(g_base->InGraphicsThread());
     return res_y_virtual_;
   }
-  void set_tv_border(bool val) {
-    assert(g_base->InGraphicsThread());
-    tv_border_ = val;
-  }
   auto tv_border() const {
     assert(g_base->InGraphicsThread());
     return tv_border_;
@@ -302,8 +300,8 @@ class GraphicsServer {
   EventLoop* event_loop_{};
   float res_x_{};
   float res_y_{};
-  float res_x_virtual_{0.0f};
-  float res_y_virtual_{0.0f};
+  float res_x_virtual_{};
+  float res_y_virtual_{};
   bool tv_border_{};
   bool renderer_context_lost_{};
   uint32_t texture_compression_types_{};

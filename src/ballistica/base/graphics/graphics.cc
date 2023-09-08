@@ -20,7 +20,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_config.h"
-#include "ballistica/base/ui/console.h"
+#include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -34,7 +34,6 @@ const float kScreenMeshZDepth{-0.05f};
 const float kProgressBarZDepth{0.0f};
 const int kProgressBarFadeTime{500};
 const float kDebugImgZDepth{-0.04f};
-const float kCursorZDepth{-0.1f};
 
 auto Graphics::IsShaderTransparent(ShadingType c) -> bool {
   switch (c) {
@@ -105,8 +104,8 @@ void Graphics::OnAppShutdown() { assert(g_base->InLogicThread()); }
 void Graphics::DoApplyAppConfig() {
   assert(g_base->InLogicThread());
 
-  // Not relevant for fullscreen anymore
-  // since we're fullscreen windows everywhere.
+  // Not relevant for fullscreen anymore since we use fullscreen windows.
+  // everywhere.
   int width = 800;
   int height = 600;
 
@@ -158,27 +157,19 @@ void Graphics::DoApplyAppConfig() {
 
   // Note: when the graphics-thread applies the first set-screen event it will
   // trigger the remainder of startup such as media-loading; make sure nothing
-  // below this will affect that.
+  // below this point will affect that.
   g_base->graphics_server->PushSetScreenCall(
       fullscreen, width, height, texture_quality_requested,
       graphics_quality_requested, android_res);
 
-  set_show_fps(g_base->app_config->Resolve(AppConfig::BoolID::kShowFPS));
-  set_show_ping(g_base->app_config->Resolve(AppConfig::BoolID::kShowPing));
+  show_fps_ = g_base->app_config->Resolve(AppConfig::BoolID::kShowFPS);
+  show_ping_ = g_base->app_config->Resolve(AppConfig::BoolID::kShowPing);
+  tv_border_ = g_base->app_config->Resolve(AppConfig::BoolID::kEnableTVBorder);
 
   g_base->graphics_server->PushSetScreenGammaCall(
       g_base->app_config->Resolve(AppConfig::FloatID::kScreenGamma));
   g_base->graphics_server->PushSetScreenPixelScaleCall(
       g_base->app_config->Resolve(AppConfig::FloatID::kScreenPixelScale));
-
-  // Set tv border (for both client and server).
-  // FIXME: this should exist either on the client or the server; not both.
-  //  (and should be communicated via frameldefs/etc.)
-  bool tv_border =
-      g_base->app_config->Resolve(AppConfig::BoolID::kEnableTVBorder);
-  g_base->graphics_server->event_loop()->PushCall(
-      [tv_border] { g_base->graphics_server->set_tv_border(tv_border); });
-  set_tv_border(tv_border);
 
   // V-sync setting.
   std::string v_sync =
@@ -313,7 +304,7 @@ void Graphics::SetShadowRange(float lower_bottom, float lower_top,
 }
 
 auto Graphics::GetShadowDensity(float x, float y, float z) -> float {
-  if (y < shadow_lower_bottom_) {  // NOLINT(bugprone-branch-clone)
+  if (y < shadow_lower_bottom_) {
     return 0.0f;
   } else if (y < shadow_lower_top_) {
     float amt =
@@ -1108,9 +1099,16 @@ void Graphics::DrawUI(FrameDef* frame_def) {
   g_base->ui->Draw(frame_def);
 }
 
+void Graphics::DrawDevUI(FrameDef* frame_def) {
+  // Just do generic thing in our default implementation.
+  // Special variants like GraphicsVR may do fancier stuff here.
+  g_base->ui->DrawDev(frame_def);
+}
+
 void Graphics::BuildAndPushFrameDef() {
   assert(g_base->InLogicThread());
   assert(camera_.Exists());
+  assert(!g_core->HeadlessMode());
 
   // Keep track of when we're in here; can be useful for making sure stuff
   // doesn't muck with our lists/etc. while we're using them.
@@ -1167,16 +1165,14 @@ void Graphics::BuildAndPushFrameDef() {
 
     DrawUI(frame_def);
 
-    // Let input draw anything it needs to. (touch input graphics, etc)
+    // Let input draw anything it needs to (touch input graphics, etc).
     g_base->input->Draw(frame_def);
 
     RenderPass* overlay_pass = frame_def->overlay_pass();
     DrawMiscOverlays(overlay_pass);
 
-    // Draw console.
-    if (!g_core->HeadlessMode() && g_base->console()) {
-      g_base->console()->Draw(overlay_pass);
-    }
+    // Let UI draw dev console and whatever else.
+    DrawDevUI(frame_def);
 
     DrawCursor(overlay_pass, app_time_millisecs);
 

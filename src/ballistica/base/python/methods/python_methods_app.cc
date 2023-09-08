@@ -5,6 +5,7 @@
 #include "ballistica/base/app_mode/app_mode_empty.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
 #include "ballistica/base/support/stress_test.h"
@@ -511,45 +512,23 @@ static auto PyQuit(PyObject* self, PyObject* args, PyObject* keywds)
   static const char* kwlist[] = {"soft", "back", nullptr};
   int soft = 0;
   int back = 0;
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ii",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|pp",
                                    const_cast<char**>(kwlist), &soft, &back)) {
     return nullptr;
   }
-
-  // Log(LogLevel::kDebug,
-  //     "QUIT soft=" + std::to_string(soft) + " back=" + std::to_string(back));
-
-  // FIXME this should all just go through platform and/or app-adapter.
-
-  if (g_buildconfig.ostype_ios_tvos()) {
-    // This should never be called on iOS
-    Log(LogLevel::kError, "Quit called.");
-  }
-
-  bool handled = false;
-
-  // A few types get handled specially on Android.
-  if (g_buildconfig.ostype_android()) {
-    if (!handled && back) {
-      // Back-quit simply synthesizes a back press.
-      // Note to self: I remember this behaved slightly differently than
-      // doing a soft quit but I should remind myself how.
-      g_core->platform->AndroidSynthesizeBackPress();
-      handled = true;
+  QuitType quit_type{};
+  if (back) {
+    if (!soft) {
+      Log(LogLevel::kWarning,
+          "Got soft=False back=True in quit() which is ambiguous.");
     }
-
-    if (!handled && soft) {
-      // Soft-quit just kills our activity but doesn't run app shutdown.
-      // Thus we'll be able to spin back up (reset to the main menu)
-      // if the user re-launches us.
-      g_core->platform->AndroidQuitActivity();
-      handled = true;
-    }
+    quit_type = QuitType::kBack;
+  } else if (soft) {
+    quit_type = QuitType::kSoft;
+  } else {
+    quit_type = QuitType::kHard;
   }
-  // In all other cases, kick off a standard app shutdown.
-  if (!handled) {
-    g_base->logic->event_loop()->PushCall([] { g_base->logic->Shutdown(); });
-  }
+  g_base->QuitApp(quit_type);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -559,15 +538,18 @@ static PyMethodDef PyQuitDef = {
     (PyCFunction)PyQuit,           // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "quit(soft: bool = False, back: bool = False) -> None\n"
+    "quit(soft: bool = True, back: bool = False) -> None\n"
     "\n"
-    "Quit the game.\n"
+    "Quit the app.\n"
     "\n"
     "Category: **General Utility Functions**\n"
     "\n"
-    "On systems like Android, 'soft' will end the activity but keep the\n"
-    "app running.",
-};
+    "On platforms such as mobile, a 'soft' quit may background and/or reset\n"
+    "the app but keep it running. A 'back' quit is a special form of soft\n"
+    "quit that may trigger different behavior in the OS. On Android, for\n"
+    "example, a back-quit may simply jump to the previous Android activity,\n"
+    "while a regular soft quit may just exit the current activity and dump\n"
+    "the user at their home screen."};
 
 // ----------------------------- apply_config ----------------------------------
 

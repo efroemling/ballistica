@@ -699,7 +699,7 @@ class ProjectUpdater:
         from batools.appmodule import generate_app_module
 
         self._generated_files[path] = generate_app_module(
-            self.feature_sets, existing_data
+            self.projroot, self.feature_sets, existing_data
         )
 
     def _update_meta_makefile(self) -> None:

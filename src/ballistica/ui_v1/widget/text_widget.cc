@@ -531,9 +531,9 @@ auto TextWidget::ShouldUseStringEditDialog() const -> bool {
     return true;
   }
 
-  // On most platforms we always want to do this.
-  // on mac/pc, however, we use inline editing if the current UI input-device
-  // is the mouse or keyboard
+  // On most platforms we always want to do this. On desktop, however, we
+  // use inline editing if the current UI input-device is the mouse or
+  // keyboard.
   if (g_buildconfig.ostype_macos() || g_buildconfig.ostype_windows()
       || g_buildconfig.ostype_linux()) {
     base::InputDevice* ui_input_device = g_base->ui->GetUIInputDevice();

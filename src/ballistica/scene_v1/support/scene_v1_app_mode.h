@@ -150,15 +150,15 @@ class SceneV1AppMode : public base::AppMode {
   void OnAppStart() override;
   void OnAppPause() override;
   void OnAppResume() override;
-  auto InMainMenu() const -> bool override;
+  auto InClassicMainMenuSession() const -> bool override;
   auto CreateInputDeviceDelegate(base::InputDevice* device)
       -> base::InputDeviceDelegate* override;
 
   void SetInternalMusic(base::SoundAsset* music, float volume = 1.0,
                         bool loop = true);
 
-  // Run a cycle of host scanning (basically sending out a broadcast packet to
-  // see who's out there).
+  // Run a cycle of host scanning (basically sending out a broadcast packet
+  // to see who's out there).
   void HostScanCycle();
   void EndHostScanning();
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from batools.featureset import FeatureSet
 
-# Grab the FeatureSet we should apply to.
+# Grab the FeatureSet we're defining here.
 fset = FeatureSet.get_active()
 
 fset.requirements = {
@@ -27,7 +27,7 @@ fset.soft_requirements = {'plus'}
 # We provide 'babase.app.classic'.
 fset.has_python_app_subsystem = True
 
-# If 'plus' is present, our subsystem should be inited after it
+# If 'plus' is present, our subsystem should be inited *after* it
 # (classic accounts key off of plus's v2 accounts)
 fset.python_app_subsystem_dependencies = {'plus'}
 

@@ -11,7 +11,7 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/support/stdio_console.h"
-#include "ballistica/base/ui/console.h"
+#include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python_sys.h"

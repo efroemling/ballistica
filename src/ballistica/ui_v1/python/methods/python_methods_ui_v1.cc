@@ -2472,45 +2472,6 @@ static PyMethodDef PyShowAd2Def = {
     "(internal)",
 };
 
-// --------------------------- show_app_invite ---------------------------------
-
-static auto PyShowAppInvite(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  std::string title;
-  std::string message;
-  std::string code;
-  PyObject* title_obj;
-  PyObject* message_obj;
-  PyObject* code_obj;
-  static const char* kwlist[] = {"title", "message", "code", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOO",
-                                   const_cast<char**>(kwlist), &title_obj,
-                                   &message_obj, &code_obj)) {
-    return nullptr;
-  }
-  title = g_base->python->GetPyLString(title_obj);
-  message = g_base->python->GetPyLString(message_obj);
-  code = g_base->python->GetPyLString(code_obj);
-  g_core->platform->AndroidShowAppInvite(title, message, code);
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyShowAppInviteDef = {
-    "show_app_invite",             // name
-    (PyCFunction)PyShowAppInvite,  // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "show_app_invite(title: str | bauiv1.Lstr,\n"
-    "  message: str | bauiv1.Lstr,\n"
-    "  code: str) -> None\n"
-    "\n"
-    "(internal)\n"
-    "\n"
-    "Category: **General Utility Functions**",
-};
-
 // --------------------- set_party_icon_always_visible -------------------------
 
 static auto PySetPartyIconAlwaysVisible(PyObject* self, PyObject* args,
@@ -2882,7 +2843,6 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyGetSpecialWidgetDef,
       PySetPartyWindowOpenDef,
       PySetPartyIconAlwaysVisibleDef,
-      PyShowAppInviteDef,
       PyShowAdDef,
       PyShowAd2Def,
       PyShowOnlineScoreUIDef,

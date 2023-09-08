@@ -10,19 +10,6 @@
 #include "ballistica/base/ui/widget_message.h"
 #include "ballistica/shared/generic/timer_list.h"
 
-// UI-Locks: make sure widget-lists don't change under you. Use a read-lock
-// if you just need to ensure lists remain intact but won't be changing
-// anything. Use a write-lock whenever modifying a list.
-#if BA_DEBUG_BUILD
-#define BA_DEBUG_UI_READ_LOCK ::ballistica::base::UI::UILock ui_lock(false)
-#define BA_DEBUG_UI_WRITE_LOCK ::ballistica::base::UI::UILock ui_lock(true)
-#else
-#define BA_DEBUG_UI_READ_LOCK
-#define BA_DEBUG_UI_WRITE_LOCK
-#endif
-#define BA_UI_READ_LOCK UI::UILock ui_lock(false)
-#define BA_UI_WRITE_LOCK UI::UILock ui_lock(true)
-
 // Predeclare a few things from ui_v1.
 namespace ballistica::ui_v1 {
 class Widget;
@@ -46,14 +33,17 @@ class UI {
 
   void LanguageChanged();
 
+  /// Reset all UI to a default state. Generally should be called when
+  /// switching app-modes or when resetting things within an app mode.
   void Reset();
 
-  /// Pop up an in-app window to show a url (NOT in a browser). Can be
-  /// called from any thread.
+  /// Pop up an in-app window to display a URL (NOT to open the URL in a
+  /// browser). Can be called from any thread.
   void ShowURL(const std::string& url);
 
-  /// High level call to request a quit ui. When a UI can't be shown,
-  /// triggers an immediate shutdown. This can be called from any thread.
+  /// High level call to request a quit; ideally with a confirmation ui.
+  /// When a UI can't be shown, triggers an immediate shutdown. This can be
+  /// called from any thread.
   void ConfirmQuit();
 
   /// Return whether there is UI present in either the main or overlay
@@ -61,66 +51,65 @@ class UI {
   auto MainMenuVisible() const -> bool;
 
   auto PartyIconVisible() -> bool;
-  void ActivatePartyIcon();
-  void HandleLegacyRootUIMouseMotion(float x, float y);
-  auto HandleLegacyRootUIMouseDown(float x, float y) -> bool;
-  void HandleLegacyRootUIMouseUp(float x, float y);
   auto PartyWindowOpen() -> bool;
+  void ActivatePartyIcon();
 
+  auto HandleMouseDown(int button, float x, float y, bool double_click) -> bool;
+  void HandleMouseUp(int button, float x, float y);
+  void HandleMouseMotion(float x, float y);
+
+  /// Draw regular UI.
   void Draw(FrameDef* frame_def);
 
-  // Returns the widget an input should send commands to, if any. Also
-  // potentially locks other inputs out of controlling the UI, so only call
-  // this if you intend on sending a message to that widget.
+  /// Draw dev UI on top.
+  void DrawDev(FrameDef* frame_def);
+
+  /// Return the widget an input-device should send commands to, if any.
+  /// Potentially assigns UI control to the provide device, so only call
+  /// this if you intend on actually sending a message to that widget.
   auto GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget*;
 
-  // Send message to the active widget.
+  /// Send a message to the active widget.
   auto SendWidgetMessage(const WidgetMessage& msg) -> int;
 
+  /// Set the device controlling the UI.
   void SetUIInputDevice(InputDevice* input_device);
 
-  // Returns the input-device that currently owns the menu; otherwise
-  // nullptr.
+  /// Return the input-device that currently owns the UI; otherwise nullptr.
   auto GetUIInputDevice() const -> InputDevice*;
 
+  /// Schedule a back button press. Can be called from any thread.
   void PushBackButtonCall(InputDevice* input_device);
 
-  // Returns whether currently selected widgets should flash. This will be
-  // false in some situations such as when only touch screen control is
-  // active.
+  /// Return whether currently selected widgets should flash. This will be
+  /// false in some situations such as when only touch screen control is
+  /// present.
   auto ShouldHighlightWidgets() const -> bool;
 
-  // Same except for button shortcuts; these generally only get shown if a
-  // joystick of some form is present.
+  /// Return whether currently selected widget should show button shortcuts.
+  /// These generally only get shown if a joystick of some form is present.
   auto ShouldShowButtonShortcuts() const -> bool;
 
-  // Used to ensure widgets are not created or destroyed at certain times
-  // (while traversing widget hierarchy, etc).
-  class UILock {
-   public:
-    explicit UILock(bool write);
-    ~UILock();
-
-   private:
-    BA_DISALLOW_CLASS_COPIES(UILock);
-  };
-
+  /// Overall ui scale for the app.
   auto scale() const { return scale_; }
 
-  /// Push a generic 'menu press' event, optionally associated with an
-  /// input device (nullptr to specify none). Note: caller must ensure
-  /// a RemoveInputDevice() call does not arrive at the logic thread
-  /// before this one.
+  /// Push a generic 'menu press' event, optionally associated with an input
+  /// device (nullptr to specify none). Can be called from any thread.
   void PushMainMenuPressCall(InputDevice* device);
 
  private:
   void MainMenuPress_(InputDevice* device);
+  auto DevConsoleButtonSize_() const -> float;
+  auto InDevConsoleButton_(float x, float y) const -> bool;
+  void DrawDevConsoleButton_(FrameDef* frame_def);
   Object::WeakRef<InputDevice> ui_input_device_;
   millisecs_t last_input_device_use_time_{};
   millisecs_t last_widget_input_reject_err_sound_time_{};
-  int ui_lock_count_{};
   UIScale scale_{UIScale::kLarge};
   bool force_scale_{};
+  bool show_dev_console_button_{};
+  bool dev_console_button_pressed_{};
+  Object::Ref<TextGroup> dev_console_button_txt_;
 };
 
 }  // namespace ballistica::base

@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 def generate_app_module(
-    feature_sets: dict[str, FeatureSet], existing_data: str
+    projroot: str, feature_sets: dict[str, FeatureSet], existing_data: str
 ) -> str:
     """Generate babase._app.py based on its existing version."""
 
@@ -24,7 +24,7 @@ def generate_app_module(
     # pylint: disable=too-many-statements
     import textwrap
 
-    from efrotools import replace_section
+    from efrotools import replace_section, getprojectconfig
 
     out = ''
 
@@ -156,31 +156,50 @@ def generate_app_module(
 
     # Generate default app-mode-selection logic.
     # TODO - make this customizable via project settings or whatnot.
+    default_app_modes: list[str] | None = getprojectconfig(projroot).get(
+        'default_app_modes'
+    )
+    if not isinstance(default_app_modes, list) or not all(
+        isinstance(x, str) for x in default_app_modes
+    ):
+        raise RuntimeError(
+            'Could not load default_app_modes from projectconfig'
+        )
+
+    def _module_for_app_mode(amode: str) -> str:
+        return '.'.join(amode.split('.')[:-1])
+
+    def _is_valid_app_mode(amode: str) -> bool:
+        # Consider the app mode valid if it comes from a Python
+        # package provided by one of our feature-sets.
+        module = _module_for_app_mode(amode)
+        for featureset in feature_sets.values():
+            if featureset.name_python_package == module:
+                return True
+        return False
+
+    default_app_modes = [m for m in default_app_modes if _is_valid_app_mode(m)]
     contents = (
         '# Ask our default app modes to handle it.\n'
-        "# (based on 'default_app_modes' in projectconfig).\n"
+        "# (generated from 'default_app_modes' in projectconfig).\n"
     )
-    imports: list[str] = []
-    if 'scene_v1' in fsets:
-        imports.append('bascenev1')
-    if 'base' in fsets:
-        imports.append('babase')
+    if not default_app_modes:
+        raise RuntimeError('No valid default_app_modes specified.')
 
-    for imp in imports:
-        contents += f'import {imp}\n'
-
+    for mode in default_app_modes:
+        contents += f'import {_module_for_app_mode(mode)}\n'
     contents += '\n'
 
-    if 'scene_v1' in fsets:
-        contents += (
-            'if bascenev1.SceneV1AppMode.can_handle_intent(intent):\n'
-            '    return bascenev1.SceneV1AppMode\n\n'
-        )
-    if 'base' in fsets:
-        contents += (
-            'if babase.EmptyAppMode.can_handle_intent(intent):\n'
-            '    return babase.EmptyAppMode\n\n'
-        )
+    contents += 'for appmode in [\n'
+    for mode in default_app_modes:
+        contents += f'    {mode},\n'
+    contents += (
+        ']:\n'
+        '    if appmode.can_handle_intent(intent):\n'
+        '        return appmode\n'
+        '\n'
+    )
+
     contents += 'return None\n'
 
     indent = '            '

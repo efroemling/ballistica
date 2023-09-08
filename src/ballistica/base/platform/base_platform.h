@@ -33,8 +33,35 @@ class BasePlatform {
   virtual void OnScreenSizeChange();
   virtual void DoApplyAppConfig();
 
-  /// Quit the app (can be immediate or via posting some high level event).
-  virtual void QuitApp();
+  /// Return whether this platform supports soft-quit. A soft quit is
+  /// when the app is reset/backgrounded/etc. but remains running in case
+  /// needed again. Generally this is the behavior on mobile apps.
+  virtual auto CanSoftQuit() -> bool;
+
+  /// Implement soft-quit behavior. Will always be called in the logic
+  /// thread. Make sure to also override CanBackQuit to reflect this being
+  /// present. Note that when quitting the app yourself, you should use
+  /// g_base->QuitApp(); do not call this directly.
+  virtual void DoSoftQuit();
+
+  /// Return whether this platform supports back-quit. A back quit is a
+  /// variation of soft-quit generally triggered by a back button, which may
+  /// give different results in the OS. For example on Android this may
+  /// result in jumping back to the previous Android activity instead of
+  /// just ending the current one and dumping to the home screen as normal
+  /// soft quit might do.
+  virtual auto CanBackQuit() -> bool;
+
+  /// Implement back-quit behavior. Will always be called in the logic
+  /// thread. Make sure to also override CanBackQuit to reflect this being
+  /// present. Note that when quitting the app yourself, you should use
+  /// g_base->QuitApp(); do not call this directly.
+  virtual void DoBackQuit();
+
+  /// Terminate the app. This can be immediate or by posting some high
+  /// level event. There should be nothing left to do in the engine at
+  /// this point.
+  virtual void TerminateApp();
 
 #pragma mark IN APP PURCHASES --------------------------------------------------
 

@@ -682,14 +682,6 @@ void CorePlatform::AndroidSetResString(const std::string& res) {
   throw Exception();
 }
 
-void CorePlatform::AndroidSynthesizeBackPress() {
-  Log(LogLevel::kError, "AndroidSynthesizeBackPress() unimplemented");
-}
-
-void CorePlatform::AndroidQuitActivity() {
-  Log(LogLevel::kError, "AndroidQuitActivity() unimplemented");
-}
-
 auto CorePlatform::GetDeviceV1AccountID() -> std::string {
   if (g_core->HeadlessMode()) {
     return "S-" + GetLegacyDeviceUUID();
@@ -757,12 +749,6 @@ void CorePlatform::MusicPlayerSetVolume(float volume) {
 }
 
 auto CorePlatform::IsOSPlayingMusic() -> bool { return false; }
-
-void CorePlatform::AndroidShowAppInvite(const std::string& title,
-                                        const std::string& message,
-                                        const std::string& code) {
-  Log(LogLevel::kError, "AndroidShowAppInvite() unimplemented");
-}
 
 void CorePlatform::IncrementAnalyticsCount(const std::string& name,
                                            int increment) {}
