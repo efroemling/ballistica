@@ -1,4 +1,4 @@
-### 1.7.28 (build 21322, api 8, 2023-09-07)
+### 1.7.28 (build 21324, api 8, 2023-09-07)
 
 - Renamed Console to DevConsole, and added an option under advanced settings to
   always show an ugly 'dev' button onscreen which can be used to toggle it. The
@@ -6,6 +6,8 @@
   functionality besides just the Python console to the dev-console, and perhaps
   improve the Python console a bit too (add support for on-screen keyboards,
   etc.)
+- The in-app Python console text is now sized up on phone and tablet devices,
+  and is generally a bit larger everywhere.
 - Added some high level functionality for copying and deleting feature-sets to
   the `spinoff` tool. For example, to create your own `poo` feature-set based on
   the existing `template_fs` one, do `tools/spinoff fset-copy template_fs poo`.

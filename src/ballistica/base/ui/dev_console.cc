@@ -9,6 +9,7 @@
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/support/context.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/support/min_sdl.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -25,6 +26,24 @@ const int kDevConsoleLineLimit = 80;
 const int kDevConsoleStringBreakUpSize = 1950;
 const int kDevConsoleActivateKey1 = SDLK_BACKQUOTE;
 const int kDevConsoleActivateKey2 = SDLK_F2;
+
+class DevConsole::Line_ {
+ public:
+  Line_(std::string s_in, millisecs_t c)
+      : creation_time(c), s(std::move(s_in)) {}
+  millisecs_t creation_time;
+  std::string s;
+  auto GetText() -> TextGroup& {
+    if (!s_mesh_.Exists()) {
+      s_mesh_ = Object::New<TextGroup>();
+      s_mesh_->set_text(s);
+    }
+    return *s_mesh_;
+  }
+
+ private:
+  Object::Ref<TextGroup> s_mesh_;
+};
 
 DevConsole::DevConsole() {
   assert(g_base->InLogicThread());
@@ -230,9 +249,6 @@ auto DevConsole::HandleKeyRelease(const SDL_Keysym* keysym) -> bool {
   return state_ != State::kInactive;
 }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "LocalValueEscapesScope"
-
 void DevConsole::Print(const std::string& s_in) {
   assert(g_base->InLogicThread());
   std::string s = Utils::GetValidUTF8(s_in.c_str(), "cspr");
@@ -252,10 +268,9 @@ void DevConsole::Print(const std::string& s_in) {
   last_line_mesh_dirty_ = true;
 }
 
-#pragma clang diagnostic pop
-
 void DevConsole::Draw(RenderPass* pass) {
   millisecs_t transition_ticks = 100;
+  float bs = PythonConsoleBaseScale();
   if ((transition_start_ != 0)
       && (state_ != State::kInactive
           || ((g_core->GetAppTimeMillisecs() - transition_start_)
@@ -264,7 +279,7 @@ void DevConsole::Draw(RenderPass* pass) {
         (static_cast<float>(g_core->GetAppTimeMillisecs() - transition_start_)
          / static_cast<float>(transition_ticks));
     float bottom;
-    float mini_size = 90;
+    float mini_size = 90.0f * bs;
     if (state_ == State::kMini) {
       bottom = pass->virtual_height() - mini_size;
     } else {
@@ -296,10 +311,10 @@ void DevConsole::Draw(RenderPass* pass) {
       bg_mesh_.SetPositionAndSize(0, bottom, kDevConsoleZDepth,
                                   pass->virtual_width(),
                                   (pass->virtual_height() - bottom));
-      stripe_mesh_.SetPositionAndSize(0, bottom + 15, kDevConsoleZDepth,
-                                      pass->virtual_width(), 15);
-      shadow_mesh_.SetPositionAndSize(0, bottom - 7, kDevConsoleZDepth,
-                                      pass->virtual_width(), 7);
+      stripe_mesh_.SetPositionAndSize(0, bottom + 15.0f * bs, kDevConsoleZDepth,
+                                      pass->virtual_width(), 15.0f * bs);
+      shadow_mesh_.SetPositionAndSize(0, bottom - 7.0f * bs, kDevConsoleZDepth,
+                                      pass->virtual_width(), 7.0f * bs);
       SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetColor(0, 0, 0.1f, 0.9f);
@@ -324,40 +339,44 @@ void DevConsole::Draw(RenderPass* pass) {
       int elem_count = built_text_group_.GetElementCount();
       for (int e = 0; e < elem_count; e++) {
         c.SetTexture(built_text_group_.GetElementTexture(e));
-        c.PushTransform();
-        c.Translate(pass->virtual_width() - 175.0f, bottom + 0,
-                    kDevConsoleZDepth);
-        c.Scale(0.5f, 0.5f, 0.5f);
-        c.DrawMesh(built_text_group_.GetElementMesh(e));
-        c.PopTransform();
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(pass->virtual_width() - 115.0f * bs, bottom + 4.0f,
+                      kDevConsoleZDepth);
+          c.Scale(0.35f * bs, 0.35f * bs, 1.0f);
+          c.DrawMesh(built_text_group_.GetElementMesh(e));
+        }
       }
       elem_count = title_text_group_.GetElementCount();
       for (int e = 0; e < elem_count; e++) {
         c.SetTexture(title_text_group_.GetElementTexture(e));
-        c.PushTransform();
-        c.Translate(20.0f, bottom + 0, kDevConsoleZDepth);
-        c.Scale(0.5f, 0.5f, 0.5f);
-        c.DrawMesh(title_text_group_.GetElementMesh(e));
-        c.PopTransform();
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(10.0f * bs, bottom + 4.0f, kDevConsoleZDepth);
+          c.Scale(0.35f * bs, 0.35f * bs, 1.0f);
+          c.DrawMesh(title_text_group_.GetElementMesh(e));
+        }
       }
       elem_count = prompt_text_group_.GetElementCount();
       for (int e = 0; e < elem_count; e++) {
         c.SetTexture(prompt_text_group_.GetElementTexture(e));
         c.SetColor(1, 1, 1, 1);
-        c.PushTransform();
-        c.Translate(5.0f, bottom + 15.0f, kDevConsoleZDepth);
-        c.Scale(0.5f, 0.5f, 0.5f);
-        c.DrawMesh(prompt_text_group_.GetElementMesh(e));
-        c.PopTransform();
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(5.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
+          c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
+          c.DrawMesh(prompt_text_group_.GetElementMesh(e));
+        }
       }
       elem_count = input_text_group_.GetElementCount();
       for (int e = 0; e < elem_count; e++) {
         c.SetTexture(input_text_group_.GetElementTexture(e));
-        c.PushTransform();
-        c.Translate(15.0f, bottom + 15.0f, kDevConsoleZDepth);
-        c.Scale(0.5f, 0.5f, 0.5f);
-        c.DrawMesh(input_text_group_.GetElementMesh(e));
-        c.PopTransform();
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(15.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
+          c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
+          c.DrawMesh(input_text_group_.GetElementMesh(e));
+        }
       }
       c.Submit();
     }
@@ -369,26 +388,30 @@ void DevConsole::Draw(RenderPass* pass) {
       SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetColor(1, 1, 1, 0.7f);
-      c.PushTransform();
-      c.Translate(
-          19.0f + g_base->text_graphics->GetStringWidth(input_string_) * 0.5f,
-          bottom + 23.0f, kDevConsoleZDepth);
-      c.Scale(5, 11, 1.0f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(
+            (19.0f
+             + g_base->text_graphics->GetStringWidth(input_string_) * 0.5f)
+                * bs,
+            bottom + 22.5f * bs, kDevConsoleZDepth);
+        c.Scale(6.0f * bs, 12.0f * bs, 1.0f);
+        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+      }
       c.Submit();
     }
 
-    // Draw console messages.
+    // Draw output lines.
     {
-      float draw_scale = 0.5f;
+      float draw_scale = 0.6f;
+      float v_inc = 18.0f;
       SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetColor(1, 1, 1, 1);
       float h = 0.5f
                 * (g_base->graphics->screen_virtual_width()
                    - (kDevConsoleStringBreakUpSize * draw_scale));
-      float v = bottom + 32.0f;
+      float v = bottom + 32.0f * bs;
       if (!last_line_.empty()) {
         if (last_line_mesh_dirty_) {
           if (!last_line_mesh_group_.Exists()) {
@@ -400,31 +423,44 @@ void DevConsole::Draw(RenderPass* pass) {
         int elem_count = last_line_mesh_group_->GetElementCount();
         for (int e = 0; e < elem_count; e++) {
           c.SetTexture(last_line_mesh_group_->GetElementTexture(e));
-          c.PushTransform();
-          c.Translate(h, v + 2, kDevConsoleZDepth);
-          c.Scale(draw_scale, draw_scale);
-          c.DrawMesh(last_line_mesh_group_->GetElementMesh(e));
-          c.PopTransform();
+          {
+            auto xf = c.ScopedTransform();
+            c.Translate(h, v + 2, kDevConsoleZDepth);
+            c.Scale(draw_scale, draw_scale);
+            c.DrawMesh(last_line_mesh_group_->GetElementMesh(e));
+          }
         }
-        v += 14;
+        v += v_inc;
       }
       for (auto i = lines_.rbegin(); i != lines_.rend(); i++) {
         int elem_count = i->GetText().GetElementCount();
         for (int e = 0; e < elem_count; e++) {
           c.SetTexture(i->GetText().GetElementTexture(e));
-          c.PushTransform();
-          c.Translate(h, v + 2, kDevConsoleZDepth);
-          c.Scale(draw_scale, draw_scale);
-          c.DrawMesh(i->GetText().GetElementMesh(e));
-          c.PopTransform();
+          {
+            auto xf = c.ScopedTransform();
+            c.Translate(h, v + 2, kDevConsoleZDepth);
+            c.Scale(draw_scale, draw_scale);
+            c.DrawMesh(i->GetText().GetElementMesh(e));
+          }
         }
-        v += 14;
+        v += v_inc;
         if (v > pass->virtual_height() + 14) {
           break;
         }
       }
       c.Submit();
     }
+  }
+}
+auto DevConsole::PythonConsoleBaseScale() -> float {
+  switch (g_base->ui->scale()) {
+    case UIScale::kLarge:
+      return 1.5f;
+    case UIScale::kMedium:
+      return 1.75f;
+    case UIScale::kSmall:
+    case UIScale::kLast:
+      return 2.0f;
   }
 }
 

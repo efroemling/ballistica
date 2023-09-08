@@ -36,6 +36,9 @@ class DevConsole {
   void EnableInput();
 
  private:
+  class Line_;
+
+  auto PythonConsoleBaseScale() -> float;
   void SubmitCommand_(const std::string& command);
   enum class State { kInactive, kMini, kFull };
   ImageMesh bg_mesh_;
@@ -50,30 +53,11 @@ class DevConsole {
   millisecs_t transition_start_{};
   State state_{State::kInactive};
   State state_prev_{State::kInactive};
-
-  class Message {
-   public:
-    Message(std::string s_in, millisecs_t c)
-        : creation_time(c), s(std::move(s_in)) {}
-    millisecs_t creation_time;
-    std::string s;
-    auto GetText() -> TextGroup& {
-      if (!s_mesh_.Exists()) {
-        s_mesh_ = Object::New<TextGroup>();
-        s_mesh_->set_text(s);
-      }
-      return *s_mesh_;
-    }
-
-   private:
-    Object::Ref<TextGroup> s_mesh_;
-  };
-
   bool input_enabled_{};
   std::string input_string_;
   std::list<std::string> input_history_;
   int input_history_position_{};
-  std::list<Message> lines_;
+  std::list<Line_> lines_;
   std::string last_line_;
   Object::Ref<TextGroup> last_line_mesh_group_;
   bool last_line_mesh_dirty_{true};

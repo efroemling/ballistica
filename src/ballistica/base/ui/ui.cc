@@ -363,12 +363,15 @@ void UI::DrawDev(FrameDef* frame_def) {
 }
 
 auto UI::DevConsoleButtonSize_() const -> float {
-  if (scale_ == UIScale::kLarge) {
-    return 25.0f;
-  } else if (scale_ == UIScale::kMedium) {
-    return 40.0f;
+  switch (scale_) {
+    case UIScale::kLarge:
+      return 25.0f;
+    case UIScale::kMedium:
+      return 40.0f;
+    case UIScale::kSmall:
+    case UIScale::kLast:
+      return 60.0f;
   }
-  return 60.0f;
 }
 
 auto UI::InDevConsoleButton_(float x, float y) const -> bool {
@@ -377,7 +380,7 @@ auto UI::InDevConsoleButton_(float x, float y) const -> bool {
   float bsz = DevConsoleButtonSize_();
   float bszh = bsz * 0.5f;
   float centerx = vwidth - bsz * 0.5f;
-  float centery = vheight * 0.5f - bsz * 0.5f;
+  float centery = vheight * 0.5f;
   float diffx = ::std::abs(centerx - x);
   float diffy = ::std::abs(centery - y);
   return diffx <= bszh && diffy <= bszh;
@@ -402,8 +405,7 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
   }
   {
     auto xf = c.ScopedTransform();
-    c.Translate(vwidth - bsz * 0.5f, vheight * 0.5f - bsz * 0.5f,
-                kCursorZDepth - 0.01f);
+    c.Translate(vwidth - bsz * 0.5f, vheight * 0.5f, kCursorZDepth - 0.01f);
     c.Scale(bsz, bsz, 1.0f);
     c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
     {
