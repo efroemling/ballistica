@@ -70,7 +70,7 @@ class SimpleComponent : public RenderComponent {
     EnsureConfiguring();
     mask_uv2_texture_ = t;
   }
-  void clearMaskUV2Texture() {
+  void ClearMaskUV2Texture() {
     EnsureConfiguring();
     mask_uv2_texture_.Clear();
   }

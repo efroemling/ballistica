@@ -398,6 +398,7 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
 
   SimpleComponent c(frame_def->overlay_pass());
   c.SetTransparent(true);
+  c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCircleShadow));
   if (dev_console_button_pressed_) {
     c.SetColor(1.0f, 1.0f, 1.0f, 0.8f);
   } else {
@@ -410,17 +411,17 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
     c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
     {
       auto xf = c.ScopedTransform();
-      c.Scale(0.02f, 0.02f, 1.0f);
+      c.Scale(0.017f, 0.017f, 1.0f);
       c.Translate(-20.0f, -15.0f, 0.0f);
       int text_elem_count = grp.GetElementCount();
       if (dev_console_button_pressed_) {
         c.SetColor(1.0f, 1.0f, 1.0f, 1.0f);
       } else {
-        c.SetColor(0.0f, 0.0f, 0.0f, 1.0f);
+        c.SetColor(0.15f, 0.15f, 0.15f, 1.0f);
       }
       for (int e = 0; e < text_elem_count; e++) {
         c.SetTexture(grp.GetElementTexture(e));
-        c.SetFlatness(1.0f);
+        c.SetFlatness(0.0f);
         c.DrawMesh(grp.GetElementMesh(e));
       }
     }

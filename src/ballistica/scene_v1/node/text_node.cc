@@ -529,7 +529,7 @@ void TextNode::Draw(base::FrameDef* frame_def) {
           if (shadow_opacity > 0) {
             c.SetMaskUV2Texture(text_group_.GetElementMaskUV2Texture(e));
           } else {
-            c.clearMaskUV2Texture();
+            c.ClearMaskUV2Texture();
           }
 
           c.PushTransform();
@@ -625,7 +625,7 @@ void TextNode::Draw(base::FrameDef* frame_def) {
       if (shadow_opacity > 0) {
         c.SetMaskUV2Texture(text_group_.GetElementMaskUV2Texture(e));
       } else {
-        c.clearMaskUV2Texture();
+        c.ClearMaskUV2Texture();
       }
       if (text_group_.GetElementCanColor(e)) {
         c.SetColor(color_[0], color_[1], color_[2], fin_a);
