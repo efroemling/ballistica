@@ -787,7 +787,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   std::string console_startup_messages_;
   std::mutex shutdown_suppress_lock_;
-  bool shutdown_suppress_disallowed_;
+  bool shutdown_suppress_disallowed_{};
   int shutdown_suppress_count_{};
   bool tried_importing_plus_{};
   bool tried_importing_classic_{};
