@@ -276,8 +276,8 @@ void UIV1FeatureSet::DeleteWidget(Widget* widget) {
 }
 
 void UIV1FeatureSet::DoApplyAppConfig() {
-  TextWidget::set_always_use_internal_keyboard(g_base->app_config->Resolve(
-      base::AppConfig::BoolID::kAlwaysUseInternalKeyboard));
+  always_use_internal_on_screen_keyboard_ = g_base->app_config->Resolve(
+      base::AppConfig::BoolID::kAlwaysUseInternalKeyboard);
 }
 
 UIV1FeatureSet::UILock::UILock(bool write) {

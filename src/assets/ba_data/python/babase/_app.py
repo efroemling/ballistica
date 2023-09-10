@@ -23,6 +23,7 @@ from babase._workspace import WorkspaceSubsystem
 from babase._appcomponent import AppComponentSubsystem
 from babase._appmodeselector import AppModeSelector
 from babase._appintent import AppIntentDefault, AppIntentExec
+from babase._stringedit import StringEditSubsystem
 
 if TYPE_CHECKING:
     import asyncio
@@ -136,8 +137,9 @@ class App:
     def __init__(self) -> None:
         """(internal)
 
-        Do not instantiate this class; use babase.app to access
-        the single shared instance.
+        Do not instantiate this class; access the single shared instance
+        of it as 'app' which is available in various Ballistica
+        feature-set modules such as babase.
         """
 
         # Hack for docs-generation.
@@ -157,6 +159,7 @@ class App:
         self.net = NetworkSubsystem()
         self.workspaces = WorkspaceSubsystem()
         self.components = AppComponentSubsystem()
+        self.stringedit = StringEditSubsystem()
 
         # This is incremented any time the app is backgrounded or
         # foregrounded; can be a simple way to determine if network data
@@ -196,9 +199,9 @@ class App:
         if os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') == '1':
             return
 
-        # NOTE: the reason we need a postinit here is that
-        # some of this stuff accesses babase.app and that doesn't
-        # exist yet as of our __init__() call.
+        # NOTE: the reason we need a postinit here is that some of this
+        # stuff accesses babase.app and that doesn't exist yet as of our
+        # __init__() call.
 
         self.lang = LanguageSubsystem()
         self.plugins = PluginSubsystem()
@@ -391,6 +394,10 @@ class App:
         assert _babase.in_logic_thread()
         self._native_shutdown_called = True
         self._update_state()
+
+    def on_native_shutdown_complete(self) -> None:
+        """Called by the native layer when the app is done shutting down."""
+        assert _babase.in_logic_thread()
 
     def read_config(self) -> None:
         """(internal)"""
@@ -754,7 +761,12 @@ class App:
         except* Exception:
             logging.exception('Unexpected error(s) in shutdown.')
 
-        _babase.complete_shutdown()
+        # Note: ideally we should run this directly here, but currently
+        # it does some legacy stuff which blocks, so running it here
+        # gives us asyncio task-took-too-long warnings. If we can
+        # convert those to nice graceful async tasks we should revert
+        # this to a direct call.
+        _babase.pushcall(_babase.complete_shutdown)
 
     async def _run_shutdown_task(
         self, coro: Coroutine[None, None, None]

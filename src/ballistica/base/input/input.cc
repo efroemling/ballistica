@@ -560,6 +560,8 @@ void Input::OnAppResume() { assert(g_base->InLogicThread()); }
 
 void Input::OnAppShutdown() { assert(g_base->InLogicThread()); }
 
+void Input::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
+
 // Tells all inputs to update their controls based on the app config.
 void Input::DoApplyAppConfig() {
   assert(g_base->InLogicThread());

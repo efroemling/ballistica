@@ -25,6 +25,8 @@ void Audio::OnAppResume() { assert(g_base->InLogicThread()); }
 
 void Audio::OnAppShutdown() { assert(g_base->InLogicThread()); }
 
+void Audio::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
+
 void Audio::StepDisplayTime() { assert(g_base->InLogicThread()); }
 
 void Audio::DoApplyAppConfig() {

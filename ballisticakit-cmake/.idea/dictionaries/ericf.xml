@@ -1687,6 +1687,7 @@
       <w>strchr</w>
       <w>strcpy</w>
       <w>strdup</w>
+      <w>stringedit</w>
       <w>stringi</w>
       <w>stringified</w>
       <w>stringifying</w>

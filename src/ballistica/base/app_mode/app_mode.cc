@@ -16,6 +16,7 @@ void AppMode::OnAppStart() {}
 void AppMode::OnAppPause() {}
 void AppMode::OnAppResume() {}
 void AppMode::OnAppShutdown() {}
+void AppMode::OnAppShutdownComplete() {}
 
 auto AppMode::CreateInputDeviceDelegate(InputDevice* device)
     -> InputDeviceDelegate* {

@@ -30,6 +30,7 @@ class BasePlatform {
   virtual void OnAppPause();
   virtual void OnAppResume();
   virtual void OnAppShutdown();
+  virtual void OnAppShutdownComplete();
   virtual void OnScreenSizeChange();
   virtual void DoApplyAppConfig();
 

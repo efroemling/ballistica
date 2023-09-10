@@ -1,4 +1,4 @@
-### 1.7.28 (build 21326, api 8, 2023-09-09)
+### 1.7.28 (build 21328, api 8, 2023-09-09)
 
 - Renamed Console to DevConsole, and added an option under advanced settings to
   always show an ugly 'dev' button onscreen which can be used to toggle it. The
@@ -28,6 +28,11 @@
   is now true, so a raw `babase.quit()` should now be a good citizen on mobile
   platforms. Also added the `g_base->QuitApp()` call which gives the C++ layer
   an equivalent to the Python call.
+- (build 21326) Fixed an uninitialized variable that could cause V1 networking
+  to fail in some builds/runs (thanks Rikko for the heads-up).
+- (build 21327) Fixed an issue that could cause the app to pause for 3 seconds
+  at shutdown.
+  
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 

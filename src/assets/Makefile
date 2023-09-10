@@ -186,6 +186,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_mgen/enums.py \
   $(BUILD_DIR)/ba_data/python/babase/_net.py \
   $(BUILD_DIR)/ba_data/python/babase/_plugin.py \
+  $(BUILD_DIR)/ba_data/python/babase/_stringedit.py \
   $(BUILD_DIR)/ba_data/python/babase/_text.py \
   $(BUILD_DIR)/ba_data/python/babase/_workspace.py \
   $(BUILD_DIR)/ba_data/python/babase/modutils.py \
@@ -457,6 +458,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_mgen/__pycache__/enums.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_net.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_plugin.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_stringedit.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_text.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_workspace.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/modutils.cpython-311.opt-1.pyc \

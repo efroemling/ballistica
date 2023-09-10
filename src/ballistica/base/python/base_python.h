@@ -18,6 +18,7 @@ class BasePython {
   void OnAppPause();
   void OnAppResume();
   void OnAppShutdown();
+  void OnAppShutdownComplete();
   void DoApplyAppConfig();
   void OnScreenSizeChange();
   void StepDisplayTime();
@@ -73,6 +74,7 @@ class BasePython {
     kAppOnNativePauseCall,
     kAppOnNativeResumeCall,
     kAppOnNativeShutdownCall,
+    kAppOnNativeShutdownCompleteCall,
     kQuitCall,
     kShowPostPurchaseMessageCall,
     kContextError,

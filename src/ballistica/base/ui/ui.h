@@ -27,6 +27,7 @@ class UI {
   void OnAppPause();
   void OnAppResume();
   void OnAppShutdown();
+  void OnAppShutdownComplete();
   void DoApplyAppConfig();
   void OnScreenSizeChange();
   void StepDisplayTime();

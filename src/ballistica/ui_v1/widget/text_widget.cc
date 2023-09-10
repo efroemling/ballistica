@@ -23,7 +23,7 @@ namespace ballistica::ui_v1 {
 
 const float kClearMargin{13.0f};
 
-bool TextWidget::always_use_internal_keyboard_{false};
+// bool TextWidget::always_use_internal_keyboard_{false};
 
 // FIXME: Move this to g_ui or something; not a global.
 Object::WeakRef<TextWidget> TextWidget::android_string_edit_widget_;
@@ -522,21 +522,25 @@ auto TextWidget::GetHeight() -> float {
 
 auto TextWidget::ShouldUseStringEditDialog() const -> bool {
   if (g_core->HeadlessMode()) {
+    // Shouldn't really get here, but if we do, keep things simple.
     return false;
   }
   if (force_internal_editing_) {
+    // Obscure cases such as the text-widget *on* our built-in on-screen
+    // keyboard.
     return false;
   }
-  if (always_use_internal_keyboard_) {
+  if (g_ui_v1->always_use_internal_on_screen_keyboard()) {
     return true;
   }
 
-  // On most platforms we always want to do this. On desktop, however, we
-  // use inline editing if the current UI input-device is the mouse or
-  // keyboard.
+  // On most platforms we always want to use an edit dialog. On desktop,
+  // however, we use inline editing *if* the current UI input-device is the
+  // mouse or keyboard. For anything else, like game controllers, we bust
+  // out the dialog.
   if (g_buildconfig.ostype_macos() || g_buildconfig.ostype_windows()
       || g_buildconfig.ostype_linux()) {
-    base::InputDevice* ui_input_device = g_base->ui->GetUIInputDevice();
+    auto* ui_input_device = g_base->ui->GetUIInputDevice();
     return !(ui_input_device == nullptr
              || ui_input_device == g_base->input->keyboard_input());
   } else {
@@ -544,29 +548,27 @@ auto TextWidget::ShouldUseStringEditDialog() const -> bool {
   }
 }
 
-void TextWidget::BringUpEditDialog() {
-  bool use_internal_dialog = true;
+void TextWidget::InvokeStringEditDialog() {
+  bool use_internal_dialog{true};
 
-  // in vr we always use our own dialog..
+  // In VR we always use our own dialog.
   if (g_core->IsVRMode()) {
     use_internal_dialog = true;
   } else {
-    // on android, use the android keyboard unless the user want to use ours..
-    if (!always_use_internal_keyboard_) {
-      // on android we pull up a native dialog
-
-      // (FIXME - abstract this to platform so we can use it elsewhere)
+    // on Android, use the Android keyboard *unless* the user want to use
+    // our built-in one.
+    if (!g_ui_v1->always_use_internal_on_screen_keyboard()) {
       if (g_buildconfig.ostype_android()) {
         use_internal_dialog = false;
-        // store ourself as the current text-widget and kick off an edit
+        // Store ourself as the current text-widget and kick off an edit.
         android_string_edit_widget_ = this;
         g_core->main_event_loop()->PushCall(
             [name = description_, value = text_raw_, max_chars = max_chars_] {
               static millisecs_t last_edit_time = 0;
               millisecs_t t = g_core->GetAppTimeMillisecs();
 
-              // Ignore if too close together.
-              // (in case second request comes in before first takes effect).
+              // Ignore if too close together (in case second request comes
+              // in before first takes effect).
               if (t - last_edit_time < 1000) {
                 return;
               }
@@ -577,7 +579,7 @@ void TextWidget::BringUpEditDialog() {
       }
     }
   }
-  if (explicit_bool(use_internal_dialog)) {
+  if (use_internal_dialog) {
     g_ui_v1->python->LaunchStringEdit(this);
   }
 }
@@ -587,14 +589,13 @@ void TextWidget::Activate() {
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
 
   if (auto* call = on_activate_call_.Get()) {
-    // Call this in the next cycle (don't wanna risk mucking with UI from within
-    // a UI loop).
+    // Call this in the next cycle (don't wanna risk mucking with UI from
+    // within a UI loop).
     call->ScheduleWeak();
   }
 
-  // If we're on ouya and this is editable, it brings up our string-editor.
   if (editable_ && ShouldUseStringEditDialog()) {
-    BringUpEditDialog();
+    InvokeStringEditDialog();
   }
 }
 
@@ -795,7 +796,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       // If we're using an edit dialog, any attempted text input just kicks us
       // over to that.
       if (editable() && ShouldUseStringEditDialog()) {
-        BringUpEditDialog();
+        InvokeStringEditDialog();
       } else {
         // Otherwise apply the text directly.
         if (editable() && m.sval != nullptr) {
@@ -907,7 +908,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                    && (y >= (-bottom_overlap)) && (y < (height_ + top_overlap))
                    && !claimed) {
           // With dialog-editing, a click/tap brings up our editor.
-          BringUpEditDialog();
+          InvokeStringEditDialog();
         }
 
         // Pressed buttons always claim mouse-ups presented to them.

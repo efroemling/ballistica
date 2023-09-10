@@ -83,6 +83,7 @@ void UI::OnAppResume() {
 }
 
 void UI::OnAppShutdown() { assert(g_base->InLogicThread()); }
+void UI::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 
 void UI::DoApplyAppConfig() {
   assert(g_base->InLogicThread());

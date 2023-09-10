@@ -706,7 +706,7 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     # away all cmake builds everywhere (to keep things clean if we
     # rename or move something in the build dir or if we change
     # something cmake doesn't properly handle without a fresh start).
-    entries: list[Entry] = [Entry('explicit cmake rebuild', '2')]
+    entries: list[Entry] = [Entry('explicit cmake rebuild', '3')]
 
     # Start fresh if cmake version changes.
     cmake_ver_output = subprocess.run(
@@ -723,7 +723,7 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     )
     entries.append(Entry('cmake path', cmake_path))
 
-    # ...or if python's version changes.
+    # ...or if Python's version changes.
     python_ver_output = (
         subprocess.run(
             [f'python{PYVER}', '--version'], check=True, capture_output=True

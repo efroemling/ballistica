@@ -101,6 +101,8 @@ void Graphics::OnAppResume() {
 
 void Graphics::OnAppShutdown() { assert(g_base->InLogicThread()); }
 
+void Graphics::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
+
 void Graphics::DoApplyAppConfig() {
   assert(g_base->InLogicThread());
 

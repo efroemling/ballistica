@@ -318,6 +318,7 @@ void BasePlatform::OnAppStart() { assert(g_base->InLogicThread()); }
 void BasePlatform::OnAppPause() { assert(g_base->InLogicThread()); }
 void BasePlatform::OnAppResume() { assert(g_base->InLogicThread()); }
 void BasePlatform::OnAppShutdown() { assert(g_base->InLogicThread()); }
+void BasePlatform::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 void BasePlatform::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
 void BasePlatform::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
 

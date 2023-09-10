@@ -37,6 +37,7 @@ class AppMode {
   virtual void OnAppPause();
   virtual void OnAppResume();
   virtual void OnAppShutdown();
+  virtual void OnAppShutdownComplete();
 
   /// Apply the app config.
   virtual void DoApplyAppConfig();

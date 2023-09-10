@@ -17,5 +17,6 @@ values = [
     app.on_native_pause,  # kAppOnNativePauseCall
     app.on_native_resume,  # kAppOnNativeResumeCall
     app.on_native_shutdown,  # kAppOnNativeShutdownCall
+    app.on_native_shutdown_complete,  # kAppOnNativeShutdownCompleteCall
     app.read_config,  # kAppReadConfigCall
 ]

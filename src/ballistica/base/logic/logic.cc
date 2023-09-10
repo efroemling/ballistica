@@ -257,9 +257,25 @@ void Logic::CompleteShutdown() {
 void Logic::OnAppShutdownComplete() {
   assert(g_base->InLogicThread());
 
-  // Wrap up any last business here in the logic thread and then
-  // kick things over to the main thread to exit out of the main loop.
+  // Wrap up any last business here in the logic thread and then kick things
+  // over to the main thread to exit out of the main loop.
   g_core->LifecycleLog("app shutdown complete");
+
+  // Let our logic subsystems know in case there's any last thing they'd
+  // like to do right before we exit.
+  // Note: Keep these in opposite order of OnAppStart.
+  // Note2: Any shutdown processes that take a non-zero amount of time
+  // should be registered as shutdown-tasks
+  g_base->python->OnAppShutdownComplete();
+  if (g_base->HavePlus()) {
+    g_base->plus()->OnAppShutdownComplete();
+  }
+  g_base->app_mode()->OnAppShutdownComplete();
+  g_base->ui->OnAppShutdownComplete();
+  g_base->input->OnAppShutdownComplete();
+  g_base->audio->OnAppShutdownComplete();
+  g_base->graphics->OnAppShutdownComplete();
+  g_base->platform->OnAppShutdownComplete();
 
   g_core->main_event_loop()->PushCall([] { g_base->OnAppShutdownComplete(); });
 }

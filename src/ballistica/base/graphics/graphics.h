@@ -56,6 +56,7 @@ class Graphics {
   void OnAppPause();
   void OnAppResume();
   void OnAppShutdown();
+  void OnAppShutdownComplete();
   void OnScreenSizeChange();
   void DoApplyAppConfig();
 

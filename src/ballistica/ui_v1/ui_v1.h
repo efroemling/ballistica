@@ -130,13 +130,17 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   auto SendWidgetMessage(const base::WidgetMessage& m) -> int override;
   void DoApplyAppConfig() override;
 
+  auto always_use_internal_on_screen_keyboard() const {
+    return always_use_internal_on_screen_keyboard_;
+  }
+
  private:
   UIV1FeatureSet();
-
   RootUI* root_ui_{};
   Object::Ref<ContainerWidget> screen_root_widget_;
   Object::Ref<ContainerWidget> overlay_root_widget_;
   Object::Ref<RootWidget> root_widget_;
+  bool always_use_internal_on_screen_keyboard_{};
   int ui_lock_count_{};
 };
 

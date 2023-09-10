@@ -23,6 +23,7 @@ class Input {
   void OnAppPause();
   void OnAppResume();
   void OnAppShutdown();
+  void OnAppShutdownComplete();
   void StepDisplayTime();
 
   void DoApplyAppConfig();

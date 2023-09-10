@@ -79,11 +79,8 @@ class TextWidget : public Widget {
   auto force_internal_editing() const -> bool {
     return force_internal_editing_;
   }
-  // set whether to attempt to use big font (if possible)
+  // Set whether to attempt to use big font (if possible).
   void SetBig(bool big);
-  static void set_always_use_internal_keyboard(bool val) {
-    always_use_internal_keyboard_ = val;
-  }
   void set_extra_touch_border_scale(float scale) {
     extra_touch_border_scale_ = scale;
   }
@@ -93,9 +90,9 @@ class TextWidget : public Widget {
   auto ScaleAdjustedY(float y) -> float;
   void AddCharsToText(const std::string& addchars);
   auto ShouldUseStringEditDialog() const -> bool;
-  void BringUpEditDialog();
+  void InvokeStringEditDialog();
   void UpdateTranslation();
-  static bool always_use_internal_keyboard_;
+  // static bool always_use_internal_keyboard_;
   static Object::WeakRef<TextWidget> android_string_edit_widget_;
   float res_scale_{1.0f};
   bool enabled_{true};
