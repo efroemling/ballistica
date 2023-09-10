@@ -143,7 +143,6 @@ from babase._general import (
     storagename,
     getclass,
     get_type_name,
-    json_prep,
 )
 from babase._keyboard import Keyboard
 from babase._language import Lstr, LanguageSubsystem
@@ -244,7 +243,6 @@ __all__ = [
     'is_point_in_box',
     'is_running_on_fire_tv',
     'is_xcode_build',
-    'json_prep',
     'Keyboard',
     'LanguageSubsystem',
     'lock_all_input',

@@ -466,6 +466,37 @@ class ClassicSubsystem(babase.AppSubsystem):
 
         _analytics.game_begin_analytics()
 
+    @classmethod
+    def json_prep(cls, data: Any) -> Any:
+        """Return a json-friendly version of the provided data.
+
+        This converts any tuples to lists and any bytes to strings
+        (interpreted as utf-8, ignoring errors). Logs errors (just once)
+        if any data is modified/discarded/unsupported.
+        """
+
+        if isinstance(data, dict):
+            return dict(
+                (cls.json_prep(key), cls.json_prep(value))
+                for key, value in list(data.items())
+            )
+        if isinstance(data, list):
+            return [cls.json_prep(element) for element in data]
+        if isinstance(data, tuple):
+            logging.exception('json_prep encountered tuple')
+            return [cls.json_prep(element) for element in data]
+        if isinstance(data, bytes):
+            try:
+                return data.decode(errors='ignore')
+            except Exception:
+                logging.exception('json_prep encountered utf-8 decode error')
+                return data.decode(errors='ignore')
+        if not isinstance(data, (str, float, bool, type(None), int)):
+            logging.exception(
+                'got unsupported type in json_prep: %s', type(data)
+            )
+        return data
+
     def master_server_v1_get(
         self,
         request: str,

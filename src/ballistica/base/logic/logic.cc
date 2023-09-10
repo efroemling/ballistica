@@ -221,8 +221,6 @@ void Logic::OnAppShutdown() {
   assert(g_base->CurrentContext().IsEmpty());
   assert(shutting_down_);
 
-  g_core->LifecycleLog("app state shutting down");
-
   // Nuke the app from orbit if we get stuck while shutting down.
   g_core->StartSuicideTimer("shutdown", 10000);
 
@@ -259,13 +257,12 @@ void Logic::OnAppShutdownComplete() {
 
   // Wrap up any last business here in the logic thread and then kick things
   // over to the main thread to exit out of the main loop.
-  g_core->LifecycleLog("app shutdown complete");
 
   // Let our logic subsystems know in case there's any last thing they'd
   // like to do right before we exit.
   // Note: Keep these in opposite order of OnAppStart.
   // Note2: Any shutdown processes that take a non-zero amount of time
-  // should be registered as shutdown-tasks
+  // should be registered as shutdown-tasks.
   g_base->python->OnAppShutdownComplete();
   if (g_base->HavePlus()) {
     g_base->plus()->OnAppShutdownComplete();

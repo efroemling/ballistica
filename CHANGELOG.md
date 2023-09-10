@@ -1,4 +1,4 @@
-### 1.7.28 (build 21328, api 8, 2023-09-09)
+### 1.7.28 (build 21329, api 8, 2023-09-10)
 
 - Renamed Console to DevConsole, and added an option under advanced settings to
   always show an ugly 'dev' button onscreen which can be used to toggle it. The

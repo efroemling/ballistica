@@ -6,12 +6,13 @@ from __future__ import annotations
 import types
 import weakref
 import random
+import logging
 import inspect
 from typing import TYPE_CHECKING, TypeVar, Protocol, NewType
 
 from efro.terminal import Clr
+
 import _babase
-from babase._error import print_error, print_exception
 
 if TYPE_CHECKING:
     from typing import Any
@@ -19,7 +20,8 @@ if TYPE_CHECKING:
 
 
 # Declare distinct types for different time measurements we use so the
-# type-checker can help prevent us from mixing and matching accidentally.
+# type-checker can help prevent us from mixing and matching accidentally,
+# even if the *actual* types being used are the same.
 
 # Our monotonic time measurement that starts at 0 when the app launches
 # and pauses while the app is suspended.
@@ -85,39 +87,6 @@ def getclass(name: str, subclassof: type[T]) -> type[T]:
     return cls
 
 
-def json_prep(data: Any) -> Any:
-    """Return a json-friendly version of the provided data.
-
-    This converts any tuples to lists and any bytes to strings
-    (interpreted as utf-8, ignoring errors). Logs errors (just once)
-    if any data is modified/discarded/unsupported.
-    """
-
-    if isinstance(data, dict):
-        return dict(
-            (json_prep(key), json_prep(value))
-            for key, value in list(data.items())
-        )
-    if isinstance(data, list):
-        return [json_prep(element) for element in data]
-    if isinstance(data, tuple):
-        print_error('json_prep encountered tuple', once=True)
-        return [json_prep(element) for element in data]
-    if isinstance(data, bytes):
-        try:
-            return data.decode(errors='ignore')
-        except Exception:
-            from babase import _error
-
-            print_error('json_prep encountered utf-8 decode error', once=True)
-            return data.decode(errors='ignore')
-    if not isinstance(data, (str, float, bool, type(None), int)):
-        print_error(
-            'got unsupported type in json_prep:' + str(type(data)), once=True
-        )
-    return data
-
-
 def utf8_all(data: Any) -> Any:
     """Convert any unicode data in provided sequence(s) to utf8 bytes."""
     if isinstance(data, dict):
@@ -136,7 +105,7 @@ def utf8_all(data: Any) -> Any:
 
 def get_type_name(cls: type) -> str:
     """Return a full type name including module for a class."""
-    return cls.__module__ + '.' + cls.__name__
+    return f'{cls.__module__}.{cls.__name__}'
 
 
 class _WeakCall:
@@ -195,18 +164,12 @@ class _WeakCall:
         else:
             app = _babase.app
             if not self._did_invalid_call_warning:
-                print(
-                    (
-                        'Warning: callable passed to babase.WeakCall() is not'
-                        ' weak-referencable ('
-                        + str(args[0])
-                        + '); use babase.Call() instead to avoid this '
-                        'warning. Stack-trace:'
-                    )
+                logging.warning(
+                    'Warning: callable passed to babase.WeakCall() is not'
+                    ' weak-referencable (%s); use babase.Call() instead'
+                    ' to avoid this warning.',
+                    stack_info=True,
                 )
-                import traceback
-
-                traceback.print_stack()
                 self._did_invalid_call_warning = True
             self._call = args[0]
         self._args = args[1:]
@@ -320,7 +283,7 @@ def verify_object_death(obj: object) -> None:
     try:
         ref = weakref.ref(obj)
     except Exception:
-        print_exception('Unable to create weak-ref in verify_object_death')
+        logging.exception('Unable to create weak-ref in verify_object_death')
         return
 
     # Use a slight range for our checks so they don't all land at once

@@ -18,8 +18,8 @@ class AppSubsystem:
 
     An app 'subsystem' is a bit of a vague term, as pieces of the app
     can technically be any class and are not required to use this, but
-    building one out of this base class provides some conveniences such
-    as predefined callbacks during app state changes.
+    building one out of this base class provides conveniences such as
+    predefined callbacks during app state changes.
 
     Subsystems must be registered with the app before it completes its
     transition to the 'running' state.
@@ -47,6 +47,9 @@ class AppSubsystem:
 
     def on_app_shutdown(self) -> None:
         """Called when the app is shutting down."""
+
+    def on_app_shutdown_complete(self) -> None:
+        """Called when the app is done shutting down."""
 
     def do_apply_app_config(self) -> None:
         """Called when the app config should be applied."""

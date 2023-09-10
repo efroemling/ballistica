@@ -97,6 +97,9 @@ class App:
         # The app is shutting down.
         SHUTTING_DOWN = 6
 
+        # The app has completed shutdown.
+        SHUTDOWN_COMPLETE = 7
+
     class DefaultAppModeSelector(AppModeSelector):
         """Decides which AppModes to use to handle AppIntents.
 
@@ -142,7 +145,8 @@ class App:
         feature-set modules such as babase.
         """
 
-        # Hack for docs-generation.
+        # Hack for docs-generation: we can be imported with dummy modules
+        # instead of our actual binary ones, but we don't function.
         if os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') == '1':
             return
 
@@ -174,6 +178,7 @@ class App:
         self._native_start_called = False
         self._native_paused = False
         self._native_shutdown_called = False
+        self._native_shutdown_complete_called = False
         self._initial_sign_in_completed = False
         self._called_on_initing = False
         self._called_on_loading = False
@@ -193,15 +198,16 @@ class App:
         ]
 
     def postinit(self) -> None:
-        """Called after we've been inited and assigned to babase.app."""
+        """Called after we've been inited and assigned to babase.app.
 
-        # Hack for docs-generation.
+        Anything that accesses babase.app as part of its init process
+        must go here instead of __init__.
+        """
+
+        # Hack for docs-generation: we can be imported with dummy modules
+        # instead of our actual binary ones, but we don't function.
         if os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') == '1':
             return
-
-        # NOTE: the reason we need a postinit here is that some of this
-        # stuff accesses babase.app and that doesn't exist yet as of our
-        # __init__() call.
 
         self.lang = LanguageSubsystem()
         self.plugins = PluginSubsystem()
@@ -308,9 +314,13 @@ class App:
         Note that tasks will be killed after
         App.SHUTDOWN_TASK_TIMEOUT_SECONDS if they are still running.
         """
-        if self.state is self.State.SHUTTING_DOWN:
+        if (
+            self.state is self.State.SHUTTING_DOWN
+            or self.state is self.State.SHUTDOWN_COMPLETE
+        ):
+            stname = self.state.name
             raise RuntimeError(
-                'Cannot add shutdown tasks with state SHUTTING_DOWN.'
+                f'Cannot add shutdown tasks with current state {stname}.'
             )
         self._shutdown_tasks.append(coro)
 
@@ -398,6 +408,8 @@ class App:
     def on_native_shutdown_complete(self) -> None:
         """Called by the native layer when the app is done shutting down."""
         assert _babase.in_logic_thread()
+        self._native_shutdown_complete_called = True
+        self._update_state()
 
     def read_config(self) -> None:
         """(internal)"""
@@ -697,13 +709,21 @@ class App:
         # pylint: disable=too-many-branches
         assert _babase.in_logic_thread()
 
-        # Shutdown trumps all. Though we can't shut down until init is
-        # completed since we need our asyncio stuff to exist for the
-        # shutdown process.
-        if self._native_shutdown_called and self._init_completed:
+        # Shutdown-complete trumps absolutely all.
+        if self._native_shutdown_complete_called:
+            if self.state is not self.State.SHUTDOWN_COMPLETE:
+                self.state = self.State.SHUTDOWN_COMPLETE
+                _babase.lifecyclelog('app state shutdown complete')
+                self._on_shutdown_complete()
+
+        # Shutdown trumps all. Though we can't start shutting down until
+        # init is completed since we need our asyncio stuff to exist for
+        # the shutdown process.
+        elif self._native_shutdown_called and self._init_completed:
             # Entering shutdown state:
             if self.state is not self.State.SHUTTING_DOWN:
                 self.state = self.State.SHUTTING_DOWN
+                _babase.lifecyclelog('app state shutting down')
                 self._on_shutting_down()
 
         elif self._native_paused:
@@ -824,6 +844,21 @@ class App:
         # Now kick off any async shutdown task(s).
         assert self._aioloop is not None
         self._shutdown_task = self._aioloop.create_task(self._shutdown())
+
+    def _on_shutdown_complete(self) -> None:
+        """(internal)"""
+        assert _babase.in_logic_thread()
+
+        # Inform app subsystems that we're done shutting down in the opposite
+        # order they were inited.
+        for subsystem in reversed(self._subsystems):
+            try:
+                subsystem.on_app_shutdown_complete()
+            except Exception:
+                logging.exception(
+                    'Error in on_app_shutdown_complete for subsystem %s.',
+                    subsystem,
+                )
 
     async def _wait_for_shutdown_suppressions(self) -> None:
         import asyncio

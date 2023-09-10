@@ -462,7 +462,7 @@ class Chooser:
         # (non-unicode/non-json) version.
         # Make sure they conform to our standards
         # (unicode strings, no tuples, etc)
-        self._profiles = babase.json_prep(self._profiles)
+        self._profiles = app.classic.json_prep(self._profiles)
 
         # Filter out any characters we're unaware of.
         for profile in list(self._profiles.items()):
