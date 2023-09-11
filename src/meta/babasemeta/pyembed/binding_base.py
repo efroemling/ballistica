@@ -15,6 +15,7 @@ from babase import (
     _env,
     _error,
     _general,
+    _ui,
 )
 
 # The C++ layer looks for this variable:
@@ -23,7 +24,6 @@ values = [
     _hooks.set_config_fullscreen_on,  # kSetConfigFullscreenOnCall
     _hooks.set_config_fullscreen_off,  # kSetConfigFullscreenOffCall
     _hooks.not_signed_in_screen_message,  # kNotSignedInScreenMessageCall
-    _hooks.connecting_to_party_message,  # kConnectingToPartyMessageCall
     _hooks.rejecting_invite_already_in_party_message,  # kRejectingInviteAlreadyInPartyMessageCall
     _hooks.connection_failed_message,  # kConnectionFailedMessageCall
     _hooks.temporarily_unavailable_message,  # kTemporarilyUnavailableMessageCall
@@ -52,6 +52,7 @@ values = [
     _hooks.remove_in_game_ads_message,  # kRemoveInGameAdsMessageCall
     _hooks.do_quit,  # kQuitCall
     _hooks.show_post_purchase_message,  # kShowPostPurchaseMessageCall
+    _hooks.string_edit_adapter_can_be_replaced,  # kStringEditAdapterCanBeReplacedCall
     _language.Lstr,  # kLStrClass
     _general.Call,  # kCallClass
     _apputils.garbage_collect_session_end,  # kGarbageCollectSessionEndCall
@@ -80,4 +81,5 @@ values = [
     _hooks.open_url_with_webbrowser_module,  # kOpenURLWithWebBrowserModuleCall
     _env.on_native_module_import,  # kEnvOnNativeModuleImportCall
     _env.on_main_thread_start_app,  # kOnMainThreadStartAppCall
+    _ui.DevConsoleStringEditAdapter,  # kDevConsoleStringEditAdapterClass
 ]

@@ -101,7 +101,22 @@ void UIV1Python::HandleDeviceMenuPress(base::InputDevice* device) {
   }
 }
 
-void UIV1Python::LaunchStringEdit(TextWidget* w) {
+void UIV1Python::InvokeStringEditor(PyObject* string_edit_adapter_instance) {
+  BA_PRECONDITION(g_base->InLogicThread());
+  BA_PRECONDITION(string_edit_adapter_instance);
+
+  base::ScopedSetContext ssc(nullptr);
+  g_base->audio->PlaySound(g_base->assets->SysSound(base::SysSoundID::kSwish));
+
+  // Schedule this in the next cycle to be safe.
+  PythonRef args(Py_BuildValue("(O)", string_edit_adapter_instance),
+                 PythonRef::kSteal);
+  Object::New<base::PythonContextCall>(
+      objs().Get(ObjID::kOnScreenKeyboardClass))
+      ->Schedule(args);
+}
+
+void UIV1Python::LaunchStringEditOld(TextWidget* w) {
   assert(g_base->InLogicThread());
   BA_PRECONDITION(w);
 

@@ -41,7 +41,6 @@ class BasePython {
     kSetConfigFullscreenOnCall,
     kSetConfigFullscreenOffCall,
     kNotSignedInScreenMessageCall,
-    kConnectingToPartyMessageCall,
     kRejectingInviteAlreadyInPartyMessageCall,
     kConnectionFailedMessageCall,
     kTemporarilyUnavailableMessageCall,
@@ -104,6 +103,8 @@ class BasePython {
     kEnvOnNativeModuleImportCall,
     kOnMainThreadStartAppCall,
     kAppPushApplyAppConfigCall,
+    kStringEditAdapterCanBeReplacedCall,
+    kDevConsoleStringEditAdapterClass,
     kLast  // Sentinel; must be at end.
   };
 
@@ -148,6 +149,8 @@ class BasePython {
   static auto GetPyEnum_TimeFormat(PyObject* obj) -> TimeFormat;
   static auto IsPyEnum_InputType(PyObject* obj) -> bool;
   static auto GetPyEnum_InputType(PyObject* obj) -> InputType;
+
+  auto CanPyStringEditAdapterBeReplaced(PyObject* o) -> bool;
 
   auto IsPyLString(PyObject* o) -> bool;
   auto GetPyLString(PyObject* o) -> std::string;

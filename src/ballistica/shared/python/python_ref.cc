@@ -162,6 +162,15 @@ auto PythonRef::ValueAsString() const -> std::string {
   return Python::GetPyString(obj_);
 }
 
+auto PythonRef::ValueAsOptionalInt() const -> std::optional<int64_t> {
+  assert(Python::HaveGIL());
+  ThrowIfUnset();
+  if (obj_ == Py_None) {
+    return {};
+  }
+  return Python::GetPyInt(obj_);
+}
+
 void PythonRef::ThrowIfUnset() const {
   if (!obj_) {
     throw Exception("PythonRef is unset.", PyExcType::kValue);

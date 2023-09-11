@@ -10,12 +10,17 @@
 #include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/platform/base_platform.h"
+#include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/logging.h"
+#include "ballistica/shared/foundation/types.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python.h"
+#include "ballistica/shared/python/python_sys.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/container_widget.h"
 
@@ -23,25 +28,16 @@ namespace ballistica::ui_v1 {
 
 const float kClearMargin{13.0f};
 
-// bool TextWidget::always_use_internal_keyboard_{false};
-
-// FIXME: Move this to g_ui or something; not a global.
-Object::WeakRef<TextWidget> TextWidget::android_string_edit_widget_;
-TextWidget* TextWidget::GetAndroidStringEditWidget() {
-  assert(g_base->InLogicThread());
-  return android_string_edit_widget_.Get();
-}
-
 TextWidget::TextWidget() {
   // We always show our clear button except for in android when we don't
   // have a touchscreen (android-tv type situations).
+  //
   // FIXME - should generalize this to any controller-only situation.
   if (g_buildconfig.ostype_android()) {
     if (g_base->input->touch_input() == nullptr) {
       do_clear_button_ = false;
     }
   }
-
   birth_time_millisecs_ =
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
 }
@@ -114,8 +110,8 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   // Center-scale.
   {
-    // We should really be scaling our bounds and things,
-    // but for now lets just do a hacky overall scale.
+    // We should really be scaling our bounds and things, but for now lets
+    // just do a hacky overall scale.
     base::EmptyComponent c(pass);
     c.SetTransparent(true);
     c.PushTransform();
@@ -296,7 +292,7 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   }
 
   // Apply subs/resources to get our actual text if need be.
-  UpdateTranslation();
+  UpdateTranslation_();
 
   if (!text_group_.Exists()) {
     text_group_ = Object::New<base::TextGroup>();
@@ -386,7 +382,7 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     // Draw the carat.
     if (IsHierarchySelected() || always_show_carat_) {
       bool show_cursor = true;
-      if (ShouldUseStringEditDialog()) {
+      if (ShouldUseStringEditor_()) {
         show_cursor = false;
       }
       if (show_cursor
@@ -520,70 +516,6 @@ auto TextWidget::GetHeight() -> float {
   return height_;
 }
 
-auto TextWidget::ShouldUseStringEditDialog() const -> bool {
-  if (g_core->HeadlessMode()) {
-    // Shouldn't really get here, but if we do, keep things simple.
-    return false;
-  }
-  if (force_internal_editing_) {
-    // Obscure cases such as the text-widget *on* our built-in on-screen
-    // keyboard.
-    return false;
-  }
-  if (g_ui_v1->always_use_internal_on_screen_keyboard()) {
-    return true;
-  }
-
-  // On most platforms we always want to use an edit dialog. On desktop,
-  // however, we use inline editing *if* the current UI input-device is the
-  // mouse or keyboard. For anything else, like game controllers, we bust
-  // out the dialog.
-  if (g_buildconfig.ostype_macos() || g_buildconfig.ostype_windows()
-      || g_buildconfig.ostype_linux()) {
-    auto* ui_input_device = g_base->ui->GetUIInputDevice();
-    return !(ui_input_device == nullptr
-             || ui_input_device == g_base->input->keyboard_input());
-  } else {
-    return true;
-  }
-}
-
-void TextWidget::InvokeStringEditDialog() {
-  bool use_internal_dialog{true};
-
-  // In VR we always use our own dialog.
-  if (g_core->IsVRMode()) {
-    use_internal_dialog = true;
-  } else {
-    // on Android, use the Android keyboard *unless* the user want to use
-    // our built-in one.
-    if (!g_ui_v1->always_use_internal_on_screen_keyboard()) {
-      if (g_buildconfig.ostype_android()) {
-        use_internal_dialog = false;
-        // Store ourself as the current text-widget and kick off an edit.
-        android_string_edit_widget_ = this;
-        g_core->main_event_loop()->PushCall(
-            [name = description_, value = text_raw_, max_chars = max_chars_] {
-              static millisecs_t last_edit_time = 0;
-              millisecs_t t = g_core->GetAppTimeMillisecs();
-
-              // Ignore if too close together (in case second request comes
-              // in before first takes effect).
-              if (t - last_edit_time < 1000) {
-                return;
-              }
-              last_edit_time = t;
-              assert(g_core->InMainThread());
-              g_core->platform->EditText(name, value, max_chars);
-            });
-      }
-    }
-  }
-  if (use_internal_dialog) {
-    g_ui_v1->python->LaunchStringEdit(this);
-  }
-}
-
 void TextWidget::Activate() {
   last_activate_time_millisecs_ =
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
@@ -594,9 +526,80 @@ void TextWidget::Activate() {
     call->ScheduleWeak();
   }
 
-  if (editable_ && ShouldUseStringEditDialog()) {
-    InvokeStringEditDialog();
+  // Bring up an editor if applicable.
+  if (editable_ && ShouldUseStringEditor_()) {
+    InvokeStringEditor_();
   }
+}
+
+auto TextWidget::ShouldUseStringEditor_() const -> bool {
+  if (g_core->HeadlessMode()) {
+    BA_LOG_ONCE(
+        LogLevel::kError,
+        "ShouldUseStringEditDialog_ called in headless; should not happen.");
+    return false;
+  }
+
+  // Obscure cases such as the text-widget *on* our built-in on-screen
+  // editor (obviously it should itself not pop up an editor).
+  if (force_internal_editing_) {
+    return false;
+  }
+
+  // If the user wants to use our widget-based keyboard, always say yes
+  // here.
+  if (g_ui_v1->always_use_internal_on_screen_keyboard()) {
+    return true;
+  }
+
+  // If we can take direct key events, no string-editor needed.
+  return !g_base->ui->UIHasDirectKeyboardInput();
+}
+
+void TextWidget::InvokeStringEditor_() {
+  assert(g_base->InLogicThread());
+
+  // If there's already a valid edit attached to us, do nothing.
+  if (string_edit_adapter_.Exists()
+      && !g_base->python->CanPyStringEditAdapterBeReplaced(
+          string_edit_adapter_.Get())) {
+    return;
+  }
+
+  // Create a Python StringEditAdapter for this widget, passing ourself as
+  // the sole arg.
+  auto args = PythonRef::Stolen(Py_BuildValue("(O)", BorrowPyRef()));
+  auto result = g_ui_v1->python->objs()
+                    .Get(UIV1Python::ObjID::kTextWidgetStringEditAdapterClass)
+                    .Call(args);
+  if (!result.Exists()) {
+    Log(LogLevel::kError, "Error invoking string edit dialog.");
+    return;
+  }
+
+  // If this new one is already marked replacable, it means it wasn't able
+  // to register as the active one, so we can ignore it.
+  if (g_base->python->CanPyStringEditAdapterBeReplaced(result.Get())) {
+    return;
+  }
+
+  // Ok looks like we're good; store the adapter and hand it over
+  // to whoever will be driving it.
+  string_edit_adapter_ = result;
+
+  // Use the platform string-editor if we have one unless the user
+  // explicitly wants us to use our own.
+  if (g_base->platform->HaveStringEditor()
+      && !g_ui_v1->always_use_internal_on_screen_keyboard()) {
+    g_base->platform->InvokeStringEditor(string_edit_adapter_.Get());
+  } else {
+    g_ui_v1->python->InvokeStringEditor(string_edit_adapter_.Get());
+  }
+}
+
+void TextWidget::AdapterFinished() {
+  BA_PRECONDITION(g_base->InLogicThread());
+  string_edit_adapter_.Release();
 }
 
 auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
@@ -619,17 +622,17 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   }
 
   // If we're doing inline editing, handle clipboard paste.
-  if (editable() && !ShouldUseStringEditDialog()
+  if (editable() && !ShouldUseStringEditor_()
       && m.type == base::WidgetMessage::Type::kPaste) {
     if (g_core->platform->ClipboardIsSupported()) {
       if (g_core->platform->ClipboardHasText()) {
         // Just enter it char by char as if we had typed it...
-        AddCharsToText(g_core->platform->ClipboardGetText());
+        AddCharsToText_(g_core->platform->ClipboardGetText());
       }
     }
   }
   // If we're doing inline editing, handle some key events.
-  if (m.has_keysym && !ShouldUseStringEditDialog()) {
+  if (m.has_keysym && !ShouldUseStringEditor_()) {
     last_carat_change_time_millisecs_ =
         static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
 
@@ -795,12 +798,12 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     case base::WidgetMessage::Type::kTextInput: {
       // If we're using an edit dialog, any attempted text input just kicks us
       // over to that.
-      if (editable() && ShouldUseStringEditDialog()) {
-        InvokeStringEditDialog();
+      if (editable() && ShouldUseStringEditor_()) {
+        InvokeStringEditor_();
       } else {
         // Otherwise apply the text directly.
         if (editable() && m.sval != nullptr) {
-          AddCharsToText(*m.sval);
+          AddCharsToText_(*m.sval);
           return true;
         }
       }
@@ -810,8 +813,8 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if (!IsSelectable()) {
         return false;
       }
-      float x{ScaleAdjustedX(m.fval1)};
-      float y{ScaleAdjustedY(m.fval2)};
+      float x{ScaleAdjustedX_(m.fval1)};
+      float y{ScaleAdjustedY_(m.fval2)};
       bool claimed = (m.fval3 > 0.0f);
       if (claimed) {
         mouse_over_ = clear_mouse_over_ = false;
@@ -829,8 +832,8 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if (!IsSelectable()) {
         return false;
       }
-      float x{ScaleAdjustedX(m.fval1)};
-      float y{ScaleAdjustedY(m.fval2)};
+      float x{ScaleAdjustedX_(m.fval1)};
+      float y{ScaleAdjustedY_(m.fval2)};
 
       auto click_count = static_cast<int>(m.fval3);
 
@@ -874,8 +877,8 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       }
     }
     case base::WidgetMessage::Type::kMouseUp: {
-      float x{ScaleAdjustedX(m.fval1)};
-      float y{ScaleAdjustedY(m.fval2)};
+      float x{ScaleAdjustedX_(m.fval1)};
+      float y{ScaleAdjustedY_(m.fval2)};
       bool claimed = (m.fval3 > 0.0f);
 
       if (clear_pressed_ && !claimed && editable()
@@ -903,12 +906,12 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             && (y < (height_ + top_overlap)) && !claimed) {
           Activate();
           pressed_activate_ = false;
-        } else if (editable_ && ShouldUseStringEditDialog()
+        } else if (editable_ && ShouldUseStringEditor_()
                    && (x >= (-left_overlap)) && (x < (width_ + right_overlap))
                    && (y >= (-bottom_overlap)) && (y < (height_ + top_overlap))
                    && !claimed) {
           // With dialog-editing, a click/tap brings up our editor.
-          InvokeStringEditDialog();
+          InvokeStringEditor_();
         }
 
         // Pressed buttons always claim mouse-ups presented to them.
@@ -922,19 +925,19 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   return false;
 }
 
-auto TextWidget::ScaleAdjustedX(float x) -> float {
+auto TextWidget::ScaleAdjustedX_(float x) -> float {
   // Account for our center_scale_ value.
   float offsx = x - width_ * 0.5f;
   return width_ * 0.5f + offsx / center_scale_;
 }
 
-auto TextWidget::ScaleAdjustedY(float y) -> float {
+auto TextWidget::ScaleAdjustedY_(float y) -> float {
   // Account for our center_scale_ value.
   float offsy = y - height_ * 0.5f;
   return height_ * 0.5f + offsy / center_scale_;
 }
 
-void TextWidget::AddCharsToText(const std::string& addchars) {
+void TextWidget::AddCharsToText_(const std::string& addchars) {
   assert(editable());
   std::vector<uint32_t> unichars = Utils::UnicodeFromUTF8(text_raw_, "jcjwf8f");
   int len = static_cast<int>(unichars.size());
@@ -954,7 +957,7 @@ void TextWidget::AddCharsToText(const std::string& addchars) {
   text_translation_dirty_ = true;
 }
 
-void TextWidget::UpdateTranslation() {
+void TextWidget::UpdateTranslation_() {
   // Apply subs/resources to get our actual text if need be.
   if (text_translation_dirty_) {
     // We don't run translations on user-editable text.
@@ -970,7 +973,7 @@ void TextWidget::UpdateTranslation() {
 }
 
 auto TextWidget::GetTextWidth() -> float {
-  UpdateTranslation();
+  UpdateTranslation_();
 
   // Should we cache this?
   return g_base->text_graphics->GetStringWidth(text_translated_, big_);

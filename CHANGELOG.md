@@ -1,13 +1,21 @@
-### 1.7.28 (build 21329, api 8, 2023-09-10)
+### 1.7.28 (build 21337, api 8, 2023-09-11)
 
 - Renamed Console to DevConsole, and added an option under advanced settings to
-  always show an ugly 'dev' button onscreen which can be used to toggle it. The
+  always show a 'dev' button onscreen which can be used to toggle it. The
   backtick key still works also for anyone with a keyboard. I plan to add more
   functionality besides just the Python console to the dev-console, and perhaps
   improve the Python console a bit too (add support for on-screen keyboards,
   etc.)
 - The in-app Python console text is now sized up on phone and tablet devices,
   and is generally a bit larger everywhere.
+- Cleaned up onscreen keyboard support and generalized it to make it possible to
+  support other things besides widgets and to make it easier to implement on
+  other platforms.
+- Added onscreen keyboard support to the in-app Python console and added an Exec
+  button to allow execing it without a return key on a keyboard. The cloud
+  console is probably still a better way to go for most people but this makes at
+  least simple things possible without an internet connection for most Android
+  users.
 - Added some high level functionality for copying and deleting feature-sets to
   the `spinoff` tool. For example, to create your own `poo` feature-set based on
   the existing `template_fs` one, do `tools/spinoff fset-copy template_fs poo`.
@@ -24,10 +32,10 @@
   significantly faster & more efficient.
 - Updated internal Python builds for Apple & iOS to 3.11.5, and updated a few
   dependent libraries as well (OpenSSL bumped from 3.0.8 to 3.0.10, etc.).
-- Cleaned up the `babase.quit()` mechanism a bit. The default for the 'soft' arg
-  is now true, so a raw `babase.quit()` should now be a good citizen on mobile
+- Cleaned up the `babase.quit()` mechanism. The default for the 'soft' arg is
+  now true, so a vanilla `babase.quit()` should now be a good citizen on mobile
   platforms. Also added the `g_base->QuitApp()` call which gives the C++ layer
-  an equivalent to the Python call.
+  a high level equivalent to the Python call.
 - (build 21326) Fixed an uninitialized variable that could cause V1 networking
   to fail in some builds/runs (thanks Rikko for the heads-up).
 - (build 21327) Fixed an issue that could cause the app to pause for 3 seconds

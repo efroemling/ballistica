@@ -32,6 +32,8 @@ class UI {
   void OnScreenSizeChange();
   void StepDisplayTime();
 
+  void OnAssetsAvailable();
+
   void LanguageChanged();
 
   /// Reset all UI to a default state. Generally should be called when
@@ -79,6 +81,13 @@ class UI {
   /// Return the input-device that currently owns the UI; otherwise nullptr.
   auto GetUIInputDevice() const -> InputDevice*;
 
+  /// Return true if there is a full desktop-style hardware keyboard
+  /// attached and the active UI InputDevice is set to it or not set. This
+  /// also may take language or user preferences into account. Editable text
+  /// elements can use this to opt in to accepting key events directly
+  /// instead of popping up a string edit dialog.
+  auto UIHasDirectKeyboardInput() const -> bool;
+
   /// Schedule a back button press. Can be called from any thread.
   void PushBackButtonCall(InputDevice* input_device);
 
@@ -98,11 +107,18 @@ class UI {
   /// device (nullptr to specify none). Can be called from any thread.
   void PushMainMenuPressCall(InputDevice* device);
 
+  auto* dev_console() const { return dev_console_; }
+
+  void PushDevConsolePrintCall(const std::string& msg);
+
  private:
   void MainMenuPress_(InputDevice* device);
   auto DevConsoleButtonSize_() const -> float;
   auto InDevConsoleButton_(float x, float y) const -> bool;
   void DrawDevConsoleButton_(FrameDef* frame_def);
+
+  DevConsole* dev_console_{};
+  std::string dev_console_startup_messages_;
   Object::WeakRef<InputDevice> ui_input_device_;
   millisecs_t last_input_device_use_time_{};
   millisecs_t last_widget_input_reject_err_sound_time_{};

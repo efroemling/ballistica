@@ -667,11 +667,6 @@ auto CorePlatform::HaveLeaderboard(const std::string& game,
   return false;
 }
 
-void CorePlatform::EditText(const std::string& title, const std::string& value,
-                            int max_chars) {
-  Log(LogLevel::kError, "FIXME: EditText() unimplemented");
-}
-
 void CorePlatform::ShowOnlineScoreUI(const std::string& show,
                                      const std::string& game,
                                      const std::string& game_version) {

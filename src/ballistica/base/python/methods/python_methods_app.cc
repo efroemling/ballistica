@@ -9,6 +9,7 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
 #include "ballistica/base/support/stress_test.h"
+#include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -1516,8 +1517,7 @@ static PyMethodDef PyShutdownSuppressEndDef = {
     "(internal)\n",
 };
 
-// ------------------------ shutdown_suppress_count
-// ------------------------------
+// ----------------------- shutdown_suppress_count -----------------------------
 
 static auto PyShutdownSuppressCount(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
@@ -1533,6 +1533,79 @@ static PyMethodDef PyShutdownSuppressCountDef = {
     METH_NOARGS,                           // flags
 
     "shutdown_suppress_count() -> int\n"
+    "\n"
+    "(internal)\n",
+};
+
+// --------------------- get_dev_console_input_text ----------------------------
+
+static auto PyGetDevConsoleInputText(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* console = g_base->ui->dev_console();
+  BA_PRECONDITION(console);
+  return PyUnicode_FromString(console->input_string().c_str());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetDevConsoleInputTextDef = {
+    "get_dev_console_input_text",           // name
+    (PyCFunction)PyGetDevConsoleInputText,  // method
+    METH_NOARGS,                            // flags
+
+    "get_dev_console_input_text() -> str\n"
+    "\n"
+    "(internal)\n",
+};
+
+// --------------------- set_dev_console_input_text ----------------------------
+
+static auto PySetDevConsoleInputText(PyObject* self, PyObject* args,
+                                     PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* console = g_base->ui->dev_console();
+  BA_PRECONDITION(console);
+
+  const char* val;
+  static const char* kwlist[] = {"val", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &val)) {
+    return nullptr;
+  }
+  console->set_input_string(val);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetDevConsoleInputTextDef = {
+    "set_dev_console_input_text",           // name
+    (PyCFunction)PySetDevConsoleInputText,  // method
+    METH_VARARGS | METH_KEYWORDS,           // flags
+
+    "set_dev_console_input_text(val: str) -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// ------------------ dev_console_input_adapter_finish -------------------------
+
+static auto PyDevConsoleInputAdapterFinish(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* console = g_base->ui->dev_console();
+  BA_PRECONDITION(console);
+  console->InputAdapterFinish();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDevConsoleInputAdapterFinishDef = {
+    "dev_console_input_adapter_finish",           // name
+    (PyCFunction)PyDevConsoleInputAdapterFinish,  // method
+    METH_NOARGS,                                  // flags
+
+    "dev_console_input_adapter_finish() -> None\n"
     "\n"
     "(internal)\n",
 };
@@ -1589,6 +1662,9 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyShutdownSuppressBeginDef,
       PyShutdownSuppressEndDef,
       PyShutdownSuppressCountDef,
+      PyGetDevConsoleInputTextDef,
+      PySetDevConsoleInputTextDef,
+      PyDevConsoleInputAdapterFinishDef,
   };
 }
 

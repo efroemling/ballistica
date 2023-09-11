@@ -24,7 +24,7 @@ void Logging::DisplayLog(const std::string& name, LogLevel level,
                          const std::string& msg) {
   // Print to the in-app console (with a newline added).
   if (g_base_soft) {
-    g_base_soft->PushConsolePrintCall(msg + "\n");
+    g_base_soft->PushDevConsolePrintCall(msg + "\n");
   }
 
   // Ship to platform-specific display mechanisms (android log, etc).

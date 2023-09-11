@@ -39,6 +39,12 @@ class _EmptyObj:
     pass
 
 
+# A dead weak-ref should be immutable, right? So we can create exactly
+# one and return it for all cases that need an empty weak-ref.
+_g_empty_weak_ref = weakref.ref(_EmptyObj())
+assert _g_empty_weak_ref() is None
+
+
 # TODO: kill this and just use efro.call.tpartial
 if TYPE_CHECKING:
     Call = Call
@@ -148,8 +154,11 @@ def empty_weakref(objtype: type[T]) -> weakref.ref[T]:
     # At runtime, all weakrefs are the same; our type arg is just
     # for the static type checker.
     del objtype  # Unused.
+
     # Just create an object and let it die. Is there a cleaner way to do this?
-    return weakref.ref(_EmptyObj())  # type: ignore
+    # return weakref.ref(_EmptyObj())  # type: ignore
+
+    return _g_empty_weak_ref  # type: ignore
 
 
 def data_size_str(bytecount: int) -> str:

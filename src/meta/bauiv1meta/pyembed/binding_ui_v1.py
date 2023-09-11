@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import bauiv1.onscreenkeyboard
 from bauiv1 import _hooks
+from bauiv1._uitypes import TextWidgetStringEditAdapter
 
 # The C++ layer looks for this variable:
 values = [
@@ -21,4 +22,5 @@ values = [
     _hooks.quit_window,  # kQuitWindowCall
     _hooks.device_menu_press,  # kDeviceMenuPressCall
     _hooks.show_url_window,  # kShowURLWindowCall
+    TextWidgetStringEditAdapter,  # kTextWidgetStringEditAdapterClass
 ]

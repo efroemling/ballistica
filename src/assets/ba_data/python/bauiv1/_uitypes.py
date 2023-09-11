@@ -241,3 +241,35 @@ def ui_upkeep() -> None:
             else:
                 remainingchecks.append(check)
     ui.cleanupchecks = remainingchecks
+
+
+class TextWidgetStringEditAdapter(babase.StringEditAdapter):
+    """A StringEditAdapter subclass for editing our text widgets."""
+
+    def __init__(self, text_widget: bauiv1.Widget) -> None:
+        self.widget = text_widget
+
+        # Ugly hacks to pull values from widgets. Really need to clean
+        # up that api.
+        description: Any = _bauiv1.textwidget(query_description=text_widget)
+        assert isinstance(description, str)
+        initial_text: Any = _bauiv1.textwidget(query=text_widget)
+        assert isinstance(initial_text, str)
+        max_length: Any = _bauiv1.textwidget(query_max_chars=text_widget)
+        assert isinstance(max_length, int)
+
+        screen_space_center = text_widget.get_screen_space_center()
+
+        super().__init__(
+            description, initial_text, max_length, screen_space_center
+        )
+
+    def _do_apply(self, new_text: str) -> None:
+        if self.widget:
+            _bauiv1.textwidget(
+                edit=self.widget, text=new_text, adapter_finished=True
+            )
+
+    def _do_cancel(self) -> None:
+        if self.widget:
+            _bauiv1.textwidget(edit=self.widget, adapter_finished=True)

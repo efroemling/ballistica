@@ -1869,6 +1869,9 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* always_show_carat_obj = Py_None;
   PyObject* extra_touch_border_scale_obj = Py_None;
   PyObject* res_scale_obj = Py_None;
+  PyObject* query_max_chars_obj = Py_None;
+  PyObject* query_description_obj = Py_None;
+  PyObject* adapter_finished_obj = Py_None;
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -1905,9 +1908,12 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "big",
                                  "extra_touch_border_scale",
                                  "res_scale",
+                                 "query_max_chars",
+                                 "query_description",
+                                 "adapter_finished",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &size_obj,
           &pos_obj, &text_obj, &v_align_obj, &h_align_obj, &editable_obj,
           &padding_obj, &on_return_press_call_obj, &on_activate_call_obj,
@@ -1917,7 +1923,8 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &transition_delay_obj, &maxwidth_obj, &max_height_obj, &flatness_obj,
           &shadow_obj, &autoselect_obj, &rotate_obj, &enabled_obj,
           &force_internal_editing_obj, &always_show_carat_obj, &big_obj,
-          &extra_touch_border_scale_obj, &res_scale_obj))
+          &extra_touch_border_scale_obj, &res_scale_obj, &query_max_chars_obj,
+          &query_description_obj, &adapter_finished_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -1933,6 +1940,24 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
                       PyExcType::kWidgetNotFound);
     }
     return PyUnicode_FromString(widget->text_raw().c_str());
+  }
+  if (query_max_chars_obj != Py_None) {
+    widget =
+        dynamic_cast<TextWidget*>(UIV1Python::GetPyWidget(query_max_chars_obj));
+    if (!widget.Exists()) {
+      throw Exception("Invalid or nonexistent widget.",
+                      PyExcType::kWidgetNotFound);
+    }
+    return PyLong_FromLong(widget->max_chars());
+  }
+  if (query_description_obj != Py_None) {
+    widget = dynamic_cast<TextWidget*>(
+        UIV1Python::GetPyWidget(query_description_obj));
+    if (!widget.Exists()) {
+      throw Exception("Invalid or nonexistent widget.",
+                      PyExcType::kWidgetNotFound);
+    }
+    return PyUnicode_FromString(widget->description().c_str());
   }
   if (edit_obj != Py_None) {
     widget = dynamic_cast<TextWidget*>(UIV1Python::GetPyWidget(edit_obj));
@@ -2095,6 +2120,13 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (res_scale_obj != Py_None) {
     widget->set_res_scale(Python::GetPyFloat(res_scale_obj));
   }
+  if (adapter_finished_obj != Py_None) {
+    if (adapter_finished_obj == Py_True) {
+      widget->AdapterFinished();
+    } else {
+      throw Exception("Unexpected value for adapter_finished");
+    }
+  }
 
   // if making a new widget add it at the end
   if (edit_obj == Py_None) {
@@ -2144,7 +2176,10 @@ static PyMethodDef PyTextWidgetDef = {
     "  always_show_carat: bool | None = None,\n"
     "  big: bool | None = None,\n"
     "  extra_touch_border_scale: float | None = None,\n"
-    "  res_scale: float | None = None)\n"
+    "  res_scale: float | None = None,"
+    "  query_max_chars: bauiv1.Widget | None = None,\n"
+    "  query_description: bauiv1.Widget | None = None,\n"
+    "  adapter_finished: bool | None = None)\n"
     "  -> bauiv1.Widget\n"
     "\n"
     "Create or edit a text widget.\n"
@@ -2757,7 +2792,7 @@ static auto PyConsolePrint(PyObject* self, PyObject* args) -> PyObject* {
         throw Exception();
       }
       const char* c = PyUnicode_AsUTF8(str_obj);
-      g_base->PushConsolePrintCall(c);
+      g_base->PushDevConsolePrintCall(c);
       Py_DECREF(str_obj);
     }
   }

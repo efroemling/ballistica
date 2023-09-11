@@ -5,6 +5,7 @@
 
 #include <string>
 
+#include "ballistica/shared/python/python_ref.h"
 #include "ballistica/ui_v1/widget/widget.h"
 
 namespace ballistica::ui_v1 {
@@ -72,6 +73,7 @@ class TextWidget : public Widget {
   void set_res_scale(float res_scale);
   auto GetTextWidth() -> float;
   void OnLanguageChange() override;
+  void AdapterFinished();
 
   static TextWidget* GetAndroidStringEditWidget();
 
@@ -86,14 +88,12 @@ class TextWidget : public Widget {
   }
 
  private:
-  auto ScaleAdjustedX(float x) -> float;
-  auto ScaleAdjustedY(float y) -> float;
-  void AddCharsToText(const std::string& addchars);
-  auto ShouldUseStringEditDialog() const -> bool;
-  void InvokeStringEditDialog();
-  void UpdateTranslation();
-  // static bool always_use_internal_keyboard_;
-  static Object::WeakRef<TextWidget> android_string_edit_widget_;
+  auto ScaleAdjustedX_(float x) -> float;
+  auto ScaleAdjustedY_(float y) -> float;
+  void AddCharsToText_(const std::string& addchars);
+  auto ShouldUseStringEditor_() const -> bool;
+  void InvokeStringEditor_();
+  void UpdateTranslation_();
   float res_scale_{1.0f};
   bool enabled_{true};
   millisecs_t birth_time_millisecs_{};
@@ -150,9 +150,10 @@ class TextWidget : public Widget {
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t last_carat_change_time_millisecs_{};
 
-  // we keep these at the bottom so they're torn down first..
+  // We keep these at the bottom so they're torn down first.
   Object::Ref<base::PythonContextCall> on_return_press_call_;
   Object::Ref<base::PythonContextCall> on_activate_call_;
+  PythonRef string_edit_adapter_;
 };
 
 }  // namespace ballistica::ui_v1

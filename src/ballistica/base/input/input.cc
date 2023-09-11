@@ -813,8 +813,8 @@ void Input::PushTextInputEvent(const std::string& text) {
     if (IsInputLocked()) {
       return;
     }
-    if (g_base && g_base->console() != nullptr
-        && g_base->console()->HandleTextEditing(text)) {
+    if (g_base && g_base->ui->dev_console() != nullptr
+        && g_base->ui->dev_console()->HandleTextEditing(text)) {
       return;
     }
     g_base->ui->SendWidgetMessage(WidgetMessage(
@@ -966,9 +966,10 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
   }
 
   // Let the console intercept stuff if it wants at this point.
-  if (g_base && g_base->console() != nullptr
-      && g_base->console()->HandleKeyPress(keysym)) {
-    return;
+  if (auto* console = g_base->ui->dev_console()) {
+    if (console->HandleKeyPress(keysym)) {
+      return;
+    }
   }
 
   // Ctrl-V or Cmd-V sends paste commands to any interested text fields.
@@ -1089,8 +1090,8 @@ void Input::HandleKeyRelease(const SDL_Keysym* keysym) {
 
   keys_held_.erase(keysym->sym);
 
-  if (g_base->console() != nullptr) {
-    g_base->console()->HandleKeyRelease(keysym);
+  if (g_base->ui->dev_console() != nullptr) {
+    g_base->ui->dev_console()->HandleKeyRelease(keysym);
   }
 
   if (keyboard_input_) {

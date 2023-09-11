@@ -403,10 +403,6 @@ class CorePlatform {
 
   static void SleepMillisecs(millisecs_t ms);
 
-  /// Pop up a text edit dialog.
-  virtual void EditText(const std::string& title, const std::string& value,
-                        int max_chars);
-
   /// Given a C++ symbol, attempt to return a pretty one.
   virtual auto DemangleCXXSymbol(const std::string& s) -> std::string;
 

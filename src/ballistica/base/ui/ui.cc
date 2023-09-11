@@ -125,12 +125,21 @@ auto UI::HandleMouseDown(int button, float x, float y, bool double_click)
     -> bool {
   bool handled{};
 
-  if (show_dev_console_button_ && button == 1) {
+  // Dev console button.
+  if (show_dev_console_button_) {
     float vx = g_base->graphics->screen_virtual_width();
     float vy = g_base->graphics->screen_virtual_height();
     if (InDevConsoleButton_(x, y)) {
-      dev_console_button_pressed_ = true;
+      if (button == 1) {
+        dev_console_button_pressed_ = true;
+      }
+      handled = true;
     }
+  }
+
+  // Dev console itself.
+  if (!handled && dev_console_ && dev_console_->IsActive()) {
+    handled = dev_console_->HandleMouseDown(button, x, y);
   }
 
   if (!handled && g_base->HaveUIV1()) {
@@ -151,10 +160,13 @@ void UI::HandleMouseUp(int button, float x, float y) {
   SendWidgetMessage(
       WidgetMessage(WidgetMessage::Type::kMouseUp, nullptr, x, y));
 
-  if (dev_console_button_pressed_) {
+  if (dev_console_) {
+    dev_console_->HandleMouseUp(button, x, y);
+  }
+  if (dev_console_button_pressed_ && button == 1) {
     if (InDevConsoleButton_(x, y)) {
-      if (auto* console = g_base->console()) {
-        console->ToggleState();
+      if (dev_console_) {
+        dev_console_->ToggleState();
       }
     }
     dev_console_button_pressed_ = false;
@@ -163,6 +175,26 @@ void UI::HandleMouseUp(int button, float x, float y) {
   if (g_base->HaveUIV1()) {
     g_base->ui_v1()->HandleLegacyRootUIMouseUp(x, y);
   }
+}
+
+auto UI::UIHasDirectKeyboardInput() const -> bool {
+  // Currently limiting this to desktop operating systems, but should
+  // generalize this, as situations such as tablets with hardware keyboards
+  // should behave similarly to desktop PCs. Though perhaps we should make
+  // this optional everywhere (or language dependent) since direct keyboard
+  // input might not work well for some languages even on desktops.
+  if (g_buildconfig.ostype_macos() || g_buildconfig.ostype_windows()
+      || g_buildconfig.ostype_linux()) {
+    // Return true if we've got a keyboard attached and either it or nothing
+    // is active.
+    auto* ui_input_device = g_base->ui->GetUIInputDevice();
+    if (auto* keyboard = g_base->ui->GetUIInputDevice()) {
+      if (ui_input_device == keyboard || ui_input_device == nullptr) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 void UI::HandleMouseMotion(float x, float y) {
@@ -353,8 +385,8 @@ void UI::Draw(FrameDef* frame_def) {
 
 void UI::DrawDev(FrameDef* frame_def) {
   // Draw dev console.
-  if (g_base->console()) {
-    g_base->console()->Draw(frame_def->overlay_pass());
+  if (dev_console_) {
+    dev_console_->Draw(frame_def->overlay_pass());
   }
 
   // Draw dev console button.
@@ -440,10 +472,10 @@ void UI::ShowURL(const std::string& url) {
 }
 
 void UI::ConfirmQuit() {
-  g_base->logic->event_loop()->PushCall([] {
+  g_base->logic->event_loop()->PushCall([this] {
     // If the in-app console is active, dismiss it.
-    if (g_base->console() != nullptr && g_base->console()->IsActive()) {
-      g_base->console()->Dismiss();
+    if (dev_console_ != nullptr && dev_console_->IsActive()) {
+      dev_console_->Dismiss();
     }
 
     assert(g_base->InLogicThread());
@@ -465,6 +497,39 @@ void UI::ConfirmQuit() {
       }
     }
   });
+}
+
+void UI::PushDevConsolePrintCall(const std::string& msg) {
+  // Completely ignore this stuff in headless mode.
+  if (g_core->HeadlessMode()) {
+    return;
+  }
+  // If our event loop AND console are up and running, ship it off to
+  // be printed. Otherwise store it for the console to grab when it's ready.
+  if (auto* event_loop = g_base->logic->event_loop()) {
+    if (dev_console_ != nullptr) {
+      event_loop->PushCall([this, msg] { dev_console_->Print(msg); });
+      return;
+    }
+  }
+  // Didn't send a print; store for later.
+  dev_console_startup_messages_ += msg;
+}
+
+void UI::OnAssetsAvailable() {
+  assert(g_base->InLogicThread());
+
+  // Spin up the dev console.
+  if (!g_core->HeadlessMode()) {
+    assert(dev_console_ == nullptr);
+    dev_console_ = new DevConsole();
+
+    // Print any messages that have built up.
+    if (!dev_console_startup_messages_.empty()) {
+      dev_console_->Print(dev_console_startup_messages_);
+      dev_console_startup_messages_.clear();
+    }
+  }
 }
 
 }  // namespace ballistica::base

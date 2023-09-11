@@ -1680,6 +1680,7 @@
       <w>stepnum</w>
       <w>stepsize</w>
       <w>stgdict</w>
+      <w>stname</w>
       <w>storagenames</w>
       <w>storecmd</w>
       <w>stot</w>

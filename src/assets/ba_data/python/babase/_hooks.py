@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING
 import _babase
 
 if TYPE_CHECKING:
-    pass
+    from babase._stringedit import StringEditAdapter
 
 
 def reset_to_main_menu() -> None:
@@ -62,14 +62,6 @@ def open_url_with_webbrowser_module(url: str) -> None:
         logging.exception("Error displaying url '%s'.", url)
         _babase.getsimplesound('error').play()
         _babase.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
-
-
-def connecting_to_party_message() -> None:
-    from babase._language import Lstr
-
-    _babase.screenmessage(
-        Lstr(resource='internal.connectingToPartyText'), color=(1, 1, 1)
-    )
 
 
 def rejecting_invite_already_in_party_message() -> None:
@@ -372,3 +364,11 @@ def show_client_too_old_error() -> None:
         ),
         color=(1, 0, 0),
     )
+
+
+def string_edit_adapter_can_be_replaced(adapter: StringEditAdapter) -> bool:
+    """Return whether a StringEditAdapter can be replaced."""
+    from babase._stringedit import StringEditAdapter
+
+    assert isinstance(adapter, StringEditAdapter)
+    return adapter.can_be_replaced()

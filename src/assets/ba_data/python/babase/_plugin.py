@@ -197,6 +197,17 @@ class PluginSubsystem(AppSubsystem):
 
                 _error.print_exception('Error in plugin on_app_shutdown()')
 
+    def on_app_shutdown_complete(self) -> None:
+        for plugin in self.active_plugins:
+            try:
+                plugin.on_app_shutdown_complete()
+            except Exception:
+                from babase import _error
+
+                _error.print_exception(
+                    'Error in plugin on_app_shutdown_complete()'
+                )
+
     def load_plugins(self) -> None:
         """(internal)"""
 
@@ -324,6 +335,9 @@ class Plugin:
 
     def on_app_shutdown(self) -> None:
         """Called when the app is beginning the shutdown process."""
+
+    def on_app_shutdown_complete(self) -> None:
+        """Called when the app has completed the shutdown process."""
 
     def has_settings_ui(self) -> bool:
         """Called to ask if we have settings UI we can show."""

@@ -329,4 +329,50 @@ auto BasePlatform::CanBackQuit() -> bool { return false; }
 void BasePlatform::DoBackQuit() {}
 void BasePlatform::DoSoftQuit() {}
 
+auto BasePlatform::HaveStringEditor() -> bool { return false; }
+
+void BasePlatform::InvokeStringEditor(PyObject* string_edit_adapter) {
+  BA_PRECONDITION(HaveStringEditor());
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  // We assume there's a single one of these at a time. Hold on to it.
+  string_edit_adapter_.Acquire(string_edit_adapter);
+
+  // Pull values from Python and ship them along to our platform
+  // implementation.
+  auto desc = string_edit_adapter_.GetAttr("description").ValueAsString();
+  auto initial_text =
+      string_edit_adapter_.GetAttr("initial_text").ValueAsString();
+  auto max_length =
+      string_edit_adapter_.GetAttr("max_length").ValueAsOptionalInt();
+  // TODO(ericf): pass along screen_space_center if its ever useful.
+
+  g_base->platform->DoInvokeStringEditor(desc, initial_text, max_length);
+}
+
+/// Should be called by platform StringEditor to apply a value.
+void BasePlatform::StringEditorApply(const std::string& val) {
+  BA_PRECONDITION(HaveStringEditor());
+  BA_PRECONDITION(g_base->InLogicThread());
+  BA_PRECONDITION(string_edit_adapter_.Exists());
+  auto args = PythonRef::Stolen(Py_BuildValue("(s)", val.c_str()));
+  string_edit_adapter_.GetAttr("apply").Call(args);
+  string_edit_adapter_.Release();
+}
+
+/// Should be called by platform StringEditor to signify a cancel.
+void BasePlatform::StringEditorCancel() {
+  BA_PRECONDITION(HaveStringEditor());
+  BA_PRECONDITION(g_base->InLogicThread());
+  BA_PRECONDITION(string_edit_adapter_.Exists());
+  string_edit_adapter_.GetAttr("cancel").Call();
+  string_edit_adapter_.Release();
+}
+
+void BasePlatform::DoInvokeStringEditor(const std::string& title,
+                                        const std::string& value,
+                                        std::optional<int> max_chars) {
+  Log(LogLevel::kError, "FIXME: DoInvokeStringEditor() unimplemented");
+}
+
 }  // namespace ballistica::base

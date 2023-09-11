@@ -4,6 +4,7 @@
 #define BALLISTICA_BASE_PLATFORM_BASE_PLATFORM_H_
 
 #include "ballistica/base/base.h"
+#include "ballistica/shared/python/python_ref.h"
 
 namespace ballistica::base {
 
@@ -104,13 +105,36 @@ class BasePlatform {
                                                bool active);
 #pragma mark MISC --------------------------------------------------------------
 
+  /// Do we define a platform-specific string editor? This is something like
+  /// a text view popup which allows the use of default OS input methods
+  /// such as on-screen-keyboards.
+  virtual auto HaveStringEditor() -> bool;
+
+  /// Trigger a string edit for the provided StringEditAdapter Python obj.
+  /// This should only be called once the edit-adapter has been verified as
+  /// being the globally active one. Must be called from the logic thread.
+  void InvokeStringEditor(PyObject* string_edit_adapter);
+
   /// Open the provided URL in a browser or whatnot.
   void OpenURL(const std::string& url);
 
   /// Get the most up-to-date cursor position.
   void GetCursorPosition(float* x, float* y);
 
+  /// Should be called by platform StringEditor to apply a value.
+  /// Must be called in the logic thread.
+  void StringEditorApply(const std::string& val);
+
+  /// Should be called by platform StringEditor to signify a cancel.
+  /// Must be called in the logic thread.
+  void StringEditorCancel();
+
  protected:
+  /// Pop up a text edit dialog.
+  virtual void DoInvokeStringEditor(const std::string& title,
+                                    const std::string& value,
+                                    std::optional<int> max_chars);
+
   /// Open the provided URL in a browser or whatnot.
   virtual void DoOpenURL(const std::string& url);
 
@@ -121,11 +145,12 @@ class BasePlatform {
   virtual ~BasePlatform();
 
  private:
-  /// Called after our singleton has been instantiated.
-  /// Any construction functionality requiring virtual functions resolving to
-  /// their final class versions can go here.
+  /// Called after our singleton has been instantiated. Any construction
+  /// functionality requiring virtual functions resolving to their final
+  /// class versions can go here.
   virtual void PostInit();
 
+  PythonRef string_edit_adapter_{};
   bool ran_base_post_init_{};
   std::string public_device_uuid_;
 };

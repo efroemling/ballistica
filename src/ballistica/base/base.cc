@@ -152,18 +152,8 @@ auto BaseFeatureSet::IsBaseCompletelyImported() -> bool {
 
 void BaseFeatureSet::OnAssetsAvailable() {
   assert(InLogicThread());
-  assert(console_ == nullptr);
 
-  // Spin up the in-app console.
-  if (!g_core->HeadlessMode()) {
-    console_ = new DevConsole();
-
-    // Print any messages that have built up.
-    if (!console_startup_messages_.empty()) {
-      console_->Print(console_startup_messages_);
-      console_startup_messages_.clear();
-    }
-  }
+  ui->OnAssetsAvailable();
 }
 
 void BaseFeatureSet::StartApp() {
@@ -576,21 +566,8 @@ void BaseFeatureSet::DoV1CloudLog(const std::string& msg) {
   plus()->DirectSendV1CloudLogs(logprefix, logsuffix, false, nullptr);
 }
 
-void BaseFeatureSet::PushConsolePrintCall(const std::string& msg) {
-  // Completely ignore this stuff in headless mode.
-  if (g_core->HeadlessMode()) {
-    return;
-  }
-  // If our event loop AND console are up and running, ship it off to
-  // be printed. Otherwise store it for the console to grab when it's ready.
-  if (auto* event_loop = logic->event_loop()) {
-    if (console_ != nullptr) {
-      event_loop->PushCall([this, msg] { console_->Print(msg); });
-      return;
-    }
-  }
-  // Didn't send a print; store for later.
-  console_startup_messages_ += msg;
+void BaseFeatureSet::PushDevConsolePrintCall(const std::string& msg) {
+  ui->PushDevConsolePrintCall(msg);
 }
 
 PyObject* BaseFeatureSet::GetPyExceptionType(PyExcType exctype) {

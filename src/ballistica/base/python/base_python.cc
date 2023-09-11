@@ -580,4 +580,25 @@ auto BasePython::DoOnce() -> bool {
   return true;
 }
 
+auto BasePython::CanPyStringEditAdapterBeReplaced(PyObject* o) -> bool {
+  assert(g_base->InLogicThread());
+
+  auto args = PythonRef::Stolen(Py_BuildValue("(O)", o));
+  auto result = g_base->python->objs()
+                    .Get(BasePython::ObjID::kStringEditAdapterCanBeReplacedCall)
+                    .Call(args);
+  if (!result.Exists()) {
+    Log(LogLevel::kError, "Error getting StringEdit valid state.");
+    return false;
+  }
+  if (result.Get() == Py_True) {
+    return true;
+  }
+  if (result.Get() == Py_False) {
+    return false;
+  }
+  Log(LogLevel::kError, "Got unexpected value for StringEdit valid.");
+  return false;
+}
+
 }  // namespace ballistica::base

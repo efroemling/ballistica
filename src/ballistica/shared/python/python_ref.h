@@ -171,6 +171,7 @@ class PythonRef {
       -> std::optional<std::list<std::string>>;
 
   auto ValueAsInt() const -> int64_t;
+  auto ValueAsOptionalInt() const -> std::optional<int64_t>;
 
   /// Returns whether the underlying PyObject is callable.
   /// Throws an exception if unset.

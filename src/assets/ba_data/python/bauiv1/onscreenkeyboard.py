@@ -15,27 +15,28 @@ import _bauiv1
 from bauiv1._uitypes import Window
 
 if TYPE_CHECKING:
+    from babase import StringEditAdapter
+
     import bauiv1 as bui
 
 
 class OnScreenKeyboardWindow(Window):
     """Simple built-in on-screen keyboard."""
 
-    def __init__(self, textwidget: bui.Widget, label: str, max_chars: int):
-        self._target_text = textwidget
+    def __init__(self, adapter: StringEditAdapter):
+        self._adapter = adapter
         self._width = 700
         self._height = 400
         assert babase.app.classic is not None
         uiscale = babase.app.ui_v1.uiscale
         top_extra = 20 if uiscale is babase.UIScale.SMALL else 0
+
         super().__init__(
             root_widget=_bauiv1.containerwidget(
                 parent=_bauiv1.get_special_widget('overlay_stack'),
                 size=(self._width, self._height + top_extra),
                 transition='in_scale',
-                scale_origin_stack_offset=(
-                    self._target_text.get_screen_space_center()
-                ),
+                scale_origin_stack_offset=adapter.screen_space_center,
                 scale=(
                     2.0
                     if uiscale is babase.UIScale.SMALL
@@ -69,7 +70,7 @@ class OnScreenKeyboardWindow(Window):
             position=(self._width * 0.5, self._height - 41),
             size=(0, 0),
             scale=0.95,
-            text=label,
+            text=adapter.description,
             maxwidth=self._width - 140,
             color=babase.app.ui_v1.title_color,
             h_align='center',
@@ -79,8 +80,8 @@ class OnScreenKeyboardWindow(Window):
         self._text_field = _bauiv1.textwidget(
             parent=self._root_widget,
             position=(70, self._height - 116),
-            max_chars=max_chars,
-            text=cast(str, _bauiv1.textwidget(query=self._target_text)),
+            max_chars=adapter.max_length,
+            text=adapter.initial_text,
             on_return_press_call=self._done,
             autoselect=True,
             size=(self._width - 140, 55),
@@ -436,13 +437,12 @@ class OnScreenKeyboardWindow(Window):
         self._refresh()
 
     def _cancel(self) -> None:
+        self._adapter.cancel()
         _bauiv1.getsound('swish').play()
         _bauiv1.containerwidget(edit=self._root_widget, transition='out_scale')
 
     def _done(self) -> None:
         _bauiv1.containerwidget(edit=self._root_widget, transition='out_scale')
-        if self._target_text:
-            _bauiv1.textwidget(
-                edit=self._target_text,
-                text=cast(str, _bauiv1.textwidget(query=self._text_field)),
-            )
+        self._adapter.apply(
+            cast(str, _bauiv1.textwidget(query=self._text_field))
+        )

@@ -164,7 +164,7 @@ void Logic::OnInitialAppModeSet() {
   // We want any sort of raw Python input to only start accepting commands
   // once we've got an initial app-mode set. Generally said commands will
   // assume we're running in that mode and will fail if run before it is set.
-  if (auto* console = g_base->console()) {
+  if (auto* console = g_base->ui->dev_console()) {
     console->EnableInput();
   }
   if (g_base->stdio_console) {

@@ -701,7 +701,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
       -> PyObject* override;
   auto FeatureSetFromData(PyObject* obj) -> FeatureSetNativeComponent* override;
   void DoV1CloudLog(const std::string& msg) override;
-  void PushConsolePrintCall(const std::string& msg) override;
+  void PushDevConsolePrintCall(const std::string& msg) override;
   auto GetPyExceptionType(PyExcType exctype) -> PyObject* override;
   auto PrintPythonStackTrace() -> bool override;
   auto GetPyLString(PyObject* obj) -> std::string override;
@@ -754,7 +754,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   Utils* const utils;
 
   // Variable subsystems.
-  auto* console() const { return console_; }
   auto* app_mode() const { return app_mode_; }
   auto* stress_test() const { return stress_test_; }
   void set_app_mode(AppMode* mode);
@@ -779,13 +778,11 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   void PrintContextUnavailable_();
 
   AppMode* app_mode_;
-  DevConsole* console_{};
   PlusSoftInterface* plus_soft_{};
   ClassicSoftInterface* classic_soft_{};
   UIV1SoftInterface* ui_v1_soft_{};
   StressTest* stress_test_;
 
-  std::string console_startup_messages_;
   std::mutex shutdown_suppress_lock_;
   bool shutdown_suppress_disallowed_{};
   int shutdown_suppress_count_{};
