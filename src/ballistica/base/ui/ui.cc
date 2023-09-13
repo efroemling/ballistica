@@ -163,13 +163,14 @@ void UI::HandleMouseUp(int button, float x, float y) {
   if (dev_console_) {
     dev_console_->HandleMouseUp(button, x, y);
   }
+
   if (dev_console_button_pressed_ && button == 1) {
+    dev_console_button_pressed_ = false;
     if (InDevConsoleButton_(x, y)) {
       if (dev_console_) {
         dev_console_->ToggleState();
       }
     }
-    dev_console_button_pressed_ = false;
   }
 
   if (g_base->HaveUIV1()) {
@@ -386,7 +387,7 @@ void UI::Draw(FrameDef* frame_def) {
 void UI::DrawDev(FrameDef* frame_def) {
   // Draw dev console.
   if (dev_console_) {
-    dev_console_->Draw(frame_def->overlay_pass());
+    dev_console_->Draw(frame_def);
   }
 
   // Draw dev console button.
@@ -422,14 +423,14 @@ auto UI::InDevConsoleButton_(float x, float y) const -> bool {
 void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
   if (!dev_console_button_txt_.Exists()) {
     dev_console_button_txt_ = Object::New<TextGroup>();
-    dev_console_button_txt_->set_text("dev");
+    dev_console_button_txt_->SetText("dev");
   }
   auto& grp(*dev_console_button_txt_);
   float vwidth = g_base->graphics->screen_virtual_width();
   float vheight = g_base->graphics->screen_virtual_height();
   float bsz = DevConsoleButtonSize_();
 
-  SimpleComponent c(frame_def->overlay_pass());
+  SimpleComponent c(frame_def->overlay_front_pass());
   c.SetTransparent(true);
   c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCircleShadow));
   if (dev_console_button_pressed_) {
@@ -439,7 +440,7 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
   }
   {
     auto xf = c.ScopedTransform();
-    c.Translate(vwidth - bsz * 0.5f, vheight * 0.5f, kCursorZDepth - 0.01f);
+    c.Translate(vwidth - bsz * 0.5f, vheight * 0.5f, kDevConsoleZDepth + 0.01f);
     c.Scale(bsz, bsz, 1.0f);
     c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
     {

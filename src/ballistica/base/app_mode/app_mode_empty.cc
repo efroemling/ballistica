@@ -37,7 +37,7 @@ void AppModeEmpty::DrawWorld(base::FrameDef* frame_def) {
   // Draw some lovely spinning text.
   if (!hello_text_group_.Exists()) {
     hello_text_group_ = Object::New<TextGroup>();
-    hello_text_group_->set_text("Potato!");
+    hello_text_group_->SetText("Potato!");
   }
   auto& grp(*hello_text_group_);
   auto* pass = frame_def->overlay_pass();

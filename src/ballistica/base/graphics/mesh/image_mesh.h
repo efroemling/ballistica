@@ -7,7 +7,7 @@
 
 namespace ballistica::base {
 
-// a mesh set up to draw images
+// A mesh set up to draw images.
 class ImageMesh : public MeshIndexedSimpleSplit {
  public:
   ImageMesh();

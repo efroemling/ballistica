@@ -47,13 +47,12 @@ void GraphicsServer::OnMainThreadStartApp() {
   }
 }
 
-void GraphicsServer::SetFrameDef(FrameDef* framedef) {
-  // Note: we're just setting the framedef directly here
-  // even though this gets called from the logic thread.
-  // Ideally it would seem we should push these to our thread
-  // event list, but currently we spin-lock waiting for new
-  // frames to appear which would prevent that from working;
-  // we would need to change that code.
+void GraphicsServer::EnqueueFrameDef(FrameDef* framedef) {
+  // Note: we're just setting the framedef directly here even though this
+  // gets called from the logic thread. Ideally it would seem we should push
+  // these to our thread event list, but currently we may spin-lock waiting
+  // for new frames to appear which would prevent that from working; we
+  // would need to change that code.
   {
     std::scoped_lock llock(frame_def_mutex_);
     assert(frame_def_ == nullptr);
@@ -69,8 +68,8 @@ auto GraphicsServer::GetRenderFrameDef() -> FrameDef* {
     return nullptr;
   }
 
-  // If the app says it's minimized, don't do anything.
-  // (on iOS we'll get shut down if we make GL calls in this state, etc)
+  // If the app says it's minimized, don't do anything (on iOS we'll get
+  // shut down if we make GL calls in this state, etc).
   if (g_base->app_adapter->app_paused()) {
     return nullptr;
   }
@@ -78,9 +77,7 @@ auto GraphicsServer::GetRenderFrameDef() -> FrameDef* {
   // Do some incremental loading every time we try to render.
   g_base->assets->RunPendingGraphicsLoads();
 
-  // Spin and wait for a short bit for a frame_def to appear. If it does, we
-  // grab it, render it, and also message the logic thread to start generating
-  // another one.
+  // Spin and wait for a short bit for a frame_def to appear.
   while (true) {
     FrameDef* frame_def{};
     {
@@ -92,8 +89,8 @@ auto GraphicsServer::GetRenderFrameDef() -> FrameDef* {
     }
     if (frame_def) {
       // As soon as we start working on rendering a frame, ask the logic
-      // thread to start working on the next one for us. Keeps things nice and
-      // pipelined.
+      // thread to start working on the next one for us. Keeps things nice
+      // and pipelined.
       g_base->logic->event_loop()->PushCall([] { g_base->logic->Draw(); });
       return frame_def;
     }
@@ -150,8 +147,8 @@ void GraphicsServer::PreprocessRenderFrameDef(FrameDef* frame_def) {
   }
 }
 
-// Does the default drawing to the screen, either from the left or right stereo
-// eye or in mono.
+// Does the default drawing to the screen, either from the left or right
+// stereo eye or in mono.
 void GraphicsServer::DrawRenderFrameDef(FrameDef* frame_def, int eye) {
   assert(renderer_);
   if (renderer_) {
@@ -175,15 +172,12 @@ void GraphicsServer::TryRender() {
   assert(g_base->InGraphicsThread());
 
   if (FrameDef* frame_def = GetRenderFrameDef()) {
-    // Apply settings such as tv-mode passed along on the frame-def.
+    // Apply settings such as tv-mode that were passed along on the
+    // frame-def.
     ApplyFrameDefSettings(frame_def);
 
-    // Note: we always run mesh updates contained in the framedef
-    // even if we don't actually render it.
-    // (Hmm this seems flaky; will TryRender always get called
-    // for each FrameDef?... perhaps we should separate mesh updates
-    // from FrameDefs? Or change our logic so that frame-defs *always* get
-    // rendered.
+    // Note: we run mesh-updates on each frame-def that comes through even
+    // if we don't actually render the frame.
     RunFrameDefMeshUpdates(frame_def);
 
     // Only actually render if we have a screen and aren't in a hold.

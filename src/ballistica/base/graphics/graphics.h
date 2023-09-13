@@ -44,7 +44,8 @@ const float kBackingDepth1{0.0f};
 
 const float kShadowNeutral{0.5f};
 
-const float kCursorZDepth{-0.1f};
+// Cursor depth within the front-overlay (not related to above depths).
+const float kCursorZDepth{0.9f};
 
 // Client class for graphics operations (used from the logic thread).
 class Graphics {
@@ -317,11 +318,14 @@ class Graphics {
     camera_gyro_explicitly_disabled_ = disabled;
   }
 
+ protected:
+  virtual void DoDrawFade(FrameDef* frame_def, float amt);
+
  private:
   class ScreenMessageEntry;
   void DrawBoxingGlovesTest(FrameDef* frame_def);
   void DrawBlotches(FrameDef* frame_def);
-  void DrawCursor(RenderPass* pass, millisecs_t real_time);
+  void DrawCursor(FrameDef* frame_def);
   void DrawFades(FrameDef* frame_def, millisecs_t real_time);
   void DrawDebugBuffers(RenderPass* pass);
 
@@ -331,7 +335,7 @@ class Graphics {
                     float size, float r, float g, float b, float a);
   auto GetEmptyFrameDef() -> FrameDef*;
   void InitInternalComponents(FrameDef* frame_def);
-  void DrawMiscOverlays(RenderPass* pass);
+  void DrawMiscOverlays(FrameDef* frame_def);
   void DrawLoadDot(RenderPass* pass);
   void ClearFrameDefDeleteList();
   void DrawProgressBar(RenderPass* pass, float opacity);

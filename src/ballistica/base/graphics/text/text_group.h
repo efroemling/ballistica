@@ -14,9 +14,9 @@
 
 namespace ballistica::base {
 
-// encapsulates the multiple meshes and textures necessary to
-// draw arbitrary text. To actually draw the text, iterate over the meshes
-// and textures this class provides to you, drawing each in the same manner
+// Encapsulates the multiple meshes and textures necessary to draw arbitrary
+// text. To actually draw the text, iterate over the meshes and textures
+// this class provides to you, drawing each in the same manner.
 class TextGroup : public Object {
  public:
   // the number of meshes needing to be drawn for this text
@@ -55,10 +55,10 @@ class TextGroup : public Object {
                                           ? SysTextureID::kSoftRect2
                                           : SysTextureID::kSoftRect);
   }
-  void set_text(const std::string& text,
-                TextMesh::HAlign alignment_h = TextMesh::HAlign::kLeft,
-                TextMesh::VAlign alignment_v = TextMesh::VAlign::kNone,
-                bool big = false, float resolution_scale = 1.0f);
+  void SetText(const std::string& text,
+               TextMesh::HAlign alignment_h = TextMesh::HAlign::kLeft,
+               TextMesh::VAlign alignment_v = TextMesh::VAlign::kNone,
+               bool big = false, float resolution_scale = 1.0f);
   auto text() const -> const std::string& { return text_; }
   void GetCaratPts(const std::string& text_in, TextMesh::HAlign alignment_h,
                    TextMesh::VAlign alignment_v, int carat_pos, float* carat_x,

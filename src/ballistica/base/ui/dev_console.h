@@ -6,12 +6,16 @@
 #include <list>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/python/python_ref.h"
 
 namespace ballistica::base {
+
+/// Where on the overlay-front-pass we draw.
+const float kDevConsoleZDepth = 0.0f;
 
 class DevConsole {
  public:
@@ -31,7 +35,7 @@ class DevConsole {
 
   /// Print text to the console.
   void Print(const std::string& s_in);
-  void Draw(RenderPass* pass);
+  void Draw(FrameDef* frame_def);
 
   /// Called when the console should start accepting Python command input.
   void EnableInput();
@@ -47,18 +51,27 @@ class DevConsole {
   auto HandleMouseDown(int button, float x, float y) -> bool;
   void HandleMouseUp(int button, float x, float y);
   void Exec();
+  void Refresh();
 
  private:
+  class Widget_;
   class Button_;
+  class ToggleButton_;
+  class TabButton_;
   class Line_;
   enum class State_ { kInactive, kMini, kFull };
+
   auto Bottom_() const -> float;
   auto PythonConsoleBaseScale_() const -> float;
   void SubmitCommand_(const std::string& command);
   void InvokeStringEditor_();
+  void RefreshTabsButtons_();
+
+  std::list<std::string> tabs_{"Python", "AppModes", "Logging", "Graphics"};
+  std::string active_tab_{"Python"};
   ImageMesh bg_mesh_;
   ImageMesh stripe_mesh_;
-  ImageMesh shadow_mesh_;
+  ImageMesh border_mesh_;
   TextGroup built_text_group_;
   TextGroup title_text_group_;
   TextGroup prompt_text_group_;
@@ -78,7 +91,8 @@ class DevConsole {
   bool last_line_mesh_dirty_{true};
   bool python_console_pressed_{};
   PythonRef string_edit_adapter_;
-  std::list<Button_> buttons_;
+  std::vector<std::unique_ptr<Widget_> > buttons_;
+  std::vector<std::unique_ptr<Widget_> > tab_buttons_;
 };
 
 }  // namespace ballistica::base

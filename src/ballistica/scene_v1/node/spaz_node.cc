@@ -4783,7 +4783,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       snprintf(buffer, sizeof(buffer), "%d", static_cast<int>(diff));
       if (curse_timer_txt_ != buffer) {
         curse_timer_txt_ = buffer;
-        curse_timer_text_group_.set_text(curse_timer_txt_);
+        curse_timer_text_group_.SetText(curse_timer_txt_);
       }
       float r, g, b;
       if (render_frame_count % 6 < 3) {
@@ -4911,7 +4911,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     {  // text
       if (counter_mesh_text_ != counter_text_) {
         counter_mesh_text_ = counter_text_;
-        counter_text_group_.set_text(counter_mesh_text_);
+        counter_text_group_.SetText(counter_mesh_text_);
       }
       base::SimpleComponent c(frame_def->overlay_3d_pass());
       c.SetTransparent(true);
@@ -4940,9 +4940,9 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     if (explicit_bool(true)) {
       if (name_mesh_txt_ != name_) {
         name_mesh_txt_ = name_;
-        name_text_group_.set_text(name_mesh_txt_,
-                                  base::TextMesh::HAlign::kCenter,
-                                  base::TextMesh::VAlign::kCenter);
+        name_text_group_.SetText(name_mesh_txt_,
+                                 base::TextMesh::HAlign::kCenter,
+                                 base::TextMesh::VAlign::kCenter);
       }
       base::SimpleComponent c(frame_def->overlay_3d_pass());
       c.SetTransparent(true);

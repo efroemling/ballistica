@@ -63,6 +63,9 @@ class GraphicsVR : public Graphics {
     vr_hands_state_ = state;
   }
 
+ protected:
+  void DoDrawFade(FrameDef* frame_def, float amt) override;
+
  private:
   void CalcVROverlayMatrices(FrameDef* frame_def);
   auto CalcVROverlayMatrix(const Vector3f& cam_pt,

@@ -417,8 +417,8 @@ void TextNode::Draw(base::FrameDef* frame_def) {
           break;
       }
 
-      // update if need be
-      text_group_.set_text(text_translated_, h_align, v_align, true, 2.5f);
+      // Update if need be.
+      text_group_.SetText(text_translated_, h_align, v_align, true, 2.5f);
       text_group_dirty_ = false;
     }
 
@@ -589,7 +589,7 @@ void TextNode::Draw(base::FrameDef* frame_def) {
       }
 
       // Update if need be.
-      text_group_.set_text(text_translated_, h_align, v_align);
+      text_group_.SetText(text_translated_, h_align, v_align);
       text_group_dirty_ = false;
     }
     float z = vr_2d_text

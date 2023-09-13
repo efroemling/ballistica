@@ -196,210 +196,158 @@ class HelpWindow(bui.Window):
             texture=logo_tex,
         )
 
-        force_test = False
         app = bui.app
         assert app.classic is not None
-        if (
-            app.classic.platform == 'android'
-            and app.classic.subplatform == 'alibaba'
-        ) or force_test:
-            v -= 120.0
-            txtv = (
-                '\xe8\xbf\x99\xe6\x98\xaf\xe4\xb8\x80\xe4\xb8\xaa\xe5\x8f\xaf'
-                '\xe4\xbb\xa5\xe5\x92\x8c\xe5\xae\xb6\xe4\xba\xba\xe6\x9c\x8b'
-                '\xe5\x8f\x8b\xe4\xb8\x80\xe8\xb5\xb7\xe7\x8e\xa9\xe7\x9a\x84'
-                '\xe6\xb8\xb8\xe6\x88\x8f,\xe5\x90\x8c\xe6\x97\xb6\xe6\x94\xaf'
-                '\xe6\x8c\x81\xe8\x81\x94 \xe2\x80\xa8\xe7\xbd\x91\xe5\xaf\xb9'
-                '\xe6\x88\x98\xe3\x80\x82\n'
-                '\xe5\xa6\x82\xe6\xb2\xa1\xe6\x9c\x89\xe6\xb8\xb8\xe6\x88\x8f'
-                '\xe6\x89\x8b\xe6\x9f\x84,\xe5\x8f\xaf\xe4\xbb\xa5\xe4\xbd\xbf'
-                '\xe7\x94\xa8\xe7\xa7\xbb\xe5\x8a\xa8\xe8\xae\xbe\xe5\xa4\x87'
-                '\xe6\x89\xab\xe7\xa0\x81\xe4\xb8\x8b\xe8\xbd\xbd\xe2\x80\x9c'
-                '\xe9\x98\xbf\xe9\x87\x8c\xc2'
-                '\xa0TV\xc2\xa0\xe5\x8a\xa9\xe6\x89'
-                '\x8b\xe2\x80\x9d\xe7\x94\xa8 \xe6\x9d\xa5\xe4\xbb\xa3\xe6\x9b'
-                '\xbf\xe5\xa4\x96\xe8\xae\xbe\xe3\x80\x82\n'
-                '\xe6\x9c\x80\xe5\xa4\x9a\xe6\x94\xaf\xe6\x8c\x81\xe6\x8e\xa5'
-                '\xe5\x85\xa5\xc2\xa08\xc2\xa0\xe4\xb8\xaa\xe5\xa4\x96\xe8'
-                '\xae\xbe'
-            )
-            bui.textwidget(
-                parent=self._subcontainer,
-                size=(0, 0),
-                h_align='center',
-                v_align='center',
-                maxwidth=self._sub_width * 0.9,
-                position=(self._sub_width * 0.5, v - 180),
-                text=txtv,
-            )
-            bui.imagewidget(
-                parent=self._subcontainer,
-                position=(self._sub_width - 320, v - 120),
-                size=(200, 200),
-                texture=bui.gettexture('aliControllerQR'),
-            )
-            bui.imagewidget(
-                parent=self._subcontainer,
-                position=(90, v - 130),
-                size=(210, 210),
-                texture=bui.gettexture('multiplayerExamples'),
-            )
-            v -= 120.0
 
+        v -= spacing * 50.0
+        txt = bui.Lstr(resource=self._r + '.someDaysText').evaluate()
+        bui.textwidget(
+            parent=self._subcontainer,
+            position=(h, v),
+            size=(0, 0),
+            scale=1.2,
+            maxwidth=self._sub_width * 0.9,
+            text=txt,
+            h_align='center',
+            color=paragraph,
+            v_align='center',
+            flatness=1.0,
+        )
+        v -= spacing * 25.0 + getres(self._r + '.someDaysExtraSpace')
+        txt_scale = 0.66
+        txt = bui.Lstr(resource=self._r + '.orPunchingSomethingText').evaluate()
+        bui.textwidget(
+            parent=self._subcontainer,
+            position=(h, v),
+            size=(0, 0),
+            scale=txt_scale,
+            maxwidth=self._sub_width * 0.9,
+            text=txt,
+            h_align='center',
+            color=paragraph,
+            v_align='center',
+            flatness=1.0,
+        )
+        v -= spacing * 27.0 + getres(self._r + '.orPunchingSomethingExtraSpace')
+        txt_scale = 1.0
+        txt = bui.Lstr(
+            resource=self._r + '.canHelpText',
+            subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
+        ).evaluate()
+        bui.textwidget(
+            parent=self._subcontainer,
+            position=(h, v),
+            size=(0, 0),
+            scale=txt_scale,
+            flatness=1.0,
+            text=txt,
+            h_align='center',
+            color=paragraph,
+            v_align='center',
+        )
+
+        v -= spacing * 70.0
+        txt_scale = 1.0
+        txt = bui.Lstr(resource=self._r + '.toGetTheMostText').evaluate()
+        bui.textwidget(
+            parent=self._subcontainer,
+            position=(h, v),
+            size=(0, 0),
+            scale=txt_scale,
+            maxwidth=self._sub_width * 0.9,
+            text=txt,
+            h_align='center',
+            color=header,
+            v_align='center',
+            flatness=1.0,
+        )
+
+        v -= spacing * 40.0
+        txt_scale = 0.74
+        txt = bui.Lstr(resource=self._r + '.friendsText').evaluate()
+        hval2 = h - 220
+        bui.textwidget(
+            parent=self._subcontainer,
+            position=(hval2, v),
+            size=(0, 0),
+            scale=txt_scale,
+            maxwidth=100,
+            text=txt,
+            h_align='right',
+            color=header,
+            v_align='center',
+            flatness=1.0,
+        )
+
+        txt = bui.Lstr(
+            resource=self._r + '.friendsGoodText',
+            subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
+        ).evaluate()
+        txt_scale = 0.7
+        bui.textwidget(
+            parent=self._subcontainer,
+            position=(hval2 + 10, v + 8),
+            size=(0, 0),
+            scale=txt_scale,
+            maxwidth=500,
+            text=txt,
+            h_align='left',
+            color=paragraph,
+            flatness=1.0,
+        )
+
+        app = bui.app
+
+        v -= spacing * 45.0
+        txt = (
+            bui.Lstr(resource=self._r + '.devicesText').evaluate()
+            if app.env.vr
+            else bui.Lstr(resource=self._r + '.controllersText').evaluate()
+        )
+        txt_scale = 0.74
+        hval2 = h - 220
+        bui.textwidget(
+            parent=self._subcontainer,
+            position=(hval2, v),
+            size=(0, 0),
+            scale=txt_scale,
+            maxwidth=100,
+            text=txt,
+            h_align='right',
+            v_align='center',
+            color=header,
+            flatness=1.0,
+        )
+
+        txt_scale = 0.7
+        if not app.env.vr:
+            infotxt = '.controllersInfoText'
+            txt = bui.Lstr(
+                resource=self._r + infotxt,
+                fallback_resource=self._r + '.controllersInfoText',
+                subs=[
+                    ('${APP_NAME}', bui.Lstr(resource='titleText')),
+                    ('${REMOTE_APP_NAME}', bui.get_remote_app_name()),
+                ],
+            ).evaluate()
         else:
-            v -= spacing * 50.0
-            txt = bui.Lstr(resource=self._r + '.someDaysText').evaluate()
-            bui.textwidget(
-                parent=self._subcontainer,
-                position=(h, v),
-                size=(0, 0),
-                scale=1.2,
-                maxwidth=self._sub_width * 0.9,
-                text=txt,
-                h_align='center',
-                color=paragraph,
-                v_align='center',
-                flatness=1.0,
-            )
-            v -= spacing * 25.0 + getres(self._r + '.someDaysExtraSpace')
-            txt_scale = 0.66
             txt = bui.Lstr(
-                resource=self._r + '.orPunchingSomethingText'
-            ).evaluate()
-            bui.textwidget(
-                parent=self._subcontainer,
-                position=(h, v),
-                size=(0, 0),
-                scale=txt_scale,
-                maxwidth=self._sub_width * 0.9,
-                text=txt,
-                h_align='center',
-                color=paragraph,
-                v_align='center',
-                flatness=1.0,
-            )
-            v -= spacing * 27.0 + getres(
-                self._r + '.orPunchingSomethingExtraSpace'
-            )
-            txt_scale = 1.0
-            txt = bui.Lstr(
-                resource=self._r + '.canHelpText',
+                resource=self._r + '.devicesInfoText',
                 subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
             ).evaluate()
-            bui.textwidget(
-                parent=self._subcontainer,
-                position=(h, v),
-                size=(0, 0),
-                scale=txt_scale,
-                flatness=1.0,
-                text=txt,
-                h_align='center',
-                color=paragraph,
-                v_align='center',
-            )
 
-            v -= spacing * 70.0
-            txt_scale = 1.0
-            txt = bui.Lstr(resource=self._r + '.toGetTheMostText').evaluate()
-            bui.textwidget(
-                parent=self._subcontainer,
-                position=(h, v),
-                size=(0, 0),
-                scale=txt_scale,
-                maxwidth=self._sub_width * 0.9,
-                text=txt,
-                h_align='center',
-                color=header,
-                v_align='center',
-                flatness=1.0,
-            )
-
-            v -= spacing * 40.0
-            txt_scale = 0.74
-            txt = bui.Lstr(resource=self._r + '.friendsText').evaluate()
-            hval2 = h - 220
-            bui.textwidget(
-                parent=self._subcontainer,
-                position=(hval2, v),
-                size=(0, 0),
-                scale=txt_scale,
-                maxwidth=100,
-                text=txt,
-                h_align='right',
-                color=header,
-                v_align='center',
-                flatness=1.0,
-            )
-
-            txt = bui.Lstr(
-                resource=self._r + '.friendsGoodText',
-                subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
-            ).evaluate()
-            txt_scale = 0.7
-            bui.textwidget(
-                parent=self._subcontainer,
-                position=(hval2 + 10, v + 8),
-                size=(0, 0),
-                scale=txt_scale,
-                maxwidth=500,
-                text=txt,
-                h_align='left',
-                color=paragraph,
-                flatness=1.0,
-            )
-
-            app = bui.app
-
-            v -= spacing * 45.0
-            txt = (
-                bui.Lstr(resource=self._r + '.devicesText').evaluate()
-                if app.env.vr
-                else bui.Lstr(resource=self._r + '.controllersText').evaluate()
-            )
-            txt_scale = 0.74
-            hval2 = h - 220
-            bui.textwidget(
-                parent=self._subcontainer,
-                position=(hval2, v),
-                size=(0, 0),
-                scale=txt_scale,
-                maxwidth=100,
-                text=txt,
-                h_align='right',
-                v_align='center',
-                color=header,
-                flatness=1.0,
-            )
-
-            txt_scale = 0.7
-            if not app.env.vr:
-                infotxt = '.controllersInfoText'
-                txt = bui.Lstr(
-                    resource=self._r + infotxt,
-                    fallback_resource=self._r + '.controllersInfoText',
-                    subs=[
-                        ('${APP_NAME}', bui.Lstr(resource='titleText')),
-                        ('${REMOTE_APP_NAME}', bui.get_remote_app_name()),
-                    ],
-                ).evaluate()
-            else:
-                txt = bui.Lstr(
-                    resource=self._r + '.devicesInfoText',
-                    subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
-                ).evaluate()
-
-            bui.textwidget(
-                parent=self._subcontainer,
-                position=(hval2 + 10, v + 8),
-                size=(0, 0),
-                scale=txt_scale,
-                maxwidth=500,
-                max_height=105,
-                text=txt,
-                h_align='left',
-                color=paragraph,
-                flatness=1.0,
-            )
+        bui.textwidget(
+            parent=self._subcontainer,
+            position=(hval2 + 10, v + 8),
+            size=(0, 0),
+            scale=txt_scale,
+            maxwidth=500,
+            max_height=105,
+            text=txt,
+            h_align='left',
+            color=paragraph,
+            flatness=1.0,
+        )
 
         v -= spacing * 150.0
 

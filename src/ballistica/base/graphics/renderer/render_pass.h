@@ -11,23 +11,46 @@
 
 namespace ballistica::base {
 
-// A drawing context for one pass. This can be a render to the screen, a shadow
-// pass, a window, etc.
+// A drawing context for one pass. This can be a render to the screen, a
+// shadow pass, a window, etc.
 class RenderPass {
  public:
   enum class ReflectionSubPass { kRegular, kMirrored };
   enum class Type {
+    // A pass whose results are projected onto the scene for lighting and
+    // shadow effects. Values lighter than kShadowNeutral will show up as
+    // light and darker than neutral will show up as shadowing. This version
+    // should be used by anything wanting to draw with both shadows and
+    // lighting cast on it. Note that there is no z-depth used in shadow
+    // calculations, so objects casting shadows should not show shadows or
+    // else they will shadow themselves.
     kLightShadowPass,
+    // A pass whose results are projected onto the scene for lighting and
+    // shadow effects. Values lighter than kShadowNeutral will show up as
+    // light and darker than neutral will show up as shadowing. This pass is
+    // intended to only contain lights however. Objects that cast shadows
+    // generally should use this light texture when drawing themselves; if
+    // they use the kLightShadowPass texture, they will shadow themselves.
     kLightPass,
+    // The pass where normal foreground scene geometry is drawn into.
     kBeautyPass,
+    // Background geometry is drawn into this; it has a separate depth range
+    // so that far off mountains can properly occlude each other and whatnot
+    // without sacrificing depth fidelity of the regular beauty pass.
     kBeautyPassBG,
+    // Geometry used to blit the camera buffer on-screen for final display.
+    // This geometry can make use of shaders for effects such as
+    // depth-of-field or can distort the texture lookup UVs for distortion
+    // shock-waves or other effects.
     kBlitPass,
-    // Standard 2d overlay stuff. May be drawn in 2d or on a plane in 3d
-    // space (in vr).  In VR, each of these elements are drawn individually
-    // and can thus have their own depth. also in VR this overlay repositions
-    // itself per level; use kOverlayFixedPass for items that shouldn't.
-    // this overlay may be obscured by UI. Use OVERLAY_FRONT_PASS if you need
-    // things to show up in front of UI.
+    // Standard 2d overlay stuff such as UI. May be drawn in 2d or on a
+    // plane in 3d space (in vr). In VR, each of these elements are drawn
+    // individually and can thus have their own depth. also in VR, this
+    // overlay may be repositions based on the camera/map/etc; use
+    // kOverlayFixedPass for items that shouldn't do this (for example,
+    // elements visible across map transitions). Be aware that things here
+    // may be obscured by UI depending on depth/etc. Use OVERLAY_FRONT_PASS
+    // if you need things to always show up in front of UI.
     kOverlayPass,
     // Just like kOverlayPass but guaranteed to draw in front of UI.
     kOverlayFrontPass,
@@ -40,7 +63,9 @@ class RenderPass {
     /// Only used in VR - stuff that needs to cover absolutely everything
     /// else (like the 3d wipe fade).
     kVRCoverPass,
-    // Only used in VR - overlay elements that should always be fixed in space.
+    // Only used in VR - overlay elements that should always be fixed in
+    // space. Use this for stuff that may be visible across map transitions
+    // or other events that can cause the regular overlay to move around.
     kOverlayFixedPass
   };
 
@@ -49,7 +74,7 @@ class RenderPass {
 
   auto type() const -> Type { return type_; }
 
-  // The physical size of the drawing surface.
+  // The physical size of the drawing surface (pixels).
   auto physical_width() const -> float { return physical_width_; }
   auto physical_height() const -> float { return physical_height_; }
 

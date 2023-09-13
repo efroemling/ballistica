@@ -23,7 +23,6 @@ namespace ballistica::base {
 
 // How much of the screen the console covers when it is at full size.
 const float kDevConsoleSize = 0.9f;
-const float kDevConsoleZDepth = 0.0f;
 const int kDevConsoleLineLimit = 80;
 const int kDevConsoleStringBreakUpSize = 1950;
 const int kDevConsoleActivateKey1 = SDLK_BACKQUOTE;
@@ -33,20 +32,65 @@ const double kTransitionSeconds = 0.1;
 
 enum class DevButtonAttach_ { kLeft, kCenter, kRight };
 
-class DevConsole::Button_ {
+static auto XOffs(DevButtonAttach_ attach) -> float {
+  switch (attach) {
+    case DevButtonAttach_::kLeft:
+      return 0.0f;
+    case DevButtonAttach_::kRight:
+      return g_base->graphics->screen_virtual_width();
+    case DevButtonAttach_::kCenter:
+      return g_base->graphics->screen_virtual_width() * 0.5f;
+  }
+  assert(false);
+  return 0.0f;
+}
+
+static void DrawBasicButton(RenderPass* pass, TextGroup* tgrp, float tscale,
+                            float bottom, float x, float y, float width,
+                            float height, const Vector3f& fgcolor,
+                            const Vector3f& bgcolor) {
+  SimpleComponent c(pass);
+  c.SetTransparent(true);
+  c.SetColor(bgcolor.x, bgcolor.y, bgcolor.z, 1.0f);
+  {
+    auto xf = c.ScopedTransform();
+    c.Translate(x + width * 0.5f, y + bottom + height * 0.5f,
+                kDevConsoleZDepth);
+    // Draw our backing.
+    {
+      auto xf = c.ScopedTransform();
+      c.Scale(width, height);
+      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+    }
+    // Draw our text.
+    c.SetColor(fgcolor.x, fgcolor.y, fgcolor.z, 1.0f);
+    c.SetFlatness(1.0f);
+    int elem_count = tgrp->GetElementCount();
+    for (int e = 0; e < elem_count; e++) {
+      c.SetTexture(tgrp->GetElementTexture(e));
+      {
+        auto xf = c.ScopedTransform();
+        float sc{0.6f * tscale};
+        c.Scale(sc, sc, 1.0f);
+        c.DrawMesh(tgrp->GetElementMesh(e));
+      }
+    }
+  }
+  c.Submit();
+}
+
+/// Super-simple widget type for populating dev-console
+/// (we don't want to depend on any of our full UI feature-sets).
+class DevConsole::Widget_ {
  public:
-  template <typename F>
-  Button_(const std::string& label, float text_scale, DevButtonAttach_ attach,
-          float x, float y, float width, float height, const F& lambda)
-      : label{label},
-        attach{attach},
-        x{x},
-        y{y},
-        width{width},
-        height{height},
-        call{NewLambdaRunnable(lambda)},
-        text_scale{text_scale} {}
-  std::string label;
+  virtual ~Widget_() = default;
+  virtual auto HandleMouseDown(float mx, float my) -> bool = 0;
+  virtual void HandleMouseUp(float mx, float my) = 0;
+  virtual void Draw(RenderPass* pass, float bottom) = 0;
+};
+
+class DevConsole::Button_ : public DevConsole::Widget_ {
+ public:
   DevButtonAttach_ attach;
   float x;
   float y;
@@ -55,27 +99,28 @@ class DevConsole::Button_ {
   bool pressed{};
   Object::Ref<Runnable> call;
   TextGroup text_group;
-  bool text_group_built_{};
   float text_scale;
 
-  auto InUs(float mx, float my) -> bool {
-    mx -= XOffs();
-    return (mx >= x && mx <= (x + width) && my >= y && my <= (y + height));
-  }
-  auto XOffs() -> float {
-    switch (attach) {
-      case DevButtonAttach_::kLeft:
-        return 0.0f;
-      case DevButtonAttach_::kRight:
-        return g_base->graphics->screen_virtual_width();
-      case DevButtonAttach_::kCenter:
-        return g_base->graphics->screen_virtual_width() * 0.5f;
-    }
-    assert(false);
-    return 0.0f;
+  template <typename F>
+  Button_(const std::string& label, float text_scale, DevButtonAttach_ attach,
+          float x, float y, float width, float height, const F& lambda)
+      : attach{attach},
+        x{x},
+        y{y},
+        width{width},
+        height{height},
+        call{NewLambdaRunnable(lambda)},
+        text_scale{text_scale} {
+    text_group.SetText(label, TextMesh::HAlign::kCenter,
+                       TextMesh::VAlign::kCenter);
   }
 
-  auto HandleMouseDown(float mx, float my) -> bool {
+  auto InUs(float mx, float my) -> bool {
+    mx -= XOffs(attach);
+    return (mx >= x && mx <= (x + width) && my >= y && my <= (y + height));
+  }
+
+  auto HandleMouseDown(float mx, float my) -> bool override {
     if (InUs(mx, my)) {
       pressed = true;
       return true;
@@ -83,56 +128,156 @@ class DevConsole::Button_ {
     return false;
   }
 
-  void HandleMouseUp(float mx, float my) {
-    pressed = false;
-    if (InUs(mx, my)) {
-      if (call.Exists()) {
-        call.Get()->Run();
+  void HandleMouseUp(float mx, float my) override {
+    if (pressed) {
+      pressed = false;
+      if (InUs(mx, my)) {
+        if (call.Exists()) {
+          call.Get()->Run();
+        }
       }
     }
   }
 
-  void Draw(RenderPass* pass, float bottom) {
-    if (!text_group_built_) {
-      text_group.set_text(label, TextMesh::HAlign::kCenter,
-                          TextMesh::VAlign::kCenter);
+  void Draw(RenderPass* pass, float bottom) override {
+    DrawBasicButton(
+        pass, &text_group, text_scale, bottom, x + XOffs(attach), y, width,
+        height,
+        pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.8f, 0.7f, 0.8f},
+        pressed ? Vector3f{0.8f, 0.7f, 0.8f} : Vector3f{0.25, 0.2f, 0.3f});
+  }
+};
+
+class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
+ public:
+  DevButtonAttach_ attach;
+  float x;
+  float y;
+  float width;
+  float height;
+  bool pressed{};
+  bool on{};
+  Object::Ref<Runnable> on_call;
+  Object::Ref<Runnable> off_call;
+  TextGroup text_group;
+  float text_scale;
+
+  template <typename F, typename G>
+  ToggleButton_(const std::string& label, float text_scale,
+                DevButtonAttach_ attach, float x, float y, float width,
+                float height, const F& on_call, const G& off_call)
+      : attach{attach},
+        x{x},
+        y{y},
+        width{width},
+        height{height},
+        on_call{NewLambdaRunnable(on_call)},
+        off_call{NewLambdaRunnable(off_call)},
+        text_scale{text_scale} {
+    text_group.SetText(label, TextMesh::HAlign::kCenter,
+                       TextMesh::VAlign::kCenter);
+  }
+
+  auto InUs(float mx, float my) -> bool {
+    mx -= XOffs(attach);
+    return (mx >= x && mx <= (x + width) && my >= y && my <= (y + height));
+  }
+
+  auto HandleMouseDown(float mx, float my) -> bool override {
+    if (InUs(mx, my)) {
+      pressed = true;
+      return true;
     }
-    SimpleComponent c(pass);
-    c.SetTransparent(true);
+    return false;
+  }
+
+  void HandleMouseUp(float mx, float my) override {
     if (pressed) {
-      c.SetColor(0.8f, 0.7f, 0.8f, 1.0f);
-    } else {
-      c.SetColor(0.25f, 0.2f, 0.3f, 1.0f);
-    }
-    {
-      auto xf = c.ScopedTransform();
-      c.Translate(x + XOffs() + width * 0.5f, y + bottom + height * 0.5f,
-                  kDevConsoleZDepth);
-      // Draw our backing.
-      {
-        auto xf = c.ScopedTransform();
-        c.Scale(width, height);
-        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
-      }
-      // Draw our text.
-      if (pressed) {
-        c.SetColor(0.0f, 0.0f, 0.0f, 1.0f);
-      } else {
-        c.SetColor(0.8f, 0.7f, 0.8f, 1.0f);
-      }
-      c.SetFlatness(1.0f);
-      int elem_count = text_group.GetElementCount();
-      for (int e = 0; e < elem_count; e++) {
-        c.SetTexture(text_group.GetElementTexture(e));
-        {
-          auto xf = c.ScopedTransform();
-          float sc{0.6f * text_scale};
-          c.Scale(sc, sc, 1.0f);
-          c.DrawMesh(text_group.GetElementMesh(e));
+      pressed = false;
+      if (InUs(mx, my)) {
+        on = !on;
+        auto&& call = on ? on_call : off_call;
+        if (call.Exists()) {
+          call.Get()->Run();
         }
       }
     }
-    c.Submit();
+  }
+
+  void Draw(RenderPass* pass, float bottom) override {
+    DrawBasicButton(pass, &text_group, text_scale, bottom, x + XOffs(attach), y,
+                    width, height,
+                    pressed ? Vector3f{1.0f, 1.0f, 1.0f}
+                    : on    ? Vector3f{1.0f, 1.0f, 1.0f}
+                            : Vector3f{0.8f, 0.7f, 0.8f},
+                    pressed ? Vector3f{0.5f, 0.2f, 1.0f}
+                    : on    ? Vector3f{0.5f, 0.4f, 0.6f}
+                            : Vector3f{0.25, 0.2f, 0.3f});
+  }
+};
+
+class DevConsole::TabButton_ : public DevConsole::Widget_ {
+ public:
+  DevButtonAttach_ attach;
+  float x;
+  float y;
+  float width;
+  float height;
+  bool pressed{};
+  bool selected{};
+  Object::Ref<Runnable> call;
+  TextGroup text_group;
+  float text_scale;
+
+  template <typename F>
+  TabButton_(const std::string& label, bool selected, float text_scale,
+             DevButtonAttach_ attach, float x, float y, float width,
+             float height, const F& call)
+      : attach{attach},
+        x{x},
+        y{y},
+        selected{selected},
+        width{width},
+        height{height},
+        call{NewLambdaRunnable(call)},
+        text_scale{text_scale} {
+    text_group.SetText(label, TextMesh::HAlign::kCenter,
+                       TextMesh::VAlign::kCenter);
+  }
+
+  auto InUs(float mx, float my) -> bool {
+    mx -= XOffs(attach);
+    return (mx >= x && mx <= (x + width) && my >= y && my <= (y + height));
+  }
+
+  auto HandleMouseDown(float mx, float my) -> bool override {
+    if (InUs(mx, my) && !selected) {
+      pressed = true;
+      return true;
+    }
+    return false;
+  }
+
+  void HandleMouseUp(float mx, float my) override {
+    if (pressed) {
+      pressed = false;
+      if (InUs(mx, my)) {
+        if (call.Exists()) {
+          call.Get()->Run();
+        }
+      }
+    }
+  }
+
+  void Draw(RenderPass* pass, float bottom) override {
+    DrawBasicButton(pass, &text_group, text_scale, bottom, x + XOffs(attach), y,
+                    width, height,
+                    pressed    ? Vector3f{1.0f, 1.0f, 1.0f}
+                    : selected ? Vector3f{1.0f, 1.0f, 1.0f}
+                               : Vector3f{0.8f, 0.7f, 0.8f},
+                    pressed    ? Vector3f{0.5f, 0.2f, 1.0f}
+                    : selected ? Vector3f{0.5f, 0.4f, 0.6f}
+                               : Vector3f{0.25, 0.2f, 0.3f});
   }
 };
 
@@ -144,7 +289,7 @@ class DevConsole::Line_ {
   auto GetText() -> TextGroup& {
     if (!s_mesh_.Exists()) {
       s_mesh_ = Object::New<TextGroup>();
-      s_mesh_->set_text(s);
+      s_mesh_->SetText(s);
     }
     return *s_mesh_;
   }
@@ -164,32 +309,45 @@ DevConsole::DevConsole() {
     title += " (test)";
   }
 
-  title_text_group_.set_text(title);
-  built_text_group_.set_text("Built: " __DATE__ " " __TIME__);
-  prompt_text_group_.set_text(">");
+  title_text_group_.SetText(title);
+  built_text_group_.SetText("Built: " __DATE__ " " __TIME__);
+  prompt_text_group_.SetText(">");
 
-  // NOTE: Once we can adjust UI scale on the fly we'll have to update
-  // this to recalc accordingly.
-  float bs = PythonConsoleBaseScale_();
-  buttons_.emplace_back("Exec", 0.75f * bs, DevButtonAttach_::kRight,
-                        -33.0f * bs, 15.95f * bs, 32.0f * bs, 13.0f * bs,
-                        [this] { Exec(); });
-
-  // buttons_.emplace_back("TestButton", 1.0f, DevButtonAttach_::kLeft, 100.0f,
-  //                       100.0f, 100.0f, 30.0f, [] { printf("B1 PRESSED!\n");
-  //                       });
-
-  // buttons_.emplace_back("TestButton2", 1.0f, DevButtonAttach_::kCenter,
-  // -50.0f,
-  //                       120.0f, 100.0f, 30.0f, [] { printf("B2 PRESSED!\n");
-  //                       });
-
-  // buttons_.emplace_back("TestButton3", 0.8f, DevButtonAttach_::kRight,
-  // -200.0f,
-  //                       140.0f, 100.0f, 30.0f, [] { printf("B3 PRESSED!\n");
-  //                       });
+  Refresh();
 }
 
+void DevConsole::Refresh() {
+  BA_PRECONDITION(g_base->InLogicThread());
+  buttons_.clear();
+  tab_buttons_.clear();
+  RefreshTabsButtons_();
+
+  if (active_tab_ == "Python") {
+    float bs = PythonConsoleBaseScale_();
+    buttons_.emplace_back(std::make_unique<Button_>(
+        "Exec", 0.75f * bs, DevButtonAttach_::kRight, -33.0f * bs, 15.95f * bs,
+        32.0f * bs, 13.0f * bs, [this] { Exec(); }));
+  }
+}
+
+void DevConsole::RefreshTabsButtons_() {
+  float bs = PythonConsoleBaseScale_();
+  float bwidth = 90.0f * bs;
+  float bheight = 26.0f * bs;
+  float bscale = 0.8f * bs;
+  float total_width = tabs_.size() * bwidth;
+  float x = total_width * -0.5f;
+
+  for (auto&& tab : tabs_) {
+    tab_buttons_.emplace_back(std::make_unique<TabButton_>(
+        tab, active_tab_ == tab, bscale, DevButtonAttach_::kCenter, x, -bheight,
+        bwidth, bheight, [this, tab] {
+          active_tab_ = tab;
+          Refresh();
+        }));
+    x += bwidth;
+  }
+}
 DevConsole::~DevConsole() = default;
 
 auto DevConsole::HandleMouseDown(int button, float x, float y) -> bool {
@@ -202,8 +360,13 @@ auto DevConsole::HandleMouseDown(int button, float x, float y) -> bool {
 
   // Pass to any buttons (in bottom-local space).
   if (button == 1) {
+    for (auto&& button : tab_buttons_) {
+      if (button->HandleMouseDown(x, y - bottom)) {
+        return true;
+      }
+    }
     for (auto&& button : buttons_) {
-      if (button.HandleMouseDown(x, y - bottom)) {
+      if (button->HandleMouseDown(x, y - bottom)) {
         return true;
       }
     }
@@ -225,8 +388,11 @@ void DevConsole::HandleMouseUp(int button, float x, float y) {
   float bottom{Bottom_()};
 
   if (button == 1) {
+    for (auto&& button : tab_buttons_) {
+      button->HandleMouseUp(x, y - bottom);
+    }
     for (auto&& button : buttons_) {
-      button.HandleMouseUp(x, y - bottom);
+      button->HandleMouseUp(x, y - bottom);
     }
   }
 
@@ -311,7 +477,7 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
   // The rest of these presses we only handle while active.
   switch (keysym->sym) {
     case SDLK_ESCAPE:
-      ToggleState();
+      Dismiss();
       break;
     case SDLK_BACKSPACE:
     case SDLK_DELETE: {
@@ -530,11 +696,12 @@ auto DevConsole::Bottom_() const -> float {
   return bottom;
 }
 
-void DevConsole::Draw(RenderPass* pass) {
+void DevConsole::Draw(FrameDef* frame_def) {
   float bs = PythonConsoleBaseScale_();
+  RenderPass* pass = frame_def->overlay_front_pass();
 
-  // If we're not yet transitioning in for the first time OR have
-  // completed transitioning out, do nothing.
+  // If we're not yet transitioning in for the first time OR have completed
+  // transitioning out, do nothing.
   if (transition_start_ <= 0.0
       || state_ == State_::kInactive
              && ((g_base->logic->display_time() - transition_start_)
@@ -543,155 +710,169 @@ void DevConsole::Draw(RenderPass* pass) {
   }
 
   float bottom = Bottom_();
+
   {
     bg_mesh_.SetPositionAndSize(0, bottom, kDevConsoleZDepth,
                                 pass->virtual_width(),
                                 (pass->virtual_height() - bottom));
     stripe_mesh_.SetPositionAndSize(0, bottom + 15.0f * bs, kDevConsoleZDepth,
                                     pass->virtual_width(), 15.0f * bs);
-    shadow_mesh_.SetPositionAndSize(0, bottom - 7.0f * bs, kDevConsoleZDepth,
-                                    pass->virtual_width(), 7.0f * bs);
+    border_mesh_.SetPositionAndSize(0, bottom - 3.0f * bs, kDevConsoleZDepth,
+                                    pass->virtual_width(), 3.0f * bs);
     SimpleComponent c(pass);
     c.SetTransparent(true);
     c.SetColor(0, 0, 0.1f, 0.9f);
     c.DrawMesh(&bg_mesh_);
     c.Submit();
-    c.SetColor(1.0f, 1.0f, 1.0f, 0.1f);
-    c.DrawMesh(&stripe_mesh_);
-    c.Submit();
-    c.SetColor(0, 0, 0, 0.1f);
-    c.DrawMesh(&shadow_mesh_);
-    c.Submit();
-  }
-  if (input_text_dirty_) {
-    input_text_group_.set_text(input_string_);
-    input_text_dirty_ = false;
-    last_input_text_change_time_ = pass->frame_def()->real_time();
-  }
-  {
-    SimpleComponent c(pass);
-    c.SetFlatness(1.0f);
-    c.SetTransparent(true);
-    c.SetColor(0.5f, 0.5f, 0.7f, 0.8f);
-    int elem_count = built_text_group_.GetElementCount();
-    for (int e = 0; e < elem_count; e++) {
-      c.SetTexture(built_text_group_.GetElementTexture(e));
-      {
-        auto xf = c.ScopedTransform();
-        c.Translate(pass->virtual_width() - 115.0f * bs, bottom + 4.0f,
-                    kDevConsoleZDepth);
-        c.Scale(0.35f * bs, 0.35f * bs, 1.0f);
-        c.DrawMesh(built_text_group_.GetElementMesh(e));
-      }
+    if (active_tab_ == "Python") {
+      c.SetColor(1.0f, 1.0f, 1.0f, 0.1f);
+      c.DrawMesh(&stripe_mesh_);
+      c.Submit();
     }
-    elem_count = title_text_group_.GetElementCount();
-    for (int e = 0; e < elem_count; e++) {
-      c.SetTexture(title_text_group_.GetElementTexture(e));
-      {
-        auto xf = c.ScopedTransform();
-        c.Translate(10.0f * bs, bottom + 4.0f, kDevConsoleZDepth);
-        c.Scale(0.35f * bs, 0.35f * bs, 1.0f);
-        c.DrawMesh(title_text_group_.GetElementMesh(e));
-      }
-    }
-    elem_count = prompt_text_group_.GetElementCount();
-    for (int e = 0; e < elem_count; e++) {
-      c.SetTexture(prompt_text_group_.GetElementTexture(e));
-      c.SetColor(1, 1, 1, 1);
-      {
-        auto xf = c.ScopedTransform();
-        c.Translate(5.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
-        c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
-        c.DrawMesh(prompt_text_group_.GetElementMesh(e));
-      }
-    }
-    elem_count = input_text_group_.GetElementCount();
-    for (int e = 0; e < elem_count; e++) {
-      c.SetTexture(input_text_group_.GetElementTexture(e));
-      {
-        auto xf = c.ScopedTransform();
-        c.Translate(15.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
-        c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
-        c.DrawMesh(input_text_group_.GetElementMesh(e));
-      }
-    }
+    c.SetColor(0.25f, 0.2f, 0.3f, 1.0f);
+    c.DrawMesh(&border_mesh_);
     c.Submit();
   }
 
-  // Carat.
-  millisecs_t real_time = pass->frame_def()->real_time();
-  if (real_time % 200 < 100
-      || (real_time - last_input_text_change_time_ < 100)) {
-    SimpleComponent c(pass);
-    c.SetTransparent(true);
-    c.SetColor(1, 1, 1, 0.7f);
+  if (active_tab_ == "Python") {
+    if (input_text_dirty_) {
+      input_text_group_.SetText(input_string_);
+      input_text_dirty_ = false;
+      last_input_text_change_time_ = pass->frame_def()->real_time();
+    }
     {
-      auto xf = c.ScopedTransform();
-      c.Translate(
-          (19.0f + g_base->text_graphics->GetStringWidth(input_string_) * 0.5f)
-              * bs,
-          bottom + 22.5f * bs, kDevConsoleZDepth);
-      c.Scale(6.0f * bs, 12.0f * bs, 1.0f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+      SimpleComponent c(pass);
+      c.SetFlatness(1.0f);
+      c.SetTransparent(true);
+      c.SetColor(0.5f, 0.5f, 0.7f, 0.8f);
+      int elem_count = built_text_group_.GetElementCount();
+      for (int e = 0; e < elem_count; e++) {
+        c.SetTexture(built_text_group_.GetElementTexture(e));
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(pass->virtual_width() - 115.0f * bs, bottom + 4.0f,
+                      kDevConsoleZDepth);
+          c.Scale(0.35f * bs, 0.35f * bs, 1.0f);
+          c.DrawMesh(built_text_group_.GetElementMesh(e));
+        }
+      }
+      elem_count = title_text_group_.GetElementCount();
+      for (int e = 0; e < elem_count; e++) {
+        c.SetTexture(title_text_group_.GetElementTexture(e));
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(10.0f * bs, bottom + 4.0f, kDevConsoleZDepth);
+          c.Scale(0.35f * bs, 0.35f * bs, 1.0f);
+          c.DrawMesh(title_text_group_.GetElementMesh(e));
+        }
+      }
+      elem_count = prompt_text_group_.GetElementCount();
+      for (int e = 0; e < elem_count; e++) {
+        c.SetTexture(prompt_text_group_.GetElementTexture(e));
+        c.SetColor(1, 1, 1, 1);
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(5.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
+          c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
+          c.DrawMesh(prompt_text_group_.GetElementMesh(e));
+        }
+      }
+      elem_count = input_text_group_.GetElementCount();
+      for (int e = 0; e < elem_count; e++) {
+        c.SetTexture(input_text_group_.GetElementTexture(e));
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(15.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
+          c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
+          c.DrawMesh(input_text_group_.GetElementMesh(e));
+        }
+      }
+      c.Submit();
     }
-    c.Submit();
+
+    // Carat.
+    millisecs_t real_time = pass->frame_def()->real_time();
+    if (real_time % 200 < 100
+        || (real_time - last_input_text_change_time_ < 100)) {
+      SimpleComponent c(pass);
+      c.SetTransparent(true);
+      c.SetColor(1, 1, 1, 0.7f);
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(
+            (19.0f
+             + g_base->text_graphics->GetStringWidth(input_string_) * 0.5f)
+                * bs,
+            bottom + 22.5f * bs, kDevConsoleZDepth);
+        c.Scale(6.0f * bs, 12.0f * bs, 1.0f);
+        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+      }
+      c.Submit();
+    }
+
+    // Draw output lines.
+    {
+      float draw_scale = 0.6f;
+      float v_inc = 18.0f;
+      SimpleComponent c(pass);
+      c.SetTransparent(true);
+      c.SetColor(1, 1, 1, 1);
+      c.SetFlatness(1.0f);
+      float h = 0.5f
+                * (g_base->graphics->screen_virtual_width()
+                   - (kDevConsoleStringBreakUpSize * draw_scale));
+      float v = bottom + 32.0f * bs;
+      if (!last_line_.empty()) {
+        if (last_line_mesh_dirty_) {
+          if (!last_line_mesh_group_.Exists()) {
+            last_line_mesh_group_ = Object::New<TextGroup>();
+          }
+          last_line_mesh_group_->SetText(last_line_);
+          last_line_mesh_dirty_ = false;
+        }
+        int elem_count = last_line_mesh_group_->GetElementCount();
+        for (int e = 0; e < elem_count; e++) {
+          c.SetTexture(last_line_mesh_group_->GetElementTexture(e));
+          {
+            auto xf = c.ScopedTransform();
+            c.Translate(h, v + 2, kDevConsoleZDepth);
+            c.Scale(draw_scale, draw_scale);
+            c.DrawMesh(last_line_mesh_group_->GetElementMesh(e));
+          }
+        }
+        v += v_inc;
+      }
+      for (auto i = lines_.rbegin(); i != lines_.rend(); i++) {
+        int elem_count = i->GetText().GetElementCount();
+        for (int e = 0; e < elem_count; e++) {
+          c.SetTexture(i->GetText().GetElementTexture(e));
+          {
+            auto xf = c.ScopedTransform();
+            c.Translate(h, v + 2, kDevConsoleZDepth);
+            c.Scale(draw_scale, draw_scale);
+            c.DrawMesh(i->GetText().GetElementMesh(e));
+          }
+        }
+        v += v_inc;
+        if (v > pass->virtual_height() + v_inc) {
+          break;
+        }
+      }
+      c.Submit();
+    }
   }
 
-  // Draw output lines.
+  // Tab Buttons.
   {
-    float draw_scale = 0.6f;
-    float v_inc = 18.0f;
-    SimpleComponent c(pass);
-    c.SetTransparent(true);
-    c.SetColor(1, 1, 1, 1);
-    c.SetFlatness(1.0f);
-    float h = 0.5f
-              * (g_base->graphics->screen_virtual_width()
-                 - (kDevConsoleStringBreakUpSize * draw_scale));
-    float v = bottom + 32.0f * bs;
-    if (!last_line_.empty()) {
-      if (last_line_mesh_dirty_) {
-        if (!last_line_mesh_group_.Exists()) {
-          last_line_mesh_group_ = Object::New<TextGroup>();
-        }
-        last_line_mesh_group_->set_text(last_line_);
-        last_line_mesh_dirty_ = false;
-      }
-      int elem_count = last_line_mesh_group_->GetElementCount();
-      for (int e = 0; e < elem_count; e++) {
-        c.SetTexture(last_line_mesh_group_->GetElementTexture(e));
-        {
-          auto xf = c.ScopedTransform();
-          c.Translate(h, v + 2, kDevConsoleZDepth);
-          c.Scale(draw_scale, draw_scale);
-          c.DrawMesh(last_line_mesh_group_->GetElementMesh(e));
-        }
-      }
-      v += v_inc;
+    for (auto&& button : tab_buttons_) {
+      button->Draw(pass, bottom);
     }
-    for (auto i = lines_.rbegin(); i != lines_.rend(); i++) {
-      int elem_count = i->GetText().GetElementCount();
-      for (int e = 0; e < elem_count; e++) {
-        c.SetTexture(i->GetText().GetElementTexture(e));
-        {
-          auto xf = c.ScopedTransform();
-          c.Translate(h, v + 2, kDevConsoleZDepth);
-          c.Scale(draw_scale, draw_scale);
-          c.DrawMesh(i->GetText().GetElementMesh(e));
-        }
-      }
-      v += v_inc;
-      if (v > pass->virtual_height() + v_inc) {
-        break;
-      }
-    }
-    c.Submit();
   }
 
   // Buttons.
   {
     for (auto&& button : buttons_) {
-      button.Draw(pass, bottom);
+      button->Draw(pass, bottom);
     }
   }
 }
@@ -706,6 +887,8 @@ auto DevConsole::PythonConsoleBaseScale_() const -> float {
     case UIScale::kLast:
       return 2.0f;
   }
+  FatalError("Unhandled scale.");
+  return 1.0f;
 }
 
 }  // namespace ballistica::base

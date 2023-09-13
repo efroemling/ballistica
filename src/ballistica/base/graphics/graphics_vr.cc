@@ -37,6 +37,49 @@ static auto ValueTestBool(bool* storage, double* absval, double* deltaval)
   return static_cast<double>(*storage);
 }
 
+void GraphicsVR::DoDrawFade(FrameDef* frame_def, float amt) {
+  SimpleComponent c(frame_def->vr_cover_pass());
+  c.SetTransparent(false);
+  Vector3f cam_pt = {0.0f, 0.0f, 0.0f};
+  Vector3f cam_target_pt = {0.0f, 0.0f, 0.0f};
+  cam_pt = Vector3f(frame_def->cam_original().x, frame_def->cam_original().y,
+                    frame_def->cam_original().z);
+
+  // In vr follow-mode the cam point gets tweaked.
+  //
+  // FIXME: should probably just do this on the camera end.
+  if (frame_def->camera_mode() == CameraMode::kOrbit) {
+    // fudge this one up a bit; looks better that way..
+    cam_target_pt = Vector3f(frame_def->cam_target_original().x,
+                             frame_def->cam_target_original().y + 6.0f,
+                             frame_def->cam_target_original().z);
+  } else {
+    cam_target_pt = Vector3f(frame_def->cam_target_original().x,
+                             frame_def->cam_target_original().y,
+                             frame_def->cam_target_original().z);
+  }
+  Vector3f diff = cam_target_pt - cam_pt;
+  diff.Normalize();
+  Vector3f side = Vector3f::Cross(diff, Vector3f(0.0f, 1.0f, 0.0f));
+  Vector3f up = Vector3f::Cross(diff, side);
+  c.SetColor(0, 0, 0);
+  c.PushTransform();
+  // We start in vr-overlay screen space; get back to world.
+  c.Translate(cam_pt.x, cam_pt.y, cam_pt.z);
+  c.MultMatrix(Matrix44fOrient(diff, up).m);
+  // At the very end we stay turned around so we get 100% black.
+  if (amt < 0.98f) {
+    c.Translate(0, 0, 40.0f * amt);
+    c.Rotate(180, 1, 0, 0);
+  }
+  float inv_a = 1.0f - amt;
+  float s = 100.0f * inv_a + 5.0f * amt;
+  c.Scale(s, s, s);
+  c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kVRFade));
+  c.PopTransform();
+  c.Submit();
+}
+
 auto GraphicsVR::ValueTest(const std::string& arg, double* absval,
                            double* deltaval, double* outval) -> bool {
   if (arg == "vrOverlayScale") {
@@ -165,15 +208,15 @@ void GraphicsVR::CalcVROverlayMatrices(FrameDef* frame_def) {
 
       vr_overlay_matrix = CalcVROverlayMatrix(cam_pt, cam_target_pt);
 
-      // We also always calc a completely fixed matrix for some elements that
-      // should *never* move such as score-screens.
+      // We also always calc a completely fixed matrix for some elements
+      // that should *never* move such as score-screens.
       cam_target_pt.y = fixed_y;
       cam_target_pt.z = fixed_z;
       vr_overlay_matrix_fixed = CalcVROverlayMatrix(cam_pt, cam_target_pt);
     }
 
-    // Calc a screen-matrix that gives us a drawing area of
-    // kBaseVirtualResX by kBaseVirtualResY.
+    // Calc a screen-matrix that gives us a drawing area of kBaseVirtualResX
+    // by kBaseVirtualResY.
     frame_def->set_vr_overlay_screen_matrix(
         Matrix44fTranslate(-0.5f * kBaseVirtualResX, -0.5f * kBaseVirtualResY,
                            0.0f)
@@ -225,9 +268,11 @@ auto GraphicsVR::CalcVROverlayMatrix(const Vector3f& cam_pt,
                                  base_scale))
          * m;
 }
+
 void GraphicsVR::DrawVROverlay(FrameDef* frame_def) {
   // In vr mode we have draw our overlay-flat texture in to space
   // as part of our regular overlay pass.
+  //
   // NOTE: this assumes nothing after this point gets drawn into
   // the overlay-flat pass (otherwise it may get skipped).
   // This should be a safe assumption since this is pretty much just for
@@ -246,6 +291,7 @@ void GraphicsVR::DrawVROverlay(FrameDef* frame_def) {
     c.Submit();
   }
 }
+
 void GraphicsVR::DrawOverlayBounds(RenderPass* pass) {
   // We can optionally draw a guide to show the edges of the overlay pass
   if (draw_overlay_bounds_) {

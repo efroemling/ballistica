@@ -162,12 +162,12 @@ class RenderComponent {
   }
   void Submit() {
     if (state_ != State::kSubmitted) {
-      // if we were drawing, make note that we're done
+      // If we were drawing, make note that we're done.
       if (state_ == State::kDrawing) {
 #if BA_DEBUG_BUILD
         assert(pass_->frame_def()->defining_component());
         pass_->frame_def()->set_defining_component(false);
-#endif  // BA_DEBUG_BUILD
+#endif
       }
       state_ = State::kSubmitted;
     }

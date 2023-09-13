@@ -11,7 +11,7 @@ class PostProcessComponent : public RenderComponent {
  public:
   explicit PostProcessComponent(RenderPass* pass)
       : RenderComponent(pass), normal_distort_(0.0f), eyes_(false) {}
-  void setNormalDistort(float d) {
+  void SetNormalDistort(float d) {
     EnsureConfiguring();
     normal_distort_ = d;
   }

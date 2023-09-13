@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
 // An ultra-simple client app to forward commands to a pcommand server. This
-// lets us run *lots* of small pcommands very fast. Normally the limiting
+// lets us run *lots* of small pcommands very fast. Often the limiting
 // factor in such cases is the startup time of Python which this mostly
 // eliminates. See tools/efrotools/pcommandbatch.py for more info.
 
@@ -380,12 +380,20 @@ int calc_paths_(struct Context_* ctx) {
   // might be to have a single 'controller' server instance that spins up
   // worker instances as needed. Though such a fancy setup might be
   // overkill.
-  ctx->instance_num = rand() % 6;
+  // ctx->instance_num = rand() % 6;
 
   // I was wondering if using pid would lead to a more even distribution,
   // but it didn't make a significant difference in my tests. And I worry
   // there would be some odd corner case where pid isn't going up evenly, so
   // sticking with rand() for now. ctx->instance_num = ctx->pid % 6;
+
+  // Actually I think this might be a good technique. This should deliver a
+  // few consecutive requests to a single server instance so it should
+  // reduce wasted spinup time when just a command or two is run, but it
+  // should still scale up to use all 6 instances when lots of commands go
+  // through. (tests show this to be the same speed as the others in that
+  // latter case).
+  ctx->instance_num = (ctx->pid / 4) % 6;
   return 0;
 }
 

@@ -8,9 +8,9 @@
 
 namespace ballistica::base {
 
-void TextGroup::set_text(const std::string& text, TextMesh::HAlign alignment_h,
-                         TextMesh::VAlign alignment_v, bool big,
-                         float resolution_scale) {
+void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
+                        TextMesh::VAlign alignment_v, bool big,
+                        float resolution_scale) {
   text_ = text;
 
   // In order to *actually* draw big, all our letters
@@ -18,8 +18,8 @@ void TextGroup::set_text(const std::string& text, TextMesh::HAlign alignment_h,
   big_ = (big && TextGraphics::HaveBigChars(text));
 
   // If we had an OS texture for custom drawing, release it.
-  // (it should stick around for a while; we'll be able to re-grab
-  // the same one if we havn't changed)
+  // It should stick around for a while; we'll be able to re-grab
+  // the same one if we havn't changed.
   os_texture_.Clear();
 
   // If we're drawing big we always just need 1 font page (the big one).
@@ -89,7 +89,9 @@ void TextGroup::set_text(const std::string& text, TextMesh::HAlign alignment_h,
 
       // For the few we can't color, we don't want to be able to
       // flatten them either.
-      if (!entry->can_color) entry->max_flatness = 0.0f;
+      if (!entry->can_color) {
+        entry->max_flatness = 0.0f;
+      }
 
       // For OS-rendered text we fill out a text-packer will all the spans
       // we'll need. we then hand that over to the OS to draw and create

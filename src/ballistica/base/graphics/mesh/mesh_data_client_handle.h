@@ -8,9 +8,9 @@
 
 namespace ballistica::base {
 
-// Client-side (game-thread) handle to server-side (graphics-thread) mesh data.
-// Server-side data will be created when this object is instantiated and
-// cleared when this object goes down.
+// Client-side (logic-thread) handle to server-side (graphics-thread) mesh
+// data. Server-side data will be created when this object is instantiated
+// and cleared when this object goes down.
 class MeshDataClientHandle : public Object {
  public:
   explicit MeshDataClientHandle(MeshData* d);

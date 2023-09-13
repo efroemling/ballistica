@@ -268,7 +268,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
     }
     if (frame_def->has_depth_texture()) {
       base::PostProcessComponent c2(frame_def->blit_pass());
-      c2.setNormalDistort(distort);
+      c2.SetNormalDistort(distort);
       c2.PushTransform();
       c2.MultMatrix((om * m).m);
       c2.Scale(s, s, s);

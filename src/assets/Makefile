@@ -5624,10 +5624,8 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/agentColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/agentIcon.dds \
   $(BUILD_DIR)/ba_data/textures/agentIconColorMask.dds \
-  $(BUILD_DIR)/ba_data/textures/aliBSRemoteIOSQR.dds \
   $(BUILD_DIR)/ba_data/textures/aliColor.dds \
   $(BUILD_DIR)/ba_data/textures/aliColorMask.dds \
-  $(BUILD_DIR)/ba_data/textures/aliControllerQR.dds \
   $(BUILD_DIR)/ba_data/textures/aliIcon.dds \
   $(BUILD_DIR)/ba_data/textures/aliIconColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/aliSplash.dds \
@@ -6029,10 +6027,8 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/agentColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/agentIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/agentIconColorMask.pvr \
-  $(BUILD_DIR)/ba_data/textures/aliBSRemoteIOSQR.pvr \
   $(BUILD_DIR)/ba_data/textures/aliColor.pvr \
   $(BUILD_DIR)/ba_data/textures/aliColorMask.pvr \
-  $(BUILD_DIR)/ba_data/textures/aliControllerQR.pvr \
   $(BUILD_DIR)/ba_data/textures/aliIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/aliIconColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/aliSplash.pvr \
@@ -6434,10 +6430,8 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/agentColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/agentIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/agentIconColorMask.ktx \
-  $(BUILD_DIR)/ba_data/textures/aliBSRemoteIOSQR.ktx \
   $(BUILD_DIR)/ba_data/textures/aliColor.ktx \
   $(BUILD_DIR)/ba_data/textures/aliColorMask.ktx \
-  $(BUILD_DIR)/ba_data/textures/aliControllerQR.ktx \
   $(BUILD_DIR)/ba_data/textures/aliIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/aliIconColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/aliSplash.ktx \
@@ -6839,10 +6833,8 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/agentColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/agentIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/agentIcon_preview.png \
-  $(BUILD_DIR)/ba_data/textures/aliBSRemoteIOSQR_preview.png \
   $(BUILD_DIR)/ba_data/textures/aliColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/aliColor_preview.png \
-  $(BUILD_DIR)/ba_data/textures/aliControllerQR_preview.png \
   $(BUILD_DIR)/ba_data/textures/aliIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/aliIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/aliSplash_preview.png \

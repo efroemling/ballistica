@@ -136,7 +136,7 @@ void ExplosionNode::Draw(base::FrameDef* frame_def) {
         float s = 1.0f;
         if (high_quality) {
           base::PostProcessComponent c(frame_def->blit_pass());
-          c.setNormalDistort(0.5f * amt);
+          c.SetNormalDistort(0.5f * amt);
           c.PushTransform();
           c.Translate(position_[0], position_[1], position_[2]);
           c.Scale(1.0f + s * 0.8f * 0.025f * age,

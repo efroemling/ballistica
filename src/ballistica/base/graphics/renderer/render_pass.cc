@@ -49,14 +49,14 @@ void RenderPass::Render(RenderTarget* render_target, bool transparent) {
   switch (type()) {
     case Type::kBeautyPass: {
       g_base->graphics_server->SetCamera(cam_pos_, cam_target_, cam_up_);
-      // If this changes, make sure to change
-      // it before _drawCameraBuffer() too.
+      // If this changes, make sure to change it before _drawCameraBuffer()
+      // too.
 
       // FIXME:
       //  If we're drawing our cam into its own buffer we could technically
       //  use its full depth range ...otherwise we need to share with the
       //  other onscreen elements (but maybe its good to use the limited
-      //  range regardless to make sure we can)
+      //  range regardless to make sure we can get by that way).
       renderer->SetDepthRange(kBackingDepth3, kBackingDepth4);
       SetFrustum(cam_near_clip_, cam_far_clip_);
 
@@ -139,9 +139,9 @@ void RenderPass::Render(RenderTarget* render_target, bool transparent) {
               -amt * w, (1.0f + amt) * w, -amt * h, (1.0f + amt) * h, -1, 1);
         } else {
           g_base->graphics_server->SetCamera(cam_pos_, cam_target_, cam_up_);
-          // We set the same depth ranges as the overlay-3d pass since
-          // we're essentially doing the same thing. See explanation in the
-          // overlay-3d case above the one difference is that we split the
+          // We set the same depth ranges as the overlay-3d pass since we're
+          // essentially doing the same thing. See explanation in the
+          // overlay-3d case above. The one difference is that we split the
           // range between our fixed overlay and our regular overlay passes
           // (we want fixed-overlay stuff on bottom).
           if (renderer->has_camera_render_target()) {
@@ -175,7 +175,7 @@ void RenderPass::Render(RenderTarget* render_target, bool transparent) {
           }
         }
       } else {
-        // Nn non-vr mode both our overlays are just ortho projected.
+        // In non-vr mode both our overlays are just ortho projected.
         g_base->graphics_server->ModelViewReset();
         if (type() == Type::kOverlayFrontPass) {
           renderer->SetDepthRange(kBackingDepth1, kBackingDepth1B);
@@ -230,8 +230,8 @@ void RenderPass::Render(RenderTarget* render_target, bool transparent) {
         const Vector3f& soffs = renderer->shadow_offset();
 
         // Well, this is slightly terrifying; '-soffs' is causing crashes
-        // here but multing by -1.000001f works.
-        // (generally just on android 4.3 on atom processors)
+        // here but multing by -1.000001f works (generally just on Android
+        // 4.3 on atom processors).
         g_base->graphics_server->Translate(Vector3f(
             -1.000001f * soffs.x, -1.000001f * soffs.y, -1.000001f * soffs.z));
       }

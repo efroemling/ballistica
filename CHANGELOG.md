@@ -1,4 +1,4 @@
-### 1.7.28 (build 21337, api 8, 2023-09-11)
+### 1.7.28 (build 21342, api 8, 2023-09-13)
 
 - Renamed Console to DevConsole, and added an option under advanced settings to
   always show a 'dev' button onscreen which can be used to toggle it. The
@@ -16,6 +16,8 @@
   console is probably still a better way to go for most people but this makes at
   least simple things possible without an internet connection for most Android
   users.
+- Pressing esc when the DevConsole is in its small form now dismisses it
+  instead of toggling it to its large form.
 - Added some high level functionality for copying and deleting feature-sets to
   the `spinoff` tool. For example, to create your own `poo` feature-set based on
   the existing `template_fs` one, do `tools/spinoff fset-copy template_fs poo`.

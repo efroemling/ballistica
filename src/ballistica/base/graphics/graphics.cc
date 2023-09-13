@@ -357,7 +357,8 @@ class Graphics::ScreenMessageEntry {
 };
 
 // Draw controls and things that lie on top of the action.
-void Graphics::DrawMiscOverlays(RenderPass* pass) {
+void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
+  RenderPass* pass = frame_def->overlay_pass();
   assert(g_base && g_base->InLogicThread());
 
   // Every now and then, update our stats.
@@ -382,7 +383,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
       if (!fps_text_group_.Exists()) {
         fps_text_group_ = Object::New<TextGroup>();
       }
-      fps_text_group_->set_text(fps_string_);
+      fps_text_group_->SetText(fps_string_);
     }
     SimpleComponent c(pass);
     c.SetTransparent(true);
@@ -415,7 +416,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
         if (!ping_text_group_.Exists()) {
           ping_text_group_ = Object::New<TextGroup>();
         }
-        ping_text_group_->set_text(ping_string_);
+        ping_text_group_->SetText(ping_string_);
       }
       SimpleComponent c(pass);
       c.SetTransparent(true);
@@ -431,12 +432,13 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
       for (int e = 0; e < text_elem_count; e++) {
         c.SetTexture(ping_text_group_->GetElementTexture(e));
         c.SetFlatness(1.0f);
-        c.PushTransform();
-        c.Translate(14.0f + (show_fps_ ? 30.0f : 0.0f), 0.1f,
-                    kScreenMessageZDepth);
-        c.Scale(0.7f, 0.7f);
-        c.DrawMesh(ping_text_group_->GetElementMesh(e));
-        c.PopTransform();
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(14.0f + (show_fps_ ? 30.0f : 0.0f), 0.1f,
+                      kScreenMessageZDepth);
+          c.Scale(0.7f, 0.7f);
+          c.DrawMesh(ping_text_group_->GetElementMesh(e));
+        }
       }
       c.Submit();
     }
@@ -450,7 +452,7 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
         if (!net_info_text_group_.Exists()) {
           net_info_text_group_ = Object::New<TextGroup>();
         }
-        net_info_text_group_->set_text(net_info_string_);
+        net_info_text_group_->SetText(net_info_string_);
       }
       SimpleComponent c(pass);
       c.SetTransparent(true);
@@ -459,11 +461,12 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
       for (int e = 0; e < text_elem_count; e++) {
         c.SetTexture(net_info_text_group_->GetElementTexture(e));
         c.SetFlatness(1.0f);
-        c.PushTransform();
-        c.Translate(4.0f, (show_fps_ ? 66.0f : 40.0f), kScreenMessageZDepth);
-        c.Scale(0.7f, 0.7f);
-        c.DrawMesh(net_info_text_group_->GetElementMesh(e));
-        c.PopTransform();
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(4.0f, (show_fps_ ? 66.0f : 40.0f), kScreenMessageZDepth);
+          c.Scale(0.7f, 0.7f);
+          c.DrawMesh(net_info_text_group_->GetElementMesh(e));
+        }
       }
       c.Submit();
     }
@@ -603,33 +606,35 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
           }
           c.SetColor(r * fade, g * fade, b * fade, a);
 
-          c.PushTransform();
-          if (i->v_smoothed == 0.0f) {
-            i->v_smoothed = v + v_extra;
-          } else {
-            float smoothing = 0.8f;
-            i->v_smoothed =
-                smoothing * i->v_smoothed + (1.0f - smoothing) * (v + v_extra);
-          }
-          c.Translate(screen_width * 0.5f, i->v_smoothed,
-                      vr ? 60 : kScreenMessageZDepth);
-          if (vr) {
-            // Let's drop down a bit in vr mode.
-            c.Translate(0, -10.0f, 0);
-            c.Scale((str_width + 60) * scale * s_extra,
-                    (str_height + 20) * scale * s_extra);
+          {
+            auto xf = c.ScopedTransform();
 
-            // Align our bottom with where we just scaled from.
-            c.Translate(0, 0.5f, 0);
-          } else {
-            c.Scale((str_width + 110) * scale * s_extra,
-                    (str_height + 40) * scale * s_extra);
+            if (i->v_smoothed == 0.0f) {
+              i->v_smoothed = v + v_extra;
+            } else {
+              float smoothing = 0.8f;
+              i->v_smoothed = smoothing * i->v_smoothed
+                              + (1.0f - smoothing) * (v + v_extra);
+            }
+            c.Translate(screen_width * 0.5f, i->v_smoothed,
+                        vr ? 60 : kScreenMessageZDepth);
+            if (vr) {
+              // Let's drop down a bit in vr mode.
+              c.Translate(0, -10.0f, 0);
+              c.Scale((str_width + 60) * scale * s_extra,
+                      (str_height + 20) * scale * s_extra);
 
-            // Align our bottom with where we just scaled from.
-            c.Translate(0, 0.5f, 0);
+              // Align our bottom with where we just scaled from.
+              c.Translate(0, 0.5f, 0);
+            } else {
+              c.Scale((str_width + 110) * scale * s_extra,
+                      (str_height + 40) * scale * s_extra);
+
+              // Align our bottom with where we just scaled from.
+              c.Translate(0, 0.5f, 0);
+            }
+            c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
           }
-          c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
-          c.PopTransform();
 
           v += scale * (36 + str_height);
           if (v > g_base->graphics->screen_virtual_height() + 30) {
@@ -698,13 +703,14 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
               c.SetColor(1, 1, 1, a);
             }
             c.SetFlatness(i->GetText().GetElementMaxFlatness(e));
-            c.PushTransform();
-            c.Translate(screen_width * 0.5f, i->v_smoothed,
-                        vr ? 150 : kScreenMessageZDepth);
-            c.Scale(scale * s_extra, scale * s_extra);
-            c.Translate(0, 20);
-            c.DrawMesh(i->GetText().GetElementMesh(e));
-            c.PopTransform();
+            {
+              auto xf = c.ScopedTransform();
+              c.Translate(screen_width * 0.5f, i->v_smoothed,
+                          vr ? 150 : kScreenMessageZDepth);
+              c.Scale(scale * s_extra, scale * s_extra);
+              c.Translate(0, 20);
+              c.DrawMesh(i->GetText().GetElementMesh(e));
+            }
           }
 
           v += scale * (36 + str_height);
@@ -798,12 +804,13 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
                 g_base->assets->SysTexture(SysTextureID::kCharacterIconMask));
           }
           c2.SetColor(1, 1, 1, a);
-          c2.PushTransform();
-          c2.Translate(h - 14, v_base + 10 + i->v_smoothed,
-                       kScreenMessageZDepth);
-          c2.Scale(22.0f * s_extra, 22.0f * s_extra);
-          c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
-          c2.PopTransform();
+          {
+            auto xf = c2.ScopedTransform();
+            c2.Translate(h - 14, v_base + 10 + i->v_smoothed,
+                         kScreenMessageZDepth);
+            c2.Scale(22.0f * s_extra, 22.0f * s_extra);
+            c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+          }
           c2.Submit();
         }
 
@@ -830,11 +837,12 @@ void Graphics::DrawMiscOverlays(RenderPass* pass) {
                       1.0f * a);
           c.SetFlatness(i->GetText().GetElementMaxFlatness(e));
           c.SetMaskUV2Texture(i->GetText().GetElementMaskUV2Texture(e));
-          c.PushTransform();
-          c.Translate(h, v_base + 2 + i->v_smoothed, kScreenMessageZDepth);
-          c.Scale(0.6f * s_extra, 0.6f * s_extra);
-          c.DrawMesh(i->GetText().GetElementMesh(e));
-          c.PopTransform();
+          {
+            auto xf = c.ScopedTransform();
+            c.Translate(h, v_base + 2 + i->v_smoothed, kScreenMessageZDepth);
+            c.Scale(0.6f * s_extra, 0.6f * s_extra);
+            c.DrawMesh(i->GetText().GetElementMesh(e));
+          }
         }
         assert(!i->translation_dirty);
         v -= g_base->text_graphics->GetStringHeight(i->s_translated.c_str())
@@ -1171,12 +1179,12 @@ void Graphics::BuildAndPushFrameDef() {
     g_base->input->Draw(frame_def);
 
     RenderPass* overlay_pass = frame_def->overlay_pass();
-    DrawMiscOverlays(overlay_pass);
+    DrawMiscOverlays(frame_def);
 
     // Let UI draw dev console and whatever else.
     DrawDevUI(frame_def);
 
-    DrawCursor(overlay_pass, app_time_millisecs);
+    DrawCursor(frame_def);
 
     // Draw our light/shadow images to the screen if desired.
     DrawDebugBuffers(overlay_pass);
@@ -1224,7 +1232,7 @@ void Graphics::BuildAndPushFrameDef() {
   frame_def->set_mesh_data_destroys(mesh_data_destroys_);
   mesh_data_destroys_.clear();
 
-  g_base->graphics_server->SetFrameDef(frame_def);
+  g_base->graphics_server->EnqueueFrameDef(frame_def);
 
   // Clean up frame_defs awaiting deletion.
   ClearFrameDefDeleteList();
@@ -1249,13 +1257,14 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
     // Blit.
     if (explicit_bool(true)) {
       PostProcessComponent c(frame_def->blit_pass());
-      c.setNormalDistort(0.07f);
-      c.PushTransform();
-      c.Translate(0, 7, -3.3f);
-      c.Scale(10, 10, 10);
-      c.Rotate(a, 0, 0, 1);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
-      c.PopTransform();
+      c.SetNormalDistort(0.07f);
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(0, 7, -3.3f);
+        c.Scale(10, 10, 10);
+        c.Rotate(a, 0, 0, 1);
+        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
+      }
       c.Submit();
     }
 
@@ -1265,12 +1274,13 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
       c.SetTexture(g_base->assets->SysTexture(SysTextureID::kBoxingGlove));
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
-      c.PushTransform();
-      c.Translate(0.0f, 3.7f, -3.3f);
-      c.Scale(10.0f, 10.0f, 10.0f);
-      c.Rotate(a, 0.0f, 0.0f, 1.0f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(0.0f, 3.7f, -3.3f);
+        c.Scale(10.0f, 10.0f, 10.0f);
+        c.Rotate(a, 0.0f, 0.0f, 1.0f);
+        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
+      }
       c.Submit();
     }
 
@@ -1279,12 +1289,13 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
       SimpleComponent c(frame_def->light_shadow_pass());
       c.SetColor(0.16f, 0.11f, 0.1f, 1.0f);
       c.SetTransparent(true);
-      c.PushTransform();
-      c.Translate(0.0f, 3.7f, -3.3f);
-      c.Scale(10.0f, 10.0f, 10.0f);
-      c.Rotate(a, 0.0f, 0.0f, 1.0f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(0.0f, 3.7f, -3.3f);
+        c.Scale(10.0f, 10.0f, 10.0f);
+        c.Rotate(a, 0.0f, 0.0f, 1.0f);
+        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
+      }
       c.Submit();
     }
   }
@@ -1295,21 +1306,23 @@ void Graphics::DrawDebugBuffers(RenderPass* pass) {
     {
       SpecialComponent c(pass, SpecialComponent::Source::kLightBuffer);
       float csize = 100;
-      c.PushTransform();
-      c.Translate(70, 400, kDebugImgZDepth);
-      c.Scale(csize, csize);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(70, 400, kDebugImgZDepth);
+        c.Scale(csize, csize);
+        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+      }
       c.Submit();
     }
     {
       SpecialComponent c(pass, SpecialComponent::Source::kLightShadowBuffer);
       float csize = 100;
-      c.PushTransform();
-      c.Translate(70, 250, kDebugImgZDepth);
-      c.Scale(csize, csize);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(70, 250, kDebugImgZDepth);
+        c.Scale(csize, csize);
+        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+      }
       c.Submit();
     }
   }
@@ -1364,7 +1377,9 @@ void Graphics::DrawFades(FrameDef* frame_def, millisecs_t real_time) {
       fade_ = 1.0f
               - (static_cast<float>(real_time - fade_start_)
                  / static_cast<float>(fade_time_));
-      if (fade_ <= 0) fade_ = 0.00001f;
+      if (fade_ <= 0) {
+        fade_ = 0.00001f;
+      }
     } else {
       fade_ = 0;
       if (!was_done && fade_end_call_.Exists()) {
@@ -1386,60 +1401,8 @@ void Graphics::DrawFades(FrameDef* frame_def, millisecs_t real_time) {
                    / static_cast<float>(kProgressBarFadeTime))
                 * (1.0f - a);
     }
-    // TODO(ericf): move this to GraphicsVR.
-    if (g_core->IsVRMode()) {
-#if BA_VR_BUILD
-      SimpleComponent c(frame_def->vr_cover_pass());
-      c.SetTransparent(false);
-      Vector3f cam_pt = {0.0f, 0.0f, 0.0f};
-      Vector3f cam_target_pt = {0.0f, 0.0f, 0.0f};
-      cam_pt =
-          Vector3f(frame_def->cam_original().x, frame_def->cam_original().y,
-                   frame_def->cam_original().z);
 
-      // In vr follow-mode the cam point gets tweaked.
-      //
-      // FIXME: should probably just do this on the camera end.
-      if (frame_def->camera_mode() == CameraMode::kOrbit) {
-        // fudge this one up a bit; looks better that way..
-        cam_target_pt = Vector3f(frame_def->cam_target_original().x,
-                                 frame_def->cam_target_original().y + 6.0f,
-                                 frame_def->cam_target_original().z);
-      } else {
-        cam_target_pt = Vector3f(frame_def->cam_target_original().x,
-                                 frame_def->cam_target_original().y,
-                                 frame_def->cam_target_original().z);
-      }
-      Vector3f diff = cam_target_pt - cam_pt;
-      diff.Normalize();
-      Vector3f side = Vector3f::Cross(diff, Vector3f(0.0f, 1.0f, 0.0f));
-      Vector3f up = Vector3f::Cross(diff, side);
-      c.SetColor(0, 0, 0);
-      c.PushTransform();
-      // we start in vr-overlay screen space; get back to world..
-      c.Translate(cam_pt.x, cam_pt.y, cam_pt.z);
-      c.MultMatrix(Matrix44fOrient(diff, up).m);
-      // at the very end we stay turned around so we get 100% black
-      if (a < 0.98f) {
-        c.Translate(0, 0, 40.0f * a);
-        c.Rotate(180, 1, 0, 0);
-      }
-      float inv_a = 1.0f - a;
-      float s = 100.0f * inv_a + 5.0f * a;
-      c.Scale(s, s, s);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kVRFade));
-      c.PopTransform();
-      c.Submit();
-#else  // BA_VR_BUILD
-      throw Exception();
-#endif
-    } else {
-      SimpleComponent c(overlay_pass);
-      c.SetTransparent(a < 1.0f);
-      c.SetColor(0, 0, 0, a);
-      c.DrawMesh(screen_mesh_.Get());
-      c.Submit();
-    }
+    DoDrawFade(frame_def, a);
 
     // If we're doing a progress-bar fade, throw in the fading progress bar.
     if (real_time - progress_bar_end_time_ < kProgressBarFadeTime / 2) {
@@ -1452,8 +1415,24 @@ void Graphics::DrawFades(FrameDef* frame_def, millisecs_t real_time) {
   }
 }
 
-void Graphics::DrawCursor(RenderPass* pass, millisecs_t real_time) {
+void Graphics::DoDrawFade(FrameDef* frame_def, float amt) {
+  SimpleComponent c(frame_def->overlay_front_pass());
+  c.SetTransparent(amt < 1.0f);
+  c.SetColor(0, 0, 0, amt);
+  {
+    // Draw this at the front of this overlay pass; should never really
+    // need stuff covering this methinks.
+    auto xf = c.ScopedTransform();
+    c.Translate(0.0f, 0.0f, 1.0f);
+    c.DrawMesh(screen_mesh_.Get());
+  }
+  c.Submit();
+}
+
+void Graphics::DrawCursor(FrameDef* frame_def) {
   assert(g_base->InLogicThread());
+
+  millisecs_t real_time = frame_def->real_time();
 
   bool can_show_cursor = g_core->platform->IsRunningOnDesktop();
   bool should_show_cursor =
@@ -1481,20 +1460,21 @@ void Graphics::DrawCursor(RenderPass* pass, millisecs_t real_time) {
   } else {
     // Draw software cursor.
     if (can_show_cursor && should_show_cursor) {
-      SimpleComponent c(pass);
+      SimpleComponent c(frame_def->overlay_front_pass());
       c.SetTransparent(true);
       float csize = 50.0f;
       c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCursor));
-      c.PushTransform();
+      {
+        auto xf = c.ScopedTransform();
 
-      // Note: we don't plug in known cursor position values here; we tell the
-      // renderer to insert the latest values on its end; this lessens cursor
-      // lag substantially.
-      c.CursorTranslate();
-      c.Translate(csize * 0.44f, csize * -0.44f, kCursorZDepth);
-      c.Scale(csize, csize);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
-      c.PopTransform();
+        // Note: we don't plug in known cursor position values here; we tell the
+        // renderer to insert the latest values on its end; this lessens cursor
+        // lag substantially.
+        c.CursorTranslate();
+        c.Translate(csize * 0.44f, csize * -0.44f, kCursorZDepth);
+        c.Scale(csize, csize);
+        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+      }
       c.Submit();
     }
   }
@@ -1898,7 +1878,7 @@ auto Graphics::ScreenMessageEntry::GetText() -> TextGroup& {
     mesh_dirty = true;
   }
   if (mesh_dirty) {
-    s_mesh_->set_text(
+    s_mesh_->SetText(
         s_translated,
         align_left ? TextMesh::HAlign::kLeft : TextMesh::HAlign::kCenter,
         TextMesh::VAlign::kBottom);

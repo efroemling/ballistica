@@ -7,8 +7,8 @@
 
 namespace ballistica::base {
 
-// mesh with static indices, some static vertex data,
-// and some dynamic vertex data
+/// A mesh with static indices, some static vertex data, and some dynamic
+/// vertex data.
 template <typename STATICDATA, typename DYNAMICDATA, MeshDataType T>
 class MeshIndexedStaticDynamic : public MeshIndexedBase {
  public:

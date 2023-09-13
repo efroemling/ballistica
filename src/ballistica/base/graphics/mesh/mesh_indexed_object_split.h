@@ -7,7 +7,7 @@
 
 namespace ballistica::base {
 
-// a mesh with static indices and UVs and dynamic positions and normals
+/// A mesh with static indices and UVs and dynamic positions and normals.
 class MeshIndexedObjectSplit
     : public MeshIndexedStaticDynamic<VertexObjectSplitStatic,
                                       VertexObjectSplitDynamic,

@@ -15,18 +15,17 @@
 
 namespace ballistica::base {
 
-// Runs in the main thread and renders frame_defs shipped to it by the
-// Graphics
+/// A server that runs in the graphics thread and renders frame_defs shipped
+/// to it by the logic thread.
 class GraphicsServer {
  public:
   GraphicsServer();
 
   void OnMainThreadStartApp();
 
-  /// Should be called to inform ballistica of screen size changes; this will be
-  /// applied to the server and then sent to the logic thread to apply to
-  /// various
-  // app systems (ui, etc.).
+  /// Should be called to inform ballistica of screen size changes; this
+  /// will be applied to the server and then sent to the logic thread to
+  /// apply to various app systems (ui, etc.).
   void SetScreenResolution(float h, float v);
 
   void PushSetScreenGammaCall(float gamma);
@@ -42,14 +41,14 @@ class GraphicsServer {
       const std::vector<Object::Ref<Asset>*>& components);
   void SetRenderHold();
 
-  // Used by the logic thread to pass frame-defs to the graphics server
-  // for rendering.
-  void SetFrameDef(FrameDef* framedef);
+  /// Used by the logic thread to pass frame-defs to the graphics server for
+  /// rendering.
+  void EnqueueFrameDef(FrameDef* framedef);
 
-  // returns the next frame_def needing to be rendered, waiting for it to arrive
-  // if necessary. this can return nullptr if no frame_defs come in within a
-  // reasonable amount of time. a frame_def here *must* be rendered and disposed
-  // of using the RenderFrameDef* calls
+  // Returns the next frame_def to be rendered, waiting for it to arrive if
+  // necessary. this can return nullptr if no frame_defs come in within a
+  // reasonable amount of time. a frame_def here *must* be rendered and
+  // disposed of using the RenderFrameDef* calls.
   auto GetRenderFrameDef() -> FrameDef*;
 
   void ApplyFrameDefSettings(FrameDef* frame_def);
