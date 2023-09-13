@@ -62,7 +62,6 @@ class Puck(bs.Actor):
         if isinstance(msg, bs.DieMessage):
             if self.node:
                 self.node.delete()
-                self.node = None
                 activity = self._activity()
                 if activity and not msg.immediate:
                     activity.handlemessage(PuckDiedMessage(self))
