@@ -186,6 +186,7 @@ class KingOfTheHillGame(bs.TeamGameActivity[Player, Team]):
                 'materials': flagmats,
             },
         )
+        self._update_scoreboard()
         self._update_flag_state()
 
     def _tick(self) -> None:
