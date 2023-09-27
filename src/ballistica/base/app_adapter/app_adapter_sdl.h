@@ -78,8 +78,8 @@ class AppAdapterSDL : public AppAdapter {
   // SDL_Surface* sdl_screen_surface_{};
   bool done_{};
   bool fullscreen_{};
-  VSyncRequest vsync_{VSyncRequest::kNever};
-  bool vsync_enabled_{};
+  VSync vsync_{VSync::kUnset};
+  bool vsync_actually_enabled_{};
   microsecs_t oversleep{};
   int max_fps_{60};
   bool debug_log_sdl_frame_timing_{};

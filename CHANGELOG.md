@@ -1,4 +1,4 @@
-### 1.7.28 (build 21385, api 8, 2023-09-27)
+### 1.7.28 (build 21386, api 8, 2023-09-27)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years

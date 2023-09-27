@@ -175,6 +175,7 @@ enum class GraphicsQuality {
   kHigher,
 };
 
+enum class VSync { kUnset, kNever, kAlways, kAdaptive };
 enum class VSyncRequest { kNever, kAlways, kAuto };
 
 /// Requests for exact or auto graphics quality values.

@@ -141,7 +141,7 @@ void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
     // to the edges. Note that we want this tweak to be small enough that it
     // won't be noticable in situations where vsync and max-fps *don't*
     // match. (for instance limiting to 60hz on a 120hz vsynced monitor).
-    if (vsync_enabled_) {
+    if (vsync_actually_enabled_) {
       millisecs_per_frame = 99 * millisecs_per_frame / 100;
     }
     microsecs_t target_time =
@@ -296,7 +296,6 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
     case SDL_WINDOWEVENT: {
       switch (event.window.event) {
         case SDL_WINDOWEVENT_MAXIMIZED: {
-          printf("MAXIMIZED\n");
           if (g_buildconfig.ostype_macos() && !fullscreen_) {
             // Special case: on Mac, we wind up here if someone fullscreens
             // our window via the window widget. This *basically* is the
@@ -316,9 +315,8 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
         }
 
         case SDL_WINDOWEVENT_RESTORED:
-          printf("RESTORED\n");
           if (g_buildconfig.ostype_macos() && fullscreen_) {
-            // See note above.
+            // See note above about Mac fullscreen.
             fullscreen_ = false;
             g_base->logic->event_loop()->PushCall([] {
               g_base->python->objs()
@@ -329,18 +327,15 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
           break;
 
         case SDL_WINDOWEVENT_MINIMIZED:
-          printf("MINIMIZED\n");
           break;
 
         case SDL_WINDOWEVENT_HIDDEN: {
           // PauseApp();
-          printf("HIDDEN\n");
           break;
         }
 
         case SDL_WINDOWEVENT_SHOWN: {
           // ResumeApp();
-          printf("SHOWN\n");
           break;
         }
 
@@ -495,33 +490,49 @@ void AppAdapterSDL::SetScreen_(
   }
 
   // VSync always gets set independent of the screen (though we set it down
-  // here to make sure we have one).
-  if (vsync_requested != vsync_) {
-    switch (vsync_requested) {
-      case VSyncRequest::kNever: {
+  // here to make sure we have a screen when its set).
+  VSync vsync;
+  switch (vsync_requested) {
+    case VSyncRequest::kNever:
+      vsync = VSync::kNever;
+      break;
+    case VSyncRequest::kAlways:
+      vsync = VSync::kAlways;
+      break;
+    case VSyncRequest::kAuto:
+      vsync = VSync::kAdaptive;
+      break;
+    default:
+      vsync = VSync::kNever;
+      break;
+  }
+  if (vsync != vsync_) {
+    switch (vsync) {
+      case VSync::kUnset:
+      case VSync::kNever: {
         SDL_GL_SetSwapInterval(0);
-        vsync_enabled_ = false;
+        vsync_actually_enabled_ = false;
         break;
       }
-      case VSyncRequest::kAlways: {
+      case VSync::kAlways: {
         SDL_GL_SetSwapInterval(1);
-        vsync_enabled_ = true;
+        vsync_actually_enabled_ = true;
         break;
       }
-      case VSyncRequest::kAuto: {
+      case VSync::kAdaptive: {
         // In this case, let's try setting to 'adaptive' and turn it off if
         // that is unsupported.
         auto result = SDL_GL_SetSwapInterval(-1);
         if (result == 0) {
-          vsync_enabled_ = true;
+          vsync_actually_enabled_ = true;
         } else {
           SDL_GL_SetSwapInterval(0);
-          vsync_enabled_ = false;
+          vsync_actually_enabled_ = false;
         }
         break;
       }
     }
-    vsync_ = vsync_requested;
+    vsync_ = vsync;
   }
 
   // This we can set anytime. Probably could have just set it from the logic
