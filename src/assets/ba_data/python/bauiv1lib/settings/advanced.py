@@ -243,6 +243,7 @@ class AdvancedSettingsWindow(bui.Window):
 
         # Don't rebuild if the menu is open or if our language and
         # language-list hasn't changed.
+
         # NOTE - although we now support widgets updating their own
         # translations, we still change the label formatting on the language
         # menu based on the language so still need this. ...however we could

@@ -13,9 +13,11 @@ namespace ballistica::base {
 
 AppAdapterVR::AppAdapterVR() {}
 
+auto AppAdapterVR::ManagesMainThreadEventLoop() const -> bool { return false; }
+
 void AppAdapterVR::PushVRSimpleRemoteStateCall(
     const VRSimpleRemoteState& state) {
-  g_core->main_event_loop()->PushCall([this, state] {
+  g_base->app_adapter->PushMainThreadCall([this, state] {
     // Convert this to a full hands state, adding in some simple elbow
     // positioning of our own and left/right.
     VRHandsState s;
@@ -47,16 +49,19 @@ void AppAdapterVR::VRPreDraw() {
     return;
   }
   assert(g_base->InGraphicsThread());
-  if (FrameDef* frame_def = g_base->graphics_server->GetRenderFrameDef()) {
-    // Note: this could be part of PreprocessRenderFrameDef but the non-vr
-    // path needs it to be separate since preprocess doesn't happen
-    // sometimes. Should probably clean that up.
-    g_base->graphics_server->RunFrameDefMeshUpdates(frame_def);
+  // FIXME - this is internal graphics-server details that the render-server
+  // should handle.
+  Log(LogLevel::kWarning, "FIXME: Have GraphicsServer handle VR drawing.");
+  // if (FrameDef* frame_def = g_base->graphics_server->GetRenderFrameDef()) {
+  //   // Note: this could be part of PreprocessRenderFrameDef but the non-vr
+  //   // path needs it to be separate since preprocess doesn't happen
+  //   // sometimes. Should probably clean that up.
+  //   g_base->graphics_server->RunFrameDefMeshUpdates(frame_def);
 
-    // store this for the duration of this frame
-    vr_render_frame_def_ = frame_def;
-    g_base->graphics_server->PreprocessRenderFrameDef(frame_def);
-  }
+  //   // store this for the duration of this frame
+  //   vr_render_frame_def_ = frame_def;
+  //   g_base->graphics_server->PreprocessRenderFrameDef(frame_def);
+  // }
 }
 
 void AppAdapterVR::VRPostDraw() {
@@ -69,7 +74,8 @@ void AppAdapterVR::VRPostDraw() {
     g_base->graphics_server->FinishRenderFrameDef(vr_render_frame_def_);
     vr_render_frame_def_ = nullptr;
   }
-  RunRenderUpkeepCycle();
+  Log(LogLevel::kWarning, "WOULD RUN RENDER UPKEEP CYCLE");
+  // RunRenderUpkeepCycle();
 }
 
 void AppAdapterVR::VRSetHead(float tx, float ty, float tz, float yaw,
@@ -116,6 +122,22 @@ void AppAdapterVR::VRDrawEye(int eye, float yaw, float pitch, float roll,
                        eye_y, eye_z, viewport_x, viewport_y);
     g_base->graphics_server->DrawRenderFrameDef(vr_render_frame_def_);
   }
+}
+
+void AppAdapterVR::RunMainThreadEventLoopToCompletion() {
+  // FIXME - can basically copy sdl path here methinks.
+  FatalError(
+      "FIXME: IMPLEMENT AppAdapterVR::RunMainThreadEventLoopToCompletion");
+  // g_core->main_event_loop()->RunToCompletion();
+}
+
+void AppAdapterVR::DoPushMainThreadRunnable(Runnable* runnable) {
+  FatalError("FIXME: DoPushMainThreadRunnable unimplemented here.");
+}
+
+void AppAdapterVR::DoExitMainThreadEventLoop() {
+  FatalError("FIXME: IMPLEMENT AppAdapterVR::DoExitMainThreadEventLoop");
+  // g_core->main_event_loop()->Exit();
 }
 
 }  // namespace ballistica::base

@@ -24,15 +24,22 @@ class Logic {
   /// not started running yet.
   auto event_loop() const -> EventLoop* { return event_loop_; }
 
+  /// Called in the main thread when the app is starting.
   void OnMainThreadStartApp();
-  void OnInitialScreenCreated();
+
+  /// Called in the logic thread when the app is starting.
   void OnAppStart();
 
-  /// Called by Python when the app reaches the RUNNING state.
+  /// Should be called by the app-adapter when graphics (or lack thereof) is
+  /// ready to go. This will kick off asset loads and proceed towards the
+  /// final app running state.
+  void OnGraphicsReady();
+
+  /// Called when the app reaches the RUNNING state.
   void OnAppRunning();
 
-  /// Called by Python after the first app-mode has been set. At this point
-  /// it is safe to start using functionality that interacts with app-modes.
+  /// Called once the first app-mode has been set. At this point it is safe
+  /// to start using functionality that interacts with app-modes.
   void OnInitialAppModeSet();
 
   /// Called when our event-loop pauses. Informs Python and other
@@ -134,6 +141,7 @@ class Logic {
   bool applied_app_config_{};
   bool shutting_down_{};
   bool shutdown_completed_{};
+  bool on_initial_screen_creation_complete_called_{};
 };
 
 }  // namespace ballistica::base

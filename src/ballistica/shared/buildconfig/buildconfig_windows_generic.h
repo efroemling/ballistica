@@ -8,7 +8,7 @@
 #define BA_ENABLE_STDIO_CONSOLE 1
 
 #define BA_SDL_BUILD 1
-#define BA_SDL2_BUILD 1
+// #define BA_SDL2_BUILD 1
 #define BA_ENABLE_SDL_JOYSTICKS 1
 
 #include "ballistica/shared/buildconfig/buildconfig_windows_common.h"

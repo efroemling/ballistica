@@ -175,6 +175,16 @@ class AssetStager:
             self.executable_name = 'ballisticakit_headless'
 
         elif platform_arg == '-xcode-mac':
+            self.src = os.environ['SOURCE_ROOT'] + '/../build/assets'
+            self.dst = (
+                os.environ['TARGET_BUILD_DIR']
+                + '/'
+                + os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH']
+            )
+            self.include_pylib = True
+            self.pylib_src_name = 'pylib-apple'
+            self.tex_suffix = '.dds'
+        elif platform_arg == '-xcode-mac-old':
             self.src = os.environ['SOURCE_ROOT'] + '/build/assets'
             self.dst = (
                 os.environ['TARGET_BUILD_DIR']

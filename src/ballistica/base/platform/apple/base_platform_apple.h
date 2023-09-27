@@ -20,6 +20,8 @@ class BasePlatformApple : public BasePlatform {
 
   void DoOpenURL(const std::string& url) override;
 
+  // void SetHardwareCursorVisible(bool visible) override;
+
  private:
 };
 

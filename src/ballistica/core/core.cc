@@ -105,7 +105,8 @@ void CoreFeatureSet::PostInit() {
 
   // Note: this checks g_core->main_thread_id which is why it must run in
   // PostInit and not our constructor.
-  main_event_loop_ = new EventLoop(EventLoopID::kMain, ThreadSource::kWrapMain);
+  // main_event_loop_ = new EventLoop(EventLoopID::kMain,
+  // ThreadSource::kWrapCurrent);
 
   // On monolithic builds we need to bring up Python itself.
   if (g_buildconfig.monolithic_build()) {
@@ -355,14 +356,14 @@ void CoreFeatureSet::UpdateAppTime() {
   }
 }
 
-void CoreFeatureSet::UpdateMainThreadID() {
-  auto current_id = std::this_thread::get_id();
+// void CoreFeatureSet::UpdateMainThreadID() {
+//   auto current_id = std::this_thread::get_id();
 
-  // This gets called a lot and it may happen before we are spun up, so just
-  // ignore it in that case.
-  main_thread_id = current_id;
-  main_event_loop_->set_thread_id(current_id);
-}
+//   // This gets called a lot and it may happen before we are spun up, so just
+//   // ignore it in that case.
+//   main_thread_id = current_id;
+//   main_event_loop_->set_thread_id(current_id);
+// }
 
 void CoreFeatureSet::StartSuicideTimer(const std::string& action,
                                        millisecs_t delay) {
@@ -372,11 +373,12 @@ void CoreFeatureSet::StartSuicideTimer(const std::string& action,
   }
 }
 
-auto CoreFeatureSet::InMainThread() -> bool {
-  if (main_event_loop_) {
-    return main_event_loop_->ThreadIsCurrent();
-  }
-  return false;
-}
+// auto CoreFeatureSet::InMainThread() -> bool {
+//   return std::this_thread::get_id() == main_thread_id;
+//   // if (main_event_loop_) {
+//   //   return main_event_loop_->ThreadIsCurrent();
+//   // }
+//   // return false;
+// }
 
 }  // namespace ballistica::core

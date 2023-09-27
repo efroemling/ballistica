@@ -3,9 +3,6 @@
 #ifndef BALLISTICA_BASE_GRAPHICS_TEXTURE_DDS_H_
 #define BALLISTICA_BASE_GRAPHICS_TEXTURE_DDS_H_
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCUnusedMacroInspection"
-
 /* DDS loader written by Jon Watte 2002 */
 /* Permission granted to use freely, as long as Jon Watte */
 /* is held harmless for all possible damages resulting from */
@@ -16,8 +13,6 @@
 #include <string>
 
 #include "ballistica/base/base.h"
-
-#if BA_ENABLE_OPENGL
 
 //  little-endian, of course
 #define DDS_MAGIC 0x20534444
@@ -98,8 +93,6 @@
 #define PF_IS_INDEX8(pf) \
   (((pf).dwFlags & DDPF_INDEXED) && ((pf).dwRGBBitCount == 8))
 
-#pragma clang diagnostic pop
-
 namespace ballistica::base {
 
 union DDS_header {
@@ -151,7 +144,5 @@ void LoadDDS(const std::string& file_name, unsigned char** buffers, int* widths,
              TextureQuality texture_quality, int min_quality, int* base_level);
 
 }  // namespace ballistica::base
-
-#endif  // BA_ENABLE_OPENGL
 
 #endif  // BALLISTICA_BASE_GRAPHICS_TEXTURE_DDS_H_

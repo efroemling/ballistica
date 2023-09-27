@@ -67,9 +67,6 @@ SessionStream::~SessionStream() {
       appmode->connections()->UnregisterClientController(this);
     }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "UnreachableCode"
-
     // Also, in the host-session case, make sure everything cleaned itself up.
     if (g_buildconfig.debug_build()) {
       size_t count;
@@ -112,8 +109,6 @@ SessionStream::~SessionStream() {
       }
     }
   }
-
-#pragma clang diagnostic pop
 }
 
 // Pull the current built-up message.
@@ -858,8 +853,10 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<Node*>& vals) {
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
-    for (auto val : vals) {
-      assert(IsValidNode(val));
+    if (g_buildconfig.debug_build()) {
+      for (auto val : vals) {
+        assert(IsValidNode(val));
+      }
     }
   }
   size_t count{vals.size()};

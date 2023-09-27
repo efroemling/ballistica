@@ -9,10 +9,9 @@
 
 namespace ballistica::base {
 
-// a mesh set up to draw text
-// in general you should not use this directly; use TextGroup below, which will
-// automatically handle switching meshes/textures in order to support the full
-// unicode range
+// A mesh set up to draw text. In general you should not use this directly;
+// use TextGroup, which will automatically handle switching meshes/textures
+// in order to support the full unicode range.
 class TextMesh : public MeshIndexedDualTextureFull {
  public:
   enum class HAlign { kLeft, kCenter, kRight };

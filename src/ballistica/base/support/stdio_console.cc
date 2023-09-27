@@ -4,6 +4,7 @@
 
 #include <cstring>
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/support/context.h"
@@ -17,12 +18,7 @@ namespace ballistica::base {
 StdioConsole::StdioConsole() = default;
 
 void StdioConsole::Start() {
-  if (auto* loop = g_core->main_event_loop()) {
-    loop->PushCall([this] { StartInMainThread(); });
-  } else {
-    Log(LogLevel::kError,
-        "StdioConsole::Start() called before main_event_loop available.");
-  }
+  g_base->app_adapter->PushMainThreadCall([this] { StartInMainThread(); });
 }
 
 void StdioConsole::StartInMainThread() {

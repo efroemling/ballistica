@@ -31,46 +31,50 @@ void CollisionCache::Draw(FrameDef* frame_def) {
   c.SetColor(0, 1, 0, 0.1f);
   float cell_width = (1.0f / static_cast<float>(grid_width_));
   float cell_height = (1.0f / static_cast<float>(grid_height_));
-  c.PushTransform();
-  c.Translate((x_min_ + x_max_) * 0.5f, 0, (z_min_ + z_max_) * 0.5f);
-  c.Scale(x_max_ - x_min_, 1, z_max_ - z_min_);
-  c.PushTransform();
-  c.Scale(1, 0.01f, 1);
-  c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBox));
-  c.PopTransform();
-  c.Translate(-0.5f + 0.5f * cell_width, 0, -0.5f + 0.5f * cell_height);
-  for (int x = 0; x < grid_width_; x++) {
-    for (int z = 0; z < grid_height_; z++) {
-      int cell_index = z * grid_width_ + x;
-      assert(cell_index >= 0 && cell_index < static_cast<int>(glow_.size()));
-      if (glow_[cell_index]) {
-        c.SetColor(1, 1, 1, 0.2f);
-      } else {
-        c.SetColor(0, 0, 1, 0.2f);
-      }
-      c.PushTransform();
-      c.Translate(static_cast<float>(x) / static_cast<float>(grid_width_),
-                  cells_[cell_index].height_confirmed_collide_,
-                  static_cast<float>(z) / static_cast<float>(grid_height_));
-      c.Scale(0.95f * cell_width, 0.01f, 0.95f * cell_height);
+  {
+    auto xf = c.ScopedTransform();
+    c.Translate((x_min_ + x_max_) * 0.5f, 0, (z_min_ + z_max_) * 0.5f);
+    c.Scale(x_max_ - x_min_, 1, z_max_ - z_min_);
+    {
+      auto xf = c.ScopedTransform();
+      c.Scale(1, 0.01f, 1);
       c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBox));
-      c.PopTransform();
-      if (glow_[cell_index]) {
-        c.SetColor(1, 1, 1, 0.2f);
-      } else {
-        c.SetColor(1, 0, 0, 0.2f);
+    }
+    c.Translate(-0.5f + 0.5f * cell_width, 0, -0.5f + 0.5f * cell_height);
+    for (int x = 0; x < grid_width_; x++) {
+      for (int z = 0; z < grid_height_; z++) {
+        int cell_index = z * grid_width_ + x;
+        assert(cell_index >= 0 && cell_index < static_cast<int>(glow_.size()));
+        if (glow_[cell_index]) {
+          c.SetColor(1, 1, 1, 0.2f);
+        } else {
+          c.SetColor(0, 0, 1, 0.2f);
+        }
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(static_cast<float>(x) / static_cast<float>(grid_width_),
+                      cells_[cell_index].height_confirmed_collide_,
+                      static_cast<float>(z) / static_cast<float>(grid_height_));
+          c.Scale(0.95f * cell_width, 0.01f, 0.95f * cell_height);
+          c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBox));
+        }
+        if (glow_[cell_index]) {
+          c.SetColor(1, 1, 1, 0.2f);
+        } else {
+          c.SetColor(1, 0, 0, 0.2f);
+        }
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(static_cast<float>(x) / static_cast<float>(grid_width_),
+                      cells_[cell_index].height_confirmed_empty_,
+                      static_cast<float>(z) / static_cast<float>(grid_height_));
+          c.Scale(0.95f * cell_width, 0.01f, 0.95f * cell_height);
+          c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBox));
+        }
+        glow_[cell_index] = 0;
       }
-      c.PushTransform();
-      c.Translate(static_cast<float>(x) / static_cast<float>(grid_width_),
-                  cells_[cell_index].height_confirmed_empty_,
-                  static_cast<float>(z) / static_cast<float>(grid_height_));
-      c.Scale(0.95f * cell_width, 0.01f, 0.95f * cell_height);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBox));
-      c.PopTransform();
-      glow_[cell_index] = 0;
     }
   }
-  c.PopTransform();
   c.Submit();
 
   if (explicit_bool(false)) {
@@ -79,47 +83,54 @@ void CollisionCache::Draw(FrameDef* frame_def) {
     c2.SetColor(1, 0, 0, 1.0f);
     float cell_width2 = (1.0f / static_cast<float>(grid_width_));
     float cell_height2 = (1.0f / static_cast<float>(grid_height_));
-    c2.PushTransform();
-    c2.Translate((x_min_ + x_max_) * 0.5f, 0, (z_min_ + z_max_) * 0.5f);
-    c2.Scale(x_max_ - x_min_, 1, z_max_ - z_min_);
-    c2.PushTransform();
-    c2.Scale(1, 0.01f, 1);
-    c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBox));
-    c2.PopTransform();
-    c2.Translate(-0.5f + 0.5f * cell_width2, 0, -0.5f + 0.5f * cell_height2);
-    for (int x = 0; x < grid_width_; x++) {
-      for (int z = 0; z < grid_height_; z++) {
-        int cell_index = z * grid_width_ + x;
-        assert(cell_index >= 0 && cell_index < static_cast<int>(glow_.size()));
-        if (glow_[cell_index]) {
-          c2.SetColor(1, 1, 1, 0.2f);
-        } else {
-          c2.SetColor(1, 0, 0, 0.2f);
-        }
-        c2.PushTransform();
-        c2.Translate(static_cast<float>(x) / static_cast<float>(grid_width_),
-                     cells_[cell_index].height_confirmed_empty_,
-                     static_cast<float>(z) / static_cast<float>(grid_height_));
-        c2.Scale(0.95f * cell_width2, 0.01f, 0.95f * cell_height2);
-        c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBox));
-        c2.PopTransform();
-        if (glow_[cell_index]) {
-          c2.SetColor(1, 1, 1, 0.2f);
-        } else {
-          c2.SetColor(0, 0, 1, 0.2f);
-        }
-        c2.PushTransform();
-        c2.Translate(static_cast<float>(x) / static_cast<float>(grid_width_),
-                     cells_[cell_index].height_confirmed_collide_,
-                     static_cast<float>(z) / static_cast<float>(grid_height_));
-        c2.Scale(0.95f * cell_width2, 0.01f, 0.95f * cell_height2);
-        c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBox));
-        c2.PopTransform();
+    {
+      auto xf = c2.ScopedTransform();
 
-        glow_[cell_index] = 0;
+      c2.Translate((x_min_ + x_max_) * 0.5f, 0, (z_min_ + z_max_) * 0.5f);
+      c2.Scale(x_max_ - x_min_, 1, z_max_ - z_min_);
+      {
+        auto xf = c2.ScopedTransform();
+        c2.Scale(1, 0.01f, 1);
+        c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBox));
+      }
+      c2.Translate(-0.5f + 0.5f * cell_width2, 0, -0.5f + 0.5f * cell_height2);
+      for (int x = 0; x < grid_width_; x++) {
+        for (int z = 0; z < grid_height_; z++) {
+          int cell_index = z * grid_width_ + x;
+          assert(cell_index >= 0
+                 && cell_index < static_cast<int>(glow_.size()));
+          if (glow_[cell_index]) {
+            c2.SetColor(1, 1, 1, 0.2f);
+          } else {
+            c2.SetColor(1, 0, 0, 0.2f);
+          }
+          {
+            auto xf = c2.ScopedTransform();
+            c2.Translate(
+                static_cast<float>(x) / static_cast<float>(grid_width_),
+                cells_[cell_index].height_confirmed_empty_,
+                static_cast<float>(z) / static_cast<float>(grid_height_));
+            c2.Scale(0.95f * cell_width2, 0.01f, 0.95f * cell_height2);
+            c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBox));
+          }
+          if (glow_[cell_index]) {
+            c2.SetColor(1, 1, 1, 0.2f);
+          } else {
+            c2.SetColor(0, 0, 1, 0.2f);
+          }
+          {
+            auto xf = c2.ScopedTransform();
+            c2.Translate(
+                static_cast<float>(x) / static_cast<float>(grid_width_),
+                cells_[cell_index].height_confirmed_collide_,
+                static_cast<float>(z) / static_cast<float>(grid_height_));
+            c2.Scale(0.95f * cell_width2, 0.01f, 0.95f * cell_height2);
+            c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBox));
+          }
+          glow_[cell_index] = 0;
+        }
       }
     }
-    c2.PopTransform();
     c2.Submit();
   }
 }

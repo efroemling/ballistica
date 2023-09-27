@@ -7,7 +7,7 @@
 
 namespace ballistica::base {
 
-// standard buffer for indices
+// Standard buffer for indices.
 class MeshIndexBuffer32 : public MeshBuffer<uint32_t> {
   using MeshBuffer::MeshBuffer;
 };

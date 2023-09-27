@@ -87,11 +87,12 @@ void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.SetPremultiplied(true);
     c.SetColor(0.25f * m, 0.3f * m, 0, 0.3f * m);
     c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kGlow));
-    c.PushTransform();
-    c.Translate(highlight_center_x_, highlight_center_y_);
-    c.Scale(highlight_width_, highlight_height_);
-    c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage4x1));
-    c.PopTransform();
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(highlight_center_x_, highlight_center_y_);
+      c.Scale(highlight_width_, highlight_height_);
+      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage4x1));
+    }
     c.Submit();
   }
 
@@ -131,14 +132,15 @@ void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.SetColor(glow_amt * color_r_, glow_amt * color_g_, glow_amt * color_b_,
                  1);
       c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kUIAtlas));
-      c.PushTransform();
-      c.Translate(box_center_x_ + extra_offs_x, box_center_y_ + extra_offs_y,
-                  0.1f);
-      c.Scale(box_width_, box_height_, 0.4f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(
-          draw_transparent ? base::SysMeshID::kButtonSmallTransparent
-                           : base::SysMeshID::kButtonSmallOpaque));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(box_center_x_ + extra_offs_x, box_center_y_ + extra_offs_y,
+                    0.1f);
+        c.Scale(box_width_, box_height_, 0.4f);
+        c.DrawMeshAsset(g_base->assets->SysMesh(
+            draw_transparent ? base::SysMeshID::kButtonSmallTransparent
+                             : base::SysMeshID::kButtonSmallOpaque));
+      }
       c.Submit();
     }
 
@@ -179,22 +181,22 @@ void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       } else {
         c.SetColor(1.0f * glow_amt, 0.6f * glow_amt, 0, 1);
       }
-      c.PushTransform();
-
-      if (is_radio_button_) {
-        c.Translate(check_center_x_ + 1 + 3.0f * extra_offs_x,
-                    check_center_y_ + 2 + 3.0f * extra_offs_y, 0.5f);
-        c.Scale(check_width_ * 0.45f, check_height_ * 0.45f, 0.5f);
-        c.Translate(-0.17f, -0.17f, 0.5f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
-      } else {
-        c.Translate(check_center_x_ + 3.0f * extra_offs_x,
-                    check_center_y_ + 3.0f * extra_offs_y, 0.5f);
-        c.Scale(check_width_, check_height_, 0.5f);
-        c.DrawMeshAsset(
-            g_base->assets->SysMesh(base::SysMeshID::kCheckTransparent));
+      {
+        auto xf = c.ScopedTransform();
+        if (is_radio_button_) {
+          c.Translate(check_center_x_ + 1 + 3.0f * extra_offs_x,
+                      check_center_y_ + 2 + 3.0f * extra_offs_y, 0.5f);
+          c.Scale(check_width_ * 0.45f, check_height_ * 0.45f, 0.5f);
+          c.Translate(-0.17f, -0.17f, 0.5f);
+          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+        } else {
+          c.Translate(check_center_x_ + 3.0f * extra_offs_x,
+                      check_center_y_ + 3.0f * extra_offs_y, 0.5f);
+          c.Scale(check_width_, check_height_, 0.5f);
+          c.DrawMeshAsset(
+              g_base->assets->SysMesh(base::SysMeshID::kCheckTransparent));
+        }
       }
-      c.PopTransform();
       c.Submit();
     }
   }
@@ -202,15 +204,16 @@ void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // Draw our text in z depth 0.5f to 1.
   base::EmptyComponent c(pass);
   c.SetTransparent(draw_transparent);
-  c.PushTransform();
-  c.Translate(2 * box_padding_ + box_size_ + 10, 0, 0.5f);
-  c.Scale(1, 1, 0.5f);
-  c.Submit();
-  float cs = glow_amt;
-  text_.set_color(cs * text_color_r_, cs * text_color_g_, cs * text_color_b_,
-                  text_color_a_);
-  text_.Draw(pass, draw_transparent);
-  c.PopTransform();
+  {
+    auto xf = c.ScopedTransform();
+    c.Translate(2 * box_padding_ + box_size_ + 10, 0, 0.5f);
+    c.Scale(1, 1, 0.5f);
+    c.Submit();
+    float cs = glow_amt;
+    text_.set_color(cs * text_color_r_, cs * text_color_g_, cs * text_color_b_,
+                    text_color_a_);
+    text_.Draw(pass, draw_transparent);
+  }
   c.Submit();
 }
 

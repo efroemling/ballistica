@@ -400,7 +400,7 @@ class Server:
         """Handle timeouts, updating port file timestamp, etc."""
 
         start_time = time.monotonic()
-        abs_timeout_secs = 60 * 5
+
         idle_secs = 0
         idle_buffer = 5
 
@@ -454,7 +454,11 @@ class Server:
                     )
                 raise IdleError()
 
-            if since_start > abs_timeout_secs:
+            # No longer limiting command duration; seems like that's not
+            # gonna do anything helpful at this point aside from break legit
+            # long commands.
+            abs_timeout_secs = 60 * 5
+            if since_start > abs_timeout_secs and bool(False):
                 raise CleanError(
                     f'pcommandbatch server {self._instance}'
                     f' (pid {self._pid}): max'

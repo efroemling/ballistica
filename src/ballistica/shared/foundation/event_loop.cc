@@ -22,11 +22,12 @@ EventLoop::EventLoop(EventLoopID identifier_in, ThreadSource source)
     case ThreadSource::kCreate: {
       // IMPORTANT: We grab this lock *before* kicking off our thread, and
       // we hold it until we're actively listening for the completion
-      // notification. The new thread also grabs the lock before notifying
-      // us, which ensures that we've reached the waiting state before the
-      // notification happens. Otherwise it is possible for them to push out
-      // a notification before we start waiting for it, which means we hang
-      // when we do start listening and nothing comes in.
+      // notification. The new thread waits until it can grab the lock
+      // before notifying us of its completion, which ensures that we've
+      // reached the waiting state before that notification arrives.
+      // Otherwise it is possible for them to push out a notification
+      // *before* we start waiting for it, which means we hang when we do
+      // start listening and nothing comes in.
       std::unique_lock lock(client_listener_mutex_);
 
       int (*func)(void*);
@@ -90,19 +91,8 @@ EventLoop::EventLoop(EventLoopID identifier_in, ThreadSource source)
 
       break;
     }
-    case ThreadSource::kWrapMain: {
-      // We've got no thread of our own to launch
-      // so we run our setup stuff right here instead of off in some.
-      assert(std::this_thread::get_id() == g_core->main_thread_id);
-      thread_id_ = std::this_thread::get_id();
-
-      // Set our own thread-id-to-name mapping.
-      SetInternalThreadName_("main");
-
-      // Hmmm we might want to set our OS thread name here,
-      // as we do for other threads? (SetCurrentThreadName).
-      // However on linux that winds up being what we see in top/etc
-      // so maybe shouldn't.
+    case ThreadSource::kWrapCurrent: {
+      BootstrapThread_();
       break;
     }
   }
@@ -344,57 +334,65 @@ void EventLoop::GetThreadMessages_(std::list<ThreadMessage_>* messages) {
   }
 }
 
+void EventLoop::BootstrapThread_() {
+  assert(!bootstrapped_);
+  thread_id_ = std::this_thread::get_id();
+  const char* name;
+  const char* id_string;
+
+  switch (identifier_) {
+    case EventLoopID::kLogic:
+      name = "logic";
+      id_string = "ballistica logic";
+      break;
+    case EventLoopID::kStdin:
+      name = "stdin";
+      id_string = "ballistica stdin";
+      break;
+    case EventLoopID::kAssets:
+      name = "assets";
+      id_string = "ballistica assets";
+      break;
+    case EventLoopID::kFileOut:
+      name = "fileout";
+      id_string = "ballistica file-out";
+      break;
+    case EventLoopID::kMain:
+      name = "main";
+      id_string = "ballistica main";
+      break;
+    case EventLoopID::kAudio:
+      name = "audio";
+      id_string = "ballistica audio";
+      break;
+    case EventLoopID::kBGDynamics:
+      name = "bgdynamics";
+      id_string = "ballistica bg-dynamics";
+      break;
+    case EventLoopID::kNetworkWrite:
+      name = "networkwrite";
+      id_string = "ballistica network writing";
+      break;
+    default:
+      throw Exception();
+  }
+  assert(name && id_string);
+  SetInternalThreadName_(name);
+
+  // Note: we currently don't do this for our main thread because it
+  // changes the process name we see in top/etc. Should look into that.
+  if (identifier_ != EventLoopID::kMain) {
+    g_core->platform->SetCurrentThreadName(id_string);
+  }
+  bootstrapped_ = true;
+}
+
 auto EventLoop::ThreadMain_() -> int {
   assert(g_core);
   try {
     assert(source_ == ThreadSource::kCreate);
-    thread_id_ = std::this_thread::get_id();
-    const char* name;
-    const char* id_string;
 
-    switch (identifier_) {
-      case EventLoopID::kLogic:
-        name = "logic";
-        id_string = "ballistica logic";
-        break;
-      case EventLoopID::kStdin:
-        name = "stdin";
-        id_string = "ballistica stdin";
-        break;
-      case EventLoopID::kAssets:
-        name = "assets";
-        id_string = "ballistica assets";
-        break;
-      case EventLoopID::kFileOut:
-        name = "fileout";
-        id_string = "ballistica file-out";
-        break;
-      case EventLoopID::kMain:
-        name = "main";
-        id_string = "ballistica main";
-        break;
-      case EventLoopID::kAudio:
-        name = "audio";
-        id_string = "ballistica audio";
-        break;
-      case EventLoopID::kBGDynamics:
-        name = "bgdynamics";
-        id_string = "ballistica bg-dynamics";
-        break;
-      case EventLoopID::kNetworkWrite:
-        name = "networkwrite";
-        id_string = "ballistica network writing";
-        break;
-      default:
-        throw Exception();
-    }
-    assert(name && id_string);
-    SetInternalThreadName_(name);
-    g_core->platform->SetCurrentThreadName(id_string);
-
-    // Mark ourself as bootstrapped and signal listeners so
-    // anyone waiting for us to spin up can move along.
-    bootstrapped_ = true;
+    BootstrapThread_();
 
     {
       // Momentarily grab this lock. This pauses if need be until whoever
@@ -450,12 +448,7 @@ void EventLoop::SetAcquiresPythonGIL() {
 }
 
 // Explicitly kill the main thread.
-void EventLoop::Quit() {
-  assert(source_ == ThreadSource::kWrapMain);
-  if (source_ == ThreadSource::kWrapMain) {
-    done_ = true;
-  }
-}
+void EventLoop::Exit() { done_ = true; }
 
 EventLoop::~EventLoop() = default;
 
@@ -663,7 +656,7 @@ void EventLoop::RunPendingRunnables_() {
   runnables_.swap(runnables);
   bool do_notify_listeners{};
   for (auto&& i : runnables) {
-    i.first->Run();
+    i.first->RunAndLogErrors();
     delete i.first;
 
     // If this runnable wanted to be flagged when done, set its flag
@@ -687,13 +680,13 @@ void EventLoop::RunPendingRunnables_() {
 
 void EventLoop::RunPauseCallbacks_() {
   for (Runnable* i : pause_callbacks_) {
-    i->Run();
+    i->RunAndLogErrors();
   }
 }
 
 void EventLoop::RunResumeCallbacks_() {
   for (Runnable* i : resume_callbacks_) {
-    i->Run();
+    i->RunAndLogErrors();
   }
 }
 

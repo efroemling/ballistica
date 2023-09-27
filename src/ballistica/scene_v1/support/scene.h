@@ -41,7 +41,7 @@ class Scene : public Object {
   }
   auto in_step() const -> bool { return in_step_; }
   void SetMapBounds(float x, float y, float z, float X, float Y, float Z);
-  void ScreenSizeChanged();
+  void OnScreenSizeChange();
   void LanguageChanged();
   void GraphicsQualityChanged(base::GraphicsQuality q);
   auto out_of_bounds_nodes() -> const std::vector<Object::WeakRef<Node> >& {

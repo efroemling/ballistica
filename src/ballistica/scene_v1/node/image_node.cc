@@ -376,13 +376,16 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
     }
     c.SetMaskTexture(mask_texture_.Exists() ? mask_texture_->texture_data()
                                             : nullptr);
-    c.PushTransform();
-    c.Translate(fin_center_x, fin_center_y,
-                vr ? vr_depth_ : g_base->graphics->overlay_node_z_depth());
-    if (rotate_ != 0.0f) c.Rotate(rotate_, 0, 0, 1);
-    c.Scale(fin_width, fin_height, fin_width);
-    c.DrawMeshAsset(mesh_opaque_used);
-    c.PopTransform();
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(fin_center_x, fin_center_y,
+                  vr ? vr_depth_ : g_base->graphics->overlay_node_z_depth());
+      if (rotate_ != 0.0f) {
+        c.Rotate(rotate_, 0, 0, 1);
+      }
+      c.Scale(fin_width, fin_height, fin_width);
+      c.DrawMeshAsset(mesh_opaque_used);
+    }
     c.Submit();
   }
   // Transparent portion.
@@ -399,13 +402,16 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
     }
     c.SetMaskTexture(mask_texture_.Exists() ? mask_texture_->texture_data()
                                             : nullptr);
-    c.PushTransform();
-    c.Translate(fin_center_x, fin_center_y,
-                vr ? vr_depth_ : g_base->graphics->overlay_node_z_depth());
-    if (rotate_ != 0.0f) c.Rotate(rotate_, 0, 0, 1);
-    c.Scale(fin_width, fin_height, fin_width);
-    c.DrawMeshAsset(mesh_transparent_used);
-    c.PopTransform();
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(fin_center_x, fin_center_y,
+                  vr ? vr_depth_ : g_base->graphics->overlay_node_z_depth());
+      if (rotate_ != 0.0f) {
+        c.Rotate(rotate_, 0, 0, 1);
+      }
+      c.Scale(fin_width, fin_height, fin_width);
+      c.DrawMeshAsset(mesh_transparent_used);
+    }
     c.Submit();
   }
 }

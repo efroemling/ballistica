@@ -870,11 +870,11 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
 
 ClientSession::~ClientSession() = default;
 
-void ClientSession::ScreenSizeChanged() {
+void ClientSession::OnScreenSizeChange() {
   // Let all our scenes know.
   for (auto&& i : scenes_) {
     if (Scene* sg = i.Get()) {
-      sg->ScreenSizeChanged();
+      sg->OnScreenSizeChange();
     }
   }
 }

@@ -111,11 +111,26 @@ void CorePython::InitPython() {
     // sys.path *after* things are up and running). Though nowadays we want
     // to use abs paths anyway to avoid needing chdir so its a moot point.
     if (g_buildconfig.ostype_windows()) {
-      // Windows Python looks for Lib and DLLs dirs by default, along with
-      // some others, but we want to be more explicit in limiting to these. It
-      // also seems that windows Python's paths can be incorrect if we're in
-      // strange dirs such as \\wsl$\Ubuntu-18.04\ that we get with WSL build
-      // setups.
+      // On most platforms we stuff abs paths in here so things can work
+      // from wherever. However on Windows we need to be running from where
+      // this stuff lives so we pick up various .dlls that live there/etc.
+      // So let's make some clear noise if we don't seem to be there.
+      // (otherwise it leads to cryptic Python init messages about locale
+      // module not being found/etc. which is not very helpful).
+      if (!g_core->platform->FilePathExists("DLLs")
+          || (!g_core->platform->FilePathExists("lib"))
+          || (!g_core->platform->FilePathExists("ba_data"))) {
+        FatalError(
+            "Ballistica seems to be running from the wrong "
+            "directory; our stuff isn't here (ba_data, etc.).\nCWD is "
+            + g_core->platform->GetCWD());
+      }
+
+      // Windows Python by default looks for Lib and DLLs dirs, along with
+      // some others, but we want to be more explicit in limiting to those
+      // two. It also seems that windows Python's paths can be incorrect if
+      // we're in strange dirs such as \\wsl$\Ubuntu-18.04\ that we get with
+      // WSL build setups.
 
       // NOTE: Python for windows actually comes with 'Lib', not 'lib', but
       // it seems the interpreter defaults point to ./lib (as of 3.8.5).
@@ -146,6 +161,7 @@ void CorePython::InitPython() {
   // Init Python.
   CheckPyInitStatus("Py_InitializeFromConfig",
                     Py_InitializeFromConfig(&config));
+
   PyConfig_Clear(&config);
 }
 

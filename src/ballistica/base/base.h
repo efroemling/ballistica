@@ -14,7 +14,6 @@
 // It predeclares our feature-set's various types and globals and other
 // bits.
 
-// Predeclared types from other feature sets that we use.
 namespace ballistica::core {
 class CoreConfig;
 class CoreFeatureSet;
@@ -58,7 +57,6 @@ class Context;
 class ContextRef;
 class DataAsset;
 class FrameDef;
-class GLContext;
 class Graphics;
 class GraphicsServer;
 class Huffman;
@@ -176,6 +174,8 @@ enum class GraphicsQuality {
   /// Graphics with full post-processing.
   kHigher,
 };
+
+enum class VSyncRequest { kNever, kAlways, kAuto };
 
 /// Requests for exact or auto graphics quality values.
 enum class GraphicsQualityRequest {
@@ -624,13 +624,13 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// Called when app shutdown process completes. Sets app to exit.
   void OnAppShutdownComplete();
 
-  auto AppManagesEventLoop() -> bool override;
+  auto AppManagesMainThreadEventLoop() -> bool override;
 
   /// Run app event loop to completion (only applies to flavors which manage
   /// their own event loop).
   void RunAppToCompletion() override;
 
-  void PrimeAppMainThreadEventPump() override;
+  // void PrimeAppMainThreadEventPump() override;
 
   auto CurrentContext() -> const ContextRef& {
     assert(InLogicThread());  // Up to caller to ensure this.

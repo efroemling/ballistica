@@ -2,6 +2,7 @@
 
 #include "ballistica/base/python/methods/python_methods_graphics.h"
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
@@ -590,36 +591,9 @@ static PyMethodDef PyAddCleanFrameCallbackDef = {
     "without elongating any current progress-bar-load.",
 };
 
-// --------------------------- has_gamma_control -------------------------------
-
-static auto PyHasGammaControl(PyObject* self, PyObject* args) -> PyObject* {
-  BA_PYTHON_TRY;
-  // phasing this out; our old non-sdl2 mac has gamma controls but nothing newer
-  // does...
-#if BA_OSTYPE_MACOS && !BA_SDL2_BUILD
-  Py_RETURN_TRUE;
-#else
-  Py_RETURN_FALSE;
-#endif
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyHasGammaControlDef = {
-    "has_gamma_control",  // name
-    PyHasGammaControl,    // method
-    METH_VARARGS,         // flags
-
-    "has_gamma_control() -> bool\n"
-    "\n"
-    "(internal)\n"
-    "\n"
-    "Returns whether the system can adjust overall screen gamma)",
-};
-
 // ------------------------- get_display_resolution ----------------------------
 
-static auto PyGetDisplayResolution(PyObject* self, PyObject* args)
-    -> PyObject* {
+static auto PyGetDisplayResolution(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   int x = 0;
   int y = 0;
@@ -633,9 +607,9 @@ static auto PyGetDisplayResolution(PyObject* self, PyObject* args)
 }
 
 static PyMethodDef PyGetDisplayResolutionDef = {
-    "get_display_resolution",  // name
-    PyGetDisplayResolution,    // method
-    METH_VARARGS,              // flags
+    "get_display_resolution",             // name
+    (PyCFunction)PyGetDisplayResolution,  // method
+    METH_NOARGS,                          // flags
 
     "get_display_resolution() -> tuple[int, int] | None\n"
     "\n"
@@ -643,6 +617,72 @@ static PyMethodDef PyGetDisplayResolutionDef = {
     "\n"
     "Return the currently selected display resolution for fullscreen\n"
     "display. Returns None if resolutions cannot be directly set.",
+};
+
+// ------------------------- can_toggle_fullscreen ----------------------------
+
+static auto PyCanToggleFullscreen(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  if (g_base->app_adapter->CanToggleFullscreen()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyCanToggleFullscreenDef = {
+    "can_toggle_fullscreen",             // name
+    (PyCFunction)PyCanToggleFullscreen,  // method
+    METH_NOARGS,                         // flags
+
+    "can_toggle_fullscreen() -> bool\n"
+    "\n"
+    "(internal)\n",
+};
+
+// ----------------------------- supports_vsync --------------------------------
+
+static auto PySupportsVSync(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  if (g_base->app_adapter->SupportsVSync()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySupportsVSyncDef = {
+    "supports_vsync",              // name
+    (PyCFunction)PySupportsVSync,  // method
+    METH_NOARGS,                   // flags
+
+    "supports_vsync() -> bool\n"
+    "\n"
+    "(internal)\n",
+};
+
+// --------------------------- supports_max_fps --------------------------------
+
+static auto PySupportsMaxFPS(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  if (g_base->app_adapter->SupportsMaxFPS()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySupportsMaxFPSDef = {
+    "supports_max_fps",             // name
+    (PyCFunction)PySupportsMaxFPS,  // method
+    METH_NOARGS,                    // flags
+
+    "supports_max_fps() -> bool\n"
+    "\n"
+    "(internal)\n",
 };
 
 // --------------------------- show_progress_bar -------------------------------
@@ -678,7 +718,6 @@ auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
       PySetCameraPositionDef,
       PySetCameraTargetDef,
       PySetCameraManualDef,
-      PyHasGammaControlDef,
       PyAddCleanFrameCallbackDef,
       PyHaveCharsDef,
       PyFadeScreenDef,
@@ -689,6 +728,9 @@ auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
       PyGetMaxGraphicsQualityDef,
       PySafeColorDef,
       PyCharStrDef,
+      PyCanToggleFullscreenDef,
+      PySupportsVSyncDef,
+      PySupportsMaxFPSDef,
       PyShowProgressBarDef,
   };
 }

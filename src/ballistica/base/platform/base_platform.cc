@@ -16,19 +16,6 @@
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_sys.h"
 
-#if BA_VR_BUILD
-#include "ballistica/base/app_adapter/app_adapter_vr.h"
-#endif
-
-#if BA_HEADLESS_BUILD
-#include "ballistica/base/app_adapter/app_adapter_headless.h"
-#endif
-
-#include "ballistica/base/app_adapter/app_adapter.h"
-#include "ballistica/base/app_adapter/app_adapter_sdl.h"
-#include "ballistica/base/graphics/graphics.h"
-#include "ballistica/base/graphics/graphics_vr.h"
-
 // ------------------------- PLATFORM SELECTION --------------------------------
 
 // This ugly chunk of macros simply pulls in the correct platform class header
@@ -89,7 +76,7 @@
 
 namespace ballistica::base {
 
-auto BasePlatform::CreatePlatform() -> BasePlatform* {
+auto BasePlatform::Create() -> BasePlatform* {
   auto platform = new BA_PLATFORM_CLASS();
   platform->PostInit();
   assert(platform->ran_base_post_init_);
@@ -105,54 +92,14 @@ void BasePlatform::PostInit() {
 
 BasePlatform::~BasePlatform() = default;
 
-auto BasePlatform::CreateAppAdapter() -> AppAdapter* {
-  assert(g_core);
-
-// TEMP - need to init sdl on our legacy mac build even though its not
-// technically an SDL app. Kill this once the old mac build is gone.
-#if BA_LEGACY_MACOS_BUILD
-  AppAdapterSDL::InitSDL();
-#endif
-
-  AppAdapter* app_adapter{};
-
-#if BA_HEADLESS_BUILD
-  app_adapter = new AppAdapterHeadless();
-#elif BA_RIFT_BUILD
-  // Rift build can spin up in either VR or regular mode.
-  if (g_core->vr_mode) {
-    app_adapter = new AppAdapterVR();
-  } else {
-    app_adapter = new AppAdapterSDL();
-  }
-#elif BA_CARDBOARD_BUILD
-  app_adapter = new AppAdapterVR();
-#elif BA_SDL_BUILD
-  app_adapter = new AppAdapterSDL();
-#else
-  app_adapter = new AppAdapter();
-#endif
-
-  assert(app_adapter);
-  return app_adapter;
-}
-
-auto BasePlatform::CreateGraphics() -> Graphics* {
-#if BA_VR_BUILD
-  return new GraphicsVR();
-#else
-  return new Graphics();
-#endif
-}
-
 auto BasePlatform::GetKeyName(int keycode) -> std::string {
   // On our actual SDL platforms we're trying to be *pure* sdl so
   // call their function for this. Otherwise we call our own version
   // of it which is basically the same thing (at least for now).
-#if BA_SDL_BUILD && !BA_MINSDL_BUILD
-  return SDL_GetKeyName(static_cast<SDL_Keycode>(keycode));
-#elif BA_MINSDL_BUILD
+#if BA_MINSDL_BUILD
   return MinSDL_GetKeyName(keycode);
+#elif BA_SDL_BUILD
+  return SDL_GetKeyName(static_cast<SDL_Keycode>(keycode));
 #else
   Log(LogLevel::kWarn, "CorePlatform::GetKeyName not implemented here.");
   return "?";
@@ -373,6 +320,13 @@ void BasePlatform::DoInvokeStringEditor(const std::string& title,
                                         const std::string& value,
                                         std::optional<int> max_chars) {
   Log(LogLevel::kError, "FIXME: DoInvokeStringEditor() unimplemented");
+}
+
+void BasePlatform::SetHardwareCursorVisible(bool visible) {
+// FIXME: Move/forward this to AppAdapter.
+#if BA_SDL_BUILD
+  SDL_ShowCursor(visible ? SDL_ENABLE : SDL_DISABLE);
+#endif
 }
 
 }  // namespace ballistica::base

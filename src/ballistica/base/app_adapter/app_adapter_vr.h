@@ -19,8 +19,10 @@ class AppAdapterVR : public AppAdapter {
     float r2 = 0.0f;
   };
 
+  auto ManagesMainThreadEventLoop() const -> bool override;
+
   /// Return g_app as a AppAdapterVR. (assumes it actually is one).
-  static auto get() -> AppAdapterVR* {
+  static auto Get() -> AppAdapterVR* {
     assert(g_base != nullptr && g_base->app_adapter != nullptr);
     assert(dynamic_cast<AppAdapterVR*>(g_base->app_adapter)
            == static_cast<AppAdapterVR*>(g_base->app_adapter));
@@ -38,6 +40,11 @@ class AppAdapterVR : public AppAdapter {
   void VRDrawEye(int eye, float yaw, float pitch, float roll, float tan_l,
                  float tan_r, float tan_b, float tan_t, float eye_x,
                  float eye_y, float eye_z, int viewport_x, int viewport_y);
+
+ protected:
+  void DoPushMainThreadRunnable(Runnable* runnable) override;
+  void RunMainThreadEventLoopToCompletion() override;
+  void DoExitMainThreadEventLoop() override;
 
  private:
   FrameDef* vr_render_frame_def_{};

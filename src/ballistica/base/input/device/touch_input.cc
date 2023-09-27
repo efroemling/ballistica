@@ -448,11 +448,12 @@ void TouchInput::Draw(FrameDef* frame_def) {
       float y_offs =
           height * (-0.1f - d_pad_default_frac_y_) * (1.0f - presence_);
 
-      c.PushTransform();
-      c.Translate(d_pad_base_x_ + x_offs, d_pad_base_y_ + y_offs, kDrawDepth);
-      c.Scale(sc2, sc2);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(d_pad_base_x_ + x_offs, d_pad_base_y_ + y_offs, kDrawDepth);
+        c.Scale(sc2, sc2);
+        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+      }
 
       if (movement_control_type_ == MovementControlType::kJoystick) {
         float val;
@@ -462,11 +463,12 @@ void TouchInput::Draw(FrameDef* frame_def) {
           val = 0.35f;
         }
         c.SetColor(0.0f, 0.0f, 0.0f, val);
-        c.PushTransform();
-        c.Translate(d_pad_x_ + x_offs, d_pad_y_ + y_offs, kDrawDepth);
-        c.Scale(sc_move * 0.5f, sc_move * 0.5f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
-        c.PopTransform();
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(d_pad_x_ + x_offs, d_pad_y_ + y_offs, kDrawDepth);
+          c.Scale(sc_move * 0.5f, sc_move * 0.5f);
+          c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+        }
       }
     }
 
@@ -481,15 +483,16 @@ void TouchInput::Draw(FrameDef* frame_def) {
       } else {
         c.SetColor(1.0f, 1.0f, 1.0f, 1.0f);
       }
-      c.PushTransform();
-      float x_offs =
-          width * (1.1f - buttons_default_frac_x_) * (1.0f - presence_);
-      float y_offs =
-          height * (-0.1f - buttons_default_frac_y_) * (1.0f - presence_);
-      c.Translate(buttons_x_ + x_offs, buttons_y_ + y_offs, kDrawDepth);
-      c.Scale(sc2, sc2);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        float x_offs =
+            width * (1.1f - buttons_default_frac_x_) * (1.0f - presence_);
+        float y_offs =
+            height * (-0.1f - buttons_default_frac_y_) * (1.0f - presence_);
+        c.Translate(buttons_x_ + x_offs, buttons_y_ + y_offs, kDrawDepth);
+        c.Scale(sc2, sc2);
+        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+      }
     }
     c.Submit();
   }
@@ -573,166 +576,176 @@ void TouchInput::Draw(FrameDef* frame_def) {
     float pop;
     float pop_time{100.0f};
 
-    c.PushTransform();
+    {
+      auto xf = c.ScopedTransform();
 
-    // In swipe mode we draw under our character when possible, and above the
-    // touch otherwise.
-    if (action_control_type_ == ActionControlType::kSwipe) {
-      if (have_player_position) {
-        c.TranslateToProjectedPoint(player_position[0], player_position[1],
-                                    player_position[2]);
-      } else {
-        float s2 = base_controls_scale_ * controls_scale_actions_;
-        c.Translate(buttons_touch_start_x_ - s2 * 50.0f,
-                    buttons_touch_start_y_ + 75.0f + s2 * 50.0f, 0.0f);
+      // In swipe mode we draw under our character when possible, and above the
+      // touch otherwise.
+      if (action_control_type_ == ActionControlType::kSwipe) {
+        if (have_player_position) {
+          c.TranslateToProjectedPoint(player_position[0], player_position[1],
+                                      player_position[2]);
+        } else {
+          float s2 = base_controls_scale_ * controls_scale_actions_;
+          c.Translate(buttons_touch_start_x_ - s2 * 50.0f,
+                      buttons_touch_start_y_ + 75.0f + s2 * 50.0f, 0.0f);
+        }
+      }
+
+      float squash{1.3f};
+      float stretch{1.3f};
+
+      float s_extra{1.0f};
+      if (editing_)
+        s_extra = 0.7f + 0.3f * sinf(static_cast<float>(real_time) * 0.02f);
+
+      // Bomb.
+      was_held =
+          bomb_held_ || (real_time - last_bomb_press_time_ < residual_time);
+      if ((button_fade_ > 0.0f) || bomb_held_ || was_held) {
+        pop = std::max(
+            0.0f, 1.0f
+                      - static_cast<float>(real_time - last_bomb_press_time_)
+                            / pop_time);
+        if (was_held) {
+          c.SetColor(1.5f, 2.0f * pop, 2.0f * pop, 1.0f);
+        } else {
+          c.SetColor(0.65f * s_extra, 0.0f, 0.0f, base_fade * button_fade_);
+        }
+
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(buttons_x_ + button_spread_s + half_b_width + x_offs,
+                      buttons_y_ + y_offs, kDrawDepth);
+          if (bomb_held_) {
+            c.Scale(stretch * b_width, squash * b_width);
+          } else {
+            c.Scale(b_width, b_width);
+          }
+          c.DrawMeshAsset(
+              g_base->assets->SysMesh(SysMeshID::kActionButtonRight));
+        }
+      }
+
+      // Punch.
+      was_held =
+          punch_held_ || (real_time - last_punch_press_time_ < residual_time);
+      if ((button_fade_ > 0.0f) || punch_held_ || was_held) {
+        pop = std::max(
+            0.0f, 1.0f
+                      - static_cast<float>(real_time - last_punch_press_time_)
+                            / pop_time);
+        if (was_held) {
+          c.SetColor(1.3f + 2.0f * pop, 1.3f + 2.0f * pop, 0.0f + 2.0f * pop,
+                     1.0f);
+        } else {
+          c.SetColor(0.9f * s_extra, 0.9f * s_extra, 0.2f * s_extra,
+                     base_fade * button_fade_);
+        }
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(buttons_x_ - button_spread_s - half_b_width + x_offs,
+                      buttons_y_ + y_offs, kDrawDepth);
+          if (punch_held_) {
+            c.Scale(stretch * b_width, squash * b_width);
+          } else {
+            c.Scale(b_width, b_width);
+          }
+          c.DrawMeshAsset(
+              g_base->assets->SysMesh(SysMeshID::kActionButtonLeft));
+        }
+      }
+
+      // Jump.
+      was_held =
+          jump_held_ || (real_time - last_jump_press_time_ < residual_time);
+      if ((button_fade_ > 0.0f) || jump_held_ || was_held) {
+        pop = std::max(
+            0.0f, 1.0f
+                      - static_cast<float>(real_time - last_jump_press_time_)
+                            / pop_time);
+        if (was_held) {
+          c.SetColor(1.8f * pop, 1.2f + 0.9f * pop, 2.0f * pop, 1.0f);
+        } else {
+          c.SetColor(0.0f, 0.8f * s_extra, 0.0f, base_fade * button_fade_);
+        }
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(buttons_x_ + x_offs,
+                      buttons_y_ - button_spread_s - half_b_width + y_offs,
+                      kDrawDepth);
+          if (jump_held_) {
+            c.Scale(squash * b_width, stretch * b_width);
+          } else {
+            c.Scale(b_width, b_width);
+          }
+          c.DrawMeshAsset(
+              g_base->assets->SysMesh(SysMeshID::kActionButtonBottom));
+        }
+      }
+
+      // Pickup.
+      was_held =
+          pickup_held_ || (real_time - last_pickup_press_time_ < residual_time);
+      if ((button_fade_ > 0.0f) || pickup_held_ || was_held) {
+        pop = std::max(
+            0.0f, 1.0f
+                      - static_cast<float>(real_time - last_pickup_press_time_)
+                            / pop_time);
+        if (was_held) {
+          c.SetColor(0.5f + 1.4f * pop, 0.8f + 2.4f * pop, 2.0f + 0.4f * pop,
+                     1.0f);
+        } else {
+          c.SetColor(0.3f * s_extra, 0.65f * s_extra, 1.0f * s_extra,
+                     base_fade * button_fade_);
+        }
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(buttons_x_ + x_offs,
+                      buttons_y_ + button_spread_s + half_b_width + y_offs,
+                      kDrawDepth);
+          if (pickup_held_) {
+            c.Scale(squash * b_width, stretch * b_width);
+          } else {
+            c.Scale(b_width, b_width);
+          }
+          c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kActionButtonTop));
+        }
+      }
+
+      // Center point.
+      if (buttons_touch_ && action_control_type_ == ActionControlType::kSwipe) {
+        c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCircle));
+        c.SetColor(1.0f, 1.0f, 0.0f, 0.8f);
+        {
+          auto xf = c.ScopedTransform();
+
+          // We need to scale this up/down relative to the scale we're drawing
+          // at since we're not drawing in screen space.
+          float diff_x = buttons_touch_x_ - buttons_x_;
+          float diff_y = buttons_touch_y_ - buttons_y_;
+
+          if (have_player_position) {
+            c.Translate(
+                buttons_x_
+                    + 2.3f * world_draw_scale_ * diff_x
+                          / (base_controls_scale_ * controls_scale_actions_)
+                    + x_offs,
+                buttons_y_
+                    + 2.3f * world_draw_scale_ * diff_y
+                          / (base_controls_scale_ * controls_scale_actions_)
+                    + y_offs,
+                kDrawDepth);
+          } else {
+            c.Translate(buttons_x_ + 0.5f * 1.55f * 2.3f * diff_x + x_offs,
+                        buttons_y_ + 0.5f * 1.55f * 2.3f * diff_y + y_offs,
+                        kDrawDepth);
+          }
+          c.Scale(b_width * 0.3f, b_width * 0.3f);
+          c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+        }
       }
     }
-
-    float squash{1.3f};
-    float stretch{1.3f};
-
-    float s_extra{1.0f};
-    if (editing_)
-      s_extra = 0.7f + 0.3f * sinf(static_cast<float>(real_time) * 0.02f);
-
-    // Bomb.
-    was_held =
-        bomb_held_ || (real_time - last_bomb_press_time_ < residual_time);
-    if ((button_fade_ > 0.0f) || bomb_held_ || was_held) {
-      pop = std::max(0.0f,
-                     1.0f
-                         - static_cast<float>(real_time - last_bomb_press_time_)
-                               / pop_time);
-      if (was_held) {
-        c.SetColor(1.5f, 2.0f * pop, 2.0f * pop, 1.0f);
-      } else {
-        c.SetColor(0.65f * s_extra, 0.0f, 0.0f, base_fade * button_fade_);
-      }
-
-      c.PushTransform();
-      c.Translate(buttons_x_ + button_spread_s + half_b_width + x_offs,
-                  buttons_y_ + y_offs, kDrawDepth);
-      if (bomb_held_) {
-        c.Scale(stretch * b_width, squash * b_width);
-      } else {
-        c.Scale(b_width, b_width);
-      }
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kActionButtonRight));
-      c.PopTransform();
-    }
-
-    // Punch.
-    was_held =
-        punch_held_ || (real_time - last_punch_press_time_ < residual_time);
-    if ((button_fade_ > 0.0f) || punch_held_ || was_held) {
-      pop = std::max(
-          0.0f, 1.0f
-                    - static_cast<float>(real_time - last_punch_press_time_)
-                          / pop_time);
-      if (was_held) {
-        c.SetColor(1.3f + 2.0f * pop, 1.3f + 2.0f * pop, 0.0f + 2.0f * pop,
-                   1.0f);
-      } else {
-        c.SetColor(0.9f * s_extra, 0.9f * s_extra, 0.2f * s_extra,
-                   base_fade * button_fade_);
-      }
-      c.PushTransform();
-      c.Translate(buttons_x_ - button_spread_s - half_b_width + x_offs,
-                  buttons_y_ + y_offs, kDrawDepth);
-      if (punch_held_) {
-        c.Scale(stretch * b_width, squash * b_width);
-      } else {
-        c.Scale(b_width, b_width);
-      }
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kActionButtonLeft));
-      c.PopTransform();
-    }
-
-    // Jump.
-    was_held =
-        jump_held_ || (real_time - last_jump_press_time_ < residual_time);
-    if ((button_fade_ > 0.0f) || jump_held_ || was_held) {
-      pop = std::max(0.0f,
-                     1.0f
-                         - static_cast<float>(real_time - last_jump_press_time_)
-                               / pop_time);
-      if (was_held) {
-        c.SetColor(1.8f * pop, 1.2f + 0.9f * pop, 2.0f * pop, 1.0f);
-      } else {
-        c.SetColor(0.0f, 0.8f * s_extra, 0.0f, base_fade * button_fade_);
-      }
-      c.PushTransform();
-      c.Translate(buttons_x_ + x_offs,
-                  buttons_y_ - button_spread_s - half_b_width + y_offs,
-                  kDrawDepth);
-      if (jump_held_) {
-        c.Scale(squash * b_width, stretch * b_width);
-      } else {
-        c.Scale(b_width, b_width);
-      }
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kActionButtonBottom));
-      c.PopTransform();
-    }
-
-    // Pickup.
-    was_held =
-        pickup_held_ || (real_time - last_pickup_press_time_ < residual_time);
-    if ((button_fade_ > 0.0f) || pickup_held_ || was_held) {
-      pop = std::max(
-          0.0f, 1.0f
-                    - static_cast<float>(real_time - last_pickup_press_time_)
-                          / pop_time);
-      if (was_held) {
-        c.SetColor(0.5f + 1.4f * pop, 0.8f + 2.4f * pop, 2.0f + 0.4f * pop,
-                   1.0f);
-      } else {
-        c.SetColor(0.3f * s_extra, 0.65f * s_extra, 1.0f * s_extra,
-                   base_fade * button_fade_);
-      }
-      c.PushTransform();
-      c.Translate(buttons_x_ + x_offs,
-                  buttons_y_ + button_spread_s + half_b_width + y_offs,
-                  kDrawDepth);
-      if (pickup_held_) {
-        c.Scale(squash * b_width, stretch * b_width);
-      } else {
-        c.Scale(b_width, b_width);
-      }
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kActionButtonTop));
-      c.PopTransform();
-    }
-
-    // Center point.
-    if (buttons_touch_ && action_control_type_ == ActionControlType::kSwipe) {
-      c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCircle));
-      c.SetColor(1.0f, 1.0f, 0.0f, 0.8f);
-      c.PushTransform();
-
-      // We need to scale this up/down relative to the scale we're drawing at
-      // since we're not drawing in screen space.
-      float diff_x = buttons_touch_x_ - buttons_x_;
-      float diff_y = buttons_touch_y_ - buttons_y_;
-
-      if (have_player_position) {
-        c.Translate(buttons_x_
-                        + 2.3f * world_draw_scale_ * diff_x
-                              / (base_controls_scale_ * controls_scale_actions_)
-                        + x_offs,
-                    buttons_y_
-                        + 2.3f * world_draw_scale_ * diff_y
-                              / (base_controls_scale_ * controls_scale_actions_)
-                        + y_offs,
-                    kDrawDepth);
-      } else {
-        c.Translate(buttons_x_ + 0.5f * 1.55f * 2.3f * diff_x + x_offs,
-                    buttons_y_ + 0.5f * 1.55f * 2.3f * diff_y + y_offs,
-                    kDrawDepth);
-      }
-      c.Scale(b_width * 0.3f, b_width * 0.3f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
-      c.PopTransform();
-    }
-    c.PopTransform();
   }
   c.Submit();
 
@@ -772,45 +785,47 @@ void TouchInput::Draw(FrameDef* frame_def) {
     c2.SetTexture(g_base->assets->SysTexture(SysTextureID::kArrow));
     Matrix44f orient =
         Matrix44fOrient(d_pad_draw_dir_, Vector3f(0.0f, 1.0f, 0.0f));
-    c2.PushTransform();
+    {
+      auto xf = c2.ScopedTransform();
 
-    // Drawing in the 3d world.
-    if (draw_in_world) {
-      c2.Translate(player_position[0], player_position[1] - 0.5f,
-                   player_position[2]);
+      // Drawing in the 3d world.
+      if (draw_in_world) {
+        c2.Translate(player_position[0], player_position[1] - 0.5f,
+                     player_position[2]);
 
-      // In happy thoughts mode show the arrow on the xy plane instead of xz.
-      if (g_base->graphics->camera()->happy_thoughts_mode()) {
-        c2.Translate(0.0f, 0.5f, 0.0f);
+        // In happy thoughts mode show the arrow on the xy plane instead of xz.
+        if (g_base->graphics->camera()->happy_thoughts_mode()) {
+          c2.Translate(0.0f, 0.5f, 0.0f);
+          c2.Rotate(90.0f, 1.0f, 0.0f, 0.0f);
+        }
+      } else {
+        // Drawing on 2d overlay.
+        float s = base_controls_scale_ * controls_scale_move_;
+        c2.Translate(d_pad_start_x_ + s * 50.0f, d_pad_start_y_ + s * 50.0f,
+                     0.0f);
+        c2.ScaleUniform(s * 50.0f);
         c2.Rotate(90.0f, 1.0f, 0.0f, 0.0f);
       }
-    } else {
-      // Drawing on 2d overlay.
-      float s = base_controls_scale_ * controls_scale_move_;
-      c2.Translate(d_pad_start_x_ + s * 50.0f, d_pad_start_y_ + s * 50.0f,
-                   0.0f);
-      c2.ScaleUniform(s * 50.0f);
-      c2.Rotate(90.0f, 1.0f, 0.0f, 0.0f);
+
+      c2.MultMatrix(orient.m);
+      c2.Rotate(-90.0f, 1.0f, 0.0f, 0.0f);
+
+      c2.ScaleUniform(0.8f);
+
+      {
+        auto xf = c2.ScopedTransform();
+        c2.Translate(0.0f, dist * -0.5f, 0.0f);
+        c2.Scale(0.15f, dist, 0.2f);
+        c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kArrowBack));
+      }
+
+      {
+        auto xf = c2.ScopedTransform();
+        c2.Translate(0.0f, dist * -1.0f - 0.15f, 0.0f);
+        c2.Scale(0.45f, 0.3f, 0.3f);
+        c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kArrowFront));
+      }
     }
-
-    c2.MultMatrix(orient.m);
-    c2.Rotate(-90.0f, 1.0f, 0.0f, 0.0f);
-
-    c2.ScaleUniform(0.8f);
-
-    c2.PushTransform();
-    c2.Translate(0.0f, dist * -0.5f, 0.0f);
-    c2.Scale(0.15f, dist, 0.2f);
-    c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kArrowBack));
-    c2.PopTransform();
-
-    c2.PushTransform();
-    c2.Translate(0.0f, dist * -1.0f - 0.15f, 0.0f);
-    c2.Scale(0.45f, 0.3f, 0.3f);
-    c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kArrowFront));
-    c2.PopTransform();
-
-    c2.PopTransform();
     c2.Submit();
   }
 }

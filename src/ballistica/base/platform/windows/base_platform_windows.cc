@@ -22,9 +22,9 @@ BasePlatformWindows::BasePlatformWindows() {}
 
 void BasePlatformWindows::DoOpenURL(const std::string& url) {
   if (explicit_bool(true)) {
-    // Switching to default implementation with goes through
-    // Python's webbrowser module. If this works well enough we can
-    // kill this override completely.
+    // Switching to the default implementation which goes through Python's
+    // webbrowser module. If this works well enough we can kill this
+    // override completely.
     BasePlatform::DoOpenURL(url);
   } else {
     auto r = reinterpret_cast<intptr_t>(ShellExecute(

@@ -6,9 +6,9 @@
 #include "ballistica/core/core.h"
 
 // FIXME: Clear out conditional stuff.
-#if BA_OSTYPE_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
-#include "ballistica/core/platform/support/min_sdl.h"
-#endif
+// #if BA_OSTYPE_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
+// #include "ballistica/core/platform/support/min_sdl.h"
+// #endif
 
 #if BA_VR_BUILD
 #include "ballistica/base/graphics/graphics_vr.h"
@@ -58,9 +58,9 @@ void Renderer::PreprocessFrameDef(FrameDef* frame_def) {
   UpdateSizesQualitiesAndColors(frame_def);
 
   // Handle a weird gamma reset issue on our legacy mac build (SDL 1.2).
-#if BA_OSTYPE_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
-  HandleFunkyMacGammaIssue(frame_def);
-#endif
+  // #if BA_OSTYPE_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
+  //   HandleFunkyMacGammaIssue(frame_def);
+  // #endif
 
   // In some cases we draw to a lower-res backing buffer instead of native
   // screen res.
@@ -425,7 +425,7 @@ void Renderer::UpdateSizesQualitiesAndColors(FrameDef* frame_def) {
   // If screen-size has changed, handle that.
   if (screen_size_dirty_) {
     msaa_enabled_dirty_ = true;
-    screen_render_target()->ScreenSizeChanged();
+    screen_render_target()->OnScreenSizeChange();
 
     // These render targets are dependent on screen size so they need to be
     // remade.
@@ -459,7 +459,7 @@ void Renderer::UpdateSizesQualitiesAndColors(FrameDef* frame_def) {
   } else {
     set_vignette_outer(frame_def->vignette_outer());
   }
-  UpdateVignetteTex(false);
+  UpdateVignetteTex_(false);
 }
 
 void Renderer::UpdateLightAndShadowBuffers(FrameDef* frame_def) {
@@ -581,7 +581,7 @@ void Renderer::UpdateCameraRenderTargets(FrameDef* frame_def) {
       // If screen size just changed or whatnot,
       // update whether we should do msaa.
       if (msaa_enabled_dirty_) {
-        UpdateMSAAEnabled();
+        UpdateMSAAEnabled_();
         msaa_enabled_dirty_ = false;
       }
 
@@ -612,7 +612,7 @@ void Renderer::UpdatePixelScaleAndBackingBuffer(FrameDef* frame_def) {
   // If our pixel-scale is changing its essentially the same as a resolution
   // change, so we wanna rebuild our light/shadow buffers and all that.
   if (pixel_scale_requested_ != pixel_scale_) {
-    ScreenSizeChanged();
+    OnScreenSizeChange();
   }
 
   // Create or destroy our backing render-target as necessary.
@@ -658,21 +658,22 @@ void Renderer::LoadMedia(FrameDef* frame_def) {
   }
 }
 
-#if BA_OSTYPE_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
-void Renderer::HandleFunkyMacGammaIssue(FrameDef* frame_def) {
-  // FIXME - for some reason, on mac, gamma is getting switched back to
-  //  default about 1 second after a res change, etc...
-  //  so if we're using a non-1.0 gamma, lets keep setting it periodically
-  //  to force the issue
-  millisecs_t t = g_core->GetAppTimeMillisecs();
-  if (screen_gamma_requested_ != screen_gamma_
-      || (t - last_screen_gamma_update_time_ > 300 && screen_gamma_ != 1.0f)) {
-    screen_gamma_ = screen_gamma_requested_;
-    SDL_SetGamma(screen_gamma_, screen_gamma_, screen_gamma_);
-    last_screen_gamma_update_time_ = t;
-  }
-}
-#endif
+// #if BA_OSTYPE_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
+// void Renderer::HandleFunkyMacGammaIssue(FrameDef* frame_def) {
+//   // FIXME - for some reason, on mac, gamma is getting switched back to
+//   //  default about 1 second after a res change, etc...
+//   //  so if we're using a non-1.0 gamma, lets keep setting it periodically
+//   //  to force the issue
+//   millisecs_t t = g_core->GetAppTimeMillisecs();
+//   if (screen_gamma_requested_ != screen_gamma_
+//       || (t - last_screen_gamma_update_time_ > 300 && screen_gamma_ != 1.0f))
+//       {
+//     screen_gamma_ = screen_gamma_requested_;
+//     SDL_SetGamma(screen_gamma_, screen_gamma_, screen_gamma_);
+//     last_screen_gamma_update_time_ = t;
+//   }
+// }
+// #endif
 
 void Renderer::DrawWorldToCameraBuffer(FrameDef* frame_def) {
 #if BA_CARDBOARD_BUILD
@@ -754,7 +755,7 @@ void Renderer::UpdateDOFParams(FrameDef* frame_def) {
   }
 }
 
-void Renderer::ScreenSizeChanged() {
+void Renderer::OnScreenSizeChange() {
   assert(g_base->InGraphicsThread());
 
   // We can actually get these events at times when we don't have a valid
@@ -762,8 +763,6 @@ void Renderer::ScreenSizeChanged() {
   // do so next time we render.
   screen_size_dirty_ = true;
 }
-
-void Renderer::CheckCapabilities() {}
 
 void Renderer::Unload() {
   light_render_target_.Clear();
@@ -777,13 +776,13 @@ void Renderer::Load() {
   screen_render_target_ = Object::CompleteDeferred(NewScreenRenderTarget());
 
   // Restore current gamma value.
-  if (screen_gamma_ != 1.0f) {
-#if BA_SDL2_BUILD
-    // Not supporting gamma in SDL2 currently.
-#elif BA_SDL_BUILD
-    SDL_SetGamma(screen_gamma_, screen_gamma_, screen_gamma_);
-#endif
-  }
+  //   if (screen_gamma_ != 1.0f) {
+  // #if BA_SDL2_BUILD
+  //     // Not supporting gamma in SDL2 currently.
+  // #elif BA_SDL_BUILD
+  //     SDL_SetGamma(screen_gamma_, screen_gamma_, screen_gamma_);
+  // #endif
+  //   }
 }
 
 void Renderer::PostLoad() {

@@ -47,12 +47,13 @@ void FlashNode::Draw(base::FrameDef* frame_def) {
   base::ObjectComponent c(frame_def->beauty_pass());
   c.SetLightShadow(base::LightShadowType::kNone);
   c.SetColor(color_[0], color_[1], color_[2], 1.0f);
-  c.PushTransform();
-  c.Translate(position_[0], position_[1], position_[2]);
-  c.Scale(size_, size_, size_);
-  c.Rotate(RandomFloat() * 360.0f, 1, 1, 0);
-  c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kFlash));
-  c.PopTransform();
+  {
+    auto xf = c.ScopedTransform();
+    c.Translate(position_[0], position_[1], position_[2]);
+    c.Scale(size_, size_, size_);
+    c.Rotate(RandomFloat() * 360.0f, 1, 1, 0);
+    c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kFlash));
+  }
   c.Submit();
 }
 

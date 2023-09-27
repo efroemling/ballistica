@@ -246,6 +246,7 @@ ctx.filter_file_extensions = {
     '.sh',
     '.sln',
     '.vcxproj',
+    '.user',
     '.cmd',
     '.hlsl',
     '.gradle',

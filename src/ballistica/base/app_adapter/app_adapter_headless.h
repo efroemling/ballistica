@@ -12,6 +12,18 @@ namespace ballistica::base {
 class AppAdapterHeadless : public AppAdapter {
  public:
   AppAdapterHeadless();
+
+  void OnMainThreadStartApp() override;
+
+  void DoApplyAppConfig() override;
+
+ protected:
+  void DoPushMainThreadRunnable(Runnable* runnable) override;
+  void RunMainThreadEventLoopToCompletion() override;
+  void DoExitMainThreadEventLoop() override;
+
+ private:
+  EventLoop* main_event_loop_{};
 };
 
 }  // namespace ballistica::base

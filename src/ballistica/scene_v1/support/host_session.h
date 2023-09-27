@@ -68,7 +68,7 @@ class HostSession : public Session {
   auto GetForegroundContext() -> base::ContextRef override;
   auto DoesFillScreen() const -> bool override;
   void Draw(base::FrameDef* f) override;
-  void ScreenSizeChanged() override;
+  void OnScreenSizeChange() override;
   void LanguageChanged() override;
   void GraphicsQualityChanged(base::GraphicsQuality q) override;
   void DebugSpeedMultChanged() override;

@@ -33,7 +33,9 @@ LPALCDEVICERESUMESOFT alcDeviceResumeSOFT;
 const int kAudioProcessIntervalNormal{500};
 const int kAudioProcessIntervalFade{50};
 const int kAudioProcessIntervalPendingLoad{1};
+#if (BA_DEBUG_BUILD || BA_TEST_BUILD)
 const bool kShowInUseSounds{};
+#endif
 
 int AudioServer::al_source_count_ = 0;
 

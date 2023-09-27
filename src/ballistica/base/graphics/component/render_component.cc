@@ -4,10 +4,10 @@
 
 namespace ballistica::base {
 
-void RenderComponent::ScissorPush(const Rect& rIn) {
+void RenderComponent::ScissorPush(const Rect& rect) {
   EnsureDrawing();
   cmd_buffer_->PutCommand(RenderCommandBuffer::Command::kScissorPush);
-  cmd_buffer_->PutFloats(rIn.l, rIn.b, rIn.r, rIn.t);
+  cmd_buffer_->PutFloats(rect.l, rect.b, rect.r, rect.t);
 }
 
 #if BA_DEBUG_BUILD

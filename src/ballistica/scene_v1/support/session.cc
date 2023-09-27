@@ -29,7 +29,7 @@ auto Session::GetForegroundContext() -> base::ContextRef { return {}; }
 
 void Session::Draw(base::FrameDef*) {}
 
-void Session::ScreenSizeChanged() {}
+void Session::OnScreenSizeChange() {}
 
 void Session::LanguageChanged() {}
 

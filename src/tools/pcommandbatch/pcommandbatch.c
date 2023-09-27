@@ -296,9 +296,24 @@ int establish_connection_(const struct Context_* ctx) {
       if (cresult == 0) {
         break;
       } else if (errno == EADDRNOTAVAIL) {
+        // Seems we can get this if blasting the machine with enough
+        // commands that they run out of ports for us to use. The situation
+        // should resolve itself if we wait/retry a few times.
         if (ctx->verbose) {
           fprintf(stderr,
                   "pcommandbatch client %s_%d (pid %d): got EADDRNOTAVAIL"
+                  " on connect attempt %d.\n",
+                  ctx->instance_prefix, ctx->instance_num, ctx->pid,
+                  retry_attempt + 1);
+        }
+      } else if (errno == ECONNREFUSED) {
+        // Am seeing this very rarely on random one-off commands. I'm
+        // guessing there's some race condition at the OS level where the
+        // port-file write goes through before the socket is actually truly
+        // accepting connections. A retry should succeed.
+        if (ctx->verbose) {
+          fprintf(stderr,
+                  "pcommandbatch client %s_%d (pid %d): got ECONNREFUSED"
                   " on connect attempt %d.\n",
                   ctx->instance_prefix, ctx->instance_num, ctx->pid,
                   retry_attempt + 1);
@@ -438,24 +453,32 @@ int send_command_(struct Context_* ctx, int argc, char** argv) {
 
 int handle_response_(const struct Context_* ctx) {
   char* inbuf = read_string_from_socket_(ctx);
-  if (!inbuf) {
+
+  // Getting null or an empty string response imply something is broken.
+  if (!inbuf || inbuf[0] == 0) {
     fprintf(stderr,
             "Error: pcommandbatch client %s_%d (pid %d): failed to read result "
             "(errno %d).\n",
             ctx->instance_prefix, ctx->instance_num, ctx->pid, errno);
+    if (inbuf) {
+      free(inbuf);
+    }
     return -1;
   }
 
+
   cJSON* result_dict = cJSON_Parse(inbuf);
-  free(inbuf);
 
   if (!result_dict) {
     fprintf(
         stderr,
         "Error: pcommandbatch client %s_%d (pid %d): failed to parse result "
-        "value.\n",
-        ctx->instance_prefix, ctx->instance_num, ctx->pid);
+        "value: %s\n",
+            ctx->instance_prefix, ctx->instance_num, ctx->pid, inbuf);
+    free(inbuf);
     return -1;
+  } else {
+    free(inbuf);
   }
 
   // If results included stdout output, print it.

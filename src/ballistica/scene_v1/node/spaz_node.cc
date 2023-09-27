@@ -4017,53 +4017,59 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
       oc->SetColor(eye_ball_color_red_, eye_ball_color_green_,
                    eye_ball_color_blue_);
     }
-    c->PushTransform();
-    body_head_->ApplyToRenderComponent(c);
-    if (eye_scale_ != 1.0f) {
-      c->Scale(eye_scale_, eye_scale_, eye_scale_);
-    }
-    c->PushTransform();
-    c->Translate(eye_offset_x_, eye_offset_y_, eye_offset_z_);
-    c->Rotate(-10 + eyes_ud_smooth_, 1, 0, 0);
-    c->Rotate(eyes_lr_smooth_, 0, 1, 0);
-    c->Scale(0.09f, 0.09f, 0.09f);
-    if (death_scale != 1.0f) {
-      c->Scale(death_scale, death_scale, death_scale);
-    }
-    if (!frosty_ && !eyeless_) {
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeBall));
-      if (shading) {
-        oc->SetReflectionScale(2, 2, 2);
-      }
-      if (death_scale != 1.0f) c->Scale(death_scale, death_scale, death_scale);
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeBallIris));
-    }
+    {
+      auto xf = c->ScopedTransform();
 
-    c->PopTransform();
+      body_head_->ApplyToRenderComponent(c);
+      if (eye_scale_ != 1.0f) {
+        c->Scale(eye_scale_, eye_scale_, eye_scale_);
+      }
+      {
+        auto xf = c->ScopedTransform();
+        c->Translate(eye_offset_x_, eye_offset_y_, eye_offset_z_);
+        c->Rotate(-10 + eyes_ud_smooth_, 1, 0, 0);
+        c->Rotate(eyes_lr_smooth_, 0, 1, 0);
+        c->Scale(0.09f, 0.09f, 0.09f);
+        if (death_scale != 1.0f) {
+          c->Scale(death_scale, death_scale, death_scale);
+        }
+        if (!frosty_ && !eyeless_) {
+          c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeBall));
+          if (shading) {
+            oc->SetReflectionScale(2, 2, 2);
+          }
+          if (death_scale != 1.0f)
+            c->Scale(death_scale, death_scale, death_scale);
+          c->DrawMeshAsset(
+              g_base->assets->SysMesh(base::SysMeshID::kEyeBallIris));
+        }
+      }
 
-    if (!pirate_ && !frosty_ && !eyeless_) {
-      if (shading) {
-        oc->SetReflectionScale(3, 3, 3);
+      if (!pirate_ && !frosty_ && !eyeless_) {
+        if (shading) {
+          oc->SetReflectionScale(3, 3, 3);
+        }
+        {
+          auto xf = c->ScopedTransform();
+          c->Translate(-eye_offset_x_, eye_offset_y_, eye_offset_z_);
+          c->Rotate(-10 + eyes_ud_smooth_, 1, 0, 0);
+          c->Rotate(eyes_lr_smooth_, 0, 1, 0);
+          c->Scale(0.09f, 0.09f, 0.09f);
+          if (death_scale != 1.0f) {
+            c->Scale(death_scale, death_scale, death_scale);
+          }
+          c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeBall));
+          if (death_scale != 1.0f) {
+            c->Scale(death_scale, death_scale, death_scale);
+          }
+          if (shading) {
+            oc->SetReflectionScale(2, 2, 2);
+          }
+          c->DrawMeshAsset(
+              g_base->assets->SysMesh(base::SysMeshID::kEyeBallIris));
+        }
       }
-      c->PushTransform();
-      c->Translate(-eye_offset_x_, eye_offset_y_, eye_offset_z_);
-      c->Rotate(-10 + eyes_ud_smooth_, 1, 0, 0);
-      c->Rotate(eyes_lr_smooth_, 0, 1, 0);
-      c->Scale(0.09f, 0.09f, 0.09f);
-      if (death_scale != 1.0f) {
-        c->Scale(death_scale, death_scale, death_scale);
-      }
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeBall));
-      if (death_scale != 1.0f) {
-        c->Scale(death_scale, death_scale, death_scale);
-      }
-      if (shading) {
-        oc->SetReflectionScale(2, 2, 2);
-      }
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeBallIris));
-      c->PopTransform();
     }
-    c->PopTransform();
   }
 }
 
@@ -4094,52 +4100,56 @@ void SpazNode::DrawEyeLids(base::RenderComponent* c, float death_fade,
     return;
   }
 
-  c->PushTransform();
-  body_head_->ApplyToRenderComponent(c);
-  if (eye_scale_ != 1.0f) {
-    c->Scale(eye_scale_, eye_scale_, eye_scale_);
-  }
-  c->Translate(eye_offset_x_, eye_offset_y_, eye_offset_z_);
+  {
+    auto xf = c->ScopedTransform();
 
-  float a = eyelid_left_ud_smooth_ + 0.5f * eyes_ud_smooth_;
-  if (blink_smooth_ > 0.001f) {
-    a = blink_smooth_ * 90.0f + (1.0f - blink_smooth_) * a;
-  }
-  c->Rotate(eye_lid_angle_, 0, 0, 1);
-  c->Rotate(a, 1, 0, 0);
-  c->Scale(0.09f, 0.09f, 0.09f);
+    body_head_->ApplyToRenderComponent(c);
+    if (eye_scale_ != 1.0f) {
+      c->Scale(eye_scale_, eye_scale_, eye_scale_);
+    }
+    c->Translate(eye_offset_x_, eye_offset_y_, eye_offset_z_);
 
-  if (death_scale != 1.0f) {
-    c->Scale(death_scale, death_scale, death_scale);
-  }
+    float a = eyelid_left_ud_smooth_ + 0.5f * eyes_ud_smooth_;
+    if (blink_smooth_ > 0.001f) {
+      a = blink_smooth_ * 90.0f + (1.0f - blink_smooth_) * a;
+    }
+    c->Rotate(eye_lid_angle_, 0, 0, 1);
+    c->Rotate(a, 1, 0, 0);
+    c->Scale(0.09f, 0.09f, 0.09f);
 
-  if (!frosty_ && !eyeless_) {
-    c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeLid));
+    if (death_scale != 1.0f) {
+      c->Scale(death_scale, death_scale, death_scale);
+    }
+
+    if (!frosty_ && !eyeless_) {
+      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeLid));
+    }
   }
-  c->PopTransform();
 
   // Left eyelid.
   c->FlipCullFace();
-  c->PushTransform();
-  body_head_->ApplyToRenderComponent(c);
-  if (eye_scale_ != 1.0f) {
-    c->Scale(eye_scale_, eye_scale_, eye_scale_);
+  {
+    auto xf = c->ScopedTransform();
+
+    body_head_->ApplyToRenderComponent(c);
+    if (eye_scale_ != 1.0f) {
+      c->Scale(eye_scale_, eye_scale_, eye_scale_);
+    }
+    c->Translate(-eye_offset_x_, eye_offset_y_, eye_offset_z_);
+    float a = eyelid_right_ud_smooth_ + 0.5f * eyes_ud_smooth_;
+    if (blink_smooth_ > 0.001f) {
+      a = blink_smooth_ * 90.0f + (1.0f - blink_smooth_) * a;
+    }
+    c->Rotate(-eye_lid_angle_, 0, 0, 1);
+    c->Rotate(a, 1, 0, 0);
+    c->Scale(-0.09f, 0.09f, 0.09f);
+    if (death_scale != 1.0f) {
+      c->Scale(death_scale, death_scale, death_scale);
+    }
+    if (!pirate_ && !frosty_ && !eyeless_) {
+      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeLid));
+    }
   }
-  c->Translate(-eye_offset_x_, eye_offset_y_, eye_offset_z_);
-  a = eyelid_right_ud_smooth_ + 0.5f * eyes_ud_smooth_;
-  if (blink_smooth_ > 0.001f) {
-    a = blink_smooth_ * 90.0f + (1.0f - blink_smooth_) * a;
-  }
-  c->Rotate(-eye_lid_angle_, 0, 0, 1);
-  c->Rotate(a, 1, 0, 0);
-  c->Scale(-0.09f, 0.09f, 0.09f);
-  if (death_scale != 1.0f) {
-    c->Scale(death_scale, death_scale, death_scale);
-  }
-  if (!pirate_ && !frosty_ && !eyeless_) {
-    c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeLid));
-  }
-  c->PopTransform();
   c->FlipCullFace();  // back to normal
 }
 
@@ -4187,325 +4197,357 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
   }
 
   // Head.
-  c->PushTransform();
-  body_head_->ApplyToRenderComponent(c);
-  if (death_scale != 1.0f) {
-    c->Scale(death_scale, death_scale, death_scale);
+  {
+    auto xf = c->ScopedTransform();
+    body_head_->ApplyToRenderComponent(c);
+    if (death_scale != 1.0f) {
+      c->Scale(death_scale, death_scale, death_scale);
+    }
+    if (head_mesh_.Exists()) {
+      c->DrawMeshAsset(head_mesh_->mesh_data());
+    }
   }
-  if (head_mesh_.Exists()) {
-    c->DrawMeshAsset(head_mesh_->mesh_data());
-  }
-  c->PopTransform();
 
   // Hair tuft 1.
   if (hair_front_right_body_.Exists()) {
-    c->PushTransform();
-    hair_front_right_body_->ApplyToRenderComponent(c);
-    if (death_scale != 1.0f) {
-      c->Scale(death_scale, death_scale, death_scale);
+    {
+      auto xf = c->ScopedTransform();
+      hair_front_right_body_->ApplyToRenderComponent(c);
+      if (death_scale != 1.0f) {
+        c->Scale(death_scale, death_scale, death_scale);
+      }
+      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft1));
     }
-    c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft1));
-    c->PopTransform();
 
     // Hair tuft 1b; just reuse tuft 1 with some extra translating.
     const dReal* m = dBodyGetRotation(body_head_->body());
-    c->PushTransform();
-    float offs[] = {-0.03f, 0.0f, -0.13f};
-    c->Translate(offs[0] * m[0] + offs[1] * m[1] + offs[2] * m[2],
-                 offs[0] * m[4] + offs[1] * m[5] + offs[2] * m[6],
-                 offs[0] * m[8] + offs[1] * m[9] + offs[2] * m[10]);
-    hair_front_right_body_->ApplyToRenderComponent(c);
-    if (death_scale != 1.0f) {
-      c->Scale(death_scale, death_scale, death_scale);
+    {
+      auto xf = c->ScopedTransform();
+      float offs[] = {-0.03f, 0.0f, -0.13f};
+      c->Translate(offs[0] * m[0] + offs[1] * m[1] + offs[2] * m[2],
+                   offs[0] * m[4] + offs[1] * m[5] + offs[2] * m[6],
+                   offs[0] * m[8] + offs[1] * m[9] + offs[2] * m[10]);
+      hair_front_right_body_->ApplyToRenderComponent(c);
+      if (death_scale != 1.0f) {
+        c->Scale(death_scale, death_scale, death_scale);
+      }
+      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft1b));
     }
-    c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft1b));
-    c->PopTransform();
   }
 
   // Hair tuft 2.
   if (hair_front_left_body_.Exists()) {
-    c->PushTransform();
-    hair_front_left_body_->ApplyToRenderComponent(c);
-    if (death_scale != 1.0f) c->Scale(death_scale, death_scale, death_scale);
-    c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft2));
-    c->PopTransform();
+    {
+      auto xf = c->ScopedTransform();
+      hair_front_left_body_->ApplyToRenderComponent(c);
+      if (death_scale != 1.0f) c->Scale(death_scale, death_scale, death_scale);
+      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft2));
+    }
   }
 
   // Hair tuft 3.
   if (hair_ponytail_top_body_.Exists()) {
-    c->PushTransform();
-    hair_ponytail_top_body_->ApplyToRenderComponent(c);
-    if (death_scale != 1.0f) {
-      c->Scale(death_scale, death_scale, death_scale);
+    {
+      auto xf = c->ScopedTransform();
+      hair_ponytail_top_body_->ApplyToRenderComponent(c);
+      if (death_scale != 1.0f) {
+        c->Scale(death_scale, death_scale, death_scale);
+      }
+      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft3));
     }
-    c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft3));
-    c->PopTransform();
   }
 
   // Hair tuft 4.
   if (hair_ponytail_bottom_body_.Exists()) {
-    c->PushTransform();
-    hair_ponytail_bottom_body_->ApplyToRenderComponent(c);
-    if (death_scale != 1.0f) {
-      c->Scale(death_scale, death_scale, death_scale);
+    {
+      auto xf = c->ScopedTransform();
+      hair_ponytail_bottom_body_->ApplyToRenderComponent(c);
+      if (death_scale != 1.0f) {
+        c->Scale(death_scale, death_scale, death_scale);
+      }
+      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft4));
     }
-    c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft4));
-    c->PopTransform();
   }
 
   // Torso.
-  c->PushTransform();
-  body_torso_->ApplyToRenderComponent(c);
-  if (death_scale != 1.0f) {
-    c->Scale(death_scale, death_scale, death_scale);
+  {
+    auto xf = c->ScopedTransform();
+    body_torso_->ApplyToRenderComponent(c);
+    if (death_scale != 1.0f) {
+      c->Scale(death_scale, death_scale, death_scale);
+    }
+    if (torso_mesh_.Exists()) {
+      c->DrawMeshAsset(torso_mesh_->mesh_data());
+    }
   }
-  if (torso_mesh_.Exists()) {
-    c->DrawMeshAsset(torso_mesh_->mesh_data());
-  }
-  c->PopTransform();
 
   // Pelvis.
-  c->PushTransform();
-  body_pelvis_->ApplyToRenderComponent(c);
-  if (death_scale != 1.0f) {
-    c->Scale(death_scale, death_scale, death_scale);
+  {
+    auto xf = c->ScopedTransform();
+    body_pelvis_->ApplyToRenderComponent(c);
+    if (death_scale != 1.0f) {
+      c->Scale(death_scale, death_scale, death_scale);
+    }
+    if (pelvis_mesh_.Exists()) {
+      c->DrawMeshAsset(pelvis_mesh_->mesh_data());
+    }
   }
-  if (pelvis_mesh_.Exists()) {
-    c->DrawMeshAsset(pelvis_mesh_->mesh_data());
-  }
-  c->PopTransform();
-
-  // Right upper arm.
-  c->PushTransform();
-  upper_right_arm_body_->ApplyToRenderComponent(c);
 
   // Get the distance between the shoulder joint socket and the fore-arm
   // socket.. we'll use this to stretch our upper-arm to fill the gap.
   float right_stretch = 1.0f;
 
-  if (!shattered_) {
-    dVector3 p_shoulder;
-    dBodyGetRelPointPos(body_torso_->body(), upper_right_arm_joint_->anchor1[0],
-                        upper_right_arm_joint_->anchor1[1],
-                        upper_right_arm_joint_->anchor1[2], p_shoulder);
-    dVector3 p_forearm;
-    dBodyGetRelPointPos(lower_right_arm_body_->body(),
-                        lower_right_arm_joint_->anchor2[0],
-                        upper_right_arm_joint_->anchor2[1],
-                        upper_right_arm_joint_->anchor2[2], p_forearm);
-    right_stretch = std::min(
-        1.6f, (Vector3f(p_shoulder) - Vector3f(p_forearm)).Length() / 0.192f);
-  }
+  // Right upper arm.
 
-  // If we've got flippers instead of arms, shorten them if we've got gloves on
-  // so they don't intersect as badly.
-  if (flippers_ && have_boxing_gloves_) {
-    right_stretch *= 0.5f;
-  }
+  {
+    auto xf = c->ScopedTransform();
 
-  c->Scale(1.0f, 1.0f, right_stretch);
+    upper_right_arm_body_->ApplyToRenderComponent(c);
 
-  if (death_scale != 1.0f) {
-    c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
+    if (!shattered_) {
+      dVector3 p_shoulder;
+      dBodyGetRelPointPos(body_torso_->body(),
+                          upper_right_arm_joint_->anchor1[0],
+                          upper_right_arm_joint_->anchor1[1],
+                          upper_right_arm_joint_->anchor1[2], p_shoulder);
+      dVector3 p_forearm;
+      dBodyGetRelPointPos(lower_right_arm_body_->body(),
+                          lower_right_arm_joint_->anchor2[0],
+                          upper_right_arm_joint_->anchor2[1],
+                          upper_right_arm_joint_->anchor2[2], p_forearm);
+      right_stretch = std::min(
+          1.6f, (Vector3f(p_shoulder) - Vector3f(p_forearm)).Length() / 0.192f);
+    }
+
+    // If we've got flippers instead of arms, shorten them if we've got gloves
+    // on so they don't intersect as badly.
+    if (flippers_ && have_boxing_gloves_) {
+      right_stretch *= 0.5f;
+    }
+
+    c->Scale(1.0f, 1.0f, right_stretch);
+
+    if (death_scale != 1.0f) {
+      c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
+    }
+    if (upper_arm_mesh_.Exists()) {
+      c->DrawMeshAsset(upper_arm_mesh_->mesh_data());
+    }
   }
-  if (upper_arm_mesh_.Exists()) {
-    c->DrawMeshAsset(upper_arm_mesh_->mesh_data());
-  }
-  c->PopTransform();
 
   // Right lower arm.
-  c->PushTransform();
-  lower_right_arm_body_->ApplyToRenderComponent(c);
-  c->PushTransform();
-  c->Translate(0, 0, 0.1f);
-  c->Scale(1.0f, 1.0f, right_stretch);
-  c->Translate(0.0f, 0.0f, -0.1f);
-  if (death_scale != 1.0f) {
-    c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
+  {
+    auto xf = c->ScopedTransform();
+
+    lower_right_arm_body_->ApplyToRenderComponent(c);
+    {
+      auto xf = c->ScopedTransform();
+      c->Translate(0, 0, 0.1f);
+      c->Scale(1.0f, 1.0f, right_stretch);
+      c->Translate(0.0f, 0.0f, -0.1f);
+      if (death_scale != 1.0f) {
+        c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
+      }
+      if (forearm_mesh_.Exists() && !flippers_) {
+        c->DrawMeshAsset(forearm_mesh_->mesh_data());
+      }
+    }
+    if (!have_boxing_gloves_) {
+      c->Translate(0, 0, 0.04f);
+      if (holding_something_) {
+        c->Rotate(-50, 0, 1, 0);
+      } else {
+        c->Rotate(10, 0, 1, 0);
+      }
+      if (death_scale != 1.0f) {
+        c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
+      }
+      if (hand_mesh_.Exists() && !flippers_) {
+        c->DrawMeshAsset(hand_mesh_->mesh_data());
+      }
+    }
   }
-  if (forearm_mesh_.Exists() && !flippers_) {
-    c->DrawMeshAsset(forearm_mesh_->mesh_data());
-  }
-  c->PopTransform();
-  if (!have_boxing_gloves_) {
-    c->Translate(0, 0, 0.04f);
-    if (holding_something_) {
-      c->Rotate(-50, 0, 1, 0);
-    } else {
-      c->Rotate(10, 0, 1, 0);
+
+  // Right upper leg.
+  {
+    auto xf = c->ScopedTransform();
+    upper_right_leg_body_->ApplyToRenderComponent(c);
+
+    // Apply stretching if still intact.
+    if (!shattered_) {
+      dVector3 p_pelvis;
+      dBodyGetRelPointPos(body_pelvis_->body(),
+                          upper_right_leg_joint_->anchor1[0],
+                          upper_right_leg_joint_->anchor1[1],
+                          upper_right_leg_joint_->anchor1[2], p_pelvis);
+      dVector3 p_lower_leg;
+      dBodyGetRelPointPos(lower_right_leg_body_->body(),
+                          lower_right_leg_joint_->anchor2[0],
+                          upper_right_leg_joint_->anchor2[1],
+                          upper_right_leg_joint_->anchor2[2], p_lower_leg);
+      float stretch = std::min(
+          1.6f, (Vector3f(p_pelvis) - Vector3f(p_lower_leg)).Length() / 0.20f);
+      c->Scale(1.0f, 1.0f, stretch);
     }
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     }
-    if (hand_mesh_.Exists() && !flippers_) {
-      c->DrawMeshAsset(hand_mesh_->mesh_data());
+    if (upper_leg_mesh_.Exists()) {
+      c->DrawMeshAsset(upper_leg_mesh_->mesh_data());
     }
   }
-  c->PopTransform();
-
-  // Right upper leg.
-  c->PushTransform();
-  upper_right_leg_body_->ApplyToRenderComponent(c);
-
-  // Apply stretching if still intact.
-  if (!shattered_) {
-    dVector3 p_pelvis;
-    dBodyGetRelPointPos(body_pelvis_->body(),
-                        upper_right_leg_joint_->anchor1[0],
-                        upper_right_leg_joint_->anchor1[1],
-                        upper_right_leg_joint_->anchor1[2], p_pelvis);
-    dVector3 p_lower_leg;
-    dBodyGetRelPointPos(lower_right_leg_body_->body(),
-                        lower_right_leg_joint_->anchor2[0],
-                        upper_right_leg_joint_->anchor2[1],
-                        upper_right_leg_joint_->anchor2[2], p_lower_leg);
-    float stretch = std::min(
-        1.6f, (Vector3f(p_pelvis) - Vector3f(p_lower_leg)).Length() / 0.20f);
-    c->Scale(1.0f, 1.0f, stretch);
-  }
-  if (death_scale != 1.0f) {
-    c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
-  }
-  if (upper_leg_mesh_.Exists()) {
-    c->DrawMeshAsset(upper_leg_mesh_->mesh_data());
-  }
-  c->PopTransform();
 
   // Right lower leg.
-  c->PushTransform();
-  lower_right_leg_body_->ApplyToRenderComponent(c);
-  if (death_scale != 1.0f) {
-    c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
+  {
+    auto xf = c->ScopedTransform();
+    lower_right_leg_body_->ApplyToRenderComponent(c);
+    if (death_scale != 1.0f) {
+      c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
+    }
+    if (lower_leg_mesh_.Exists()) {
+      c->DrawMeshAsset(lower_leg_mesh_->mesh_data());
+    }
   }
-  if (lower_leg_mesh_.Exists()) {
-    c->DrawMeshAsset(lower_leg_mesh_->mesh_data());
-  }
-  c->PopTransform();
 
-  c->PushTransform();
-  right_toes_body_->ApplyToRenderComponent(c);
-  if (death_scale != 1.0f) {
-    c->Scale(death_scale, death_scale, death_scale);
+  {
+    auto xf = c->ScopedTransform();
+    right_toes_body_->ApplyToRenderComponent(c);
+    if (death_scale != 1.0f) {
+      c->Scale(death_scale, death_scale, death_scale);
+    }
+    if (toes_mesh_.Exists()) {
+      c->DrawMeshAsset(toes_mesh_->mesh_data());
+    }
   }
-  if (toes_mesh_.Exists()) {
-    c->DrawMeshAsset(toes_mesh_->mesh_data());
-  }
-  c->PopTransform();
 
   // OK NOW LEFT SIDE LIMBS:
   c->FlipCullFace();
 
-  // Left upper arm.
-  c->PushTransform();
-  upper_left_arm_body_->ApplyToRenderComponent(c);
   float left_stretch = 1.0f;
 
-  // Stretch if not shattered.
-  if (!shattered_) {
-    dVector3 p_shoulder;
-    dBodyGetRelPointPos(body_torso_->body(), upper_left_arm_joint_->anchor1[0],
-                        upper_left_arm_joint_->anchor1[1],
-                        upper_left_arm_joint_->anchor1[2], p_shoulder);
-    dVector3 p_forearm;
-    dBodyGetRelPointPos(lower_left_arm_body_->body(),
-                        lower_left_arm_joint_->anchor2[0],
-                        upper_left_arm_joint_->anchor2[1],
-                        upper_left_arm_joint_->anchor2[2], p_forearm);
-    left_stretch = std::min(
-        1.6f, (Vector3f(p_shoulder) - Vector3f(p_forearm)).Length() / 0.192f);
-  }
+  // Left upper arm.
+  {
+    auto xf = c->ScopedTransform();
 
-  // If we've got flippers instead of arms, shorten them if we've got gloves on
-  // so they don't intersect as badly.
-  if (flippers_ && have_boxing_gloves_) {
-    left_stretch *= 0.5f;
+    upper_left_arm_body_->ApplyToRenderComponent(c);
+
+    // Stretch if not shattered.
+    if (!shattered_) {
+      dVector3 p_shoulder;
+      dBodyGetRelPointPos(body_torso_->body(),
+                          upper_left_arm_joint_->anchor1[0],
+                          upper_left_arm_joint_->anchor1[1],
+                          upper_left_arm_joint_->anchor1[2], p_shoulder);
+      dVector3 p_forearm;
+      dBodyGetRelPointPos(lower_left_arm_body_->body(),
+                          lower_left_arm_joint_->anchor2[0],
+                          upper_left_arm_joint_->anchor2[1],
+                          upper_left_arm_joint_->anchor2[2], p_forearm);
+      left_stretch = std::min(
+          1.6f, (Vector3f(p_shoulder) - Vector3f(p_forearm)).Length() / 0.192f);
+    }
+
+    // If we've got flippers instead of arms, shorten them if we've got gloves
+    // on so they don't intersect as badly.
+    if (flippers_ && have_boxing_gloves_) {
+      left_stretch *= 0.5f;
+    }
+    c->Scale(-1, 1, left_stretch);
+    if (death_scale != 1.0f) {
+      c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
+    }
+    if (upper_arm_mesh_.Exists()) {
+      c->DrawMeshAsset(upper_arm_mesh_->mesh_data());
+    }
   }
-  c->Scale(-1, 1, left_stretch);
-  if (death_scale != 1.0f) {
-    c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
-  }
-  if (upper_arm_mesh_.Exists()) {
-    c->DrawMeshAsset(upper_arm_mesh_->mesh_data());
-  }
-  c->PopTransform();
 
   // Left lower arm.
-  c->PushTransform();
-  lower_left_arm_body_->ApplyToRenderComponent(c);
-  c->Scale(-1, 1, 1);
-  c->PushTransform();
-  c->Translate(0, 0, 0.1f);
-  c->Scale(1, 1, left_stretch);
-  c->Translate(0, 0, -0.1f);
-  if (death_scale != 1.0f) {
-    c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
-  }
-  if (forearm_mesh_.Exists() && !flippers_) {
-    c->DrawMeshAsset(forearm_mesh_->mesh_data());
-  }
-  c->PopTransform();
-  if (!have_boxing_gloves_) {
-    c->Translate(0, 0, 0.04f);
-    if (holding_something_) {
-      c->Rotate(-50, 0, 1, 0);
-    } else {
-      c->Rotate(10, 0, 1, 0);
+  {
+    auto xf = c->ScopedTransform();
+
+    lower_left_arm_body_->ApplyToRenderComponent(c);
+    c->Scale(-1, 1, 1);
+    {
+      auto x = c->ScopedTransform();
+      c->Translate(0, 0, 0.1f);
+      c->Scale(1, 1, left_stretch);
+      c->Translate(0, 0, -0.1f);
+      if (death_scale != 1.0f) {
+        c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
+      }
+      if (forearm_mesh_.Exists() && !flippers_) {
+        c->DrawMeshAsset(forearm_mesh_->mesh_data());
+      }
     }
+    if (!have_boxing_gloves_) {
+      c->Translate(0, 0, 0.04f);
+      if (holding_something_) {
+        c->Rotate(-50, 0, 1, 0);
+      } else {
+        c->Rotate(10, 0, 1, 0);
+      }
+      if (death_scale != 1.0f) {
+        c->Scale(death_scale, death_scale, death_scale);
+      }
+      if (hand_mesh_.Exists() && !flippers_) {
+        c->DrawMeshAsset(hand_mesh_->mesh_data());
+      }
+    }
+  }
+
+  // Left upper leg.
+  {
+    auto xf = c->ScopedTransform();
+
+    upper_left_leg_body_->ApplyToRenderComponent(c);
+
+    // Stretch if not shattered.
+    if (!shattered_) {
+      dVector3 p_pelvis;
+      dBodyGetRelPointPos(body_pelvis_->body(),
+                          upper_left_leg_joint_->anchor1[0],
+                          upper_left_leg_joint_->anchor1[1],
+                          upper_left_leg_joint_->anchor1[2], p_pelvis);
+      dVector3 p_lower_leg;
+      dBodyGetRelPointPos(lower_left_leg_body_->body(),
+                          lower_left_leg_joint_->anchor2[0],
+                          upper_left_leg_joint_->anchor2[1],
+                          upper_left_leg_joint_->anchor2[2], p_lower_leg);
+      float stretch = std::min(
+          1.6f, (Vector3f(p_pelvis) - Vector3f(p_lower_leg)).Length() / 0.20f);
+      c->Scale(-1.0f, 1.0f, stretch);
+    }
+    if (death_scale != 1.0f)
+      c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
+    if (upper_leg_mesh_.Exists())
+      c->DrawMeshAsset(upper_leg_mesh_->mesh_data());
+  }
+
+  // Lower leg.
+  {
+    auto xf = c->ScopedTransform();
+    lower_left_leg_body_->ApplyToRenderComponent(c);
+    c->Scale(-1.0f, 1.0f, 1.0f);
+    if (death_scale != 1.0f)
+      c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
+    if (lower_leg_mesh_.Exists()) {
+      c->DrawMeshAsset(lower_leg_mesh_->mesh_data());
+    }
+  }
+
+  // Toes.
+  {
+    auto xf = c->ScopedTransform();
+
+    left_toes_body_->ApplyToRenderComponent(c);
+    c->Scale(-1, 1, 1);
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    if (hand_mesh_.Exists() && !flippers_) {
-      c->DrawMeshAsset(hand_mesh_->mesh_data());
+    if (toes_mesh_.Exists()) {
+      c->DrawMeshAsset(toes_mesh_->mesh_data());
     }
   }
-  c->PopTransform();
-
-  // Left upper leg.
-  c->PushTransform();
-  upper_left_leg_body_->ApplyToRenderComponent(c);
-
-  // Stretch if not shattered.
-  if (!shattered_) {
-    dVector3 p_pelvis;
-    dBodyGetRelPointPos(body_pelvis_->body(), upper_left_leg_joint_->anchor1[0],
-                        upper_left_leg_joint_->anchor1[1],
-                        upper_left_leg_joint_->anchor1[2], p_pelvis);
-    dVector3 p_lower_leg;
-    dBodyGetRelPointPos(lower_left_leg_body_->body(),
-                        lower_left_leg_joint_->anchor2[0],
-                        upper_left_leg_joint_->anchor2[1],
-                        upper_left_leg_joint_->anchor2[2], p_lower_leg);
-    float stretch = std::min(
-        1.6f, (Vector3f(p_pelvis) - Vector3f(p_lower_leg)).Length() / 0.20f);
-    c->Scale(-1.0f, 1.0f, stretch);
-  }
-  if (death_scale != 1.0f)
-    c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
-  if (upper_leg_mesh_.Exists()) c->DrawMeshAsset(upper_leg_mesh_->mesh_data());
-  c->PopTransform();
-
-  // Lower leg.
-  c->PushTransform();
-  lower_left_leg_body_->ApplyToRenderComponent(c);
-  c->Scale(-1.0f, 1.0f, 1.0f);
-  if (death_scale != 1.0f)
-    c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
-  if (lower_leg_mesh_.Exists()) {
-    c->DrawMeshAsset(lower_leg_mesh_->mesh_data());
-  }
-  c->PopTransform();
-
-  // Toes.
-  c->PushTransform();
-  left_toes_body_->ApplyToRenderComponent(c);
-  c->Scale(-1, 1, 1);
-  if (death_scale != 1.0f) {
-    c->Scale(death_scale, death_scale, death_scale);
-  }
-  if (toes_mesh_.Exists()) {
-    c->DrawMeshAsset(toes_mesh_->mesh_data());
-  }
-  c->PopTransform();
 
   // RESTORE CULL
   c->FlipCullFace();
@@ -4532,112 +4574,120 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     c.SetDoubleSided(true);
     c.SetColor(1, 0, 0, 0.5f);
 
-    c.PushTransform();
-    body_head_->ApplyToRenderComponent(&c);
+    {
+      auto xf = c.ScopedTransform();
+      body_head_->ApplyToRenderComponent(&c);
 
-    c.BeginDebugDrawTriangles();
-    c.Vertex(0, 0.5f, 0);
-    c.Vertex(0, 0, 0.5f);
-    c.Vertex(0, 0, 0);
-    c.End();
-    c.PopTransform();
+      c.BeginDebugDrawTriangles();
+      c.Vertex(0, 0.5f, 0);
+      c.Vertex(0, 0, 0.5f);
+      c.Vertex(0, 0, 0);
+      c.End();
+    }
 
-    c.PushTransform();
-    body_torso_->ApplyToRenderComponent(&c);
-    c.BeginDebugDrawTriangles();
-    c.Vertex(0, 0.2f, 0);
-    c.Vertex(0, 0, 0.2f);
-    c.Vertex(0, 0, 0);
-    c.End();
-    c.PopTransform();
+    {
+      auto xf = c.ScopedTransform();
+      body_torso_->ApplyToRenderComponent(&c);
+      c.BeginDebugDrawTriangles();
+      c.Vertex(0, 0.2f, 0);
+      c.Vertex(0, 0, 0.2f);
+      c.Vertex(0, 0, 0);
+      c.End();
+    }
 
-    c.PushTransform();
-    body_pelvis_->ApplyToRenderComponent(&c);
-    c.BeginDebugDrawTriangles();
-    c.Vertex(0, 0.2f, 0);
-    c.Vertex(0, 0, 0.2f);
-    c.Vertex(0, 0, 0);
-    c.End();
-    c.PopTransform();
+    {
+      auto xf = c.ScopedTransform();
+      body_pelvis_->ApplyToRenderComponent(&c);
+      c.BeginDebugDrawTriangles();
+      c.Vertex(0, 0.2f, 0);
+      c.Vertex(0, 0, 0.2f);
+      c.Vertex(0, 0, 0);
+      c.End();
+    }
 
     c.SetColor(0.4f, 1.0f, 0.4f, 0.2f);
-    c.PushTransform();
-    stand_body_->ApplyToRenderComponent(&c);
-    c.BeginDebugDrawTriangles();
-    c.Vertex(0, 0.2f, 0);
-    c.Vertex(0, 0, 0.5f);
-    c.Vertex(0, 0, 0);
+    {
+      auto xf = c.ScopedTransform();
 
-    c.Vertex(0, 2.0f, 0);
-    c.Vertex(0, 0, 0.1f);
-    c.Vertex(0, 0, 0);
+      stand_body_->ApplyToRenderComponent(&c);
+      c.BeginDebugDrawTriangles();
+      c.Vertex(0, 0.2f, 0);
+      c.Vertex(0, 0, 0.5f);
+      c.Vertex(0, 0, 0);
 
-    c.Vertex(0, 0.2f, 0);
-    c.Vertex(0.5f, 0, 0);
-    c.Vertex(0, 0, 0);
+      c.Vertex(0, 2.0f, 0);
+      c.Vertex(0, 0, 0.1f);
+      c.Vertex(0, 0, 0);
 
-    c.Vertex(0, 2.0f, 0);
-    c.Vertex(0.1f, 0, 0.0f);
-    c.Vertex(0, 0, 0);
+      c.Vertex(0, 0.2f, 0);
+      c.Vertex(0.5f, 0, 0);
+      c.Vertex(0, 0, 0);
 
-    c.End();
-    c.PopTransform();
+      c.Vertex(0, 2.0f, 0);
+      c.Vertex(0.1f, 0, 0.0f);
+      c.Vertex(0, 0, 0);
+
+      c.End();
+    }
 
     // Punch direction.
     if (explicit_bool(true)) {
       c.SetColor(1, 1, 0, 0.5f);
       const dReal* p = dBodyGetPosition(body_torso_->body());
-      c.PushTransform();
-      c.Translate(p[0], p[1], p[2]);
-      c.BeginDebugDrawTriangles();
-      c.Vertex(0, 0, 0);
-      c.Vertex(2.0f * punch_dir_x_, 0, 2.0f * punch_dir_z_);
-      c.Vertex(0, 0.05f, 0);
-      c.Vertex(0, 0, 0);
-      c.Vertex(0, 0.05f, 0);
-      c.Vertex(2.0f * punch_dir_x_, 0, 2.0f * punch_dir_z_);
-      c.End();
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(p[0], p[1], p[2]);
+        c.BeginDebugDrawTriangles();
+        c.Vertex(0, 0, 0);
+        c.Vertex(2.0f * punch_dir_x_, 0, 2.0f * punch_dir_z_);
+        c.Vertex(0, 0.05f, 0);
+        c.Vertex(0, 0, 0);
+        c.Vertex(0, 0.05f, 0);
+        c.Vertex(2.0f * punch_dir_x_, 0, 2.0f * punch_dir_z_);
+        c.End();
+      }
     }
 
     // Run joint foot attach.
     if (explicit_bool(true)) {
       c.SetColor(1, 0, 0);
-      c.PushTransform();
-      lower_left_leg_body_->ApplyToRenderComponent(&c);
-      JointFixedEF* j = left_leg_ik_joint_;
-      c.Translate(j->anchor2[0], j->anchor2[1], j->anchor2[2]);
-      c.Rotate(90, 1, 0, 0);
-      c.Scale(0.5f, 0.5f, 0.5f);
-      c.BeginDebugDrawTriangles();
-      c.Vertex(0, 0.1f, 0.5f);
-      c.Vertex(0, 0, 0.5f);
-      c.Vertex(0, 0, 0);
-      c.Vertex(0, 0, 0);
-      c.Vertex(0, 0, 0.5f);
-      c.Vertex(0, 0.1f, 0.5f);
-      c.End();
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        lower_left_leg_body_->ApplyToRenderComponent(&c);
+        JointFixedEF* j = left_leg_ik_joint_;
+        c.Translate(j->anchor2[0], j->anchor2[1], j->anchor2[2]);
+        c.Rotate(90, 1, 0, 0);
+        c.Scale(0.5f, 0.5f, 0.5f);
+        c.BeginDebugDrawTriangles();
+        c.Vertex(0, 0.1f, 0.5f);
+        c.Vertex(0, 0, 0.5f);
+        c.Vertex(0, 0, 0);
+        c.Vertex(0, 0, 0);
+        c.Vertex(0, 0, 0.5f);
+        c.Vertex(0, 0.1f, 0.5f);
+        c.End();
+      }
     }
 
     // Run joint pelvis attach.
     if (explicit_bool(true)) {
       c.SetColor(0, 0, 1);
-      c.PushTransform();
-      body_pelvis_->ApplyToRenderComponent(&c);
-      JointFixedEF* j = left_leg_ik_joint_;
-      c.Translate(j->anchor1[0], j->anchor1[1], j->anchor1[2]);
-      c.Rotate(90, 1, 0, 0);
-      c.Scale(0.5f, 0.5f, 0.5f);
-      c.BeginDebugDrawTriangles();
-      c.Vertex(0, 0.1f, 0.5f);
-      c.Vertex(0, 0, 0.5f);
-      c.Vertex(0, 0, 0);
-      c.Vertex(0, 0, 0);
-      c.Vertex(0, 0, 0.5f);
-      c.Vertex(0, 0.1f, 0.5f);
-      c.End();
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        body_pelvis_->ApplyToRenderComponent(&c);
+        JointFixedEF* j = left_leg_ik_joint_;
+        c.Translate(j->anchor1[0], j->anchor1[1], j->anchor1[2]);
+        c.Rotate(90, 1, 0, 0);
+        c.Scale(0.5f, 0.5f, 0.5f);
+        c.BeginDebugDrawTriangles();
+        c.Vertex(0, 0.1f, 0.5f);
+        c.Vertex(0, 0, 0.5f);
+        c.Vertex(0, 0, 0);
+        c.Vertex(0, 0, 0);
+        c.Vertex(0, 0, 0.5f);
+        c.Vertex(0, 0.1f, 0.5f);
+        c.End();
+      }
     }
 
     c.Submit();
@@ -4808,12 +4858,13 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         c.SetMaskUV2Texture(
             curse_timer_text_group_.GetElementMaskUV2Texture(e));
         c.SetFlatness(1.0f);
-        c.PushTransform();
-        c.Translate(torso_pos[0] - 0.2f, torso_pos[1] + 0.8f,
-                    torso_pos[2] - 0.2f);
-        c.Scale(0.02f, 0.02f, 0.02f);
-        c.DrawMesh(curse_timer_text_group_.GetElementMesh(e));
-        c.PopTransform();
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(torso_pos[0] - 0.2f, torso_pos[1] + 0.8f,
+                      torso_pos[2] - 0.2f);
+          c.Scale(0.02f, 0.02f, 0.02f);
+          c.DrawMesh(curse_timer_text_group_.GetElementMesh(e));
+        }
       }
       c.Submit();
     }
@@ -4834,12 +4885,13 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
                          ? mini_billboard_1_texture_->texture_data()
                          : nullptr);
       }
-      c.PushTransform();
-      c.Translate(torso_pos[0] - 0.2f, torso_pos[1] + 1.2f,
-                  torso_pos[2] - 0.2f);
-      c.Scale(0.08f, 0.08f, 0.08f);
-      DrawRadialMeter(&billboard_1_mesh_, &c, amt, flash);
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(torso_pos[0] - 0.2f, torso_pos[1] + 1.2f,
+                    torso_pos[2] - 0.2f);
+        c.Scale(0.08f, 0.08f, 0.08f);
+        DrawRadialMeter(&billboard_1_mesh_, &c, amt, flash);
+      }
       c.Submit();
     }
   }
@@ -4860,11 +4912,12 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
                          ? mini_billboard_2_texture_->texture_data()
                          : nullptr);
       }
-      c.PushTransform();
-      c.Translate(torso_pos[0], torso_pos[1] + 1.2f, torso_pos[2] - 0.2f);
-      c.Scale(0.09f, 0.09f, 0.09f);
-      DrawRadialMeter(&billboard_2_mesh_, &c, amt, flash);
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(torso_pos[0], torso_pos[1] + 1.2f, torso_pos[2] - 0.2f);
+        c.Scale(0.09f, 0.09f, 0.09f);
+        DrawRadialMeter(&billboard_2_mesh_, &c, amt, flash);
+      }
       c.Submit();
     }
   }
@@ -4883,12 +4936,13 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
                          ? mini_billboard_3_texture_->texture_data()
                          : nullptr);
       }
-      c.PushTransform();
-      c.Translate(torso_pos[0] + 0.2f, torso_pos[1] + 1.2f,
-                  torso_pos[2] - 0.2f);
-      c.Scale(0.08f, 0.08f, 0.08f);
-      DrawRadialMeter(&billboard_3_mesh_, &c, amt, flash);
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(torso_pos[0] + 0.2f, torso_pos[1] + 1.2f,
+                    torso_pos[2] - 0.2f);
+        c.Scale(0.08f, 0.08f, 0.08f);
+        DrawRadialMeter(&billboard_3_mesh_, &c, amt, flash);
+      }
       c.Submit();
     }
   }
@@ -4900,12 +4954,13 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       c.SetTransparent(true);
       c.SetTexture(counter_texture_.Exists() ? counter_texture_->texture_data()
                                              : nullptr);
-      c.PushTransform();
-      c.Translate(torso_pos[0] - 0.3f, torso_pos[1] + 1.47f,
-                  torso_pos[2] - 0.2f);
-      c.Scale(1.5f * 0.2f, 1.5f * 0.2f, 1.5f * 0.2f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(torso_pos[0] - 0.3f, torso_pos[1] + 1.47f,
+                    torso_pos[2] - 0.2f);
+        c.Scale(1.5f * 0.2f, 1.5f * 0.2f, 1.5f * 0.2f);
+        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+      }
       c.Submit();
     }
     {  // text
@@ -4923,12 +4978,13 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
                     -0.004f * counter_text_group_.GetElementVScale(e), 0.0f,
                     0.3f);
         c.SetFlatness(1.0f);
-        c.PushTransform();
-        c.Translate(torso_pos[0] - 0.1f, torso_pos[1] + 1.34f,
-                    torso_pos[2] - 0.2f);
-        c.Scale(0.01f, 0.01f, 0.01f);
-        c.DrawMesh(counter_text_group_.GetElementMesh(e));
-        c.PopTransform();
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(torso_pos[0] - 0.1f, torso_pos[1] + 1.34f,
+                      torso_pos[2] - 0.2f);
+          c.Scale(0.01f, 0.01f, 0.01f);
+          c.DrawMesh(counter_text_group_.GetElementMesh(e));
+        }
       }
       c.Submit();
     }
@@ -4980,16 +5036,17 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
                     -0.0035f * name_text_group_.GetElementVScale(e), 0.0f,
                     dead_ ? 0.25f : 0.5f);
         c.SetFlatness(1.0f);
-        c.PushTransform();
-        c.Translate(torso_pos[0] - 0.0f, torso_pos[1] + 0.89f + 0.4f * extra,
-                    torso_pos[2] - 0.2f);
-        float s = (0.01f + 0.01f * extra) * death_scale;
-        float w = g_base->text_graphics->GetStringWidth(name_.c_str());
-        if (w > 100.0f) s *= (100.0f / w);
-        s *= s_extra;
-        c.Scale(s, s, s);
-        c.DrawMesh(name_text_group_.GetElementMesh(e));
-        c.PopTransform();
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(torso_pos[0] - 0.0f, torso_pos[1] + 0.89f + 0.4f * extra,
+                      torso_pos[2] - 0.2f);
+          float s = (0.01f + 0.01f * extra) * death_scale;
+          float w = g_base->text_graphics->GetStringWidth(name_.c_str());
+          if (w > 100.0f) s *= (100.0f / w);
+          s *= s_extra;
+          c.Scale(s, s, s);
+          c.DrawMesh(name_text_group_.GetElementMesh(e));
+        }
       }
       c.Submit();
     }
@@ -5007,11 +5064,12 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     c.SetTexture(billboard_texture_.Exists()
                      ? billboard_texture_->texture_data()
                      : nullptr);
-    c.PushTransform();
-    c.Translate(pos[0], pos[1] + 1.6f, pos[2] - 0.2f);
-    c.Scale(2.3f * 0.2f * s, 2.3f * 0.2f * s, 2.3f * 0.2f * s);
-    c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
-    c.PopTransform();
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(pos[0], pos[1] + 1.6f, pos[2] - 0.2f);
+      c.Scale(2.3f * 0.2f * s, 2.3f * 0.2f * s, 2.3f * 0.2f * s);
+      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+    }
     c.Submit();
 
     // Draw a red cross over it if they want.
@@ -5021,11 +5079,12 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       base::SimpleComponent c2(frame_def->overlay_3d_pass());
       c2.SetTransparent(true);
       c2.SetColor(1, 0, 0, o2);
-      c2.PushTransform();
-      c2.Translate(pos[0], pos[1] + 1.6f, pos[2] - 0.2f);
-      c2.Scale(2.3f * 0.2f * s, 2.3f * 0.2f * s, 2.3f * 0.2f * s);
-      c2.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kCrossOut));
-      c2.PopTransform();
+      {
+        auto xf = c2.ScopedTransform();
+        c2.Translate(pos[0], pos[1] + 1.6f, pos[2] - 0.2f);
+        c2.Scale(2.3f * 0.2f * s, 2.3f * 0.2f * s, 2.3f * 0.2f * s);
+        c2.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kCrossOut));
+      }
       c2.Submit();
     }
   }
@@ -5039,74 +5098,79 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       base::SimpleComponent c(frame_def->overlay_3d_pass());
       c.SetTransparent(true);
       c.SetPremultiplied(true);
-      c.PushTransform();
+      {
+        auto xf = c.ScopedTransform();
 
-      o = 1.0f
-          - static_cast<float>(since_last_hurt_change)
-                / static_cast<float>(fade_time);
-      o *= o;
-      const dReal* pos = dBodyGetPosition(body_torso_->body());
+        o = 1.0f
+            - static_cast<float>(since_last_hurt_change)
+                  / static_cast<float>(fade_time);
+        o *= o;
+        const dReal* pos = dBodyGetPosition(body_torso_->body());
 
-      float p_left, p_right;
-      if (hurt_ < hurt_smoothed_) {
-        p_left = 1.0f - hurt_smoothed_;
-        p_right = 1.0f - hurt_;
-      } else {
-        p_right = 1.0f - hurt_smoothed_;
-        p_left = 1.0f - hurt_;
+        float p_left, p_right;
+        if (hurt_ < hurt_smoothed_) {
+          p_left = 1.0f - hurt_smoothed_;
+          p_right = 1.0f - hurt_;
+        } else {
+          p_right = 1.0f - hurt_smoothed_;
+          p_left = 1.0f - hurt_;
+        }
+
+        // For the first moment start p_left at p_right so they can see a
+        // glimpse of green before it goes away.
+        if (since_last_hurt_change < 100) {
+          p_left +=
+              (p_right - p_left)
+              * (1.0f - static_cast<float>(since_last_hurt_change) / 100.0f);
+        }
+
+        c.Translate(pos[0] - 0.25f, pos[1] + 1.35f, pos[2] - 0.2f);
+        c.Scale(0.5f, 0.5f, 0.5f);
+
+        float height = 0.1f;
+        float half_height = height * 0.5f;
+        c.SetColor(0, 0, 0, 0.3f * o);
+
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(0.5f, half_height);
+          c.Scale(1.1f, height + 0.1f);
+          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+        }
+
+        c.SetColor(0, 0.35f * o, 0, 0.3f * o);
+
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(p_left * 0.5f, half_height);
+          c.Scale(p_left, height);
+          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+        }
+
+        if (dead_ && scene()->stepnum() % 10 < 5) {
+          c.SetColor(1 * o, 0.3f, 0.0f, 1.0f * o);
+        } else {
+          c.SetColor(1 * o, 0.0f * o, 0.0f * o, 1.0f * o);
+        }
+
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate((p_left + p_right) * 0.5f, half_height);
+          c.Scale(p_right - p_left, height);
+          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+        }
+
+        c.SetColor(
+            (dead_ && scene()->stepnum() % 10 < 5) ? 0.55f * o : 0.01f * o, 0,
+            0, 0.4f * o);
+
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate((p_right + 1.0f) * 0.5f, half_height);
+          c.Scale(1.0f - p_right, height);
+          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+        }
       }
-
-      // For the first moment start p_left at p_right so they can see a glimpse
-      // of green before it goes away.
-      if (since_last_hurt_change < 100) {
-        p_left +=
-            (p_right - p_left)
-            * (1.0f - static_cast<float>(since_last_hurt_change) / 100.0f);
-      }
-
-      c.Translate(pos[0] - 0.25f, pos[1] + 1.35f, pos[2] - 0.2f);
-      c.Scale(0.5f, 0.5f, 0.5f);
-
-      float height = 0.1f;
-      float half_height = height * 0.5f;
-      c.SetColor(0, 0, 0, 0.3f * o);
-
-      c.PushTransform();
-      c.Translate(0.5f, half_height);
-      c.Scale(1.1f, height + 0.1f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
-      c.PopTransform();
-
-      c.SetColor(0, 0.35f * o, 0, 0.3f * o);
-
-      c.PushTransform();
-      c.Translate(p_left * 0.5f, half_height);
-      c.Scale(p_left, height);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
-      c.PopTransform();
-
-      if (dead_ && scene()->stepnum() % 10 < 5) {
-        c.SetColor(1 * o, 0.3f, 0.0f, 1.0f * o);
-      } else {
-        c.SetColor(1 * o, 0.0f * o, 0.0f * o, 1.0f * o);
-      }
-
-      c.PushTransform();
-      c.Translate((p_left + p_right) * 0.5f, half_height);
-      c.Scale(p_right - p_left, height);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
-      c.PopTransform();
-
-      c.SetColor((dead_ && scene()->stepnum() % 10 < 5) ? 0.55f * o : 0.01f * o,
-                 0, 0, 0.4f * o);
-
-      c.PushTransform();
-      c.Translate((p_right + 1.0f) * 0.5f, half_height);
-      c.Scale(1.0f - p_right, height);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
-      c.PopTransform();
-
-      c.PopTransform();
       c.Submit();
     }
   }
@@ -5161,34 +5225,38 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       // Draw target.
       dBodyGetRelPointPos(body_torso_->body(), kWingAttachX, kWingAttachY,
                           kWingAttachZ, p_wing_l);
-      c.PushTransform();
-      c.Translate(p_wing_l[0], p_wing_l[1], p_wing_l[2]);
-      c.Scale(0.05f, 0.05f, 0.05f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBox));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(p_wing_l[0], p_wing_l[1], p_wing_l[2]);
+        c.Scale(0.05f, 0.05f, 0.05f);
+        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBox));
+      }
 
       // Draw wing point.
-      c.PushTransform();
-      c.Translate(wing_pos_left_.x, wing_pos_left_.y, wing_pos_left_.z);
-      c.Scale(0.1f, 0.1f, 0.1f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBox));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(wing_pos_left_.x, wing_pos_left_.y, wing_pos_left_.z);
+        c.Scale(0.1f, 0.1f, 0.1f);
+        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBox));
+      }
 
       // Draw target.
       dBodyGetRelPointPos(body_torso_->body(), -kWingAttachX, kWingAttachY,
                           kWingAttachZ, p_wing_r);
-      c.PushTransform();
-      c.Translate(p_wing_r[0], p_wing_r[1], p_wing_r[2]);
-      c.Scale(0.05f, 0.05f, 0.05f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBox));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(p_wing_r[0], p_wing_r[1], p_wing_r[2]);
+        c.Scale(0.05f, 0.05f, 0.05f);
+        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBox));
+      }
 
       // Draw wing point.
-      c.PushTransform();
-      c.Translate(wing_pos_right_.x, wing_pos_right_.y, wing_pos_right_.z);
-      c.Scale(0.1f, 0.1f, 0.1f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBox));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(wing_pos_right_.x, wing_pos_right_.y, wing_pos_right_.z);
+        c.Scale(0.1f, 0.1f, 0.1f);
+        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBox));
+      }
     }
 
     // To draw wings, we need a matrix positioned at our torso pointing at our
@@ -5207,14 +5275,16 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     left_wing_up.Normalize();
 
     // Draw target.
-    c.PushTransform();
-    c.Translate(torso_pos2.x, torso_pos2.y, torso_pos2.z);
-    c.MultMatrix(Matrix44fOrient(left_wing_side, left_wing_up, to_left_wing).m);
-    if (death_scale != 1.0f) {
-      c.Scale(death_scale, death_scale, death_scale);
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(torso_pos2.x, torso_pos2.y, torso_pos2.z);
+      c.MultMatrix(
+          Matrix44fOrient(left_wing_side, left_wing_up, to_left_wing).m);
+      if (death_scale != 1.0f) {
+        c.Scale(death_scale, death_scale, death_scale);
+      }
+      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kWing));
     }
-    c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kWing));
-    c.PopTransform();
 
     Vector3f to_right_wing = wing_pos_right_ - torso_pos2;
     to_right_wing.Normalize();
@@ -5224,15 +5294,16 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     right_wing_up.Normalize();
 
     // Draw target.
-    c.PushTransform();
-    c.Translate(torso_pos2.x, torso_pos2.y, torso_pos2.z);
-    c.MultMatrix(
-        Matrix44fOrient(right_wing_side, right_wing_up, to_right_wing).m);
-    if (death_scale != 1.0f) {
-      c.Scale(death_scale, death_scale, death_scale);
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(torso_pos2.x, torso_pos2.y, torso_pos2.z);
+      c.MultMatrix(
+          Matrix44fOrient(right_wing_side, right_wing_up, to_right_wing).m);
+      if (death_scale != 1.0f) {
+        c.Scale(death_scale, death_scale, death_scale);
+      }
+      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kWing));
     }
-    c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kWing));
-    c.PopTransform();
     c.Submit();
   }
 
@@ -5270,24 +5341,26 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     c.SetLightShadow(base::LightShadowType::kObject);
     c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kBoxingGlove));
 
-    c.PushTransform();
-    lower_right_arm_body_->ApplyToRenderComponent(&c);
-    if (death_scale != 1.0f) {
-      c.Scale(death_scale, death_scale, death_scale);
+    {
+      auto xf = c.ScopedTransform();
+      lower_right_arm_body_->ApplyToRenderComponent(&c);
+      if (death_scale != 1.0f) {
+        c.Scale(death_scale, death_scale, death_scale);
+      }
+      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBoxingGlove));
     }
-    c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBoxingGlove));
-    c.PopTransform();
 
     c.FlipCullFace();
-    c.PushTransform();
-    lower_left_arm_body_->ApplyToRenderComponent(&c);
-    c.Scale(-1.0f, 1.0f, 1.0f);
-    if (death_scale != 1.0f) {
-      c.Scale(death_scale, death_scale, death_scale);
+    {
+      auto xf = c.ScopedTransform();
+      lower_left_arm_body_->ApplyToRenderComponent(&c);
+      c.Scale(-1.0f, 1.0f, 1.0f);
+      if (death_scale != 1.0f) {
+        c.Scale(death_scale, death_scale, death_scale);
+      }
+      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBoxingGlove));
+      c.FlipCullFace();
     }
-    c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBoxingGlove));
-    c.FlipCullFace();
-    c.PopTransform();
     c.Submit();
   }
 

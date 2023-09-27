@@ -111,17 +111,7 @@ void TimerList::Run(TimerMedium target_time) {
     Timer* t = GetExpiredTimer(target_time);
     if (t) {
       assert(!t->dead_);
-      try {
-        t->runnable_->Run();
-      } catch (const std::exception&) {
-        // If something went wrong, put our list back in order and propagate.
-        if (t->list_died_) {
-          delete t;  // nothing is left but this timer
-        } else {
-          SubmitTimer(t);
-        }
-        throw;
-      }
+      t->runnable_->RunAndLogErrors();
       // If this timer killed the list, stop; otherwise put it back and keep on
       // trucking.
       if (t->list_died_) {

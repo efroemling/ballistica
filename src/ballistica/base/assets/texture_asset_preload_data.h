@@ -12,7 +12,8 @@ namespace ballistica::base {
 const int kMaxTextureLevels = 14;
 
 // Temporary data that is passed along to the renderer when creating
-// rendererdata. This may include sdl surfaces and/or compressed buffers.
+// renderer-data. This may include things like sdl surfaces and/or
+// compressed buffers.
 class TextureAssetPreloadData {
  public:
   static void rgba8888_to_rgba4444_in_place(void* src, size_t cb);

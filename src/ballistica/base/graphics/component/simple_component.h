@@ -36,18 +36,22 @@ class SimpleComponent : public RenderComponent {
         have_color_(false),
         double_sided_(false),
         do_colorize_2_(false) {}
+
   void SetPremultiplied(bool val) {
     EnsureConfiguring();
     premultiplied_ = val;
   }
+
   void SetTransparent(bool val) {
     EnsureConfiguring();
     transparent_ = val;
   }
+
   void SetTexture(TextureAsset* t) {
     EnsureConfiguring();
     texture_ = t;
   }
+
   void SetTexture(const Object::Ref<TextureAsset>& t) {
     EnsureConfiguring();
     texture_ = t;
@@ -59,31 +63,36 @@ class SimpleComponent : public RenderComponent {
     EnsureConfiguring();
     colorize_texture_ = t;
   }
-  // red multiplies source color, green adds colorize1-color,
-  // and blue adds white
-  // (currently requires colorize1 and colorize 2 to be set)
+
+  // Red multiplies source color, green adds colorize1-color, and blue adds
+  // white (currently requires colorize1 and colorize 2 to be set).
   void SetMaskTexture(TextureAsset* t) {
     EnsureConfiguring();
     mask_texture_ = t;
   }
+
   void SetMaskUV2Texture(TextureAsset* t) {
     EnsureConfiguring();
     mask_uv2_texture_ = t;
   }
+
   void ClearMaskUV2Texture() {
     EnsureConfiguring();
     mask_uv2_texture_.Clear();
   }
+
   void SetDoubleSided(bool enable) {
     EnsureConfiguring();
     double_sided_ = enable;
   }
+
   void SetColor(float r, float g, float b, float a = 1.0f) {
-    // we support fast inline color changes with drawing streams
-    // (avoids having to re-send a whole configure for every color change)
-    // ..make sure to only allow this if we have a color already; otherwise we
+    // We support fast inline color changes with drawing streams (avoids
+    // having to re-send a whole configure for every color change).
+
+    // Make sure to only allow this if we have a color already; otherwise we
     // need to config since we might be implicitly switch shaders by setting
-    // color
+    // color.
     if (state_ == State::kDrawing && have_color_) {
       cmd_buffer_->PutCommand(
           RenderCommandBuffer::Command::kSimpleComponentInlineColor);
@@ -97,6 +106,7 @@ class SimpleComponent : public RenderComponent {
     color_b_ = b;
     color_a_ = a;
   }
+
   void SetColorizeColor(float r, float g, float b, float a = 1.0f) {
     EnsureConfiguring();
     colorize_color_r_ = r;
@@ -104,6 +114,7 @@ class SimpleComponent : public RenderComponent {
     colorize_color_b_ = b;
     colorize_color_a_ = a;
   }
+
   void SetColorizeColor2(float r, float g, float b, float a = 1.0f) {
     EnsureConfiguring();
     colorize_color2_r_ = r;
@@ -112,6 +123,7 @@ class SimpleComponent : public RenderComponent {
     colorize_color2_a_ = a;
     do_colorize_2_ = true;
   }
+
   void SetShadow(float offsetX, float offsetY, float blur, float opacity) {
     EnsureConfiguring();
     shadow_offset_x_ = offsetX;
@@ -119,11 +131,13 @@ class SimpleComponent : public RenderComponent {
     shadow_blur_ = blur;
     shadow_opacity_ = opacity;
   }
-  void setGlow(float amount, float blur) {
+
+  void SetGlow(float amount, float blur) {
     EnsureConfiguring();
     glow_amount_ = amount;
     glow_blur_ = blur;
   }
+
   void SetFlatness(float flatness) {
     EnsureConfiguring();
     flatness_ = flatness;

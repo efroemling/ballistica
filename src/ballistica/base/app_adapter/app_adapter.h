@@ -3,40 +3,54 @@
 #ifndef BALLISTICA_BASE_APP_ADAPTER_APP_ADAPTER_H_
 #define BALLISTICA_BASE_APP_ADAPTER_APP_ADAPTER_H_
 
-#include <string>
-
 #include "ballistica/base/base.h"
+#include "ballistica/shared/generic/lambda_runnable.h"
 
 namespace ballistica::base {
 
 /// Adapts app behavior specific to a particular paradigm and/or api
-/// environment. For example, 'Headless', 'VROculus', 'SDL', etc. Multiple
-/// of these may be supported on a single platform, unlike the Platform
-/// classes where generally there is a single one for the whole platform.
-/// For example, on Windows, we might have GUI, VR, and Headless
-/// AppAdapters, but they all might share the same CorePlatform and
-/// BasePlatform classes.
+/// environment. For example, 'Headless', 'VROculus', 'SDL', etc. These may
+/// be mixed & matched with platform classes to define a build. For example,
+/// on Windows, we might have SDL, VR, and Headless AppAdapters, but they
+/// all might share the same CorePlatform and BasePlatform classes.
 class AppAdapter {
  public:
-  AppAdapter();
-  virtual ~AppAdapter();
+  /// Instantiate the AppAdapter subclass for the current build.
+  static auto Create() -> AppAdapter*;
 
+  /// Called in the main thread when the app is being started.
   virtual void OnMainThreadStartApp();
 
-  /// Return whether this class runs its own event loop.
-  auto ManagesEventLoop() const -> bool;
+  // Logic thread callbacks.
+  virtual void OnAppStart();
+  virtual void OnAppPause();
+  virtual void OnAppResume();
+  virtual void OnAppShutdown();
+  virtual void OnAppShutdownComplete();
+  virtual void OnScreenSizeChange();
+  virtual void DoApplyAppConfig();
 
-  /// Called for non-event-loop-managing apps to give them an opportunity to
-  /// ensure they are self-sustaining. For instance, an app relying on
-  /// frame-draws for its main thread event processing may need to manually
-  /// pump events until a screen-creation event goes through which should
-  /// keep things running thereafter.
-  virtual void PrimeMainThreadEventPump();
+  /// Return whether this class manages the main thread event loop itself.
+  /// Default is true. If this is true, RunMainThreadEventLoopToCompletion()
+  /// will be called to run the app. This should return false on builds
+  /// where the OS manages the main thread event loop and we just sit in it
+  /// and receive events via callbacks/etc.
+  virtual auto ManagesMainThreadEventLoop() const -> bool;
 
-  /// Handle any pending OS events. On normal graphical builds this is
-  /// triggered by RunRenderUpkeepCycle(); timer intervals for headless
-  /// builds, etc. Should process any pending OS events, etc.
-  virtual void RunEvents();
+  /// When called, the main thread event loop should be run until
+  /// ExitMainThreadEventLoop() is called. This will only be called if
+  /// ManagesMainThreadEventLoop() returns true.
+  virtual void RunMainThreadEventLoopToCompletion();
+
+  /// Called when the main thread event loop should exit. Will only be
+  /// called if ManagesMainThreadEventLoop() returns true.
+  virtual void DoExitMainThreadEventLoop();
+
+  /// Push a call to be run in the app's main thread.
+  template <typename F>
+  void PushMainThreadCall(const F& lambda) {
+    DoPushMainThreadRunnable(NewLambdaRunnableUnmanaged(lambda));
+  }
 
   /// Put the app into a paused state. Should be called from the main
   /// thread. Pauses work, closes network sockets, etc. May correspond to
@@ -53,34 +67,29 @@ class AppAdapter {
 
   auto app_paused() const { return app_paused_; }
 
-  /// The last time the app was resumed (uses GetAppTimeMillisecs() value).
-  auto last_app_resume_time() const { return last_app_resume_time_; }
+  /// Return whether this AppAdapter supports a 'fullscreen' toggle for its
+  /// display. This currently will simply affect whether that option is
+  /// available in display settings or via a hotkey.
+  virtual auto CanToggleFullscreen() -> bool const;
 
-  /// Attempt to draw a frame.
-  void DrawFrame(bool during_resize = false);
+  /// Return whether this AppAdapter supports vsync controls for its display.
+  virtual auto SupportsVSync() -> bool const;
 
-  /// Gets called when the app config is being applied. Note that this call
-  /// happens in the logic thread, so we should do any reading that needs to
-  /// happen in the logic thread and then forward the values to ourself back
-  /// in our main thread.
-  virtual void LogicThreadDoApplyAppConfig();
+  /// Return whether this AppAdapter supports max-fps controls for its display.
+  virtual auto SupportsMaxFPS() -> bool const;
 
-  /// Used on platforms where our main thread event processing is driven by
-  /// frame-draw commands given to us. This should be called after drawing a
-  /// frame in order to bring game state up to date and process OS events.
-  void RunRenderUpkeepCycle();
+ protected:
+  AppAdapter();
+  virtual ~AppAdapter();
 
-  /// Called by the graphics-server when drawing completes for a frame.
-  virtual void DidFinishRenderingFrame(FrameDef* frame);
+  /// Push a raw pointer Runnable to the platform's 'main' thread. The main
+  /// thread should call its RunAndLogErrors() method and then delete it.
+  virtual void DoPushMainThreadRunnable(Runnable* runnable) = 0;
 
  private:
-  void UpdatePauseResume_();
   void OnAppPause_();
   void OnAppResume_();
-  bool app_pause_requested_{};
   bool app_paused_{};
-  millisecs_t last_resize_draw_event_time_{};
-  millisecs_t last_app_resume_time_{};
 };
 
 }  // namespace ballistica::base

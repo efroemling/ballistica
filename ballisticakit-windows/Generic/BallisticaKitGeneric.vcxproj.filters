@@ -7,6 +7,12 @@
     <ClInclude Include="..\..\src\ballistica\base\app_adapter\app_adapter.h">
       <Filter>ballistica\base\app_adapter</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\app_adapter\app_adapter_apple.cc">
+      <Filter>ballistica\base\app_adapter</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\app_adapter\app_adapter_apple.h">
+      <Filter>ballistica\base\app_adapter</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\app_adapter\app_adapter_headless.cc">
       <Filter>ballistica\base\app_adapter</Filter>
     </ClCompile>
@@ -244,16 +250,79 @@
     <ClInclude Include="..\..\src\ballistica\base\graphics\component\sprite_component.h">
       <Filter>ballistica\base\graphics\component</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\framebuffer_object_gl.h">
+      <Filter>ballistica\base\graphics\gl</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\graphics\gl\gl_sys.cc">
       <Filter>ballistica\base\graphics\gl</Filter>
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\base\graphics\gl\gl_sys.h">
       <Filter>ballistica\base\graphics\gl</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\gl\gl_sys_windows.cc">
+      <Filter>ballistica\base\graphics\gl</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\gl_sys_windows.h">
+      <Filter>ballistica\base\graphics\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\mesh\mesh_asset_data_gl.h">
+      <Filter>ballistica\base\graphics\gl\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\mesh\mesh_data_dual_texture_full_gl.h">
+      <Filter>ballistica\base\graphics\gl\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\mesh\mesh_data_gl.h">
+      <Filter>ballistica\base\graphics\gl\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\mesh\mesh_data_object_split_gl.h">
+      <Filter>ballistica\base\graphics\gl\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\mesh\mesh_data_simple_full_gl.h">
+      <Filter>ballistica\base\graphics\gl\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\mesh\mesh_data_simple_split_gl.h">
+      <Filter>ballistica\base\graphics\gl\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\mesh\mesh_data_smoke_full_gl.h">
+      <Filter>ballistica\base\graphics\gl\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\mesh\mesh_data_sprite_gl.h">
+      <Filter>ballistica\base\graphics\gl\mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\program\program_blur_gl.h">
+      <Filter>ballistica\base\graphics\gl\program</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\program\program_gl.h">
+      <Filter>ballistica\base\graphics\gl\program</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\program\program_object_gl.h">
+      <Filter>ballistica\base\graphics\gl\program</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\program\program_post_process_gl.h">
+      <Filter>ballistica\base\graphics\gl\program</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\program\program_shield_gl.h">
+      <Filter>ballistica\base\graphics\gl\program</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\program\program_simple_gl.h">
+      <Filter>ballistica\base\graphics\gl\program</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\program\program_smoke_gl.h">
+      <Filter>ballistica\base\graphics\gl\program</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\program\program_sprite_gl.h">
+      <Filter>ballistica\base\graphics\gl\program</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\render_target_gl.h">
+      <Filter>ballistica\base\graphics\gl</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\graphics\gl\renderer_gl.cc">
       <Filter>ballistica\base\graphics\gl</Filter>
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\base\graphics\gl\renderer_gl.h">
+      <Filter>ballistica\base\graphics\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\texture_data_gl.h">
       <Filter>ballistica\base\graphics\gl</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\graphics\graphics.cc">
@@ -1880,6 +1949,8 @@
     <Filter Include="ballistica\base\graphics" />
     <Filter Include="ballistica\base\graphics\component" />
     <Filter Include="ballistica\base\graphics\gl" />
+    <Filter Include="ballistica\base\graphics\gl\mesh" />
+    <Filter Include="ballistica\base\graphics\gl\program" />
     <Filter Include="ballistica\base\graphics\mesh" />
     <Filter Include="ballistica\base\graphics\renderer" />
     <Filter Include="ballistica\base\graphics\support" />

@@ -475,7 +475,7 @@ void TextNode::Draw(base::FrameDef* frame_def) {
                 c.SetPremultiplied(true);
                 c.SetColor(trail_color_[0] * o, trail_color_[1] * o,
                            trail_color_[2] * o, 0.0f);
-                c.setGlow(1.0f, 3.0f);
+                c.SetGlow(1.0f, 3.0f);
 
                 // FIXME FIXME FIXME NEED A WAY TO BLUR IN THE SHADER
                 int elem_count = text_group_.GetElementCount();
@@ -485,21 +485,23 @@ void TextNode::Draw(base::FrameDef* frame_def) {
                   if (!t->preloaded()) continue;
                   c.SetTexture(t);
                   c.SetMaskUV2Texture(text_group_.GetElementMaskUV2Texture(e));
-                  c.PushTransform();
-                  if (vr_2d_text) {
-                    c.Translate(
-                        0, 0,
-                        vr_depth_ - 15.0f * static_cast<float>(passes - i));
-                  }
+                  {
+                    auto xf = c.ScopedTransform();
+                    if (vr_2d_text) {
+                      c.Translate(
+                          0, 0,
+                          vr_depth_ - 15.0f * static_cast<float>(passes - i));
+                    }
 
-                  // Fudge factors to keep our old look.. ew.
-                  c.Translate(pass_width / 2 + 7.0f, pass_height / 2 + 35.0f,
-                              z);
-                  c.Scale(project_scale, project_scale);
-                  c.Translate(x, y + 70.0f, 0);
-                  c.Scale(extrascale * extrascale_2, extrascale * extrascale_2);
-                  c.DrawMesh(text_group_.GetElementMesh(e));
-                  c.PopTransform();
+                    // Fudge factors to keep our old look.. ew.
+                    c.Translate(pass_width / 2 + 7.0f, pass_height / 2 + 35.0f,
+                                z);
+                    c.Scale(project_scale, project_scale);
+                    c.Translate(x, y + 70.0f, 0);
+                    c.Scale(extrascale * extrascale_2,
+                            extrascale * extrascale_2);
+                    c.DrawMesh(text_group_.GetElementMesh(e));
+                  }
                 }
                 c.Submit();
               }
@@ -532,19 +534,20 @@ void TextNode::Draw(base::FrameDef* frame_def) {
             c.ClearMaskUV2Texture();
           }
 
-          c.PushTransform();
-          if (vr_2d_text) {
-            c.Translate(0, 0, vr_depth_);
-          }
+          {
+            auto xf = c.ScopedTransform();
+            if (vr_2d_text) {
+              c.Translate(0, 0, vr_depth_);
+            }
 
-          // Fudge factors to keep our old look.. ew.
-          c.Translate(pass_width / 2 + 7.0f, pass_height / 2 + 35.0f, z);
-          c.Scale(project_scale_, project_scale_);
-          c.Translate(tx + tx_tilt - pass_width / 2,
-                      ty + ty_tilt - pass_height / 2 + 70.0f, 0);
-          c.Scale(extrascale * extrascale_2, extrascale * extrascale_2);
-          c.DrawMesh(text_group_.GetElementMesh(e));
-          c.PopTransform();
+            // Fudge factors to keep our old look.. ew.
+            c.Translate(pass_width / 2 + 7.0f, pass_height / 2 + 35.0f, z);
+            c.Scale(project_scale_, project_scale_);
+            c.Translate(tx + tx_tilt - pass_width / 2,
+                        ty + ty_tilt - pass_height / 2 + 70.0f, 0);
+            c.Scale(extrascale * extrascale_2, extrascale * extrascale_2);
+            c.DrawMesh(text_group_.GetElementMesh(e));
+          }
           // Any reason why we submit inside the loop here but not further
           // down?
           c.Submit();
@@ -638,15 +641,16 @@ void TextNode::Draw(base::FrameDef* frame_def) {
         c.SetFlatness(
             std::min(text_group_.GetElementMaxFlatness(e), flatness_));
       }
-      c.PushTransform();
-      if (vr_2d_text) {
-        c.Translate(0, 0, vr_depth_);
+      {
+        auto xf = c.ScopedTransform();
+        if (vr_2d_text) {
+          c.Translate(0, 0, vr_depth_);
+        }
+        c.Translate(position_final_[0], position_final_[1], z);
+        if (rotate_ != 0.0f) c.Rotate(rotate_, 0, 0, 1);
+        c.Scale(scale_ * extrascale, scale_ * extrascale, 1.0f * extrascale);
+        c.DrawMesh(text_group_.GetElementMesh(e));
       }
-      c.Translate(position_final_[0], position_final_[1], z);
-      if (rotate_ != 0.0f) c.Rotate(rotate_, 0, 0, 1);
-      c.Scale(scale_ * extrascale, scale_ * extrascale, 1.0f * extrascale);
-      c.DrawMesh(text_group_.GetElementMesh(e));
-      c.PopTransform();
     }
     c.Submit();
   }

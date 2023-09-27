@@ -293,10 +293,10 @@ enum class LogLevel {
 };
 
 enum class ThreadSource {
-  /// A normal thread spun up by us.
+  /// Spin up a new thread for the event loop.
   kCreate,
-  /// For wrapping a ballistica thread around the existing main thread.
-  kWrapMain
+  /// Wrap the event loop around the current thread.
+  kWrapCurrent
 };
 
 /// Used for thread identification.

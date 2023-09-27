@@ -234,7 +234,7 @@ void Scene::GraphicsQualityChanged(base::GraphicsQuality q) {
   }
 }
 
-void Scene::ScreenSizeChanged() {
+void Scene::OnScreenSizeChange() {
   assert(g_base->InLogicThread());
   for (auto&& i : nodes_) {
     i->OnScreenSizeChange();  // New.

@@ -44,7 +44,9 @@ class CoreFeatureSet {
  public:
   /// Import the core feature set. A core-config can be passed ONLY in
   /// monolithic builds when it is guaranteed that the Import will be
-  /// allocating the CoreFeatureSet singleton.
+  /// allocating the CoreFeatureSet singleton. Also be aware that the
+  /// initial core import must happen from whichever thread is considered
+  /// the 'main' thread for the platform.
   static auto Import(const CoreConfig* config = nullptr) -> CoreFeatureSet*;
 
   /// Attempt to import the base feature-set. Will return nullptr if it is
@@ -66,9 +68,9 @@ class CoreFeatureSet {
 
   // Call this if the main thread changes.
   // Fixme: Should come up with something less hacky feeling.
-  void UpdateMainThreadID();
+  // void UpdateMainThreadID();
 
-  auto* main_event_loop() const { return main_event_loop_; }
+  // auto* main_event_loop() const { return main_event_loop_; }
   auto IsVRMode() -> bool;
 
   /// Are we running headless?
@@ -95,9 +97,12 @@ class CoreFeatureSet {
   /// progressing while the app is suspended and will never go backwards.
   auto GetAppTimeSeconds() -> double;
 
-  /// Are we in the thread the main event loop is running on? Generally this
-  /// is the thread that runs graphics and os event processing.
-  auto InMainThread() -> bool;
+  /// Are we in the 'main' thread? The thread that first inited Core is
+  /// considered the 'main' thread; on most platforms it is the one where
+  /// UI calls must be run/etc.
+  auto InMainThread() -> bool {
+    return std::this_thread::get_id() == main_thread_id;
+  }
 
   /// Log a boot-related message (only if core_config.lifecycle_log is true).
   void LifecycleLog(const char* msg, double offset_seconds = 0.0);
@@ -185,7 +190,7 @@ class CoreFeatureSet {
   void UpdateAppTime();
   void PostInit();
   bool tried_importing_base_{};
-  EventLoop* main_event_loop_{};
+  // EventLoop* main_event_loop_{};
   CoreConfig core_config_;
   bool started_suicide_{};
   std::string build_src_dir_;

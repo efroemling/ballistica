@@ -5,8 +5,6 @@
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
 
-#if BA_ENABLE_OPENGL
-
 /* DDS loader written by Jon Watte 2002 */
 /* Permission granted to use freely, as long as Jon Watte */
 /* is held harmless for all possible damages resulting from */
@@ -15,10 +13,6 @@
 /* or not at all. */
 
 namespace ballistica::base {
-
-// Should tidy this up to use unsigned vals but don't want to touch for now.
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "hicpp-signed-bitwise"
 
 struct DdsLoadInfo {
   bool compressed;
@@ -139,8 +133,4 @@ void LoadDDS(const std::string& file_name, unsigned char** buffers, int* widths,
   fclose(f);
 }
 
-#pragma clang diagnostic pop
-
 }  // namespace ballistica::base
-
-#endif  // BA_ENABLE_OPENGL

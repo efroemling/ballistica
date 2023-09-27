@@ -28,7 +28,7 @@ class ClientSession : public Session {
   void Reset(bool rewind);
   auto GetForegroundContext() -> base::ContextRef override;
   auto DoesFillScreen() const -> bool override;
-  void ScreenSizeChanged() override;
+  void OnScreenSizeChange() override;
   void LanguageChanged() override;
   void GetCorrectionMessages(bool blend,
                              std::vector<std::vector<uint8_t> >* messages);

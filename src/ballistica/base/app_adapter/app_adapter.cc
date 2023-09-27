@@ -2,11 +2,19 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 
+#if BA_OSTYPE_ANDROID
+#include "ballistica/base/app_adapter/app_adapter_android.h"
+#endif
+#include "ballistica/base/app_adapter/app_adapter_apple.h"
+#include "ballistica/base/app_adapter/app_adapter_headless.h"
+#include "ballistica/base/app_adapter/app_adapter_sdl.h"
+#include "ballistica/base/app_adapter/app_adapter_vr.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/base/networking/networking.h"
+#include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/support/stress_test.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -14,20 +22,47 @@
 
 namespace ballistica::base {
 
+auto AppAdapter::Create() -> AppAdapter* {
+  assert(g_core);
+
+// TEMP - need to init sdl on our legacy mac build even though its not
+// technically an SDL app. Kill this once the old mac build is gone.
+#if BA_LEGACY_MACOS_BUILD
+  AppAdapterSDL::InitSDL();
+#endif
+
+  AppAdapter* app_adapter{};
+
+#if BA_HEADLESS_BUILD
+  app_adapter = new AppAdapterHeadless();
+#elif BA_OSTYPE_ANDROID
+  app_adapter = new AppAdapterAndroid();
+#elif BA_XCODE_BUILD
+  app_adapter = new AppAdapterApple();
+#elif BA_RIFT_BUILD
+  // Rift build can spin up in either VR or regular mode.
+  if (g_core->vr_mode) {
+    app_adapter = new AppAdapterVR();
+  } else {
+    app_adapter = new AppAdapterSDL();
+  }
+#elif BA_CARDBOARD_BUILD
+  app_adapter = new AppAdapterVR();
+#elif BA_SDL_BUILD
+  app_adapter = new AppAdapterSDL();
+#else
+#error No app adapter defined for this build.
+#endif
+
+  assert(app_adapter);
+  return app_adapter;
+}
+
 AppAdapter::AppAdapter() = default;
 
 AppAdapter::~AppAdapter() = default;
 
-void AppAdapter::LogicThreadDoApplyAppConfig() {
-  assert(g_base->InLogicThread());
-}
-
-auto AppAdapter::ManagesEventLoop() const -> bool {
-  // We have 2 redundant values for essentially the same thing;
-  // should get rid of IsEventPushMode() once we've created
-  // App subclasses for our various platforms.
-  return !g_core->platform->IsEventPushMode();
-}
+auto AppAdapter::ManagesMainThreadEventLoop() const -> bool { return true; }
 
 void AppAdapter::OnMainThreadStartApp() {
   assert(g_base);
@@ -37,11 +72,12 @@ void AppAdapter::OnMainThreadStartApp() {
   // Add some common input devices where applicable. More specific ones (SDL
   // Joysticks, etc.) get added in subclasses.
 
-  // If we've got a nice themed hardware cursor, show it. Otherwise we'll
-  // render it manually, which is laggier but gets the job done.
-  g_core->platform->SetHardwareCursorVisible(g_buildconfig.hardware_cursor());
-
+  // FIXME: This stuff should probably go elsewhere.
   if (!g_core->HeadlessMode()) {
+    // If we've got a nice themed hardware cursor, show it. Otherwise we'll
+    // render it manually, which is laggier but gets the job done.
+    g_base->platform->SetHardwareCursorVisible(g_buildconfig.hardware_cursor());
+
     // On desktop systems we just assume keyboard input exists and add it
     // immediately.
     if (g_core->platform->IsRunningOnDesktop()) {
@@ -56,74 +92,82 @@ void AppAdapter::OnMainThreadStartApp() {
   }
 }
 
-void AppAdapter::DrawFrame(bool during_resize) {
-  assert(g_base->InGraphicsThread());
+void AppAdapter::OnAppStart() { assert(g_base->InLogicThread()); }
+void AppAdapter::OnAppPause() { assert(g_base->InLogicThread()); }
+void AppAdapter::OnAppResume() { assert(g_base->InLogicThread()); }
+void AppAdapter::OnAppShutdown() { assert(g_base->InLogicThread()); }
+void AppAdapter::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
+void AppAdapter::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
+void AppAdapter::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
 
-  // It's possible to be asked to draw before we're ready.
-  if (!g_base->graphics_server || !g_base->graphics_server->renderer()) {
-    return;
-  }
+// void AppAdapter::DrawFrame(bool during_resize) {
+//   assert(g_base->InGraphicsThread());
 
-  millisecs_t starttime = g_core->GetAppTimeMillisecs();
+//   // It's possible to be asked to draw before we're ready.
+//   if (!g_base->graphics_server || !g_base->graphics_server->renderer()) {
+//     return;
+//   }
 
-  // A resize-draw event means that we're drawing due to a window resize.
-  // In this case we ignore regular draw events for a short while
-  // afterwards which makes resizing smoother.
-  //
-  // FIXME: should figure out the *correct* way to handle this; I believe
-  //  the underlying cause here is some sort of context contention across
-  //  threads.
-  if (during_resize) {
-    last_resize_draw_event_time_ = starttime;
-  } else {
-    if (starttime - last_resize_draw_event_time_ < (1000 / 30)) {
-      return;
-    }
-  }
-  g_base->graphics_server->TryRender();
-  RunRenderUpkeepCycle();
-}
+//   millisecs_t starttime = g_core->GetAppTimeMillisecs();
 
-void AppAdapter::RunRenderUpkeepCycle() {
-  // This should only be firing if the OS is handling the event loop.
-  assert(!ManagesEventLoop());
+//   // A resize-draw event means that we're drawing due to a window resize.
+//   // In this case we ignore regular draw events for a short while
+//   // afterwards which makes resizing smoother.
+//   //
+//   // FIXME: should figure out the *correct* way to handle this; I believe
+//   //  the underlying cause here is some sort of context contention across
+//   //  threads.
+//   if (during_resize) {
+//     last_resize_draw_event_time_ = starttime;
+//   } else {
+//     if (starttime - last_resize_draw_event_time_ < (1000 / 30)) {
+//       return;
+//     }
+//   }
+//   g_base->graphics_server->TryRender();
+//   // RunRenderUpkeepCycle();
+// }
 
-  // Pump the main event loop (when we're being driven by frame-draw
-  // callbacks, this is the only place that gets done).
-  g_core->main_event_loop()->RunSingleCycle();
+// void AppAdapter::RunRenderUpkeepCycle() {
+//   // This should only be firing if the OS is handling the event loop.
+//   assert(!ManagesMainThreadEventLoop());
 
-  // Now do the general app event cycle for whoever needs to process things.
-  // FIXME KILL THIS.
-  RunEvents();
-}
+//   // Pump the main event loop (when we're being driven by frame-draw
+//   // callbacks, this is the only place that gets done).
+//   g_core->main_event_loop()->RunSingleCycle();
+
+//   // Now do the general app event cycle for whoever needs to process things.
+//   // FIXME KILL THIS.
+//   RunEvents();
+// }
 
 // FIXME KILL THIS.
-void AppAdapter::RunEvents() {
-  // There's probably a better place for this.
-  g_base->stress_test()->Update();
+// void AppAdapter::RunEvents() {
+// There's probably a better place for this.
+// g_base->stress_test()->Update();
 
-  // Give platforms a chance to pump/handle their own events.
-  //
-  // FIXME: now that we have app class overrides, platform should really not
-  // be doing event handling. (need to fix Rift build in this regard).
-  g_core->platform->RunEvents();
-}
+// Give platforms a chance to pump/handle their own events.
+//
+// FIXME: now that we have app class overrides, platform should really not
+// be doing event handling. (need to fix Rift build in this regard).
+// g_core->platform->RunEvents();
+// }
 
-void AppAdapter::UpdatePauseResume_() {
-  if (app_paused_) {
-    // Unpause if no one wants pause.
-    if (!app_pause_requested_) {
-      OnAppResume_();
-      app_paused_ = false;
-    }
-  } else {
-    // OnAppPause if anyone wants.
-    if (app_pause_requested_) {
-      OnAppPause_();
-      app_paused_ = true;
-    }
-  }
-}
+// void AppAdapter::UpdatePauseResume_() {
+//   if (app_paused_) {
+//     // Unpause if no one wants pause.
+//     if (!app_pause_requested_) {
+//       OnAppResume_();
+//       app_paused_ = false;
+//     }
+//   } else {
+//     // OnAppPause if anyone wants.
+//     if (app_pause_requested_) {
+//       OnAppPause_();
+//       app_paused_ = true;
+//     }
+//   }
+// }
 
 void AppAdapter::OnAppPause_() {
   assert(g_core->InMainThread());
@@ -144,7 +188,7 @@ void AppAdapter::OnAppPause_() {
 
 void AppAdapter::OnAppResume_() {
   assert(g_core->InMainThread());
-  last_app_resume_time_ = g_core->GetAppTimeMillisecs();
+  // last_app_resume_time_ = g_core->GetAppTimeMillisecs();
 
   // Spin all event-loops back up.
   EventLoop::SetEventLoopsPaused(false);
@@ -173,6 +217,13 @@ void AppAdapter::OnAppResume_() {
 void AppAdapter::PauseApp() {
   assert(g_core);
   assert(g_core->InMainThread());
+
+  if (app_paused_) {
+    Log(LogLevel::kWarning,
+        "AppAdapter::PauseApp() called with app already paused.");
+    return;
+  }
+
   millisecs_t start_time{core::CorePlatform::GetCurrentMillisecs()};
 
   // Apple mentioned 5 seconds to run stuff once backgrounded or they bring
@@ -181,9 +232,10 @@ void AppAdapter::PauseApp() {
 
   g_core->platform->DebugLog(
       "PauseApp@" + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
-  assert(!app_pause_requested_);
-  app_pause_requested_ = true;
-  UpdatePauseResume_();
+  // assert(!app_pause_requested_);
+  // app_pause_requested_ = true;
+  OnAppPause_();
+  // UpdatePauseResume_();
 
   // We assume that the OS will completely suspend our process the moment we
   // return from this call (though this is not technically true on all
@@ -219,13 +271,21 @@ void AppAdapter::PauseApp() {
 }
 
 void AppAdapter::ResumeApp() {
-  assert(g_core && g_core->InMainThread());
+  assert(g_core);
+  assert(g_core->InMainThread());
+
+  if (!app_paused_) {
+    Log(LogLevel::kWarning,
+        "AppAdapter::ResumeApp() called with app not in paused state.");
+    return;
+  }
   millisecs_t start_time{core::CorePlatform::GetCurrentMillisecs()};
   g_core->platform->DebugLog(
       "ResumeApp@" + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
-  assert(app_pause_requested_);
-  app_pause_requested_ = false;
-  UpdatePauseResume_();
+  // assert(app_pause_requested_);
+  // app_pause_requested_ = false;
+  // UpdatePauseResume_();
+  OnAppResume_();
   if (g_buildconfig.debug_build()) {
     Log(LogLevel::kDebug,
         "ResumeApp() completed in "
@@ -235,21 +295,18 @@ void AppAdapter::ResumeApp() {
   }
 }
 
-void AppAdapter::DidFinishRenderingFrame(FrameDef* frame) {}
-
-void AppAdapter::PrimeMainThreadEventPump() {
-  assert(!ManagesEventLoop());
-
-  // Need to release the GIL while we're doing this so other thread
-  // can do their Python-y stuff.
-  Python::ScopedInterpreterLockRelease release;
-
-  // Pump events manually until a screen gets created.
-  // At that point we use frame-draws to drive our event loop.
-  while (!g_base->graphics_server->initial_screen_created()) {
-    g_core->main_event_loop()->RunSingleCycle();
-    core::CorePlatform::SleepMillisecs(1);
-  }
+void AppAdapter::RunMainThreadEventLoopToCompletion() {
+  FatalError("RunMainThreadEventLoopToCompletion is not implemented here.");
 }
+
+void AppAdapter::DoExitMainThreadEventLoop() {
+  FatalError("DoExitMainThreadEventLoop is not implemented here.");
+}
+
+auto AppAdapter::CanToggleFullscreen() -> bool const { return false; }
+
+auto AppAdapter::SupportsVSync() -> bool const { return false; }
+
+auto AppAdapter::SupportsMaxFPS() -> bool const { return false; }
 
 }  // namespace ballistica::base

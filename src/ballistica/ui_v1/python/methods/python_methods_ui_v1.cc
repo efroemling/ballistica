@@ -2,6 +2,7 @@
 
 #include "ballistica/ui_v1/python/methods/python_methods_ui_v1.h"
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/input/input.h"
@@ -23,9 +24,9 @@
 #include "ballistica/ui_v1/widget/row_widget.h"
 #include "ballistica/ui_v1/widget/scroll_widget.h"
 
-#if !BA_HEADLESS_BUILD && !BA_XCODE_NEW_PROJECT
-extern "C" void SDL_ericf_focus(void);
-#endif
+// #if !BA_HEADLESS_BUILD && !BA_XCODE_NEW_PROJECT
+// extern "C" void SDL_ericf_focus(void);
+// #endif
 
 namespace ballistica::ui_v1 {
 
@@ -2357,11 +2358,11 @@ static auto PyFocusWindow(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   assert(g_base->InLogicThread());
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_HEADLESS_BUILD \
-    && !BA_XCODE_NEW_PROJECT
-  SDL_ericf_focus();
-#else
-#endif
+  // #if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_HEADLESS_BUILD \
+//     && !BA_XCODE_NEW_PROJECT
+  //   SDL_ericf_focus();
+  // #else
+  // #endif
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -2400,7 +2401,7 @@ static auto PyShowOnlineScoreUI(PyObject* self, PyObject* args,
   if (game_version_obj != Py_None) {
     game_version = Python::GetPyString(game_version_obj);
   }
-  g_core->main_event_loop()->PushCall([show, game, game_version] {
+  g_base->app_adapter->PushMainThreadCall([show, game, game_version] {
     assert(g_core->InMainThread());
     g_core->platform->ShowOnlineScoreUI(show, game, game_version);
   });
@@ -2724,7 +2725,7 @@ static auto PyOpenURL(PyObject* self, PyObject* args, PyObject* keywds)
   if (force_internal) {
     g_base->ui->ShowURL(address);
   } else {
-    g_core->main_event_loop()->PushCall(
+    g_base->app_adapter->PushMainThreadCall(
         [address] { g_base->platform->OpenURL(address); });
   }
   Py_RETURN_NONE;

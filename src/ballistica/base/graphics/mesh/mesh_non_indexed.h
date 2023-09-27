@@ -4,6 +4,7 @@
 #define BALLISTICA_BASE_GRAPHICS_MESH_MESH_NON_INDEXED_H_
 
 #include "ballistica/base/graphics/mesh/mesh.h"
+#include "ballistica/base/graphics/mesh/mesh_buffer.h"
 
 namespace ballistica::base {
 

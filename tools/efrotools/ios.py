@@ -21,14 +21,17 @@ MODES = {
 class Config:
     """Configuration values for this project."""
 
+    # Same as XCode setting.
+    product_name: str
+
     # Project relative xcodeproj path ('MyAppName/MyAppName.xcodeproj').
     projectpath: str
 
     # App bundle name ('MyAppName.app').
-    app_bundle_name: str
+    # app_bundle_name: str
 
     # Base name of the ipa archive to be pushed ('myappname').
-    archive_name: str
+    # archive_name: str
 
     # Scheme to build ('MyAppName iOS').
     scheme: str
@@ -71,11 +74,11 @@ def push_ipa(
     app_dir = project_build_path(
         projroot=str(root),
         project_path=str(xcprojpath),
-        scheme='BallisticaKit iOS Legacy',
+        scheme=cfg.scheme,
         configuration=mode['configuration'],
         executable=False,
     )
-    built_app_path = pathlib.Path(app_dir, cfg.app_bundle_name)
+    built_app_path = pathlib.Path(app_dir, f'{cfg.product_name}.app')
 
     workdir = pathlib.Path(root, 'build', 'push_ipa')
     workdir.mkdir(parents=True, exist_ok=True)
@@ -118,10 +121,10 @@ def _add_build_to_xcarchive(
     xcprojpath: pathlib.Path,
     built_app_path: pathlib.Path,
     cfg: Config,
-    signing_config: str | None,
+    ba_signing_config: str | None,
 ) -> pathlib.Path:
-    archivepathbase = pathlib.Path(workdir, cfg.archive_name)
-    archivepath = pathlib.Path(workdir, cfg.archive_name + '.xcarchive')
+    archivepathbase = pathlib.Path(workdir, cfg.product_name)
+    archivepath = pathlib.Path(workdir, cfg.product_name + '.xcarchive')
 
     # Rebuild a full archive if one doesn't exist.
     if not archivepath.exists():
@@ -141,8 +144,8 @@ def _add_build_to_xcarchive(
             str(archivepathbase),
             '-allowProvisioningUpdates',
         ]
-        if signing_config is not None:
-            args += ['-signingconfig', signing_config]
+        if ba_signing_config is not None:
+            args += ['-baSigningConfig', ba_signing_config]
 
         subprocess.run(args, check=True, capture_output=False)
 
@@ -150,7 +153,7 @@ def _add_build_to_xcarchive(
     print('Copying build to archive...')
     sys.stdout.flush()
     archive_app_path = pathlib.Path(
-        archivepath, 'Products/Applications/' + cfg.app_bundle_name
+        archivepath, f'Products/Applications/{cfg.product_name}.app'
     )
     subprocess.run(['rm', '-rf', archive_app_path], check=True)
     subprocess.run(['cp', '-r', built_app_path, archive_app_path], check=True)
@@ -209,7 +212,7 @@ def _export_ipa_from_xcarchive(
         str(ipa_dir_path),
     ]
     if signing_config is not None:
-        args += ['-signingconfig', signing_config]
+        args += ['-baSigningConfig', signing_config]
     try:
         subprocess.run(args, check=True, capture_output=True)
     except Exception:
@@ -219,7 +222,7 @@ def _export_ipa_from_xcarchive(
         )
         raise
 
-    ipa_path_exported = pathlib.Path(ipa_dir_path, cfg.scheme + '.ipa')
-    ipa_path = pathlib.Path(ipa_dir_path, cfg.archive_name + '.ipa')
-    subprocess.run(['mv', ipa_path_exported, ipa_path], check=True)
-    return ipa_path
+    ipa_path_exported = pathlib.Path(ipa_dir_path, cfg.product_name + '.ipa')
+    # ipa_path = pathlib.Path(ipa_dir_path, cfg.archive_name + '.ipa')
+    # subprocess.run(['mv', ipa_path_exported, ipa_path], check=True)
+    return ipa_path_exported

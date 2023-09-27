@@ -63,20 +63,21 @@ void GraphicsVR::DoDrawFade(FrameDef* frame_def, float amt) {
   Vector3f side = Vector3f::Cross(diff, Vector3f(0.0f, 1.0f, 0.0f));
   Vector3f up = Vector3f::Cross(diff, side);
   c.SetColor(0, 0, 0);
-  c.PushTransform();
-  // We start in vr-overlay screen space; get back to world.
-  c.Translate(cam_pt.x, cam_pt.y, cam_pt.z);
-  c.MultMatrix(Matrix44fOrient(diff, up).m);
-  // At the very end we stay turned around so we get 100% black.
-  if (amt < 0.98f) {
-    c.Translate(0, 0, 40.0f * amt);
-    c.Rotate(180, 1, 0, 0);
+  {
+    auto xf = c.ScopedTransform();
+    // We start in vr-overlay screen space; get back to world.
+    c.Translate(cam_pt.x, cam_pt.y, cam_pt.z);
+    c.MultMatrix(Matrix44fOrient(diff, up).m);
+    // At the very end we stay turned around so we get 100% black.
+    if (amt < 0.98f) {
+      c.Translate(0, 0, 40.0f * amt);
+      c.Rotate(180, 1, 0, 0);
+    }
+    float inv_a = 1.0f - amt;
+    float s = 100.0f * inv_a + 5.0f * amt;
+    c.Scale(s, s, s);
+    c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kVRFade));
   }
-  float inv_a = 1.0f - amt;
-  float s = 100.0f * inv_a + 5.0f * amt;
-  c.Scale(s, s, s);
-  c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kVRFade));
-  c.PopTransform();
   c.Submit();
 }
 
@@ -281,13 +282,14 @@ void GraphicsVR::DrawVROverlay(FrameDef* frame_def) {
     // Draw our overlay-flat stuff into our overlay pass.
     SpecialComponent c(frame_def->overlay_pass(),
                        SpecialComponent::Source::kVROverlayBuffer);
-    c.PushTransform();
-    c.Translate(0.5f * kBaseVirtualResX, 0.5f * kBaseVirtualResY, 0.0f);
-    c.Scale(kBaseVirtualResX * (1.0f + kVRBorder),
-            kBaseVirtualResY * (1.0f + kVRBorder),
-            kBaseVirtualResX * (1.0f + kVRBorder));
-    c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kVROverlay));
-    c.PopTransform();
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(0.5f * kBaseVirtualResX, 0.5f * kBaseVirtualResY, 0.0f);
+      c.Scale(kBaseVirtualResX * (1.0f + kVRBorder),
+              kBaseVirtualResY * (1.0f + kVRBorder),
+              kBaseVirtualResX * (1.0f + kVRBorder));
+      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kVROverlay));
+    }
     c.Submit();
   }
 }
@@ -297,15 +299,16 @@ void GraphicsVR::DrawOverlayBounds(RenderPass* pass) {
   if (draw_overlay_bounds_) {
     SimpleComponent c(pass);
     c.SetColor(1, 0, 0);
-    c.PushTransform();
-    float width = screen_virtual_width();
-    float height = screen_virtual_height();
+    {
+      auto xf = c.ScopedTransform();
+      float width = screen_virtual_width();
+      float height = screen_virtual_height();
 
-    // Slight offset in z to reduce z fighting.
-    c.Translate(0.5f * width, 0.5f * height, 1.0f);
-    c.Scale(width, height, 100.0f);
-    c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kOverlayGuide));
-    c.PopTransform();
+      // Slight offset in z to reduce z fighting.
+      c.Translate(0.5f * width, 0.5f * height, 1.0f);
+      c.Scale(width, height, 100.0f);
+      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kOverlayGuide));
+    }
     c.Submit();
   }
 }
@@ -326,12 +329,13 @@ void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
     c.SetTexture(g_base->assets->SysTexture(SysTextureID::kBoxingGlove));
     c.SetReflection(ReflectionType::kSoft);
     c.SetReflectionScale(0.4f, 0.4f, 0.4f);
-    c.PushTransform();
-    c.VRTransformToHead();
-    c.Translate(0, 0, 5);
-    c.Scale(2, 2, 2);
-    c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
-    c.PopTransform();
+    {
+      auto xf = c.ScopedTransform();
+      c.VRTransformToHead();
+      c.Translate(0, 0, 5);
+      c.Scale(2, 2, 2);
+      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
+    }
     c.Submit();
   }
 
@@ -346,11 +350,12 @@ void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
       c.SetTexture(g_base->assets->SysTexture(SysTextureID::kBoxingGlove));
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
-      c.PushTransform();
-      c.VRTransformToRightHand();
-      c.Scale(10, 10, 10);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.VRTransformToRightHand();
+        c.Scale(10, 10, 10);
+        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
+      }
       c.Submit();
       break;
     }
@@ -365,11 +370,12 @@ void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
       c.SetTexture(g_base->assets->SysTexture(SysTextureID::kBoxingGlove));
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
-      c.PushTransform();
-      c.VRTransformToLeftHand();
-      c.Scale(10, 10, 10);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.VRTransformToLeftHand();
+        c.Scale(10, 10, 10);
+        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
+      }
       c.Submit();
       break;
     }

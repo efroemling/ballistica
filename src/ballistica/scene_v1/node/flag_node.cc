@@ -360,10 +360,11 @@ void FlagNode::Draw(base::FrameDef* frame_def) {
     c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kFlagPole));
     c.SetReflection(base::ReflectionType::kSharp);
     c.SetReflectionScale(0.1f, 0.1f, 0.1f);
-    c.PushTransform();
-    body_->ApplyToRenderComponent(&c);
-    c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kFlagPole));
-    c.PopTransform();
+    {
+      auto xf = c.ScopedTransform();
+      body_->ApplyToRenderComponent(&c);
+      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kFlagPole));
+    }
     c.Submit();
   }
 }

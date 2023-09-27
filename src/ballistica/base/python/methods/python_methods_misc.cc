@@ -251,10 +251,10 @@ static PyMethodDef PyIsRunningOnOuyaDef = {
 
 static auto PySetUpSigInt(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_core) {
+  if (g_base) {
     g_base->platform->SetupInterruptHandling();
   } else {
-    Log(LogLevel::kError, "SigInt handler called before g_core exists.");
+    Log(LogLevel::kError, "setup_sigint called before g_base exists.");
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

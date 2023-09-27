@@ -185,26 +185,28 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
           continue;
         }
       }
-      c.PushTransform();
-      float z_offs = base_offset + static_cast<float>(i) * layer_spacing;
-      if (transition_scale_ != 1.0f) {
-        c.Translate(bg_center_x_, bg_center_y_, 0);
-        c.Scale(transition_scale_, transition_scale_, 1.0f);
-        c.Translate(-bg_center_x_, -bg_center_y_, 0);
-      }
+      {
+        auto xf = c.ScopedTransform();
 
-      // Widgets can opt to use a subset of their allotted depth slice.
-      float d_min = w.depth_range_min();
-      float d_max = w.depth_range_max();
-      if (d_min != 0.0f || d_max != 1.0f) {
-        z_offs += layer_thickness * d_min;
-        layer_thickness *= (d_max - d_min);
+        float z_offs = base_offset + static_cast<float>(i) * layer_spacing;
+        if (transition_scale_ != 1.0f) {
+          c.Translate(bg_center_x_, bg_center_y_, 0);
+          c.Scale(transition_scale_, transition_scale_, 1.0f);
+          c.Translate(-bg_center_x_, -bg_center_y_, 0);
+        }
+
+        // Widgets can opt to use a subset of their allotted depth slice.
+        float d_min = w.depth_range_min();
+        float d_max = w.depth_range_max();
+        if (d_min != 0.0f || d_max != 1.0f) {
+          z_offs += layer_thickness * d_min;
+          layer_thickness *= (d_max - d_min);
+        }
+        c.Translate(x_offset + tx, y_offset + ty, z_offs);
+        c.Scale(s, s, layer_thickness);
+        c.Submit();
+        w.Draw(pass, draw_transparent);
       }
-      c.Translate(x_offset + tx, y_offset + ty, z_offs);
-      c.Scale(s, s, layer_thickness);
-      c.Submit();
-      w.Draw(pass, draw_transparent);
-      c.PopTransform();
       c.Submit();
     }
     c.Submit();
@@ -257,26 +259,27 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
         }
       }
 
-      c.PushTransform();
-      float z_offs = base_offset + static_cast<float>(i) * layer_spacing;
-      if (transition_scale_ != 1.0f) {
-        c.Translate(bg_center_x_, bg_center_y_, 0);
-        c.Scale(transition_scale_, transition_scale_, 1.0f);
-        c.Translate(-bg_center_x_, -bg_center_y_, 0);
-      }
+      {
+        auto xf = c.ScopedTransform();
+        float z_offs = base_offset + static_cast<float>(i) * layer_spacing;
+        if (transition_scale_ != 1.0f) {
+          c.Translate(bg_center_x_, bg_center_y_, 0);
+          c.Scale(transition_scale_, transition_scale_, 1.0f);
+          c.Translate(-bg_center_x_, -bg_center_y_, 0);
+        }
 
-      // Widgets can opt to use a subset of their allotted depth slice.
-      float d_min = w.depth_range_min();
-      float d_max = w.depth_range_max();
-      if (d_min != 0.0f || d_max != 1.0f) {
-        z_offs += layer_thickness * d_min;
-        layer_thickness *= (d_max - d_min);
+        // Widgets can opt to use a subset of their allotted depth slice.
+        float d_min = w.depth_range_min();
+        float d_max = w.depth_range_max();
+        if (d_min != 0.0f || d_max != 1.0f) {
+          z_offs += layer_thickness * d_min;
+          layer_thickness *= (d_max - d_min);
+        }
+        c.Translate(x_offset + tx, y_offset + ty, z_offs);
+        c.Scale(s, s, layer_thickness);
+        c.Submit();
+        w.Draw(pass, draw_transparent);
       }
-      c.Translate(x_offset + tx, y_offset + ty, z_offs);
-      c.Scale(s, s, layer_thickness);
-      c.Submit();
-      w.Draw(pass, draw_transparent);
-      c.PopTransform();
       c.Submit();
     }
     c.Submit();
@@ -986,12 +989,13 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
       c.SetColor(red_ * s, green_ * s, blue_ * s, alpha_);
       c.SetTexture(tex_.Get());
-      c.PushTransform();
-      c.Translate(bg_center_x_, bg_center_y_);
-      c.Scale(bg_width_ * transition_scale_, bg_height_ * transition_scale_);
-      c.DrawMeshAsset(g_base->assets->SysMesh(
-          draw_transparent ? bg_mesh_transparent_i_d_ : bg_mesh_opaque_i_d_));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(bg_center_x_, bg_center_y_);
+        c.Scale(bg_width_ * transition_scale_, bg_height_ * transition_scale_);
+        c.DrawMeshAsset(g_base->assets->SysMesh(
+            draw_transparent ? bg_mesh_transparent_i_d_ : bg_mesh_opaque_i_d_));
+      }
       c.Submit();
     }
   }
@@ -1022,11 +1026,12 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.SetPremultiplied(true);
       c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kGlow));
       c.SetColor(0.25f * m, 0.25f * m, 0, 0.3f * m);
-      c.PushTransform();
-      c.Translate(glow_center_x_, glow_center_y_);
-      c.Scale(glow_width_, glow_height_);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage4x1));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(glow_center_x_, glow_center_y_);
+        c.Scale(glow_width_, glow_height_);
+        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage4x1));
+      }
       c.Submit();
     }
   }

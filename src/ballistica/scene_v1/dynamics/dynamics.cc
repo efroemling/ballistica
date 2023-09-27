@@ -155,11 +155,10 @@ void Dynamics::Draw(base::FrameDef* frame_def) {
   c.SetColor(1, 0, 0);
   c.SetTransparent(true);
   for (auto&& i : debug_collisions_) {
-    c.PushTransform();
+    auto xf = c.ScopedTransform();
     c.Translate(i.x(), i.y(), i.z());
     c.scaleUniform(0.05f);
     c.DrawMeshAsset(g_assets->GetMesh(Assets::BOX_MESH));
-    c.PopTransform();
   }
   c.Submit();
   debug_collisions_.clear();

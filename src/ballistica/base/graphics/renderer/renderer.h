@@ -82,7 +82,7 @@ class Renderer {
   auto light_pitch() const -> float { return light_pitch_; }
   auto light_heading() const -> float { return light_heading_; }
   void set_pixel_scale(float s) { pixel_scale_requested_ = s; }
-  void set_screen_gamma(float val) { screen_gamma_requested_ = val; }
+  // void set_screen_gamma(float val) { screen_gamma_requested_ = val; }
   void set_debug_draw_mode(bool debugModeIn) { debug_draw_mode_ = debugModeIn; }
   auto debug_draw_mode() -> bool { return debug_draw_mode_; }
 
@@ -90,13 +90,12 @@ class Renderer {
   virtual void Unload();
   virtual void Load();
   virtual void PostLoad();
-  virtual void CheckCapabilities();
   virtual auto GetAutoGraphicsQuality() -> GraphicsQuality = 0;
   virtual auto GetAutoTextureQuality() -> TextureQuality = 0;
 
   virtual auto GetAutoAndroidRes() -> std::string;
 
-  void ScreenSizeChanged();
+  void OnScreenSizeChange();
   auto has_camera_render_target() const -> bool {
     return camera_render_target_.Exists();
   }
@@ -148,7 +147,7 @@ class Renderer {
                 float eyeZ, int viewport_x, int viewport_y);
   int VRGetViewportX() const { return vr_viewport_x_; }
   int VRGetViewportY() const { return vr_viewport_y_; }
-#endif  // BA_VR_BUILD
+#endif
 
   virtual auto NewMeshAssetData(const MeshAsset& mesh)
       -> Object::Ref<MeshAssetRendererData> = 0;
@@ -166,7 +165,7 @@ class Renderer {
  protected:
   virtual void DrawDebug() = 0;
   virtual void CheckForErrors() = 0;
-  virtual void UpdateVignetteTex(bool force) = 0;
+  virtual void UpdateVignetteTex_(bool force) = 0;
   virtual void GenerateCameraBufferBlurPasses() = 0;
   virtual void UpdateMeshes(
       const std::vector<Object::Ref<MeshDataClientHandle>>& meshes,
@@ -190,7 +189,7 @@ class Renderer {
                           bool linear_interpolation, bool force_shader_blit,
                           bool invalidate_source) = 0;
   virtual auto IsMSAAEnabled() const -> bool = 0;
-  virtual void UpdateMSAAEnabled() = 0;
+  virtual void UpdateMSAAEnabled_() = 0;
   virtual void VREyeRenderBegin() = 0;
   virtual void RenderFrameDefEnd() = 0;
   virtual void CardboardDisableScissor() = 0;
@@ -209,46 +208,47 @@ class Renderer {
   void DrawWorldToCameraBuffer(FrameDef* frame_def);
   void UpdatePixelScaleAndBackingBuffer(FrameDef* frame_def);
   void UpdateCameraRenderTargets(FrameDef* frame_def);
-#if BA_OSTYPE_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
-  void HandleFunkyMacGammaIssue(FrameDef* frame_def);
-#endif
+  // #if BA_OSTYPE_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
+  //   void HandleFunkyMacGammaIssue(FrameDef* frame_def);
+  // #endif
   void LoadMedia(FrameDef* frame_def);
   void UpdateDOFParams(FrameDef* frame_def);
 #if BA_VR_BUILD
   void VRPreprocess(FrameDef* frame_def);
   void VRUpdateForEyeRender(FrameDef* frame_def);
   void VRDrawOverlayFlatPass(FrameDef* frame_def);
-  // raw values from vr system
-  VRHandsState vr_raw_hands_state_;
-  float vr_raw_head_tx_ = 0.0f;
-  float vr_raw_head_ty_ = 0.0f;
-  float vr_raw_head_tz_ = 0.0f;
-  float vr_raw_head_yaw_ = 0.0f;
-  float vr_raw_head_pitch_ = 0.0f;
-  float vr_raw_head_roll_ = 0.0f;
-  // final game-space transforms
-  Matrix44f vr_base_transform_ = kMatrix44fIdentity;
-  Matrix44f vr_transform_right_hand_ = kMatrix44fIdentity;
-  Matrix44f vr_transform_left_hand_ = kMatrix44fIdentity;
-  Matrix44f vr_transform_head_ = kMatrix44fIdentity;
-  // values for current eye render
-  bool vr_use_fov_tangents_ = false;
-  float vr_fov_l_tan_ = 1.0f;
-  float vr_fov_r_tan_ = 1.0f;
-  float vr_fov_b_tan_ = 1.0f;
-  float vr_fov_t_tan_ = 1.0f;
-  float vr_fov_degrees_x_ = 30.0f;
-  float vr_fov_degrees_y_ = 30.0f;
-  float vr_eye_x_ = 0.0f;
-  float vr_eye_y_ = 0.0f;
-  float vr_eye_z_ = 0.0f;
-  int vr_eye_ = 0;
-  float vr_eye_yaw_ = 0.0f;
-  float vr_eye_pitch_ = 0.0f;
-  float vr_eye_roll_ = 0.0f;
-  int vr_viewport_x_ = 0;
-  int vr_viewport_y_ = 0;
+  // Raw values from vr system.
+  VRHandsState vr_raw_hands_state_{};
+  float vr_raw_head_tx_{};
+  float vr_raw_head_ty_{};
+  float vr_raw_head_tz_{};
+  float vr_raw_head_yaw_{};
+  float vr_raw_head_pitch_{};
+  float vr_raw_head_roll_{};
+  // Final game-space transforms.
+  Matrix44f vr_base_transform_{kMatrix44fIdentity};
+  Matrix44f vr_transform_right_hand_{kMatrix44fIdentity};
+  Matrix44f vr_transform_left_hand_{kMatrix44fIdentity};
+  Matrix44f vr_transform_head_{kMatrix44fIdentity};
+  // Values for current eye render.
+  bool vr_use_fov_tangents_{};
+  float vr_fov_l_tan_{1.0f};
+  float vr_fov_r_tan_{1.0f};
+  float vr_fov_b_tan_{1.0f};
+  float vr_fov_t_tan_{1.0f};
+  float vr_fov_degrees_x_{30.0f};
+  float vr_fov_degrees_y_{30.0f};
+  float vr_eye_x_{};
+  float vr_eye_y_{};
+  float vr_eye_z_{};
+  int vr_eye_{};
+  float vr_eye_yaw_{};
+  float vr_eye_pitch_{};
+  float vr_eye_roll_{};
+  int vr_viewport_x_{};
+  int vr_viewport_y_{};
 #endif  // BA_VR_BUILD
+
   bool screen_size_dirty_{};
   bool msaa_enabled_dirty_{};
   millisecs_t dof_update_time_{};
@@ -269,7 +269,7 @@ class Renderer {
   Vector3f vignette_outer_{0.0f, 0.0f, 0.0f};
   Vector3f vignette_inner_{1.0f, 1.0f, 1.0f};
   int shadow_res_{-1};
-  float screen_gamma_requested_{1.0f};
+  // float screen_gamma_requested_{1.0f};
   float screen_gamma_{1.0f};
   float pixel_scale_requested_{1.0f};
   float pixel_scale_{1.0f};

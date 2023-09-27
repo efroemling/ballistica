@@ -432,8 +432,8 @@ void RenderPass::Reset() {
       throw Exception();
   }
 
-  // By default, logical width matches physical width, but for overlay passes
-  // it can be independent.
+  // By default, logical width matches physical width, but for overlay
+  // passes it can be independent.
   switch (type()) {
     case Type::kOverlayPass:
     case Type::kOverlayFrontPass:

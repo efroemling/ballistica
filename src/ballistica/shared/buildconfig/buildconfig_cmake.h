@@ -21,7 +21,7 @@
 #endif
 
 #define BA_OSTYPE_MACOS 1
-#define HAVE_FRAMEWORK_OPENAL 1
+#define BA_HAVE_FRAMEWORK_OPENAL 1
 
 #elif __linux__
 
@@ -52,7 +52,7 @@
 #define BA_ENABLE_AUDIO 1
 #define BA_ENABLE_OPENGL 1
 #define BA_SDL_BUILD 1
-#define BA_SDL2_BUILD 1
+// #define BA_SDL2_BUILD 1
 #define BA_ENABLE_SDL_JOYSTICKS 1
 #else
 #define BA_MINSDL_BUILD 1

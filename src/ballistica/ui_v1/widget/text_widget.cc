@@ -86,12 +86,12 @@ void TextWidget::SetEnabled(bool val) {
 }
 
 void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
-  millisecs_t current_time = pass->frame_def()->display_time_millisecs();
-
   // All our stuff currently happens in the transparent pass.
   if (!draw_transparent) {
     return;
   }
+
+  millisecs_t current_time = pass->frame_def()->display_time_millisecs();
 
   float l = padding_;
   float r = l + width_ - padding_;
@@ -114,6 +114,13 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     // just do a hacky overall scale.
     base::EmptyComponent c(pass);
     c.SetTransparent(true);
+
+    // FIXME(ericf): This component has an unmatched push and we have
+    // another component at the end with the matching pop. This only works
+    // because the components in the middle wind up writing to the same draw
+    // list, but there is nothing checking or enforcing that so it would be
+    // easy to break. Should improve this somehow. (perhaps by using a single
+    // component and enforcing list uniformity between push/pop blocks?)
     c.PushTransform();
 
     // Move to middle, scale down, move back.
@@ -178,11 +185,12 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.SetPremultiplied(true);
       c.SetColor(0.25f * m, 0.3f * m, 0, 0.3f * m);
       c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kGlow));
-      c.PushTransform();
-      c.Translate(highlight_center_x_, highlight_center_y_, 0.1f);
-      c.Scale(highlight_width_, highlight_height_);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage4x1));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(highlight_center_x_, highlight_center_y_, 0.1f);
+        c.Scale(highlight_width_, highlight_height_);
+        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage4x1));
+      }
       c.Submit();
     }
 
@@ -203,12 +211,13 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.SetTransparent(true);
       c.SetColor(1, 1, 1, 1);
       c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kUIAtlas));
-      c.PushTransform();
-      c.Translate(outline_center_x_, outline_center_y_, 0.1f);
-      c.Scale(outline_width_, outline_height_);
-      c.DrawMeshAsset(
-          g_base->assets->SysMesh(base::SysMeshID::kTextBoxTransparent));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(outline_center_x_, outline_center_y_, 0.1f);
+        c.Scale(outline_width_, outline_height_);
+        c.DrawMeshAsset(
+            g_base->assets->SysMesh(base::SysMeshID::kTextBoxTransparent));
+      }
       c.Submit();
     }
 
@@ -224,15 +233,16 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
       c.SetTexture(
           g_base->assets->SysTexture(base::SysTextureID::kTextClearButton));
-      c.PushTransform();
-      c.Translate(r - 20, b * 0.5f + t * 0.5f, 0.1f);
-      if (g_base->ui->scale() == UIScale::kSmall) {
-        c.Scale(30, 30);
-      } else {
-        c.Scale(25, 25);
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(r - 20, b * 0.5f + t * 0.5f, 0.1f);
+        if (g_base->ui->scale() == UIScale::kSmall) {
+          c.Scale(30, 30);
+        } else {
+          c.Scale(25, 25);
+        }
+        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
       }
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
-      c.PopTransform();
       c.Submit();
     }
 
@@ -306,113 +316,28 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     text_group_dirty_ = false;
   }
 
+  // Calc scaling factors due to max width/height restrictions.
   float max_width_scale = 1.0f;
   float max_height_scale = 1.0f;
-  {
-    // Calc draw-brightness (for us and our children).
-    float color_mult = 1.0f;
-    if (Widget* draw_controller = draw_control_parent()) {
-      color_mult *= draw_controller->GetDrawBrightness(current_time);
-    }
-
-    float fin_a = enabled_ ? color_a_ : 0.4f * color_a_;
-
-    base::SimpleComponent c(pass);
-    c.SetTransparent(true);
-
-    if ((pressed_ && mouse_over_)
-        || (current_time - last_activate_time_millisecs_ < 200)) {
-      color_mult *= 2.0f;
-    } else if (always_highlight_ && selected()) {
-      color_mult *= 1.4f;
-    }
-    float fin_color_r = color_r_ * color_mult;
-    float fin_color_g = color_g_ * color_mult;
-    float fin_color_b = color_b_ * color_mult;
-
-    int elem_count = text_group_->GetElementCount();
-    for (int e = 0; e < elem_count; e++) {
-      // Gracefully skip unloaded textures..
-      base::TextureAsset* t2 = text_group_->GetElementTexture(e);
-      if (!t2->preloaded()) {
-        continue;
-      }
-      c.SetTexture(t2);
-      c.SetMaskUV2Texture(text_group_->GetElementMaskUV2Texture(e));
-      c.SetShadow(-0.004f * text_group_->GetElementUScale(e),
-                  -0.004f * text_group_->GetElementVScale(e), 0.0f,
-                  shadow_ * color_a_);
-      if (text_group_->GetElementCanColor(e)) {
-        c.SetColor(fin_color_r, fin_color_g, fin_color_b, fin_a);
-      } else {
-        c.SetColor(1, 1, 1, fin_a);
-      }
-
-      if (g_core->IsVRMode()) {
-        c.SetFlatness(text_group_->GetElementMaxFlatness(e));
-      } else {
-        c.SetFlatness(
-            std::min(text_group_->GetElementMaxFlatness(e), flatness_));
-      }
-      c.PushTransform();
-      c.Translate(x_offset, y_offset, 0.1f);
-      if (rotate_ != 0.0f) {
-        c.Rotate(rotate_, 0, 0, 1);
-      }
-      if (max_width_ > 0.0f && text_width_ > 0.0
-          && ((text_width_ * center_scale_) > max_width_)) {
-        max_width_scale = max_width_ / (text_width_ * center_scale_);
-        c.Scale(max_width_scale, max_width_scale);
-      }
-      // Currently cant do max-height with big.
-      assert(max_height_ <= 0.0 || !big_);
-      if (max_height_ > 0.0f && text_height_ > 0.0
-          && ((text_height_ * center_scale_ * max_width_scale) > max_height_)) {
-        max_height_scale =
-            max_height_ / (text_height_ * center_scale_ * max_width_scale);
-        c.Scale(max_height_scale, max_height_scale);
-      }
-      c.DrawMesh(text_group_->GetElementMesh(e));
-      c.PopTransform();
-    }
-    c.Submit();
+  if (max_width_ > 0.0f && text_width_ > 0.0
+      && ((text_width_ * center_scale_) > max_width_)) {
+    max_width_scale = max_width_ / (text_width_ * center_scale_);
   }
+  // Currently cant do max-height with big.
+  assert(max_height_ <= 0.0 || !big_);
+  if (max_height_ > 0.0f && text_height_ > 0.0
+      && ((text_height_ * center_scale_ * max_width_scale) > max_height_)) {
+    max_height_scale =
+        max_height_ / (text_height_ * center_scale_ * max_width_scale);
+  }
+
+  DoDrawText_(pass, x_offset, y_offset, max_width_scale, max_height_scale);
 
   if (editable()) {
     // Draw the carat.
-    if (IsHierarchySelected() || always_show_carat_) {
-      bool show_cursor = true;
-      if (ShouldUseStringEditor_()) {
-        show_cursor = false;
-      }
-      if (show_cursor
-          && ((current_time / 100) % 2 == 0
-              || (current_time - last_carat_change_time_millisecs_ < 250))) {
-        int str_size = Utils::UTF8StringLength(text_raw_.c_str());
-        if (carat_position_ > str_size) {
-          carat_position_ = str_size;
-        }
-        float h, v;
-        text_group_->GetCaratPts(text_raw_, align_h, align_v, carat_position_,
-                                 &h, &v);
-        base::SimpleComponent c(pass);
-        c.SetPremultiplied(true);
-        c.SetTransparent(true);
-        c.PushTransform();
-        c.SetColor(0.17f, 0.12f, 0, 0);
-        c.Translate(x_offset, y_offset);
-        float max_width_height_scale = max_width_scale * max_height_scale;
-        c.Scale(max_width_height_scale, max_width_height_scale);
-        c.Translate(h + 4, v + 17.0f);
-        c.Scale(6, 27);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
-        c.SetColor(1, 1, 1, 0);
-        c.Scale(0.3f, 0.8f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
-        c.PopTransform();
-        c.Submit();
-      }
-    }
+    DoDrawCarat_(pass, align_h, align_v, x_offset, y_offset, max_width_scale,
+                 max_height_scale);
+
     base::EmptyComponent c(pass);
     c.SetTransparent(true);
     c.ScissorPop();
@@ -425,6 +350,116 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.SetTransparent(true);
     c.PopTransform();
     c.Submit();
+  }
+}
+
+void TextWidget::DoDrawText_(base::RenderPass* pass, float x_offset,
+                             float y_offset, float max_width_scale,
+                             float max_height_scale) {
+  millisecs_t current_time{pass->frame_def()->display_time_millisecs()};
+
+  // Calc draw-brightness (for us and our children).
+  float color_mult = 1.0f;
+  if (Widget* draw_controller = draw_control_parent()) {
+    color_mult *= draw_controller->GetDrawBrightness(current_time);
+  }
+
+  float fin_a = enabled_ ? color_a_ : 0.4f * color_a_;
+
+  base::SimpleComponent c(pass);
+  c.SetTransparent(true);
+
+  if ((pressed_ && mouse_over_)
+      || (current_time - last_activate_time_millisecs_ < 200)) {
+    color_mult *= 2.0f;
+  } else if (always_highlight_ && selected()) {
+    color_mult *= 1.4f;
+  }
+  float fin_color_r = color_r_ * color_mult;
+  float fin_color_g = color_g_ * color_mult;
+  float fin_color_b = color_b_ * color_mult;
+
+  int elem_count = text_group_->GetElementCount();
+  for (int e = 0; e < elem_count; e++) {
+    // Gracefully skip unloaded textures.
+    base::TextureAsset* t2 = text_group_->GetElementTexture(e);
+    if (!t2->preloaded()) {
+      continue;
+    }
+    c.SetTexture(t2);
+    c.SetMaskUV2Texture(text_group_->GetElementMaskUV2Texture(e));
+    c.SetShadow(-0.004f * text_group_->GetElementUScale(e),
+                -0.004f * text_group_->GetElementVScale(e), 0.0f,
+                shadow_ * color_a_);
+    if (text_group_->GetElementCanColor(e)) {
+      c.SetColor(fin_color_r, fin_color_g, fin_color_b, fin_a);
+    } else {
+      c.SetColor(1, 1, 1, fin_a);
+    }
+
+    // In VR, draw everything flat because it's generally harder to read.
+    if (g_core->IsVRMode()) {
+      c.SetFlatness(text_group_->GetElementMaxFlatness(e));
+    } else {
+      c.SetFlatness(std::min(text_group_->GetElementMaxFlatness(e), flatness_));
+    }
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(x_offset, y_offset, 0.1f);
+      if (rotate_ != 0.0f) {
+        c.Rotate(rotate_, 0, 0, 1);
+      }
+      if (max_width_scale != 1.0f) {
+        c.Scale(max_width_scale, max_width_scale);
+      }
+      if (max_height_scale != 1.0f) {
+        c.Scale(max_height_scale, max_height_scale);
+      }
+      c.DrawMesh(text_group_->GetElementMesh(e));
+    }
+  }
+  c.Submit();
+}
+
+void TextWidget::DoDrawCarat_(base::RenderPass* pass,
+                              base::TextMesh::HAlign align_h,
+                              base::TextMesh::VAlign align_v, float x_offset,
+                              float y_offset, float max_width_scale,
+                              float max_height_scale) {
+  millisecs_t current_time{pass->frame_def()->display_time_millisecs()};
+  if (IsHierarchySelected() || always_show_carat_) {
+    bool show_cursor = true;
+    if (ShouldUseStringEditor_()) {
+      show_cursor = false;
+    }
+    if (show_cursor
+        && ((current_time / 100) % 2 == 0
+            || (current_time - last_carat_change_time_millisecs_ < 250))) {
+      int str_size = Utils::UTF8StringLength(text_raw_.c_str());
+      if (carat_position_ > str_size) {
+        carat_position_ = str_size;
+      }
+      float h, v;
+      text_group_->GetCaratPts(text_raw_, align_h, align_v, carat_position_, &h,
+                               &v);
+      base::SimpleComponent c(pass);
+      c.SetPremultiplied(true);
+      c.SetTransparent(true);
+      {
+        auto xf = c.ScopedTransform();
+        c.SetColor(0.17f, 0.12f, 0, 0);
+        c.Translate(x_offset, y_offset);
+        float max_width_height_scale = max_width_scale * max_height_scale;
+        c.Scale(max_width_height_scale, max_width_height_scale);
+        c.Translate(h + 4, v + 17.0f);
+        c.Scale(6, 27);
+        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+        c.SetColor(1, 1, 1, 0);
+        c.Scale(0.3f, 0.8f);
+        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+      }
+      c.Submit();
+    }
   }
 }
 
@@ -704,92 +739,93 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if (editable()) {
         claimed = true;
 
-#if BA_SDL2_BUILD || BA_MINSDL_BUILD
-        // On SDL2, chars come through as TEXT_INPUT messages;
-        // can ignore this.
-#else
-        std::vector<uint32_t> unichars =
-            Utils::UnicodeFromUTF8(text_raw_, "2jf987");
-        int len = static_cast<int>(unichars.size());
+        // #if BA_SDL2_BUILD || BA_MINSDL_BUILD
+        //         // On SDL2, chars come through as TEXT_INPUT messages;
+        //         // can ignore this.
+        // #else
+        //         std::vector<uint32_t> unichars =
+        //             Utils::UnicodeFromUTF8(text_raw_, "2jf987");
+        //         int len = static_cast<int>(unichars.size());
 
-        if (len < max_chars_) {
-          if ((m.keysym.unicode >= 32) && (m.keysym.sym != SDLK_TAB)) {
-            claimed = true;
-            int pos = carat_position_;
-            if (pos > len) pos = len;
-            unichars.insert(unichars.begin() + pos, m.keysym.unicode);
-            text_raw_ = Utils::UTF8FromUnicode(unichars);
-            text_translation_dirty_ = true;
-            carat_position_++;
-          } else {
-            // These don't seem to come through cleanly as unicode:
-            // FIXME - should re-check this on SDL2 builds
+        //         if (len < max_chars_) {
+        //           if ((m.keysym.unicode >= 32) && (m.keysym.sym != SDLK_TAB))
+        //           {
+        //             claimed = true;
+        //             int pos = carat_position_;
+        //             if (pos > len) pos = len;
+        //             unichars.insert(unichars.begin() + pos,
+        //             m.keysym.unicode); text_raw_ =
+        //             Utils::UTF8FromUnicode(unichars); text_translation_dirty_
+        //             = true; carat_position_++;
+        //           } else {
+        //             // These don't seem to come through cleanly as unicode:
+        //             // FIXME - should re-check this on SDL2 builds
 
-            claimed = true;
-            std::string s;
-            uint32_t pos = carat_position_;
-            if (pos > len) pos = len;
-            switch (m.keysym.sym) {
-              case SDLK_KP0:
-                s = '0';
-                break;
-              case SDLK_KP1:
-                s = '1';
-                break;
-              case SDLK_KP2:
-                s = '2';
-                break;
-              case SDLK_KP3:
-                s = '3';
-                break;
-              case SDLK_KP4:
-                s = '4';
-                break;
-              case SDLK_KP5:
-                s = '5';
-                break;
-              case SDLK_KP6:
-                s = '6';
-                break;
-              case SDLK_KP7:
-                s = '7';
-                break;
-              case SDLK_KP8:
-                s = '8';
-                break;
-              case SDLK_KP9:
-                s = '9';
-                break;
-              case SDLK_KP_PERIOD:
-                s = '.';
-                break;
-              case SDLK_KP_DIVIDE:
-                s = '/';
-                break;
-              case SDLK_KP_MULTIPLY:
-                s = '*';
-                break;
-              case SDLK_KP_MINUS:
-                s = '-';
-                break;
-              case SDLK_KP_PLUS:
-                s = '+';
-                break;
-              case SDLK_KP_EQUALS:
-                s = '=';
-                break;
-              default:
-                break;
-            }
-            if (s.size() > 0) {
-              unichars.insert(unichars.begin() + pos, s[0]);
-              text_raw_ = Utils::UTF8FromUnicode(unichars);
-              text_translation_dirty_ = true;
-              carat_position_++;
-            }
-          }
-        }
-#endif  // BA_SDL2_BUILD
+        //             claimed = true;
+        //             std::string s;
+        //             uint32_t pos = carat_position_;
+        //             if (pos > len) pos = len;
+        //             switch (m.keysym.sym) {
+        //               case SDLK_KP0:
+        //                 s = '0';
+        //                 break;
+        //               case SDLK_KP1:
+        //                 s = '1';
+        //                 break;
+        //               case SDLK_KP2:
+        //                 s = '2';
+        //                 break;
+        //               case SDLK_KP3:
+        //                 s = '3';
+        //                 break;
+        //               case SDLK_KP4:
+        //                 s = '4';
+        //                 break;
+        //               case SDLK_KP5:
+        //                 s = '5';
+        //                 break;
+        //               case SDLK_KP6:
+        //                 s = '6';
+        //                 break;
+        //               case SDLK_KP7:
+        //                 s = '7';
+        //                 break;
+        //               case SDLK_KP8:
+        //                 s = '8';
+        //                 break;
+        //               case SDLK_KP9:
+        //                 s = '9';
+        //                 break;
+        //               case SDLK_KP_PERIOD:
+        //                 s = '.';
+        //                 break;
+        //               case SDLK_KP_DIVIDE:
+        //                 s = '/';
+        //                 break;
+        //               case SDLK_KP_MULTIPLY:
+        //                 s = '*';
+        //                 break;
+        //               case SDLK_KP_MINUS:
+        //                 s = '-';
+        //                 break;
+        //               case SDLK_KP_PLUS:
+        //                 s = '+';
+        //                 break;
+        //               case SDLK_KP_EQUALS:
+        //                 s = '=';
+        //                 break;
+        //               default:
+        //                 break;
+        //             }
+        //             if (s.size() > 0) {
+        //               unichars.insert(unichars.begin() + pos, s[0]);
+        //               text_raw_ = Utils::UTF8FromUnicode(unichars);
+        //               text_translation_dirty_ = true;
+        //               carat_position_++;
+        //             }
+        //           }
+        //         }
+        // #endif  // BA_SDL2_BUILD
       }
     }
     return claimed;

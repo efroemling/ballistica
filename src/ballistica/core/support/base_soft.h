@@ -16,9 +16,9 @@ class BaseSoftInterface {
   virtual void ScreenMessage(const std::string& s, const Vector3f& color) = 0;
   virtual auto IsUnmodifiedBlessedBuild() -> bool = 0;
   virtual void StartApp() = 0;
-  virtual auto AppManagesEventLoop() -> bool = 0;
+  virtual auto AppManagesMainThreadEventLoop() -> bool = 0;
   virtual void RunAppToCompletion() = 0;
-  virtual void PrimeAppMainThreadEventPump() = 0;
+  // virtual void PrimeAppMainThreadEventPump() = 0;
   virtual auto InAssetsThread() const -> bool = 0;
   virtual auto InLogicThread() const -> bool = 0;
   virtual auto InGraphicsThread() const -> bool = 0;

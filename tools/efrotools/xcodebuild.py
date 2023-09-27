@@ -123,9 +123,9 @@ class XCodeBuild:
 
         self._signingconfigname: str | None = None
         self._signingconfig: SigningConfig | None = None
-        if '-signingconfig' in args:
+        if '-baSigningConfig' in args:
             self._signingconfigname = self._argstr(
-                args, '-signingconfig', remove=True
+                args, '-baSigningConfig', remove=True
             )
 
             lconfig = getlocalconfig(projroot=Path(projroot))

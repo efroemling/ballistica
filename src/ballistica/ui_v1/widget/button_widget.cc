@@ -352,17 +352,16 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         mesh = g_base->assets->SysMesh(mesh_id);
       }
       if (do_draw) {
-        c.PushTransform();
+        auto xf = c.ScopedTransform();
         c.Translate((l - l_border + r + r_border) * 0.5f + extra_offs_x,
                     (b - b_border + t + t_border) * 0.5f + extra_offs_y, 0);
         c.Scale(r - l + l_border + r_border, t - b + b_border + t_border, 1.0f);
         c.DrawMeshAsset(mesh);
-        c.PopTransform();
       }
 
       // Draw icon.
       if ((show_icons) && draw_transparent) {
-        bool doDrawIcon = true;
+        bool do_draw_icon = true;
         if (icon_type_ == IconType::kStart) {
           c.SetColor(1.4f * mult * (color_red_), 1.4f * mult * (color_green_),
                      1.4f * mult * (color_blue_), 1.0f);
@@ -397,7 +396,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                             + (1.0f - icon_tint_) * mult),
                      icon_color_alpha_);
           if (!icon_->loaded()) {
-            doDrawIcon = false;
+            do_draw_icon = false;
           } else {
             c.SetTexture(icon_);
           }
@@ -405,14 +404,13 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           c.SetColor(1, 1, 1);
           c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kCircle));
         }
-        if (doDrawIcon) {
-          c.PushTransform();
+        if (do_draw_icon) {
+          auto xf = c.ScopedTransform();
           c.Translate((l + r) * 0.5f + extra_offs_x
                           - (string_width * string_scale) * 0.5f - 5.0f,
                       (b + t) * 0.5f + extra_offs_y, 0.001f);
           c.Scale(34.0f * icon_scale_, 34.f * icon_scale_, 1.0f);
           c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
-          c.PopTransform();
         }
       }
       c.Submit();
@@ -423,25 +421,27 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   if (!string_too_small_to_draw) {
     base::EmptyComponent c(pass);
     c.SetTransparent(draw_transparent);
-    c.PushTransform();
-    c.Translate(1.0f * extra_offs_x, 1.0f * extra_offs_y, 0.5f);
-    c.Scale(1, 1, 0.5f);
-    c.Translate(width_ * 0.5f, height_ * 0.5f);
+    {
+      auto xf = c.ScopedTransform();
 
-    // Shift over for our icon if we have it.
-    if (show_icons) {
-      c.Translate(17.0f * icon_scale_, 0, 0);
-    }
-    if (string_scale != 1.0f) {
-      c.Scale(string_scale, string_scale);
-    }
-    c.Submit();
+      c.Translate(1.0f * extra_offs_x, 1.0f * extra_offs_y, 0.5f);
+      c.Scale(1, 1, 0.5f);
+      c.Translate(width_ * 0.5f, height_ * 0.5f);
 
-    text_->set_color(mult * text_color_r_, mult * text_color_g_,
-                     mult * text_color_b_, text_color_a_);
-    text_->set_flatness(text_flatness_);
-    text_->Draw(pass, draw_transparent);
-    c.PopTransform();
+      // Shift over for our icon if we have it.
+      if (show_icons) {
+        c.Translate(17.0f * icon_scale_, 0, 0);
+      }
+      if (string_scale != 1.0f) {
+        c.Scale(string_scale, string_scale);
+      }
+      c.Submit();
+
+      text_->set_color(mult * text_color_r_, mult * text_color_g_,
+                       mult * text_color_b_, text_color_a_);
+      text_->set_flatness(text_flatness_);
+      text_->Draw(pass, draw_transparent);
+    }
     c.Submit();
   }
 }

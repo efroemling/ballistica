@@ -38,7 +38,7 @@ core::CoreFeatureSet* g_core{};
 BaseFeatureSet* g_base{};
 
 BaseFeatureSet::BaseFeatureSet()
-    : app_adapter{BasePlatform::CreateAppAdapter()},
+    : app_adapter{AppAdapter::Create()},
       app_config{new AppConfig()},
       app_mode_{AppModeEmpty::GetSingleton()},
       assets{new Assets()},
@@ -50,7 +50,7 @@ BaseFeatureSet::BaseFeatureSet()
       bg_dynamics_server{g_core->HeadlessMode() ? nullptr
                                                 : new BGDynamicsServer},
       context_ref{new ContextRef(nullptr)},
-      graphics{BasePlatform::CreateGraphics()},
+      graphics{Graphics::Create()},
       graphics_server{new GraphicsServer()},
       huffman{new Huffman()},
       input{new Input()},
@@ -58,7 +58,7 @@ BaseFeatureSet::BaseFeatureSet()
       network_reader{new NetworkReader()},
       network_writer{new NetworkWriter()},
       networking{new Networking()},
-      platform{BasePlatform::CreatePlatform()},
+      platform{BasePlatform::Create()},
       python{new BasePython()},
       stdio_console{g_buildconfig.enable_stdio_console() ? new StdioConsole()
                                                          : nullptr},
@@ -223,8 +223,8 @@ void BaseFeatureSet::OnAppShutdownComplete() {
   g_core->LifecycleLog("app exiting (main thread)");
 
   // Flag our own event loop to exit (or ask the OS to if they're managing).
-  if (app_adapter->ManagesEventLoop()) {
-    g_core->main_event_loop()->Quit();
+  if (app_adapter->ManagesMainThreadEventLoop()) {
+    app_adapter->DoExitMainThreadEventLoop();
   } else {
     platform->TerminateApp();
   }
@@ -276,14 +276,14 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
   }
 }
 
-auto BaseFeatureSet::AppManagesEventLoop() -> bool {
-  return app_adapter->ManagesEventLoop();
+auto BaseFeatureSet::AppManagesMainThreadEventLoop() -> bool {
+  return app_adapter->ManagesMainThreadEventLoop();
 }
 
 void BaseFeatureSet::RunAppToCompletion() {
   BA_PRECONDITION(g_core->InMainThread());
   BA_PRECONDITION(g_base);
-  BA_PRECONDITION(g_base->app_adapter->ManagesEventLoop());
+  BA_PRECONDITION(g_base->app_adapter->ManagesMainThreadEventLoop());
   BA_PRECONDITION(!called_run_app_to_completion_);
   called_run_app_to_completion_ = true;
 
@@ -294,12 +294,12 @@ void BaseFeatureSet::RunAppToCompletion() {
   // Let go of the GIL while we're running.
   Python::ScopedInterpreterLockRelease gil_release;
 
-  g_core->main_event_loop()->RunToCompletion();
+  g_base->app_adapter->RunMainThreadEventLoopToCompletion();
 }
 
-void BaseFeatureSet::PrimeAppMainThreadEventPump() {
-  app_adapter->PrimeMainThreadEventPump();
-}
+// void BaseFeatureSet::PrimeAppMainThreadEventPump() {
+//   app_adapter->PrimeMainThreadEventPump();
+// }
 
 auto BaseFeatureSet::HavePlus() -> bool {
   if (!plus_soft_ && !tried_importing_plus_) {
@@ -469,10 +469,12 @@ auto BaseFeatureSet::InLogicThread() const -> bool {
 }
 
 auto BaseFeatureSet::InGraphicsThread() const -> bool {
-  if (auto* loop = graphics_server->event_loop()) {
-    return loop->ThreadIsCurrent();
-  }
-  return false;
+  // FIXME.
+  return g_core->InMainThread();
+  // if (auto* loop = graphics_server->event_loop()) {
+  //   return loop->ThreadIsCurrent();
+  // }
+  // return false;
 }
 
 auto BaseFeatureSet::InAudioThread() const -> bool {

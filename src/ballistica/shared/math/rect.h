@@ -10,8 +10,7 @@ class Rect {
  public:
   float l{}, r{}, b{}, t{};
   Rect() = default;
-  Rect(float l_in, float b_in, float r_in, float t_in)
-      : l(l_in), r(r_in), b(b_in), t(t_in) {}
+  Rect(float l, float b, float r, float t) : l(l), r(r), b(b), t(t) {}
   auto width() const -> float { return r - l; }
   auto height() const -> float { return t - b; }
 };

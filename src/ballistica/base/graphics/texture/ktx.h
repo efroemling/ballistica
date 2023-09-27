@@ -7,9 +7,6 @@
 
 #include "ballistica/base/base.h"
 
-// currently need gl for this stuff.. probably not necessary.
-#if BA_ENABLE_OPENGL
-
 namespace ballistica::base {
 
 void LoadKTX(const std::string& file_name, unsigned char** buffers, int* widths,
@@ -23,7 +20,5 @@ void KTXUnpackETC(const uint8_t* src_etc, unsigned int src_format,
                   int r16_formats, bool supports_srgb);
 
 }  // namespace ballistica::base
-
-#endif  // BA_ENABLE_OPENGL
 
 #endif  // BALLISTICA_BASE_GRAPHICS_TEXTURE_KTX_H_

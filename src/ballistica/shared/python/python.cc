@@ -394,7 +394,7 @@ void Python::MarkReachedEndOfModule(PyObject* module) {
   auto* val = Py_True;
   Py_INCREF(val);
   auto result = PyObject_SetAttrString(module, "_REACHED_END_OF_MODULE", val);
-  assert(result == 0);
+  BA_PRECONDITION_FATAL(result == 0);
 }
 
 class Python::ScopedInterpreterLock::Impl {

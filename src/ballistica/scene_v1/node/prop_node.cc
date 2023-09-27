@@ -117,15 +117,16 @@ void PropNode::Draw(base::FrameDef* frame_def) {
   if (flashing_ && frame_def->frame_number() % 10 < 5) {
     c.SetColor(1.2f, 1.2f, 1.2f);
   }
-  c.PushTransform();
-  body_->ApplyToRenderComponent(&c);
-  float s = mesh_scale_ * extra_mesh_scale_;
-  c.Scale(s, s, s);
-  c.DrawMeshAsset(mesh_->mesh_data());
-  c.PopTransform();
+  {
+    auto xf = c.ScopedTransform();
+    body_->ApplyToRenderComponent(&c);
+    float s = mesh_scale_ * extra_mesh_scale_;
+    c.Scale(s, s, s);
+    c.DrawMeshAsset(mesh_->mesh_data());
+  }
   c.Submit();
 
-  {  // shadow
+  {  // Shadow.
     assert(body_.Exists());
     const dReal* pos_raw = dGeomGetPosition(body_->geom());
     float pos[3];
@@ -160,18 +161,18 @@ void PropNode::Draw(base::FrameDef* frame_def) {
           c2.SetTransparent(true);
           float dd = body_type_ == BodyType::LANDMINE ? 0.5f : 1.0f;
           c2.SetColor(0.3f, 0.2f, 0.1f, 0.08f * s_density * dd);
-          c2.PushTransform();
-          body_->ApplyToRenderComponent(&c2);
-          float ss = body_type_ == BodyType::LANDMINE ? 0.9f : 1.0f;
-          for (int i = 0; i < 4; i++) {
-            c2.PushTransform();
-            float s2 = ss * mesh_scale_ * extra_mesh_scale_
-                       * (1.3f - 0.08f * static_cast<float>(i));
-            c2.Scale(s2, s2, s2);
-            c2.DrawMeshAsset(light_mesh_->mesh_data());
-            c2.PopTransform();
+          {
+            auto x2 = c2.ScopedTransform();
+            body_->ApplyToRenderComponent(&c2);
+            float ss = body_type_ == BodyType::LANDMINE ? 0.9f : 1.0f;
+            for (int i = 0; i < 4; i++) {
+              auto xf = c2.ScopedTransform();
+              float s2 = ss * mesh_scale_ * extra_mesh_scale_
+                         * (1.3f - 0.08f * static_cast<float>(i));
+              c2.Scale(s2, s2, s2);
+              c2.DrawMeshAsset(light_mesh_->mesh_data());
+            }
           }
-          c2.PopTransform();
           c2.Submit();
         }
 
@@ -191,17 +192,18 @@ void PropNode::Draw(base::FrameDef* frame_def) {
             c2.SetColor(0.022f * s_density, 0.022f * s_density,
                         0.022f * s_density, 0.0f);
           }
-          c2.PushTransform();
-          body_->ApplyToRenderComponent(&c2);
-          for (int i = 0; i < 4; i++) {
-            c2.PushTransform();
-            float s2 = mesh_scale_ * extra_mesh_scale_ * 1.7f;
-            c2.Scale(s2, s2, s2);
-            c2.Rotate(-50.0f + 43.0f * static_cast<float>(i), 0.2f, 0.4f, 0.6f);
-            c2.DrawMeshAsset(light_mesh_->mesh_data());
-            c2.PopTransform();
+          {
+            auto xf = c2.ScopedTransform();
+            body_->ApplyToRenderComponent(&c2);
+            for (int i = 0; i < 4; i++) {
+              auto xf = c2.ScopedTransform();
+              float s2 = mesh_scale_ * extra_mesh_scale_ * 1.7f;
+              c2.Scale(s2, s2, s2);
+              c2.Rotate(-50.0f + 43.0f * static_cast<float>(i), 0.2f, 0.4f,
+                        0.6f);
+              c2.DrawMeshAsset(light_mesh_->mesh_data());
+            }
           }
-          c2.PopTransform();
           c2.Submit();
         }
       }

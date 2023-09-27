@@ -54,7 +54,7 @@ class HostActivity : public SceneV1Context {
   auto GetAsHostActivity() -> HostActivity* override;
   auto GetMutableScene() -> Scene* override;
   void Draw(base::FrameDef* frame_def);
-  void ScreenSizeChanged();
+  void OnScreenSizeChange();
   void LanguageChanged();
   void DebugSpeedMultChanged();
   void GraphicsQualityChanged(base::GraphicsQuality q);

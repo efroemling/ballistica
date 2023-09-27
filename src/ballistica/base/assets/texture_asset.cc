@@ -41,6 +41,7 @@ static void rgba8888_unpremultiply_in_place(uint8_t* src, size_t cb) {
 }
 
 TextureAsset::TextureAsset() = default;
+
 TextureAsset::TextureAsset(const std::string& file_in, TextureType type_in,
                            TextureMinQuality min_quality_in)
     : file_name_(file_in), type_(type_in), min_quality_(min_quality_in) {
@@ -59,19 +60,19 @@ TextureAsset::TextureAsset(TextPacker* packer) : packer_(packer) {
 }
 
 TextureAsset::TextureAsset(const std::string& qr_url) : is_qr_code_(true) {
-  int hard_limit{96};
-  int soft_limit{64};
+  size_t hard_limit{96};
+  size_t soft_limit{64};
   if (qr_url.size() > hard_limit) {
     char buffer[512];
     snprintf(buffer, sizeof(buffer),
-             "QR code url byte length %zu exceeds hard-limit of %d;"
+             "QR code url byte length %zu exceeds hard-limit of %zu;"
              " please use shorter urls. (url=%s)",
              qr_url.size(), hard_limit, qr_url.c_str());
     throw Exception(buffer, PyExcType::kValue);
   } else if (qr_url.size() > soft_limit) {
     char buffer[512];
     snprintf(buffer, sizeof(buffer),
-             "QR code url byte length %zu exceeds soft-limit of %d;"
+             "QR code url byte length %zu exceeds soft-limit of %zu;"
              " please use shorter urls. (url=%s)",
              qr_url.size(), soft_limit, qr_url.c_str());
     Log(LogLevel::kWarning, buffer);
@@ -211,15 +212,11 @@ void TextureAsset::DoPreload() {
       if (file_name_size > 12
           && !strcmp(file_name_full_.c_str() + file_name_size - 12,
                      ".android_dds")) {
-#if BA_ENABLE_OPENGL
         LoadDDS(file_name_full_, preload_datas_[0].buffers,
                 preload_datas_[0].widths, preload_datas_[0].heights,
                 preload_datas_[0].formats, preload_datas_[0].sizes,
                 texture_quality, static_cast<uint8_t>(min_quality_),
                 &preload_datas_[0].base_level);
-#else
-        throw Exception();
-#endif
 
         // We should only be loading this if we support etc1 in hardware.
         assert(g_base->graphics_server->SupportsTextureCompressionType(
@@ -238,15 +235,11 @@ void TextureAsset::DoPreload() {
       } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
                          ".dds")) {
         // Dxt1 for non-alpha and dxt5 for alpha (.dds files).
-#if BA_ENABLE_OPENGL
         LoadDDS(file_name_full_, preload_datas_[0].buffers,
                 preload_datas_[0].widths, preload_datas_[0].heights,
                 preload_datas_[0].formats, preload_datas_[0].sizes,
                 texture_quality, static_cast<int>(min_quality_),
                 &preload_datas_[0].base_level);
-#else
-        throw Exception();
-#endif
 
         // Decompress dxt1/dxt5 if we don't natively support it.
         if (!g_base->graphics_server->SupportsTextureCompressionType(
@@ -257,15 +250,11 @@ void TextureAsset::DoPreload() {
                          ".ktx")) {
         // Etc2 or etc1 for non-alpha and etc2 for alpha (.ktx files).
         try {
-#if BA_ENABLE_OPENGL
           LoadKTX(file_name_full_, preload_datas_[0].buffers,
                   preload_datas_[0].widths, preload_datas_[0].heights,
                   preload_datas_[0].formats, preload_datas_[0].sizes,
                   texture_quality, static_cast<uint8_t>(min_quality_),
                   &preload_datas_[0].base_level);
-#else
-          throw Exception();
-#endif
         } catch (const std::exception& e) {
           throw Exception("Error loading file '" + file_name_full_
                           + "': " + e.what());
@@ -343,15 +332,11 @@ void TextureAsset::DoPreload() {
             && !strcmp(file_name_full_.c_str() + file_name_size - 12,
                        ".android_dds")) {
           try {
-#if BA_ENABLE_OPENGL
             LoadDDS(name, preload_datas_[d].buffers, preload_datas_[d].widths,
                     preload_datas_[d].heights, preload_datas_[d].formats,
                     preload_datas_[d].sizes, texture_quality,
                     static_cast<uint8_t>(min_quality_),
                     &preload_datas_[d].base_level);
-#else
-            throw Exception();
-#endif
           } catch (const std::exception& e) {
             throw Exception("Error loading file '" + file_name_full_
                             + "': " + e.what());
@@ -373,16 +358,12 @@ void TextureAsset::DoPreload() {
           }
         } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
                            ".dds")) {
-#if BA_ENABLE_OPENGL
           // Dxt1 for non-alpha and dxt5 for alpha (.dds files).
           LoadDDS(name, preload_datas_[d].buffers, preload_datas_[d].widths,
                   preload_datas_[d].heights, preload_datas_[d].formats,
                   preload_datas_[d].sizes, texture_quality,
                   static_cast<uint8_t>(min_quality_),
                   &preload_datas_[d].base_level);
-#else
-          throw Exception();
-#endif
 
           // Decompress dxt1/dxt5 if we don't natively support it.
           if (!g_base->graphics_server->SupportsTextureCompressionType(
@@ -392,15 +373,11 @@ void TextureAsset::DoPreload() {
         } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
                            ".ktx")) {
           // Etc2 or etc1 for non-alpha and etc2 for alpha (.ktx files)
-#if BA_ENABLE_OPENGL
           LoadKTX(name, preload_datas_[d].buffers, preload_datas_[d].widths,
                   preload_datas_[d].heights, preload_datas_[d].formats,
                   preload_datas_[d].sizes, texture_quality,
                   static_cast<uint8_t>(min_quality_),
                   &preload_datas_[d].base_level);
-#else
-          throw Exception();
-#endif
 
           // Decompress etc2 ones if we don't natively support them.
           if (((preload_datas_[d].formats[preload_datas_[d].base_level]

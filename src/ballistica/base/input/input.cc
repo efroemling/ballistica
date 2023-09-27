@@ -2,6 +2,7 @@
 
 #include "ballistica/base/input/input.h"
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/support/camera.h"
@@ -22,15 +23,10 @@ namespace ballistica::base {
 
 Input::Input() = default;
 
-template <typename F>
-void PushLogicCall(const F& lambda) {
-  assert(g_base);
-  assert(g_base->logic->event_loop());
-  g_base->logic->event_loop()->PushCall(lambda);
-}
-
 void Input::PushCreateKeyboardInputDevices() {
-  PushLogicCall([this] { CreateKeyboardInputDevices(); });
+  assert(g_base->logic->event_loop());
+  g_base->logic->event_loop()->PushCall(
+      [this] { CreateKeyboardInputDevices(); });
 }
 
 void Input::CreateKeyboardInputDevices() {
@@ -47,7 +43,9 @@ void Input::CreateKeyboardInputDevices() {
 }
 
 void Input::PushDestroyKeyboardInputDevices() {
-  PushLogicCall([this] { DestroyKeyboardInputDevices(); });
+  assert(g_base->logic->event_loop());
+  g_base->logic->event_loop()->PushCall(
+      [this] { DestroyKeyboardInputDevices(); });
 }
 
 void Input::DestroyKeyboardInputDevices() {
@@ -265,7 +263,8 @@ void Input::ShowStandardInputDeviceDisconnectedMessage(InputDevice* j) {
 
 void Input::PushAddInputDeviceCall(InputDevice* input_device,
                                    bool standard_message) {
-  PushLogicCall([this, input_device, standard_message] {
+  assert(g_base->logic->event_loop());
+  g_base->logic->event_loop()->PushCall([this, input_device, standard_message] {
     AddInputDevice(input_device, standard_message);
   });
 }
@@ -351,7 +350,8 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
 
 void Input::PushRemoveInputDeviceCall(InputDevice* input_device,
                                       bool standard_message) {
-  PushLogicCall([this, input_device, standard_message] {
+  assert(g_base->logic->event_loop());
+  g_base->logic->event_loop()->PushCall([this, input_device, standard_message] {
     RemoveInputDevice(input_device, standard_message);
   });
 }
@@ -806,7 +806,8 @@ void Input::ProcessStressTesting(int player_count) {
 }
 
 void Input::PushTextInputEvent(const std::string& text) {
-  PushLogicCall([this, text] {
+  assert(g_base->logic->event_loop());
+  g_base->logic->event_loop()->PushCall([this, text] {
     MarkInputActive();
 
     // Ignore  if input is locked.
@@ -824,7 +825,8 @@ void Input::PushTextInputEvent(const std::string& text) {
 
 void Input::PushJoystickEvent(const SDL_Event& event,
                               InputDevice* input_device) {
-  PushLogicCall([this, event, input_device] {
+  assert(g_base->logic->event_loop());
+  g_base->logic->event_loop()->PushCall([this, event, input_device] {
     HandleJoystickEvent(event, input_device);
   });
 }
@@ -858,11 +860,15 @@ void Input::HandleJoystickEvent(const SDL_Event& event,
 }
 
 void Input::PushKeyPressEvent(const SDL_Keysym& keysym) {
-  PushLogicCall([this, keysym] { HandleKeyPress(&keysym); });
+  assert(g_base->logic->event_loop());
+  g_base->logic->event_loop()->PushCall(
+      [this, keysym] { HandleKeyPress(&keysym); });
 }
 
 void Input::PushKeyReleaseEvent(const SDL_Keysym& keysym) {
-  PushLogicCall([this, keysym] { HandleKeyRelease(&keysym); });
+  assert(g_base->logic->event_loop());
+  g_base->logic->event_loop()->PushCall(
+      [this, keysym] { HandleKeyRelease(&keysym); });
 }
 
 void Input::CaptureKeyboardInput(HandleKeyPressCall* press_call,
@@ -946,9 +952,8 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
     }
   }
 
-  // A few things that apply only to non-mobile.
-  if (!g_buildconfig.ostype_ios_tvos() && !g_buildconfig.ostype_android()) {
-    // Command-F or Control-F toggles full-screen.
+  // Command-F or Control-F toggles full-screen if the app-adapter supports it.
+  if (g_base->app_adapter->CanToggleFullscreen()) {
     if (!repeat_press && keysym->sym == SDLK_f
         && ((keysym->mod & KMOD_CTRL) || (keysym->mod & KMOD_GUI))) {
       g_base->python->objs()
@@ -956,13 +961,13 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
           .Call();
       return;
     }
+  }
 
-    // Control-Q quits. On Mac, the usual cmd-q gets handled by SDL/etc.
-    // implicitly.
-    if (!repeat_press && keysym->sym == SDLK_q && (keysym->mod & KMOD_CTRL)) {
-      g_base->ui->ConfirmQuit();
-      return;
-    }
+  // Control-Q quits. On Mac, the usual cmd-q gets handled by SDL/etc.
+  // implicitly.
+  if (!repeat_press && keysym->sym == SDLK_q && (keysym->mod & KMOD_CTRL)) {
+    g_base->ui->ConfirmQuit();
+    return;
   }
 
   // Let the console intercept stuff if it wants at this point.
@@ -1014,12 +1019,16 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
       }
 
       case SDLK_F7:
-        PushLogicCall([] { g_base->graphics->ToggleManualCamera(); });
+        assert(g_base->logic->event_loop());
+        g_base->logic->event_loop()->PushCall(
+            [] { g_base->graphics->ToggleManualCamera(); });
         handled = true;
         break;
 
       case SDLK_F8:
-        PushLogicCall([] { g_base->graphics->ToggleNetworkDebugDisplay(); });
+        assert(g_base->logic->event_loop());
+        g_base->logic->event_loop()->PushCall(
+            [] { g_base->graphics->ToggleNetworkDebugDisplay(); });
         handled = true;
         break;
 
@@ -1030,7 +1039,9 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
         break;
 
       case SDLK_F10:
-        PushLogicCall([] { g_base->graphics->ToggleDebugDraw(); });
+        assert(g_base->logic->event_loop());
+        g_base->logic->event_loop()->PushCall(
+            [] { g_base->graphics->ToggleDebugDraw(); });
         handled = true;
         break;
 
@@ -1128,7 +1139,9 @@ void Input::UpdateModKeyStates(const SDL_Keysym* keysym, bool press) {
 }
 
 void Input::PushMouseScrollEvent(const Vector2f& amount) {
-  PushLogicCall([this, amount] { HandleMouseScroll(amount); });
+  assert(g_base->logic->event_loop());
+  g_base->logic->event_loop()->PushCall(
+      [this, amount] { HandleMouseScroll(amount); });
 }
 
 void Input::HandleMouseScroll(const Vector2f& amount) {
@@ -1162,7 +1175,8 @@ void Input::HandleMouseScroll(const Vector2f& amount) {
 
 void Input::PushSmoothMouseScrollEvent(const Vector2f& velocity,
                                        bool momentum) {
-  PushLogicCall([this, velocity, momentum] {
+  assert(g_base->logic->event_loop());
+  g_base->logic->event_loop()->PushCall([this, velocity, momentum] {
     HandleSmoothMouseScroll(velocity, momentum);
   });
 }
@@ -1196,7 +1210,9 @@ void Input::HandleSmoothMouseScroll(const Vector2f& velocity, bool momentum) {
 }
 
 void Input::PushMouseMotionEvent(const Vector2f& position) {
-  PushLogicCall([this, position] { HandleMouseMotion(position); });
+  assert(g_base->logic->event_loop());
+  g_base->logic->event_loop()->PushCall(
+      [this, position] { HandleMouseMotion(position); });
 }
 
 void Input::HandleMouseMotion(const Vector2f& position) {
@@ -1244,7 +1260,8 @@ void Input::HandleMouseMotion(const Vector2f& position) {
 }
 
 void Input::PushMouseDownEvent(int button, const Vector2f& position) {
-  PushLogicCall(
+  assert(g_base->logic->event_loop());
+  g_base->logic->event_loop()->PushCall(
       [this, button, position] { HandleMouseDown(button, position); });
 }
 
@@ -1307,7 +1324,9 @@ void Input::HandleMouseDown(int button, const Vector2f& position) {
 }
 
 void Input::PushMouseUpEvent(int button, const Vector2f& position) {
-  PushLogicCall([this, button, position] { HandleMouseUp(button, position); });
+  assert(g_base->logic->event_loop());
+  g_base->logic->event_loop()->PushCall(
+      [this, button, position] { HandleMouseUp(button, position); });
 }
 
 void Input::HandleMouseUp(int button, const Vector2f& position) {
@@ -1349,7 +1368,8 @@ void Input::HandleMouseUp(int button, const Vector2f& position) {
 }
 
 void Input::PushTouchEvent(const TouchEvent& e) {
-  PushLogicCall([e, this] { HandleTouchEvent(e); });
+  assert(g_base->logic->event_loop());
+  g_base->logic->event_loop()->PushCall([e, this] { HandleTouchEvent(e); });
 }
 
 void Input::HandleTouchEvent(const TouchEvent& e) {

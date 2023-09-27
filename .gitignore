@@ -62,7 +62,6 @@ libs/
 
 # Visual Studio
 .vs
-*.vcxproj.user
 *.aps
 *.ncb
 *.opendb

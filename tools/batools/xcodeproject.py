@@ -162,7 +162,7 @@ class Updater:
         self._store_path_uuids(bgrp.get_id(), self.old_path_uuids, '')
         self.project.remove_group_by_id(bgrp.get_id())
 
-        srcgrp = self._get_unique_group('Source')
+        srcgrp = self._get_unique_group(f'{self.pnameu} Shared')
         self.add_paths(srcgrp)
 
         if self.has_app_delegate_mm:
@@ -224,7 +224,9 @@ class Updater:
                         assert isinstance(target.name, str)
                         return target.name
 
-        raise RuntimeError('Could not deduce target name from build file.')
+        raise RuntimeError(
+            f'Could not deduce target name from build file {buildfile}.'
+        )
 
     def _filter_uuids(self, projpath: str) -> None:
         projtxt = repr(self.project) + '\n'
@@ -304,14 +306,18 @@ class Updater:
         """Set per-file compiler flags."""
         files = self.project.get_files_by_name('app_delegate.mm')
         if len(files) != 1:
-            raise RuntimeError(
-                f'Expected to find exactly 1 app_delegate.mm;'
-                f' found {len(files)}.'
-            )
-        bfiles = self.project.get_build_files_for_file(files[0].get_id())
+            # Update: no longer expecting to always find this now that
+            # it has been moved to base.
+            if self.pnameu == 'Ballistica' + 'Kit':
+                raise RuntimeError(
+                    f'Expected to find exactly 1 app_delegate.mm;'
+                    f' found {len(files)}.'
+                )
+        else:
+            bfiles = self.project.get_build_files_for_file(files[0].get_id())
 
-        for bfile in bfiles:
-            bfile.add_compiler_flags('-fobjc-arc')
+            for bfile in bfiles:
+                bfile.add_compiler_flags('-fobjc-arc')
 
     def hash_inputs(
         self, sources: list[str], include_us: bool, project_source: str
@@ -410,19 +416,11 @@ class Updater:
 
     def _target_names_for_file(self, filename: str) -> list[str] | None:
         # Cocoa stuff only applies to our macOS build.
-        if filename in {
-            'CocoaAppDelegate.swift',
-            'CocoaGLViewController.swift',
-            'CocoaMetalViewController.swift',
-        }:
+        if filename.startswith('Cocoa') and filename.endswith('.swift'):
             return [f'{self.pnameu} macOS']
 
         # UIKit stuff applies to our iOS/tvOS builds.
-        if filename in {
-            'UIKitAppDelegate.swift',
-            'UIKitGLViewController.swift',
-            'UIKitMetalViewController.swift',
-        }:
+        if filename.startswith('UIKit') and filename.endswith('.swift'):
             return [f'{self.pnameu} iOS', f'{self.pnameu} tvOS']
 
         # Everything else applies to everything.

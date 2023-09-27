@@ -2,6 +2,7 @@
 
 #include "ballistica/base/python/methods/python_methods_app.h"
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode_empty.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
@@ -804,7 +805,7 @@ static auto PySetStressTesting(PyObject* self, PyObject* args) -> PyObject* {
   if (!PyArg_ParseTuple(args, "pi", &enable, &player_count)) {
     return nullptr;
   }
-  g_core->main_event_loop()->PushCall([enable, player_count] {
+  g_base->app_adapter->PushMainThreadCall([enable, player_count] {
     g_base->stress_test()->Set(enable, player_count);
   });
   Py_RETURN_NONE;

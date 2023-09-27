@@ -19,9 +19,9 @@ const microsecs_t kAppModeMaxHeadlessDisplayStep{500000};
 const microsecs_t kAppModeMinHeadlessDisplayStep{1000};
 
 /// Represents 'what the app is doing'. The global app-mode can be switched
-/// as the app is running. Be aware that, unlike the AppAdapter classes
-/// which primarily deal with the main thread, most functionality here is
-/// based in the logic thread.
+/// as the app is running. The Python layer has its own Python AppMode
+/// classes, and generally when one of them becomes active it calls down
+/// to the C++ layer to make a corresponding C++ AppMode class active.
 class AppMode {
  public:
   AppMode();
@@ -33,13 +33,12 @@ class AppMode {
   /// Called just before the app-mode ceases being the active one.
   virtual void OnDeactivate();
 
+  /// Logic thread callbacks that run while the app-mode is active.
   virtual void OnAppStart();
   virtual void OnAppPause();
   virtual void OnAppResume();
   virtual void OnAppShutdown();
   virtual void OnAppShutdownComplete();
-
-  /// Apply the app config.
   virtual void DoApplyAppConfig();
 
   /// Update the logic thread for a new display-time. Can be called at any

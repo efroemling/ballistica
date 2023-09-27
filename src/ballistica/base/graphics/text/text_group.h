@@ -19,16 +19,19 @@ namespace ballistica::base {
 // this class provides to you, drawing each in the same manner.
 class TextGroup : public Object {
  public:
-  // the number of meshes needing to be drawn for this text
+  // The number of meshes needing to be drawn for this text.
   auto GetElementCount() -> int { return static_cast<int>(entries_.size()); }
+
   auto GetElementMesh(int index) const -> TextMesh* {
     assert(index < static_cast<int>(entries_.size()));
     return &(entries_[index]->mesh);
   }
+
   auto GetElementTexture(int index) const -> TextureAsset* {
     assert(index < static_cast<int>(entries_.size()));
     return entries_[index]->tex.Get();
   }
+
   // if you are doing any shader effects in UV-space (such as drop-shadows),
   // scale them by this ..this will account for different character sheets
   // with different sized characters
@@ -36,18 +39,22 @@ class TextGroup : public Object {
     assert(index < static_cast<int>(entries_.size()));
     return entries_[index]->u_scale;
   }
+
   auto GetElementVScale(int index) -> float {
     assert(index < static_cast<int>(entries_.size()));
     return entries_[index]->v_scale;
   }
+
   auto GetElementMaxFlatness(int index) const -> float {
     assert(index < static_cast<int>(entries_.size()));
     return entries_[index]->max_flatness;
   }
+
   auto GetElementCanColor(int index) const -> bool {
     assert(index < static_cast<int>(entries_.size()));
     return entries_[index]->can_color;
   }
+
   auto GetElementMaskUV2Texture(int index) const -> TextureAsset* {
     assert(index < static_cast<int>(entries_.size()));
     return g_base->assets->SysTexture(entries_[index]->type
@@ -55,11 +62,14 @@ class TextGroup : public Object {
                                           ? SysTextureID::kSoftRect2
                                           : SysTextureID::kSoftRect);
   }
+
   void SetText(const std::string& text,
                TextMesh::HAlign alignment_h = TextMesh::HAlign::kLeft,
                TextMesh::VAlign alignment_v = TextMesh::VAlign::kNone,
                bool big = false, float resolution_scale = 1.0f);
+
   auto text() const -> const std::string& { return text_; }
+
   void GetCaratPts(const std::string& text_in, TextMesh::HAlign alignment_h,
                    TextMesh::VAlign alignment_v, int carat_pos, float* carat_x,
                    float* carat_y);

@@ -59,6 +59,7 @@ void Logic::OnAppStart() {
   // it will be the most variable; that way it will interact with other
   // subsystems in their normal states which is less likely to lead to
   // problems.
+  g_base->app_adapter->OnAppStart();
   g_base->platform->OnAppStart();
   g_base->graphics->OnAppStart();
   g_base->audio->OnAppStart();
@@ -73,8 +74,13 @@ void Logic::OnAppStart() {
   g_core->LifecycleLog("on-app-start end (logic thread)");
 }
 
-void Logic::OnInitialScreenCreated() {
+void Logic::OnGraphicsReady() {
   assert(g_base->InLogicThread());
+  if (on_initial_screen_creation_complete_called_) {
+    // Only want to fire this logic the first time.
+    return;
+  }
+  on_initial_screen_creation_complete_called_ = true;
 
   // Ok; graphics-server is telling us we've got a screen (or no screen in
   // the case of headless-mode). We use this as a cue to kick off our
@@ -85,21 +91,21 @@ void Logic::OnInitialScreenCreated() {
   // state.
   CompleteAppBootstrapping();
 
-  if (!g_core->HeadlessMode()) {
+  if (g_core->HeadlessMode()) {
+    // Normally we step display-time as part of our frame-drawing process.
+    // If we're headless, we're not drawing any frames, but we still want to
+    // do minimal processing on any display-time timers so code doesn't
+    // break. Let's run at a low-ish rate (10hz) to keep things efficient.
+    // Anyone dealing in display-time should be able to handle a wide
+    // variety of rates anyway. NOTE: This length is currently milliseconds.
+    headless_display_time_step_timer_ = event_loop()->NewTimer(
+        kAppModeMinHeadlessDisplayStep / 1000, true,
+        NewLambdaRunnable([this] { StepDisplayTime(); }));
+  } else {
     // In gui mode, push an initial frame to the graphics server. From this
     // point it will be self-sustaining, sending us a frame request each
     // time it receives a new frame from us.
     g_base->graphics->BuildAndPushFrameDef();
-  } else {
-    // Normally we step display-time as part of our frame-drawing process.
-    // If we're headless, we're not drawing any frames, but we still want to
-    // do minimal processing on any display-time timers. Let's run at a
-    // low-ish rate (10hz) to keep things efficient. Anyone dealing in
-    // display-time should be able to handle a wide variety of rates anyway.
-    // NOTE: This length is currently milliseconds.
-    headless_display_time_step_timer_ = event_loop()->NewTimer(
-        kAppModeMinHeadlessDisplayStep / 1000, true,
-        NewLambdaRunnable([this] { StepDisplayTime(); }));
   }
 }
 
@@ -187,6 +193,7 @@ void Logic::OnAppPause() {
   g_base->audio->OnAppPause();
   g_base->graphics->OnAppPause();
   g_base->platform->OnAppPause();
+  g_base->app_adapter->OnAppPause();
 }
 
 void Logic::OnAppResume() {
@@ -194,6 +201,7 @@ void Logic::OnAppResume() {
   assert(g_base->CurrentContext().IsEmpty());
 
   // Note: keep these in the same order as OnAppStart.
+  g_base->app_adapter->OnAppResume();
   g_base->platform->OnAppResume();
   g_base->graphics->OnAppResume();
   g_base->audio->OnAppResume();
@@ -241,6 +249,7 @@ void Logic::OnAppShutdown() {
   g_base->audio->OnAppShutdown();
   g_base->graphics->OnAppShutdown();
   g_base->platform->OnAppShutdown();
+  g_base->app_adapter->OnAppShutdown();
 }
 
 void Logic::CompleteShutdown() {
@@ -273,8 +282,10 @@ void Logic::OnAppShutdownComplete() {
   g_base->audio->OnAppShutdownComplete();
   g_base->graphics->OnAppShutdownComplete();
   g_base->platform->OnAppShutdownComplete();
+  g_base->app_adapter->OnAppShutdownComplete();
 
-  g_core->main_event_loop()->PushCall([] { g_base->OnAppShutdownComplete(); });
+  g_base->app_adapter->PushMainThreadCall(
+      [] { g_base->OnAppShutdownComplete(); });
 }
 
 void Logic::DoApplyAppConfig() {
@@ -282,6 +293,8 @@ void Logic::DoApplyAppConfig() {
 
   // Give all our other subsystems a chance.
   // Note: keep these in the same order as OnAppStart.
+  g_base->app_adapter->DoApplyAppConfig();
+  g_base->platform->DoApplyAppConfig();
   g_base->graphics->DoApplyAppConfig();
   g_base->audio->DoApplyAppConfig();
   g_base->input->DoApplyAppConfig();
@@ -294,7 +307,6 @@ void Logic::DoApplyAppConfig() {
 
   // Inform some other subsystems even though they're not our standard
   // set of logic-thread-based ones.
-  g_base->app_adapter->LogicThreadDoApplyAppConfig();
   g_base->networking->DoApplyAppConfig();
 
   applied_app_config_ = true;
@@ -306,6 +318,7 @@ void Logic::OnScreenSizeChange(float virtual_width, float virtual_height,
 
   // Inform all subsystems.
   // Note: keep these in the same order as OnAppStart.
+  g_base->app_adapter->OnScreenSizeChange();
   g_base->platform->OnScreenSizeChange();
   g_base->graphics->OnScreenSizeChange();
   g_base->audio->OnScreenSizeChange();
@@ -380,18 +393,19 @@ void Logic::UpdateDisplayTimeForHeadlessMode() {
   // don't care about keeping the increments smooth or consistent.
 
   // The one thing we *do* try to do, however, is keep our timer length
-  // updated so that we fire exactly when the app mode has events scheduled
-  // (or at least close enough so we can fudge it and tell them its that
-  // exact time).
+  // updated so that we fire exactly when the next app-mode event is
+  // scheduled (or at least close enough so we can fudge it and tell them
+  // its that exact time).
 
   auto app_time_microsecs = g_core->GetAppTimeMicrosecs();
 
+  // Set our int based time vals so we can exactly hit timers.
   auto old_display_time_microsecs = display_time_microsecs_;
   display_time_microsecs_ = app_time_microsecs;
   display_time_increment_microsecs_ =
       display_time_microsecs_ - old_display_time_microsecs;
 
-  // In this path our float values are driven by our int ones.
+  // And then our float time vals are driven by our int ones.
   display_time_ = static_cast<double>(display_time_microsecs_) / 1000000.0;
   display_time_increment_ =
       static_cast<double>(display_time_increment_microsecs_) / 1000000.0;
@@ -408,7 +422,7 @@ void Logic::PostUpdateDisplayTimeForHeadlessMode() {
   assert(g_base->InLogicThread());
   // At this point we've stepped our app-mode, so let's ask it how long
   // we've got until the next event. We'll plug this into our display-update
-  // timer so we can try to sleep until that point.
+  // timer so we can try to sleep exactly until that point.
   auto headless_display_step_microsecs =
       std::max(std::min(g_base->app_mode()->GetHeadlessDisplayStep(),
                         kAppModeMaxHeadlessDisplayStep),
@@ -433,17 +447,17 @@ void Logic::UpdateDisplayTimeForFrameDraw() {
   // Here we update our smoothed display-time-increment based on how fast we
   // are currently rendering frames. We want display-time to basically be
   // progressing at the same rate as app-time but in as constant of a manner
-  // as possible so that animations, simulation-stepping/etc. appears smooth
-  // (app-time measurements at render times exhibit quite a bit of jitter).
-  // Though we also don't want it to be *too* smooth; drops in framerate
-  // should still be reflected quickly in display-time-increment otherwise
-  // it can look like the game is slowing down or speeding up.
+  // as possible so that animation, simulation-stepping/etc. appears smooth
+  // (using app-times within renders exhibits quite a bit of jitter). Though
+  // we also don't want it to be *too* smooth; drops in framerate should
+  // still be reflected quickly in display-time-increment otherwise it can
+  // look like the game is slowing down or speeding up.
 
-  // Flip this on to debug this stuff.
-  // Things to look for:
+  // Flip debug-log-display-time on to debug this stuff.
+  // Things to look for:'
   // - 'final' value should mostly stay constant.
-  // - 'final' value should not be *too* far from 'used'.
-  // - 'use_avg' should mostly be 1.
+  // - 'final' value should not be *too* far from 'current'.
+  // - 'current' should mostly show '(avg)'; rarely '(sample)'.
   // - these can vary briefly during load spikes/etc. but should quickly
   //   reconverge to stability. If not, this may need further calibration.
   auto current_app_time = g_core->GetAppTimeSeconds();
@@ -474,30 +488,35 @@ void Logic::UpdateDisplayTimeForFrameDraw() {
     // rogue sample being unusually long and often the next one being
     // unusually short. Let's try to filter out some of these cases by
     // ignoring both the longest and shortest sample in our set.
-    int max_index{};
-    int min_index{};
-    double max_val{recent_display_time_increments_[0]};
-    double min_val{recent_display_time_increments_[0]};
-    for (int i = 0; i < kDisplayTimeSampleCount; ++i) {
-      auto val = recent_display_time_increments_[i];
-      if (val > max_val) {
-        max_val = val;
-        max_index = i;
-      }
-      if (val < min_val) {
-        min_val = val;
-        min_index = i;
-      }
-    }
+    //
+    // SCRATCH THAT; we want to gracefully handle cases where vsync combined
+    // with target-framerate might give us crazy sample times like 5, 10, 5,
+    // 10, etc. So we can't expect filtering a single sample to help.
+    //
+    // int max_index{};
+    // int min_index{};
+    // double max_val{recent_display_time_increments_[0]};
+    // double min_val{recent_display_time_increments_[0]};
+    // for (int i = 0; i < kDisplayTimeSampleCount; ++i) {
+    //   auto val = recent_display_time_increments_[i];
+    //   if (val > max_val) {
+    //     max_val = val;
+    //     max_index = i;
+    //   }
+    //   if (val < min_val) {
+    //     min_val = val;
+    //     min_index = i;
+    //   }
+    // }
 
     double avg{};
     double min{};
     double max{};
     int count{};
     for (int i = 0; i < kDisplayTimeSampleCount; ++i) {
-      if (i == min_index || i == max_index) {
-        continue;
-      }
+      // if (i == min_index || i == max_index) {
+      //   continue;
+      // }
       auto val = recent_display_time_increments_[i];
       if (count == 0) {
         // We may have skipped first index(es) so need to do this here
@@ -517,22 +536,34 @@ void Logic::UpdateDisplayTimeForFrameDraw() {
     // current value to respond quickly to changes. If things are more calm,
     // use our nice smoothed value.
 
-    // So in a case where we're seeing an average increment of 16ms, we snap
-    // out of avg mode if there's more than 8ms between the longest and
-    // shortest increments.
-    double chaos = range / avg;
-    bool use_avg = chaos < 0.5;
+    // Let's use 1.0 as a final 'chaos' threshold to make logs easy to read.
+    // So our key fudge factor here is chaos_fudge. The higher this value,
+    // the lower chaos will be and thus the more the engine will stick to
+    // smoothed values. A good way to determine if this value is too high is
+    // to launch the game and watch the menu animation. If it visibly speeds
+    // up or slows down in the moment after launch, it means the value is
+    // too high and the engine is sticking with smoothed values when it
+    // should instead be reacting immediately. So basically this value
+    // should be as high as possible while avoiding that look.
+    double chaos_fudge{1.25};
+    double chaos = (range / avg) / chaos_fudge;
+    bool use_avg = chaos < 1.0;
     auto used = use_avg ? avg : this_increment;
+
+    // double chaos = 0.0;
+    // bool use_avg = true;
+    // auto used = use_avg ? avg : this_increment;
 
     // Lastly use this 'used' value to update our actual increment - our
     // increment moves only if 'used' value gets farther than [trail_buffer]
     // from it. So ideally it will sit in the middle of the smoothed value
     // range.
 
-    // How far the smoothed increment value needs to get away from the final
-    // value to actually start moving it. Example: If our avg increment is
-    // 16.6ms (60fps), don't change our increment until the 'used' value is
-    // more than 0.5ms (16.6 * 0.03) from it in either direction.
+    // How far the smoothed increment value needs to get away from the
+    // current smooth value to actually start moving it. Example: If our
+    // smooth increment is 16.6ms (60fps), don't change our increment until
+    // the 'used' value is more than 0.5ms (16.6 * 0.03) from it in either
+    // direction.
 
     // Note: In practice I'm seeing that higher framerates like 120 need
     // buffers that are larger relative to avg to remain stable. Though
@@ -558,8 +589,8 @@ void Logic::UpdateDisplayTimeForFrameDraw() {
     if (debug_log_display_time_) {
       char buffer[256];
       snprintf(buffer, sizeof(buffer),
-               "final %.5f used %.5f use_avg %d sample %.5f chaos %.5f",
-               display_time_increment_, used, static_cast<int>(use_avg),
+               "final %.5f current(%s) %.5f sample %.5f chaos %.5f",
+               display_time_increment_, use_avg ? "avg" : "sample", used,
                this_increment, chaos);
       Log(LogLevel::kDebug, buffer);
     }

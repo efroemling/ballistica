@@ -36,7 +36,9 @@ class HostConfig:
     mosh_shell: str = 'sh'
     workspaces_root: str = '/home/${USER}/cloudshell_workspaces'
     sync_perms: bool = True
-    precommand: str | None = None
+    precommand: str | None = None  # KILL THIS
+    precommand_noninteractive: str | None = None
+    precommand_interactive: str | None = None
     managed: bool = False
     idle_minutes: int = 5
     can_sudo_reboot: bool = False

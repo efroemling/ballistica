@@ -54,6 +54,7 @@ class AppConfig {
 
   enum class IntID {
     kPort,
+    kMaxFPS,
     kLast  // Sentinel.
   };
 

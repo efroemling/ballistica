@@ -7,7 +7,7 @@
 
 namespace ballistica::base {
 
-// a mesh with all data provided together (either static or dynamic)
+// A mesh with all data provided together (either static or dynamic).
 class MeshIndexedSmokeFull
     : public MeshIndexed<VertexSmokeFull, MeshDataType::kIndexedSmokeFull> {
   using MeshIndexed::MeshIndexed;  // wheee c++11 magic

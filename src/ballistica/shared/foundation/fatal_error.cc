@@ -115,7 +115,7 @@ void FatalError::ReportFatalError(const std::string& message,
     DoBlockingFatalErrorDialog(message);
   }
 
-  // Wait until the log submit has finished or a bit of time has passed..
+  // Wait until the log submit has finished or a bit of time has passed.
   while (time(nullptr) - starttime < 10) {
     if (result != 0) {
       break;
@@ -133,30 +133,31 @@ void FatalError::DoBlockingFatalErrorDialog(const std::string& message) {
   if (g_core->InMainThread()) {
     g_core->platform->BlockingFatalErrorDialog(message);
   } else {
-    bool started{};
-    bool finished{};
-    bool* startedptr{&started};
-    bool* finishedptr{&finished};
-    g_core->main_event_loop()->PushCall([message, startedptr, finishedptr] {
-      *startedptr = true;
-      g_core->platform->BlockingFatalErrorDialog(message);
-      *finishedptr = true;
-    });
+    printf("FIXME REIMPLEMENT BLOCKING FATAL ERROR FOR BG THREAD\n");
+    // bool started{};
+    // bool finished{};
+    // bool* startedptr{&started};
+    // bool* finishedptr{&finished};
+    // g_core->main_event_loop()->PushCall([message, startedptr, finishedptr] {
+    //   *startedptr = true;
+    //   g_core->platform->BlockingFatalErrorDialog(message);
+    //   *finishedptr = true;
+    // });
 
-    // Wait a short amount of time for the main thread to take action.
-    // There's a chance that it can't (if threads are paused, if it is
-    // blocked on a synchronous call to another thread, etc.) so if we don't
-    // see something happening soon, just give up on showing a dialog.
-    auto starttime = core::CorePlatform::GetCurrentMillisecs();
-    while (!started) {
-      if (core::CorePlatform::GetCurrentMillisecs() - starttime > 1000) {
-        return;
-      }
-      core::CorePlatform::SleepMillisecs(10);
-    }
-    while (!finished) {
-      core::CorePlatform::SleepMillisecs(10);
-    }
+    // // Wait a short amount of time for the main thread to take action.
+    // // There's a chance that it can't (if threads are paused, if it is
+    // // blocked on a synchronous call to another thread, etc.) so if we don't
+    // // see something happening soon, just give up on showing a dialog.
+    // auto starttime = core::CorePlatform::GetCurrentMillisecs();
+    // while (!started) {
+    //   if (core::CorePlatform::GetCurrentMillisecs() - starttime > 1000) {
+    //     return;
+    //   }
+    //   core::CorePlatform::SleepMillisecs(10);
+    // }
+    // while (!finished) {
+    //   core::CorePlatform::SleepMillisecs(10);
+    // }
   }
 }
 

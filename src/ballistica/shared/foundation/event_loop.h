@@ -36,8 +36,8 @@ class EventLoop {
     return std::this_thread::get_id() == thread_id();
   }
 
-  // Used to quit the main thread.
-  void Quit();
+  /// Flags the loop to exit at the end of the next cycle.
+  void Exit();
 
   void SetAcquiresPythonGIL();
 
@@ -48,7 +48,7 @@ class EventLoop {
   // Needed in rare cases where we jump physical threads.
   // (Our 'main' thread on Android can switch under us as
   // rendering contexts are recreated in new threads/etc.)
-  void set_thread_id(std::thread::id id) { thread_id_ = id; }
+  // void set_thread_id(std::thread::id id) { thread_id_ = id; }
 
   void RunToCompletion();
   void RunSingleCycle();
@@ -100,10 +100,7 @@ class EventLoop {
   static auto GetStillPausingThreads() -> std::vector<EventLoop*>;
 
   auto paused() { return paused_; }
-  auto done() -> bool {
-    assert(source_ == ThreadSource::kWrapMain);
-    return done_;
-  }
+  auto done() -> bool { return done_; }
 
  private:
   struct ThreadMessage_ {
@@ -155,6 +152,8 @@ class EventLoop {
 
   void AcquireGIL_();
   void ReleaseGIL_();
+
+  void BootstrapThread_();
 
   bool writing_tally_{};
   bool paused_{};

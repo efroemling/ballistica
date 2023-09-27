@@ -203,7 +203,9 @@ void BGDynamics::Draw(FrameDef* frame_def) {
   // Draw shadows.
   if (ds->shadow_vertices.Exists()) {
     assert(ds->shadow_indices.Exists());
-    if (!shadows_mesh_.Exists()) shadows_mesh_ = Object::New<SpriteMesh>();
+    if (!shadows_mesh_.Exists()) {
+      shadows_mesh_ = Object::New<SpriteMesh>();
+    }
     shadows_mesh_->SetIndexData(ds->shadow_indices);
     shadows_mesh_->SetData(
         Object::Ref<MeshBuffer<VertexSprite>>(ds->shadow_vertices));

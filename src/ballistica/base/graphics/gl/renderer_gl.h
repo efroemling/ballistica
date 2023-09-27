@@ -15,10 +15,27 @@
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/shared/foundation/object.h"
 
+// Can be handy to check GL errors on opt builds.
+#define BA_FORCE_CHECK_GL_ERRORS 0
+
+#define BA_CHECK_GL_ERROR CheckGLError(__FILE__, __LINE__)
+#if BA_DEBUG_BUILD || BA_FORCE_CHECK_GL_ERRORS
+#define BA_DEBUG_CHECK_GL_ERROR CheckGLError(__FILE__, __LINE__)
+#else
+#define BA_DEBUG_CHECK_GL_ERROR ((void)0)
+#endif
+
 namespace ballistica::base {
 
-// for now lets not go above 8 since that's what the iPhone 3gs has..
-// ...haha perhaps should revisit this
+// extern int g_msaa_max_samples_rgb565;
+// extern int g_msaa_max_samples_rgb8;
+// extern bool g_vao_support;
+// extern bool g_running_es3;
+// extern bool g_anisotropic_support;
+// extern float g_max_anisotropy;
+
+// For now lets not go above 8 since that's what the iPhone 3gs has. ...haha
+// perhaps can reconsider that since the 3gs was 15 years ago.
 constexpr int kMaxGLTexUnitsUsed = 5;
 
 class RendererGL : public Renderer {
@@ -38,22 +55,72 @@ class RendererGL : public Renderer {
   class FragmentShaderGL;
   class VertexShaderGL;
   class ProgramGL;
-  class SimpleProgramGL;
-  class ObjectProgramGL;
-  class SmokeProgramGL;
-  class BlurProgramGL;
-  class ShieldProgramGL;
-  class PostProcessProgramGL;
-  class SpriteProgramGL;
+  class ProgramSimpleGL;
+  class ProgramObjectGL;
+  class ProgramSmokeGL;
+  class ProgramBlurGL;
+  class ProgramShieldGL;
+  class ProgramPostProcessGL;
+  class ProgramSpriteGL;
 
  public:
+  static void CheckGLError(const char* file, int line);
+  static auto GLErrorToString(GLenum err) -> std::string;
+  static auto GetGLTextureFormat(TextureFormat f) -> GLenum;
+
   RendererGL();
   ~RendererGL() override;
   void Unload() override;
   void Load() override;
   void PostLoad() override;
 
-  // our vertex attrs
+  // Flags used internally by shaders.
+  enum ShaderPrivateFlags {
+    PFLAG_USES_POSITION_ATTR = 1,
+    PFLAG_USES_UV_ATTR = 1 << 1,
+    PFLAG_USES_NORMAL_ATTR = 1 << 2,
+    PFLAG_USES_MODEL_WORLD_MATRIX = 1 << 3,
+    PFLAG_USES_CAM_POS = 1 << 4,
+    PFLAG_USES_SHADOW_PROJECTION_MATRIX = 1 << 5,
+    PFLAG_WORLD_SPACE_PTS = 1 << 6,
+    PFLAG_USES_ERODE_ATTR = 1 << 7,
+    PFLAG_USES_COLOR_ATTR = 1 << 8,
+    PFLAG_USES_SIZE_ATTR = 1 << 9,
+    PFLAG_USES_DIFFUSE_ATTR = 1 << 10,
+    PFLAG_USES_CAM_ORIENT_MATRIX = 1 << 11,
+    PFLAG_USES_MODEL_VIEW_MATRIX = 1 << 12,
+    PFLAG_USES_UV2_ATTR = 1 << 13
+  };
+
+  // Flags affecting shader creation.
+  enum ShaderFlag {
+    SHD_REFLECTION = 1,
+    SHD_TEXTURE = 1 << 1,
+    SHD_MODULATE = 1 << 2,
+    SHD_COLORIZE = 1 << 3,
+    SHD_LIGHT_SHADOW = 1 << 4,
+    SHD_WORLD_SPACE_PTS = 1 << 5,
+    SHD_DEBUG_PRINT = 1 << 6,
+    SHD_ADD = 1 << 7,
+    SHD_OBJ_TRANSPARENT = 1 << 8,
+    SHD_COLOR = 1 << 9,
+    SHD_EXP2 = 1 << 10,
+    SHD_CAMERA_ALIGNED = 1 << 11,
+    SHD_DISTORT = 1 << 12,
+    SHD_PREMULTIPLY = 1 << 13,
+    SHD_OVERLAY = 1 << 14,
+    SHD_EYES = 1 << 15,
+    SHD_COLORIZE2 = 1 << 16,
+    SHD_HIGHER_QUALITY = 1 << 17,
+    SHD_SHADOW = 1 << 18,
+    SHD_GLOW = 1 << 19,
+    SHD_MASKED = 1 << 20,
+    SHD_MASK_UV2 = 1 << 21,
+    SHD_CONDITIONAL = 1 << 22,
+    SHD_FLATNESS = 1 << 23,
+    SHD_DEPTH_BUG_TEST = 1 << 24
+  };
+
   enum VertexAttr {
     kVertexAttrPosition,
     kVertexAttrUV,
@@ -66,12 +133,12 @@ class RendererGL : public Renderer {
     kVertexAttrCount
   };
 
-  void CheckCapabilities() override;
   auto GetAutoGraphicsQuality() -> GraphicsQuality override;
   auto GetAutoTextureQuality() -> TextureQuality override;
+
 #if BA_OSTYPE_ANDROID
   std::string GetAutoAndroidRes() override;
-#endif  // BA_OSTYPE_ANDROID
+#endif
 
  protected:
   void DrawDebug() override;
@@ -119,36 +186,66 @@ class RendererGL : public Renderer {
 
 #if BA_VR_BUILD
   void VRSyncRenderStates() override;
-#endif  // BA_VR_BUILD
+#endif
 
-  // TEMP
   auto current_vertex_array() const -> GLuint { return current_vertex_array_; }
 
+  auto anisotropic_support() const { return anisotropic_support_; }
+  auto max_anisotropy() const {
+    assert(anisotropic_support_);
+    return max_anisotropy_;
+  }
+  auto invalidate_framebuffer_support() const {
+    return invalidate_framebuffer_support_;
+  }
+
+  auto msaa_max_samples_rgb565() const {
+    assert(msaa_max_samples_rgb565_ != -1);
+    return msaa_max_samples_rgb565_;
+  }
+
+  auto msaa_max_samples_rgb8() const {
+    assert(msaa_max_samples_rgb8_ != -1);
+    return msaa_max_samples_rgb8_;
+  }
+
+  auto gl_is_es() const -> bool {
+#if BA_OPENGL_IS_ES
+    return true;
+#else
+    return false;
+#endif
+  }
+
+  auto DebugGLGetInt(GLenum name) -> int;
+
  private:
-  void CheckFunkyDepthIssue();
-  auto GetMSAASamplesForFramebuffer(int width, int height) -> int;
-  void UpdateMSAAEnabled() override;
-  void CheckGLExtensions();
-  void UpdateVignetteTex(bool force) override;
-  void StandardPostProcessSetup(PostProcessProgramGL* p,
-                                const RenderPass& pass);
-  void SyncGLState();
-  void RetainShader(ProgramGL* p);
-  void SetViewport(GLint x, GLint y, GLsizei width, GLsizei height);
-  void UseProgram(ProgramGL* p);
-  auto GetActiveProgram() const -> ProgramGL* {
+  static auto GetFunkyDepthIssue_() -> bool;
+  // static auto GetDrawsShieldsFunny_()->bool;
+  void CheckFunkyDepthIssue_();
+  auto GetMSAASamplesForFramebuffer_(int width, int height) -> int;
+  void UpdateMSAAEnabled_() override;
+  void CheckGLCapabilities_();
+  void UpdateVignetteTex_(bool force) override;
+  void StandardPostProcessSetup_(ProgramPostProcessGL* p,
+                                 const RenderPass& pass);
+  void SyncGLState_();
+  void RetainShader_(ProgramGL* p);
+  void SetViewport_(GLint x, GLint y, GLsizei width, GLsizei height);
+  void UseProgram_(ProgramGL* p);
+  auto GetActiveProgram_() const -> ProgramGL* {
     assert(current_program_);
     return current_program_;
   }
-  void SetDoubleSided(bool d);
-  void ScissorPush(const Rect& rIn, RenderTarget* render_target);
-  void ScissorPop(RenderTarget* render_target);
-  void BindVertexArray(GLuint v);
+  void SetDoubleSided_(bool d);
+  void ScissorPush_(const Rect& rIn, RenderTarget* render_target);
+  void ScissorPop_(RenderTarget* render_target);
+  void BindVertexArray_(GLuint v);
 
   // Note: This is only for use when VAOs aren't supported.
-  void SetVertexAttribArrayEnabled(GLuint i, bool enabled);
-  void BindTexture(GLuint type, const TextureAsset* t, GLuint tex_unit = 0);
-  void BindTexture(GLuint type, GLuint tex, GLuint tex_unit = 0);
+  // void SetVertexAttributeArrayEnabled_(GLuint i, bool enabled);
+  void BindTexture_(GLuint type, const TextureAsset* t, GLuint tex_unit = 0);
+  void BindTexture_(GLuint type, GLuint tex, GLuint tex_unit = 0);
   void BindTextureUnit(uint32_t tex_unit);
   void BindFramebuffer(GLuint fb);
   void BindArrayBuffer(GLuint b);
@@ -156,7 +253,7 @@ class RendererGL : public Renderer {
   void SetBlendPremult(bool b);
   millisecs_t dof_update_time_{};
   std::vector<Object::Ref<FramebufferObjectGL> > blur_buffers_;
-  bool supports_depth_textures_{};
+  // bool supports_depth_textures_{};
   bool first_extension_check_{true};
   bool is_tegra_4_{};
   bool is_tegra_k1_{};
@@ -179,56 +276,54 @@ class RendererGL : public Renderer {
   bool depth_testing_enabled_{};
   bool data_loaded_{};
   bool draw_front_{};
-  GLuint screen_framebuffer_{};
   bool got_screen_framebuffer_{};
+  GLuint screen_framebuffer_{};
   GLuint random_tex_{};
   GLuint vignette_tex_{};
   GraphicsQuality vignette_quality_{};
-  std::vector<std::unique_ptr<ProgramGL> > shaders_;
   GLint viewport_x_{};
   GLint viewport_y_{};
   GLint viewport_width_{};
   GLint viewport_height_{};
-  SimpleProgramGL* simple_color_prog_{};
-  SimpleProgramGL* simple_tex_prog_{};
-  SimpleProgramGL* simple_tex_dtest_prog_{};
-  SimpleProgramGL* simple_tex_mod_prog_{};
-  SimpleProgramGL* simple_tex_mod_flatness_prog_{};
-  SimpleProgramGL* simple_tex_mod_shadow_prog_{};
-  SimpleProgramGL* simple_tex_mod_shadow_flatness_prog_{};
-  SimpleProgramGL* simple_tex_mod_glow_prog_{};
-  SimpleProgramGL* simple_tex_mod_glow_maskuv2_prog_{};
-  SimpleProgramGL* simple_tex_mod_colorized_prog_{};
-  SimpleProgramGL* simple_tex_mod_colorized2_prog_{};
-  SimpleProgramGL* simple_tex_mod_colorized2_masked_prog_{};
-  ObjectProgramGL* obj_prog_{};
-  ObjectProgramGL* obj_transparent_prog_{};
-  ObjectProgramGL* obj_lightshad_transparent_prog_{};
-  ObjectProgramGL* obj_refl_prog_{};
-  ObjectProgramGL* obj_refl_worldspace_prog_{};
-  ObjectProgramGL* obj_refl_transparent_prog_{};
-  ObjectProgramGL* obj_refl_add_transparent_prog_{};
-  ObjectProgramGL* obj_lightshad_prog_{};
-  ObjectProgramGL* obj_lightshad_worldspace_prog_{};
-  ObjectProgramGL* obj_refl_lightshad_prog_{};
-  ObjectProgramGL* obj_refl_lightshad_worldspace_prog_{};
-  ObjectProgramGL* obj_refl_lightshad_colorize_prog_{};
-  ObjectProgramGL* obj_refl_lightshad_colorize2_prog_{};
-  ObjectProgramGL* obj_refl_lightshad_add_prog_{};
-  ObjectProgramGL* obj_refl_lightshad_add_colorize_prog_{};
-  ObjectProgramGL* obj_refl_lightshad_add_colorize2_prog_{};
-  SmokeProgramGL* smoke_prog_{};
-  SmokeProgramGL* smoke_overlay_prog_{};
-  SpriteProgramGL* sprite_prog_{};
-  SpriteProgramGL* sprite_camalign_prog_{};
-  SpriteProgramGL* sprite_camalign_overlay_prog_{};
-  BlurProgramGL* blur_prog_{};
-  ShieldProgramGL* shield_prog_{};
-  PostProcessProgramGL* postprocess_prog_{};
-  PostProcessProgramGL* postprocess_eyes_prog_{};
-  PostProcessProgramGL* postprocess_distort_prog_{};
-  static auto GetFunkyDepthIssue() -> bool;
-  static auto GetDrawsShieldsFunny() -> bool;
+  std::vector<std::unique_ptr<ProgramGL> > shaders_;
+  ProgramSimpleGL* simple_color_prog_{};
+  ProgramSimpleGL* simple_tex_prog_{};
+  ProgramSimpleGL* simple_tex_dtest_prog_{};
+  ProgramSimpleGL* simple_tex_mod_prog_{};
+  ProgramSimpleGL* simple_tex_mod_flatness_prog_{};
+  ProgramSimpleGL* simple_tex_mod_shadow_prog_{};
+  ProgramSimpleGL* simple_tex_mod_shadow_flatness_prog_{};
+  ProgramSimpleGL* simple_tex_mod_glow_prog_{};
+  ProgramSimpleGL* simple_tex_mod_glow_maskuv2_prog_{};
+  ProgramSimpleGL* simple_tex_mod_colorized_prog_{};
+  ProgramSimpleGL* simple_tex_mod_colorized2_prog_{};
+  ProgramSimpleGL* simple_tex_mod_colorized2_masked_prog_{};
+  ProgramObjectGL* obj_prog_{};
+  ProgramObjectGL* obj_transparent_prog_{};
+  ProgramObjectGL* obj_lightshad_transparent_prog_{};
+  ProgramObjectGL* obj_refl_prog_{};
+  ProgramObjectGL* obj_refl_worldspace_prog_{};
+  ProgramObjectGL* obj_refl_transparent_prog_{};
+  ProgramObjectGL* obj_refl_add_transparent_prog_{};
+  ProgramObjectGL* obj_lightshad_prog_{};
+  ProgramObjectGL* obj_lightshad_worldspace_prog_{};
+  ProgramObjectGL* obj_refl_lightshad_prog_{};
+  ProgramObjectGL* obj_refl_lightshad_worldspace_prog_{};
+  ProgramObjectGL* obj_refl_lightshad_colorize_prog_{};
+  ProgramObjectGL* obj_refl_lightshad_colorize2_prog_{};
+  ProgramObjectGL* obj_refl_lightshad_add_prog_{};
+  ProgramObjectGL* obj_refl_lightshad_add_colorize_prog_{};
+  ProgramObjectGL* obj_refl_lightshad_add_colorize2_prog_{};
+  ProgramSmokeGL* smoke_prog_{};
+  ProgramSmokeGL* smoke_overlay_prog_{};
+  ProgramSpriteGL* sprite_prog_{};
+  ProgramSpriteGL* sprite_camalign_prog_{};
+  ProgramSpriteGL* sprite_camalign_overlay_prog_{};
+  ProgramBlurGL* blur_prog_{};
+  ProgramShieldGL* shield_prog_{};
+  ProgramPostProcessGL* postprocess_prog_{};
+  ProgramPostProcessGL* postprocess_eyes_prog_{};
+  ProgramPostProcessGL* postprocess_distort_prog_{};
   static bool funky_depth_issue_set_;
   static bool funky_depth_issue_;
   static bool draws_shields_funny_set_;
@@ -236,7 +331,7 @@ class RendererGL : public Renderer {
 #if BA_OSTYPE_ANDROID
   static bool is_speedy_android_device_;
   static bool is_extra_speedy_android_device_;
-#endif  // BA_OSTYPE_ANDROID
+#endif
   ProgramGL* current_program_{};
   bool double_sided_{};
   std::vector<Rect> scissor_rects_;
@@ -257,6 +352,12 @@ class RendererGL : public Renderer {
   std::vector<MeshDataSmokeFullGL*> recycle_mesh_datas_smoke_full_;
   std::vector<MeshDataSpriteGL*> recycle_mesh_datas_sprite_;
   int error_check_counter_{};
+  GLint combined_texture_image_unit_count_{};
+  GLint anisotropic_support_{};
+  GLfloat max_anisotropy_{};
+  bool invalidate_framebuffer_support_{};
+  int msaa_max_samples_rgb565_{-1};
+  int msaa_max_samples_rgb8_{-1};
 };
 
 }  // namespace ballistica::base

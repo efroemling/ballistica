@@ -14,32 +14,16 @@
 
 namespace ballistica::core {
 
-/// For capturing and printing stack-traces and related errors. Platforms
-/// should subclass this and return instances in GetStackTrace(). Stack
-/// trace classes should capture the stack state immediately upon
-/// construction but should do the bare minimum amount of work to store it.
-/// Any expensive operations such as symbolification should be deferred
-/// until FormatForDisplay().
-class PlatformStackTrace {
- public:
-  virtual ~PlatformStackTrace() = default;
-
-  // Return a human readable version of the trace (with symbolification if
-  // available).
-  virtual auto FormatForDisplay() noexcept -> std::string = 0;
-
-  // Should return a copy of itself allocated via new() (or nullptr if not
-  // possible).
-  virtual auto Copy() const noexcept -> PlatformStackTrace* = 0;
-};
-
-/// This class attempts to abstract away most platform-specific
-/// functionality. Ideally we should need to pull in no platform-specific
-/// system headers outside of the platform*.cc files and can just go through
-/// this.
+/// Low level platform-specific functionality is contained here, to be
+/// implemented by platform-specific subclasses.
+///
+/// TODO(ericf): Most of the stuff below should be migrated into
+///   BasePlatform or other higher-level places. Core should contain only
+///   what is directly needed to bootstrap Python and the engine
+///   environment.
 class CorePlatform {
  public:
-  /// Create the proper CorePlatform subclass for the current platform.
+  /// Instantiate the CorePlatform subclass for the current build.
   static auto Create() -> CorePlatform*;
 
 #pragma mark LIFECYCLE/SETTINGS ------------------------------------------------
@@ -128,7 +112,7 @@ class CorePlatform {
   // Are we running in event-push-mode? With this on, we return from Main()
   // and the system handles the event loop. With it off, we loop in Main()
   // ourself.
-  virtual auto IsEventPushMode() -> bool;
+  // virtual auto IsEventPushMode() -> bool;
 
   /// Return the interface type based on the environment (phone, tablet,
   /// etc).
@@ -403,6 +387,8 @@ class CorePlatform {
 
   static void SleepMillisecs(millisecs_t ms);
 
+  static void SleepMicrosecs(millisecs_t ms);
+
   /// Given a C++ symbol, attempt to return a pretty one.
   virtual auto DemangleCXXSymbol(const std::string& s) -> std::string;
 
@@ -415,9 +401,6 @@ class CorePlatform {
 
   /// Pass platform-specific misc-read-vals along to the OS (as a json string).
   virtual void SetPlatformMiscReadVals(const std::string& vals);
-
-  /// Show/hide the hardware cursor.
-  virtual void SetHardwareCursorVisible(bool visible);
 
   /// Open a file using the system default method (in another app, etc.)
   virtual void OpenFileExternally(const std::string& path);
@@ -508,6 +491,25 @@ class CorePlatform {
   std::string legacy_device_uuid_;
   std::string volatile_data_dir_;
   std::string replays_dir_;
+};
+
+/// For capturing and printing stack-traces and related errors. Platforms
+/// should subclass this and return instances in GetStackTrace(). Stack
+/// trace classes should capture the stack state immediately upon
+/// construction but should do the bare minimum amount of work to store it.
+/// Any expensive operations such as symbolification should be deferred
+/// until FormatForDisplay().
+class PlatformStackTrace {
+ public:
+  virtual ~PlatformStackTrace() = default;
+
+  // Return a human readable version of the trace (with symbolification if
+  // available).
+  virtual auto FormatForDisplay() noexcept -> std::string = 0;
+
+  // Should return a copy of itself allocated via new() (or nullptr if not
+  // possible).
+  virtual auto Copy() const noexcept -> PlatformStackTrace* = 0;
 };
 
 }  // namespace ballistica::core

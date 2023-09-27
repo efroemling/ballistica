@@ -15,26 +15,58 @@
 
 namespace ballistica::base {
 
-/// A server that runs in the graphics thread and renders frame_defs shipped
-/// to it by the logic thread.
+/// A mechanism used by the AppAdapter to render frame-defs shipped from the
+/// logic thread. This may happen in the main thread or in other dedicated
+/// thread(s) depending on the AppAdapter and environment.
 class GraphicsServer {
  public:
   GraphicsServer();
+  ~GraphicsServer();
 
   void OnMainThreadStartApp();
 
-  /// Should be called to inform ballistica of screen size changes; this
-  /// will be applied to the server and then sent to the logic thread to
-  /// apply to various app systems (ui, etc.).
+  /// The current renderer.
+  auto renderer() const { return renderer_; }
+
+  /// Assign a renderer.
+  void set_renderer(Renderer* renderer);
+
+  /// Load the current renderer. This will lock in various things such as
+  /// quality settings and will allow renderer-specific forms of assets and
+  /// other components to be created.
+  void LoadRenderer();
+
+  /// Unload the current renderer. Destroys all renderer-specific forms of
+  /// assets and other components.
+  void UnloadRenderer();
+
+  /// Call this if a renderer's context has been lost. This is basically
+  /// an UnloadRenderer() followed by a LoadRenderer() except that the
+  /// renderer is not asked to delete components during the unload.
+  void ReloadLostRenderer();
+
+  /// Return whether the current renderer is loaded.
+  auto renderer_loaded() const {
+    assert(renderer_);
+    return renderer_loaded_;
+  }
+
+  /// The AppAdapter should call this to inform the engine of screen size
+  /// changes. Changes will be applied to the server and then sent to the
+  /// logic thread to apply to various app systems (ui, etc.).
   void SetScreenResolution(float h, float v);
 
-  void PushSetScreenGammaCall(float gamma);
+  /// Used by headless builds to init the graphics-server into a
+  /// non-functional state.
+  void SetNullGraphics();
+
+  // void PushSetScreenGammaCall(float gamma);
   void PushSetScreenPixelScaleCall(float pixel_scale);
-  void PushSetVSyncCall(bool sync, bool auto_sync);
-  void PushSetScreenCall(bool fullscreen, int width, int height,
-                         TextureQualityRequest texture_quality_request,
-                         GraphicsQualityRequest graphics_quality_request,
-                         const std::string& android_res);
+  // void PushSetVSyncCall(bool sync, bool auto_sync);
+  // void PushSetScreenCall(bool fullscreen, int width, int height,
+  //                        TextureQualityRequest texture_quality_request,
+  //                        GraphicsQualityRequest graphics_quality_request,
+  //                        const std::string& android_res);
   void PushReloadMediaCall();
   void PushRemoveRenderHoldCall();
   void PushComponentUnloadCall(
@@ -45,17 +77,11 @@ class GraphicsServer {
   /// rendering.
   void EnqueueFrameDef(FrameDef* framedef);
 
-  // Returns the next frame_def to be rendered, waiting for it to arrive if
-  // necessary. this can return nullptr if no frame_defs come in within a
-  // reasonable amount of time. a frame_def here *must* be rendered and
-  // disposed of using the RenderFrameDef* calls.
-  auto GetRenderFrameDef() -> FrameDef*;
-
   void ApplyFrameDefSettings(FrameDef* frame_def);
 
   void RunFrameDefMeshUpdates(FrameDef* frame_def);
 
-  // renders shadow passes and other common parts of a frame_def
+  // Renders shadow passes and other common parts of a frame_def.
   void PreprocessRenderFrameDef(FrameDef* frame_def);
 
   // Does the default drawing to the screen, either from the left or right
@@ -65,11 +91,11 @@ class GraphicsServer {
   // Clean up the frame_def once done drawing it.
   void FinishRenderFrameDef(FrameDef* frame_def);
 
-  // Equivalent to calling GetRenderFrameDef() and then preprocess, draw (in
-  // mono), and finish.
-  void TryRender();
+  // Attempts to wait for a frame-def to come in and render it.
+  // Returns true if a frame was rendered.
+  auto TryRender() -> bool;
 
-  // init the modelview matrix to look here
+  // Init the modelview matrix to look here.
   void SetCamera(const Vector3f& eye, const Vector3f& target,
                  const Vector3f& up);
 
@@ -109,42 +135,45 @@ class GraphicsServer {
     return light_shadow_projection_matrix_;
   }
 
-  // Returns the modelview * projection matrix.
+  // Return the modelview * projection matrix.
   auto GetModelViewProjectionMatrix() -> const Matrix44f& {
-    UpdateModelViewProjectionMatrix();
+    UpdateModelViewProjectionMatrix_();
     return model_view_projection_matrix_;
   }
 
   auto GetModelViewProjectionMatrixState() -> uint32_t {
-    UpdateModelViewProjectionMatrix();
+    UpdateModelViewProjectionMatrix_();
     return model_view_projection_matrix_state_;
   }
 
   auto GetModelWorldMatrix() -> const Matrix44f& {
-    UpdateModelWorldMatrix();
+    UpdateModelWorldMatrix_();
     return model_world_matrix_;
   }
 
   auto GetModelWorldMatrixState() -> uint32_t {
-    UpdateModelWorldMatrix();
+    UpdateModelWorldMatrix_();
     return model_world_matrix_state_;
   }
 
   auto cam_pos() -> const Vector3f& { return cam_pos_; }
+
   auto cam_pos_state() -> uint32_t { return cam_pos_state_; }
+
   auto GetCamOrientMatrix() -> const Matrix44f& {
-    UpdateCamOrientMatrix();
+    UpdateCamOrientMatrix_();
     return cam_orient_matrix_;
   }
 
   auto GetCamOrientMatrixState() -> uint32_t {
-    UpdateCamOrientMatrix();
+    UpdateCamOrientMatrix_();
     return cam_orient_matrix_state_;
   }
 
   auto model_view_matrix() const -> const Matrix44f& {
     return model_view_matrix_;
   }
+
   void SetModelViewMatrix(const Matrix44f& m) {
     model_view_matrix_ = m;
     model_view_projection_matrix_dirty_ = model_world_matrix_dirty_ = true;
@@ -153,6 +182,7 @@ class GraphicsServer {
   auto projection_matrix() const -> const Matrix44f& {
     return projection_matrix_;
   }
+
   void PushTransform() {
     model_view_stack_.push_back(model_view_matrix_);
     assert(model_view_stack_.size() < 20);
@@ -185,10 +215,6 @@ class GraphicsServer {
     model_view_projection_matrix_dirty_ = model_world_matrix_dirty_ = true;
   }
 
-  void RebuildLostContext();
-  ~GraphicsServer();
-
-  auto renderer() { return renderer_; }
   auto quality() const -> GraphicsQuality {
     assert(graphics_quality_set_);
     return graphics_quality_;
@@ -203,6 +229,7 @@ class GraphicsServer {
     assert(g_base->InGraphicsThread());
     return res_x_;
   }
+
   auto screen_pixel_height() const -> float {
     assert(g_base->InGraphicsThread());
     return res_y_;
@@ -212,16 +239,19 @@ class GraphicsServer {
     assert(g_base->InGraphicsThread());
     return res_x_virtual_;
   }
+
   auto screen_virtual_height() const -> float {
     assert(g_base->InGraphicsThread());
     return res_y_virtual_;
   }
+
   auto tv_border() const {
     assert(g_base->InGraphicsThread());
     return tv_border_;
   }
 
   auto graphics_quality_set() const { return graphics_quality_set_; }
+
   auto texture_quality_set() const { return texture_quality_set_; }
 
   auto SupportsTextureCompressionType(TextureCompressionType t) const -> bool {
@@ -235,87 +265,90 @@ class GraphicsServer {
   auto texture_compression_types_are_set() const {
     return texture_compression_types_set_;
   }
-  auto set_renderer_context_lost(bool lost) { renderer_context_lost_ = lost; }
+
+  void set_renderer_context_lost(bool lost) { renderer_context_lost_ = lost; }
+
   auto renderer_context_lost() const { return renderer_context_lost_; }
-  auto fullscreen_enabled() const { return fullscreen_enabled_; }
+
+  // auto fullscreen_enabled() const { return fullscreen_enabled_; }
 
   // This doesn't actually toggle fullscreen. It is used to inform the game
   // when fullscreen changes under it.
-  auto set_fullscreen_enabled(bool fs) { fullscreen_enabled_ = fs; }
+  // auto set_fullscreen_enabled(bool fs) { fullscreen_enabled_ = fs; }
 
-#if BA_ENABLE_OPENGL
-  auto gl_context() const -> GLContext* { return gl_context_.get(); }
-#endif
+  // #if BA_ENABLE_OPENGL
+  //   auto gl_context() const -> GLContext* { return gl_context_.get(); }
+  // #endif
 
   auto graphics_quality_requested() const {
     return graphics_quality_requested_;
   }
+
+  void set_graphics_quality_requested(GraphicsQualityRequest val) {
+    graphics_quality_requested_ = val;
+  }
+
+  void set_texture_quality_requested(TextureQualityRequest val) {
+    texture_quality_requested_ = val;
+  }
+
   auto graphics_quality() const { return graphics_quality_; }
+
   auto texture_quality_requested() const { return texture_quality_requested_; }
-  auto renderer() const { return renderer_; }
-  auto initial_screen_created() const { return initial_screen_created_; }
-  auto event_loop() const -> EventLoop* { return event_loop_; }
+
+  // auto initial_screen_created() const { return initial_screen_created_; }
+
+  void HandlePushAndroidRes(const std::string& android_res);
+
+  // void HandleFullContextScreenRebuild(
+  //     bool need_full_context_rebuild, bool fullscreen,
+  //     GraphicsQualityRequest graphics_quality_requested,
+  //     TextureQualityRequest texture_quality_requested);
+  // void HandleFullscreenToggling(bool do_set_existing_fs, bool do_toggle_fs,
+  //                               bool fullscreen);
 
  private:
-  void HandleFullscreenToggling(bool do_set_existing_fs, bool do_toggle_fs,
-                                bool fullscreen);
-  void HandlePushAndroidRes(const std::string& android_res);
-  void HandleFullContextScreenRebuild(
-      bool need_full_context_rebuild, bool fullscreen, int width, int height,
-      GraphicsQualityRequest graphics_quality_requested,
-      TextureQualityRequest texture_quality_requested);
+  // Return the next frame_def to be rendered, waiting for it to arrive if
+  // necessary. this can return nullptr if no frame_defs come in within a
+  // reasonable amount of time. a frame_def here *must* be rendered and
+  // disposed of using the RenderFrameDef* calls.
+  auto WaitForRenderFrameDef_() -> FrameDef*;
 
   // Update virtual screen dimensions based on the current physical ones.
-  static void CalcVirtualRes(float* x, float* y);
-
-  void UpdateVirtualScreenRes();
-  void UpdateCamOrientMatrix();
-  void ReloadMedia();
-  void UpdateModelViewProjectionMatrix() {
+  static void CalcVirtualRes_(float* x, float* y);
+  void UpdateVirtualScreenRes_();
+  void UpdateCamOrientMatrix_();
+  void ReloadMedia_();
+  void UpdateModelViewProjectionMatrix_() {
     if (model_view_projection_matrix_dirty_) {
       model_view_projection_matrix_ = model_view_matrix_ * projection_matrix_;
       model_view_projection_matrix_state_++;
       model_view_projection_matrix_dirty_ = false;
     }
   }
-  void UpdateModelWorldMatrix() {
+
+  void UpdateModelWorldMatrix_() {
     if (model_world_matrix_dirty_) {
       model_world_matrix_ = model_view_matrix_ * view_world_matrix_;
       model_world_matrix_state_++;
       model_world_matrix_dirty_ = false;
     }
   }
-  void SetScreen(bool fullscreen, int width, int height,
-                 TextureQualityRequest texture_quality_request,
-                 GraphicsQualityRequest graphics_quality_request,
-                 const std::string& android_res);
 
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  void FullscreenCheck();
-#endif
-#if BA_ENABLE_OPENGL
-  std::unique_ptr<GLContext> gl_context_;
-#endif
-  EventLoop* event_loop_{};
   float res_x_{};
   float res_y_{};
   float res_x_virtual_{};
   float res_y_virtual_{};
-  bool tv_border_{};
-  bool renderer_context_lost_{};
   uint32_t texture_compression_types_{};
-  bool texture_compression_types_set_{};
   TextureQualityRequest texture_quality_requested_{
       TextureQualityRequest::kUnset};
   TextureQuality texture_quality_{TextureQuality::kLow};
   GraphicsQualityRequest graphics_quality_requested_{
       GraphicsQualityRequest::kUnset};
   GraphicsQuality graphics_quality_{GraphicsQuality::kUnset};
-  bool graphics_quality_set_{};
-  bool texture_quality_set_{};
-  bool fullscreen_enabled_{};
-  float target_res_x_{800.0f};
-  float target_res_y_{600.0f};
+  // bool fullscreen_enabled_{};
+  // float target_res_x_{800.0f};
+  // float target_res_y_{600.0f};
   Matrix44f model_view_matrix_{kMatrix44fIdentity};
   Matrix44f view_world_matrix_{kMatrix44fIdentity};
   Matrix44f projection_matrix_{kMatrix44fIdentity};
@@ -325,8 +358,6 @@ class GraphicsServer {
   uint32_t projection_matrix_state_{1};
   uint32_t model_view_projection_matrix_state_{1};
   uint32_t model_world_matrix_state_{1};
-  bool model_view_projection_matrix_dirty_{true};
-  bool model_world_matrix_dirty_{true};
   Matrix44f light_shadow_projection_matrix_{kMatrix44fIdentity};
   uint32_t light_shadow_projection_matrix_state_{1};
   Vector3f cam_pos_{0.0f, 0.0f, 0.0f};
@@ -334,14 +365,22 @@ class GraphicsServer {
   uint32_t cam_pos_state_{1};
   Matrix44f cam_orient_matrix_ = kMatrix44fIdentity;
   uint32_t cam_orient_matrix_state_{1};
-  bool cam_orient_matrix_dirty_{true};
   std::list<MeshData*> mesh_datas_;
-  bool v_sync_{};
-  bool auto_vsync_{};
   Timer* render_timer_{};
   Renderer* renderer_{};
   FrameDef* frame_def_{};
-  bool initial_screen_created_{};
+  // bool initial_screen_created_{};
+  bool renderer_loaded_{};
+  bool v_sync_{};
+  bool auto_vsync_{};
+  bool model_view_projection_matrix_dirty_{true};
+  bool model_world_matrix_dirty_{true};
+  bool graphics_quality_set_{};
+  bool texture_quality_set_{};
+  bool tv_border_{};
+  bool renderer_context_lost_{};
+  bool texture_compression_types_set_{};
+  bool cam_orient_matrix_dirty_{true};
   int render_hold_{};
   std::mutex frame_def_mutex_{};
 };

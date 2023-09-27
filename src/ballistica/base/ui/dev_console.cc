@@ -520,19 +520,19 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
       break;
     }
     default: {
-#if BA_SDL2_BUILD || BA_MINSDL_BUILD
-      // (in SDL2/Non-SDL we dont' get chars from keypress events;
-      // they come through as text edit events)
-#else   // BA_SDL2_BUILD
-      if (keysym->unicode < 0x80 && keysym->unicode > 0) {
-        std::vector<uint32_t> unichars =
-            Utils::UnicodeFromUTF8(input_string_, "cjofrh0");
-        unichars.push_back(keysym->unicode);
-        input_string_ = Utils::GetValidUTF8(
-            Utils::UTF8FromUnicode(unichars).c_str(), "sdkr");
-        input_text_dirty_ = true;
-      }
-#endif  // BA_SDL2_BUILD
+      // #if BA_SDL2_BUILD || BA_MINSDL_BUILD
+      //       // (in SDL2/Non-SDL we dont' get chars from keypress events;
+      //       // they come through as text edit events)
+      // #else   // BA_SDL2_BUILD
+      //       if (keysym->unicode < 0x80 && keysym->unicode > 0) {
+      //         std::vector<uint32_t> unichars =
+      //             Utils::UnicodeFromUTF8(input_string_, "cjofrh0");
+      //         unichars.push_back(keysym->unicode);
+      //         input_string_ = Utils::GetValidUTF8(
+      //             Utils::UTF8FromUnicode(unichars).c_str(), "sdkr");
+      //         input_text_dirty_ = true;
+      //       }
+      // #endif  // BA_SDL2_BUILD
       break;
     }
   }
@@ -662,7 +662,6 @@ void DevConsole::Print(const std::string& s_in) {
 
 auto DevConsole::Bottom_() const -> float {
   float bs = PythonConsoleBaseScale_();
-  float vw = g_base->graphics->screen_virtual_width();
   float vh = g_base->graphics->screen_virtual_height();
 
   float ratio =
@@ -703,22 +702,24 @@ void DevConsole::Draw(FrameDef* frame_def) {
   // If we're not yet transitioning in for the first time OR have completed
   // transitioning out, do nothing.
   if (transition_start_ <= 0.0
-      || state_ == State_::kInactive
-             && ((g_base->logic->display_time() - transition_start_)
-                 >= kTransitionSeconds)) {
+      || (state_ == State_::kInactive
+          && ((g_base->logic->display_time() - transition_start_)
+              >= kTransitionSeconds))) {
     return;
   }
 
   float bottom = Bottom_();
 
+  float border_height{3.0f};
   {
     bg_mesh_.SetPositionAndSize(0, bottom, kDevConsoleZDepth,
                                 pass->virtual_width(),
                                 (pass->virtual_height() - bottom));
     stripe_mesh_.SetPositionAndSize(0, bottom + 15.0f * bs, kDevConsoleZDepth,
                                     pass->virtual_width(), 15.0f * bs);
-    border_mesh_.SetPositionAndSize(0, bottom - 3.0f * bs, kDevConsoleZDepth,
-                                    pass->virtual_width(), 3.0f * bs);
+    border_mesh_.SetPositionAndSize(0, bottom - border_height * bs,
+                                    kDevConsoleZDepth, pass->virtual_width(),
+                                    border_height * bs);
     SimpleComponent c(pass);
     c.SetTransparent(true);
     c.SetColor(0, 0, 0.1f, 0.9f);
@@ -732,6 +733,22 @@ void DevConsole::Draw(FrameDef* frame_def) {
     c.SetColor(0.25f, 0.2f, 0.3f, 1.0f);
     c.DrawMesh(&border_mesh_);
     c.Submit();
+  }
+
+  // Drop shadow.
+  {
+    SimpleComponent c(pass);
+    c.SetTransparent(true);
+    c.SetColor(0.03, 0, 0.09, 0.9f);
+    c.SetTexture(g_base->assets->SysTexture(SysTextureID::kSoftRectVertical));
+    {
+      auto scissor = c.ScopedScissor({0.0f, 0.0f, pass->virtual_width(),
+                                      bottom - (border_height * 0.95f) * bs});
+      auto xf = c.ScopedTransform();
+      c.Translate(pass->virtual_width() * 0.5f, bottom + 160.0f);
+      c.Scale(pass->virtual_width() * 1.2f, 600.0f);
+      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+    }
   }
 
   if (active_tab_ == "Python") {

@@ -192,12 +192,13 @@ void RootUI::Draw(base::FrameDef* frame_def) {
       } else {
         c.SetColor(0.3f, 0.3f + 0.2f * menu_fade_, 0.2f, menu_fade_);
       }
-      c.PushTransform();
-      c.Translate(width - menu_button_size_ * 0.5f,
-                  height - menu_button_size_ * 0.38f, kMenuButtonDrawDepth);
-      c.Scale(menu_button_size_ * 0.8f, menu_button_size_ * 0.8f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(width - menu_button_size_ * 0.5f,
+                    height - menu_button_size_ * 0.38f, kMenuButtonDrawDepth);
+        c.Scale(menu_button_size_ * 0.8f, menu_button_size_ * 0.8f);
+        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+      }
       c.Submit();
     }
 
@@ -235,24 +236,26 @@ void RootUI::Draw(base::FrameDef* frame_def) {
       // Draw button.
       float width = g_base->graphics->screen_virtual_width();
       float height = g_base->graphics->screen_virtual_height();
-      c.PushTransform();
-      float extra_offset =
-          (draw_menu_button && menu_fade_ > 0.0f) ? -menu_button_size_ : 0.0f;
       {
-        float smoothing = 0.8f;
-        connected_client_extra_offset_smoothed_ =
-            smoothing * connected_client_extra_offset_smoothed_
-            + (1.0f - smoothing) * extra_offset;
+        auto xf = c.ScopedTransform();
+
+        float extra_offset =
+            (draw_menu_button && menu_fade_ > 0.0f) ? -menu_button_size_ : 0.0f;
+        {
+          float smoothing = 0.8f;
+          connected_client_extra_offset_smoothed_ =
+              smoothing * connected_client_extra_offset_smoothed_
+              + (1.0f - smoothing) * extra_offset;
+        }
+        c.Translate(width - menu_button_size_ * 0.4f
+                        + connected_client_extra_offset_smoothed_,
+                    height - menu_button_size_ * 0.35f, kMenuButtonDrawDepth);
+        c.Scale(menu_button_size_ * 0.8f, menu_button_size_ * 0.8f);
+        if (flash && frame_def->display_time_millisecs() % 250 < 125) {
+          c.SetColor(1.0f, 1.4f, 1.0f);
+        }
+        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
       }
-      c.Translate(width - menu_button_size_ * 0.4f
-                      + connected_client_extra_offset_smoothed_,
-                  height - menu_button_size_ * 0.35f, kMenuButtonDrawDepth);
-      c.Scale(menu_button_size_ * 0.8f, menu_button_size_ * 0.8f);
-      if (flash && frame_def->display_time_millisecs() % 250 < 125) {
-        c.SetColor(1.0f, 1.4f, 1.0f);
-      }
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
-      c.PopTransform();
       c.Submit();
 
       // Based on who has menu control, we may show a key/button below the
@@ -280,14 +283,15 @@ void RootUI::Draw(base::FrameDef* frame_def) {
                   1.0f);
               c.SetFlatness(1.0f);
               c.SetColor(0.8f, 1, 0.8f, 0.9f);
-              c.PushTransform();
-              c.Translate(width - menu_button_size_ * 0.42f
-                              + connected_client_extra_offset_smoothed_,
-                          height - menu_button_size_ * 0.77f,
-                          kMenuButtonDrawDepth);
-              c.Scale(menu_button_size_ * 0.015f, menu_button_size_ * 0.015f);
-              c.DrawMesh(party_button_text_group_->GetElementMesh(e));
-              c.PopTransform();
+              {
+                auto xf = c.ScopedTransform();
+                c.Translate(width - menu_button_size_ * 0.42f
+                                + connected_client_extra_offset_smoothed_,
+                            height - menu_button_size_ * 0.77f,
+                            kMenuButtonDrawDepth);
+                c.Scale(menu_button_size_ * 0.015f, menu_button_size_ * 0.015f);
+                c.DrawMesh(party_button_text_group_->GetElementMesh(e));
+              }
             }
             c.Submit();
           }
@@ -344,13 +348,15 @@ void RootUI::Draw(base::FrameDef* frame_def) {
               c.SetColor(0.5f, 0.65f, 0.5f);
             }
           }
-          c.PushTransform();
-          c.Translate(width - menu_button_size_ * 0.49f
-                          + connected_client_extra_offset_smoothed_,
-                      height - menu_button_size_ * 0.6f, kMenuButtonDrawDepth);
-          c.Scale(menu_button_size_ * 0.01f, menu_button_size_ * 0.01f);
-          c.DrawMesh(party_size_text_group_->GetElementMesh(e));
-          c.PopTransform();
+          {
+            auto xf = c.ScopedTransform();
+            c.Translate(width - menu_button_size_ * 0.49f
+                            + connected_client_extra_offset_smoothed_,
+                        height - menu_button_size_ * 0.6f,
+                        kMenuButtonDrawDepth);
+            c.Scale(menu_button_size_ * 0.01f, menu_button_size_ * 0.01f);
+            c.DrawMesh(party_size_text_group_->GetElementMesh(e));
+          }
         }
         c.Submit();
       }
@@ -383,11 +389,13 @@ void RootUI::Draw(base::FrameDef* frame_def) {
             } else {
               c.SetColor(0, 1, 0);
             }
-            c.PushTransform();
-            c.Translate(width - 10, height - menu_button_size_ * 0.7f, -0.07f);
-            c.Scale(start_a_game_text_scale_, start_a_game_text_scale_);
-            c.DrawMesh(start_a_game_text_group_->GetElementMesh(e));
-            c.PopTransform();
+            {
+              auto xf = c.ScopedTransform();
+              c.Translate(width - 10, height - menu_button_size_ * 0.7f,
+                          -0.07f);
+              c.Scale(start_a_game_text_scale_, start_a_game_text_scale_);
+              c.DrawMesh(start_a_game_text_group_->GetElementMesh(e));
+            }
           }
           c.Submit();
         }

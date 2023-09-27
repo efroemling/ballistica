@@ -134,13 +134,13 @@ void HostSession::DebugSpeedMultChanged() {
   }
 }
 
-void HostSession::ScreenSizeChanged() {
+void HostSession::OnScreenSizeChange() {
   // Let our internal scene know.
-  scene()->ScreenSizeChanged();
+  scene()->OnScreenSizeChange();
 
   // Also let all our activities know.
   for (auto&& i : host_activities_) {
-    i->ScreenSizeChanged();
+    i->OnScreenSizeChange();
   }
 }
 

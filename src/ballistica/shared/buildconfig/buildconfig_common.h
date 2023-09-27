@@ -90,9 +90,9 @@ namespace ballistica {
 #endif
 
 // Does this build use SDL 2.x?
-#ifndef BA_SDL2_BUILD
-#define BA_SDL2_BUILD 0
-#endif
+// #ifndef BA_SDL2_BUILD
+// #define BA_SDL2_BUILD 0
+// #endif
 
 // Does this build use our 'min-sdl' types?
 // (basic SDL types we define ourselves; no actual SDL dependency)
@@ -240,7 +240,7 @@ class BuildConfig {
   }
 
   bool sdl_build() const { return EXPBOOL_(BA_SDL_BUILD); }
-  bool sdl2_build() const { return EXPBOOL_(BA_SDL2_BUILD); }
+  // bool sdl2_build() const { return EXPBOOL_(BA_SDL2_BUILD); }
   bool minsdl_build() const { return EXPBOOL_(BA_MINSDL_BUILD); }
   bool enable_sdl_joysticks() const {
     return EXPBOOL_(BA_ENABLE_SDL_JOYSTICKS);

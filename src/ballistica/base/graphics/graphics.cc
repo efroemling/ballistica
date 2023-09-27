@@ -11,13 +11,14 @@
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/component/special_component.h"
 #include "ballistica/base/graphics/component/sprite_component.h"
-#include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/graphics_vr.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/graphics/support/net_graph.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
@@ -34,6 +35,14 @@ const float kScreenMeshZDepth{-0.05f};
 const float kProgressBarZDepth{0.0f};
 const int kProgressBarFadeTime{500};
 const float kDebugImgZDepth{-0.04f};
+
+auto Graphics::Create() -> Graphics* {
+#if BA_VR_BUILD
+  return new GraphicsVR();
+#else
+  return new Graphics();
+#endif
+}
 
 auto Graphics::IsShaderTransparent(ShadingType c) -> bool {
   switch (c) {
@@ -106,93 +115,9 @@ void Graphics::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 void Graphics::DoApplyAppConfig() {
   assert(g_base->InLogicThread());
 
-  // Not relevant for fullscreen anymore since we use fullscreen windows.
-  // everywhere.
-  int width = 800;
-  int height = 600;
-
-  // Texture quality.
-  TextureQualityRequest texture_quality_requested;
-  std::string texqualstr =
-      g_base->app_config->Resolve(AppConfig::StringID::kTextureQuality);
-
-  if (texqualstr == "Auto") {
-    texture_quality_requested = TextureQualityRequest::kAuto;
-  } else if (texqualstr == "High") {
-    texture_quality_requested = TextureQualityRequest::kHigh;
-  } else if (texqualstr == "Medium") {
-    texture_quality_requested = TextureQualityRequest::kMedium;
-  } else if (texqualstr == "Low") {
-    texture_quality_requested = TextureQualityRequest::kLow;
-  } else {
-    Log(LogLevel::kError,
-        "Invalid texture quality: '" + texqualstr + "'; defaulting to low.");
-    texture_quality_requested = TextureQualityRequest::kLow;
-  }
-
-  // Graphics quality.
-  std::string gqualstr =
-      g_base->app_config->Resolve(AppConfig::StringID::kGraphicsQuality);
-  GraphicsQualityRequest graphics_quality_requested;
-
-  if (gqualstr == "Auto") {
-    graphics_quality_requested = GraphicsQualityRequest::kAuto;
-  } else if (gqualstr == "Higher") {
-    graphics_quality_requested = GraphicsQualityRequest::kHigher;
-  } else if (gqualstr == "High") {
-    graphics_quality_requested = GraphicsQualityRequest::kHigh;
-  } else if (gqualstr == "Medium") {
-    graphics_quality_requested = GraphicsQualityRequest::kMedium;
-  } else if (gqualstr == "Low") {
-    graphics_quality_requested = GraphicsQualityRequest::kLow;
-  } else {
-    Log(LogLevel::kError,
-        "Invalid graphics quality: '" + gqualstr + "'; defaulting to auto.");
-    graphics_quality_requested = GraphicsQualityRequest::kAuto;
-  }
-
-  // Android res string.
-  std::string android_res =
-      g_base->app_config->Resolve(AppConfig::StringID::kResolutionAndroid);
-
-  bool fullscreen = g_base->app_config->Resolve(AppConfig::BoolID::kFullscreen);
-
-  // Note: when the graphics-thread applies the first set-screen event it will
-  // trigger the remainder of startup such as media-loading; make sure nothing
-  // below this point will affect that.
-  g_base->graphics_server->PushSetScreenCall(
-      fullscreen, width, height, texture_quality_requested,
-      graphics_quality_requested, android_res);
-
   show_fps_ = g_base->app_config->Resolve(AppConfig::BoolID::kShowFPS);
   show_ping_ = g_base->app_config->Resolve(AppConfig::BoolID::kShowPing);
   tv_border_ = g_base->app_config->Resolve(AppConfig::BoolID::kEnableTVBorder);
-
-  g_base->graphics_server->PushSetScreenGammaCall(
-      g_base->app_config->Resolve(AppConfig::FloatID::kScreenGamma));
-  g_base->graphics_server->PushSetScreenPixelScaleCall(
-      g_base->app_config->Resolve(AppConfig::FloatID::kScreenPixelScale));
-
-  // V-sync setting.
-  std::string v_sync =
-      g_base->app_config->Resolve(AppConfig::StringID::kVerticalSync);
-  bool do_v_sync{};
-  bool auto_v_sync{};
-  if (v_sync == "Auto") {
-    do_v_sync = true;
-    auto_v_sync = true;
-  } else if (v_sync == "Always") {
-    do_v_sync = true;
-    auto_v_sync = false;
-  } else if (v_sync == "Never") {
-    do_v_sync = false;
-    auto_v_sync = false;
-  } else {
-    do_v_sync = false;
-    auto_v_sync = false;
-    Log(LogLevel::kError, "Invalid 'Vertical Sync' value: '" + v_sync + "'");
-  }
-  g_base->graphics_server->PushSetVSyncCall(do_v_sync, auto_v_sync);
 
   bool disable_camera_shake =
       g_base->app_config->Resolve(AppConfig::BoolID::kDisableCameraShake);
@@ -216,6 +141,66 @@ void Graphics::RunCleanFrameCommands() {
     i->Run();
   }
   clean_frame_commands_.clear();
+}
+
+auto Graphics::TextureQualityFromAppConfig() -> TextureQualityRequest {
+  // Texture quality.
+  TextureQualityRequest texture_quality_requested;
+  std::string texqualstr =
+      g_base->app_config->Resolve(AppConfig::StringID::kTextureQuality);
+
+  if (texqualstr == "Auto") {
+    texture_quality_requested = TextureQualityRequest::kAuto;
+  } else if (texqualstr == "High") {
+    texture_quality_requested = TextureQualityRequest::kHigh;
+  } else if (texqualstr == "Medium") {
+    texture_quality_requested = TextureQualityRequest::kMedium;
+  } else if (texqualstr == "Low") {
+    texture_quality_requested = TextureQualityRequest::kLow;
+  } else {
+    Log(LogLevel::kError,
+        "Invalid texture quality: '" + texqualstr + "'; defaulting to low.");
+    texture_quality_requested = TextureQualityRequest::kLow;
+  }
+  return texture_quality_requested;
+}
+
+auto Graphics::VSyncFromAppConfig() -> VSyncRequest {
+  std::string v_sync =
+      g_base->app_config->Resolve(AppConfig::StringID::kVerticalSync);
+  if (v_sync == "Auto") {
+    return VSyncRequest::kAuto;
+  } else if (v_sync == "Always") {
+    return VSyncRequest::kAuto;
+  } else if (v_sync == "Never") {
+    return VSyncRequest::kNever;
+  }
+  Log(LogLevel::kError, "Invalid 'Vertical Sync' value: '" + v_sync + "'");
+  return VSyncRequest::kNever;
+}
+
+auto Graphics::GraphicsQualityFromAppConfig() -> GraphicsQualityRequest {
+  // Graphics quality.
+  std::string gqualstr =
+      g_base->app_config->Resolve(AppConfig::StringID::kGraphicsQuality);
+  GraphicsQualityRequest graphics_quality_requested;
+
+  if (gqualstr == "Auto") {
+    graphics_quality_requested = GraphicsQualityRequest::kAuto;
+  } else if (gqualstr == "Higher") {
+    graphics_quality_requested = GraphicsQualityRequest::kHigher;
+  } else if (gqualstr == "High") {
+    graphics_quality_requested = GraphicsQualityRequest::kHigh;
+  } else if (gqualstr == "Medium") {
+    graphics_quality_requested = GraphicsQualityRequest::kMedium;
+  } else if (gqualstr == "Low") {
+    graphics_quality_requested = GraphicsQualityRequest::kLow;
+  } else {
+    Log(LogLevel::kError,
+        "Invalid graphics quality: '" + gqualstr + "'; defaulting to auto.");
+    graphics_quality_requested = GraphicsQualityRequest::kAuto;
+  }
+  return graphics_quality_requested;
 }
 
 void Graphics::SetGyroEnabled(bool enable) {
@@ -1452,9 +1437,9 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
         || real_time - last_cursor_visibility_event_time_ > 2000) {
       hardware_cursor_visible_ = new_cursor_visibility;
       last_cursor_visibility_event_time_ = real_time;
-      g_core->main_event_loop()->PushCall([this] {
+      g_base->app_adapter->PushMainThreadCall([this] {
         assert(g_core && g_core->InMainThread());
-        g_core->platform->SetHardwareCursorVisible(hardware_cursor_visible_);
+        g_base->platform->SetHardwareCursorVisible(hardware_cursor_visible_);
       });
     }
   } else {
@@ -1899,6 +1884,10 @@ void Graphics::SetScreenSize(float virtual_width, float virtual_height,
 
   // Need to rebuild internal components (some are sized to the screen).
   internal_components_inited_ = false;
+
+  // This will inform all applicable logic thread subsystems.
+  g_base->logic->OnScreenSizeChange(virtual_width, virtual_height, pixel_width,
+                                    pixel_height);
 }
 
 void Graphics::ScreenMessageEntry::UpdateTranslation() {

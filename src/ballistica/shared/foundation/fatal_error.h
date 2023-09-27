@@ -30,4 +30,5 @@ class FatalError {
 };
 
 }  // namespace ballistica
+
 #endif  // BALLISTICA_SHARED_FOUNDATION_FATAL_ERROR_H_

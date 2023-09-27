@@ -9,14 +9,10 @@
 #include <uuid/uuid.h>
 
 #if BA_XCODE_BUILD
-#include "ballistica/core/platform/apple/apple_utils.h"
+#include "ballistica/base/platform/apple/apple_utils.h"
 #endif
 
 namespace ballistica::core {
-
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD && BA_SDL_BUILD
-extern void DoSetCursor(bool show);
-#endif
 
 CorePlatformApple::CorePlatformApple() = default;
 
@@ -33,11 +29,11 @@ auto CorePlatformApple::GetDeviceV1AccountUUIDPrefix() -> std::string {
 // Legacy for device-accounts; don't modify this code.
 auto CorePlatformApple::GetRealLegacyDeviceUUID(std::string* uuid) -> bool {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  *uuid = AppleUtils::GetMacUUID();
+  *uuid = base::AppleUtils::GetMacUUID();
   return true;
 #endif
 #if BA_OSTYPE_IOS_TVOS
-  *uuid = AppleUtils::GetIOSUUID();
+  *uuid = base::AppleUtils::GetIOSUUID();
   return true;
 #endif
   return false;
@@ -71,14 +67,14 @@ auto CorePlatformApple::GetDeviceUUIDInputs() -> std::list<std::string> {
   std::list<std::string> out;
 #if BA_OSTYPE_MACOS
 #if BA_XCODE_BUILD
-  out.push_back(AppleUtils::GetMacUUID());
+  out.push_back(base::AppleUtils::GetMacUUID());
 #else   // BA_XCODE_BUILD
   out.push_back(GetMacUUIDFallback());
 #endif  // BA_XCODE_BUILD
 #endif  // BA_OSTYPE_MACOS
 
 #if BA_OSTYPE_IOS_TVOS
-  out.push_back(AppleUtils::GetIOSUUID());
+  out.push_back(base::AppleUtils::GetIOSUUID());
 #endif
   return out;
 }
@@ -98,7 +94,7 @@ auto CorePlatformApple::DoGetConfigDirectoryMonolithicDefault()
   printf("FIXME: get proper default-config-dir\n");
   return std::string(getenv("HOME")) + "/Library";
 #elif BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  return AppleUtils::GetApplicationSupportPath() + "/BallisticaKit";
+  return base::AppleUtils::GetApplicationSupportPath() + "/BallisticaKit";
 #else
   return CorePlatform::DoGetConfigDirectoryMonolithicDefault();
 #endif
@@ -106,7 +102,7 @@ auto CorePlatformApple::DoGetConfigDirectoryMonolithicDefault()
 
 auto CorePlatformApple::GetLocale() -> std::string {
 #if BA_XCODE_BUILD
-  return AppleUtils::GetLocaleString();
+  return base::AppleUtils::GetLocaleString();
 #else
   return CorePlatform::GetLocale();
 #endif
@@ -114,7 +110,7 @@ auto CorePlatformApple::GetLocale() -> std::string {
 
 auto CorePlatformApple::DoGetDeviceName() -> std::string {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  return AppleUtils::GetDeviceName();
+  return base::AppleUtils::GetDeviceName();
 #else
   return CorePlatform::DoGetDeviceName();
 #endif
@@ -130,7 +126,7 @@ auto CorePlatformApple::DoHasTouchScreen() -> bool {
 
 auto CorePlatformApple::GetUIScale() -> UIScale {
 #if BA_OSTYPE_IOS
-  if (AppleUtils::IsTablet()) {
+  if (base::AppleUtils::IsTablet()) {
     return UIScale::kMedium;
   } else {
     return UIScale::kSmall;
@@ -154,7 +150,7 @@ void CorePlatformApple::DisplayLog(const std::string& name, LogLevel level,
 #if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
 
   // HMM: do we want to use proper logging APIs here or simple printing?
-  // AppleUtils::NSLogStr(msg);
+  // base::AppleUtils::NSLogStr(msg);
   CorePlatform::DisplayLog(name, level, msg);
 #else
 
@@ -166,7 +162,7 @@ void CorePlatformApple::DisplayLog(const std::string& name, LogLevel level,
 auto CorePlatformApple::DoGetDataDirectoryMonolithicDefault() -> std::string {
 #if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
   // On Apple package-y builds use our resources dir.
-  return AppleUtils::GetResourcesPath();
+  return base::AppleUtils::GetResourcesPath();
 #else
   // Fall back to default.
   return CorePlatform::DoGetDataDirectoryMonolithicDefault();
@@ -176,7 +172,7 @@ auto CorePlatformApple::DoGetDataDirectoryMonolithicDefault() -> std::string {
 void CorePlatformApple::GetTextBoundsAndWidth(const std::string& text, Rect* r,
                                               float* width) {
 #if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
-  AppleUtils::GetTextBoundsAndWidth(text, r, width);
+  base::AppleUtils::GetTextBoundsAndWidth(text, r, width);
 #else
   CorePlatform::GetTextBoundsAndWidth(text, r, width);
 #endif
@@ -184,7 +180,7 @@ void CorePlatformApple::GetTextBoundsAndWidth(const std::string& text, Rect* r,
 
 void CorePlatformApple::FreeTextTexture(void* tex) {
 #if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
-  AppleUtils::FreeTextTexture(tex);
+  base::AppleUtils::FreeTextTexture(tex);
 #else
   CorePlatform::FreeTextTexture(tex);
 #endif
@@ -195,8 +191,8 @@ auto CorePlatformApple::CreateTextTexture(
     const std::vector<float>& positions, const std::vector<float>& widths,
     float scale) -> void* {
 #if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
-  return AppleUtils::CreateTextTexture(width, height, strings, positions,
-                                       widths, scale);
+  return base::AppleUtils::CreateTextTexture(width, height, strings, positions,
+                                             widths, scale);
 #else
   return CorePlatform::CreateTextTexture(width, height, strings, positions,
                                          widths, scale);
@@ -205,7 +201,7 @@ auto CorePlatformApple::CreateTextTexture(
 
 auto CorePlatformApple::GetTextTextureData(void* tex) -> uint8_t* {
 #if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
-  return AppleUtils::GetTextTextureData(tex);
+  return base::AppleUtils::GetTextTextureData(tex);
 #else
   return CorePlatform::GetTextTextureData(tex);
 #endif
@@ -214,7 +210,7 @@ auto CorePlatformApple::GetTextTextureData(void* tex) -> uint8_t* {
 void CorePlatformApple::SubmitScore(const std::string& game,
                                     const std::string& version, int64_t score) {
 #if BA_USE_GAME_CENTER
-  AppleUtils::SubmitScore(game, version, score);
+  base::AppleUtils::SubmitScore(game, version, score);
 #else
   CorePlatform::SubmitScore(game, version, score);
 #endif
@@ -222,7 +218,7 @@ void CorePlatformApple::SubmitScore(const std::string& game,
 
 void CorePlatformApple::ReportAchievement(const std::string& achievement) {
 #if BA_USE_GAME_CENTER
-  AppleUtils::ReportAchievement(achievement);
+  base::AppleUtils::ReportAchievement(achievement);
 #else
   CorePlatform::ReportAchievement(achievement);
 #endif
@@ -230,7 +226,7 @@ void CorePlatformApple::ReportAchievement(const std::string& achievement) {
 
 void CorePlatformApple::ResetAchievements() {
 #if BA_USE_GAME_CENTER
-  AppleUtils::ResetGameCenterAchievements();
+  base::AppleUtils::ResetGameCenterAchievements();
 #else
   CorePlatform::ResetAchievements();
 #endif
@@ -239,7 +235,7 @@ void CorePlatformApple::ResetAchievements() {
 auto CorePlatformApple::HaveLeaderboard(const std::string& game,
                                         const std::string& config) -> bool {
 #if BA_USE_GAME_CENTER
-  return AppleUtils::HaveGameCenterLeaderboard(game, config);
+  return base::AppleUtils::HaveGameCenterLeaderboard(game, config);
 #else
   return CorePlatform::HaveLeaderboard(game, config);
 #endif
@@ -249,7 +245,7 @@ void CorePlatformApple::ShowOnlineScoreUI(const std::string& show,
                                           const std::string& game,
                                           const std::string& game_version) {
 #if BA_USE_GAME_CENTER
-  AppleUtils::ShowOnlineScoreUI(show, game, game_version);
+  base::AppleUtils::ShowOnlineScoreUI(show, game, game_version);
 #else
   CorePlatform::ShowOnlineScoreUI(show, game, game_version);
 #endif
@@ -257,7 +253,7 @@ void CorePlatformApple::ShowOnlineScoreUI(const std::string& show,
 
 auto CorePlatformApple::NewAutoReleasePool() -> void* {
 #if BA_XCODE_BUILD
-  return AppleUtils::NewAutoReleasePool();
+  return base::AppleUtils::NewAutoReleasePool();
 #else
   return CorePlatform::NewAutoReleasePool();
 #endif
@@ -265,7 +261,7 @@ auto CorePlatformApple::NewAutoReleasePool() -> void* {
 
 void CorePlatformApple::DrainAutoReleasePool(void* pool) {
 #if BA_XCODE_BUILD
-  AppleUtils::DrainAutoReleasePool(pool);
+  base::AppleUtils::DrainAutoReleasePool(pool);
 #else
   CorePlatform::DrainAutoReleasePool(pool);
 #endif
@@ -273,7 +269,7 @@ void CorePlatformApple::DrainAutoReleasePool(void* pool) {
 
 void CorePlatformApple::GameCenterLogin() {
 #if BA_USE_GAME_CENTER
-  AppleUtils::DoGameCenterLogin();
+  base::AppleUtils::DoGameCenterLogin();
 #else
   CorePlatform::GameCenterLogin();
 #endif
@@ -281,25 +277,15 @@ void CorePlatformApple::GameCenterLogin() {
 
 auto CorePlatformApple::IsOSPlayingMusic() -> bool {
 #if BA_XCODE_BUILD
-  return AppleUtils::IsMusicPlaying();
+  return base::AppleUtils::IsMusicPlaying();
 #else
   return CorePlatform::IsOSPlayingMusic();
 #endif
 }
 
-void CorePlatformApple::SetHardwareCursorVisible(bool visible) {
-  // Set our nifty custom hardware cursor on mac;
-  // otherwise fall back to default.
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_HEADLESS_BUILD && BA_SDL_BUILD
-  DoSetCursor(visible);
-#else
-  return CorePlatform::SetHardwareCursorVisible(visible);
-#endif
-}
-
 void CorePlatformApple::OpenFileExternally(const std::string& path) {
 #if BA_XCODE_BUILD
-  AppleUtils::EditTextFile(path.c_str());
+  base::AppleUtils::EditTextFile(path.c_str());
 #else
   CorePlatform::OpenFileExternally(path);
 #endif
@@ -320,35 +306,35 @@ void CorePlatformApple::OpenDirExternally(const std::string& path) {
 
 void CorePlatformApple::MacMusicAppInit() {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  AppleUtils::MacMusicAppInit();
+  base::AppleUtils::MacMusicAppInit();
 #else
   CorePlatform::MacMusicAppInit();
 #endif
 }
 auto CorePlatformApple::MacMusicAppGetVolume() -> int {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  return static_cast<int>(AppleUtils::MacMusicAppGetVolume());
+  return static_cast<int>(base::AppleUtils::MacMusicAppGetVolume());
 #else
   return CorePlatform::MacMusicAppGetVolume();
 #endif
 }
 void CorePlatformApple::MacMusicAppSetVolume(int volume) {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  AppleUtils::MacMusicAppSetVolume(volume);
+  base::AppleUtils::MacMusicAppSetVolume(volume);
 #else
   CorePlatform::MacMusicAppSetVolume(volume);
 #endif
 }
 void CorePlatformApple::MacMusicAppGetLibrarySource() {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  AppleUtils::MacMusicAppGetLibrarySource();
+  base::AppleUtils::MacMusicAppGetLibrarySource();
 #else
   CorePlatform::MacMusicAppGetLibrarySource();
 #endif
 }
 void CorePlatformApple::MacMusicAppStop() {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  AppleUtils::MacMusicAppStop();
+  base::AppleUtils::MacMusicAppStop();
 #else
   CorePlatform::MacMusicAppStop();
 #endif
@@ -356,25 +342,16 @@ void CorePlatformApple::MacMusicAppStop() {
 auto CorePlatformApple::MacMusicAppPlayPlaylist(const std::string& playlist)
     -> bool {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  return AppleUtils::MacMusicAppPlayPlaylist(playlist.c_str());
+  return base::AppleUtils::MacMusicAppPlayPlaylist(playlist.c_str());
 #else
   return CorePlatform::MacMusicAppPlayPlaylist(playlist);
 #endif
 }
 auto CorePlatformApple::MacMusicAppGetPlaylists() -> std::list<std::string> {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  return AppleUtils::MacMusicAppGetPlaylists();
+  return base::AppleUtils::MacMusicAppGetPlaylists();
 #else
   return CorePlatform::MacMusicAppGetPlaylists();
-#endif
-}
-
-auto CorePlatformApple::IsEventPushMode() -> bool {
-// We operate in push mode in our xcode builds (except headless).
-#if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
-  return true;
-#else
-  return CorePlatform::IsEventPushMode();
 #endif
 }
 
@@ -400,7 +377,7 @@ auto CorePlatformApple::GetSubplatformName() -> std::string {
 
 auto CorePlatformApple::DoClipboardIsSupported() -> bool {
 #if BA_XCODE_BUILD
-  return AppleUtils::ClipboardIsSupported();
+  return base::AppleUtils::ClipboardIsSupported();
 #else
   return CorePlatform::DoClipboardIsSupported();
 #endif  // BA_XCODE_BUILD
@@ -408,7 +385,7 @@ auto CorePlatformApple::DoClipboardIsSupported() -> bool {
 
 auto CorePlatformApple::DoClipboardHasText() -> bool {
 #if BA_XCODE_BUILD
-  return AppleUtils::ClipboardHasText();
+  return base::AppleUtils::ClipboardHasText();
 #else
   return CorePlatform::DoClipboardHasText();
 #endif  // BA_XCODE_BUILD
@@ -416,7 +393,7 @@ auto CorePlatformApple::DoClipboardHasText() -> bool {
 
 void CorePlatformApple::DoClipboardSetText(const std::string& text) {
 #if BA_XCODE_BUILD
-  AppleUtils::ClipboardSetText(text);
+  base::AppleUtils::ClipboardSetText(text);
 #else
   CorePlatform::DoClipboardSetText(text);
 #endif  // BA_XCODE_BUILD
@@ -424,7 +401,7 @@ void CorePlatformApple::DoClipboardSetText(const std::string& text) {
 
 auto CorePlatformApple::DoClipboardGetText() -> std::string {
 #if BA_XCODE_BUILD
-  return AppleUtils::ClipboardGetText();
+  return base::AppleUtils::ClipboardGetText();
 #else
   return CorePlatform::DoClipboardGetText();
 #endif  // BA_XCODE_BUILD

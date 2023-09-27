@@ -736,7 +736,7 @@ class App:
             if self.state is self.State.PAUSED:
                 self._on_resume()
 
-            # Handle initially entering or returning to other states.
+            # Entering or returning to running state
             if self._initial_sign_in_completed and self._meta_scan_completed:
                 if self.state != self.State.RUNNING:
                     self.state = self.State.RUNNING
@@ -744,6 +744,7 @@ class App:
                     if not self._called_on_running:
                         self._called_on_running = True
                         self._on_running()
+            # Entering or returning to loading state:
             elif self._init_completed:
                 if self.state is not self.State.LOADING:
                     self.state = self.State.LOADING
@@ -751,6 +752,8 @@ class App:
                     if not self._called_on_loading:
                         self._called_on_loading = True
                         self._on_loading()
+
+            # Entering or returning to initing state:
             elif self._native_bootstrapping_completed:
                 if self.state is not self.State.INITING:
                     self.state = self.State.INITING
@@ -758,13 +761,21 @@ class App:
                     if not self._called_on_initing:
                         self._called_on_initing = True
                         self._on_initing()
-            else:
-                # Only possibility left is app-start. We shouldn't be
-                # getting called before at least that happens.
-                assert self._native_start_called
-                assert self.state is self.State.NOT_RUNNING
-                if bool(True):
+
+            # Entering or returning to native bootstrapping:
+            elif self._native_start_called:
+                if self.state is not self.State.NATIVE_BOOTSTRAPPING:
                     self.state = self.State.NATIVE_BOOTSTRAPPING
+                    _babase.lifecyclelog('app state native bootstrapping')
+            else:
+                # Only logical possibility left is NOT_RUNNING, in which
+                # case we should not be getting called.
+                logging.warning(
+                    'App._update_state called while in %s state;'
+                    ' should not happen.',
+                    self.state.value,
+                    stack_info=True,
+                )
 
     async def _shutdown(self) -> None:
         import asyncio

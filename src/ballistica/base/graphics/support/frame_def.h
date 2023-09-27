@@ -163,8 +163,12 @@ class FrameDef {
   auto shake_original() const -> const Vector3f& { return shake_original_; }
 
 #if BA_DEBUG_BUILD
-  auto defining_component() const -> bool { return defining_component_; }
-  void set_defining_component(bool val) { defining_component_ = val; }
+  // For debugging; there should ever only be a single RenderComponent writing
+  // commands to us at once.
+  auto active_render_component() const { return active_render_component_; }
+  void set_active_render_component(RenderComponent* c) {
+    active_render_component_ = c;
+  }
 #endif
 
  private:
@@ -191,6 +195,7 @@ class FrameDef {
   // Sanity checking: make sure components are completely submitted
   // before new ones are started (so we dont get scrambled command buffers).
   bool defining_component_{};
+  RenderComponent* active_render_component_{};
 #endif
 
   std::unique_ptr<RenderPass> light_pass_;

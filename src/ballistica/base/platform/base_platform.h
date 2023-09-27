@@ -8,25 +8,23 @@
 
 namespace ballistica::base {
 
+/// Most general platform-specific functionality is contained here, to be
+/// implemented by platform-specific subclasses. Exceptions to this rule are
+/// things such as AppAdapter which are broken out into their own classes so
+/// that different adapters (SDL, headless, etc.) may be composed together
+/// with a single platform (Windows, Mac, etc.).
 class BasePlatform {
  public:
-  /// Instantiate the appropriate BasePlatform subclass for the current
-  /// environment.
-  static auto CreatePlatform() -> BasePlatform*;
+  /// Instantiate the CorePlatform subclass for the current build.
+  static auto Create() -> BasePlatform*;
 
-  /// Instantiate the appropriate App subclass for the current environment.
-  static auto CreateAppAdapter() -> AppAdapter*;
+#pragma mark APP EVENTS / LIFECYCLE --------------------------------------------
 
-  /// Instantiate the appropriate Graphics subsystem for the current
-  /// environment.
-  static auto CreateGraphics() -> Graphics*;
-
-#pragma mark APP LIFECYCLE -----------------------------------------------------
-
-  /// Inform the platform that all subsystems are up and running and it can
-  /// start talking to them.
+  /// Called to inform the platform that all subsystems are up and running
+  /// and it can start talking to them.
   virtual void OnMainThreadStartAppComplete();
 
+  // Logic thread callbacks.
   virtual void OnAppStart();
   virtual void OnAppPause();
   virtual void OnAppResume();
@@ -120,6 +118,9 @@ class BasePlatform {
 
   /// Get the most up-to-date cursor position.
   void GetCursorPosition(float* x, float* y);
+
+  /// Show/hide the hardware cursor.
+  virtual void SetHardwareCursorVisible(bool visible);
 
   /// Should be called by platform StringEditor to apply a value.
   /// Must be called in the logic thread.

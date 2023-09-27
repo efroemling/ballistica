@@ -66,7 +66,7 @@ JoystickInput::JoystickInput(int sdl_joystick_id,
     // In SDL2 we're passed a device-id but that's only used to open the
     // joystick; events and most everything else use an instance ID, so we store
     // that instead.
-#if BA_SDL2_BUILD
+    // #if BA_SDL2_BUILD
     sdl_joystick_id_ = SDL_JoystickInstanceID(sdl_joystick_);
     raw_sdl_joystick_name_ = SDL_JoystickName(sdl_joystick_);
 
@@ -78,14 +78,15 @@ JoystickInput::JoystickInput(int sdl_joystick_id,
         && raw_sdl_joystick_name_.size() <= 22) {
       raw_sdl_joystick_name_ = "XInput Controller";
     }
-#else
-    raw_sdl_joystick_name_ = SDL_JoystickName(sdl_joystick_id_);
-#endif  // BA_SDL2_BUILD
+    // #else
+    //     raw_sdl_joystick_name_ = SDL_JoystickName(sdl_joystick_id_);
+    // #endif  // BA_SDL2_BUILD
 
     // If its an SDL joystick and we're using our custom sdl 1.2 build, ask it.
-#if BA_XCODE_BUILD && BA_OSTYPE_MACOS && !BA_SDL2_BUILD
-    raw_sdl_joystick_identifier_ = SDL_JoystickIdentifier(sdl_joystick_id_);
-#endif
+    // #if BA_XCODE_BUILD && BA_OSTYPE_MACOS && !BA_SDL2_BUILD
+    //     raw_sdl_joystick_identifier_ =
+    //     SDL_JoystickIdentifier(sdl_joystick_id_);
+    // #endif
 
     // Some special-cases on mac.
     if (strstr(raw_sdl_joystick_name_.c_str(), "PLAYSTATION") != nullptr) {
@@ -307,7 +308,7 @@ JoystickInput::~JoystickInput() {
 #if BA_ENABLE_SDL_JOYSTICKS
     assert(g_base->app_adapter);
     auto joystick = sdl_joystick_;
-    g_core->main_event_loop()->PushCall(
+    g_base->app_adapter->PushMainThreadCall(
         [joystick] { SDL_JoystickClose(joystick); });
     sdl_joystick_ = nullptr;
 #else

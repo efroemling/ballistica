@@ -1,26 +1,205 @@
 // Released under the MIT License. See LICENSE for details.
 
+#include "ballistica/shared/buildconfig/buildconfig_common.h"
 #if BA_SDL_BUILD
 
 #include "ballistica/base/app_adapter/app_adapter_sdl.h"
-
+#include "ballistica/base/base.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/gl/gl_sys.h"
+#include "ballistica/base/graphics/gl/renderer_gl.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/input/device/joystick_input.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
-#include "ballistica/base/support/stress_test.h"
+#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::base {
 
-void AppAdapterSDL::HandleSDLEvent(const SDL_Event& event) {
+AppAdapterSDL::AppAdapterSDL() {
+  assert(!g_core->HeadlessMode());
   assert(g_core->InMainThread());
+
+  // Enable display-time debug logs via env var.
+  auto val = g_core->platform->GetEnv("BA_DEBUG_LOG_SDL_FRAME_TIMING");
+  if (val && *val == "1") {
+    debug_log_sdl_frame_timing_ = true;
+  }
+}
+
+void AppAdapterSDL::OnMainThreadStartApp() {
+  // App is starting. Let's fire up the ol' SDL.
+  uint32_t sdl_flags{SDL_INIT_VIDEO | SDL_INIT_JOYSTICK};
+
+  // We may or may not want xinput on windows.
+  if (g_buildconfig.ostype_windows()) {
+    if (!g_core->platform->GetLowLevelConfigValue("enablexinput", 1)) {
+      SDL_SetHint(SDL_HINT_XINPUT_ENABLED, "0");
+    }
+  }
+
+  int result = SDL_Init(sdl_flags);
+  if (result < 0) {
+    FatalError(std::string("SDL_Init failed: ") + SDL_GetError());
+  }
+
+  // Register events we can send ourself.
+  sdl_runnable_event_id_ = SDL_RegisterEvents(1);
+  assert(sdl_runnable_event_id_ != (uint32_t)-1);
+
+  // Note: parent class can add some input devices so need to bring up sdl
+  // before we let it run. That code should maybe be relocated/refactored.
+  AppAdapter::OnMainThreadStartApp();
+
+  if (g_buildconfig.enable_sdl_joysticks()) {
+    // We want events from joysticks.
+    SDL_JoystickEventState(SDL_ENABLE);
+
+    // Add already-existing SDL joysticks. Any added later will come
+    // through as joystick-added events.
+    //
+    // TODO(ericf): Check to see if this is necessary or if we always get
+    // connected events even for these initial ones.
+    if (explicit_bool(true)) {
+      int joystick_count = SDL_NumJoysticks();
+      for (int i = 0; i < joystick_count; i++) {
+        AppAdapterSDL::OnSDLJoystickAdded_(i);
+      }
+    }
+  }
+}
+
+void AppAdapterSDL::DoApplyAppConfig() {
+  assert(g_base->InLogicThread());
+
+  g_base->graphics_server->PushSetScreenPixelScaleCall(
+      g_base->app_config->Resolve(AppConfig::FloatID::kScreenPixelScale));
+
+  auto graphics_quality_requested =
+      g_base->graphics->GraphicsQualityFromAppConfig();
+
+  auto texture_quality_requested =
+      g_base->graphics->TextureQualityFromAppConfig();
+
+  // Android res string.
+  // std::string android_res =
+  //     g_base->app_config->Resolve(AppConfig::StringID::kResolutionAndroid);
+
+  bool fullscreen = g_base->app_config->Resolve(AppConfig::BoolID::kFullscreen);
+  auto vsync = g_base->graphics->VSyncFromAppConfig();
+  int max_fps = g_base->app_config->Resolve(AppConfig::IntID::kMaxFPS);
+
+  // Tell the main thread to set up the screen with these settings.
+  g_base->app_adapter->PushMainThreadCall([=] {
+    SetScreen_(fullscreen, max_fps, vsync, texture_quality_requested,
+               graphics_quality_requested);
+  });
+}
+
+void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
+  assert(g_core->InMainThread());
+
+  // float smoothed_fps{};
+  // float fps_smoothing{0.1f};
+  while (!done_) {
+    microsecs_t cycle_start_time = g_core->GetAppTimeMicrosecs();
+
+    // Run all pending events.
+    SDL_Event event;
+    while (SDL_PollEvent(&event) && (!done_)) {
+      HandleSDLEvent_(event);
+    }
+
+    // Draw a frame.
+    if (g_base->graphics_server->TryRender()) {
+      SDL_GL_SwapWindow(sdl_window_);
+    }
+
+    // Sleep until we should start our next cycle (based on
+    // max-frame-rate or other factors).
+
+    // Special case which means no max. Farewell poor laptop battery.
+    if (max_fps_ == -1) {
+      continue;
+    }
+    microsecs_t now = g_core->GetAppTimeMicrosecs();
+    auto used_max_fps = max_fps_;
+    millisecs_t millisecs_per_frame = 1000000 / used_max_fps;
+    // Special case: if we've got vsync enabled, let's tweak max-fps to be
+    // just a *tiny* bit higher than requested. This means if our max-fps
+    // matches the refresh rate we'll be trying to render just a bit faster
+    // than vsync which should push us up against the vsync wall and keep
+    // vsync doing most of the delay work. In that case the logging below
+    // should show mostly 'no sleep.'. Without this delay, our render
+    // kick-offs tend to drift around the middle of the vsync cycle and I
+    // worry there could be bad interference patterns in certain spots close
+    // to the edges. Note that we want this tweak to be small enough that it
+    // won't be noticable in situations where vsync and max-fps *don't*
+    // match. (for instance limiting to 60hz on a 120hz vsynced monitor).
+    if (vsync_enabled_) {
+      millisecs_per_frame = 99 * millisecs_per_frame / 100;
+    }
+    microsecs_t target_time =
+        cycle_start_time + millisecs_per_frame - oversleep;
+
+    // Set a minimum so we don't sleep if we're within a few millisecs of
+    // where we want to be. Sleep tends to run over by a bit so we'll
+    // probably render closer to our target time by just skipping the sleep.
+    // And the oversleep system will compensate just as it does if we sleep
+    // too long.
+    const microsecs_t min_sleep{2000};
+    if (now + min_sleep >= target_time) {
+      if (debug_log_sdl_frame_timing_) {
+        Log(LogLevel::kDebug, "no sleep.");  // 'till brooklyn!
+      }
+    } else {
+      if (debug_log_sdl_frame_timing_) {
+        char buf[256];
+        snprintf(buf, sizeof(buf), "render %.1f sleep %.1f",
+                 (now - cycle_start_time) / 1000.0f,
+                 (target_time - now) / 1000.0f);
+        Log(LogLevel::kDebug, buf);
+      }
+      g_core->platform->SleepMicrosecs(target_time - now);
+    }
+
+    // Maintain an 'oversleep' amount to compensate for the timer not being
+    // exact. This should keep us exactly at our target frame-rate in the
+    // end.
+    now = g_core->GetAppTimeMicrosecs();
+    oversleep = now - target_time;
+
+    // Prevent oversleep from compensating by more than a few millisecs per
+    // frame (not sure if this would ever be a problem but lets be safe).
+    oversleep = std::max(int64_t{-3000}, oversleep);
+    oversleep = std::min(int64_t{3000}, oversleep);
+  }
+}
+
+void AppAdapterSDL::DoPushMainThreadRunnable(Runnable* runnable) {
+  assert(sdl_runnable_event_id_ != 0);
+  SDL_Event event;
+  SDL_memset(&event, 0, sizeof(event));
+  event.type = sdl_runnable_event_id_;
+  event.user.code = 0;
+  event.user.data1 = runnable;
+  event.user.data2 = 0;
+  SDL_PushEvent(&event);
+}
+
+void AppAdapterSDL::DoExitMainThreadEventLoop() {
+  assert(g_core->InMainThread());
+  done_ = true;
+}
+
+void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
+  assert(g_core->InMainThread());
+  assert(g_base);
 
   switch (event.type) {
     case SDL_JOYAXISMOTION:
@@ -37,8 +216,7 @@ void AppAdapterSDL::HandleSDLEvent(const SDL_Event& event) {
           || sdl_joysticks_[event.jbutton.which] == nullptr) {
         return;
       }
-      JoystickInput* js = GetSDLJoystickInput_(&event);
-      if (js) {
+      if (JoystickInput* js = GetSDLJoystickInput_(&event)) {
         if (g_base) {
           g_base->input->PushJoystickEvent(event, js);
         }
@@ -53,11 +231,9 @@ void AppAdapterSDL::HandleSDLEvent(const SDL_Event& event) {
       const SDL_MouseButtonEvent* e = &event.button;
 
       // Convert sdl's coords to normalized view coords.
-      float x = static_cast<float>(e->x) / screen_dimensions_.x;
-      float y = 1.0f - static_cast<float>(e->y) / screen_dimensions_.y;
-      if (g_base) {
-        g_base->input->PushMouseDownEvent(e->button, Vector2f(x, y));
-      }
+      float x = static_cast<float>(e->x) / window_size_.x;
+      float y = 1.0f - static_cast<float>(e->y) / window_size_.y;
+      g_base->input->PushMouseDownEvent(e->button, Vector2f(x, y));
       break;
     }
 
@@ -65,11 +241,9 @@ void AppAdapterSDL::HandleSDLEvent(const SDL_Event& event) {
       const SDL_MouseButtonEvent* e = &event.button;
 
       // Convert sdl's coords to normalized view coords.
-      float x = static_cast<float>(e->x) / screen_dimensions_.x;
-      float y = 1.0f - static_cast<float>(e->y) / screen_dimensions_.y;
-      if (g_base) {
-        g_base->input->PushMouseUpEvent(e->button, Vector2f(x, y));
-      }
+      float x = static_cast<float>(e->x) / window_size_.x;
+      float y = 1.0f - static_cast<float>(e->y) / window_size_.y;
+      g_base->input->PushMouseUpEvent(e->button, Vector2f(x, y));
       break;
     }
 
@@ -77,500 +251,141 @@ void AppAdapterSDL::HandleSDLEvent(const SDL_Event& event) {
       const SDL_MouseMotionEvent* e = &event.motion;
 
       // Convert sdl's coords to normalized view coords.
-      float x = static_cast<float>(e->x) / screen_dimensions_.x;
-      float y = 1.0f - static_cast<float>(e->y) / screen_dimensions_.y;
-      if (g_base) {
-        g_base->input->PushMouseMotionEvent(Vector2f(x, y));
-      }
+      float x = static_cast<float>(e->x) / window_size_.x;
+      float y = 1.0f - static_cast<float>(e->y) / window_size_.y;
+      g_base->input->PushMouseMotionEvent(Vector2f(x, y));
       break;
     }
 
     case SDL_KEYDOWN: {
-      if (g_base) {
-        g_base->input->PushKeyPressEvent(event.key.keysym);
-      }
+      g_base->input->PushKeyPressEvent(event.key.keysym);
       break;
     }
 
     case SDL_KEYUP: {
-      if (g_base) {
-        g_base->input->PushKeyReleaseEvent(event.key.keysym);
-      }
+      g_base->input->PushKeyReleaseEvent(event.key.keysym);
       break;
     }
 
-#if BA_SDL2_BUILD || BA_MINSDL_BUILD
     case SDL_MOUSEWHEEL: {
       const SDL_MouseWheelEvent* e = &event.wheel;
-
-      // Seems in general scrolling is a lot faster on mac SDL compared to
-      // windows/linux. (maybe its just for trackpads/etc..).. so lets
-      // compensate.
-      int scroll_speed;
-      if (g_buildconfig.ostype_android()) {
-        scroll_speed = 1;
-      } else if (g_buildconfig.ostype_macos()) {
-        scroll_speed = 500;
-      } else {
-        scroll_speed = 500;
-      }
-      if (g_base) {
-        g_base->input->PushMouseScrollEvent(
-            Vector2f(static_cast<float>(e->x * scroll_speed),
-                     static_cast<float>(e->y * scroll_speed)));
-      }
+      int scroll_speed{500};
+      g_base->input->PushMouseScrollEvent(
+          Vector2f(static_cast<float>(e->x * scroll_speed),
+                   static_cast<float>(e->y * scroll_speed)));
       break;
     }
-#endif  // BA_SDL2_BUILD
 
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-    case SDL_SMOOTHSCROLLEVENT: {
-      const SDL_SmoothScrollEvent* e = &event.scroll;
-      if (g_base) {
-        g_base->input->PushSmoothMouseScrollEvent(
-            Vector2f(0.2f * e->deltaX, -0.2f * e->deltaY), e->momentum);
-      }
-      break;
-    }
-#endif
-
-    // Currently used in our some of our heavily customized builds. Should
-    // replace this with some sort of PushDrawEvent() thing.
-#if BA_XCODE_BUILD
-    case SDL_RESIZEDRAWEVENT:
-    case SDL_DRAWEVENT: {
-      DrawFrame(event.type == SDL_RESIZEDRAWEVENT);
-      break;
-    }
-#endif  // BA_OSTYPE_MACOS || BA_OSTYPE_ANDROID
-
-    // Is there a reason we need to ignore these on ios?
-    // do they even happen there?
-    //
-    // UPDATE: I think the even types are just not defined on our old iOS
-    // SDL.
-#if BA_SDL2_BUILD && !BA_OSTYPE_IOS_TVOS && BA_ENABLE_SDL_JOYSTICKS
-    case SDL_JOYDEVICEREMOVED:
-      // In this case we're passed the instance-id of the joystick.
-      SDLJoystickDisconnected_(event.jdevice.which);
-      break;
     case SDL_JOYDEVICEADDED:
-      SDLJoystickConnected_(event.jdevice.which);
+      OnSDLJoystickAdded_(event.jdevice.which);
       break;
-#endif
+
+    case SDL_JOYDEVICEREMOVED:
+      OnSDLJoystickRemoved_(event.jdevice.which);
+      break;
 
     case SDL_QUIT:
-      // g_base->logic->event_loop()->PushCall([] { g_base->logic->Shutdown();
-      // });
       g_base->logic->event_loop()->PushCall([] { g_base->ui->ConfirmQuit(); });
       break;
 
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_HEADLESS_BUILD
-    case SDL_FULLSCREENSWITCH:
-      // Our custom hacked-up SDL informs *us* when our window enters or
-      // exits fullscreen. Let's commit this to our config so that we're in
-      // sync..
-      g_base->python->objs().PushCall(
-          event.user.code ? BasePython::ObjID::kSetConfigFullscreenOnCall
-                          : BasePython::ObjID::kSetConfigFullscreenOffCall);
-      g_base->graphics_server->set_fullscreen_enabled(event.user.code);
-      break;
-#endif
-
-#if BA_SDL2_BUILD
-
     case SDL_TEXTINPUT: {
-      if (g_base) {
-        g_base->input->PushTextInputEvent(event.text.text);
-      }
+      g_base->input->PushTextInputEvent(event.text.text);
       break;
     }
 
     case SDL_WINDOWEVENT: {
       switch (event.window.event) {
-        case SDL_WINDOWEVENT_MINIMIZED:  // NOLINT(bugprone-branch-clone)
-
-          // Hmm do we want to pause the app on desktop when minimized?
-          // Gonna say no for now.
-#if BA_OSTYPE_IOS_TVOS
-          PauseApp();
-#endif
+        case SDL_WINDOWEVENT_MAXIMIZED: {
+          printf("MAXIMIZED\n");
+          if (g_buildconfig.ostype_macos() && !fullscreen_) {
+            // Special case: on Mac, we wind up here if someone fullscreens
+            // our window via the window widget. This *basically* is the
+            // same thing as setting fullscreen through sdl, so we want to
+            // treat this as if we've changed the setting ourself. We write
+            // it to the config so that UIs can poll for it and pick up the
+            // change. We don't do this on other platforms where a maximized
+            // window is more distinctly different than a fullscreen one.
+            fullscreen_ = true;
+            g_base->logic->event_loop()->PushCall([] {
+              g_base->python->objs()
+                  .Get(BasePython::ObjID::kSetConfigFullscreenOnCall)
+                  .Call();
+            });
+          }
           break;
+        }
 
         case SDL_WINDOWEVENT_RESTORED:
-#if BA_OSTYPE_IOS_TVOS
-          ResumeApp();
-#endif
+          printf("RESTORED\n");
+          if (g_buildconfig.ostype_macos() && fullscreen_) {
+            // See note above.
+            fullscreen_ = false;
+            g_base->logic->event_loop()->PushCall([] {
+              g_base->python->objs()
+                  .Get(BasePython::ObjID::kSetConfigFullscreenOffCall)
+                  .Call();
+            });
+          }
           break;
 
-        case SDL_WINDOWEVENT_RESIZED:
+        case SDL_WINDOWEVENT_MINIMIZED:
+          printf("MINIMIZED\n");
+          break;
+
+        case SDL_WINDOWEVENT_HIDDEN: {
+          // PauseApp();
+          printf("HIDDEN\n");
+          break;
+        }
+
+        case SDL_WINDOWEVENT_SHOWN: {
+          // ResumeApp();
+          printf("SHOWN\n");
+          break;
+        }
+
         case SDL_WINDOWEVENT_SIZE_CHANGED: {
-#if BA_OSTYPE_IOS_TVOS
-          // Do nothing here currently.
-#else   // Generic SDL:
-          int pixels_x, pixels_y;
-          SDL_GL_GetDrawableSize(
-              g_base->graphics_server->gl_context()->sdl_window(), &pixels_x,
-              &pixels_y);
-
-          // Pixel density is number of pixels divided by window dimension.
-          screen_dimensions_ = Vector2f(event.window.data1, event.window.data2);
-          g_base->graphics_server->SetScreenResolution(
-              static_cast<float>(pixels_x), static_cast<float>(pixels_y));
-#endif  // BA_OSTYPE_IOS_TVOS
-
+          // Note: this should cover all size changes; there is also
+          // SDL_WINDOWEVENT_RESIZED but according to the docs it only covers
+          // external events such as user window resizes.
+          UpdateScreenSizes_();
           break;
         }
         default:
           break;
       }
       break;
-      default:
-        break;
     }
-#else   // BA_SDL2_BUILD
-    case SDL_VIDEORESIZE: {
-      screen_dimensions_ = Vector2f(event.resize.w, event.resize.h);
-      g_base->graphics_server->SetScreenResolution(event.resize.w,
-                                                   event.resize.h);
+
+    default: {
+      // Lastly handle our custom events (can't since their
+      // values are dynamic).
+      if (event.type == sdl_runnable_event_id_) {
+        auto* runnable = static_cast<Runnable*>(event.user.data1);
+        runnable->RunAndLogErrors();
+        delete runnable;
+        return;
+      }
       break;
     }
-#endif  // BA_SDL2_BUILD
   }
 }
 
-auto FilterSDLEvent(const SDL_Event* event) -> int {
-  try {
-    // If this event is coming from this thread, handle it immediately.
-    if (std::this_thread::get_id() == g_core->main_thread_id) {
-      auto app = static_cast_check_type<AppAdapterSDL*>(g_base->app_adapter);
-      assert(app);
-      if (app) {
-        app->HandleSDLEvent(*event);
-      }
-      return false;  // We handled it; sdl doesn't need to keep it.
-    } else {
-      // Otherwise just let SDL post it to the normal queue.. we process
-      // this every now and then to pick these up.
-      return true;  // sdl should keep this.
-    }
-  } catch (const std::exception& e) {
-    BA_LOG_ONCE(LogLevel::kError,
-                std::string("Error in inline SDL-Event handling: ") + e.what());
-    throw;
-  }
+void AppAdapterSDL::OnSDLJoystickAdded_(int device_index) {
+  assert(g_base);
+  assert(g_core->InMainThread());
+
+  // Create the joystick here in the main thread and then pass it over to
+  // the logic thread to be added to the action.
+  auto* j = Object::NewDeferred<JoystickInput>(device_index);
+  int instance_id = SDL_JoystickInstanceID(j->sdl_joystick());
+  AddSDLInputDevice_(j, instance_id);
 }
 
-#if BA_SDL2_BUILD
-inline auto FilterSDL2Event(void* user_data, SDL_Event* event) -> int {
-  return FilterSDLEvent(event);
-}
-#endif
-
-// Note: can move this to AppAdapterSDL::AppAdapterSDL() once it is no longer
-// needed by the legacy mac build.
-void AppAdapterSDL::InitSDL() {
-  assert(g_core);
-
-  if (g_buildconfig.ostype_macos()) {
-    // We don't want sdl to translate command/option clicks to different
-    // mouse buttons dernit.
-    g_core->platform->SetEnv("SDL_HAS3BUTTONMOUSE", "1");
-  }
-
-  // Let's turn on extra GL debugging on linux debug builds.
-  if (g_buildconfig.ostype_linux() && g_buildconfig.debug_build()) {
-    g_core->platform->SetEnv("MESA_DEBUG", "true");
-  }
-
-  uint32_t sdl_flags{};
-
-  // We can skip joysticks and video for headless.
-  if (!g_buildconfig.headless_build()) {
-    sdl_flags |= SDL_INIT_VIDEO;
-    if (explicit_bool(true)) {
-      sdl_flags |= SDL_INIT_JOYSTICK;
-
-      // KILL THIS ONCE MAC SDL1.2 BUILD IS DEAD.
-      // Register our hotplug callbacks in our funky custom mac build.
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_HEADLESS_BUILD
-      SDL_JoystickSetHotPlugCallbacks(AppAdapterSDL::SDLJoystickConnected_,
-                                      AppAdapterSDL::SDLJoystickDisconnected_);
-#endif
-    }
-  }
-
-  // Whatever fancy-pants stuff SDL is trying to do with catching
-  // signals/etc, we don't want it.
-  sdl_flags |= SDL_INIT_NOPARACHUTE;
-
-  // We may or may not want xinput on windows.
-  if (g_buildconfig.ostype_windows()) {
-    if (!g_core->platform->GetLowLevelConfigValue("enablexinput", 1)) {
-      SDL_SetHint(SDL_HINT_XINPUT_ENABLED, "0");
-    }
-  }
-
-  int result = SDL_Init(sdl_flags);
-  if (result < 0) {
-    throw Exception(std::string("SDL_Init failed: ") + SDL_GetError());
-  }
-
-  // KILL THIS ONCE SDL IS NO LONGER USED ON IOS BUILD
-  if (g_buildconfig.ostype_ios_tvos() || g_buildconfig.ostype_android()) {
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-  }
-
-  // KILL THIS ONCE MAC SDL 1.2 BUILD IS DEAD
-#if !BA_SDL2_BUILD
-  SDL_EnableUNICODE(true);
-  SDL_EnableKeyRepeat(200, 50);
-#endif
-}
-
-AppAdapterSDL::AppAdapterSDL() {
-  InitSDL();
-
-  // If we're not running our own even loop, we set up a filter to intercept
-  // SDL events the moment they're generated and we process them
-  // immediately. This way we don't have to poll for events and can be
-  // purely callback-based, which fits in nicely with most modern event
-  // models.
-  if (!ManagesEventLoop()) {
-#if BA_SDL2_BUILD
-    SDL_SetEventFilter(FilterSDL2Event, nullptr);
-#else
-    SDL_SetEventFilter(FilterSDLEvent);
-#endif  // BA_SDL2_BUILD
-  } else {
-    // Otherwise we do the standard old SDL polling stuff.
-
-    // Set up a timer to chew through events every now and then. Polling
-    // isn't super elegant, but is necessary in SDL's case. (SDLWaitEvent()
-    // itself is pretty much a loop with SDL_PollEvents() followed by
-    // SDL_Delay(10) until something is returned; In spirit, we're pretty
-    // much doing that same thing, except that we're free to handle other
-    // matters concurrently instead of being locked in a delay call.
-    g_core->main_event_loop()->NewTimer(10, true, NewLambdaRunnable([this] {
-                                          assert(g_base->app_adapter);
-                                          g_base->app_adapter->RunEvents();
-                                        }));
-  }
-}
-
-void AppAdapterSDL::OnMainThreadStartApp() {
-  AppAdapter::OnMainThreadStartApp();
-
-  if (!g_core->HeadlessMode() && g_buildconfig.enable_sdl_joysticks()) {
-    // Add initial sdl joysticks. any added/removed after this will be
-    // handled via events. (it seems (on mac at least) even the initial ones
-    // are handled via events, so lets make sure we handle redundant
-    // joystick connections gracefully.
-    if (explicit_bool(true)) {
-      int joystick_count = SDL_NumJoysticks();
-      for (int i = 0; i < joystick_count; i++) {
-        AppAdapterSDL::SDLJoystickConnected_(i);
-      }
-
-      // We want events from joysticks.
-      SDL_JoystickEventState(SDL_ENABLE);
-    }
-  }
-}
-
-void AppAdapterSDL::RunEvents() {
-  AppAdapter::RunEvents();
-
-  // Now run all pending SDL events until we run out or we're told to quit.
-  SDL_Event event;
-  while (SDL_PollEvent(&event) && (!g_core->main_event_loop()->done())) {
-    HandleSDLEvent(event);
-  }
-}
-
-void AppAdapterSDL::DidFinishRenderingFrame(FrameDef* frame) {
-  AppAdapter::DidFinishRenderingFrame(frame);
-  SwapBuffers_();
-}
-
-void AppAdapterSDL::DoSwap_() {
-  assert(g_base->InGraphicsThread());
-
-  if (g_buildconfig.debug_build()) {
-    millisecs_t diff = g_core->GetAppTimeMillisecs() - swap_start_time_;
-    if (diff > 5) {
-      Log(LogLevel::kWarning, "Swap handling delay of " + std::to_string(diff));
-    }
-  }
-
-#if BA_ENABLE_OPENGL
-#if BA_SDL2_BUILD
-  SDL_GL_SwapWindow(g_base->graphics_server->gl_context()->sdl_window());
-#else
-  SDL_GL_SwapBuffers();
-#endif  // BA_SDL2_BUILD
-#endif  // BA_ENABLE_OPENGL
-
-  millisecs_t cur_time = g_core->GetAppTimeMillisecs();
-
-  // Do some post-render analysis/updates.
-  if (last_swap_time_ != 0) {
-    millisecs_t diff2 = cur_time - last_swap_time_;
-    if (auto_vsync_) {
-      UpdateAutoVSync_(static_cast<int>(diff2));
-    }
-
-    // If we drop to a super-crappy FPS lets take some countermeasures such
-    // as telling BG-dynamics to kill off some stuff.
-    if (diff2 >= 1000 / 20) {
-      too_slow_frame_count_++;
-    } else {
-      too_slow_frame_count_ = 0;
-    }
-
-    // Several slow frames in a row and we take action.
-    if (too_slow_frame_count_ > 10) {
-      too_slow_frame_count_ = 0;
-
-      // A common cause of slowness is excessive smoke and bg stuff; lets
-      // tell the bg dynamics thread to tone it down.
-      g_base->bg_dynamics->TooSlow();
-    }
-  }
-  last_swap_time_ = cur_time;
-}
-
-void AppAdapterSDL::SwapBuffers_() {
-  swap_start_time_ = g_core->GetAppTimeMillisecs();
-  assert(g_core->main_event_loop()->ThreadIsCurrent());
-  DoSwap_();
-
-  // FIXME: Move this somewhere reasonable. Not here. On mac/ios we wanna
-  // delay our game-center login until we've drawn a few frames, so lets do
-  // that here. ...hmm; why is that? I don't remember. Should revisit.
-  if (g_buildconfig.use_game_center()) {
-    static int f_count = 0;
-    f_count++;
-    if (f_count == 5) {
-      g_core->platform->GameCenterLogin();
-    }
-  }
-}
-
-void AppAdapterSDL::UpdateAutoVSync_(int diff) {
-  assert(auto_vsync_);
-
-  // If we're currently vsyncing, watch for slow frames.
-  if (vsync_enabled_) {
-    bool should_disable{};
-
-    // Note (March 2023): Currently mac opengl vsync seems broken on recent
-    // OSs. See discussions: https://github.com/libsdl-org/SDL/issues/4918
-    // Since Mac compositor generally avoids tearing anyway, just gonna have
-    // 'auto' mode disable vsync for now. Explicit enable is still available
-    // for odd cases where it still may be beneficial.
-    if (g_buildconfig.ostype_macos()) {
-      should_disable = true;
-    } else {
-      // Keep a smoothed average of the FPS we get with VSync on.
-      {
-        float this_fps = 1000.0f / static_cast<float>(diff);
-        float smoothing = 0.95f;
-        average_vsync_fps_ =
-            smoothing * average_vsync_fps_ + (1.0f - smoothing) * this_fps;
-      }
-
-      // FIXME: should not be assuming a 60fps framerate these days. If
-      // framerate drops significantly below 60, flip vsync off to get a
-      // better framerate (but *only* if we're pretty sure we can hit 60
-      // with it on; otherwise if we're on a 30hz monitor we'll get into a
-      // cycle of flipping it off and on repeatedly since we slow down a lot
-      // with it on and then speed up a lot with it off).
-      if (diff >= 1000 / 40 && average_vsync_fps_ > 55.0f) {
-        vsync_bad_frame_count_++;
-      } else {
-        vsync_bad_frame_count_ = 0;
-      }
-      should_disable = vsync_bad_frame_count_ >= 10;
-    }
-    if (should_disable) {
-      vsync_enabled_ = false;
-#if BA_ENABLE_OPENGL
-      g_base->graphics_server->gl_context()->SetVSync(vsync_enabled_);
-#endif
-      vsync_good_frame_count_ = 0;
-    }
-  } else {
-    bool should_enable{};
-    if (g_buildconfig.ostype_macos()) {
-      should_enable = false;
-    } else {
-      // Vsync is currently off; watch for framerate staying consistently
-      // high and then turn it on again.
-      if (diff <= 1000 / 50) {
-        vsync_good_frame_count_++;
-      } else {
-        vsync_good_frame_count_ = 0;
-      }
-      // FIXME - should not be assuming a 60fps framerate these days.
-      should_enable = vsync_good_frame_count_ >= 60;
-    }
-    if (should_enable) {
-      vsync_enabled_ = true;
-#if BA_ENABLE_OPENGL
-      g_base->graphics_server->gl_context()->SetVSync(vsync_enabled_);
-#endif
-      vsync_bad_frame_count_ = 0;
-    }
-  }
-}
-
-void AppAdapterSDL::SetAutoVSync(bool enable) {
-  auto_vsync_ = enable;
-  // If we're doing auto, start with vsync on.
-  if (enable) {
-    vsync_enabled_ = true;
-#if BA_ENABLE_OPENGL
-    g_base->graphics_server->gl_context()->SetVSync(vsync_enabled_);
-#endif
-  }
-}
-
-void AppAdapterSDL::SDLJoystickConnected_(int device_index) {
-  assert(g_core && g_core->InMainThread());
-
-  // We add all existing inputs when bootstrapping is complete; we should
-  // never be getting these before that happens.
-  if (!g_base) {
-    Log(LogLevel::kError,
-        "Unexpected SDLJoystickConnected_ early in boot sequence.");
-    return;
-  }
-
-  // Create the joystick here in the main thread and then pass it over to the
-  // logic thread to be added to the game.
-  if (g_buildconfig.ostype_ios_tvos()) {
-    BA_LOG_ONCE(LogLevel::kError, "WTF GOT SDL-JOY-CONNECTED ON IOS");
-  } else {
-    auto* j = Object::NewDeferred<JoystickInput>(device_index);
-    if (g_buildconfig.sdl2_build() && g_buildconfig.enable_sdl_joysticks()) {
-      int instance_id = SDL_JoystickInstanceID(j->sdl_joystick());
-      Get()->AddSDLInputDevice_(j, instance_id);
-    } else {
-      Get()->AddSDLInputDevice_(j, device_index);
-    }
-  }
-}
-
-void AppAdapterSDL::SDLJoystickDisconnected_(int index) {
+void AppAdapterSDL::OnSDLJoystickRemoved_(int index) {
   assert(g_core->InMainThread());
   assert(index >= 0);
-  Get()->RemoveSDLInputDevice_(index);
-}
-
-void AppAdapterSDL::SetInitialScreenDimensions(const Vector2f& dimensions) {
-  screen_dimensions_ = dimensions;
+  RemoveSDLInputDevice_(index);
 }
 
 void AppAdapterSDL::AddSDLInputDevice_(JoystickInput* input, int index) {
@@ -579,7 +394,7 @@ void AppAdapterSDL::AddSDLInputDevice_(JoystickInput* input, int index) {
   assert(g_core->InMainThread());
   assert(index >= 0);
 
-  // Keep a mapping of SDL input-device indices to Joysticks.
+  // Keep a mapping of SDL input-device indices to our Joysticks.
   if (static_cast_check_fit<int>(sdl_joysticks_.size()) <= index) {
     sdl_joysticks_.resize(static_cast<size_t>(index) + 1, nullptr);
   }
@@ -639,6 +454,195 @@ auto AppAdapterSDL::GetSDLJoystickInput_(int sdl_joystick_id) const
   }
   return nullptr;  // Epic fail.
 }
+
+void AppAdapterSDL::SetScreen_(
+    bool fullscreen, int max_fps, VSyncRequest vsync_requested,
+    TextureQualityRequest texture_quality_requested,
+    GraphicsQualityRequest graphics_quality_requested) {
+  assert(g_base->InGraphicsThread());
+  assert(!g_core->HeadlessMode());
+
+  // If we know what we support, filter our request types to what is
+  // supported. This will keep us from rebuilding contexts if request type
+  // is flipping between different types that we don't support.
+  if (g_base->graphics->has_supports_high_quality_graphics_value()) {
+    if (!g_base->graphics->supports_high_quality_graphics()
+        && graphics_quality_requested > GraphicsQualityRequest::kMedium) {
+      graphics_quality_requested = GraphicsQualityRequest::kMedium;
+    }
+  }
+
+  bool do_toggle_fs{};
+  bool do_set_existing_fullscreen{};
+
+  auto* gs = g_base->graphics_server;
+
+  // We need a full renderer reload if quality values have changed
+  // or if we don't have one yet.
+  bool need_full_reload =
+      ((sdl_window_ == nullptr
+        || gs->texture_quality_requested() != texture_quality_requested)
+       || (gs->graphics_quality_requested() != graphics_quality_requested)
+       || !gs->texture_quality_set() || !gs->graphics_quality_set());
+
+  if (need_full_reload) {
+    ReloadRenderer_(fullscreen, graphics_quality_requested,
+                    texture_quality_requested);
+  } else if (fullscreen != fullscreen_) {
+    SDL_SetWindowFullscreen(sdl_window_,
+                            fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+    fullscreen_ = fullscreen;
+  }
+
+  // VSync always gets set independent of the screen (though we set it down
+  // here to make sure we have one).
+  if (vsync_requested != vsync_) {
+    switch (vsync_requested) {
+      case VSyncRequest::kNever: {
+        SDL_GL_SetSwapInterval(0);
+        vsync_enabled_ = false;
+        break;
+      }
+      case VSyncRequest::kAlways: {
+        SDL_GL_SetSwapInterval(1);
+        vsync_enabled_ = true;
+        break;
+      }
+      case VSyncRequest::kAuto: {
+        // In this case, let's try setting to 'adaptive' and turn it off if
+        // that is unsupported.
+        auto result = SDL_GL_SetSwapInterval(-1);
+        if (result == 0) {
+          vsync_enabled_ = true;
+        } else {
+          SDL_GL_SetSwapInterval(0);
+          vsync_enabled_ = false;
+        }
+        break;
+      }
+    }
+    vsync_ = vsync_requested;
+  }
+
+  // This we can set anytime. Probably could have just set it from the logic
+  // thread where we read it, but let's be pedantic and keep everything to
+  // the main thread.
+  max_fps_ = max_fps;
+  // Allow -1 to mean no max.
+  if (max_fps_ != -1) {
+    max_fps_ = std::max(10, max_fps_);
+    max_fps_ = std::min(99999, max_fps_);
+  }
+
+  // Let the logic thread know we've got a graphics system up and running.
+  // It may use this cue to kick off asset loads and other bootstrapping.
+  g_base->logic->event_loop()->PushCall(
+      [] { g_base->logic->OnGraphicsReady(); });
+}
+
+void AppAdapterSDL::ReloadRenderer_(
+    bool fullscreen, GraphicsQualityRequest graphics_quality_requested,
+    TextureQualityRequest texture_quality_requested) {
+  assert(g_base->InGraphicsThread());
+
+  auto* gs = g_base->graphics_server;
+
+  if (gs->renderer() && gs->renderer_loaded()) {
+    gs->UnloadRenderer();
+  }
+
+  // If we don't haven't yet, create our window and renderer.
+  if (!sdl_window_) {
+    fullscreen_ = fullscreen;
+
+    // A reasonable default window size.
+    auto width = static_cast<int>(kBaseVirtualResX * 0.8f);
+    auto height = static_cast<int>(kBaseVirtualResY * 0.8f);
+
+    uint32_t flags = SDL_WINDOW_OPENGL
+                     | SDL_WINDOW_SHOWN
+                     // | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS
+                     | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
+    if (fullscreen) {
+      flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+    }
+
+    // On Mac we ask for a GL 4.1 Core profile. This is supported by all
+    // hardware the game officially supports and is also the last version of
+    // GL supported on Apple hardware. So we know exactly what we have to
+    // work with.
+    int context_flags{};
+    if (g_buildconfig.ostype_macos()) {
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                          SDL_GL_CONTEXT_PROFILE_CORE);
+      context_flags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
+    } else {
+      // On other platforms, let's not ask for anything in particular.
+      // We'll work with whatever they give us if its 4.x or 3.x or we'll
+      // show a lovely error if it's older.
+
+      // Wondering if there would be a smarter strategy here; for example
+      // trying a few different specific core profiles.
+    }
+    if (g_buildconfig.debug_build()) {
+      context_flags |= SDL_GL_CONTEXT_DEBUG_FLAG;
+    }
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, context_flags);
+
+    sdl_window_ =
+        SDL_CreateWindow(nullptr, SDL_WINDOWPOS_UNDEFINED,
+                         SDL_WINDOWPOS_UNDEFINED, width, height, flags);
+    if (!sdl_window_) {
+      FatalError("Unable to create SDL Window of size " + std::to_string(width)
+                 + " by " + std::to_string(height));
+    }
+    sdl_gl_context_ = SDL_GL_CreateContext(sdl_window_);
+    if (!sdl_gl_context_) {
+      FatalError("Unable to create SDL GL Context");
+    }
+    // auto result = SDL_GL_SetSwapInterval(-1);
+    // printf("GOT RESULT %d\n", result);
+
+    SDL_SetWindowTitle(sdl_window_, "BallisticaKit");
+
+    UpdateScreenSizes_();
+
+    // Now assign a GL renderer to the graphics-server to do its work.
+    assert(!gs->renderer());
+    if (!gs->renderer()) {
+      gs->set_renderer(new RendererGL());
+    }
+  }
+
+  // Update graphics quality based on request.
+  gs->set_graphics_quality_requested(graphics_quality_requested);
+  gs->set_texture_quality_requested(texture_quality_requested);
+
+  gs->LoadRenderer();
+}
+
+void AppAdapterSDL::UpdateScreenSizes_() {
+  assert(g_base->InGraphicsThread());
+
+  // Grab logical window dimensions (points?).
+  // This is the coordinate space SDL's events deal in.
+  int win_size_x, win_size_y;
+  SDL_GetWindowSize(sdl_window_, &win_size_x, &win_size_y);
+  window_size_ = Vector2f(win_size_x, win_size_y);
+
+  // Also grab the new size of the drawable; this is our physical
+  // (pixel) dimensions.
+  int pixels_x, pixels_y;
+  SDL_GL_GetDrawableSize(sdl_window_, &pixels_x, &pixels_y);
+  g_base->graphics_server->SetScreenResolution(static_cast<float>(pixels_x),
+                                               static_cast<float>(pixels_y));
+}
+
+auto AppAdapterSDL::CanToggleFullscreen() -> bool const { return true; }
+auto AppAdapterSDL::SupportsVSync() -> bool const { return true; }
+auto AppAdapterSDL::SupportsMaxFPS() -> bool const { return true; }
 
 }  // namespace ballistica::base
 

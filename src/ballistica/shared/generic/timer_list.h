@@ -16,7 +16,8 @@ class TimerList {
   TimerList();
   ~TimerList();
 
-  // Run timers up to the provided target time.
+  // Run timers up to the provided target time. Any errors are caught and
+  // logged.
   void Run(TimerMedium target_time);
 
   // Create a timer with provided runnable.

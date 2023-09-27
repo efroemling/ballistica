@@ -1176,6 +1176,7 @@
       <w>noninteractively</w>
       <w>nonlint</w>
       <w>noone</w>
+      <w>nopull</w>
       <w>notarytool</w>
       <w>nothin</w>
       <w>notorize</w>
@@ -1446,6 +1447,7 @@
       <w>raspbian</w>
       <w>rasterizer</w>
       <w>rawkey</w>
+      <w>rawval</w>
       <w>rayd</w>
       <w>rcade</w>
       <w>rcva</w>
@@ -1675,6 +1677,7 @@
       <w>staticdata</w>
       <w>statictest</w>
       <w>stdint</w>
+      <w>steamdeck</w>
       <w>stepfast</w>
       <w>stephane</w>
       <w>stepnum</w>
@@ -1950,6 +1953,7 @@
       <w>wreadlink</w>
       <w>writeauxiliaryfile</w>
       <w>writecall</w>
+      <w>wslview</w>
       <w>wspath</w>
       <w>wsroot</w>
       <w>wtfslice</w>

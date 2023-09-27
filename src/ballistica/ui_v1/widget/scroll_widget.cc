@@ -651,29 +651,21 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   float b = 0;
   float t = b + height();
 
-  // begin clipping for children
+  // Begin clipping for children.
   {
     base::EmptyComponent c(pass);
     c.SetTransparent(draw_transparent);
-    c.ScissorPush(Rect(l + border_width_, b + border_height_ + 1,
-                       l + (width() - border_width_ - 0),
-                       b + (height() - border_height_) - 1));
-    c.Submit();
-  }
+    auto scissor = c.ScopedScissor({l + border_width_, b + border_height_ + 1,
+                                    l + (width() - border_width_ - 0),
+                                    b + (height() - border_height_) - 1});
+    c.Submit();  // Get out of the way for children drawing.
 
-  set_simple_culling_bottom(b + border_height_ + 1);
-  set_simple_culling_top(b + (height() - border_height_) - 1);
+    set_simple_culling_bottom(b + border_height_ + 1);
+    set_simple_culling_top(b + (height() - border_height_) - 1);
 
-  // draw all our widgets at our z level
-  DrawChildren(pass, draw_transparent, l + extra_offs_x, b + extra_offs_y,
-               1.0f);
-
-  // end clipping...
-  {
-    base::EmptyComponent c(pass);
-    c.SetTransparent(draw_transparent);
-    c.ScissorPop();
-    c.Submit();
+    // Draw all our widgets at our z level.
+    DrawChildren(pass, draw_transparent, l + extra_offs_x, b + extra_offs_y,
+                 1.0f);
   }
 
   // scroll trough (depth 0.7f to 0.8f)
@@ -700,12 +692,13 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.SetTransparent(true);
     c.SetColor(1, 1, 1, border_opacity_);
     c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kUIAtlas));
-    c.PushTransform();
-    c.Translate(trough_center_x_, trough_center_y_, 0.7f);
-    c.Scale(trough_width_, trough_height_, 0.1f);
-    c.DrawMeshAsset(
-        g_base->assets->SysMesh(base::SysMeshID::kScrollBarTroughTransparent));
-    c.PopTransform();
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(trough_center_x_, trough_center_y_, 0.7f);
+      c.Scale(trough_width_, trough_height_, 0.1f);
+      c.DrawMeshAsset(g_base->assets->SysMesh(
+          base::SysMeshID::kScrollBarTroughTransparent));
+    }
     c.Submit();
   }
 
@@ -740,38 +733,40 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         thumb_dirty_ = false;
       }
 
-      base::SimpleComponent c(pass);
-      c.SetTransparent(draw_transparent);
-      float c_scale = 1.0f;
-      if (mouse_held_thumb_) {
-        c_scale = 1.8f;
-      } else if (mouse_over_thumb_) {
-        c_scale = 1.25f;
-      }
+      {
+        base::SimpleComponent c(pass);
+        c.SetTransparent(draw_transparent);
+        float c_scale = 1.0f;
+        if (mouse_held_thumb_) {
+          c_scale = 1.8f;
+        } else if (mouse_over_thumb_) {
+          c_scale = 1.25f;
+        }
 
-      c.SetColor(color_red_ * c_scale, color_green_ * c_scale,
-                 color_blue_ * c_scale, 1.0f);
+        c.SetColor(color_red_ * c_scale, color_green_ * c_scale,
+                   color_blue_ * c_scale, 1.0f);
 
-      c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kUIAtlas));
-      c.ScissorPush(Rect(l + border_width_, b + border_height_ + 1,
-                         l + (width()), b + (height() * 0.995f)));
-      c.PushTransform();
-      c.Translate(thumb_center_x_, thumb_center_y_, 0.8f);
-      c.Scale(thumb_width_, thumb_height_, 0.1f);
-      if (draw_transparent) {
-        c.DrawMeshAsset(g_base->assets->SysMesh(
-            sb_thumb_height > 100
-                ? base::SysMeshID::kScrollBarThumbTransparent
-                : base::SysMeshID::kScrollBarThumbShortTransparent));
-      } else {
-        c.DrawMeshAsset(g_base->assets->SysMesh(
-            sb_thumb_height > 100
-                ? base::SysMeshID::kScrollBarThumbOpaque
-                : base::SysMeshID::kScrollBarThumbShortOpaque));
+        c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kUIAtlas));
+        {
+          auto scissor =
+              c.ScopedScissor({l + border_width_, b + border_height_ + 1,
+                               l + (width()), b + (height() * 0.995f)});
+          auto xf = c.ScopedTransform();
+          c.Translate(thumb_center_x_, thumb_center_y_, 0.8f);
+          c.Scale(thumb_width_, thumb_height_, 0.1f);
+          if (draw_transparent) {
+            c.DrawMeshAsset(g_base->assets->SysMesh(
+                sb_thumb_height > 100
+                    ? base::SysMeshID::kScrollBarThumbTransparent
+                    : base::SysMeshID::kScrollBarThumbShortTransparent));
+          } else {
+            c.DrawMeshAsset(g_base->assets->SysMesh(
+                sb_thumb_height > 100
+                    ? base::SysMeshID::kScrollBarThumbOpaque
+                    : base::SysMeshID::kScrollBarThumbShortOpaque));
+          }
+        }
       }
-      c.PopTransform();
-      c.ScissorPop();
-      c.Submit();
     }
   }
 
@@ -793,16 +788,20 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       outline_center_y_ = b2 - b_border + 0.5f * outline_height_;
       shadow_dirty_ = false;
     }
-    base::SimpleComponent c(pass);
-    c.SetTransparent(true);
-    c.SetColor(1, 1, 1, border_opacity_);
-    c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kScrollWidget));
-    c.PushTransform();
-    c.Translate(outline_center_x_, outline_center_y_, 0.9f);
-    c.Scale(outline_width_, outline_height_, 0.1f);
-    c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kSoftEdgeOutside));
-    c.PopTransform();
-    c.Submit();
+    {
+      base::SimpleComponent c(pass);
+      c.SetTransparent(true);
+      c.SetColor(1, 1, 1, border_opacity_);
+      c.SetTexture(
+          g_base->assets->SysTexture(base::SysTextureID::kScrollWidget));
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(outline_center_x_, outline_center_y_, 0.9f);
+        c.Scale(outline_width_, outline_height_, 0.1f);
+        c.DrawMeshAsset(
+            g_base->assets->SysMesh(base::SysMeshID::kSoftEdgeOutside));
+      }
+    }
   }
 
   // if selected, do glow at depth 0.9f-1.0
@@ -834,11 +833,13 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.SetColor(0.4f * m, 0.5f * m, 0.05f * m, 0.0f);
     c.SetTexture(
         g_base->assets->SysTexture(base::SysTextureID::kScrollWidgetGlow));
-    c.PushTransform();
-    c.Translate(glow_center_x_, glow_center_y_, 0.9f);
-    c.Scale(glow_width_, glow_height_, 0.1f);
-    c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kSoftEdgeOutside));
-    c.PopTransform();
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(glow_center_x_, glow_center_y_, 0.9f);
+      c.Scale(glow_width_, glow_height_, 0.1f);
+      c.DrawMeshAsset(
+          g_base->assets->SysMesh(base::SysMeshID::kSoftEdgeOutside));
+    }
     c.Submit();
   }
 }

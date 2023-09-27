@@ -39,7 +39,7 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 21342;
+const int kEngineBuildNumber = 21385;
 const char* kEngineVersion = "1.7.28";
 const int kEngineApiVersion = 8;
 
@@ -62,7 +62,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     }
 
     // No matter what we're doing, we need the core feature set. Some
-    // ballistica functionality implicitly uses core, so we should always
+    // Ballistica functionality implicitly uses core, so we should always
     // import it first thing even if we don't explicitly use it.
     l_core = core::CoreFeatureSet::Import(&core_config);
 
@@ -113,21 +113,17 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // until the app exits (or we return from this function and let the
     // environment do that part).
 
-    if (l_base->AppManagesEventLoop()) {
-      // In environments where we control the event loop... do that.
+    if (l_base->AppManagesMainThreadEventLoop()) {
+      // In environments where we control the event loop, do that.
       l_base->RunAppToCompletion();
     } else {
       // If the environment is managing events, we now simply return and let
-      // it feed us those events. However, we may first need to 'prime the
-      // pump'. For instance, if the work we do here in the main thread is
-      // driven by frame draws, we may need to manually pump events until we
-      // receive a 'create-screen' message from the logic thread which
-      // gets those frame draws going.
-      l_base->PrimeAppMainThreadEventPump();
+      // it feed us those events.
 
       // IMPORTANT - We're still holding the GIL at this point, so we need
-      // to permanently release it to avoid starving the app. Any of our
-      // callback code that needs it will need to acquire it.
+      // to permanently release it to avoid starving the app. From this
+      // point on, any code outside of the logic thread will need to
+      // explicitly acquire it.
       Python::PermanentlyReleaseGIL();
     }
   } catch (const std::exception& exc) {

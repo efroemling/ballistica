@@ -324,6 +324,12 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         .strip()
     )
 
+    # TEMP - hard coding old ndk for the moment; looks like libffi needs to
+    # be fixed to build with it. I *think* this has already been done; we just
+    # need to wait for the official update beyond 3.4.4.
+    print('TEMP TEMP TEMP HARD-CODING OLD NDK FOR LIBFFI BUG')
+    os.environ['ANDROID_NDK'] = '/home/ubuntu/android/ndk/25.2.9519653'
+
     # Disable builds for dependencies we don't use.
     ftxt = readfile('Android/build_deps.py')
     ftxt = replace_exact(

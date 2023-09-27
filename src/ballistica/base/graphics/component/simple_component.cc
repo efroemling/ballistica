@@ -5,9 +5,9 @@
 namespace ballistica::base {
 
 void SimpleComponent::WriteConfig() {
-  // if we're transparent we don't want to do optimization-based
-  // shader swapping (ie: when color is 1).  This is because it can
-  // affect draw order, which is important unlike with opaque stuff.
+  // If we're transparent, we don't want to do optimization-based shader
+  // swapping (ie: when color is 1). This is because it can affect draw
+  // order, which is important unlike with opaque stuff.
   if (transparent_) {
     if (texture_.Exists()) {
       if (colorize_texture_.Exists()) {
@@ -52,7 +52,7 @@ void SimpleComponent::WriteConfig() {
           cmd_buffer_->PutTexture(colorize_texture_);
         }
       } else {
-        // non-colorized with texture
+        // Non-colorized with texture.
         if (double_sided_) {
           assert(!mask_texture_.Exists());      // unimplemented combo
           assert(flatness_ == 0.0f);            // unimplemented combo
@@ -111,7 +111,7 @@ void SimpleComponent::WriteConfig() {
               }
             } else {
               if (flatness_ != 0.0f) {
-                assert(!mask_texture_.Exists());  // unimplemented
+                assert(!mask_texture_.Exists());  // unimplemented combo
                 ConfigForShading(
                     ShadingType::kSimpleTextureModulatedTransFlatness);
                 cmd_buffer_->PutInt(premultiplied_);
@@ -120,8 +120,8 @@ void SimpleComponent::WriteConfig() {
                 cmd_buffer_->PutTexture(texture_);
               } else {
                 if (mask_texture_.Exists()) {
-                  // currently mask functionality requires colorize too, so
-                  // just send a black texture for that..
+                  // Currently mask functionality requires colorize too, so
+                  // just send a black texture for that.
                   ConfigForShading(
                       ShadingType::
                           kSimpleTextureModulatedTransparentColorized2Masked);
@@ -165,12 +165,12 @@ void SimpleComponent::WriteConfig() {
       }
     }
   } else {
-    // when we're opaque we can do some shader-swapping optimizations
+    // When we're opaque, we can do some shader-swapping optimizations
     // since draw order doesn't matter.
     assert(flatness_ == 0.0f);            // unimplemented combo
     assert(glow_amount_ == 0.0f);         // unimplemented combo
     assert(shadow_opacity_ == 0.0f);      // unimplemented combo
-    assert(!double_sided_);               // not implemented
+    assert(!double_sided_);               // unimplemented combo
     assert(!mask_uv2_texture_.Exists());  // unimplemented combo
     if (texture_.Exists()) {
       if (colorize_texture_.Exists()) {
@@ -194,8 +194,8 @@ void SimpleComponent::WriteConfig() {
       } else {
         assert(!do_colorize_2_);  // unsupported combo
         if (mask_texture_.Exists()) {
-          // currently mask functionality requires colorize too, so
-          // we have to send a black texture along for that..
+          // Currently mask functionality requires colorize too, so
+          // we have to send a black texture along for that.
           ConfigForShading(
               ShadingType::kSimpleTextureModulatedColorized2Masked);
           cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
@@ -207,7 +207,7 @@ void SimpleComponent::WriteConfig() {
               g_base->assets->SysTexture(SysTextureID::kBlack));
           cmd_buffer_->PutTexture(mask_texture_);
         } else {
-          // if no color was provided we can do a super-cheap version
+          // If no color was provided, we can do a super-cheap version.
           if (!have_color_) {
             ConfigForShading(ShadingType::kSimpleTexture);
             cmd_buffer_->PutTexture(texture_);

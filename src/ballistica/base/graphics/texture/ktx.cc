@@ -5,22 +5,7 @@
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
 
-#if !BA_HEADLESS_BUILD
-
 namespace ballistica::base {
-
-// Inspection is not terribly happy about this file but it works so not
-// gonna touch it for now.
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "hicpp-signed-bitwise"
-#pragma ide diagnostic ignored "bugprone-narrowing-conversions"
-#pragma ide diagnostic ignored "bugprone-macro-parentheses"
-#pragma ide diagnostic ignored "UnusedValue"
-
-#pragma ide diagnostic ignored "cppcoreguidelines-narrowing-conversions"
-#pragma ide diagnostic ignored "OCUnusedMacroInspection"
-#pragma ide diagnostic ignored "clang-analyzer-deadcode.DeadStores"
-#pragma clang diagnostic ignored "-Wunused-variable"
 
 // We don't want this to be dependent on GL so
 // lets just define the few bits we need here
@@ -2291,8 +2276,4 @@ void KTXUnpackETC(const GLubyte* srcETC, const GLenum srcFormat,
   }
 }
 
-#pragma clang diagnostic pop
-
 }  // namespace ballistica::base
-
-#endif  // !BA_HEADLESS_BUILD

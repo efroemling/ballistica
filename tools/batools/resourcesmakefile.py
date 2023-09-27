@@ -308,7 +308,7 @@ class ResourcesMakefileGenerator:
         ]
         for size in sizes:
             res = int(size[0] * size[1])
-            src = os.path.join('icon', 'icon_clipped.png')
+            src = os.path.join('icon', 'icon_clipped_mac.png')
             dst = os.path.join(
                 ROOT_DIR,
                 f'{self.namel}-xcode',

@@ -134,21 +134,24 @@ def run(projroot: str, args: list[str]) -> None:
     if command == 'get-sdk-path':
         print(sdk_dir)
 
-    # We no longer add the ndk path to local.properties (doing so is obsolete)
-    # but we still want to support returning the ndk path, as some things such
-    # as external python builds still ask for this. So now we just pull it from
-    # the project gradle file where we set it explicitly.
+    # We no longer add the ndk path to local.properties (doing so is
+    # obsolete) but we still want to support returning the ndk path, as
+    # some things such as external python builds still ask for this. So
+    # now we just pull it from the project gradle file where we set it
+    # explicitly.
     if command == 'get-ndk-path':
-        gradlepath = Path(projroot, 'ballisticakit-android/build.gradle')
+        gradlepath = Path(
+            projroot, 'ballisticakit-android/BallisticaKit/build.gradle'
+        )
         with gradlepath.open(encoding='utf-8') as infile:
             lines = [
                 l
                 for l in infile.readlines()
-                if l.strip().startswith('ext.ndk_version = ')
+                if l.strip().startswith('ndkVersion ')
             ]
         if len(lines) != 1:
             raise RuntimeError(
-                f'Expected exactly one ndk_version line in build.gradle;'
+                f'Expected exactly one ndkVersion line in build.gradle;'
                 f' found {len(lines)}'
             )
         ver = lines[0].strip().replace("'", '').replace('"', '').split()[-1]

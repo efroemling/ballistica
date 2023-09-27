@@ -7,8 +7,7 @@
 
 namespace ballistica::base {
 
-// Renderer-specific data (gl tex, etc)
-// this is extended by the renderer
+// Renderer-specific data (gl tex, etc). To be extended by the renderer.
 class TextureAssetRendererData : public Object {
  public:
   auto GetDefaultOwnerThread() const -> EventLoopID override {
@@ -18,9 +17,7 @@ class TextureAssetRendererData : public Object {
   // Create the renderer data but don't load it in yet.
   TextureAssetRendererData() = default;
 
-  // load the data.
-  // if incremental is true, return whether the load was completed
-  // (non-incremental loads should always complete)
+  // Load the data.
   virtual void Load() = 0;
 };
 

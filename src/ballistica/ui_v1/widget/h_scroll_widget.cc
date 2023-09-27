@@ -581,25 +581,17 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   {
     base::EmptyComponent c(pass);
     c.SetTransparent(draw_transparent);
-    c.ScissorPush(Rect(l + border_width_, b + border_height_ + 1,
-                       l + (width() - border_width_ - 0),
-                       b + (height() - border_height_) - 1));
-    c.Submit();
-  }
+    auto scissor = c.ScopedScissor({l + border_width_, b + border_height_ + 1,
+                                    l + (width() - border_width_ - 0),
+                                    b + (height() - border_height_) - 1});
+    c.Submit();  // Get out of the way for child drawing.
 
-  set_simple_culling_left(l + border_width_);
-  set_simple_culling_right(l + (width() - border_height_));
+    set_simple_culling_left(l + border_width_);
+    set_simple_culling_right(l + (width() - border_height_));
 
-  // Draw all our widgets at our z level.
-  DrawChildren(pass, draw_transparent, l + extra_offs_x, b + extra_offs_y,
-               1.0f);
-
-  // End clipping.
-  {
-    base::EmptyComponent c(pass);
-    c.SetTransparent(draw_transparent);
-    c.ScissorPop();
-    c.Submit();
+    // Draw all our widgets at our z level.
+    DrawChildren(pass, draw_transparent, l + extra_offs_x, b + extra_offs_y,
+                 1.0f);
   }
 
   // scroll trough (depth 0.7f to 0.8f)
@@ -627,13 +619,14 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.SetTransparent(true);
     c.SetColor(1, 1, 1, border_opacity_);
     c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kUIAtlas));
-    c.PushTransform();
-    c.Translate(trough_center_x_, trough_center_y_, 0.7f);
-    c.Scale(trough_width_, trough_height_, 0.1f);
-    c.Rotate(-90, 0, 0, 1);
-    c.DrawMeshAsset(
-        g_base->assets->SysMesh(base::SysMeshID::kScrollBarTroughTransparent));
-    c.PopTransform();
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(trough_center_x_, trough_center_y_, 0.7f);
+      c.Scale(trough_width_, trough_height_, 0.1f);
+      c.Rotate(-90, 0, 0, 1);
+      c.DrawMeshAsset(g_base->assets->SysMesh(
+          base::SysMeshID::kScrollBarTroughTransparent));
+    }
     c.Submit();
   }
 
@@ -701,25 +694,25 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
       c.SetColor(0, 0, 0, std::min(1.0f, 0.3f * touch_fade_));
 
-      c.ScissorPush(Rect(l + border_width_, b + border_height_ + 1,
-                         l + (width()), b + (height() * 0.995f)));
-      c.PushTransform();
-      c.Translate(thumb_center_x_, thumb_center_y_, 0.8f);
-      c.Scale(-thumb_width_, thumb_height_, 0.1f);
-      c.FlipCullFace();
-      c.Rotate(-90, 0, 0, 1);
+      {
+        auto scissor =
+            c.ScopedScissor({l + border_width_, b + border_height_ + 1,
+                             l + (width()), b + (height() * 0.995f)});
+        auto xf = c.ScopedTransform();
+        c.Translate(thumb_center_x_, thumb_center_y_, 0.8f);
+        c.Scale(-thumb_width_, thumb_height_, 0.1f);
+        c.FlipCullFace();
+        c.Rotate(-90, 0, 0, 1);
 
-      if (draw_transparent) {
-        c.DrawMeshAsset(g_base->assets->SysMesh(
-            sb_thumb_width > 100
-                ? base::SysMeshID::kScrollBarThumbSimple
-                : base::SysMeshID::kScrollBarThumbShortSimple));
+        if (draw_transparent) {
+          c.DrawMeshAsset(g_base->assets->SysMesh(
+              sb_thumb_width > 100
+                  ? base::SysMeshID::kScrollBarThumbSimple
+                  : base::SysMeshID::kScrollBarThumbShortSimple));
+        }
+        c.FlipCullFace();
+        c.Submit();
       }
-
-      c.FlipCullFace();
-      c.PopTransform();
-      c.ScissorPop();
-      c.Submit();
     }
   }
 
@@ -745,11 +738,13 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.SetTransparent(true);
     c.SetColor(1, 1, 1, border_opacity_);
     c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kScrollWidget));
-    c.PushTransform();
-    c.Translate(outline_center_x_, outline_center_y_, 0.9f);
-    c.Scale(outline_width_, outline_height_, 0.1f);
-    c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kSoftEdgeOutside));
-    c.PopTransform();
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(outline_center_x_, outline_center_y_, 0.9f);
+      c.Scale(outline_width_, outline_height_, 0.1f);
+      c.DrawMeshAsset(
+          g_base->assets->SysMesh(base::SysMeshID::kSoftEdgeOutside));
+    }
     c.Submit();
   }
 
@@ -783,11 +778,13 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.SetColor(0.4f * m, 0.5f * m, 0.05f * m, 0.0f);
     c.SetTexture(
         g_base->assets->SysTexture(base::SysTextureID::kScrollWidgetGlow));
-    c.PushTransform();
-    c.Translate(glow_center_x_, glow_center_y_, 0.9f);
-    c.Scale(glow_width_, glow_height_, 0.1f);
-    c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kSoftEdgeOutside));
-    c.PopTransform();
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(glow_center_x_, glow_center_y_, 0.9f);
+      c.Scale(glow_width_, glow_height_, 0.1f);
+      c.DrawMeshAsset(
+          g_base->assets->SysMesh(base::SysMeshID::kSoftEdgeOutside));
+    }
     c.Submit();
   }
 }

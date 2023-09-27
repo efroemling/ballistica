@@ -158,17 +158,18 @@ void NetGraph::Draw(RenderPass* pass, double time, double x, double y, double w,
   SimpleComponent c2(pass);
   c2.SetTransparent(true);
   c2.SetColor(1, 0, 0, 1);
-  c2.PushTransform();
-  c2.Translate(static_cast<float>(x), static_cast<float>(y + h));
-  float scale = static_cast<float>(h) * 0.006f;
-  c2.Scale(scale, scale);
-  int text_elem_count = impl_->max_vel_text.GetElementCount();
-  for (int e = 0; e < text_elem_count; e++) {
-    c2.SetTexture(impl_->max_vel_text.GetElementTexture(e));
-    c2.SetFlatness(1.0f);
-    c2.DrawMesh(impl_->max_vel_text.GetElementMesh(e));
+  {
+    auto xf = c2.ScopedTransform();
+    c2.Translate(static_cast<float>(x), static_cast<float>(y + h));
+    float scale = static_cast<float>(h) * 0.006f;
+    c2.Scale(scale, scale);
+    int text_elem_count = impl_->max_vel_text.GetElementCount();
+    for (int e = 0; e < text_elem_count; e++) {
+      c2.SetTexture(impl_->max_vel_text.GetElementTexture(e));
+      c2.SetFlatness(1.0f);
+      c2.DrawMesh(impl_->max_vel_text.GetElementMesh(e));
+    }
   }
-  c2.PopTransform();
   c2.Submit();
 }
 

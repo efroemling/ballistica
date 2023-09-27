@@ -70,13 +70,15 @@ void ScorchNode::Draw(base::FrameDef* frame_def) {
   c.SetColor(color_[0], color_[1], color_[2], o * 0.35f);
   c.SetTexture(g_base->assets->SysTexture(big_ ? base::SysTextureID::kScorchBig
                                                : base::SysTextureID::kScorch));
-  c.PushTransform();
-  c.Translate(position_[0], position_[1], position_[2]);
-  c.Scale(o * size_ * rand_size_[0], o * size_ * rand_size_[1],
-          o * size_ * rand_size_[2]);
-  c.Rotate(Utils::precalc_rand_1(id() % kPrecalcRandsCount) * 360.0f, 0, 1, 0);
-  c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kScorch));
-  c.PopTransform();
+  {
+    auto xf = c.ScopedTransform();
+    c.Translate(position_[0], position_[1], position_[2]);
+    c.Scale(o * size_ * rand_size_[0], o * size_ * rand_size_[1],
+            o * size_ * rand_size_[2]);
+    c.Rotate(Utils::precalc_rand_1(id() % kPrecalcRandsCount) * 360.0f, 0, 1,
+             0);
+    c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kScorch));
+  }
   c.Submit();
 }
 

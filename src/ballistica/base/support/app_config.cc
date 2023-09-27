@@ -207,6 +207,7 @@ void AppConfig::SetupEntries() {
       StringEntry("Mac Controller Subsystem", "Classic");
 
   int_entries_[IntID::kPort] = IntEntry("Port", kDefaultPort);
+  int_entries_[IntID::kMaxFPS] = IntEntry("Max FPS", 60);
 
   bool_entries_[BoolID::kTouchControlsSwipeHidden] =
       BoolEntry("Touch Controls Swipe Hidden", false);

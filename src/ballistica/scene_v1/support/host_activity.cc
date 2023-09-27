@@ -480,7 +480,7 @@ void HostActivity::PruneSessionBaseTimers() {
   remaining_timer_ids.swap(session_base_timer_ids_);
 }
 
-void HostActivity::ScreenSizeChanged() { scene()->ScreenSizeChanged(); }
+void HostActivity::OnScreenSizeChange() { scene()->OnScreenSizeChange(); }
 void HostActivity::LanguageChanged() { scene()->LanguageChanged(); }
 void HostActivity::DebugSpeedMultChanged() { UpdateStepTimerLength(); }
 void HostActivity::GraphicsQualityChanged(base::GraphicsQuality q) {

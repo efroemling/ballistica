@@ -50,8 +50,8 @@ const float kCursorZDepth{0.9f};
 // Client class for graphics operations (used from the logic thread).
 class Graphics {
  public:
-  Graphics();
-  virtual ~Graphics();
+  /// Instantiate the Graphics subclass for the current build.
+  static auto Create() -> Graphics*;
 
   void OnAppStart();
   void OnAppPause();
@@ -61,9 +61,15 @@ class Graphics {
   void OnScreenSizeChange();
   void DoApplyAppConfig();
 
+  /// Called by the graphics server to keep us up to date in the logic
+  /// thread. Dispatches the news to all logic subsystems that care.
   void SetScreenSize(float virtual_width, float virtual_height,
                      float physical_width, float physical_height);
   void StepDisplayTime();
+
+  auto TextureQualityFromAppConfig() -> TextureQualityRequest;
+  auto GraphicsQualityFromAppConfig() -> GraphicsQualityRequest;
+  auto VSyncFromAppConfig() -> VSyncRequest;
 
   static auto IsShaderTransparent(ShadingType c) -> bool;
   static auto CubeMapFromReflectionType(ReflectionType reflection_type)
@@ -265,11 +271,13 @@ class Graphics {
     }
     return y * (res_y_virtual_ / res_y_);
   }
+
+  // FIXME: This should probably move to Renderer or AppAdapter once we
+  // support switching renderers.
   auto supports_high_quality_graphics() const -> bool {
     assert(has_supports_high_quality_graphics_value_);
     return supports_high_quality_graphics_;
   }
-
   void SetSupportsHighQualityGraphics(bool s);
   auto has_supports_high_quality_graphics_value() const -> bool {
     return has_supports_high_quality_graphics_value_;
@@ -319,6 +327,8 @@ class Graphics {
   }
 
  protected:
+  Graphics();
+  virtual ~Graphics();
   virtual void DoDrawFade(FrameDef* frame_def, float amt);
 
  private:

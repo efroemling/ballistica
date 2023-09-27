@@ -120,21 +120,23 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                                 tint2_color_blue_);
           }
           c.SetMaskTexture(mask_texture_.Get());
-          c.PushTransform();
-          c.Translate(image_center_x_ + extra_offs_x,
-                      image_center_y_ + extra_offs_y);
-          c.Scale(image_width_, image_height_, 1.0f);
-          if (draw_radial_opaque) {
-            if (!radial_mesh_.Exists()) {
-              radial_mesh_ = Object::NewDeferred<base::MeshIndexedSimpleFull>();
+          {
+            auto xf = c.ScopedTransform();
+            c.Translate(image_center_x_ + extra_offs_x,
+                        image_center_y_ + extra_offs_y);
+            c.Scale(image_width_, image_height_, 1.0f);
+            if (draw_radial_opaque) {
+              if (!radial_mesh_.Exists()) {
+                radial_mesh_ =
+                    Object::NewDeferred<base::MeshIndexedSimpleFull>();
+              }
+              base::Graphics::DrawRadialMeter(&(*radial_mesh_), radial_amount_);
+              c.Scale(0.5f, 0.5f, 1.0f);
+              c.DrawMesh(radial_mesh_.Get());
+            } else {
+              c.DrawMeshAsset(mesh_opaque_used.Get());
             }
-            base::Graphics::DrawRadialMeter(&(*radial_mesh_), radial_amount_);
-            c.Scale(0.5f, 0.5f, 1.0f);
-            c.DrawMesh(radial_mesh_.Get());
-          } else {
-            c.DrawMeshAsset(mesh_opaque_used.Get());
           }
-          c.PopTransform();
           c.Submit();
         }
       }
@@ -155,21 +157,22 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                               tint2_color_blue_);
         }
         c.SetMaskTexture(mask_texture_.Get());
-        c.PushTransform();
-        c.Translate(image_center_x_ + extra_offs_x,
-                    image_center_y_ + extra_offs_y);
-        c.Scale(image_width_, image_height_, 1.0f);
-        if (draw_radial_transparent) {
-          if (!radial_mesh_.Exists()) {
-            radial_mesh_ = Object::New<base::MeshIndexedSimpleFull>();
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(image_center_x_ + extra_offs_x,
+                      image_center_y_ + extra_offs_y);
+          c.Scale(image_width_, image_height_, 1.0f);
+          if (draw_radial_transparent) {
+            if (!radial_mesh_.Exists()) {
+              radial_mesh_ = Object::New<base::MeshIndexedSimpleFull>();
+            }
+            base::Graphics::DrawRadialMeter(&(*radial_mesh_), radial_amount_);
+            c.Scale(0.5f, 0.5f, 1.0f);
+            c.DrawMesh(radial_mesh_.Get());
+          } else {
+            c.DrawMeshAsset(mesh_transparent_used.Get());
           }
-          base::Graphics::DrawRadialMeter(&(*radial_mesh_), radial_amount_);
-          c.Scale(0.5f, 0.5f, 1.0f);
-          c.DrawMesh(radial_mesh_.Get());
-        } else {
-          c.DrawMeshAsset(mesh_transparent_used.Get());
         }
-        c.PopTransform();
         c.Submit();
       }
     }

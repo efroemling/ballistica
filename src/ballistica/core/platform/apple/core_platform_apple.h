@@ -49,7 +49,6 @@ class CorePlatformApple : public CorePlatform {
   void ResetAchievements() override;
   void GameCenterLogin() override;
   auto IsOSPlayingMusic() -> bool override;
-  void SetHardwareCursorVisible(bool visible) override;
   void OpenFileExternally(const std::string& path) override;
   void OpenDirExternally(const std::string& path) override;
   void MacMusicAppInit() override;
@@ -59,7 +58,6 @@ class CorePlatformApple : public CorePlatform {
   void MacMusicAppStop() override;
   auto MacMusicAppPlayPlaylist(const std::string& playlist) -> bool override;
   auto MacMusicAppGetPlaylists() -> std::list<std::string> override;
-  auto IsEventPushMode() -> bool override;
   auto GetPlatformName() -> std::string override;
   auto GetSubplatformName() -> std::string override;
 

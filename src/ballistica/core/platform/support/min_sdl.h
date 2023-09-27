@@ -3,35 +3,39 @@
 #ifndef BALLISTICA_CORE_PLATFORM_SUPPORT_MIN_SDL_H_
 #define BALLISTICA_CORE_PLATFORM_SUPPORT_MIN_SDL_H_
 
+// Note to self: This needs to remain in core. It would seem like it could
+// go to base since it deals mostly in high level app type stuff. However we
+// need it in core because SDL provides things such as fatal error dialogs
+// which may be required before base is even spun up. Also the SDLMain
+// mechanism affects our main() definition so that is needed where we define
+// main.
+
 // A bit of history:
 //
 // Ballistica originally used SDL as its sole library for events,
-// window-management, etc. on all platforms. This means a lot of the low level
-// event handling code was written with SDL types.
+// window-management, etc. on all platforms. This means a lot of the low
+// level event handling code was written with SDL types.
 //
-// Over time, for various reasons, I started converting bits of functionality
-// over to native platform APIs, to the point where nowadays SDL's role is
-// largely vestigial in some builds; SDL types are getting passed around but
-// not actually being supplied by SDL.
+// Over time, for various reasons, I started converting bits of
+// functionality over to native platform APIs, to the point where nowadays
+// SDL's role is largely vestigial in some builds; SDL types are getting
+// passed around but not actually being supplied by SDL.
 //
-// Moving forward, my plan has been to clean things up so that SDL can be
-// completely removed from platforms that don't actually use it (though
-// still fully supported for platforms where it makes sense). That's where
-// this header comes in.
+// At this point many builds no longer depend on SDL at all, though some SDL
+// types are still used. That's where this header comes in.
 //
 // The minimum bits of SDL still needed to compile the game have been copied
-// here for use by 'non-sdl' platforms. This mainly includes things like event
-// types and keysyms.
+// here for use by 'non-sdl' platforms. This mainly includes things like
+// event types and keysyms.
 //
 // On platforms using 'full' SDL, this header simply includes the full sdl
 // headers.
 //
-// The idea is that, over time, the SDL types contained here can be replaced
-// with ballistica-specific types added to types.h. The 'full' SDL platform
-// layer can then translate its SDL types to ballistica types in the same way
-// that other platform code translates their native types, and eventually SDL
-// usage should be nicely contained to platform/sdl/* for the platforms that
-// want it.
+// The theory is that, over time, the SDL types contained here can be
+// replaced with ballistica-specific types. The 'full' SDL platform layer
+// can then translate its SDL types to ballistica types in the same way that
+// other platform code translates their native types, and eventually SDL
+// usage can be nicely contained to platform and/or app-adapter classes.
 
 /*
   Simple DirectMedia Layer

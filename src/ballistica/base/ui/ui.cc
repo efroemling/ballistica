@@ -127,8 +127,6 @@ auto UI::HandleMouseDown(int button, float x, float y, bool double_click)
 
   // Dev console button.
   if (show_dev_console_button_) {
-    float vx = g_base->graphics->screen_virtual_width();
-    float vy = g_base->graphics->screen_virtual_height();
     if (InDevConsoleButton_(x, y)) {
       if (button == 1) {
         dev_console_button_pressed_ = true;
@@ -406,6 +404,7 @@ auto UI::DevConsoleButtonSize_() const -> float {
     case UIScale::kLast:
       return 60.0f;
   }
+  return 60.0f;
 }
 
 auto UI::InDevConsoleButton_(float x, float y) const -> bool {

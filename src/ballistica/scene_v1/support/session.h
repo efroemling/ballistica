@@ -32,7 +32,7 @@ class Session : public SceneV1Context {
   // This is used for executing console command or other UI hotkeys that should
   // apply to whatever the user is seeing.
   virtual auto GetForegroundContext() -> base::ContextRef;
-  virtual void ScreenSizeChanged();
+  virtual void OnScreenSizeChange();
   virtual void LanguageChanged();
   virtual void GraphicsQualityChanged(base::GraphicsQuality q);
   virtual void DebugSpeedMultChanged();

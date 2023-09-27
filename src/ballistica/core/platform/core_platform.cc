@@ -469,6 +469,10 @@ void CorePlatform::SleepMillisecs(millisecs_t ms) {
   std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
 
+void CorePlatform::SleepMicrosecs(millisecs_t ms) {
+  std::this_thread::sleep_for(std::chrono::microseconds(ms));
+}
+
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "NullDereferences"
 
@@ -497,7 +501,7 @@ auto CorePlatform::HandleFatalError(bool exit_cleanly,
 }
 
 auto CorePlatform::CanShowBlockingFatalErrorDialog() -> bool {
-  if (g_buildconfig.sdl2_build()) {
+  if (g_buildconfig.sdl_build()) {
     return true;
   } else {
     return false;
@@ -505,7 +509,7 @@ auto CorePlatform::CanShowBlockingFatalErrorDialog() -> bool {
 }
 
 void CorePlatform::BlockingFatalErrorDialog(const std::string& message) {
-#if BA_SDL2_BUILD
+#if BA_SDL_BUILD
   assert(g_core->InMainThread());
   if (!g_core->HeadlessMode()) {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Fatal Error",
@@ -784,13 +788,6 @@ void CorePlatform::SignOutV1() {
   Log(LogLevel::kError, "SignOutV1() unimplemented");
 }
 
-void CorePlatform::SetHardwareCursorVisible(bool visible) {
-// FIXME: Forward this to app?..
-#if BA_SDL_BUILD
-  SDL_ShowCursor(visible ? SDL_ENABLE : SDL_DISABLE);
-#endif
-}
-
 void CorePlatform::OpenFileExternally(const std::string& path) {
   Log(LogLevel::kError, "OpenFileExternally() unimplemented");
 }
@@ -877,7 +874,7 @@ auto CorePlatform::DoAbsPath(const std::string& path, std::string* outpath)
 #endif
 }
 
-auto CorePlatform::IsEventPushMode() -> bool { return false; }
+// auto CorePlatform::IsEventPushMode() -> bool { return false; }
 
 auto CorePlatform::GetDisplayResolution(int* x, int* y) -> bool {
   return false;
@@ -1089,7 +1086,7 @@ auto CorePlatform::ClipboardGetText() -> std::string {
 auto CorePlatform::DoClipboardIsSupported() -> bool {
   // Go through SDL functionality on SDL based platforms;
   // otherwise default to no clipboard.
-#if BA_SDL2_BUILD && !BA_OSTYPE_IOS_TVOS
+#if BA_SDL_BUILD
   return true;
 #else
   return false;
@@ -1099,7 +1096,7 @@ auto CorePlatform::DoClipboardIsSupported() -> bool {
 auto CorePlatform::DoClipboardHasText() -> bool {
   // Go through SDL functionality on SDL based platforms;
   // otherwise default to no clipboard.
-#if BA_SDL2_BUILD && !BA_OSTYPE_IOS_TVOS
+#if BA_SDL_BUILD
   return SDL_HasClipboardText();
 #else
   // Shouldn't get here since we default to no clipboard support.
@@ -1111,7 +1108,7 @@ auto CorePlatform::DoClipboardHasText() -> bool {
 void CorePlatform::DoClipboardSetText(const std::string& text) {
   // Go through SDL functionality on SDL based platforms;
   // otherwise default to no clipboard.
-#if BA_SDL2_BUILD && !BA_OSTYPE_IOS_TVOS
+#if BA_SDL_BUILD
   SDL_SetClipboardText(text.c_str());
 #else
   // Shouldn't get here since we default to no clipboard support.
@@ -1122,7 +1119,7 @@ void CorePlatform::DoClipboardSetText(const std::string& text) {
 auto CorePlatform::DoClipboardGetText() -> std::string {
   // Go through SDL functionality on SDL based platforms;
   // otherwise default to no clipboard.
-#if BA_SDL2_BUILD && !BA_OSTYPE_IOS_TVOS
+#if BA_SDL_BUILD
   char* out = SDL_GetClipboardText();
   if (out == nullptr) {
     throw Exception("Error fetching clipboard contents.", PyExcType::kRuntime);
@@ -1138,6 +1135,10 @@ auto CorePlatform::DoClipboardGetText() -> std::string {
 }
 
 auto CorePlatform::System(const char* cmd) -> int {
+  // By default can support this everywhere outside of Apple's more
+  // sandboxed platforms (iOS and equivalent). Actually should check
+  // sandboxed Mac version; not sure if this succeeds there (though it
+  // should compile at least).
 #if BA_OSTYPE_IOS_TVOS
   throw Exception("system() call is not supported on this OS.");
 #else

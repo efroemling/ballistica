@@ -5,6 +5,7 @@
 
 #include <string>
 
+#include "ballistica/base/graphics/mesh/text_mesh.h"
 #include "ballistica/shared/python/python_ref.h"
 #include "ballistica/ui_v1/widget/widget.h"
 
@@ -94,6 +95,12 @@ class TextWidget : public Widget {
   auto ShouldUseStringEditor_() const -> bool;
   void InvokeStringEditor_();
   void UpdateTranslation_();
+  void DoDrawCarat_(base::RenderPass* pass, base::TextMesh::HAlign align_h,
+                    base::TextMesh::VAlign align_v, float x_offset,
+                    float y_offset, float max_width_scale,
+                    float max_height_scale);
+  void DoDrawText_(base::RenderPass* pass, float x_offset, float y_offset,
+                   float max_width_scale, float max_height_scale);
   float res_scale_{1.0f};
   bool enabled_{true};
   millisecs_t birth_time_millisecs_{};

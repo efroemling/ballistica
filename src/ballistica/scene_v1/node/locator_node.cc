@@ -141,11 +141,12 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
     }
     c.SetColor(color_[0], color_[1], color_[2], opacity_);
     c.SetTexture(g_base->assets->SysTexture(texture));
-    c.PushTransform();
-    c.Translate(position_[0], position_[1], position_[2]);
-    c.Scale(size_[0], size_[1], size_[2]);
-    c.DrawMeshAsset(g_base->assets->SysMesh(mesh));
-    c.PopTransform();
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(position_[0], position_[1], position_[2]);
+      c.Scale(size_[0], size_[1], size_[2]);
+      c.DrawMeshAsset(g_base->assets->SysMesh(mesh));
+    }
     c.Submit();
   }
 
@@ -165,22 +166,24 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
         c.SetColor(color_[0], color_[1], color_[2], opacity_);
       }
       c.SetTexture(g_base->assets->SysTexture(texture));
-      c.PushTransform();
-      c.Translate(position_[0], position_[1], position_[2]);
-      c.Scale(size_[0], size_[1], size_[2]);
-      c.DrawMeshAsset(g_base->assets->SysMesh(mesh));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(position_[0], position_[1], position_[2]);
+        c.Scale(size_[0], size_[1], size_[2]);
+        c.DrawMeshAsset(g_base->assets->SysMesh(mesh));
+      }
       c.Submit();
     } else {
       // simple black shadow for locator/box
       base::SimpleComponent c(frame_def->light_shadow_pass());
       c.SetTransparent(true);
       c.SetColor(0.4f, 0.4f, 0.4f, 0.7f);
-      c.PushTransform();
-      c.Translate(position_[0], position_[1], position_[2]);
-      c.Scale(size_[0], size_[1], size_[2]);
-      c.DrawMeshAsset(g_base->assets->SysMesh(mesh));
-      c.PopTransform();
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(position_[0], position_[1], position_[2]);
+        c.Scale(size_[0], size_[1], size_[2]);
+        c.DrawMeshAsset(g_base->assets->SysMesh(mesh));
+      }
       c.Submit();
     }
   }

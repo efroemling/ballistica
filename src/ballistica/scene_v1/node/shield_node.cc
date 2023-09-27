@@ -145,59 +145,64 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
       base::SimpleComponent c(frame_def->overlay_3d_pass());
       c.SetTransparent(true);
       c.SetPremultiplied(true);
-      c.PushTransform();
-      float o = 1.0f
-                - static_cast<float>(since_last_hurt_change)
-                      / static_cast<float>(fade_time);
-      if (always_show_health_bar_) {
-        o = std::max(o, 0.5f);
-      }
-      o *= o;
-      float p_left, p_right;
-      if (hurt_ < hurt_smoothed_) {
-        p_left = 1.0f - hurt_smoothed_;
-        p_right = 1.0f - hurt_;
-      } else {
-        p_right = 1.0f - hurt_smoothed_;
-        p_left = 1.0f - hurt_;
-      }
+      {
+        auto xf = c.ScopedTransform();
+        float o = 1.0f
+                  - static_cast<float>(since_last_hurt_change)
+                        / static_cast<float>(fade_time);
+        if (always_show_health_bar_) {
+          o = std::max(o, 0.5f);
+        }
+        o *= o;
+        float p_left, p_right;
+        if (hurt_ < hurt_smoothed_) {
+          p_left = 1.0f - hurt_smoothed_;
+          p_right = 1.0f - hurt_;
+        } else {
+          p_right = 1.0f - hurt_smoothed_;
+          p_left = 1.0f - hurt_;
+        }
 
-      // For the first moment start p_left at p_right so they can see a glimpse
-      // of green before it goes away.
-      if (since_last_hurt_change < 100) {
-        p_left +=
-            (p_right - p_left)
-            * (1.0f - static_cast<float>(since_last_hurt_change) / 100.0f);
+        // For the first moment start p_left at p_right so they can see a
+        // glimpse of green before it goes away.
+        if (since_last_hurt_change < 100) {
+          p_left +=
+              (p_right - p_left)
+              * (1.0f - static_cast<float>(since_last_hurt_change) / 100.0f);
+        }
+        c.Translate(position_[0] - 0.25f, position_[1] + 1.25f, position_[2]);
+        c.Scale(0.5f, 0.5f, 0.5f);
+        float height = 0.1f;
+        float half_height = height * 0.5f;
+        c.SetColor(0, 0, 0.3f, 0.3f * o);
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(0.5f, half_height);
+          c.Scale(1.1f, height + 0.1f);
+          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+        }
+        c.SetColor(0.4f * o, 0.4f * o, 0.8f * o, 0.0f * o);
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(p_left * 0.5f, half_height);
+          c.Scale(p_left, height);
+          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+        }
+        c.SetColor(1.0f * o, 1.0f * o, 1.0f * o, 0.0f);
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate((p_left + p_right) * 0.5f, half_height);
+          c.Scale(p_right - p_left, height);
+          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+        }
+        c.SetColor(0.1f * o, 0.1f * o, 0.2f * o, 0.4f * o);
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate((p_right + 1.0f) * 0.5f, half_height);
+          c.Scale(1.0f - p_right, height);
+          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+        }
       }
-      c.Translate(position_[0] - 0.25f, position_[1] + 1.25f, position_[2]);
-      c.Scale(0.5f, 0.5f, 0.5f);
-      float height = 0.1f;
-      float half_height = height * 0.5f;
-      c.SetColor(0, 0, 0.3f, 0.3f * o);
-      c.PushTransform();
-      c.Translate(0.5f, half_height);
-      c.Scale(1.1f, height + 0.1f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
-      c.PopTransform();
-      c.SetColor(0.4f * o, 0.4f * o, 0.8f * o, 0.0f * o);
-      c.PushTransform();
-      c.Translate(p_left * 0.5f, half_height);
-      c.Scale(p_left, height);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
-      c.PopTransform();
-      c.SetColor(1.0f * o, 1.0f * o, 1.0f * o, 0.0f);
-      c.PushTransform();
-      c.Translate((p_left + p_right) * 0.5f, half_height);
-      c.Scale(p_right - p_left, height);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
-      c.PopTransform();
-      c.SetColor(0.1f * o, 0.1f * o, 0.2f * o, 0.4f * o);
-      c.PushTransform();
-      c.Translate((p_right + 1.0f) * 0.5f, half_height);
-      c.Scale(1.0f - p_right, height);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
-      c.PopTransform();
-      c.PopTransform();
       c.Submit();
     }
   }
@@ -229,7 +234,6 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
     c.SetReflectionScale(0.34f * o, 0.34f * o, 0.34f * o);
     c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kShield));
     c.SetColor(col[0], col[1], col[2], 0.13f * o);
-    c.PushTransform();
     Vector3f to_cam =
         Vector3f(cx - position_[0], cy - position_[1], cz - position_[2])
             .Normalized();
@@ -238,46 +242,50 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
     Vector3f right = Vector3f::Cross(to_cam, kVector3fY).Normalized();
     Vector3f up = Vector3f::Cross(right, to_cam).Normalized();
     Matrix44f om = Matrix44fOrient(right, to_cam, up);
-    c.MultMatrix((om * m).m);
     float s = radius_ * 0.53f;
-    c.Scale(s, s, s);
-    c.Rotate(Utils::precalc_rand_1(rot_count_ % kPrecalcRandsCount) * 360, 0, 1,
-             0);
     float r2 =
         r_scale_
         * (0.97f
            + 0.05f * Utils::precalc_rand_2(rot_count_ % kPrecalcRandsCount));
-    c.Scale(r2, r2, r2);
-    c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kShield),
-                    base::kMeshDrawFlagNoReflection);
-    c.PopTransform();
+    {
+      auto xf = c.ScopedTransform();
+      c.MultMatrix((om * m).m);
+      c.Scale(s, s, s);
+      c.Rotate(Utils::precalc_rand_1(rot_count_ % kPrecalcRandsCount) * 360, 0,
+               1, 0);
+      c.Scale(r2, r2, r2);
+      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kShield),
+                      base::kMeshDrawFlagNoReflection);
+    }
     c.Submit();
 
     // Nifty intersection effects in fancy graphics mode.
     if (frame_def->has_depth_texture()) {
       base::ShieldComponent c2(frame_def->overlay_3d_pass());
-      c2.PushTransform();
-      c2.MultMatrix((om * m).m);
-      c2.Scale(s, s, s);
-      c2.Rotate(Utils::precalc_rand_1(rot_count_ % kPrecalcRandsCount) * 360, 0,
-                1, 0);
-      c2.Scale(r2, r2, r2);
-      c2.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kShield));
-      c2.PopTransform();
+      {
+        auto xf = c2.ScopedTransform();
+        c2.MultMatrix((om * m).m);
+        c2.Scale(s, s, s);
+        c2.Rotate(Utils::precalc_rand_1(rot_count_ % kPrecalcRandsCount) * 360,
+                  0, 1, 0);
+        c2.Scale(r2, r2, r2);
+        c2.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kShield));
+      }
       c2.Submit();
     }
     if (frame_def->has_depth_texture()) {
       base::PostProcessComponent c2(frame_def->blit_pass());
       c2.SetNormalDistort(distort);
-      c2.PushTransform();
-      c2.MultMatrix((om * m).m);
-      c2.Scale(s, s, s);
-      c2.Rotate(Utils::precalc_rand_1(rot_count_ % kPrecalcRandsCount) * 360, 0,
-                1, 0);
-      float sc = r2 * 1.1f;
-      c2.Scale(sc, sc, sc);
-      c2.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kShield));
-      c2.PopTransform();
+      {
+        auto xf = c2.ScopedTransform();
+        c2.MultMatrix((om * m).m);
+        c2.Scale(s, s, s);
+        c2.Rotate(Utils::precalc_rand_1(rot_count_ % kPrecalcRandsCount) * 360,
+                  0, 1, 0);
+        float sc = r2 * 1.1f;
+        c2.Scale(sc, sc, sc);
+        c2.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kShield));
+      }
       c2.Submit();
     }
   }

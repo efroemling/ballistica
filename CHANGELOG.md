@@ -1,5 +1,29 @@
-### 1.7.28 (build 21342, api 8, 2023-09-13)
+### 1.7.28 (build 21385, api 8, 2023-09-27)
 
+- Massively cleaned up code related to rendering and window systems (OpenGL,
+  SDL, etc). This code had been growing into a nasty tangle for 15 years
+  attempting to support various old/hacked versions of SDL, etc. I ripped out
+  huge chunks of it and put back still-relevant pieces in a much more cleanly
+  designed way. This should put us in a much better place for supporting various
+  platforms and making graphical improvements going forward. See
+  `ballistica/base/app_adapter/app_adapter_sdl.cc` for an example of the now
+  nicely implemented system.
+- The engine now requires OpenGL 3.0 or newer on desktop and OpenGL ES 3.0 or
+  newer on mobile. This means we're cutting off a few percent of old devices on
+  Android that only support ES 2, but ES 3 has been out for 10 years now so I
+  feel it is time. As mentioned above, this allows massively cleaning up the
+  graphics code which means we can start to improve it.
+- Removed gamma controls. These were only active on the old Mac version anyway
+  and are being removed from the upcoming SDL3, so if we want this sort of thing
+  we should do it through shading in the renderer now.
+- Implemented both vsync and max-fps for the SDL build of the game. This means
+  you can finally take advantage of that nice high frame rate monitor on your
+  PC. Vsync supports 'Disable', 'Enabled' and 'Auto', which attempts to use
+  'adaptive' vsync if available, and no vsync otherwise.
+- Spent some time tuning a few frame-timing mechanisms, so motion in the game
+  should appear significantly smoother in some cases. Please let me know if it
+  ever appears *less* smooth than before or if you see what looks like weird
+  speed changes which could be timing problems.
 - Renamed Console to DevConsole, and added an option under advanced settings to
   always show a 'dev' button onscreen which can be used to toggle it. The
   backtick key still works also for anyone with a keyboard. I plan to add more
@@ -42,6 +66,17 @@
   to fail in some builds/runs (thanks Rikko for the heads-up).
 - (build 21327) Fixed an issue that could cause the app to pause for 3 seconds
   at shutdown.
+- Worked to improve sanity checking on C++ RenderComponents in debug builds to
+  make it easier to use and avoid sending broken commands to the renderer. Some
+  specifics follow.
+- RenderComponents no longer need an explicit Submit() at the end; if one goes
+  out of scope not in the submitted state it will implicitly run a submit.
+  Hopefully this will encourage concise code where RenderComponents are defined
+  in tight scopes.
+- RenderComponents now have a ScopedTransform() call which can be used to push
+  and pop the transform stack based on C++ scoping instead of the old
+  PushTransform/PopTransform. This should make it harder to accidentally break
+  the transform stack with unbalanced components.
   
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)

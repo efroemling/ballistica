@@ -1097,7 +1097,7 @@ void SceneV1AppMode::ChangeGameSpeed(int offs) {
 
 void SceneV1AppMode::OnScreenSizeChange() {
   if (Session* session = GetForegroundSession()) {
-    session->ScreenSizeChanged();
+    session->OnScreenSizeChange();
   }
 }
 

@@ -12,7 +12,7 @@ RenderTarget::RenderTarget(Type type) : type_(type) {
 
 RenderTarget::~RenderTarget() = default;
 
-void RenderTarget::ScreenSizeChanged() {
+void RenderTarget::OnScreenSizeChange() {
   assert(type_ == Type::kScreen);
   physical_width_ = g_base->graphics_server->screen_pixel_width();
   physical_height_ = g_base->graphics_server->screen_pixel_height();

@@ -144,14 +144,15 @@ void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
     {
       base::EmptyComponent c(overlay_flat_pass);
       c.SetTransparent(false);
-      c.PushTransform();
-      c.Translate(-tilt.y, tilt.x, -0.5f);
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(-tilt.y, tilt.x, -0.5f);
 
-      // We want our widgets to cover 0.1f in z space.
-      c.Scale(1.0f, 1.0f, 0.1f);
-      c.Submit();
-      root_widget->Draw(overlay_flat_pass, false);
-      c.PopTransform();
+        // We want our widgets to cover 0.1f in z space.
+        c.Scale(1.0f, 1.0f, 0.1f);
+        c.Submit();
+        root_widget->Draw(overlay_flat_pass, false);
+      }
       c.Submit();
     }
 
@@ -161,14 +162,15 @@ void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
     {
       base::EmptyComponent c(overlay_flat_pass);
       c.SetTransparent(true);
-      c.PushTransform();
-      c.Translate(-tilt.y, tilt.x, -0.5f);
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(-tilt.y, tilt.x, -0.5f);
 
-      // We want our widgets to cover 0.1f in z space.
-      c.Scale(1.0f, 1.0f, 0.1f);
-      c.Submit();
-      root_widget->Draw(overlay_flat_pass, true);
-      c.PopTransform();
+        // We want our widgets to cover 0.1f in z space.
+        c.Scale(1.0f, 1.0f, 0.1f);
+        c.Submit();
+        root_widget->Draw(overlay_flat_pass, true);
+      }
       c.Submit();
     }
 

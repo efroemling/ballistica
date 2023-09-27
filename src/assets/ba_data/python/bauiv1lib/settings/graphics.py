@@ -4,11 +4,14 @@
 
 from __future__ import annotations
 
-import logging
+from typing import TYPE_CHECKING, cast
 
 from bauiv1lib.popup import PopupMenu
-from bauiv1lib.config import ConfigCheckBox, ConfigNumberEdit
+from bauiv1lib.config import ConfigCheckBox
 import bauiv1 as bui
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 class GraphicsSettingsWindow(bui.Window):
@@ -42,23 +45,23 @@ class GraphicsSettingsWindow(bui.Window):
         uiscale = app.ui_v1.uiscale
         width = 450.0
         height = 302.0
+        self._max_fps_dirty = False
+        self._last_max_fps_set_time = bui.apptime()
+        self._last_max_fps_str = ''
 
         self._show_fullscreen = False
         fullscreen_spacing_top = spacing * 0.2
         fullscreen_spacing = spacing * 1.2
-        if uiscale == bui.UIScale.LARGE and app.classic.platform != 'android':
+        if bui.can_toggle_fullscreen():
             self._show_fullscreen = True
             height += fullscreen_spacing + fullscreen_spacing_top
 
-        show_gamma = False
-        gamma_spacing = spacing * 1.3
-        if bui.has_gamma_control():
-            show_gamma = True
-            height += gamma_spacing
+        show_vsync = bui.supports_vsync()
+        show_tv_mode = not bui.app.env.vr
 
-        show_vsync = False
-        if app.classic.platform == 'mac':
-            show_vsync = True
+        show_max_fps = bui.supports_max_fps()
+        if show_max_fps:
+            height += 50
 
         show_resolution = True
         if app.env.vr:
@@ -70,7 +73,7 @@ class GraphicsSettingsWindow(bui.Window):
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         base_scale = (
-            2.4
+            2.0
             if uiscale is bui.UIScale.SMALL
             else 1.5
             if uiscale is bui.UIScale.MEDIUM
@@ -91,19 +94,20 @@ class GraphicsSettingsWindow(bui.Window):
             )
         )
 
-        btn = bui.buttonwidget(
+        back_button = bui.buttonwidget(
             parent=self._root_widget,
             position=(35, height - 50),
-            size=(120, 60),
+            # size=(120, 60),
+            size=(60, 60),
             scale=0.8,
             text_scale=1.2,
             autoselect=True,
-            label=bui.Lstr(resource='backText'),
-            button_type='back',
+            label=bui.charstr(bui.SpecialChar.BACK),
+            button_type='backSmall',
             on_activate_call=self._back,
         )
 
-        bui.containerwidget(edit=self._root_widget, cancel_button=btn)
+        bui.containerwidget(edit=self._root_widget, cancel_button=back_button)
 
         bui.textwidget(
             parent=self._root_widget,
@@ -115,15 +119,7 @@ class GraphicsSettingsWindow(bui.Window):
             v_align='top',
         )
 
-        bui.buttonwidget(
-            edit=btn,
-            button_type='backSmall',
-            size=(60, 60),
-            label=bui.charstr(bui.SpecialChar.BACK),
-        )
-
         self._fullscreen_checkbox: bui.Widget | None = None
-        self._gamma_controls: ConfigNumberEdit | None = None
         if self._show_fullscreen:
             v -= fullscreen_spacing_top
             self._fullscreen_checkbox = ConfigCheckBox(
@@ -149,34 +145,10 @@ class GraphicsSettingsWindow(bui.Window):
                 self._have_selected_child = True
             v -= fullscreen_spacing
 
-        if show_gamma:
-            self._gamma_controls = gmc = ConfigNumberEdit(
-                parent=self._root_widget,
-                position=(90, v),
-                configkey='Screen Gamma',
-                displayname=bui.Lstr(resource=self._r + '.gammaText'),
-                minval=0.1,
-                maxval=2.0,
-                increment=0.1,
-                xoffset=-70,
-                textscale=0.85,
-            )
-            if bui.app.ui_v1.use_toolbars:
-                bui.widget(
-                    edit=gmc.plusbutton,
-                    right_widget=bui.get_special_widget('party_button'),
-                )
-            if not self._have_selected_child:
-                bui.containerwidget(
-                    edit=self._root_widget, selected_child=gmc.minusbutton
-                )
-                self._have_selected_child = True
-            v -= gamma_spacing
-
         self._selected_color = (0.5, 1, 0.5, 1)
         self._unselected_color = (0.7, 0.7, 0.7, 1)
 
-        # quality
+        # Quality
         bui.textwidget(
             parent=self._root_widget,
             position=(60, v),
@@ -208,7 +180,7 @@ class GraphicsSettingsWindow(bui.Window):
             on_value_change_call=self._set_quality,
         )
 
-        # texture controls
+        # Texture controls
         bui.textwidget(
             parent=self._root_widget,
             position=(230, v),
@@ -244,8 +216,9 @@ class GraphicsSettingsWindow(bui.Window):
 
         h_offs = 0
 
+        resolution_popup: PopupMenu | None = None
+
         if show_resolution:
-            # resolution
             bui.textwidget(
                 parent=self._root_widget,
                 position=(h_offs + 60, v),
@@ -258,32 +231,17 @@ class GraphicsSettingsWindow(bui.Window):
                 v_align='center',
             )
 
-            # on standard android we have 'Auto', 'Native', and a few
-            # HD standards
+            # On standard android we have 'Auto', 'Native', and a few
+            # HD standards.
             if app.classic.platform == 'android':
                 # on cardboard/daydream android we have a few
                 # render-target-scale options
                 if app.classic.subplatform == 'cardboard':
+                    rawval = bui.app.config.resolve('GVR Render Target Scale')
                     current_res_cardboard = (
-                        str(
-                            min(
-                                100,
-                                max(
-                                    10,
-                                    int(
-                                        round(
-                                            bui.app.config.resolve(
-                                                'GVR Render Target Scale'
-                                            )
-                                            * 100.0
-                                        )
-                                    ),
-                                ),
-                            )
-                        )
-                        + '%'
+                        str(min(100, max(10, int(round(rawval * 100.0))))) + '%'
                     )
-                    PopupMenu(
+                    resolution_popup = PopupMenu(
                         parent=self._root_widget,
                         position=(h_offs + 60, v - 50),
                         width=120,
@@ -301,16 +259,16 @@ class GraphicsSettingsWindow(bui.Window):
                         bui.Lstr(resource='nativeText'),
                     ]
                     for res in [1440, 1080, 960, 720, 480]:
-                        # nav bar is 72px so lets allow for that in what
-                        # choices we show
+                        # Nav bar is 72px so lets allow for that in what
+                        # choices we show.
                         if native_res[1] >= res - 72:
-                            res_str = str(res) + 'p'
+                            res_str = f'{res}p'
                             choices.append(res_str)
                             choices_display.append(bui.Lstr(value=res_str))
                     current_res_android = bui.app.config.resolve(
                         'Resolution (Android)'
                     )
-                    PopupMenu(
+                    resolution_popup = PopupMenu(
                         parent=self._root_widget,
                         position=(h_offs + 60, v - 50),
                         width=120,
@@ -325,26 +283,11 @@ class GraphicsSettingsWindow(bui.Window):
                 # set pixel-scale instead.
                 current_res = bui.get_display_resolution()
                 if current_res is None:
+                    rawval = bui.app.config.resolve('Screen Pixel Scale')
                     current_res2 = (
-                        str(
-                            min(
-                                100,
-                                max(
-                                    10,
-                                    int(
-                                        round(
-                                            bui.app.config.resolve(
-                                                'Screen Pixel Scale'
-                                            )
-                                            * 100.0
-                                        )
-                                    ),
-                                ),
-                            )
-                        )
-                        + '%'
+                        str(min(100, max(10, int(round(rawval * 100.0))))) + '%'
                     )
-                    PopupMenu(
+                    resolution_popup = PopupMenu(
                         parent=self._root_widget,
                         position=(h_offs + 60, v - 50),
                         width=120,
@@ -355,11 +298,16 @@ class GraphicsSettingsWindow(bui.Window):
                     )
                 else:
                     raise RuntimeError(
-                        'obsolete path; discrete resolutions'
+                        'obsolete code path; discrete resolutions'
                         ' no longer supported'
                     )
+        if resolution_popup is not None:
+            bui.widget(
+                edit=resolution_popup.get_button(),
+                left_widget=back_button,
+            )
 
-        # vsync
+        vsync_popup: PopupMenu | None = None
         if show_vsync:
             bui.textwidget(
                 parent=self._root_widget,
@@ -372,8 +320,7 @@ class GraphicsSettingsWindow(bui.Window):
                 h_align='center',
                 v_align='center',
             )
-
-            PopupMenu(
+            vsync_popup = PopupMenu(
                 parent=self._root_widget,
                 position=(230, v - 50),
                 width=150,
@@ -387,8 +334,59 @@ class GraphicsSettingsWindow(bui.Window):
                 current_choice=bui.app.config.resolve('Vertical Sync'),
                 on_value_change_call=self._set_vsync,
             )
+            if resolution_popup is not None:
+                bui.widget(
+                    edit=vsync_popup.get_button(),
+                    left_widget=resolution_popup.get_button(),
+                )
+
+        if resolution_popup is not None and vsync_popup is not None:
+            bui.widget(
+                edit=resolution_popup.get_button(),
+                right_widget=vsync_popup.get_button(),
+            )
 
         v -= 90
+        self._max_fps_text: bui.Widget | None = None
+        if show_max_fps:
+            v -= 5
+            bui.textwidget(
+                parent=self._root_widget,
+                position=(155, v + 10),
+                size=(0, 0),
+                text=bui.Lstr(resource=self._r + '.maxFPSText'),
+                color=bui.app.ui_v1.heading_color,
+                scale=0.9,
+                maxwidth=90,
+                h_align='right',
+                v_align='center',
+            )
+
+            max_fps_str = str(bui.app.config.resolve('Max FPS'))
+            self._last_max_fps_str = max_fps_str
+            self._max_fps_text = bui.textwidget(
+                parent=self._root_widget,
+                position=(170, v - 5),
+                size=(105, 30),
+                text=max_fps_str,
+                max_chars=5,
+                editable=True,
+                h_align='left',
+                v_align='center',
+                on_return_press_call=self._on_max_fps_return_press,
+            )
+            v -= 45
+
+        if self._max_fps_text is not None and resolution_popup is not None:
+            bui.widget(
+                edit=resolution_popup.get_button(),
+                down_widget=self._max_fps_text,
+            )
+            bui.widget(
+                edit=self._max_fps_text,
+                up_widget=resolution_popup.get_button(),
+            )
+
         fpsc = ConfigCheckBox(
             parent=self._root_widget,
             position=(69, v - 6),
@@ -398,9 +396,17 @@ class GraphicsSettingsWindow(bui.Window):
             displayname=bui.Lstr(resource=self._r + '.showFPSText'),
             maxwidth=130,
         )
+        if self._max_fps_text is not None:
+            bui.widget(
+                edit=self._max_fps_text,
+                down_widget=fpsc.widget,
+            )
+            bui.widget(
+                edit=fpsc.widget,
+                up_widget=self._max_fps_text,
+            )
 
-        # (tv mode doesnt apply to vr)
-        if not bui.app.env.vr:
+        if show_tv_mode:
             tvc = ConfigCheckBox(
                 parent=self._root_widget,
                 position=(240, v - 6),
@@ -410,13 +416,8 @@ class GraphicsSettingsWindow(bui.Window):
                 displayname=bui.Lstr(resource=self._r + '.tvBorderText'),
                 maxwidth=130,
             )
-            # grumble..
             bui.widget(edit=fpsc.widget, right_widget=tvc.widget)
-        try:
-            pass
-
-        except Exception:
-            logging.exception('Exception wiring up graphics settings UI.')
+            bui.widget(edit=tvc.widget, left_widget=fpsc.widget)
 
         v -= spacing
 
@@ -428,6 +429,10 @@ class GraphicsSettingsWindow(bui.Window):
 
     def _back(self) -> None:
         from bauiv1lib.settings import allsettings
+
+        # Applying max-fps takes a few moments. Apply if it hasn't been
+        # yet.
+        self._apply_max_fps()
 
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
@@ -469,7 +474,60 @@ class GraphicsSettingsWindow(bui.Window):
         cfg['Vertical Sync'] = val
         cfg.apply_and_commit()
 
+    def _on_max_fps_return_press(self) -> None:
+        self._apply_max_fps()
+        bui.containerwidget(
+            edit=self._root_widget, selected_child=cast(bui.Widget, 0)
+        )
+
+    def _apply_max_fps(self) -> None:
+        if not self._max_fps_dirty or not self._max_fps_text:
+            return
+
+        val: Any = bui.textwidget(query=self._max_fps_text)
+        assert isinstance(val, str)
+        # If there's a broken value, replace it with the default.
+        try:
+            ival = int(val)
+        except ValueError:
+            ival = bui.app.config.default_value('Max FPS')
+        assert isinstance(ival, int)
+
+        # Clamp to reasonable limits (allow -1 to mean no max).
+        if ival != -1:
+            ival = max(10, ival)
+            ival = min(99999, ival)
+
+        # Store it to the config.
+        cfg = bui.app.config
+        cfg['Max FPS'] = ival
+        cfg.apply_and_commit()
+
+        # Update the display if we changed the value.
+        if str(ival) != val:
+            bui.textwidget(edit=self._max_fps_text, text=str(ival))
+
+        self._max_fps_dirty = False
+
     def _update_controls(self) -> None:
+        if self._max_fps_text is not None:
+            # Keep track of when the max-fps value changes. Once it
+            # remains stable for a few moments, apply it.
+            val: Any = bui.textwidget(query=self._max_fps_text)
+            assert isinstance(val, str)
+            if val != self._last_max_fps_str:
+                # Oop; it changed. Note the time and the fact that we'll
+                # need to apply it at some point.
+                self._max_fps_dirty = True
+                self._last_max_fps_str = val
+                self._last_max_fps_set_time = bui.apptime()
+            else:
+                # If its been stable long enough, apply it.
+                if (
+                    self._max_fps_dirty
+                    and bui.apptime() - self._last_max_fps_set_time > 1.0
+                ):
+                    self._apply_max_fps()
         if self._show_fullscreen:
             bui.checkboxwidget(
                 edit=self._fullscreen_checkbox,

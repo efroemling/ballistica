@@ -7,7 +7,7 @@
 
 namespace ballistica::base {
 
-// an indexed sprite-mesh
+// An indexed sprite-mesh.
 class SpriteMesh : public MeshIndexed<VertexSprite, MeshDataType::kSprite> {
   using MeshIndexed::MeshIndexed;  // wheeee c++11 magic
 };

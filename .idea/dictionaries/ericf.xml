@@ -1975,6 +1975,7 @@
       <w>noninteractively</w>
       <w>nonmultipart</w>
       <w>noone</w>
+      <w>nopull</w>
       <w>norun</w>
       <w>nospeak</w>
       <w>nosub</w>
@@ -2447,6 +2448,7 @@
       <w>rawkey</w>
       <w>rawpath</w>
       <w>rawpaths</w>
+      <w>rawval</w>
       <w>rayd</w>
       <w>rcade</w>
       <w>rcfile</w>
@@ -2821,6 +2823,7 @@
       <w>stdobj</w>
       <w>stdsettings</w>
       <w>stdspaz</w>
+      <w>steamdeck</w>
       <w>stedit</w>
       <w>steelseries</w>
       <w>stgdict</w>
@@ -3318,6 +3321,7 @@
       <w>writeclasses</w>
       <w>writefuncs</w>
       <w>wslpath</w>
+      <w>wslview</w>
       <w>wspath</w>
       <w>wsroot</w>
       <w>wtcolor</w>

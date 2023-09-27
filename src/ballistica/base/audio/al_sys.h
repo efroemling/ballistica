@@ -9,7 +9,7 @@
 
 #if BA_ENABLE_AUDIO
 
-#if HAVE_FRAMEWORK_OPENAL
+#if BA_HAVE_FRAMEWORK_OPENAL
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
 #else

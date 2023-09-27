@@ -732,7 +732,10 @@ def echo() -> None:
         if arg in clrnames:
             out.append(getattr(clr, arg))
         else:
-            if not first:
+            # Special case: a dot by itself is treated as a period for
+            # the previous arg. This lets us do periods following color
+            # tags.
+            if not first and arg != '.':
                 out.append(' ')
             first = False
             out.append(arg)

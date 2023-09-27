@@ -27,7 +27,7 @@ class RenderTarget : public Object {
               clear_color.w);
   }
 
-  void ScreenSizeChanged();
+  void OnScreenSizeChange();
   auto physical_width() const -> float { return physical_width_; }
   auto physical_height() const -> float { return physical_height_; }
   auto GetScissorScaleX() const -> float;

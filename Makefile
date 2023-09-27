@@ -955,8 +955,7 @@ WINDOWS_CONFIGURATION ?= Debug
 
 # Stage assets and other files so a built binary will run.
 windows-staging: assets-windows resources meta
-	$(STAGE_BUILD) -win-$(WINPLT) -$(WINCFGLC) \
-      build/windows/$(WINCFG)_$(WINPLT)
+	$(STAGE_BUILD) -win-$(WINPLT) -$(WINCFGLC) build/windows/$(WINCFG)_$(WINPLT)
 
 # Build and run a debug windows build (from WSL).
 windows-debug: windows-debug-build
