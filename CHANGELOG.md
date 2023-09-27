@@ -1,4 +1,4 @@
-### 1.7.28 (build 21386, api 8, 2023-09-27)
+### 1.7.28 (build 21387, api 8, 2023-09-27)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -24,6 +24,9 @@
   should appear significantly smoother in some cases. Please let me know if it
   ever appears *less* smooth than before or if you see what looks like weird
   speed changes which could be timing problems.
+- Debug speed adjustments are now Ctrl-plus or Ctrl-minus instead of just plus
+  or minus. This makes these safer in case we want to enable them in regular
+  builds at some point.
 - Renamed Console to DevConsole, and added an option under advanced settings to
   always show a 'dev' button onscreen which can be used to toggle it. The
   backtick key still works also for anyone with a keyboard. I plan to add more

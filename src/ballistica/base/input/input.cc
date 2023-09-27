@@ -1001,13 +1001,17 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
 
       case SDLK_EQUALS:
       case SDLK_PLUS:
-        g_base->app_mode()->ChangeGameSpeed(1);
-        handled = true;
+        if (keysym->mod & KMOD_CTRL) {
+          g_base->app_mode()->ChangeGameSpeed(1);
+          handled = true;
+        }
         break;
 
       case SDLK_MINUS:
-        g_base->app_mode()->ChangeGameSpeed(-1);
-        handled = true;
+        if (keysym->mod & KMOD_CTRL) {
+          g_base->app_mode()->ChangeGameSpeed(-1);
+          handled = true;
+        }
         break;
 
       case SDLK_F5: {
