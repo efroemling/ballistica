@@ -718,11 +718,16 @@ class EditProfileWindow(bui.Window):
                 else '???'
             )
         if len(name) > 10 and not (self._global or self._is_account_profile):
+            name = name.strip()
+            display_name = ((name[:10] + '...')
+                           if len(name) > 10
+                           else name
+            )
             bui.textwidget(
                 edit=self._clipped_name_text,
                 text=bui.Lstr(
                     resource='inGameClippedNameText',
-                    subs=[('${NAME}', name[:10] + '...')],
+                    subs=[('${NAME}', display_name)],
                 ),
             )
         else:
