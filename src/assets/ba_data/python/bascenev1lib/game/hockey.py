@@ -60,11 +60,11 @@ class Puck(bs.Actor):
 
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.DieMessage):
-            assert self.node
-            self.node.delete()
-            activity = self._activity()
-            if activity and not msg.immediate:
-                activity.handlemessage(PuckDiedMessage(self))
+            if self.node:
+                self.node.delete()
+                activity = self._activity()
+                if activity and not msg.immediate:
+                    activity.handlemessage(PuckDiedMessage(self))
 
         # If we go out of bounds, move back to where we started.
         elif isinstance(msg, bs.OutOfBoundsMessage):
