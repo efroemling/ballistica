@@ -755,7 +755,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
     if (input_text_dirty_) {
       input_text_group_.SetText(input_string_);
       input_text_dirty_ = false;
-      last_input_text_change_time_ = pass->frame_def()->real_time();
+      last_input_text_change_time_ = pass->frame_def()->app_time_millisecs();
     }
     {
       SimpleComponent c(pass);
@@ -808,7 +808,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
     }
 
     // Carat.
-    millisecs_t real_time = pass->frame_def()->real_time();
+    millisecs_t real_time = pass->frame_def()->app_time_millisecs();
     if (real_time % 200 < 100
         || (real_time - last_input_text_change_time_ < 100)) {
       SimpleComponent c(pass);

@@ -206,7 +206,7 @@ auto Graphics::GraphicsQualityFromAppConfig() -> GraphicsQualityRequest {
 void Graphics::SetGyroEnabled(bool enable) {
   // If we're turning back on, suppress gyro updates for a bit.
   if (enable && !gyro_enabled_) {
-    last_suppress_gyro_time_ = g_core->GetAppTimeMillisecs();
+    last_suppress_gyro_time_ = g_core->GetAppTimeMicrosecs();
   }
   gyro_enabled_ = enable;
 }
@@ -1013,8 +1013,11 @@ void Graphics::DrawLoadDot(RenderPass* pass) {
   c.Submit();
 }
 
-void Graphics::UpdateGyro(millisecs_t real_time, millisecs_t elapsed) {
+void Graphics::UpdateGyro(microsecs_t time_microsecs,
+                          microsecs_t elapsed_microsecs) {
   Vector3f tilt = gyro_vals_;
+
+  millisecs_t elapsed_millisecs = elapsed_microsecs / 1000;
 
   // Our gyro vals get set from another thread and we don't use a lock,
   // so perhaps there's a chance we get corrupted float values here?..
@@ -1031,12 +1034,12 @@ void Graphics::UpdateGyro(millisecs_t real_time, millisecs_t elapsed) {
 
   // Our math was calibrated for 60hz (16ms per frame);
   // adjust for other framerates...
-  float timescale = static_cast<float>(elapsed) / 16.0f;
+  float timescale = static_cast<float>(elapsed_millisecs) / 16.0f;
 
   // If we've recently been told to suppress the gyro, zero these.
   // (prevents hitches when being restored, etc)
   if (!gyro_enabled_ || camera_gyro_explicitly_disabled_
-      || (real_time - last_suppress_gyro_time_ < 1000)) {
+      || (time_microsecs - last_suppress_gyro_time_ < 1000000)) {
     tilt = Vector3f{0.0, 0.0, 0.0};
   }
 
@@ -1114,25 +1117,25 @@ void Graphics::BuildAndPushFrameDef() {
   // layer is fully bootstrapped.
   BA_PRECONDITION_FATAL(g_base->logic->app_bootstrapping_complete());
 
-  millisecs_t app_time_millisecs = g_core->GetAppTimeMillisecs();
+  microsecs_t app_time_microsecs = g_core->GetAppTimeMicrosecs();
 
   // Store how much time this frame_def represents.
-  auto display_time_millisecs =
-      static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
-  millisecs_t elapsed = std::min(
-      millisecs_t{50}, display_time_millisecs - last_create_frame_def_time_);
-  last_create_frame_def_time_ = display_time_millisecs;
+  auto display_time_microsecs = g_base->logic->display_time_microsecs();
+
+  millisecs_t elapsed_microsecs = std::min(
+      millisecs_t{50000}, display_time_microsecs - last_create_frame_def_time_);
+  last_create_frame_def_time_ = display_time_microsecs;
 
   // This probably should not be here. Though I guess we get the most
   // up-to-date values possible this way. But it should probably live in
   // g_input.
-  UpdateGyro(app_time_millisecs, elapsed);
+  UpdateGyro(app_time_microsecs, elapsed_microsecs);
 
   FrameDef* frame_def = GetEmptyFrameDef();
-  frame_def->set_app_time_millisecs(app_time_millisecs);
-  frame_def->set_display_time_millisecs(
-      static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0));
-  frame_def->set_display_time_elapsed_millisecs(elapsed);
+  frame_def->set_app_time_microsecs(app_time_microsecs);
+  frame_def->set_display_time_microsecs(
+      g_base->logic->display_time_microsecs());
+  frame_def->set_display_time_elapsed_microsecs(elapsed_microsecs);
   frame_def->set_frame_number(frame_def_count_++);
 
   if (!internal_components_inited_) {
@@ -1151,7 +1154,7 @@ void Graphics::BuildAndPushFrameDef() {
 
   if (progress_bar_) {
     frame_def->set_needs_clear(true);
-    UpdateAndDrawProgressBar(frame_def, app_time_millisecs);
+    UpdateAndDrawProgressBar(frame_def);
   } else {
     // Ok, we're drawing a real frame.
 
@@ -1183,7 +1186,7 @@ void Graphics::BuildAndPushFrameDef() {
       c.Submit();
     }
 
-    DrawFades(frame_def, app_time_millisecs);
+    DrawFades(frame_def);
 
     // Sanity test: If we're in VR, the only reason we should have stuff in
     // the flat overlay pass is if there's windows present (we want to avoid
@@ -1313,8 +1316,7 @@ void Graphics::DrawDebugBuffers(RenderPass* pass) {
   }
 }
 
-void Graphics::UpdateAndDrawProgressBar(FrameDef* frame_def,
-                                        millisecs_t real_time) {
+void Graphics::UpdateAndDrawProgressBar(FrameDef* frame_def) {
   RenderPass* pass = frame_def->overlay_pass();
   UpdateProgressBarProgress(
       1.0f
@@ -1327,15 +1329,17 @@ void Graphics::UpdateAndDrawProgressBar(FrameDef* frame_def,
   int count = g_base->assets->GetGraphicalPendingLoadCount();
   if (count <= 0) {
     progress_bar_ = false;
-    progress_bar_end_time_ = real_time;
+    progress_bar_end_time_ = frame_def->app_time_millisecs();
   }
   if (g_base->assets->GetPendingLoadCount() > 0) {
     DrawLoadDot(pass);
   }
 }
 
-void Graphics::DrawFades(FrameDef* frame_def, millisecs_t real_time) {
+void Graphics::DrawFades(FrameDef* frame_def) {
   RenderPass* overlay_pass = frame_def->overlay_pass();
+
+  millisecs_t real_time = frame_def->app_time_millisecs();
 
   // Guard against accidental fades that never fade back in.
   if (fade_ <= 0.0f && fade_out_) {
@@ -1417,7 +1421,7 @@ void Graphics::DoDrawFade(FrameDef* frame_def, float amt) {
 void Graphics::DrawCursor(FrameDef* frame_def) {
   assert(g_base->InLogicThread());
 
-  millisecs_t real_time = frame_def->real_time();
+  millisecs_t app_time_millisecs = frame_def->app_time_millisecs();
 
   bool can_show_cursor = g_core->platform->IsRunningOnDesktop();
   bool should_show_cursor =
@@ -1434,9 +1438,9 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
     // Ship this state when it changes and also every now and then just in
     // case things go wonky.
     if (new_cursor_visibility != hardware_cursor_visible_
-        || real_time - last_cursor_visibility_event_time_ > 2000) {
+        || app_time_millisecs - last_cursor_visibility_event_time_ > 2000) {
       hardware_cursor_visible_ = new_cursor_visibility;
-      last_cursor_visibility_event_time_ = real_time;
+      last_cursor_visibility_event_time_ = app_time_millisecs;
       g_base->app_adapter->PushMainThreadCall([this] {
         assert(g_core && g_core->InMainThread());
         g_base->platform->SetHardwareCursorVisible(hardware_cursor_visible_);

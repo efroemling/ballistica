@@ -37,22 +37,37 @@ class FrameDef {
   auto blit_pass() -> RenderPass* { return blit_pass_.get(); }
   auto vr_cover_pass() -> RenderPass* { return vr_cover_pass_.get(); }
 
-  // Returns the real-time this frame_def originated at.
-  // For a more smoothly-incrementing value,
-  // use getbasetime()
-  auto real_time() const -> millisecs_t { return app_time_millisecs_; }
-  auto frame_number() const -> int64_t { return frame_number_; }
-
-  // Returns the bsGame master-net-time when this was made
-  // (tries to match real time but is incremented more smoothly
-  // so is better for drawing purposes)
-  auto display_time_millisecs() const -> millisecs_t {
-    return display_time_millisecs_;
+  // The app-time this frame_def originated at. For a more
+  // smoothly-incrementing value, use the frame-def's display_time.
+  auto app_time_millisecs() const -> millisecs_t {
+    return app_time_microsecs_ / 1000;
+  }
+  auto app_time_microsecs() const -> microsecs_t { return app_time_microsecs_; }
+  auto app_time() const -> double {
+    return static_cast<double>(app_time_microsecs_) / 1000000.0;
   }
 
-  // How much base time does this frame-def represent.
+  // A number incremented for each frame renderered. Try to avoid using this
+  // for drawing flashes/etc. since framerates can vary a lot these days; a
+  // 30hz flash will look a lot different than a 240hz one.
+  auto frame_number() const -> int64_t { return frame_number_; }
+
+  // Returns the display-time this frame-def was created at (tries to match
+  // real time but is incremented more smoothly so is better for drawing
+  // purposes).
+  auto display_time_millisecs() const -> millisecs_t {
+    return display_time_microsecs_ / 1000;
+  }
+  auto display_time_microsecs() const -> microsecs_t {
+    return display_time_microsecs_;
+  }
+  auto display_time() const -> double {
+    return static_cast<double>(display_time_microsecs_) / 1000000.0;
+  }
+
+  // How much display time does this frame-def represent.
   auto display_time_elapsed_millisecs() const -> millisecs_t {
-    return display_time_elapsed_millisecs_;
+    return display_time_elapsed_microsecs_ / 1000;
   }
 
   auto quality() const -> GraphicsQuality { return quality_; }
@@ -109,12 +124,14 @@ class FrameDef {
   void Reset();
   void Finalize();
 
-  void set_display_time_elapsed_millisecs(millisecs_t val) {
-    display_time_elapsed_millisecs_ = val;
+  void set_display_time_elapsed_microsecs(microsecs_t val) {
+    display_time_elapsed_microsecs_ = val;
   }
-  void set_app_time_millisecs(millisecs_t val) { app_time_millisecs_ = val; }
-  void set_display_time_millisecs(millisecs_t val) {
-    display_time_millisecs_ = val;
+  // void set_app_time_millisecs(millisecs_t val) { app_time_millisecs_ = val; }
+  void set_app_time_microsecs(microsecs_t val) { app_time_microsecs_ = val; }
+
+  void set_display_time_microsecs(microsecs_t val) {
+    display_time_microsecs_ = val;
   }
   void set_frame_number(int64_t val) { frame_number_ = val; }
 
@@ -173,8 +190,11 @@ class FrameDef {
 
  private:
   bool needs_clear_{};
-  BenchmarkType benchmark_type_{BenchmarkType::kNone};
   bool rendering_{};
+  bool orbiting_{};
+  bool tv_border_{};
+  bool shadow_ortho_{};
+  BenchmarkType benchmark_type_{BenchmarkType::kNone};
   CameraMode camera_mode_{CameraMode::kFollow};
   Vector3f cam_original_{0.0f, 0.0f, 0.0f};
   Vector3f cam_target_original_{0.0f, 0.0f, 0.0f};
@@ -210,15 +230,12 @@ class FrameDef {
   std::unique_ptr<RenderPass> overlay_3d_pass_;
   std::unique_ptr<RenderPass> blit_pass_;
   GraphicsQuality quality_{GraphicsQuality::kLow};
-  bool orbiting_{};
-  bool tv_border_{};
-  millisecs_t app_time_millisecs_{};
-  millisecs_t display_time_millisecs_{};
-  millisecs_t display_time_elapsed_millisecs_{};
+  microsecs_t app_time_microsecs_{};
+  microsecs_t display_time_microsecs_{};
+  microsecs_t display_time_elapsed_microsecs_{};
   int64_t frame_number_{};
   Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
   Vector2f shadow_scale_{1.0f, 1.0f};
-  bool shadow_ortho_{};
   Vector3f tint_{1.0f, 1.0f, 1.0f};
   Vector3f ambient_color_{1.0f, 1.0f, 1.0f};
   Vector3f vignette_outer_{1.0f, 1.0f, 1.0f};

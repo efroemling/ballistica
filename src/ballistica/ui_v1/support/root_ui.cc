@@ -145,7 +145,7 @@ void RootUI::HandleMouseMotion(float x, float y) {
 
 void RootUI::Draw(base::FrameDef* frame_def) {
   if (explicit_bool(DO_OLD_MENU_PARTY_BUTTONS)) {
-    millisecs_t real_time = frame_def->real_time();
+    millisecs_t real_time = frame_def->app_time_millisecs();
 
     // Menu button.
     // Update time-dependent stuff to this point.

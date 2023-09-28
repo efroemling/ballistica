@@ -351,7 +351,7 @@ void TouchInput::UpdateDPad() {
 void TouchInput::Draw(FrameDef* frame_def) {
   assert(g_base->InLogicThread());
   bool active = (!g_base->ui->MainMenuVisible());
-  millisecs_t real_time = frame_def->real_time();
+  millisecs_t real_time = frame_def->app_time_millisecs();
 
   // Update our action center whenever possible in case screen is resized.
   if (!buttons_touch_) {

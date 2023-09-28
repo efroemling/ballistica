@@ -742,11 +742,11 @@ void Renderer::UpdateDOFParams(FrameDef* frame_def) {
     min_z = max_z = 0;
   }
 
-  if ((frame_def->real_time() - dof_update_time_ > 100)) {
-    dof_update_time_ = frame_def->real_time() - 100;
+  if ((frame_def->app_time_millisecs() - dof_update_time_ > 100)) {
+    dof_update_time_ = frame_def->app_time_millisecs() - 100;
   }
   float smoothing = 0.995f;
-  while (dof_update_time_ < frame_def->real_time()) {
+  while (dof_update_time_ < frame_def->app_time_millisecs()) {
     dof_update_time_++;
     dof_near_smoothed_ =
         smoothing * dof_near_smoothed_ + (1.0f - smoothing) * min_z;

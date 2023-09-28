@@ -12,6 +12,7 @@
 
 #include "ballistica/base/base.h"
 #include "ballistica/shared/foundation/object.h"
+#include "ballistica/shared/foundation/types.h"
 #include "ballistica/shared/math/matrix44f.h"
 #include "ballistica/shared/math/rect.h"
 #include "ballistica/shared/math/vector2f.h"
@@ -96,13 +97,13 @@ class Graphics {
   // Called when the GraphicsServer has sent us a frame-def for deletion.
   void ReturnCompletedFrameDef(FrameDef* frame_def);
 
-  auto screen_pixel_width() const -> float { return res_x_; }
-  auto screen_pixel_height() const -> float { return res_y_; }
+  auto screen_pixel_width() const { return res_x_; }
+  auto screen_pixel_height() const { return res_y_; }
 
   // Return the size of the virtual screen.  This value should always
   // be used for interface positioning, etc.
-  auto screen_virtual_width() const -> float { return res_x_virtual_; }
-  auto screen_virtual_height() const -> float { return res_y_virtual_; }
+  auto screen_virtual_width() const { return res_x_virtual_; }
+  auto screen_virtual_height() const { return res_y_virtual_; }
 
   void ClearScreenMessageTranslations();
 
@@ -115,11 +116,11 @@ class Graphics {
 
   // Print a message to the on-screen list.
   void AddScreenMessage(const std::string& msg,
-                        const Vector3f& color = Vector3f{1, 1, 1},
-                        bool top = false, TextureAsset* texture = nullptr,
+                        const Vector3f& color = {1, 1, 1}, bool top = false,
+                        TextureAsset* texture = nullptr,
                         TextureAsset* tint_texture = nullptr,
-                        const Vector3f& tint = Vector3f{1, 1, 1},
-                        const Vector3f& tint2 = Vector3f{1, 1, 1});
+                        const Vector3f& tint = {1, 1, 1},
+                        const Vector3f& tint2 = {1, 1, 1});
 
   // Fade the local screen in or out over the given time period.
   void FadeScreen(bool to, millisecs_t time, PyObject* endcall);
@@ -149,16 +150,16 @@ class Graphics {
   // Enable progress bar drawing locally.
   void EnableProgressBar(bool fade_in);
 
-  auto camera() -> Camera* { return camera_.Get(); }
+  auto* camera() { return camera_.Get(); }
   void ToggleManualCamera();
   void LocalCameraShake(float intensity);
   void ToggleDebugDraw();
-  auto network_debug_info_display_enabled() const -> bool {
+  auto network_debug_info_display_enabled() const {
     return network_debug_display_enabled_;
   }
   void ToggleNetworkDebugDisplay();
   void SetGyroEnabled(bool enable);
-  auto floor_reflection() const -> bool {
+  auto floor_reflection() const {
     assert(g_base->InLogicThread());
     return floor_reflection_;
   }
@@ -179,7 +180,7 @@ class Graphics {
     assert(g_base->InLogicThread());
     shadow_ortho_ = o;
   }
-  auto tint() -> const Vector3f& { return tint_; }
+  auto tint() const { return tint_; }
   void set_tint(const Vector3f& val) {
     assert(g_base->InLogicThread());
     tint_ = val;
@@ -197,31 +198,27 @@ class Graphics {
     assert(g_base->InLogicThread());
     vignette_inner_ = val;
   }
-  auto shadow_offset() const -> const Vector3f& {
+  auto shadow_offset() const {
     assert(g_base->InLogicThread());
     return shadow_offset_;
   }
-  auto shadow_scale() const -> const Vector2f& {
+  auto shadow_scale() const {
     assert(g_base->InLogicThread());
     return shadow_scale_;
   }
-  auto tint() const -> const Vector3f& {
-    assert(g_base->InLogicThread());
-    return tint_;
-  }
-  auto ambient_color() const -> const Vector3f& {
+  auto ambient_color() {
     assert(g_base->InLogicThread());
     return ambient_color_;
   }
-  auto vignette_outer() const -> const Vector3f& {
+  auto vignette_outer() const {
     assert(g_base->InLogicThread());
     return vignette_outer_;
   }
-  auto vignette_inner() const -> const Vector3f& {
+  auto vignette_inner() const {
     assert(g_base->InLogicThread());
     return vignette_inner_;
   }
-  auto shadow_ortho() const -> bool {
+  auto shadow_ortho() const {
     assert(g_base->InLogicThread());
     return shadow_ortho_;
   }
@@ -229,14 +226,14 @@ class Graphics {
                       float upper_top);
   void ReleaseFadeEndCommand();
 
-  auto tv_border() const -> bool {
+  auto tv_border() const {
     assert(g_base->InLogicThread());
     return tv_border_;
   }
 
   // Nodes that draw flat stuff into the overlay pass should query this z value
   // for where to draw in z.
-  auto overlay_node_z_depth() -> float {
+  auto overlay_node_z_depth() {
     fetched_overlay_node_z_depth_ = true;
     return overlay_node_z_depth_;
   }
@@ -250,8 +247,8 @@ class Graphics {
     }
   }
 
-  auto accel() const -> const Vector3f& { return accel_pos_; }
-  auto tilt() const -> const Vector3f& { return tilt_pos_; }
+  auto accel() const { return accel_pos_; }
+  auto tilt() const { return tilt_pos_; }
 
   auto PixelToVirtualX(float x) const -> float {
     if (tv_border_) {
@@ -262,6 +259,7 @@ class Graphics {
     }
     return x * (res_x_virtual_ / res_x_);
   }
+
   auto PixelToVirtualY(float y) const -> float {
     if (tv_border_) {
       // In this case, 0 to 1 in physical coords maps to -0.05f to 1.05f in
@@ -274,12 +272,12 @@ class Graphics {
 
   // FIXME: This should probably move to Renderer or AppAdapter once we
   // support switching renderers.
-  auto supports_high_quality_graphics() const -> bool {
+  auto supports_high_quality_graphics() const {
     assert(has_supports_high_quality_graphics_value_);
     return supports_high_quality_graphics_;
   }
   void SetSupportsHighQualityGraphics(bool s);
-  auto has_supports_high_quality_graphics_value() const -> bool {
+  auto has_supports_high_quality_graphics_value() const {
     return has_supports_high_quality_graphics_value_;
   }
 
@@ -287,7 +285,7 @@ class Graphics {
     internal_components_inited_ = val;
   }
   void set_gyro_vals(const Vector3f& vals) { gyro_vals_ = vals; }
-  auto show_net_info() const -> bool { return show_net_info_; }
+  auto show_net_info() const { return show_net_info_; }
   void set_show_net_info(bool val) { show_net_info_ = val; }
   auto GetDebugGraph(const std::string& name, bool smoothed) -> NetGraph*;
 
@@ -297,9 +295,7 @@ class Graphics {
 
   // For debugging: ensures that only transparent or opaque components
   // are submitted while enabled.
-  auto drawing_transparent_only() const -> bool {
-    return drawing_transparent_only_;
-  }
+  auto drawing_transparent_only() const { return drawing_transparent_only_; }
   void set_drawing_transparent_only(bool val) {
     drawing_transparent_only_ = val;
   }
@@ -310,7 +306,7 @@ class Graphics {
   /// Draw dev console or whatever else on top of normal stuff.
   virtual void DrawDevUI(FrameDef* frame_def);
 
-  auto drawing_opaque_only() const -> bool { return drawing_opaque_only_; }
+  auto drawing_opaque_only() const { return drawing_opaque_only_; }
   void set_drawing_opaque_only(bool val) { drawing_opaque_only_ = val; }
 
   // Handle testing values from _baclassic.value_test()
@@ -336,10 +332,10 @@ class Graphics {
   void DrawBoxingGlovesTest(FrameDef* frame_def);
   void DrawBlotches(FrameDef* frame_def);
   void DrawCursor(FrameDef* frame_def);
-  void DrawFades(FrameDef* frame_def, millisecs_t real_time);
+  void DrawFades(FrameDef* frame_def);
   void DrawDebugBuffers(RenderPass* pass);
 
-  void UpdateAndDrawProgressBar(FrameDef* frame_def, millisecs_t real_time);
+  void UpdateAndDrawProgressBar(FrameDef* frame_def);
   void DoDrawBlotch(std::vector<uint16_t>* indices,
                     std::vector<VertexSprite>* verts, const Vector3f& pos,
                     float size, float r, float g, float b, float a);
@@ -350,40 +346,55 @@ class Graphics {
   void ClearFrameDefDeleteList();
   void DrawProgressBar(RenderPass* pass, float opacity);
   void UpdateProgressBarProgress(float target);
-  void UpdateGyro(millisecs_t real_time, millisecs_t elapsed);
+  void UpdateGyro(microsecs_t time, microsecs_t elapsed);
 
-  GraphicsQuality last_frame_def_graphics_quality_{GraphicsQuality::kUnset};
   bool drawing_transparent_only_{};
   bool drawing_opaque_only_{};
+  bool has_supports_high_quality_graphics_value_{};
+  bool supports_high_quality_graphics_{};
+  bool internal_components_inited_{};
+  bool fade_out_{true};
+  bool progress_bar_{};
+  bool progress_bar_fade_in_{};
+  bool debug_draw_{};
+  bool network_debug_display_enabled_{};
+  bool hardware_cursor_visible_{};
+  bool camera_shake_disabled_{};
+  bool camera_gyro_explicitly_disabled_{};
+  bool gyro_enabled_{true};
+  bool show_fps_{};
+  bool show_ping_{};
+  bool show_net_info_{};
+  bool tv_border_{};
+  bool floor_reflection_{};
+  bool building_frame_def_{};
+  bool shadow_ortho_{};
+  bool fetched_overlay_node_z_depth_{};
+  bool gyro_broken_{};
+  GraphicsQuality last_frame_def_graphics_quality_{GraphicsQuality::kUnset};
   std::list<Object::Ref<PythonContextCall>> clean_frame_commands_;
   std::vector<MeshData*> mesh_data_creates_;
   std::vector<MeshData*> mesh_data_destroys_;
-  bool has_supports_high_quality_graphics_value_{};
-  bool supports_high_quality_graphics_{};
   millisecs_t last_create_frame_def_time_{};
   Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
   Vector2f shadow_scale_{1.0f, 1.0f};
-  bool shadow_ortho_ = false;
   Vector3f tint_{1.0f, 1.0f, 1.0f};
   Vector3f ambient_color_{1.0f, 1.0f, 1.0f};
   Vector3f vignette_outer_{0.0f, 0.0f, 0.0f};
   Vector3f vignette_inner_{1.0f, 1.0f, 1.0f};
   std::vector<FrameDef*> recycle_frame_defs_;
-  millisecs_t last_jitter_update_time_ = 0;
+  millisecs_t last_jitter_update_time_{};
   Vector3f jitter_{0.0f, 0.0f, 0.0f};
   Vector3f accel_smoothed_{0.0f, 0.0f, 0.0f};
   Vector3f accel_smoothed2_{0.0f, 0.0f, 0.0f};
   Vector3f accel_hi_pass_{0.0f, 0.0f, 0.0f};
   Vector3f accel_vel_{0.0f, 0.0f, 0.0f};
   Vector3f accel_pos_{0.0f, 0.0f, 0.0f};
-  Vector3f tilt_smoothed_ = {0.0f, 0.0f, 0.0f};
+  Vector3f tilt_smoothed_{0.0f, 0.0f, 0.0f};
   Vector3f tilt_vel_{0.0f, 0.0f, 0.0f};
   Vector3f tilt_pos_{0.0f, 0.0f, 0.0f};
-  bool gyro_broken_{};
   float gyro_mag_test_{};
-  bool fetched_overlay_node_z_depth_{};
   float overlay_node_z_depth_{};
-  bool internal_components_inited_{};
   Object::Ref<ImageMesh> screen_mesh_;
   Object::Ref<ImageMesh> progress_bar_bottom_mesh_;
   Object::Ref<ImageMesh> progress_bar_top_mesh_;
@@ -403,16 +414,9 @@ class Graphics {
   std::vector<VertexSprite> blotch_soft_verts_;
   std::vector<uint16_t> blotch_soft_obj_indices_;
   std::vector<VertexSprite> blotch_soft_obj_verts_;
-  bool show_fps_{};
-  bool show_ping_{};
-  bool show_net_info_{};
-  bool tv_border_{};
-  bool floor_reflection_{};
   std::map<std::string, Object::Ref<NetGraph>> debug_graphs_;
   std::mutex frame_def_delete_list_mutex_;
   std::vector<FrameDef*> frame_def_delete_list_;
-  bool debug_draw_{};
-  bool network_debug_display_enabled_{};
   Object::Ref<Camera> camera_;
   millisecs_t next_stat_update_time_{};
   int last_total_frames_rendered_{};
@@ -422,8 +426,6 @@ class Graphics {
   bool set_fade_start_on_next_draw_{};
   millisecs_t fade_start_{};
   millisecs_t fade_time_{};
-  bool fade_out_{true};
-  Object::Ref<PythonContextCall> fade_end_call_;
   float fade_{};
   Vector3f gyro_vals_{0.0f, 0.0, 0.0f};
   float res_x_{100};
@@ -431,25 +433,19 @@ class Graphics {
   float res_x_virtual_{100};
   float res_y_virtual_{100};
   int progress_bar_loads_{};
-  bool progress_bar_{};
-  bool progress_bar_fade_in_{};
   millisecs_t progress_bar_end_time_{-9999};
-  float progress_bar_progress_{};
   millisecs_t last_progress_bar_draw_time_{};
   millisecs_t last_progress_bar_start_time_{};
+  float progress_bar_progress_{};
   float screen_gamma_{1.0f};
   float shadow_lower_bottom_{-4.0f};
   float shadow_lower_top_{4.0f};
   float shadow_upper_bottom_{30.0f};
   float shadow_upper_top_{40.0f};
-  bool hardware_cursor_visible_{};
-  bool camera_shake_disabled_{};
-  bool camera_gyro_explicitly_disabled_{};
   millisecs_t last_cursor_visibility_event_time_{};
   int64_t frame_def_count_{1};
-  bool gyro_enabled_{true};
-  millisecs_t last_suppress_gyro_time_{};
-  int building_frame_def_{};
+  microsecs_t last_suppress_gyro_time_{};
+  Object::Ref<PythonContextCall> fade_end_call_;
 };
 
 }  // namespace ballistica::base
