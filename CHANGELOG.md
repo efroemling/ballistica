@@ -80,6 +80,14 @@
   and pop the transform stack based on C++ scoping instead of the old
   PushTransform/PopTransform. This should make it harder to accidentally break
   the transform stack with unbalanced components.
+- Fixes an issue related to incorrect die-message handling by hockey pucks (fix
+  #617). Thanks EraOSBeta!
+- Fixes an issue where clamped player-name would display incorrectly if extra
+  spaces are present (fix #618). Thanks vishal332008!
+- Fixes an issue where King of the Hill scoreboard did not display immediately
+  (fix #614). Thanks heLlow-step-sis!
+- Fixes an issue where CTF flag return counters could get stuck (fix #584).
+  Thanks SoK05 and Dliwk!
   
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)

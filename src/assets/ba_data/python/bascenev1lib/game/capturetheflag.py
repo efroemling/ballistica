@@ -483,9 +483,6 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
         except bs.NotFoundError:
             return
 
-        if not spaz.is_alive():
-            return
-
         player = spaz.getplayer(Player, True)
 
         if player:

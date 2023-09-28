@@ -445,9 +445,7 @@ class Spaz(bs.Actor):
         Called to 'press punch' on this spaz;
         used for player or AI connections.
         """
-        if (not self.node
-            or self.frozen
-            or self.node.knockout > 0.0):
+        if not self.node or self.frozen or self.node.knockout > 0.0:
             return
         t_ms = int(bs.time() * 1000.0)
         assert isinstance(t_ms, int)
@@ -487,10 +485,12 @@ class Spaz(bs.Actor):
         Called to 'press bomb' on this spaz;
         used for player or AI connections.
         """
-        if (not self.node
+        if (
+            not self.node
             or self._dead
             or self.frozen
-            or self.node.knockout > 0.0):
+            or self.node.knockout > 0.0
+        ):
             return
         t_ms = int(bs.time() * 1000.0)
         assert isinstance(t_ms, int)
