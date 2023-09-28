@@ -322,6 +322,8 @@
     <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_indexed_static_dynamic.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_non_indexed.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_renderer_data.h" />
+    <ClCompile Include="..\..\src\ballistica\base\graphics\mesh\nine_patch_mesh.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\nine_patch_mesh.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\sprite_mesh.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\mesh\text_mesh.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\text_mesh.h" />

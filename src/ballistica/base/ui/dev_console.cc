@@ -5,6 +5,7 @@
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
@@ -45,38 +46,34 @@ static auto XOffs(DevButtonAttach_ attach) -> float {
   return 0.0f;
 }
 
-static void DrawBasicButton(RenderPass* pass, TextGroup* tgrp, float tscale,
-                            float bottom, float x, float y, float width,
-                            float height, const Vector3f& fgcolor,
+static void DrawBasicButton(RenderPass* pass, Mesh* mesh, TextGroup* tgrp,
+                            float tscale, float bottom, float x, float y,
+                            float width, float height, const Vector3f& fgcolor,
                             const Vector3f& bgcolor) {
   SimpleComponent c(pass);
   c.SetTransparent(true);
   c.SetColor(bgcolor.x, bgcolor.y, bgcolor.z, 1.0f);
+  c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCircle));
+  {
+    auto xf = c.ScopedTransform();
+    c.Translate(x, y + bottom, kDevConsoleZDepth);
+    c.DrawMesh(mesh);
+  }
+  // Draw our text.
   {
     auto xf = c.ScopedTransform();
     c.Translate(x + width * 0.5f, y + bottom + height * 0.5f,
                 kDevConsoleZDepth);
-    // Draw our backing.
-    {
-      auto xf = c.ScopedTransform();
-      c.Scale(width, height);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
-    }
-    // Draw our text.
+    float sc{0.6f * tscale};
+    c.Scale(sc, sc, 1.0f);
+    int elem_count = tgrp->GetElementCount();
     c.SetColor(fgcolor.x, fgcolor.y, fgcolor.z, 1.0f);
     c.SetFlatness(1.0f);
-    int elem_count = tgrp->GetElementCount();
     for (int e = 0; e < elem_count; e++) {
       c.SetTexture(tgrp->GetElementTexture(e));
-      {
-        auto xf = c.ScopedTransform();
-        float sc{0.6f * tscale};
-        c.Scale(sc, sc, 1.0f);
-        c.DrawMesh(tgrp->GetElementMesh(e));
-      }
+      c.DrawMesh(tgrp->GetElementMesh(e));
     }
   }
-  c.Submit();
 }
 
 /// Super-simple widget type for populating dev-console
@@ -98,6 +95,7 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
   float height;
   bool pressed{};
   Object::Ref<Runnable> call;
+  NinePatchMesh mesh;
   TextGroup text_group;
   float text_scale;
 
@@ -110,7 +108,8 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
         width{width},
         height{height},
         call{NewLambdaRunnable(lambda)},
-        text_scale{text_scale} {
+        text_scale{text_scale},
+        mesh(0.0f, 0.0f, 0.0f, width, height, 0.1f, 0.3f, 0.1f, 0.3f) {
     text_group.SetText(label, TextMesh::HAlign::kCenter,
                        TextMesh::VAlign::kCenter);
   }
@@ -141,8 +140,8 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
 
   void Draw(RenderPass* pass, float bottom) override {
     DrawBasicButton(
-        pass, &text_group, text_scale, bottom, x + XOffs(attach), y, width,
-        height,
+        pass, &mesh, &text_group, text_scale, bottom, x + XOffs(attach), y,
+        width, height,
         pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.8f, 0.7f, 0.8f},
         pressed ? Vector3f{0.8f, 0.7f, 0.8f} : Vector3f{0.25, 0.2f, 0.3f});
   }
@@ -159,6 +158,7 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
   bool on{};
   Object::Ref<Runnable> on_call;
   Object::Ref<Runnable> off_call;
+  NinePatchMesh mesh;
   TextGroup text_group;
   float text_scale;
 
@@ -173,7 +173,8 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
         height{height},
         on_call{NewLambdaRunnable(on_call)},
         off_call{NewLambdaRunnable(off_call)},
-        text_scale{text_scale} {
+        text_scale{text_scale},
+        mesh(0.0f, 0.0f, 0.0f, width, height, 0.1f, 0.3f, 0.1f, 0.3f) {
     text_group.SetText(label, TextMesh::HAlign::kCenter,
                        TextMesh::VAlign::kCenter);
   }
@@ -205,8 +206,8 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
   }
 
   void Draw(RenderPass* pass, float bottom) override {
-    DrawBasicButton(pass, &text_group, text_scale, bottom, x + XOffs(attach), y,
-                    width, height,
+    DrawBasicButton(pass, &mesh, &text_group, text_scale, bottom,
+                    x + XOffs(attach), y, width, height,
                     pressed ? Vector3f{1.0f, 1.0f, 1.0f}
                     : on    ? Vector3f{1.0f, 1.0f, 1.0f}
                             : Vector3f{0.8f, 0.7f, 0.8f},
@@ -227,6 +228,7 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
   bool selected{};
   Object::Ref<Runnable> call;
   TextGroup text_group;
+  NinePatchMesh mesh;
   float text_scale;
 
   template <typename F>
@@ -240,7 +242,8 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
         width{width},
         height{height},
         call{NewLambdaRunnable(call)},
-        text_scale{text_scale} {
+        text_scale{text_scale},
+        mesh(0.0f, 0.0f, 0.0f, width, height, 0.1f, 0.3f, 0.1f, 0.0f) {
     text_group.SetText(label, TextMesh::HAlign::kCenter,
                        TextMesh::VAlign::kCenter);
   }
@@ -270,8 +273,8 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
   }
 
   void Draw(RenderPass* pass, float bottom) override {
-    DrawBasicButton(pass, &text_group, text_scale, bottom, x + XOffs(attach), y,
-                    width, height,
+    DrawBasicButton(pass, &mesh, &text_group, text_scale, bottom,
+                    x + XOffs(attach), y, width, height,
                     pressed    ? Vector3f{1.0f, 1.0f, 1.0f}
                     : selected ? Vector3f{1.0f, 1.0f, 1.0f}
                                : Vector3f{0.8f, 0.7f, 0.8f},

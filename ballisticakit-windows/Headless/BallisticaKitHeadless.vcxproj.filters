@@ -415,6 +415,12 @@
     <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_renderer_data.h">
       <Filter>ballistica\base\graphics\mesh</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\mesh\nine_patch_mesh.cc">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\nine_patch_mesh.h">
+      <Filter>ballistica\base\graphics\mesh</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\sprite_mesh.h">
       <Filter>ballistica\base\graphics\mesh</Filter>
     </ClInclude>
