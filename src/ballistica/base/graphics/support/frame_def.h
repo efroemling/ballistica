@@ -47,10 +47,18 @@ class FrameDef {
     return static_cast<double>(app_time_microsecs_) / 1000000.0;
   }
 
-  // A number incremented for each frame renderered. Try to avoid using this
-  // for drawing flashes/etc. since framerates can vary a lot these days; a
-  // 30hz flash will look a lot different than a 240hz one.
-  auto frame_number() const -> int64_t { return frame_number_; }
+  // A number incremented for each frame renderered. Note that graphics code
+  // should not plug this directly into things like flash calculations since
+  // frame-rates will vary a lot these days. A 30hz flash will look a lot
+  // different than a 240hz flash. Use frame_number_filtered() for such
+  // purposes.
+  auto frame_number() const { return frame_number_; }
+
+  // A number incremented for each frame rendered, but a maximum of 60 times
+  // per second. Code for drawing flashes or other exact effects should use
+  // this value instead of regular frame_number so that things don't turn
+  // muddy at extremely high frame rates.
+  auto frame_number_filtered() const { return frame_number_filtered_; }
 
   // Returns the display-time this frame-def was created at (tries to match
   // real time but is incremented more smoothly so is better for drawing
@@ -134,6 +142,7 @@ class FrameDef {
     display_time_microsecs_ = val;
   }
   void set_frame_number(int64_t val) { frame_number_ = val; }
+  void set_frame_number_filtered(int64_t val) { frame_number_filtered_ = val; }
 
   auto overlay_flat_pass() const -> RenderPass* {
     return overlay_flat_pass_.get();
@@ -234,6 +243,7 @@ class FrameDef {
   microsecs_t display_time_microsecs_{};
   microsecs_t display_time_elapsed_microsecs_{};
   int64_t frame_number_{};
+  int64_t frame_number_filtered_{};
   Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
   Vector2f shadow_scale_{1.0f, 1.0f};
   Vector3f tint_{1.0f, 1.0f, 1.0f};

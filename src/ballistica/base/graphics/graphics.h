@@ -443,7 +443,9 @@ class Graphics {
   float shadow_upper_bottom_{30.0f};
   float shadow_upper_top_{40.0f};
   millisecs_t last_cursor_visibility_event_time_{};
-  int64_t frame_def_count_{1};
+  microsecs_t next_frame_number_filtered_increment_time_{};
+  int64_t frame_def_count_{};
+  int64_t frame_def_count_filtered_{};
   microsecs_t last_suppress_gyro_time_{};
   Object::Ref<PythonContextCall> fade_end_call_;
 };

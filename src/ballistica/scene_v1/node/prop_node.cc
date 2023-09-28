@@ -114,7 +114,7 @@ void PropNode::Draw(base::FrameDef* frame_def) {
     c.SetReflectionScale(reflection_scale_r_, reflection_scale_g_,
                          reflection_scale_b_);
   }
-  if (flashing_ && frame_def->frame_number() % 10 < 5) {
+  if (flashing_ && frame_def->frame_number_filtered() % 10 < 5) {
     c.SetColor(1.2f, 1.2f, 1.2f);
   }
   {
@@ -185,7 +185,7 @@ void PropNode::Draw(base::FrameDef* frame_def) {
           c2.SetPremultiplied(true);
           c2.SetTexture(color_texture_.Exists() ? color_texture_->texture_data()
                                                 : nullptr);
-          if (flashing_ && frame_def->frame_number() % 10 < 5) {
+          if (flashing_ && frame_def->frame_number_filtered() % 10 < 5) {
             c2.SetColor(0.026f * s_density, 0.026f * s_density,
                         0.026f * s_density, 0.0f);
           } else {

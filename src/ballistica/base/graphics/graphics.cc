@@ -1122,9 +1122,26 @@ void Graphics::BuildAndPushFrameDef() {
   // Store how much time this frame_def represents.
   auto display_time_microsecs = g_base->logic->display_time_microsecs();
 
-  millisecs_t elapsed_microsecs = std::min(
-      millisecs_t{50000}, display_time_microsecs - last_create_frame_def_time_);
+  // Clamp a frame-def's elapsed time to 1/10th of a second even if it has
+  // been longer than that since the last. Don't want things like
+  // motion-blur to get out of control.
+  millisecs_t elapsed_microsecs =
+      std::min(microsecs_t{100000},
+               display_time_microsecs - last_create_frame_def_time_);
   last_create_frame_def_time_ = display_time_microsecs;
+
+  frame_def_count_++;
+
+  // Update our filtered frame-number (clamped at 60hz so it can be used
+  // for drawing without looking wonky at high frame rates).
+  if (display_time_microsecs >= next_frame_number_filtered_increment_time_) {
+    frame_def_count_filtered_ += 1;
+    // Schedule the next increment for 1/60th of a second after the last (or
+    // now, whichever is later).
+    next_frame_number_filtered_increment_time_ =
+        std::max(display_time_microsecs,
+                 next_frame_number_filtered_increment_time_ + 1000000 / 60);
+  }
 
   // This probably should not be here. Though I guess we get the most
   // up-to-date values possible this way. But it should probably live in
@@ -1136,7 +1153,8 @@ void Graphics::BuildAndPushFrameDef() {
   frame_def->set_display_time_microsecs(
       g_base->logic->display_time_microsecs());
   frame_def->set_display_time_elapsed_microsecs(elapsed_microsecs);
-  frame_def->set_frame_number(frame_def_count_++);
+  frame_def->set_frame_number(frame_def_count_);
+  frame_def->set_frame_number_filtered(frame_def_count_filtered_);
 
   if (!internal_components_inited_) {
     InitInternalComponents(frame_def);

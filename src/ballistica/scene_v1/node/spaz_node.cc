@@ -4672,7 +4672,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
 #endif  // BA_OSTYPE_MACOS
 
   millisecs_t scenetime = scene()->time();
-  int64_t render_frame_count = frame_def->frame_number();
+  int64_t render_frame_count = frame_def->frame_number_filtered();
   auto* beauty_pass = frame_def->beauty_pass();
 
   float death_fade = 1.0f;
@@ -4704,7 +4704,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
 
   // Invincible! flash white.
   if (invincible_) {
-    if (frame_def->frame_number() % 6 < 3) {
+    if (frame_def->frame_number_filtered() % 6 < 3) {
       add_color[0] = 0.12f;
       add_color[1] = 0.22f;
       add_color[2] = 0.0f;

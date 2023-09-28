@@ -1,4 +1,4 @@
-### 1.7.28 (build 21391, api 8, 2023-09-28)
+### 1.7.28 (build 21393, api 8, 2023-09-28)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -27,6 +27,8 @@
 - Debug speed adjustments are now Ctrl-plus or Ctrl-minus instead of just plus
   or minus. This makes these safer in case we want to enable them in regular
   builds at some point.
+- Flashing things in the game (powerups about to disappear, etc.) now flash at a
+  consistent rate even on high frame rate setups.
 - Renamed Console to DevConsole, and added an option under advanced settings to
   always show a 'dev' button onscreen which can be used to toggle it. The
   backtick key still works also for anyone with a keyboard. I plan to add more
