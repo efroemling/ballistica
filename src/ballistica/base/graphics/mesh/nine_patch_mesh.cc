@@ -2,12 +2,22 @@
 
 #include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 
+#include "ballistica/shared/foundation/macros.h"
+
 namespace ballistica::base {
 
 NinePatchMesh::NinePatchMesh(float x, float y, float z, float width,
                              float height, float border_left,
                              float border_bottom, float border_right,
                              float border_top) {
+  if (g_buildconfig.debug_build()) {
+    if ((border_bottom < 0.0f || border_top < 0.0f
+         || (border_bottom + border_top) > 1.0f)
+        || (border_left < 0.0f || border_right < 0.0f
+            || (border_left + border_right) > 1.0f)) {
+      BA_LOG_ONCE(LogLevel::kWarning, "Invalid nine-patch values provided.");
+    }
+  }
   // Statically allocate enough for a full 9 patches even though we may
   // not use them all (in cases of size 0 borders).
   VertexSimpleFull verts[16];  // 4 vertical * 4 horizontal slices.
