@@ -19,6 +19,9 @@ if TYPE_CHECKING:
     from typing import Any, Sequence, Callable
 
 POWERUP_WEAR_OFF_TIME = 20000
+
+# Obsolete - just used for demo guy now.
+BASE_PUNCH_POWER_SCALE = 1.2
 BASE_PUNCH_COOLDOWN = 400
 
 
@@ -95,7 +98,7 @@ class Spaz(bs.Actor):
         self.source_player = source_player
         self._dead = False
         if self._demo_mode:  # Preserve old behavior.
-            self._punch_power_scale = 1.2
+            self._punch_power_scale = BASE_PUNCH_POWER_SCALE
         else:
             self._punch_power_scale = factory.punch_power_scale
         self.fly = bs.getactivity().globalsnode.happy_thoughts_mode
@@ -189,7 +192,7 @@ class Spaz(bs.Actor):
         self.land_mine_count = 0
         self.blast_radius = 2.0
         self.powerups_expire = powerups_expire
-        if self._demo_mode:  # preserve old behavior
+        if self._demo_mode:  # Preserve old behavior.
             self._punch_cooldown = BASE_PUNCH_COOLDOWN
         else:
             self._punch_cooldown = factory.punch_cooldown
@@ -442,7 +445,9 @@ class Spaz(bs.Actor):
         Called to 'press punch' on this spaz;
         used for player or AI connections.
         """
-        if not self.node or self.frozen or self.node.knockout > 0.0:
+        if (not self.node
+            or self.frozen
+            or self.node.knockout > 0.0):
             return
         t_ms = int(bs.time() * 1000.0)
         assert isinstance(t_ms, int)
@@ -482,12 +487,10 @@ class Spaz(bs.Actor):
         Called to 'press bomb' on this spaz;
         used for player or AI connections.
         """
-        if not self.node:
-            return
-
-        if self._dead or self.frozen:
-            return
-        if self.node.knockout > 0.0:
+        if (not self.node
+            or self._dead
+            or self.frozen
+            or self.node.knockout > 0.0):
             return
         t_ms = int(bs.time() * 1000.0)
         assert isinstance(t_ms, int)
@@ -514,15 +517,14 @@ class Spaz(bs.Actor):
         """
         if not self.node:
             return
-
         t_ms = int(bs.time() * 1000.0)
         assert isinstance(t_ms, int)
         self.last_run_time_ms = t_ms
         self.node.run = value
 
-        # filtering these events would be tough since its an analog
+        # Filtering these events would be tough since its an analog
         # value, but lets still pass full 0-to-1 presses along to
-        # the turbo filter to punish players if it looks like they're turbo-ing
+        # the turbo filter to punish players if it looks like they're turbo-ing.
         if self._last_run_value < 0.01 and value > 0.99:
             self._turbo_filter_add_press('run')
 
@@ -535,7 +537,7 @@ class Spaz(bs.Actor):
         """
         if not self.node:
             return
-        # not adding a cooldown time here for now; slightly worried
+        # Not adding a cooldown time here for now; slightly worried
         # input events get clustered up during net-games and we'd wind up
         # killing a lot and making it hard to fly.. should look into this.
         self.node.fly_pressed = True
@@ -610,7 +612,7 @@ class Spaz(bs.Actor):
                         self.node, attr, materials + (factory.curse_material,)
                     )
 
-            # None specifies no time limit
+            # None specifies no time limit.
             assert self.node
             if self.curse_time is None:
                 self.node.curse_death_time = -1
@@ -878,7 +880,7 @@ class Spaz(bs.Actor):
                 self.node.frozen = True
                 bs.timer(5.0, bs.WeakCall(self.handlemessage, bs.ThawMessage()))
                 # Instantly shatter if we're already dead.
-                # (otherwise its hard to tell we're dead)
+                # (otherwise its hard to tell we're dead).
                 if self.hitpoints <= 0:
                     self.shatter()
 
@@ -898,7 +900,7 @@ class Spaz(bs.Actor):
                 return True
 
             # If we were recently hit, don't count this as another.
-            # (so punch flurries and bomb pileups essentially count as 1 hit)
+            # (so punch flurries and bomb pileups essentially count as 1 hit).
             local_time = int(bs.time() * 1000.0)
             assert isinstance(local_time, int)
             if (
@@ -1133,11 +1135,11 @@ class Spaz(bs.Actor):
                 )
             if self.hitpoints > 0:
                 # It's kinda crappy to die from impacts, so lets reduce
-                # impact damage by a reasonable amount *if* it'll keep us alive
+                # impact damage by a reasonable amount *if* it'll keep us alive.
                 if msg.hit_type == 'impact' and damage > self.hitpoints:
                     # Drop damage to whatever puts us at 10 hit points,
                     # or 200 less than it used to be whichever is greater
-                    # (so it *can* still kill us if its high enough)
+                    # (so it *can* still kill us if its high enough).
                     newdamage = max(damage - 200, self.hitpoints - 10)
                     damage = newdamage
                 self.node.handlemessage('flash')
