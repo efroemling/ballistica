@@ -22,19 +22,6 @@
 
 namespace ballistica::base {
 
-// Calc border values for a nine-patch based on dimensions and a desired max
-// corner radius.
-static auto CalcBorder_(float corner_radius, float matching_dimension,
-                        float other_dimension) -> float {
-  // Limit the radius to no more than half the shortest side.
-  corner_radius = std::min(
-      corner_radius, std::min(matching_dimension, other_dimension) * 0.5f);
-  if (corner_radius < 0.0001f) {
-    return 0.0f;
-  }
-  return corner_radius / matching_dimension;
-}
-
 // How much of the screen the console covers when it is at full size.
 const float kDevConsoleSize = 0.9f;
 const int kDevConsoleLineLimit = 80;
@@ -125,10 +112,14 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
         call{NewLambdaRunnable(lambda)},
         text_scale{text_scale},
         mesh(0.0f, 0.0f, 0.0f, width, height,
-             CalcBorder_(kDevConsoleButtonCornerRadius, width, height),
-             CalcBorder_(kDevConsoleButtonCornerRadius, height, width),
-             CalcBorder_(kDevConsoleButtonCornerRadius, width, height),
-             CalcBorder_(kDevConsoleButtonCornerRadius, height, width)) {
+             NinePatchMesh::BorderForRadius(kDevConsoleButtonCornerRadius,
+                                            width, height),
+             NinePatchMesh::BorderForRadius(kDevConsoleButtonCornerRadius,
+                                            height, width),
+             NinePatchMesh::BorderForRadius(kDevConsoleButtonCornerRadius,
+                                            width, height),
+             NinePatchMesh::BorderForRadius(kDevConsoleButtonCornerRadius,
+                                            height, width)) {
     text_group.SetText(label, TextMesh::HAlign::kCenter,
                        TextMesh::VAlign::kCenter);
   }
@@ -194,10 +185,14 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
         off_call{NewLambdaRunnable(off_call)},
         text_scale{text_scale},
         mesh(0.0f, 0.0f, 0.0f, width, height,
-             CalcBorder_(kDevConsoleButtonCornerRadius, width, height),
-             CalcBorder_(kDevConsoleButtonCornerRadius, height, width),
-             CalcBorder_(kDevConsoleButtonCornerRadius, width, height),
-             CalcBorder_(kDevConsoleButtonCornerRadius, height, width)) {
+             NinePatchMesh::BorderForRadius(kDevConsoleButtonCornerRadius,
+                                            width, height),
+             NinePatchMesh::BorderForRadius(kDevConsoleButtonCornerRadius,
+                                            height, width),
+             NinePatchMesh::BorderForRadius(kDevConsoleButtonCornerRadius,
+                                            width, height),
+             NinePatchMesh::BorderForRadius(kDevConsoleButtonCornerRadius,
+                                            height, width)) {
     text_group.SetText(label, TextMesh::HAlign::kCenter,
                        TextMesh::VAlign::kCenter);
   }
@@ -267,9 +262,12 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
         call{NewLambdaRunnable(call)},
         text_scale{text_scale},
         mesh(0.0f, 0.0f, 0.0f, width, height,
-             CalcBorder_(kDevConsoleTabButtonCornerRadius, width, height),
-             CalcBorder_(kDevConsoleTabButtonCornerRadius, height, width),
-             CalcBorder_(kDevConsoleTabButtonCornerRadius, width, height),
+             NinePatchMesh::BorderForRadius(kDevConsoleTabButtonCornerRadius,
+                                            width, height),
+             NinePatchMesh::BorderForRadius(kDevConsoleTabButtonCornerRadius,
+                                            height, width),
+             NinePatchMesh::BorderForRadius(kDevConsoleTabButtonCornerRadius,
+                                            width, height),
              0.0f) {
     text_group.SetText(label, TextMesh::HAlign::kCenter,
                        TextMesh::VAlign::kCenter);

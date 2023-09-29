@@ -6,6 +6,18 @@
 
 namespace ballistica::base {
 
+auto NinePatchMesh::BorderForRadius(float corner_radius,
+                                    float matching_dimension,
+                                    float other_dimension) -> float {
+  // Limit the radius to no more than half the shortest side.
+  corner_radius = std::min(
+      corner_radius, std::min(matching_dimension, other_dimension) * 0.5f);
+  if (corner_radius < 0.0001f) {
+    return 0.0f;
+  }
+  return corner_radius / matching_dimension;
+}
+
 NinePatchMesh::NinePatchMesh(float x, float y, float z, float width,
                              float height, float border_left,
                              float border_bottom, float border_right,
