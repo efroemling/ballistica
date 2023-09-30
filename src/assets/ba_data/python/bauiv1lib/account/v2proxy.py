@@ -131,14 +131,17 @@ class V2ProxySignInWindow(bui.Window):
         else:
             bui.textwidget(
                 parent=self._root_widget,
-                position=(self._width * 0.5, self._height - 145),
-                size=(0, 0),
+                position=(self._width * 0.5 - 200, self._height - 180),
+                size=(button_width - 50, 50),
                 text=bui.Lstr(value=address_pretty),
                 flatness=1.0,
                 maxwidth=self._width,
                 scale=0.75,
                 h_align='center',
                 v_align='center',
+                autoselect=True,
+                on_activate_call=bui.Call(self._copy_link, address_pretty),
+                selectable=True,
             )
             qroffs = 20.0
 
@@ -230,6 +233,14 @@ class V2ProxySignInWindow(bui.Window):
         del response  # Not used.
         # We could do something smart like retry on exceptions here, but
         # this isn't critical so we'll just let anything slide.
+
+    def _copy_link(self, link: str) -> None:
+        if bui.clipboard_is_supported():
+            bui.clipboard_set_text(link)
+            bui.screenmessage(
+                bui.Lstr(resource='copyConfirmText'),
+                color=(0, 1, 0)
+            )
 
     def _done(self) -> None:
         bui.containerwidget(edit=self._root_widget, transition='out_scale')
