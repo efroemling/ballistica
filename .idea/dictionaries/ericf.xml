@@ -2974,6 +2974,7 @@
       <w>templatefs</w>
       <w>tenum</w>
       <w>termcolors</w>
+      <w>termenv</w>
       <w>termios</w>
       <w>testbuffer</w>
       <w>testbuild</w>

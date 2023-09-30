@@ -5,6 +5,7 @@
 
 #if BA_ENABLE_OPENGL
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics_server.h"
 
@@ -46,7 +47,7 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
 
   void Load(bool force_low_quality = false) {
     if (loaded_) return;
-    assert(g_base->InGraphicsThread());
+    assert(g_base->app_adapter->InGraphicsContext());
     BA_DEBUG_CHECK_GL_ERROR;
     GLenum status;
     BA_DEBUG_CHECK_GL_ERROR;
@@ -246,7 +247,7 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
   }
 
   void Unload() {
-    assert(g_base->InGraphicsThread());
+    assert(g_base->app_adapter->InGraphicsContext());
     if (!loaded_) return;
 
     // If our textures are currently bound as anything, clear that out.
@@ -288,7 +289,7 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
   }
 
   void Bind() {
-    assert(g_base->InGraphicsThread());
+    assert(g_base->app_adapter->InGraphicsContext());
     renderer_->BindFramebuffer(framebuffer_);
     // if (time(nullptr)%2 == 0) {
     //   glDisable(GL_FRAMEBUFFER_SRGB);

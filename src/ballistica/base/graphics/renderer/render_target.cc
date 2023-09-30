@@ -2,12 +2,13 @@
 
 #include "ballistica/base/graphics/renderer/render_target.h"
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/graphics/graphics_server.h"
 
 namespace ballistica::base {
 
 RenderTarget::RenderTarget(Type type) : type_(type) {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 }
 
 RenderTarget::~RenderTarget() = default;

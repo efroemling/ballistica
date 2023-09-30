@@ -23,7 +23,7 @@ class RendererGL::RenderTargetGL : public RenderTarget {
 
   void DrawBegin(bool must_clear_color, float clear_r, float clear_g,
                  float clear_b, float clear_a) override {
-    assert(g_base->InGraphicsThread());
+    assert(g_base->app_adapter->InGraphicsContext());
     BA_DEBUG_CHECK_GL_ERROR;
 
     Bind();
@@ -94,7 +94,7 @@ class RendererGL::RenderTargetGL : public RenderTarget {
   // Screen constructor.
   explicit RenderTargetGL(RendererGL* renderer)
       : RenderTarget(Type::kScreen), renderer_(renderer) {
-    assert(g_base->InGraphicsThread());
+    assert(g_base->app_adapter->InGraphicsContext());
     depth_ = true;
 
     // This will update our width/height values.
@@ -106,7 +106,7 @@ class RendererGL::RenderTargetGL : public RenderTarget {
                  bool linear_interp, bool depth, bool texture,
                  bool depth_texture, bool high_quality, bool msaa, bool alpha)
       : RenderTarget(Type::kFramebuffer), renderer_(renderer) {
-    assert(g_base->InGraphicsThread());
+    assert(g_base->app_adapter->InGraphicsContext());
     BA_DEBUG_CHECK_GL_ERROR;
     framebuffer_ = Object::New<FramebufferObjectGL>(
         renderer, width, height, linear_interp, depth, texture, depth_texture,

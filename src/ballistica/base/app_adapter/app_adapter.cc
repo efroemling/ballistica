@@ -100,75 +100,6 @@ void AppAdapter::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 void AppAdapter::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
 void AppAdapter::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
 
-// void AppAdapter::DrawFrame(bool during_resize) {
-//   assert(g_base->InGraphicsThread());
-
-//   // It's possible to be asked to draw before we're ready.
-//   if (!g_base->graphics_server || !g_base->graphics_server->renderer()) {
-//     return;
-//   }
-
-//   millisecs_t starttime = g_core->GetAppTimeMillisecs();
-
-//   // A resize-draw event means that we're drawing due to a window resize.
-//   // In this case we ignore regular draw events for a short while
-//   // afterwards which makes resizing smoother.
-//   //
-//   // FIXME: should figure out the *correct* way to handle this; I believe
-//   //  the underlying cause here is some sort of context contention across
-//   //  threads.
-//   if (during_resize) {
-//     last_resize_draw_event_time_ = starttime;
-//   } else {
-//     if (starttime - last_resize_draw_event_time_ < (1000 / 30)) {
-//       return;
-//     }
-//   }
-//   g_base->graphics_server->TryRender();
-//   // RunRenderUpkeepCycle();
-// }
-
-// void AppAdapter::RunRenderUpkeepCycle() {
-//   // This should only be firing if the OS is handling the event loop.
-//   assert(!ManagesMainThreadEventLoop());
-
-//   // Pump the main event loop (when we're being driven by frame-draw
-//   // callbacks, this is the only place that gets done).
-//   g_core->main_event_loop()->RunSingleCycle();
-
-//   // Now do the general app event cycle for whoever needs to process things.
-//   // FIXME KILL THIS.
-//   RunEvents();
-// }
-
-// FIXME KILL THIS.
-// void AppAdapter::RunEvents() {
-// There's probably a better place for this.
-// g_base->stress_test()->Update();
-
-// Give platforms a chance to pump/handle their own events.
-//
-// FIXME: now that we have app class overrides, platform should really not
-// be doing event handling. (need to fix Rift build in this regard).
-// g_core->platform->RunEvents();
-// }
-
-// void AppAdapter::UpdatePauseResume_() {
-//   if (app_paused_) {
-//     // Unpause if no one wants pause.
-//     if (!app_pause_requested_) {
-//       OnAppResume_();
-//       app_paused_ = false;
-//     }
-//   } else {
-//     // OnAppPause if anyone wants.
-//     if (app_pause_requested_) {
-//       OnAppPause_();
-//       app_paused_ = true;
-//     }
-//   }
-// }
-
 void AppAdapter::OnAppPause_() {
   assert(g_core->InMainThread());
 
@@ -188,7 +119,6 @@ void AppAdapter::OnAppPause_() {
 
 void AppAdapter::OnAppResume_() {
   assert(g_core->InMainThread());
-  // last_app_resume_time_ = g_core->GetAppTimeMillisecs();
 
   // Spin all event-loops back up.
   EventLoop::SetEventLoopsPaused(false);
@@ -234,6 +164,7 @@ void AppAdapter::PauseApp() {
       "PauseApp@" + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
   // assert(!app_pause_requested_);
   // app_pause_requested_ = true;
+  app_paused_ = true;
   OnAppPause_();
   // UpdatePauseResume_();
 
@@ -285,6 +216,7 @@ void AppAdapter::ResumeApp() {
   // assert(app_pause_requested_);
   // app_pause_requested_ = false;
   // UpdatePauseResume_();
+  app_paused_ = false;
   OnAppResume_();
   if (g_buildconfig.debug_build()) {
     Log(LogLevel::kDebug,
@@ -308,5 +240,13 @@ auto AppAdapter::CanToggleFullscreen() -> bool const { return false; }
 auto AppAdapter::SupportsVSync() -> bool const { return false; }
 
 auto AppAdapter::SupportsMaxFPS() -> bool const { return false; }
+
+/// As a default, allow graphics stuff in the main thread.
+auto AppAdapter::InGraphicsContext() -> bool { return g_core->InMainThread(); }
+
+/// As a default, assume our main thread *is* our graphics context.
+void AppAdapter::DoPushGraphicsContextRunnable(Runnable* runnable) {
+  DoPushMainThreadRunnable(runnable);
+}
 
 }  // namespace ballistica::base

@@ -17,7 +17,7 @@ auto AppAdapterVR::ManagesMainThreadEventLoop() const -> bool { return false; }
 
 void AppAdapterVR::PushVRSimpleRemoteStateCall(
     const VRSimpleRemoteState& state) {
-  g_base->app_adapter->PushMainThreadCall([this, state] {
+  g_base->app_adapter->PushGraphicsContextCall([this, state] {
     // Convert this to a full hands state, adding in some simple elbow
     // positioning of our own and left/right.
     VRHandsState s;
@@ -48,7 +48,7 @@ void AppAdapterVR::VRPreDraw() {
       || !g_base->graphics_server->renderer()) {
     return;
   }
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   // FIXME - this is internal graphics-server details that the render-server
   // should handle.
   Log(LogLevel::kWarning, "FIXME: Have GraphicsServer handle VR drawing.");
@@ -65,7 +65,7 @@ void AppAdapterVR::VRPreDraw() {
 }
 
 void AppAdapterVR::VRPostDraw() {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   if (!g_base || !g_base->graphics_server
       || !g_base->graphics_server->renderer()) {
     return;
@@ -80,14 +80,14 @@ void AppAdapterVR::VRPostDraw() {
 
 void AppAdapterVR::VRSetHead(float tx, float ty, float tz, float yaw,
                              float pitch, float roll) {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   Renderer* renderer = g_base->graphics_server->renderer();
   if (renderer == nullptr) return;
   renderer->VRSetHead(tx, ty, tz, yaw, pitch, roll);
 }
 
 void AppAdapterVR::VRSetHands(const VRHandsState& state) {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   // Pass this along to the renderer (in this same thread) for drawing (so
   // hands can be drawn at their absolute most up-to-date positions, etc).
@@ -114,7 +114,7 @@ void AppAdapterVR::VRDrawEye(int eye, float yaw, float pitch, float roll,
       || !g_base->graphics_server->renderer()) {
     return;
   }
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   if (vr_render_frame_def_) {
     // Set up VR eye stuff.
     Renderer* renderer = g_base->graphics_server->renderer();

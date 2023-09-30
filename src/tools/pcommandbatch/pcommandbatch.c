@@ -412,6 +412,41 @@ int calc_paths_(struct Context_* ctx) {
   return 0;
 }
 
+int color_enabled() {
+  // This logic here should line up with how the 'color_enabled' val in
+  // efro.terminal is calculated.
+
+  // Allow explict enabling/disabling via this env var.
+  const char* env = getenv("EFRO_TERMCOLORS");
+  if (env && !strcmp(env, "1")) {
+    return 1;
+  }
+  if (env && !strcmp(env, "0")) {
+    return 0;
+  }
+
+  env = getenv("TERM");
+
+  // If TERM is unset, don't attempt color (this is currently the case
+  // in xcode).
+  if (!env) {
+    return 0;
+  }
+
+  // A common way to say the terminal can't do fancy stuff like color.
+  if (env && !(strcmp(env, "dumb"))) {
+    return 0;
+  }
+
+  // If our stdout is not attached to a terminal, go with no-color.
+  if (!isatty(1)) {
+    return 0;
+  }
+
+  // We seem to be a terminal with color support; let's do it!
+  return 1;
+}
+
 int send_command_(struct Context_* ctx, int argc, char** argv) {
   // Build a json array of our args.
   cJSON* req = cJSON_CreateObject();
@@ -420,10 +455,8 @@ int send_command_(struct Context_* ctx, int argc, char** argv) {
     cJSON_AddItemToArray(array, cJSON_CreateString(argv[i]));
   }
   cJSON_AddItemToObject(req, "a", array);
-  cJSON_AddItemToObject(req, "t",
-                        isatty(1) ? cJSON_CreateTrue() : cJSON_CreateFalse());
-  cJSON_AddItemToObject(req, "t",
-                        isatty(1) ? cJSON_CreateTrue() : cJSON_CreateFalse());
+  cJSON_AddItemToObject(
+      req, "c", color_enabled() ? cJSON_CreateTrue() : cJSON_CreateFalse());
   char* json_out = cJSON_Print(req);
 
   // Send our command.
@@ -466,7 +499,6 @@ int handle_response_(const struct Context_* ctx) {
     return -1;
   }
 
-
   cJSON* result_dict = cJSON_Parse(inbuf);
 
   if (!result_dict) {
@@ -474,7 +506,7 @@ int handle_response_(const struct Context_* ctx) {
         stderr,
         "Error: pcommandbatch client %s_%d (pid %d): failed to parse result "
         "value: %s\n",
-            ctx->instance_prefix, ctx->instance_num, ctx->pid, inbuf);
+        ctx->instance_prefix, ctx->instance_num, ctx->pid, inbuf);
     free(inbuf);
     return -1;
   } else {

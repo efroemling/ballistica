@@ -27,7 +27,7 @@ class RendererGL::MeshDataGL : public MeshRendererData {
       : renderer_(renderer),
         uses_secondary_data_(static_cast<bool>(flags & kUsesSecondaryBuffer)),
         uses_index_data_(static_cast<bool>(flags & kUsesIndexBuffer)) {
-    assert(g_base->InGraphicsThread());
+    assert(g_base->app_adapter->InGraphicsContext());
     BA_DEBUG_CHECK_GL_ERROR;
 
     // Create our vertex array to hold all this state.
@@ -85,7 +85,7 @@ class RendererGL::MeshDataGL : public MeshRendererData {
   }
 
   ~MeshDataGL() override {
-    assert(g_base->InGraphicsThread());
+    assert(g_base->app_adapter->InGraphicsContext());
     // Unbind if we're bound; otherwise we might prevent a new vao that
     // reuses our ID from binding.
     if (vao_ == renderer_->current_vertex_array_) {

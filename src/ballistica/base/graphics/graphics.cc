@@ -1121,14 +1121,24 @@ void Graphics::BuildAndPushFrameDef() {
 
   // Store how much time this frame_def represents.
   auto display_time_microsecs = g_base->logic->display_time_microsecs();
+  auto display_time_millisecs = display_time_microsecs / 1000;
 
   // Clamp a frame-def's elapsed time to 1/10th of a second even if it has
   // been longer than that since the last. Don't want things like
   // motion-blur to get out of control.
-  millisecs_t elapsed_microsecs =
+  microsecs_t elapsed_microsecs =
       std::min(microsecs_t{100000},
-               display_time_microsecs - last_create_frame_def_time_);
-  last_create_frame_def_time_ = display_time_microsecs;
+               display_time_microsecs - last_create_frame_def_time_microsecs_);
+  last_create_frame_def_time_microsecs_ = display_time_microsecs;
+
+  // We need to do a separate elapsed calculation for milliseconds. It would
+  // seem that we could just calc this based on our elapsed microseconds,
+  // but the problem is that at very high frame rates we wind up always
+  // rounding down to 0.
+  millisecs_t elapsed_millisecs =
+      std::min(millisecs_t{100},
+               display_time_millisecs - last_create_frame_def_time_millisecs_);
+  last_create_frame_def_time_millisecs_ = display_time_millisecs;
 
   frame_def_count_++;
 
@@ -1153,6 +1163,7 @@ void Graphics::BuildAndPushFrameDef() {
   frame_def->set_display_time_microsecs(
       g_base->logic->display_time_microsecs());
   frame_def->set_display_time_elapsed_microsecs(elapsed_microsecs);
+  frame_def->set_display_time_elapsed_millisecs(elapsed_millisecs);
   frame_def->set_frame_number(frame_def_count_);
   frame_def->set_frame_number_filtered(frame_def_count_filtered_);
 

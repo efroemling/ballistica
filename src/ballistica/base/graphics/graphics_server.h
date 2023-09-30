@@ -226,27 +226,27 @@ class GraphicsServer {
   }
 
   auto screen_pixel_width() const -> float {
-    assert(g_base->InGraphicsThread());
+    assert(InGraphicsContext_());
     return res_x_;
   }
 
   auto screen_pixel_height() const -> float {
-    assert(g_base->InGraphicsThread());
+    assert(InGraphicsContext_());
     return res_y_;
   }
 
   auto screen_virtual_width() const -> float {
-    assert(g_base->InGraphicsThread());
+    assert(InGraphicsContext_());
     return res_x_virtual_;
   }
 
   auto screen_virtual_height() const -> float {
-    assert(g_base->InGraphicsThread());
+    assert(InGraphicsContext_());
     return res_y_virtual_;
   }
 
   auto tv_border() const {
-    assert(g_base->InGraphicsThread());
+    assert(InGraphicsContext_());
     return tv_border_;
   }
 
@@ -308,6 +308,9 @@ class GraphicsServer {
   //                               bool fullscreen);
 
  private:
+  // So we don't have to include app_adapter.h here for asserts.
+  auto InGraphicsContext_() const -> bool;
+
   // Return the next frame_def to be rendered, waiting for it to arrive if
   // necessary. this can return nullptr if no frame_defs come in within a
   // reasonable amount of time. a frame_def here *must* be rendered and

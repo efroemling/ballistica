@@ -199,8 +199,7 @@ void AudioServer::OnAppStartInThread() {
     }
 #endif  // BA_RIFT_BUILD
 
-    ALCdevice* device;
-    device = alcOpenDevice(al_device_name);
+    auto* device = alcOpenDevice(al_device_name);
     if (!device) {
       FatalError(
           "No audio devices found. Do you have speakers/headphones/etc. "

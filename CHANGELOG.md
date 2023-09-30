@@ -1,4 +1,4 @@
-### 1.7.28 (build 21397, api 8, 2023-09-28)
+### 1.7.28 (build 21401, api 8, 2023-09-29)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -74,10 +74,10 @@
 - Worked to improve sanity checking on C++ RenderComponents in debug builds to
   make it easier to use and avoid sending broken commands to the renderer. Some
   specifics follow.
-- RenderComponents no longer need an explicit Submit() at the end; if one goes
-  out of scope not in the submitted state it will implicitly run a submit.
-  Hopefully this will encourage concise code where RenderComponents are defined
-  in tight scopes.
+- RenderComponents (C++ layer) no longer need an explicit Submit() at the end;
+  if one goes out of scope not in the submitted state it will implicitly run a
+  submit. Hopefully this will encourage concise code where RenderComponents are
+  defined in tight scopes.
 - RenderComponents now have a ScopedTransform() call which can be used to push
   and pop the transform stack based on C++ scoping instead of the old
   PushTransform/PopTransform. This should make it harder to accidentally break

@@ -331,8 +331,8 @@ class Server:
             argv: list[str] = reqdata['a']
             assert isinstance(argv, list)
             assert all(isinstance(i, str) for i in argv)
-            isatty: bool = reqdata['t']
-            assert isinstance(isatty, bool)
+            color_enabled: bool = reqdata['c']
+            assert isinstance(color_enabled, bool)
 
             print(
                 f'pcommandbatch server {self._instance} (pid {self._pid})'
@@ -345,7 +345,9 @@ class Server:
             # client. ideally should expand the client-side logic to
             # exactly match what efro.terminal.Clr does locally.
             clr: type[efro.terminal.ClrBase] = (
-                efro.terminal.ClrAlways if isatty else efro.terminal.ClrNever
+                efro.terminal.ClrAlways
+                if color_enabled
+                else efro.terminal.ClrNever
             )
 
             try:

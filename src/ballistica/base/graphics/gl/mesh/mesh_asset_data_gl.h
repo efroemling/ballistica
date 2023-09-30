@@ -5,6 +5,7 @@
 
 #if BA_ENABLE_OPENGL
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/graphics/gl/gl_sys.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics_server.h"
@@ -23,7 +24,7 @@ class RendererGL::MeshAssetDataGL : public MeshAssetRendererData {
     name_ = model.GetName();
 #endif
 
-    assert(g_base->InGraphicsThread());
+    assert(g_base->app_adapter->InGraphicsContext());
     BA_DEBUG_CHECK_GL_ERROR;
 
     // Create our vertex array to hold all this state.
@@ -98,7 +99,7 @@ class RendererGL::MeshAssetDataGL : public MeshAssetRendererData {
   }
 
   ~MeshAssetDataGL() override {
-    assert(g_base->InGraphicsThread());
+    assert(g_base->app_adapter->InGraphicsContext());
     BA_DEBUG_CHECK_GL_ERROR;
 
     // Unbind if we're bound; otherwise if a new vao pops up with our same

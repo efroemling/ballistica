@@ -2,6 +2,7 @@
 
 #include "ballistica/base/assets/assets.h"
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/assets/collision_mesh_asset.h"
@@ -409,7 +410,7 @@ void Assets::MarkAllAssetsForLoad() {
 // Call this from the graphics thread to immediately unload all
 // assets used by it. (for when GL context gets lost, etc).
 void Assets::UnloadRendererBits(bool do_textures, bool do_meshes) {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   // need to keep lists locked while iterating over them..
   AssetListLock m_lock;
   if (do_textures) {
@@ -728,7 +729,7 @@ auto Assets::RunPendingAudioLoads() -> bool {
 
 // Runs the pending loads that need to run from the graphics thread.
 auto Assets::RunPendingGraphicsLoads() -> bool {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   return RunPendingLoadList(&pending_loads_graphics_);
 }
 

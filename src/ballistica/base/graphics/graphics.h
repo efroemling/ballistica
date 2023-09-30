@@ -375,7 +375,8 @@ class Graphics {
   std::list<Object::Ref<PythonContextCall>> clean_frame_commands_;
   std::vector<MeshData*> mesh_data_creates_;
   std::vector<MeshData*> mesh_data_destroys_;
-  millisecs_t last_create_frame_def_time_{};
+  microsecs_t last_create_frame_def_time_microsecs_{};
+  millisecs_t last_create_frame_def_time_millisecs_{};
   Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
   Vector2f shadow_scale_{1.0f, 1.0f};
   Vector3f tint_{1.0f, 1.0f, 1.0f};

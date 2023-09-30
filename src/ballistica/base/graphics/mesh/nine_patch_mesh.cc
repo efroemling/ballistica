@@ -6,18 +6,6 @@
 
 namespace ballistica::base {
 
-auto NinePatchMesh::BorderForRadius(float corner_radius,
-                                    float matching_dimension,
-                                    float other_dimension) -> float {
-  // Limit the radius to no more than half the shortest side.
-  corner_radius = std::min(
-      corner_radius, std::min(matching_dimension, other_dimension) * 0.5f);
-  if (corner_radius < 0.0001f) {
-    return 0.0f;
-  }
-  return corner_radius / matching_dimension;
-}
-
 NinePatchMesh::NinePatchMesh(float x, float y, float z, float width,
                              float height, float border_left,
                              float border_bottom, float border_right,
@@ -35,6 +23,7 @@ NinePatchMesh::NinePatchMesh(float x, float y, float z, float width,
   VertexSimpleFull verts[16];  // 4 vertical * 4 horizontal slices.
   uint16_t indices[54];        // 9 patches * 2 triangles * 3 verts.
 
+  // Vertical slices.
   float y0 = y;
   float y1 = y + border_bottom * height;
   float y2 = y + (1.0 - border_top) * height;
@@ -44,6 +33,7 @@ NinePatchMesh::NinePatchMesh(float x, float y, float z, float width,
   auto v2 = 32767;
   auto v3 = 0;
 
+  // Horizontal slices.
   float x0 = x;
   float x1 = x + border_left * width;
   float x2 = x + (1.0 - border_right) * width;
@@ -53,9 +43,7 @@ NinePatchMesh::NinePatchMesh(float x, float y, float z, float width,
   auto u2 = 32767;
   auto u3 = 65535;
 
-  int icount{};
-
-  // Assign all 16 positions and uvs.
+  // Fill out all 16 verts.
   for (int yi = 0; yi < 4; ++yi) {
     for (int xi = 0; xi < 4; ++xi) {
       VertexSimpleFull* v = verts + yi * 4 + xi;
@@ -108,18 +96,17 @@ NinePatchMesh::NinePatchMesh(float x, float y, float z, float width,
   }
 
   // Now add triangle draws for any of the 9 patches with width/height > 0.
+  int icount{};
   for (int yi = 0; yi < 3; ++yi) {
     for (int xi = 0; xi < 3; ++xi) {
       VertexSimpleFull* v = verts + yi * 4 + xi;
       VertexSimpleFull* vright = v + 1;
       VertexSimpleFull* vtop = v + 4;
-
       if (vright->position[0] > v->position[0]
           && vtop->position[1] > v->position[1]) {
         indices[icount++] = yi * 4 + xi;
         indices[icount++] = yi * 4 + xi + 1;
         indices[icount++] = (yi + 1) * 4 + xi + 1;
-
         indices[icount++] = yi * 4 + xi;
         indices[icount++] = (yi + 1) * 4 + xi + 1;
         indices[icount++] = (yi + 1) * 4 + xi;

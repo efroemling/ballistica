@@ -61,6 +61,7 @@ class AppAdapterSDL : public AppAdapter {
   // void UpdateAutoVSync_(int diff);
   void AddSDLInputDevice_(JoystickInput* input, int index);
   void RemoveSDLInputDevice_(int index);
+  void SleepUntilNextEventCycle_(microsecs_t cycle_start_time);
   // millisecs_t last_swap_time_{};
   // millisecs_t swap_start_time_{};
   // int too_slow_frame_count_{};
@@ -80,7 +81,7 @@ class AppAdapterSDL : public AppAdapter {
   bool fullscreen_{};
   VSync vsync_{VSync::kUnset};
   bool vsync_actually_enabled_{};
-  microsecs_t oversleep{};
+  microsecs_t oversleep_{};
   int max_fps_{60};
   bool debug_log_sdl_frame_timing_{};
   // std::unique_ptr<GLContext> gl_context_;

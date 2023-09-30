@@ -2,13 +2,9 @@
 
 #include "ballistica/base/graphics/renderer/renderer.h"
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/core/core.h"
-
-// FIXME: Clear out conditional stuff.
-// #if BA_OSTYPE_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
-// #include "ballistica/core/platform/support/min_sdl.h"
-// #endif
 
 #if BA_VR_BUILD
 #include "ballistica/base/graphics/graphics_vr.h"
@@ -35,7 +31,7 @@ Renderer::~Renderer() {
 }
 
 void Renderer::PreprocessFrameDef(FrameDef* frame_def) {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   // If this frame_def was made in a different quality mode than we're
   // currently in, don't attempt to render it.
@@ -96,7 +92,7 @@ void Renderer::PreprocessFrameDef(FrameDef* frame_def) {
 // actually render one of these frame_def suckers...
 // (called within the graphics thread)
 void Renderer::RenderFrameDef(FrameDef* frame_def) {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   // If preprocess decided not to render this.
   if (!frame_def->rendering()) return;
@@ -756,7 +752,7 @@ void Renderer::UpdateDOFParams(FrameDef* frame_def) {
 }
 
 void Renderer::OnScreenSizeChange() {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   // We can actually get these events at times when we don't have a valid
   // gl context, so instead of doing any GL work here let's just make a note to

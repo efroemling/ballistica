@@ -75,7 +75,11 @@ class FrameDef {
 
   // How much display time does this frame-def represent.
   auto display_time_elapsed_millisecs() const -> millisecs_t {
-    return display_time_elapsed_microsecs_ / 1000;
+    return display_time_elapsed_millisecs_;
+  }
+
+  auto display_time_elapsed_microsecs() const -> microsecs_t {
+    return display_time_elapsed_microsecs_;
   }
 
   auto quality() const -> GraphicsQuality { return quality_; }
@@ -134,6 +138,9 @@ class FrameDef {
 
   void set_display_time_elapsed_microsecs(microsecs_t val) {
     display_time_elapsed_microsecs_ = val;
+  }
+  void set_display_time_elapsed_millisecs(millisecs_t val) {
+    display_time_elapsed_millisecs_ = val;
   }
   // void set_app_time_millisecs(millisecs_t val) { app_time_millisecs_ = val; }
   void set_app_time_microsecs(microsecs_t val) { app_time_microsecs_ = val; }
@@ -242,6 +249,7 @@ class FrameDef {
   microsecs_t app_time_microsecs_{};
   microsecs_t display_time_microsecs_{};
   microsecs_t display_time_elapsed_microsecs_{};
+  microsecs_t display_time_elapsed_millisecs_{};
   int64_t frame_number_{};
   int64_t frame_number_filtered_{};
   Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};

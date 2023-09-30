@@ -2,6 +2,7 @@
 
 #include "ballistica/base/assets/texture_asset.h"
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/texture_asset_preload_data.h"
 #include "ballistica/base/assets/texture_asset_renderer_data.h"
 #include "ballistica/base/graphics/graphics.h"
@@ -425,7 +426,7 @@ void TextureAsset::DoPreload() {
 }
 
 void TextureAsset::DoLoad() {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   assert(!renderer_data_.Exists());
   renderer_data_ = g_base->graphics_server->renderer()->NewTextureData(*this);
   assert(renderer_data_.Exists());
@@ -441,7 +442,7 @@ void TextureAsset::DoLoad() {
 }
 
 void TextureAsset::DoUnload() {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   assert(valid_);
   assert(renderer_data_.Exists());
   renderer_data_.Clear();

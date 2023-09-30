@@ -682,7 +682,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   auto InAssetsThread() const -> bool override;
   auto InLogicThread() const -> bool override;
-  auto InGraphicsThread() const -> bool override;
   auto InAudioThread() const -> bool override;
   auto InBGDynamicsThread() const -> bool override;
   auto InNetworkWriteThread() const -> bool override;

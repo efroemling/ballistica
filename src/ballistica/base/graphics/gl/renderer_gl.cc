@@ -87,7 +87,7 @@ bool RendererGL::is_extra_speedy_android_device_{};
 #endif
 
 RendererGL::RendererGL() {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   if (explicit_bool(BA_FORCE_CHECK_GL_ERRORS)) {
     ScreenMessage("GL ERROR CHECKS ENABLED");
@@ -175,7 +175,7 @@ static auto CheckGLExtension(const std::vector<std::string>& exts,
 
 void RendererGL::CheckGLCapabilities_() {
   BA_DEBUG_CHECK_GL_ERROR;
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   draws_shields_funny_set_ = true;
 
@@ -653,7 +653,7 @@ auto RendererGL::DebugGLGetInt(GLenum name) -> int {
   // This is probably inefficient so make sure we don't leave it on in
   // release builds.
   assert(g_buildconfig.debug_build());
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   // Clear any error coming in; don't want to die for something that's not
   // ours.
@@ -874,7 +874,7 @@ void RendererGL::InvalidateFramebuffer(bool color, bool depth,
 }
 
 RendererGL::~RendererGL() {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   printf("FIXME: need to unload renderer on destroy.\n");
   // Unload();
   BA_DEBUG_CHECK_GL_ERROR;
@@ -2610,7 +2610,7 @@ auto RendererGL::GetFunkyDepthIssue_() -> bool {
 
 #if BA_OSTYPE_ANDROID
 std::string RendererGL::GetAutoAndroidRes() {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   const char* renderer = (const char*)glGetString(GL_RENDERER);
 
@@ -2636,7 +2636,7 @@ std::string RendererGL::GetAutoAndroidRes() {
 #endif  // BA_OSTYPE_ANDROID
 
 auto RendererGL::GetAutoTextureQuality() -> TextureQuality {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   TextureQuality qual{TextureQuality::kHigh};
 
@@ -2668,7 +2668,7 @@ auto RendererGL::GetAutoTextureQuality() -> TextureQuality {
 }
 
 auto RendererGL::GetAutoGraphicsQuality() -> GraphicsQuality {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   GraphicsQuality q{GraphicsQuality::kMedium};
 #if BA_OSTYPE_ANDROID
   // lets be cheaper in VR mode since we draw twice..
@@ -2691,7 +2691,7 @@ auto RendererGL::GetAutoGraphicsQuality() -> GraphicsQuality {
 void RendererGL::RetainShader_(ProgramGL* p) { shaders_.emplace_back(p); }
 
 void RendererGL::Load() {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   assert(!data_loaded_);
   assert(g_base->graphics_server->graphics_quality_set());
   BA_DEBUG_CHECK_GL_ERROR;
@@ -2920,7 +2920,7 @@ void RendererGL::PostLoad() {
 }
 
 void RendererGL::Unload() {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   BA_DEBUG_CHECK_GL_ERROR;
   assert(data_loaded_);
   Renderer::Unload();

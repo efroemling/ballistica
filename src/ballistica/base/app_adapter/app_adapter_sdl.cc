@@ -104,8 +104,6 @@ void AppAdapterSDL::DoApplyAppConfig() {
 void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
   assert(g_core->InMainThread());
 
-  // float smoothed_fps{};
-  // float fps_smoothing{0.1f};
   while (!done_) {
     microsecs_t cycle_start_time = g_core->GetAppTimeMicrosecs();
 
@@ -120,65 +118,67 @@ void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
       SDL_GL_SwapWindow(sdl_window_);
     }
 
-    // Sleep until we should start our next cycle (based on
-    // max-frame-rate or other factors).
-
-    // Special case which means no max. Farewell poor laptop battery.
-    if (max_fps_ == -1) {
-      continue;
-    }
-    microsecs_t now = g_core->GetAppTimeMicrosecs();
-    auto used_max_fps = max_fps_;
-    millisecs_t millisecs_per_frame = 1000000 / used_max_fps;
-    // Special case: if we've got vsync enabled, let's tweak max-fps to be
-    // just a *tiny* bit higher than requested. This means if our max-fps
-    // matches the refresh rate we'll be trying to render just a bit faster
-    // than vsync which should push us up against the vsync wall and keep
-    // vsync doing most of the delay work. In that case the logging below
-    // should show mostly 'no sleep.'. Without this delay, our render
-    // kick-offs tend to drift around the middle of the vsync cycle and I
-    // worry there could be bad interference patterns in certain spots close
-    // to the edges. Note that we want this tweak to be small enough that it
-    // won't be noticable in situations where vsync and max-fps *don't*
-    // match. (for instance limiting to 60hz on a 120hz vsynced monitor).
-    if (vsync_actually_enabled_) {
-      millisecs_per_frame = 99 * millisecs_per_frame / 100;
-    }
-    microsecs_t target_time =
-        cycle_start_time + millisecs_per_frame - oversleep;
-
-    // Set a minimum so we don't sleep if we're within a few millisecs of
-    // where we want to be. Sleep tends to run over by a bit so we'll
-    // probably render closer to our target time by just skipping the sleep.
-    // And the oversleep system will compensate just as it does if we sleep
-    // too long.
-    const microsecs_t min_sleep{2000};
-    if (now + min_sleep >= target_time) {
-      if (debug_log_sdl_frame_timing_) {
-        Log(LogLevel::kDebug, "no sleep.");  // 'till brooklyn!
-      }
-    } else {
-      if (debug_log_sdl_frame_timing_) {
-        char buf[256];
-        snprintf(buf, sizeof(buf), "render %.1f sleep %.1f",
-                 (now - cycle_start_time) / 1000.0f,
-                 (target_time - now) / 1000.0f);
-        Log(LogLevel::kDebug, buf);
-      }
-      g_core->platform->SleepMicrosecs(target_time - now);
-    }
-
-    // Maintain an 'oversleep' amount to compensate for the timer not being
-    // exact. This should keep us exactly at our target frame-rate in the
-    // end.
-    now = g_core->GetAppTimeMicrosecs();
-    oversleep = now - target_time;
-
-    // Prevent oversleep from compensating by more than a few millisecs per
-    // frame (not sure if this would ever be a problem but lets be safe).
-    oversleep = std::max(int64_t{-3000}, oversleep);
-    oversleep = std::min(int64_t{3000}, oversleep);
+    // In some cases, sleep until we should start our next cycle (depending
+    // on max-frame-rate or other factors).
+    SleepUntilNextEventCycle_(cycle_start_time);
   }
+}
+
+void AppAdapterSDL::SleepUntilNextEventCycle_(microsecs_t cycle_start_time) {
+  // Special case which means no max. Farewell poor laptop battery.
+  if (max_fps_ == -1) {
+    return;
+  }
+  microsecs_t now = g_core->GetAppTimeMicrosecs();
+  auto used_max_fps = max_fps_;
+  millisecs_t millisecs_per_frame = 1000000 / used_max_fps;
+  // Special case: if we've got vsync enabled, let's tweak max-fps to be
+  // just a *tiny* bit higher than requested. This means if our max-fps
+  // matches the refresh rate we'll be trying to render just a bit faster
+  // than vsync which should push us up against the vsync wall and keep
+  // vsync doing most of the delay work. In that case the logging below
+  // should show mostly 'no sleep.'. Without this delay, our render
+  // kick-offs tend to drift around the middle of the vsync cycle and I
+  // worry there could be bad interference patterns in certain spots close
+  // to the edges. Note that we want this tweak to be small enough that it
+  // won't be noticable in situations where vsync and max-fps *don't*
+  // match. (for instance limiting to 60hz on a 120hz vsynced monitor).
+  if (vsync_actually_enabled_) {
+    millisecs_per_frame = 99 * millisecs_per_frame / 100;
+  }
+  microsecs_t target_time = cycle_start_time + millisecs_per_frame - oversleep_;
+
+  // Set a minimum so we don't sleep if we're within a few millisecs of
+  // where we want to be. Sleep tends to run over by a bit so we'll
+  // probably render closer to our target time by just skipping the sleep.
+  // And the oversleep system will compensate just as it does if we sleep
+  // too long.
+  const microsecs_t min_sleep{2000};
+  if (now + min_sleep >= target_time) {
+    if (debug_log_sdl_frame_timing_) {
+      Log(LogLevel::kDebug, "no sleep.");  // 'till brooklyn!
+    }
+  } else {
+    if (debug_log_sdl_frame_timing_) {
+      char buf[256];
+      snprintf(buf, sizeof(buf), "render %.1f sleep %.1f",
+               (now - cycle_start_time) / 1000.0f,
+               (target_time - now) / 1000.0f);
+      Log(LogLevel::kDebug, buf);
+    }
+    g_core->platform->SleepMicrosecs(target_time - now);
+  }
+
+  // Maintain an 'oversleep' amount to compensate for the timer not being
+  // exact. This should keep us exactly at our target frame-rate in the
+  // end.
+  now = g_core->GetAppTimeMicrosecs();
+  oversleep_ = now - target_time;
+
+  // Prevent oversleep from compensating by more than a few millisecs per
+  // frame (not sure if this would ever be a problem but lets be safe).
+  oversleep_ = std::max(int64_t{-3000}, oversleep_);
+  oversleep_ = std::min(int64_t{3000}, oversleep_);
 }
 
 void AppAdapterSDL::DoPushMainThreadRunnable(Runnable* runnable) {
@@ -454,7 +454,7 @@ void AppAdapterSDL::SetScreen_(
     bool fullscreen, int max_fps, VSyncRequest vsync_requested,
     TextureQualityRequest texture_quality_requested,
     GraphicsQualityRequest graphics_quality_requested) {
-  assert(g_base->InGraphicsThread());
+  assert(InGraphicsContext());
   assert(!g_core->HeadlessMode());
 
   // If we know what we support, filter our request types to what is
@@ -554,7 +554,7 @@ void AppAdapterSDL::SetScreen_(
 void AppAdapterSDL::ReloadRenderer_(
     bool fullscreen, GraphicsQualityRequest graphics_quality_requested,
     TextureQualityRequest texture_quality_requested) {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   auto* gs = g_base->graphics_server;
 
@@ -635,7 +635,7 @@ void AppAdapterSDL::ReloadRenderer_(
 }
 
 void AppAdapterSDL::UpdateScreenSizes_() {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   // Grab logical window dimensions (points?).
   // This is the coordinate space SDL's events deal in.

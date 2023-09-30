@@ -5,6 +5,7 @@
 
 #if BA_ENABLE_OPENGL
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/texture_asset_preload_data.h"
 #include "ballistica/base/assets/texture_asset_renderer_data.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
@@ -16,14 +17,14 @@ class RendererGL::TextureDataGL : public TextureAssetRendererData {
  public:
   TextureDataGL(const TextureAsset& texture_in, RendererGL* renderer_in)
       : tex_media_(&texture_in), texture_(0), renderer_(renderer_in) {
-    assert(g_base->InGraphicsThread());
+    assert(g_base->app_adapter->InGraphicsContext());
     BA_DEBUG_CHECK_GL_ERROR;
     glGenTextures(1, &texture_);
     BA_DEBUG_CHECK_GL_ERROR;
   }
 
   ~TextureDataGL() override {
-    if (!g_base->InGraphicsThread()) {
+    if (!g_base->app_adapter->InGraphicsContext()) {
       Log(LogLevel::kError, "TextureDataGL dying outside of graphics thread.");
     } else {
       // If we're currently bound as anything, clear that out (otherwise a
@@ -46,7 +47,7 @@ class RendererGL::TextureDataGL : public TextureAssetRendererData {
   auto GetTexture() const -> GLuint { return texture_; }
 
   void Load() override {
-    assert(g_base->InGraphicsThread());
+    assert(g_base->app_adapter->InGraphicsContext());
     BA_DEBUG_CHECK_GL_ERROR;
 
     if (tex_media_->texture_type() == TextureType::k2D) {

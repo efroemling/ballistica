@@ -18,10 +18,8 @@ class BaseSoftInterface {
   virtual void StartApp() = 0;
   virtual auto AppManagesMainThreadEventLoop() -> bool = 0;
   virtual void RunAppToCompletion() = 0;
-  // virtual void PrimeAppMainThreadEventPump() = 0;
   virtual auto InAssetsThread() const -> bool = 0;
   virtual auto InLogicThread() const -> bool = 0;
-  virtual auto InGraphicsThread() const -> bool = 0;
   virtual auto InAudioThread() const -> bool = 0;
   virtual auto InBGDynamicsThread() const -> bool = 0;
   virtual auto InNetworkWriteThread() const -> bool = 0;

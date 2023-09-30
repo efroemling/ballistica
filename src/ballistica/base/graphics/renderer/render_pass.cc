@@ -2,6 +2,7 @@
 
 #include "ballistica/base/graphics/renderer/render_pass.h"
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 
@@ -36,7 +37,7 @@ RenderPass::RenderPass(RenderPass::Type type_in, FrameDef* frame_def_in)
 RenderPass::~RenderPass() = default;
 
 void RenderPass::Render(RenderTarget* render_target, bool transparent) {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   if (explicit_bool(!DRAW_TRANSPARENT) && transparent) {
     return;
@@ -460,7 +461,7 @@ void RenderPass::Reset() {
 }
 
 void RenderPass::SetFrustum(float near_val, float far_val) {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   // If we're using fov-tangents:
   if (cam_use_fov_tangents_) {
     float l = near_val * cam_fov_l_tan_;

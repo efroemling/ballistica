@@ -5,6 +5,7 @@
 
 #if BA_ENABLE_OPENGL
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics_server.h"
 
@@ -18,7 +19,7 @@ class RendererGL::ShaderGL : public Object {
   }
 
   ShaderGL(GLenum type_in, const std::string& src_in) : type_(type_in) {
-    assert(g_base->InGraphicsThread());
+    assert(g_base->app_adapter->InGraphicsContext());
     BA_DEBUG_CHECK_GL_ERROR;
     assert(type_ == GL_FRAGMENT_SHADER || type_ == GL_VERTEX_SHADER);
     shader_ = glCreateShader(type_);
@@ -73,7 +74,7 @@ class RendererGL::ShaderGL : public Object {
   }
 
   ~ShaderGL() override {
-    assert(g_base->InGraphicsThread());
+    assert(g_base->app_adapter->InGraphicsContext());
     if (!g_base->graphics_server->renderer_context_lost()) {
       glDeleteShader(shader_);
       BA_DEBUG_CHECK_GL_ERROR;
@@ -127,7 +128,7 @@ class RendererGL::ProgramGL {
         renderer_(renderer),
         pflags_(pflags),
         name_(std::move(name)) {
-    assert(g_base->InGraphicsThread());
+    assert(g_base->app_adapter->InGraphicsContext());
     BA_DEBUG_CHECK_GL_ERROR;
     program_ = glCreateProgram();
     BA_PRECONDITION(program_);
@@ -209,7 +210,7 @@ class RendererGL::ProgramGL {
   }
 
   virtual ~ProgramGL() {
-    assert(g_base->InGraphicsThread());
+    assert(g_base->app_adapter->InGraphicsContext());
     if (!g_base->graphics_server->renderer_context_lost()) {
       glDetachShader(program_, fragment_shader_->shader());
       glDetachShader(program_, vertex_shader_->shader());

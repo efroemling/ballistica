@@ -22,11 +22,11 @@
 
 namespace ballistica::base {
 
-GraphicsServer::GraphicsServer() {}
+GraphicsServer::GraphicsServer() = default;
 GraphicsServer::~GraphicsServer() = default;
 
 void GraphicsServer::SetRenderHold() {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   render_hold_++;
 }
 
@@ -46,7 +46,7 @@ void GraphicsServer::EnqueueFrameDef(FrameDef* framedef) {
 }
 
 auto GraphicsServer::TryRender() -> bool {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   bool success{};
 
@@ -75,7 +75,7 @@ auto GraphicsServer::TryRender() -> bool {
 }
 
 auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   millisecs_t app_time = g_core->GetAppTimeMillisecs();
 
   if (!renderer_) {
@@ -127,13 +127,13 @@ auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
 }
 
 void GraphicsServer::ApplyFrameDefSettings(FrameDef* frame_def) {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   tv_border_ = frame_def->tv_border();
 }
 
 // Runs any mesh updates contained in the frame-def.
 void GraphicsServer::RunFrameDefMeshUpdates(FrameDef* frame_def) {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   // Run any mesh-data creates/destroys included with this frame_def.
   for (auto&& i : frame_def->mesh_data_creates()) {
@@ -151,7 +151,7 @@ void GraphicsServer::RunFrameDefMeshUpdates(FrameDef* frame_def) {
 
 // Renders shadow passes and other common parts of a frame_def.
 void GraphicsServer::PreprocessRenderFrameDef(FrameDef* frame_def) {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   // Now let the renderer do any preprocess passes (shadows, etc).
   assert(renderer_);
@@ -179,7 +179,7 @@ void GraphicsServer::FinishRenderFrameDef(FrameDef* frame_def) {
 
 // Reload all media (for debugging/benchmarking purposes).
 void GraphicsServer::ReloadMedia_() {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   // Immediately unload all renderer data here in this thread.
   if (renderer_) {
@@ -205,7 +205,7 @@ void GraphicsServer::ReloadMedia_() {
 
 // Call when a renderer context has been lost.
 void GraphicsServer::ReloadLostRenderer() {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   if (!renderer_) {
     Log(LogLevel::kError, "No renderer on GraphicsServer::ReloadLostRenderer.");
@@ -274,14 +274,14 @@ void GraphicsServer::SetNullGraphics() {
 }
 
 void GraphicsServer::set_renderer(Renderer* renderer) {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   assert(!renderer_loaded_);
   assert(!renderer_);
   renderer_ = renderer;
 }
 
 void GraphicsServer::LoadRenderer() {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   if (!renderer_) {
     Log(LogLevel::kError, "LoadRenderer() called with no renderer present.");
     return;
@@ -358,15 +358,14 @@ void GraphicsServer::LoadRenderer() {
 
   renderer_loaded_ = true;
 
-  // Set a render-hold so we ignore all frame_defs up until the point at
-  // which we receive the corresponding remove-hold. (At which point
-  // subsequent frame-defs will be be progress-bar frame_defs so we won't
-  // hitch if we actually render them.)
+  // Set an immediate render-hold so we ignore all frame_defs up until the
+  // point at which we receive the corresponding remove-hold. (At which
+  // point subsequent frame-defs will be be progress-bar frame_defs so we
+  // won't hitch if we actually render them.)
   SetRenderHold();
 
   // Now tell the logic thread to kick off loads for everything, flip on
-  // progress bar drawing, and then tell the graphics thread to stop
-  // ignoring frame-defs.
+  // progress bar drawing, and then ship a remove-hold call back to us.
   g_base->logic->event_loop()->PushCall([this] {
     g_base->assets->MarkAllAssetsForLoad();
     g_base->graphics->set_internal_components_inited(false);
@@ -376,7 +375,7 @@ void GraphicsServer::LoadRenderer() {
 }
 
 void GraphicsServer::UnloadRenderer() {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   if (!renderer_) {
     Log(LogLevel::kError, "UnloadRenderer() called with no renderer present.");
     return;
@@ -417,7 +416,7 @@ void GraphicsServer::CalcVirtualRes_(float* x, float* y) {
 }
 
 void GraphicsServer::UpdateVirtualScreenRes_() {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   // In vr mode our virtual res is independent of our screen size.
   // (since it gets drawn to an overlay)
@@ -432,7 +431,7 @@ void GraphicsServer::UpdateVirtualScreenRes_() {
 }
 
 void GraphicsServer::SetScreenResolution(float h, float v) {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   // Ignore redundant sets.
   if (res_x_ == h && res_y_ == v) {
@@ -477,50 +476,9 @@ void GraphicsServer::HandlePushAndroidRes(const std::string& android_res) {
   }
 }
 
-// void GraphicsServer::HandleFullscreenToggling(bool do_set_existing_fs,
-//                                               bool do_toggle_fs,
-//                                               bool fullscreen) {
-//   if (do_set_existing_fs) {
-// #if BA_SDL2_BUILD
-//     bool rift_vr_mode = false;
-// #if BA_RIFT_BUILD
-//     if (g_core->IsVRMode()) {
-//       rift_vr_mode = true;
-//     }
-// #endif  // BA_RIFT_BUILD
-//     if (explicit_bool(!rift_vr_mode)) {
-// #if BA_OSTYPE_IOS_TVOS
-//       set_fullscreen_enabled(true);
-
-// #else   // BA_OSTYPE_IOS_TVOS
-//       auto* app_adapter_sdl = AppAdapterSDL::Get();
-//       uint32_t fullscreen_flag = SDL_WINDOW_FULLSCREEN_DESKTOP;
-//       SDL_SetWindowFullscreen(app_adapter_sdl->sdl_window_,
-//                               fullscreen ? fullscreen_flag : 0);
-
-//       // Ideally this should be driven by OS events and not just explicitly
-//       by
-//       // us (so, for instance, if someone presses fullscreen on mac we'd know
-//       // we've gone into fullscreen).  But this works for now.
-//       set_fullscreen_enabled(fullscreen);
-// #endif  // BA_OSTYPE_IOS_TVOS
-//     }
-// #endif  // BA_SDL2_BUILD
-//   } else if (do_toggle_fs) {
-//     // If we're doing a fullscreen-toggle, we need to do it after coming out
-//     of
-//     // sync mode (because the toggle triggers sync-mode itself).
-// #if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_XCODE_NEW_PROJECT
-// #if BA_ENABLE_OPENGL
-//     SDL_WM_ToggleFullScreen(gl_context_->sdl_screen_surface());
-// #endif
-// #endif  // macos && xcode_build
-//   }
-// }
-
 void GraphicsServer::SetTextureCompressionTypes(
     const std::list<TextureCompressionType>& types) {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   texture_compression_types_ = 0;
   for (auto&& i : types) {
     texture_compression_types_ |= (0x01u << (static_cast<uint32_t>(i)));
@@ -531,7 +489,7 @@ void GraphicsServer::SetTextureCompressionTypes(
 void GraphicsServer::SetOrthoProjection(float left, float right, float bottom,
                                         float top, float nearval,
                                         float farval) {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   float tx = -((right + left) / (right - left));
   float ty = -((top + bottom) / (top - bottom));
   float tz = -((farval + nearval) / (farval - nearval));
@@ -562,7 +520,7 @@ void GraphicsServer::SetOrthoProjection(float left, float right, float bottom,
 
 void GraphicsServer::SetCamera(const Vector3f& eye, const Vector3f& target,
                                const Vector3f& up_vector) {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
 
   // Reset the modelview stack.
   model_view_stack_.clear();
@@ -604,7 +562,7 @@ void GraphicsServer::SetCamera(const Vector3f& eye, const Vector3f& target,
 }
 
 void GraphicsServer::UpdateCamOrientMatrix_() {
-  assert(g_base->InGraphicsThread());
+  assert(g_base->app_adapter->InGraphicsContext());
   if (cam_orient_matrix_dirty_) {
     cam_orient_matrix_ = kMatrix44fIdentity;
     Vector3f to_cam = cam_pos_ - cam_target_;
@@ -631,12 +589,12 @@ void GraphicsServer::UpdateCamOrientMatrix_() {
 }
 
 void GraphicsServer::PushReloadMediaCall() {
-  g_base->app_adapter->PushMainThreadCall([this] { ReloadMedia_(); });
+  g_base->app_adapter->PushGraphicsContextCall([this] { ReloadMedia_(); });
 }
 
 void GraphicsServer::PushSetScreenPixelScaleCall(float pixel_scale) {
-  g_base->app_adapter->PushMainThreadCall([this, pixel_scale] {
-    assert(g_base->InGraphicsThread());
+  g_base->app_adapter->PushGraphicsContextCall([this, pixel_scale] {
+    assert(g_base->app_adapter->InGraphicsContext());
     if (!renderer_) {
       return;
     }
@@ -646,8 +604,8 @@ void GraphicsServer::PushSetScreenPixelScaleCall(float pixel_scale) {
 
 void GraphicsServer::PushComponentUnloadCall(
     const std::vector<Object::Ref<Asset>*>& components) {
-  g_base->app_adapter->PushMainThreadCall([components] {
-    assert(g_base->InGraphicsThread());
+  g_base->app_adapter->PushGraphicsContextCall([components] {
+    assert(g_base->app_adapter->InGraphicsContext());
     // Unload the components.
     for (auto&& i : components) {
       (**i).Unload();
@@ -662,8 +620,8 @@ void GraphicsServer::PushComponentUnloadCall(
 }
 
 void GraphicsServer::PushRemoveRenderHoldCall() {
-  g_base->app_adapter->PushMainThreadCall([this] {
-    assert(g_base->InGraphicsThread());
+  g_base->app_adapter->PushGraphicsContextCall([this] {
+    assert(g_base->app_adapter->InGraphicsContext());
     assert(render_hold_);
     render_hold_--;
     if (render_hold_ < 0) {
@@ -671,6 +629,10 @@ void GraphicsServer::PushRemoveRenderHoldCall() {
       render_hold_ = 0;
     }
   });
+}
+
+auto GraphicsServer::InGraphicsContext_() const -> bool {
+  return g_base->app_adapter->InGraphicsContext();
 }
 
 }  // namespace ballistica::base

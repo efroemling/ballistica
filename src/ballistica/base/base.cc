@@ -468,15 +468,6 @@ auto BaseFeatureSet::InLogicThread() const -> bool {
   return false;
 }
 
-auto BaseFeatureSet::InGraphicsThread() const -> bool {
-  // FIXME.
-  return g_core->InMainThread();
-  // if (auto* loop = graphics_server->event_loop()) {
-  //   return loop->ThreadIsCurrent();
-  // }
-  // return false;
-}
-
 auto BaseFeatureSet::InAudioThread() const -> bool {
   if (auto* loop = audio_server->event_loop()) {
     return loop->ThreadIsCurrent();

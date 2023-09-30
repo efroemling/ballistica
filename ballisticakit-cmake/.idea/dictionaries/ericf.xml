@@ -1754,6 +1754,7 @@
       <w>templatefs</w>
       <w>tempvec</w>
       <w>tenum</w>
+      <w>termenv</w>
       <w>testbuild</w>
       <w>testclinic</w>
       <w>testint</w>

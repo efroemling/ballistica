@@ -52,6 +52,17 @@ class AppAdapter {
     DoPushMainThreadRunnable(NewLambdaRunnableUnmanaged(lambda));
   }
 
+  /// Should return whether the current thread and/or context setup is the
+  /// one where graphics calls should be made. For the default
+  /// implementation, this simply returns true in the main thread.
+  virtual auto InGraphicsContext() -> bool;
+
+  /// Push a call to be run in the app's graphics context.
+  template <typename F>
+  void PushGraphicsContextCall(const F& lambda) {
+    DoPushGraphicsContextRunnable(NewLambdaRunnableUnmanaged(lambda));
+  }
+
   /// Put the app into a paused state. Should be called from the main
   /// thread. Pauses work, closes network sockets, etc. May correspond to
   /// being backgrounded on mobile, being minimized on desktop, etc. It is
@@ -85,6 +96,10 @@ class AppAdapter {
   /// Push a raw pointer Runnable to the platform's 'main' thread. The main
   /// thread should call its RunAndLogErrors() method and then delete it.
   virtual void DoPushMainThreadRunnable(Runnable* runnable) = 0;
+
+  /// Push a raw pointer Runnable to be run in the platform's graphics
+  /// context. By default this is simply the main thread.
+  virtual void DoPushGraphicsContextRunnable(Runnable* runnable);
 
  private:
   void OnAppPause_();
