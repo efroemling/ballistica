@@ -51,11 +51,6 @@ if (HEADLESS)
   endif ()
   find_package(OpenGL REQUIRED)
   find_package(OpenAL REQUIRED)
-  if (APPLE)
-    # On mac this sets an include path that we don't need since
-    # we're using the system framework... should clean this up.
-    set(OPENAL_INCLUDE_DIR "")
-  endif ()
   find_library(OGG_LIBRARY ogg)
   find_library(VORBISFILE_LIBRARY vorbisfile)
   if (NOT OGG_LIBRARY)
@@ -77,8 +72,7 @@ endif ()
 # on Raspberry Pi builds. We never need to care about C++ abi compatibility
 # so just silencing them for now. Can maybe remove this later if they stop.
 if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
-  set(CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} -Wno-psabi")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
 endif()
 
 set(BA_SRC_ROOT ../src)
@@ -799,11 +793,6 @@ target_include_directories(ballisticakitbin PRIVATE
 target_link_libraries(ballisticakitbin PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread ${Python_LIBRARIES}
   ${SDL2_LIBRARIES} ${EXTRA_LIBRARIES} dl)
-
-# Hack for building on rpi; need to update my pi so I can remove this.
-if(EXISTS "/home/pi")
-target_link_libraries(ballisticakitbin PRIVATE dl util stdc++fs)
-endif()
 
 
 # BallisticaKit modular shared library

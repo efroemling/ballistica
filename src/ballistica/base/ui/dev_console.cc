@@ -16,6 +16,7 @@
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/support/min_sdl.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python_command.h"
 #include "ballistica/shared/python/python_sys.h"
@@ -103,7 +104,8 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
 
   template <typename F>
   Button_(const std::string& label, float text_scale, DevButtonAttach_ attach,
-          float x, float y, float width, float height, const F& lambda)
+          float x, float y, float width, float height, float corner_radius,
+          const F& lambda)
       : attach{attach},
         x{x},
         y{y},
@@ -112,14 +114,10 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
         call{NewLambdaRunnable(lambda)},
         text_scale{text_scale},
         mesh(0.0f, 0.0f, 0.0f, width, height,
-             NinePatchMesh::BorderForRadius(kDevConsoleButtonCornerRadius,
-                                            width, height),
-             NinePatchMesh::BorderForRadius(kDevConsoleButtonCornerRadius,
-                                            height, width),
-             NinePatchMesh::BorderForRadius(kDevConsoleButtonCornerRadius,
-                                            width, height),
-             NinePatchMesh::BorderForRadius(kDevConsoleButtonCornerRadius,
-                                            height, width)) {
+             NinePatchMesh::BorderForRadius(corner_radius, width, height),
+             NinePatchMesh::BorderForRadius(corner_radius, height, width),
+             NinePatchMesh::BorderForRadius(corner_radius, width, height),
+             NinePatchMesh::BorderForRadius(corner_radius, height, width)) {
     text_group.SetText(label, TextMesh::HAlign::kCenter,
                        TextMesh::VAlign::kCenter);
   }
@@ -309,9 +307,10 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
   }
 };
 
-class DevConsole::Line_ {
+class DevConsole::OutputLine_ {
  public:
-  Line_(std::string s_in, double c) : creation_time(c), s(std::move(s_in)) {}
+  OutputLine_(std::string s_in, double c)
+      : creation_time(c), s(std::move(s_in)) {}
   double creation_time;
   std::string s;
   auto GetText() -> TextGroup& {
@@ -340,43 +339,112 @@ DevConsole::DevConsole() {
   title_text_group_.SetText(title);
   built_text_group_.SetText("Built: " __DATE__ " " __TIME__);
   prompt_text_group_.SetText(">");
-
-  Refresh();
 }
 
-void DevConsole::Refresh() {
-  BA_PRECONDITION(g_base->InLogicThread());
-  buttons_.clear();
-  tab_buttons_.clear();
-  RefreshTabsButtons_();
+DevConsole::~DevConsole() = default;
 
-  if (active_tab_ == "Python") {
-    float bs = PythonConsoleBaseScale_();
-    buttons_.emplace_back(std::make_unique<Button_>(
-        "Exec", 0.75f * bs, DevButtonAttach_::kRight, -33.0f * bs, 15.95f * bs,
-        32.0f * bs, 13.0f * bs, [this] { Exec(); }));
+void DevConsole::RefreshTabButtons_() {
+  // Ask the Python layer for the latest set of tabs.
+  tabs_ = g_base->python->objs()
+              .Get(BasePython::ObjID::kGetDevConsoleTabNamesCall)
+              .Call()
+              .ValueAsStringSequence();
+  // If we have tabs and none of them are selected, select the first.
+  if (!tabs_.empty()) {
+    bool found{};
+    for (auto&& tab : tabs_) {
+      if (active_tab_ == tab) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      active_tab_ = tabs_.front();
+    }
   }
-}
 
-void DevConsole::RefreshTabsButtons_() {
-  float bs = PythonConsoleBaseScale_();
+  // Now rebuild our buttons for them.
+  tab_buttons_.clear();
+  float bs = BaseScale();
   float bwidth = 90.0f * bs;
   float bheight = 26.0f * bs;
   float bscale = 0.8f * bs;
   float total_width = tabs_.size() * bwidth;
   float x = total_width * -0.5f;
-
   for (auto&& tab : tabs_) {
     tab_buttons_.emplace_back(std::make_unique<TabButton_>(
         tab, active_tab_ == tab, bscale, DevButtonAttach_::kCenter, x, -bheight,
         bwidth, bheight, [this, tab] {
           active_tab_ = tab;
-          Refresh();
+          RefreshTabButtons_();
+          RefreshTabContents_();
         }));
     x += bwidth;
   }
 }
-DevConsole::~DevConsole() = default;
+
+void DevConsole::RefreshTabContents_() {
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  // Consider any refresh requests fulfilled. Subsequent refresh-requests
+  // will generate a new refresh at this point.
+  refresh_pending_ = false;
+
+  // Clear to an empty slate.
+  buttons_.clear();
+  python_terminal_visible_ = false;
+
+  // Now ask the Python layer to fill this tab in.
+  PythonRef args(Py_BuildValue("(s)", active_tab_.c_str()), PythonRef::kSteal);
+  g_base->python->objs()
+      .Get(BasePython::ObjID::kAppDevConsoleDoRefreshTabCall)
+      .Call(args);
+}
+
+void DevConsole::AddButton(const char* label, float x, float y, float width,
+                           float height, PyObject* call, const char* h_anchor,
+                           float label_scale, float corner_radius) {
+  assert(g_base->InLogicThread());
+
+  DevButtonAttach_ anchor;
+  if (!strcmp(h_anchor, "left")) {
+    anchor = DevButtonAttach_::kLeft;
+  } else if (!strcmp(h_anchor, "right")) {
+    anchor = DevButtonAttach_::kRight;
+  } else {
+    assert(!strcmp(h_anchor, "center"));
+    anchor = DevButtonAttach_::kCenter;
+  }
+
+  // auto call_obj = PythonRef::Acquired(call);
+  buttons_.emplace_back(std::make_unique<Button_>(
+      label, label_scale, anchor, x, y, width, height, corner_radius,
+      [this, call_obj = PythonRef::Acquired(call)] {
+        if (call_obj.Get() != Py_None) {
+          call_obj.Call();
+        }
+      }));
+}
+
+void DevConsole::AddPythonTerminal() {
+  float bs = BaseScale();
+  buttons_.emplace_back(std::make_unique<Button_>(
+      "Exec", 0.75f * bs, DevButtonAttach_::kRight, -33.0f * bs, 15.95f * bs,
+      32.0f * bs, 13.0f * bs, 2.0 * bs, [this] { Exec(); }));
+  python_terminal_visible_ = true;
+}
+
+void DevConsole::RequestRefresh() {
+  assert(g_base->InLogicThread());
+
+  // Schedule a refresh. If one is already scheduled but hasn't run, do
+  // nothing.
+  if (refresh_pending_) {
+    return;
+  }
+  refresh_pending_ = true;
+  g_base->logic->event_loop()->PushCall([this] { RefreshTabContents_(); });
+}
 
 auto DevConsole::HandleMouseDown(int button, float x, float y) -> bool {
   assert(g_base->InLogicThread());
@@ -404,11 +472,19 @@ auto DevConsole::HandleMouseDown(int button, float x, float y) -> bool {
     return false;
   }
 
-  if (button == 1) {
-    python_console_pressed_ = true;
+  if (button == 1 && python_terminal_visible_) {
+    python_terminal_pressed_ = true;
   }
 
   return true;
+}
+
+auto DevConsole::Width() -> float {
+  return g_base->graphics->screen_virtual_width();
+}
+
+auto DevConsole::Height() -> float {
+  return g_base->graphics->screen_virtual_height() - Bottom_();
 }
 
 void DevConsole::HandleMouseUp(int button, float x, float y) {
@@ -424,8 +500,8 @@ void DevConsole::HandleMouseUp(int button, float x, float y) {
     }
   }
 
-  if (button == 1 && python_console_pressed_) {
-    python_console_pressed_ = false;
+  if (button == 1 && python_terminal_pressed_) {
+    python_terminal_pressed_ = false;
     if (y > bottom) {
       // If we're not getting fed keyboard events and have a string editor
       // available, invoke it.
@@ -548,19 +624,6 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
       break;
     }
     default: {
-      // #if BA_SDL2_BUILD || BA_MINSDL_BUILD
-      //       // (in SDL2/Non-SDL we dont' get chars from keypress events;
-      //       // they come through as text edit events)
-      // #else   // BA_SDL2_BUILD
-      //       if (keysym->unicode < 0x80 && keysym->unicode > 0) {
-      //         std::vector<uint32_t> unichars =
-      //             Utils::UnicodeFromUTF8(input_string_, "cjofrh0");
-      //         unichars.push_back(keysym->unicode);
-      //         input_string_ = Utils::GetValidUTF8(
-      //             Utils::UTF8FromUnicode(unichars).c_str(), "sdkr");
-      //         input_text_dirty_ = true;
-      //       }
-      // #endif  // BA_SDL2_BUILD
       break;
     }
   }
@@ -576,9 +639,9 @@ void DevConsole::Exec() {
   input_history_position_ = 0;
   if (input_string_ == "clear") {
     last_line_.clear();
-    lines_.clear();
+    output_lines_.clear();
   } else {
-    SubmitCommand_(input_string_);
+    SubmitPythonCommand_(input_string_);
   }
   input_history_.push_front(input_string_);
   if (input_history_.size() > 100) {
@@ -588,7 +651,7 @@ void DevConsole::Exec() {
   input_text_dirty_ = true;
 }
 
-void DevConsole::SubmitCommand_(const std::string& command) {
+void DevConsole::SubmitPythonCommand_(const std::string& command) {
   assert(g_base);
   g_base->logic->event_loop()->PushCall([command, this] {
     // These are always run in whichever context is 'visible'.
@@ -631,9 +694,12 @@ void DevConsole::ToggleState() {
   switch (state_) {
     case State_::kInactive:
       state_ = State_::kMini;
+      RefreshTabButtons_();
+      RefreshTabContents_();
       break;
     case State_::kMini:
       state_ = State_::kFull;
+      RefreshTabContents_();
       break;
     case State_::kFull:
       state_ = State_::kInactive;
@@ -650,6 +716,9 @@ auto DevConsole::HandleTextEditing(const std::string& text) -> bool {
   }
 
   // Ignore back-tick because we use that key to toggle the console.
+  //
+  // FIXME: Perhaps should allow typing it if some control-character is
+  // held?
   if (text == "`") {
     return false;
   }
@@ -679,9 +748,9 @@ void DevConsole::Print(const std::string& s_in) {
 
   // Spit out all completed lines and keep the last one as lastline.
   for (size_t i = 0; i < broken_up.size() - 1; i++) {
-    lines_.emplace_back(broken_up[i], g_base->logic->display_time());
-    if (lines_.size() > kDevConsoleLineLimit) {
-      lines_.pop_front();
+    output_lines_.emplace_back(broken_up[i], g_base->logic->display_time());
+    if (output_lines_.size() > kDevConsoleLineLimit) {
+      output_lines_.pop_front();
     }
   }
   last_line_ = broken_up[broken_up.size() - 1];
@@ -689,13 +758,18 @@ void DevConsole::Print(const std::string& s_in) {
 }
 
 auto DevConsole::Bottom_() const -> float {
-  float bs = PythonConsoleBaseScale_();
   float vh = g_base->graphics->screen_virtual_height();
 
   float ratio =
       (g_base->logic->display_time() - transition_start_) / kTransitionSeconds;
   float bottom;
-  float mini_size = 90.0f * bs;
+
+  // NOTE: Originally I was tweaking this based on UI scale, but I decided
+  // that it would be a better idea to have a constant value everywhere.
+  // dev-consoles are not meant to be especially pretty and I think it is
+  // more important for them to be able to be written to a known hard-coded
+  // mini-size.
+  float mini_size = 100.0f;
   if (state_ == State_::kMini) {
     bottom = vh - mini_size;
   } else {
@@ -724,7 +798,7 @@ auto DevConsole::Bottom_() const -> float {
 }
 
 void DevConsole::Draw(FrameDef* frame_def) {
-  float bs = PythonConsoleBaseScale_();
+  float bs = BaseScale();
   RenderPass* pass = frame_def->overlay_front_pass();
 
   // If we're not yet transitioning in for the first time OR have completed
@@ -753,7 +827,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
     c.SetColor(0, 0, 0.1f, 0.9f);
     c.DrawMesh(&bg_mesh_);
     c.Submit();
-    if (active_tab_ == "Python") {
+    if (python_terminal_visible_) {
       c.SetColor(1.0f, 1.0f, 1.0f, 0.1f);
       c.DrawMesh(&stripe_mesh_);
       c.Submit();
@@ -779,7 +853,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
     }
   }
 
-  if (active_tab_ == "Python") {
+  if (python_terminal_visible_) {
     if (input_text_dirty_) {
       input_text_group_.SetText(input_string_);
       input_text_dirty_ = false;
@@ -887,7 +961,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
         }
         v += v_inc;
       }
-      for (auto i = lines_.rbegin(); i != lines_.rend(); i++) {
+      for (auto i = output_lines_.rbegin(); i != output_lines_.rend(); i++) {
         int elem_count = i->GetText().GetElementCount();
         for (int e = 0; e < elem_count; e++) {
           c.SetTexture(i->GetText().GetElementTexture(e));
@@ -922,7 +996,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
   }
 }
 
-auto DevConsole::PythonConsoleBaseScale_() const -> float {
+auto DevConsole::BaseScale() const -> float {
   switch (g_base->ui->scale()) {
     case UIScale::kLarge:
       return 1.5f;

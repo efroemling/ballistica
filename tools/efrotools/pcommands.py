@@ -728,16 +728,18 @@ def echo() -> None:
     clrnames = {n for n in dir(clr) if n.isupper() and not n.startswith('_')}
     first = True
     out: list[str] = []
+    last_was_tag = False
     for arg in pcommand.get_args():
         if arg in clrnames:
             out.append(getattr(clr, arg))
+            last_was_tag = True
         else:
-            # Special case: a dot by itself is treated as a period for
-            # the previous arg. This lets us do periods following color
-            # tags.
-            if not first and arg != '.':
+            # Special case: punctuation by itself after a tag doesn't
+            # get a space before it.
+            if not first and not (last_was_tag and arg in ('.', '?', '!')):
                 out.append(' ')
             first = False
+            last_was_tag = False
             out.append(arg)
     out.append(clr.RST)
     pcommand.clientprint(''.join(out))

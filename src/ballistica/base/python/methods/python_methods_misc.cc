@@ -12,6 +12,7 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
 #include "ballistica/base/support/app_config.h"
+#include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -1450,6 +1451,169 @@ static PyMethodDef PyFatalErrorDef = {
     "however, Exceptions should be preferred.",
 };
 
+// ------------------------- dev_console_add_button ----------------------------
+
+static auto PyDevConsoleAddButton(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* dev_console = g_base->ui->dev_console();
+  BA_PRECONDITION(dev_console);
+  BA_PRECONDITION(dev_console->IsActive());
+  const char* label;
+  float x;
+  float y;
+  float width;
+  float height;
+  PyObject* call;
+  const char* h_anchor;
+  float label_scale;
+  float corner_radius;
+  if (!PyArg_ParseTuple(args, "sffffOsff", &label, &x, &y, &width, &height,
+                        &call, &h_anchor, &label_scale, &corner_radius)) {
+    return nullptr;
+  }
+  dev_console->AddButton(label, x, y, width, height, call, h_anchor,
+                         label_scale, corner_radius);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDevConsoleAddButtonDef = {
+    "dev_console_add_button",            // name
+    (PyCFunction)PyDevConsoleAddButton,  // method
+    METH_VARARGS,                        // flags
+
+    "dev_console_add_button(\n"
+    "  label: str,\n"
+    "  x: float,\n"
+    "  y: float,\n"
+    "  width: float,\n"
+    "  height: float,\n"
+    "  call: Callable[[], Any] | None,\n"
+    "  h_anchor: str,\n"
+    "  label_scale: float,\n"
+    "  corner_radius: float,\n"
+    ") -> None\n"
+    "\n"
+    "(internal)",
+};
+
+// -------------------- dev_console_add_python_terminal ------------------------
+
+static auto PyDevConsoleAddPythonTerminal(PyObject* self, PyObject* args)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* dev_console = g_base->ui->dev_console();
+  BA_PRECONDITION(dev_console);
+  BA_PRECONDITION(dev_console->IsActive());
+  if (!PyArg_ParseTuple(args, "")) {
+    return nullptr;
+  }
+  dev_console->AddPythonTerminal();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDevConsoleAddPythonTerminalDef = {
+    "dev_console_add_python_terminal",           // name
+    (PyCFunction)PyDevConsoleAddPythonTerminal,  // method
+    METH_VARARGS,                                // flags
+
+    "dev_console_add_python_terminal() -> None\n"
+    "\n"
+    "(internal)",
+};
+
+// ------------------------ dev_console_tab_width ------------------------------
+
+static auto PyDevConsoleTabWidth(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* dev_console = g_base->ui->dev_console();
+  BA_PRECONDITION(dev_console);
+  BA_PRECONDITION(dev_console->IsActive());
+  return PyFloat_FromDouble(dev_console->Width());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDevConsoleTabWidthDef = {
+    "dev_console_tab_width",            // name
+    (PyCFunction)PyDevConsoleTabWidth,  // method
+    METH_NOARGS,                        // flags
+
+    "dev_console_tab_width() -> float\n"
+    "\n"
+    "(internal)",
+};
+
+// ------------------------ dev_console_tab_height -----------------------------
+
+static auto PyDevConsoleTabHeight(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* dev_console = g_base->ui->dev_console();
+  BA_PRECONDITION(dev_console);
+  BA_PRECONDITION(dev_console->IsActive());
+  return PyFloat_FromDouble(dev_console->Height());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDevConsoleTabHeightDef = {
+    "dev_console_tab_height",            // name
+    (PyCFunction)PyDevConsoleTabHeight,  // method
+    METH_NOARGS,                         // flags
+
+    "dev_console_tab_height() -> float\n"
+    "\n"
+    "(internal)",
+};
+
+// ----------------------- dev_console_base_scale ------------------------------
+
+static auto PyDevConsoleBaseScale(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* dev_console = g_base->ui->dev_console();
+  BA_PRECONDITION(dev_console);
+  BA_PRECONDITION(dev_console->IsActive());
+  return PyFloat_FromDouble(dev_console->BaseScale());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDevConsoleBaseScaleDef = {
+    "dev_console_base_scale",            // name
+    (PyCFunction)PyDevConsoleBaseScale,  // method
+    METH_NOARGS,                         // flags
+
+    "dev_console_base_scale() -> float\n"
+    "\n"
+    "(internal)",
+};
+
+// -------------------- dev_console_request_refresh ----------------------------
+
+static auto PyDevConsoleRequestRefresh(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* dev_console = g_base->ui->dev_console();
+  BA_PRECONDITION(dev_console);
+  BA_PRECONDITION(dev_console->IsActive());
+  dev_console->RequestRefresh();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDevConsoleRequestRefreshDef = {
+    "dev_console_request_refresh",            // name
+    (PyCFunction)PyDevConsoleRequestRefresh,  // method
+    METH_NOARGS,                              // flags
+
+    "dev_console_request_refresh() -> None\n"
+    "\n"
+    "(internal)",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
@@ -1505,6 +1669,12 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PyNativeStackTraceDef,
       PyOpenDirExternallyDef,
       PyFatalErrorDef,
+      PyDevConsoleAddButtonDef,
+      PyDevConsoleAddPythonTerminalDef,
+      PyDevConsoleTabWidthDef,
+      PyDevConsoleTabHeightDef,
+      PyDevConsoleBaseScaleDef,
+      PyDevConsoleRequestRefreshDef,
   };
 }
 

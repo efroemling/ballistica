@@ -1,15 +1,12 @@
 // Released under the MIT License. See LICENSE for details.
 
 #if BA_ENABLE_OPENGL
-
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 
 #include <iterator>
 #include <sstream>
 
 #include "ballistica/base/graphics/component/special_component.h"
-#include "ballistica/base/graphics/gl/framebuffer_object_gl.h"
-#include "ballistica/base/graphics/gl/gl_sys.h"
 #include "ballistica/base/graphics/gl/mesh/mesh_asset_data_gl.h"
 #include "ballistica/base/graphics/gl/mesh/mesh_data_dual_texture_full_gl.h"
 #include "ballistica/base/graphics/gl/mesh/mesh_data_gl.h"
@@ -29,11 +26,6 @@
 #include "ballistica/base/graphics/gl/render_target_gl.h"
 #include "ballistica/base/graphics/gl/texture_data_gl.h"
 #include "ballistica/base/platform/base_platform.h"
-#include "ballistica/shared/buildconfig/buildconfig_common.h"
-
-#if BA_OSTYPE_IOS_TVOS
-#include "ballistica/base/platform/apple/apple_utils.h"
-#endif
 
 // Turn this off to see how much blend overdraw is occurring.
 #define BA_GL_ENABLE_BLEND 1
@@ -64,22 +56,6 @@ namespace ballistica::base {
 
 bool RendererGL::funky_depth_issue_set_{};
 bool RendererGL::funky_depth_issue_{};
-bool RendererGL::draws_shields_funny_{};
-bool RendererGL::draws_shields_funny_set_{};
-
-// FIXME - move this stuff to the renderer class.
-// GLint g_combined_texture_image_unit_count{};
-// bool g_anisotropic_support{};
-// bool g_vao_support{};
-// float g_max_anisotropy{};
-// bool g_discard_framebuffer_support{};
-// bool g_invalidate_framebuffer_support{};
-// bool g_blit_framebuffer_support{};
-// bool g_framebuffer_multisample_support{};
-// bool g_running_es3{};
-// bool g_seamless_cube_maps{};
-// int g_msaa_max_samples_rgb565{};
-// int g_msaa_max_samples_rgb8{};
 
 #if BA_OSTYPE_ANDROID
 bool RendererGL::is_speedy_android_device_{};
@@ -108,8 +84,11 @@ void RendererGL::CheckGLError(const char* file, int line) {
   GLenum err = glGetError();
   if (err != GL_NO_ERROR) {
     const char* version = (const char*)glGetString(GL_VERSION);
+    BA_PRECONDITION_FATAL(version);
     const char* vendor = (const char*)glGetString(GL_VENDOR);
+    BA_PRECONDITION_FATAL(vendor);
     const char* renderer = (const char*)glGetString(GL_RENDERER);
+    BA_PRECONDITION_FATAL(renderer);
     Log(LogLevel::kError,
         "OpenGL Error at " + std::string(file) + " line " + std::to_string(line)
             + ": " + GLErrorToString(err) + "\nrenderer: " + renderer
@@ -177,11 +156,27 @@ void RendererGL::CheckGLCapabilities_() {
   BA_DEBUG_CHECK_GL_ERROR;
   assert(g_base->app_adapter->InGraphicsContext());
 
-  draws_shields_funny_set_ = true;
-
   const char* renderer = (const char*)glGetString(GL_RENDERER);
+  BA_PRECONDITION_FATAL(renderer);
   const char* vendor = (const char*)glGetString(GL_VENDOR);
+  BA_PRECONDITION_FATAL(vendor);
   const char* version_str = (const char*)glGetString(GL_VERSION);
+  BA_PRECONDITION_FATAL(version_str);
+
+  // Do a rough check to make sure we're running 3 or newer of GL/GLES.
+  // This query should be available even on older versions.
+  if (version_str[0] != '3' && version_str[0] != '4') {
+    FatalError(std::string("Invalid OpenGL version found (") + version_str
+               + "). We require 3.0 or later.");
+  }
+
+  // Now fetch exact major/minor versions. This query requires version 3.0
+  // or newer which is why we checked that above.
+  glGetError();  // Clear any existing error so we don't die on it here.
+  glGetIntegerv(GL_MAJOR_VERSION, &gl_version_major_);
+  BA_PRECONDITION_FATAL(glGetError() == GL_NO_ERROR);
+  glGetIntegerv(GL_MINOR_VERSION, &gl_version_minor_);
+  BA_PRECONDITION_FATAL(glGetError() == GL_NO_ERROR);
 
   const char* basestr;
   if (gl_is_es()) {
@@ -200,28 +195,20 @@ void RendererGL::CheckGLCapabilities_() {
   std::vector<std::string> extensions;
   bool used_num_extensions{};
 
-  // On the ES side we still support ES 2 which does not support the modern
-  // GL_NUM_EXTENSIONS route. Though I suppose we could just try it on ES
-  // and do the fallback if we get GL_INVALID_ENUM.
-#if !BA_OPENGL_IS_ES
-  {
-    GLint num_extensions{};
-    glGetError();  // Clear any existing error.
-    glGetIntegerv(GL_NUM_EXTENSIONS, &num_extensions);
-    if (glGetError() == GL_NO_ERROR) {
-      used_num_extensions = true;
-      extensions.reserve(num_extensions);
-      for (int i = 0; i < num_extensions; ++i) {
-        const char* extension = (const char*)glGetStringi(GL_EXTENSIONS, i);
-        BA_PRECONDITION(extension);
-        extensions.push_back(extension);
-      }
+  // Do the modern gl thing of looking through a list of extensions; not a
+  // single string.
+  if (auto num_extensions = GLGetIntOptional(GL_NUM_EXTENSIONS)) {
+    used_num_extensions = true;
+    extensions.reserve(*num_extensions);
+    for (int i = 0; i < num_extensions; ++i) {
+      const char* extension = (const char*)glGetStringi(GL_EXTENSIONS, i);
+      BA_PRECONDITION(extension);
+      extensions.push_back(extension);
     }
-  }
-#endif
-
-  // Fall back on parsing the single giant string if need be.
-  if (!used_num_extensions) {
+  } else {
+    Log(LogLevel::kWarning, "Falling back on legacy GL_EXTENSIONS parsing.");
+    // Fall back on parsing the single giant string if need be.
+    // (Can probably kill this).
     auto* ex = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
     BA_DEBUG_CHECK_GL_ERROR;
     BA_PRECONDITION_FATAL(ex);
@@ -349,13 +336,15 @@ void RendererGL::CheckGLCapabilities_() {
 
   std::list<TextureCompressionType> c_types;
   assert(g_base->graphics);
-  if (CheckGLExtension(extensions, "texture_compression_s3tc"))
+  if (CheckGLExtension(extensions, "texture_compression_s3tc")) {
     c_types.push_back(TextureCompressionType::kS3TC);
+  }
 
   // Limiting pvr support to iOS for the moment.
   if (!g_buildconfig.ostype_android()) {
-    if (CheckGLExtension(extensions, "texture_compression_pvrtc"))
+    if (CheckGLExtension(extensions, "texture_compression_pvrtc")) {
       c_types.push_back(TextureCompressionType::kPVR);
+    }
   }
 
   // All android devices should support etc1.
@@ -375,33 +364,14 @@ void RendererGL::CheckGLCapabilities_() {
 
   g_base->graphics_server->SetTextureCompressionTypes(c_types);
 
-  // Check whether we support high-quality mode (requires a few things like
-  // depth textures) For now lets also disallow high-quality in some VR
-  // environments.
-
-  // Both GL 3.2 and GL ES 3.0 support depth textures.
-  // if (!gl_is_es()) {
-  // supports_depth_textures_ = true;
+  // Both GL 3 and GL ES 3.0 support depth textures (and thus our high
+  // quality mode) as a core feature.
   g_base->graphics->SetSupportsHighQualityGraphics(true);
-
-  // } else {
-  //   if (CheckGLExtension(extensions, "depth_texture")) {
-  //     supports_depth_textures_ = true;
-  //     if (g_buildconfig.cardboard_build()) {
-  //       g_base->graphics->SetSupportsHighQualityGraphics(false);
-  //     } else {
-  //       g_base->graphics->SetSupportsHighQualityGraphics(true);
-  //     }
-  //   } else {
-  //     supports_depth_textures_ = false;
-  //     g_base->graphics->SetSupportsHighQualityGraphics(false);
-  //   }
-  // }
 
   // Store the tex-compression type we support.
   BA_DEBUG_CHECK_GL_ERROR;
 
-  // Anisotropic sampling is still an extension as of both GL 3.2 and ES 3,
+  // Anisotropic sampling is still an extension as of both GL 3 and ES 3,
   // so we need to test for it.
   anisotropic_support_ =
       CheckGLExtension(extensions, "texture_filter_anisotropic");
@@ -410,40 +380,6 @@ void RendererGL::CheckGLCapabilities_() {
   }
 
   BA_DEBUG_CHECK_GL_ERROR;
-
-  // VAO support is everywhere now.
-  // #if BA_OPENGL_IS_ES
-  //   // We can run with our without VAOs but they're nice to have.
-  //   g_vao_support =
-  //       (glGenVertexArrays != nullptr && glDeleteVertexArrays != nullptr
-  //        && glBindVertexArray != nullptr
-  //        && (g_running_es3
-  //            || CheckGLExtension(extensions, "vertex_array_object")));
-  // #else
-  //   g_vao_support = true;
-  // #endif
-
-  // #if !BA_OPENGL_IS_ES
-  // Both of these are standard in GL 3.2 and GL ES 3; hooray!
-  // g_blit_framebuffer_support = true;
-  // g_framebuffer_multisample_support = true;
-  // #else
-  // #if BA_OSTYPE_IOS_TVOS
-  //   g_blit_framebuffer_support = false;
-  //   g_framebuffer_multisample_support = false;
-  // #elif BA_OSTYPE_MACOS
-  //   g_blit_framebuffer_support = CheckGLExtension(extensions,
-  //   "framebuffer_blit"); g_framebuffer_multisample_support = false;
-  // #else
-  //   g_blit_framebuffer_support =
-  //       (glBlitFramebuffer != nullptr
-  //        && (g_running_es3 || CheckGLExtension(ex, "framebuffer_blit")));
-  //   g_framebuffer_multisample_support =
-  //       (glRenderbufferStorageMultisample != nullptr
-  //        && (g_running_es3 || (CheckGLExtension(ex,
-  //        "framebuffer_multisample"))));
-  // #endif
-  // #endif
 
   if (gl_is_es()) {
     // GL ES 3 has glInvalidateFramebuffer as part of the standard.
@@ -454,68 +390,25 @@ void RendererGL::CheckGLCapabilities_() {
     invalidate_framebuffer_support_ = false;
   }
 
-  // #if BA_OSTYPE_IOS_TVOS || BA_OSTYPE_ANDROID
-  // #if BA_OSTYPE_IOS_TVOS
-  //   g_discard_framebuffer_support = CheckGLExtension(ex,
-  //   "discard_framebuffer");
-  // #else
-  //   g_discard_framebuffer_support =
-  //       (glDiscardFramebufferEXT != nullptr
-  //        && CheckGLExtension(ex, "discard_framebuffer"));
-  // #endif
-
-  //   g_invalidate_framebuffer_support =
-  //       (g_running_es3 && glInvalidateFramebuffer != nullptr);
-  // #else
-  //   g_discard_framebuffer_support = false;
-  //   g_invalidate_framebuffer_support = false;
-  // #endif
-
-  // g_seamless_cube_maps = CheckGLExtension(ex, "seamless_cube_map");
-
-  // #if BA_OSTYPE_WINDOWS
-  //   // The vmware gl driver breaks horrifically with VAOs turned on.
-  //   const char* vendor = (const char*)glGetString(GL_VENDOR);
-  //   if (strstr(vendor, "VMware")) {
-  //     g_vao_support = false;
-  //   }
-  // #endif
-
-  // #if BA_OSTYPE_ANDROID
-  //   // VAOs currently break my poor kindle fire hd to the point of rebooting
-  //   it if (!g_running_es3 && !is_tegra_4_) {
-  //     g_vao_support = false;
-  //   }
-
-  //   // also they seem to be problematic on zenfone2's gpu.
-  //   if (strstr(renderer, "PowerVR Rogue G6430")) {
-  //     g_vao_support = false;
-  //   }
-  // #endif
-
-  glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS,
-                &combined_texture_image_unit_count_);
+  combined_texture_image_unit_count_ =
+      GLGetInt(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 
   // If we're running ES3, ask about our max multisample counts and whether we
   // can enable MSAA.
-  // enable_msaa_ = false;  // start pessimistic
   msaa_max_samples_rgb565_ = msaa_max_samples_rgb8_ = 0;  // start pessimistic
 
-  // FIXME - NEED TO CHECK DESKTOP GL VERSION TO USE THIS THERE.
-#if BA_OSTYPE_ANDROID || BA_RIFT_BUILD
-  bool check_msaa = false;
+  bool have_gl_get_internal_format_iv{};
+  if (gl_is_es()) {
+    // This is available on ES 3.
+    have_gl_get_internal_format_iv = true;
+  } else {
+    // This is available on GL 4.2 or newer.
+    if (gl_version_major() == 4 && gl_version_minor() >= 2) {
+      have_gl_get_internal_format_iv = true;
+    }
+  }
 
-#if BA_OSTYPE_ANDROID
-  // if (g_running_es3) {
-  check_msaa = true;
-  // }
-#endif  // BA_OSTYPE_ANDROID
-
-#if BA_RIFT_BUILD
-  check_msaa = true;
-#endif  // BA_RIFT_BUILD
-
-  if (check_msaa) {
+  if (have_gl_get_internal_format_iv) {
     GLint count;
     glGetInternalformativ(GL_RENDERBUFFER, GL_RGB565, GL_NUM_SAMPLE_COUNTS, 1,
                           &count);
@@ -543,9 +436,16 @@ void RendererGL::CheckGLCapabilities_() {
       BA_LOG_ONCE(LogLevel::kError, "Got 0 samplecounts for RGB8");
       msaa_max_samples_rgb8_ = 0;
     }
+  } else {
+    // For older GL (which includes all Macs) it sounds like this is the way
+    // to query max samples?.. but I don't know for sure if this applies to
+    // renderbuffer targets or just the default drawable. Will it ever be
+    // different?
+    auto max_samples = GLGetIntOptional(GL_MAX_SAMPLES);
+    if (max_samples.has_value()) {
+      msaa_max_samples_rgb565_ = msaa_max_samples_rgb8_ = *max_samples;
+    }
   }
-
-#endif  // BA_OSTYPE_ANDROID
 
   BA_DEBUG_CHECK_GL_ERROR;
 
@@ -639,7 +539,7 @@ void RendererGL::BindTextureUnit(uint32_t tex_unit) {
   assert(tex_unit >= 0 && tex_unit < kMaxGLTexUnitsUsed);
   if (active_tex_unit_ != -1) {
     // Make sure our internal state stays correct.
-    assert(DebugGLGetInt(GL_ACTIVE_TEXTURE) == GL_TEXTURE0 + active_tex_unit_);
+    assert(GLGetInt(GL_ACTIVE_TEXTURE) == GL_TEXTURE0 + active_tex_unit_);
   }
   if (active_tex_unit_ != tex_unit) {
     active_tex_unit_ = tex_unit;
@@ -649,18 +549,39 @@ void RendererGL::BindTextureUnit(uint32_t tex_unit) {
   }
 }
 
-auto RendererGL::DebugGLGetInt(GLenum name) -> int {
-  // This is probably inefficient so make sure we don't leave it on in
-  // release builds.
-  assert(g_buildconfig.debug_build());
+auto RendererGL::GLGetInt(GLenum name) -> int {
   assert(g_base->app_adapter->InGraphicsContext());
 
-  // Clear any error coming in; don't want to die for something that's not
-  // ours.
-  BA_DEBUG_CHECK_GL_ERROR;
+  // Clear any error coming in; don't want to fail for something that's not
+  // our problem.
+  if (g_buildconfig.debug_build()) {
+    BA_DEBUG_CHECK_GL_ERROR;
+  } else {
+    glGetError();
+  }
   GLint val;
   glGetIntegerv(name, &val);
-  assert(glGetError() == GL_NO_ERROR);
+  if (glGetError() != GL_NO_ERROR) {
+    FatalError("Unable to fetch GL int " + std::to_string(name));
+  }
+  return val;
+}
+
+auto RendererGL::GLGetIntOptional(GLenum name) -> std::optional<int> {
+  assert(g_base->app_adapter->InGraphicsContext());
+
+  // Clear any error coming in; don't want to fail for something that's not
+  // our problem.
+  if (g_buildconfig.debug_build()) {
+    BA_DEBUG_CHECK_GL_ERROR;
+  } else {
+    glGetError();
+  }
+  GLint val;
+  glGetIntegerv(name, &val);
+  if (glGetError() != GL_NO_ERROR) {
+    return {};
+  }
   return val;
 }
 
@@ -669,14 +590,14 @@ void RendererGL::BindFramebuffer(GLuint fb) {
     glBindFramebuffer(GL_FRAMEBUFFER, fb);
     active_framebuffer_ = fb;
   } else {
-    assert(DebugGLGetInt(GL_FRAMEBUFFER_BINDING) == fb);
+    assert(GLGetInt(GL_FRAMEBUFFER_BINDING) == fb);
   }
 }
 
 void RendererGL::BindArrayBuffer(GLuint b) {
   if (active_array_buffer_ != -1) {
     // Make sure our internal state stays correct.
-    assert(DebugGLGetInt(GL_ARRAY_BUFFER_BINDING) == active_array_buffer_);
+    assert(GLGetInt(GL_ARRAY_BUFFER_BINDING) == active_array_buffer_);
   }
   if (active_array_buffer_ != b) {
     glBindBuffer(GL_ARRAY_BUFFER, b);
@@ -702,7 +623,7 @@ void RendererGL::BindTexture_(GLuint type, GLuint tex, GLuint tex_unit) {
       if (g_buildconfig.debug_build()) {
         if (bound_textures_2d_[tex_unit] != -1) {
           BindTextureUnit(tex_unit);
-          assert(DebugGLGetInt(GL_TEXTURE_BINDING_2D)
+          assert(GLGetInt(GL_TEXTURE_BINDING_2D)
                  == bound_textures_2d_[tex_unit]);
         }
       }
@@ -718,7 +639,7 @@ void RendererGL::BindTexture_(GLuint type, GLuint tex, GLuint tex_unit) {
       if (g_buildconfig.debug_build()) {
         if (bound_textures_cube_map_[tex_unit] != -1) {
           BindTextureUnit(tex_unit);
-          assert(DebugGLGetInt(GL_TEXTURE_BINDING_CUBE_MAP)
+          assert(GLGetInt(GL_TEXTURE_BINDING_CUBE_MAP)
                  == bound_textures_cube_map_[tex_unit]);
         }
       }
@@ -825,7 +746,6 @@ void RendererGL::InvalidateFramebuffer(bool color, bool depth,
 
   // Currently this is ES only for us.
 #if BA_OPENGL_IS_ES
-  // #if BA_OSTYPE_IOS_TVOS || BA_OSTYPE_ANDROID
 
   if (invalidate_framebuffer_support()) {
     GLenum attachments[5];
@@ -834,11 +754,9 @@ void RendererGL::InvalidateFramebuffer(bool color, bool depth,
     if (active_framebuffer_ == 0 && !target_read_framebuffer) {
       if (color) {
         attachments[count++] = GL_COLOR;
-        // attachments[count++] = GL_COLOR_EXT;
       }
       if (depth) {
         attachments[count++] = GL_DEPTH;
-        // attachments[count++] = GL_DEPTH_EXT;
       }
     } else {
       if (color) {
@@ -848,29 +766,16 @@ void RendererGL::InvalidateFramebuffer(bool color, bool depth,
         attachments[count++] = GL_DEPTH_ATTACHMENT;
       }
 
-      // Apparently the oculus docs say glInvalidateFramebuffer errors on a
-      // mali es3 implementation so they always use glDiscard when present.
-      // if () {
-      // #if BA_OSTYPE_IOS_TVOS
-      //       throw Exception();  // shouldnt happen
-      // #else
       glInvalidateFramebuffer(
           target_read_framebuffer ? GL_READ_FRAMEBUFFER : GL_FRAMEBUFFER, count,
           attachments);
-      // #endif
     }
-    // } else {
-    //   // If we've got a read-framebuffer, we should have invalidate too.
-    //   assert(!target_read_framebuffer);
-    //   glDiscardFramebufferEXT(GL_FRAMEBUFFER, count, attachments);
-    // }
     BA_DEBUG_CHECK_GL_ERROR;
   }
 #else
-  // Make noise if we should be doing this here too...
+  // Make noise if we should be doing this here too at some point.
   assert(!invalidate_framebuffer_support());
 #endif  // BA_OPENGL_IS_ES
-  // #endif  // BA_OSTYPE_IOS_TVOS || BA_OSTYPE_ANDROID
 }
 
 RendererGL::~RendererGL() {
@@ -2701,8 +2606,7 @@ void RendererGL::Load() {
     // Grab the current framebuffer and consider that to be our 'screen'
     // framebuffer. This can be 0 for the main framebuffer or can be
     // something else.
-    glGetIntegerv(GL_FRAMEBUFFER_BINDING,
-                  reinterpret_cast<GLint*>(&screen_framebuffer_));
+    screen_framebuffer_ = GLGetInt(GL_FRAMEBUFFER_BINDING);
   }
   Renderer::Load();
   int high_qual_pp_flag =
@@ -3340,9 +3244,7 @@ void RendererGL::VREyeRenderBegin() {
   glDisable(GL_FRAMEBUFFER_SRGB);
 #endif  // BA_RIFT_BUILD
 
-  GLuint fb;
-  glGetIntegerv(GL_FRAMEBUFFER_BINDING, reinterpret_cast<GLint*>(&fb));
-  screen_framebuffer_ = fb;
+  screen_framebuffer_ = GLGetInt(GL_FRAMEBUFFER_BINDING);
 }
 
 #if BA_VR_BUILD

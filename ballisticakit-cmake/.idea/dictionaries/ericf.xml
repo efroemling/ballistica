@@ -1733,6 +1733,8 @@
       <w>syscalls</w>
       <w>sysresponse</w>
       <w>tabdefs</w>
+      <w>tabentry</w>
+      <w>tabname</w>
       <w>tabtype</w>
       <w>tabtypes</w>
       <w>talloc</w>
@@ -1972,6 +1974,7 @@
       <w>xcrun</w>
       <w>xdiff</w>
       <w>xdist</w>
+      <w>xhost</w>
       <w>xinput</w>
       <w>xmax</w>
       <w>xmin</w>

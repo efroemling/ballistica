@@ -125,7 +125,7 @@ class Python {
   static auto GetPyInts(PyObject* o) -> std::vector<int>;
   static auto GetPyUInts64(PyObject* o) -> std::vector<uint64_t>;
   static auto GetPyPoint2D(PyObject* o) -> Point2D;
-  static auto GetPyStrings(PyObject* o) -> std::list<std::string>;
+  static auto GetPyStringSequence(PyObject* o) -> std::list<std::string>;
 
   /// Set Python exception from C++ Exception.
   static void SetPythonException(const Exception& exc);

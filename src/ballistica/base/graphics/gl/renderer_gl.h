@@ -217,7 +217,14 @@ class RendererGL : public Renderer {
 #endif
   }
 
-  auto DebugGLGetInt(GLenum name) -> int;
+  auto gl_version_minor() const { return gl_version_minor_; }
+  auto gl_version_major() const { return gl_version_major_; }
+
+  // Wraps glGetIntegerv(). Triggers FatalError if get fails.
+  auto GLGetInt(GLenum name) -> int;
+
+  // Wraps glGetIntegerv(); returns empty value if get fails.
+  auto GLGetIntOptional(GLenum name) -> std::optional<int>;
 
  private:
   static auto GetFunkyDepthIssue_() -> bool;
@@ -251,18 +258,28 @@ class RendererGL : public Renderer {
   void BindArrayBuffer(GLuint b);
   void SetBlend(bool b);
   void SetBlendPremult(bool b);
-  millisecs_t dof_update_time_{};
-  std::vector<Object::Ref<FramebufferObjectGL> > blur_buffers_;
-  // bool supports_depth_textures_{};
+
+  bool blend_{};
+  bool blend_premult_{};
   bool first_extension_check_{true};
   bool is_tegra_4_{};
   bool is_tegra_k1_{};
   bool is_recent_adreno_{};
   bool is_adreno_{};
   bool enable_msaa_{};
+  bool draw_at_equal_depth_{};
+  bool depth_writing_enabled_{};
+  bool depth_testing_enabled_{};
+  bool data_loaded_{};
+  bool draw_front_{};
+  bool got_screen_framebuffer_{};
+  bool double_sided_{};
+  bool invalidate_framebuffer_support_{};
+  GLint gl_version_major_{};
+  GLint gl_version_minor_{};
+  int last_blur_res_count_{};
   float last_cam_buffer_width_{};
   float last_cam_buffer_height_{};
-  int last_blur_res_count_{};
   float vignette_tex_outer_r_{};
   float vignette_tex_outer_g_{};
   float vignette_tex_outer_b_{};
@@ -271,13 +288,7 @@ class RendererGL : public Renderer {
   float vignette_tex_inner_b_{};
   float depth_range_min_{};
   float depth_range_max_{};
-  bool draw_at_equal_depth_{};
-  bool depth_writing_enabled_{};
-  bool depth_testing_enabled_{};
-  bool data_loaded_{};
-  bool draw_front_{};
-  bool got_screen_framebuffer_{};
-  GLuint screen_framebuffer_{};
+  GLint screen_framebuffer_{};
   GLuint random_tex_{};
   GLuint vignette_tex_{};
   GraphicsQuality vignette_quality_{};
@@ -285,6 +296,8 @@ class RendererGL : public Renderer {
   GLint viewport_y_{};
   GLint viewport_width_{};
   GLint viewport_height_{};
+  millisecs_t dof_update_time_{};
+  std::vector<Object::Ref<FramebufferObjectGL> > blur_buffers_;
   std::vector<std::unique_ptr<ProgramGL> > shaders_;
   ProgramSimpleGL* simple_color_prog_{};
   ProgramSimpleGL* simple_tex_prog_{};
@@ -326,24 +339,18 @@ class RendererGL : public Renderer {
   ProgramPostProcessGL* postprocess_distort_prog_{};
   static bool funky_depth_issue_set_;
   static bool funky_depth_issue_;
-  static bool draws_shields_funny_set_;
-  static bool draws_shields_funny_;
 #if BA_OSTYPE_ANDROID
   static bool is_speedy_android_device_;
   static bool is_extra_speedy_android_device_;
 #endif
   ProgramGL* current_program_{};
-  bool double_sided_{};
   std::vector<Rect> scissor_rects_;
   GLuint current_vertex_array_{};
-  bool vertex_attrib_arrays_enabled_[kVertexAttrCount]{};
   int active_tex_unit_{};
   int active_framebuffer_{};
   int active_array_buffer_{};
   int bound_textures_2d_[kMaxGLTexUnitsUsed]{};
   int bound_textures_cube_map_[kMaxGLTexUnitsUsed]{};
-  bool blend_{};
-  bool blend_premult_{};
   std::unique_ptr<MeshDataSimpleFullGL> screen_mesh_;
   std::vector<MeshDataSimpleSplitGL*> recycle_mesh_datas_simple_split_;
   std::vector<MeshDataObjectSplitGL*> recycle_mesh_datas_object_split_;
@@ -355,7 +362,6 @@ class RendererGL : public Renderer {
   GLint combined_texture_image_unit_count_{};
   GLint anisotropic_support_{};
   GLfloat max_anisotropy_{};
-  bool invalidate_framebuffer_support_{};
   int msaa_max_samples_rgb565_{-1};
   int msaa_max_samples_rgb8_{-1};
 };

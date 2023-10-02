@@ -114,6 +114,11 @@ from babase._apputils import (
     AppHealthMonitor,
 )
 from babase._cloud import CloudSubsystem
+from babase._devconsole import (
+    DevConsoleTab,
+    DevConsoleTabEntry,
+    DevConsoleSubsystem,
+)
 from babase._emptyappmode import EmptyAppMode
 from babase._error import (
     print_exception,
@@ -206,6 +211,9 @@ __all__ = [
     'ContextError',
     'ContextRef',
     'DelegateNotFoundError',
+    'DevConsoleTab',
+    'DevConsoleTabEntry',
+    'DevConsoleSubsystem',
     'DisplayTime',
     'displaytime',
     'displaytimer',

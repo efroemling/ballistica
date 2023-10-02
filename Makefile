@@ -135,6 +135,7 @@ resources-clean:
 	cd src/resources && $(MAKE) clean
 
 # Build our generated sources.
+#
 # Meta builds can affect sources used by asset builds, resource builds, and
 # compiles, so it should be listed as a dependency of any of those.
 meta: prereqs
@@ -146,8 +147,8 @@ meta-clean:
 	rm -f $(LAZYBUILDDIR)/meta
 	cd src/meta && $(MAKE) clean
 
-# Remove ALL files and directories that aren't managed by git
-# (except for a few things such as localconfig.json).
+# Remove ALL files and directories that aren't managed by git (except for a
+# few things such as localconfig.json).
 clean:
 	$(CHECK_CLEAN_SAFETY)
 	rm -rf build  # Handle this part ourself; can confuse git.
@@ -160,9 +161,10 @@ clean-list:
 	git clean -dnx $(ROOT_CLEAN_IGNORES)
 
 # Build/update dummy python modules.
-# IMPORTANT - building this target can kick off full builds/cleans and so
-# it should not be built in parallel with other targets.
-# See py_check_prereqs target for more info.
+#
+# IMPORTANT - building this target can kick off full builds/cleans and so it
+# should not be built in parallel with other targets. See py_check_prereqs
+# target for more info.
 dummymodules: prereqs meta
 	@$(PCOMMAND) lazybuild dummymodules_src $(LAZYBUILDDIR)/$@ \
  rm -rf build/dummymodules \&\& $(PCOMMAND) gen_dummy_modules

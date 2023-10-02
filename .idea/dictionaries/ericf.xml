@@ -2923,6 +2923,8 @@
       <w>syslogmodule</w>
       <w>sysresponse</w>
       <w>tabdefs</w>
+      <w>tabentry</w>
+      <w>tabname</w>
       <w>tabtype</w>
       <w>tabtypes</w>
       <w>tabval</w>
@@ -3351,6 +3353,7 @@
       <w>xcworkspacedata</w>
       <w>xdrlib</w>
       <w>xhdpi</w>
+      <w>xhost</w>
       <w>xinput</w>
       <w>xjtp</w>
       <w>xmlbuilder</w>

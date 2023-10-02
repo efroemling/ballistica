@@ -19,4 +19,5 @@ values = [
     app.on_native_shutdown,  # kAppOnNativeShutdownCall
     app.on_native_shutdown_complete,  # kAppOnNativeShutdownCompleteCall
     app.read_config,  # kAppReadConfigCall
+    app.devconsole.do_refresh_tab,  # kAppDevConsoleDoRefreshTabCall
 ]

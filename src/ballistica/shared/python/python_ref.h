@@ -166,6 +166,7 @@ class PythonRef {
   auto ValueAsLString() const -> std::string;
 
   auto ValueAsString() const -> std::string;
+  auto ValueAsStringSequence() const -> std::list<std::string>;
   auto ValueAsOptionalString() const -> std::optional<std::string>;
   auto ValueAsOptionalStringSequence() const
       -> std::optional<std::list<std::string>>;

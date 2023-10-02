@@ -225,7 +225,7 @@ auto Python::GetPyFloats(PyObject* o) -> std::vector<float> {
   return vals;
 }
 
-auto Python::GetPyStrings(PyObject* o) -> std::list<std::string> {
+auto Python::GetPyStringSequence(PyObject* o) -> std::list<std::string> {
   assert(HaveGIL());
   BA_PRECONDITION_FATAL(o != nullptr);
 

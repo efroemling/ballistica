@@ -51,24 +51,42 @@ class DevConsole {
   auto HandleMouseDown(int button, float x, float y) -> bool;
   void HandleMouseUp(int button, float x, float y);
   void Exec();
-  void Refresh();
+
+  void AddButton(const char* label, float x, float y, float width, float height,
+                 PyObject* call, const char* h_anchor, float label_scale,
+                 float corner_radius);
+  void AddPythonTerminal();
+
+  auto Width() -> float;
+  auto Height() -> float;
+  auto BaseScale() const -> float;
+  void RequestRefresh();
 
  private:
   class Widget_;
   class Button_;
   class ToggleButton_;
   class TabButton_;
-  class Line_;
-  enum class State_ { kInactive, kMini, kFull };
+  class OutputLine_;
+  enum class State_ : uint8_t { kInactive, kMini, kFull };
 
   auto Bottom_() const -> float;
-  auto PythonConsoleBaseScale_() const -> float;
-  void SubmitCommand_(const std::string& command);
+  void SubmitPythonCommand_(const std::string& command);
   void InvokeStringEditor_();
-  void RefreshTabsButtons_();
+  void RefreshTabButtons_();
+  void RefreshTabContents_();
 
-  std::list<std::string> tabs_{"Python", "AppModes", "Logging", "Graphics"};
-  std::string active_tab_{"Python"};
+  bool input_text_dirty_{true};
+  bool input_enabled_{};
+  bool last_line_mesh_dirty_{true};
+  bool python_terminal_visible_{};
+  bool python_terminal_pressed_{};
+  bool refresh_pending_{};
+  State_ state_{State_::kInactive};
+  State_ state_prev_{State_::kInactive};
+  millisecs_t last_input_text_change_time_{};
+  double transition_start_{};
+  int input_history_position_{};
   ImageMesh bg_mesh_;
   ImageMesh stripe_mesh_;
   ImageMesh border_mesh_;
@@ -76,21 +94,15 @@ class DevConsole {
   TextGroup title_text_group_;
   TextGroup prompt_text_group_;
   TextGroup input_text_group_;
-  millisecs_t last_input_text_change_time_{};
-  bool input_text_dirty_{true};
-  double transition_start_{};
-  State_ state_{State_::kInactive};
-  State_ state_prev_{State_::kInactive};
-  bool input_enabled_{};
-  std::string input_string_;
-  std::list<std::string> input_history_;
-  int input_history_position_{};
-  std::list<Line_> lines_;
   std::string last_line_;
-  Object::Ref<TextGroup> last_line_mesh_group_;
-  bool last_line_mesh_dirty_{true};
-  bool python_console_pressed_{};
+  std::string input_string_;
+  std::list<std::string> tabs_{"Python", "AppModes", "Logging", "Graphics",
+                               "UI"};
+  std::string active_tab_{"Python"};
   PythonRef string_edit_adapter_;
+  Object::Ref<TextGroup> last_line_mesh_group_;
+  std::list<std::string> input_history_;
+  std::list<OutputLine_> output_lines_;
   std::vector<std::unique_ptr<Widget_> > buttons_;
   std::vector<std::unique_ptr<Widget_> > tab_buttons_;
 };

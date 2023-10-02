@@ -21,7 +21,7 @@
 #endif
 
 #define BA_OSTYPE_MACOS 1
-#define BA_HAVE_FRAMEWORK_OPENAL 1
+// #define BA_HAVE_FRAMEWORK_OPENAL 1
 
 #elif __linux__
 

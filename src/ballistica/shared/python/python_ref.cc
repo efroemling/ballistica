@@ -162,6 +162,12 @@ auto PythonRef::ValueAsString() const -> std::string {
   return Python::GetPyString(obj_);
 }
 
+auto PythonRef::ValueAsStringSequence() const -> std::list<std::string> {
+  assert(Python::HaveGIL());
+  ThrowIfUnset();
+  return Python::GetPyStringSequence(obj_);
+}
+
 auto PythonRef::ValueAsOptionalInt() const -> std::optional<int64_t> {
   assert(Python::HaveGIL());
   ThrowIfUnset();
@@ -193,7 +199,7 @@ auto PythonRef::ValueAsOptionalStringSequence() const
   if (obj_ == Py_None) {
     return {};
   }
-  return Python::GetPyStrings(obj_);
+  return Python::GetPyStringSequence(obj_);
 }
 
 auto PythonRef::ValueAsInt() const -> int64_t {

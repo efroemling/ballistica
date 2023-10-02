@@ -13,12 +13,12 @@
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
 #else
-#include <AL/al.h>
-#include <AL/alc.h>
+#include <al.h>
+#include <alc.h>
 #endif
 
 #if BA_OSTYPE_ANDROID
-#include <AL/alext.h>
+#include <alext.h>
 #endif
 
 #define CHECK_AL_ERROR _check_al_error(__FILE__, __LINE__)

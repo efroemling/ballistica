@@ -372,3 +372,8 @@ def string_edit_adapter_can_be_replaced(adapter: StringEditAdapter) -> bool:
 
     assert isinstance(adapter, StringEditAdapter)
     return adapter.can_be_replaced()
+
+
+def get_dev_console_tab_names() -> list[str]:
+    """Return the current set of dev-console tab names."""
+    return [t.name for t in _babase.app.devconsole.tabs]

@@ -105,6 +105,8 @@ class BasePython {
     kAppPushApplyAppConfigCall,
     kStringEditAdapterCanBeReplacedCall,
     kDevConsoleStringEditAdapterClass,
+    kGetDevConsoleTabNamesCall,
+    kAppDevConsoleDoRefreshTabCall,
     kLast  // Sentinel; must be at end.
   };
 

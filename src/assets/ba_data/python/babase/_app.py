@@ -24,6 +24,7 @@ from babase._appcomponent import AppComponentSubsystem
 from babase._appmodeselector import AppModeSelector
 from babase._appintent import AppIntentDefault, AppIntentExec
 from babase._stringedit import StringEditSubsystem
+from babase._devconsole import DevConsoleSubsystem
 
 if TYPE_CHECKING:
     import asyncio
@@ -164,6 +165,7 @@ class App:
         self.workspaces = WorkspaceSubsystem()
         self.components = AppComponentSubsystem()
         self.stringedit = StringEditSubsystem()
+        self.devconsole = DevConsoleSubsystem()
 
         # This is incremented any time the app is backgrounded or
         # foregrounded; can be a simple way to determine if network data
