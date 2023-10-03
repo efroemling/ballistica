@@ -52,6 +52,22 @@ else:
     Call = functools.partial
 
 
+def explicit_bool(val: bool) -> bool:
+    """Return a non-inferable boolean value.
+
+    Useful to be able to disable blocks of code without type checkers
+    complaining/etc.
+    """
+    # pylint: disable=no-else-return
+    if TYPE_CHECKING:
+        # infer this! <boom>
+        import random
+
+        return random.random() < 0.5
+    else:
+        return val
+
+
 def snake_case_to_title(val: str) -> str:
     """Given a snake-case string 'foo_bar', returns 'Foo Bar'."""
     # Kill empty words resulting from leading/trailing/multiple underscores.

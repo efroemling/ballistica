@@ -519,7 +519,7 @@ def _run_pylint(
 
     args += dirtyfiles
     name = f'{len(dirtyfiles)} file(s)'
-    run = lint.Run(args, do_exit=False)
+    run = lint.Run(args, exit=False)
     if cache is not None:
         assert allfiles is not None
         result = _apply_pylint_run_to_cache(

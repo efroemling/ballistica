@@ -344,24 +344,24 @@ class MessageProtocol:
 
         if part == 'sender':
             import_lines += (
-                'from efro.message import MessageSender, BoundMessageSender'
+                'from efro.message import MessageSender, BoundMessageSender\n'
             )
             tpimport_typing_extras = ''
         else:
             if single_message_type:
                 import_lines += (
                     'from efro.message import (MessageReceiver,'
-                    ' BoundMessageReceiver, Message, Response)'
+                    ' BoundMessageReceiver, Message, Response)\n'
                 )
             else:
                 import_lines += (
                     'from efro.message import MessageReceiver,'
-                    ' BoundMessageReceiver'
+                    ' BoundMessageReceiver\n'
                 )
             tpimport_typing_extras = ', Awaitable'
 
         if extra_import_code is not None:
-            import_lines += f'\n{extra_import_code}\n'
+            import_lines += extra_import_code
 
         ovld = ', overload' if not single_message_type else ''
         ovld2 = (
@@ -386,7 +386,7 @@ class MessageProtocol:
             f'\n'
             f'from typing import TYPE_CHECKING{ovld}{ovld2}\n'
             f'\n'
-            f'{import_lines}\n'
+            f'{import_lines}'
             f'\n'
             f'if TYPE_CHECKING:\n'
             f'    from typing import {baseimps_s}'

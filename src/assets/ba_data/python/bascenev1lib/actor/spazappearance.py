@@ -122,7 +122,6 @@ def register_appearances() -> None:
     """Register our builtin spaz appearances."""
 
     # This is quite ugly but will be going away so not worth cleaning up.
-    # pylint: disable=invalid-name
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
 

@@ -20,7 +20,6 @@ class PartyQueueWindow(bui.Window):
     """Window showing players waiting to join a server."""
 
     # Ewww this needs quite a bit of de-linting if/when i revisit it..
-    # pylint: disable=invalid-name
     # pylint: disable=consider-using-dict-comprehension
     class Dude:
         """Represents a single dude waiting in a server line."""

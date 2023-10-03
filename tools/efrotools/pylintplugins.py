@@ -77,7 +77,9 @@ def ignore_type_check_filter(if_node: nc.NodeNG) -> nc.NodeNG:
         passnode = astroid.Pass(
             parent=if_node,
             lineno=if_node.lineno + 1,
+            end_lineno=if_node.lineno + 1,
             col_offset=if_node.col_offset + 1,
+            end_col_offset=if_node.col_offset + 1,
         )
         if_node.body = [passnode]
     return if_node

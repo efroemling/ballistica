@@ -8,7 +8,6 @@
 # pylint: disable=too-many-statements
 # pylint: disable=too-many-lines
 # pylint: disable=missing-function-docstring, missing-class-docstring
-# pylint: disable=invalid-name
 # pylint: disable=too-many-locals
 # pylint: disable=unused-argument
 # pylint: disable=unused-variable

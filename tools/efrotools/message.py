@@ -46,8 +46,9 @@ def standard_message_sender_gen_pcommand(
     build_time_protocol_create_code: str | None
     if embedded:
         protocol_module_level_import_code = (
+            'from efro.util import explicit_bool\n'
             f'\n# Dummy import for type-checking purposes.\n'
-            f'if bool(False):\n'
+            f'if explicit_bool(False):\n'
             f'    from {source_module} import {get_protocol_import}'
         )
         protocol_create_code = f'protocol = {get_protocol_call}()'
@@ -111,9 +112,10 @@ def standard_message_receiver_gen_pcommand(
     build_time_protocol_create_code: str | None
     if embedded:
         protocol_module_level_import_code = (
+            'from efro.util import explicit_bool\n'
             f'\n# Dummy import for type-checking purposes.\n'
-            f'if bool(False):\n'
-            f'    from {source_module} import {get_protocol_import}'
+            f'if explicit_bool(False):\n'
+            f'    from {source_module} import {get_protocol_import}\n'
         )
         protocol_create_code = f'protocol = {get_protocol_call}()'
         build_time_protocol_create_code = (

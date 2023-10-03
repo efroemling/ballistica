@@ -11,7 +11,7 @@
 namespace ballistica {
 
 /* is c the start of a utf8 sequence? */
-#define isutf(c) (((c)&0xC0) != 0x80)
+#define isutf(c) (((c) & 0xC0) != 0x80)
 
 /* convert UTF-8 data to wide character */
 auto u8_toucs(uint32_t* dest, int sz, const char* src, int srcsz) -> int;

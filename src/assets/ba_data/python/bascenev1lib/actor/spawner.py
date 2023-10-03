@@ -41,17 +41,17 @@ class Spawner:
             self,
             spawner: Spawner,
             data: Any,
-            pt: Sequence[float],  # pylint: disable=invalid-name
+            pt: Sequence[float],
         ):
             """Instantiate with the given values."""
             self.spawner = spawner
             self.data = data
-            self.pt = pt  # pylint: disable=invalid-name
+            self.pt = pt
 
     def __init__(
         self,
         data: Any = None,
-        pt: Sequence[float] = (0, 0, 0),  # pylint: disable=invalid-name
+        pt: Sequence[float] = (0, 0, 0),
         spawn_time: float = 1.0,
         send_spawn_message: bool = True,
         spawn_callback: Callable[[], Any] | None = None,
