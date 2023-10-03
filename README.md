@@ -6,7 +6,7 @@ height="50" alt="logo">
 
 ***-ica***: collection of things relating to a specific theme.
 
-![](https://github.com/efroemling/ballistica/workflows/CI/badge.svg)
+[![](https://github.com/efroemling/ballistica/actions/workflows/ci.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/ci.yml)
 
 The Ballistica project is the foundation for
 [BombSquad](https://www.froemling.net/apps/bombsquad) and potentially other
@@ -82,8 +82,8 @@ Playstation / My Toaster??**
   launch on at least iOS and Steam at that time. I'm trying to get there as fast
   as I can. As far as consoles, I'd love to and hope to at some point but have
   nothing to announce just yet. See the
-  * [Ballistica Roadmap](https://github.com/efroemling/ballistica/wiki/Roadmap)
-  for more details or check the [Ballistica
+  * Check out [Ballistica Roadmap](https://github.com/efroemling/ballistica/wiki/Roadmap)
+  for more details or the [Ballistica
   Downloads](https://ballistica.net/downloads) page for early test builds on
   some platforms.
   
