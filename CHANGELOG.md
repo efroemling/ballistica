@@ -93,6 +93,8 @@
   (fix #614). Thanks heLlow-step-sis!
 - Fixes an issue where CTF flag return counters could get stuck (fix #584).
   Thanks SoK05 and Dliwk!
+- In cases where there's no browser available, the v2 account sign-in URL can
+  now be tapped to copy it (Thanks vishal332008!).
   
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)

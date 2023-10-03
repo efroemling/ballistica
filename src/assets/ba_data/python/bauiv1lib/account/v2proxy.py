@@ -238,8 +238,7 @@ class V2ProxySignInWindow(bui.Window):
         if bui.clipboard_is_supported():
             bui.clipboard_set_text(link)
             bui.screenmessage(
-                bui.Lstr(resource='copyConfirmText'),
-                color=(0, 1, 0)
+                bui.Lstr(resource='copyConfirmText'), color=(0, 1, 0)
             )
 
     def _done(self) -> None:
