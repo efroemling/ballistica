@@ -1221,6 +1221,7 @@
       <w>genmapjson</w>
       <w>genstartercache</w>
       <w>genutils</w>
+      <w>get</w>
       <w>getaccountid</w>
       <w>getactivity</w>
       <w>getauxval</w>

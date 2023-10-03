@@ -736,6 +736,7 @@
       <w>gencmd</w>
       <w>gencount</w>
       <w>generatedsymfile</w>
+      <w>get</w>
       <w>getactivity</w>
       <w>getattro</w>
       <w>getattrofunc</w>

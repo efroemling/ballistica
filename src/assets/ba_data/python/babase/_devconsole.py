@@ -32,6 +32,7 @@ class DevConsoleTab:
         h_anchor: Literal['left', 'center', 'right'] = 'center',
         label_scale: float = 1.0,
         corner_radius: float = 8.0,
+        style: Literal['normal', 'dark'] = 'normal',
     ) -> None:
         """Add a button to the tab being refreshed."""
         assert _babase.app.devconsole.is_refreshing
@@ -45,6 +46,7 @@ class DevConsoleTab:
             h_anchor,
             label_scale,
             corner_radius,
+            style,
         )
 
     def python_terminal(self) -> None:
@@ -94,6 +96,13 @@ class DevConsoleTabTest(DevConsoleTab):
             size=(100, 30),
             h_anchor='left',
             call=self.request_refresh,
+        )
+        self.button(
+            f'FLOOP2-{random.randrange(200)}',
+            pos=(120, 10),
+            size=(100, 30),
+            h_anchor='left',
+            style='dark',
         )
 
 

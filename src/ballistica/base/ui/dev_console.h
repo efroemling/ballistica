@@ -54,7 +54,7 @@ class DevConsole {
 
   void AddButton(const char* label, float x, float y, float width, float height,
                  PyObject* call, const char* h_anchor, float label_scale,
-                 float corner_radius);
+                 float corner_radius, const char* style);
   void AddPythonTerminal();
 
   auto Width() -> float;

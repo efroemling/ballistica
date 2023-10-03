@@ -29,12 +29,12 @@ const int kDevConsoleLineLimit = 80;
 const int kDevConsoleStringBreakUpSize = 1950;
 const int kDevConsoleActivateKey1 = SDLK_BACKQUOTE;
 const int kDevConsoleActivateKey2 = SDLK_F2;
-const float kDevConsoleButtonCornerRadius{8.0f};
 const float kDevConsoleTabButtonCornerRadius{16.0f};
 
 const double kTransitionSeconds = 0.1;
 
 enum class DevButtonAttach_ { kLeft, kCenter, kRight };
+enum class DevButtonStyle_ { kNormal, kDark };
 
 static auto XOffs(DevButtonAttach_ attach) -> float {
   switch (attach) {
@@ -101,11 +101,12 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
   NinePatchMesh mesh;
   TextGroup text_group;
   float text_scale;
+  DevButtonStyle_ style;
 
   template <typename F>
   Button_(const std::string& label, float text_scale, DevButtonAttach_ attach,
           float x, float y, float width, float height, float corner_radius,
-          const F& lambda)
+          DevButtonStyle_ style, const F& lambda)
       : attach{attach},
         x{x},
         y{y},
@@ -113,6 +114,7 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
         height{height},
         call{NewLambdaRunnable(lambda)},
         text_scale{text_scale},
+        style{style},
         mesh(0.0f, 0.0f, 0.0f, width, height,
              NinePatchMesh::BorderForRadius(corner_radius, width, height),
              NinePatchMesh::BorderForRadius(corner_radius, height, width),
@@ -147,11 +149,24 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
   }
 
   void Draw(RenderPass* pass, float bottom) override {
-    DrawBasicButton(
-        pass, &mesh, &text_group, text_scale, bottom, x + XOffs(attach), y,
-        width, height,
-        pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.8f, 0.7f, 0.8f},
-        pressed ? Vector3f{0.8f, 0.7f, 0.8f} : Vector3f{0.25, 0.2f, 0.3f});
+    Vector3f fgcolor;
+    Vector3f bgcolor;
+    switch (style) {
+      case DevButtonStyle_::kDark:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.8f, 0.7f, 0.8f};
+        bgcolor =
+            pressed ? Vector3f{0.6f, 0.5f, 0.6f} : Vector3f{0.16, 0.07f, 0.18f};
+        break;
+      default:
+        assert(style == DevButtonStyle_::kNormal);
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.8f, 0.7f, 0.8f};
+        bgcolor =
+            pressed ? Vector3f{0.8f, 0.7f, 0.8f} : Vector3f{0.25, 0.2f, 0.3f};
+    }
+    DrawBasicButton(pass, &mesh, &text_group, text_scale, bottom,
+                    x + XOffs(attach), y, width, height, fgcolor, bgcolor);
   }
 };
 
@@ -173,7 +188,8 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
   template <typename F, typename G>
   ToggleButton_(const std::string& label, float text_scale,
                 DevButtonAttach_ attach, float x, float y, float width,
-                float height, const F& on_call, const G& off_call)
+                float height, float corner_radius, const F& on_call,
+                const G& off_call)
       : attach{attach},
         x{x},
         y{y},
@@ -183,14 +199,10 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
         off_call{NewLambdaRunnable(off_call)},
         text_scale{text_scale},
         mesh(0.0f, 0.0f, 0.0f, width, height,
-             NinePatchMesh::BorderForRadius(kDevConsoleButtonCornerRadius,
-                                            width, height),
-             NinePatchMesh::BorderForRadius(kDevConsoleButtonCornerRadius,
-                                            height, width),
-             NinePatchMesh::BorderForRadius(kDevConsoleButtonCornerRadius,
-                                            width, height),
-             NinePatchMesh::BorderForRadius(kDevConsoleButtonCornerRadius,
-                                            height, width)) {
+             NinePatchMesh::BorderForRadius(corner_radius, width, height),
+             NinePatchMesh::BorderForRadius(corner_radius, height, width),
+             NinePatchMesh::BorderForRadius(corner_radius, width, height),
+             NinePatchMesh::BorderForRadius(corner_radius, height, width)) {
     text_group.SetText(label, TextMesh::HAlign::kCenter,
                        TextMesh::VAlign::kCenter);
   }
@@ -300,9 +312,10 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
                     x + XOffs(attach), y, width, height,
                     pressed    ? Vector3f{1.0f, 1.0f, 1.0f}
                     : selected ? Vector3f{1.0f, 1.0f, 1.0f}
-                               : Vector3f{0.8f, 0.7f, 0.8f},
-                    pressed    ? Vector3f{0.5f, 0.2f, 1.0f}
-                    : selected ? Vector3f{0.5f, 0.4f, 0.6f}
+                               : Vector3f{0.6f, 0.5f, 0.6f},
+                    pressed    ? Vector3f{0.4f, 0.2f, 0.8f}
+                    : selected ? Vector3f{0.4f, 0.3f, 0.4f}
+                               // : selected ? Vector3f{0.5f, 0.4f, 0.6f}
                                : Vector3f{0.25, 0.2f, 0.3f});
   }
 };
@@ -403,8 +416,16 @@ void DevConsole::RefreshTabContents_() {
 
 void DevConsole::AddButton(const char* label, float x, float y, float width,
                            float height, PyObject* call, const char* h_anchor,
-                           float label_scale, float corner_radius) {
+                           float label_scale, float corner_radius,
+                           const char* style) {
   assert(g_base->InLogicThread());
+
+  DevButtonStyle_ style_val;
+  if (!strcmp(style, "dark")) {
+    style_val = DevButtonStyle_::kDark;
+  } else {
+    style_val = DevButtonStyle_::kNormal;
+  }
 
   DevButtonAttach_ anchor;
   if (!strcmp(h_anchor, "left")) {
@@ -418,7 +439,7 @@ void DevConsole::AddButton(const char* label, float x, float y, float width,
 
   // auto call_obj = PythonRef::Acquired(call);
   buttons_.emplace_back(std::make_unique<Button_>(
-      label, label_scale, anchor, x, y, width, height, corner_radius,
+      label, label_scale, anchor, x, y, width, height, corner_radius, style_val,
       [this, call_obj = PythonRef::Acquired(call)] {
         if (call_obj.Get() != Py_None) {
           call_obj.Call();
@@ -430,7 +451,8 @@ void DevConsole::AddPythonTerminal() {
   float bs = BaseScale();
   buttons_.emplace_back(std::make_unique<Button_>(
       "Exec", 0.75f * bs, DevButtonAttach_::kRight, -33.0f * bs, 15.95f * bs,
-      32.0f * bs, 13.0f * bs, 2.0 * bs, [this] { Exec(); }));
+      32.0f * bs, 13.0f * bs, 2.0 * bs, DevButtonStyle_::kNormal,
+      [this] { Exec(); }));
   python_terminal_visible_ = true;
 }
 
@@ -578,53 +600,61 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
     return false;
   }
 
-  // The rest of these presses we only handle while active.
+  // Handle some stuff only while active.
   switch (keysym->sym) {
     case SDLK_ESCAPE:
       Dismiss();
+      return true;
+    default:
       break;
-    case SDLK_BACKSPACE:
-    case SDLK_DELETE: {
-      std::vector<uint32_t> unichars =
-          Utils::UnicodeFromUTF8(input_string_, "fjco38");
-      if (!unichars.empty()) {
-        unichars.resize(unichars.size() - 1);
-        input_string_ = Utils::UTF8FromUnicode(unichars);
-        input_text_dirty_ = true;
-      }
-      break;
-    }
-    case SDLK_UP:
-    case SDLK_DOWN: {
-      if (input_history_.empty()) {
+  }
+
+  // Handle some stuff only with the Python terminal visible.
+  if (python_terminal_visible_) {
+    switch (keysym->sym) {
+      case SDLK_BACKSPACE:
+      case SDLK_DELETE: {
+        std::vector<uint32_t> unichars =
+            Utils::UnicodeFromUTF8(input_string_, "fjco38");
+        if (!unichars.empty()) {
+          unichars.resize(unichars.size() - 1);
+          input_string_ = Utils::UTF8FromUnicode(unichars);
+          input_text_dirty_ = true;
+        }
         break;
       }
-      if (keysym->sym == SDLK_UP) {
-        input_history_position_++;
-      } else {
-        input_history_position_--;
-      }
-      int input_history_position_used =
-          (input_history_position_ - 1)
-          % static_cast<int>(input_history_.size());
-      int j = 0;
-      for (auto& i : input_history_) {
-        if (j == input_history_position_used) {
-          input_string_ = i;
-          input_text_dirty_ = true;
+      case SDLK_UP:
+      case SDLK_DOWN: {
+        if (input_history_.empty()) {
           break;
         }
-        j++;
+        if (keysym->sym == SDLK_UP) {
+          input_history_position_++;
+        } else {
+          input_history_position_--;
+        }
+        int input_history_position_used =
+            (input_history_position_ - 1)
+            % static_cast<int>(input_history_.size());
+        int j = 0;
+        for (auto& i : input_history_) {
+          if (j == input_history_position_used) {
+            input_string_ = i;
+            input_text_dirty_ = true;
+            break;
+          }
+          j++;
+        }
+        break;
       }
-      break;
-    }
-    case SDLK_KP_ENTER:
-    case SDLK_RETURN: {
-      Exec();
-      break;
-    }
-    default: {
-      break;
+      case SDLK_KP_ENTER:
+      case SDLK_RETURN: {
+        Exec();
+        break;
+      }
+      default: {
+        break;
+      }
     }
   }
   return true;
@@ -845,7 +875,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
     c.SetTexture(g_base->assets->SysTexture(SysTextureID::kSoftRectVertical));
     {
       auto scissor = c.ScopedScissor({0.0f, 0.0f, pass->virtual_width(),
-                                      bottom - (border_height * 0.95f) * bs});
+                                      bottom - (border_height * 0.75f) * bs});
       auto xf = c.ScopedTransform();
       c.Translate(pass->virtual_width() * 0.5f, bottom + 160.0f);
       c.Scale(pass->virtual_width() * 1.2f, 600.0f);
@@ -863,13 +893,13 @@ void DevConsole::Draw(FrameDef* frame_def) {
       SimpleComponent c(pass);
       c.SetFlatness(1.0f);
       c.SetTransparent(true);
-      c.SetColor(0.5f, 0.5f, 0.7f, 0.8f);
+      c.SetColor(0.4f, 0.33f, 0.45f, 0.8f);
       int elem_count = built_text_group_.GetElementCount();
       for (int e = 0; e < elem_count; e++) {
         c.SetTexture(built_text_group_.GetElementTexture(e));
         {
           auto xf = c.ScopedTransform();
-          c.Translate(pass->virtual_width() - 115.0f * bs, bottom + 4.0f,
+          c.Translate(pass->virtual_width() - 115.0f * bs, bottom + 1.9f * bs,
                       kDevConsoleZDepth);
           c.Scale(0.35f * bs, 0.35f * bs, 1.0f);
           c.DrawMesh(built_text_group_.GetElementMesh(e));
@@ -880,7 +910,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
         c.SetTexture(title_text_group_.GetElementTexture(e));
         {
           auto xf = c.ScopedTransform();
-          c.Translate(10.0f * bs, bottom + 4.0f, kDevConsoleZDepth);
+          c.Translate(10.0f * bs, bottom + 1.9f * bs, kDevConsoleZDepth);
           c.Scale(0.35f * bs, 0.35f * bs, 1.0f);
           c.DrawMesh(title_text_group_.GetElementMesh(e));
         }

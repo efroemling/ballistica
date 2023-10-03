@@ -1468,12 +1468,14 @@ static auto PyDevConsoleAddButton(PyObject* self, PyObject* args) -> PyObject* {
   const char* h_anchor;
   float label_scale;
   float corner_radius;
-  if (!PyArg_ParseTuple(args, "sffffOsff", &label, &x, &y, &width, &height,
-                        &call, &h_anchor, &label_scale, &corner_radius)) {
+  const char* style;
+  if (!PyArg_ParseTuple(args, "sffffOsffs", &label, &x, &y, &width, &height,
+                        &call, &h_anchor, &label_scale, &corner_radius,
+                        &style)) {
     return nullptr;
   }
   dev_console->AddButton(label, x, y, width, height, call, h_anchor,
-                         label_scale, corner_radius);
+                         label_scale, corner_radius, style);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1493,6 +1495,7 @@ static PyMethodDef PyDevConsoleAddButtonDef = {
     "  h_anchor: str,\n"
     "  label_scale: float,\n"
     "  corner_radius: float,\n"
+    "  style: str,\n"
     ") -> None\n"
     "\n"
     "(internal)",
