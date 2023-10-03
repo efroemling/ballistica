@@ -49,7 +49,12 @@ UI::UI() {
   }
 }
 
-void UI::StepDisplayTime() { assert(g_base->InLogicThread()); }
+void UI::StepDisplayTime() {
+  assert(g_base->InLogicThread());
+  if (dev_console_) {
+    dev_console_->StepDisplayTime();
+  }
+}
 
 void UI::OnAppStart() {
   assert(g_base->InLogicThread());

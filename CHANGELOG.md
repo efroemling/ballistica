@@ -1,4 +1,4 @@
-### 1.7.28 (build 21406, api 8, 2023-10-02)
+### 1.7.28 (build 21407, api 8, 2023-10-02)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -37,6 +37,9 @@
   etc.)
 - The in-app Python console text is now sized up on phone and tablet devices,
   and is generally a bit larger everywhere.
+- Added an API to define DevConsole tabs via Python. Currently it supports basic
+  buttons and text, but should be easy to expand to whatever we need. See
+  `babase/_devconsole.py`. It should be easy to define new tabs via plugins/etc.
 - Cleaned up onscreen keyboard support and generalized it to make it possible to
   support other things besides widgets and to make it easier to implement on
   other platforms.

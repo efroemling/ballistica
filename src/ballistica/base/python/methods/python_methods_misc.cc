@@ -1501,6 +1501,48 @@ static PyMethodDef PyDevConsoleAddButtonDef = {
     "(internal)",
 };
 
+// ------------------------- dev_console_add_text ------------------------------
+
+static auto PyDevConsoleAddText(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* dev_console = g_base->ui->dev_console();
+  BA_PRECONDITION(dev_console);
+  BA_PRECONDITION(dev_console->IsActive());
+  const char* text;
+  float x;
+  float y;
+  const char* h_anchor;
+  const char* h_align;
+  const char* v_align;
+  float scale;
+  if (!PyArg_ParseTuple(args, "sffsssf", &text, &x, &y, &h_anchor, &h_align,
+                        &v_align, &scale)) {
+    return nullptr;
+  }
+  dev_console->AddText(text, x, y, h_anchor, h_align, v_align, scale);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDevConsoleAddTextDef = {
+    "dev_console_add_text",            // name
+    (PyCFunction)PyDevConsoleAddText,  // method
+    METH_VARARGS,                      // flags
+
+    "dev_console_add_text(\n"
+    "  text: str,\n"
+    "  x: float,\n"
+    "  y: float,\n"
+    "  h_anchor: str,\n"
+    "  h_align: str,\n"
+    "  v_align: str,\n"
+    "  scale: float,\n"
+    ") -> None\n"
+    "\n"
+    "(internal)",
+};
+
 // -------------------- dev_console_add_python_terminal ------------------------
 
 static auto PyDevConsoleAddPythonTerminal(PyObject* self, PyObject* args)
@@ -1673,6 +1715,7 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PyOpenDirExternallyDef,
       PyFatalErrorDef,
       PyDevConsoleAddButtonDef,
+      PyDevConsoleAddTextDef,
       PyDevConsoleAddPythonTerminalDef,
       PyDevConsoleTabWidthDef,
       PyDevConsoleTabHeightDef,

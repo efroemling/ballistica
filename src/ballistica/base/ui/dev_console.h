@@ -37,6 +37,8 @@ class DevConsole {
   void Print(const std::string& s_in);
   void Draw(FrameDef* frame_def);
 
+  void StepDisplayTime();
+
   /// Called when the console should start accepting Python command input.
   void EnableInput();
 
@@ -53,8 +55,10 @@ class DevConsole {
   void Exec();
 
   void AddButton(const char* label, float x, float y, float width, float height,
-                 PyObject* call, const char* h_anchor, float label_scale,
-                 float corner_radius, const char* style);
+                 PyObject* call, const char* h_anchor_str, float label_scale,
+                 float corner_radius, const char* style_str);
+  void AddText(const char* text, float x, float y, const char* h_anchor_str,
+               const char* h_align_str, const char* v_align_str, float scale);
   void AddPythonTerminal();
 
   auto Width() -> float;
@@ -65,6 +69,7 @@ class DevConsole {
  private:
   class Widget_;
   class Button_;
+  class Text_;
   class ToggleButton_;
   class TabButton_;
   class OutputLine_;
@@ -103,7 +108,7 @@ class DevConsole {
   Object::Ref<TextGroup> last_line_mesh_group_;
   std::list<std::string> input_history_;
   std::list<OutputLine_> output_lines_;
-  std::vector<std::unique_ptr<Widget_> > buttons_;
+  std::vector<std::unique_ptr<Widget_> > widgets_;
   std::vector<std::unique_ptr<Widget_> > tab_buttons_;
 };
 

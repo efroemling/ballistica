@@ -49,6 +49,21 @@ class DevConsoleTab:
             style,
         )
 
+    def text(
+        self,
+        text: str,
+        pos: tuple[float, float],
+        h_anchor: Literal['left', 'center', 'right'] = 'center',
+        h_align: Literal['left', 'center', 'right'] = 'center',
+        v_align: Literal['top', 'center', 'bottom', 'none'] = 'center',
+        scale: float = 1.0,
+    ) -> None:
+        """Add a button to the tab being refreshed."""
+        assert _babase.app.devconsole.is_refreshing
+        _babase.dev_console_add_text(
+            text, pos[0], pos[1], h_anchor, h_align, v_align, scale
+        )
+
     def python_terminal(self) -> None:
         """Add a Python Terminal to the tab being refreshed."""
         assert _babase.app.devconsole.is_refreshing
@@ -95,6 +110,7 @@ class DevConsoleTabTest(DevConsoleTab):
             pos=(10, 10),
             size=(100, 30),
             h_anchor='left',
+            label_scale=0.6,
             call=self.request_refresh,
         )
         self.button(
@@ -102,7 +118,16 @@ class DevConsoleTabTest(DevConsoleTab):
             pos=(120, 10),
             size=(100, 30),
             h_anchor='left',
+            label_scale=0.6,
             style='dark',
+        )
+        self.text(
+            'TestText',
+            scale=0.8,
+            pos=(15, 50),
+            h_anchor='left',
+            h_align='left',
+            v_align='none',
         )
 
 
@@ -115,7 +140,15 @@ class DevConsoleTabEntry:
 
 
 class DevConsoleSubsystem:
-    """Wrangles the dev console."""
+    """Subsystem for wrangling the dev console.
+
+    The single instance of this class can be found at
+    babase.app.devconsole. The dev-console is a simple always-available
+    UI intended for use by developers; not end users. Traditionally it
+    is available by typing a backtick (`) key on a keyboard, but now can
+    be accessed via an on-screen button (see settings/advanced to enable
+    said button).
+    """
 
     def __init__(self) -> None:
         # All tabs in the dev-console. Add your own stuff here via

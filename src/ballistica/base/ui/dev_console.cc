@@ -31,44 +31,102 @@ const int kDevConsoleActivateKey1 = SDLK_BACKQUOTE;
 const int kDevConsoleActivateKey2 = SDLK_F2;
 const float kDevConsoleTabButtonCornerRadius{16.0f};
 
-const double kTransitionSeconds = 0.1;
+const double kTransitionSeconds = 0.15;
 
-enum class DevButtonAttach_ { kLeft, kCenter, kRight };
+enum class DevConsoleHAnchor_ { kLeft, kCenter, kRight };
 enum class DevButtonStyle_ { kNormal, kDark };
 
-static auto XOffs(DevButtonAttach_ attach) -> float {
+static auto DevButtonStyleFromStr_(const char* strval) {
+  if (!strcmp(strval, "dark")) {
+    return DevButtonStyle_::kDark;
+  }
+  assert(!strcmp(strval, "normal"));
+  return DevButtonStyle_::kNormal;
+}
+
+static auto DevConsoleHAttachFromStr_(const char* strval) {
+  if (!strcmp(strval, "left")) {
+    return DevConsoleHAnchor_::kLeft;
+  } else if (!strcmp(strval, "right")) {
+    return DevConsoleHAnchor_::kRight;
+  }
+  assert(!strcmp(strval, "center"));
+  return DevConsoleHAnchor_::kCenter;
+}
+
+static auto TextMeshHAlignFromStr_(const char* strval) {
+  if (!strcmp(strval, "left")) {
+    return TextMesh::HAlign::kLeft;
+  } else if (!strcmp(strval, "right")) {
+    return TextMesh::HAlign::kRight;
+  }
+  assert(!strcmp(strval, "center"));
+  return TextMesh::HAlign::kCenter;
+}
+
+static auto TextMeshVAlignFromStr_(const char* strval) {
+  if (!strcmp(strval, "top")) {
+    return TextMesh::VAlign::kTop;
+  } else if (!strcmp(strval, "bottom")) {
+    return TextMesh::VAlign::kBottom;
+  } else if (!strcmp(strval, "none")) {
+    return TextMesh::VAlign::kNone;
+  }
+  assert(!strcmp(strval, "center"));
+  return TextMesh::VAlign::kCenter;
+}
+
+static auto XOffs(DevConsoleHAnchor_ attach) -> float {
   switch (attach) {
-    case DevButtonAttach_::kLeft:
+    case DevConsoleHAnchor_::kLeft:
       return 0.0f;
-    case DevButtonAttach_::kRight:
+    case DevConsoleHAnchor_::kRight:
       return g_base->graphics->screen_virtual_width();
-    case DevButtonAttach_::kCenter:
+    case DevConsoleHAnchor_::kCenter:
       return g_base->graphics->screen_virtual_width() * 0.5f;
   }
   assert(false);
   return 0.0f;
 }
 
-static void DrawBasicButton(RenderPass* pass, Mesh* mesh, TextGroup* tgrp,
-                            float tscale, float bottom, float x, float y,
-                            float width, float height, const Vector3f& fgcolor,
-                            const Vector3f& bgcolor) {
+static void DrawRect(RenderPass* pass, Mesh* mesh, float bottom, float x,
+                     float y, float width, float height,
+                     const Vector3f& bgcolor) {
   SimpleComponent c(pass);
   c.SetTransparent(true);
   c.SetColor(bgcolor.x, bgcolor.y, bgcolor.z, 1.0f);
   c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCircle));
-  {
+  // Draw mesh bg.
+  if (mesh) {
     auto xf = c.ScopedTransform();
     c.Translate(x, y + bottom, kDevConsoleZDepth);
     c.DrawMesh(mesh);
   }
-  // Draw our text.
+  // Draw text.
+  // {
+  //   auto xf = c.ScopedTransform();
+  //   c.Translate(x + width * 0.5f, y + bottom + height * 0.5f,
+  //               kDevConsoleZDepth);
+  //   c.Scale(tscale, tscale, 1.0f);
+  //   int elem_count = tgrp->GetElementCount();
+  //   c.SetColor(fgcolor.x, fgcolor.y, fgcolor.z, 1.0f);
+  //   c.SetFlatness(1.0f);
+  //   for (int e = 0; e < elem_count; e++) {
+  //     c.SetTexture(tgrp->GetElementTexture(e));
+  //     c.DrawMesh(tgrp->GetElementMesh(e));
+  //   }
+  // }
+}
+
+static void DrawText(RenderPass* pass, TextGroup* tgrp, float tscale,
+                     float bottom, float x, float y, const Vector3f& fgcolor) {
+  SimpleComponent c(pass);
+  c.SetTransparent(true);
+  // Draw text.
   {
     auto xf = c.ScopedTransform();
-    c.Translate(x + width * 0.5f, y + bottom + height * 0.5f,
-                kDevConsoleZDepth);
-    float sc{0.6f * tscale};
-    c.Scale(sc, sc, 1.0f);
+    c.Translate(x, y + bottom, kDevConsoleZDepth);
+    c.Scale(tscale, tscale, 1.0f);
     int elem_count = tgrp->GetElementCount();
     c.SetColor(fgcolor.x, fgcolor.y, fgcolor.z, 1.0f);
     c.SetFlatness(1.0f);
@@ -84,14 +142,46 @@ static void DrawBasicButton(RenderPass* pass, Mesh* mesh, TextGroup* tgrp,
 class DevConsole::Widget_ {
  public:
   virtual ~Widget_() = default;
-  virtual auto HandleMouseDown(float mx, float my) -> bool = 0;
-  virtual void HandleMouseUp(float mx, float my) = 0;
+  virtual auto HandleMouseDown(float mx, float my) -> bool { return false; }
+  virtual void HandleMouseUp(float mx, float my) {}
   virtual void Draw(RenderPass* pass, float bottom) = 0;
+};
+
+class DevConsole::Text_ : public DevConsole::Widget_ {
+ public:
+  DevConsoleHAnchor_ h_attach;
+  TextMesh::HAlign h_align;
+  TextMesh::VAlign v_align;
+  float x;
+  float y;
+  float scale;
+  TextGroup text_group;
+  DevButtonStyle_ style;
+
+  Text_(const std::string& text, float x, float y, DevConsoleHAnchor_ h_attach,
+        TextMesh::HAlign h_align, TextMesh::VAlign v_align, float scale)
+      : h_attach{h_attach},
+        h_align(h_align),
+        v_align(v_align),
+        x{x},
+        y{y},
+        scale{scale} {
+    text_group.SetText(text, h_align, v_align);
+  }
+
+  void Draw(RenderPass* pass, float bottom) override {
+    Vector3f fgcolor;
+    Vector3f bgcolor;
+    fgcolor = Vector3f{0.8f, 0.7f, 0.8f};
+    bgcolor = Vector3f{0.25, 0.2f, 0.3f};
+
+    DrawText(pass, &text_group, scale, bottom, x + XOffs(h_attach), y, fgcolor);
+  }
 };
 
 class DevConsole::Button_ : public DevConsole::Widget_ {
  public:
-  DevButtonAttach_ attach;
+  DevConsoleHAnchor_ attach;
   float x;
   float y;
   float width;
@@ -104,7 +194,7 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
   DevButtonStyle_ style;
 
   template <typename F>
-  Button_(const std::string& label, float text_scale, DevButtonAttach_ attach,
+  Button_(const std::string& label, float text_scale, DevConsoleHAnchor_ attach,
           float x, float y, float width, float height, float corner_radius,
           DevButtonStyle_ style, const F& lambda)
       : attach{attach},
@@ -165,14 +255,15 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
         bgcolor =
             pressed ? Vector3f{0.8f, 0.7f, 0.8f} : Vector3f{0.25, 0.2f, 0.3f};
     }
-    DrawBasicButton(pass, &mesh, &text_group, text_scale, bottom,
-                    x + XOffs(attach), y, width, height, fgcolor, bgcolor);
+    DrawRect(pass, &mesh, bottom, x + XOffs(attach), y, width, height, bgcolor);
+    DrawText(pass, &text_group, text_scale, bottom,
+             x + XOffs(attach) + width * 0.5f, y + height * 0.5f, fgcolor);
   }
 };
 
 class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
  public:
-  DevButtonAttach_ attach;
+  DevConsoleHAnchor_ attach;
   float x;
   float y;
   float width;
@@ -187,7 +278,7 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
 
   template <typename F, typename G>
   ToggleButton_(const std::string& label, float text_scale,
-                DevButtonAttach_ attach, float x, float y, float width,
+                DevConsoleHAnchor_ attach, float x, float y, float width,
                 float height, float corner_radius, const F& on_call,
                 const G& off_call)
       : attach{attach},
@@ -234,20 +325,22 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
   }
 
   void Draw(RenderPass* pass, float bottom) override {
-    DrawBasicButton(pass, &mesh, &text_group, text_scale, bottom,
-                    x + XOffs(attach), y, width, height,
-                    pressed ? Vector3f{1.0f, 1.0f, 1.0f}
-                    : on    ? Vector3f{1.0f, 1.0f, 1.0f}
-                            : Vector3f{0.8f, 0.7f, 0.8f},
-                    pressed ? Vector3f{0.5f, 0.2f, 1.0f}
-                    : on    ? Vector3f{0.5f, 0.4f, 0.6f}
-                            : Vector3f{0.25, 0.2f, 0.3f});
+    DrawRect(pass, &mesh, bottom, x + XOffs(attach), y, width, height,
+
+             pressed ? Vector3f{0.5f, 0.2f, 1.0f}
+             : on    ? Vector3f{0.5f, 0.4f, 0.6f}
+                     : Vector3f{0.25, 0.2f, 0.3f});
+    DrawText(pass, &text_group, text_scale, bottom,
+             x + XOffs(attach) + width * 0.5f, y + height * 0.5f,
+             pressed ? Vector3f{1.0f, 1.0f, 1.0f}
+             : on    ? Vector3f{1.0f, 1.0f, 1.0f}
+                     : Vector3f{0.8f, 0.7f, 0.8f});
   }
 };
 
 class DevConsole::TabButton_ : public DevConsole::Widget_ {
  public:
-  DevButtonAttach_ attach;
+  DevConsoleHAnchor_ attach;
   float x;
   float y;
   float width;
@@ -261,7 +354,7 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
 
   template <typename F>
   TabButton_(const std::string& label, bool selected, float text_scale,
-             DevButtonAttach_ attach, float x, float y, float width,
+             DevConsoleHAnchor_ attach, float x, float y, float width,
              float height, const F& call)
       : attach{attach},
         x{x},
@@ -308,15 +401,15 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
   }
 
   void Draw(RenderPass* pass, float bottom) override {
-    DrawBasicButton(pass, &mesh, &text_group, text_scale, bottom,
-                    x + XOffs(attach), y, width, height,
-                    pressed    ? Vector3f{1.0f, 1.0f, 1.0f}
-                    : selected ? Vector3f{1.0f, 1.0f, 1.0f}
-                               : Vector3f{0.6f, 0.5f, 0.6f},
-                    pressed    ? Vector3f{0.4f, 0.2f, 0.8f}
-                    : selected ? Vector3f{0.4f, 0.3f, 0.4f}
-                               // : selected ? Vector3f{0.5f, 0.4f, 0.6f}
-                               : Vector3f{0.25, 0.2f, 0.3f});
+    DrawRect(pass, &mesh, bottom, x + XOffs(attach), y, width, height,
+             pressed    ? Vector3f{0.4f, 0.2f, 0.8f}
+             : selected ? Vector3f{0.4f, 0.3f, 0.4f}
+                        : Vector3f{0.25, 0.2f, 0.3f});
+    DrawText(pass, &text_group, text_scale, bottom,
+             x + XOffs(attach) + width * 0.5f, y + height * 0.5f,
+             pressed    ? Vector3f{1.0f, 1.0f, 1.0f}
+             : selected ? Vector3f{1.0f, 1.0f, 1.0f}
+                        : Vector3f{0.6f, 0.5f, 0.6f});
   }
 };
 
@@ -381,13 +474,13 @@ void DevConsole::RefreshTabButtons_() {
   float bs = BaseScale();
   float bwidth = 90.0f * bs;
   float bheight = 26.0f * bs;
-  float bscale = 0.8f * bs;
+  float bscale = 0.6f * bs;
   float total_width = tabs_.size() * bwidth;
   float x = total_width * -0.5f;
   for (auto&& tab : tabs_) {
     tab_buttons_.emplace_back(std::make_unique<TabButton_>(
-        tab, active_tab_ == tab, bscale, DevButtonAttach_::kCenter, x, -bheight,
-        bwidth, bheight, [this, tab] {
+        tab, active_tab_ == tab, bscale, DevConsoleHAnchor_::kCenter, x,
+        -bheight, bwidth, bheight, [this, tab] {
           active_tab_ = tab;
           RefreshTabButtons_();
           RefreshTabContents_();
@@ -404,7 +497,7 @@ void DevConsole::RefreshTabContents_() {
   refresh_pending_ = false;
 
   // Clear to an empty slate.
-  buttons_.clear();
+  widgets_.clear();
   python_terminal_visible_ = false;
 
   // Now ask the Python layer to fill this tab in.
@@ -414,43 +507,39 @@ void DevConsole::RefreshTabContents_() {
       .Call(args);
 }
 
+void DevConsole::AddText(const char* text, float x, float y,
+                         const char* h_anchor_str, const char* h_align_str,
+                         const char* v_align_str, float scale) {
+  auto h_anchor = DevConsoleHAttachFromStr_(h_anchor_str);
+  auto h_align = TextMeshHAlignFromStr_(h_align_str);
+  auto v_align = TextMeshVAlignFromStr_(v_align_str);
+
+  widgets_.emplace_back(
+      std::make_unique<Text_>(text, x, y, h_anchor, h_align, v_align, scale));
+}
+
 void DevConsole::AddButton(const char* label, float x, float y, float width,
-                           float height, PyObject* call, const char* h_anchor,
-                           float label_scale, float corner_radius,
-                           const char* style) {
+                           float height, PyObject* call,
+                           const char* h_anchor_str, float label_scale,
+                           float corner_radius, const char* style_str) {
   assert(g_base->InLogicThread());
 
-  DevButtonStyle_ style_val;
-  if (!strcmp(style, "dark")) {
-    style_val = DevButtonStyle_::kDark;
-  } else {
-    style_val = DevButtonStyle_::kNormal;
-  }
+  auto style = DevButtonStyleFromStr_(style_str);
+  auto h_anchor = DevConsoleHAttachFromStr_(h_anchor_str);
 
-  DevButtonAttach_ anchor;
-  if (!strcmp(h_anchor, "left")) {
-    anchor = DevButtonAttach_::kLeft;
-  } else if (!strcmp(h_anchor, "right")) {
-    anchor = DevButtonAttach_::kRight;
-  } else {
-    assert(!strcmp(h_anchor, "center"));
-    anchor = DevButtonAttach_::kCenter;
-  }
-
-  // auto call_obj = PythonRef::Acquired(call);
-  buttons_.emplace_back(std::make_unique<Button_>(
-      label, label_scale, anchor, x, y, width, height, corner_radius, style_val,
-      [this, call_obj = PythonRef::Acquired(call)] {
-        if (call_obj.Get() != Py_None) {
-          call_obj.Call();
+  widgets_.emplace_back(std::make_unique<Button_>(
+      label, label_scale, h_anchor, x, y, width, height, corner_radius, style,
+      [this, callref = PythonRef::Acquired(call)] {
+        if (callref.Get() != Py_None) {
+          callref.Call();
         }
       }));
 }
 
 void DevConsole::AddPythonTerminal() {
   float bs = BaseScale();
-  buttons_.emplace_back(std::make_unique<Button_>(
-      "Exec", 0.75f * bs, DevButtonAttach_::kRight, -33.0f * bs, 15.95f * bs,
+  widgets_.emplace_back(std::make_unique<Button_>(
+      "Exec", 0.5f * bs, DevConsoleHAnchor_::kRight, -33.0f * bs, 15.95f * bs,
       32.0f * bs, 13.0f * bs, 2.0 * bs, DevButtonStyle_::kNormal,
       [this] { Exec(); }));
   python_terminal_visible_ = true;
@@ -483,7 +572,7 @@ auto DevConsole::HandleMouseDown(int button, float x, float y) -> bool {
         return true;
       }
     }
-    for (auto&& button : buttons_) {
+    for (auto&& button : widgets_) {
       if (button->HandleMouseDown(x, y - bottom)) {
         return true;
       }
@@ -517,7 +606,7 @@ void DevConsole::HandleMouseUp(int button, float x, float y) {
     for (auto&& button : tab_buttons_) {
       button->HandleMouseUp(x, y - bottom);
     }
-    for (auto&& button : buttons_) {
+    for (auto&& button : widgets_) {
       button->HandleMouseUp(x, y - bottom);
     }
   }
@@ -800,6 +889,10 @@ auto DevConsole::Bottom_() const -> float {
   // more important for them to be able to be written to a known hard-coded
   // mini-size.
   float mini_size = 100.0f;
+
+  // Now that we have tabs and drop-shadows hanging down, we have to
+  // overshoot the top of the screen when transitioning out.
+  float top_buffer = 100.0f;
   if (state_ == State_::kMini) {
     bottom = vh - mini_size;
   } else {
@@ -812,7 +905,7 @@ auto DevConsole::Bottom_() const -> float {
     } else if (state_prev_ == State_::kFull) {
       from_height = vh - vh * kDevConsoleSize;
     } else {
-      from_height = vh;
+      from_height = vh + top_buffer;
     }
     float to_height;
     if (state_ == State_::kMini) {
@@ -820,7 +913,7 @@ auto DevConsole::Bottom_() const -> float {
     } else if (state_ == State_::kFull) {
       to_height = vh - vh * kDevConsoleSize;
     } else {
-      to_height = vh;
+      to_height = vh + top_buffer;
     }
     bottom = to_height * ratio + from_height * (1.0 - ratio);
   }
@@ -852,19 +945,20 @@ void DevConsole::Draw(FrameDef* frame_def) {
     border_mesh_.SetPositionAndSize(0, bottom - border_height * bs,
                                     kDevConsoleZDepth, pass->virtual_width(),
                                     border_height * bs);
-    SimpleComponent c(pass);
-    c.SetTransparent(true);
-    c.SetColor(0, 0, 0.1f, 0.9f);
-    c.DrawMesh(&bg_mesh_);
-    c.Submit();
-    if (python_terminal_visible_) {
-      c.SetColor(1.0f, 1.0f, 1.0f, 0.1f);
-      c.DrawMesh(&stripe_mesh_);
+    {
+      SimpleComponent c(pass);
+      c.SetTransparent(true);
+      c.SetColor(0, 0, 0.1f, 0.9f);
+      c.DrawMesh(&bg_mesh_);
       c.Submit();
+      if (python_terminal_visible_) {
+        c.SetColor(1.0f, 1.0f, 1.0f, 0.1f);
+        c.DrawMesh(&stripe_mesh_);
+        c.Submit();
+      }
+      c.SetColor(0.25f, 0.2f, 0.3f, 1.0f);
+      c.DrawMesh(&border_mesh_);
     }
-    c.SetColor(0.25f, 0.2f, 0.3f, 1.0f);
-    c.DrawMesh(&border_mesh_);
-    c.Submit();
   }
 
   // Drop shadow.
@@ -936,7 +1030,6 @@ void DevConsole::Draw(FrameDef* frame_def) {
           c.DrawMesh(input_text_group_.GetElementMesh(e));
         }
       }
-      c.Submit();
     }
 
     // Carat.
@@ -956,17 +1049,16 @@ void DevConsole::Draw(FrameDef* frame_def) {
         c.Scale(6.0f * bs, 12.0f * bs, 1.0f);
         c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
       }
-      c.Submit();
     }
 
-    // Draw output lines.
+    // Output lines.
     {
-      float draw_scale = 0.6f;
-      float v_inc = 18.0f;
       SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetColor(1, 1, 1, 1);
       c.SetFlatness(1.0f);
+      float draw_scale = 0.6f;
+      float v_inc = 18.0f;
       float h = 0.5f
                 * (g_base->graphics->screen_virtual_width()
                    - (kDevConsoleStringBreakUpSize * draw_scale));
@@ -1007,7 +1099,6 @@ void DevConsole::Draw(FrameDef* frame_def) {
           break;
         }
       }
-      c.Submit();
     }
   }
 
@@ -1020,7 +1111,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
 
   // Buttons.
   {
-    for (auto&& button : buttons_) {
+    for (auto&& button : widgets_) {
       button->Draw(pass, bottom);
     }
   }
@@ -1038,6 +1129,23 @@ auto DevConsole::BaseScale() const -> float {
   }
   FatalError("Unhandled scale.");
   return 1.0f;
+}
+
+void DevConsole::StepDisplayTime() {
+  assert(g_base->InLogicThread());
+  // If we're inactive, blow away all our stuff once we transition fully
+  // off screen. This will kill any Python stuff attached to our widgets
+  // so things can clean themselves up.
+  if (state_ == State_::kInactive && !tab_buttons_.empty()) {
+    if ((g_base->logic->display_time() - transition_start_)
+        >= kTransitionSeconds) {
+      // Reset to a blank slate but *don't refresh anything (that will
+      // happen once we get vis'ed again).
+      tab_buttons_.clear();
+      widgets_.clear();
+      python_terminal_visible_ = false;
+    }
+  }
 }
 
 }  // namespace ballistica::base
