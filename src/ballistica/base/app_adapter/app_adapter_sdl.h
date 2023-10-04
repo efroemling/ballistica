@@ -56,39 +56,23 @@ class AppAdapterSDL : public AppAdapter {
   auto GetSDLJoystickInput_(int sdl_joystick_id) const -> JoystickInput*;
   // The same but using sdl events.
   auto GetSDLJoystickInput_(const SDL_Event* e) const -> JoystickInput*;
-  // void DoSwap_();
-  // void SwapBuffers_();
-  // void UpdateAutoVSync_(int diff);
   void AddSDLInputDevice_(JoystickInput* input, int index);
   void RemoveSDLInputDevice_(int index);
   void SleepUntilNextEventCycle_(microsecs_t cycle_start_time);
-  // millisecs_t last_swap_time_{};
-  // millisecs_t swap_start_time_{};
-  // int too_slow_frame_count_{};
-  // bool auto_vsync_{};
-  // bool vsync_enabled_{true};
-  // float average_vsync_fps_{60.0f};
-  // int vsync_good_frame_count_{};
-  // int vsync_bad_frame_count_{};
+
+  bool done_{};
+  bool fullscreen_{};
+  bool vsync_actually_enabled_{};
+  bool debug_log_sdl_frame_timing_{};
+  bool hidden_{};
+  VSync vsync_{VSync::kUnset};
   uint32_t sdl_runnable_event_id_{};
+  int max_fps_{60};
+  microsecs_t oversleep_{};
   std::vector<JoystickInput*> sdl_joysticks_;
-  /// This is in points, not pixels.
   Vector2f window_size_{1.0f, 1.0f};
   SDL_Window* sdl_window_{};
   void* sdl_gl_context_{};
-  // SDL_Surface* sdl_screen_surface_{};
-  bool done_{};
-  bool fullscreen_{};
-  VSync vsync_{VSync::kUnset};
-  bool vsync_actually_enabled_{};
-  microsecs_t oversleep_{};
-  int max_fps_{60};
-  bool debug_log_sdl_frame_timing_{};
-  // std::unique_ptr<GLContext> gl_context_;
-
-  // TEMP
-  // friend class GLContext;
-  friend class GraphicsServer;
 };
 
 }  // namespace ballistica::base

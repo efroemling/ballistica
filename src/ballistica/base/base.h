@@ -119,7 +119,7 @@ class UIV1SoftInterface;
 class AppAdapterVR;
 class GraphicsVR;
 
-enum class QuitType {
+enum class QuitType : uint8_t {
   /// Leads to the process exiting.
   kHard,
   /// May hide/reset the app but keep the process running. Generally how
@@ -131,7 +131,7 @@ enum class QuitType {
   kBack,
 };
 
-enum class AssetType {
+enum class AssetType : uint8_t {
   kTexture,
   kCollisionMesh,
   kMesh,
@@ -140,19 +140,19 @@ enum class AssetType {
   kLast,
 };
 
-enum class DrawType {
+enum class DrawType : uint8_t {
   kTriangles,
   kPoints,
 };
 
 /// Hints to the renderer - stuff that is changed rarely should be static,
 /// and stuff changed often should be dynamic.
-enum class MeshDrawType {
+enum class MeshDrawType : uint8_t {
   kStatic,
   kDynamic,
 };
 
-enum class ReflectionType {
+enum class ReflectionType : uint8_t {
   kNone,
   kChar,
   kPowerup,
@@ -162,7 +162,7 @@ enum class ReflectionType {
   kSharpest,
 };
 
-enum class GraphicsQuality {
+enum class GraphicsQuality : uint8_t {
   /// Quality has not yet been set.
   kUnset,
   /// Bare minimum graphics.
@@ -175,11 +175,11 @@ enum class GraphicsQuality {
   kHigher,
 };
 
-enum class VSync { kUnset, kNever, kAlways, kAdaptive };
-enum class VSyncRequest { kNever, kAlways, kAuto };
+enum class VSync : uint8_t { kUnset, kNever, kAlways, kAdaptive };
+enum class VSyncRequest : uint8_t { kNever, kAlways, kAuto };
 
 /// Requests for exact or auto graphics quality values.
-enum class GraphicsQualityRequest {
+enum class GraphicsQualityRequest : uint8_t {
   kUnset,
   kLow,
   kMedium,
@@ -245,7 +245,7 @@ struct VertexSprite {
   float color[4];
 };
 
-enum class MeshFormat {
+enum class MeshFormat : uint8_t {
   /// 16bit UV, 8bit normal, 8bit pt-index.
   kUV16N8Index8,
   /// 16bit UV, 8bit normal, 16bit pt-index.
@@ -254,12 +254,12 @@ enum class MeshFormat {
   kUV16N8Index32,
 };
 
-enum class TextureType {
+enum class TextureType : uint8_t {
   k2D,
   kCubeMap,
 };
 
-enum class TextureFormat {
+enum class TextureFormat : uint8_t {
   kNone,
   kRGBA_8888,
   kRGB_888,
@@ -274,25 +274,25 @@ enum class TextureFormat {
   kETC2_RGBA,
 };
 
-enum class TextureCompressionType {
+enum class TextureCompressionType : uint8_t {
   kS3TC,
   kPVR,
   kETC1,
   kETC2,
 };
 
-enum class TextureMinQuality {
+enum class TextureMinQuality : uint8_t {
   kLow,
   kMedium,
   kHigh,
 };
 
-enum class CameraMode {
+enum class CameraMode : uint8_t {
   kFollow,
   kOrbit,
 };
 
-enum class MeshDataType {
+enum class MeshDataType : uint8_t {
   kIndexedSimpleSplit,
   kIndexedObjectSplit,
   kIndexedSimpleFull,
@@ -310,44 +310,45 @@ struct TouchEvent {
   float y{};
 };
 
-enum class TextMeshEntryType {
+enum class TextMeshEntryType : uint8_t {
   kRegular,
   kExtras,
   kOSRendered,
 };
 
-enum MeshDrawFlags {
+enum MeshDrawFlags : uint8_t {
   kMeshDrawFlagNoReflection = 1,
 };
 
-enum class LightShadowType {
+enum class LightShadowType : uint8_t {
   kNone,
   kTerrain,
   kObject,
 };
 
-enum class TextureQualityRequest {
+enum class TextureQualityRequest : uint8_t {
   kUnset,
   kAuto,
   kHigh,
   kMedium,
   kLow,
 };
-enum class TextureQuality {
+
+enum class TextureQuality : uint8_t {
   kUnset,
   kHigh,
   kMedium,
   kLow,
 };
 
-enum class BenchmarkType {
+enum class BenchmarkType : uint8_t {
   kNone,
   kCPU,
   kGPU,
 };
 
 #if BA_VR_BUILD
-enum class VRHandType {
+enum class VRHandType : uint8_t {
   kNone,
   kDaydreamRemote,
   kOculusTouchL,
@@ -372,7 +373,7 @@ struct VRHandsState {
 /// These do not necessarily correspond to actual shader objects in the renderer
 /// (a single shader may handle more than one of these, etc).
 /// These are simply categories of looks.
-enum class ShadingType {
+enum class ShadingType : uint8_t {
   kSimpleColor,
   kSimpleColorTransparent,
   kSimpleColorTransparentDoubleSided,
@@ -416,7 +417,7 @@ enum class ShadingType {
   kCount
 };
 
-enum class SysTextureID {
+enum class SysTextureID : uint8_t {
   kUIAtlas,
   kButtonSquare,
   kWhite,
@@ -484,7 +485,7 @@ enum class SysTextureID {
   kWings
 };
 
-enum class SysCubeMapTextureID {
+enum class SysCubeMapTextureID : uint8_t {
   kReflectionChar,
   kReflectionPowerup,
   kReflectionSoft,
@@ -494,7 +495,7 @@ enum class SysCubeMapTextureID {
 };
 
 enum class SysSoundID {
-  kDeek = 0,
+  kDeek,
   kBlip,
   kBlank,
   kPunch,
@@ -512,9 +513,9 @@ enum class SysSoundID {
   kSparkle3
 };
 
-enum class SystemDataID {};
+enum class SystemDataID : uint8_t {};
 
-enum class SysMeshID {
+enum class SysMeshID : uint8_t {
   kButtonSmallTransparent,
   kButtonSmallOpaque,
   kButtonMediumTransparent,

@@ -107,52 +107,66 @@ void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
   while (!done_) {
     microsecs_t cycle_start_time = g_core->GetAppTimeMicrosecs();
 
-    // Run all pending events.
+    // Events.
     SDL_Event event;
     while (SDL_PollEvent(&event) && (!done_)) {
       HandleSDLEvent_(event);
     }
 
-    // Draw a frame.
-    if (g_base->graphics_server->TryRender()) {
+    // Draw.
+    if (!hidden_ && g_base->graphics_server->TryRender()) {
       SDL_GL_SwapWindow(sdl_window_);
     }
 
-    // In some cases, sleep until we should start our next cycle (depending
-    // on max-frame-rate or other factors).
+    // Sleep.
     SleepUntilNextEventCycle_(cycle_start_time);
+
+    // Repeat.
   }
 }
 
 void AppAdapterSDL::SleepUntilNextEventCycle_(microsecs_t cycle_start_time) {
-  // Special case which means no max. Farewell poor laptop battery.
+  // Special case: if we're hidden, we simply sleep for a long bit; no fancy
+  // timing.
+  if (hidden_) {
+    g_core->platform->SleepMillisecs(100);
+    return;
+  }
+
+  // Special case which means no max, and thus no sleeping. Farewell poor
+  // laptop battery; we hardly knew ye.
   if (max_fps_ == -1) {
     return;
   }
+
+  // Normally we just calc when our next draw should happen and sleep 'til
+  // then.
   microsecs_t now = g_core->GetAppTimeMicrosecs();
   auto used_max_fps = max_fps_;
   millisecs_t millisecs_per_frame = 1000000 / used_max_fps;
-  // Special case: if we've got vsync enabled, let's tweak max-fps to be
-  // just a *tiny* bit higher than requested. This means if our max-fps
-  // matches the refresh rate we'll be trying to render just a bit faster
-  // than vsync which should push us up against the vsync wall and keep
-  // vsync doing most of the delay work. In that case the logging below
-  // should show mostly 'no sleep.'. Without this delay, our render
+
+  // Special case: if we've got vsync enabled, let's tweak our drawing to
+  // happen just a *tiny* bit faster than requested. This means, if our
+  // max-fps matches the refresh rate, we'll be trying to render just a
+  // *bit* faster than vsync which should push us up against the vsync wall
+  // and keep vsync doing most of the delay work. In that case the logging
+  // below should show mostly 'no sleep.'. Without this delay, our render
   // kick-offs tend to drift around the middle of the vsync cycle and I
   // worry there could be bad interference patterns in certain spots close
   // to the edges. Note that we want this tweak to be small enough that it
-  // won't be noticable in situations where vsync and max-fps *don't*
-  // match. (for instance limiting to 60hz on a 120hz vsynced monitor).
+  // won't be noticable in situations where vsync and max-fps *don't* match.
+  // For instance, limiting to 60hz on a 120hz vsynced monitor should still
+  // work as expected.
   if (vsync_actually_enabled_) {
     millisecs_per_frame = 99 * millisecs_per_frame / 100;
   }
   microsecs_t target_time = cycle_start_time + millisecs_per_frame - oversleep_;
 
   // Set a minimum so we don't sleep if we're within a few millisecs of
-  // where we want to be. Sleep tends to run over by a bit so we'll
-  // probably render closer to our target time by just skipping the sleep.
-  // And the oversleep system will compensate just as it does if we sleep
-  // too long.
+  // where we want to be. Sleep tends to run over by a bit so we'll probably
+  // render closer to our target time by just skipping the sleep. And the
+  // oversleep system will compensate for our earliness just as it does if
+  // we sleep too long.
   const microsecs_t min_sleep{2000};
   if (now + min_sleep >= target_time) {
     if (debug_log_sdl_frame_timing_) {
@@ -182,6 +196,7 @@ void AppAdapterSDL::SleepUntilNextEventCycle_(microsecs_t cycle_start_time) {
 }
 
 void AppAdapterSDL::DoPushMainThreadRunnable(Runnable* runnable) {
+  // Our main thread is the SDL event loop, so add this as an SDL event.
   assert(sdl_runnable_event_id_ != 0);
   SDL_Event event;
   SDL_memset(&event, 0, sizeof(event));
@@ -330,12 +345,19 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
           break;
 
         case SDL_WINDOWEVENT_HIDDEN: {
-          // PauseApp();
+          // Let's keep track of when we're hidden so we can stop drawing
+          // and sleep more. Theoretically we could put the app into a full
+          // suspended state like we do on mobile (pausing event loops/etc.)
+          // but that would be more involved; we'd need to ignore most SDL
+          // events while sleeping (except for SDL_WINDOWEVENT_SHOWN) and
+          // would need to rebuild our controller lists/etc when we resume.
+          // For now just gonna keep things simple and keep running.
+          hidden_ = true;
           break;
         }
 
         case SDL_WINDOWEVENT_SHOWN: {
-          // ResumeApp();
+          hidden_ = false;
           break;
         }
 
@@ -570,20 +592,18 @@ void AppAdapterSDL::ReloadRenderer_(
     auto width = static_cast<int>(kBaseVirtualResX * 0.8f);
     auto height = static_cast<int>(kBaseVirtualResY * 0.8f);
 
-    uint32_t flags = SDL_WINDOW_OPENGL
-                     | SDL_WINDOW_SHOWN
-                     // | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS
+    uint32_t flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN
                      | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
     if (fullscreen) {
       flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
     }
 
-    // On Mac we ask for a GL 4.1 Core profile. This is supported by all
-    // hardware the game officially supports and is also the last version of
-    // GL supported on Apple hardware. So we know exactly what we have to
-    // work with.
     int context_flags{};
     if (g_buildconfig.ostype_macos()) {
+      // On Mac we ask for a GL 4.1 Core profile. This is supported by all
+      // hardware that we officially support and is also the last version of
+      // GL supported on Apple hardware. So we have a nice fixed target to
+      // work with.
       SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
       SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
       SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
@@ -596,8 +616,14 @@ void AppAdapterSDL::ReloadRenderer_(
 
       // Wondering if there would be a smarter strategy here; for example
       // trying a few different specific core profiles.
+
+      // Actually, in reading a bit more, Nvidia actually recommends
+      // compatibility profiles and their core profiles may actually be
+      // slightly slower due to extra checks, so what we're doing here might
+      // be optimal.
     }
     if (g_buildconfig.debug_build()) {
+      // Curious if this has any real effects anywhere.
       context_flags |= SDL_GL_CONTEXT_DEBUG_FLAG;
     }
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, context_flags);
@@ -613,8 +639,6 @@ void AppAdapterSDL::ReloadRenderer_(
     if (!sdl_gl_context_) {
       FatalError("Unable to create SDL GL Context");
     }
-    // auto result = SDL_GL_SetSwapInterval(-1);
-    // printf("GOT RESULT %d\n", result);
 
     SDL_SetWindowTitle(sdl_window_, "BallisticaKit");
 
@@ -637,14 +661,14 @@ void AppAdapterSDL::ReloadRenderer_(
 void AppAdapterSDL::UpdateScreenSizes_() {
   assert(g_base->app_adapter->InGraphicsContext());
 
-  // Grab logical window dimensions (points?).
-  // This is the coordinate space SDL's events deal in.
+  // Grab logical window dimensions (points?). This is the coordinate space
+  // SDL's events deal in.
   int win_size_x, win_size_y;
   SDL_GetWindowSize(sdl_window_, &win_size_x, &win_size_y);
   window_size_ = Vector2f(win_size_x, win_size_y);
 
-  // Also grab the new size of the drawable; this is our physical
-  // (pixel) dimensions.
+  // Also grab the new size of the drawable; this is our physical (pixel)
+  // dimensions.
   int pixels_x, pixels_y;
   SDL_GL_GetDrawableSize(sdl_window_, &pixels_x, &pixels_y);
   g_base->graphics_server->SetScreenResolution(static_cast<float>(pixels_x),

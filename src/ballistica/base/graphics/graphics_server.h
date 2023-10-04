@@ -60,13 +60,7 @@ class GraphicsServer {
   /// non-functional state.
   void SetNullGraphics();
 
-  // void PushSetScreenGammaCall(float gamma);
   void PushSetScreenPixelScaleCall(float pixel_scale);
-  // void PushSetVSyncCall(bool sync, bool auto_sync);
-  // void PushSetScreenCall(bool fullscreen, int width, int height,
-  //                        TextureQualityRequest texture_quality_request,
-  //                        GraphicsQualityRequest graphics_quality_request,
-  //                        const std::string& android_res);
   void PushReloadMediaCall();
   void PushRemoveRenderHoldCall();
   void PushComponentUnloadCall(

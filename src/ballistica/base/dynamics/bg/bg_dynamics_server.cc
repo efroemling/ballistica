@@ -2332,8 +2332,8 @@ void BGDynamicsServer::Step(StepData* step_data) {
   // Step the world.
   dWorldQuickStep(ode_world_, step_seconds_);
 
-  // Now generate a snapshot of our state and send it to the game thread,
-  // so they can draw us.
+  // Now generate a snapshot of our state and send it to the logic thread so
+  // they can draw us.
   BGDynamicsDrawSnapshot* snapshot = CreateDrawSnapshot();
   g_base->logic->event_loop()->PushCall([snapshot] {
     snapshot->SetLogicThreadOwnership();

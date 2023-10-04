@@ -46,7 +46,8 @@ class AppAdapter {
   /// called if ManagesMainThreadEventLoop() returns true.
   virtual void DoExitMainThreadEventLoop();
 
-  /// Push a call to be run in the app's main thread.
+  /// Push a call to be run in the app's 'main' thread. This is the thread
+  /// where the OS generally expects event and UI processing to happen in.
   template <typename F>
   void PushMainThreadCall(const F& lambda) {
     DoPushMainThreadRunnable(NewLambdaRunnableUnmanaged(lambda));
@@ -57,7 +58,8 @@ class AppAdapter {
   /// implementation, this simply returns true in the main thread.
   virtual auto InGraphicsContext() -> bool;
 
-  /// Push a call to be run in the app's graphics context.
+  /// Push a call to be run in the app's graphics context. Be aware that
+  /// this may mean different threads on different platforms.
   template <typename F>
   void PushGraphicsContextCall(const F& lambda) {
     DoPushGraphicsContextRunnable(NewLambdaRunnableUnmanaged(lambda));

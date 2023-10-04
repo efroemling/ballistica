@@ -36,13 +36,13 @@ void BGDynamics::Emit(const BGDynamicsEmission& e) {
   g_base->bg_dynamics_server->PushEmitCall(e);
 }
 
-// Call friend client to step our sim.
 void BGDynamics::Step(const Vector3f& cam_pos, int step_millisecs) {
   assert(g_base->InLogicThread());
 
   // The BG dynamics thread just processes steps as fast as it can;
   // we need to throttle what we send or tell it to cut back if its behind
   int step_count = g_base->bg_dynamics_server->step_count();
+  // printf("STEP COUNT %d\n", step_count);
 
   // If we're really getting behind, start pruning stuff.
   if (step_count > 3) {
