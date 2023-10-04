@@ -1236,12 +1236,12 @@ $(PCOMMANDBATCHBIN): src/tools/pcommandbatch/pcommandbatch.c \
 CM_BT_LC = $(shell echo $(CMAKE_BUILD_TYPE) | tr A-Z a-z)
 
 # Eww; no way to do multi-line constants in make without spaces :-(
-_WMSBE_1 = \"C:\\Program Files \(x86\)\\Microsoft Visual Studio\\2019
+_WMSBE_1 = \"C:\\Program Files\\Microsoft Visual Studio\\2022
 _WMSBE_2 = \\Community\\MSBuild\\Current\\Bin\\MSBuild.exe\"
-_WMSBE_1B = /mnt/c/Program Files (x86)/Microsoft Visual Studio/2019
+_WMSBE_1B = /mnt/c/Program Files/Microsoft Visual Studio/2022
 _WMSBE_2B = /Community/MSBuild/Current/Bin/MSBuild.exe
 
-VISUAL_STUDIO_VERSION = -property:VisualStudioVersion=16
+VISUAL_STUDIO_VERSION = -property:VisualStudioVersion=17
 WIN_MSBUILD_EXE = $(_WMSBE_1)$(_WMSBE_2)
 WIN_MSBUILD_EXE_B = "$(_WMSBE_1B)$(_WMSBE_2B)"
 WINPRJ = $(WINDOWS_PROJECT)

@@ -243,13 +243,13 @@ def win_ci_binary_build() -> None:
     # Do the thing.
     subprocess.run(
         [
-            'C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\'
+            'C:\\Program Files\\Microsoft Visual Studio\\2022\\'
             'Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe',
             'ballisticakit-windows\\Generic\\BallisticaKitGeneric.vcxproj',
             '-target:Build',
             '-property:Configuration=Debug',
             '-property:Platform=Win32',
-            '-property:VisualStudioVersion=16',
+            '-property:VisualStudioVersion=17',
         ],
         check=True,
     )
