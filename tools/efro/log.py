@@ -302,6 +302,10 @@ class LogHandler(logging.Handler):
             return all(cls._is_immutable_log_data(x) for x in data)
         return False
 
+    def call_in_thread(self, call: Callable[[], Any]) -> None:
+        """Submit a call to be run in the logging background thread."""
+        self._event_loop.call_soon_threadsafe(call)
+
     def emit(self, record: logging.LogRecord) -> None:
         # pylint: disable=too-many-branches
         if __debug__:

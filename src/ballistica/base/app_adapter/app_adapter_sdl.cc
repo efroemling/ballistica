@@ -561,7 +561,8 @@ void AppAdapterSDL::SetScreen_(
   // thread where we read it, but let's be pedantic and keep everything to
   // the main thread.
   max_fps_ = max_fps;
-  // Allow -1 to mean no max.
+
+  // Take -1 to mean no max. Otherwise clamp to a reasonable range.
   if (max_fps_ != -1) {
     max_fps_ = std::max(10, max_fps_);
     max_fps_ = std::min(99999, max_fps_);

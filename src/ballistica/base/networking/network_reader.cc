@@ -22,7 +22,7 @@ void NetworkReader::SetPort(int port) {
     return;
   }
   port4_ = port6_ = port;
-  thread_ = new std::thread(RunThreadStatic, this);
+  thread_ = new std::thread(RunThreadStatic_, this);
 }
 
 void NetworkReader::OnAppPause() {
@@ -36,7 +36,7 @@ void NetworkReader::OnAppPause() {
   // Ok now attempt to send a quick ping to ourself to wake us up so we can kill
   // our socket.
   if (port4_ != -1) {
-    PokeSelf();
+    PokeSelf_();
   } else {
     Log(LogLevel::kError, "NetworkReader port is -1 on pause");
   }
@@ -55,7 +55,7 @@ void NetworkReader::OnAppResume() {
   paused_cv_.notify_all();
 }
 
-void NetworkReader::PokeSelf() {
+void NetworkReader::PokeSelf_() {
   int sd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sd < 0) {
     Log(LogLevel::kError, "Unable to create sleep ping socket; errno "
@@ -88,7 +88,7 @@ void NetworkReader::PokeSelf() {
   }
 }
 
-void NetworkReader::DoPoll(bool* can_read_4, bool* can_read_6) {
+void NetworkReader::DoPoll_(bool* can_read_4, bool* can_read_6) {
   struct pollfd fds[2]{};
   int i{};
   int index_4{-1};
@@ -124,7 +124,7 @@ void NetworkReader::DoPoll(bool* can_read_4, bool* can_read_6) {
   }
 }
 
-void NetworkReader::DoSelect(bool* can_read_4, bool* can_read_6) {
+void NetworkReader::DoSelect_(bool* can_read_4, bool* can_read_6) {
   fd_set readset;
   FD_ZERO(&readset);
 
@@ -173,7 +173,9 @@ void NetworkReader::DoSelect(bool* can_read_4, bool* can_read_6) {
   }
 }
 
-auto NetworkReader::RunThread() -> int {
+auto NetworkReader::RunThread_() -> int {
+  g_core->platform->SetCurrentThreadName("ballistica network-read");
+
   if (!g_core->HeadlessMode()) {
     remote_server_ = std::make_unique<RemoteAppServer>();
   }
@@ -186,7 +188,7 @@ auto NetworkReader::RunThread() -> int {
       paused_cv_.wait(lock, [this] { return (!paused_); });
     }
 
-    OpenSockets();
+    OpenSockets_();
 
     // Now just listen and forward messages along.
     char buffer[10000];
@@ -203,9 +205,9 @@ auto NetworkReader::RunThread() -> int {
       // limit size of ~1000 or whatnot. So switching to poll() instead which
       // sounds like it
       if (explicit_bool(true)) {
-        DoPoll(&can_read_4, &can_read_6);
+        DoPoll_(&can_read_4, &can_read_6);
       } else {
-        DoSelect(&can_read_4, &can_read_6);
+        DoSelect_(&can_read_4, &can_read_6);
       }
 
       for (int s_index : {0, 1}) {
@@ -344,7 +346,7 @@ auto NetworkReader::RunThread() -> int {
               // connections.. pass them to the logic thread to wrangle.
               std::vector<uint8_t> msg_buffer(rresult2);
               memcpy(msg_buffer.data(), buffer, rresult2);
-              PushIncomingUDPPacketCall(msg_buffer, SockAddr(from));
+              PushIncomingUDPPacketCall_(msg_buffer, SockAddr(from));
               break;
             }
 
@@ -372,8 +374,8 @@ auto NetworkReader::RunThread() -> int {
   }
 }
 
-void NetworkReader::PushIncomingUDPPacketCall(const std::vector<uint8_t>& data,
-                                              const SockAddr& addr) {
+void NetworkReader::PushIncomingUDPPacketCall_(const std::vector<uint8_t>& data,
+                                               const SockAddr& addr) {
   // Avoid buffer-full errors if something is causing us to write too often;
   // these are unreliable messages so its ok to just drop them.
   if (!g_base->logic->event_loop()->CheckPushSafety()) {
@@ -389,7 +391,7 @@ void NetworkReader::PushIncomingUDPPacketCall(const std::vector<uint8_t>& data,
   });
 }
 
-void NetworkReader::OpenSockets() {
+void NetworkReader::OpenSockets_() {
   // This needs to be locked during any socket-descriptor changes/writes.
   std::scoped_lock lock(sd_mutex_);
 

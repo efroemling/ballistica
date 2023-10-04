@@ -40,6 +40,11 @@ def on_native_module_import() -> None:
     if envconfig.log_handler is not None:
         _feed_logs_to_babase(envconfig.log_handler)
 
+        # Also let's name the log-handler thread to help in profiling.
+        envconfig.log_handler.call_in_thread(
+            lambda: _babase.set_thread_name('ballistica logging')
+        )
+
     env = _babase.pre_env()
 
     # Give a soft warning if we're being used with a different binary

@@ -384,6 +384,7 @@ class AppHealthMonitor(AppSubsystem):
         log_dumped_app_state()
 
     def _app_monitor_thread_main(self) -> None:
+        _babase.set_thread_name('ballistica app-monitor')
         try:
             self._monitor_app()
         except Exception:

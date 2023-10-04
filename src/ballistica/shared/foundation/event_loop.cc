@@ -371,7 +371,7 @@ void EventLoop::BootstrapThread_() {
       break;
     case EventLoopID::kNetworkWrite:
       name = "networkwrite";
-      id_string = "ballistica network writing";
+      id_string = "ballistica network-write";
       break;
     default:
       throw Exception();

@@ -1,12 +1,10 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to the high level state of the app."""
-# pylint: disable=too-many-lines
 from __future__ import annotations
 
 import os
 import logging
-import warnings
 from enum import Enum
 from typing import TYPE_CHECKING
 from concurrent.futures import ThreadPoolExecutor
@@ -158,7 +156,10 @@ class App:
         # processing. It should also be passed to any additional asyncio
         # loops we create so that everything shares the same single set
         # of worker threads.
-        self.threadpool = ThreadPoolExecutor(thread_name_prefix='baworker')
+        self.threadpool = ThreadPoolExecutor(
+            thread_name_prefix='baworker',
+            initializer=self._thread_pool_thread_init,
+        )
 
         self.meta = MetadataSubsystem()
         self.net = NetworkSubsystem()
@@ -198,6 +199,7 @@ class App:
         self._shutdown_tasks: list[Coroutine[None, None, None]] = [
             self._wait_for_shutdown_suppressions()
         ]
+        self._pool_thread_count = 0
 
     def postinit(self) -> None:
         """Called after we've been inited and assigned to babase.app.
@@ -890,243 +892,7 @@ class App:
                 'Error in work submitted via threadpool_submit_no_wait()'
             )
 
-    # --------------------------------------------------------------------
-    # THE FOLLOWING ARE DEPRECATED AND WILL BE REMOVED IN A FUTURE UPDATE.
-    # --------------------------------------------------------------------
-
-    @property
-    def build_number(self) -> int:
-        """Integer build number.
-
-        This value increases by at least 1 with each release of the engine.
-        It is independent of the human readable babase.App.version string.
-        """
-        warnings.warn(
-            'app.build_number is deprecated; use app.env.build_number',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.env.build_number
-
-    @property
-    def device_name(self) -> str:
-        """Name of the device running the app."""
-        warnings.warn(
-            'app.device_name is deprecated; use app.env.device_name',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.env.device_name
-
-    @property
-    def config_file_path(self) -> str:
-        """Where the app's config file is stored on disk."""
-        warnings.warn(
-            'app.config_file_path is deprecated;'
-            ' use app.env.config_file_path',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.env.config_file_path
-
-    @property
-    def version(self) -> str:
-        """Human-readable engine version string; something like '1.3.24'.
-
-        This should not be interpreted as a number; it may contain
-        string elements such as 'alpha', 'beta', 'test', etc.
-        If a numeric version is needed, use `build_number`.
-        """
-        warnings.warn(
-            'app.version is deprecated; use app.env.version',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.env.version
-
-    @property
-    def debug_build(self) -> bool:
-        """Whether the app was compiled in debug mode.
-
-        Debug builds generally run substantially slower than non-debug
-        builds due to compiler optimizations being disabled and extra
-        checks being run.
-        """
-        warnings.warn(
-            'app.debug_build is deprecated; use app.env.debug',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.env.debug
-
-    @property
-    def test_build(self) -> bool:
-        """Whether the app was compiled in test mode.
-
-        Test mode enables extra checks and features that are useful for
-        release testing but which do not slow the game down significantly.
-        """
-        warnings.warn(
-            'app.test_build is deprecated; use app.env.test',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.env.test
-
-    @property
-    def data_directory(self) -> str:
-        """Path where static app data lives."""
-        warnings.warn(
-            'app.data_directory is deprecated; use app.env.data_directory',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.env.data_directory
-
-    @property
-    def python_directory_user(self) -> str | None:
-        """Path where the app expects its user scripts (mods) to live.
-
-        Be aware that this value may be None if ballistica is running in
-        a non-standard environment, and that python-path modifications may
-        cause modules to be loaded from other locations.
-        """
-        warnings.warn(
-            'app.python_directory_user is deprecated;'
-            ' use app.env.python_directory_user',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.env.python_directory_user
-
-    @property
-    def python_directory_app(self) -> str | None:
-        """Path where the app expects its bundled modules to live.
-
-        Be aware that this value may be None if Ballistica is running in
-        a non-standard environment, and that python-path modifications may
-        cause modules to be loaded from other locations.
-        """
-        warnings.warn(
-            'app.python_directory_app is deprecated;'
-            ' use app.env.python_directory_app',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.env.python_directory_app
-
-    @property
-    def python_directory_app_site(self) -> str | None:
-        """Path where the app expects its bundled pip modules to live.
-
-        Be aware that this value may be None if Ballistica is running in
-        a non-standard environment, and that python-path modifications may
-        cause modules to be loaded from other locations.
-        """
-        warnings.warn(
-            'app.python_directory_app_site is deprecated;'
-            ' use app.env.python_directory_app_site',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.env.python_directory_app_site
-
-    @property
-    def api_version(self) -> int:
-        """The app's api version.
-
-        Only Python modules and packages associated with the current API
-        version number will be detected by the game (see the ba_meta tag).
-        This value will change whenever substantial backward-incompatible
-        changes are introduced to ballistica APIs. When that happens,
-        modules/packages should be updated accordingly and set to target
-        the newer API version number.
-        """
-        warnings.warn(
-            'app.api_version is deprecated; use app.env.api_version',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.env.api_version
-
-    @property
-    def on_tv(self) -> bool:
-        """Whether the app is currently running on a TV."""
-        warnings.warn(
-            'app.on_tv is deprecated; use app.env.tv',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.env.tv
-
-    @property
-    def vr_mode(self) -> bool:
-        """Whether the app is currently running in VR."""
-        warnings.warn(
-            'app.vr_mode is deprecated; use app.env.vr',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.env.vr
-
-    # __SPINOFF_REQUIRE_UI_V1_BEGIN__
-
-    @property
-    def toolbar_test(self) -> bool:
-        """(internal)."""
-        warnings.warn(
-            'app.toolbar_test is deprecated; use app.ui_v1.use_toolbars',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.ui_v1.use_toolbars
-
-    # __SPINOFF_REQUIRE_UI_V1_END__
-
-    @property
-    def arcade_mode(self) -> bool:
-        """Whether the app is currently running on arcade hardware."""
-        warnings.warn(
-            'app.arcade_mode is deprecated; use app.env.arcade',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.env.arcade
-
-    @property
-    def headless_mode(self) -> bool:
-        """Whether the app is running headlessly."""
-        warnings.warn(
-            'app.headless_mode is deprecated; use app.env.headless',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.env.headless
-
-    @property
-    def demo_mode(self) -> bool:
-        """Whether the app is targeting a demo experience."""
-        warnings.warn(
-            'app.demo_mode is deprecated; use app.env.demo',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.env.demo
-
-    # __SPINOFF_REQUIRE_SCENE_V1_BEGIN__
-
-    @property
-    def protocol_version(self) -> int:
-        """(internal)."""
-        # pylint: disable=cyclic-import
-        import bascenev1
-
-        warnings.warn(
-            'app.protocol_version is deprecated;'
-            ' use bascenev1.protocol_version()',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return bascenev1.protocol_version()
-
-    # __SPINOFF_REQUIRE_SCENE_V1_END__
+    def _thread_pool_thread_init(self) -> None:
+        # Help keep things clear in profiling tools/etc.
+        self._pool_thread_count += 1
+        _babase.set_thread_name(f'ballistica worker-{self._pool_thread_count}')

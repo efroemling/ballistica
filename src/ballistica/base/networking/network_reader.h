@@ -33,32 +33,31 @@ class NetworkReader {
   auto sd6() const { return sd6_; }
 
  private:
-  void DoSelect(bool* can_read_4, bool* can_read_6);
-  void DoPoll(bool* can_read_4, bool* can_read_6);
-  void OpenSockets();
-  void PokeSelf();
-  auto RunThread() -> int;
-  void PushIncomingUDPPacketCall(const std::vector<uint8_t>& data,
-                                 const SockAddr& addr);
-  static auto RunThreadStatic(void* self) -> int {
-    return static_cast<NetworkReader*>(self)->RunThread();
+  void DoSelect_(bool* can_read_4, bool* can_read_6);
+  void DoPoll_(bool* can_read_4, bool* can_read_6);
+  void OpenSockets_();
+  void PokeSelf_();
+  auto RunThread_() -> int;
+  void PushIncomingUDPPacketCall_(const std::vector<uint8_t>& data,
+                                  const SockAddr& addr);
+  static auto RunThreadStatic_(void* self) -> int {
+    return static_cast<NetworkReader*>(self)->RunThread_();
   }
-  std::unique_ptr<RemoteAppServer> remote_server_;
-  int sd4_{-1};
-  int sd6_{-1};
-  std::mutex sd_mutex_;
 
-  // This needs to be locked while modifying or writing to either the ipv4 or
-  // ipv6 socket. The one exception is when the network-reader thread is reading
-  // from them, since there is no chance of anyone else reading or modifying
-  // them. (that is all handled by the net-reader thread).
+  // This needs to be locked while modifying or writing to either the ipv4
+  // or ipv6 socket. The one exception is when the network-reader thread is
+  // reading from them, since there is no chance of anyone else reading or
+  // modifying them. (that is all handled by the net-reader thread).
+  std::mutex sd_mutex_;
   int port4_{-1};
   int port6_{-1};
-  std::thread* thread_{};
+  int sd4_{-1};
+  int sd6_{-1};
   bool paused_{};
+  std::thread* thread_{};
   std::mutex paused_mutex_;
   std::condition_variable paused_cv_;
-  bool passed_fd_threshold_{};
+  std::unique_ptr<RemoteAppServer> remote_server_;
 };
 
 }  // namespace ballistica::base
