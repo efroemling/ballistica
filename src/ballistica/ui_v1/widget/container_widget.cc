@@ -1268,7 +1268,7 @@ void ContainerWidget::DeleteWidget(Widget* w) {
         }
         // Grab a ref until we clear it off the list to avoid funky recursion
         // issues.
-        Object::Ref<Widget> w2 = *i;
+        auto w2 = Object::Ref<Widget>(*i);
         widgets_.erase(i);
         found = true;
         break;

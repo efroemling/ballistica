@@ -30,7 +30,7 @@ static auto GetAsset(std::unordered_map<std::string, Object::WeakRef<T> >* list,
     // strong-ref to it.
     auto t(Object::New<T>(name, scene));
     (*list)[name] = t;
-    return t;
+    return Object::Ref<T>(t);
   }
 }
 

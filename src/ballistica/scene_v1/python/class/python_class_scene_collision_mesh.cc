@@ -12,7 +12,8 @@ namespace ballistica::scene_v1 {
 auto PythonClassSceneCollisionMesh::tp_repr(PythonClassSceneCollisionMesh* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Object::Ref<SceneCollisionMesh> m = *self->collision_mesh_;
+  assert(self->collision_mesh_);
+  auto&& m = *self->collision_mesh_;
   return Py_BuildValue(
       "s", (std::string("<bascenev1.CollisionMesh ")
             + (m.Exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")

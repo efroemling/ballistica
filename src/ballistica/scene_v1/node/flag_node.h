@@ -50,7 +50,7 @@ class FlagNode : public Node {
   base::AreaOfInterest* area_of_interest_ = nullptr;
   Part part_;
   std::vector<float> color_ = {1.0f, 1.0f, 1.0f};
-  Object::Ref<RigidBody> body_{nullptr};
+  Object::Ref<RigidBody> body_;
   Object::Ref<SceneTexture> color_texture_;
   base::MeshIndexedObjectSplit mesh_;
   Object::Ref<FullShadowSet> full_shadow_set_;

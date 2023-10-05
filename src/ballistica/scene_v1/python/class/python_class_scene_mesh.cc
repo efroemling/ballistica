@@ -11,7 +11,7 @@ namespace ballistica::scene_v1 {
 
 auto PythonClassSceneMesh::tp_repr(PythonClassSceneMesh* self) -> PyObject* {
   BA_PYTHON_TRY;
-  Object::Ref<SceneMesh> m = *(self->mesh_);
+  auto&& m = *(self->mesh_);
   return Py_BuildValue(
       "s", (std::string("<bascenev1.Mesh ")
             + (m.Exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")

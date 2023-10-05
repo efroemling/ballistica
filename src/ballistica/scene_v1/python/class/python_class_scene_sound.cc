@@ -30,7 +30,7 @@ void PythonClassSceneSound::SetupType(PyTypeObject* cls) {
 
 auto PythonClassSceneSound::tp_repr(PythonClassSceneSound* self) -> PyObject* {
   BA_PYTHON_TRY;
-  Object::Ref<SceneSound> m = *(self->sound_);
+  auto&& m = *(self->sound_);
   return Py_BuildValue(
       "s", (std::string("<bascenev1.Sound ")
             + (m.Exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")

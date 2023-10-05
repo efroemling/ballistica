@@ -12,7 +12,7 @@ namespace ballistica::scene_v1 {
 auto PythonClassSceneTexture::tp_repr(PythonClassSceneTexture* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Object::Ref<SceneTexture> t = *(self->texture_);
+  auto&& t = *(self->texture_);
   return Py_BuildValue(
       "s", (std::string("<bascenev1.Texture ")
             + (t.Exists() ? ("\"" + t->name() + "\"") : "(empty ref)") + ">")

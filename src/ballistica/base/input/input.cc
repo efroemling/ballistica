@@ -369,7 +369,7 @@ void Input::RemoveInputDevice(InputDevice* input, bool standard_message) {
     if (input_device.Exists() && (input_device.Get() == input)) {
       // Pull it off the list before killing it (in case it tries to trigger
       // another kill itself).
-      Object::Ref<InputDevice> device = input_device;
+      auto device = Object::Ref<InputDevice>(input_device);
 
       // Ok we cleared its slot in our vector; now we just have
       // the local variable 'device' keeping it alive.

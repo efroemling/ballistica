@@ -12,7 +12,7 @@ namespace ballistica::scene_v1 {
 auto PythonClassSceneDataAsset::tp_repr(PythonClassSceneDataAsset* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Object::Ref<SceneDataAsset> m = *self->data_;
+  auto&& m = *self->data_;
   return Py_BuildValue(
       "s", (std::string("<ba.Data ")
             + (m.Exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")

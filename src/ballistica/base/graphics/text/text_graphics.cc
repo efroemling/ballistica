@@ -1002,7 +1002,7 @@ void TextGraphics::GetOSTextSpanBoundsAndWidth(const std::string& s, Rect* r,
   // so let's use a cache of recent results.
   auto i = text_span_bounds_cache_map_.find(s);
   if (i != text_span_bounds_cache_map_.end()) {
-    Object::Ref<TextSpanBoundsCacheEntry> entry = i->second;
+    auto entry = Object::Ref<TextSpanBoundsCacheEntry>(i->second);
     *r = entry->r;
     *width = entry->width;
 

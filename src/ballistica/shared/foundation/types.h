@@ -273,6 +273,7 @@ enum class PyExcType {
   kIndex,
   kType,
   kValue,
+  kReference,
   kContext,
   kNotFound,
   kNodeNotFound,

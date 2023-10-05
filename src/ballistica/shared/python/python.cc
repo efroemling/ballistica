@@ -49,6 +49,9 @@ void Python::SetPythonException(const Exception& exc) {
     case PyExcType::kValue:
       pytype = PyExc_ValueError;
       break;
+    case PyExcType::kReference:
+      pytype = PyExc_ReferenceError;
+      break;
     case PyExcType::kType:
       pytype = PyExc_TypeError;
       break;

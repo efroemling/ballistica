@@ -275,7 +275,7 @@ void HostSession::RemovePlayer(Player* player) {
     if (i->Get() == player) {
       // Grab a ref to keep the player alive, pull him off the list, then call
       // his leaving callback.
-      Object::Ref<Player> player2 = *i;
+      auto player2 = Object::Ref<Player>(*i);
       players_.erase(i);
 
       // Clear the player's attachment to its host-session so it doesn't

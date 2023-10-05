@@ -473,7 +473,7 @@ auto Assets::GetAsset(const std::string& file_name,
       MarkAssetForLoad(d.Get());
     }
     d->set_last_used_time(g_core->GetAppTimeMillisecs());
-    return d;
+    return Object::Ref<T>(d);
   }
 }
 
@@ -485,7 +485,7 @@ auto Assets::GetTexture(TextPacker* packer) -> Object::Ref<TextureAsset> {
   if (i != text_textures_.end()) {
     return Object::Ref<TextureAsset>(i->second.Get());
   } else {
-    auto d(Object::New<TextureAsset>(packer));
+    auto d{Object::New<TextureAsset>(packer)};
     text_textures_[hash] = d;
     {
       Asset::LockGuard lock(d.Get());
@@ -493,7 +493,7 @@ auto Assets::GetTexture(TextPacker* packer) -> Object::Ref<TextureAsset> {
       MarkAssetForLoad(d.Get());
     }
     d->set_last_used_time(g_core->GetAppTimeMillisecs());
-    return d;
+    return Object::Ref<TextureAsset>(d);
   }
 }
 
@@ -513,7 +513,7 @@ auto Assets::GetQRCodeTexture(const std::string& url)
       MarkAssetForLoad(d.Get());
     }
     d->set_last_used_time(g_core->GetAppTimeMillisecs());
-    return d;
+    return Object::Ref<TextureAsset>(d);
   }
 }
 
@@ -536,7 +536,7 @@ auto Assets::GetCubeMapTexture(const std::string& file_name)
       MarkAssetForLoad(d.Get());
     }
     d->set_last_used_time(g_core->GetAppTimeMillisecs());
-    return d;
+    return Object::Ref<TextureAsset>(d);
   }
 }
 
@@ -592,7 +592,7 @@ auto Assets::GetTexture(const std::string& file_name)
       MarkAssetForLoad(d.Get());
     }
     d->set_last_used_time(g_core->GetAppTimeMillisecs());
-    return d;
+    return Object::Ref<TextureAsset>(d);
   }
 }
 

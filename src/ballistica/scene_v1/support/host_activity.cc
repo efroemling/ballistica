@@ -193,7 +193,7 @@ auto HostActivity::NewMaterial(const std::string& name)
 
   auto m(Object::New<Material>(name, scene()));
   materials_.emplace_back(m);
-  return m;
+  return Object::Ref<Material>(m);
 }
 
 auto HostActivity::GetTexture(const std::string& name)

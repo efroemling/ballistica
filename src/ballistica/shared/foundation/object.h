@@ -151,7 +151,7 @@ class Object {
     friend class Object;
   };  // WeakRefBase
 
-  /// Weak-reference to an instance of a specific Object subclass.
+  /// A weak-reference to an instance of a specific Object subclass.
   template <typename T>
   class WeakRef : public WeakRefBase {
    public:
@@ -179,11 +179,14 @@ class Object {
       return reinterpret_cast<T*>(obj_);
     }
 
-    // These operators throw exceptions if the object is dead.
+    // ----------------------------- Operators ---------------------------------
+
+    /// Access the referenced object; throws an Exception if ref is invalid.
     auto operator*() const -> T& {
       if (!obj_) {
-        throw Exception("Dereferencing invalid " + static_type_name<T>()
-                        + " ref.");
+        throw Exception(
+            "Dereferencing invalid " + static_type_name<T>() + " ref.",
+            PyExcType::kReference);
       }
 
       // Yes, reinterpret_cast is evil, but we make sure
@@ -191,10 +194,13 @@ class Object {
       // (see Acquire()).
       return *reinterpret_cast<T*>(obj_);
     }
+
+    /// Access the referenced object; throws an Exception if ref is invalid.
     auto operator->() const -> T* {
       if (!obj_) {
-        throw Exception("Dereferencing invalid " + static_type_name<T>()
-                        + " ref.");
+        throw Exception(
+            "Dereferencing invalid " + static_type_name<T>() + " ref.",
+            PyExcType::kReference);
       }
 
       // Yes, reinterpret_cast is evil, but we make sure we only operate
@@ -202,7 +208,53 @@ class Object {
       return reinterpret_cast<T*>(obj_);
     }
 
-    // Assign/compare with any compatible pointer.
+    /// Compare to a pointer of any compatible type.
+    template <typename U>
+    auto operator==(U* ptr) -> bool {
+      return (Get() == ptr);
+    }
+
+    /// Compare to a pointer of any compatible type.
+    template <typename U>
+    auto operator!=(U* ptr) -> bool {
+      return (Get() != ptr);
+    }
+
+    /// Compare to a strong ref of any compatible type.
+    template <typename U>
+    auto operator==(const Ref<U>& ref) -> bool {
+      return (Get() == ref.Get());
+    }
+
+    /// Compare to a strong ref to a compatible type.
+    template <typename U>
+    auto operator!=(const Ref<U>& ref) -> bool {
+      return (Get() != ref.Get());
+    }
+
+    /// Compare to a weak ref of any compatible type.
+    template <typename U>
+    auto operator==(const WeakRef<U>& ref) -> bool {
+      return (Get() == ref.Get());
+    }
+
+    /// Compare to a weak ref of any compatible type.
+    template <typename U>
+    auto operator!=(const WeakRef<U>& ref) -> bool {
+      return (Get() != ref.Get());
+    }
+
+    /// Assign from our exact type. Note: it might seem like our template
+    /// assigment operator (taking typename U) would cover this case, but
+    /// that's not how it works. If we remove this, the default generated
+    /// piecewise assignment operator gets selected as the best match for
+    /// our exact type and we crash horrifically.
+    auto operator=(const WeakRef<T>& ref) -> WeakRef<T>& {
+      *this = ref.Get();
+      return *this;
+    }
+
+    /// Assign from a pointer of any compatible type.
     template <typename U>
     auto operator=(U* ptr) -> WeakRef<T>& {
       Release();
@@ -219,104 +271,60 @@ class Object {
       return *this;
     }
 
-    template <typename U>
-    auto operator==(U* ptr) -> bool {
-      return (Get() == ptr);
-    }
-
-    template <typename U>
-    auto operator!=(U* ptr) -> bool {
-      return (Get() != ptr);
-    }
-
-    // Assign/compare with same type ref (apparently the template below
-    // doesn't cover this case?).
-    //
-    // Update: Actually now getting errors that
-    // having both is ambiguous, so maybe can kill these now?..
-
-    // Update 2: Oops; we (still?) crash without this.
-    // re-enabling for now. Need to get to the bottom of this.
-    auto operator=(const WeakRef<T>& ref) -> WeakRef<T>& {
-      *this = ref.Get();
-      return *this;
-    }
-
-    // auto operator==(const WeakRef<T>& ref) -> bool {
-    //   return (Get() == ref.Get());
-    // }
-
-    // auto operator!=(const WeakRef<T>& ref) -> bool {
-    //   return (Get() != ref.Get());
-    // }
-
-    // Assign/compare with a compatible weak-ref.
-    template <typename U>
-    auto operator=(const WeakRef<U>& ref) -> WeakRef<T>& {
-      *this = ref.Get();
-      return *this;
-    }
-
-    template <typename U>
-    auto operator==(const WeakRef<U>& ref) -> bool {
-      return (Get() == ref.Get());
-    }
-
-    template <typename U>
-    auto operator!=(const WeakRef<U>& ref) -> bool {
-      return (Get() != ref.Get());
-    }
-
-    // Assign/compare with a compatible strong-ref.
+    /// Assign from a strong ref of any compatible type.
     template <typename U>
     auto operator=(const Ref<U>& ref) -> WeakRef<T>& {
       *this = ref.Get();
       return *this;
     }
 
+    /// Assign from a weak ref of any compatible type (except our exact
+    /// type which has its own overload).
     template <typename U>
-    auto operator==(const Ref<U>& ref) -> bool {
-      return (Get() == ref.Get());
+    auto operator=(const WeakRef<U>& ref) -> WeakRef<T>& {
+      *this = ref.Get();
+      return *this;
     }
 
-    template <typename U>
-    auto operator!=(const Ref<U>& ref) -> bool {
-      return (Get() != ref.Get());
-    }
+    // ---------------------------- Constructors -------------------------------
 
-    // Various constructors:
-
-    // Empty.
+    // Default constructor.
     WeakRef() = default;
 
-    // From our type pointer.
-    explicit WeakRef(T* obj) { *this = obj; }
+    /// Copy constructor. Note that, by making this explicit, we require code
+    /// to be a bit more verbose. For example, we can't just do 'return
+    /// some_ref;' from a function and instead have to do 'return
+    /// Object::WeakRef<SomeType>(some_ref)'. However I feel this extra
+    /// verbosity is good; we're tossing around a mix of pointers and
+    /// strong-refs and weak-refs so it's good to be aware exactly where refs
+    /// are being added/etc.
+    explicit WeakRef(const WeakRef<T>& ref) { *this = ref.Get(); }
 
-    // Copy constructor (only non-explicit one).
-    WeakRef(const WeakRef<T>& ref) { *this = ref.Get(); }
-
-    // From a compatible pointer.
+    /// Create from a pointer of any compatible type.
     template <typename U>
     explicit WeakRef(U* ptr) {
       *this = ptr;
     }
 
-    // From a compatible strong ref.
+    /// Create from a strong ref of any compatible type.
     template <typename U>
     explicit WeakRef(const Ref<U>& ref) {
       *this = ref;
     }
 
-    // From a compatible weak ref.
+    /// Create from a weak ref of any compatible type.
     template <typename U>
     explicit WeakRef(const WeakRef<U>& ref) {
       *this = ref;
     }
 
+    // -------------------------------------------------------------------------
+
    private:
     void Acquire(T* obj) {
       if (obj == nullptr) {
-        throw Exception("Acquiring invalid ptr of " + static_type_name<T>());
+        throw Exception("Acquiring invalid ptr of " + static_type_name<T>(),
+                        PyExcType::kReference);
       }
 
 #if BA_DEBUG_BUILD
@@ -355,22 +363,8 @@ class Object {
     ~Ref() { Release(); }
     auto Get() const -> T* { return obj_; }
 
-    // These operators throw an Exception if the object is dead.
-    auto operator*() const -> T& {
-      if (!obj_) {
-        throw Exception("Dereferencing invalid " + static_type_name<T>()
-                        + " ref.");
-      }
-      return *obj_;
-    }
-    auto operator->() const -> T* {
-      if (!obj_) {
-        throw Exception("Dereferencing invalid " + static_type_name<T>()
-                        + " ref.");
-      }
-      return obj_;
-    }
     auto Exists() const -> bool { return (obj_ != nullptr); }
+
     void Clear() { Release(); }
 
     /// Convenience wrapper for Object::IsValidManagedObject.
@@ -381,7 +375,67 @@ class Object {
       return false;
     }
 
-    // Assign/compare with any compatible pointer.
+    // ----------------------------- Operators ---------------------------------
+
+    /// Access the referenced object; throws an Exception if ref is invalid.
+    auto operator*() const -> T& {
+      if (!obj_) {
+        throw Exception(
+            "Dereferencing invalid " + static_type_name<T>() + " ref.",
+            PyExcType::kReference);
+      }
+      return *obj_;
+    }
+
+    /// Access the referenced object; throws an Exception if ref is invalid.
+    auto operator->() const -> T* {
+      if (!obj_) {
+        throw Exception(
+            "Dereferencing invalid " + static_type_name<T>() + " ref.",
+            PyExcType::kReference);
+      }
+      return obj_;
+    }
+
+    /// Compare to a pointer of any compatible type.
+    template <typename U>
+    auto operator==(U* ptr) -> bool {
+      return (Get() == ptr);
+    }
+
+    /// Compare to a pointer of any compatible type.
+    template <typename U>
+    auto operator!=(U* ptr) -> bool {
+      return (Get() != ptr);
+    }
+
+    /// Compare to a strong ref of any compatible type.
+    template <typename U>
+    auto operator==(const Ref<U>& ref) -> bool {
+      return (Get() == ref.Get());
+    }
+
+    /// Compare to a strong ref of any compatible type.
+    template <typename U>
+    auto operator!=(const Ref<U>& ref) -> bool {
+      return (Get() != ref.Get());
+    }
+
+    // Note: we don't need to include comparisons to weak-refs because that
+    // is handled on the weak-ref side (and we can get ambiguity errors if
+    // we handle them here too).
+
+    /// Assign from our exact type. Note: it might seem like our template
+    /// assigment operator (taking typename U) would cover this case, but
+    /// that's not how it works. If we remove this, the default generated
+    /// piecewise assignment operator gets selected as the best match for
+    /// our exact type and we crash horrifically.
+    auto operator=(const Ref<T>& ref) -> Ref<T>& {
+      *this = ref.Get();
+      return *this;
+    }
+
+    /// Assign from a pointer of any compatible type.
     template <typename U>
     auto operator=(U* ptr) -> Ref<T>& {
       Release();
@@ -390,98 +444,61 @@ class Object {
       }
       return *this;
     }
-    template <typename U>
-    auto operator==(U* ptr) -> bool {
-      return (Get() == ptr);
-    }
-    template <typename U>
-    auto operator!=(U* ptr) -> bool {
-      return (Get() != ptr);
-    }
 
-    auto operator==(const Ref<T>& ref) -> bool { return (Get() == ref.Get()); }
-    auto operator!=(const Ref<T>& ref) -> bool { return (Get() != ref.Get()); }
-
-    // Assign/compare with same type ref (apparently the generic template below
-    // doesn't cover that case?..)
-    // DANGER: Seems to still compile if we comment this out, but crashes.
-    // Should get to the bottom of that.
-    auto operator=(const Ref<T>& ref) -> Ref<T>& {
-      assert(this != &ref);  // Shouldn't be self-assigning.
-      *this = ref.Get();
-      return *this;
-    }
-
-    // Assign/compare with a compatible strong-ref.
+    /// Assign from a strong ref of any compatible type (except our exact
+    /// type which has its own overload).
     template <typename U>
     auto operator=(const Ref<U>& ref) -> Ref<T>& {
       *this = ref.Get();
       return *this;
     }
 
-    template <typename U>
-    auto operator==(const Ref<U>& ref) -> bool {
-      return (Get() == ref.Get());
-    }
-
-    template <typename U>
-    auto operator!=(const Ref<U>& ref) -> bool {
-      return (Get() != ref.Get());
-    }
-
-    // Assign from a compatible weak-ref. Comparing to compatible weak-refs
-    // is covered by the operators on the weak-ref side.
+    /// Assign from a weak ref to any compatible type.
     template <typename U>
     auto operator=(const WeakRef<U>& ref) -> Ref<T>& {
       *this = ref.Get();
       return *this;
     }
 
-    // These are already covered by the equivalent operators
-    // on the WeakRef side.
-    // template <typename U>
-    // auto operator==(const WeakRef<U>& ref) -> bool {
-    //   return (Get() == ref.Get());
-    // }
+    // ---------------------------- Constructors -------------------------------
 
-    // template <typename U>
-    // auto operator!=(const WeakRef<U>& ref) -> bool {
-    //   return (Get() != ref.Get());
-    // }
-
-    // Various constructors:
-
-    // Empty.
+    /// Default constructor.
     Ref() = default;
 
-    // From our type pointer.
-    explicit Ref(T* obj) { *this = obj; }
+    /// Copy constructor. Note that, by making this explicit, we require code
+    /// to be a bit more verbose. For example, we can't just do 'return
+    /// some_ref;' from a function and instead have to do 'return
+    /// Object::Ref<SomeType>(some_ref)'. However I feel this extra verbosity
+    /// is good; we're tossing around a mix of pointers and strong-refs and
+    /// weak-refs so it's good to be aware exactly where refs are being
+    /// added/etc.
+    explicit Ref(const Ref<T>& ref) { *this = ref.Get(); }
 
-    // Copy constructor (only non-explicit one).
-    Ref(const Ref<T>& ref) { *this = ref.Get(); }
-
-    // From a compatible pointer.
+    /// Create from a compatible pointer.
     template <typename U>
     explicit Ref(U* ptr) {
       *this = ptr;
     }
 
-    // From a compatible strong ref.
+    /// Create from a compatible strong ref.
     template <typename U>
     explicit Ref(const Ref<U>& ref) {
       *this = ref;
     }
 
-    // From a compatible weak ref.
+    /// Create from a compatible weak ref.
     template <typename U>
     explicit Ref(const WeakRef<U>& ref) {
       *this = ref;
     }
 
+    // -------------------------------------------------------------------------
+
    private:
     void Acquire(T* obj) {
       if (obj == nullptr) {
-        throw Exception("Acquiring invalid ptr of " + static_type_name<T>());
+        throw Exception("Acquiring invalid ptr of " + static_type_name<T>(),
+                        PyExcType::kReference);
       }
 
 #if BA_DEBUG_BUILD
@@ -549,13 +566,13 @@ class Object {
 
   /// In some cases it may be handy to allocate an object for ref-counting
   /// but not actually create references yet. An example is when creating an
-  /// object in one thread to be passed to another which will own said object.
-  /// For such cases, allocate using NewDeferred() and then create the initial
-  /// strong ref in the desired thread using CompleteDeferred().
-  /// Note that in debug builds, checks may be run to make sure deferred
-  /// objects wind up with references added to them at some point. If you
-  /// want to allocate an object for manual deallocation or permanent
-  /// existence, use NewUnmanaged() instead.
+  /// object in one thread to be passed to another which will own said
+  /// object. For such cases, allocate using NewDeferred() and then create
+  /// the initial strong ref in the desired thread using CompleteDeferred().
+  /// Note that, in debug builds, checks may be run to make sure deferred
+  /// objects wind up with references added to them at some point. For this
+  /// reason, if you want to allocate an object for manual deallocation or
+  /// permanent existence, use NewUnmanaged() instead.
   template <typename T, typename... ARGS>
   [[nodiscard]] static auto NewDeferred(ARGS&&... args) -> T* {
     T* ptr = new T(std::forward<ARGS>(args)...);
