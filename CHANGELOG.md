@@ -1,4 +1,4 @@
-### 1.7.28 (build 21411, api 8, 2023-10-04)
+### 1.7.28 (build 21417, api 8, 2023-10-04)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -98,6 +98,9 @@
 - Removed the bits from `babase.app` that were deprecated in 1.7.27. I know that
   was only one version ago, but this version has been cooking for a while now.
 - Visual Studio projects have been updated to target Visual Studio 2022.
+- Now that all our compilers support it, updating from the C++17 standard to
+  C++20. This will allow a few useful things such as being able to pack 8 bools
+  into 1 byte.
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 

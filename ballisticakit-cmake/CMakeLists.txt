@@ -5,8 +5,8 @@ include(CheckIncludeFile)
 option(HEADLESS "build headless server" OFF)
 option(TEST_BUILD "include testing features" OFF)
 
-# Requiring minimum of C++17 currently.
-set(CMAKE_CXX_STANDARD 17)
+# Requiring minimum of C++20 currently.
+set(CMAKE_CXX_STANDARD 20)
 
 if (APPLE)
   # Seems as of Mojave we need to explicitly pull in homebrew paths.

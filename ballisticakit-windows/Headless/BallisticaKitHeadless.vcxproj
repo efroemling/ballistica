@@ -101,7 +101,7 @@
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/SDL2;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
@@ -123,7 +123,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/SDL2;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>

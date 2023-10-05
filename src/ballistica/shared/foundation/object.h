@@ -229,39 +229,26 @@ class Object {
       return (Get() != ptr);
     }
 
-    // Assign/compare with same type ref (apparently the template below doesn't
-    // cover this case?).
-    auto operator=(const WeakRef<T>& ref) -> WeakRef<T>& {
-      *this = ref.Get();
-      return *this;
-    }
+    // Assign/compare with same type ref (apparently the template below
+    // doesn't cover this case?).
+    //
+    // Update: Actually now getting errors that
+    // having both is ambiguous, so maybe can kill these now?..
 
-    auto operator==(const WeakRef<T>& ref) -> bool {
-      return (Get() == ref.Get());
-    }
+    // auto operator=(const WeakRef<T>& ref) -> WeakRef<T>& {
+    //   *this = ref.Get();
+    //   return *this;
+    // }
 
-    auto operator!=(const WeakRef<T>& ref) -> bool {
-      return (Get() != ref.Get());
-    }
+    // auto operator==(const WeakRef<T>& ref) -> bool {
+    //   return (Get() == ref.Get());
+    // }
 
-    // Assign/compare with any compatible strong-ref.
-    template <typename U>
-    auto operator=(const Ref<U>& ref) -> WeakRef<T>& {
-      *this = ref.Get();
-      return *this;
-    }
+    // auto operator!=(const WeakRef<T>& ref) -> bool {
+    //   return (Get() != ref.Get());
+    // }
 
-    template <typename U>
-    auto operator==(const Ref<U>& ref) -> bool {
-      return (Get() == ref.Get());
-    }
-
-    template <typename U>
-    auto operator!=(const Ref<U>& ref) -> bool {
-      return (Get() != ref.Get());
-    }
-
-    // Assign/compare with any compatible weak-ref.
+    // Assign/compare with a compatible weak-ref.
     template <typename U>
     auto operator=(const WeakRef<U>& ref) -> WeakRef<T>& {
       *this = ref.Get();
@@ -275,6 +262,23 @@ class Object {
 
     template <typename U>
     auto operator!=(const WeakRef<U>& ref) -> bool {
+      return (Get() != ref.Get());
+    }
+
+    // Assign/compare with a compatible strong-ref.
+    template <typename U>
+    auto operator=(const Ref<U>& ref) -> WeakRef<T>& {
+      *this = ref.Get();
+      return *this;
+    }
+
+    template <typename U>
+    auto operator==(const Ref<U>& ref) -> bool {
+      return (Get() == ref.Get());
+    }
+
+    template <typename U>
+    auto operator!=(const Ref<U>& ref) -> bool {
       return (Get() != ref.Get());
     }
 
@@ -406,7 +410,7 @@ class Object {
       return *this;
     }
 
-    // Assign/compare with any compatible strong-ref.
+    // Assign/compare with a compatible strong-ref.
     template <typename U>
     auto operator=(const Ref<U>& ref) -> Ref<T>& {
       *this = ref.Get();
@@ -423,22 +427,25 @@ class Object {
       return (Get() != ref.Get());
     }
 
-    // Assign/compare from any compatible weak-ref.
+    // Assign from a compatible weak-ref. Comparing to compatible weak-refs
+    // is covered by the operators on the weak-ref side.
     template <typename U>
     auto operator=(const WeakRef<U>& ref) -> Ref<T>& {
       *this = ref.Get();
       return *this;
     }
 
-    template <typename U>
-    auto operator==(const WeakRef<U>& ref) -> bool {
-      return (Get() == ref.Get());
-    }
+    // These are already covered by the equivalent operators
+    // on the WeakRef side.
+    // template <typename U>
+    // auto operator==(const WeakRef<U>& ref) -> bool {
+    //   return (Get() == ref.Get());
+    // }
 
-    template <typename U>
-    auto operator!=(const WeakRef<U>& ref) -> bool {
-      return (Get() != ref.Get());
-    }
+    // template <typename U>
+    // auto operator!=(const WeakRef<U>& ref) -> bool {
+    //   return (Get() != ref.Get());
+    // }
 
     // Various constructors:
 
