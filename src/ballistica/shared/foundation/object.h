@@ -235,10 +235,12 @@ class Object {
     // Update: Actually now getting errors that
     // having both is ambiguous, so maybe can kill these now?..
 
-    // auto operator=(const WeakRef<T>& ref) -> WeakRef<T>& {
-    //   *this = ref.Get();
-    //   return *this;
-    // }
+    // Update 2: Oops; we (still?) crash without this.
+    // re-enabling for now. Need to get to the bottom of this.
+    auto operator=(const WeakRef<T>& ref) -> WeakRef<T>& {
+      *this = ref.Get();
+      return *this;
+    }
 
     // auto operator==(const WeakRef<T>& ref) -> bool {
     //   return (Get() == ref.Get());
