@@ -67,6 +67,7 @@ class DevConsole {
   void RequestRefresh();
 
  private:
+  class ScopedUILock_;
   class Widget_;
   class Button_;
   class Text_;
@@ -87,6 +88,7 @@ class DevConsole {
   bool python_terminal_visible_{};
   bool python_terminal_pressed_{};
   bool refresh_pending_{};
+  int ui_lock_count_{};
   State_ state_{State_::kInactive};
   State_ state_prev_{State_::kInactive};
   millisecs_t last_input_text_change_time_{};

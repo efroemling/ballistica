@@ -137,6 +137,25 @@ static void DrawText(RenderPass* pass, TextGroup* tgrp, float tscale,
   }
 }
 
+/// Anyone iterating through or mucking with the UI lists should hold one
+/// of these while doing so; they simply keep us informed if we're editing
+/// UI stuff where we shouldn't be.
+class DevConsole::ScopedUILock_ {
+ public:
+  explicit ScopedUILock_(DevConsole* dev_console) : dev_console_{dev_console} {
+    assert(g_base->InLogicThread());
+    dev_console_->ui_lock_count_++;
+  }
+  ~ScopedUILock_() {
+    assert(g_base->InLogicThread());
+    dev_console_->ui_lock_count_--;
+    assert(dev_console_->ui_lock_count_ >= 0);
+  }
+
+ private:
+  DevConsole* dev_console_;
+};
+
 /// Super-simple widget type for populating dev-console
 /// (we don't want to depend on any of our full UI feature-sets).
 class DevConsole::Widget_ {
@@ -393,6 +412,12 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
     if (pressed) {
       pressed = false;
       if (InUs(mx, my)) {
+        // Technically this callback should cause us to be recreated in a
+        // selected state, but that happens in a deferred call, so go ahead
+        // and set ourself as selected already so we don't flash as
+        // unselected for a frame before the deferred call runs.
+        selected = true;
+
         if (call.Exists()) {
           call.Get()->Run();
         }
@@ -450,6 +475,11 @@ DevConsole::DevConsole() {
 DevConsole::~DevConsole() = default;
 
 void DevConsole::RefreshTabButtons_() {
+  // IMPORTANT: This code should always be run in its own top level call and
+  // never directly from user code. Otherwise we can wind up mucking with
+  // the UI list as we're iterating through it.
+  assert(!ui_lock_count_);
+
   // Ask the Python layer for the latest set of tabs.
   tabs_ = g_base->python->objs()
               .Get(BasePython::ObjID::kGetDevConsoleTabNamesCall)
@@ -482,8 +512,12 @@ void DevConsole::RefreshTabButtons_() {
         tab, active_tab_ == tab, bscale, DevConsoleHAnchor_::kCenter, x,
         -bheight, bwidth, bheight, [this, tab] {
           active_tab_ = tab;
-          RefreshTabButtons_();
-          RefreshTabContents_();
+          // Can't muck with UI from code called while iterating through UI.
+          // So defer it.
+          g_base->logic->event_loop()->PushCall([this] {
+            RefreshTabButtons_();
+            RefreshTabContents_();
+          });
         }));
     x += bwidth;
   }
@@ -491,6 +525,11 @@ void DevConsole::RefreshTabButtons_() {
 
 void DevConsole::RefreshTabContents_() {
   BA_PRECONDITION(g_base->InLogicThread());
+
+  // IMPORTANT: This code should always be run in its own top level call and
+  // never directly from user code. Otherwise we can wind up mucking with
+  // the UI list as we're iterating through it.
+  assert(!ui_lock_count_);
 
   // Consider any refresh requests fulfilled. Subsequent refresh-requests
   // will generate a new refresh at this point.
@@ -567,6 +606,9 @@ auto DevConsole::HandleMouseDown(int button, float x, float y) -> bool {
 
   // Pass to any buttons (in bottom-local space).
   if (button == 1) {
+    // Make sure we don't muck with our UI while we're in here.
+    auto lock = ScopedUILock_(this);
+
     for (auto&& button : tab_buttons_) {
       if (button->HandleMouseDown(x, y - bottom)) {
         return true;
@@ -603,6 +645,9 @@ void DevConsole::HandleMouseUp(int button, float x, float y) {
   float bottom{Bottom_()};
 
   if (button == 1) {
+    // Make sure we don't muck with our UI while we're in here.
+    auto lock = ScopedUILock_(this);
+
     for (auto&& button : tab_buttons_) {
       button->HandleMouseUp(x, y - bottom);
     }
@@ -813,12 +858,18 @@ void DevConsole::ToggleState() {
   switch (state_) {
     case State_::kInactive:
       state_ = State_::kMini;
-      RefreshTabButtons_();
-      RefreshTabContents_();
+      // Can't muck with UI from code (potentially) called while iterating
+      // through UI. So defer it.
+      g_base->logic->event_loop()->PushCall([this] {
+        RefreshTabButtons_();
+        RefreshTabContents_();
+      });
       break;
     case State_::kMini:
       state_ = State_::kFull;
-      RefreshTabContents_();
+      // Can't muck with UI from code (potentially) called while iterating
+      // through UI. So defer it.
+      g_base->logic->event_loop()->PushCall([this] { RefreshTabContents_(); });
       break;
     case State_::kFull:
       state_ = State_::kInactive;
@@ -1104,6 +1155,9 @@ void DevConsole::Draw(FrameDef* frame_def) {
 
   // Tab Buttons.
   {
+    // Make sure we don't muck with our UI while we're in here.
+    auto lock = ScopedUILock_(this);
+
     for (auto&& button : tab_buttons_) {
       button->Draw(pass, bottom);
     }
@@ -1111,6 +1165,9 @@ void DevConsole::Draw(FrameDef* frame_def) {
 
   // Buttons.
   {
+    // Make sure we don't muck with our UI while we're in here.
+    auto lock = ScopedUILock_(this);
+
     for (auto&& button : widgets_) {
       button->Draw(pass, bottom);
     }
@@ -1133,6 +1190,11 @@ auto DevConsole::BaseScale() const -> float {
 
 void DevConsole::StepDisplayTime() {
   assert(g_base->InLogicThread());
+
+  // IMPORTANT: We can muck with UI here so make sure noone is iterating
+  // through or editing it.
+  assert(!ui_lock_count_);
+
   // If we're inactive, blow away all our stuff once we transition fully
   // off screen. This will kill any Python stuff attached to our widgets
   // so things can clean themselves up.
