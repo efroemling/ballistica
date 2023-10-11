@@ -115,6 +115,8 @@ class Assets {
 
   auto sys_assets_loaded() const { return sys_assets_loaded_; }
 
+  auto language_state() const { return language_state_; }
+
  private:
   static void MarkAssetForLoad(Asset* c);
   void LoadSystemTexture(SysTextureID id, const char* name);
@@ -175,6 +177,7 @@ class Assets {
   // Text & Language (need to mold this into more asset-like concepts).
   std::mutex language_mutex_;
   std::unordered_map<std::string, std::string> language_;
+  int language_state_{};
   std::mutex special_char_mutex_;
   std::unordered_map<SpecialChar, std::string> special_char_strings_;
 };

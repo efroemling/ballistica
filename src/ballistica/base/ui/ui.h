@@ -40,6 +40,8 @@ class UI {
   /// switching app-modes or when resetting things within an app mode.
   void Reset();
 
+  void set_ui_delegate(base::UIDelegateInterface* delegate);
+
   /// Pop up an in-app window to display a URL (NOT to open the URL in a
   /// browser). Can be called from any thread.
   void ShowURL(const std::string& url);
@@ -47,7 +49,7 @@ class UI {
   /// High level call to request a quit; ideally with a confirmation ui.
   /// When a UI can't be shown, triggers an immediate shutdown. This can be
   /// called from any thread.
-  void ConfirmQuit();
+  // void ConfirmQuit();
 
   /// Return whether there is UI present in either the main or overlay
   /// stacks. Generally this implies the focus should be on the UI.
@@ -111,12 +113,15 @@ class UI {
 
   void PushDevConsolePrintCall(const std::string& msg);
 
+  auto* delegate() const { return delegate_; }
+
  private:
   void MainMenuPress_(InputDevice* device);
   auto DevConsoleButtonSize_() const -> float;
   auto InDevConsoleButton_(float x, float y) const -> bool;
   void DrawDevConsoleButton_(FrameDef* frame_def);
 
+  base::UIDelegateInterface* delegate_{};
   DevConsole* dev_console_{};
   std::string dev_console_startup_messages_;
   Object::WeakRef<InputDevice> ui_input_device_;

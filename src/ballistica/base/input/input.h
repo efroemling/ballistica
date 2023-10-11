@@ -119,6 +119,8 @@ class Input {
   void CreateTouchInput();
 
   void PushTextInputEvent(const std::string& text);
+  void PushKeyPressEventSimple(int keycode);
+  void PushKeyReleaseEventSimple(int keycode);
   void PushKeyPressEvent(const SDL_Keysym& keysym);
   void PushKeyReleaseEvent(const SDL_Keysym& keysym);
   void PushMouseDownEvent(int button, const Vector2f& position);
@@ -152,27 +154,30 @@ class Input {
   void RebuildInputDeviceDelegates();
 
  private:
-  void UpdateInputDeviceCounts();
-  auto GetNewNumberedIdentifier(const std::string& name,
-                                const std::string& identifier) -> int;
-  void UpdateEnabledControllerSubsystems();
-  void AnnounceConnects();
-  void AnnounceDisconnects();
-  void HandleKeyPress(const SDL_Keysym* keysym);
-  void HandleKeyRelease(const SDL_Keysym* keysym);
-  void HandleMouseMotion(const Vector2f& position);
-  void HandleMouseDown(int button, const Vector2f& position);
-  void HandleMouseUp(int button, const Vector2f& position);
-  void HandleMouseScroll(const Vector2f& amount);
-  void HandleSmoothMouseScroll(const Vector2f& velocity, bool momentum);
-  void HandleJoystickEvent(const SDL_Event& event, InputDevice* input_device);
-  void HandleTouchEvent(const TouchEvent& e);
-  void ShowStandardInputDeviceConnectedMessage(InputDevice* j);
-  void ShowStandardInputDeviceDisconnectedMessage(InputDevice* j);
-  void PrintLockLabels();
-  void UpdateModKeyStates(const SDL_Keysym* keysym, bool press);
-  void CreateKeyboardInputDevices();
-  void DestroyKeyboardInputDevices();
+  void UpdateInputDeviceCounts_();
+  auto GetNewNumberedIdentifier_(const std::string& name,
+                                 const std::string& identifier) -> int;
+  void UpdateEnabledControllerSubsystems_();
+  void AnnounceConnects_();
+  void AnnounceDisconnects_();
+  void HandleKeyPressSimple_(int keycode);
+  void HandleKeyReleaseSimple_(int keycode);
+  void HandleKeyPress_(const SDL_Keysym& keysym);
+  void HandleKeyRelease_(const SDL_Keysym& keysym);
+  void HandleMouseMotion_(const Vector2f& position);
+  void HandleMouseDown_(int button, const Vector2f& position);
+  void HandleMouseUp_(int button, const Vector2f& position);
+  void HandleMouseScroll_(const Vector2f& amount);
+  void HandleSmoothMouseScroll_(const Vector2f& velocity, bool momentum);
+  void HandleJoystickEvent_(const SDL_Event& event, InputDevice* input_device);
+  void HandleTouchEvent_(const TouchEvent& e);
+  void ShowStandardInputDeviceConnectedMessage_(InputDevice* j);
+  void ShowStandardInputDeviceDisconnectedMessage_(InputDevice* j);
+  void PrintLockLabels_();
+  void UpdateModKeyStates_(const SDL_Keysym* keysym, bool press);
+  void CreateKeyboardInputDevices_();
+  void DestroyKeyboardInputDevices_();
+  void AddFakeMods_(SDL_Keysym* sym);
 
   HandleKeyPressCall* keyboard_input_capture_press_{};
   HandleKeyReleaseCall* keyboard_input_capture_release_{};

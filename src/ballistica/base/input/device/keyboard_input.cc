@@ -113,9 +113,6 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool repeat, bool down)
               pass = true;
             }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "ConstantConditionsOC"
-
             // if we're keyboard 1 we always send at least a key press event
             // along..
             if (!parent_keyboard_input_ && !pass) {
@@ -123,8 +120,6 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool repeat, bool down)
               pass = true;
             }
             break;
-
-#pragma clang diagnostic pop
         }
       }
       if (pass) {

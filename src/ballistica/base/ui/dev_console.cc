@@ -11,12 +11,8 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
-#include "ballistica/base/support/context.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/core/core.h"
-#include "ballistica/core/platform/support/min_sdl.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python_command.h"
 #include "ballistica/shared/python/python_sys.h"
@@ -102,20 +98,6 @@ static void DrawRect(RenderPass* pass, Mesh* mesh, float bottom, float x,
     c.Translate(x, y + bottom, kDevConsoleZDepth);
     c.DrawMesh(mesh);
   }
-  // Draw text.
-  // {
-  //   auto xf = c.ScopedTransform();
-  //   c.Translate(x + width * 0.5f, y + bottom + height * 0.5f,
-  //               kDevConsoleZDepth);
-  //   c.Scale(tscale, tscale, 1.0f);
-  //   int elem_count = tgrp->GetElementCount();
-  //   c.SetColor(fgcolor.x, fgcolor.y, fgcolor.z, 1.0f);
-  //   c.SetFlatness(1.0f);
-  //   for (int e = 0; e < elem_count; e++) {
-  //     c.SetTexture(tgrp->GetElementTexture(e));
-  //     c.DrawMesh(tgrp->GetElementMesh(e));
-  //   }
-  // }
 }
 
 static void DrawText(RenderPass* pass, TextGroup* tgrp, float tscale,

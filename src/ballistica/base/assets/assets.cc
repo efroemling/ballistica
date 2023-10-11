@@ -1327,6 +1327,10 @@ void Assets::SetLanguageKeys(
     std::scoped_lock lock(language_mutex_);
     language_ = language;
   }
+  // Log our unique change state so things that go inactive and stop
+  // receiving callbacks can see if they're out of date if they become
+  // active again.
+  language_state_++;
 
   // Let some subsystems know that language has changed.
   g_base->app_mode()->LanguageChanged();

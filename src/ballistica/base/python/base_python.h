@@ -70,8 +70,8 @@ class BasePython {
     kUIRemotePressCall,
     kRemoveInGameAdsMessageCall,
     kAppOnNativeStartCall,
-    kAppOnNativePauseCall,
-    kAppOnNativeResumeCall,
+    kAppOnNativeSuspendCall,
+    kAppOnNativeUnsuspendCall,
     kAppOnNativeShutdownCall,
     kAppOnNativeShutdownCompleteCall,
     kQuitCall,
@@ -88,6 +88,7 @@ class BasePython {
     kSessionNotFoundError,
     kTimeFormatClass,
     kTimeTypeClass,
+    kQuitTypeClass,
     kInputTypeClass,
     kPermissionClass,
     kSpecialCharClass,
@@ -151,6 +152,9 @@ class BasePython {
   static auto GetPyEnum_TimeFormat(PyObject* obj) -> TimeFormat;
   static auto IsPyEnum_InputType(PyObject* obj) -> bool;
   static auto GetPyEnum_InputType(PyObject* obj) -> InputType;
+  static auto GetPyEnum_QuitType(PyObject* obj) -> QuitType;
+
+  auto PyQuitType(QuitType val) -> PythonRef;
 
   auto CanPyStringEditAdapterBeReplaced(PyObject* o) -> bool;
 
@@ -167,7 +171,7 @@ class BasePython {
 
   void SoftImportPlus();
   void SoftImportClassic();
-  void SoftImportUIV1();
+  // void SoftImportUIV1();
 
  private:
   std::set<std::string> do_once_locations_;

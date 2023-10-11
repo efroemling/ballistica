@@ -5,7 +5,6 @@
 #include <list>
 #include <unordered_map>
 
-#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/platform/base_platform.h"

@@ -2,7 +2,6 @@
 
 #include "ballistica/base/graphics/texture/dds.h"
 
-#include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
 
 /* DDS loader written by Jon Watte 2002 */

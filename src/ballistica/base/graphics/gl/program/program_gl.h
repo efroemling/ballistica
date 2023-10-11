@@ -14,8 +14,8 @@ namespace ballistica::base {
 // Base class for fragment/vertex shaders.
 class RendererGL::ShaderGL : public Object {
  public:
-  auto GetDefaultOwnerThread() const -> EventLoopID override {
-    return EventLoopID::kMain;
+  auto GetThreadOwnership() const -> ThreadOwnership override {
+    return ThreadOwnership::kGraphicsContext;
   }
 
   ShaderGL(GLenum type_in, const std::string& src_in) : type_(type_in) {

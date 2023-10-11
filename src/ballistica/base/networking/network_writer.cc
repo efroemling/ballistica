@@ -14,7 +14,7 @@ NetworkWriter::NetworkWriter() {}
 void NetworkWriter::OnMainThreadStartApp() {
   // Spin up our thread.
   event_loop_ = new EventLoop(EventLoopID::kNetworkWrite);
-  g_core->pausable_event_loops.push_back(event_loop_);
+  g_core->suspendable_event_loops.push_back(event_loop_);
 }
 
 void NetworkWriter::PushSendToCall(const std::vector<uint8_t>& msg,

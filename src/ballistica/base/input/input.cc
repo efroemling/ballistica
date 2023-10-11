@@ -15,7 +15,6 @@
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -26,10 +25,10 @@ Input::Input() = default;
 void Input::PushCreateKeyboardInputDevices() {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall(
-      [this] { CreateKeyboardInputDevices(); });
+      [this] { CreateKeyboardInputDevices_(); });
 }
 
-void Input::CreateKeyboardInputDevices() {
+void Input::CreateKeyboardInputDevices_() {
   assert(g_base->InLogicThread());
   if (keyboard_input_ != nullptr || keyboard_input_2_ != nullptr) {
     Log(LogLevel::kError,
@@ -45,10 +44,10 @@ void Input::CreateKeyboardInputDevices() {
 void Input::PushDestroyKeyboardInputDevices() {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall(
-      [this] { DestroyKeyboardInputDevices(); });
+      [this] { DestroyKeyboardInputDevices_(); });
 }
 
-void Input::DestroyKeyboardInputDevices() {
+void Input::DestroyKeyboardInputDevices_() {
   assert(g_base->InLogicThread());
   if (keyboard_input_ == nullptr || keyboard_input_2_ == nullptr) {
     Log(LogLevel::kError,
@@ -80,8 +79,8 @@ auto Input::GetInputDevice(const std::string& name,
   return nullptr;
 }
 
-auto Input::GetNewNumberedIdentifier(const std::string& name,
-                                     const std::string& identifier) -> int {
+auto Input::GetNewNumberedIdentifier_(const std::string& name,
+                                      const std::string& identifier) -> int {
   assert(g_base->InLogicThread());
 
   // Stuff like reserved_identifiers["JoyStickType"]["0x812312314"] = 2;
@@ -154,7 +153,7 @@ void Input::CreateTouchInput() {
   PushAddInputDeviceCall(touch_input_, false);
 }
 
-void Input::AnnounceConnects() {
+void Input::AnnounceConnects_() {
   static bool first_print = true;
 
   // For the first announcement just say "X controllers detected" and don't
@@ -205,7 +204,7 @@ void Input::AnnounceConnects() {
   newly_connected_controllers_.clear();
 }
 
-void Input::AnnounceDisconnects() {
+void Input::AnnounceDisconnects_() {
   // If there's been several connected, just give a number.
   if (newly_disconnected_controllers_.size() > 1) {
     std::string s =
@@ -228,7 +227,7 @@ void Input::AnnounceDisconnects() {
   newly_disconnected_controllers_.clear();
 }
 
-void Input::ShowStandardInputDeviceConnectedMessage(InputDevice* j) {
+void Input::ShowStandardInputDeviceConnectedMessage_(InputDevice* j) {
   assert(g_base->InLogicThread());
   std::string suffix;
   suffix += j->GetPersistentIdentifier();
@@ -243,10 +242,10 @@ void Input::ShowStandardInputDeviceConnectedMessage(InputDevice* j) {
     g_base->logic->DeleteAppTimer(connect_print_timer_id_);
   }
   connect_print_timer_id_ = g_base->logic->NewAppTimer(
-      250, false, NewLambdaRunnable([this] { AnnounceConnects(); }));
+      250, false, NewLambdaRunnable([this] { AnnounceConnects_(); }));
 }
 
-void Input::ShowStandardInputDeviceDisconnectedMessage(InputDevice* j) {
+void Input::ShowStandardInputDeviceDisconnectedMessage_(InputDevice* j) {
   assert(g_base->InLogicThread());
 
   newly_disconnected_controllers_.push_back(j->GetDeviceName() + " "
@@ -258,7 +257,7 @@ void Input::ShowStandardInputDeviceDisconnectedMessage(InputDevice* j) {
     g_base->logic->DeleteAppTimer(disconnect_print_timer_id_);
   }
   disconnect_print_timer_id_ = g_base->logic->NewAppTimer(
-      250, false, NewLambdaRunnable([this] { AnnounceDisconnects(); }));
+      250, false, NewLambdaRunnable([this] { AnnounceDisconnects_(); }));
 }
 
 void Input::PushAddInputDeviceCall(InputDevice* input_device,
@@ -313,8 +312,8 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
   // or something, but if it doesn't and thus matches an already-existing one,
   // we tack an index on to it. that way we can at least uniquely address them
   // based off how many are connected.
-  device->set_number(GetNewNumberedIdentifier(device->GetRawDeviceName(),
-                                              device->GetDeviceIdentifier()));
+  device->set_number(GetNewNumberedIdentifier_(device->GetRawDeviceName(),
+                                               device->GetDeviceIdentifier()));
 
   // Let the device know it's been added (for custom announcements, etc.)
   device->OnAdded();
@@ -327,7 +326,7 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
 
     // Need to do this after updating controls, as some control settings can
     // affect things we count (such as whether start activates default button).
-    UpdateInputDeviceCounts();
+    UpdateInputDeviceCounts_();
   }
 
   if (g_buildconfig.ostype_macos()) {
@@ -344,7 +343,7 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
   }
 
   if (standard_message && !device->ShouldBeHiddenFromUser()) {
-    ShowStandardInputDeviceConnectedMessage(device);
+    ShowStandardInputDeviceConnectedMessage_(device);
   }
 }
 
@@ -360,7 +359,7 @@ void Input::RemoveInputDevice(InputDevice* input, bool standard_message) {
   assert(g_base->InLogicThread());
 
   if (standard_message && !input->ShouldBeHiddenFromUser()) {
-    ShowStandardInputDeviceDisconnectedMessage(input);
+    ShowStandardInputDeviceDisconnectedMessage_(input);
   }
 
   // Just look for it in our list.. if we find it, simply clear the ref
@@ -380,14 +379,14 @@ void Input::RemoveInputDevice(InputDevice* input, bool standard_message) {
 
       // This should kill the device.
       device.Clear();
-      UpdateInputDeviceCounts();
+      UpdateInputDeviceCounts_();
       return;
     }
   }
   throw Exception("Input::RemoveInputDevice: invalid device provided");
 }
 
-void Input::UpdateInputDeviceCounts() {
+void Input::UpdateInputDeviceCounts_() {
   assert(g_base->InLogicThread());
 
   auto current_time_millisecs =
@@ -528,7 +527,7 @@ auto Input::ShouldCompletelyIgnoreInputDevice(InputDevice* input_device)
   return ignore_sdl_controllers_ && input_device->IsSDLController();
 }
 
-void Input::UpdateEnabledControllerSubsystems() {
+void Input::UpdateEnabledControllerSubsystems_() {
   assert(g_base);
 
   // First off, on mac, let's update whether we want to completely ignore
@@ -566,7 +565,7 @@ void Input::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 void Input::DoApplyAppConfig() {
   assert(g_base->InLogicThread());
 
-  UpdateEnabledControllerSubsystems();
+  UpdateEnabledControllerSubsystems_();
 
   // It's technically possible that updating these controls will add or
   // remove devices, thus changing the input_devices_ list, so lets work
@@ -579,7 +578,7 @@ void Input::DoApplyAppConfig() {
   }
 
   // Some config settings can affect this.
-  UpdateInputDeviceCounts();
+  UpdateInputDeviceCounts_();
 }
 
 void Input::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
@@ -595,7 +594,7 @@ void Input::StepDisplayTime() {
       Log(LogLevel::kError,
           "Input has been temp-locked for 10 seconds; unlocking.");
       input_lock_count_temp_ = 0;
-      PrintLockLabels();
+      PrintLockLabels_();
       input_lock_temp_labels_.clear();
       input_unlock_temp_labels_.clear();
     }
@@ -610,7 +609,7 @@ void Input::StepDisplayTime() {
   // now.
   millisecs_t incr = 249;
   if (real_time - last_input_device_count_update_time_ > incr) {
-    UpdateInputDeviceCounts();
+    UpdateInputDeviceCounts_();
     last_input_device_count_update_time_ = real_time;
 
     // Keep our idle-time up to date.
@@ -682,7 +681,7 @@ void Input::UnlockAllInput(bool permanent, const std::string& label) {
     input_unlock_permanent_labels_.push_back(label);
     if (input_lock_count_permanent_ < 0) {
       BA_LOG_PYTHON_TRACE_ONCE("lock-count-permanent < 0");
-      PrintLockLabels();
+      PrintLockLabels_();
       input_lock_count_permanent_ = 0;
     }
 
@@ -713,7 +712,7 @@ void Input::UnlockAllInput(bool permanent, const std::string& label) {
   }
 }
 
-void Input::PrintLockLabels() {
+void Input::PrintLockLabels_() {
   std::string s = "INPUT LOCK REPORT (time="
                   + std::to_string(g_core->GetAppTimeMillisecs()) + "):";
   int num;
@@ -827,12 +826,12 @@ void Input::PushJoystickEvent(const SDL_Event& event,
                               InputDevice* input_device) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall([this, event, input_device] {
-    HandleJoystickEvent(event, input_device);
+    HandleJoystickEvent_(event, input_device);
   });
 }
 
-void Input::HandleJoystickEvent(const SDL_Event& event,
-                                InputDevice* input_device) {
+void Input::HandleJoystickEvent_(const SDL_Event& event,
+                                 InputDevice* input_device) {
   assert(g_base->InLogicThread());
   assert(input_device);
 
@@ -859,16 +858,28 @@ void Input::HandleJoystickEvent(const SDL_Event& event,
   input_device->HandleSDLEvent(&event);
 }
 
+void Input::PushKeyPressEventSimple(int key) {
+  assert(g_base->logic->event_loop());
+  g_base->logic->event_loop()->PushCall(
+      [this, key] { HandleKeyPressSimple_(key); });
+}
+
+void Input::PushKeyReleaseEventSimple(int key) {
+  assert(g_base->logic->event_loop());
+  g_base->logic->event_loop()->PushCall(
+      [this, key] { HandleKeyReleaseSimple_(key); });
+}
+
 void Input::PushKeyPressEvent(const SDL_Keysym& keysym) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall(
-      [this, keysym] { HandleKeyPress(&keysym); });
+      [this, keysym] { HandleKeyPress_(keysym); });
 }
 
 void Input::PushKeyReleaseEvent(const SDL_Keysym& keysym) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall(
-      [this, keysym] { HandleKeyRelease(&keysym); });
+      [this, keysym] { HandleKeyRelease_(keysym); });
 }
 
 void Input::CaptureKeyboardInput(HandleKeyPressCall* press_call,
@@ -900,7 +911,41 @@ void Input::ReleaseJoystickInput() {
   joystick_input_capture_ = nullptr;
 }
 
-void Input::HandleKeyPress(const SDL_Keysym* keysym) {
+void Input::AddFakeMods_(SDL_Keysym* sym) {
+  // In cases where we are only passed simple keycodes, we fill in modifiers
+  // ourself by looking at currently held key states. This is less than
+  // ideal because modifier key states can fall out of sync in some cases
+  // but is generally 'good enough' for our minimal keyboard needs.
+  if (keys_held_.contains(SDLK_LCTRL) || keys_held_.contains(SDLK_RCTRL)) {
+    sym->mod |= KMOD_CTRL;
+  }
+  if (keys_held_.contains(SDLK_LSHIFT) || keys_held_.contains(SDLK_RSHIFT)) {
+    sym->mod |= KMOD_SHIFT;
+  }
+  if (keys_held_.contains(SDLK_LALT) || keys_held_.contains(SDLK_RALT)) {
+    sym->mod |= KMOD_ALT;
+  }
+  if (keys_held_.contains(SDLK_LGUI) || keys_held_.contains(SDLK_RGUI)) {
+    sym->mod |= KMOD_GUI;
+  }
+}
+
+void Input::HandleKeyPressSimple_(int keycode) {
+  SDL_Keysym keysym{};
+  keysym.sym = keycode;
+  AddFakeMods_(&keysym);
+  HandleKeyPress_(keysym);
+}
+
+void Input::HandleKeyReleaseSimple_(int keycode) {
+  // See notes above.
+  SDL_Keysym keysym{};
+  keysym.sym = keycode;
+  AddFakeMods_(&keysym);
+  HandleKeyRelease_(keysym);
+}
+
+void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
   assert(g_base->InLogicThread());
 
   MarkInputActive();
@@ -912,7 +957,7 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
 
   // If someone is capturing these events, give them a crack at it.
   if (keyboard_input_capture_press_) {
-    if (keyboard_input_capture_press_(*keysym)) {
+    if (keyboard_input_capture_press_(keysym)) {
       return;
     }
   }
@@ -920,19 +965,19 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
   // Regardless of what else we do, keep track of mod key states.
   // (for things like manual camera moves. For individual key presses
   // ideally we should use the modifiers bundled with the key presses)
-  UpdateModKeyStates(keysym, true);
+  UpdateModKeyStates_(&keysym, true);
 
   bool repeat_press;
-  if (keys_held_.count(keysym->sym) != 0) {
+  if (keys_held_.count(keysym.sym) != 0) {
     repeat_press = true;
   } else {
     repeat_press = false;
-    keys_held_.insert(keysym->sym);
+    keys_held_.insert(keysym.sym);
   }
 
   // Mobile-specific stuff.
   if (g_buildconfig.ostype_ios_tvos() || g_buildconfig.ostype_android()) {
-    switch (keysym->sym) {
+    switch (keysym.sym) {
       // FIXME: See if this stuff is still necessary. Was this perhaps
       //  specifically to support the console?
       case SDLK_DELETE:
@@ -944,7 +989,7 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
         //  them a TEXT_INPUT message with no string.. I made them resistant
         //  to that case but wondering if we can take this out?
         g_base->ui->SendWidgetMessage(
-            WidgetMessage(WidgetMessage::Type::kTextInput, keysym));
+            WidgetMessage(WidgetMessage::Type::kTextInput, &keysym));
         break;
       }
       default:
@@ -954,8 +999,8 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
 
   // Command-F or Control-F toggles full-screen if the app-adapter supports it.
   if (g_base->app_adapter->CanToggleFullscreen()) {
-    if (!repeat_press && keysym->sym == SDLK_f
-        && ((keysym->mod & KMOD_CTRL) || (keysym->mod & KMOD_GUI))) {
+    if (!repeat_press && keysym.sym == SDLK_f
+        && ((keysym.mod & KMOD_CTRL) || (keysym.mod & KMOD_GUI))) {
       g_base->python->objs()
           .Get(BasePython::ObjID::kToggleFullscreenCall)
           .Call();
@@ -963,24 +1008,24 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
     }
   }
 
-  // Control-Q quits. On Mac, the usual cmd-q gets handled by SDL/etc.
-  // implicitly.
-  if (!repeat_press && keysym->sym == SDLK_q && (keysym->mod & KMOD_CTRL)) {
-    g_base->ui->ConfirmQuit();
+  // Control-Q quits. On Mac, the usual Cmd-Q gets handled
+  // by the app-adapter implicitly.
+  if (!repeat_press && keysym.sym == SDLK_q && (keysym.mod & KMOD_CTRL)) {
+    g_base->QuitApp(true);
     return;
   }
 
   // Let the console intercept stuff if it wants at this point.
   if (auto* console = g_base->ui->dev_console()) {
-    if (console->HandleKeyPress(keysym)) {
+    if (console->HandleKeyPress(&keysym)) {
       return;
     }
   }
 
   // Ctrl-V or Cmd-V sends paste commands to any interested text fields.
   // Command-Q or Control-Q quits.
-  if (!repeat_press && keysym->sym == SDLK_v
-      && ((keysym->mod & KMOD_CTRL) || (keysym->mod & KMOD_GUI))) {
+  if (!repeat_press && keysym.sym == SDLK_v
+      && ((keysym.mod & KMOD_CTRL) || (keysym.mod & KMOD_GUI))) {
     g_base->ui->SendWidgetMessage(WidgetMessage(WidgetMessage::Type::kPaste));
     return;
   }
@@ -989,7 +1034,7 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
 
   // None of the following stuff accepts key repeats.
   if (!repeat_press) {
-    switch (keysym->sym) {
+    switch (keysym.sym) {
       // Menu button on android/etc. pops up the menu.
       case SDLK_MENU: {
         if (!g_base->ui->MainMenuVisible()) {
@@ -1001,14 +1046,14 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
 
       case SDLK_EQUALS:
       case SDLK_PLUS:
-        if (keysym->mod & KMOD_CTRL) {
+        if (keysym.mod & KMOD_CTRL) {
           g_base->app_mode()->ChangeGameSpeed(1);
           handled = true;
         }
         break;
 
       case SDLK_MINUS:
-        if (keysym->mod & KMOD_CTRL) {
+        if (keysym.mod & KMOD_CTRL) {
           g_base->app_mode()->ChangeGameSpeed(-1);
           handled = true;
         }
@@ -1073,12 +1118,12 @@ void Input::HandleKeyPress(const SDL_Keysym* keysym) {
   // If we haven't claimed it, pass it along as potential player/widget input.
   if (!handled) {
     if (keyboard_input_) {
-      keyboard_input_->HandleKey(keysym, repeat_press, true);
+      keyboard_input_->HandleKey(&keysym, repeat_press, true);
     }
   }
 }
 
-void Input::HandleKeyRelease(const SDL_Keysym* keysym) {
+void Input::HandleKeyRelease_(const SDL_Keysym& keysym) {
   assert(g_base);
   assert(g_base->InLogicThread());
 
@@ -1089,32 +1134,32 @@ void Input::HandleKeyRelease(const SDL_Keysym* keysym) {
   // In some cases we may receive duplicate key-release events (if a
   // keyboard reset was run, it deals out key releases, but then the
   // keyboard driver issues them as well).
-  if (keys_held_.count(keysym->sym) == 0) {
+  if (keys_held_.count(keysym.sym) == 0) {
     return;
   }
 
   // If someone is capturing these events, give them a crack at it.
   if (keyboard_input_capture_release_) {
-    (keyboard_input_capture_release_(*keysym));
+    (keyboard_input_capture_release_(keysym));
   }
 
   // Keep track of mod key states for things like manual camera moves. For
   // individual key presses ideally we should instead use modifiers bundled
   // with the key press events.
-  UpdateModKeyStates(keysym, false);
+  UpdateModKeyStates_(&keysym, false);
 
-  keys_held_.erase(keysym->sym);
+  keys_held_.erase(keysym.sym);
 
   if (g_base->ui->dev_console() != nullptr) {
-    g_base->ui->dev_console()->HandleKeyRelease(keysym);
+    g_base->ui->dev_console()->HandleKeyRelease(&keysym);
   }
 
   if (keyboard_input_) {
-    keyboard_input_->HandleKey(keysym, false, false);
+    keyboard_input_->HandleKey(&keysym, false, false);
   }
 }
 
-void Input::UpdateModKeyStates(const SDL_Keysym* keysym, bool press) {
+void Input::UpdateModKeyStates_(const SDL_Keysym* keysym, bool press) {
   switch (keysym->sym) {
     case SDLK_LCTRL:
     case SDLK_RCTRL: {
@@ -1145,10 +1190,10 @@ void Input::UpdateModKeyStates(const SDL_Keysym* keysym, bool press) {
 void Input::PushMouseScrollEvent(const Vector2f& amount) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall(
-      [this, amount] { HandleMouseScroll(amount); });
+      [this, amount] { HandleMouseScroll_(amount); });
 }
 
-void Input::HandleMouseScroll(const Vector2f& amount) {
+void Input::HandleMouseScroll_(const Vector2f& amount) {
   assert(g_base->InLogicThread());
 
   // If input is locked, allow it to mark us active but nothing more.
@@ -1181,11 +1226,11 @@ void Input::PushSmoothMouseScrollEvent(const Vector2f& velocity,
                                        bool momentum) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall([this, velocity, momentum] {
-    HandleSmoothMouseScroll(velocity, momentum);
+    HandleSmoothMouseScroll_(velocity, momentum);
   });
 }
 
-void Input::HandleSmoothMouseScroll(const Vector2f& velocity, bool momentum) {
+void Input::HandleSmoothMouseScroll_(const Vector2f& velocity, bool momentum) {
   assert(g_base->InLogicThread());
 
   // If input is locked, allow it to mark us active but nothing more.
@@ -1216,10 +1261,10 @@ void Input::HandleSmoothMouseScroll(const Vector2f& velocity, bool momentum) {
 void Input::PushMouseMotionEvent(const Vector2f& position) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall(
-      [this, position] { HandleMouseMotion(position); });
+      [this, position] { HandleMouseMotion_(position); });
 }
 
-void Input::HandleMouseMotion(const Vector2f& position) {
+void Input::HandleMouseMotion_(const Vector2f& position) {
   assert(g_base);
   assert(g_base->InLogicThread());
 
@@ -1266,10 +1311,10 @@ void Input::HandleMouseMotion(const Vector2f& position) {
 void Input::PushMouseDownEvent(int button, const Vector2f& position) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall(
-      [this, button, position] { HandleMouseDown(button, position); });
+      [this, button, position] { HandleMouseDown_(button, position); });
 }
 
-void Input::HandleMouseDown(int button, const Vector2f& position) {
+void Input::HandleMouseDown_(int button, const Vector2f& position) {
   assert(g_base);
   assert(g_base->InLogicThread());
 
@@ -1330,10 +1375,10 @@ void Input::HandleMouseDown(int button, const Vector2f& position) {
 void Input::PushMouseUpEvent(int button, const Vector2f& position) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall(
-      [this, button, position] { HandleMouseUp(button, position); });
+      [this, button, position] { HandleMouseUp_(button, position); });
 }
 
-void Input::HandleMouseUp(int button, const Vector2f& position) {
+void Input::HandleMouseUp_(int button, const Vector2f& position) {
   assert(g_base->InLogicThread());
   MarkInputActive();
 
@@ -1373,10 +1418,10 @@ void Input::HandleMouseUp(int button, const Vector2f& position) {
 
 void Input::PushTouchEvent(const TouchEvent& e) {
   assert(g_base->logic->event_loop());
-  g_base->logic->event_loop()->PushCall([e, this] { HandleTouchEvent(e); });
+  g_base->logic->event_loop()->PushCall([e, this] { HandleTouchEvent_(e); });
 }
 
-void Input::HandleTouchEvent(const TouchEvent& e) {
+void Input::HandleTouchEvent_(const TouchEvent& e) {
   assert(g_base->InLogicThread());
   assert(g_base->graphics);
 
@@ -1422,11 +1467,11 @@ void Input::HandleTouchEvent(const TouchEvent& e) {
   // mouse events which covers most UI stuff.
   if (e.type == TouchEvent::Type::kDown && single_touch_ == nullptr) {
     single_touch_ = e.touch;
-    HandleMouseDown(SDL_BUTTON_LEFT, Vector2f(e.x, e.y));
+    HandleMouseDown_(SDL_BUTTON_LEFT, Vector2f(e.x, e.y));
   }
 
   if (e.type == TouchEvent::Type::kMoved && e.touch == single_touch_) {
-    HandleMouseMotion(Vector2f(e.x, e.y));
+    HandleMouseMotion_(Vector2f(e.x, e.y));
   }
 
   // Currently just applying touch-cancel the same as touch-up here;
@@ -1434,7 +1479,7 @@ void Input::HandleTouchEvent(const TouchEvent& e) {
   if ((e.type == TouchEvent::Type::kUp || e.type == TouchEvent::Type::kCanceled)
       && (e.touch == single_touch_ || e.overall)) {
     single_touch_ = nullptr;
-    HandleMouseUp(SDL_BUTTON_LEFT, Vector2f(e.x, e.y));
+    HandleMouseUp_(SDL_BUTTON_LEFT, Vector2f(e.x, e.y));
   }
 
   // If we've got a touch input device, forward events along to it.
@@ -1460,7 +1505,7 @@ void Input::ResetKeyboardHeldKeys() {
       SDL_Keysym k;
       memset(&k, 0, sizeof(k));
       k.sym = (SDL_Keycode)(*keys_held_.begin());
-      HandleKeyRelease(&k);
+      HandleKeyRelease_(k);
     }
   }
 }

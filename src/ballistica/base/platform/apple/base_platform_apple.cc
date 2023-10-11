@@ -62,14 +62,6 @@ void BasePlatformApple::DoOpenURL(const std::string& url) {
 #endif
 }
 
-void BasePlatformApple::TerminateApp() {
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_HEADLESS_BUILD
-  AppleUtils::TerminateApp();
-#else
-  BasePlatform::TerminateApp();
-#endif
-}
-
 // void BasePlatformApple::SetHardwareCursorVisible(bool visible) {
 //   // Set our nifty custom hardware cursor on mac;
 //   // otherwise fall back to default.

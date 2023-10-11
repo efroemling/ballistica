@@ -1,4 +1,4 @@
-### 1.7.28 (build 21422, api 8, 2023-10-05)
+### 1.7.28 (build 21441, api 8, 2023-10-11)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -104,6 +104,32 @@
 - Created a custom icon for BallisticaKit (previously it was just the BombSquad
   icon with an ugly 'C' on it). BombSquad itself will still have the BombSquad
   icon.
+- Changed `AppState.NOT_RUNNING` to `AppState.NOT_STARTED` since not-running
+  could be confused with a state such as paused.
+- Changed the general app-state terms 'pause' and 'resume' to 'suspend' and
+  'unsuspend'. (note this has nothing to do with pausing in the game which is
+  still called pausing). The suspend state is used by mobile versions when
+  backgrounded and basically stops all activity in the app. I may later add
+  another state called 'paused' for when the app is still running but there is
+  an OS dialog or ad or something in front of it. Though perhaps another term
+  would be better to avoid confusion with the act of pausing in the game
+  ('inactive' maybe?).
+- Fixed an issue that could cause a few seconds delay when shutting down if
+  internet access is unavailable.
+- Generalized the UI system to accept a delegate object, of which UIV1 is now
+  one. In the future this will allow plugging in UIV2 instead or other UI
+  systems.
+- Headless builds now plug in *no* ui delegate instead of UIV1, so one must
+  avoid calling UI code from servers now. This should reduce server resource
+  usage a bit. Please holler if this causes non-trivial problems. In general,
+  code that brings up UI from gameplay contexts should check the value of
+  `ba.app.env.headless` and avoid doing so when that is True.
+- Cleaned up quit behavior a bit more. The `babase.quit()` call now takes a
+  single `babase.QuitType` enum instead of the multiple bool options it took
+  before. It also takes a `confirm` bool arg which allows it to be used to bring
+  up a confirm dialog.
+- Clicking on a window close button to quit no longer brings up a confirm dialog
+  and instead quits immediately (though with a proper graceful shutdown).
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 

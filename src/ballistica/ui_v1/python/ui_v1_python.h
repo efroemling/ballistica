@@ -23,6 +23,7 @@ class UIV1Python {
   void ShowURL(const std::string& url);
 
   static auto GetPyWidget(PyObject* o) -> Widget*;
+  void InvokeQuitWindow(QuitType quit_type);
 
   /// Specific Python objects we hold in objs_.
   enum class ObjID {

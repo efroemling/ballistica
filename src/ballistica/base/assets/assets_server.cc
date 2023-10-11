@@ -15,7 +15,7 @@ AssetsServer::AssetsServer() = default;
 void AssetsServer::OnMainThreadStartApp() {
   // Spin up our thread.
   event_loop_ = new EventLoop(EventLoopID::kAssets);
-  g_core->pausable_event_loops.push_back(event_loop_);
+  g_core->suspendable_event_loops.push_back(event_loop_);
 
   event_loop_->PushCallSynchronous([this] { OnAppStartInThread(); });
 }

@@ -2,8 +2,6 @@
 
 #include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 
-#include "ballistica/shared/foundation/macros.h"
-
 namespace ballistica::base {
 
 NinePatchMesh::NinePatchMesh(float x, float y, float z, float width,

@@ -190,7 +190,6 @@ class MainMenuWindow(bui.Window):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
-        from bauiv1lib.confirm import QuitWindow
         from bauiv1lib.store.button import StoreButton
 
         plus = bui.app.plus
@@ -422,7 +421,7 @@ class MainMenuWindow(bui.Window):
             ):
 
                 def _do_quit() -> None:
-                    QuitWindow(swish=True, back=True)
+                    bui.quit(confirm=True, quit_type=bui.QuitType.BACK)
 
                 bui.containerwidget(
                     edit=self._root_widget, on_cancel_call=_do_quit
@@ -1040,6 +1039,9 @@ class MainMenuWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.confirm import QuitWindow
 
+        # Note: Normally we should go through bui.quit(confirm=True) but
+        # invoking the window directly lets us scale it up from the
+        # button.
         QuitWindow(origin_widget=self._quit_button)
 
     def _demo_menu_press(self) -> None:

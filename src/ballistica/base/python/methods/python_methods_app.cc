@@ -6,13 +6,11 @@
 #include "ballistica/base/app_mode/app_mode_empty.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
 #include "ballistica/base/support/stress_test.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/logging.h"
 #include "ballistica/shared/python/python.h"
@@ -511,26 +509,20 @@ static auto PyQuit(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->IsAppStarted());
 
-  static const char* kwlist[] = {"soft", "back", nullptr};
-  int soft = 0;
-  int back = 0;
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|pp",
-                                   const_cast<char**>(kwlist), &soft, &back)) {
+  static const char* kwlist[] = {"confirm", "quit_type", nullptr};
+  QuitType quit_type = QuitType::kSoft;
+  PyObject* quit_type_obj{Py_None};
+  int confirm{};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|pO",
+                                   const_cast<char**>(kwlist), &confirm,
+                                   &quit_type_obj)) {
     return nullptr;
   }
-  QuitType quit_type{};
-  if (back) {
-    if (!soft) {
-      Log(LogLevel::kWarning,
-          "Got soft=False back=True in quit() which is ambiguous.");
-    }
-    quit_type = QuitType::kBack;
-  } else if (soft) {
-    quit_type = QuitType::kSoft;
-  } else {
-    quit_type = QuitType::kHard;
+  if (quit_type_obj != Py_None) {
+    quit_type = BasePython::GetPyEnum_QuitType(quit_type_obj);
   }
-  g_base->QuitApp(quit_type);
+
+  g_base->QuitApp(confirm, quit_type);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -540,18 +532,17 @@ static PyMethodDef PyQuitDef = {
     (PyCFunction)PyQuit,           // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "quit(soft: bool = True, back: bool = False) -> None\n"
+    "quit(confirm: bool = False,\n"
+    "          quit_type: babase.QuitType = babase.QuitType.SOFT\n"
+    ") -> None\n"
     "\n"
     "Quit the app.\n"
     "\n"
     "Category: **General Utility Functions**\n"
     "\n"
-    "On platforms such as mobile, a 'soft' quit may background and/or reset\n"
-    "the app but keep it running. A 'back' quit is a special form of soft\n"
-    "quit that may trigger different behavior in the OS. On Android, for\n"
-    "example, a back-quit may simply jump to the previous Android activity,\n"
-    "while a regular soft quit may just exit the current activity and dump\n"
-    "the user at their home screen."};
+    "If 'confirm' is True, a confirm dialog will be presented if conditions\n"
+    "allow; otherwise the quit will still be immediate.\n"
+    "See docs for babase.QuitType for explanations of its behavior."};
 
 // ----------------------------- apply_config ----------------------------------
 

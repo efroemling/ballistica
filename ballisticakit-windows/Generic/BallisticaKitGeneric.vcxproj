@@ -148,7 +148,7 @@
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/SDL2;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
@@ -173,7 +173,7 @@
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/SDL2;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
@@ -434,11 +434,11 @@
     <ClInclude Include="..\..\src\ballistica\base\support\stdio_console.h" />
     <ClCompile Include="..\..\src\ballistica\base\support\stress_test.cc" />
     <ClInclude Include="..\..\src\ballistica\base\support\stress_test.h" />
-    <ClInclude Include="..\..\src\ballistica\base\support\ui_v1_soft.h" />
     <ClCompile Include="..\..\src\ballistica\base\ui\dev_console.cc" />
     <ClInclude Include="..\..\src\ballistica\base\ui\dev_console.h" />
     <ClCompile Include="..\..\src\ballistica\base\ui\ui.cc" />
     <ClInclude Include="..\..\src\ballistica\base\ui\ui.h" />
+    <ClInclude Include="..\..\src\ballistica\base\ui\ui_delegate.h" />
     <ClInclude Include="..\..\src\ballistica\base\ui\widget_message.h" />
     <ClCompile Include="..\..\src\ballistica\classic\classic.cc" />
     <ClInclude Include="..\..\src\ballistica\classic\classic.h" />

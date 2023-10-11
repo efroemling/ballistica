@@ -14,12 +14,11 @@ from bascenev1lib.actor.flag import Flag
 from bascenev1lib.actor.scoreboard import Scoreboard
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.gameutils import SharedObjects
+from bascenev1lib.actor.respawnicon import RespawnIcon
 import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
-
-    from bascenev1lib.actor.respawnicon import RespawnIcon
 
 
 class ConquestFlag(Flag):
@@ -49,7 +48,9 @@ class Player(bs.Player['Team']):
     @property
     def respawn_timer(self) -> bs.Timer | None:
         """Type safe access to standard respawn timer."""
-        return self.customdata.get('respawn_timer', None)
+        val = self.customdata.get('respawn_timer', None)
+        assert isinstance(val, (bs.Timer, type(None)))
+        return val
 
     @respawn_timer.setter
     def respawn_timer(self, value: bs.Timer | None) -> None:
@@ -58,7 +59,9 @@ class Player(bs.Player['Team']):
     @property
     def respawn_icon(self) -> RespawnIcon | None:
         """Type safe access to standard respawn icon."""
-        return self.customdata.get('respawn_icon', None)
+        val = self.customdata.get('respawn_icon', None)
+        assert isinstance(val, (RespawnIcon, type(None)))
+        return val
 
     @respawn_icon.setter
     def respawn_icon(self, value: RespawnIcon | None) -> None:

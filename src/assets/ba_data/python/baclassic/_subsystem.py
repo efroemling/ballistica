@@ -229,12 +229,12 @@ class ClassicSubsystem(babase.AppSubsystem):
 
         self.accounts.on_app_loading()
 
-    def on_app_pause(self) -> None:
-        self.accounts.on_app_pause()
+    def on_app_suspend(self) -> None:
+        self.accounts.on_app_suspend()
 
-    def on_app_resume(self) -> None:
-        self.accounts.on_app_resume()
-        self.music.on_app_resume()
+    def on_app_unsuspend(self) -> None:
+        self.accounts.on_app_unsuspend()
+        self.music.on_app_unsuspend()
 
     def on_app_shutdown(self) -> None:
         self.music.on_app_shutdown()
@@ -701,11 +701,11 @@ class ClassicSubsystem(babase.AppSubsystem):
 
         ShowURLWindow(address)
 
-    def quit_window(self) -> None:
+    def quit_window(self, quit_type: babase.QuitType) -> None:
         """(internal)"""
         from bauiv1lib.confirm import QuitWindow
 
-        QuitWindow()
+        QuitWindow(quit_type)
 
     def tournament_entry_window(
         self,

@@ -39,10 +39,10 @@ class AppSubsystem:
     def on_app_running(self) -> None:
         """Called when the app reaches the running state."""
 
-    def on_app_pause(self) -> None:
+    def on_app_suspend(self) -> None:
         """Called when the app enters the paused state."""
 
-    def on_app_resume(self) -> None:
+    def on_app_unsuspend(self) -> None:
         """Called when the app exits the paused state."""
 
     def on_app_shutdown(self) -> None:

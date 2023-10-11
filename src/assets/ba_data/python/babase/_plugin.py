@@ -170,23 +170,23 @@ class PluginSubsystem(AppSubsystem):
 
                 _error.print_exception('Error in plugin on_app_running()')
 
-    def on_app_pause(self) -> None:
+    def on_app_suspend(self) -> None:
         for plugin in self.active_plugins:
             try:
-                plugin.on_app_pause()
+                plugin.on_app_suspend()
             except Exception:
                 from babase import _error
 
-                _error.print_exception('Error in plugin on_app_pause()')
+                _error.print_exception('Error in plugin on_app_suspend()')
 
-    def on_app_resume(self) -> None:
+    def on_app_unsuspend(self) -> None:
         for plugin in self.active_plugins:
             try:
-                plugin.on_app_resume()
+                plugin.on_app_unsuspend()
             except Exception:
                 from babase import _error
 
-                _error.print_exception('Error in plugin on_app_resume()')
+                _error.print_exception('Error in plugin on_app_unsuspend()')
 
     def on_app_shutdown(self) -> None:
         for plugin in self.active_plugins:
@@ -327,11 +327,11 @@ class Plugin:
     def on_app_running(self) -> None:
         """Called when the app reaches the running state."""
 
-    def on_app_pause(self) -> None:
-        """Called when the app is switching to a paused state."""
+    def on_app_suspend(self) -> None:
+        """Called when the app enters the suspended state."""
 
-    def on_app_resume(self) -> None:
-        """Called when the app is resuming from a paused state."""
+    def on_app_unsuspend(self) -> None:
+        """Called when the app exits the suspended state."""
 
     def on_app_shutdown(self) -> None:
         """Called when the app is beginning the shutdown process."""

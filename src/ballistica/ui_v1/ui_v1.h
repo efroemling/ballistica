@@ -5,7 +5,7 @@
 
 #include <ballistica/base/input/device/input_device.h>
 
-#include "ballistica/base/support/ui_v1_soft.h"
+#include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
 
 // Common header that most everything using our feature-set should include.
@@ -64,7 +64,7 @@ extern UIV1FeatureSet* g_ui_v1;
 /// Our C++ front-end to our feature set. This is what other C++
 /// feature-sets can 'Import' from us.
 class UIV1FeatureSet : public FeatureSetNativeComponent,
-                       public base::UIV1SoftInterface {
+                       public base::UIDelegateInterface {
  public:
   /// Instantiate our FeatureSet if needed and return the single instance of
   /// it. Basically a Python import statement.
@@ -85,8 +85,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   static void OnModuleExec(PyObject* module);
   void DoHandleDeviceMenuPress(base::InputDevice* device) override;
   void DoShowURL(const std::string& url) override;
-  void DoQuitWindow() override;
-  auto NewRootUI() -> ui_v1::RootUI* override;
+  // void DoQuitWindow() override;
   auto MainMenuVisible() -> bool override;
   auto PartyIconVisible() -> bool override;
   void ActivatePartyIcon() override;
@@ -101,7 +100,10 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
     assert(root_ui_);
     return root_ui_;
   }
-  void OnAppStart() override;
+  // void OnAppStart() override;
+  void OnActivate() override;
+  void OnDeactivate() override;
+
   auto PartyWindowOpen() -> bool override;
 
   // Return the root widget containing all windows & dialogs. Whenever this
@@ -134,6 +136,9 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
     return always_use_internal_on_screen_keyboard_;
   }
 
+  auto HasQuitConfirmDialog() -> bool override;
+  void ConfirmQuit(QuitType quit_type) override;
+
  private:
   UIV1FeatureSet();
   RootUI* root_ui_{};
@@ -142,6 +147,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   Object::Ref<RootWidget> root_widget_;
   bool always_use_internal_on_screen_keyboard_{};
   int ui_lock_count_{};
+  int language_state_{};
 };
 
 }  // namespace ballistica::ui_v1

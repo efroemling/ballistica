@@ -3,14 +3,15 @@
 #include "ballistica/ui_v1/ui_v1.h"
 
 #include "ballistica/base/app_mode/app_mode.h"
+#include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/input/input.h"
+#include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/support/root_ui.h"
 #include "ballistica/ui_v1/widget/root_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"
-#include "ballistica/ui_v1/widget/text_widget.h"
 
 namespace ballistica::ui_v1 {
 
@@ -54,7 +55,7 @@ void UIV1FeatureSet::OnModuleExec(PyObject* module) {
 
   // Let base know we exist.
   // (save it the trouble of trying to load us if it uses us passively).
-  g_base->set_ui_v1(g_ui_v1);
+  // g_base->set_ui_v1(g_ui_v1);
 
   g_core->LifecycleLog("_bauiv1 exec end");
 }
@@ -72,11 +73,9 @@ void UIV1FeatureSet::DoHandleDeviceMenuPress(base::InputDevice* device) {
 
 void UIV1FeatureSet::DoShowURL(const std::string& url) { python->ShowURL(url); }
 
-void UIV1FeatureSet::DoQuitWindow() {
-  g_ui_v1->python->objs().Get(UIV1Python::ObjID::kQuitWindowCall).Call();
-}
-
-RootUI* UIV1FeatureSet::NewRootUI() { return new RootUI(); }
+// void UIV1FeatureSet::DoQuitWindow() {
+//   g_ui_v1->python->objs().Get(UIV1Python::ObjID::kQuitWindowCall).Call();
+// }
 
 bool UIV1FeatureSet::MainMenuVisible() {
   // We consider anything on our screen or overlay stacks to be a 'main menu'.
@@ -101,6 +100,7 @@ void UIV1FeatureSet::ActivatePartyIcon() {
     r->ActivatePartyIcon();
   }
 }
+
 bool UIV1FeatureSet::PartyWindowOpen() {
   if (auto* r = root_ui()) {
     return r->party_window_open();
@@ -182,16 +182,16 @@ void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
   }
 }
 
-void UIV1FeatureSet::OnAppStart() {
+void UIV1FeatureSet::OnActivate() {
   assert(g_base->InLogicThread());
-  root_ui_ = g_base->ui_v1()->NewRootUI();
+  if (root_ui_ == nullptr) {
+    root_ui_ = new RootUI();
+  }
 }
+void UIV1FeatureSet::OnDeactivate() { assert(g_base->InLogicThread()); }
 
 void UIV1FeatureSet::Reset() {
-  // Hmm; technically we don't need to recreate these each time we reset.
   root_widget_.Clear();
-
-  // Kill our screen-root widget.
   screen_root_widget_.Clear();
 
   // (Re)create our screen-root widget.
@@ -252,9 +252,15 @@ void UIV1FeatureSet::OnScreenSizeChange() {
 }
 
 void UIV1FeatureSet::OnLanguageChange() {
-  // As well as existing UI stuff.
-  if (auto* r = root_widget()) {
-    r->OnLanguageChange();
+  // Since switching languages is a bit costly, ignore redundant change
+  // notifications. These will tend to happen nowadays since change
+  // notifications go out anytime the ui-delegate switches.
+  auto asset_language_state = g_base->assets->language_state();
+  if (asset_language_state != language_state_) {
+    language_state_ = asset_language_state;
+    if (auto* r = root_widget()) {
+      r->OnLanguageChange();
+    }
   }
 }
 
@@ -280,6 +286,11 @@ void UIV1FeatureSet::DeleteWidget(Widget* widget) {
 void UIV1FeatureSet::DoApplyAppConfig() {
   always_use_internal_on_screen_keyboard_ = g_base->app_config->Resolve(
       base::AppConfig::BoolID::kAlwaysUseInternalKeyboard);
+}
+
+auto UIV1FeatureSet::HasQuitConfirmDialog() -> bool { return true; }
+void UIV1FeatureSet::ConfirmQuit(QuitType quit_type) {
+  python->InvokeQuitWindow(quit_type);
 }
 
 UIV1FeatureSet::UILock::UILock(bool write) {

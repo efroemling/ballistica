@@ -29,8 +29,8 @@ class EventLoop {
 
   static auto CurrentThreadName() -> std::string;
 
-  static void SetEventLoopsPaused(bool enable);
-  static auto AreEventLoopsPaused() -> bool;
+  static void SetEventLoopsSuspended(bool enable);
+  static auto AreEventLoopsSuspended() -> bool;
 
   auto ThreadIsCurrent() const -> bool {
     return std::this_thread::get_id() == thread_id();
@@ -41,7 +41,7 @@ class EventLoop {
 
   void SetAcquiresPythonGIL();
 
-  void PushSetPaused(bool paused);
+  void PushSetSuspended(bool suspended);
 
   auto thread_id() const -> std::thread::id { return thread_id_; }
 
@@ -81,11 +81,11 @@ class EventLoop {
     PushRunnableSynchronous(NewLambdaRunnableUnmanaged(lambda));
   }
 
-  /// Add a callback to be run on event-loop pauses.
-  void AddPauseCallback(Runnable* runnable);
+  /// Add a callback to be run on event-loop suspends.
+  void AddSuspendCallback(Runnable* runnable);
 
-  /// Add a callback to be run on event-loop resumes.
-  void AddResumeCallback(Runnable* runnable);
+  /// Add a callback to be run on event-loop unsuspends.
+  void AddUnsuspendCallback(Runnable* runnable);
 
   auto has_pending_runnables() const -> bool { return !runnables_.empty(); }
 
@@ -97,14 +97,14 @@ class EventLoop {
   /// the app through a flood of packets.
   auto CheckPushSafety() -> bool;
 
-  static auto GetStillPausingThreads() -> std::vector<EventLoop*>;
+  static auto GetStillSuspendingEventLoops() -> std::vector<EventLoop*>;
 
-  auto paused() { return paused_; }
+  auto suspended() { return suspended_; }
   auto done() -> bool { return done_; }
 
  private:
   struct ThreadMessage_ {
-    enum class Type { kShutdown = 999, kRunnable, kPause, kResume };
+    enum class Type { kShutdown = 999, kRunnable, kSuspend, kUnsuspend };
     Type type;
     union {
       Runnable* runnable{};
@@ -147,8 +147,8 @@ class EventLoop {
   void PushThreadMessage_(const ThreadMessage_& t);
 
   void RunPendingRunnables_();
-  void RunPauseCallbacks_();
-  void RunResumeCallbacks_();
+  void RunSuspendCallbacks_();
+  void RunUnsuspendCallbacks_();
 
   void AcquireGIL_();
   void ReleaseGIL_();
@@ -156,10 +156,10 @@ class EventLoop {
   void BootstrapThread_();
 
   bool writing_tally_{};
-  bool paused_{};
-  millisecs_t last_pause_time_{};
-  int messages_since_paused_{};
-  millisecs_t last_paused_message_report_time_{};
+  bool suspended_{};
+  millisecs_t last_suspend_time_{};
+  int messages_since_suspended_{};
+  millisecs_t last_suspended_message_report_time_{};
   bool done_{};
   ThreadSource source_;
   int listen_sd_{};
@@ -175,8 +175,8 @@ class EventLoop {
 
   bool bootstrapped_{};
   std::list<std::pair<Runnable*, bool*>> runnables_;
-  std::list<Runnable*> pause_callbacks_;
-  std::list<Runnable*> resume_callbacks_;
+  std::list<Runnable*> suspend_callbacks_;
+  std::list<Runnable*> unsuspend_callbacks_;
   std::condition_variable thread_message_cv_;
   std::mutex thread_message_mutex_;
   std::list<ThreadMessage_> thread_messages_;

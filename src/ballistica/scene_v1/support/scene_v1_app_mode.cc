@@ -25,6 +25,7 @@
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
+#include "ballistica/ui_v1/ui_v1.h"
 
 namespace ballistica::scene_v1 {
 
@@ -76,7 +77,13 @@ bool SceneV1AppMode::InClassicMainMenuSession() const {
 static SceneV1AppMode* g_scene_v1_app_mode{};
 
 void SceneV1AppMode::OnActivate() {
+  assert(g_base->InLogicThread());
   Reset();
+
+  // We use UIV1.
+  if (!g_core->HeadlessMode()) {
+    g_base->ui->set_ui_delegate(ui_v1::UIV1FeatureSet::Import());
+  }
 
   // To set initial states, explicitly fire some of our 'On-Foo-Changed'
   // callbacks.

@@ -26,7 +26,7 @@ void StdioConsole::StartInMainThread() {
 
   // Spin up our thread.
   event_loop_ = new EventLoop(EventLoopID::kStdin);
-  g_core->pausable_event_loops.push_back(event_loop_);
+  g_core->suspendable_event_loops.push_back(event_loop_);
 
   // Tell our thread to start reading.
   event_loop()->PushCall([this] {

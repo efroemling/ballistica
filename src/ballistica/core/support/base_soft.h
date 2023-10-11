@@ -21,6 +21,7 @@ class BaseSoftInterface {
   virtual auto InAssetsThread() const -> bool = 0;
   virtual auto InLogicThread() const -> bool = 0;
   virtual auto InAudioThread() const -> bool = 0;
+  virtual auto InGraphicsContext() const -> bool = 0;
   virtual auto InBGDynamicsThread() const -> bool = 0;
   virtual auto InNetworkWriteThread() const -> bool = 0;
   virtual void PlusDirectSendV1CloudLogs(const std::string& prefix,

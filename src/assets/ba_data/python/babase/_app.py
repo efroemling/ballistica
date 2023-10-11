@@ -70,7 +70,7 @@ class App:
 
         # The app has not yet begun starting and should not be used in
         # any way.
-        NOT_RUNNING = 0
+        NOT_STARTED = 0
 
         # The native layer is spinning up its machinery (screens,
         # renderers, etc.). Nothing should happen in the Python layer
@@ -90,13 +90,23 @@ class App:
         # All pieces are in place and the app is now doing its thing.
         RUNNING = 4
 
-        # The app is backgrounded or otherwise suspended.
-        PAUSED = 5
+        # Used on platforms such as mobile where the app basically needs
+        # to shut down while backgrounded. In this state, all event
+        # loops are suspended and all graphics and audio should cease
+        # completely. Be aware that the suspended state can be entered
+        # from any other state including NATIVE_BOOTSTRAPPING and
+        # SHUTTING_DOWN.
+        SUSPENDED = 5
 
-        # The app is shutting down.
+        # The app is shutting down. This process may involve sending
+        # network messages or other things that can take up to a few
+        # seconds, so ideally graphics and audio should remain
+        # functional (with fades or spinners or whatever to show
+        # something is happening).
         SHUTTING_DOWN = 6
 
-        # The app has completed shutdown.
+        # The app has completed shutdown. Any code running here should
+        # be basically immediate.
         SHUTDOWN_COMPLETE = 7
 
     class DefaultAppModeSelector(AppModeSelector):
@@ -150,7 +160,7 @@ class App:
             return
 
         self.env: babase.Env = _babase.Env()
-        self.state = self.State.NOT_RUNNING
+        self.state = self.State.NOT_STARTED
 
         # Default executor which can be used for misc background
         # processing. It should also be passed to any additional asyncio
@@ -179,7 +189,7 @@ class App:
         self._init_completed = False
         self._meta_scan_completed = False
         self._native_start_called = False
-        self._native_paused = False
+        self._native_suspended = False
         self._native_shutdown_called = False
         self._native_shutdown_complete_called = False
         self._initial_sign_in_completed = False
@@ -197,7 +207,8 @@ class App:
         self._mode_selector: babase.AppModeSelector | None = None
         self._shutdown_task: asyncio.Task[None] | None = None
         self._shutdown_tasks: list[Coroutine[None, None, None]] = [
-            self._wait_for_shutdown_suppressions()
+            self._wait_for_shutdown_suppressions(),
+            self._fade_for_shutdown(),
         ]
         self._pool_thread_count = 0
 
@@ -315,7 +326,7 @@ class App:
     def add_shutdown_task(self, coro: Coroutine[None, None, None]) -> None:
         """Add a task to be run on app shutdown.
 
-        Note that tasks will be killed after
+        Note that shutdown tasks will be canceled after
         App.SHUTDOWN_TASK_TIMEOUT_SECONDS if they are still running.
         """
         if (
@@ -389,18 +400,18 @@ class App:
         self._native_bootstrapping_completed = True
         self._update_state()
 
-    def on_native_pause(self) -> None:
-        """Called by the native layer when the app pauses."""
+    def on_native_suspend(self) -> None:
+        """Called by the native layer when the app is suspended."""
         assert _babase.in_logic_thread()
-        assert not self._native_paused  # Should avoid redundant calls.
-        self._native_paused = True
+        assert not self._native_suspended  # Should avoid redundant calls.
+        self._native_suspended = True
         self._update_state()
 
-    def on_native_resume(self) -> None:
-        """Called by the native layer when the app resumes."""
+    def on_native_unsuspend(self) -> None:
+        """Called by the native layer when the app suspension ends."""
         assert _babase.in_logic_thread()
-        assert self._native_paused  # Should avoid redundant calls.
-        self._native_paused = False
+        assert self._native_suspended  # Should avoid redundant calls.
+        self._native_suspended = False
         self._update_state()
 
     def on_native_shutdown(self) -> None:
@@ -730,15 +741,15 @@ class App:
                 _babase.lifecyclelog('app state shutting down')
                 self._on_shutting_down()
 
-        elif self._native_paused:
-            # Entering paused state:
-            if self.state is not self.State.PAUSED:
-                self.state = self.State.PAUSED
-                self._on_pause()
+        elif self._native_suspended:
+            # Entering suspended state:
+            if self.state is not self.State.SUSPENDED:
+                self.state = self.State.SUSPENDED
+                self._on_suspend()
         else:
-            # Leaving paused state:
-            if self.state is self.State.PAUSED:
-                self._on_resume()
+            # Leaving suspended state:
+            if self.state is self.State.SUSPENDED:
+                self._on_unsuspend()
 
             # Entering or returning to running state
             if self._initial_sign_in_completed and self._meta_scan_completed:
@@ -772,7 +783,7 @@ class App:
                     self.state = self.State.NATIVE_BOOTSTRAPPING
                     _babase.lifecyclelog('app state native bootstrapping')
             else:
-                # Only logical possibility left is NOT_RUNNING, in which
+                # Only logical possibility left is NOT_STARTED, in which
                 # case we should not be getting called.
                 logging.warning(
                     'App._update_state called while in %s state;'
@@ -813,33 +824,33 @@ class App:
         try:
             await asyncio.wait_for(task, self.SHUTDOWN_TASK_TIMEOUT_SECONDS)
         except Exception:
-            logging.exception('Error in shutdown task.')
+            logging.exception('Error in shutdown task (%s).', coro)
 
-    def _on_pause(self) -> None:
-        """Called when the app goes to a paused state."""
+    def _on_suspend(self) -> None:
+        """Called when the app goes to a suspended state."""
         assert _babase.in_logic_thread()
 
-        # Pause all app subsystems in the opposite order they were inited.
+        # Suspend all app subsystems in the opposite order they were inited.
         for subsystem in reversed(self._subsystems):
             try:
-                subsystem.on_app_pause()
+                subsystem.on_app_suspend()
             except Exception:
                 logging.exception(
-                    'Error in on_app_pause for subsystem %s.', subsystem
+                    'Error in on_app_suspend for subsystem %s.', subsystem
                 )
 
-    def _on_resume(self) -> None:
-        """Called when resuming."""
+    def _on_unsuspend(self) -> None:
+        """Called when unsuspending."""
         assert _babase.in_logic_thread()
         self.fg_state += 1
 
-        # Resume all app subsystems in the same order they were inited.
+        # Unsuspend all app subsystems in the same order they were inited.
         for subsystem in self._subsystems:
             try:
-                subsystem.on_app_resume()
+                subsystem.on_app_unsuspend()
             except Exception:
                 logging.exception(
-                    'Error in on_app_resume for subsystem %s.', subsystem
+                    'Error in on_app_unsuspend for subsystem %s.', subsystem
                 )
 
     def _on_shutting_down(self) -> None:
@@ -883,6 +894,19 @@ class App:
         while _babase.shutdown_suppress_count() > 0:
             await asyncio.sleep(0.001)
         _babase.lifecyclelog('shutdown-suppress wait end')
+
+    async def _fade_for_shutdown(self) -> None:
+        import asyncio
+
+        # Kick off a fade, block input, and wait for a short bit.
+        # Ideally most shutdown activity completes during the fade so
+        # there's no tangible wait.
+        _babase.lifecyclelog('fade-for-shutdown begin')
+        _babase.fade_screen(False, time=0.15)
+        _babase.lock_all_input()
+        # _babase.getsimplesound('swish2').play()
+        await asyncio.sleep(0.15)
+        _babase.lifecyclelog('fade-for-shutdown end')
 
     def _threadpool_no_wait_done(self, fut: Future) -> None:
         try:

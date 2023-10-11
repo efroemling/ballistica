@@ -39,6 +39,7 @@ class HostConfig:
     precommand_noninteractive: str | None = None
     precommand_interactive: str | None = None
     managed: bool = False
+    region: str | None = None
     idle_minutes: int = 5
     can_sudo_reboot: bool = False
     max_sessions: int = 4

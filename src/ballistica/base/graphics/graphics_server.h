@@ -264,16 +264,6 @@ class GraphicsServer {
 
   auto renderer_context_lost() const { return renderer_context_lost_; }
 
-  // auto fullscreen_enabled() const { return fullscreen_enabled_; }
-
-  // This doesn't actually toggle fullscreen. It is used to inform the game
-  // when fullscreen changes under it.
-  // auto set_fullscreen_enabled(bool fs) { fullscreen_enabled_ = fs; }
-
-  // #if BA_ENABLE_OPENGL
-  //   auto gl_context() const -> GLContext* { return gl_context_.get(); }
-  // #endif
-
   auto graphics_quality_requested() const {
     return graphics_quality_requested_;
   }
@@ -290,16 +280,7 @@ class GraphicsServer {
 
   auto texture_quality_requested() const { return texture_quality_requested_; }
 
-  // auto initial_screen_created() const { return initial_screen_created_; }
-
   void HandlePushAndroidRes(const std::string& android_res);
-
-  // void HandleFullContextScreenRebuild(
-  //     bool need_full_context_rebuild, bool fullscreen,
-  //     GraphicsQualityRequest graphics_quality_requested,
-  //     TextureQualityRequest texture_quality_requested);
-  // void HandleFullscreenToggling(bool do_set_existing_fs, bool do_toggle_fs,
-  //                               bool fullscreen);
 
  private:
   // So we don't have to include app_adapter.h here for asserts.
@@ -332,53 +313,49 @@ class GraphicsServer {
     }
   }
 
-  float res_x_{};
-  float res_y_{};
-  float res_x_virtual_{};
-  float res_y_virtual_{};
-  uint32_t texture_compression_types_{};
+  bool renderer_loaded_ : 1 {};
+  bool v_sync_ : 1 {};
+  bool auto_vsync_ : 1 {};
+  bool model_view_projection_matrix_dirty_ : 1 {true};
+  bool model_world_matrix_dirty_ : 1 {true};
+  bool graphics_quality_set_ : 1 {};
+  bool texture_quality_set_ : 1 {};
+  bool tv_border_ : 1 {};
+  bool renderer_context_lost_ : 1 {};
+  bool texture_compression_types_set_ : 1 {};
+  bool cam_orient_matrix_dirty_ : 1 {true};
   TextureQualityRequest texture_quality_requested_{
       TextureQualityRequest::kUnset};
   TextureQuality texture_quality_{TextureQuality::kLow};
   GraphicsQualityRequest graphics_quality_requested_{
       GraphicsQualityRequest::kUnset};
   GraphicsQuality graphics_quality_{GraphicsQuality::kUnset};
-  // bool fullscreen_enabled_{};
-  // float target_res_x_{800.0f};
-  // float target_res_y_{600.0f};
+  int render_hold_{};
+  float res_x_{};
+  float res_y_{};
+  float res_x_virtual_{};
+  float res_y_virtual_{};
   Matrix44f model_view_matrix_{kMatrix44fIdentity};
   Matrix44f view_world_matrix_{kMatrix44fIdentity};
   Matrix44f projection_matrix_{kMatrix44fIdentity};
   Matrix44f model_view_projection_matrix_{kMatrix44fIdentity};
   Matrix44f model_world_matrix_{kMatrix44fIdentity};
   std::vector<Matrix44f> model_view_stack_;
+  uint32_t texture_compression_types_{};
   uint32_t projection_matrix_state_{1};
   uint32_t model_view_projection_matrix_state_{1};
   uint32_t model_world_matrix_state_{1};
-  Matrix44f light_shadow_projection_matrix_{kMatrix44fIdentity};
   uint32_t light_shadow_projection_matrix_state_{1};
+  uint32_t cam_pos_state_{1};
+  uint32_t cam_orient_matrix_state_{1};
   Vector3f cam_pos_{0.0f, 0.0f, 0.0f};
   Vector3f cam_target_{0.0f, 0.0f, 0.0f};
-  uint32_t cam_pos_state_{1};
+  Matrix44f light_shadow_projection_matrix_{kMatrix44fIdentity};
   Matrix44f cam_orient_matrix_ = kMatrix44fIdentity;
-  uint32_t cam_orient_matrix_state_{1};
   std::list<MeshData*> mesh_datas_;
   Timer* render_timer_{};
   Renderer* renderer_{};
   FrameDef* frame_def_{};
-  // bool initial_screen_created_{};
-  bool renderer_loaded_{};
-  bool v_sync_{};
-  bool auto_vsync_{};
-  bool model_view_projection_matrix_dirty_{true};
-  bool model_world_matrix_dirty_{true};
-  bool graphics_quality_set_{};
-  bool texture_quality_set_{};
-  bool tv_border_{};
-  bool renderer_context_lost_{};
-  bool texture_compression_types_set_{};
-  bool cam_orient_matrix_dirty_{true};
-  int render_hold_{};
   std::mutex frame_def_mutex_{};
 };
 

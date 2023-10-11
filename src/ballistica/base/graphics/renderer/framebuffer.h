@@ -9,8 +9,8 @@ namespace ballistica::base {
 
 class Framebuffer : public Object {
  public:
-  auto GetDefaultOwnerThread() const -> EventLoopID override {
-    return EventLoopID::kMain;
+  auto GetThreadOwnership() const -> ThreadOwnership override {
+    return ThreadOwnership::kGraphicsContext;
   }
 };
 

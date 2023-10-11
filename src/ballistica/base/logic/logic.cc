@@ -29,7 +29,7 @@ Logic::Logic() : display_timers_(new TimerList()) {
 void Logic::OnMainThreadStartApp() {
   // Spin up our logic thread and sit and wait for it to init.
   event_loop_ = new EventLoop(EventLoopID::kLogic);
-  g_core->pausable_event_loops.push_back(event_loop_);
+  g_core->suspendable_event_loops.push_back(event_loop_);
   event_loop_->PushCallSynchronous([this] { OnAppStart(); });
 }
 
@@ -47,9 +47,9 @@ void Logic::OnAppStart() {
   event_loop_->SetAcquiresPythonGIL();
 
   // Stay informed when our event loop is pausing/unpausing.
-  event_loop_->AddPauseCallback(
+  event_loop_->AddSuspendCallback(
       NewLambdaRunnableUnmanaged([this] { OnAppPause(); }));
-  event_loop_->AddResumeCallback(
+  event_loop_->AddUnsuspendCallback(
       NewLambdaRunnableUnmanaged([this] { OnAppResume(); }));
 
   // Running in a specific order here and should try to stick to it in
@@ -454,7 +454,7 @@ void Logic::UpdateDisplayTimeForFrameDraw() {
   // look like the game is slowing down or speeding up.
 
   // Flip debug-log-display-time on to debug this stuff.
-  // Things to look for:'
+  // Things to look for:
   // - 'final' value should mostly stay constant.
   // - 'final' value should not be *too* far from 'current'.
   // - 'current' should mostly show '(avg)'; rarely '(sample)'.
@@ -484,51 +484,16 @@ void Logic::UpdateDisplayTimeForFrameDraw() {
           (recent_display_time_increments_index_ + 1) % kDisplayTimeSampleCount;
     }
 
-    // It seems that when things get thrown off it is often due to a single
-    // rogue sample being unusually long and often the next one being
-    // unusually short. Let's try to filter out some of these cases by
-    // ignoring both the longest and shortest sample in our set.
-    //
-    // SCRATCH THAT; we want to gracefully handle cases where vsync combined
-    // with target-framerate might give us crazy sample times like 5, 10, 5,
-    // 10, etc. So we can't expect filtering a single sample to help.
-    //
-    // int max_index{};
-    // int min_index{};
-    // double max_val{recent_display_time_increments_[0]};
-    // double min_val{recent_display_time_increments_[0]};
-    // for (int i = 0; i < kDisplayTimeSampleCount; ++i) {
-    //   auto val = recent_display_time_increments_[i];
-    //   if (val > max_val) {
-    //     max_val = val;
-    //     max_index = i;
-    //   }
-    //   if (val < min_val) {
-    //     min_val = val;
-    //     min_index = i;
-    //   }
-    // }
-
     double avg{};
-    double min{};
-    double max{};
-    int count{};
+    double min, max;
+    min = max = recent_display_time_increments_[0];
     for (int i = 0; i < kDisplayTimeSampleCount; ++i) {
-      // if (i == min_index || i == max_index) {
-      //   continue;
-      // }
       auto val = recent_display_time_increments_[i];
-      if (count == 0) {
-        // We may have skipped first index(es) so need to do this here
-        // instead of initing min/max to first value.
-        min = max = val;
-      }
       avg += val;
       min = std::min(min, val);
       max = std::max(max, val);
-      count += 1;
     }
-    avg /= count;
+    avg /= kDisplayTimeSampleCount;
     double range = max - min;
 
     // If our range of recent increment values is somewhat large relative to
@@ -541,18 +506,15 @@ void Logic::UpdateDisplayTimeForFrameDraw() {
     // the lower chaos will be and thus the more the engine will stick to
     // smoothed values. A good way to determine if this value is too high is
     // to launch the game and watch the menu animation. If it visibly speeds
-    // up or slows down in the moment after launch, it means the value is
-    // too high and the engine is sticking with smoothed values when it
-    // should instead be reacting immediately. So basically this value
-    // should be as high as possible while avoiding that look.
+    // up or slows down in a 'rubber band' looking way the moment after
+    // launch, it means the value is too high and the engine is sticking
+    // with smoothed values when it should instead be reacting immediately.
+    // So basically this value should be as high as possible while avoiding
+    // that look.
     double chaos_fudge{1.25};
     double chaos = (range / avg) / chaos_fudge;
     bool use_avg = chaos < 1.0;
     auto used = use_avg ? avg : this_increment;
-
-    // double chaos = 0.0;
-    // bool use_avg = true;
-    // auto used = use_avg ? avg : this_increment;
 
     // Lastly use this 'used' value to update our actual increment - our
     // increment moves only if 'used' value gets farther than [trail_buffer]
@@ -595,6 +557,7 @@ void Logic::UpdateDisplayTimeForFrameDraw() {
       Log(LogLevel::kDebug, buffer);
     }
   }
+
   // Lastly, apply our updated increment value to our time.
   display_time_ += display_time_increment_;
 

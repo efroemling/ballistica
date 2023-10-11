@@ -124,6 +124,7 @@ class ResourcesMakefileGenerator:
             self._add_apple_tv_3d_icon()
             self._add_apple_tv_store_icon()
             self._add_google_vr_icon()
+            self._add_macos_cursor()
             our_lines_private_2 = (
                 ['# __PUBSYNC_STRIP_BEGIN__']
                 + _empty_line_if(bool(self.targets))
@@ -569,6 +570,33 @@ class ResourcesMakefileGenerator:
                 ]
             )
             self.targets.append(Target(src=[src], dst=dst, cmd=cmd, mkdir=True))
+
+    def _add_macos_cursor(self) -> None:
+        sizes = [
+            (64, 1),
+            (64, 2),
+        ]
+        for size in sizes:
+            res = int(size[0] * size[1])
+            src = os.path.join('cursor.png')
+            dst = os.path.join(
+                ROOT_DIR,
+                f'{self.namel}-xcode',
+                f'{self.nameu} Shared',
+                'Assets.xcassets',
+                'Cursor macOS.imageset',
+                'cursor_' + str(size[0]) + 'x' + str(size[1]) + '.png',
+            )
+            cmd = ' '.join(
+                [
+                    RESIZE_CMD,
+                    str(res),
+                    str(res),
+                    '"' + src + '"',
+                    '"' + dst + '"',
+                ]
+            )
+            self.targets.append(Target(src=[src], dst=dst, cmd=cmd))
 
 
 def _empty_line_if(condition: bool) -> list[str]:

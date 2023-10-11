@@ -162,6 +162,7 @@ from babase._mgen.enums import (
     SpecialChar,
     InputType,
     UIScale,
+    QuitType,
 )
 from babase._math import normalized_color, is_point_in_box, vec3validate
 from babase._meta import MetadataSubsystem
@@ -286,6 +287,7 @@ __all__ = [
     'print_load_info',
     'pushcall',
     'quit',
+    'QuitType',
     'reload_media',
     'request_permission',
     'safecolor',

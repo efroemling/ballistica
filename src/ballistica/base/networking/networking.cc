@@ -5,7 +5,6 @@
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/base/support/app_config.h"
-#include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/networking/sockaddr.h"
 
 namespace ballistica::base {

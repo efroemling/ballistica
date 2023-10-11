@@ -5,14 +5,12 @@
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/texture_asset_preload_data.h"
 #include "ballistica/base/assets/texture_asset_renderer_data.h"
-#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/graphics/text/text_packer.h"
 #include "ballistica/base/graphics/texture/dds.h"
 #include "ballistica/base/graphics/texture/ktx.h"
 #include "ballistica/base/graphics/texture/pvr.h"
-#include "ballistica/core/core.h"
 #include "external/qr_code_generator/QrCode.hpp"
 
 namespace ballistica::base {

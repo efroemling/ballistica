@@ -9,7 +9,6 @@
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/plus_soft.h"
-#include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_mesh.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_sound.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_texture.h"
