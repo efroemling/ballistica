@@ -89,7 +89,7 @@ void Logic::OnGraphicsReady() {
   // Let the Python layer know the native layer is now fully functional.
   // This will probably result in the Python layer flipping to the INITING
   // state.
-  CompleteAppBootstrapping();
+  CompleteAppBootstrapping_();
 
   if (g_core->HeadlessMode()) {
     // Normally we step display-time as part of our frame-drawing process.
@@ -100,7 +100,7 @@ void Logic::OnGraphicsReady() {
     // variety of rates anyway. NOTE: This length is currently milliseconds.
     headless_display_time_step_timer_ = event_loop()->NewTimer(
         kAppModeMinHeadlessDisplayStep / 1000, true,
-        NewLambdaRunnable([this] { StepDisplayTime(); }));
+        NewLambdaRunnable([this] { StepDisplayTime_(); }));
   } else {
     // In gui mode, push an initial frame to the graphics server. From this
     // point it will be self-sustaining, sending us a frame request each
@@ -109,7 +109,7 @@ void Logic::OnGraphicsReady() {
   }
 }
 
-void Logic::CompleteAppBootstrapping() {
+void Logic::CompleteAppBootstrapping_() {
   assert(g_base->InLogicThread());
   assert(g_base->CurrentContext().IsEmpty());
 
@@ -133,7 +133,7 @@ void Logic::CompleteAppBootstrapping() {
 
   // Set up our timers.
   process_pending_work_timer_ = event_loop()->NewTimer(
-      0, true, NewLambdaRunnable([this] { ProcessPendingWork(); }));
+      0, true, NewLambdaRunnable([this] { ProcessPendingWork_(); }));
   asset_prune_timer_ = event_loop()->NewTimer(
       2345, true, NewLambdaRunnable([] { g_base->assets->Prune(); }));
 
@@ -153,7 +153,7 @@ void Logic::CompleteAppBootstrapping() {
       .Get(BasePython::ObjID::kAppOnNativeBootstrappingCompleteCall)
       .Call();
 
-  UpdatePendingWorkTimer();
+  UpdatePendingWorkTimer_();
 }
 
 void Logic::OnAppRunning() {
@@ -333,7 +333,7 @@ void Logic::OnScreenSizeChange(float virtual_width, float virtual_height,
 }
 
 // Bring all logic-thread stuff up to date for a new visual frame.
-void Logic::StepDisplayTime() {
+void Logic::StepDisplayTime_() {
   assert(g_base->InLogicThread());
 
   // We have two different modes of operation here. When running in headless
@@ -343,9 +343,9 @@ void Logic::StepDisplayTime() {
   // real draw times and is intended to keep frame intervals as visually
   // consistent and smooth looking as possible.
   if (g_core->HeadlessMode()) {
-    UpdateDisplayTimeForHeadlessMode();
+    UpdateDisplayTimeForHeadlessMode_();
   } else {
-    UpdateDisplayTimeForFrameDraw();
+    UpdateDisplayTimeForFrameDraw_();
   }
 
   // Give all our subsystems some update love.
@@ -366,7 +366,7 @@ void Logic::StepDisplayTime() {
   display_timers_->Run(display_time_microsecs_);
 
   if (g_core->HeadlessMode()) {
-    PostUpdateDisplayTimeForHeadlessMode();
+    PostUpdateDisplayTimeForHeadlessMode_();
   }
 }
 
@@ -387,7 +387,7 @@ void Logic::OnAppModeChanged() {
   }
 }
 
-void Logic::UpdateDisplayTimeForHeadlessMode() {
+void Logic::UpdateDisplayTimeForHeadlessMode_() {
   assert(g_base->InLogicThread());
   // In this case we just keep display time synced up with app time; we
   // don't care about keeping the increments smooth or consistent.
@@ -418,7 +418,7 @@ void Logic::UpdateDisplayTimeForHeadlessMode() {
   }
 }
 
-void Logic::PostUpdateDisplayTimeForHeadlessMode() {
+void Logic::PostUpdateDisplayTimeForHeadlessMode_() {
   assert(g_base->InLogicThread());
   // At this point we've stepped our app-mode, so let's ask it how long
   // we've got until the next event. We'll plug this into our display-update
@@ -443,7 +443,7 @@ void Logic::PostUpdateDisplayTimeForHeadlessMode() {
   headless_display_time_step_timer_->SetLength(sleep_millisecs);
 }
 
-void Logic::UpdateDisplayTimeForFrameDraw() {
+void Logic::UpdateDisplayTimeForFrameDraw_() {
   // Here we update our smoothed display-time-increment based on how fast we
   // are currently rendering frames. We want display-time to basically be
   // progressing at the same rate as app-time but in as constant of a manner
@@ -568,7 +568,7 @@ void Logic::UpdateDisplayTimeForFrameDraw() {
 }
 
 // Set up our sleeping based on what we're doing.
-void Logic::UpdatePendingWorkTimer() {
+void Logic::UpdatePendingWorkTimer_() {
   assert(g_base->InLogicThread());
 
   // This might get called before we set up our timer in some cases. (such
@@ -626,13 +626,13 @@ void Logic::Draw() {
   // drawn. But as high frame rates are becoming more normal this becomes
   // less and less meaningful and its probably best to prioritize smooth
   // visuals.
-  StepDisplayTime();
+  StepDisplayTime_();
 }
 
 void Logic::NotifyOfPendingAssetLoads() {
   assert(g_base->InLogicThread());
   have_pending_loads_ = true;
-  UpdatePendingWorkTimer();
+  UpdatePendingWorkTimer_();
 }
 
 auto Logic::NewAppTimer(millisecs_t length, bool repeat,
@@ -687,9 +687,9 @@ void Logic::SetDisplayTimerLength(int timer_id, microsecs_t length) {
   }
 }
 
-void Logic::ProcessPendingWork() {
+void Logic::ProcessPendingWork_() {
   have_pending_loads_ = g_base->assets->RunPendingLoadsLogicThread();
-  UpdatePendingWorkTimer();
+  UpdatePendingWorkTimer_();
 }
 
 }  // namespace ballistica::base

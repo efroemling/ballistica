@@ -533,7 +533,7 @@ static PyMethodDef PyQuitDef = {
     METH_VARARGS | METH_KEYWORDS,  // flags
 
     "quit(confirm: bool = False,\n"
-    "          quit_type: babase.QuitType = babase.QuitType.SOFT\n"
+    "          quit_type: babase.QuitType | None = None\n"
     ") -> None\n"
     "\n"
     "Quit the app.\n"
@@ -542,7 +542,8 @@ static PyMethodDef PyQuitDef = {
     "\n"
     "If 'confirm' is True, a confirm dialog will be presented if conditions\n"
     "allow; otherwise the quit will still be immediate.\n"
-    "See docs for babase.QuitType for explanations of its behavior."};
+    "See docs for babase.QuitType for explanations of the optional\n"
+    "'quit_type' arg."};
 
 // ----------------------------- apply_config ----------------------------------
 

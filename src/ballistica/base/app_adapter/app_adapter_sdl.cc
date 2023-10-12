@@ -747,7 +747,6 @@ void AppAdapterSDL::UpdateScreenSizes_() {
                                                static_cast<float>(pixels_y));
 }
 
-/// As a default, allow graphics stuff in the main thread.
 auto AppAdapterSDL::InGraphicsContext() -> bool {
   // In strict mode, make sure we're in the right thread *and* within our
   // render call.

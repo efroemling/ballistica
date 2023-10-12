@@ -109,17 +109,17 @@ class Logic {
   auto shutdown_completed() const { return shutdown_completed_; }
 
  private:
-  void UpdateDisplayTimeForFrameDraw();
-  void UpdateDisplayTimeForHeadlessMode();
-  void PostUpdateDisplayTimeForHeadlessMode();
-  void CompleteAppBootstrapping();
-  void ProcessPendingWork();
-  void UpdatePendingWorkTimer();
-  void StepDisplayTime();
+  void UpdateDisplayTimeForFrameDraw_();
+  void UpdateDisplayTimeForHeadlessMode_();
+  void PostUpdateDisplayTimeForHeadlessMode_();
+  void CompleteAppBootstrapping_();
+  void ProcessPendingWork_();
+  void UpdatePendingWorkTimer_();
+  void StepDisplayTime_();
 
   double display_time_{};
-  microsecs_t display_time_microsecs_{};
   double display_time_increment_{1.0 / 60.0};
+  microsecs_t display_time_microsecs_{};
   microsecs_t display_time_increment_microsecs_{1000000 / 60};
 
   // GUI scheduling.
@@ -128,20 +128,20 @@ class Logic {
   int recent_display_time_increments_index_{-1};
 
   // Headless scheduling.
-
-  std::unique_ptr<TimerList> display_timers_;
-  EventLoop* event_loop_{};
-  Timer* process_pending_work_timer_{};
   Timer* headless_display_time_step_timer_{};
+
+  Timer* process_pending_work_timer_{};
   Timer* asset_prune_timer_{};
   Timer* debug_timer_{};
-  bool app_bootstrapping_complete_{};
-  bool have_pending_loads_{};
-  bool debug_log_display_time_{};
-  bool applied_app_config_{};
-  bool shutting_down_{};
-  bool shutdown_completed_{};
-  bool on_initial_screen_creation_complete_called_{};
+  EventLoop* event_loop_{};
+  std::unique_ptr<TimerList> display_timers_;
+  bool app_bootstrapping_complete_ : 1 {};
+  bool have_pending_loads_ : 1 {};
+  bool debug_log_display_time_ : 1 {};
+  bool applied_app_config_ : 1 {};
+  bool shutting_down_ : 1 {};
+  bool shutdown_completed_ : 1 {};
+  bool on_initial_screen_creation_complete_called_ : 1 {};
 };
 
 }  // namespace ballistica::base
