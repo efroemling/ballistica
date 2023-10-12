@@ -117,7 +117,7 @@ void AppAdapterSDL::DoApplyAppConfig() {
   //     g_base->app_config->Resolve(AppConfig::StringID::kResolutionAndroid);
 
   bool fullscreen = g_base->app_config->Resolve(AppConfig::BoolID::kFullscreen);
-  fullscreen = false;
+
   auto vsync = g_base->graphics->VSyncFromAppConfig();
   int max_fps = g_base->app_config->Resolve(AppConfig::IntID::kMaxFPS);
 
