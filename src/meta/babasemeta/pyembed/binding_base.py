@@ -69,6 +69,7 @@ values = [
     _error.SessionNotFoundError,  # kSessionNotFoundError
     enums.TimeFormat,  # kTimeFormatClass
     enums.TimeType,  # kTimeTypeClass
+    enums.QuitType,  # kQuitTypeClass
     enums.InputType,  # kInputTypeClass
     enums.Permission,  # kPermissionClass
     enums.SpecialChar,  # kSpecialCharClass

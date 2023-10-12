@@ -140,10 +140,6 @@ namespace ballistica {
 #define BA_ENABLE_STDIO_CONSOLE 0
 #endif
 
-#ifndef BA_HARDWARE_CURSOR
-#define BA_HARDWARE_CURSOR 0
-#endif
-
 #ifndef BA_ENABLE_OS_FONT_RENDERING
 #define BA_ENABLE_OS_FONT_RENDERING 0
 #endif
@@ -277,7 +273,6 @@ class BuildConfig {
   bool enable_os_font_rendering() const {
     return EXPBOOL_(BA_ENABLE_OS_FONT_RENDERING);
   }
-  bool hardware_cursor() const { return EXPBOOL_(BA_HARDWARE_CURSOR); }
 };
 
 #undef EXPBOOL_

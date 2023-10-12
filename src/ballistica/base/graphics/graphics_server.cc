@@ -2,22 +2,9 @@
 
 #include "ballistica/base/graphics/graphics_server.h"
 
-// Kill this.
-#include "ballistica/base/graphics/gl/renderer_gl.h"
-
-// FIXME: clear out this conditional stuff.
-#if BA_SDL_BUILD
-#include "ballistica/base/app_adapter/app_adapter_sdl.h"
-#else
 #include "ballistica/base/app_adapter/app_adapter.h"
-#endif
-
-#include "ballistica/base/assets/assets.h"
-#include "ballistica/base/graphics/mesh/mesh_data.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
-#include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
@@ -83,7 +70,7 @@ auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
   }
 
   // If the app is paused, never render.
-  if (g_base->app_adapter->app_paused()) {
+  if (g_base->app_adapter->app_suspended()) {
     return nullptr;
   }
 

@@ -171,12 +171,13 @@ auto EventLoop::ThreadMainAssetsP_(void* data) -> void* {
   return nullptr;
 }
 
-void EventLoop::PushSetPaused(bool paused) {
+void EventLoop::PushSetSuspended(bool suspended) {
   assert(g_core);
   // Can be toggled from the main thread only.
   assert(std::this_thread::get_id() == g_core->main_thread_id);
-  PushThreadMessage_(ThreadMessage_(paused ? ThreadMessage_::Type::kPause
-                                           : ThreadMessage_::Type::kResume));
+  PushThreadMessage_(ThreadMessage_(suspended
+                                        ? ThreadMessage_::Type::kSuspend
+                                        : ThreadMessage_::Type::kUnsuspend));
 }
 
 void EventLoop::WaitForNextEvent_(bool single_cycle) {
@@ -184,24 +185,27 @@ void EventLoop::WaitForNextEvent_(bool single_cycle) {
 
   // If we're running a single cycle we never stop to wait.
   if (single_cycle) {
-    // Need to revisit this if we ever do single-cycle for
-    // the gil-holding thread so we don't starve other Python threads.
+    // Need to revisit this if we ever do single-cycle for the gil-holding
+    // thread so we don't starve other Python threads.
     assert(!acquires_python_gil_);
     return;
   }
 
-  // We also never wait if we have pending runnables; we want to run
-  // things as soon as we can. We chew through all runnables at the end
-  // of the loop so it might seem like there should never be any here,
-  // but runnables can add other runnables that won't get processed until
-  // the next time through.
-  // BUG FIX: We now skip this if we're paused since we don't run runnables
-  //  in that case. This was preventing us from releasing the GIL while paused
-  //  (and I assume causing us to spin full-speed through the loop; ugh).
-  // NOTE: It is theoretically possible for a runnable to add another runnable
-  //  each time through the loop which would effectively starve the GIL as
-  //  well; do we need to worry about that case?
-  if (has_pending_runnables() && !paused_) {
+  // We also never wait if we have pending runnables; we want to run things
+  // as soon as we can. We chew through all runnables at the end of the loop
+  // so it might seem like there should never be any here, but runnables can
+  // add other runnables that won't get processed until the next time
+  // through.
+  //
+  // BUG FIX: We now skip this if we're suspended since we don't run
+  //  runnables in that case. This was preventing us from releasing the GIL
+  //  while suspended (and I assume causing us to spin full-speed through
+  //  the loop; ugh).
+  //
+  // NOTE: It is theoretically possible for a runnable to add another
+  //  runnable each time through the loop which would effectively starve the
+  //  GIL as well; do we need to worry about that case?
+  if (has_pending_runnables() && !suspended_) {
     return;
   }
 
@@ -212,7 +216,7 @@ void EventLoop::WaitForNextEvent_(bool single_cycle) {
 
   // If we've got active timers, wait for messages with a timeout so we can
   // run the next timer payload.
-  if (!paused_ && timers_.ActiveTimerCount() > 0) {
+  if (!suspended_ && timers_.ActiveTimerCount() > 0) {
     millisecs_t apptime = g_core->GetAppTimeMillisecs();
     millisecs_t wait_time = timers_.TimeToNextExpire(apptime);
     if (wait_time > 0) {
@@ -287,18 +291,18 @@ void EventLoop::Run_(bool single_cycle) {
           done_ = true;
           break;
         }
-        case ThreadMessage_::Type::kPause: {
-          assert(!paused_);
-          RunPauseCallbacks_();
-          paused_ = true;
-          last_pause_time_ = g_core->GetAppTimeMillisecs();
-          messages_since_paused_ = 0;
+        case ThreadMessage_::Type::kSuspend: {
+          assert(!suspended_);
+          RunSuspendCallbacks_();
+          suspended_ = true;
+          last_suspend_time_ = g_core->GetAppTimeMillisecs();
+          messages_since_suspended_ = 0;
           break;
         }
-        case ThreadMessage_::Type::kResume: {
-          assert(paused_);
-          RunResumeCallbacks_();
-          paused_ = false;
+        case ThreadMessage_::Type::kUnsuspend: {
+          assert(suspended_);
+          RunUnsuspendCallbacks_();
+          suspended_ = false;
           break;
         }
         default: {
@@ -311,7 +315,7 @@ void EventLoop::Run_(bool single_cycle) {
       }
     }
 
-    if (!paused_) {
+    if (!suspended_) {
       timers_.Run(g_core->GetAppTimeMillisecs());
       RunPendingRunnables_();
     }
@@ -473,11 +477,11 @@ void EventLoop::LogThreadMessageTally_(
         case ThreadMessage_::Type::kRunnable:
           s += "kRunnable";
           break;
-        case ThreadMessage_::Type::kPause:
-          s += "kPause";
+        case ThreadMessage_::Type::kSuspend:
+          s += "kSuspend";
           break;
-        case ThreadMessage_::Type::kResume:
-          s += "kResume";
+        case ThreadMessage_::Type::kUnsuspend:
+          s += "kUnsuspend";
           break;
         default:
           s += "UNKNOWN(" + std::to_string(static_cast<int>(m.type)) + ")";
@@ -570,24 +574,24 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
   }
 }
 
-void EventLoop::SetEventLoopsPaused(bool paused) {
+void EventLoop::SetEventLoopsSuspended(bool suspended) {
   assert(g_core);
   assert(std::this_thread::get_id() == g_core->main_thread_id);
-  g_core->threads_paused = paused;
-  for (auto&& i : g_core->pausable_event_loops) {
-    i->PushSetPaused(paused);
+  g_core->event_loops_suspended = suspended;
+  for (auto&& i : g_core->suspendable_event_loops) {
+    i->PushSetSuspended(suspended);
   }
 }
 
-auto EventLoop::GetStillPausingThreads() -> std::vector<EventLoop*> {
+auto EventLoop::GetStillSuspendingEventLoops() -> std::vector<EventLoop*> {
   assert(g_core);
   std::vector<EventLoop*> threads;
   assert(std::this_thread::get_id() == g_core->main_thread_id);
 
-  // Only return results if an actual pause is in effect.
-  if (g_core->threads_paused) {
-    for (auto&& i : g_core->pausable_event_loops) {
-      if (!i->paused()) {
+  // Only return results if an actual suspend is in effect.
+  if (g_core->event_loops_suspended) {
+    for (auto&& i : g_core->suspendable_event_loops) {
+      if (!i->suspended()) {
         threads.push_back(i);
       }
     }
@@ -595,9 +599,9 @@ auto EventLoop::GetStillPausingThreads() -> std::vector<EventLoop*> {
   return threads;
 }
 
-auto EventLoop::AreEventLoopsPaused() -> bool {
+auto EventLoop::AreEventLoopsSuspended() -> bool {
   assert(g_core);
-  return g_core->threads_paused;
+  return g_core->event_loops_suspended;
 }
 
 auto EventLoop::NewTimer(millisecs_t length, bool repeat,
@@ -678,14 +682,14 @@ void EventLoop::RunPendingRunnables_() {
   }
 }
 
-void EventLoop::RunPauseCallbacks_() {
-  for (Runnable* i : pause_callbacks_) {
+void EventLoop::RunSuspendCallbacks_() {
+  for (Runnable* i : suspend_callbacks_) {
     i->RunAndLogErrors();
   }
 }
 
-void EventLoop::RunResumeCallbacks_() {
-  for (Runnable* i : resume_callbacks_) {
+void EventLoop::RunUnsuspendCallbacks_() {
+  for (Runnable* i : unsuspend_callbacks_) {
     i->RunAndLogErrors();
   }
 }
@@ -701,14 +705,14 @@ void EventLoop::PushCrossThreadRunnable_(Runnable* runnable,
       EventLoop::ThreadMessage_::Type::kRunnable, runnable, completion_flag));
 }
 
-void EventLoop::AddPauseCallback(Runnable* runnable) {
+void EventLoop::AddSuspendCallback(Runnable* runnable) {
   assert(std::this_thread::get_id() == thread_id());
-  pause_callbacks_.push_back(runnable);
+  suspend_callbacks_.push_back(runnable);
 }
 
-void EventLoop::AddResumeCallback(Runnable* runnable) {
+void EventLoop::AddUnsuspendCallback(Runnable* runnable) {
   assert(std::this_thread::get_id() == thread_id());
-  resume_callbacks_.push_back(runnable);
+  unsuspend_callbacks_.push_back(runnable);
 }
 
 void EventLoop::PushRunnable(Runnable* runnable) {

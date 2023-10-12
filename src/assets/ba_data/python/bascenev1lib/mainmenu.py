@@ -300,7 +300,10 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             from bauiv1lib import specialoffer
 
             assert bs.app.classic is not None
-            if bool(False):
+            if bui.app.env.headless:
+                # UI stuff fails now in headless builds; avoid it.
+                pass
+            elif bool(False):
                 uicontroller = bs.app.ui_v1.controller
                 assert uicontroller is not None
                 uicontroller.show_main_menu()

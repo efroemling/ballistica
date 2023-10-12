@@ -199,6 +199,16 @@ void Object::ObjectThreadCheck() {
 
   ThreadOwnership thread_ownership = GetThreadOwnership();
 
+  // Special case; graphics context (not simply a thread so have to handle
+  // specially).
+  if (thread_ownership == ThreadOwnership::kGraphicsContext) {
+    if (!(g_base_soft && g_base_soft->InGraphicsContext())) {
+      throw Exception("ObjectThreadCheck failed for " + GetObjectDescription()
+                      + "; expected graphics context.");
+    }
+    return;
+  }
+
   EventLoopID t;
   if (thread_ownership == ThreadOwnership::kClassDefault) {
     t = GetDefaultOwnerThread();

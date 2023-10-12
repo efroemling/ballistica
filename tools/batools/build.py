@@ -43,8 +43,8 @@ class PyRequirement:
 # remove our custom module based stuff soon if nobody complains, which
 # would free us to theoretically move to a requirements.txt based setup.
 PY_REQUIREMENTS = [
-    PyRequirement(pipname='pylint', minversion=[3, 0, 0]),
-    PyRequirement(pipname='mypy', minversion=[1, 5, 1]),
+    PyRequirement(pipname='pylint', minversion=[3, 0, 1]),
+    PyRequirement(pipname='mypy', minversion=[1, 6, 0]),
     PyRequirement(pipname='cpplint', minversion=[1, 6, 1]),
     PyRequirement(pipname='pytest', minversion=[7, 4, 2]),
     PyRequirement(pipname='pytz', minversion=[2023, 3]),
@@ -706,7 +706,7 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     # away all cmake builds everywhere (to keep things clean if we
     # rename or move something in the build dir or if we change
     # something cmake doesn't properly handle without a fresh start).
-    entries: list[Entry] = [Entry('explicit cmake rebuild', '3')]
+    entries: list[Entry] = [Entry('explicit cmake rebuild', '4')]
 
     # Start fresh if cmake version changes.
     cmake_ver_output = subprocess.run(

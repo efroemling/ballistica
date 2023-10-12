@@ -32,8 +32,12 @@ class Object {
   virtual auto GetObjectDescription() const -> std::string;
 
   enum class ThreadOwnership {
-    kClassDefault,    // Uses class' GetDefaultOwnerThread() call.
-    kNextReferencing  // Uses whichever thread next acquires/accesses a ref.
+    /// Uses class' GetDefaultOwnerThread() call.
+    kClassDefault,
+    /// Requires graphics context to be active.
+    kGraphicsContext,
+    /// Uses whichever thread next acquires/accesses a reference.
+    kNextReferencing
   };
 
 #if BA_DEBUG_BUILD

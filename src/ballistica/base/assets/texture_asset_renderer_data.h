@@ -10,8 +10,8 @@ namespace ballistica::base {
 // Renderer-specific data (gl tex, etc). To be extended by the renderer.
 class TextureAssetRendererData : public Object {
  public:
-  auto GetDefaultOwnerThread() const -> EventLoopID override {
-    return EventLoopID::kMain;
+  auto GetThreadOwnership() const -> ThreadOwnership override {
+    return ThreadOwnership::kGraphicsContext;
   }
 
   // Create the renderer data but don't load it in yet.

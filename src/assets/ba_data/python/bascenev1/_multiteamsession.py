@@ -162,8 +162,11 @@ class MultiTeamSession(Session):
     def get_max_players(self) -> int:
         """Return max number of Players allowed to join the game at once."""
         if self.use_teams:
-            return babase.app.config.get('Team Game Max Players', 8)
-        return babase.app.config.get('Free-for-All Max Players', 8)
+            val = babase.app.config.get('Team Game Max Players', 8)
+        else:
+            val = babase.app.config.get('Free-for-All Max Players', 8)
+        assert isinstance(val, int)
+        return val
 
     def _instantiate_next_game(self) -> None:
         self._next_game_instance = _bascenev1.newactivity(

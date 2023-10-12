@@ -131,24 +131,31 @@ def build_apple(arch: str, debug: bool = False) -> None:
     )
     os.chdir(builddir)
 
-    # TEMP: Check out a particular commit while the branch head is
-    # broken. We can actually fix this to use the current one, but
-    # something broke in the underlying build even on old commits so
-    # keeping it locked for now...
-    #
-    # run('git checkout bf1ed73d0d5ff46862ba69dd5eb2ffaeff6f19b6')
-
-    # Grab the branch corresponding to our target python version.
-    subprocess.run(['git', 'checkout', PY_VER_APPLE], check=True)
+    # TEMP: The recent update (Oct 2023) switched a bit of stuff around
+    # (apparently dylib support has been revamped more) so I need to
+    # re-test things and probably make adjustments. Holding off for now.
+    # Might just do this when I update everything to 3.12 which will be
+    # a bit of work anyway.
+    if bool(True):
+        subprocess.run(
+            ['git', 'checkout', 'a8c93fed2bdf0122fc2ca663faa1e46e5cf28d69'],
+            check=True,
+        )
+    else:
+        # Grab the branch corresponding to our target Python version.
+        subprocess.run(['git', 'checkout', PY_VER_APPLE], check=True)
 
     txt = readfile('Makefile')
 
     # Sanity check; we don't actually change Python version for these
     # builds but we need to make sure exactly what version the repo is
-    # building (for path purposes and whatnot).
+    # building (for path purposes and whatnot). Ideally we should just
+    # parse these values from the Makefile so we don't have to keep
+    # things in sync.
     if f'\nPYTHON_VERSION={PY_VER_EXACT_APPLE}\n' not in txt:
         raise RuntimeError(
-            'Does not look like our PY_VER_EXACT_APPLE matches the repo;'
+            f'Does not look like our PY_VER_EXACT_APPLE'
+            f' ({PY_VER_EXACT_APPLE}) matches the repo;'
             f' please update it in {__name__}.'
         )
 
@@ -328,7 +335,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # be fixed to build with it. I *think* this has already been done; we just
     # need to wait for the official update beyond 3.4.4.
     print('TEMP TEMP TEMP HARD-CODING OLD NDK FOR LIBFFI BUG')
-    os.environ['ANDROID_NDK'] = '/home/ubuntu/android/ndk/25.2.9519653'
+    os.environ['ANDROID_NDK'] = '/home/ubuntu/AndroidSDK/ndk/25.2.9519653'
 
     # Disable builds for dependencies we don't use.
     ftxt = readfile('Android/build_deps.py')

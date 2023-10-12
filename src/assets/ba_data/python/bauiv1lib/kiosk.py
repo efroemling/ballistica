@@ -21,7 +21,7 @@ class KioskWindow(bui.Window):
         self._height = 340.0
 
         def _do_cancel() -> None:
-            QuitWindow(swish=True, back=True)
+            QuitWindow(swish=True, quit_type=bui.QuitType.BACK)
 
         super().__init__(
             root_widget=bui.containerwidget(

@@ -64,7 +64,9 @@ def get_remote_app_name() -> babase.Lstr:
 
 def should_submit_debug_info() -> bool:
     """(internal)"""
-    return _babase.app.config.get('Submit Debug Info', True)
+    val = _babase.app.config.get('Submit Debug Info', True)
+    assert isinstance(val, bool)
+    return val
 
 
 def handle_v1_cloud_log() -> None:
@@ -442,10 +444,10 @@ class AppHealthMonitor(AppSubsystem):
 
             self._first_check = False
 
-    def on_app_pause(self) -> None:
+    def on_app_suspend(self) -> None:
         assert _babase.in_logic_thread()
         self._running = False
 
-    def on_app_resume(self) -> None:
+    def on_app_unsuspend(self) -> None:
         assert _babase.in_logic_thread()
         self._running = True

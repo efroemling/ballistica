@@ -136,14 +136,14 @@ AudioServer::AudioServer() : impl_{new AudioServer::Impl()} {}
 void AudioServer::OnMainThreadStartApp() {
   // Spin up our thread.
   event_loop_ = new EventLoop(EventLoopID::kAudio);
-  g_core->pausable_event_loops.push_back(event_loop_);
+  g_core->suspendable_event_loops.push_back(event_loop_);
 
   // Run some setup stuff from our shiny new thread.
   event_loop_->PushCall([this] {
     // We want to be informed when our event-loop is pausing and unpausing.
-    event_loop()->AddPauseCallback(
+    event_loop()->AddSuspendCallback(
         NewLambdaRunnableUnmanaged([this] { OnThreadPause(); }));
-    event_loop()->AddResumeCallback(
+    event_loop()->AddUnsuspendCallback(
         NewLambdaRunnableUnmanaged([this] { OnThreadResume(); }));
   });
 
@@ -1136,7 +1136,7 @@ void AudioServer::PushSetSoundPitchCall(float val) {
   event_loop()->PushCall([this, val] { SetSoundPitch(val); });
 }
 
-void AudioServer::PushSetPausedCall(bool pause) {
+void AudioServer::PushSetSuspendedCall(bool pause) {
   event_loop()->PushCall([this, pause] {
     if (g_buildconfig.ostype_android()) {
       Log(LogLevel::kError, "Shouldn't be getting SetPausedCall on android.");
@@ -1189,7 +1189,7 @@ void AudioServer::ClearSoundRefDeleteList() {
 
 void AudioServer::BeginInterruption() {
   assert(!g_base->InAudioThread());
-  g_base->audio_server->PushSetPausedCall(true);
+  g_base->audio_server->PushSetSuspendedCall(true);
 
   // Wait a reasonable amount of time for the thread to act on it.
   millisecs_t t = g_core->GetAppTimeMillisecs();
@@ -1211,7 +1211,7 @@ void AudioServer::OnThreadResume() { SetPaused(false); }
 
 void AudioServer::EndInterruption() {
   assert(!g_base->InAudioThread());
-  g_base->audio_server->PushSetPausedCall(false);
+  g_base->audio_server->PushSetSuspendedCall(false);
 
   // Wait a reasonable amount of time for the thread to act on it.
   millisecs_t t = g_core->GetAppTimeMillisecs();

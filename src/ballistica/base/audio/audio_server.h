@@ -28,7 +28,7 @@ class AudioServer {
 
   void PushSetVolumesCall(float music_volume, float sound_volume);
   void PushSetSoundPitchCall(float val);
-  void PushSetPausedCall(bool pause);
+  void PushSetSuspendedCall(bool pause);
 
   static void BeginInterruption();
   static void EndInterruption();

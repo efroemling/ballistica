@@ -32,6 +32,8 @@ class AppAdapterSDL : public AppAdapter {
   void OnMainThreadStartApp() override;
   void DoApplyAppConfig() override;
 
+  auto TryRender() -> bool;
+
   auto CanToggleFullscreen() -> bool const override;
   auto SupportsVSync() -> bool const override;
   auto SupportsMaxFPS() -> bool const override;
@@ -40,8 +42,12 @@ class AppAdapterSDL : public AppAdapter {
   void DoPushMainThreadRunnable(Runnable* runnable) override;
   void RunMainThreadEventLoopToCompletion() override;
   void DoExitMainThreadEventLoop() override;
+  auto InGraphicsContext() -> bool override;
+  void DoPushGraphicsContextRunnable(Runnable* runnable) override;
+  void CursorPositionForDraw(float* x, float* y) override;
 
  private:
+  class ScopedAllowGraphics_;
   void SetScreen_(bool fullscreen, int max_fps, VSyncRequest vsync_requested,
                   TextureQualityRequest texture_quality_requested,
                   GraphicsQualityRequest graphics_quality_requested);
@@ -60,11 +66,23 @@ class AppAdapterSDL : public AppAdapter {
   void RemoveSDLInputDevice_(int index);
   void SleepUntilNextEventCycle_(microsecs_t cycle_start_time);
 
-  bool done_{};
-  bool fullscreen_{};
-  bool vsync_actually_enabled_{};
-  bool debug_log_sdl_frame_timing_{};
-  bool hidden_{};
+  bool done_ : 1 {};
+  bool fullscreen_ : 1 {};
+  bool vsync_actually_enabled_ : 1 {};
+  bool debug_log_sdl_frame_timing_ : 1 {};
+  bool hidden_ : 1 {};
+
+  /// With this off, graphics call pushes simply get pushed to the main
+  /// thread and graphics code is allowed to run any time in the main
+  /// thread. When this is on, pushed graphics-context calls get enqueued
+  /// and run as part of drawing, and graphics context calls are only
+  /// allowed during draws. This strictness is generally not needed here but
+  /// can be useful to test with, as it more closely matches other platforms
+  /// that require such a setup.
+  bool strict_graphics_context_ : 1 {};
+  bool strict_graphics_allowed_ : 1 {};
+  std::mutex strict_graphics_calls_mutex_;
+  std::vector<Runnable*> strict_graphics_calls_;
   VSync vsync_{VSync::kUnset};
   uint32_t sdl_runnable_event_id_{};
   int max_fps_{60};
@@ -73,6 +91,7 @@ class AppAdapterSDL : public AppAdapter {
   Vector2f window_size_{1.0f, 1.0f};
   SDL_Window* sdl_window_{};
   void* sdl_gl_context_{};
+  millisecs_t last_windowevent_close_time_{};
 };
 
 }  // namespace ballistica::base

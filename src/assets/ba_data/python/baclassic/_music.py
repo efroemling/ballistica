@@ -239,7 +239,7 @@ class MusicSubsystem:
             logging.exception('Error in get_soundtrack_entry_name.')
             return 'default'
 
-    def on_app_resume(self) -> None:
+    def on_app_unsuspend(self) -> None:
         """Should be run when the app resumes from a suspended state."""
         if babase.is_os_playing_music():
             self.do_play_music(None)

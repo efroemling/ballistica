@@ -2,7 +2,6 @@
 
 #include "ballistica/ui_v1/widget/text_widget.h"
 
-#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
@@ -13,11 +12,6 @@
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
-#include "ballistica/base/ui/ui.h"
-#include "ballistica/core/core.h"
-#include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/foundation/logging.h"
-#include "ballistica/shared/foundation/types.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_sys.h"

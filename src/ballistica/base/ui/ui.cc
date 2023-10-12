@@ -7,12 +7,10 @@
 #include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
-#include "ballistica/base/support/ui_v1_soft.h"
 #include "ballistica/base/ui/dev_console.h"
+#include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/foundation/inline.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
@@ -59,9 +57,11 @@ void UI::StepDisplayTime() {
 void UI::OnAppStart() {
   assert(g_base->InLogicThread());
 
-  if (g_base->HaveUIV1()) {
-    g_base->ui_v1()->OnAppStart();
-  }
+  // if (auto* ui_delegate = g_base->ui->delegate()) {
+  // printf("HAVE DEL %d\n",
+  //        static_cast<int>(g_base->ui->delegate() != nullptr));
+  // g_base->ui_v1()->OnAppStart();
+  // }
 
   // Make sure user knows when forced-ui-scale is enabled.
   if (force_scale_) {
@@ -92,36 +92,36 @@ void UI::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 
 void UI::DoApplyAppConfig() {
   assert(g_base->InLogicThread());
-  if (g_base->HaveUIV1()) {
-    g_base->ui_v1()->DoApplyAppConfig();
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    ui_delegate->DoApplyAppConfig();
   }
   show_dev_console_button_ =
       g_base->app_config->Resolve(AppConfig::BoolID::kShowDevConsoleButton);
 }
 
 auto UI::MainMenuVisible() const -> bool {
-  if (g_base->HaveUIV1()) {
-    return g_base->ui_v1()->MainMenuVisible();
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    return ui_delegate->MainMenuVisible();
   }
   return false;
 }
 
 auto UI::PartyIconVisible() -> bool {
-  if (g_base->HaveUIV1()) {
-    return g_base->ui_v1()->PartyIconVisible();
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    return ui_delegate->PartyIconVisible();
   }
   return false;
 }
 
 void UI::ActivatePartyIcon() {
-  if (g_base->HaveUIV1()) {
-    g_base->ui_v1()->ActivatePartyIcon();
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    ui_delegate->ActivatePartyIcon();
   }
 }
 
 auto UI::PartyWindowOpen() -> bool {
-  if (g_base->HaveUIV1()) {
-    return g_base->ui_v1()->PartyWindowOpen();
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    return ui_delegate->PartyWindowOpen();
   }
   return false;
 }
@@ -145,8 +145,10 @@ auto UI::HandleMouseDown(int button, float x, float y, bool double_click)
     handled = dev_console_->HandleMouseDown(button, x, y);
   }
 
-  if (!handled && g_base->HaveUIV1()) {
-    handled = g_base->ui_v1()->HandleLegacyRootUIMouseDown(x, y);
+  if (!handled) {
+    if (auto* ui_delegate = g_base->ui->delegate()) {
+      handled = ui_delegate->HandleLegacyRootUIMouseDown(x, y);
+    }
   }
 
   if (!handled) {
@@ -176,8 +178,8 @@ void UI::HandleMouseUp(int button, float x, float y) {
     }
   }
 
-  if (g_base->HaveUIV1()) {
-    g_base->ui_v1()->HandleLegacyRootUIMouseUp(x, y);
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    ui_delegate->HandleLegacyRootUIMouseUp(x, y);
   }
 }
 
@@ -205,8 +207,8 @@ void UI::HandleMouseMotion(float x, float y) {
   SendWidgetMessage(
       WidgetMessage(WidgetMessage::Type::kMouseMove, nullptr, x, y));
 
-  if (g_base->HaveUIV1()) {
-    g_base->ui_v1()->HandleLegacyRootUIMouseMotion(x, y);
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    ui_delegate->HandleLegacyRootUIMouseMotion(x, y);
   }
 }
 
@@ -232,8 +234,8 @@ void UI::PushMainMenuPressCall(InputDevice* device) {
 
 void UI::MainMenuPress_(InputDevice* device) {
   assert(g_base->InLogicThread());
-  if (g_base->HaveUIV1()) {
-    g_base->ui_v1()->DoHandleDeviceMenuPress(device);
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    ui_delegate->DoHandleDeviceMenuPress(device);
   } else {
     Log(LogLevel::kWarning,
         "UI::MainMenuPress called without ui_v1 present; unexpected.");
@@ -250,8 +252,8 @@ void UI::SetUIInputDevice(InputDevice* input_device) {
 }
 
 void UI::Reset() {
-  if (g_base->HaveUIV1()) {
-    g_base->ui_v1()->Reset();
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    ui_delegate->Reset();
   }
 }
 
@@ -267,21 +269,21 @@ auto UI::ShouldShowButtonShortcuts() const -> bool {
 }
 
 auto UI::SendWidgetMessage(const WidgetMessage& m) -> int {
-  if (g_base->HaveUIV1()) {
-    return g_base->ui_v1()->SendWidgetMessage(m);
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    return ui_delegate->SendWidgetMessage(m);
   }
   return false;
 }
 
 void UI::OnScreenSizeChange() {
-  if (g_base->HaveUIV1()) {
-    g_base->ui_v1()->OnScreenSizeChange();
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    ui_delegate->OnScreenSizeChange();
   }
 }
 
 void UI::LanguageChanged() {
-  if (g_base->HaveUIV1()) {
-    g_base->ui_v1()->OnLanguageChange();
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    ui_delegate->OnLanguageChange();
   }
 }
 
@@ -313,7 +315,9 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget* {
   // events are received by that device for a long time, it is up for grabs
   // to the next device that requests it.
 
-  if (!g_base->HaveUIV1()) {
+  auto* ui_delegate = g_base->ui->delegate();
+
+  if (!ui_delegate) {
     ret_val = nullptr;
   } else if ((GetUIInputDevice() == nullptr)
              || (input_device == GetUIInputDevice())
@@ -325,7 +329,7 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget* {
     // seconds ago to automatically own a newly created widget).
     last_input_device_use_time_ = time;
     ui_input_device_ = input_device;
-    ret_val = g_base->ui_v1()->GetRootWidget();
+    ret_val = ui_delegate->GetRootWidget();
   } else {
     // For rejected input devices, play error sounds sometimes so they know
     // they're not the chosen one.
@@ -382,8 +386,8 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget* {
 }
 
 void UI::Draw(FrameDef* frame_def) {
-  if (g_base->HaveUIV1()) {
-    g_base->ui_v1()->Draw(frame_def);
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    ui_delegate->Draw(frame_def);
   }
 }
 
@@ -468,40 +472,43 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
 }
 
 void UI::ShowURL(const std::string& url) {
-  if (g_base->HaveUIV1()) {
-    g_base->ui_v1()->DoShowURL(url);
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    ui_delegate->DoShowURL(url);
   } else {
-    Log(LogLevel::kWarning,
-        "UI::ShowURL called without g_ui_v1_soft present; unexpected.");
+    Log(LogLevel::kWarning, "UI::ShowURL called without ui_delegate present.");
   }
 }
 
-void UI::ConfirmQuit() {
-  g_base->logic->event_loop()->PushCall([this] {
-    // If the in-app console is active, dismiss it.
-    if (dev_console_ != nullptr && dev_console_->IsActive()) {
-      dev_console_->Dismiss();
-    }
+void UI::set_ui_delegate(base::UIDelegateInterface* delegate) {
+  assert(g_base->InLogicThread());
 
-    assert(g_base->InLogicThread());
-    // If we're headless or we don't have ui-v1, just quit immediately; a
-    // confirm screen wouldn't work anyway.
-    if (g_core->HeadlessMode() || g_base->input->IsInputLocked()
-        || !g_base->HaveUIV1()) {
-      g_base->QuitApp();
-      return;
-    } else {
-      ScopedSetContext ssc(nullptr);
-      g_base->audio->PlaySound(g_base->assets->SysSound(SysSoundID::kSwish));
-      g_base->ui_v1()->DoQuitWindow();
+  if (delegate == delegate_) {
+    return;
+  }
 
-      // If we have a keyboard, give it UI ownership.
-      InputDevice* keyboard = g_base->input->keyboard_input();
-      if (keyboard) {
-        g_base->ui->SetUIInputDevice(keyboard);
-      }
+  try {
+    auto* old_delegate = delegate_;
+    delegate_ = nullptr;
+    if (old_delegate) {
+      old_delegate->OnDeactivate();
     }
-  });
+    delegate_ = delegate;
+    if (delegate_) {
+      delegate_->OnActivate();
+
+      // Inform them that a few things changed, since they might have since
+      // the last time they were active (these callbacks only go to the *active*
+      // ui delegate).
+      delegate_->DoApplyAppConfig();
+      delegate_->OnScreenSizeChange();
+      delegate_->OnLanguageChange();
+    }
+  } catch (const Exception& exc) {
+    // Switching UI delegates is a big deal; don't try to continue if
+    // something goes wrong.
+    FatalError(std::string("Error setting native layer ui-delegate: ")
+               + exc.what());
+  }
 }
 
 void UI::PushDevConsolePrintCall(const std::string& msg) {

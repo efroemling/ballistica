@@ -431,7 +431,9 @@ class GamepadSettingsWindow(bui.Window):
     def get_unassigned_buttons_run_value(self) -> bool:
         """(internal)"""
         assert self._settings is not None
-        return self._settings.get('unassignedButtonsRun', True)
+        val = self._settings.get('unassignedButtonsRun', True)
+        assert isinstance(val, bool)
+        return val
 
     def set_unassigned_buttons_run_value(self, value: bool) -> None:
         """(internal)"""
@@ -446,7 +448,9 @@ class GamepadSettingsWindow(bui.Window):
     def get_start_button_activates_default_widget_value(self) -> bool:
         """(internal)"""
         assert self._settings is not None
-        return self._settings.get('startButtonActivatesDefaultWidget', True)
+        val = self._settings.get('startButtonActivatesDefaultWidget', True)
+        assert isinstance(val, bool)
+        return val
 
     def set_start_button_activates_default_widget_value(
         self, value: bool
@@ -463,7 +467,9 @@ class GamepadSettingsWindow(bui.Window):
     def get_ui_only_value(self) -> bool:
         """(internal)"""
         assert self._settings is not None
-        return self._settings.get('uiOnly', False)
+        val = self._settings.get('uiOnly', False)
+        assert isinstance(val, bool)
+        return val
 
     def set_ui_only_value(self, value: bool) -> None:
         """(internal)"""
@@ -478,7 +484,9 @@ class GamepadSettingsWindow(bui.Window):
     def get_ignore_completely_value(self) -> bool:
         """(internal)"""
         assert self._settings is not None
-        return self._settings.get('ignoreCompletely', False)
+        val = self._settings.get('ignoreCompletely', False)
+        assert isinstance(val, bool)
+        return val
 
     def set_ignore_completely_value(self, value: bool) -> None:
         """(internal)"""
@@ -493,7 +501,9 @@ class GamepadSettingsWindow(bui.Window):
     def get_auto_recalibrate_analog_stick_value(self) -> bool:
         """(internal)"""
         assert self._settings is not None
-        return self._settings.get('autoRecalibrateAnalogStick', False)
+        val = self._settings.get('autoRecalibrateAnalogStick', False)
+        assert isinstance(val, bool)
+        return val
 
     def set_auto_recalibrate_analog_stick_value(self, value: bool) -> None:
         """(internal)"""
@@ -510,7 +520,9 @@ class GamepadSettingsWindow(bui.Window):
         assert self._settings is not None
         if not self._is_secondary:
             raise RuntimeError('Enable value only applies to secondary editor.')
-        return self._settings.get('enableSecondary', False)
+        val = self._settings.get('enableSecondary', False)
+        assert isinstance(val, bool)
+        return val
 
     def show_secondary_editor(self) -> None:
         """(internal)"""

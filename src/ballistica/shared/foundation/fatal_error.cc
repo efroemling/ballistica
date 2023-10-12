@@ -4,7 +4,6 @@
 
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/support/base_soft.h"
-#include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/logging.h"
 
 namespace ballistica {

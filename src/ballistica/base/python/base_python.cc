@@ -103,20 +103,20 @@ void BasePython::SoftImportClassic() {
   }
 }
 
-void BasePython::SoftImportUIV1() {
-  // To keep our init order clean, we want to root out any attempted uses
-  // of this before _babase/babase has been fully imported.
-  assert(g_base);
-  assert(g_base->IsBaseCompletelyImported());
+// void BasePython::SoftImportUIV1() {
+//   // To keep our init order clean, we want to root out any attempted uses
+//   // of this before _babase/babase has been fully imported.
+//   assert(g_base);
+//   assert(g_base->IsBaseCompletelyImported());
 
-  auto gil{Python::ScopedInterpreterLock()};
-  auto result = PythonRef::StolenSoft(PyImport_ImportModule("_bauiv1"));
-  if (!result.Exists()) {
-    // Ignore any errors here for now. All that will matter is whether plus
-    // gave us its interface.
-    PyErr_Clear();
-  }
-}
+//   auto gil{Python::ScopedInterpreterLock()};
+//   auto result = PythonRef::StolenSoft(PyImport_ImportModule("_bauiv1"));
+//   if (!result.Exists()) {
+//     // Ignore any errors here for now. All that will matter is whether plus
+//     // gave us its interface.
+//     PyErr_Clear();
+//   }
+// }
 
 void BasePython::ReadConfig() {
   auto gil{Python::ScopedInterpreterLock()};
@@ -151,12 +151,12 @@ void BasePython::OnAppStart() {
 
 void BasePython::OnAppPause() {
   assert(g_base->InLogicThread());
-  objs().Get(BasePython::ObjID::kAppOnNativePauseCall).Call();
+  objs().Get(BasePython::ObjID::kAppOnNativeSuspendCall).Call();
 }
 
 void BasePython::OnAppResume() {
   assert(g_base->InLogicThread());
-  objs().Get(BasePython::ObjID::kAppOnNativeResumeCall).Call();
+  objs().Get(BasePython::ObjID::kAppOnNativeUnsuspendCall).Call();
 }
 
 void BasePython::OnAppShutdown() {
@@ -467,6 +467,10 @@ auto BasePython::GetPyEnum_TimeType(PyObject* obj) -> TimeType {
   return GetPyEnum<TimeType>(BasePython::ObjID::kTimeTypeClass, obj);
 }
 
+auto BasePython::GetPyEnum_QuitType(PyObject* obj) -> QuitType {
+  return GetPyEnum<QuitType>(BasePython::ObjID::kQuitTypeClass, obj);
+}
+
 auto BasePython::GetPyEnum_TimeFormat(PyObject* obj) -> TimeFormat {
   return GetPyEnum<TimeFormat>(BasePython::ObjID::kTimeFormatClass, obj);
 }
@@ -477,6 +481,14 @@ auto BasePython::IsPyEnum_InputType(PyObject* obj) -> bool {
 
 auto BasePython::GetPyEnum_InputType(PyObject* obj) -> InputType {
   return GetPyEnum<InputType>(BasePython::ObjID::kInputTypeClass, obj);
+}
+
+// TODO(ericf): Make this a template.
+auto BasePython::PyQuitType(QuitType val) -> PythonRef {
+  auto args = PythonRef::Stolen(Py_BuildValue("(d)", static_cast<int>(val)));
+  auto out = objs().Get(BasePython::ObjID::kQuitTypeClass).Call(args);
+  BA_PRECONDITION(out.Exists());
+  return out;
 }
 
 auto BasePython::GetResource(const char* key, const char* fallback_resource,

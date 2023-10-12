@@ -26,6 +26,7 @@
 #include "ballistica/base/support/stress_test.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/logging.h"
@@ -226,7 +227,7 @@ void BaseFeatureSet::OnAppShutdownComplete() {
   if (app_adapter->ManagesMainThreadEventLoop()) {
     app_adapter->DoExitMainThreadEventLoop();
   } else {
-    platform->TerminateApp();
+    app_adapter->TerminateApp();
   }
 }
 
@@ -297,10 +298,6 @@ void BaseFeatureSet::RunAppToCompletion() {
   g_base->app_adapter->RunMainThreadEventLoopToCompletion();
 }
 
-// void BaseFeatureSet::PrimeAppMainThreadEventPump() {
-//   app_adapter->PrimeMainThreadEventPump();
-// }
-
 auto BaseFeatureSet::HavePlus() -> bool {
   if (!plus_soft_ && !tried_importing_plus_) {
     python->SoftImportPlus();
@@ -361,37 +358,6 @@ auto BaseFeatureSet::classic() -> ClassicSoftInterface* {
 void BaseFeatureSet::set_classic(ClassicSoftInterface* classic) {
   assert(classic_soft_ == nullptr);
   classic_soft_ = classic;
-}
-
-auto BaseFeatureSet::HaveUIV1() -> bool {
-  if (!ui_v1_soft_ && !tried_importing_ui_v1_) {
-    python->SoftImportUIV1();
-    // Important to set this *after* import attempt, or a second import
-    // attempt while first is ongoing can insta-fail. Multiple import
-    // attempts shouldn't hurt anything.
-    tried_importing_ui_v1_ = true;
-  }
-  return ui_v1_soft_ != nullptr;
-}
-
-/// Access the plus feature-set. Will throw an exception if not present.
-auto BaseFeatureSet::ui_v1() -> UIV1SoftInterface* {
-  if (!ui_v1_soft_ && !tried_importing_ui_v1_) {
-    python->SoftImportUIV1();
-    // Important to set this *after* import attempt, or a second import
-    // attempt while first is ongoing can insta-fail. Multiple import
-    // attempts shouldn't hurt anything.
-    tried_importing_ui_v1_ = true;
-  }
-  if (!ui_v1_soft_) {
-    throw Exception("ui_v1 feature-set not present.");
-  }
-  return ui_v1_soft_;
-}
-
-void BaseFeatureSet::set_ui_v1(UIV1SoftInterface* ui_v1) {
-  assert(ui_v1_soft_ == nullptr);
-  ui_v1_soft_ = ui_v1;
 }
 
 auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
@@ -487,6 +453,10 @@ auto BaseFeatureSet::InNetworkWriteThread() const -> bool {
     return loop->ThreadIsCurrent();
   }
   return false;
+}
+
+auto BaseFeatureSet::InGraphicsContext() const -> bool {
+  return app_adapter->InGraphicsContext();
 }
 
 void BaseFeatureSet::ScreenMessage(const std::string& s,
@@ -719,15 +689,25 @@ void BaseFeatureSet::ShutdownSuppressDisallow() {
 
 auto BaseFeatureSet::GetReturnValue() const -> int { return return_value(); }
 
-void BaseFeatureSet::QuitApp(QuitType quit_type) {
-  // If they ask for 'back' and we support that, do it.
-  // Otherwise if they want 'back' or 'soft' and we support soft, do it.
-  // Otherwise go with a regular app shutdown.
-  if (quit_type == QuitType::kBack && g_base->platform->CanBackQuit()) {
-    logic->event_loop()->PushCall([this] { platform->DoBackQuit(); });
+void BaseFeatureSet::QuitApp(bool confirm, QuitType quit_type) {
+  // If they want a confirm dialog and we're able to present one, do that.
+  if (confirm && !g_core->HeadlessMode() && !g_base->input->IsInputLocked()
+      && g_base->ui->delegate()
+      && g_base->ui->delegate()->HasQuitConfirmDialog()) {
+    logic->event_loop()->PushCall(
+        [this, quit_type] { g_base->ui->delegate()->ConfirmQuit(quit_type); });
+    return;
+  }
+  // Ok looks like we're quitting immediately.
+  //
+  // If they ask for 'back' and we support that, do it. Otherwise if they
+  // want 'back' or 'soft' and we support soft, do it. Otherwise go with a
+  // regular app shutdown.
+  if (quit_type == QuitType::kBack && app_adapter->CanBackQuit()) {
+    logic->event_loop()->PushCall([this] { app_adapter->DoBackQuit(); });
   } else if ((quit_type == QuitType::kBack || quit_type == QuitType::kSoft)
-             && g_base->platform->CanSoftQuit()) {
-    logic->event_loop()->PushCall([this] { platform->DoSoftQuit(); });
+             && app_adapter->CanSoftQuit()) {
+    logic->event_loop()->PushCall([this] { app_adapter->DoSoftQuit(); });
   } else {
     logic->event_loop()->PushCall([this] { logic->Shutdown(); });
   }

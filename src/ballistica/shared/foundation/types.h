@@ -97,6 +97,27 @@ enum class InputType {
   kLast  // Sentinel
 };
 
+// BA_EXPORT_PYTHON_ENUM
+/// Types of input a controller can send to the game.
+///
+/// Category: Enums
+///
+/// 'soft' may hide/reset the app but keep the process running, depending
+///    on the platform.
+///
+/// 'back' is a variant of 'soft' which may give 'back-button-pressed'
+///    behavior depending on the platform. (returning to some previous
+///    activity instead of dumping to the home screen, etc.)
+///
+/// 'hard' leads to the process exiting. This generally should be avoided
+///    on platforms such as mobile.
+enum class QuitType {
+  kSoft,
+  kBack,
+  kHard,
+  kLast  // Sentinel.
+};
+
 typedef int64_t TimerMedium;
 
 // BA_EXPORT_PYTHON_ENUM

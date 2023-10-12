@@ -1452,11 +1452,11 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
 
   millisecs_t app_time_millisecs = frame_def->app_time_millisecs();
 
-  bool can_show_cursor = g_core->platform->IsRunningOnDesktop();
+  bool can_show_cursor = g_base->app_adapter->ShouldUseCursor();
   bool should_show_cursor =
       camera_->manual() || g_base->input->IsCursorVisible();
 
-  if (g_buildconfig.hardware_cursor()) {
+  if (g_base->app_adapter->HasHardwareCursor()) {
     // If we're using a hardware cursor, ship hardware cursor visibility
     // updates to the app thread periodically.
     bool new_cursor_visibility = false;
@@ -1472,7 +1472,7 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
       last_cursor_visibility_event_time_ = app_time_millisecs;
       g_base->app_adapter->PushMainThreadCall([this] {
         assert(g_core && g_core->InMainThread());
-        g_base->platform->SetHardwareCursorVisible(hardware_cursor_visible_);
+        g_base->app_adapter->SetHardwareCursorVisible(hardware_cursor_visible_);
       });
     }
   } else {
@@ -1486,10 +1486,10 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
 
         // Note: we don't plug in known cursor position values here; we tell the
-        // renderer to insert the latest values on its end; this lessens cursor
-        // lag substantially.
+        // renderer to insert the latest values on its end; this can lessen
+        // cursor lag substantially.
         c.CursorTranslate();
-        c.Translate(csize * 0.44f, csize * -0.44f, kCursorZDepth);
+        c.Translate(csize * 0.40f, csize * -0.38f, kCursorZDepth);
         c.Scale(csize, csize);
         c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
       }

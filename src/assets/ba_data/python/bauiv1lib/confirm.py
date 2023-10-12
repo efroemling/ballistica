@@ -153,15 +153,15 @@ class QuitWindow:
 
     def __init__(
         self,
+        quit_type: bui.QuitType | None = None,
         swish: bool = False,
-        back: bool = False,
         origin_widget: bui.Widget | None = None,
     ):
         classic = bui.app.classic
         assert classic is not None
         ui = bui.app.ui_v1
         app = bui.app
-        self._back = back
+        self._quit_type = quit_type
 
         # If there's already one of us up somewhere, kill it.
         if ui.quit_window is not None:
@@ -187,29 +187,8 @@ class QuitWindow:
                 resource=quit_resource,
                 subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
             ),
-            self._fade_and_quit,
+            lambda: bui.quit(confirm=False, quit_type=self._quit_type)
+            if self._quit_type is not None
+            else bui.quit(confirm=False),
             origin_widget=origin_widget,
         ).root_widget
-
-    def _fade_and_quit(self) -> None:
-        bui.fade_screen(
-            False,
-            time=0.2,
-            endcall=lambda: bui.quit(soft=True, back=self._back),
-        )
-
-        # Prevent the user from doing anything else while we're on our
-        # way out.
-        bui.lock_all_input()
-
-        # On systems supporting soft-quit, unlock and fade back in shortly
-        # (soft-quit basically just backgrounds/hides the app).
-        if bui.app.env.supports_soft_quit:
-            # Unlock and fade back in shortly. Just in case something goes
-            # wrong (or on Android where quit just backs out of our activity
-            # and we may come back after).
-            def _come_back() -> None:
-                bui.unlock_all_input()
-                bui.fade_screen(True)
-
-            bui.apptimer(0.5, _come_back)

@@ -115,21 +115,9 @@ class TextureAssetPreloadData;
 class TextureAssetRendererData;
 class TouchInput;
 class UI;
-class UIV1SoftInterface;
+class UIDelegateInterface;
 class AppAdapterVR;
 class GraphicsVR;
-
-enum class QuitType : uint8_t {
-  /// Leads to the process exiting.
-  kHard,
-  /// May hide/reset the app but keep the process running. Generally how
-  /// mobile apps behave.
-  kSoft,
-  /// Same as kSoft but gives 'back-button-pressed' behavior which may
-  /// differ depending on the OS (returning to a previous Activity in
-  /// Android instead of dumping to the home screen, etc.)
-  kBack,
-};
 
 enum class AssetType : uint8_t {
   kTexture,
@@ -619,9 +607,11 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// 'soft' means the app can simply reset/hide itself instead of actually
   /// exiting the process (common behavior on mobile platforms). 'back'
   /// means that a soft-quit should behave as if a back-button was pressed,
-  /// whic may trigger different behavior in the OS than a standard soft
-  /// quit.
-  void QuitApp(QuitType quit_type = QuitType::kSoft);
+  /// which may trigger different behavior in the OS than a standard soft
+  /// quit. If 'confirm' is true, a confirmation dialog will be presented if
+  /// the current app-mode provides one and the app is in gui mode.
+  /// Otherwise the quit will be immediate.
+  void QuitApp(bool confirm = false, QuitType quit_type = QuitType::kSoft);
 
   /// Called when app shutdown process completes. Sets app to exit.
   void OnAppShutdownComplete();
@@ -657,14 +647,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   void set_classic(ClassicSoftInterface* classic);
 
-  /// Try to load the ui_v1 feature-set and return whether it is available.
-  auto HaveUIV1() -> bool;
-
-  /// Access the ui_v1 feature-set. Will throw an exception if not present.
-  auto ui_v1() -> UIV1SoftInterface*;
-
-  void set_ui_v1(UIV1SoftInterface* ui_v1);
-
   /// Return a string that should be universally unique to this particular
   /// running instance of the app.
   auto GetAppInstanceUUID() -> const std::string&;
@@ -686,6 +668,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   auto InAudioThread() const -> bool override;
   auto InBGDynamicsThread() const -> bool override;
   auto InNetworkWriteThread() const -> bool override;
+  auto InGraphicsContext() const -> bool override;
 
   /// High level screen-message call usable from any thread.
   void ScreenMessage(const std::string& s, const Vector3f& color) override;
@@ -755,9 +738,10 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   Utils* const utils;
 
   // Variable subsystems.
-  auto* app_mode() const { return app_mode_; }
-  auto* stress_test() const { return stress_test_; }
   void set_app_mode(AppMode* mode);
+  auto* app_mode() const { return app_mode_; }
+
+  auto* stress_test() const { return stress_test_; }
 
   /// Whether we're running under ballisticakit_server.py
   /// (affects some app behavior).
@@ -781,7 +765,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   AppMode* app_mode_;
   PlusSoftInterface* plus_soft_{};
   ClassicSoftInterface* classic_soft_{};
-  UIV1SoftInterface* ui_v1_soft_{};
   StressTest* stress_test_;
 
   std::mutex shutdown_suppress_lock_;

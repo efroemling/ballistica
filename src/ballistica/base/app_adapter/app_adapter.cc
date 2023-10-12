@@ -76,7 +76,7 @@ void AppAdapter::OnMainThreadStartApp() {
   if (!g_core->HeadlessMode()) {
     // If we've got a nice themed hardware cursor, show it. Otherwise we'll
     // render it manually, which is laggier but gets the job done.
-    g_base->platform->SetHardwareCursorVisible(g_buildconfig.hardware_cursor());
+    // g_base->platform->SetHardwareCursorVisible(g_buildconfig.hardware_cursor());
 
     // On desktop systems we just assume keyboard input exists and add it
     // immediately.
@@ -100,7 +100,7 @@ void AppAdapter::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 void AppAdapter::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
 void AppAdapter::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
 
-void AppAdapter::OnAppPause_() {
+void AppAdapter::OnAppSuspend_() {
   assert(g_core->InMainThread());
 
   // IMPORTANT: Any pause related stuff that event-loop-threads need to do
@@ -109,7 +109,7 @@ void AppAdapter::OnAppPause_() {
   // their event-loop is actually paused.
 
   // Pause all event loops.
-  EventLoop::SetEventLoopsPaused(true);
+  EventLoop::SetEventLoopsSuspended(true);
 
   if (g_base->network_reader) {
     g_base->network_reader->OnAppPause();
@@ -117,24 +117,26 @@ void AppAdapter::OnAppPause_() {
   g_base->networking->OnAppPause();
 }
 
-void AppAdapter::OnAppResume_() {
+void AppAdapter::OnAppUnsuspend_() {
   assert(g_core->InMainThread());
 
   // Spin all event-loops back up.
-  EventLoop::SetEventLoopsPaused(false);
+  EventLoop::SetEventLoopsSuspended(false);
 
   // Run resumes that expect to happen in the main thread.
   g_base->network_reader->OnAppResume();
   g_base->networking->OnAppResume();
 
-  // When resuming from a paused state, we may want to pause whatever game
-  // was running when we last were active.
+  // When resuming from a suspended state, we may want to pause whatever
+  // game was running when we last were active.
   //
   // TODO(efro): we should make this smarter so it doesn't happen if we're
   // in a network game or something that we can't pause; bringing up the
   // menu doesn't really accomplish anything there.
-  if (g_core->should_pause) {
-    g_core->should_pause = false;
+  //
+  // In general this probably should be handled at a higher level.
+  if (g_core->should_pause_active_game) {
+    g_core->should_pause_active_game = false;
 
     // If we've been completely backgrounded, send a menu-press command to
     // the game; this will bring up a pause menu if we're in the game/etc.
@@ -144,13 +146,13 @@ void AppAdapter::OnAppResume_() {
   }
 }
 
-void AppAdapter::PauseApp() {
+void AppAdapter::SuspendApp() {
   assert(g_core);
   assert(g_core->InMainThread());
 
-  if (app_paused_) {
+  if (app_suspended_) {
     Log(LogLevel::kWarning,
-        "AppAdapter::PauseApp() called with app already paused.");
+        "AppAdapter::SuspendApp() called with app already suspended.");
     return;
   }
 
@@ -161,11 +163,12 @@ void AppAdapter::PauseApp() {
   millisecs_t max_duration{2000};
 
   g_core->platform->DebugLog(
-      "PauseApp@" + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
+      "SuspendApp@"
+      + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
   // assert(!app_pause_requested_);
   // app_pause_requested_ = true;
-  app_paused_ = true;
-  OnAppPause_();
+  app_suspended_ = true;
+  OnAppSuspend_();
   // UpdatePauseResume_();
 
   // We assume that the OS will completely suspend our process the moment we
@@ -177,12 +180,12 @@ void AppAdapter::PauseApp() {
          < max_duration) {
     // If/when we get to a point with no threads waiting to be paused, we're
     // good to go.
-    auto threads{EventLoop::GetStillPausingThreads()};
+    auto threads{EventLoop::GetStillSuspendingEventLoops()};
     running_thread_count = threads.size();
     if (running_thread_count == 0) {
       if (g_buildconfig.debug_build()) {
         Log(LogLevel::kDebug,
-            "PauseApp() completed in "
+            "SuspendApp() completed in "
                 + std::to_string(core::CorePlatform::GetCurrentMillisecs()
                                  - start_time)
                 + "ms.");
@@ -193,7 +196,7 @@ void AppAdapter::PauseApp() {
 
   // If we made it here, we timed out. Complain.
   Log(LogLevel::kError,
-      std::string("PauseApp() took too long; ")
+      std::string("SuspendApp() took too long; ")
           + std::to_string(running_thread_count)
           + " threads not yet paused after "
           + std::to_string(core::CorePlatform::GetCurrentMillisecs()
@@ -201,26 +204,27 @@ void AppAdapter::PauseApp() {
           + " ms.");
 }
 
-void AppAdapter::ResumeApp() {
+void AppAdapter::UnsuspendApp() {
   assert(g_core);
   assert(g_core->InMainThread());
 
-  if (!app_paused_) {
+  if (!app_suspended_) {
     Log(LogLevel::kWarning,
-        "AppAdapter::ResumeApp() called with app not in paused state.");
+        "AppAdapter::UnsuspendApp() called with app not in paused state.");
     return;
   }
   millisecs_t start_time{core::CorePlatform::GetCurrentMillisecs()};
   g_core->platform->DebugLog(
-      "ResumeApp@" + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
+      "UnsuspendApp@"
+      + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
   // assert(app_pause_requested_);
   // app_pause_requested_ = false;
   // UpdatePauseResume_();
-  app_paused_ = false;
-  OnAppResume_();
+  app_suspended_ = false;
+  OnAppUnsuspend_();
   if (g_buildconfig.debug_build()) {
     Log(LogLevel::kDebug,
-        "ResumeApp() completed in "
+        "UnsuspendApp() completed in "
             + std::to_string(core::CorePlatform::GetCurrentMillisecs()
                              - start_time)
             + "ms.");
@@ -248,5 +252,33 @@ auto AppAdapter::InGraphicsContext() -> bool { return g_core->InMainThread(); }
 void AppAdapter::DoPushGraphicsContextRunnable(Runnable* runnable) {
   DoPushMainThreadRunnable(runnable);
 }
+
+void AppAdapter::CursorPositionForDraw(float* x, float* y) {
+  assert(x && y);
+
+  // By default, just use our latest event-delivered cursor position;
+  // this should work everywhere though perhaps might not be most optimal.
+  if (g_base->input == nullptr) {
+    *x = 0.0f;
+    *y = 0.0f;
+    return;
+  }
+  *x = g_base->input->cursor_pos_x();
+  *y = g_base->input->cursor_pos_y();
+}
+
+auto AppAdapter::ShouldUseCursor() -> bool { return true; }
+
+auto AppAdapter::HasHardwareCursor() -> bool { return false; }
+
+void AppAdapter::SetHardwareCursorVisible(bool visible) {
+  printf("SHOULD SET VIS %d\n", static_cast<int>(visible));
+}
+
+auto AppAdapter::CanSoftQuit() -> bool { return false; }
+auto AppAdapter::CanBackQuit() -> bool { return false; }
+void AppAdapter::DoBackQuit() { FatalError("Fixme unimplemented."); }
+void AppAdapter::DoSoftQuit() { FatalError("Fixme unimplemented."); }
+void AppAdapter::TerminateApp() { FatalError("Fixme unimplemented."); }
 
 }  // namespace ballistica::base

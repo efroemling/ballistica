@@ -105,7 +105,9 @@ class Level:
     def complete(self) -> bool:
         """Whether this Level has been completed."""
         config = self._get_config_dict()
-        return config.get('Complete', False)
+        val = config.get('Complete', False)
+        assert isinstance(val, bool)
+        return val
 
     def set_complete(self, val: bool) -> None:
         """Set whether or not this level is complete."""
@@ -147,7 +149,9 @@ class Level:
     @property
     def rating(self) -> float:
         """The current rating for this Level."""
-        return self._get_config_dict().get('Rating', 0.0)
+        val = self._get_config_dict().get('Rating', 0.0)
+        assert isinstance(val, float)
+        return val
 
     def set_rating(self, rating: float) -> None:
         """Set a rating for this Level, replacing the old ONLY IF higher."""

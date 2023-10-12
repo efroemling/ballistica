@@ -13,6 +13,8 @@ import _bauiv1
 if TYPE_CHECKING:
     from typing import Sequence
 
+    import babase
+
 
 def ticket_icon_press() -> None:
     from babase import app
@@ -57,14 +59,14 @@ def party_icon_activate(origin: Sequence[float]) -> None:
         logging.warning('party_icon_activate: no classic.')
 
 
-def quit_window() -> None:
+def quit_window(quit_type: babase.QuitType) -> None:
     from babase import app
 
     if app.classic is None:
         logging.exception('Classic not present.')
         return
 
-    app.classic.quit_window()
+    app.classic.quit_window(quit_type)
 
 
 def device_menu_press(device_id: int | None) -> None:

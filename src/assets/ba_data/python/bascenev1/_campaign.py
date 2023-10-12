@@ -87,7 +87,9 @@ class Campaign:
 
     def get_selected_level(self) -> str:
         """Return the name of the Level currently selected in the UI."""
-        return self.configdict.get('Selection', self._levels[0].name)
+        val = self.configdict.get('Selection', self._levels[0].name)
+        assert isinstance(val, str)
+        return val
 
     @property
     def configdict(self) -> dict[str, Any]:

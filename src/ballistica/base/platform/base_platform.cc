@@ -245,20 +245,6 @@ void BasePlatform::SetupInterruptHandling() {
 #endif
 }
 
-void BasePlatform::GetCursorPosition(float* x, float* y) {
-  assert(x && y);
-
-  // By default, just use our latest event-delivered cursor position;
-  // this should work everywhere though perhaps might not be most optimal.
-  if (g_base->input == nullptr) {
-    *x = 0.0f;
-    *y = 0.0f;
-    return;
-  }
-  *x = g_base->input->cursor_pos_x();
-  *y = g_base->input->cursor_pos_y();
-}
-
 void BasePlatform::OnMainThreadStartAppComplete() {}
 
 void BasePlatform::OnAppStart() { assert(g_base->InLogicThread()); }
@@ -268,13 +254,6 @@ void BasePlatform::OnAppShutdown() { assert(g_base->InLogicThread()); }
 void BasePlatform::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 void BasePlatform::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
 void BasePlatform::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
-
-void BasePlatform::TerminateApp() { exit(g_base->return_value()); }
-
-auto BasePlatform::CanSoftQuit() -> bool { return false; }
-auto BasePlatform::CanBackQuit() -> bool { return false; }
-void BasePlatform::DoBackQuit() {}
-void BasePlatform::DoSoftQuit() {}
 
 auto BasePlatform::HaveStringEditor() -> bool { return false; }
 
@@ -320,13 +299,6 @@ void BasePlatform::DoInvokeStringEditor(const std::string& title,
                                         const std::string& value,
                                         std::optional<int> max_chars) {
   Log(LogLevel::kError, "FIXME: DoInvokeStringEditor() unimplemented");
-}
-
-void BasePlatform::SetHardwareCursorVisible(bool visible) {
-// FIXME: Move/forward this to AppAdapter.
-#if BA_SDL_BUILD
-  SDL_ShowCursor(visible ? SDL_ENABLE : SDL_DISABLE);
-#endif
 }
 
 }  // namespace ballistica::base

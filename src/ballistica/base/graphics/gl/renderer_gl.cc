@@ -2080,7 +2080,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
       }
       case RenderCommandBuffer::Command::kCursorTranslate: {
         float x, y;
-        g_base->platform->GetCursorPosition(&x, &y);
+        g_base->app_adapter->CursorPositionForDraw(&x, &y);
         g_base->graphics_server->Translate(Vector3f(x, y, 0));
         break;
       }

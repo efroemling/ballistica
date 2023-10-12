@@ -442,11 +442,11 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/support/stdio_console.h
   ${BA_SRC_ROOT}/ballistica/base/support/stress_test.cc
   ${BA_SRC_ROOT}/ballistica/base/support/stress_test.h
-  ${BA_SRC_ROOT}/ballistica/base/support/ui_v1_soft.h
   ${BA_SRC_ROOT}/ballistica/base/ui/dev_console.cc
   ${BA_SRC_ROOT}/ballistica/base/ui/dev_console.h
   ${BA_SRC_ROOT}/ballistica/base/ui/ui.cc
   ${BA_SRC_ROOT}/ballistica/base/ui/ui.h
+  ${BA_SRC_ROOT}/ballistica/base/ui/ui_delegate.h
   ${BA_SRC_ROOT}/ballistica/base/ui/widget_message.h
   ${BA_SRC_ROOT}/ballistica/classic/classic.cc
   ${BA_SRC_ROOT}/ballistica/classic/classic.h

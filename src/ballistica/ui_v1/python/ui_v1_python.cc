@@ -4,9 +4,12 @@
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
+#include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/base/ui/dev_console.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python_command.h"
 #include "ballistica/shared/python/python_module_builder.h"
@@ -130,6 +133,29 @@ void UIV1Python::LaunchStringEditOld(TextWidget* w) {
   Object::New<base::PythonContextCall>(
       objs().Get(ObjID::kOnScreenKeyboardClass))
       ->Schedule(args);
+}
+
+void UIV1Python::InvokeQuitWindow(QuitType quit_type) {
+  assert(g_base->InLogicThread());
+  base::ScopedSetContext ssc(nullptr);
+
+  // If the in-app console is active, dismiss it.
+  if (auto* dev_console = g_base->ui->dev_console()) {
+    if (dev_console->IsActive()) {
+      dev_console->Dismiss();
+    }
+  }
+
+  g_base->audio->PlaySound(g_base->assets->SysSound(base::SysSoundID::kSwish));
+  auto py_enum = g_base->python->PyQuitType(quit_type);
+  auto args = PythonRef::Stolen(Py_BuildValue("(O)", py_enum.Get()));
+  objs().Get(UIV1Python::ObjID::kQuitWindowCall).Call(args);
+
+  // If we have a keyboard, give it UI ownership.
+  base::InputDevice* keyboard = g_base->input->keyboard_input();
+  if (keyboard) {
+    g_base->ui->SetUIInputDevice(keyboard);
+  }
 }
 
 }  // namespace ballistica::ui_v1

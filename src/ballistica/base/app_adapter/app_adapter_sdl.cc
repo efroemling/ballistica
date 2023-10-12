@@ -1,9 +1,9 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/shared/buildconfig/buildconfig_common.h"
 #if BA_SDL_BUILD
 
 #include "ballistica/base/app_adapter/app_adapter_sdl.h"
+
 #include "ballistica/base/base.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/gl/gl_sys.h"
@@ -17,9 +17,27 @@
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/core_platform.h"
+#include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
+
+/// RAII-friendly way to mark where in the main thread we're allowed to run
+/// graphics code (only applies in strict-graphics-context mode).
+class AppAdapterSDL::ScopedAllowGraphics_ {
+ public:
+  explicit ScopedAllowGraphics_(AppAdapterSDL* adapter) : adapter_{adapter} {
+    assert(!adapter_->strict_graphics_allowed_);
+    adapter->strict_graphics_allowed_ = true;
+  }
+  ~ScopedAllowGraphics_() {
+    assert(adapter_->strict_graphics_allowed_);
+    adapter_->strict_graphics_allowed_ = false;
+  }
+
+ private:
+  AppAdapterSDL* adapter_;
+};
 
 AppAdapterSDL::AppAdapterSDL() {
   assert(!g_core->HeadlessMode());
@@ -36,6 +54,11 @@ void AppAdapterSDL::OnMainThreadStartApp() {
   // App is starting. Let's fire up the ol' SDL.
   uint32_t sdl_flags{SDL_INIT_VIDEO | SDL_INIT_JOYSTICK};
 
+  if (strict_graphics_context_) {
+    Log(LogLevel::kWarning,
+        "AppAdapterSDL strict_graphics_context_ is enabled."
+        " Remember to turn this off.");
+  }
   // We may or may not want xinput on windows.
   if (g_buildconfig.ostype_windows()) {
     if (!g_core->platform->GetLowLevelConfigValue("enablexinput", 1)) {
@@ -72,6 +95,9 @@ void AppAdapterSDL::OnMainThreadStartApp() {
       }
     }
   }
+
+  // We currently use a software cursor, so hide the system one.
+  SDL_ShowCursor(SDL_DISABLE);
 }
 
 void AppAdapterSDL::DoApplyAppConfig() {
@@ -91,6 +117,7 @@ void AppAdapterSDL::DoApplyAppConfig() {
   //     g_base->app_config->Resolve(AppConfig::StringID::kResolutionAndroid);
 
   bool fullscreen = g_base->app_config->Resolve(AppConfig::BoolID::kFullscreen);
+  fullscreen = false;
   auto vsync = g_base->graphics->VSyncFromAppConfig();
   int max_fps = g_base->app_config->Resolve(AppConfig::IntID::kMaxFPS);
 
@@ -114,7 +141,7 @@ void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
     }
 
     // Draw.
-    if (!hidden_ && g_base->graphics_server->TryRender()) {
+    if (!hidden_ && TryRender()) {
       SDL_GL_SwapWindow(sdl_window_);
     }
 
@@ -122,6 +149,34 @@ void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
     SleepUntilNextEventCycle_(cycle_start_time);
 
     // Repeat.
+  }
+}
+
+auto AppAdapterSDL::TryRender() -> bool {
+  if (strict_graphics_context_) {
+    // In strict mode, allow graphics stuff in here. Normally we allow it
+    // anywhere in the main thread.
+    auto allow = ScopedAllowGraphics_(this);
+
+    // Run & release any pending runnables.
+    std::vector<Runnable*> calls;
+    {
+      // Pull calls off the list before running them; this way we only need
+      // to grab the list lock for a moment.
+      auto lock = std::scoped_lock(strict_graphics_calls_mutex_);
+      if (!strict_graphics_calls_.empty()) {
+        strict_graphics_calls_.swap(calls);
+      }
+    }
+    for (auto* call : calls) {
+      call->RunAndLogErrors();
+      delete call;
+    }
+    // Lastly render.
+    return g_base->graphics_server->TryRender();
+  } else {
+    // Simple path; just render.
+    return g_base->graphics_server->TryRender();
   }
 }
 
@@ -300,7 +355,13 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
       break;
 
     case SDL_QUIT:
-      g_base->logic->event_loop()->PushCall([] { g_base->ui->ConfirmQuit(); });
+      if (g_core->GetAppTimeMillisecs() - last_windowevent_close_time_ < 100) {
+        // If they hit the window close button, skip the confirm.
+        g_base->QuitApp(false);
+      } else {
+        // By default, confirm before quitting.
+        g_base->QuitApp(true);
+      }
       break;
 
     case SDL_TEXTINPUT: {
@@ -310,6 +371,13 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
 
     case SDL_WINDOWEVENT: {
       switch (event.window.event) {
+        case SDL_WINDOWEVENT_CLOSE: {
+          // Simply note that this happened. We use this to adjust our
+          // SDL_QUIT behavior (quit is called right after this).
+          last_windowevent_close_time_ = g_core->GetAppTimeMillisecs();
+          break;
+        }
+
         case SDL_WINDOWEVENT_MAXIMIZED: {
           if (g_buildconfig.ostype_macos() && !fullscreen_) {
             // Special case: on Mac, we wind up here if someone fullscreens
@@ -476,8 +544,11 @@ void AppAdapterSDL::SetScreen_(
     bool fullscreen, int max_fps, VSyncRequest vsync_requested,
     TextureQualityRequest texture_quality_requested,
     GraphicsQualityRequest graphics_quality_requested) {
-  assert(InGraphicsContext());
+  assert(g_core->InMainThread());
   assert(!g_core->HeadlessMode());
+
+  // In strict mode, allow graphics stuff in here.
+  auto allow = ScopedAllowGraphics_(this);
 
   // If we know what we support, filter our request types to what is
   // supported. This will keep us from rebuilding contexts if request type
@@ -674,6 +745,74 @@ void AppAdapterSDL::UpdateScreenSizes_() {
   SDL_GL_GetDrawableSize(sdl_window_, &pixels_x, &pixels_y);
   g_base->graphics_server->SetScreenResolution(static_cast<float>(pixels_x),
                                                static_cast<float>(pixels_y));
+}
+
+/// As a default, allow graphics stuff in the main thread.
+auto AppAdapterSDL::InGraphicsContext() -> bool {
+  // In strict mode, make sure we're in the right thread *and* within our
+  // render call.
+  if (strict_graphics_context_) {
+    return g_core->InMainThread() && strict_graphics_allowed_;
+  }
+  // By default, allow anywhere in main thread.
+  return g_core->InMainThread();
+}
+
+void AppAdapterSDL::DoPushGraphicsContextRunnable(Runnable* runnable) {
+  // In strict mode, make sure we're in our TryRender() call.
+  if (strict_graphics_context_) {
+    auto lock = std::scoped_lock(strict_graphics_calls_mutex_);
+    if (strict_graphics_calls_.size() > 1000) {
+      BA_LOG_ONCE(LogLevel::kError, "strict_graphics_calls_ got too big.");
+    }
+    strict_graphics_calls_.push_back(runnable);
+  } else {
+    DoPushMainThreadRunnable(runnable);
+  }
+}
+
+void AppAdapterSDL::CursorPositionForDraw(float* x, float* y) {
+  // Note: disabling this code, but leaving it in here for now as a proof of
+  // concept in case its worth revisiting later. In my current tests on Mac,
+  // Windows, and Linux, I'm seeing basicaly zero difference between
+  // immediate calculated values and ones from the event system, so I'm
+  // guessing remaining latency might be coming from the fact that frames
+  // tend to get assembled 1/60th of a second before it is displayed or
+  // whatnot. It'd probably be a better use of time to just wire up hardware
+  // cursor support for this build.
+  if (explicit_bool(true)) {
+    AppAdapter::CursorPositionForDraw(x, y);
+    return;
+  }
+
+  assert(x && y);
+
+  // Grab latest values from the input subsystem (what would get used by
+  // default).
+  float event_x = g_base->input->cursor_pos_x();
+  float event_y = g_base->input->cursor_pos_y();
+
+  // Now ask sdl for it's latest values and wrangle the math ourself.
+  int sdl_x, sdl_y;
+  SDL_GetMouseState(&sdl_x, &sdl_y);
+
+  // Convert window coords to normalized.
+  float normalized_x = static_cast<float>(sdl_x) / window_size_.x;
+  float normalized_y = 1.0f - static_cast<float>(sdl_y) / window_size_.y;
+
+  // Convert normalized coords to virtual coords.
+  float immediate_x = g_base->graphics->PixelToVirtualX(
+      normalized_x * g_base->graphics->screen_pixel_width());
+  float immediate_y = g_base->graphics->PixelToVirtualY(
+      normalized_y * g_base->graphics->screen_pixel_height());
+
+  float diff_x = immediate_x - event_x;
+  float diff_y = immediate_y - event_y;
+  printf("DIFFS: %.2f %.2f\n", diff_x, diff_y);
+  fflush(stdout);
+
+  *x = immediate_x;
+  *y = immediate_y;
 }
 
 auto AppAdapterSDL::CanToggleFullscreen() -> bool const { return true; }

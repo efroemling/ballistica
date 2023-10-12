@@ -157,10 +157,10 @@ class CoreFeatureSet {
 
   // The following are misc values that should be migrated to applicable
   // subsystem classes.
-  bool threads_paused{};
+  bool event_loops_suspended{};
   bool workspaces_in_use{};
   bool replay_open{};
-  std::vector<EventLoop*> pausable_event_loops;
+  std::vector<EventLoop*> suspendable_event_loops;
   std::mutex v1_cloud_log_mutex;
   std::string v1_cloud_log;
   bool did_put_v1_cloud_log{};
@@ -168,7 +168,7 @@ class CoreFeatureSet {
   int master_server_source{};
   int session_count{};
   bool have_incentivized_ad{false};
-  bool should_pause{};
+  bool should_pause_active_game{};
   bool reset_vr_orientation{};
   bool user_ran_commands{};
   std::thread::id main_thread_id{};
