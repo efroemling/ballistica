@@ -117,7 +117,7 @@ void AppAdapterSDL::DoApplyAppConfig() {
   //     g_base->app_config->Resolve(AppConfig::StringID::kResolutionAndroid);
 
   bool fullscreen = g_base->app_config->Resolve(AppConfig::BoolID::kFullscreen);
-  fullscreen = false;
+
   auto vsync = g_base->graphics->VSyncFromAppConfig();
   int max_fps = g_base->app_config->Resolve(AppConfig::IntID::kMaxFPS);
 
@@ -747,7 +747,6 @@ void AppAdapterSDL::UpdateScreenSizes_() {
                                                static_cast<float>(pixels_y));
 }
 
-/// As a default, allow graphics stuff in the main thread.
 auto AppAdapterSDL::InGraphicsContext() -> bool {
   // In strict mode, make sure we're in the right thread *and* within our
   // render call.

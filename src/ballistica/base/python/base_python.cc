@@ -485,7 +485,7 @@ auto BasePython::GetPyEnum_InputType(PyObject* obj) -> InputType {
 
 // TODO(ericf): Make this a template.
 auto BasePython::PyQuitType(QuitType val) -> PythonRef {
-  auto args = PythonRef::Stolen(Py_BuildValue("(d)", static_cast<int>(val)));
+  auto args = PythonRef::Stolen(Py_BuildValue("(i)", static_cast<int>(val)));
   auto out = objs().Get(BasePython::ObjID::kQuitTypeClass).Call(args);
   BA_PRECONDITION(out.Exists());
   return out;

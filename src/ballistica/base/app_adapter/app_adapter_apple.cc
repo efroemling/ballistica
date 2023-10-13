@@ -34,8 +34,8 @@ class AppAdapterApple::ScopedAllowGraphics_ {
 };
 
 auto AppAdapterApple::ManagesMainThreadEventLoop() const -> bool {
-  // Nope; we run under a standard Cocoa/UIKit environment and they call us; we
-  // don't call them.
+  // Nope; we run under a standard Cocoa/UIKit environment and they call us;
+  // we don't call them.
   return false;
 }
 
@@ -76,8 +76,8 @@ void AppAdapterApple::SetScreen_(
 
   auto* gs = g_base->graphics_server;
 
-  // We need a full renderer reload if quality values have changed
-  // or if we don't have one yet.
+  // We need a full renderer reload if quality values have changed or if we
+  // don't have one yet.
   bool need_full_reload =
       ((gs->texture_quality_requested() != texture_quality_requested)
        || (gs->graphics_quality_requested() != graphics_quality_requested)
@@ -105,10 +105,10 @@ void AppAdapterApple::ReloadRenderer_(
     gs->set_renderer(new RendererGL());
   }
 
-  // Set a dummy screen resolution to start with.
-  // The main thread will kick along the latest real resolution just before
-  // each frame draw, but we need *something* here or else we'll get errors due
-  // to framebuffers getting made at size 0/etc.
+  // Set a dummy screen resolution to start with. The main thread will kick
+  // along the latest real resolution just before each frame draw, but we
+  // need *something* here or else we'll get errors due to framebuffers
+  // getting made at size 0/etc.
   g_base->graphics_server->SetScreenResolution(320.0, 240.0);
 
   // Update graphics quality based on request.
@@ -135,8 +135,8 @@ auto AppAdapterApple::TryRender() -> bool {
   // Run & release any pending runnables.
   std::vector<Runnable*> calls;
   {
-    // Pull calls off the list before running them; this way we only need
-    // to grab the list lock for a moment.
+    // Pull calls off the list before running them; this way we only need to
+    // grab the list lock for a moment.
     auto lock = std::scoped_lock(graphics_calls_mutex_);
     if (!graphics_calls_.empty()) {
       graphics_calls_.swap(calls);
@@ -157,7 +157,6 @@ auto AppAdapterApple::InGraphicsContext() -> bool {
 }
 
 void AppAdapterApple::DoPushGraphicsContextRunnable(Runnable* runnable) {
-  // In strict mode, make sure we're in our TryRender() call.
   auto lock = std::scoped_lock(graphics_calls_mutex_);
   if (graphics_calls_.size() > 1000) {
     BA_LOG_ONCE(LogLevel::kError, "graphics_calls_ got too big.");
@@ -171,10 +170,10 @@ auto AppAdapterApple::ShouldUseCursor() -> bool {
     return true;
   }
 
-  // Anywhere else (iOS, tvOS, etc.) just say no cursor for now. The OS
-  // may draw one in some cases (trackpad connected to iPad, etc.) but we
-  // don't interfere and just let the OS draw its normal cursor in that
-  // case. Can revisit this later if that becomes a more common scenario.
+  // Anywhere else (iOS, tvOS, etc.) just say no cursor for now. The OS may
+  // draw one in some cases (trackpad connected to iPad, etc.) but we don't
+  // interfere and just let the OS draw its normal cursor in that case. Can
+  // revisit this later if that becomes a more common scenario.
   return false;
 }
 

@@ -1,11 +1,11 @@
-### 1.7.28 (build 21443, api 8, 2023-10-11)
+### 1.7.28 (build 21447, api 8, 2023-10-12)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
   attempting to support various old/hacked versions of SDL, etc. I ripped out
   huge chunks of it and put back still-relevant pieces in a much more cleanly
   designed way. This should put us in a much better place for supporting various
-  platforms and making graphical improvements going forward. See
+  platforms and making graphical improvements going forward.
   `ballistica/base/app_adapter/app_adapter_sdl.cc` for an example of the now
   nicely implemented system.
 - The engine now requires OpenGL 3.0 or newer on desktop and OpenGL ES 3.0 or
