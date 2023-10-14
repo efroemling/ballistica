@@ -15,8 +15,8 @@ from threading import Lock, Thread, current_thread
 from typing import TYPE_CHECKING
 
 # We make use of the bacommon and efro packages as well as site-packages
-# included with our bundled Ballistica dist, so we need to add those paths
-# before we import them.
+# included with our bundled Ballistica dist, so we need to add those
+# paths before we import them.
 sys.path += [
     str(Path(Path(__file__).parent, 'dist', 'ba_data', 'python')),
     str(Path(Path(__file__).parent, 'dist', 'ba_data', 'python-site-packages')),
@@ -34,31 +34,55 @@ if TYPE_CHECKING:
 VERSION_STR = '1.3.1'
 
 # Version history:
+#
 # 1.3.1
-#  Windows binary is now named BallisticaKitHeadless.exe
+#
+#  - Windows binary is now named 'BallisticaKitHeadless.exe'.
+#
 # 1.3:
-#  Added show_tutorial config option
-#  Added team_names config option
-#  Added team_colors config option
-#  Added playlist_inline config option
+#
+#  - Added show_tutorial config option.
+#
+#  - Added team_names config option.
+#
+#  - Added team_colors config option.
+#
+#  - Added playlist_inline config option.
+#
 # 1.2:
-#  Added optional --help arg
-#  Added --config arg for specifying config file and --root for ba_root path
-#  Added noninteractive mode and --interactive/--noninteractive args to
-#    explicitly enable/disable it (it is autodetected by default)
-#  Added explicit control for auto-restart: --no-auto-restart
-#  Config file is now reloaded each time server binary is restarted; no more
-#    need to bring down server wrapper to pick up changes
-#  Now automatically restarts server binary when config file is modified
-#    (use --no-config-auto-restart to disable that behavior)
+#
+#  - Added optional --help arg.
+#
+#  - Added --config arg for specifying config file and --root for
+#    ba_root path.
+#
+#  - Added noninteractive mode and --interactive/--noninteractive args
+#    to explicitly enable/disable it (it is autodetected by default).
+#
+#  - Added explicit control for auto-restart: --no-auto-restart.
+#
+#  - Config file is now reloaded each time server binary is restarted;
+#    no more need to bring down server wrapper to pick up changes.
+#
+#  - Now automatically restarts server binary when config file is
+#    modified (use --no-config-auto-restart to disable that behavior).
+#
 # 1.1.1:
-#  Switched config reading to use efro.dataclasses.dataclass_from_dict()
+#
+#  - Switched config reading to use
+#    efro.dataclasses.dataclass_from_dict().
+#
 # 1.1.0:
-#  Added shutdown command
-#  Changed restart to default to immediate=True
-#  Added clean_exit_minutes, unclean_exit_minutes, and idle_exit_minutes
+#
+#  - Added shutdown command.
+#
+#  - Changed restart to default to immediate=True.
+#
+#  - Added clean_exit_minutes, unclean_exit_minutes, and idle_exit_minutes.
+#
 # 1.0.0:
-#  Initial release
+#
+#  - Initial release.
 
 
 class ServerManagerApp:
@@ -101,8 +125,9 @@ class ServerManagerApp:
         # This may override the above defaults.
         self._parse_command_line_args()
 
-        # Do an initial config-load. If the config is invalid at this point
-        # we can cleanly die (we're more lenient later on reloads).
+        # Do an initial config-load. If the config is invalid at this
+        # point we can cleanly die (we're more lenient later on
+        # reloads).
         self.load_config(strict=True, print_confirmation=False)
 
     @property
@@ -131,9 +156,9 @@ class ServerManagerApp:
         )
 
         # Python will handle SIGINT for us (as KeyboardInterrupt) but we
-        # need to register a SIGTERM handler so we have a chance to clean
-        # up our subprocess when someone tells us to die. (and avoid
-        # zombie processes)
+        # need to register a SIGTERM handler so we have a chance to
+        # clean up our subprocess when someone tells us to die. (and
+        # avoid zombie processes)
         signal.signal(signal.SIGTERM, self._handle_term_signal)
 
         # During a run, we make the assumption that cwd is the dir
@@ -155,7 +180,8 @@ class ServerManagerApp:
                 f'{Clr.CYN}Waiting for subprocess exit...{Clr.RST}', flush=True
             )
 
-        # Mark ourselves as shutting down and wait for the process to wrap up.
+        # Mark ourselves as shutting down and wait for the process to
+        # wrap up.
         self._done = True
         self._subprocess_thread.join()
 
@@ -181,9 +207,10 @@ class ServerManagerApp:
             # Gracefully bow out if we kill ourself via keyboard.
             pass
         except SystemExit:
-            # We get this from the builtin quit(), our signal handler, etc.
-            # Need to catch this so we can clean up, otherwise we'll be
-            # left in limbo with our process thread still running.
+            # We get this from the builtin quit(), our signal handler,
+            # etc. Need to catch this so we can clean up, otherwise
+            # we'll be left in limbo with our process thread still
+            # running.
             pass
         self._postrun()
 
@@ -207,14 +234,17 @@ class ServerManagerApp:
         self._enable_tab_completion(context)
 
         # Now just sit in an interpreter.
-        # TODO: make it possible to use IPython if the user has it available.
+        #
+        # TODO: make it possible to use IPython if the user has it
+        # available.
         try:
             self._interpreter_start_time = time.time()
             code.interact(local=context, banner='', exitmsg='')
         except SystemExit:
-            # We get this from the builtin quit(), our signal handler, etc.
-            # Need to catch this so we can clean up, otherwise we'll be
-            # left in limbo with our process thread still running.
+            # We get this from the builtin quit(), our signal handler,
+            # etc. Need to catch this so we can clean up, otherwise
+            # we'll be left in limbo with our process thread still
+            # running.
             pass
         except BaseException as exc:
             print(
@@ -238,19 +268,21 @@ class ServerManagerApp:
         self._block_for_command_completion()
 
     def _block_for_command_completion(self) -> None:
-        # Ideally we'd block here until the command was run so our prompt would
-        # print after it's results. We currently don't get any response from
-        # the app so the best we can do is block until our bg thread has sent
-        # it. In the future we can perhaps add a proper 'command port'
-        # interface for proper blocking two way communication.
+        # Ideally we'd block here until the command was run so our
+        # prompt would print after it's results. We currently don't get
+        # any response from the app so the best we can do is block until
+        # our bg thread has sent it. In the future we can perhaps add a
+        # proper 'command port' interface for proper blocking two way
+        # communication.
         while True:
             with self._subprocess_commands_lock:
                 if not self._subprocess_commands:
                     break
             time.sleep(0.1)
 
-        # One last short delay so if we come out *just* as the command is sent
-        # we'll hopefully still give it enough time to process/print.
+        # One last short delay so if we come out *just* as the command
+        # is sent we'll hopefully still give it enough time to
+        # process/print.
         time.sleep(0.1)
 
     def screenmessage(
@@ -320,8 +352,8 @@ class ServerManagerApp:
             )
         )
 
-        # If we're asking for an immediate restart but don't get one within
-        # the grace period, bring down the hammer.
+        # If we're asking for an immediate restart but don't get one
+        # within the grace period, bring down the hammer.
         if immediate:
             self._subprocess_force_kill_time = (
                 time.time() + self.IMMEDIATE_SHUTDOWN_TIME_LIMIT
@@ -340,12 +372,12 @@ class ServerManagerApp:
             ShutdownCommand(reason=ShutdownReason.NONE, immediate=immediate)
         )
 
-        # An explicit shutdown means we know to bail completely once this
-        # subprocess completes.
+        # An explicit shutdown means we know to bail completely once
+        # this subprocess completes.
         self._wrapper_shutdown_desired = True
 
-        # If we're asking for an immediate shutdown but don't get one within
-        # the grace period, bring down the hammer.
+        # If we're asking for an immediate shutdown but don't get one
+        # within the grace period, bring down the hammer.
         if immediate:
             self._subprocess_force_kill_time = (
                 time.time() + self.IMMEDIATE_SHUTDOWN_TIME_LIMIT
@@ -378,9 +410,10 @@ class ServerManagerApp:
                 if i + 1 >= argc:
                     raise CleanError('Expected a path as next arg.')
                 path = sys.argv[i + 1]
-                # Unlike config_path, this one doesn't have to exist now.
-                # We do however need an abs path because we may be in a
-                # different cwd currently than we will be during the run.
+                # Unlike config_path, this one doesn't have to exist
+                # now. We do however need an abs path because we may be
+                # in a different cwd currently than we will be during
+                # the run.
                 self._ba_root_path = os.path.abspath(path)
                 i += 2
             elif arg == '--interactive':
@@ -538,6 +571,7 @@ class ServerManagerApp:
 
         if not os.path.exists(self._config_path):
             # Special case:
+            #
             # If the user didn't specify a particular config file, allow
             # gracefully falling back to defaults if the default one is
             # missing.
@@ -606,24 +640,26 @@ class ServerManagerApp:
         """Spin up the server subprocess and run it until exit."""
         # pylint: disable=consider-using-with
 
-        # Reload our config, and update our overall behavior based on it.
-        # We do non-strict this time to give the user repeated attempts if
-        # if they mess up while modifying the config on the fly.
+        # Reload our config, and update our overall behavior based on
+        # it. We do non-strict this time to give the user repeated
+        # attempts if if they mess up while modifying the config on the
+        # fly.
         self.load_config(strict=False, print_confirmation=True)
 
         self._prep_subprocess_environment()
 
-        # Launch the binary and grab its stdin;
-        # we'll use this to feed it commands.
+        # Launch the binary and grab its stdin; we'll use this to feed
+        # it commands.
         self._subprocess_launch_time = time.time()
 
         # Set an environment var so the server process knows its being
-        # run under us. This causes it to ignore ctrl-c presses and other
-        # slight behavior tweaks. Hmm; should this be an argument instead?
+        # run under us. This causes it to ignore ctrl-c presses and
+        # other slight behavior tweaks. Hmm; should this be an argument
+        # instead?
         os.environ['BA_SERVER_WRAPPER_MANAGED'] = '1'
 
-        # Set an environment var to change the device name.
-        # Device name is used while making connection with master server,
+        # Set an environment var to change the device name. Device name
+        # is used while making connection with master server,
         # cloud-console recognize us with this name.
         os.environ['BA_DEVICE_NAME'] = self._config.party_name
 
@@ -663,9 +699,10 @@ class ServerManagerApp:
 
         assert self._subprocess_exited_cleanly is not None
 
-        # EW: it seems that if we die before the main thread has fully started
-        # up the interpreter, its possible that it will not break out of its
-        # loop via the usual SystemExit that gets sent when we die.
+        # EW: it seems that if we die before the main thread has fully
+        # started up the interpreter, its possible that it will not
+        # break out of its loop via the usual SystemExit that gets sent
+        # when we die.
         if self._interactive:
             while (
                 self._interpreter_start_time is None
@@ -694,8 +731,8 @@ class ServerManagerApp:
         # tell the main thread to die.
         if self._wrapper_shutdown_desired:
             # Only do this if the main thread is not already waiting for
-            # us to die; otherwise it can lead to deadlock.
-            # (we hang in os.kill while main thread is blocked in Thread.join)
+            # us to die; otherwise it can lead to deadlock. (we hang in
+            # os.kill while main thread is blocked in Thread.join)
             if not self._done:
                 self._done = True
 
@@ -721,6 +758,8 @@ class ServerManagerApp:
         bincfg['Auto Balance Teams'] = self._config.auto_balance_teams
         bincfg['Show Tutorial'] = self._config.show_tutorial
 
+        if self._config.protocol_version is not None:
+            bincfg['SceneV1 Host Protocol'] = self._config.protocol_version
         if self._config.team_names is not None:
             bincfg['Custom Team Names'] = self._config.team_names
         elif 'Custom Team Names' in bincfg:
@@ -769,8 +808,8 @@ class ServerManagerApp:
         assert current_thread() is self._subprocess_thread
         assert self._subprocess.stdin is not None
 
-        # Send the initial server config which should kick things off.
-        # (but make sure its values are still valid first)
+        # Send the initial server config which should kick things off
+        # (but make sure its values are still valid first).
         dataclass_validate(self._config)
         self._send_server_command(StartServerModeCommand(self._config))
 
@@ -782,8 +821,8 @@ class ServerManagerApp:
             # Pass along any commands to our process.
             with self._subprocess_commands_lock:
                 for incmd in self._subprocess_commands:
-                    # If we're passing a raw string to exec, no need to wrap it
-                    # in any proper structure.
+                    # If we're passing a raw string to exec, no need to
+                    # wrap it in any proper structure.
                     if isinstance(incmd, str):
                         self._subprocess.stdin.write((incmd + '\n').encode())
                         self._subprocess.stdin.flush()
@@ -794,9 +833,9 @@ class ServerManagerApp:
             # Request restarts/shut-downs for various reasons.
             self._request_shutdowns_or_restarts()
 
-            # If they want to force-kill our subprocess, simply exit this
-            # loop; the cleanup code will kill the process if its still
-            # alive.
+            # If they want to force-kill our subprocess, simply exit
+            # this loop; the cleanup code will kill the process if its
+            # still alive.
             if (
                 self._subprocess_force_kill_time is not None
                 and time.time() > self._subprocess_force_kill_time
@@ -855,8 +894,8 @@ class ServerManagerApp:
                     self.restart(immediate=True)
                     self._subprocess_sent_config_auto_restart = True
 
-        # Attempt clean exit if our clean-exit-time passes.
-        # (and enforce a 6 hour max if not provided)
+        # Attempt clean exit if our clean-exit-time passes (and enforce
+        # a 6 hour max if not provided).
         clean_exit_minutes = 360.0
         if self._config.clean_exit_minutes is not None:
             clean_exit_minutes = min(
@@ -881,8 +920,8 @@ class ServerManagerApp:
                     self.shutdown(immediate=False)
                 self._subprocess_sent_clean_exit = True
 
-        # Attempt unclean exit if our unclean-exit-time passes.
-        # (and enforce a 7 hour max if not provided)
+        # Attempt unclean exit if our unclean-exit-time passes (and
+        # enforce a 7 hour max if not provided).
         unclean_exit_minutes = 420.0
         if self._config.unclean_exit_minutes is not None:
             unclean_exit_minutes = min(
@@ -924,8 +963,8 @@ class ServerManagerApp:
 
         print(f'{Clr.CYN}Stopping subprocess...{Clr.RST}', flush=True)
 
-        # First, ask it nicely to die and give it a moment.
-        # If that doesn't work, bring down the hammer.
+        # First, ask it nicely to die and give it a moment. If that
+        # doesn't work, bring down the hammer.
         self._subprocess.terminate()
         try:
             self._subprocess.wait(timeout=10)
@@ -941,8 +980,9 @@ def main() -> None:
     try:
         ServerManagerApp().run()
     except CleanError as exc:
-        # For clean errors, do a simple print and fail; no tracebacks/etc.
-        # Any others will bubble up and give us the usual mess.
+        # For clean errors, do a simple print and fail; no
+        # tracebacks/etc. Any others will bubble up and give us the
+        # usual mess.
         exc.pretty_print()
         sys.exit(1)
 

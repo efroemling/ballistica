@@ -103,20 +103,27 @@ SceneV1FeatureSet::SceneV1FeatureSet() : python{new SceneV1Python()} {
   // Types: I is 32 bit int, i is 16 bit int, c is 8 bit int,
   // F is 32 bit float, f is 16 bit float,
   // s is string, b is bool.
-  SetupNodeMessageType("flash", NodeMessageType::kFlash, "");
-  SetupNodeMessageType("footing", NodeMessageType::kFooting, "c");
-  SetupNodeMessageType("impulse", NodeMessageType::kImpulse, "fffffffffifff");
-  SetupNodeMessageType("kick_back", NodeMessageType::kKickback, "fffffff");
-  SetupNodeMessageType("celebrate", NodeMessageType::kCelebrate, "i");
-  SetupNodeMessageType("celebrate_l", NodeMessageType::kCelebrateL, "i");
-  SetupNodeMessageType("celebrate_r", NodeMessageType::kCelebrateR, "i");
-  SetupNodeMessageType("knockout", NodeMessageType::kKnockout, "f");
-  SetupNodeMessageType("hurt_sound", NodeMessageType::kHurtSound, "");
-  SetupNodeMessageType("picked_up", NodeMessageType::kPickedUp, "");
-  SetupNodeMessageType("jump_sound", NodeMessageType::kJumpSound, "");
-  SetupNodeMessageType("attack_sound", NodeMessageType::kAttackSound, "");
-  SetupNodeMessageType("scream_sound", NodeMessageType::kScreamSound, "");
-  SetupNodeMessageType("stand", NodeMessageType::kStand, "ffff");
+  SetupNodeMessageType_("flash", NodeMessageType::kFlash, "");
+  SetupNodeMessageType_("footing", NodeMessageType::kFooting, "c");
+  SetupNodeMessageType_("impulse", NodeMessageType::kImpulse, "fffffffffifff");
+  SetupNodeMessageType_("kick_back", NodeMessageType::kKickback, "fffffff");
+  SetupNodeMessageType_("celebrate", NodeMessageType::kCelebrate, "i");
+  SetupNodeMessageType_("celebrate_l", NodeMessageType::kCelebrateL, "i");
+  SetupNodeMessageType_("celebrate_r", NodeMessageType::kCelebrateR, "i");
+  SetupNodeMessageType_("knockout", NodeMessageType::kKnockout, "f");
+  SetupNodeMessageType_("hurt_sound", NodeMessageType::kHurtSound, "");
+  SetupNodeMessageType_("picked_up", NodeMessageType::kPickedUp, "");
+  SetupNodeMessageType_("jump_sound", NodeMessageType::kJumpSound, "");
+  SetupNodeMessageType_("attack_sound", NodeMessageType::kAttackSound, "");
+  SetupNodeMessageType_("scream_sound", NodeMessageType::kScreamSound, "");
+  SetupNodeMessageType_("stand", NodeMessageType::kStand, "ffff");
+}
+
+auto SceneV1FeatureSet::Import() -> SceneV1FeatureSet* {
+  // Since we provide a native Python module, we piggyback our C++ front-end
+  // on top of that. This way our C++ and Python dependencies are resolved
+  // consistently no matter which side we are imported from.
+  return ImportThroughPythonModule<SceneV1FeatureSet>("_bascenev1");
 }
 
 void SceneV1FeatureSet::Reset() {
@@ -130,13 +137,6 @@ void SceneV1FeatureSet::ResetRandomNames() {
     return;
   }
   random_name_registry_->clear();
-}
-
-auto SceneV1FeatureSet::Import() -> SceneV1FeatureSet* {
-  // Since we provide a native Python module, we piggyback our C++ front-end
-  // on top of that. This way our C++ and Python dependencies are resolved
-  // consistently no matter which side we are imported from.
-  return ImportThroughPythonModule<SceneV1FeatureSet>("_bascenev1");
 }
 
 auto SceneV1FeatureSet::GetRandomName(const std::string& full_name)
@@ -172,9 +172,9 @@ auto SceneV1FeatureSet::GetRandomName(const std::string& full_name)
   return (*random_name_registry_)[full_name];
 }
 
-void SceneV1FeatureSet::SetupNodeMessageType(const std::string& name,
-                                             NodeMessageType val,
-                                             const std::string& format) {
+void SceneV1FeatureSet::SetupNodeMessageType_(const std::string& name,
+                                              NodeMessageType val,
+                                              const std::string& format) {
   node_message_types_[name] = val;
   assert(static_cast<int>(val) >= 0);
   if (node_message_formats_.size() <= static_cast<size_t>(val)) {

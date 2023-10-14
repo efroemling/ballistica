@@ -1046,7 +1046,24 @@ static auto PyCameraShake(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &intensity)) {
     return nullptr;
   }
-  g_base->graphics->LocalCameraShake(intensity);
+
+  if (Scene* scene = ContextRefSceneV1::FromCurrent().GetMutableScene()) {
+    // Send to clients/replays (IF we're servering protocol 35+).
+    if (SceneV1AppMode::GetSingleton()->host_protocol_version() >= 35) {
+      if (SessionStream* output_stream = scene->GetSceneStream()) {
+        output_stream->EmitCameraShake(intensity);
+      }
+    }
+
+    // Depict locally.
+    if (!g_core->HeadlessMode()) {
+      g_base->graphics->LocalCameraShake(intensity);
+    }
+  } else {
+    throw Exception("Can't shake the camera in this context_ref.",
+                    PyExcType::kContext);
+  }
+
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1172,9 +1189,13 @@ static auto PyEmitFx(PyObject* self, PyObject* args, PyObject* keywds)
     e.spread = spread;
     e.chunk_type = chunk_type;
     e.tendril_type = tendril_type;
+
+    // Send to clients/replays.
     if (SessionStream* output_stream = scene->GetSceneStream()) {
       output_stream->EmitBGDynamics(e);
     }
+
+    // Depict locally.
     if (!g_core->HeadlessMode()) {
       g_base->bg_dynamics->Emit(e);
     }
@@ -1722,7 +1743,8 @@ static PyMethodDef PyHandleAppIntentExecDef = {
 
 static auto PyProtocolVersion(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  return PyLong_FromLong(kProtocolVersion);
+  return PyLong_FromLong(
+      SceneV1AppMode::GetSingleton()->host_protocol_version());
   BA_PYTHON_CATCH;
 }
 

@@ -99,7 +99,7 @@ void Logic::OnGraphicsReady() {
     // Anyone dealing in display-time should be able to handle a wide
     // variety of rates anyway. NOTE: This length is currently milliseconds.
     headless_display_time_step_timer_ = event_loop()->NewTimer(
-        kAppModeMinHeadlessDisplayStep / 1000, true,
+        kHeadlessMinDisplayTimeStep / 1000, true,
         NewLambdaRunnable([this] { StepDisplayTime_(); }));
   } else {
     // In gui mode, push an initial frame to the graphics server. From this
@@ -382,7 +382,7 @@ void Logic::OnAppModeChanged() {
     }
     assert(headless_display_time_step_timer_);
     // NOTE: This is currently milliseconds.
-    headless_display_time_step_timer_->SetLength(kAppModeMinHeadlessDisplayStep
+    headless_display_time_step_timer_->SetLength(kHeadlessMinDisplayTimeStep
                                                  / 1000);
   }
 }
@@ -424,9 +424,9 @@ void Logic::PostUpdateDisplayTimeForHeadlessMode_() {
   // we've got until the next event. We'll plug this into our display-update
   // timer so we can try to sleep exactly until that point.
   auto headless_display_step_microsecs =
-      std::max(std::min(g_base->app_mode()->GetHeadlessDisplayStep(),
-                        kAppModeMaxHeadlessDisplayStep),
-               kAppModeMinHeadlessDisplayStep);
+      std::max(std::min(g_base->app_mode()->GetHeadlessNextDisplayTimeStep(),
+                        kHeadlessMaxDisplayTimeStep),
+               kHeadlessMinDisplayTimeStep);
 
   if (debug_log_display_time_) {
     auto sleepsecs =

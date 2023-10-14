@@ -56,6 +56,8 @@ class App:
 
     # pylint: disable=too-many-public-methods
 
+    # A few things defined as non-optional values but not actually
+    # available until the app starts.
     plugins: PluginSubsystem
     lang: LanguageSubsystem
     health_monitor: AppHealthMonitor
@@ -92,7 +94,7 @@ class App:
 
         # Used on platforms such as mobile where the app basically needs
         # to shut down while backgrounded. In this state, all event
-        # loops are suspended and all graphics and audio should cease
+        # loops are suspended and all graphics and audio must cease
         # completely. Be aware that the suspended state can be entered
         # from any other state including NATIVE_BOOTSTRAPPING and
         # SHUTTING_DOWN.
@@ -149,9 +151,9 @@ class App:
     def __init__(self) -> None:
         """(internal)
 
-        Do not instantiate this class; access the single shared instance
-        of it as 'app' which is available in various Ballistica
-        feature-set modules such as babase.
+        Do not instantiate this class. You can access the single shared
+        instance of it through various high level packages: 'babase.app',
+        'bascenev1.app', 'bauiv1.app', etc.
         """
 
         # Hack for docs-generation: we can be imported with dummy modules
@@ -508,7 +510,7 @@ class App:
         except Exception:
             logging.exception('Error setting app intent to %s.', intent)
             _babase.pushcall(
-                tpartial(self._apply_intent_error, intent),
+                tpartial(self._display_set_intent_error, intent),
                 from_other_thread=True,
             )
 
@@ -553,10 +555,11 @@ class App:
                 'Error handling intent %s in app-mode %s.', intent, mode
             )
 
-    def _apply_intent_error(self, intent: AppIntent) -> None:
+    def _display_set_intent_error(self, intent: AppIntent) -> None:
+        """Show the *user* something went wrong setting an intent."""
         from babase._language import Lstr
 
-        del intent  # Unused.
+        del intent
         _babase.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
         _babase.getsimplesound('error').play()
 

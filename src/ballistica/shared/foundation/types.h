@@ -68,7 +68,7 @@ class Graphics;
 ///
 /// Category: Enums
 ///
-enum class InputType {
+enum class InputType : uint8_t {
   kUpDown = 2,
   kLeftRight,
   kJumpPress,
@@ -111,7 +111,7 @@ enum class InputType {
 ///
 /// 'hard' leads to the process exiting. This generally should be avoided
 ///    on platforms such as mobile.
-enum class QuitType {
+enum class QuitType : uint8_t {
   kSoft,
   kBack,
   kHard,
@@ -139,7 +139,7 @@ typedef int64_t TimerMedium;
 /// 'small' is used primarily for phones or other small devices where
 ///    content needs to be presented as large and clear in order to remain
 ///    readable from an average distance.
-enum class UIScale {
+enum class UIScale : uint8_t {
   kLarge,
   kMedium,
   kSmall,
@@ -162,7 +162,7 @@ enum class UIScale {
 /// 'real' time is mostly based on clock time, with a few exceptions.  It may
 ///    not advance while the app is backgrounded for instance.  (the engine
 ///    attempts to prevent single large time jumps from occurring)
-enum class TimeType {
+enum class TimeType : uint8_t {
   kSim,
   kBase,
   kReal,
@@ -173,7 +173,7 @@ enum class TimeType {
 /// Specifies the format time values are provided in.
 ///
 /// Category: Enums
-enum class TimeFormat {
+enum class TimeFormat : uint8_t {
   kSeconds,
   kMilliseconds,
   kLast  // Sentinel.
@@ -183,7 +183,7 @@ enum class TimeFormat {
 /// Permissions that can be requested from the OS.
 ///
 /// Category: Enums
-enum class Permission {
+enum class Permission : uint8_t {
   kStorage,
   kLast  // Sentinel.
 };
@@ -192,7 +192,7 @@ enum class Permission {
 /// Special characters the game can print.
 ///
 /// Category: Enums
-enum class SpecialChar {
+enum class SpecialChar : uint8_t {
   kDownArrow,
   kUpArrow,
   kLeftArrow,
@@ -288,7 +288,7 @@ enum class SpecialChar {
 };
 
 /// Python exception types we can raise from our own exceptions.
-enum class PyExcType {
+enum class PyExcType : uint8_t {
   kRuntime,
   kAttribute,
   kIndex,
@@ -306,7 +306,7 @@ enum class PyExcType {
   kWidgetNotFound
 };
 
-enum class LogLevel {
+enum class LogLevel : uint8_t {
   kDebug,
   kInfo,
   kWarning,
@@ -314,7 +314,7 @@ enum class LogLevel {
   kCritical,
 };
 
-enum class ThreadSource {
+enum class ThreadSource : uint8_t {
   /// Spin up a new thread for the event loop.
   kCreate,
   /// Wrap the event loop around the current thread.
@@ -323,7 +323,7 @@ enum class ThreadSource {
 
 /// Used for thread identification.
 /// Mostly just for debugging.
-enum class EventLoopID {
+enum class EventLoopID : uint8_t {
   kInvalid,
   kLogic,
   kAssets,

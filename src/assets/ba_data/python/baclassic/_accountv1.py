@@ -302,6 +302,11 @@ class AccountV1Subsystem:
         """(internal)"""
         plus = babase.app.plus
         if plus is None:
+            import logging
+
+            logging.warning(
+                'Error adding pending promo code; plus not present.'
+            )
             babase.screenmessage(
                 babase.Lstr(resource='errorText'), color=(1, 0, 0)
             )

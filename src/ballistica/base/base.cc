@@ -197,9 +197,9 @@ void BaseFeatureSet::StartApp() {
   assets_server->OnMainThreadStartApp();
   app_adapter->OnMainThreadStartApp();
 
-  // Take note that we're now 'running'. Various code such as anything that
-  // pushes messages to threads can watch for this state to avoid crashing
-  // if called early.
+  // Ok; we're now official 'started'. Various code such as anything that
+  // pushes messages to threads can watch for this state (via IsAppStarted()
+  // to avoid crashing if called early.
   app_started_ = true;
 
   // Inform anyone who wants to know that we're done starting.

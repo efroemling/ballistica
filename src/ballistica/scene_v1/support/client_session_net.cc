@@ -17,7 +17,9 @@ ClientSessionNet::ClientSessionNet() {
         "g_replay_open true at netclient start; shouldn't happen.");
   }
   assert(g_base->assets_server);
-  g_base->assets_server->PushBeginWriteReplayCall(kProtocolVersion);
+
+  // We always write replays as the highest protocol version we support.
+  g_base->assets_server->PushBeginWriteReplayCall(kProtocolVersionMax);
   writing_replay_ = true;
   g_core->replay_open = true;
 }

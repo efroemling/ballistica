@@ -72,7 +72,7 @@ class ImageNode : public Node {
   void set_front(bool val) { front_ = val; }
 
  private:
-  enum class Attach {
+  enum class Attach : uint8_t {
     CENTER,
     TOP_LEFT,
     TOP_CENTER,
@@ -83,32 +83,24 @@ class ImageNode : public Node {
     BOTTOM_LEFT,
     CENTER_LEFT
   };
-  bool host_only_{};
-  bool front_{};
-  float vr_depth_{};
-  std::vector<float> scale_{1.0f, 1.0f};
-  std::vector<float> position_{0.0f, 0.0f};
-  std::vector<float> color_{1.0f, 1.0f, 1.0f};
-  std::vector<float> tint_color_{1.0f, 1.0f, 1.0f};
-  std::vector<float> tint2_color_{1.0f, 1.0f, 1.0f};
-  Object::Ref<SceneTexture> texture_;
-  Object::Ref<SceneTexture> tint_texture_;
-  Object::Ref<SceneTexture> mask_texture_;
-  Object::Ref<SceneMesh> mesh_opaque_;
-  Object::Ref<SceneMesh> mesh_transparent_;
-  bool fill_screen_{};
-  bool has_alpha_channel_{true};
-  bool dirty_{true};
-  float opacity_{1.0f};
+
+  bool host_only_ : 1 {};
+  bool front_ : 1 {};
+  bool absolute_scale_ : 1 {true};
+  bool premultiplied_ : 1 {};
+  bool fill_screen_ : 1 {};
+  bool has_alpha_channel_ : 1 {true};
+  bool dirty_ : 1 {true};
   Attach attach_{Attach::CENTER};
-  bool absolute_scale_{true};
+
+  float vr_depth_{};
+  float opacity_{1.0f};
   float center_x_{};
   float center_y_{};
   float width_{};
   float height_{};
   float tilt_translate_{};
   float rotate_{};
-  bool premultiplied_{};
   float red_{1.0f};
   float green_{1.0f};
   float blue_{1.0f};
@@ -119,6 +111,16 @@ class ImageNode : public Node {
   float tint2_red_{1.0f};
   float tint2_green_{1.0f};
   float tint2_blue_{1.0f};
+  std::vector<float> scale_{1.0f, 1.0f};
+  std::vector<float> position_{0.0f, 0.0f};
+  std::vector<float> color_{1.0f, 1.0f, 1.0f};
+  std::vector<float> tint_color_{1.0f, 1.0f, 1.0f};
+  std::vector<float> tint2_color_{1.0f, 1.0f, 1.0f};
+  Object::Ref<SceneTexture> texture_;
+  Object::Ref<SceneTexture> tint_texture_;
+  Object::Ref<SceneTexture> mask_texture_;
+  Object::Ref<SceneMesh> mesh_opaque_;
+  Object::Ref<SceneMesh> mesh_transparent_;
 };
 
 }  // namespace ballistica::scene_v1

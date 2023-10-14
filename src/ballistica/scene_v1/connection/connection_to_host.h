@@ -33,12 +33,12 @@ class ConnectionToHost : public Connection {
   std::string party_name_;
   std::string peer_hash_input_;
   std::string peer_hash_;
-  bool printed_connect_message_ = false;
-  int protocol_version_ = kProtocolVersion;
-  int build_number_ = 0;
-  bool got_host_info_ = false;
-  // can remove once back-compat protocol is > 29
-  bool ignore_old_attach_remote_player_packets_ = false;
+  // Can remove once back-compat protocol is > 29
+  bool ignore_old_attach_remote_player_packets_ : 1 {};
+  bool printed_connect_message_ : 1 {};
+  bool got_host_info_ : 1 {};
+  int protocol_version_{-1};
+  int build_number_{};
   millisecs_t last_ping_send_time_{};
   // the client-session that we're driving
   Object::WeakRef<ClientSession> client_session_;

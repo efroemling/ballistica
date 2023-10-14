@@ -53,47 +53,58 @@ ctx.src_omit_paths = {
     'src/assets/workspace',
 }
 
-# Use this to 'carve out' directories or exact file paths which will be
-# git-managed on dst. By default, spinoff will consider dirs containing
-# the files it syncs from src as 'spinoff-managed'; it will set them as
-# git-ignored and will complain if any files appear in them that it does
-# not manage itself (to prevent accidentally doing work in such places).
-# Note that adding a dir to src_write_paths does not prevent files
-# within it from being synced by spinoff; it just means that each of
-# those individual spinoff-managed files will have their own gitignore
-# entry since there is no longer one covering the whole dir. So to keep
-# things tidy, carve out the minimal set of exact file/dir paths that
-# you need.
+# Use this to 'carve out' files or directories which will be git-managed
+# on dst.
+#
+# By default, spinoff will consider dirs containing the files it syncs
+# from src as 'spinoff-managed'; it will set them as git-ignored and
+# will complain if any files appear in them that it does not manage
+# itself (to prevent accidentally doing work in such places). Note that
+# adding a dir to src_write_paths does not prevent files within it from
+# being synced by spinoff; it just means that each of those individual
+# spinoff-managed files will have their own gitignore entry since there
+# can't be a single one covering the whole dir. So to keep things tidy,
+# carve out the minimal set of exact file/dir paths that you need.
 ctx.src_write_paths = {
     'tools/spinoff',
     'config/spinoffconfig.py',
 }
 
-# Normally spinoff errors if it finds any files in its managed dirs that
-# it did not put there. This is to prevent accidentally working in these
-# parts of a dst project; since these sections are git-ignored, git
-# itself won't raise any warnings in such cases and it would be easy to
-# accidentally lose work otherwise.
+# Use this to 'carve out' files or directories under spinoff managed
+# dirs which will be completely ignored by spinoff (but *not* placed
+# under git control).
 #
-# This list can be used to suppress spinoff's errors for specific
-# locations. This is generally used to allow build output or other
-# dynamically generated files to exist within spinoff-managed
-# directories. It is possible to use src_write_paths for such purposes,
-# but this has the side-effect of greatly complicating the dst project's
-# gitignore list; selectively marking a few dirs as unchecked makes for
-# a cleaner setup. Just be careful to not set excessively broad regions
-# as unchecked; you don't want to mask actual useful error messages.
+# Normally spinoff will error if it finds any files under its managed
+# dirs that it did not put there. This is to prevent accidentally
+# working in these parts of a dst project; since spinoff-controlled
+# stuff is git-ignored, git itself won't raise any warnings in such
+# cases and it would be easy to accidentally blow away changes if
+# spinoff didn't raise a stink.
+#
+# This list is used to suppress raising of said stink for specific
+# locations. This allows build output or other dynamically generated
+# files to exist under spinoff-managed directories. It is also possible
+# to use src_write_paths for such carve-outs, but that can have the
+# negative side-effect of greatly complicating the dst project's
+# .gitignore file. Selectively marking a few specific files or dirs as
+# unchecked instead can keep things tidier and more understandable.
+#
+# Note that files and paths marked as unchecked cannot be the
+# destination for synced files, as that would be ambiguous (We can
+# either sync the file ourself or expect someone else to write it, but
+# not both).
 ctx.src_unchecked_paths = {
     'src/ballistica/mgen',
     'src/ballistica/*/mgen',
     'src/assets/ba_data/python/*/_mgen',
     'src/meta/*/mgen',
     'ballisticakit-cmake/.clang-format',
-    'ballisticakit-android/BallisticaKit/src/cardboard/res',
     'ballisticakit-windows/*/BallisticaKit.ico',
-    'ballisticakit-xcode/BallisticaKit Shared/Assets.xcassets',
-    'ballisticakit-android/BallisticaKit/src/*/res',
-    'ballisticakit-android/BallisticaKit/src/*/assets',
+    'ballisticakit-xcode/BallisticaKit Shared/Assets.xcassets/*/*.png',
+    'ballisticakit-xcode/BallisticaKit Shared/Assets.xcassets/*/*/*.png',
+    'ballisticakit-xcode/BallisticaKit Shared/Assets.xcassets/*/*/*/*/*.png',
+    'ballisticakit-android/BallisticaKit/src/*/res/*/*.png',
+    'ballisticakit-android/BallisticaKit/src/*/assets/ballistica_files',
     'ballisticakit-android/local.properties',
     'ballisticakit-android/.gradle',
     'ballisticakit-android/build',

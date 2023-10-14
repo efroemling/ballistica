@@ -13,6 +13,15 @@ namespace ballistica::base {
 
 const int kDisplayTimeSampleCount{15};
 
+/// The max amount of time a headless app can sleep if no events are pending.
+/// This should not be *too* high or it might cause delays when going from
+/// no events present to events present.
+const microsecs_t kHeadlessMaxDisplayTimeStep{500000};
+
+/// The min amount of time a headless app can sleep. This provides an upper
+/// limit on stepping overhead in cases where events are densely packed.
+const microsecs_t kHeadlessMinDisplayTimeStep{1000};
+
 /// The logic subsystem of the app. This runs on a dedicated thread and is
 /// where most high level app logic happens. Much app functionality
 /// including UI calls must be run on the logic thread.
@@ -63,8 +72,9 @@ class Logic {
   /// graphical builds we also use this opportunity to step our logic.
   void Draw();
 
-  /// Kick off an app shutdown. Shutdown is an asynchronous process which
-  /// may take a bit of time to complete. Safe to call repeatedly.
+  /// Kick off a low level app shutdown. Shutdown is an asynchronous process
+  /// which may take up to a few seconds to complete. This is safe to call
+  /// repeatedly but must be called from the logic thread.
   void Shutdown();
 
   /// Should be called by the Python layer when it has completed all

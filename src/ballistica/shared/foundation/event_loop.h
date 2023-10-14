@@ -118,7 +118,7 @@ class EventLoop {
   auto CheckPushRunnableSafety_() -> bool;
   void SetInternalThreadName_(const std::string& name);
   void WaitForNextEvent_(bool single_cycle);
-  void LoopUpkeep_(bool single_cycle);
+  // void LoopUpkeep_(bool single_cycle);
   void LogThreadMessageTally_(
       std::vector<std::pair<LogLevel, std::string>>* log_entries);
   void PushLocalRunnable_(Runnable* runnable, bool* completion_flag);
@@ -155,32 +155,26 @@ class EventLoop {
 
   void BootstrapThread_();
 
+  bool bootstrapped_{};
   bool writing_tally_{};
   bool suspended_{};
+  bool done_{};
+  bool acquires_python_gil_{};
+  EventLoopID identifier_{EventLoopID::kInvalid};
   millisecs_t last_suspend_time_{};
+  int listen_sd_{};
   int messages_since_suspended_{};
   millisecs_t last_suspended_message_report_time_{};
-  bool done_{};
-  ThreadSource source_;
-  int listen_sd_{};
-  std::thread::id thread_id_{};
-  EventLoopID identifier_{EventLoopID::kInvalid};
   millisecs_t last_complaint_time_{};
-  bool acquires_python_gil_{};
-
-  // FIXME: Should generalize this to some sort of PlatformThreadData class.
-#if BA_XCODE_BUILD
-  void* auto_release_pool_{};
-#endif
-
-  bool bootstrapped_{};
+  ThreadSource source_;
+  std::thread::id thread_id_{};
   std::list<std::pair<Runnable*, bool*>> runnables_;
   std::list<Runnable*> suspend_callbacks_;
   std::list<Runnable*> unsuspend_callbacks_;
   std::condition_variable thread_message_cv_;
+  std::condition_variable client_listener_cv_;
   std::mutex thread_message_mutex_;
   std::list<ThreadMessage_> thread_messages_;
-  std::condition_variable client_listener_cv_;
   std::mutex client_listener_mutex_;
   std::list<std::vector<char>> data_to_client_;
   PyThreadState* py_thread_state_{};

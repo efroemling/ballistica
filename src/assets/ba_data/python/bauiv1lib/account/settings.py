@@ -1184,6 +1184,9 @@ class AccountSettingsWindow(bui.Window):
         self, response: bacommon.cloud.ManageAccountResponse | Exception
     ) -> None:
         if isinstance(response, Exception) or response.url is None:
+            logging.warning(
+                'Got error in manage-account-response: %s.', response
+            )
             bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
             bui.getsound('error').play()
             return
@@ -1466,6 +1469,7 @@ class AccountSettingsWindow(bui.Window):
         if isinstance(result, Exception):
             # For now just make a bit of noise if anything went wrong;
             # can get more specific as needed later.
+            logging.warning('Got error in v2 sign-in result: %s.', result)
             bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
             bui.getsound('error').play()
         else:

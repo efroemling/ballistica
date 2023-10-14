@@ -9,15 +9,6 @@
 
 namespace ballistica::base {
 
-/// The max amount of time a headless app can sleep if no events are pending.
-/// This should not be *too* high or it might cause delays when going from
-/// no events present to events present.
-const microsecs_t kAppModeMaxHeadlessDisplayStep{500000};
-
-/// The min amount of time a headless app can sleep. This provides an upper
-/// limit on stepping overhead in cases where events are densely packed.
-const microsecs_t kAppModeMinHeadlessDisplayStep{1000};
-
 /// Represents 'what the app is doing'. The global app-mode can be switched
 /// as the app is running. The Python layer has its own Python AppMode
 /// classes, and generally when one of them becomes active it calls down
@@ -51,9 +42,9 @@ class AppMode {
   /// Called right after stepping; should return the exact microseconds
   /// between the current display time and the next event the app-mode has
   /// scheduled. If no events are pending, should return
-  /// kAppModeMaxHeadlessDisplayStep. This will only be called on headless
+  /// kHeadlessMaxDisplayTimeStep. This will only be called on headless
   /// builds.
-  virtual auto GetHeadlessDisplayStep() -> microsecs_t;
+  virtual auto GetHeadlessNextDisplayTimeStep() -> microsecs_t;
 
   /// Create a delegate for an input-device.
   /// Return a raw pointer allocated using Object::NewDeferred.
