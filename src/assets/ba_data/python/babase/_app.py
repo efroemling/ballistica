@@ -807,7 +807,7 @@ class App:
                     _ = task_group.create_task(
                         self._run_shutdown_task(task_coro)
                     )
-        except* Exception:
+        except Exception:
             logging.exception('Unexpected error(s) in shutdown.')
 
         # Note: ideally we should run this directly here, but currently
