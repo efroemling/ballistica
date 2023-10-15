@@ -1000,7 +1000,7 @@ class PublicGatherTab(GatherTab):
                 ):
                 bui.textwidget(
                     edit=self._no_servers_text,
-                    text='No Servers Found' #bui.Lstr(resource='notSignedInText')
+                    text=bui.Lstr(resource='noServerFoundText')
                 )
             return
 
