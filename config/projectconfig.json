@@ -14,7 +14,6 @@
     "src/ballistica/core/platform/android/utf8/checked.h",
     "src/ballistica/core/platform/android/utf8/unchecked.h",
     "src/ballistica/core/platform/android/utf8/core.h",
-    "src/ballistica/base/platform/apple/sdl_main_mac.h",
     "src/ballistica/base/platform/oculus/main_rift.cc",
     "src/ballistica/core/platform/android/android_gl3.c"
   ],

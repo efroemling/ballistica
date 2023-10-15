@@ -23,10 +23,6 @@
 #include "ballistica/ui_v1/widget/row_widget.h"
 #include "ballistica/ui_v1/widget/scroll_widget.h"
 
-// #if !BA_HEADLESS_BUILD && !BA_XCODE_NEW_PROJECT
-// extern "C" void SDL_ericf_focus(void);
-// #endif
-
 namespace ballistica::ui_v1 {
 
 // Ignore signed bitwise stuff; python macros do it quite a bit.

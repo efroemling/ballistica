@@ -27,39 +27,54 @@ namespace ballistica::scene_v1 {
 
 // Protocol version we host games with and write replays to. This should be
 // incremented whenever there are changes made to the session-commands layer
-// (new/removed/changed nodes, attrs, data files, behavior, etc.)
+// (new/removed/changed nodes, attrs, data files, behavior, etc.).
 
 // Note that the packet/gamepacket/message layer can vary more organically
 // based on build-numbers of connected clients/servers since none of that
-// data is stored; this just needs to be observed for all the scene stuff
-// that goes into replays since a single stream can get played/replayed on
-// different builds (as long as they support that protocol version).
-const int kProtocolVersion = 33;
+// data is stored; these protocol versions just need to be observed by
+// anything emitting or ingesting scene streams.
+
+// Oldest protocol version we can act as a host for.
+const int kProtocolVersionHostMin = 33;
 
 // Oldest protocol version we can act as a client to. This can generally be
-// left as-is as long as only new nodes/attrs/commands are added and
-// existing stuff is unchanged.
-const int kProtocolVersionMin = 24;
+// left as-is as long as only new nodes/attrs/commands are added and old
+// behavior remains the same when not using the new stuff.
+const int kProtocolVersionClientMin = 24;
 
-// FIXME: We should separate out connection protocol from scene protocol. We
-//  want to be able to watch really old replays if possible but being able
-//  to connect to old clients is much less important (and slows progress).
+// Newest protocol version we can act as a client OR host for.
+const int kProtocolVersionMax = 35;
 
-// Protocol additions:
-// 25: added a few new achievement graphics and new node attrs for displaying
-// stuff in front of the UI
-// 26: added penguin
-// 27: added templates for LOTS of characters
-// 28: added cyborg and enabled fallback sounds and textures
-// 29: added bunny and eggs
-// 30: added support for resource-strings in text-nodes and screen-messages
-// 31: added support for short-form resource-strings, time-display-node, and
-// string-to-string attr connections
-// 32: added json based player profiles message, added shield
-//     alwaysShowHealthBar attr
-// 33: handshake/handshake-response now send json dicts instead of
-//     just player-specs
-// 34: new image_node enums, data assets.
+// The protocol version we actually host is now read as a setting; see
+// kSceneV1HostProtocol in ballistica/base/support/app_config.h.
+
+// Protocol changes:
+//
+// 25: Added a few new achievement graphics and new node attrs for displaying
+//     stuff in front of the UI.
+//
+// 26: Added penguin.
+//
+// 27: Added templates for LOTS of characters.
+//
+// 28: Added cyborg and enabled fallback sounds and textures.
+//
+// 29: Added bunny and eggs.
+//
+// 30: Added support for resource-strings in text-nodes and screen-messages.
+//
+// 31: Added support for short-form resource-strings, time-display-node, and
+//     string-to-string attr connections.
+//
+// 32: Added json based player profiles message, added shield
+//     always_show_health_bar attr.
+//
+// 33: Handshake/handshake-response now send json dicts instead of
+//     just player-specs.
+//
+// 34: New image_node enums, data assets.
+//
+// 35: Camera shake in netplay. how did I apparently miss this for 10 years!?!
 
 // Sim step size in milliseconds.
 const int kGameStepMilliseconds = 8;
@@ -215,7 +230,8 @@ enum class SessionCommand {
   kScreenMessageBottom,
   kScreenMessageTop,
   kAddData,
-  kRemoveData
+  kRemoveData,
+  kCameraShake
 };
 
 enum class NodeCollideAttr {
@@ -373,8 +389,8 @@ class SceneV1FeatureSet : public FeatureSetNativeComponent {
   SceneV1Python* const python;
 
  private:
-  void SetupNodeMessageType(const std::string& name, NodeMessageType val,
-                            const std::string& format);
+  void SetupNodeMessageType_(const std::string& name, NodeMessageType val,
+                             const std::string& format);
 
   SceneV1FeatureSet();
   std::unordered_map<std::string, NodeType*> node_types_;

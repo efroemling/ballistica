@@ -53,9 +53,9 @@ OggStream::OggStream(const char* file_name, ALuint source, bool loop)
 
   vorbis_info_ = ov_info(&ogg_file_, -1);
   if (vorbis_info_->channels == 1) {
-    set_format(MONO16_FORMAT);
+    set_format(Format::kMono16);
   } else {
-    set_format(STEREO16_FORMAT);
+    set_format(Format::kStereo16);
   }
 }
 

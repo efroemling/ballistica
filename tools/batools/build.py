@@ -601,6 +601,7 @@ def _get_server_config_raw_contents(projroot: str) -> str:
 
 def _get_server_config_template_yaml(projroot: str) -> str:
     # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
     import yaml
 
     lines_in = _get_server_config_raw_contents(projroot).splitlines()
@@ -664,6 +665,8 @@ def _get_server_config_template_yaml(projroot: str) -> str:
                 vval = 'https://mystatssite.com/showstats?player=${ACCOUNT}'
             elif vname == 'admins':
                 vval = ['pb-yOuRAccOuNtIdHErE', 'pb-aNdMayBeAnotherHeRE']
+            elif vname == 'protocol_version':
+                vval = 35
             lines_out += [
                 '#' + l for l in yaml.dump({vname: vval}).strip().splitlines()
             ]

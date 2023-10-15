@@ -779,13 +779,12 @@ check-full: py_check_prereqs
 
 # Same as 'check' plus optional/slow extra checks.
 check2: py_check_prereqs
-	@$(DMAKE) -j$(CPUS) update-check cpplint pylint mypy pycharm
+	@$(DMAKE) -j$(CPUS) update-check cpplint pylint mypy
 	@$(PCOMMANDBATCH) echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as check2 but no caching (all files are checked).
 check2-full: py_check_prereqs
-	@$(DMAKE) -j$(CPUS) update-check cpplint-full pylint-full mypy-full \
-   pycharm-full
+	@$(DMAKE) -j$(CPUS) update-check cpplint-full pylint-full mypy-full
 	@$(PCOMMANDBATCH) echo SGRN BLD ALL CHECKS PASSED!
 
 # Run Cpplint checks on all C/C++ code.
@@ -924,14 +923,14 @@ preflight-full:
 preflight2:
 	@$(MAKE) format
 	@$(MAKE) update
-	@$(MAKE) -j$(CPUS) cpplint pylint mypy pycharm test
+	@$(MAKE) -j$(CPUS) cpplint pylint mypy test
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight2' but without caching (all files visited).
 preflight2-full:
 	@$(MAKE) format-full
 	@$(MAKE) update
-	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full pycharm-full test-full
+	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-full
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Tell make which of these targets don't represent files.

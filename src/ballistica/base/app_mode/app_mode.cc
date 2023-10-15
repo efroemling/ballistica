@@ -3,6 +3,7 @@
 #include "ballistica/base/app_mode/app_mode.h"
 
 #include "ballistica/base/input/device/input_device_delegate.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/support/context.h"
 
 namespace ballistica::base {
@@ -43,8 +44,8 @@ void AppMode::ChangeGameSpeed(int offs) {}
 
 void AppMode::StepDisplayTime() {}
 
-auto AppMode::GetHeadlessDisplayStep() -> microsecs_t {
-  return kAppModeMaxHeadlessDisplayStep;
+auto AppMode::GetHeadlessNextDisplayTimeStep() -> microsecs_t {
+  return kHeadlessMaxDisplayTimeStep;
 }
 
 auto AppMode::GetPartySize() const -> int { return 0; }

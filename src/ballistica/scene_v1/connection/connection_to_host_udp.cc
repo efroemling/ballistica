@@ -13,7 +13,7 @@
 namespace ballistica::scene_v1 {
 
 auto ConnectionToHostUDP::SwitchProtocol() -> bool {
-  if (protocol_version() > kProtocolVersionMin) {
+  if (protocol_version() > kProtocolVersionClientMin) {
     set_protocol_version(protocol_version() - 1);
 
     // Need a new request id so we ignore further responses to our previous

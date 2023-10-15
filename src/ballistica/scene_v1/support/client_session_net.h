@@ -26,8 +26,6 @@ class ClientSessionNet : public ClientSession {
 
  private:
   struct SampleBucket {
-    //    int least_buffered_count{};
-    //    int most_buffered_count{};
     int max_delay_from_projection{};
   };
 

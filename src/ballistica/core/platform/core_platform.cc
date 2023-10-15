@@ -476,7 +476,7 @@ void CorePlatform::SleepMicrosecs(millisecs_t ms) {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "NullDereferences"
 
-auto CorePlatform::GetUIScale() -> UIScale {
+auto CorePlatform::GetDefaultUIScale() -> UIScale {
   // Handles mac/pc/linux cases.
   return UIScale::kLarge;
 }

@@ -31,8 +31,9 @@ SessionStream::SessionStream(HostSession* host_session, bool save_replay)
       Log(LogLevel::kError,
           "g_replay_open true at replay start; shouldn't happen.");
     }
+    // We always write replays as the max protocol version we support.
     assert(g_base->assets_server);
-    g_base->assets_server->PushBeginWriteReplayCall(kProtocolVersion);
+    g_base->assets_server->PushBeginWriteReplayCall(kProtocolVersionMax);
     writing_replay_ = true;
     g_core->replay_open = true;
   }
@@ -205,9 +206,6 @@ void SessionStream::Flush() {
   }
 }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "ConstantParameter"
-
 // Writes just a command.
 void SessionStream::WriteCommand(SessionCommand cmd) {
   assert(out_command_.empty());
@@ -218,8 +216,6 @@ void SessionStream::WriteCommand(SessionCommand cmd) {
   uint8_t* ptr = &out_command_[size];
   *ptr = static_cast<uint8_t>(cmd);
 }
-
-#pragma clang diagnostic pop
 
 // Writes a command plus an int to the stream, using whatever size is optimal.
 void SessionStream::WriteCommandInt32(SessionCommand cmd, int32_t value) {
@@ -1120,6 +1116,13 @@ void SessionStream::EmitBGDynamics(const base::BGDynamicsEmission& e) {
   fvals[6] = e.scale;
   fvals[7] = e.spread;
   WriteFloats(8, fvals);
+  EndCommand();
+}
+
+void SessionStream::EmitCameraShake(float intensity) {
+  WriteCommand(SessionCommand::kCameraShake);
+  // FIXME: We shouldn't need to be passing all these as full floats. :-(
+  WriteFloat(intensity);
   EndCommand();
 }
 

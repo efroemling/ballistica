@@ -24,7 +24,10 @@ namespace ballistica::scene_v1 {
 // How long new clients have to wait before starting a kick vote.
 const int kNewClientKickVoteDelay = 60000;
 
-ConnectionToClient::ConnectionToClient(int id) : id_(id) {
+ConnectionToClient::ConnectionToClient(int id)
+    : id_(id),
+      protocol_version_{
+          SceneV1AppMode::GetSingleton()->host_protocol_version()} {
   // We calc this once just in case it changes on our end
   // (the client uses it for their verification hash so we need to
   // ensure it stays consistent).
@@ -33,7 +36,7 @@ ConnectionToClient::ConnectionToClient(int id) : id_(id) {
 
   // On newer protocols we include an extra salt value
   // to ensure the hash the client generates can't be recycled.
-  if (explicit_bool(kProtocolVersion >= 33)) {
+  if (explicit_bool(protocol_version() >= 33)) {
     our_handshake_salt_ = std::to_string(rand());  // NOLINT
   }
 }
@@ -95,7 +98,7 @@ void ConnectionToClient::Update() {
     // In newer protocols we embed a json dict as the second part of the
     // handshake packet; this way we can evolve the protocol more
     // easily in the future.
-    if (explicit_bool(kProtocolVersion >= 33)) {
+    if (explicit_bool(protocol_version() >= 33)) {
       // Construct a json dict with our player-spec-string as one element.
       JsonDict dict;
       dict.AddString("s", our_handshake_player_spec_str_);
@@ -106,17 +109,17 @@ void ConnectionToClient::Update() {
       std::string out = dict.PrintUnformatted();
       std::vector<uint8_t> data(3 + out.size());
       data[0] = BA_SCENEPACKET_HANDSHAKE;
-      uint16_t val = kProtocolVersion;
+      uint16_t val = protocol_version();
       memcpy(data.data() + 1, &val, sizeof(val));
       memcpy(data.data() + 3, out.c_str(), out.size());
       SendGamePacket(data);
     } else {
-      // (KILL THIS WHEN kProtocolVersionMin >= 33)
+      // (KILL THIS WHEN kProtocolVersionClientMin >= 33)
       // on older protocols, we simply embedded our spec-string as the second
       // part of the handshake packet
       std::vector<uint8_t> data(3 + our_handshake_player_spec_str_.size());
       data[0] = BA_SCENEPACKET_HANDSHAKE;
-      uint16_t val = kProtocolVersion;
+      uint16_t val = protocol_version();
       memcpy(data.data() + 1, &val, sizeof(val));
       memcpy(data.data() + 3, our_handshake_player_spec_str_.c_str(),
              our_handshake_player_spec_str_.size());
@@ -155,7 +158,7 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
 
       // In newer builds we expect to be sent a json dict here;
       // pull client's spec from that.
-      if (explicit_bool(kProtocolVersion >= 33)) {
+      if (protocol_version() >= 33) {
         std::vector<char> string_buffer(data.size() - 3 + 1);
         memcpy(&(string_buffer[0]), &(data[3]), data.size() - 3);
         string_buffer[string_buffer.size() - 1] = 0;
@@ -173,7 +176,7 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
           cJSON_Delete(handshake);
         }
       } else {
-        // (KILL THIS WHEN kProtocolVersionMin >= 33)
+        // (KILL THIS WHEN kProtocolVersionClientMin >= 33)
         // older versions only contained the client spec
         // pull client's spec from the handshake packet..
         std::vector<char> string_buffer(data.size() - 3 + 1);
@@ -195,7 +198,7 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
       // Bytes 2 and 3 are their protocol version.
       uint16_t val;
       memcpy(&val, data.data() + 1, sizeof(val));
-      if (val != kProtocolVersion) {
+      if (val != protocol_version()) {
         // Depending on the connection type we may print the connection
         // failure or not. (If we invited them it'd be good to know about the
         // failure).

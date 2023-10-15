@@ -4,8 +4,10 @@
 #include "ballistica/core/platform/apple/core_platform_apple.h"
 
 #if BA_XCODE_BUILD
+#include <BallisticaKit-Swift.h>
 #include <unistd.h>
 #endif
+
 #include <uuid/uuid.h>
 
 #if BA_XCODE_BUILD
@@ -102,7 +104,7 @@ auto CorePlatformApple::DoGetConfigDirectoryMonolithicDefault()
 
 auto CorePlatformApple::GetLocale() -> std::string {
 #if BA_XCODE_BUILD
-  return base::AppleUtils::GetLocaleString();
+  return BallisticaKit::FromCppGetLocaleString();
 #else
   return CorePlatform::GetLocale();
 #endif
@@ -124,7 +126,7 @@ auto CorePlatformApple::DoHasTouchScreen() -> bool {
 #endif
 }
 
-auto CorePlatformApple::GetUIScale() -> UIScale {
+auto CorePlatformApple::GetDefaultUIScale() -> UIScale {
 #if BA_OSTYPE_IOS
   if (base::AppleUtils::IsTablet()) {
     return UIScale::kMedium;
@@ -132,8 +134,8 @@ auto CorePlatformApple::GetUIScale() -> UIScale {
     return UIScale::kSmall;
   }
 #else
-  // default case handles mac/tvos
-  return CorePlatform::GetUIScale();
+  // Default case handles mac & tvos.
+  return CorePlatform::GetDefaultUIScale();
 #endif
 }
 
@@ -160,9 +162,8 @@ void CorePlatformApple::DisplayLog(const std::string& name, LogLevel level,
 }
 
 auto CorePlatformApple::DoGetDataDirectoryMonolithicDefault() -> std::string {
-#if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
-  // On Apple package-y builds use our resources dir.
-  return base::AppleUtils::GetResourcesPath();
+#if BA_XCODE_BUILD
+  return BallisticaKit::FromCppGetResourcesPath();
 #else
   // Fall back to default.
   return CorePlatform::DoGetDataDirectoryMonolithicDefault();
@@ -292,13 +293,8 @@ void CorePlatformApple::OpenFileExternally(const std::string& path) {
 }
 
 void CorePlatformApple::OpenDirExternally(const std::string& path) {
-#if BA_OSTYPE_MACOS
-  std::string cmd = std::string("open \"") + path + "\"";
-  int result = system(cmd.c_str());
-  if (result != 0) {
-    Log(LogLevel::kError, "Got return value " + std::to_string(result)
-                              + " on open cmd '" + cmd + "'");
-  }
+#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
+  BallisticaKit::CocoaFromCppOpenDirExternally(path);
 #else
   CorePlatform::OpenDirExternally(path);
 #endif
@@ -380,7 +376,7 @@ auto CorePlatformApple::DoClipboardIsSupported() -> bool {
   return base::AppleUtils::ClipboardIsSupported();
 #else
   return CorePlatform::DoClipboardIsSupported();
-#endif  // BA_XCODE_BUILD
+#endif
 }
 
 auto CorePlatformApple::DoClipboardHasText() -> bool {
@@ -388,7 +384,7 @@ auto CorePlatformApple::DoClipboardHasText() -> bool {
   return base::AppleUtils::ClipboardHasText();
 #else
   return CorePlatform::DoClipboardHasText();
-#endif  // BA_XCODE_BUILD
+#endif
 }
 
 void CorePlatformApple::DoClipboardSetText(const std::string& text) {
@@ -396,7 +392,7 @@ void CorePlatformApple::DoClipboardSetText(const std::string& text) {
   base::AppleUtils::ClipboardSetText(text);
 #else
   CorePlatform::DoClipboardSetText(text);
-#endif  // BA_XCODE_BUILD
+#endif
 }
 
 auto CorePlatformApple::DoClipboardGetText() -> std::string {
@@ -404,7 +400,7 @@ auto CorePlatformApple::DoClipboardGetText() -> std::string {
   return base::AppleUtils::ClipboardGetText();
 #else
   return CorePlatform::DoClipboardGetText();
-#endif  // BA_XCODE_BUILD
+#endif
 }
 
 }  // namespace ballistica::core

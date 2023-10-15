@@ -59,6 +59,10 @@ def _gen_enums(infilename: str) -> str:
 
 def _parse_name(lines: list[str], lnum: int) -> str:
     bits = lines[lnum].split(' ')
+
+    # Special case: allow for specifying underlying type.
+    if len(bits) == 6 and bits[3] == ':' and bits[4] in {'uint8_t', 'uint16_t'}:
+        bits = [bits[0], bits[1], bits[2], bits[5]]
     if (
         len(bits) != 4
         or bits[0] != 'enum'

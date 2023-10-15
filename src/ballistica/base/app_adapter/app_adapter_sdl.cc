@@ -59,12 +59,16 @@ void AppAdapterSDL::OnMainThreadStartApp() {
         "AppAdapterSDL strict_graphics_context_ is enabled."
         " Remember to turn this off.");
   }
+
   // We may or may not want xinput on windows.
   if (g_buildconfig.ostype_windows()) {
     if (!g_core->platform->GetLowLevelConfigValue("enablexinput", 1)) {
       SDL_SetHint(SDL_HINT_XINPUT_ENABLED, "0");
     }
   }
+
+  // We wrangle our own signal handling; don't bring SDL into it.
+  SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
 
   int result = SDL_Init(sdl_flags);
   if (result < 0) {
@@ -96,7 +100,7 @@ void AppAdapterSDL::OnMainThreadStartApp() {
     }
   }
 
-  // We currently use a software cursor, so hide the system one.
+  // This adapter draws a software cursor; hide the actual OS one.
   SDL_ShowCursor(SDL_DISABLE);
 }
 

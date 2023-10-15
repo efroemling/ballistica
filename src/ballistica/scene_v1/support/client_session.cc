@@ -835,6 +835,11 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
                                              y, z);
           break;
         }
+        case SessionCommand::kCameraShake: {
+          auto intensity = ReadFloat();
+          g_base->graphics->LocalCameraShake(intensity);
+          break;
+        }
         case SessionCommand::kEmitBGDynamics: {
           int cmdvals[4];
           ReadInt32_4(cmdvals);

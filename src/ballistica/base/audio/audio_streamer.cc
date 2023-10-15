@@ -68,7 +68,9 @@ void AudioStreamer::Stop() {
 }
 
 void AudioStreamer::Update() {
-  if (eof_) return;
+  if (eof_) {
+    return;
+  }
 
   CHECK_AL_ERROR;
 

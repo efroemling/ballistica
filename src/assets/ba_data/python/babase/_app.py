@@ -56,6 +56,8 @@ class App:
 
     # pylint: disable=too-many-public-methods
 
+    # A few things defined as non-optional values but not actually
+    # available until the app starts.
     plugins: PluginSubsystem
     lang: LanguageSubsystem
     health_monitor: AppHealthMonitor
@@ -92,7 +94,7 @@ class App:
 
         # Used on platforms such as mobile where the app basically needs
         # to shut down while backgrounded. In this state, all event
-        # loops are suspended and all graphics and audio should cease
+        # loops are suspended and all graphics and audio must cease
         # completely. Be aware that the suspended state can be entered
         # from any other state including NATIVE_BOOTSTRAPPING and
         # SHUTTING_DOWN.
@@ -149,9 +151,9 @@ class App:
     def __init__(self) -> None:
         """(internal)
 
-        Do not instantiate this class; access the single shared instance
-        of it as 'app' which is available in various Ballistica
-        feature-set modules such as babase.
+        Do not instantiate this class. You can access the single shared
+        instance of it through various high level packages: 'babase.app',
+        'bascenev1.app', 'bauiv1.app', etc.
         """
 
         # Hack for docs-generation: we can be imported with dummy modules
@@ -208,7 +210,8 @@ class App:
         self._shutdown_task: asyncio.Task[None] | None = None
         self._shutdown_tasks: list[Coroutine[None, None, None]] = [
             self._wait_for_shutdown_suppressions(),
-            self._fade_for_shutdown(),
+            self._fade_and_shutdown_graphics(),
+            self._fade_and_shutdown_audio(),
         ]
         self._pool_thread_count = 0
 
@@ -508,7 +511,7 @@ class App:
         except Exception:
             logging.exception('Error setting app intent to %s.', intent)
             _babase.pushcall(
-                tpartial(self._apply_intent_error, intent),
+                tpartial(self._display_set_intent_error, intent),
                 from_other_thread=True,
             )
 
@@ -553,10 +556,11 @@ class App:
                 'Error handling intent %s in app-mode %s.', intent, mode
             )
 
-    def _apply_intent_error(self, intent: AppIntent) -> None:
+    def _display_set_intent_error(self, intent: AppIntent) -> None:
+        """Show the *user* something went wrong setting an intent."""
         from babase._language import Lstr
 
-        del intent  # Unused.
+        del intent
         _babase.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
         _babase.getsimplesound('error').play()
 
@@ -795,6 +799,7 @@ class App:
     async def _shutdown(self) -> None:
         import asyncio
 
+        _babase.lock_all_input()
         try:
             async with asyncio.TaskGroup() as task_group:
                 for task_coro in self._shutdown_tasks:
@@ -895,18 +900,26 @@ class App:
             await asyncio.sleep(0.001)
         _babase.lifecyclelog('shutdown-suppress wait end')
 
-    async def _fade_for_shutdown(self) -> None:
+    async def _fade_and_shutdown_graphics(self) -> None:
         import asyncio
 
-        # Kick off a fade, block input, and wait for a short bit.
-        # Ideally most shutdown activity completes during the fade so
-        # there's no tangible wait.
-        _babase.lifecyclelog('fade-for-shutdown begin')
+        # Kick off a short fade and give it time to complete.
+        _babase.lifecyclelog('fade-and-shutdown-graphics begin')
         _babase.fade_screen(False, time=0.15)
-        _babase.lock_all_input()
-        # _babase.getsimplesound('swish2').play()
         await asyncio.sleep(0.15)
-        _babase.lifecyclelog('fade-for-shutdown end')
+        _babase.lifecyclelog('fade-and-shutdown-graphics end')
+
+    async def _fade_and_shutdown_audio(self) -> None:
+        import asyncio
+
+        # Tell the audio system to go down and give it a bit of
+        # time to do so gracefully.
+        _babase.lifecyclelog('fade-and-shutdown-audio begin')
+        _babase.audio_shutdown_begin()
+        await asyncio.sleep(0.15)
+        while not _babase.audio_shutdown_is_complete():
+            await asyncio.sleep(0.01)
+        _babase.lifecyclelog('fade-and-shutdown-audio end')
 
     def _threadpool_no_wait_done(self, fut: Future) -> None:
         try:

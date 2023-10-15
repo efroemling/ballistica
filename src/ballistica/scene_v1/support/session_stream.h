@@ -69,6 +69,7 @@ class SessionStream : public Object, public ClientControllerInterface {
                            float z);
   void PlaySound(SceneSound* sound, float volume);
   void EmitBGDynamics(const base::BGDynamicsEmission& e);
+  void EmitCameraShake(float intensity);
   auto GetSoundID(SceneSound* s) -> int64_t;
   auto GetMaterialID(Material* m) -> int64_t;
   void ScreenMessageBottom(const std::string& val, float r, float g, float b);

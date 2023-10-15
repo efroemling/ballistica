@@ -603,14 +603,13 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// Start app systems in motion.
   void StartApp() override;
 
-  /// Issue a high level app quit request. Can be called from any thread.
-  /// 'soft' means the app can simply reset/hide itself instead of actually
-  /// exiting the process (common behavior on mobile platforms). 'back'
-  /// means that a soft-quit should behave as if a back-button was pressed,
-  /// which may trigger different behavior in the OS than a standard soft
-  /// quit. If 'confirm' is true, a confirmation dialog will be presented if
-  /// the current app-mode provides one and the app is in gui mode.
-  /// Otherwise the quit will be immediate.
+  /// Issue a high level app quit request. Can be called from any thread and
+  /// can be safely called repeatedly. If 'confirm' is true, a confirmation
+  /// dialog will be presented if the environment and situation allows;
+  /// otherwise the quit will be immediate. A QuitType arg can optionally be
+  /// passed to influence quit behavior; on some platforms such as mobile
+  /// the default is for the app to recede to the background but physically
+  /// remain running.
   void QuitApp(bool confirm = false, QuitType quit_type = QuitType::kSoft);
 
   /// Called when app shutdown process completes. Sets app to exit.

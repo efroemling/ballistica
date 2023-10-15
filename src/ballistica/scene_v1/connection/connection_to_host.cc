@@ -22,7 +22,9 @@ namespace ballistica::scene_v1 {
 // How long to go between sending out null packets for pings.
 const int kPingSendInterval = 2000;
 
-ConnectionToHost::ConnectionToHost() = default;
+ConnectionToHost::ConnectionToHost()
+    : protocol_version_{
+        SceneV1AppMode::GetSingleton()->host_protocol_version()} {}
 
 auto ConnectionToHost::GetAsUDP() -> ConnectionToHostUDP* { return nullptr; }
 
@@ -103,8 +105,8 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
       uint16_t their_protocol_version;
       memcpy(&their_protocol_version, data.data() + 1,
              sizeof(their_protocol_version));
-      if (their_protocol_version >= kProtocolVersionMin
-          && their_protocol_version <= kProtocolVersion) {
+      if (their_protocol_version >= kProtocolVersionClientMin
+          && their_protocol_version <= kProtocolVersionMax) {
         compatible = true;
 
         // If we are compatible, set our protocol version to match
@@ -136,7 +138,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
         memcpy(data2.data() + 3, out.c_str(), out.size());
         SendGamePacket(data2);
       } else {
-        // (KILL THIS WHEN kProtocolVersionMin >= 33)
+        // (KILL THIS WHEN kProtocolVersionClientMin >= 33)
         std::string our_spec_str =
             PlayerSpec::GetAccountPlayerSpec().GetSpecString();
         std::vector<uint8_t> response(3 + our_spec_str.size());
@@ -148,7 +150,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
       }
 
       if (!compatible) {
-        if (their_protocol_version > kProtocolVersion) {
+        if (their_protocol_version > protocol_version()) {
           Error(g_base->assets->GetResourceString(
               "incompatibleNewerVersionHostText"));
         } else {
@@ -183,7 +185,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
             cJSON_Delete(handshake);
           }
         } else {
-          // (KILL THIS WHEN kProtocolVersionMin >= 33)
+          // (KILL THIS WHEN kProtocolVersionClientMin >= 33)
           // In older protocols, handshake simply contained a
           // player-spec for the host.
 

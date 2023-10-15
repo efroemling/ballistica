@@ -29,7 +29,7 @@ from batools.spinoff._state import (
 )
 
 if TYPE_CHECKING:
-    from typing import Callable, Iterable
+    from typing import Callable, Iterable, Any
 
     from batools.project import ProjectUpdater
 
@@ -54,6 +54,7 @@ class SpinoffContext:
         OVERRIDE = 'override'
         DIFF = 'diff'
         BACKPORT = 'backport'
+        DESCRIBE_PATH = 'describe_path'
 
     def __init__(
         self,
@@ -66,6 +67,7 @@ class SpinoffContext:
         override_paths: list[str] | None = None,
         backport_file: str | None = None,
         auto_backport: bool = False,
+        describe_path: str | None = None,
     ) -> None:
         # pylint: disable=too-many-statements
 
@@ -82,6 +84,7 @@ class SpinoffContext:
         self._override_paths = override_paths
         self._backport_file = backport_file
         self._auto_backport = auto_backport
+        self._describe_path = describe_path
 
         self._project_updater: ProjectUpdater | None = None
 
@@ -278,10 +281,10 @@ class SpinoffContext:
             self._src_omit_feature_sets,
         ) = self._calc_src_retain_omit_feature_sets()
 
-        # Generate a version of src_omit_paths that includes our feature-set
-        # omissions. Basically, omitting a feature set simply omits
-        # particular names at a few particular places.
+        # Generate a version of src_omit_paths that includes some extra values
         self._src_omit_paths_expanded = self.src_omit_paths.copy()
+        # Include feature-set omissions. Basically, omitting a feature
+        # set simply omits particular names at a few particular places.
         self._add_feature_set_omit_paths(self._src_omit_paths_expanded)
 
         # Create a version of dst-write-paths that also includes filtered
@@ -362,6 +365,7 @@ class SpinoffContext:
     def run(self) -> None:
         """Do the thing."""
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
 
         self._read_state()
 
@@ -399,6 +403,20 @@ class SpinoffContext:
 
         # Ignore anything under omitted paths/names.
         self._filter_src_git_file_list()
+
+        # Go through the final set of files we're syncing to dst and
+        # make sure none of them fall under our unchecked-paths list.
+        # That would mean we are writing a file but we're also declaring
+        # that we don't care if anyone else writes that file, which
+        # could lead to ambiguous/dangerous situations where spinoff as
+        # well as some command on dst write to the same file.
+        for path in self._src_git_files:
+            if _any_path_contains(self.src_unchecked_paths, path):
+                self._src_error_entities[path] = (
+                    'Synced file falls under src_unchecked_paths, which'
+                    " is not allowed. Either don't sync the file or carve"
+                    ' it out from src_unchecked_paths.'
+                )
 
         # Now map whatever is left to paths in dst.
         self._dst_git_files = set(
@@ -454,8 +472,10 @@ class SpinoffContext:
             )
             raise self.BackportInProgressError
 
+        if self._mode is self.Mode.DESCRIBE_PATH:
+            self._do_describe_path()
         # If anything is off, print errors; otherwise actually do the deed.
-        if self._src_error_entities or self._dst_error_entities:
+        elif self._src_error_entities or self._dst_error_entities:
             self._print_error_entities()
         else:
             if (
@@ -510,6 +530,76 @@ class SpinoffContext:
         # Update .gitignore to ignore everything spinoff-managed.
         if self._mode is self.Mode.UPDATE or self._mode is self.Mode.OVERRIDE:
             self._write_gitignore()
+
+    def _do_describe_path(self) -> None:
+        assert self._describe_path is not None
+        path = self._describe_path
+
+        # Currently operating only on dst paths.
+        if path.startswith('/') and not path.startswith(self._dst_root):
+            raise CleanError('Please supply a path in the dst dir.')
+
+        # Allow abs paths.
+        path = path.removeprefix(f'{self._dst_root}/')
+
+        if self._src_error_entities or self._dst_error_entities:
+            print(
+                f'{Clr.RED}Note: Errors are present;'
+                f' this info may not be fully accurate.{Clr.RST}'
+            )
+        print(f'{Clr.BLD}dstpath: {Clr.BLU}{path}{Clr.RST}')
+
+        def _printval(name: Any, val: Any) -> None:
+            print(f'  {name}: {Clr.BLU}{val}{Clr.RST}')
+
+        _printval('exists', os.path.exists(os.path.join(self._dst_root, path)))
+
+        # Adapted from code in _check_spinoff_managed_dirs.
+        managed = False
+        unchecked = False
+        git_mirrored = False
+
+        dstrootsl = f'{self._dst_root}/'
+        assert self._spinoff_managed_dirs is not None
+        for rdir in self._spinoff_managed_dirs:
+            for root, dirnames, fnames in os.walk(
+                os.path.join(self._dst_root, rdir),
+                topdown=True,
+            ):
+                # Completely ignore ignore-names in both dirs and files
+                # and cruft-file names in files.
+                for dirname in dirnames.copy():
+                    if dirname in self.ignore_names:
+                        dirnames.remove(dirname)
+                for fname in fnames.copy():
+                    if (
+                        fname in self.ignore_names
+                        or fname in self.cruft_file_names
+                    ):
+                        fnames.remove(fname)
+
+                for fname in fnames:
+                    dst_path_full = os.path.join(root, fname)
+                    assert dst_path_full.startswith(dstrootsl)
+                    dst_path = dst_path_full.removeprefix(dstrootsl)
+                    if dst_path == path:
+                        managed = True
+                    if _any_path_contains(self._dst_unchecked_paths, dst_path):
+                        unchecked = True
+                    if _any_path_contains(self.git_mirrored_paths, dst_path):
+                        git_mirrored = True
+        _printval(
+            'spinoff-managed',
+            managed,
+        )
+        _printval(
+            'unchecked',
+            unchecked,
+        )
+        _printval(
+            'git-mirrored',
+            git_mirrored,
+        )
 
     def _apply_project_configs(self) -> None:
         # pylint: disable=exec-used
@@ -744,9 +834,6 @@ class SpinoffContext:
 
         # Strip out any sections frames by our strip-begin/end tags.
 
-        # strip_tag_pairs: list[tuple[str, str]] = []
-        # print('HELLO WORLD')
-
         def _first_index_containing_string(
             items: list[str], substring: str
         ) -> int | None:
@@ -795,7 +882,7 @@ class SpinoffContext:
                 'make any edits in source project)'
             )
             lines = self.default_filter_text(text).splitlines()
-            return '\n'.join(lines[:1] + ['', blurb] + lines[1:])
+            return '\n'.join([blurb, ' '] + lines)
         if 'Jenkinsfile' in src_path:
             blurb = (
                 '// THIS FILE IS AUTOGENERATED BY SPINOFF;'
@@ -1028,8 +1115,10 @@ class SpinoffContext:
         """Print info about entity errors encountered."""
         print(
             '\nSpinoff Error(s) Found:\n'
-            "     Tip: to resolve 'spinoff-managed file modified' errors,\n"
-            "          use the 'backport' subcommand.\n",
+            "  Tips: To resolve 'spinoff-managed file modified' errors,\n"
+            "         use the 'backport' subcommand.\n"
+            "        To debug other issues, try the 'describe-path'"
+            ' subcommand.\n',
             file=sys.stderr,
         )
         for key, val in sorted(self._src_error_entities.items()):
@@ -1046,7 +1135,18 @@ class SpinoffContext:
         print('')
 
     def _validate_final_lists(self) -> None:
-        """Make sure we never delete the few files we're letting git store."""
+        """Check some last things on our entities lists before we update."""
+
+        # Go through the final set of files we're syncing to dst and
+        # make sure none of them fall under our unchecked-paths list.
+        # That would mean we are writing a file but we're also declaring
+        # that we don't care if anyone else writes that file, which
+        # could lead to ambiguous/dangerous situations where spinoff as
+        # well as some command on dst write to the same file.
+        # print('CHECKING', self._src_copy_entities)
+        # for ent in self._src_copy_entities:
+        #     if _any_path_contains(self._dst_unchecked_paths, ent):
+        #         raise CleanError('FOUND BAD PATH', ent)
 
         for ent in self._dst_purge_entities.copy():
             if _any_path_contains(self.git_mirrored_paths, ent):
@@ -1806,7 +1906,8 @@ class SpinoffContext:
                         )
 
     def _filter_src_git_file_list(self) -> None:
-        # Crate a filtered version of src git files based on our omit entries.
+        # Create a filtered version of src git files based on our omit
+        # entries.
         out = set[str]()
         assert self._src_git_files is not None
         for gitpath in self._src_git_files:
@@ -1958,7 +2059,7 @@ class SpinoffContext:
 
         # In strict mode we want it to always be an error if dst mod-time
         # varies from the version we wrote (we want to track down anyone
-        # writing to our files who is not us).
+        # writing to our managed files who is not us).
         # Note that we need to ignore git-mirrored-paths because git might
         # be mucking with modtimes itself.
         if (

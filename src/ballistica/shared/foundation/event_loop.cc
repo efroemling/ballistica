@@ -248,6 +248,9 @@ void EventLoop::WaitForNextEvent_(bool single_cycle) {
   }
 }
 
+// Note to self (Oct '23): can probably kill this at some point,
+// but am still using some non-ARC objc stuff from logic thread
+// so should keep it around just a bit longer just in case.
 void EventLoop::LoopUpkeep_(bool single_cycle) {
   assert(g_core);
   // Keep our autorelease pool clean on mac/ios

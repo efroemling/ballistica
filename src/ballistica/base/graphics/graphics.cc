@@ -336,6 +336,7 @@ class Graphics::ScreenMessageEntry {
   float v_smoothed{};
   bool translation_dirty{true};
   bool mesh_dirty{true};
+  millisecs_t smooth_time{};
 
  private:
   Object::Ref<TextGroup> s_mesh_;
@@ -594,13 +595,21 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
           {
             auto xf = c.ScopedTransform();
 
-            if (i->v_smoothed == 0.0f) {
-              i->v_smoothed = v + v_extra;
-            } else {
-              float smoothing = 0.8f;
-              i->v_smoothed = smoothing * i->v_smoothed
-                              + (1.0f - smoothing) * (v + v_extra);
+            // This logic needs to run at a fixed hz or it breaks on high frame
+            // rates.
+            auto now_millisecs = pass->frame_def()->display_time_millisecs();
+            i->smooth_time = std::max(i->smooth_time, now_millisecs - 100);
+            while (i->smooth_time < now_millisecs) {
+              i->smooth_time += 1000 / 60;
+              if (i->v_smoothed == 0.0f) {
+                i->v_smoothed = v + v_extra;
+              } else {
+                float smoothing = 0.8f;
+                i->v_smoothed = smoothing * i->v_smoothed
+                                + (1.0f - smoothing) * (v + v_extra);
+              }
             }
+
             c.Translate(screen_width * 0.5f, i->v_smoothed,
                         vr ? 60 : kScreenMessageZDepth);
             if (vr) {
@@ -767,10 +776,17 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
           a = 1;
         }
 
-        i->v_smoothed += 0.1f;
-        if (i->v_smoothed - last_v < min_spacing) {
-          i->v_smoothed +=
-              8.0f * (1.0f - ((i->v_smoothed - last_v) / min_spacing));
+        // This logic needs to run at a fixed hz or it breaks on high frame
+        // rates.
+        auto now_millisecs = pass->frame_def()->display_time_millisecs();
+        i->smooth_time = std::max(i->smooth_time, now_millisecs - 100);
+        while (i->smooth_time < now_millisecs) {
+          i->smooth_time += 1000 / 60;
+          i->v_smoothed += 0.1f;
+          if (i->v_smoothed - last_v < min_spacing) {
+            i->v_smoothed +=
+                8.0f * (1.0f - ((i->v_smoothed - last_v) / min_spacing));
+          }
         }
         last_v = i->v_smoothed;
 
@@ -864,11 +880,11 @@ void Graphics::GetSafeColor(float* red, float* green, float* blue,
     *blue = std::min(1.0f, (*blue) * s);
   }
 
-  // We may still be short of our target intensity due to clamping (ie: (10,0,0)
-  // will not look any brighter than (1,0,0)) if that's the case, just convert
-  // the difference to a grey value and add that to all channels... this *still*
-  // might not get us there so lets do it a few times if need be.  (i'm sure
-  // there's a less bone-headed way to do this)
+  // We may still be short of our target intensity due to clamping (ie:
+  // (10,0,0) will not look any brighter than (1,0,0)) if that's the case,
+  // just convert the difference to a grey value and add that to all
+  // channels... this *still* might not get us there so lets do it a few times
+  // if need be.  (i'm sure there's a less bone-headed way to do this)
   for (int i = 0; i < 4; i++) {
     float remaining =
         (0.2989f * (*red) + 0.5870f * (*green) + 0.1140f * (*blue)) - 1.0f;
@@ -1050,14 +1066,13 @@ void Graphics::UpdateGyro(microsecs_t time_microsecs,
   tilt_vel_ = tilt_smoothed_ * 3.0f;
   tilt_pos_ += tilt_vel_ * timescale;
 
-  // Technically this will behave slightly differently at different time scales,
-  // but it should be close to correct..
-  // tilt_pos_ *= 0.991f;
+  // Technically this will behave slightly differently at different time
+  // scales, but it should be close to correct.. tilt_pos_ *= 0.991f;
   tilt_pos_ *= std::max(0.0f, 1.0f - 0.01f * timescale);
 
   // Some gyros seem wonky and either give us crazy big values or consistently
-  // offset ones. Let's keep a running tally of magnitude that slowly drops over
-  // time, and if it reaches a certain value lets just kill gyro input.
+  // offset ones. Let's keep a running tally of magnitude that slowly drops
+  // over time, and if it reaches a certain value lets just kill gyro input.
   if (gyro_broken_) {
     tilt_pos_ *= 0.0f;
   } else {
@@ -1485,9 +1500,9 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
       {
         auto xf = c.ScopedTransform();
 
-        // Note: we don't plug in known cursor position values here; we tell the
-        // renderer to insert the latest values on its end; this can lessen
-        // cursor lag substantially.
+        // Note: we don't plug in known cursor position values here; we tell
+        // the renderer to insert the latest values on its end; this can
+        // lessen cursor lag substantially.
         c.CursorTranslate();
         c.Translate(csize * 0.40f, csize * -0.38f, kCursorZDepth);
         c.Scale(csize, csize);

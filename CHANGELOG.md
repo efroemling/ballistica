@@ -1,4 +1,4 @@
-### 1.7.28 (build 21447, api 8, 2023-10-12)
+### 1.7.28 (build 21465, api 8, 2023-10-14)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -12,8 +12,10 @@
   newer on mobile. This means we're cutting off a few percent of old devices on
   Android that only support ES 2, but ES 3 has been out for 10 years now so I
   feel it is time. As mentioned above, this allows massively cleaning up the
-  graphics code which means we can start to improve it.
-- Removed gamma controls. These were only active on the old Mac version anyway
+  graphics code which means we can start to improve it. Ideally now the GL
+  renderer can be abstracted a bit more which will make the process of writing
+  other renderers easier.
+- Removed gamma controls. These were only active on the old Mac builds anyway
   and are being removed from the upcoming SDL3, so if we want this sort of thing
   we should do it through shading in the renderer now.
 - Implemented both vsync and max-fps for the SDL build of the game. This means
@@ -129,7 +131,22 @@
   before. It also takes a `confirm` bool arg which allows it to be used to bring
   up a confirm dialog.
 - Clicking on a window close button to quit no longer brings up a confirm dialog
-  and instead quits immediately (though with a proper graceful shutdown).
+  and instead quits immediately (though with a proper graceful shutdown and a
+  lovely little fade).
+- Camera shake is now supported in network games and replays. Somehow I didn't
+  notice that was missing for years. The downside is this requires a server to
+  be hosting protocol 35, which cuts off support for 1.4 clients. So for now I
+  am keeping the default at 33. Once there a fewer 1.4 clients around we can
+  consider changing this (if everything hasn't moved to SceneV2 by then).
+- Added a server option to set the hosting protocol for servers who might want
+  to allow camera shake (or other minor features/fixes) that don't work in the
+  default protocol 33. See `protocol_version` in `config.yaml`. Just remember
+  that you will be cutting off support for older clients if you use 35.
+- Fixed a bug with screen-messages animating off screen too fast when frame
+  rates are high.
+- Added a proper graceful shutdown process for the audio server. This should
+  result in fewer ugly pops and warning messages when the app is quit.
+
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 
