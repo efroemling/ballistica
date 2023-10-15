@@ -101,7 +101,7 @@ auto Audio::SourceBeginNew() -> AudioSource* {
 #pragma clang diagnostic pop
 
 auto Audio::IsSoundPlaying(uint32_t play_id) -> bool {
-  uint32_t source_id = AudioServer::source_id_from_play_id(play_id);
+  uint32_t source_id = AudioServer::SourceIdFromPlayId(play_id);
   assert(client_sources_.size() > source_id);
   client_sources_[source_id]->Lock(2);
   bool result = (client_sources_[source_id]->play_id() == play_id);
@@ -112,7 +112,7 @@ auto Audio::IsSoundPlaying(uint32_t play_id) -> bool {
 auto Audio::SourceBeginExisting(uint32_t play_id, int debug_id)
     -> AudioSource* {
   BA_DEBUG_FUNCTION_TIMER_BEGIN();
-  uint32_t source_id = AudioServer::source_id_from_play_id(play_id);
+  uint32_t source_id = AudioServer::SourceIdFromPlayId(play_id);
 
   // Ok, the audio thread fills in this source list,
   // so theoretically a client could call this before the audio thread

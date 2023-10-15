@@ -190,13 +190,13 @@ void AppAdapterApple::SetHardwareCursorVisible(bool visible) {
   assert(g_core->InMainThread());
 
 #if BA_OSTYPE_MACOS
-  BallisticaKit::CocoaSupportSetCursorVisible(visible);
+  BallisticaKit::CocoaFromCppSetCursorVisible(visible);
 #endif
 }
 
 void AppAdapterApple::TerminateApp() {
 #if BA_OSTYPE_MACOS
-  BallisticaKit::CocoaSupportTerminateApp();
+  BallisticaKit::CocoaFromCppTerminateApp();
 #else
   AppAdapter::TerminateApp();
 #endif

@@ -24,7 +24,7 @@ class CorePlatformApple : public CorePlatform {
   auto GetLocale() -> std::string override;
   auto DoGetDeviceName() -> std::string override;
   auto DoHasTouchScreen() -> bool override;
-  auto GetUIScale() -> UIScale override;
+  auto GetDefaultUIScale() -> UIScale override;
   auto IsRunningOnDesktop() -> bool override;
   void DisplayLog(const std::string& name, LogLevel level,
                   const std::string& msg) override;

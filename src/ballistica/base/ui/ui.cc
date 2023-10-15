@@ -42,7 +42,7 @@ UI::UI() {
       // VR and TV modes always use medium.
       scale_ = UIScale::kMedium;
     } else {
-      scale_ = g_core->platform->GetUIScale();
+      scale_ = g_core->platform->GetDefaultUIScale();
     }
   }
 }

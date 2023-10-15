@@ -1,4 +1,4 @@
-### 1.7.28 (build 21453, api 8, 2023-10-13)
+### 1.7.28 (build 21465, api 8, 2023-10-14)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -144,6 +144,8 @@
   that you will be cutting off support for older clients if you use 35.
 - Fixed a bug with screen-messages animating off screen too fast when frame
   rates are high.
+- Added a proper graceful shutdown process for the audio server. This should
+  result in fewer ugly pops and warning messages when the app is quit.
 
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)

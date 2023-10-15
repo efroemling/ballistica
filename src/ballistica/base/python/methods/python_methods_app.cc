@@ -4,6 +4,7 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode_empty.h"
+#include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
@@ -729,11 +730,8 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "ss"  // ui_scale
         "sO"  // on_tv
         "sO"  // vr_mode
-        // "sO"  // toolbar_test
         "sO"  // demo_mode
         "sO"  // arcade_mode
-        // "sO"  // iircade_mode
-        // "si"  // protocol_version
         "sO"  // headless_mode
         "sO"  // python_directory_app_site
         "ss"  // device_name
@@ -757,8 +755,6 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "vr_mode", g_core->IsVRMode() ? Py_True : Py_False,
         "demo_mode", g_buildconfig.demo_build() ? Py_True : Py_False,
         "arcade_mode", g_buildconfig.arcade_build() ? Py_True : Py_False,
-        // "iircade_mode", g_buildconfig.iircade_build() ? Py_True: Py_False,
-        // "protocol_version", kProtocolVersion,
         "headless_mode", g_core->HeadlessMode() ? Py_True : Py_False,
         "python_directory_app_site",
           site_py_dir ? *PythonRef::FromString(*site_py_dir) : Py_None,
@@ -1603,6 +1599,52 @@ static PyMethodDef PyDevConsoleInputAdapterFinishDef = {
     "(internal)\n",
 };
 
+// -------------------------- audio_shutdown_begin -----------------------------
+
+static auto PyAudioShutdownBegin(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  auto* audio_event_loop = g_base->audio_server->event_loop();
+  BA_PRECONDITION(audio_event_loop);
+  audio_event_loop->PushCall([] { g_base->audio_server->Shutdown(); });
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAudioShutdownBeginDef = {
+    "audio_shutdown_begin",             // name
+    (PyCFunction)PyAudioShutdownBegin,  // method
+    METH_NOARGS,                        // flags
+
+    "audio_shutdown_begin() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// ----------------------- audio_shutdown_is_complete --------------------------
+
+static auto PyAudioShutdownIsComplete(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  if (g_base->audio_server->shutdown_completed()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAudioShutdownIsCompleteDef = {
+    "audio_shutdown_is_complete",            // name
+    (PyCFunction)PyAudioShutdownIsComplete,  // method
+    METH_NOARGS,                             // flags
+
+    "audio_shutdown_is_complete() -> bool\n"
+    "\n"
+    "(internal)\n",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
@@ -1658,6 +1700,8 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyGetDevConsoleInputTextDef,
       PySetDevConsoleInputTextDef,
       PyDevConsoleInputAdapterFinishDef,
+      PyAudioShutdownBeginDef,
+      PyAudioShutdownIsCompleteDef,
   };
 }
 

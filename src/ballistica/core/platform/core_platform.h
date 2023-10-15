@@ -97,26 +97,22 @@ class CorePlatform {
 #pragma mark PRINTING/LOGGING --------------------------------------------------
 
   /// Display a message to any default log for the platform (android log,
-  /// etc.) Note that this can be called from any thread.
+  /// etc.) Note that this can be called from any thread. Default
+  /// implementation does nothing.
   virtual void DisplayLog(const std::string& name, LogLevel level,
                           const std::string& msg);
 
 #pragma mark ENVIRONMENT -------------------------------------------------------
 
-  // Return a simple name for the platform: 'mac', 'windows', 'linux', etc.
+  /// Return a simple name for the platform: 'mac', 'windows', 'linux', etc.
   virtual auto GetPlatformName() -> std::string;
 
-  // Return a simple name for the subplatform: 'amazon', 'google', etc.
+  /// Return a simple name for the subplatform: 'amazon', 'google', etc.
   virtual auto GetSubplatformName() -> std::string;
-
-  // Are we running in event-push-mode? With this on, we return from Main()
-  // and the system handles the event loop. With it off, we loop in Main()
-  // ourself.
-  // virtual auto IsEventPushMode() -> bool;
 
   /// Return the interface type based on the environment (phone, tablet,
   /// etc).
-  virtual auto GetUIScale() -> UIScale;
+  virtual auto GetDefaultUIScale() -> UIScale;
 
   /// Return default DataDirectory value for monolithic builds.
   auto GetDataDirectoryMonolithicDefault() -> std::string;
@@ -387,7 +383,7 @@ class CorePlatform {
 
   static void SleepMillisecs(millisecs_t ms);
 
-  static void SleepMicrosecs(millisecs_t ms);
+  static void SleepMicrosecs(microsecs_t ms);
 
   /// Given a C++ symbol, attempt to return a pretty one.
   virtual auto DemangleCXXSymbol(const std::string& s) -> std::string;

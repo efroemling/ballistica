@@ -30,6 +30,7 @@ typedef struct _SDL_Joystick SDL_Joystick;
 namespace ballistica {
 
 // Used internally for time values.
+typedef double seconds_t;
 typedef int64_t millisecs_t;
 typedef int64_t microsecs_t;
 

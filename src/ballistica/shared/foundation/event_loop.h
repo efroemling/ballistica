@@ -118,7 +118,6 @@ class EventLoop {
   auto CheckPushRunnableSafety_() -> bool;
   void SetInternalThreadName_(const std::string& name);
   void WaitForNextEvent_(bool single_cycle);
-  // void LoopUpkeep_(bool single_cycle);
   void LogThreadMessageTally_(
       std::vector<std::pair<LogLevel, std::string>>* log_entries);
   void PushLocalRunnable_(Runnable* runnable, bool* completion_flag);
@@ -154,6 +153,13 @@ class EventLoop {
   void ReleaseGIL_();
 
   void BootstrapThread_();
+
+  void LoopUpkeep_(bool single_cycle);
+
+  // FIXME: Should generalize this to some sort of PlatformThreadData class.
+#if BA_XCODE_BUILD
+  void* auto_release_pool_{};
+#endif
 
   bool bootstrapped_{};
   bool writing_tally_{};

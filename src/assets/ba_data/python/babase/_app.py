@@ -210,7 +210,8 @@ class App:
         self._shutdown_task: asyncio.Task[None] | None = None
         self._shutdown_tasks: list[Coroutine[None, None, None]] = [
             self._wait_for_shutdown_suppressions(),
-            self._fade_for_shutdown(),
+            self._fade_and_shutdown_graphics(),
+            self._fade_and_shutdown_audio(),
         ]
         self._pool_thread_count = 0
 
@@ -798,6 +799,7 @@ class App:
     async def _shutdown(self) -> None:
         import asyncio
 
+        _babase.lock_all_input()
         try:
             async with asyncio.TaskGroup() as task_group:
                 for task_coro in self._shutdown_tasks:
@@ -898,18 +900,26 @@ class App:
             await asyncio.sleep(0.001)
         _babase.lifecyclelog('shutdown-suppress wait end')
 
-    async def _fade_for_shutdown(self) -> None:
+    async def _fade_and_shutdown_graphics(self) -> None:
         import asyncio
 
-        # Kick off a fade, block input, and wait for a short bit.
-        # Ideally most shutdown activity completes during the fade so
-        # there's no tangible wait.
-        _babase.lifecyclelog('fade-for-shutdown begin')
+        # Kick off a short fade and give it time to complete.
+        _babase.lifecyclelog('fade-and-shutdown-graphics begin')
         _babase.fade_screen(False, time=0.15)
-        _babase.lock_all_input()
-        # _babase.getsimplesound('swish2').play()
         await asyncio.sleep(0.15)
-        _babase.lifecyclelog('fade-for-shutdown end')
+        _babase.lifecyclelog('fade-and-shutdown-graphics end')
+
+    async def _fade_and_shutdown_audio(self) -> None:
+        import asyncio
+
+        # Tell the audio system to go down and give it a bit of
+        # time to do so gracefully.
+        _babase.lifecyclelog('fade-and-shutdown-audio begin')
+        _babase.audio_shutdown_begin()
+        await asyncio.sleep(0.15)
+        while not _babase.audio_shutdown_is_complete():
+            await asyncio.sleep(0.01)
+        _babase.lifecyclelog('fade-and-shutdown-audio end')
 
     def _threadpool_no_wait_done(self, fut: Future) -> None:
         try:
