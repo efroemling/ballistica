@@ -361,6 +361,7 @@ class PublicGatherTab(GatherTab):
         self._last_server_list_query_time: float | None = None
         self._join_list_column: bui.Widget | None = None
         self._join_status_text: bui.Widget | None = None
+        self._no_servers_text: bui.Widget | None = None
         self._host_max_party_size_value: bui.Widget | None = None
         self._host_max_party_size_minus_button: (bui.Widget | None) = None
         self._host_max_party_size_plus_button: (bui.Widget | None) = None
@@ -655,6 +656,18 @@ class PublicGatherTab(GatherTab):
             h_align='center',
             v_align='top',
             maxwidth=c_width,
+            color=(0.6, 0.6, 0.6),
+            position=(c_width * 0.5, c_height * 0.5),
+        )
+        self._no_servers_text = bui.textwidget(
+            parent=self._container,
+            text='',
+            size=(0, 0),
+            scale=0.9,
+            flatness=1.0,
+            shadow=0.0,
+            h_align='center',
+            v_align='top',
             color=(0.6, 0.6, 0.6),
             position=(c_width * 0.5, c_height * 0.5),
         )
