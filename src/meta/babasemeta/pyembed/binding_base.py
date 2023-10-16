@@ -21,6 +21,8 @@ from babase import (
 # The C++ layer looks for this variable:
 values = [
     _hooks.reset_to_main_menu,  # kResetToMainMenuCall
+    _hooks.store_config_fullscreen_on,  # kStoreConfigFullscreenOnCall
+    _hooks.store_config_fullscreen_off,  # kStoreConfigFullscreenOffCall
     _hooks.set_config_fullscreen_on,  # kSetConfigFullscreenOnCall
     _hooks.set_config_fullscreen_off,  # kSetConfigFullscreenOffCall
     _hooks.not_signed_in_screen_message,  # kNotSignedInScreenMessageCall

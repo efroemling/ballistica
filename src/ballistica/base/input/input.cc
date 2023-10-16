@@ -15,6 +15,7 @@
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -997,10 +998,26 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     }
   }
 
-  // Command-F or Control-F toggles full-screen if the app-adapter supports it.
-  if (g_base->app_adapter->CanToggleFullscreen()) {
-    if (!repeat_press && keysym.sym == SDLK_f
-        && ((keysym.mod & KMOD_CTRL) || (keysym.mod & KMOD_GUI))) {
+  // Explicitly handle fullscreen-toggles in some cases.
+  if (g_base->app_adapter->FullscreenControlAvailable()) {
+    bool do_toggle{};
+    // On our Mac SDL builds we support ctrl+F for toggling fullscreen.
+    // On our nice Cocoa build, fullscreening happens magically through the
+    // view menu fullscreen controls.
+    if (g_buildconfig.ostype_macos() && !g_buildconfig.xcode_build()) {
+      if (!repeat_press && keysym.sym == SDLK_f && ((keysym.mod & KMOD_CTRL))) {
+        do_toggle = true;
+      }
+    }
+    // On Windows we support both F11 and Alt+Enter for toggling fullscreen.
+    if (g_buildconfig.ostype_windows()) {
+      if (!repeat_press
+          && (keysym.sym == SDLK_F11
+              || (keysym.sym == SDLK_RETURN && ((keysym.mod & KMOD_ALT))))) {
+        do_toggle = true;
+      }
+    }
+    if (do_toggle) {
       g_base->python->objs()
           .Get(BasePython::ObjID::kToggleFullscreenCall)
           .Call();
@@ -1008,12 +1025,15 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     }
   }
 
-  // Control-Q quits. On Mac, the usual Cmd-Q gets handled
-  // by the app-adapter implicitly.
-  if (!repeat_press && keysym.sym == SDLK_q && (keysym.mod & KMOD_CTRL)) {
-    g_base->QuitApp(true);
-    return;
-  }
+  // Control-Q quits. On Mac, the usual Cmd-Q gets handled implicitly by the
+  // app-adapter.
+  // UPDATE: Disabling this for now. Looks like standard OS shortcuts like
+  // Alt+F4 on windows or Cmd-Q on Mac are doing the right thing with SDL
+  // builds these days so these are not needed.
+  // if (!repeat_press && keysym.sym == SDLK_q && (keysym.mod & KMOD_CTRL)) {
+  //   g_base->QuitApp(true);
+  //   return;
+  // }
 
   // Let the console intercept stuff if it wants at this point.
   if (auto* console = g_base->ui->dev_console()) {

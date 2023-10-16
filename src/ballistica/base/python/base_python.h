@@ -38,6 +38,8 @@ class BasePython {
     kConfig,
     kAppOnNativeBootstrappingCompleteCall,
     kResetToMainMenuCall,
+    kStoreConfigFullscreenOnCall,
+    kStoreConfigFullscreenOffCall,
     kSetConfigFullscreenOnCall,
     kSetConfigFullscreenOffCall,
     kNotSignedInScreenMessageCall,

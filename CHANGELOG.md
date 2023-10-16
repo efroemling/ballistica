@@ -1,4 +1,4 @@
-### 1.7.28 (build 21465, api 8, 2023-10-14)
+### 1.7.28 (build 21468, api 8, 2023-10-16)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -146,7 +146,8 @@
   rates are high.
 - Added a proper graceful shutdown process for the audio server. This should
   result in fewer ugly pops and warning messages when the app is quit.
-
+- Tidied up some keyboard shortcuts to be more platform-appropriate. For
+  example, toggling fullscreen on Windows is now Alt+Enter or F11.
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 

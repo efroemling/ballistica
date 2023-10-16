@@ -363,8 +363,10 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
         // If they hit the window close button, skip the confirm.
         g_base->QuitApp(false);
       } else {
-        // By default, confirm before quitting.
-        g_base->QuitApp(true);
+        // For all other quits we might want to default to a confirm dialog.
+        // Update: going to try without confirm for a bit and see how that
+        // feels.
+        g_base->QuitApp(false);
       }
       break;
 
@@ -394,7 +396,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
             fullscreen_ = true;
             g_base->logic->event_loop()->PushCall([] {
               g_base->python->objs()
-                  .Get(BasePython::ObjID::kSetConfigFullscreenOnCall)
+                  .Get(BasePython::ObjID::kStoreConfigFullscreenOnCall)
                   .Call();
             });
           }
@@ -407,7 +409,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
             fullscreen_ = false;
             g_base->logic->event_loop()->PushCall([] {
               g_base->python->objs()
-                  .Get(BasePython::ObjID::kSetConfigFullscreenOffCall)
+                  .Get(BasePython::ObjID::kStoreConfigFullscreenOffCall)
                   .Call();
             });
           }
@@ -818,7 +820,28 @@ void AppAdapterSDL::CursorPositionForDraw(float* x, float* y) {
   *y = immediate_y;
 }
 
-auto AppAdapterSDL::CanToggleFullscreen() -> bool const { return true; }
+auto AppAdapterSDL::FullscreenControlAvailable() const -> bool { return true; }
+auto AppAdapterSDL::FullscreenControlKeyShortcut() const
+    -> std::optional<std::string> {
+  if (g_buildconfig.ostype_windows()) {
+    // On Windows we support F11 and Alt+Enter to toggle fullscreen. Let's
+    // mention Alt+Enter which seems like it might be more commonly used
+    return "Alt+Enter";
+  }
+  if (g_buildconfig.ostype_macos()) {
+    // The Mac+SDL situation is a bit of a mess. By default, there is 'Enter
+    // Full Screen' in the window menu which is mapped to fn-F, but that
+    // will only work if a window was created in SDL as windowed. If we
+    // fullscreen that window and restart the app, we'll then have a *real*
+    // fullscreen sdl window and that shortcut won't work anymore. So to
+    // keep things consistent we advertise ctrl-f which we always handle
+    // ourselves. Maybe this situation will be cleaned up in SDL 3, but its
+    // not a huge deal anyway since our Cocoa Mac version behaves cleanly.
+    return "Ctrl+F";
+  }
+  return {};
+};
+
 auto AppAdapterSDL::SupportsVSync() -> bool const { return true; }
 auto AppAdapterSDL::SupportsMaxFPS() -> bool const { return true; }
 

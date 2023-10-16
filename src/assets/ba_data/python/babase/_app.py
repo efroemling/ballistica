@@ -895,10 +895,18 @@ class App:
         import asyncio
 
         # Spin and wait for anything blocking shutdown to complete.
+        starttime = _babase.apptime()
         _babase.lifecyclelog('shutdown-suppress wait begin')
         while _babase.shutdown_suppress_count() > 0:
             await asyncio.sleep(0.001)
         _babase.lifecyclelog('shutdown-suppress wait end')
+        duration = _babase.apptime() - starttime
+        if duration > 1.0:
+            logging.warning(
+                'Shutdown-suppressions delayed shutdown longer than ideal '
+                '(%.2f seconds).',
+                duration,
+            )
 
     async def _fade_and_shutdown_graphics(self) -> None:
         import asyncio

@@ -15,6 +15,8 @@
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/platform/base_platform.h"
+#include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/stress_test.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -239,7 +241,7 @@ void AppAdapter::DoExitMainThreadEventLoop() {
   FatalError("DoExitMainThreadEventLoop is not implemented here.");
 }
 
-auto AppAdapter::CanToggleFullscreen() -> bool const { return false; }
+auto AppAdapter::FullscreenControlAvailable() const -> bool { return false; }
 
 auto AppAdapter::SupportsVSync() -> bool const { return false; }
 
@@ -251,6 +253,29 @@ auto AppAdapter::InGraphicsContext() -> bool { return g_core->InMainThread(); }
 /// As a default, assume our main thread *is* our graphics context.
 void AppAdapter::DoPushGraphicsContextRunnable(Runnable* runnable) {
   DoPushMainThreadRunnable(runnable);
+}
+
+auto AppAdapter::FullscreenControlGet() const -> bool {
+  assert(g_base->InLogicThread());
+
+  // By default, just go through config (assume we have full control over
+  // the fullscreen state ourself).
+  return g_base->app_config->Resolve(AppConfig::BoolID::kFullscreen);
+}
+
+void AppAdapter::FullscreenControlSet(bool fullscreen) {
+  assert(g_base->InLogicThread());
+  // By default, just set these in the config and apply it (assumes config
+  // changes get plugged into actual fullscreen state).
+  g_base->python->objs()
+      .Get(fullscreen ? BasePython::ObjID::kSetConfigFullscreenOnCall
+                      : BasePython::ObjID::kSetConfigFullscreenOffCall)
+      .Call();
+}
+
+auto AppAdapter::FullscreenControlKeyShortcut() const
+    -> std::optional<std::string> {
+  return {};
 }
 
 void AppAdapter::CursorPositionForDraw(float* x, float* y) {
@@ -271,9 +296,7 @@ auto AppAdapter::ShouldUseCursor() -> bool { return true; }
 
 auto AppAdapter::HasHardwareCursor() -> bool { return false; }
 
-void AppAdapter::SetHardwareCursorVisible(bool visible) {
-  printf("SHOULD SET VIS %d\n", static_cast<int>(visible));
-}
+void AppAdapter::SetHardwareCursorVisible(bool visible) {}
 
 auto AppAdapter::CanSoftQuit() -> bool { return false; }
 auto AppAdapter::CanBackQuit() -> bool { return false; }

@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 # the last load. Either way, however, multiple execs will happen in some
 # form.
 #
-# So we need to do a few things to handle that situation gracefully.
+# To handle that situation gracefully, we need to do a few things:
 #
 # - First, we need to store any mutable global state in the __main__
 #   module; not in ourself. This way, alternate versions of ourself will
@@ -48,11 +48,11 @@ if TYPE_CHECKING:
 #
 # - Second, we should avoid the use of isinstance and similar calls for
 #   our types. An EnvConfig we create would technically be a different
-#   type than that created by an alternate baenv.
+#   type than an EnvConfig created by an alternate baenv.
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 21465
+TARGET_BALLISTICA_BUILD = 21468
 TARGET_BALLISTICA_VERSION = '1.7.28'
 
 

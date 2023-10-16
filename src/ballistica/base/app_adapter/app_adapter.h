@@ -113,9 +113,27 @@ class AppAdapter {
   auto app_suspended() const { return app_suspended_; }
 
   /// Return whether this AppAdapter supports a 'fullscreen' toggle for its
-  /// display. This currently will simply affect whether that option is
-  /// available in display settings or via a hotkey.
-  virtual auto CanToggleFullscreen() -> bool const;
+  /// display. This will affect whether that option is available in display
+  /// settings or via a hotkey. Must be called from the logic thread.
+  virtual auto FullscreenControlAvailable() const -> bool;
+
+  /// AppAdapters supporting a 'fullscreen' control should return the
+  /// current fullscreen state here. By default this simply returns the
+  /// app-config fullscreen value (so assumes the actual state is synced to
+  /// that). Must be called from the logic thread.
+  virtual auto FullscreenControlGet() const -> bool;
+
+  /// AppAdapters supporting a 'fullscreen' control should set the
+  /// current fullscreen state here. By default this simply sets the
+  /// app-config fullscreen value (so assumes the actual state is synced to
+  /// that). Must be called from the logic thread.
+  virtual void FullscreenControlSet(bool fullscreen);
+
+  /// AppAdapters supporting a 'fullscreen' control can return a key name
+  /// here to display if they support toggling via key ('ctrl-F', etc.).
+  /// Must be called from the logic thread.
+  virtual auto FullscreenControlKeyShortcut() const
+      -> std::optional<std::string>;
 
   /// Return whether this AppAdapter supports vsync controls for its display.
   virtual auto SupportsVSync() -> bool const;
