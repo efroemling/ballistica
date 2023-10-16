@@ -202,6 +202,34 @@ void AppAdapterApple::TerminateApp() {
 #endif
 }
 
+auto AppAdapterApple::FullscreenControlAvailable() const -> bool {
+  // Currently Mac only. Any window-management stuff elsewhere such as
+  // iPadOS is out of our hands.
+  if (g_buildconfig.ostype_macos()) {
+    return true;
+  }
+  return false;
+}
+
+auto AppAdapterApple::FullscreenControlGet() const -> bool {
+#if BA_OSTYPE_MACOS
+  return BallisticaKit::CocoaFromCppGetMainWindowIsFullscreen();
+#else
+  return false;
+#endif
+}
+
+void AppAdapterApple::FullscreenControlSet(bool fullscreen) {
+#if BA_OSTYPE_MACOS
+  return BallisticaKit::CocoaFromCppSetMainWindowFullscreen(fullscreen);
+#endif
+}
+
+auto AppAdapterApple::FullscreenControlKeyShortcut() const
+    -> std::optional<std::string> {
+  return "fn+F";
+}
+
 }  // namespace ballistica::base
 
 #endif  // BA_XCODE_BUILD

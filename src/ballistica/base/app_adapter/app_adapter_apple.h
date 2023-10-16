@@ -34,6 +34,12 @@ class AppAdapterApple : public AppAdapter {
   /// Called by FromSwift.
   void SetScreenResolution(float pixel_width, float pixel_height);
 
+  auto FullscreenControlAvailable() const -> bool override;
+  auto FullscreenControlGet() const -> bool override;
+  void FullscreenControlSet(bool fullscreen) override;
+  auto FullscreenControlKeyShortcut() const
+      -> std::optional<std::string> override;
+
  protected:
   void DoPushMainThreadRunnable(Runnable* runnable) override;
   void DoPushGraphicsContextRunnable(Runnable* runnable) override;
