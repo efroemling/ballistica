@@ -704,7 +704,7 @@ class AccountSettingsWindow(bui.Window):
                 position=((self._sub_width - button_width) * 0.5, v + 30),
                 autoselect=True,
                 size=(button_width, 60),
-                label=bui.Lstr(resource=self._r + '.manageAccountText'),
+                label=bui.Lstr(resource=f'{self._r}.manageAccountText'),
                 color=(0.55, 0.5, 0.6),
                 icon=bui.gettexture('settingsIcon'),
                 textcolor=(0.75, 0.7, 0.8),
