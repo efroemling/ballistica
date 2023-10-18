@@ -2,6 +2,7 @@
 
 #include "ballistica/base/ui/ui.h"
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/input/device/keyboard_input.h"
@@ -184,15 +185,14 @@ void UI::HandleMouseUp(int button, float x, float y) {
 }
 
 auto UI::UIHasDirectKeyboardInput() const -> bool {
-  // Currently limiting this to desktop operating systems, but should
-  // generalize this, as situations such as tablets with hardware keyboards
-  // should behave similarly to desktop PCs. Though perhaps we should make
-  // this optional everywhere (or language dependent) since direct keyboard
-  // input might not work well for some languages even on desktops.
-  if (g_buildconfig.ostype_macos() || g_buildconfig.ostype_windows()
-      || g_buildconfig.ostype_linux()) {
-    // Return true if we've got a keyboard attached and either it or nothing
-    // is active.
+  // As a first gate, ask the app-adapter if it is providing keyboard
+  // events at all.
+  if (g_base->app_adapter->HasDirectKeyboardInput()) {
+    // Ok, direct keyboard input is a thing.
+    // Now let's also require the keyboard (or nothing) to be currently
+    // driving the UI. If something like a game-controller is driving,
+    // we'll probably want to pop up a controller-centric on-screen-keyboard
+    // thingie instead.
     auto* ui_input_device = g_base->ui->GetUIInputDevice();
     if (auto* keyboard = g_base->ui->GetUIInputDevice()) {
       if (ui_input_device == keyboard || ui_input_device == nullptr) {

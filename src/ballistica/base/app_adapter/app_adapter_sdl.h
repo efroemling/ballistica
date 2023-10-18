@@ -40,6 +40,8 @@ class AppAdapterSDL : public AppAdapter {
   auto SupportsVSync() -> bool const override;
   auto SupportsMaxFPS() -> bool const override;
 
+  auto HasDirectKeyboardInput() -> bool override;
+
  protected:
   void DoPushMainThreadRunnable(Runnable* runnable) override;
   void RunMainThreadEventLoopToCompletion() override;

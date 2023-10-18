@@ -230,6 +230,8 @@ auto AppAdapterApple::FullscreenControlKeyShortcut() const
   return "fn+F";
 }
 
+auto AppAdapterApple::HasDirectKeyboardInput() -> bool { return true; };
+
 }  // namespace ballistica::base
 
 #endif  // BA_XCODE_BUILD

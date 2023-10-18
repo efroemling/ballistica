@@ -171,6 +171,16 @@ class AppAdapter {
   /// this point.
   virtual void TerminateApp();
 
+  /// Should return whether there is a keyboard attached that will deliver
+  /// direct text-editing related events to the app. When this is false,
+  /// alternate entry methods such as keyboard-entry-dialogs and on-screen
+  /// keyboards will be used. This value can change based on conditions such
+  /// as a hardware keyboard getting attached or detached or the language
+  /// changing (it may be preferable to rely on dialogs for non-english
+  /// languages/etc.). Default implementation returns false. This function
+  /// should be callable from any thread.
+  virtual auto HasDirectKeyboardInput() -> bool;
+
  protected:
   AppAdapter();
   virtual ~AppAdapter();

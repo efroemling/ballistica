@@ -845,6 +845,11 @@ auto AppAdapterSDL::FullscreenControlKeyShortcut() const
 auto AppAdapterSDL::SupportsVSync() -> bool const { return true; }
 auto AppAdapterSDL::SupportsMaxFPS() -> bool const { return true; }
 
+auto AppAdapterSDL::HasDirectKeyboardInput() -> bool {
+  // We always provide direct keyboard events.
+  return true;
+}
+
 }  // namespace ballistica::base
 
 #endif  // BA_SDL_BUILD

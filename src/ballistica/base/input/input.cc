@@ -533,23 +533,28 @@ void Input::UpdateEnabledControllerSubsystems_() {
 
   // First off, on mac, let's update whether we want to completely ignore
   // either the classic or the iOS/Mac controller subsystems.
-  if (g_buildconfig.ostype_macos()) {
-    std::string sys = g_base->app_config->Resolve(
-        AppConfig::StringID::kMacControllerSubsystem);
-    if (sys == "Classic") {
-      ignore_mfi_controllers_ = true;
-      ignore_sdl_controllers_ = false;
-    } else if (sys == "MFi") {
-      ignore_mfi_controllers_ = false;
-      ignore_sdl_controllers_ = true;
-    } else if (sys == "Both") {
-      ignore_mfi_controllers_ = false;
-      ignore_sdl_controllers_ = false;
-    } else {
-      BA_LOG_ONCE(LogLevel::kError,
-                  "Invalid mac-controller-subsystem value: '" + sys + "'");
-    }
-  }
+  //
+  // UPDATE - these days we're mfi-only on our xcode builds (which should
+  // support older controllers too). So we don't need to touch ignore vals
+  // anywhere since we'll not get sdl ones on those builds.
+
+  // if (g_buildconfig.ostype_macos()) {
+  //   std::string sys = g_base->app_config->Resolve(
+  //       AppConfig::StringID::kMacControllerSubsystem);
+  //   if (sys == "Classic") {
+  //     ignore_mfi_controllers_ = true;
+  //     ignore_sdl_controllers_ = false;
+  //   } else if (sys == "MFi") {
+  //     ignore_mfi_controllers_ = false;
+  //     ignore_sdl_controllers_ = true;
+  //   } else if (sys == "Both") {
+  //     ignore_mfi_controllers_ = false;
+  //     ignore_sdl_controllers_ = false;
+  //   } else {
+  //     BA_LOG_ONCE(LogLevel::kError,
+  //                 "Invalid mac-controller-subsystem value: '" + sys + "'");
+  //   }
+  // }
 }
 
 void Input::OnAppStart() { assert(g_base->InLogicThread()); }
@@ -810,10 +815,35 @@ void Input::PushTextInputEvent(const std::string& text) {
   g_base->logic->event_loop()->PushCall([this, text] {
     MarkInputActive();
 
-    // Ignore  if input is locked.
+    // If if the app doesn't want direct text input right now.
+    if (!g_base->app_adapter->HasDirectKeyboardInput()) {
+      return;
+    }
+
+    // Ignore if input is locked.
     if (IsInputLocked()) {
       return;
     }
+
+    // We try to handle char filtering here (to keep it consistent across
+    // platforms) but make a stink if they sent us something that we can't
+    // at least translate to unicode.
+    if (!Utils::IsValidUTF8(text)) {
+      Log(LogLevel::kWarning, "PushTextInputEvent passed invalid utf-8 text.");
+      return;
+    }
+
+    // Now scan through unicode vals and ignore stuff like tabs and newlines
+    // and backspaces. We want to limit this mechanism to direct simple
+    // lines of text. Anything needing something fancier should go through a
+    // proper OS-managed text input dialog or whatnot.
+    auto univals = Utils::UnicodeFromUTF8(text, "80ff83");
+    for (auto&& unival : univals) {
+      if (unival < 32) {
+        return;
+      }
+    }
+
     if (g_base && g_base->ui->dev_console() != nullptr
         && g_base->ui->dev_console()->HandleTextEditing(text)) {
       return;

@@ -40,6 +40,8 @@ class AppAdapterApple : public AppAdapter {
   auto FullscreenControlKeyShortcut() const
       -> std::optional<std::string> override;
 
+  auto HasDirectKeyboardInput() -> bool override;
+
  protected:
   void DoPushMainThreadRunnable(Runnable* runnable) override;
   void DoPushGraphicsContextRunnable(Runnable* runnable) override;

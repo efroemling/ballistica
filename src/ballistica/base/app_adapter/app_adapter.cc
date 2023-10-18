@@ -303,5 +303,6 @@ auto AppAdapter::CanBackQuit() -> bool { return false; }
 void AppAdapter::DoBackQuit() { FatalError("Fixme unimplemented."); }
 void AppAdapter::DoSoftQuit() { FatalError("Fixme unimplemented."); }
 void AppAdapter::TerminateApp() { FatalError("Fixme unimplemented."); }
+auto AppAdapter::HasDirectKeyboardInput() -> bool { return false; }
 
 }  // namespace ballistica::base

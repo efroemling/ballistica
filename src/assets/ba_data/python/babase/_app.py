@@ -903,7 +903,7 @@ class App:
         duration = _babase.apptime() - starttime
         if duration > 1.0:
             logging.warning(
-                'Shutdown-suppressions delayed shutdown longer than ideal '
+                'Shutdown-suppressions lasted longer than ideal '
                 '(%.2f seconds).',
                 duration,
             )
