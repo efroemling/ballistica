@@ -33,6 +33,8 @@ static auto PyGetSimpleSound(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &name)) {
     return nullptr;
   }
+  BA_PRECONDITION(g_base->InLogicThread());
+  BA_PRECONDITION(g_base->assets->asset_loads_allowed());
   {
     Assets::AssetListLock lock;
     return PythonClassSimpleSound::Create(g_base->assets->GetSound(name));
@@ -1658,6 +1660,27 @@ static PyMethodDef PyDevConsoleRequestRefreshDef = {
     "(internal)",
 };
 
+// -------------------------- asset_loads_allowed ------------------------------
+
+static auto PyAssetLoadsAllowed(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_base->assets->asset_loads_allowed()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAssetLoadsAllowedDef = {
+    "asset_loads_allowed",             // name
+    (PyCFunction)PyAssetLoadsAllowed,  // method
+    METH_NOARGS,                       // flags
+
+    "asset_loads_allowed() -> bool\n"
+    "\n"
+    "(internal)",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
@@ -1720,6 +1743,7 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PyDevConsoleTabHeightDef,
       PyDevConsoleBaseScaleDef,
       PyDevConsoleRequestRefreshDef,
+      PyAssetLoadsAllowedDef,
   };
 }
 

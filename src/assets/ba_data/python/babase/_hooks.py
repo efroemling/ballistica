@@ -389,3 +389,17 @@ def string_edit_adapter_can_be_replaced(adapter: StringEditAdapter) -> bool:
 def get_dev_console_tab_names() -> list[str]:
     """Return the current set of dev-console tab names."""
     return [t.name for t in _babase.app.devconsole.tabs]
+
+
+def unsupported_controller_message(name: str) -> None:
+    """Print a message when an unsupported controller is connected."""
+    from babase._language import Lstr
+
+    # Ick; this can get called early in the bootstrapping process
+    # before we're allowed to load assets. Guard against that.
+    if _babase.asset_loads_allowed():
+        _babase.getsimplesound('error').play()
+    _babase.screenmessage(
+        Lstr(resource='unsupportedControllerText', subs=[('${NAME}', name)]),
+        color=(1, 0, 0),
+    )

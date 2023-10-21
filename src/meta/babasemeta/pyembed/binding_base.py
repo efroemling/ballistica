@@ -56,6 +56,7 @@ values = [
     _hooks.show_post_purchase_message,  # kShowPostPurchaseMessageCall
     _hooks.string_edit_adapter_can_be_replaced,  # kStringEditAdapterCanBeReplacedCall
     _hooks.get_dev_console_tab_names,  # kGetDevConsoleTabNamesCall
+    _hooks.unsupported_controller_message,  # kUnsupportedControllerMessageCall
     _language.Lstr,  # kLStrClass
     _general.Call,  # kCallClass
     _apputils.garbage_collect_session_end,  # kGarbageCollectSessionEndCall

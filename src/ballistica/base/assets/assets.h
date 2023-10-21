@@ -117,6 +117,8 @@ class Assets {
 
   auto language_state() const { return language_state_; }
 
+  auto asset_loads_allowed() const { return asset_loads_allowed_; }
+
  private:
   static void MarkAssetForLoad(Asset* c);
   void LoadSystemTexture(SysTextureID id, const char* name);

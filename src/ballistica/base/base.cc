@@ -662,6 +662,10 @@ void BaseFeatureSet::DoPushObjCall(const PythonObjectSetBase* objset, int id,
 
 auto BaseFeatureSet::IsAppStarted() const -> bool { return app_started_; }
 
+auto BaseFeatureSet::IsAppBootstrapped() const -> bool {
+  return logic->app_bootstrapping_complete();
+}
+
 auto BaseFeatureSet::ShutdownSuppressBegin() -> bool {
   std::scoped_lock lock(shutdown_suppress_lock_);
 

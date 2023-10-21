@@ -83,10 +83,9 @@ void Assets::StartLoading() {
   assert(g_base->audio_server && g_base->assets_server
          && g_base->graphics_server);
   assert(g_base->graphics->has_client_context());
-  // assert(g_base->graphics_server->texture_compression_types_are_set());
-  // assert(g_base->graphics_server->texture_quality_set());
 
-  assert(!asset_loads_allowed_);  // We should only be called once.
+  // We should only be called once.
+  assert(!asset_loads_allowed_);
   asset_loads_allowed_ = true;
 
   // Just grab the lock once for all this stuff for efficiency.

@@ -110,6 +110,7 @@ class BasePython {
     kDevConsoleStringEditAdapterClass,
     kGetDevConsoleTabNamesCall,
     kAppDevConsoleDoRefreshTabCall,
+    kUnsupportedControllerMessageCall,
     kLast  // Sentinel; must be at end.
   };
 
