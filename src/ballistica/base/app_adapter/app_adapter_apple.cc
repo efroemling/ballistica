@@ -74,12 +74,6 @@ void AppAdapterApple::ReloadRenderer_(const GraphicsSettings* settings) {
     gs->set_renderer(new RendererGL());
   }
 
-  // Set a dummy screen resolution to start with. The main thread will kick
-  // along the latest real resolution just before each frame draw, but we
-  // need *something* here or else we'll get errors due to framebuffers
-  // getting made at size 0/etc.
-  // g_base->graphics_server->SetScreenResolution(320.0, 240.0);
-
   // Update graphics quality based on request.
   gs->set_graphics_quality_requested(settings->graphics_quality);
   gs->set_texture_quality_requested(settings->texture_quality);

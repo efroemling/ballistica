@@ -311,25 +311,6 @@ void GraphicsServer::ReloadLostRenderer() {
   });
 }
 
-void GraphicsServer::SetNullGraphics() {
-  // We don't actually make or update a renderer in headless, but we
-  // still need to set our list of supported textures types/etc. to avoid
-  // complaints.
-  std::list<TextureCompressionType> c_types;
-  SetTextureCompressionTypes(c_types);
-  graphics_quality_requested_ = GraphicsQualityRequest::kLow;
-  graphics_quality_ = GraphicsQuality::kLow;
-  // graphics_quality_set_ = true;
-  texture_quality_requested_ = TextureQualityRequest::kLow;
-  texture_quality_ = TextureQuality::kLow;
-  // texture_quality_set_ = true;
-
-  FatalError("FIXME REWORK THIS");
-  // Let the logic thread know screen creation is done (or lack thereof).
-  // g_base->logic->event_loop()->PushCall(
-  //     [] { g_base->logic->OnGraphicsReady(); });
-}
-
 void GraphicsServer::set_renderer(Renderer* renderer) {
   assert(g_base->app_adapter->InGraphicsContext());
   assert(!renderer_loaded_);

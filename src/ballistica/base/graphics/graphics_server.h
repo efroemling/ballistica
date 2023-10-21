@@ -54,16 +54,6 @@ class GraphicsServer {
 
   void ApplySettings(const GraphicsSettings* settings);
 
-  /// The AppAdapter should call this to inform the engine of screen size
-  /// changes. Changes will be applied to the server and then sent to the
-  /// logic thread to apply to various app systems (ui, etc.).
-  // void SetScreenResolution(float h, float v);
-
-  /// Used by headless builds to init the graphics-server into a
-  /// non-functional state.
-  void SetNullGraphics();
-
-  // void PushSetScreenPixelScaleCall(float pixel_scale);
   void PushReloadMediaCall();
   void PushRemoveRenderHoldCall();
   void PushComponentUnloadCall(

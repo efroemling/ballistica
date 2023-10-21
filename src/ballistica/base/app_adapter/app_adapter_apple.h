@@ -32,9 +32,6 @@ class AppAdapterApple : public AppAdapter {
   /// Called by FromSwift.
   auto TryRender() -> bool;
 
-  /// Called by FromSwift.
-  // void SetScreenResolution(float pixel_width, float pixel_height);
-
   auto FullscreenControlAvailable() const -> bool override;
   auto FullscreenControlGet() const -> bool override;
   void FullscreenControlSet(bool fullscreen) override;
@@ -42,7 +39,6 @@ class AppAdapterApple : public AppAdapter {
       -> std::optional<std::string> override;
 
   auto HasDirectKeyboardInput() -> bool override;
-
   void EnableResizeFriendlyMode(int width, int height);
 
  protected:

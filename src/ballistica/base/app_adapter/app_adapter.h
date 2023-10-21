@@ -195,11 +195,6 @@ class AppAdapter {
   /// the logic subsystem. This will be called initially to jump-start the
   /// graphics system as well as before frame draws to update any new
   /// settings coming in.
-  ///
-  /// Whenever graphics settings will result in a change to the graphics
-  /// context (ie: something visible to rendering code in the logic thread)
-  /// the adapter should call g_base->graphics_server->set_context() with
-  /// the updated context.
   virtual void ApplyGraphicsSettings(const GraphicsSettings* settings);
 
  protected:
