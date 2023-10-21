@@ -42,7 +42,7 @@ MaterialContext::SkidSoundEntry::SkidSoundEntry(
   assert(context->dynamics.Exists());
 #endif
   assert(context->dynamics->in_process());
-  context->dynamics->increment_skid_sound_count();
+  context->dynamics->IncrementSkidSoundCount();
 }
 
 MaterialContext::SkidSoundEntry::SkidSoundEntry(MaterialContext* context_in,
@@ -57,13 +57,13 @@ MaterialContext::SkidSoundEntry::SkidSoundEntry(MaterialContext* context_in,
   assert(context);
   assert(context->dynamics.Exists());
   assert(context->dynamics->in_process());
-  context->dynamics->increment_skid_sound_count();
+  context->dynamics->IncrementSkidSoundCount();
 }
 
 MaterialContext::SkidSoundEntry::~SkidSoundEntry() {
   assert(context);
   assert(context->dynamics.Exists());
-  context->dynamics->decrement_skid_sound_count();
+  context->dynamics->DecrementSkidSoundCount();
   if (playing) {
     g_base->audio->PushSourceFadeOutCall(play_id, 200);
   }
@@ -81,7 +81,7 @@ MaterialContext::RollSoundEntry::RollSoundEntry(MaterialContext* context_in,
   assert(context);
   assert(context->dynamics.Exists());
   assert(context->dynamics->in_process());
-  context->dynamics->incrementRollSoundCount();
+  context->dynamics->IncrementRollSoundCount();
 }
 
 MaterialContext::RollSoundEntry::RollSoundEntry(
@@ -90,13 +90,13 @@ MaterialContext::RollSoundEntry::RollSoundEntry(
   assert(context);
   assert(context->dynamics.Exists());
   assert(context->dynamics->in_process());
-  context->dynamics->incrementRollSoundCount();
+  context->dynamics->IncrementRollSoundCount();
 }
 
 MaterialContext::RollSoundEntry::~RollSoundEntry() {
   assert(context);
   assert(context->dynamics.Exists());
-  context->dynamics->decrement_roll_sound_count();
+  context->dynamics->DecrementRollSoundCount();
   if (playing) {
     g_base->audio->PushSourceFadeOutCall(play_id, 200);
   }

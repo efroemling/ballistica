@@ -70,7 +70,6 @@ class HostSession : public Session {
   void Draw(base::FrameDef* f) override;
   void OnScreenSizeChange() override;
   void LanguageChanged() override;
-  void GraphicsQualityChanged(base::GraphicsQuality q) override;
   void DebugSpeedMultChanged() override;
   auto GetHostSession() -> HostSession* override;
   auto GetMutableScene() -> Scene* override;

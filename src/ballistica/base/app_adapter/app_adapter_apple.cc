@@ -44,58 +44,27 @@ void AppAdapterApple::DoPushMainThreadRunnable(Runnable* runnable) {
   BallisticaKit::FromCppPushRawRunnableToMain(runnable);
 }
 
-void AppAdapterApple::DoApplyAppConfig() {
-  assert(g_base->InLogicThread());
+void AppAdapterApple::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
 
-  g_base->graphics_server->PushSetScreenPixelScaleCall(
-      g_base->app_config->Resolve(AppConfig::FloatID::kScreenPixelScale));
+void AppAdapterApple::ApplyGraphicsSettings(const GraphicsSettings* settings) {
+  auto* graphics_server = g_base->graphics_server;
 
-  auto graphics_quality_requested =
-      g_base->graphics->GraphicsQualityFromAppConfig();
-
-  auto texture_quality_requested =
-      g_base->graphics->TextureQualityFromAppConfig();
-
-  g_base->app_adapter->PushGraphicsContextCall([=] {
-    SetScreen_(texture_quality_requested, graphics_quality_requested);
-  });
-}
-
-void AppAdapterApple::SetScreen_(
-    TextureQualityRequest texture_quality_requested,
-    GraphicsQualityRequest graphics_quality_requested) {
-  // If we know what we support, filter our request types to what is
-  // supported. This will keep us from rebuilding contexts if request type
-  // is flipping between different types that we don't support.
-  if (g_base->graphics->has_supports_high_quality_graphics_value()) {
-    if (!g_base->graphics->supports_high_quality_graphics()
-        && graphics_quality_requested > GraphicsQualityRequest::kMedium) {
-      graphics_quality_requested = GraphicsQualityRequest::kMedium;
-    }
-  }
-
-  auto* gs = g_base->graphics_server;
+  // We need a full renderer reload if quality values have changed
+  // or if we don't have a renderer yet.
+  bool need_full_reload = ((graphics_server->texture_quality_requested()
+                            != settings->texture_quality)
+                           || (graphics_server->graphics_quality_requested()
+                               != settings->graphics_quality));
 
   // We need a full renderer reload if quality values have changed or if we
-  // don't have one yet.
-  bool need_full_reload =
-      ((gs->texture_quality_requested() != texture_quality_requested)
-       || (gs->graphics_quality_requested() != graphics_quality_requested)
-       || !gs->texture_quality_set() || !gs->graphics_quality_set());
+  // don't yet have a renderer.
 
   if (need_full_reload) {
-    ReloadRenderer_(graphics_quality_requested, texture_quality_requested);
+    ReloadRenderer_(settings);
   }
-
-  // Let the logic thread know we've got a graphics system up and running.
-  // It may use this cue to kick off asset loads and other bootstrapping.
-  g_base->logic->event_loop()->PushCall(
-      [] { g_base->logic->OnGraphicsReady(); });
 }
 
-void AppAdapterApple::ReloadRenderer_(
-    GraphicsQualityRequest graphics_quality_requested,
-    TextureQualityRequest texture_quality_requested) {
+void AppAdapterApple::ReloadRenderer_(const GraphicsSettings* settings) {
   auto* gs = g_base->graphics_server;
 
   if (gs->renderer() && gs->renderer_loaded()) {
@@ -109,11 +78,11 @@ void AppAdapterApple::ReloadRenderer_(
   // along the latest real resolution just before each frame draw, but we
   // need *something* here or else we'll get errors due to framebuffers
   // getting made at size 0/etc.
-  g_base->graphics_server->SetScreenResolution(320.0, 240.0);
+  // g_base->graphics_server->SetScreenResolution(320.0, 240.0);
 
   // Update graphics quality based on request.
-  gs->set_graphics_quality_requested(graphics_quality_requested);
-  gs->set_texture_quality_requested(texture_quality_requested);
+  gs->set_graphics_quality_requested(settings->graphics_quality);
+  gs->set_texture_quality_requested(settings->texture_quality);
 
   // (Re)load stuff with these latest quality settings.
   gs->LoadRenderer();
@@ -121,12 +90,6 @@ void AppAdapterApple::ReloadRenderer_(
 
 void AppAdapterApple::UpdateScreenSizes_() {
   assert(g_base->app_adapter->InGraphicsContext());
-}
-
-void AppAdapterApple::SetScreenResolution(float pixel_width,
-                                          float pixel_height) {
-  auto allow = ScopedAllowGraphics_(this);
-  g_base->graphics_server->SetScreenResolution(pixel_width, pixel_height);
 }
 
 auto AppAdapterApple::TryRender() -> bool {
@@ -146,10 +109,45 @@ auto AppAdapterApple::TryRender() -> bool {
     call->RunAndLogErrors();
     delete call;
   }
-  // Lastly render.
-  return g_base->graphics_server->TryRender();
 
-  return true;
+  // Lastly, render.
+  auto result = g_base->graphics_server->TryRender();
+
+  // A little trick to make mac resizing look a lot smoother. Because we
+  // render in a background thread, we often don't render at the most up to
+  // date window size during a window resize. Normally this makes our image
+  // jerk around in an ugly way, but if we just re-render once or twice in
+  // those cases we mostly always get the most up to date window size.
+  if (result && resize_friendly_frames_ > 0) {
+    // Leave this enabled for just a few frames every time it is set.
+    // (so just in case it breaks we won't draw each frame serveral times for
+    // eternity).
+    resize_friendly_frames_ -= 1;
+
+    // Keep on drawing until the drawn window size
+    // matches what we have (or until we try for too long or fail at drawing).
+    seconds_t start_time = g_core->GetAppTimeSeconds();
+    for (int i = 0; i < 5; ++i) {
+      if (((std::abs(resize_target_resolution_.x
+                     - g_base->graphics_server->screen_pixel_width())
+            > 0.01f)
+           || (std::abs(resize_target_resolution_.y
+                        - g_base->graphics_server->screen_pixel_height())
+               > 0.01f))
+          && g_core->GetAppTimeSeconds() - start_time < 0.1 && result) {
+        result = g_base->graphics_server->TryRender();
+      } else {
+        break;
+      }
+    }
+  }
+
+  return result;
+}
+
+void AppAdapterApple::EnableResizeFriendlyMode(int width, int height) {
+  resize_friendly_frames_ = 5;
+  resize_target_resolution_ = Vector2f(width, height);
 }
 
 auto AppAdapterApple::InGraphicsContext() -> bool {

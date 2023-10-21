@@ -4,6 +4,7 @@
 #include "ballistica/base/app_adapter/app_adapter_headless.h"
 
 #include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/support/graphics_client_context.h"
 #include "ballistica/shared/ballistica.h"
 
 namespace ballistica::base {
@@ -19,12 +20,7 @@ void AppAdapterHeadless::OnMainThreadStartApp() {
       new EventLoop(EventLoopID::kMain, ThreadSource::kWrapCurrent);
 }
 
-void AppAdapterHeadless::DoApplyAppConfig() {
-  // Normal graphical app-adapters kick off screen creation here
-  // which then leads to remaining app bootstrapping. We create
-  // a 'null' screen purely for the same effect.
-  PushMainThreadCall([] { g_base->graphics_server->SetNullGraphics(); });
-}
+void AppAdapterHeadless::DoApplyAppConfig() {}
 
 void AppAdapterHeadless::RunMainThreadEventLoopToCompletion() {
   assert(g_core->InMainThread());
@@ -38,6 +34,11 @@ void AppAdapterHeadless::DoPushMainThreadRunnable(Runnable* runnable) {
 void AppAdapterHeadless::DoExitMainThreadEventLoop() {
   assert(g_core->InMainThread());
   main_event_loop_->Exit();
+}
+
+auto AppAdapterHeadless::GetGraphicsClientContext() -> GraphicsClientContext* {
+  // Special dummy form.
+  return new GraphicsClientContext(0);
 }
 
 }  // namespace ballistica::base

@@ -33,8 +33,6 @@ void Session::OnScreenSizeChange() {}
 
 void Session::LanguageChanged() {}
 
-void Session::GraphicsQualityChanged(base::GraphicsQuality q) {}
-
 void Session::DebugSpeedMultChanged() {}
 
 void Session::DumpFullState(SessionStream* out) {

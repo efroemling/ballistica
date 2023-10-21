@@ -57,7 +57,6 @@ class HostActivity : public SceneV1Context {
   void OnScreenSizeChange();
   void LanguageChanged();
   void DebugSpeedMultChanged();
-  void GraphicsQualityChanged(base::GraphicsQuality q);
 
   // Used to register python calls created in this context so we can make sure
   // they got properly cleaned up.

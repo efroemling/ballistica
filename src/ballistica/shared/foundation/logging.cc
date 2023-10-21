@@ -20,16 +20,16 @@ void Logging::Log(LogLevel level, const std::string& msg) {
   g_core->python->LoggingCall(level, msg);
 }
 
-void Logging::DisplayLog(const std::string& name, LogLevel level,
-                         const std::string& msg) {
-  // Print to the in-app console (with a newline added).
+void Logging::EmitLog(const std::string& name, LogLevel level,
+                      const std::string& msg) {
+  // Print to the dev console.
   if (g_base_soft) {
     g_base_soft->PushDevConsolePrintCall(msg + "\n");
   }
 
   // Ship to platform-specific display mechanisms (android log, etc).
   if (g_core) {
-    g_core->platform->DisplayLog(name, level, msg);
+    g_core->platform->EmitPlatformLog(name, level, msg);
   }
 }
 

@@ -348,13 +348,14 @@ static PyMethodDef PySafeColorDef = {
 
 static auto PyGetMaxGraphicsQuality(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_base->graphics
-      && g_base->graphics->has_supports_high_quality_graphics_value()
-      && g_base->graphics->supports_high_quality_graphics()) {
-    return Py_BuildValue("s", "High");
-  } else {
-    return Py_BuildValue("s", "Medium");
-  }
+  // if (g_base->graphics
+  //     && g_base->graphics->has_supports_high_quality_graphics_value()
+  //     && g_base->graphics->supports_high_quality_graphics()) {
+  //   return Py_BuildValue("s", "High");
+  // } else {
+  //   return Py_BuildValue("s", "Medium");
+  // }
+  return Py_BuildValue("s", "Higher");
   BA_PYTHON_CATCH;
 }
 

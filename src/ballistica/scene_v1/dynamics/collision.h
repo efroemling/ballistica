@@ -12,11 +12,12 @@
 
 namespace ballistica::scene_v1 {
 
-// Stores info about an occurring collision.
-// Note than just because a collision exists between two parts doesn't mean
-// they're physically colliding in the simulation. It is just a shortcut to
-// determine what behavior, if any, exists between two parts which are currently
-// overlapping in the simulation.
+/// Stores info about an occurring collision.
+///
+/// Note than just because a collision exists between two parts doesn't mean
+/// they're physically colliding in the simulation. It is just a shortcut to
+/// determine what behavior, if any, exists between two parts which are
+/// currently overlapping in the simulation.
 class Collision : public Object {
  public:
   explicit Collision(Scene* scene) : src_context(scene), dst_context(scene) {}

@@ -166,7 +166,7 @@ void Scene::Step() {
   }
 
   // Lastly step our sim.
-  dynamics_->process();
+  dynamics_->Process();
 
   time_ += kGameStepMilliseconds;
   stepnum_++;
@@ -224,13 +224,6 @@ void Scene::DeleteNode(Node* node) {
         node2->scene()->DeleteNode(node2);
       }
     }
-  }
-}
-
-void Scene::GraphicsQualityChanged(base::GraphicsQuality q) {
-  assert(g_base->InLogicThread());
-  for (auto&& i : nodes_) {
-    i->OnGraphicsQualityChanged(q);
   }
 }
 

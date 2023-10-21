@@ -11,6 +11,7 @@
 
 #include "ballistica/base/base.h"
 #include "ballistica/shared/foundation/object.h"
+#include "ballistica/shared/generic/snapshot.h"
 #include "ballistica/shared/math/matrix44f.h"
 
 namespace ballistica::base {
@@ -51,16 +52,18 @@ class GraphicsServer {
     return renderer_loaded_;
   }
 
+  void ApplySettings(const GraphicsSettings* settings);
+
   /// The AppAdapter should call this to inform the engine of screen size
   /// changes. Changes will be applied to the server and then sent to the
   /// logic thread to apply to various app systems (ui, etc.).
-  void SetScreenResolution(float h, float v);
+  // void SetScreenResolution(float h, float v);
 
   /// Used by headless builds to init the graphics-server into a
   /// non-functional state.
   void SetNullGraphics();
 
-  void PushSetScreenPixelScaleCall(float pixel_scale);
+  // void PushSetScreenPixelScaleCall(float pixel_scale);
   void PushReloadMediaCall();
   void PushRemoveRenderHoldCall();
   void PushComponentUnloadCall(
@@ -70,8 +73,6 @@ class GraphicsServer {
   /// Used by the logic thread to pass frame-defs to the graphics server for
   /// rendering.
   void EnqueueFrameDef(FrameDef* framedef);
-
-  void ApplyFrameDefSettings(FrameDef* frame_def);
 
   void RunFrameDefMeshUpdates(FrameDef* frame_def);
 
@@ -108,9 +109,7 @@ class GraphicsServer {
     projection_matrix_state_++;
   }
 
-  auto projection_matrix_state() -> uint32_t {
-    return projection_matrix_state_;
-  }
+  auto projection_matrix_state() { return projection_matrix_state_; }
 
   void SetLightShadowProjectionMatrix(const Matrix44f& p) {
     // This will generally get repeatedly set to the same value
@@ -121,61 +120,57 @@ class GraphicsServer {
     }
   }
 
-  auto light_shadow_projection_matrix_state() const -> uint32_t {
+  auto light_shadow_projection_matrix_state() const {
     return light_shadow_projection_matrix_state_;
   }
 
-  auto light_shadow_projection_matrix() const -> const Matrix44f& {
+  const auto& light_shadow_projection_matrix() const {
     return light_shadow_projection_matrix_;
   }
 
   // Return the modelview * projection matrix.
-  auto GetModelViewProjectionMatrix() -> const Matrix44f& {
+  const auto& GetModelViewProjectionMatrix() {
     UpdateModelViewProjectionMatrix_();
     return model_view_projection_matrix_;
   }
 
-  auto GetModelViewProjectionMatrixState() -> uint32_t {
+  auto GetModelViewProjectionMatrixState() {
     UpdateModelViewProjectionMatrix_();
     return model_view_projection_matrix_state_;
   }
 
-  auto GetModelWorldMatrix() -> const Matrix44f& {
+  const auto& GetModelWorldMatrix() {
     UpdateModelWorldMatrix_();
     return model_world_matrix_;
   }
 
-  auto GetModelWorldMatrixState() -> uint32_t {
+  auto GetModelWorldMatrixState() {
     UpdateModelWorldMatrix_();
     return model_world_matrix_state_;
   }
 
-  auto cam_pos() -> const Vector3f& { return cam_pos_; }
+  const auto& cam_pos() { return cam_pos_; }
 
-  auto cam_pos_state() -> uint32_t { return cam_pos_state_; }
+  auto cam_pos_state() { return cam_pos_state_; }
 
-  auto GetCamOrientMatrix() -> const Matrix44f& {
+  const auto& GetCamOrientMatrix() {
     UpdateCamOrientMatrix_();
     return cam_orient_matrix_;
   }
 
-  auto GetCamOrientMatrixState() -> uint32_t {
+  auto GetCamOrientMatrixState() {
     UpdateCamOrientMatrix_();
     return cam_orient_matrix_state_;
   }
 
-  auto model_view_matrix() const -> const Matrix44f& {
-    return model_view_matrix_;
-  }
+  const auto& model_view_matrix() const { return model_view_matrix_; }
 
   void SetModelViewMatrix(const Matrix44f& m) {
     model_view_matrix_ = m;
     model_view_projection_matrix_dirty_ = model_world_matrix_dirty_ = true;
   }
 
-  auto projection_matrix() const -> const Matrix44f& {
-    return projection_matrix_;
-  }
+  const auto& projection_matrix() const { return projection_matrix_; }
 
   void PushTransform() {
     model_view_stack_.push_back(model_view_matrix_);
@@ -209,32 +204,34 @@ class GraphicsServer {
     model_view_projection_matrix_dirty_ = model_world_matrix_dirty_ = true;
   }
 
-  auto quality() const -> GraphicsQuality {
-    assert(graphics_quality_set_);
+  auto quality() const {
+    assert(InGraphicsContext_());
+    assert(graphics_quality_ != GraphicsQuality::kUnset);
     return graphics_quality_;
   }
 
-  auto texture_quality() const -> TextureQuality {
-    assert(texture_quality_set_);
+  auto texture_quality() const {
+    assert(InGraphicsContext_());
+    assert(texture_quality_ != TextureQuality::kUnset);
     return texture_quality_;
   }
 
-  auto screen_pixel_width() const -> float {
+  auto screen_pixel_width() const {
     assert(InGraphicsContext_());
     return res_x_;
   }
 
-  auto screen_pixel_height() const -> float {
+  auto screen_pixel_height() const {
     assert(InGraphicsContext_());
     return res_y_;
   }
 
-  auto screen_virtual_width() const -> float {
+  auto screen_virtual_width() const {
     assert(InGraphicsContext_());
     return res_x_virtual_;
   }
 
-  auto screen_virtual_height() const -> float {
+  auto screen_virtual_height() const {
     assert(InGraphicsContext_());
     return res_y_virtual_;
   }
@@ -244,45 +241,69 @@ class GraphicsServer {
     return tv_border_;
   }
 
-  auto graphics_quality_set() const { return graphics_quality_set_; }
+  // auto graphics_quality_set() const {
+  //   return graphics_quality_ != GraphicsQuality::kUnset;
+  // }
 
-  auto texture_quality_set() const { return texture_quality_set_; }
+  // auto texture_quality_set() const {
+  //   return texture_quality_ != TextureQuality::kUnset;
+  // }
 
   auto SupportsTextureCompressionType(TextureCompressionType t) const -> bool {
+    assert(InGraphicsContext_());
     assert(texture_compression_types_set_);
     return ((texture_compression_types_ & (0x01u << static_cast<uint32_t>(t)))
             != 0u);
   }
+
   void SetTextureCompressionTypes(
       const std::list<TextureCompressionType>& types);
 
-  auto texture_compression_types_are_set() const {
-    return texture_compression_types_set_;
-  }
+  // auto texture_compression_types_are_set() const {
+  //   return texture_compression_types_set_;
+  // }
 
   void set_renderer_context_lost(bool lost) { renderer_context_lost_ = lost; }
 
   auto renderer_context_lost() const { return renderer_context_lost_; }
 
   auto graphics_quality_requested() const {
+    assert(InGraphicsContext_());
     return graphics_quality_requested_;
   }
 
   void set_graphics_quality_requested(GraphicsQualityRequest val) {
+    assert(InGraphicsContext_());
     graphics_quality_requested_ = val;
   }
 
   void set_texture_quality_requested(TextureQualityRequest val) {
+    assert(InGraphicsContext_());
     texture_quality_requested_ = val;
   }
 
-  auto graphics_quality() const { return graphics_quality_; }
+  auto graphics_quality() const {
+    assert(InGraphicsContext_());
+    return graphics_quality_;
+  }
 
-  auto texture_quality_requested() const { return texture_quality_requested_; }
+  auto texture_quality_requested() const {
+    assert(InGraphicsContext_());
+    return texture_quality_requested_;
+  }
 
   void HandlePushAndroidRes(const std::string& android_res);
 
+  auto texture_compression_types() const {
+    assert(texture_compression_types_set_);
+    return texture_compression_types_;
+  }
+
  private:
+  /// Pass a freshly allocated GraphicsContext instance, which the graphics
+  /// system will take ownership of.
+  void set_client_context(GraphicsClientContext* context);
+
   // So we don't have to include app_adapter.h here for asserts.
   auto InGraphicsContext_() const -> bool;
 
@@ -293,8 +314,8 @@ class GraphicsServer {
   auto WaitForRenderFrameDef_() -> FrameDef*;
 
   // Update virtual screen dimensions based on the current physical ones.
-  static void CalcVirtualRes_(float* x, float* y);
-  void UpdateVirtualScreenRes_();
+  // static void CalcVirtualRes_(float* x, float* y);
+  // void UpdateVirtualScreenRes_();
   void UpdateCamOrientMatrix_();
   void ReloadMedia_();
   void UpdateModelViewProjectionMatrix_() {
@@ -314,23 +335,17 @@ class GraphicsServer {
   }
 
   bool renderer_loaded_ : 1 {};
-  bool v_sync_ : 1 {};
-  bool auto_vsync_ : 1 {};
   bool model_view_projection_matrix_dirty_ : 1 {true};
   bool model_world_matrix_dirty_ : 1 {true};
-  bool graphics_quality_set_ : 1 {};
-  bool texture_quality_set_ : 1 {};
   bool tv_border_ : 1 {};
   bool renderer_context_lost_ : 1 {};
   bool texture_compression_types_set_ : 1 {};
   bool cam_orient_matrix_dirty_ : 1 {true};
-  TextureQualityRequest texture_quality_requested_{
-      TextureQualityRequest::kUnset};
-  TextureQuality texture_quality_{TextureQuality::kLow};
-  GraphicsQualityRequest graphics_quality_requested_{
-      GraphicsQualityRequest::kUnset};
-  GraphicsQuality graphics_quality_{GraphicsQuality::kUnset};
-  int render_hold_{};
+  Snapshot<GraphicsClientContext>* client_context_{};
+  TextureQualityRequest texture_quality_requested_{};
+  TextureQuality texture_quality_{};
+  GraphicsQualityRequest graphics_quality_requested_{};
+  GraphicsQuality graphics_quality_{};
   float res_x_{};
   float res_y_{};
   float res_x_virtual_{};
@@ -340,20 +355,21 @@ class GraphicsServer {
   Matrix44f projection_matrix_{kMatrix44fIdentity};
   Matrix44f model_view_projection_matrix_{kMatrix44fIdentity};
   Matrix44f model_world_matrix_{kMatrix44fIdentity};
-  std::vector<Matrix44f> model_view_stack_;
   uint32_t texture_compression_types_{};
-  uint32_t projection_matrix_state_{1};
-  uint32_t model_view_projection_matrix_state_{1};
-  uint32_t model_world_matrix_state_{1};
-  uint32_t light_shadow_projection_matrix_state_{1};
-  uint32_t cam_pos_state_{1};
-  uint32_t cam_orient_matrix_state_{1};
+  int render_hold_{};
+  int projection_matrix_state_{};
+  int model_view_projection_matrix_state_{};
+  int model_world_matrix_state_{};
+  int light_shadow_projection_matrix_state_{};
+  int cam_pos_state_{};
+  int cam_orient_matrix_state_{};
+  int settings_index_{-1};
   Vector3f cam_pos_{0.0f, 0.0f, 0.0f};
   Vector3f cam_target_{0.0f, 0.0f, 0.0f};
   Matrix44f light_shadow_projection_matrix_{kMatrix44fIdentity};
   Matrix44f cam_orient_matrix_ = kMatrix44fIdentity;
+  std::vector<Matrix44f> model_view_stack_;
   std::list<MeshData*> mesh_datas_;
-  Timer* render_timer_{};
   Renderer* renderer_{};
   FrameDef* frame_def_{};
   std::mutex frame_def_mutex_{};

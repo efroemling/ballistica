@@ -136,20 +136,21 @@ class Assets {
                 std::unordered_map<std::string, Object::Ref<T> >* c_list)
       -> Object::Ref<T>;
 
-  std::vector<std::string> asset_paths_;
+  int language_state_{};
   bool have_pending_loads_[static_cast<int>(AssetType::kLast)]{};
+
+  // Will be true while a AssetListLock exists. Good to debug-verify this
+  // during any asset list access.
+  bool asset_lists_locked_ : 1 {};
+  bool asset_loads_allowed_ : 1 {};
+  bool sys_assets_loaded_ : 1 {};
+
+  std::vector<std::string> asset_paths_;
   std::unordered_map<std::string, std::string> packages_;
 
   // For use by AssetListLock; don't manually acquire.
   std::mutex asset_lists_mutex_;
 
-  // Will be true while a AssetListLock exists. Good to debug-verify this
-  // during any asset list access.
-  bool asset_lists_locked_{};
-
-  // 'hard-wired' internal assets
-  bool asset_loads_allowed_{};
-  bool sys_assets_loaded_{};
   std::vector<Object::Ref<TextureAsset> > system_textures_;
   std::vector<Object::Ref<TextureAsset> > system_cube_map_textures_;
   std::vector<Object::Ref<SoundAsset> > system_sounds_;
@@ -177,7 +178,6 @@ class Assets {
   // Text & Language (need to mold this into more asset-like concepts).
   std::mutex language_mutex_;
   std::unordered_map<std::string, std::string> language_;
-  int language_state_{};
   std::mutex special_char_mutex_;
   std::unordered_map<SpecialChar, std::string> special_char_strings_;
 };

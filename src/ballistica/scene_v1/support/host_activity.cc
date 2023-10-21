@@ -483,9 +483,6 @@ void HostActivity::PruneSessionBaseTimers() {
 void HostActivity::OnScreenSizeChange() { scene()->OnScreenSizeChange(); }
 void HostActivity::LanguageChanged() { scene()->LanguageChanged(); }
 void HostActivity::DebugSpeedMultChanged() { UpdateStepTimerLength(); }
-void HostActivity::GraphicsQualityChanged(base::GraphicsQuality q) {
-  scene()->GraphicsQualityChanged(q);
-}
 
 void HostActivity::Draw(base::FrameDef* frame_def) {
   if (!started_) {

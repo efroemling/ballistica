@@ -1013,7 +1013,7 @@ void Camera::ApplyToFrameDef(FrameDef* frame_def) {
         up_, 4, 1000.0f,
         -1.0f,  // Auto x fov.
         final_fov_y
-            * (g_base->graphics->tv_border() ? (1.0f + kTVBorder) : 1.0f),
+            * (frame_def->settings()->tv_border ? (1.0f + kTVBorder) : 1.0f),
         false, 0, 0, 0, 0,  // Not using tangent fovs.
         area_of_interest_points_);
   }

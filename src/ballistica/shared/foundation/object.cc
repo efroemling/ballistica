@@ -20,7 +20,6 @@ using core::g_core;
 Object::Object() {
 #if BA_DEBUG_BUILD
   // Mark when we were born.
-  // NOTE: Using core's internal globals here; don't do this normally.
   assert(g_core);
   object_birth_time_ = g_core->GetAppTimeMillisecs();
 
@@ -41,7 +40,6 @@ Object::Object() {
 Object::~Object() {
 #if BA_DEBUG_BUILD
   {
-    // NOTE: using core's internal globals here; don't do this normally!
     assert(g_core);
     // Pull ourself from the global obj list.
     std::scoped_lock lock(g_core->object_list_mutex);
@@ -70,6 +68,7 @@ Object::~Object() {
 #endif  // BA_DEBUG_BUILD
 
   // Invalidate all our weak refs.
+  //
   // We could call Release() on each but we'd have to deactivate the
   // thread-check since virtual functions won't work as expected in a
   // destructor. Also we can take a few shortcuts here since we know
@@ -85,7 +84,6 @@ Object::~Object() {
 
 auto Object::GetObjectTypeName() const -> std::string {
   // Default implementation just returns type name.
-  // Note: using core's globals directly; don't normally do this!
   if (g_core) {
     return g_core->platform->DemangleCXXSymbol(typeid(*this).name());
   }
@@ -112,7 +110,6 @@ auto Object::GetThreadOwnership() const -> Object::ThreadOwnership {
 
 void Object::LsObjects() {
 #if BA_DEBUG_BUILD
-  // Note: using core's internal globals here; don't normally do this.
   assert(g_core);
   std::string s;
   {
@@ -192,12 +189,12 @@ void Object::ObjectUpdateForAcquire() {
   }
 }
 
-void Object::ObjectThreadCheck() {
+void Object::ObjectThreadCheck() const {
   if (!thread_checks_enabled_) {
     return;
   }
 
-  ThreadOwnership thread_ownership = GetThreadOwnership();
+  auto thread_ownership = GetThreadOwnership();
 
   // Special case; graphics context (not simply a thread so have to handle
   // specially).

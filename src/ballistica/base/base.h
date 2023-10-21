@@ -59,6 +59,8 @@ class DataAsset;
 class FrameDef;
 class Graphics;
 class GraphicsServer;
+struct GraphicsSettings;
+struct GraphicsClientContext;
 class Huffman;
 class ImageMesh;
 class Input;
@@ -662,6 +664,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// allowing certain functionality before this time.
   auto IsBaseCompletelyImported() -> bool;
 
+  auto InMainThread() const -> bool;
   auto InAssetsThread() const -> bool override;
   auto InLogicThread() const -> bool override;
   auto InAudioThread() const -> bool override;

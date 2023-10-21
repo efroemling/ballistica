@@ -104,32 +104,115 @@ void AppAdapterSDL::OnMainThreadStartApp() {
   SDL_ShowCursor(SDL_DISABLE);
 }
 
+/// Our particular flavor of graphics settings.
+struct AppAdapterSDL::GraphicsSettings_ : public GraphicsSettings {
+  bool fullscreen = g_base->app_config->Resolve(AppConfig::BoolID::kFullscreen);
+  VSyncRequest vsync = g_base->graphics->VSyncFromAppConfig();
+  int max_fps = g_base->app_config->Resolve(AppConfig::IntID::kMaxFPS);
+};
+
 void AppAdapterSDL::DoApplyAppConfig() {
   assert(g_base->InLogicThread());
-
-  g_base->graphics_server->PushSetScreenPixelScaleCall(
-      g_base->app_config->Resolve(AppConfig::FloatID::kScreenPixelScale));
-
-  auto graphics_quality_requested =
-      g_base->graphics->GraphicsQualityFromAppConfig();
-
-  auto texture_quality_requested =
-      g_base->graphics->TextureQualityFromAppConfig();
 
   // Android res string.
   // std::string android_res =
   //     g_base->app_config->Resolve(AppConfig::StringID::kResolutionAndroid);
+}
 
-  bool fullscreen = g_base->app_config->Resolve(AppConfig::BoolID::kFullscreen);
+auto AppAdapterSDL::GetGraphicsSettings() -> GraphicsSettings* {
+  assert(g_base->InLogicThread());
+  return new GraphicsSettings_();
+}
 
-  auto vsync = g_base->graphics->VSyncFromAppConfig();
-  int max_fps = g_base->app_config->Resolve(AppConfig::IntID::kMaxFPS);
+void AppAdapterSDL::ApplyGraphicsSettings(
+    const GraphicsSettings* settings_base) {
+  assert(g_core->InMainThread());
+  assert(!g_core->HeadlessMode());
 
-  // Tell the main thread to set up the screen with these settings.
-  g_base->app_adapter->PushMainThreadCall([=] {
-    SetScreen_(fullscreen, max_fps, vsync, texture_quality_requested,
-               graphics_quality_requested);
-  });
+  // In strict mode, allow graphics stuff while in here.
+  auto allow = ScopedAllowGraphics_(this);
+
+  // Settings will always be our subclass (since we created it).
+  auto* settings = static_cast<const GraphicsSettings_*>(settings_base);
+
+  // Apply any changes.
+  bool do_toggle_fs{};
+  bool do_set_existing_fullscreen{};
+
+  auto* graphics_server = g_base->graphics_server;
+
+  // We need a full renderer reload if quality values have changed
+  // or if we don't have a renderer yet.
+  bool need_full_reload = ((sdl_window_ == nullptr
+                            || graphics_server->texture_quality_requested()
+                                   != settings->texture_quality)
+                           || (graphics_server->graphics_quality_requested()
+                               != settings->graphics_quality));
+
+  if (need_full_reload) {
+    ReloadRenderer_(settings);
+  } else if (settings->fullscreen != fullscreen_) {
+    SDL_SetWindowFullscreen(
+        sdl_window_, settings->fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+    fullscreen_ = settings->fullscreen;
+  }
+
+  // VSync always gets set independent of the screen (though we set it down
+  // here to make sure we have a screen when its set).
+  VSync vsync;
+  switch (settings->vsync) {
+    case VSyncRequest::kNever:
+      vsync = VSync::kNever;
+      break;
+    case VSyncRequest::kAlways:
+      vsync = VSync::kAlways;
+      break;
+    case VSyncRequest::kAuto:
+      vsync = VSync::kAdaptive;
+      break;
+    default:
+      vsync = VSync::kNever;
+      break;
+  }
+  if (vsync != vsync_) {
+    switch (vsync) {
+      case VSync::kUnset:
+      case VSync::kNever: {
+        SDL_GL_SetSwapInterval(0);
+        vsync_actually_enabled_ = false;
+        break;
+      }
+      case VSync::kAlways: {
+        SDL_GL_SetSwapInterval(1);
+        vsync_actually_enabled_ = true;
+        break;
+      }
+      case VSync::kAdaptive: {
+        // In this case, let's try setting to 'adaptive' and turn it off if
+        // that is unsupported.
+        auto result = SDL_GL_SetSwapInterval(-1);
+        if (result == 0) {
+          vsync_actually_enabled_ = true;
+        } else {
+          SDL_GL_SetSwapInterval(0);
+          vsync_actually_enabled_ = false;
+        }
+        break;
+      }
+    }
+    vsync_ = vsync;
+  }
+
+  // This we can set anytime. Probably could have just set it from the logic
+  // thread where we read it, but let's be pedantic and keep everything to
+  // the main thread.
+  max_fps_ = settings->max_fps;
+
+  // Take -1 to mean no max. Otherwise clamp to a reasonable range.
+  if (max_fps_ != -1) {
+    max_fps_ = std::max(10, max_fps_);
+    max_fps_ = std::min(99999, max_fps_);
+  }
 }
 
 void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
@@ -158,7 +241,7 @@ void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
 
 auto AppAdapterSDL::TryRender() -> bool {
   if (strict_graphics_context_) {
-    // In strict mode, allow graphics stuff in here. Normally we allow it
+    // In strict mode, allow graphics stuff in here. Otherwise we allow it
     // anywhere in the main thread.
     auto allow = ScopedAllowGraphics_(this);
 
@@ -179,7 +262,7 @@ auto AppAdapterSDL::TryRender() -> bool {
     // Lastly render.
     return g_base->graphics_server->TryRender();
   } else {
-    // Simple path; just render.
+    // Simpler path; just render.
     return g_base->graphics_server->TryRender();
   }
 }
@@ -188,7 +271,7 @@ void AppAdapterSDL::SleepUntilNextEventCycle_(microsecs_t cycle_start_time) {
   // Special case: if we're hidden, we simply sleep for a long bit; no fancy
   // timing.
   if (hidden_) {
-    g_core->platform->SleepMillisecs(100);
+    g_core->platform->SleepSeconds(0.1);
     return;
   }
 
@@ -359,7 +442,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
       break;
 
     case SDL_QUIT:
-      if (g_core->GetAppTimeMillisecs() - last_windowevent_close_time_ < 100) {
+      if (g_core->GetAppTimeSeconds() - last_windowevent_close_time_ < 0.1) {
         // If they hit the window close button, skip the confirm.
         g_base->QuitApp(false);
       } else {
@@ -380,7 +463,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
         case SDL_WINDOWEVENT_CLOSE: {
           // Simply note that this happened. We use this to adjust our
           // SDL_QUIT behavior (quit is called right after this).
-          last_windowevent_close_time_ = g_core->GetAppTimeMillisecs();
+          last_windowevent_close_time_ = g_core->GetAppTimeSeconds();
           break;
         }
 
@@ -546,114 +629,96 @@ auto AppAdapterSDL::GetSDLJoystickInput_(int sdl_joystick_id) const
   return nullptr;  // Epic fail.
 }
 
-void AppAdapterSDL::SetScreen_(
-    bool fullscreen, int max_fps, VSyncRequest vsync_requested,
-    TextureQualityRequest texture_quality_requested,
-    GraphicsQualityRequest graphics_quality_requested) {
-  assert(g_core->InMainThread());
-  assert(!g_core->HeadlessMode());
+// void AppAdapterSDL::ApplyGraphicsSettings_(const GraphicsSettings_* settings)
+// {
+//   assert(g_core->InMainThread());
+//   assert(!g_core->HeadlessMode());
 
-  // In strict mode, allow graphics stuff in here.
-  auto allow = ScopedAllowGraphics_(this);
+//   // In strict mode, allow graphics stuff while in here.
+//   auto allow = ScopedAllowGraphics_(this);
 
-  // If we know what we support, filter our request types to what is
-  // supported. This will keep us from rebuilding contexts if request type
-  // is flipping between different types that we don't support.
-  if (g_base->graphics->has_supports_high_quality_graphics_value()) {
-    if (!g_base->graphics->supports_high_quality_graphics()
-        && graphics_quality_requested > GraphicsQualityRequest::kMedium) {
-      graphics_quality_requested = GraphicsQualityRequest::kMedium;
-    }
-  }
+//   bool do_toggle_fs{};
+//   bool do_set_existing_fullscreen{};
 
-  bool do_toggle_fs{};
-  bool do_set_existing_fullscreen{};
+//   auto* graphics_server = g_base->graphics_server;
 
-  auto* gs = g_base->graphics_server;
+//   // We need a full renderer reload if quality values have changed
+//   // or if we don't have a renderer yet.
+//   bool need_full_reload = ((sdl_window_ == nullptr
+//                             || graphics_server->texture_quality_requested()
+//                                    != settings->texture_quality)
+//                            || (graphics_server->graphics_quality_requested()
+//                                != settings->graphics_quality));
 
-  // We need a full renderer reload if quality values have changed
-  // or if we don't have one yet.
-  bool need_full_reload =
-      ((sdl_window_ == nullptr
-        || gs->texture_quality_requested() != texture_quality_requested)
-       || (gs->graphics_quality_requested() != graphics_quality_requested)
-       || !gs->texture_quality_set() || !gs->graphics_quality_set());
+//   if (need_full_reload) {
+//     ReloadRenderer_(settings->fullscreen, settings->graphics_quality,
+//                     settings->texture_quality);
+//   } else if (settings->fullscreen != fullscreen_) {
+//     SDL_SetWindowFullscreen(
+//         sdl_window_, settings->fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP :
+//         0);
+//     fullscreen_ = settings->fullscreen;
+//   }
 
-  if (need_full_reload) {
-    ReloadRenderer_(fullscreen, graphics_quality_requested,
-                    texture_quality_requested);
-  } else if (fullscreen != fullscreen_) {
-    SDL_SetWindowFullscreen(sdl_window_,
-                            fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-    fullscreen_ = fullscreen;
-  }
+//   // VSync always gets set independent of the screen (though we set it down
+//   // here to make sure we have a screen when its set).
+//   VSync vsync;
+//   switch (settings->vsync) {
+//     case VSyncRequest::kNever:
+//       vsync = VSync::kNever;
+//       break;
+//     case VSyncRequest::kAlways:
+//       vsync = VSync::kAlways;
+//       break;
+//     case VSyncRequest::kAuto:
+//       vsync = VSync::kAdaptive;
+//       break;
+//     default:
+//       vsync = VSync::kNever;
+//       break;
+//   }
+//   if (vsync != vsync_) {
+//     switch (vsync) {
+//       case VSync::kUnset:
+//       case VSync::kNever: {
+//         SDL_GL_SetSwapInterval(0);
+//         vsync_actually_enabled_ = false;
+//         break;
+//       }
+//       case VSync::kAlways: {
+//         SDL_GL_SetSwapInterval(1);
+//         vsync_actually_enabled_ = true;
+//         break;
+//       }
+//       case VSync::kAdaptive: {
+//         // In this case, let's try setting to 'adaptive' and turn it off if
+//         // that is unsupported.
+//         auto result = SDL_GL_SetSwapInterval(-1);
+//         if (result == 0) {
+//           vsync_actually_enabled_ = true;
+//         } else {
+//           SDL_GL_SetSwapInterval(0);
+//           vsync_actually_enabled_ = false;
+//         }
+//         break;
+//       }
+//     }
+//     vsync_ = vsync;
+//   }
 
-  // VSync always gets set independent of the screen (though we set it down
-  // here to make sure we have a screen when its set).
-  VSync vsync;
-  switch (vsync_requested) {
-    case VSyncRequest::kNever:
-      vsync = VSync::kNever;
-      break;
-    case VSyncRequest::kAlways:
-      vsync = VSync::kAlways;
-      break;
-    case VSyncRequest::kAuto:
-      vsync = VSync::kAdaptive;
-      break;
-    default:
-      vsync = VSync::kNever;
-      break;
-  }
-  if (vsync != vsync_) {
-    switch (vsync) {
-      case VSync::kUnset:
-      case VSync::kNever: {
-        SDL_GL_SetSwapInterval(0);
-        vsync_actually_enabled_ = false;
-        break;
-      }
-      case VSync::kAlways: {
-        SDL_GL_SetSwapInterval(1);
-        vsync_actually_enabled_ = true;
-        break;
-      }
-      case VSync::kAdaptive: {
-        // In this case, let's try setting to 'adaptive' and turn it off if
-        // that is unsupported.
-        auto result = SDL_GL_SetSwapInterval(-1);
-        if (result == 0) {
-          vsync_actually_enabled_ = true;
-        } else {
-          SDL_GL_SetSwapInterval(0);
-          vsync_actually_enabled_ = false;
-        }
-        break;
-      }
-    }
-    vsync_ = vsync;
-  }
+//   // This we can set anytime. Probably could have just set it from the logic
+//   // thread where we read it, but let's be pedantic and keep everything to
+//   // the main thread.
+//   max_fps_ = settings->max_fps;
 
-  // This we can set anytime. Probably could have just set it from the logic
-  // thread where we read it, but let's be pedantic and keep everything to
-  // the main thread.
-  max_fps_ = max_fps;
+//   // Take -1 to mean no max. Otherwise clamp to a reasonable range.
+//   if (max_fps_ != -1) {
+//     max_fps_ = std::max(10, max_fps_);
+//     max_fps_ = std::min(99999, max_fps_);
+//   }
+// }
 
-  // Take -1 to mean no max. Otherwise clamp to a reasonable range.
-  if (max_fps_ != -1) {
-    max_fps_ = std::max(10, max_fps_);
-    max_fps_ = std::min(99999, max_fps_);
-  }
-
-  // Let the logic thread know we've got a graphics system up and running.
-  // It may use this cue to kick off asset loads and other bootstrapping.
-  g_base->logic->event_loop()->PushCall(
-      [] { g_base->logic->OnGraphicsReady(); });
-}
-
-void AppAdapterSDL::ReloadRenderer_(
-    bool fullscreen, GraphicsQualityRequest graphics_quality_requested,
-    TextureQualityRequest texture_quality_requested) {
+void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
   assert(g_base->app_adapter->InGraphicsContext());
 
   auto* gs = g_base->graphics_server;
@@ -664,7 +729,7 @@ void AppAdapterSDL::ReloadRenderer_(
 
   // If we don't haven't yet, create our window and renderer.
   if (!sdl_window_) {
-    fullscreen_ = fullscreen;
+    fullscreen_ = settings->fullscreen;
 
     // A reasonable default window size.
     auto width = static_cast<int>(kBaseVirtualResX * 0.8f);
@@ -672,7 +737,7 @@ void AppAdapterSDL::ReloadRenderer_(
 
     uint32_t flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN
                      | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
-    if (fullscreen) {
+    if (settings->fullscreen) {
       flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
     }
 
@@ -729,15 +794,16 @@ void AppAdapterSDL::ReloadRenderer_(
     }
   }
 
-  // Update graphics quality based on request.
-  gs->set_graphics_quality_requested(graphics_quality_requested);
-  gs->set_texture_quality_requested(texture_quality_requested);
+  // Update graphics-server's qualities based on request.
+  gs->set_graphics_quality_requested(settings->graphics_quality);
+  gs->set_texture_quality_requested(settings->texture_quality);
 
   gs->LoadRenderer();
 }
 
 void AppAdapterSDL::UpdateScreenSizes_() {
-  assert(g_base->app_adapter->InGraphicsContext());
+  // This runs in the main thread in response to SDL events.
+  assert(g_core->InMainThread());
 
   // Grab logical window dimensions (points?). This is the coordinate space
   // SDL's events deal in.
@@ -749,8 +815,13 @@ void AppAdapterSDL::UpdateScreenSizes_() {
   // dimensions.
   int pixels_x, pixels_y;
   SDL_GL_GetDrawableSize(sdl_window_, &pixels_x, &pixels_y);
-  g_base->graphics_server->SetScreenResolution(static_cast<float>(pixels_x),
-                                               static_cast<float>(pixels_y));
+
+  // Push this over to the logic thread which owns the canonical value
+  // for this.
+  g_base->logic->event_loop()->PushCall([pixels_x, pixels_y] {
+    g_base->graphics->SetScreenResolution(static_cast<float>(pixels_x),
+                                          static_cast<float>(pixels_y));
+  });
 }
 
 auto AppAdapterSDL::InGraphicsContext() -> bool {

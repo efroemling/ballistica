@@ -487,7 +487,7 @@ void RenderPass::SetFrustum(float near_val, float far_val) {
   g_base->graphics_server->SetProjectionMatrix(projection_matrix_);
 }
 
-void RenderPass::Finalize() {
+void RenderPass::Complete() {
   if (UsesWorldLists()) {
     for (auto& command : commands_) {
       command->Finalize();

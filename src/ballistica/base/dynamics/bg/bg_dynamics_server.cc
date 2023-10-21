@@ -2282,7 +2282,8 @@ void BGDynamicsServer::Step(StepData* step_data) {
   auto ref(Object::CompleteDeferred(step_data));
 
   // Keep our quality in sync with the graphics thread's.
-  graphics_quality_ = g_base->graphics_server->graphics_quality();
+  graphics_quality_ = step_data->graphics_quality;
+  assert(graphics_quality_ != GraphicsQuality::kUnset);
 
   cam_pos_ = step_data->cam_pos;
 

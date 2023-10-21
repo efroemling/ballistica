@@ -5,12 +5,26 @@
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/audio/audio_source.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
 
 Audio::Audio() = default;
+
+auto Audio::UseLowQualityAudio() -> bool {
+  assert(g_base->InLogicThread());
+  // Currently just piggybacking off graphics quality here.
+  if (g_core->HeadlessMode() || g_base->graphics->has_client_context()) {
+    return true;
+  }
+  // We don't have a frame-def to look at so need to calc this ourself; ugh.
+  auto quality = Graphics::GraphicsQualityFromRequest(
+      g_base->graphics->settings()->graphics_quality,
+      g_base->graphics->client_context()->auto_graphics_quality);
+  return quality < GraphicsQuality::kMedium;
+}
 
 void Audio::Reset() {
   assert(g_base->InLogicThread());

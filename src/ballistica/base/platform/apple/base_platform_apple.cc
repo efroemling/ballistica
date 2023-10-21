@@ -4,6 +4,7 @@
 #include "ballistica/base/platform/apple/base_platform_apple.h"
 
 #if BA_XCODE_BUILD
+#include <BallisticaKit-Swift.h>
 #include <unistd.h>
 #endif
 #include <uuid/uuid.h>
@@ -53,9 +54,14 @@ void BasePlatformApple::PurchaseAck(const std::string& purchase,
 
 void BasePlatformApple::DoOpenURL(const std::string& url) {
 #if BA_XCODE_BUILD
+#if BA_OSTYPE_MACOS
+  BallisticaKit::CocoaFromCppOpenURL(url);
+#else
+  BallisticaKit::UIKitFromCppOpenURL(url);
+#endif
   // Go ahead and do this ourself. Though perhaps the default
   // Python path would be fine.
-  AppleUtils::OpenURL(url.c_str());
+  // AppleUtils::OpenURL(url.c_str());
 #else
   // Otherwise go with the default (Python webbrowser module).
   BasePlatform::DoOpenURL(url);

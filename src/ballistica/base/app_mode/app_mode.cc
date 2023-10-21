@@ -36,8 +36,6 @@ void AppMode::HandleGameQuery(const char* buffer, size_t size,
 
 auto AppMode::DoesWorldFillScreen() -> bool { return false; }
 
-void AppMode::GraphicsQualityChanged(GraphicsQuality quality) {}
-
 void AppMode::DrawWorld(FrameDef* frame_def) {}
 
 void AppMode::ChangeGameSpeed(int offs) {}

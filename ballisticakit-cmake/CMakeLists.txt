@@ -353,6 +353,10 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/camera.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/frame_def.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/frame_def.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/graphics_client_context.cc
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/graphics_client_context.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/graphics_settings.cc
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/graphics_settings.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/net_graph.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/net_graph.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/render_command_buffer.h
@@ -688,6 +692,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/generic/lambda_runnable.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/runnable.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/runnable.h
+  ${BA_SRC_ROOT}/ballistica/shared/generic/snapshot.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/timer_list.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/timer_list.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/utf8.cc

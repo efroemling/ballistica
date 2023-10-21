@@ -76,11 +76,11 @@ void Logic::OnAppStart() {
 
 void Logic::OnGraphicsReady() {
   assert(g_base->InLogicThread());
-  if (on_initial_screen_creation_complete_called_) {
+  if (graphics_ready_) {
     // Only want to fire this logic the first time.
     return;
   }
-  on_initial_screen_creation_complete_called_ = true;
+  graphics_ready_ = true;
 
   // Ok; graphics-server is telling us we've got a screen (or no screen in
   // the case of headless-mode). We use this as a cue to kick off our

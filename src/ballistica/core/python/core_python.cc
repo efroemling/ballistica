@@ -307,8 +307,8 @@ void CorePython::LoggingCall(LogLevel loglevel, const std::string& msg) {
           "CorePython::LoggingCall() called before Python"
           " logging available."};
       if (g_core->platform) {
-        g_core->platform->DisplayLog("root", LogLevel::kError, errmsg);
-        g_core->platform->DisplayLog("root", loglevel, msg);
+        g_core->platform->EmitPlatformLog("root", LogLevel::kError, errmsg);
+        g_core->platform->EmitPlatformLog("root", loglevel, msg);
       }
       fprintf(stderr, "%s\n%s\n", errmsg, msg.c_str());
     }

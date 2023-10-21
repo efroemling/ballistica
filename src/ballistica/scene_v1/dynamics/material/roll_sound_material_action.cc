@@ -2,7 +2,7 @@
 
 #include "ballistica/scene_v1/dynamics/material/roll_sound_material_action.h"
 
-#include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/audio/audio.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/dynamics/material/material_context.h"
 #include "ballistica/scene_v1/support/client_session.h"
@@ -34,16 +34,14 @@ void RollSoundMaterialAction::Apply(MaterialContext* context,
   assert(context->dynamics.Exists());
   assert(context->dynamics->in_process());
 
-  // For now lets avoid this in low-quality graphics mode
-  // (should we make a low-quality sound mode?)
-  if (g_base->graphics
-      && g_base->graphics_server->quality() < base::GraphicsQuality::kMedium) {
+  // Avoid this if we're cutting corners.
+  if (g_base->audio->UseLowQualityAudio()) {
     return;
   }
 
   // Let's limit the amount of skid-sounds we spawn, otherwise we'll
   // start using up all our sound resources on skids when things get messy
-  if (context->dynamics->getRollSoundCount() < 2) {
+  if (context->dynamics->roll_sound_count() < 2) {
     context->roll_sounds.emplace_back(context, sound.Get(), target_impulse,
                                       volume);
     context->complex_sound = true;

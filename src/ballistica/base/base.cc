@@ -420,6 +420,10 @@ auto BaseFeatureSet::IsUnmodifiedBlessedBuild() -> bool {
   return false;
 }
 
+auto BaseFeatureSet::InMainThread() const -> bool {
+  return g_core->InMainThread();
+}
+
 auto BaseFeatureSet::InAssetsThread() const -> bool {
   if (auto* loop = assets_server->event_loop()) {
     return loop->ThreadIsCurrent();

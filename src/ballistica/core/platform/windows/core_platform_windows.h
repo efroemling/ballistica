@@ -41,8 +41,8 @@ class CorePlatformWindows : public CorePlatform {
   auto GetLocale() -> std::string override;
   auto DoGetDeviceName() -> std::string override;
   auto DoHasTouchScreen() -> bool override;
-  void DisplayLog(const std::string& name, LogLevel level,
-                  const std::string& msg) override;
+  void EmitPlatformLog(const std::string& name, LogLevel level,
+                       const std::string& msg) override;
   void SetEnv(const std::string& name, const std::string& value) override;
   auto GetEnv(const std::string& name) -> std::optional<std::string> override;
   auto GetIsStdinATerminal() -> bool override;

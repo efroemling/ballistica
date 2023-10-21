@@ -30,6 +30,16 @@ class AppAdapter {
   virtual void OnScreenSizeChange();
   virtual void DoApplyAppConfig();
 
+  /// When called, should allocate an instance of a GraphicsSettings
+  /// subclass using 'new', fill it out, and return it. Runs in the logic
+  /// thread.
+  virtual auto GetGraphicsSettings() -> GraphicsSettings*;
+
+  /// When called, should allocate an instance of a GraphicsClientContext
+  /// subclass using 'new', fill it out, and return it. Runs in the graphics
+  /// context.
+  virtual auto GetGraphicsClientContext() -> GraphicsClientContext*;
+
   /// Return whether this class manages the main thread event loop itself.
   /// Default is true. If this is true, RunMainThreadEventLoopToCompletion()
   /// will be called to run the app. This should return false on builds
@@ -180,6 +190,17 @@ class AppAdapter {
   /// languages/etc.). Default implementation returns false. This function
   /// should be callable from any thread.
   virtual auto HasDirectKeyboardInput() -> bool;
+
+  /// Called in the graphics context to apply new settings coming in from
+  /// the logic subsystem. This will be called initially to jump-start the
+  /// graphics system as well as before frame draws to update any new
+  /// settings coming in.
+  ///
+  /// Whenever graphics settings will result in a change to the graphics
+  /// context (ie: something visible to rendering code in the logic thread)
+  /// the adapter should call g_base->graphics_server->set_context() with
+  /// the updated context.
+  virtual void ApplyGraphicsSettings(const GraphicsSettings* settings);
 
  protected:
   AppAdapter();

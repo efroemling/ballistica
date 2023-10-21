@@ -810,9 +810,9 @@ static PyMethodDef PySetStressTestingDef = {
     "(internal)",
 };
 
-// ------------------------------ display_log ----------------------------------
+// -------------------------------- emit_log -----------------------------------
 
-static auto PyDisplayLog(PyObject* self, PyObject* args, PyObject* keywds)
+static auto PyEmitLog(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {"name", "level", "message", nullptr};
@@ -839,25 +839,25 @@ static auto PyDisplayLog(PyObject* self, PyObject* args, PyObject* keywds)
     level = LogLevel::kCritical;
   } else {
     // Assume we should avoid Log() calls here since it could infinite loop.
-    fprintf(stderr, "Invalid log level to display_log(): %s\n", levelstr);
+    fprintf(stderr, "Invalid log level to emit_log(): %s\n", levelstr);
     level = LogLevel::kInfo;
   }
-  Logging::DisplayLog(name, level, message);
+  Logging::EmitLog(name, level, message);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyDisplayLogDef = {
-    "display_log",                 // name
-    (PyCFunction)PyDisplayLog,     // method
+static PyMethodDef PyEmitLogDef = {
+    "emit_log",                    // name
+    (PyCFunction)PyEmitLog,        // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "display_log(name: str, level: str, message: str) -> None\n"
+    "emit_log(name: str, level: str, message: str) -> None\n"
     "\n"
     "(internal)\n"
     "\n"
-    "Sends a log message to the in-game console and any per-platform\n"
+    "Sends a log message to the in-app console and any per-platform\n"
     "log destinations (Android log, etc.). This generally is not called\n"
     "directly and should instead be fed Python logging output.",
 };
@@ -1654,7 +1654,7 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyAppNameUpperDef,
       PyIsXCodeBuildDef,
       PyCanDisplayFullUnicodeDef,
-      PyDisplayLogDef,
+      PyEmitLogDef,
       PyV1CloudLogDef,
       PySetStressTestingDef,
       PyEnvDef,

@@ -238,10 +238,10 @@ class RendererGL::ProgramGL {
 
     // Update matrices as necessary.
 
-    uint32_t mvpState =
+    int mvp_state =
         g_base->graphics_server->GetModelViewProjectionMatrixState();
-    if (mvpState != mvp_state_) {
-      mvp_state_ = mvpState;
+    if (mvp_state != mvp_state_) {
+      mvp_state_ = mvp_state;
       glUniformMatrix4fv(
           mvp_uniform_, 1, 0,
           g_base->graphics_server->GetModelViewProjectionMatrix().m);
@@ -251,7 +251,7 @@ class RendererGL::ProgramGL {
     if (pflags_ & PFLAG_USES_MODEL_WORLD_MATRIX) {
       // With world space points this would be identity; don't waste time.
       assert(!(pflags_ & PFLAG_WORLD_SPACE_PTS));
-      uint32_t state = g_base->graphics_server->GetModelWorldMatrixState();
+      int state = g_base->graphics_server->GetModelWorldMatrixState();
       if (state != model_world_matrix_state_) {
         model_world_matrix_state_ = state;
         glUniformMatrix4fv(model_world_matrix_uniform_, 1, 0,
@@ -264,8 +264,7 @@ class RendererGL::ProgramGL {
       // With world space points this would be identity; don't waste time.
       assert(!(pflags_ & PFLAG_WORLD_SPACE_PTS));
       // There's no state for just modelview but this works.
-      uint32_t state =
-          g_base->graphics_server->GetModelViewProjectionMatrixState();
+      int state = g_base->graphics_server->GetModelViewProjectionMatrixState();
       if (state != model_view_matrix_state_) {
         model_view_matrix_state_ = state;
         glUniformMatrix4fv(model_view_matrix_uniform_, 1, 0,
@@ -275,7 +274,7 @@ class RendererGL::ProgramGL {
     BA_DEBUG_CHECK_GL_ERROR;
 
     if (pflags_ & PFLAG_USES_CAM_POS) {
-      uint32_t state = g_base->graphics_server->cam_pos_state();
+      int state = g_base->graphics_server->cam_pos_state();
       if (state != cam_pos_state_) {
         cam_pos_state_ = state;
         const Vector3f& p(g_base->graphics_server->cam_pos());
@@ -285,7 +284,7 @@ class RendererGL::ProgramGL {
     BA_DEBUG_CHECK_GL_ERROR;
 
     if (pflags_ & PFLAG_USES_CAM_ORIENT_MATRIX) {
-      uint32_t state = g_base->graphics_server->GetCamOrientMatrixState();
+      int state = g_base->graphics_server->GetCamOrientMatrixState();
       if (state != cam_orient_matrix_state_) {
         cam_orient_matrix_state_ = state;
         glUniformMatrix4fv(cam_orient_matrix_uniform_, 1, 0,
@@ -295,7 +294,7 @@ class RendererGL::ProgramGL {
     BA_DEBUG_CHECK_GL_ERROR;
 
     if (pflags_ & PFLAG_USES_SHADOW_PROJECTION_MATRIX) {
-      uint32_t state =
+      int state =
           g_base->graphics_server->light_shadow_projection_matrix_state();
       if (state != light_shadow_projection_matrix_state_) {
         light_shadow_projection_matrix_state_ = state;
@@ -336,19 +335,19 @@ class RendererGL::ProgramGL {
   Object::Ref<VertexShaderGL> vertex_shader_;
   std::string name_;
   GLuint program_{};
-  int pflags_{};
-  uint32_t mvp_state_{};
   GLint mvp_uniform_{};
   GLint model_world_matrix_uniform_{};
   GLint model_view_matrix_uniform_{};
   GLint light_shadow_projection_matrix_uniform_{};
-  uint32_t light_shadow_projection_matrix_state_{};
-  uint32_t model_world_matrix_state_{};
-  uint32_t model_view_matrix_state_{};
   GLint cam_pos_uniform_{};
-  uint32_t cam_pos_state_{};
   GLint cam_orient_matrix_uniform_{};
-  GLuint cam_orient_matrix_state_{};
+  int cam_orient_matrix_state_{};
+  int light_shadow_projection_matrix_state_{};
+  int pflags_{};
+  int mvp_state_{};
+  int cam_pos_state_{};
+  int model_world_matrix_state_{};
+  int model_view_matrix_state_{};
   BA_DISALLOW_CLASS_COPIES(ProgramGL);
 };
 

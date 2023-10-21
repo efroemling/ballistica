@@ -2,7 +2,7 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 
-#if BA_OSTYPE_ANDROID
+#if BA_OSTYPE_ANDROID  // Remove conditional once android sources are public.
 #include "ballistica/base/app_adapter/app_adapter_android.h"
 #endif
 #include "ballistica/base/app_adapter/app_adapter_apple.h"
@@ -304,5 +304,15 @@ void AppAdapter::DoBackQuit() { FatalError("Fixme unimplemented."); }
 void AppAdapter::DoSoftQuit() { FatalError("Fixme unimplemented."); }
 void AppAdapter::TerminateApp() { FatalError("Fixme unimplemented."); }
 auto AppAdapter::HasDirectKeyboardInput() -> bool { return false; }
+
+void AppAdapter::ApplyGraphicsSettings(const GraphicsSettings* settings) {}
+
+auto AppAdapter::GetGraphicsSettings() -> GraphicsSettings* {
+  return new GraphicsSettings();
+}
+
+auto AppAdapter::GetGraphicsClientContext() -> GraphicsClientContext* {
+  return new GraphicsClientContext();
+}
 
 }  // namespace ballistica::base

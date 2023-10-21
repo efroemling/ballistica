@@ -66,77 +66,77 @@ void do_dBodyGetLocalFeedback(dBodyID b, dReal px, dReal py, dReal pz,
 
 // Stores info about a collision needing a reset
 // (used when parts change materials).
-class Dynamics::CollisionReset {
+class Dynamics::CollisionReset_ {
  public:
   int node1;
   int node2;
   int part1;
   int part2;
-  CollisionReset(int node1_in, int part1_in, int node2_in, int part2_in)
+  CollisionReset_(int node1_in, int part1_in, int node2_in, int part2_in)
       : node1(node1_in), node2(node2_in), part1(part1_in), part2(part2_in) {}
 };
 
-class Dynamics::CollisionEvent {
+class Dynamics::CollisionEvent_ {
  public:
   Object::Ref<MaterialAction> action;
   Object::Ref<Collision> collision;
   Object::WeakRef<Node> node1;  // first event node
   Object::WeakRef<Node> node2;  // second event node
-  CollisionEvent(Node* node1_in, Node* node2_in,
-                 const Object::Ref<MaterialAction>& action_in,
-                 const Object::Ref<Collision>& collision_in)
+  CollisionEvent_(Node* node1_in, Node* node2_in,
+                  const Object::Ref<MaterialAction>& action_in,
+                  const Object::Ref<Collision>& collision_in)
       : node1(node1_in),
         node2(node2_in),
         action(action_in),
         collision(collision_in) {}
 };
 
-class Dynamics::SrcPartCollideMap {
+class Dynamics::SrcPartCollideMap_ {
  public:
   std::unordered_map<int, Object::Ref<Collision> > dst_part_collisions;
 };
 
-class Dynamics::DstNodeCollideMap {
+class Dynamics::DstNodeCollideMap_ {
  public:
-  std::unordered_map<int, SrcPartCollideMap> src_parts;
+  std::unordered_map<int, SrcPartCollideMap_> src_parts;
   int collideDisabled;
-  DstNodeCollideMap() : collideDisabled(0) {}
-  ~DstNodeCollideMap() = default;
+  DstNodeCollideMap_() : collideDisabled(0) {}
+  ~DstNodeCollideMap_() = default;
 };
 
-class Dynamics::SrcNodeCollideMap {
+class Dynamics::SrcNodeCollideMap_ {
  public:
-  std::unordered_map<int64_t, DstNodeCollideMap> dst_nodes;
+  std::unordered_map<int64_t, DstNodeCollideMap_> dst_nodes;
 };
 
-class Dynamics::Impl {
+class Dynamics::Impl_ {
  public:
-  explicit Impl(Dynamics* dynamics) : dynamics_(dynamics) {}
+  explicit Impl_(Dynamics* dynamics) : dynamics_(dynamics) {}
 
   // NOTE: we need to implement this here in an Impl class because
   // gcc currently chokes on unordered_maps with forward-declared types,
   // so we can't have this in our header without pushing all our map/collision
   // types there too.
   void HandleDisconnect(
-      const std::unordered_map<int64_t, Dynamics::SrcNodeCollideMap>::iterator&
+      const std::unordered_map<int64_t, Dynamics::SrcNodeCollideMap_>::iterator&
           i,
-      const std::unordered_map<int64_t, Dynamics::DstNodeCollideMap>::iterator&
+      const std::unordered_map<int64_t, Dynamics::DstNodeCollideMap_>::iterator&
           j,
-      const std::unordered_map<int, SrcPartCollideMap>::iterator& k,
+      const std::unordered_map<int, SrcPartCollideMap_>::iterator& k,
       const std::unordered_map<int, Object::Ref<Collision> >::iterator& l);
 
  private:
   Dynamics* dynamics_{};
   // Contains in-progress collisions for current nodes.
-  std::unordered_map<int64_t, SrcNodeCollideMap> node_collisions_;
+  std::unordered_map<int64_t, SrcNodeCollideMap_> node_collisions_;
   friend class Dynamics;
 };
 
 Dynamics::Dynamics(Scene* scene_in)
     : scene_(scene_in),
       collision_cache_(new base::CollisionCache()),
-      impl_(std::make_unique<Impl>(this)) {
-  ResetODE();
+      impl_(std::make_unique<Impl_>(this)) {
+  ResetODE_();
 }
 
 Dynamics::~Dynamics() {
@@ -145,7 +145,7 @@ Dynamics::~Dynamics() {
         "Dynamics going down within Process() call;"
         " should not happen.");
   }
-  ShutdownODE();
+  ShutdownODE_();
 }
 
 void Dynamics::Draw(base::FrameDef* frame_def) {
@@ -203,7 +203,7 @@ void Dynamics::RemoveTrimesh(dGeomID g) {
   throw Exception("trimesh not found");
 }
 
-auto Dynamics::AreColliding(const Part& p1_in, const Part& p2_in) -> bool {
+auto Dynamics::AreColliding_(const Part& p1_in, const Part& p2_in) -> bool {
   const Part* p1;
   const Part* p2;
   if (IsInStoreOrder(p1_in.node()->id(), p1_in.id(), p2_in.node()->id(),
@@ -279,7 +279,7 @@ auto Dynamics::GetCollision(Part* p1_in, Part* p2_in, MaterialContext** cc1,
     p2->ApplyMaterials(*cc2, p2, p1);
 
     // If either disabled collisions between these two nodes, store that.
-    DstNodeCollideMap* dncm =
+    DstNodeCollideMap_* dncm =
         &impl_->node_collisions_[p1->node()->id()].dst_nodes[p2->node()->id()];
     if (!(*cc1)->node_collide || !(*cc2)->node_collide) {
       dncm->collideDisabled = true;
@@ -319,10 +319,12 @@ auto Dynamics::GetCollision(Part* p1_in, Part* p2_in, MaterialContext** cc1,
   return &(*(i.first->second));
 }
 
-void Dynamics::Impl::HandleDisconnect(
-    const std::unordered_map<int64_t, Dynamics::SrcNodeCollideMap>::iterator& i,
-    const std::unordered_map<int64_t, Dynamics::DstNodeCollideMap>::iterator& j,
-    const std::unordered_map<int, SrcPartCollideMap>::iterator& k,
+void Dynamics::Impl_::HandleDisconnect(
+    const std::unordered_map<int64_t, Dynamics::SrcNodeCollideMap_>::iterator&
+        i,
+    const std::unordered_map<int64_t, Dynamics::DstNodeCollideMap_>::iterator&
+        j,
+    const std::unordered_map<int, SrcPartCollideMap_>::iterator& k,
     const std::unordered_map<int, Object::Ref<Collision> >::iterator& l) {
   // Handle disconnect equivalents if they were colliding.
   if (l->second->collide) {
@@ -367,7 +369,7 @@ void Dynamics::Impl::HandleDisconnect(
   k->second.dst_part_collisions.erase(l);
 }
 
-void Dynamics::ProcessCollisions() {
+void Dynamics::ProcessCollision_() {
   processing_collisions_ = true;
 
   collision_count_ = 0;
@@ -441,10 +443,10 @@ void Dynamics::ProcessCollisions() {
   // Process all standard collisions. This will trigger our callback which
   // do the real work (add collisions to list, store commands to be
   // called, etc).
-  dSpaceCollide(ode_space_, this, &DoCollideCallback);
+  dSpaceCollide(ode_space_, this, &DoCollideCallback_);
 
   // Collide our trimeshes against everything.
-  collision_cache_->CollideAgainstSpace(ode_space_, this, &DoCollideCallback);
+  collision_cache_->CollideAgainstSpace(ode_space_, this, &DoCollideCallback_);
 
   // Do a bit of precalc each cycle.
   collision_cache_->Precalc();
@@ -453,9 +455,9 @@ void Dynamics::ProcessCollisions() {
   // setting parts' currently-colliding-with lists
   // based on current info,
   // removing unclaimed collisions and empty groups.
-  std::unordered_map<int64_t, SrcNodeCollideMap>::iterator i_next;
-  std::unordered_map<int64_t, DstNodeCollideMap>::iterator j_next;
-  std::unordered_map<int, SrcPartCollideMap>::iterator k_next;
+  std::unordered_map<int64_t, SrcNodeCollideMap_>::iterator i_next;
+  std::unordered_map<int64_t, DstNodeCollideMap_>::iterator j_next;
+  std::unordered_map<int, SrcPartCollideMap_>::iterator k_next;
   std::unordered_map<int, Object::Ref<Collision> >::iterator l_next;
   for (auto i = impl_->node_collisions_.begin();
        i != impl_->node_collisions_.end(); i = i_next) {
@@ -507,26 +509,26 @@ void Dynamics::ProcessCollisions() {
   collision_events_.clear();
 }
 
-void Dynamics::process() {
+void Dynamics::Process() {
   in_process_ = true;
   // Update this once so we can recycle results.
   real_time_ = g_core->GetAppTimeMillisecs();
-  ProcessCollisions();
+  ProcessCollision_();
   dWorldQuickStep(ode_world_, kGameStepSeconds);
   dJointGroupEmpty(ode_contact_group_);
   in_process_ = false;
 }
 
-void Dynamics::DoCollideCallback(void* data, dGeomID o1, dGeomID o2) {
+void Dynamics::DoCollideCallback_(void* data, dGeomID o1, dGeomID o2) {
   auto* d = static_cast<Dynamics*>(data);
-  d->CollideCallback(o1, o2);
+  d->CollideCallback_(o1, o2);
 }
 
 // Run collisions for everything. Store any callbacks that will need to be made
 // and run them after all collision constraints are made.
 // This way we know all bodies and their associated nodes, etc are valid
 // throughout collision processing.
-void Dynamics::CollideCallback(dGeomID o1, dGeomID o2) {
+void Dynamics::CollideCallback_(dGeomID o1, dGeomID o2) {
   dBodyID b1 = dGeomGetBody(o1);
   dBodyID b2 = dGeomGetBody(o2);
 
@@ -1103,7 +1105,7 @@ void Dynamics::CollideCallback(dGeomID o1, dGeomID o2) {
   }
 }
 
-void Dynamics::ShutdownODE() {
+void Dynamics::ShutdownODE_() {
   if (ode_space_) {
     dSpaceDestroy(ode_space_);
     ode_space_ = nullptr;
@@ -1118,8 +1120,8 @@ void Dynamics::ShutdownODE() {
   }
 }
 
-void Dynamics::ResetODE() {
-  ShutdownODE();
+void Dynamics::ResetODE_() {
+  ShutdownODE_();
   ode_world_ = dWorldCreate();
   assert(ode_world_);
   dWorldSetGravity(ode_world_, 0, -20, 0);

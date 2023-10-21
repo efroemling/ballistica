@@ -99,8 +99,8 @@ class CorePlatform {
   /// Display a message to any default log for the platform (android log,
   /// etc.) Note that this can be called from any thread. Default
   /// implementation does nothing.
-  virtual void DisplayLog(const std::string& name, LogLevel level,
-                          const std::string& msg);
+  virtual void EmitPlatformLog(const std::string& name, LogLevel level,
+                               const std::string& msg);
 
 #pragma mark ENVIRONMENT -------------------------------------------------------
 
@@ -381,9 +381,9 @@ class CorePlatform {
   /// to not go backwards.
   static auto GetCurrentWholeSeconds() -> int64_t;
 
-  static void SleepMillisecs(millisecs_t ms);
-
-  static void SleepMicrosecs(microsecs_t ms);
+  static void SleepSeconds(seconds_t duration);
+  static void SleepMillisecs(millisecs_t duration);
+  static void SleepMicrosecs(microsecs_t duration);
 
   /// Given a C++ symbol, attempt to return a pretty one.
   virtual auto DemangleCXXSymbol(const std::string& s) -> std::string;

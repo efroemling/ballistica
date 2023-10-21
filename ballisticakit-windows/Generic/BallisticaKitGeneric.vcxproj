@@ -345,6 +345,10 @@
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\camera.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\support\frame_def.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\frame_def.h" />
+    <ClCompile Include="..\..\src\ballistica\base\graphics\support\graphics_client_context.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\support\graphics_client_context.h" />
+    <ClCompile Include="..\..\src\ballistica\base\graphics\support\graphics_settings.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\support\graphics_settings.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\support\net_graph.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\net_graph.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\render_command_buffer.h" />
@@ -680,6 +684,7 @@
     <ClInclude Include="..\..\src\ballistica\shared\generic\lambda_runnable.h" />
     <ClCompile Include="..\..\src\ballistica\shared\generic\runnable.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\runnable.h" />
+    <ClInclude Include="..\..\src\ballistica\shared\generic\snapshot.h" />
     <ClCompile Include="..\..\src\ballistica\shared\generic\timer_list.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\timer_list.h" />
     <ClCompile Include="..\..\src\ballistica\shared\generic\utf8.cc" />

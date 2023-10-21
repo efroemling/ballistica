@@ -159,16 +159,16 @@ void Input::AnnounceConnects_() {
 
   // For the first announcement just say "X controllers detected" and don't
   // have a sound.
-  if (first_print && g_core->GetAppTimeMillisecs() < 10000) {
+  if (first_print && g_core->GetAppTimeSeconds() < 5.0) {
     first_print = false;
 
-    // Disabling this completely for now; being more lenient with devices
-    // allowed on Android means this will often come back with large
-    // numbers.
-    bool do_print{false};
+    // Disabling this completely on Android for now; we often get large
+    // numbers of devices there that aren't actually devices.
+
+    bool do_print_initial_counts{!g_buildconfig.ostype_android()};
 
     // If there's been several connected, just give a number.
-    if (explicit_bool(do_print)) {
+    if (explicit_bool(do_print_initial_counts)) {
       if (newly_connected_controllers_.size() > 1) {
         std::string s =
             g_base->assets->GetResourceString("controllersDetectedText");

@@ -154,16 +154,6 @@ void HostSession::LanguageChanged() {
   }
 }
 
-void HostSession::GraphicsQualityChanged(base::GraphicsQuality q) {
-  // Let our internal scene know.
-  scene()->GraphicsQualityChanged(q);
-
-  // Let all our activities know.
-  for (auto&& i : host_activities_) {
-    i->GraphicsQualityChanged(q);
-  }
-}
-
 auto HostSession::DoesFillScreen() const -> bool {
   // FIXME not necessarily the case.
   return true;
