@@ -1521,10 +1521,10 @@ void Graphics::DoDrawFade(FrameDef* frame_def, float amt) {
 void Graphics::DrawCursor(FrameDef* frame_def) {
   assert(g_base->InLogicThread());
 
-  millisecs_t app_time_millisecs = frame_def->app_time_millisecs();
+  auto app_time = frame_def->app_time();
 
-  bool can_show_cursor = g_base->app_adapter->ShouldUseCursor();
-  bool should_show_cursor =
+  auto can_show_cursor = g_base->app_adapter->ShouldUseCursor();
+  auto should_show_cursor =
       camera_->manual() || g_base->input->IsCursorVisible();
 
   if (g_base->app_adapter->HasHardwareCursor()) {
@@ -1538,9 +1538,9 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
     // Ship this state when it changes and also every now and then just in
     // case things go wonky.
     if (new_cursor_visibility != hardware_cursor_visible_
-        || app_time_millisecs - last_cursor_visibility_event_time_ > 2000) {
+        || app_time - last_cursor_visibility_event_time_ > 2.137) {
       hardware_cursor_visible_ = new_cursor_visibility;
-      last_cursor_visibility_event_time_ = app_time_millisecs;
+      last_cursor_visibility_event_time_ = app_time;
       g_base->app_adapter->PushMainThreadCall([this] {
         assert(g_core && g_core->InMainThread());
         g_base->app_adapter->SetHardwareCursorVisible(hardware_cursor_visible_);

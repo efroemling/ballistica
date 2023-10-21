@@ -485,7 +485,7 @@ class Graphics {
   millisecs_t last_progress_bar_draw_time_{};
   millisecs_t last_progress_bar_start_time_{};
   microsecs_t last_suppress_gyro_time_{};
-  millisecs_t last_cursor_visibility_event_time_{};
+  seconds_t last_cursor_visibility_event_time_{};
   microsecs_t next_frame_number_filtered_increment_time_{};
   microsecs_t last_create_frame_def_time_microsecs_{};
   millisecs_t last_create_frame_def_time_millisecs_{};

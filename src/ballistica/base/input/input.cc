@@ -1297,7 +1297,7 @@ void Input::HandleSmoothMouseScroll_(const Vector2f& velocity, bool momentum) {
       WidgetMessage(WidgetMessage::Type::kMouseWheelVelocityH, nullptr,
                     cursor_pos_x_, cursor_pos_y_, velocity.x, momentum));
 
-  last_mouse_move_time_ = g_core->GetAppTimeMillisecs();
+  last_mouse_move_time_ = g_core->GetAppTimeSeconds();
   mouse_move_count_++;
 
   Camera* camera = g_base->graphics->camera();
@@ -1333,7 +1333,7 @@ void Input::HandleMouseMotion_(const Vector2f& position) {
   cursor_pos_y_ = g_base->graphics->PixelToVirtualY(
       position.y * g_base->graphics->screen_pixel_height());
 
-  last_mouse_move_time_ = g_core->GetAppTimeMillisecs();
+  last_mouse_move_time_ = g_core->GetAppTimeSeconds();
   mouse_move_count_++;
 
   // If we have a touch-input in editing mode, pass along events to it.
@@ -1374,7 +1374,7 @@ void Input::HandleMouseDown_(int button, const Vector2f& position) {
     return;
   }
 
-  last_mouse_move_time_ = g_core->GetAppTimeMillisecs();
+  last_mouse_move_time_ = g_core->GetAppTimeSeconds();
   mouse_move_count_++;
 
   // Convert normalized view coords to our virtual ones.
@@ -1439,8 +1439,8 @@ void Input::HandleMouseUp_(int button, const Vector2f& position) {
       position.y * g_base->graphics->screen_pixel_height());
 
   // If we have a touch-input in editing mode, pass along events to it.
-  // (it usually handles its own events but here we want it to play nice
-  // with stuff under it by blocking touches, etc)
+  // It usually handles its own events but here we want it to play nice
+  // with stuff under it by blocking touches, etc.
   if (touch_input_ && touch_input_->editing()) {
     touch_input_->HandleTouchUp(reinterpret_cast<void*>(1), cursor_pos_x_,
                                 cursor_pos_y_);
@@ -1481,9 +1481,6 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
 
   MarkInputActive();
 
-  // float x = e.x;
-  // float y = e.y;
-
   if (g_buildconfig.ostype_ios_tvos()) {
     printf("FIXME: update touch handling\n");
   }
@@ -1513,8 +1510,8 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
     }
   }
 
-  // We keep track of one 'single' touch which we pass along as
-  // mouse events which covers most UI stuff.
+  // We keep track of one 'single' touch which we pass along as mouse events
+  // which covers most UI stuff.
   if (e.type == TouchEvent::Type::kDown && single_touch_ == nullptr) {
     single_touch_ = e.touch;
     HandleMouseDown_(SDL_BUTTON_LEFT, Vector2f(e.x, e.y));
@@ -1524,8 +1521,8 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
     HandleMouseMotion_(Vector2f(e.x, e.y));
   }
 
-  // Currently just applying touch-cancel the same as touch-up here;
-  // perhaps should be smarter in the future.
+  // Currently just applying touch-cancel the same as touch-up here; perhaps
+  // should be smarter in the future.
   if ((e.type == TouchEvent::Type::kUp || e.type == TouchEvent::Type::kCanceled)
       && (e.touch == single_touch_ || e.overall)) {
     single_touch_ = nullptr;
@@ -1579,13 +1576,9 @@ auto Input::IsCursorVisible() const -> bool {
   }
   bool val;
 
-  // Show our cursor if any dialogs/windows are up or else if its been moved
-  // very recently.
-  if (g_base->ui->MainMenuVisible()) {
-    val = (g_core->GetAppTimeMillisecs() - last_mouse_move_time_ < 5000);
-  } else {
-    val = (g_core->GetAppTimeMillisecs() - last_mouse_move_time_ < 1000);
-  }
+  // Show our cursor only if its been moved recently.
+  val = (g_core->GetAppTimeSeconds() - last_mouse_move_time_ < 2.071);
+
   return val;
 }
 

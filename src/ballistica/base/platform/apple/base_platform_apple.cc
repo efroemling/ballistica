@@ -5,9 +5,7 @@
 
 #if BA_XCODE_BUILD
 #include <BallisticaKit-Swift.h>
-#include <unistd.h>
 #endif
-#include <uuid/uuid.h>
 
 #if BA_XCODE_BUILD
 #include "ballistica/base/platform/apple/apple_utils.h"
@@ -15,12 +13,7 @@
 
 namespace ballistica::base {
 
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD && BA_SDL_BUILD
-extern void DoSetCursor(bool show);
-#endif
-
-BasePlatformApple::BasePlatformApple() {  // NOLINT: trivial constructor false
-                                          // positive
+BasePlatformApple::BasePlatformApple() {
   // On iOS, keep the device from falling asleep in our app
 #if BA_OSTYPE_IOS_TVOS
   AppleUtils::DisableIdleTimer();
@@ -58,25 +51,13 @@ void BasePlatformApple::DoOpenURL(const std::string& url) {
   BallisticaKit::CocoaFromCppOpenURL(url);
 #else
   BallisticaKit::UIKitFromCppOpenURL(url);
-#endif
-  // Go ahead and do this ourself. Though perhaps the default
-  // Python path would be fine.
-  // AppleUtils::OpenURL(url.c_str());
-#else
-  // Otherwise go with the default (Python webbrowser module).
-  BasePlatform::DoOpenURL(url);
-#endif
-}
+#endif  // BA_OSTYPE_MACOS
 
-// void BasePlatformApple::SetHardwareCursorVisible(bool visible) {
-//   // Set our nifty custom hardware cursor on mac;
-//   // otherwise fall back to default.
-// #if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_HEADLESS_BUILD && BA_SDL_BUILD
-//   base::DoSetCursor(visible);
-// #else
-//   return BasePlatform::SetHardwareCursorVisible(visible);
-// #endif
-// }
+#else
+  // For non-xcode builds, go with the default (Python webbrowser module).
+  BasePlatform::DoOpenURL(url);
+#endif  // BA_XCODE_BUILD
+}
 
 }  // namespace ballistica::base
 

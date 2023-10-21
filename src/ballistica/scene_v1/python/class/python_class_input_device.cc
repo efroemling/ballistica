@@ -32,7 +32,12 @@ void PythonClassInputDevice::SetupType(PyTypeObject* cls) {
       "Attributes:\n"
       "\n"
       "   allows_configuring (bool):\n"
-      "      Whether the input-device can be configured.\n"
+      "      Whether the input-device can be configured in the app.\n"
+      "\n"
+      "   allows_configuring_in_system_settings (bool):\n"
+      "      Whether the input-device can be configured in the system.\n"
+      "      setings app. This can be used to redirect the user to go there\n"
+      "      if they attempt to configure the device.\n"
       "\n"
       "   has_meaningful_button_names (bool):\n"
       "      Whether button names returned by this instance match labels\n"
@@ -185,6 +190,16 @@ auto PythonClassInputDevice::tp_getattro(PythonClassInputDevice* self,
       throw Exception(PyExcType::kInputDeviceNotFound);
     }
     if (d->input_device().GetAllowsConfiguring()) {
+      Py_RETURN_TRUE;
+    } else {
+      Py_RETURN_FALSE;
+    }
+  } else if (!strcmp(s, "allows_configuring_in_system_settings")) {
+    auto* d = self->input_device_delegate_->Get();
+    if (!d) {
+      throw Exception(PyExcType::kInputDeviceNotFound);
+    }
+    if (d->input_device().IsMFiController()) {
       Py_RETURN_TRUE;
     } else {
       Py_RETURN_FALSE;

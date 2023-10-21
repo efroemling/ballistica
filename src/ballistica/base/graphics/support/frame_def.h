@@ -44,8 +44,8 @@ class FrameDef {
     return app_time_microsecs_ / 1000;
   }
   auto app_time_microsecs() const -> microsecs_t { return app_time_microsecs_; }
-  auto app_time() const -> double {
-    return static_cast<double>(app_time_microsecs_) / 1000000.0;
+  auto app_time() const {
+    return static_cast<seconds_t>(app_time_microsecs_) / 1000000.0;
   }
 
   // A number incremented for each frame renderered. Note that graphics code

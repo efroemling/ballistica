@@ -311,8 +311,6 @@ void FlagNode::Draw(base::FrameDef* frame_def) {
     c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kShadow));
     c.SetTransparent(true);
 
-    FullShadowSet* full_shadows = full_shadow_set_.Get();
-
     // Update our shadow objects.
     if (!g_core->HeadlessMode()) {
       dBodyID b = body_->body();
