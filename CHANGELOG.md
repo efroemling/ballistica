@@ -1,4 +1,4 @@
-### 1.7.28 (build 21489, api 8, 2023-10-21)
+### 1.7.28 (build 21491, api 8, 2023-10-22)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -148,6 +148,12 @@
   result in fewer ugly pops and warning messages when the app is quit.
 - Tidied up some keyboard shortcuts to be more platform-appropriate. For
   example, toggling fullscreen on Windows is now Alt+Enter or F11.
+- Fancy rebuilt Mac build should now automatically sync its frame rate to the
+  display its running on (using CVDisplayLinks, not VSync).
+- Mac build is now relying solely on Apple's Game Controller Framework, which
+  seems pretty awesome these days. It should support most stuff SDL does and
+  with less configuring involved. Please holler if you come across something
+  that doesn't work.
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 

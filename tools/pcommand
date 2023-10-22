@@ -52,6 +52,7 @@ from efrotools.pcommands import (
     try_repeat,
     xcodebuild,
     xcoderun,
+    xcodeshow,
     tweak_empty_py_files,
     make_ensure,
     make_target_debug,
