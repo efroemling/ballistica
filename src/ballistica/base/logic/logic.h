@@ -4,7 +4,6 @@
 #define BALLISTICA_BASE_LOGIC_LOGIC_H_
 
 #include <memory>
-#include <set>
 #include <string>
 
 #include "ballistica/shared/foundation/object.h"
@@ -118,6 +117,8 @@ class Logic {
   auto shutting_down() const { return shutting_down_; }
   auto shutdown_completed() const { return shutdown_completed_; }
 
+  auto graphics_ready() const { return graphics_ready_; }
+
  private:
   void UpdateDisplayTimeForFrameDraw_();
   void UpdateDisplayTimeForHeadlessMode_();
@@ -127,31 +128,31 @@ class Logic {
   void UpdatePendingWorkTimer_();
   void StepDisplayTime_();
 
-  double display_time_{};
-  double display_time_increment_{1.0 / 60.0};
+  seconds_t display_time_{};
+  seconds_t display_time_increment_{1.0 / 60.0};
   microsecs_t display_time_microsecs_{};
   microsecs_t display_time_increment_microsecs_{1000000 / 60};
-
-  // GUI scheduling.
-  double last_display_time_update_app_time_{-1.0};
-  double recent_display_time_increments_[kDisplayTimeSampleCount]{};
-  int recent_display_time_increments_index_{-1};
 
   // Headless scheduling.
   Timer* headless_display_time_step_timer_{};
 
-  Timer* process_pending_work_timer_{};
-  Timer* asset_prune_timer_{};
-  Timer* debug_timer_{};
-  EventLoop* event_loop_{};
-  std::unique_ptr<TimerList> display_timers_;
+  // GUI scheduling.
+  seconds_t last_display_time_update_app_time_{-1.0};
+  seconds_t recent_display_time_increments_[kDisplayTimeSampleCount]{};
+  int recent_display_time_increments_index_{-1};
+
   bool app_bootstrapping_complete_ : 1 {};
   bool have_pending_loads_ : 1 {};
   bool debug_log_display_time_ : 1 {};
   bool applied_app_config_ : 1 {};
   bool shutting_down_ : 1 {};
   bool shutdown_completed_ : 1 {};
-  bool on_initial_screen_creation_complete_called_ : 1 {};
+  bool graphics_ready_ : 1 {};
+  Timer* process_pending_work_timer_{};
+  Timer* asset_prune_timer_{};
+  Timer* debug_timer_{};
+  EventLoop* event_loop_{};
+  std::unique_ptr<TimerList> display_timers_;
 };
 
 }  // namespace ballistica::base

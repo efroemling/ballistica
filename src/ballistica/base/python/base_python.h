@@ -38,6 +38,8 @@ class BasePython {
     kConfig,
     kAppOnNativeBootstrappingCompleteCall,
     kResetToMainMenuCall,
+    kStoreConfigFullscreenOnCall,
+    kStoreConfigFullscreenOffCall,
     kSetConfigFullscreenOnCall,
     kSetConfigFullscreenOffCall,
     kNotSignedInScreenMessageCall,
@@ -108,6 +110,7 @@ class BasePython {
     kDevConsoleStringEditAdapterClass,
     kGetDevConsoleTabNamesCall,
     kAppDevConsoleDoRefreshTabCall,
+    kUnsupportedControllerMessageCall,
     kLast  // Sentinel; must be at end.
   };
 

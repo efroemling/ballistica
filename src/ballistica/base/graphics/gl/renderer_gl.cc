@@ -366,7 +366,7 @@ void RendererGL::CheckGLCapabilities_() {
 
   // Both GL 3 and GL ES 3.0 support depth textures (and thus our high
   // quality mode) as a core feature.
-  g_base->graphics->SetSupportsHighQualityGraphics(true);
+  // g_base->graphics->SetSupportsHighQualityGraphics(true);
 
   // Store the tex-compression type we support.
   BA_DEBUG_CHECK_GL_ERROR;
@@ -2598,7 +2598,8 @@ void RendererGL::RetainShader_(ProgramGL* p) { shaders_.emplace_back(p); }
 void RendererGL::Load() {
   assert(g_base->app_adapter->InGraphicsContext());
   assert(!data_loaded_);
-  assert(g_base->graphics_server->graphics_quality_set());
+  assert(g_base->graphics_server->graphics_quality()
+         != GraphicsQuality::kUnset);
   BA_DEBUG_CHECK_GL_ERROR;
   if (!got_screen_framebuffer_) {
     got_screen_framebuffer_ = true;

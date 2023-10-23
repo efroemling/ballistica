@@ -62,8 +62,6 @@ class AppMode {
 
   virtual void DrawWorld(FrameDef* frame_def);
 
-  virtual void GraphicsQualityChanged(GraphicsQuality quality);
-
   /// Called whenever screen size changes.
   virtual void OnScreenSizeChange();
 

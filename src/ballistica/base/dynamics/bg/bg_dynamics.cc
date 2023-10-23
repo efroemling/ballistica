@@ -39,10 +39,15 @@ void BGDynamics::Emit(const BGDynamicsEmission& e) {
 void BGDynamics::Step(const Vector3f& cam_pos, int step_millisecs) {
   assert(g_base->InLogicThread());
 
+  // Don't actually start doing anything until there's a
+  // client-graphics-context. We need this to calculate qualities/etc.
+  if (!g_base->graphics->has_client_context()) {
+    return;
+  }
+
   // The BG dynamics thread just processes steps as fast as it can;
   // we need to throttle what we send or tell it to cut back if its behind
   int step_count = g_base->bg_dynamics_server->step_count();
-  // printf("STEP COUNT %d\n", step_count);
 
   // If we're really getting behind, start pruning stuff.
   if (step_count > 3) {
@@ -62,6 +67,9 @@ void BGDynamics::Step(const Vector3f& cam_pos, int step_millisecs) {
   // Pass a newly allocated raw pointer to the bg-dynamics thread; it takes care
   // of disposing it when done.
   auto d = Object::NewDeferred<BGDynamicsServer::StepData>();
+  d->graphics_quality = Graphics::GraphicsQualityFromRequest(
+      g_base->graphics->settings()->graphics_quality,
+      g_base->graphics->client_context()->auto_graphics_quality);
   d->step_millisecs = step_millisecs;
   d->cam_pos = cam_pos;
 
@@ -174,7 +182,7 @@ void BGDynamics::Draw(FrameDef* frame_def) {
 
     // In high-quality, we draw in the overlay pass so that we don't get wiped
     // out by depth-of-field.
-    bool draw_in_overlay = (frame_def->quality() >= GraphicsQuality::kHigh);
+    bool draw_in_overlay = frame_def->quality() >= GraphicsQuality::kHigh;
     SpriteComponent c(draw_in_overlay ? frame_def->overlay_3d_pass()
                                       : frame_def->beauty_pass());
     c.SetCameraAligned(true);
@@ -232,7 +240,7 @@ void BGDynamics::Draw(FrameDef* frame_def) {
     tendrils_mesh_->SetIndexData(ds->tendril_indices);
     tendrils_mesh_->SetData(
         Object::Ref<MeshBuffer<VertexSmokeFull>>(ds->tendril_vertices));
-    bool draw_in_overlay = (frame_def->quality() >= GraphicsQuality::kHigh);
+    bool draw_in_overlay = frame_def->quality() >= GraphicsQuality::kHigh;
     SmokeComponent c(draw_in_overlay ? frame_def->overlay_3d_pass()
                                      : frame_def->beauty_pass());
     c.SetOverlay(draw_in_overlay);

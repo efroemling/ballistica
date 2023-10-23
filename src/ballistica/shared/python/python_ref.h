@@ -68,6 +68,7 @@ class PythonRef {
 
   /// Shortcut to create a string object.
   static auto FromString(const std::string& val) -> PythonRef;
+  static auto SingleStringTuple(const std::string& val) -> PythonRef;
 
   /// Assignment from another PythonRef acquires a reference to the object
   /// referenced by other if there is one. If other has no reference, any

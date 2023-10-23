@@ -34,9 +34,16 @@ class AppAdapterSDL : public AppAdapter {
 
   auto TryRender() -> bool;
 
-  auto CanToggleFullscreen() -> bool const override;
+  auto FullscreenControlAvailable() const -> bool override;
+  auto FullscreenControlKeyShortcut() const
+      -> std::optional<std::string> override;
   auto SupportsVSync() -> bool const override;
   auto SupportsMaxFPS() -> bool const override;
+
+  auto HasDirectKeyboardInput() -> bool override;
+  void ApplyGraphicsSettings(const GraphicsSettings* settings) override;
+
+  auto GetGraphicsSettings() -> GraphicsSettings* override;
 
  protected:
   void DoPushMainThreadRunnable(Runnable* runnable) override;
@@ -48,14 +55,11 @@ class AppAdapterSDL : public AppAdapter {
 
  private:
   class ScopedAllowGraphics_;
-  void SetScreen_(bool fullscreen, int max_fps, VSyncRequest vsync_requested,
-                  TextureQualityRequest texture_quality_requested,
-                  GraphicsQualityRequest graphics_quality_requested);
+  struct GraphicsSettings_;
+
   void HandleSDLEvent_(const SDL_Event& event);
   void UpdateScreenSizes_();
-  void ReloadRenderer_(bool fullscreen,
-                       GraphicsQualityRequest graphics_quality_requested,
-                       TextureQualityRequest texture_quality_requested);
+  void ReloadRenderer_(const GraphicsSettings_* settings);
   void OnSDLJoystickAdded_(int index);
   void OnSDLJoystickRemoved_(int index);
   // Given an SDL joystick ID, returns our Ballistica input for it.
@@ -66,6 +70,7 @@ class AppAdapterSDL : public AppAdapter {
   void RemoveSDLInputDevice_(int index);
   void SleepUntilNextEventCycle_(microsecs_t cycle_start_time);
 
+  int max_fps_{60};
   bool done_ : 1 {};
   bool fullscreen_ : 1 {};
   bool vsync_actually_enabled_ : 1 {};
@@ -81,17 +86,16 @@ class AppAdapterSDL : public AppAdapter {
   /// that require such a setup.
   bool strict_graphics_context_ : 1 {};
   bool strict_graphics_allowed_ : 1 {};
-  std::mutex strict_graphics_calls_mutex_;
-  std::vector<Runnable*> strict_graphics_calls_;
   VSync vsync_{VSync::kUnset};
   uint32_t sdl_runnable_event_id_{};
-  int max_fps_{60};
+  std::mutex strict_graphics_calls_mutex_;
+  std::vector<Runnable*> strict_graphics_calls_;
   microsecs_t oversleep_{};
   std::vector<JoystickInput*> sdl_joysticks_;
   Vector2f window_size_{1.0f, 1.0f};
   SDL_Window* sdl_window_{};
   void* sdl_gl_context_{};
-  millisecs_t last_windowevent_close_time_{};
+  seconds_t last_windowevent_close_time_{};
 };
 
 }  // namespace ballistica::base

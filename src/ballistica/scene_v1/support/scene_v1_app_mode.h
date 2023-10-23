@@ -172,7 +172,6 @@ class SceneV1AppMode : public base::AppMode {
                        sockaddr_storage* from) override;
   void DrawWorld(base::FrameDef* frame_def) override;
   auto DoesWorldFillScreen() -> bool override;
-  void GraphicsQualityChanged(base::GraphicsQuality quality) override;
   void RunMainMenu();
 
   auto dynamics_sync_time() const { return dynamics_sync_time_; }

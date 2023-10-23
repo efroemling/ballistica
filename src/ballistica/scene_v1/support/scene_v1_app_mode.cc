@@ -1312,15 +1312,6 @@ void SceneV1AppMode::SetPublicPartyStatsURL(const std::string& url) {
   }
 }
 
-void SceneV1AppMode::GraphicsQualityChanged(base::GraphicsQuality quality) {
-  for (auto&& i : sessions_) {
-    if (!i.Exists()) {
-      continue;
-    }
-    i->GraphicsQualityChanged(quality);
-  }
-}
-
 void SceneV1AppMode::SetPublicPartyPlayerCount(int count) {
   assert(g_base->InLogicThread());
   if (count == public_party_player_count_) {

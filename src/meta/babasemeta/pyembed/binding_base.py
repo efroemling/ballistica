@@ -21,6 +21,8 @@ from babase import (
 # The C++ layer looks for this variable:
 values = [
     _hooks.reset_to_main_menu,  # kResetToMainMenuCall
+    _hooks.store_config_fullscreen_on,  # kStoreConfigFullscreenOnCall
+    _hooks.store_config_fullscreen_off,  # kStoreConfigFullscreenOffCall
     _hooks.set_config_fullscreen_on,  # kSetConfigFullscreenOnCall
     _hooks.set_config_fullscreen_off,  # kSetConfigFullscreenOffCall
     _hooks.not_signed_in_screen_message,  # kNotSignedInScreenMessageCall
@@ -54,6 +56,7 @@ values = [
     _hooks.show_post_purchase_message,  # kShowPostPurchaseMessageCall
     _hooks.string_edit_adapter_can_be_replaced,  # kStringEditAdapterCanBeReplacedCall
     _hooks.get_dev_console_tab_names,  # kGetDevConsoleTabNamesCall
+    _hooks.unsupported_controller_message,  # kUnsupportedControllerMessageCall
     _language.Lstr,  # kLStrClass
     _general.Call,  # kCallClass
     _apputils.garbage_collect_session_end,  # kGarbageCollectSessionEndCall

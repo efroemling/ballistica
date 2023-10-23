@@ -43,7 +43,6 @@ class Scene : public Object {
   void SetMapBounds(float x, float y, float z, float X, float Y, float Z);
   void OnScreenSizeChange();
   void LanguageChanged();
-  void GraphicsQualityChanged(base::GraphicsQuality q);
   auto out_of_bounds_nodes() -> const std::vector<Object::WeakRef<Node> >& {
     return out_of_bounds_nodes_;
   }

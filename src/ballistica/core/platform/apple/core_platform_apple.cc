@@ -147,17 +147,17 @@ auto CorePlatformApple::IsRunningOnDesktop() -> bool {
 #endif
 }
 
-void CorePlatformApple::DisplayLog(const std::string& name, LogLevel level,
-                                   const std::string& msg) {
+void CorePlatformApple::EmitPlatformLog(const std::string& name, LogLevel level,
+                                        const std::string& msg) {
 #if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
 
   // HMM: do we want to use proper logging APIs here or simple printing?
   // base::AppleUtils::NSLogStr(msg);
-  CorePlatform::DisplayLog(name, level, msg);
+  CorePlatform::EmitPlatformLog(name, level, msg);
 #else
 
   // Fall back to default handler...
-  CorePlatform::DisplayLog(name, level, msg);
+  CorePlatform::EmitPlatformLog(name, level, msg);
 #endif
 }
 

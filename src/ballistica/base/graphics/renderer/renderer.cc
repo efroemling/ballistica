@@ -35,10 +35,12 @@ void Renderer::PreprocessFrameDef(FrameDef* frame_def) {
 
   // If this frame_def was made in a different quality mode than we're
   // currently in, don't attempt to render it.
-  if (frame_def->quality() != g_base->graphics_server->quality()) {
-    frame_def->set_rendering(false);
-    return;
-  }
+  // UPDATE - scratch that; we now set our quality FROM the frame def.
+  // if (frame_def->quality() != g_base->graphics_server->quality()) {
+  //   frame_def->set_rendering(false);
+  //   return;
+  // }
+
   frame_def->set_rendering(true);
 
   // Some VR environments muck with render states before/after

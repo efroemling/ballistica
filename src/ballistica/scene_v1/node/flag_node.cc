@@ -129,9 +129,6 @@ FlagNode::FlagNode(Scene* scene) : Node(scene, node_type), part_(this) {
 
   mesh_.SetIndexData(indices);
   mesh_.SetStaticData(v_static);
-
-  // Create our shadow set.
-  UpdateForGraphicsQuality(g_base->graphics_server->quality());
 }
 
 auto FlagNode::getPosition() const -> std::vector<float> {
@@ -257,6 +254,11 @@ void FlagNode::HandleMessage(const char* data_in) {
 }
 
 void FlagNode::Draw(base::FrameDef* frame_def) {
+  if (graphics_quality_ != frame_def->quality()) {
+    graphics_quality_ = frame_def->quality();
+    UpdateForGraphicsQuality(graphics_quality_);
+  }
+
   // Flag cloth.
   {
     // Update the dynamic portion of our mesh data.
@@ -309,47 +311,60 @@ void FlagNode::Draw(base::FrameDef* frame_def) {
     c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kShadow));
     c.SetTransparent(true);
 
-    FullShadowSet* full_shadows = full_shadow_set_.Get();
+    // Update our shadow objects.
+    if (!g_core->HeadlessMode()) {
+      dBodyID b = body_->body();
+      assert(b);
+      dVector3 p;
+      if (FullShadowSet* full_shadows = full_shadow_set_.Get()) {
+        full_shadows->shadow_flag_.SetPosition(
+            flag_points_[kFlagSizeX * (kFlagSizeY / 2) + (kFlagSizeX / 2)]);
+        dBodyGetRelPointPos(b, 0, 0, kFlagHeight * -0.4f, p);
+        full_shadows->shadow_pole_bottom_.SetPosition(Vector3f(p));
+        full_shadows->shadow_pole_middle_.SetPosition(
+            Vector3f(dBodyGetPosition(b)));
+        dBodyGetRelPointPos(b, 0, 0, kFlagHeight * 0.4f, p);
+        full_shadows->shadow_pole_top_.SetPosition(Vector3f(p));
+        // Pole bottom.
+        {
+          full_shadows->shadow_pole_bottom_.GetValues(&s_scale, &s_density);
+          const Vector3f& p(full_shadows->shadow_pole_bottom_.GetPosition());
+          g_base->graphics->DrawBlotch(p, 0.4f * s_scale, 0, 0, 0,
+                                       s_density * 0.25f);
+        }
 
-    if (full_shadows) {
-      // Pole bottom.
-      {
-        full_shadows->shadow_pole_bottom_.GetValues(&s_scale, &s_density);
-        const Vector3f& p(full_shadows->shadow_pole_bottom_.GetPosition());
-        g_base->graphics->DrawBlotch(p, 0.4f * s_scale, 0, 0, 0,
-                                     s_density * 0.25f);
-      }
+        // Pole middle.
+        {
+          full_shadows->shadow_pole_middle_.GetValues(&s_scale, &s_density);
+          const Vector3f& p(full_shadows->shadow_pole_middle_.GetPosition());
+          g_base->graphics->DrawBlotch(p, 0.4f * s_scale, 0, 0, 0,
+                                       s_density * 0.25f);
+        }
 
-      // Pole middle.
-      {
-        full_shadows->shadow_pole_middle_.GetValues(&s_scale, &s_density);
-        const Vector3f& p(full_shadows->shadow_pole_middle_.GetPosition());
-        g_base->graphics->DrawBlotch(p, 0.4f * s_scale, 0, 0, 0,
-                                     s_density * 0.25f);
-      }
+        // Pole top.
+        {
+          full_shadows->shadow_pole_middle_.GetValues(&s_scale, &s_density);
+          const Vector3f& p(full_shadows->shadow_pole_top_.GetPosition());
+          g_base->graphics->DrawBlotch(p, 0.4f * s_scale, 0, 0, 0,
+                                       s_density * 0.25f);
+        }
 
-      // Pole top.
-      {
-        full_shadows->shadow_pole_middle_.GetValues(&s_scale, &s_density);
-        const Vector3f& p(full_shadows->shadow_pole_top_.GetPosition());
-        g_base->graphics->DrawBlotch(p, 0.4f * s_scale, 0, 0, 0,
-                                     s_density * 0.25f);
-      }
+        // Flag center.
+        {
+          full_shadows->shadow_flag_.GetValues(&s_scale, &s_density);
+          const Vector3f& p(full_shadows->shadow_flag_.GetPosition());
+          g_base->graphics->DrawBlotch(p, 0.8f * s_scale, 0, 0, 0,
+                                       s_density * 0.3f);
+        }
 
-      // Flag center.
-      {
-        full_shadows->shadow_flag_.GetValues(&s_scale, &s_density);
-        const Vector3f& p(full_shadows->shadow_flag_.GetPosition());
+      } else if (SimpleShadowSet* simple_shadows = simple_shadow_set_.Get()) {
+        dBodyGetRelPointPos(b, 0, 0, kFlagHeight * -0.3f, p);
+        simple_shadows->shadow_.SetPosition(Vector3f(p));
+        simple_shadows->shadow_.GetValues(&s_scale, &s_density);
+        const Vector3f& p(simple_shadows->shadow_.GetPosition());
         g_base->graphics->DrawBlotch(p, 0.8f * s_scale, 0, 0, 0,
-                                     s_density * 0.3f);
+                                     s_density * 0.5f);
       }
-    } else {
-      SimpleShadowSet* simple_shadows = simple_shadow_set_.Get();
-      assert(simple_shadows);
-      simple_shadows->shadow_.GetValues(&s_scale, &s_density);
-      const Vector3f& p(simple_shadows->shadow_.GetPosition());
-      g_base->graphics->DrawBlotch(p, 0.8f * s_scale, 0, 0, 0,
-                                   s_density * 0.5f);
     }
     c.Submit();
   }
@@ -397,30 +412,6 @@ void FlagNode::Step() {
 
   // FIXME: This should probably happen for RBDs automatically?
   body_->UpdateBlending();
-
-  // Update our shadow objects.
-  dBodyID b = body_->body();
-  assert(b);
-
-  if (!g_core->HeadlessMode()) {
-    dVector3 p;
-    FullShadowSet* full_shadows = full_shadow_set_.Get();
-    if (full_shadows) {
-      full_shadows->shadow_flag_.SetPosition(
-          flag_points_[kFlagSizeX * (kFlagSizeY / 2) + (kFlagSizeX / 2)]);
-      dBodyGetRelPointPos(b, 0, 0, kFlagHeight * -0.4f, p);
-      full_shadows->shadow_pole_bottom_.SetPosition(Vector3f(p));
-      full_shadows->shadow_pole_middle_.SetPosition(
-          Vector3f(dBodyGetPosition(b)));
-      dBodyGetRelPointPos(b, 0, 0, kFlagHeight * 0.4f, p);
-      full_shadows->shadow_pole_top_.SetPosition(Vector3f(p));
-    } else {
-      SimpleShadowSet* simple_shadows = simple_shadow_set_.Get();
-      assert(simple_shadows);
-      dBodyGetRelPointPos(b, 0, 0, kFlagHeight * -0.3f, p);
-      simple_shadows->shadow_.SetPosition(Vector3f(p));
-    }
-  }
 
   if (dBodyIsEnabled(body_->body())) {
     // Try to keep upright by pushing the top of the
@@ -673,10 +664,6 @@ void FlagNode::GetRigidBodyPickupLocations(int id, float* obj, float* character,
   hand2[2] = -0.1f;
   hand1[0] = -0.05f;
   hand1[2] = -0.05f;
-}
-
-void FlagNode::OnGraphicsQualityChanged(base::GraphicsQuality q) {
-  UpdateForGraphicsQuality(q);
 }
 
 void FlagNode::UpdateForGraphicsQuality(base::GraphicsQuality quality) {

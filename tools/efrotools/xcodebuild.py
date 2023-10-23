@@ -983,8 +983,8 @@ class XCodeBuild:
             # on to clarify in that case (unless requested not to).
             assert self._section is not None
             sys.stdout.write(
-                f'{Clr.YLW}Unexpected {self._section.value}'
-                f' Output:{Clr.RST} {line}'
+                f'{Clr.YLW}Unfiltered Output (Section {self._section.value}):'
+                f'{Clr.RST} {line}'
             )
         else:
             sys.stdout.write(line)

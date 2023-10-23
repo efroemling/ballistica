@@ -562,12 +562,7 @@ void TextWidget::Activate() {
 }
 
 auto TextWidget::ShouldUseStringEditor_() const -> bool {
-  if (g_core->HeadlessMode()) {
-    BA_LOG_ONCE(
-        LogLevel::kError,
-        "ShouldUseStringEditDialog_ called in headless; should not happen.");
-    return false;
-  }
+  assert(!g_core->HeadlessMode());  // Should not get called here.
 
   // Obscure cases such as the text-widget *on* our built-in on-screen
   // editor (obviously it should itself not pop up an editor).
@@ -581,7 +576,7 @@ auto TextWidget::ShouldUseStringEditor_() const -> bool {
     return true;
   }
 
-  // If we can take direct key events, no string-editor needed.
+  // If the UI is getting fed actual keyboard events, no string-editor needed.
   return !g_base->ui->UIHasDirectKeyboardInput();
 }
 

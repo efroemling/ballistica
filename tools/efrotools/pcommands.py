@@ -98,10 +98,8 @@ def xcodebuild() -> None:
     XCodeBuild(projroot=str(pcommand.PROJROOT), args=sys.argv[2:]).run()
 
 
-def xcoderun() -> None:
-    """Run an xcode build in the terminal."""
+def _xcodepath(executable: bool) -> str:
     import os
-    import subprocess
     from efro.error import CleanError
     from efrotools.xcodebuild import project_build_path
 
@@ -114,12 +112,27 @@ def xcoderun() -> None:
     project_path = os.path.abspath(sys.argv[2])
     scheme = sys.argv[3]
     configuration = sys.argv[4]
-    path = project_build_path(
+    return project_build_path(
         projroot=str(pcommand.PROJROOT),
         project_path=project_path,
         scheme=scheme,
         configuration=configuration,
+        executable=executable,
     )
+
+
+def xcodeshow() -> None:
+    """Open folder containing xcode build in the finder."""
+    import subprocess
+
+    subprocess.run(['open', _xcodepath(executable=False)], check=True)
+
+
+def xcoderun() -> None:
+    """Run an xcode build in the terminal."""
+    import subprocess
+
+    path = _xcodepath(executable=True)
     subprocess.run(path, check=True)
 
 

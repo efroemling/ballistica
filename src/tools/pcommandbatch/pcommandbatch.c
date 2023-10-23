@@ -307,13 +307,22 @@ int establish_connection_(const struct Context_* ctx) {
                   retry_attempt + 1);
         }
       } else if (errno == ECONNREFUSED) {
-        // Am seeing this very rarely on random one-off commands. I'm
+        // Am seeing these very rarely on random one-off commands. I'm
         // guessing there's some race condition at the OS level where the
         // port-file write goes through before the socket is actually truly
         // accepting connections. A retry should succeed.
         if (ctx->verbose) {
           fprintf(stderr,
                   "pcommandbatch client %s_%d (pid %d): got ECONNREFUSED"
+                  " on connect attempt %d.\n",
+                  ctx->instance_prefix, ctx->instance_num, ctx->pid,
+                  retry_attempt + 1);
+        }
+      } else if (errno == EINVAL) {
+        // Saw this randomly once on Mac. Not sure what could have led to it.
+        if (ctx->verbose) {
+          fprintf(stderr,
+                  "pcommandbatch client %s_%d (pid %d): got EINVAL"
                   " on connect attempt %d.\n",
                   ctx->instance_prefix, ctx->instance_num, ctx->pid,
                   retry_attempt + 1);

@@ -59,6 +59,8 @@ class DataAsset;
 class FrameDef;
 class Graphics;
 class GraphicsServer;
+struct GraphicsSettings;
+struct GraphicsClientContext;
 class Huffman;
 class ImageMesh;
 class Input;
@@ -662,6 +664,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// allowing certain functionality before this time.
   auto IsBaseCompletelyImported() -> bool;
 
+  auto InMainThread() const -> bool;
   auto InAssetsThread() const -> bool override;
   auto InLogicThread() const -> bool override;
   auto InAudioThread() const -> bool override;
@@ -672,10 +675,17 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// High level screen-message call usable from any thread.
   void ScreenMessage(const std::string& s, const Vector3f& color) override;
 
-  /// Has StartApp been called (and completely finished its work)?
-  /// Code that sends calls/messages to other threads or otherwise uses
-  /// app functionality may want to check this to avoid crashes.
+  /// Has StartApp been called (and completely finished its work)? Code that
+  /// sends calls/messages to other threads or otherwise uses app
+  /// functionality may want to check this to avoid crashes. Note that some
+  /// app functionality such as loading assets is not available until
+  /// IsAppBootstrapped returns true. This call is thread safe.
   auto IsAppStarted() const -> bool override;
+
+  /// Has the app bootstrapping phase completed? The bootstrapping phase
+  /// involves initial screen/graphics setup. Asset loading is not allowed
+  /// until it is complete.
+  auto IsAppBootstrapped() const -> bool override;
 
   void PlusDirectSendV1CloudLogs(const std::string& prefix,
                                  const std::string& suffix, bool instant,

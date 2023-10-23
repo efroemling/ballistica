@@ -40,7 +40,6 @@ class Node : public Object {
 
   /// Called when the language changes.
   virtual void OnLanguageChange() {}
-  virtual void OnGraphicsQualityChanged(base::GraphicsQuality q) {}
 
   /// The node can rule out collisions between particular bodies using this.
   virtual auto PreFilterCollision(RigidBody* b1, RigidBody* r2) -> bool {

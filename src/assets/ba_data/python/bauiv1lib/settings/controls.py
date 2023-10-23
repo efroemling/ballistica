@@ -98,9 +98,11 @@ class ControlsSettingsWindow(bui.Window):
         # made-for-iOS/Mac systems
         # (we can run into problems where devices register as one of each
         # type otherwise)..
+        # UPDATE: We always use the apple system these days (which should
+        # support older controllers). So no need for a switch.
         show_mac_controller_subsystem = False
-        if platform == 'mac' and bui.is_xcode_build():
-            show_mac_controller_subsystem = True
+        # if platform == 'mac' and bui.is_xcode_build():
+        #     show_mac_controller_subsystem = True
 
         if show_mac_controller_subsystem:
             height += spacing * 1.5
@@ -311,6 +313,7 @@ class ControlsSettingsWindow(bui.Window):
                 maxwidth=width * 0.8,
             )
             v -= spacing
+
         if show_mac_controller_subsystem:
             PopupMenu(
                 parent=self._root_widget,

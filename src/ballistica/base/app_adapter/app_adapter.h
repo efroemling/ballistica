@@ -30,6 +30,16 @@ class AppAdapter {
   virtual void OnScreenSizeChange();
   virtual void DoApplyAppConfig();
 
+  /// When called, should allocate an instance of a GraphicsSettings
+  /// subclass using 'new', fill it out, and return it. Runs in the logic
+  /// thread.
+  virtual auto GetGraphicsSettings() -> GraphicsSettings*;
+
+  /// When called, should allocate an instance of a GraphicsClientContext
+  /// subclass using 'new', fill it out, and return it. Runs in the graphics
+  /// context.
+  virtual auto GetGraphicsClientContext() -> GraphicsClientContext*;
+
   /// Return whether this class manages the main thread event loop itself.
   /// Default is true. If this is true, RunMainThreadEventLoopToCompletion()
   /// will be called to run the app. This should return false on builds
@@ -113,9 +123,27 @@ class AppAdapter {
   auto app_suspended() const { return app_suspended_; }
 
   /// Return whether this AppAdapter supports a 'fullscreen' toggle for its
-  /// display. This currently will simply affect whether that option is
-  /// available in display settings or via a hotkey.
-  virtual auto CanToggleFullscreen() -> bool const;
+  /// display. This will affect whether that option is available in display
+  /// settings or via a hotkey. Must be called from the logic thread.
+  virtual auto FullscreenControlAvailable() const -> bool;
+
+  /// AppAdapters supporting a 'fullscreen' control should return the
+  /// current fullscreen state here. By default this simply returns the
+  /// app-config fullscreen value (so assumes the actual state is synced to
+  /// that). Must be called from the logic thread.
+  virtual auto FullscreenControlGet() const -> bool;
+
+  /// AppAdapters supporting a 'fullscreen' control should set the
+  /// current fullscreen state here. By default this simply sets the
+  /// app-config fullscreen value (so assumes the actual state is synced to
+  /// that). Must be called from the logic thread.
+  virtual void FullscreenControlSet(bool fullscreen);
+
+  /// AppAdapters supporting a 'fullscreen' control can return a key name
+  /// here to display if they support toggling via key ('ctrl-F', etc.).
+  /// Must be called from the logic thread.
+  virtual auto FullscreenControlKeyShortcut() const
+      -> std::optional<std::string>;
 
   /// Return whether this AppAdapter supports vsync controls for its display.
   virtual auto SupportsVSync() -> bool const;
@@ -152,6 +180,22 @@ class AppAdapter {
   /// level event. There should be nothing left to do in the engine at
   /// this point.
   virtual void TerminateApp();
+
+  /// Should return whether there is a keyboard attached that will deliver
+  /// direct text-editing related events to the app. When this is false,
+  /// alternate entry methods such as keyboard-entry-dialogs and on-screen
+  /// keyboards will be used. This value can change based on conditions such
+  /// as a hardware keyboard getting attached or detached or the language
+  /// changing (it may be preferable to rely on dialogs for non-english
+  /// languages/etc.). Default implementation returns false. This function
+  /// should be callable from any thread.
+  virtual auto HasDirectKeyboardInput() -> bool;
+
+  /// Called in the graphics context to apply new settings coming in from
+  /// the logic subsystem. This will be called initially to jump-start the
+  /// graphics system as well as before frame draws to update any new
+  /// settings coming in.
+  virtual void ApplyGraphicsSettings(const GraphicsSettings* settings);
 
  protected:
   AppAdapter();

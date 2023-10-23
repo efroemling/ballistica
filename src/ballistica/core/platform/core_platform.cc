@@ -465,12 +465,17 @@ auto CorePlatform::IsRunningOnDesktop() -> bool {
   return true;
 }
 
-void CorePlatform::SleepMillisecs(millisecs_t ms) {
-  std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+void CorePlatform::SleepSeconds(seconds_t duration) {
+  std::this_thread::sleep_for(
+      std::chrono::microseconds(static_cast<microsecs_t>(duration * 1000000)));
 }
 
-void CorePlatform::SleepMicrosecs(millisecs_t ms) {
-  std::this_thread::sleep_for(std::chrono::microseconds(ms));
+void CorePlatform::SleepMillisecs(millisecs_t duration) {
+  std::this_thread::sleep_for(std::chrono::milliseconds(duration));
+}
+
+void CorePlatform::SleepMicrosecs(millisecs_t duration) {
+  std::this_thread::sleep_for(std::chrono::microseconds(duration));
 }
 
 #pragma clang diagnostic push
@@ -481,8 +486,8 @@ auto CorePlatform::GetDefaultUIScale() -> UIScale {
   return UIScale::kLarge;
 }
 
-void CorePlatform::DisplayLog(const std::string& name, LogLevel level,
-                              const std::string& msg) {
+void CorePlatform::EmitPlatformLog(const std::string& name, LogLevel level,
+                                   const std::string& msg) {
   // Do nothing by default.
 }
 

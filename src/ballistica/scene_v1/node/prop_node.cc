@@ -576,7 +576,7 @@ auto PropNode::CollideCallback(dContact* c, int count,
           dBodyGetMass(b2, &m);
           dJointID j =
               dJointCreateFixed(scene()->dynamics()->ode_world(),
-                                scene()->dynamics()->getContactGroup());
+                                scene()->dynamics()->ode_contact_group());
           dJointAttach(j, b1, b2);
           dJointSetFixed(j);
           dJointSetFixedSpringMode(j, 1, 1, false);

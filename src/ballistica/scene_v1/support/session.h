@@ -34,7 +34,6 @@ class Session : public SceneV1Context {
   virtual auto GetForegroundContext() -> base::ContextRef;
   virtual void OnScreenSizeChange();
   virtual void LanguageChanged();
-  virtual void GraphicsQualityChanged(base::GraphicsQuality q);
   virtual void DebugSpeedMultChanged();
   auto benchmark_type() const -> base::BenchmarkType { return benchmark_type_; }
   void set_benchmark_type(base::BenchmarkType val) { benchmark_type_ = val; }

@@ -15,6 +15,7 @@
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -158,16 +159,16 @@ void Input::AnnounceConnects_() {
 
   // For the first announcement just say "X controllers detected" and don't
   // have a sound.
-  if (first_print && g_core->GetAppTimeMillisecs() < 10000) {
+  if (first_print && g_core->GetAppTimeSeconds() < 5.0) {
     first_print = false;
 
-    // Disabling this completely for now; being more lenient with devices
-    // allowed on Android means this will often come back with large
-    // numbers.
-    bool do_print{false};
+    // Disabling this completely on Android for now; we often get large
+    // numbers of devices there that aren't actually devices.
+
+    bool do_print_initial_counts{!g_buildconfig.ostype_android()};
 
     // If there's been several connected, just give a number.
-    if (explicit_bool(do_print)) {
+    if (explicit_bool(do_print_initial_counts)) {
       if (newly_connected_controllers_.size() > 1) {
         std::string s =
             g_base->assets->GetResourceString("controllersDetectedText");
@@ -532,23 +533,28 @@ void Input::UpdateEnabledControllerSubsystems_() {
 
   // First off, on mac, let's update whether we want to completely ignore
   // either the classic or the iOS/Mac controller subsystems.
-  if (g_buildconfig.ostype_macos()) {
-    std::string sys = g_base->app_config->Resolve(
-        AppConfig::StringID::kMacControllerSubsystem);
-    if (sys == "Classic") {
-      ignore_mfi_controllers_ = true;
-      ignore_sdl_controllers_ = false;
-    } else if (sys == "MFi") {
-      ignore_mfi_controllers_ = false;
-      ignore_sdl_controllers_ = true;
-    } else if (sys == "Both") {
-      ignore_mfi_controllers_ = false;
-      ignore_sdl_controllers_ = false;
-    } else {
-      BA_LOG_ONCE(LogLevel::kError,
-                  "Invalid mac-controller-subsystem value: '" + sys + "'");
-    }
-  }
+  //
+  // UPDATE - these days we're mfi-only on our xcode builds (which should
+  // support older controllers too). So we don't need to touch ignore vals
+  // anywhere since we'll not get sdl ones on those builds.
+
+  // if (g_buildconfig.ostype_macos()) {
+  //   std::string sys = g_base->app_config->Resolve(
+  //       AppConfig::StringID::kMacControllerSubsystem);
+  //   if (sys == "Classic") {
+  //     ignore_mfi_controllers_ = true;
+  //     ignore_sdl_controllers_ = false;
+  //   } else if (sys == "MFi") {
+  //     ignore_mfi_controllers_ = false;
+  //     ignore_sdl_controllers_ = true;
+  //   } else if (sys == "Both") {
+  //     ignore_mfi_controllers_ = false;
+  //     ignore_sdl_controllers_ = false;
+  //   } else {
+  //     BA_LOG_ONCE(LogLevel::kError,
+  //                 "Invalid mac-controller-subsystem value: '" + sys + "'");
+  //   }
+  // }
 }
 
 void Input::OnAppStart() { assert(g_base->InLogicThread()); }
@@ -809,10 +815,35 @@ void Input::PushTextInputEvent(const std::string& text) {
   g_base->logic->event_loop()->PushCall([this, text] {
     MarkInputActive();
 
-    // Ignore  if input is locked.
+    // If if the app doesn't want direct text input right now.
+    if (!g_base->app_adapter->HasDirectKeyboardInput()) {
+      return;
+    }
+
+    // Ignore if input is locked.
     if (IsInputLocked()) {
       return;
     }
+
+    // We try to handle char filtering here (to keep it consistent across
+    // platforms) but make a stink if they sent us something that we can't
+    // at least translate to unicode.
+    if (!Utils::IsValidUTF8(text)) {
+      Log(LogLevel::kWarning, "PushTextInputEvent passed invalid utf-8 text.");
+      return;
+    }
+
+    // Now scan through unicode vals and ignore stuff like tabs and newlines
+    // and backspaces. We want to limit this mechanism to direct simple
+    // lines of text. Anything needing something fancier should go through a
+    // proper OS-managed text input dialog or whatnot.
+    auto univals = Utils::UnicodeFromUTF8(text, "80ff83");
+    for (auto&& unival : univals) {
+      if (unival < 32) {
+        return;
+      }
+    }
+
     if (g_base && g_base->ui->dev_console() != nullptr
         && g_base->ui->dev_console()->HandleTextEditing(text)) {
       return;
@@ -997,10 +1028,26 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     }
   }
 
-  // Command-F or Control-F toggles full-screen if the app-adapter supports it.
-  if (g_base->app_adapter->CanToggleFullscreen()) {
-    if (!repeat_press && keysym.sym == SDLK_f
-        && ((keysym.mod & KMOD_CTRL) || (keysym.mod & KMOD_GUI))) {
+  // Explicitly handle fullscreen-toggles in some cases.
+  if (g_base->app_adapter->FullscreenControlAvailable()) {
+    bool do_toggle{};
+    // On our Mac SDL builds we support ctrl+F for toggling fullscreen.
+    // On our nice Cocoa build, fullscreening happens magically through the
+    // view menu fullscreen controls.
+    if (g_buildconfig.ostype_macos() && !g_buildconfig.xcode_build()) {
+      if (!repeat_press && keysym.sym == SDLK_f && ((keysym.mod & KMOD_CTRL))) {
+        do_toggle = true;
+      }
+    }
+    // On Windows we support both F11 and Alt+Enter for toggling fullscreen.
+    if (g_buildconfig.ostype_windows()) {
+      if (!repeat_press
+          && (keysym.sym == SDLK_F11
+              || (keysym.sym == SDLK_RETURN && ((keysym.mod & KMOD_ALT))))) {
+        do_toggle = true;
+      }
+    }
+    if (do_toggle) {
       g_base->python->objs()
           .Get(BasePython::ObjID::kToggleFullscreenCall)
           .Call();
@@ -1008,12 +1055,15 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     }
   }
 
-  // Control-Q quits. On Mac, the usual Cmd-Q gets handled
-  // by the app-adapter implicitly.
-  if (!repeat_press && keysym.sym == SDLK_q && (keysym.mod & KMOD_CTRL)) {
-    g_base->QuitApp(true);
-    return;
-  }
+  // Control-Q quits. On Mac, the usual Cmd-Q gets handled implicitly by the
+  // app-adapter.
+  // UPDATE: Disabling this for now. Looks like standard OS shortcuts like
+  // Alt+F4 on windows or Cmd-Q on Mac are doing the right thing with SDL
+  // builds these days so these are not needed.
+  // if (!repeat_press && keysym.sym == SDLK_q && (keysym.mod & KMOD_CTRL)) {
+  //   g_base->QuitApp(true);
+  //   return;
+  // }
 
   // Let the console intercept stuff if it wants at this point.
   if (auto* console = g_base->ui->dev_console()) {
@@ -1247,7 +1297,7 @@ void Input::HandleSmoothMouseScroll_(const Vector2f& velocity, bool momentum) {
       WidgetMessage(WidgetMessage::Type::kMouseWheelVelocityH, nullptr,
                     cursor_pos_x_, cursor_pos_y_, velocity.x, momentum));
 
-  last_mouse_move_time_ = g_core->GetAppTimeMillisecs();
+  last_mouse_move_time_ = g_core->GetAppTimeSeconds();
   mouse_move_count_++;
 
   Camera* camera = g_base->graphics->camera();
@@ -1283,7 +1333,7 @@ void Input::HandleMouseMotion_(const Vector2f& position) {
   cursor_pos_y_ = g_base->graphics->PixelToVirtualY(
       position.y * g_base->graphics->screen_pixel_height());
 
-  last_mouse_move_time_ = g_core->GetAppTimeMillisecs();
+  last_mouse_move_time_ = g_core->GetAppTimeSeconds();
   mouse_move_count_++;
 
   // If we have a touch-input in editing mode, pass along events to it.
@@ -1324,7 +1374,7 @@ void Input::HandleMouseDown_(int button, const Vector2f& position) {
     return;
   }
 
-  last_mouse_move_time_ = g_core->GetAppTimeMillisecs();
+  last_mouse_move_time_ = g_core->GetAppTimeSeconds();
   mouse_move_count_++;
 
   // Convert normalized view coords to our virtual ones.
@@ -1389,8 +1439,8 @@ void Input::HandleMouseUp_(int button, const Vector2f& position) {
       position.y * g_base->graphics->screen_pixel_height());
 
   // If we have a touch-input in editing mode, pass along events to it.
-  // (it usually handles its own events but here we want it to play nice
-  // with stuff under it by blocking touches, etc)
+  // It usually handles its own events but here we want it to play nice
+  // with stuff under it by blocking touches, etc.
   if (touch_input_ && touch_input_->editing()) {
     touch_input_->HandleTouchUp(reinterpret_cast<void*>(1), cursor_pos_x_,
                                 cursor_pos_y_);
@@ -1431,9 +1481,6 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
 
   MarkInputActive();
 
-  // float x = e.x;
-  // float y = e.y;
-
   if (g_buildconfig.ostype_ios_tvos()) {
     printf("FIXME: update touch handling\n");
   }
@@ -1463,8 +1510,8 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
     }
   }
 
-  // We keep track of one 'single' touch which we pass along as
-  // mouse events which covers most UI stuff.
+  // We keep track of one 'single' touch which we pass along as mouse events
+  // which covers most UI stuff.
   if (e.type == TouchEvent::Type::kDown && single_touch_ == nullptr) {
     single_touch_ = e.touch;
     HandleMouseDown_(SDL_BUTTON_LEFT, Vector2f(e.x, e.y));
@@ -1474,8 +1521,8 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
     HandleMouseMotion_(Vector2f(e.x, e.y));
   }
 
-  // Currently just applying touch-cancel the same as touch-up here;
-  // perhaps should be smarter in the future.
+  // Currently just applying touch-cancel the same as touch-up here; perhaps
+  // should be smarter in the future.
   if ((e.type == TouchEvent::Type::kUp || e.type == TouchEvent::Type::kCanceled)
       && (e.touch == single_touch_ || e.overall)) {
     single_touch_ = nullptr;
@@ -1529,13 +1576,9 @@ auto Input::IsCursorVisible() const -> bool {
   }
   bool val;
 
-  // Show our cursor if any dialogs/windows are up or else if its been moved
-  // very recently.
-  if (g_base->ui->MainMenuVisible()) {
-    val = (g_core->GetAppTimeMillisecs() - last_mouse_move_time_ < 5000);
-  } else {
-    val = (g_core->GetAppTimeMillisecs() - last_mouse_move_time_ < 1000);
-  }
+  // Show our cursor only if its been moved recently.
+  val = (g_core->GetAppTimeSeconds() - last_mouse_move_time_ < 2.071);
+
   return val;
 }
 

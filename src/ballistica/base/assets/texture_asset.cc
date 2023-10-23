@@ -93,11 +93,14 @@ auto TextureAsset::GetNameFull() const -> std::string {
 void TextureAsset::DoPreload() {
   assert(valid_);
 
-  assert(g_base->graphics_server
-         && g_base->graphics_server->texture_compression_types_are_set());
+  // Make sure we're not loading without knowing what texture types we
+  // support.
+  // assert(g_base->graphics->has_client_context());
+  // assert(g_base->graphics_server
+  //        && g_base->graphics_server->texture_compression_types_are_set());
 
-  // We figure out which LOD should be our base level based on quality.
-  TextureQuality texture_quality = g_base->graphics_server->texture_quality();
+  // Figure out which LOD should be our base level based on texture quality.
+  auto texture_quality = g_base->graphics->placeholder_texture_quality();
 
   // If we're a text-texture.
   if (packer_.Exists()) {
@@ -218,12 +221,14 @@ void TextureAsset::DoPreload() {
                 &preload_datas_[0].base_level);
 
         // We should only be loading this if we support etc1 in hardware.
-        assert(g_base->graphics_server->SupportsTextureCompressionType(
-            TextureCompressionType::kETC1));
+        assert(g_base->graphics->placeholder_client_context()
+                   ->SupportsTextureCompressionType(
+                       TextureCompressionType::kETC1));
 
         // Decompress dxt1/dxt5 ones if we don't natively support S3TC.
-        if (!g_base->graphics_server->SupportsTextureCompressionType(
-                TextureCompressionType::kS3TC)) {
+        if (!g_base->graphics->placeholder_client_context()
+                 ->SupportsTextureCompressionType(
+                     TextureCompressionType::kS3TC)) {
           if ((preload_datas_[0].formats[preload_datas_[0].base_level]
                == TextureFormat::kDXT5)
               || (preload_datas_[0].formats[preload_datas_[0].base_level]
@@ -241,8 +246,9 @@ void TextureAsset::DoPreload() {
                 &preload_datas_[0].base_level);
 
         // Decompress dxt1/dxt5 if we don't natively support it.
-        if (!g_base->graphics_server->SupportsTextureCompressionType(
-                TextureCompressionType::kS3TC)) {
+        if (!g_base->graphics->placeholder_client_context()
+                 ->SupportsTextureCompressionType(
+                     TextureCompressionType::kS3TC)) {
           preload_datas_[0].ConvertToUncompressed(this);
         }
       } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
@@ -264,16 +270,18 @@ void TextureAsset::DoPreload() {
               == TextureFormat::kETC2_RGB)
              || (preload_datas_[0].formats[preload_datas_[0].base_level]
                  == TextureFormat::kETC2_RGBA))
-            && (!g_base->graphics_server->SupportsTextureCompressionType(
-                TextureCompressionType::kETC2))) {
+            && (!g_base->graphics->placeholder_client_context()
+                     ->SupportsTextureCompressionType(
+                         TextureCompressionType::kETC2))) {
           preload_datas_[0].ConvertToUncompressed(this);
         }
 
         // Decompress etc1 if we don't natively support it.
         if ((preload_datas_[0].formats[preload_datas_[0].base_level]
              == TextureFormat::kETC1)
-            && (!g_base->graphics_server->SupportsTextureCompressionType(
-                TextureCompressionType::kETC1))) {
+            && (!g_base->graphics->placeholder_client_context()
+                     ->SupportsTextureCompressionType(
+                         TextureCompressionType::kETC1))) {
           preload_datas_[0].ConvertToUncompressed(this);
         }
 
@@ -287,8 +295,9 @@ void TextureAsset::DoPreload() {
                 &preload_datas_[0].base_level);
 
         // We should only be loading this if we support pvr in hardware.
-        assert(g_base->graphics_server->SupportsTextureCompressionType(
-            TextureCompressionType::kPVR));
+        assert(
+            g_base->graphics->placeholder_client_context()
+                ->SupportsTextureCompressionType(TextureCompressionType::kPVR));
       } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
                          ".nop")) {
         // Dummy path for headless; nothing to do here.
@@ -342,12 +351,14 @@ void TextureAsset::DoPreload() {
           }
 
           // We should only be loading this if we support etc1 in hardware.
-          assert(g_base->graphics_server->SupportsTextureCompressionType(
-              TextureCompressionType::kETC1));
+          assert(g_base->graphics->placeholder_client_context()
+                     ->SupportsTextureCompressionType(
+                         TextureCompressionType::kETC1));
 
           // Decompress dxt1/dxt5 ones if we don't natively support S3TC.
-          if (!g_base->graphics_server->SupportsTextureCompressionType(
-                  TextureCompressionType::kS3TC)) {
+          if (!g_base->graphics->placeholder_client_context()
+                   ->SupportsTextureCompressionType(
+                       TextureCompressionType::kS3TC)) {
             if ((preload_datas_[d].formats[preload_datas_[d].base_level]
                  == TextureFormat::kDXT5)
                 || (preload_datas_[d].formats[preload_datas_[d].base_level]
@@ -365,8 +376,9 @@ void TextureAsset::DoPreload() {
                   &preload_datas_[d].base_level);
 
           // Decompress dxt1/dxt5 if we don't natively support it.
-          if (!g_base->graphics_server->SupportsTextureCompressionType(
-                  TextureCompressionType::kS3TC)) {
+          if (!g_base->graphics->placeholder_client_context()
+                   ->SupportsTextureCompressionType(
+                       TextureCompressionType::kS3TC)) {
             preload_datas_[d].ConvertToUncompressed(this);
           }
         } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
@@ -383,16 +395,18 @@ void TextureAsset::DoPreload() {
                 == TextureFormat::kETC2_RGB)
                || (preload_datas_[d].formats[preload_datas_[d].base_level]
                    == TextureFormat::kETC2_RGBA))
-              && (!g_base->graphics_server->SupportsTextureCompressionType(
-                  TextureCompressionType::kETC2))) {
+              && (!g_base->graphics->placeholder_client_context()
+                       ->SupportsTextureCompressionType(
+                           TextureCompressionType::kETC2))) {
             preload_datas_[d].ConvertToUncompressed(this);
           }
 
           // Decompress etc1 if we don't natively support it.
           if ((preload_datas_[d].formats[preload_datas_[d].base_level]
                == TextureFormat::kETC1)
-              && (!g_base->graphics_server->SupportsTextureCompressionType(
-                  TextureCompressionType::kETC1))) {
+              && (!g_base->graphics->placeholder_client_context()
+                       ->SupportsTextureCompressionType(
+                           TextureCompressionType::kETC1))) {
             preload_datas_[d].ConvertToUncompressed(this);
           }
 

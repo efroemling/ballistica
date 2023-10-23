@@ -115,9 +115,14 @@ void Graphics::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 void Graphics::DoApplyAppConfig() {
   assert(g_base->InLogicThread());
 
+  // Any time we load the config we ship a new graphics-settings to
+  // the graphics server since something likely changed.
+  graphics_settings_dirty_ = true;
+
   show_fps_ = g_base->app_config->Resolve(AppConfig::BoolID::kShowFPS);
   show_ping_ = g_base->app_config->Resolve(AppConfig::BoolID::kShowPing);
-  tv_border_ = g_base->app_config->Resolve(AppConfig::BoolID::kEnableTVBorder);
+  // tv_border_ =
+  // g_base->app_config->Resolve(AppConfig::BoolID::kEnableTVBorder);
 
   bool disable_camera_shake =
       g_base->app_config->Resolve(AppConfig::BoolID::kDisableCameraShake);
@@ -126,6 +131,52 @@ void Graphics::DoApplyAppConfig() {
   bool disable_camera_gyro =
       g_base->app_config->Resolve(AppConfig::BoolID::kDisableCameraGyro);
   set_camera_gyro_explicitly_disabled(disable_camera_gyro);
+
+  applied_app_config_ = true;
+
+  // At this point we may want to send initial graphics settings to the
+  // graphics server if we haven't.
+  UpdateInitialGraphicsSettingsSend_();
+}
+
+void Graphics::UpdateInitialGraphicsSettingsSend_() {
+  assert(g_base->InLogicThread());
+  if (sent_initial_graphics_settings_) {
+    return;
+  }
+
+  // We need to send an initial graphics-settings to the server to kick
+  // things off, but we need a few things to be in place first.
+  auto app_config_ready = applied_app_config_;
+  // At some point we may want to wait to know our actual screen res before
+  // sending. This won't apply everywhere though since on some platforms the
+  // screen doesn't exist until we send this.
+  auto screen_resolution_ready = true;
+
+  if (app_config_ready && screen_resolution_ready) {
+    // Update/grab the current settings snapshot.
+    auto* settings = GetGraphicsSettingsSnapshot();
+
+    // We need to explicitly push settings to the graphics server to kick
+    // things off. We need to keep this settings instance alive until
+    // handled by the graphics context (which might be in another thread
+    // where we're not allowed to muck with settings' refs from). So let's
+    // explicitly increment its refcount here in the logic thread now and
+    // then push a call back here to decrement it when we're done.
+    settings->ObjectIncrementStrongRefCount();
+    // auto* s = settings_.Get();
+    g_base->app_adapter->PushGraphicsContextCall([settings] {
+      assert(g_base->app_adapter->InGraphicsContext());
+      g_base->graphics_server->ApplySettings(settings->Get());
+      g_base->logic->event_loop()->PushCall([settings] {
+        // Release our strong ref back here in the logic thread.
+        assert(g_base->InLogicThread());
+        settings->ObjectDecrementStrongRefCount();
+      });
+    });
+
+    sent_initial_graphics_settings_ = true;
+  }
 }
 
 void Graphics::StepDisplayTime() { assert(g_base->InLogicThread()); }
@@ -976,6 +1027,20 @@ auto Graphics::GetEmptyFrameDef() -> FrameDef* {
   return frame_def;
 }
 
+auto Graphics::GetGraphicsSettingsSnapshot() -> Snapshot<GraphicsSettings>* {
+  assert(g_base->InLogicThread());
+
+  // If need be, ask the app-adapter to build us a new settings instance.
+  if (graphics_settings_dirty_) {
+    auto* new_settings = g_base->app_adapter->GetGraphicsSettings();
+    new_settings->index = next_settings_index_++;
+    settings_snapshot_ = Object::New<Snapshot<GraphicsSettings>>(new_settings);
+    graphics_settings_dirty_ = false;
+  }
+  assert(settings_snapshot_.Exists());
+  return settings_snapshot_.Get();
+}
+
 void Graphics::ClearFrameDefDeleteList() {
   assert(g_base->InLogicThread());
   std::scoped_lock lock(frame_def_delete_list_mutex_);
@@ -1120,6 +1185,8 @@ void Graphics::DrawDevUI(FrameDef* frame_def) {
 
 void Graphics::BuildAndPushFrameDef() {
   assert(g_base->InLogicThread());
+
+  BA_PRECONDITION_FATAL(g_base->logic->app_bootstrapping_complete());
   assert(camera_.Exists());
   assert(!g_core->HeadlessMode());
 
@@ -1127,10 +1194,6 @@ void Graphics::BuildAndPushFrameDef() {
   // doesn't muck with our lists/etc. while we're using them.
   assert(!building_frame_def_);
   building_frame_def_ = true;
-
-  // We should not be building/pushing any frames until the native
-  // layer is fully bootstrapped.
-  BA_PRECONDITION_FATAL(g_base->logic->app_bootstrapping_complete());
 
   microsecs_t app_time_microsecs = g_core->GetAppTimeMicrosecs();
 
@@ -1185,13 +1248,6 @@ void Graphics::BuildAndPushFrameDef() {
   if (!internal_components_inited_) {
     InitInternalComponents(frame_def);
     internal_components_inited_ = true;
-  }
-
-  // If graphics quality has changed since our last draw, inform anyone who
-  // wants to know.
-  if (last_frame_def_graphics_quality_ != frame_def->quality()) {
-    last_frame_def_graphics_quality_ = frame_def->quality();
-    g_base->app_mode()->GraphicsQualityChanged(frame_def->quality());
   }
 
   ApplyCamera(frame_def);
@@ -1254,7 +1310,7 @@ void Graphics::BuildAndPushFrameDef() {
     RunCleanFrameCommands();
   }
 
-  frame_def->Finalize();
+  frame_def->Complete();
 
   // Include all mesh-data loads and unloads that have accumulated up to
   // this point the graphics thread will have to handle these before
@@ -1465,10 +1521,10 @@ void Graphics::DoDrawFade(FrameDef* frame_def, float amt) {
 void Graphics::DrawCursor(FrameDef* frame_def) {
   assert(g_base->InLogicThread());
 
-  millisecs_t app_time_millisecs = frame_def->app_time_millisecs();
+  auto app_time = frame_def->app_time();
 
-  bool can_show_cursor = g_base->app_adapter->ShouldUseCursor();
-  bool should_show_cursor =
+  auto can_show_cursor = g_base->app_adapter->ShouldUseCursor();
+  auto should_show_cursor =
       camera_->manual() || g_base->input->IsCursorVisible();
 
   if (g_base->app_adapter->HasHardwareCursor()) {
@@ -1482,9 +1538,9 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
     // Ship this state when it changes and also every now and then just in
     // case things go wonky.
     if (new_cursor_visibility != hardware_cursor_visible_
-        || app_time_millisecs - last_cursor_visibility_event_time_ > 2000) {
+        || app_time - last_cursor_visibility_event_time_ > 2.137) {
       hardware_cursor_visible_ = new_cursor_visibility;
-      last_cursor_visibility_event_time_ = app_time_millisecs;
+      last_cursor_visibility_event_time_ = app_time;
       g_base->app_adapter->PushMainThreadCall([this] {
         assert(g_core && g_core->InMainThread());
         g_base->app_adapter->SetHardwareCursorVisible(hardware_cursor_visible_);
@@ -1553,11 +1609,6 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
     c.DrawMesh(shadow_blotch_soft_obj_mesh_.Get());
     c.Submit();
   }
-}
-
-void Graphics::SetSupportsHighQualityGraphics(bool s) {
-  supports_high_quality_graphics_ = s;
-  has_supports_high_quality_graphics_value_ = true;
 }
 
 void Graphics::ClearScreenMessageTranslations() {
@@ -1922,20 +1973,55 @@ auto Graphics::ScreenMessageEntry::GetText() -> TextGroup& {
 
 void Graphics::OnScreenSizeChange() {}
 
-void Graphics::SetScreenSize(float virtual_width, float virtual_height,
-                             float pixel_width, float pixel_height) {
+void Graphics::CalcVirtualRes_(float* x, float* y) {
+  float x_in = *x;
+  float y_in = *y;
+  if (*x / *y > static_cast<float>(kBaseVirtualResX)
+                    / static_cast<float>(kBaseVirtualResY)) {
+    *y = kBaseVirtualResY;
+    *x = *y * (x_in / y_in);
+  } else {
+    *x = kBaseVirtualResX;
+    *y = *x * (y_in / x_in);
+  }
+}
+
+void Graphics::SetScreenResolution(float x, float y) {
   assert(g_base->InLogicThread());
-  res_x_virtual_ = virtual_width;
-  res_y_virtual_ = virtual_height;
-  res_x_ = pixel_width;
-  res_y_ = pixel_height;
+
+  // Ignore redundant sets.
+  if (res_x_ == x && res_y_ == y) {
+    return;
+  }
+
+  // We'll need to ship a new settings to the server with this change.
+  graphics_settings_dirty_ = true;
+
+  res_x_ = x;
+  res_y_ = y;
+
+  // Calc virtual res. In vr mode our virtual res is independent of our
+  // screen size (since it gets drawn to an overlay).
+  if (g_core->IsVRMode()) {
+    res_x_virtual_ = kBaseVirtualResX;
+    res_y_virtual_ = kBaseVirtualResY;
+  } else {
+    res_x_virtual_ = res_x_;
+    res_y_virtual_ = res_y_;
+    CalcVirtualRes_(&res_x_virtual_, &res_y_virtual_);
+  }
 
   // Need to rebuild internal components (some are sized to the screen).
   internal_components_inited_ = false;
 
-  // This will inform all applicable logic thread subsystems.
-  g_base->logic->OnScreenSizeChange(virtual_width, virtual_height, pixel_width,
-                                    pixel_height);
+  // Inform all our logic thread buddies of this change.
+  g_base->logic->OnScreenSizeChange(res_x_virtual_, res_y_virtual_, res_x_,
+                                    res_y_);
+
+  // This may trigger us sending initial graphics settings to the
+  // graphics-server to kick off drawing.
+  got_screen_resolution_ = true;
+  UpdateInitialGraphicsSettingsSend_();
 }
 
 void Graphics::ScreenMessageEntry::UpdateTranslation() {
@@ -2028,6 +2114,63 @@ void Graphics::LanguageChanged() {
   }
   // Also clear translations on all screen-messages.
   ClearScreenMessageTranslations();
+}
+
+auto Graphics::GraphicsQualityFromRequest(GraphicsQualityRequest request,
+                                          GraphicsQuality auto_val)
+    -> GraphicsQuality {
+  switch (request) {
+    case GraphicsQualityRequest::kLow:
+      return GraphicsQuality::kLow;
+    case GraphicsQualityRequest::kMedium:
+      return GraphicsQuality::kMedium;
+    case GraphicsQualityRequest::kHigh:
+      return GraphicsQuality::kHigh;
+    case GraphicsQualityRequest::kHigher:
+      return GraphicsQuality::kHigher;
+    case GraphicsQualityRequest::kAuto:
+      return auto_val;
+    default:
+      Log(LogLevel::kError, "Unhandled GraphicsQualityRequest value: "
+                                + std::to_string(static_cast<int>(request)));
+      return GraphicsQuality::kLow;
+  }
+}
+auto Graphics::TextureQualityFromRequest(TextureQualityRequest request,
+                                         TextureQuality auto_val)
+    -> TextureQuality {
+  switch (request) {
+    case TextureQualityRequest::kLow:
+      return TextureQuality::kLow;
+    case TextureQualityRequest::kMedium:
+      return TextureQuality::kMedium;
+    case TextureQualityRequest::kHigh:
+      return TextureQuality::kHigh;
+    case TextureQualityRequest::kAuto:
+      return auto_val;
+    default:
+      Log(LogLevel::kError, "Unhandled TextureQualityRequest value: "
+                                + std::to_string(static_cast<int>(request)));
+      return TextureQuality::kLow;
+  }
+}
+
+void Graphics::set_client_context(Snapshot<GraphicsClientContext>* context) {
+  assert(g_base->InLogicThread());
+
+  // Currently we only expect this to be set once. That will change
+  // once we support renderer swapping/etc.
+  assert(!g_base->logic->graphics_ready());
+  assert(!client_context_snapshot_.Exists());
+  client_context_snapshot_ = context;
+
+  // Update our static placeholder value (we don't want to calc it dynamically
+  // since it can be accessed from other threads).
+  texture_quality_placeholder_ = TextureQualityFromRequest(
+      settings()->texture_quality, client_context()->auto_texture_quality);
+
+  // Let the logic system know its free to proceed beyond bootstrapping.
+  g_base->logic->OnGraphicsReady();
 }
 
 }  // namespace ballistica::base

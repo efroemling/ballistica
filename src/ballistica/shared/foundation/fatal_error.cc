@@ -92,7 +92,7 @@ void FatalError::ReportFatalError(const std::string& message,
   // momentarily, and also go to platform-specific logging and good ol'
   // stderr.
   Logging::V1CloudLog(logmsg);
-  Logging::DisplayLog("root", LogLevel::kCritical, logmsg);
+  Logging::EmitLog("root", LogLevel::kCritical, logmsg);
   fprintf(stderr, "%s\n", logmsg.c_str());
 
   std::string prefix = "FATAL-ERROR-LOG:";
@@ -175,10 +175,10 @@ auto FatalError::HandleFatalError(bool exit_cleanly,
   // bring the app down ourself.
   if (!in_top_level_exception_handler) {
     if (exit_cleanly) {
-      Logging::DisplayLog("root", LogLevel::kCritical, "Calling exit(1)...");
+      Logging::EmitLog("root", LogLevel::kCritical, "Calling exit(1)...");
       exit(1);
     } else {
-      Logging::DisplayLog("root", LogLevel::kCritical, "Calling abort()...");
+      Logging::EmitLog("root", LogLevel::kCritical, "Calling abort()...");
       abort();
     }
   }

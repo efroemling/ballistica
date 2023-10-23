@@ -916,9 +916,6 @@ SpazNode::SpazNode(Scene* scene)
   // Give joints initial vals.
   UpdateJoints();
 
-  // FIXME: should do this on draw.
-  UpdateForGraphicsQuality(g_base->graphics_server->quality());
-
   // We want to have an area of interest by default.
   SetIsAreaOfInterest(true);
 
@@ -2078,40 +2075,6 @@ void SpazNode::Step() {
       punch_power_ = 0.0f;
     }
   }
-
-  // Update shadows.
-#if !BA_HEADLESS_BUILD
-  FullShadowSet* full_shadows = full_shadow_set_.Get();
-  if (full_shadows) {
-    full_shadows->torso_shadow_.SetPosition(
-        Vector3f(dBodyGetPosition(body_torso_->body())));
-    full_shadows->head_shadow_.SetPosition(
-        Vector3f(dBodyGetPosition(body_head_->body())));
-    full_shadows->pelvis_shadow_.SetPosition(
-        Vector3f(dBodyGetPosition(body_pelvis_->body())));
-    full_shadows->lower_left_leg_shadow_.SetPosition(
-        Vector3f(dBodyGetPosition(lower_left_leg_body_->body())));
-    full_shadows->lower_right_leg_shadow_.SetPosition(
-        Vector3f(dBodyGetPosition(lower_right_leg_body_->body())));
-    full_shadows->upper_left_leg_shadow_.SetPosition(
-        Vector3f(dBodyGetPosition(upper_left_leg_body_->body())));
-    full_shadows->upper_right_leg_shadow_.SetPosition(
-        Vector3f(dBodyGetPosition(upper_right_leg_body_->body())));
-    full_shadows->lower_right_arm_shadow_.SetPosition(
-        Vector3f(dBodyGetPosition(lower_right_arm_body_->body())));
-    full_shadows->upper_right_arm_shadow_.SetPosition(
-        Vector3f(dBodyGetPosition(upper_right_arm_body_->body())));
-    full_shadows->lower_left_arm_shadow_.SetPosition(
-        Vector3f(dBodyGetPosition(lower_left_arm_body_->body())));
-    full_shadows->upper_left_arm_shadow_.SetPosition(
-        Vector3f(dBodyGetPosition(upper_left_arm_body_->body())));
-  } else {
-    SimpleShadowSet* simple_shadows = simple_shadow_set_.Get();
-    assert(simple_shadows);
-    simple_shadows->shadow_.SetPosition(
-        Vector3f(dBodyGetPosition(body_pelvis_->body())));
-  }
-#endif  // !BA_HEADLESS_BUILD
 
   // Update wings if we've got 'em.
   if (wings_) {
@@ -4547,6 +4510,11 @@ static void DrawRadialMeter(base::MeshIndexedSimpleFull* m,
 void SpazNode::Draw(base::FrameDef* frame_def) {
 #if !BA_HEADLESS_BUILD
 
+  if (graphics_quality_ != frame_def->quality()) {
+    graphics_quality_ = frame_def->quality();
+    UpdateForGraphicsQuality(graphics_quality_);
+  }
+
 #if BA_OSTYPE_MACOS
   if (g_base->graphics_server->renderer()->debug_draw_mode()) {
     base::SimpleComponent c(frame_def->overlay_3d_pass());
@@ -5356,48 +5324,67 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       sc[2] = weight * freeze_color[2] + (1.0f - weight) * sc[2];
     }
 
-    FullShadowSet* full_shadows = full_shadow_set_.Get();
-    if (full_shadows) {
-      DrawBrightSpot(full_shadows->lower_left_leg_shadow_, 0.3f * death_scale,
-                     death_fade * (frozen_ ? 0.3f : 0.2f), sc);
-      DrawBrightSpot(full_shadows->lower_right_leg_shadow_, 0.3f * death_scale,
-                     death_fade * (frozen_ ? 0.3f : 0.2f), sc);
-      DrawBrightSpot(full_shadows->head_shadow_, 0.45f * death_scale,
-                     death_fade * (frozen_ ? 0.8f : 0.14f), sc);
-    }
+    // Update and draw shadows.
+    if (!g_core->HeadlessMode()) {
+      if (FullShadowSet* full_shadows = full_shadow_set_.Get()) {
+        full_shadows->torso_shadow_.SetPosition(
+            Vector3f(dBodyGetPosition(body_torso_->body())));
+        full_shadows->head_shadow_.SetPosition(
+            Vector3f(dBodyGetPosition(body_head_->body())));
+        full_shadows->pelvis_shadow_.SetPosition(
+            Vector3f(dBodyGetPosition(body_pelvis_->body())));
+        full_shadows->lower_left_leg_shadow_.SetPosition(
+            Vector3f(dBodyGetPosition(lower_left_leg_body_->body())));
+        full_shadows->lower_right_leg_shadow_.SetPosition(
+            Vector3f(dBodyGetPosition(lower_right_leg_body_->body())));
+        full_shadows->upper_left_leg_shadow_.SetPosition(
+            Vector3f(dBodyGetPosition(upper_left_leg_body_->body())));
+        full_shadows->upper_right_leg_shadow_.SetPosition(
+            Vector3f(dBodyGetPosition(upper_right_leg_body_->body())));
+        full_shadows->lower_right_arm_shadow_.SetPosition(
+            Vector3f(dBodyGetPosition(lower_right_arm_body_->body())));
+        full_shadows->upper_right_arm_shadow_.SetPosition(
+            Vector3f(dBodyGetPosition(upper_right_arm_body_->body())));
+        full_shadows->lower_left_arm_shadow_.SetPosition(
+            Vector3f(dBodyGetPosition(lower_left_arm_body_->body())));
+        full_shadows->upper_left_arm_shadow_.SetPosition(
+            Vector3f(dBodyGetPosition(upper_left_arm_body_->body())));
 
-    if (full_shadows) {
-      DrawShadow(full_shadows->torso_shadow_, 0.19f * death_scale, 0.9f, sc);
-      DrawShadow(full_shadows->head_shadow_, 0.15f * death_scale, 0.7f, sc);
-      DrawShadow(full_shadows->pelvis_shadow_, 0.15f * death_scale, 0.7f, sc);
-      DrawShadow(full_shadows->lower_left_leg_shadow_, 0.08f * death_scale,
-                 1.0f, sc);
-      DrawShadow(full_shadows->lower_right_leg_shadow_, 0.08f * death_scale,
-                 1.0f, sc);
-      DrawShadow(full_shadows->upper_left_leg_shadow_, 0.08f * death_scale,
-                 1.0f, sc);
-      DrawShadow(full_shadows->upper_right_leg_shadow_, 0.08f * death_scale,
-                 1.0f, sc);
-      DrawShadow(full_shadows->upper_left_arm_shadow_, 0.08f * death_scale,
-                 0.5f, sc);
-      DrawShadow(full_shadows->lower_left_arm_shadow_, 0.08f * death_scale,
-                 0.3f, sc);
-      DrawShadow(full_shadows->lower_right_arm_shadow_, 0.08f * death_scale,
-                 0.3f, sc);
-      DrawShadow(full_shadows->upper_right_arm_shadow_, 0.08f * death_scale,
-                 0.5f, sc);
-    } else {
-      SimpleShadowSet* simple_shadows = simple_shadow_set_.Get();
-      assert(simple_shadows);
-      DrawShadow(simple_shadows->shadow_, 0.2f * death_scale, 2.0f, sc);
+        DrawBrightSpot(full_shadows->lower_left_leg_shadow_, 0.3f * death_scale,
+                       death_fade * (frozen_ ? 0.3f : 0.2f), sc);
+        DrawBrightSpot(full_shadows->lower_right_leg_shadow_,
+                       0.3f * death_scale, death_fade * (frozen_ ? 0.3f : 0.2f),
+                       sc);
+        DrawBrightSpot(full_shadows->head_shadow_, 0.45f * death_scale,
+                       death_fade * (frozen_ ? 0.8f : 0.14f), sc);
+        DrawShadow(full_shadows->torso_shadow_, 0.19f * death_scale, 0.9f, sc);
+        DrawShadow(full_shadows->head_shadow_, 0.15f * death_scale, 0.7f, sc);
+        DrawShadow(full_shadows->pelvis_shadow_, 0.15f * death_scale, 0.7f, sc);
+        DrawShadow(full_shadows->lower_left_leg_shadow_, 0.08f * death_scale,
+                   1.0f, sc);
+        DrawShadow(full_shadows->lower_right_leg_shadow_, 0.08f * death_scale,
+                   1.0f, sc);
+        DrawShadow(full_shadows->upper_left_leg_shadow_, 0.08f * death_scale,
+                   1.0f, sc);
+        DrawShadow(full_shadows->upper_right_leg_shadow_, 0.08f * death_scale,
+                   1.0f, sc);
+        DrawShadow(full_shadows->upper_left_arm_shadow_, 0.08f * death_scale,
+                   0.5f, sc);
+        DrawShadow(full_shadows->lower_left_arm_shadow_, 0.08f * death_scale,
+                   0.3f, sc);
+        DrawShadow(full_shadows->lower_right_arm_shadow_, 0.08f * death_scale,
+                   0.3f, sc);
+        DrawShadow(full_shadows->upper_right_arm_shadow_, 0.08f * death_scale,
+                   0.5f, sc);
+      } else if (SimpleShadowSet* simple_shadows = simple_shadow_set_.Get()) {
+        simple_shadows->shadow_.SetPosition(
+            Vector3f(dBodyGetPosition(body_pelvis_->body())));
+        DrawShadow(simple_shadows->shadow_, 0.2f * death_scale, 2.0f, sc);
+      }
     }
   }
 #endif  // !BA_HEADLESS_BUILD
 }  // NOLINT (yes i know this is too big)
-
-void SpazNode::OnGraphicsQualityChanged(base::GraphicsQuality q) {
-  UpdateForGraphicsQuality(q);
-}
 
 void SpazNode::UpdateForGraphicsQuality(base::GraphicsQuality quality) {
 #if !BA_HEADLESS_BUILD

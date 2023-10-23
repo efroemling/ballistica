@@ -2708,7 +2708,7 @@ static PyMethodDef PyBackPressDef = {
 static auto PyOpenURL(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  const char* address = nullptr;
+  const char* address{};
   int force_internal{0};
   static const char* kwlist[] = {"address", "force_internal", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|p",
@@ -2716,12 +2716,15 @@ static auto PyOpenURL(PyObject* self, PyObject* args, PyObject* keywds)
                                    &force_internal)) {
     return nullptr;
   }
+  // Need to pass a self-contained string to a lambda; not a char*.
+  std::string address2{address};
+
   assert(g_base->app_adapter);
   if (force_internal) {
     g_base->ui->ShowURL(address);
   } else {
     g_base->app_adapter->PushMainThreadCall(
-        [address] { g_base->platform->OpenURL(address); });
+        [address2] { g_base->platform->OpenURL(address2); });
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

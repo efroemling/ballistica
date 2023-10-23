@@ -118,6 +118,10 @@ auto PythonRef::FromString(const std::string& val) -> PythonRef {
   return Stolen(PyUnicode_FromString(val.c_str()));
 }
 
+auto PythonRef::SingleStringTuple(const std::string& val) -> PythonRef {
+  return Stolen(Py_BuildValue("(s)", val.c_str()));
+}
+
 auto PythonRef::Str() const -> std::string {
   assert(Python::HaveGIL());
   if (!obj_) {

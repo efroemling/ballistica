@@ -185,10 +185,8 @@ def _feed_logs_to_babase(log_handler: LogHandler) -> None:
     def _on_log(entry: LogEntry) -> None:
         # Forward this along to the engine to display in the in-app
         # console, in the Android log, etc.
-        _babase.display_log(
-            name=entry.name,
-            level=entry.level.name,
-            message=entry.message,
+        _babase.emit_log(
+            name=entry.name, level=entry.level.name, message=entry.message
         )
 
         # We also want to feed some logs to the old v1-cloud-log system.

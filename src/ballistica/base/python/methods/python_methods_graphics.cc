@@ -12,6 +12,7 @@
 #include "ballistica/base/python/support/python_context_call_runnable.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
+#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_sys.h"
@@ -345,23 +346,23 @@ static PyMethodDef PySafeColorDef = {
 
 // ------------------------ get_max_graphics_quality ---------------------------
 
-static auto PyGetMaxGraphicsQuality(PyObject* self, PyObject* args)
-    -> PyObject* {
+static auto PyGetMaxGraphicsQuality(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_base->graphics
-      && g_base->graphics->has_supports_high_quality_graphics_value()
-      && g_base->graphics->supports_high_quality_graphics()) {
-    return Py_BuildValue("s", "High");
-  } else {
-    return Py_BuildValue("s", "Medium");
-  }
+  // if (g_base->graphics
+  //     && g_base->graphics->has_supports_high_quality_graphics_value()
+  //     && g_base->graphics->supports_high_quality_graphics()) {
+  //   return Py_BuildValue("s", "High");
+  // } else {
+  //   return Py_BuildValue("s", "Medium");
+  // }
+  return Py_BuildValue("s", "Higher");
   BA_PYTHON_CATCH;
 }
 
 static PyMethodDef PyGetMaxGraphicsQualityDef = {
-    "get_max_graphics_quality",  // name
-    PyGetMaxGraphicsQuality,     // method
-    METH_VARARGS,                // flags
+    "get_max_graphics_quality",            // name
+    (PyCFunction)PyGetMaxGraphicsQuality,  // method
+    METH_NOARGS,                           // flags
 
     "get_max_graphics_quality() -> str\n"
     "\n"
@@ -619,24 +620,105 @@ static PyMethodDef PyGetDisplayResolutionDef = {
     "display. Returns None if resolutions cannot be directly set.",
 };
 
-// ------------------------- can_toggle_fullscreen ----------------------------
+// ---------------------- fullscreen_control_available -------------------------
 
-static auto PyCanToggleFullscreen(PyObject* self) -> PyObject* {
+static auto PyFullscreenControlAvailable(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
 
-  if (g_base->app_adapter->CanToggleFullscreen()) {
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (g_base->app_adapter->FullscreenControlAvailable()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyCanToggleFullscreenDef = {
-    "can_toggle_fullscreen",             // name
-    (PyCFunction)PyCanToggleFullscreen,  // method
-    METH_NOARGS,                         // flags
+static PyMethodDef PyFullscreenControlAvailableDef = {
+    "fullscreen_control_available",             // name
+    (PyCFunction)PyFullscreenControlAvailable,  // method
+    METH_NOARGS,                                // flags
 
-    "can_toggle_fullscreen() -> bool\n"
+    "fullscreen_control_available() -> bool\n"
+    "\n"
+    "(internal)\n",
+};
+
+// --------------------- fullscreen_control_key_shortcut -----------------------
+
+static auto PyFullscreenControlKeyShortcut(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+  BA_PRECONDITION(g_base->app_adapter->FullscreenControlAvailable());
+
+  auto val = g_base->app_adapter->FullscreenControlKeyShortcut();
+  if (val.has_value()) {
+    return PyUnicode_FromString(val->c_str());
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyFullscreenControlKeyShortcutDef = {
+    "fullscreen_control_key_shortcut",            // name
+    (PyCFunction)PyFullscreenControlKeyShortcut,  // method
+    METH_NOARGS,                                  // flags
+
+    "fullscreen_control_key_shortcut() -> str | None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// ------------------------ fullscreen_control_get -----------------------------
+
+static auto PyFullscreenControlGet(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (g_base->app_adapter->FullscreenControlGet()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyFullscreenControlGetDef = {
+    "fullscreen_control_get",             // name
+    (PyCFunction)PyFullscreenControlGet,  // method
+    METH_NOARGS,                          // flags
+
+    "fullscreen_control_get() -> bool\n"
+    "\n"
+    "(internal)\n",
+};
+
+// ------------------------ fullscreen_control_set -----------------------------
+
+static auto PyFullscreenControlSet(PyObject* self, PyObject* args,
+                                   PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  int val{};
+  static const char* kwlist[] = {"val", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
+                                   const_cast<char**>(kwlist), &val)) {
+    return nullptr;
+  }
+
+  g_base->app_adapter->FullscreenControlSet(val);
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyFullscreenControlSetDef = {
+    "fullscreen_control_set",             // name
+    (PyCFunction)PyFullscreenControlSet,  // method
+    METH_VARARGS | METH_KEYWORDS,         // flags
+
+    "fullscreen_control_set(val: bool) -> None\n"
     "\n"
     "(internal)\n",
 };
@@ -728,10 +810,13 @@ auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
       PyGetMaxGraphicsQualityDef,
       PySafeColorDef,
       PyCharStrDef,
-      PyCanToggleFullscreenDef,
+      PyFullscreenControlAvailableDef,
       PySupportsVSyncDef,
       PySupportsMaxFPSDef,
       PyShowProgressBarDef,
+      PyFullscreenControlKeyShortcutDef,
+      PyFullscreenControlGetDef,
+      PyFullscreenControlSetDef,
   };
 }
 

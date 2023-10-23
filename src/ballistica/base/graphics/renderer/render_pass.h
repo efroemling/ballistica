@@ -112,7 +112,7 @@ class RenderPass {
     return model_view_projection_matrix_;
   }
   auto HasDrawCommands() const -> bool;
-  void Finalize();
+  void Complete();
   void Reset();
 
   // Whether this pass draws stuff from the per-shader command lists

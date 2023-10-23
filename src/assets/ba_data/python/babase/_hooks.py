@@ -33,16 +33,28 @@ def reset_to_main_menu() -> None:
         logging.warning('reset_to_main_menu: no-op due to classic not present.')
 
 
-def set_config_fullscreen_on() -> None:
+def store_config_fullscreen_on() -> None:
     """The OS has changed our fullscreen state and we should take note."""
     _babase.app.config['Fullscreen'] = True
     _babase.app.config.commit()
 
 
-def set_config_fullscreen_off() -> None:
+def store_config_fullscreen_off() -> None:
     """The OS has changed our fullscreen state and we should take note."""
     _babase.app.config['Fullscreen'] = False
     _babase.app.config.commit()
+
+
+def set_config_fullscreen_on() -> None:
+    """Set and store fullscreen state"""
+    _babase.app.config['Fullscreen'] = True
+    _babase.app.config.apply_and_commit()
+
+
+def set_config_fullscreen_off() -> None:
+    """The OS has changed our fullscreen state and we should take note."""
+    _babase.app.config['Fullscreen'] = False
+    _babase.app.config.apply_and_commit()
 
 
 def not_signed_in_screen_message() -> None:
@@ -377,3 +389,17 @@ def string_edit_adapter_can_be_replaced(adapter: StringEditAdapter) -> bool:
 def get_dev_console_tab_names() -> list[str]:
     """Return the current set of dev-console tab names."""
     return [t.name for t in _babase.app.devconsole.tabs]
+
+
+def unsupported_controller_message(name: str) -> None:
+    """Print a message when an unsupported controller is connected."""
+    from babase._language import Lstr
+
+    # Ick; this can get called early in the bootstrapping process
+    # before we're allowed to load assets. Guard against that.
+    if _babase.asset_loads_allowed():
+        _babase.getsimplesound('error').play()
+    _babase.screenmessage(
+        Lstr(resource='unsupportedControllerText', subs=[('${NAME}', name)]),
+        color=(1, 0, 0),
+    )

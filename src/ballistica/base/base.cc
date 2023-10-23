@@ -420,6 +420,10 @@ auto BaseFeatureSet::IsUnmodifiedBlessedBuild() -> bool {
   return false;
 }
 
+auto BaseFeatureSet::InMainThread() const -> bool {
+  return g_core->InMainThread();
+}
+
 auto BaseFeatureSet::InAssetsThread() const -> bool {
   if (auto* loop = assets_server->event_loop()) {
     return loop->ThreadIsCurrent();
@@ -657,6 +661,10 @@ void BaseFeatureSet::DoPushObjCall(const PythonObjectSetBase* objset, int id,
 }
 
 auto BaseFeatureSet::IsAppStarted() const -> bool { return app_started_; }
+
+auto BaseFeatureSet::IsAppBootstrapped() const -> bool {
+  return logic->app_bootstrapping_complete();
+}
 
 auto BaseFeatureSet::ShutdownSuppressBegin() -> bool {
   std::scoped_lock lock(shutdown_suppress_lock_);

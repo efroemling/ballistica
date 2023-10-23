@@ -29,16 +29,16 @@ def gamepad_configure_callback(event: dict[str, Any]) -> None:
         logging.exception('Error transitioning out main_menu_window.')
     bui.getsound('activateBeep').play()
     bui.getsound('swish').play()
-    inputdevice = event['input_device']
-    assert isinstance(inputdevice, bs.InputDevice)
-    if inputdevice.allows_configuring:
+    device = event['input_device']
+    assert isinstance(device, bs.InputDevice)
+    if device.allows_configuring:
         bui.app.ui_v1.set_main_menu_window(
-            gamepad.GamepadSettingsWindow(inputdevice).get_root_widget()
+            gamepad.GamepadSettingsWindow(device).get_root_widget()
         )
     else:
         width = 700
         height = 200
-        button_width = 100
+        button_width = 80
         uiscale = bui.app.ui_v1.uiscale
         dlg = bui.containerwidget(
             scale=(
@@ -52,8 +52,13 @@ def gamepad_configure_callback(event: dict[str, Any]) -> None:
             transition='in_right',
         )
         bui.app.ui_v1.set_main_menu_window(dlg)
-        device_name = inputdevice.name
-        if device_name == 'iDevice':
+
+        if device.allows_configuring_in_system_settings:
+            msg = bui.Lstr(
+                resource='configureDeviceInSystemSettingsText',
+                subs=[('${DEVICE}', device.name)],
+            )
+        elif device.is_controller_app:
             msg = bui.Lstr(
                 resource='bsRemoteConfigureInAppText',
                 subs=[('${REMOTE_APP_NAME}', bui.get_remote_app_name())],
@@ -61,7 +66,7 @@ def gamepad_configure_callback(event: dict[str, Any]) -> None:
         else:
             msg = bui.Lstr(
                 resource='cantConfigureDeviceText',
-                subs=[('${DEVICE}', device_name)],
+                subs=[('${DEVICE}', device.name)],
             )
         bui.textwidget(
             parent=dlg,

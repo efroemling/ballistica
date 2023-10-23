@@ -11,6 +11,7 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/shared/generic/runnable.h"
+#include "ballistica/shared/math/vector2f.h"
 
 namespace ballistica::base {
 
@@ -31,8 +32,14 @@ class AppAdapterApple : public AppAdapter {
   /// Called by FromSwift.
   auto TryRender() -> bool;
 
-  /// Called by FromSwift.
-  void SetScreenResolution(float pixel_width, float pixel_height);
+  auto FullscreenControlAvailable() const -> bool override;
+  auto FullscreenControlGet() const -> bool override;
+  void FullscreenControlSet(bool fullscreen) override;
+  auto FullscreenControlKeyShortcut() const
+      -> std::optional<std::string> override;
+
+  auto HasDirectKeyboardInput() -> bool override;
+  void EnableResizeFriendlyMode(int width, int height);
 
  protected:
   void DoPushMainThreadRunnable(Runnable* runnable) override;
@@ -42,16 +49,18 @@ class AppAdapterApple : public AppAdapter {
   auto HasHardwareCursor() -> bool override;
   void SetHardwareCursorVisible(bool visible) override;
   void TerminateApp() override;
+  void ApplyGraphicsSettings(const GraphicsSettings* settings) override;
 
  private:
-  void UpdateScreenSizes_();
   class ScopedAllowGraphics_;
-  void SetScreen_(TextureQualityRequest texture_quality_requested,
-                  GraphicsQualityRequest graphics_quality_requested);
-  void ReloadRenderer_(GraphicsQualityRequest graphics_quality_requested,
-                       TextureQualityRequest texture_quality_requested);
+
+  void UpdateScreenSizes_();
+  void ReloadRenderer_(const GraphicsSettings* settings);
+
   std::thread::id graphics_thread_{};
-  bool graphics_allowed_;
+  bool graphics_allowed_ : 1 {};
+  uint8_t resize_friendly_frames_{};
+  Vector2f resize_target_resolution_{-1.0f, -1.0f};
   std::mutex graphics_calls_mutex_;
   std::vector<Runnable*> graphics_calls_;
 };

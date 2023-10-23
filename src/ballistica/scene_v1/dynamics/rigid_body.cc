@@ -65,23 +65,23 @@ RigidBody::RigidBody(int id_in, Part* part_in, Type type_in, Shape shape_in,
     case Shape::kSphere: {
       dimensions_[0] = dimensions_[1] = dimensions_[2] = 0.3f;
       geoms_.resize(1);
-      geoms_[0] = dCreateSphere(dynamics_->space(), dimensions_[0]);
+      geoms_[0] = dCreateSphere(dynamics_->ode_space(), dimensions_[0]);
       break;
     }
 
     case Shape::kBox: {
       dimensions_[0] = dimensions_[1] = dimensions_[2] = 0.6f;
       geoms_.resize(1);
-      geoms_[0] = dCreateBox(dynamics_->space(), dimensions_[0], dimensions_[1],
-                             dimensions_[2]);
+      geoms_[0] = dCreateBox(dynamics_->ode_space(), dimensions_[0],
+                             dimensions_[1], dimensions_[2]);
       break;
     }
 
     case Shape::kCapsule: {
       dimensions_[0] = dimensions_[1] = 0.3f;
       geoms_.resize(1);
-      geoms_[0] =
-          dCreateCCylinder(dynamics_->space(), dimensions_[0], dimensions_[1]);
+      geoms_[0] = dCreateCCylinder(dynamics_->ode_space(), dimensions_[0],
+                                   dimensions_[1]);
       break;
     }
 
@@ -98,14 +98,15 @@ RigidBody::RigidBody(int id_in, Part* part_in, Type type_in, Shape shape_in,
         Vector3f p =
             Matrix44fRotate(Vector3f(0, 1, 0), static_cast<float>(i) * inc)
             * Vector3f(offset, 0, 0);
-        geoms_[i * 2] = dCreateGeomTransform(dynamics_->space());
+        geoms_[i * 2] = dCreateGeomTransform(dynamics_->ode_space());
         geoms_[i * 2 + 1] = dCreateSphere(nullptr, sub_rad);
         dGeomTransformSetGeom(geoms_[i * 2], geoms_[i * 2 + 1]);
         dGeomSetPosition(geoms_[i * 2 + 1], p.v[0], p.v[1], p.v[2]);
       }
 
       // One last center sphere to keep stuff from getting stuck in our middle.
-      geoms_[geoms_.size() - 1] = dCreateSphere(dynamics_->space(), sub_rad);
+      geoms_[geoms_.size() - 1] =
+          dCreateSphere(dynamics_->ode_space(), sub_rad);
 
       break;
     }
