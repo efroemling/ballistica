@@ -3,6 +3,7 @@
 """Defines base session class."""
 from __future__ import annotations
 
+import math
 import weakref
 import logging
 from typing import TYPE_CHECKING
@@ -16,6 +17,8 @@ if TYPE_CHECKING:
     from typing import Sequence, Any
 
     import bascenev1
+
+TIMEOUT = 10
 
 
 class Session:
@@ -203,6 +206,10 @@ class Session:
         # Instantiate our session globals node which will apply its settings.
         self._sessionglobalsnode = _bascenev1.newnode('sessionglobals')
 
+        self._players_on_wait: dict = {}
+        self._player_requested_identifiers: dict = {}
+        self._waitlist_timers: dict = {}
+
     @property
     def context(self) -> bascenev1.ContextRef:
         """A context-ref pointing at this activity."""
@@ -253,6 +260,26 @@ class Session:
                 )
                 return False
 
+        identifier = player.get_v1_account_id()
+        if identifier:
+            leave_time = self._players_on_wait.get(identifier)
+            if leave_time:
+                diff = str(math.ceil(TIMEOUT - babase.apptime() + leave_time))
+                _bascenev1.broadcastmessage(
+                    babase.Lstr(
+                        translate=(
+                            'serverResponses',
+                            'You can join in ${COUNT} seconds.',
+                        ),
+                        subs=[('${COUNT}', diff)],
+                    ),
+                    color=(1, 1, 0),
+                    clients=[player.inputdevice.client_id],
+                    transient=True,
+                )
+                return False
+            self._player_requested_identifiers[player.id] = identifier
+
         _bascenev1.getsound('dripity').play()
         return True
 
@@ -269,6 +296,15 @@ class Session:
         _bascenev1.getsound('playerLeft').play()
 
         activity = self._activity_weak()
+
+        identifier = self._player_requested_identifiers.get(sessionplayer.id)
+        if identifier:
+            self._players_on_wait[identifier] = babase.apptime()
+            with babase.ContextRef.empty():
+                self._waitlist_timers[identifier] = babase.AppTimer(
+                    TIMEOUT,
+                    babase.Call(self._remove_player_from_waitlist, identifier),
+                )
 
         if not sessionplayer.in_game:
             # Ok, the player is still in the lobby; simply remove them.
@@ -770,3 +806,9 @@ class Session:
         if pass_to_activity:
             activity.add_player(sessionplayer)
         return sessionplayer
+
+    def _remove_player_from_waitlist(self, identifier) -> None:
+        try:
+            self._players_on_wait.pop(identifier)
+        except KeyError:
+            pass

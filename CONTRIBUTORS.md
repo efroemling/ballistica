@@ -43,6 +43,10 @@
 ### Era0S
 - Bug Fixer
 - Modder
+- Added a feature
 
 ### VinniTR
 - Fixes
+
+### Rikko
+- Created the original "reject_recently_left_players" plugin
