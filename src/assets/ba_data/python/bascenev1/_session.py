@@ -807,7 +807,7 @@ class Session:
             activity.add_player(sessionplayer)
         return sessionplayer
 
-    def _remove_player_from_waitlist(self, identifier) -> None:
+    def _remove_player_from_waitlist(self, identifier: str) -> None:
         try:
             self._players_on_wait.pop(identifier)
         except KeyError:
