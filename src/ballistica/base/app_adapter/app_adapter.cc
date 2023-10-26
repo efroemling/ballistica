@@ -318,4 +318,58 @@ auto AppAdapter::GetGraphicsClientContext() -> GraphicsClientContext* {
 auto AppAdapter::GetKeyRepeatDelay() -> float { return 0.3f; }
 auto AppAdapter::GetKeyRepeatInterval() -> float { return 0.08f; }
 
+auto AppAdapter::ClipboardIsSupported() -> bool {
+  // We only call our actual virtual function once.
+  if (!have_clipboard_is_supported_) {
+    clipboard_is_supported_ = DoClipboardIsSupported();
+    have_clipboard_is_supported_ = true;
+  }
+  return clipboard_is_supported_;
+}
+
+auto AppAdapter::ClipboardHasText() -> bool {
+  // If subplatform says they don't support clipboards, don't even ask.
+  if (!ClipboardIsSupported()) {
+    return false;
+  }
+  return DoClipboardHasText();
+}
+
+void AppAdapter::ClipboardSetText(const std::string& text) {
+  // If subplatform says they don't support clipboards, this is an error.
+  if (!ClipboardIsSupported()) {
+    throw Exception("ClipboardSetText called with no clipboard support.",
+                    PyExcType::kRuntime);
+  }
+  DoClipboardSetText(text);
+}
+
+auto AppAdapter::ClipboardGetText() -> std::string {
+  // If subplatform says they don't support clipboards, this is an error.
+  if (!ClipboardIsSupported()) {
+    throw Exception("ClipboardGetText called with no clipboard support.",
+                    PyExcType::kRuntime);
+  }
+  return DoClipboardGetText();
+}
+
+auto AppAdapter::DoClipboardIsSupported() -> bool { return false; }
+
+auto AppAdapter::DoClipboardHasText() -> bool {
+  // Shouldn't get here since we default to no clipboard support.
+  FatalError("Shouldn't get here.");
+  return false;
+}
+
+void AppAdapter::DoClipboardSetText(const std::string& text) {
+  // Shouldn't get here since we default to no clipboard support.
+  FatalError("Shouldn't get here.");
+}
+
+auto AppAdapter::DoClipboardGetText() -> std::string {
+  // Shouldn't get here since we default to no clipboard support.
+  FatalError("Shouldn't get here.");
+  return "";
+}
+
 }  // namespace ballistica::base

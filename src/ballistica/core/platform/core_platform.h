@@ -76,24 +76,6 @@ class CorePlatform {
   /// requires the path to already exist.
   auto AbsPath(const std::string& path, std::string* outpath) -> bool;
 
-#pragma mark CLIPBOARD ---------------------------------------------------------
-
-  /// Return whether clipboard operations are supported at all. This gets
-  /// called when determining whether to display clipboard related UI
-  /// elements/etc.
-  auto ClipboardIsSupported() -> bool;
-
-  /// Return whether there is currently text on the clipboard.
-  auto ClipboardHasText() -> bool;
-
-  /// Set current clipboard text. Raises an Exception if clipboard is
-  /// unsupported.
-  void ClipboardSetText(const std::string& text);
-
-  /// Return current text from the clipboard. Raises an Exception if
-  /// clipboard is unsupported or if there's no text on the clipboard.
-  auto ClipboardGetText() -> std::string;
-
 #pragma mark PRINTING/LOGGING --------------------------------------------------
 
   /// Display a message to any default log for the platform (android log,
@@ -456,11 +438,6 @@ class CorePlatform {
   /// Generate a random UUID string.
   virtual auto GenerateUUID() -> std::string;
 
-  virtual auto DoClipboardIsSupported() -> bool;
-  virtual auto DoClipboardHasText() -> bool;
-  virtual void DoClipboardSetText(const std::string& text);
-  virtual auto DoClipboardGetText() -> std::string;
-
   /// Print a log message to be included in crash logs or other debug
   /// mechanisms (example: Crashlytics). V1-cloud-log messages get forwarded
   /// to here as well. It can be useful to call this directly to report extra
@@ -473,15 +450,13 @@ class CorePlatform {
   virtual ~CorePlatform();
 
  private:
-  bool is_stdin_a_terminal_{};
-  bool have_has_touchscreen_value_{};
-  bool have_touchscreen_{};
-  bool is_tegra_k1_{};
-  bool have_clipboard_is_supported_{};
-  bool clipboard_is_supported_{};
-  bool made_volatile_data_dir_{};
-  bool have_device_uuid_{};
-  bool ran_base_post_init_{};
+  bool is_stdin_a_terminal_ : 1 {};
+  bool have_has_touchscreen_value_ : 1 {};
+  bool have_touchscreen_ : 1 {};
+  bool is_tegra_k1_ : 1 {};
+  bool made_volatile_data_dir_ : 1 {};
+  bool have_device_uuid_ : 1 {};
+  bool ran_base_post_init_ : 1 {};
   millisecs_t start_time_millisecs_{};
   std::string device_name_;
   std::string legacy_device_uuid_;

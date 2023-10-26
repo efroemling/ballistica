@@ -71,6 +71,7 @@ class BasePlatform {
   /// active/inactive.
   virtual void LoginAdapterBackEndActiveChange(const std::string& login_type,
                                                bool active);
+
 #pragma mark MISC --------------------------------------------------------------
 
   /// Do we define a platform-specific string editor? This is something like
@@ -115,8 +116,8 @@ class BasePlatform {
   /// class versions can go here.
   virtual void PostInit();
 
+  bool ran_base_post_init_ : 1 {};
   PythonRef string_edit_adapter_{};
-  bool ran_base_post_init_{};
   std::string public_device_uuid_;
 };
 

@@ -52,6 +52,10 @@ class AppAdapterSDL : public AppAdapter {
   auto InGraphicsContext() -> bool override;
   void DoPushGraphicsContextRunnable(Runnable* runnable) override;
   void CursorPositionForDraw(float* x, float* y) override;
+  auto DoClipboardIsSupported() -> bool override;
+  auto DoClipboardHasText() -> bool override;
+  void DoClipboardSetText(const std::string& text) override;
+  auto DoClipboardGetText() -> std::string override;
 
  private:
   class ScopedAllowGraphics_;

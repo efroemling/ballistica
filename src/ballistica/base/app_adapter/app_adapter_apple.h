@@ -53,6 +53,10 @@ class AppAdapterApple : public AppAdapter {
   void SetHardwareCursorVisible(bool visible) override;
   void TerminateApp() override;
   void ApplyGraphicsSettings(const GraphicsSettings* settings) override;
+  auto DoClipboardIsSupported() -> bool override;
+  auto DoClipboardHasText() -> bool override;
+  void DoClipboardSetText(const std::string& text) override;
+  auto DoClipboardGetText() -> std::string override;
 
  private:
   class ScopedAllowGraphics_;

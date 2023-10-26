@@ -2,6 +2,7 @@
 
 #include "ballistica/ui_v1/widget/text_widget.h"
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
@@ -648,10 +649,10 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   // If we're doing inline editing, handle clipboard paste.
   if (editable() && !ShouldUseStringEditor_()
       && m.type == base::WidgetMessage::Type::kPaste) {
-    if (g_core->platform->ClipboardIsSupported()) {
-      if (g_core->platform->ClipboardHasText()) {
+    if (g_base->app_adapter->ClipboardIsSupported()) {
+      if (g_base->app_adapter->ClipboardHasText()) {
         // Just enter it char by char as if we had typed it...
-        AddCharsToText_(g_core->platform->ClipboardGetText());
+        AddCharsToText_(g_base->app_adapter->ClipboardGetText());
       }
     }
   }

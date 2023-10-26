@@ -21,8 +21,6 @@ class CorePlatformApple : public CorePlatform {
   auto GenerateUUID() -> std::string override;
   auto DoGetConfigDirectoryMonolithicDefault()
       -> std::optional<std::string> override;
-  // auto GetLocale() -> std::string override;
-  // auto DoGetDeviceName() -> std::string override;
   auto DoHasTouchScreen() -> bool override;
   auto GetDefaultUIScale() -> UIScale override;
   auto IsRunningOnDesktop() -> bool override;
@@ -61,10 +59,6 @@ class CorePlatformApple : public CorePlatform {
   auto GetPlatformName() -> std::string override;
   auto GetSubplatformName() -> std::string override;
 
-  auto DoClipboardIsSupported() -> bool override;
-  auto DoClipboardHasText() -> bool override;
-  void DoClipboardSetText(const std::string& text) override;
-  auto DoClipboardGetText() -> std::string override;
   auto GetDeviceUUIDInputs() -> std::list<std::string> override;
 
  protected:

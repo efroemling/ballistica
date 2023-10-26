@@ -7,6 +7,7 @@
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/platform/apple/apple_utils.h"
 #include "ballistica/base/platform/apple/from_swift.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/shared/ballistica.h"
@@ -242,6 +243,42 @@ auto AppAdapterApple::GetKeyRepeatInterval() -> float {
   return BallisticaKit::CocoaFromCpp::GetKeyRepeatInterval();
 #else
   return AppAdapter::GetKeyRepeatDelay();
+#endif
+}
+
+auto AppAdapterApple::DoClipboardIsSupported() -> bool {
+#if BA_XCODE_BUILD
+  return BallisticaKit::CocoaFromCpp::ClipboardIsSupported();
+#else
+  return CorePlatform::DoClipboardIsSupported();
+#endif
+}
+
+auto AppAdapterApple::DoClipboardHasText() -> bool {
+#if BA_XCODE_BUILD
+  return BallisticaKit::CocoaFromCpp::ClipboardHasText();
+#else
+  return CorePlatform::DoClipboardHasText();
+#endif
+}
+
+void AppAdapterApple::DoClipboardSetText(const std::string& text) {
+#if BA_XCODE_BUILD
+  BallisticaKit::CocoaFromCpp::ClipboardSetText(text);
+#else
+  CorePlatform::DoClipboardSetText(text);
+#endif
+}
+
+auto AppAdapterApple::DoClipboardGetText() -> std::string {
+#if BA_XCODE_BUILD
+  auto contents = BallisticaKit::CocoaFromCpp::ClipboardGetText();
+  if (contents) {
+    return std::string(contents.get());
+  }
+  throw Exception("No text on clipboard.");
+#else
+  return CorePlatform::DoClipboardGetText();
 #endif
 }
 

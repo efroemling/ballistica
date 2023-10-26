@@ -400,38 +400,6 @@ auto CorePlatformApple::GetSubplatformName() -> std::string {
 #endif
 }
 
-auto CorePlatformApple::DoClipboardIsSupported() -> bool {
-#if BA_XCODE_BUILD
-  return base::AppleUtils::ClipboardIsSupported();
-#else
-  return CorePlatform::DoClipboardIsSupported();
-#endif
-}
-
-auto CorePlatformApple::DoClipboardHasText() -> bool {
-#if BA_XCODE_BUILD
-  return base::AppleUtils::ClipboardHasText();
-#else
-  return CorePlatform::DoClipboardHasText();
-#endif
-}
-
-void CorePlatformApple::DoClipboardSetText(const std::string& text) {
-#if BA_XCODE_BUILD
-  base::AppleUtils::ClipboardSetText(text);
-#else
-  CorePlatform::DoClipboardSetText(text);
-#endif
-}
-
-auto CorePlatformApple::DoClipboardGetText() -> std::string {
-#if BA_XCODE_BUILD
-  return base::AppleUtils::ClipboardGetText();
-#else
-  return CorePlatform::DoClipboardGetText();
-#endif
-}
-
 }  // namespace ballistica::core
 
 #endif  // BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS

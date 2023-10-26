@@ -829,6 +829,15 @@ void Input::PushTextInputEvent(const std::string& text) {
       return;
     }
 
+    // Also ignore if there are any mod keys being held.
+    // We process some of our own keyboard shortcuts and don't
+    // want text input to come through at the same time.
+    if (keys_held_.contains(SDLK_LCTRL) || keys_held_.contains(SDLK_RCTRL)
+        || keys_held_.contains(SDLK_LALT) || keys_held_.contains(SDLK_RALT)
+        || keys_held_.contains(SDLK_LGUI) || keys_held_.contains(SDLK_RGUI)) {
+      return;
+    }
+
     // We try to handle char filtering here (to keep it consistent across
     // platforms) but make a stink if they sent us something that we can't
     // at least translate to unicode.

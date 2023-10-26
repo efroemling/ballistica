@@ -834,6 +834,28 @@ auto AppAdapterSDL::HasDirectKeyboardInput() -> bool {
   return true;
 }
 
+auto AppAdapterSDL::DoClipboardIsSupported() -> bool { return true; }
+
+auto AppAdapterSDL::DoClipboardHasText() -> bool {
+  return SDL_HasClipboardText();
+}
+
+void AppAdapterSDL::DoClipboardSetText(const std::string& text) {
+  SDL_SetClipboardText(text.c_str());
+}
+
+auto AppAdapterSDL::DoClipboardGetText() -> std::string {
+  // Go through SDL functionality on SDL based platforms;
+  // otherwise default to no clipboard.
+  char* out = SDL_GetClipboardText();
+  if (out == nullptr) {
+    throw Exception("Error fetching clipboard contents.", PyExcType::kRuntime);
+  }
+  std::string out_s{out};
+  SDL_free(out);
+  return out_s;
+}
+
 }  // namespace ballistica::base
 
 #endif  // BA_SDL_BUILD

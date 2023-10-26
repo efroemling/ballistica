@@ -5,6 +5,7 @@
 #include <list>
 #include <unordered_map>
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/platform/base_platform.h"
@@ -128,7 +129,7 @@ static PyMethodDef PyHasTouchScreenDef = {
 
 static auto PyClipboardIsSupported(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_core->platform->ClipboardIsSupported()) {
+  if (g_base->app_adapter->ClipboardIsSupported()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -154,7 +155,7 @@ static PyMethodDef PyClipboardIsSupportedDef = {
 
 static auto PyClipboardHasText(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_core->platform->ClipboardHasText()) {
+  if (g_base->app_adapter->ClipboardHasText()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -187,7 +188,7 @@ static auto PyClipboardSetText(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &value)) {
     return nullptr;
   }
-  g_core->platform->ClipboardSetText(value);
+  g_base->app_adapter->ClipboardSetText(value);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -211,7 +212,7 @@ static PyMethodDef PyClipboardSetTextDef = {
 
 static auto PyClipboardGetText(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  return PyUnicode_FromString(g_core->platform->ClipboardGetText().c_str());
+  return PyUnicode_FromString(g_base->app_adapter->ClipboardGetText().c_str());
   Py_RETURN_FALSE;
   BA_PYTHON_CATCH;
 }

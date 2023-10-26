@@ -207,6 +207,22 @@ class AppAdapter {
   virtual auto GetKeyRepeatDelay() -> float;
   virtual auto GetKeyRepeatInterval() -> float;
 
+  /// Return whether clipboard operations are supported at all. This gets
+  /// called when determining whether to display clipboard related UI
+  /// elements/etc.
+  auto ClipboardIsSupported() -> bool;
+
+  /// Return whether there is currently text on the clipboard.
+  auto ClipboardHasText() -> bool;
+
+  /// Set current clipboard text. Raises an Exception if clipboard is
+  /// unsupported.
+  void ClipboardSetText(const std::string& text);
+
+  /// Return current text from the clipboard. Raises an Exception if
+  /// clipboard is unsupported or if there's no text on the clipboard.
+  auto ClipboardGetText() -> std::string;
+
  protected:
   AppAdapter();
   virtual ~AppAdapter();
@@ -219,10 +235,18 @@ class AppAdapter {
   /// context. By default this is simply the main thread.
   virtual void DoPushGraphicsContextRunnable(Runnable* runnable);
 
+  virtual auto DoClipboardIsSupported() -> bool;
+  virtual auto DoClipboardHasText() -> bool;
+  virtual void DoClipboardSetText(const std::string& text);
+  virtual auto DoClipboardGetText() -> std::string;
+
  private:
   void OnAppSuspend_();
   void OnAppUnsuspend_();
-  bool app_suspended_{};
+
+  bool app_suspended_ : 1 {};
+  bool have_clipboard_is_supported_ : 1 {};
+  bool clipboard_is_supported_ : 1 {};
 };
 
 }  // namespace ballistica::base
