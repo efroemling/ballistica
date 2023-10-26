@@ -607,11 +607,11 @@ auto EventLoop::AreEventLoopsSuspended() -> bool {
   return g_core->event_loops_suspended;
 }
 
-auto EventLoop::NewTimer(millisecs_t length, bool repeat,
-                         const Object::Ref<Runnable>& runnable) -> Timer* {
+auto EventLoop::NewTimer(millisecs_t length, bool repeat, Runnable* runnable)
+    -> Timer* {
   assert(g_core);
   assert(ThreadIsCurrent());
-  assert(runnable.Exists());
+  assert(Object::IsValidManagedObject(runnable));
   return timers_.NewTimer(g_core->GetAppTimeMillisecs(), length, 0,
                           repeat ? -1 : 0, runnable);
 }

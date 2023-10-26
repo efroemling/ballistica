@@ -4,11 +4,14 @@
 #include "ballistica/base/platform/apple/base_platform_apple.h"
 
 #if BA_XCODE_BUILD
-#include <BallisticaKit-Swift.h>
+#include "ballistica/base/platform/apple/apple_utils.h"
+#include "ballistica/base/platform/apple/from_swift.h"
 #endif
 
 #if BA_XCODE_BUILD
-#include "ballistica/base/platform/apple/apple_utils.h"
+// This needs to be below ballistica headers since it relies on
+// some types in them but does not include headers itself.
+#include <BallisticaKit-Swift.h>
 #endif
 
 namespace ballistica::base {
@@ -48,9 +51,9 @@ void BasePlatformApple::PurchaseAck(const std::string& purchase,
 void BasePlatformApple::DoOpenURL(const std::string& url) {
 #if BA_XCODE_BUILD
 #if BA_OSTYPE_MACOS
-  BallisticaKit::CocoaFromCppOpenURL(url);
+  BallisticaKit::CocoaFromCpp::OpenURL(url);
 #else
-  BallisticaKit::UIKitFromCppOpenURL(url);
+  BallisticaKit::UIKitFromCpp::OpenURL(url);
 #endif  // BA_OSTYPE_MACOS
 
 #else

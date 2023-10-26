@@ -21,8 +21,8 @@ class CorePlatformApple : public CorePlatform {
   auto GenerateUUID() -> std::string override;
   auto DoGetConfigDirectoryMonolithicDefault()
       -> std::optional<std::string> override;
-  auto GetLocale() -> std::string override;
-  auto DoGetDeviceName() -> std::string override;
+  // auto GetLocale() -> std::string override;
+  // auto DoGetDeviceName() -> std::string override;
   auto DoHasTouchScreen() -> bool override;
   auto GetDefaultUIScale() -> UIScale override;
   auto IsRunningOnDesktop() -> bool override;

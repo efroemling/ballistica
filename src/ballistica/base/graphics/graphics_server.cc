@@ -137,14 +137,10 @@ auto GraphicsServer::TryRender() -> bool {
 
 auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
   assert(g_base->app_adapter->InGraphicsContext());
-  millisecs_t app_time = g_core->GetAppTimeMillisecs();
+  millisecs_t start_time = g_core->GetAppTimeMillisecs();
 
-  if (!renderer_) {
-    return nullptr;
-  }
-
-  // If the app is paused, never render.
-  if (g_base->app_adapter->app_suspended()) {
+  // Don't bother waiting if we can't/shouldn't render anyway.
+  if (!renderer_ || shutting_down_ || g_base->app_adapter->app_suspended()) {
     return nullptr;
   }
 
@@ -173,12 +169,12 @@ auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
     // if we've been waiting for too long, give up. On some platforms such
     // as Android, this frame will still get flipped whether we draw in it
     // or not, so we *really* want to not skip drawing if we can help it.
-    millisecs_t t = g_core->GetAppTimeMillisecs() - app_time;
+    millisecs_t t = g_core->GetAppTimeMillisecs() - start_time;
     if (t >= 1000) {
       if (g_buildconfig.debug_build()) {
         Log(LogLevel::kWarning,
-            "GraphicsServer: aborting GetRenderFrameDef after "
-                + std::to_string(t) + "ms.");
+            "GraphicsServer: timed out at " + std::to_string(t)
+                + "ms waiting for logic thread to send us a FrameDef.");
       }
       break;  // Fail.
     }
@@ -335,38 +331,6 @@ void GraphicsServer::LoadRenderer() {
 
   texture_quality_ = Graphics::TextureQualityFromRequest(
       texture_quality_requested_, renderer_->GetAutoTextureQuality());
-
-  // If we don't support high quality graphics, make sure we're no higher than
-  // medium.
-  // BA_PRECONDITION(g_base->graphics->has_supports_high_quality_graphics_value());
-  // if (!g_base->graphics->supports_high_quality_graphics()
-  //     && graphics_quality_ > GraphicsQuality::kMedium) {
-  //   graphics_quality_ = GraphicsQuality::kMedium;
-  // }
-  // graphics_quality_set_ = true;
-
-  // Update texture quality based on request.
-  // switch (texture_quality_requested_) {
-  //   case TextureQualityRequest::kLow:
-  //     texture_quality_ = TextureQuality::kLow;
-  //     break;
-  //   case TextureQualityRequest::kMedium:
-  //     texture_quality_ = TextureQuality::kMedium;
-  //     break;
-  //   case TextureQualityRequest::kHigh:
-  //     texture_quality_ = TextureQuality::kHigh;
-  //     break;
-  //   case TextureQualityRequest::kAuto:
-  //     texture_quality_ = renderer_->GetAutoTextureQuality();
-  //     break;
-  //   default:
-  //     Log(LogLevel::kError,
-  //         "Unhandled TextureQualityRequest value: "
-  //             +
-  //             std::to_string(static_cast<int>(texture_quality_requested_)));
-  //     texture_quality_ = TextureQuality::kLow;
-  // }
-  // texture_quality_set_ = true;
 
   // Ok we've got our qualities figured out; now load/update the renderer.
   renderer_->Load();
@@ -655,6 +619,17 @@ void GraphicsServer::PushRemoveRenderHoldCall() {
 
 auto GraphicsServer::InGraphicsContext_() const -> bool {
   return g_base->app_adapter->InGraphicsContext();
+}
+
+void GraphicsServer::Shutdown() {
+  BA_PRECONDITION(!shutting_down_);
+  BA_PRECONDITION(g_base->InGraphicsContext());
+  shutting_down_ = true;
+
+  // We don't actually do anything here currently; just take note
+  // that we're shutting down so we no longer wait for frames to come
+  // in from the main thread.
+  shutdown_completed_ = true;
 }
 
 }  // namespace ballistica::base

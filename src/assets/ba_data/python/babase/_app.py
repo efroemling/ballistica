@@ -915,6 +915,12 @@ class App:
         _babase.lifecyclelog('fade-and-shutdown-graphics begin')
         _babase.fade_screen(False, time=0.15)
         await asyncio.sleep(0.15)
+
+        # Now tell the graphics system to go down and wait until
+        # it has done so.
+        _babase.graphics_shutdown_begin()
+        while not _babase.graphics_shutdown_is_complete():
+            await asyncio.sleep(0.01)
         _babase.lifecyclelog('fade-and-shutdown-graphics end')
 
     async def _fade_and_shutdown_audio(self) -> None:

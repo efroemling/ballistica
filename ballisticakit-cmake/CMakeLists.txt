@@ -442,6 +442,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/support/huffman.cc
   ${BA_SRC_ROOT}/ballistica/base/support/huffman.h
   ${BA_SRC_ROOT}/ballistica/base/support/plus_soft.h
+  ${BA_SRC_ROOT}/ballistica/base/support/repeater.cc
+  ${BA_SRC_ROOT}/ballistica/base/support/repeater.h
   ${BA_SRC_ROOT}/ballistica/base/support/stdio_console.cc
   ${BA_SRC_ROOT}/ballistica/base/support/stdio_console.h
   ${BA_SRC_ROOT}/ballistica/base/support/stress_test.cc

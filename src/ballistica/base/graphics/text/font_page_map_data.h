@@ -12,25 +12,25 @@
 #include "ballistica/base/graphics/text/text_graphics.h"
 
 namespace ballistica::base {
-// the total number of glyph pages we have
+// The total number of glyph pages we have.
 #define BA_GLYPH_PAGE_COUNT 8
 
-// the total number of glyphs we have
+// The total number of glyphs we have.
 const int kGlyphCount = 1280;
 
-// the starting glyph index for each page
+// The starting glyph index for each page.
 uint32_t g_glyph_page_start_index_map[8] = {0,   258, 416,  546,
                                             698, 981, 1138, 1276};
 
-// the number of glyphs on each page
+// The number of glyphs on each page.
 uint32_t g_glyph_page_glyph_counts[8] = {258, 158, 130, 152, 283, 157, 138, 4};
 
-// our dynamically-loaded glyph structs for each page
+// Our dynamically-loaded glyph structs for each page.
 TextGraphics::Glyph* g_glyph_pages[8] = {nullptr, nullptr, nullptr, nullptr,
                                          nullptr, nullptr, nullptr, nullptr};
 
-// the page index for each glyph
-uint16_t g_glyph_map[kGlyphCount] = {
+// The page index for each glyph.
+uint8_t g_glyph_map[kGlyphCount] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

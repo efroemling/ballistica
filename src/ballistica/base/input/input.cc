@@ -159,12 +159,11 @@ void Input::AnnounceConnects_() {
 
   // For the first announcement just say "X controllers detected" and don't
   // have a sound.
-  if (first_print && g_core->GetAppTimeSeconds() < 5.0) {
+  if (first_print && g_core->GetAppTimeSeconds() < 2.0) {
     first_print = false;
 
     // Disabling this completely on Android for now; we often get large
     // numbers of devices there that aren't actually devices.
-
     bool do_print_initial_counts{!g_buildconfig.ostype_android()};
 
     // If there's been several connected, just give a number.
@@ -243,7 +242,7 @@ void Input::ShowStandardInputDeviceConnectedMessage_(InputDevice* j) {
     g_base->logic->DeleteAppTimer(connect_print_timer_id_);
   }
   connect_print_timer_id_ = g_base->logic->NewAppTimer(
-      250, false, NewLambdaRunnable([this] { AnnounceConnects_(); }));
+      250, false, NewLambdaRunnable([this] { AnnounceConnects_(); }).Get());
 }
 
 void Input::ShowStandardInputDeviceDisconnectedMessage_(InputDevice* j) {
@@ -258,7 +257,7 @@ void Input::ShowStandardInputDeviceDisconnectedMessage_(InputDevice* j) {
     g_base->logic->DeleteAppTimer(disconnect_print_timer_id_);
   }
   disconnect_print_timer_id_ = g_base->logic->NewAppTimer(
-      250, false, NewLambdaRunnable([this] { AnnounceDisconnects_(); }));
+      250, false, NewLambdaRunnable([this] { AnnounceDisconnects_(); }).Get());
 }
 
 void Input::PushAddInputDeviceCall(InputDevice* input_device,
@@ -802,6 +801,7 @@ void Input::ProcessStressTesting(int player_count) {
       (*test_input).Reset();
     }
   }
+
   while (stress_test_time_ < time) {
     stress_test_time_++;
     for (auto& test_input : test_inputs_) {
@@ -815,7 +815,7 @@ void Input::PushTextInputEvent(const std::string& text) {
   g_base->logic->event_loop()->PushCall([this, text] {
     MarkInputActive();
 
-    // If if the app doesn't want direct text input right now.
+    // If the app doesn't want direct text input right now, ignore.
     if (!g_base->app_adapter->HasDirectKeyboardInput()) {
       return;
     }
@@ -848,6 +848,7 @@ void Input::PushTextInputEvent(const std::string& text) {
         && g_base->ui->dev_console()->HandleTextEditing(text)) {
       return;
     }
+
     g_base->ui->SendWidgetMessage(WidgetMessage(
         WidgetMessage::Type::kTextInput, nullptr, 0, 0, 0, 0, text.c_str()));
   });
@@ -986,6 +987,34 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     return;
   }
 
+  // Nowadays we don't want the OS to deliver repeat events to us,
+  // so filter out any that we get and make noise that they should stop. We
+  // explicitly handle repeats for UI purposes at the InputDevice or Widget
+  // level now.
+  if (keys_held_.find(keysym.sym) != keys_held_.end()) {
+    // Look out for several repeats coming in within the span of a few
+    // seconds and complain if it happens. This should allow for the random
+    // fluke repeat key press event due to funky OS circumstances.
+    static int count{};
+    static seconds_t last_count_reset_time{};
+    auto now = g_core->GetAppTimeSeconds();
+    if (now - last_count_reset_time > 2.0) {
+      count = 0;
+      last_count_reset_time = now;
+    } else {
+      count++;
+      if (count > 10) {
+        BA_LOG_ONCE(
+            LogLevel::kWarning,
+            "Input::HandleKeyPress_ seems to be getting passed repeat key"
+            " press events. Only initial press events should be passed.");
+      }
+    }
+    return;
+  }
+
+  keys_held_.insert(keysym.sym);
+
   // If someone is capturing these events, give them a crack at it.
   if (keyboard_input_capture_press_) {
     if (keyboard_input_capture_press_(keysym)) {
@@ -998,52 +1027,44 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
   // ideally we should use the modifiers bundled with the key presses)
   UpdateModKeyStates_(&keysym, true);
 
-  bool repeat_press;
-  if (keys_held_.count(keysym.sym) != 0) {
-    repeat_press = true;
-  } else {
-    repeat_press = false;
-    keys_held_.insert(keysym.sym);
-  }
-
   // Mobile-specific stuff.
-  if (g_buildconfig.ostype_ios_tvos() || g_buildconfig.ostype_android()) {
-    switch (keysym.sym) {
-      // FIXME: See if this stuff is still necessary. Was this perhaps
-      //  specifically to support the console?
-      case SDLK_DELETE:
-      case SDLK_RETURN:
-      case SDLK_KP_ENTER:
-      case SDLK_BACKSPACE: {
-        // FIXME: I don't remember what this was put here for, but now that
-        //  we have hardware keyboards it crashes text fields by sending
-        //  them a TEXT_INPUT message with no string.. I made them resistant
-        //  to that case but wondering if we can take this out?
-        g_base->ui->SendWidgetMessage(
-            WidgetMessage(WidgetMessage::Type::kTextInput, &keysym));
-        break;
-      }
-      default:
-        break;
-    }
-  }
+  //  if (g_buildconfig.ostype_ios_tvos() || g_buildconfig.ostype_android()) {
+  //    switch (keysym.sym) {
+  //      // FIXME: See if this stuff is still necessary. Was this perhaps
+  //      //  specifically to support the console?
+  //      case SDLK_DELETE:
+  //      case SDLK_RETURN:
+  //      case SDLK_KP_ENTER:
+  //      case SDLK_BACKSPACE: {
+  //        // FIXME: I don't remember what this was put here for, but now that
+  //        //  we have hardware keyboards it crashes text fields by sending
+  //        //  them a TEXT_INPUT message with no string.. I made them resistant
+  //        //  to that case but wondering if we can take this out?
+  //        g_base->ui->SendWidgetMessage(
+  //            WidgetMessage(WidgetMessage::Type::kTextInput, &keysym));
+  //        break;
+  //      }
+  //      default:
+  //        break;
+  //    }
+  //  }
 
   // Explicitly handle fullscreen-toggles in some cases.
   if (g_base->app_adapter->FullscreenControlAvailable()) {
     bool do_toggle{};
     // On our Mac SDL builds we support ctrl+F for toggling fullscreen.
     // On our nice Cocoa build, fullscreening happens magically through the
-    // view menu fullscreen controls.
+    // view menu fullscreen control's shortcut.
     if (g_buildconfig.ostype_macos() && !g_buildconfig.xcode_build()) {
-      if (!repeat_press && keysym.sym == SDLK_f && ((keysym.mod & KMOD_CTRL))) {
+      if (keysym.sym == SDLK_f && ((keysym.mod & KMOD_CTRL))) {
         do_toggle = true;
       }
     }
-    // On Windows we support both F11 and Alt+Enter for toggling fullscreen.
-    if (g_buildconfig.ostype_windows()) {
-      if (!repeat_press
-          && (keysym.sym == SDLK_F11
-              || (keysym.sym == SDLK_RETURN && ((keysym.mod & KMOD_ALT))))) {
+    // On Windows and Linux we support both F11 and Alt+Enter for toggling
+    // fullscreen.
+    if (g_buildconfig.ostype_windows() || g_buildconfig.ostype_linux()) {
+      if ((keysym.sym == SDLK_F11
+           || (keysym.sym == SDLK_RETURN && ((keysym.mod & KMOD_ALT))))) {
         do_toggle = true;
       }
     }
@@ -1055,26 +1076,21 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     }
   }
 
-  // Control-Q quits. On Mac, the usual Cmd-Q gets handled implicitly by the
-  // app-adapter.
-  // UPDATE: Disabling this for now. Looks like standard OS shortcuts like
-  // Alt+F4 on windows or Cmd-Q on Mac are doing the right thing with SDL
-  // builds these days so these are not needed.
-  // if (!repeat_press && keysym.sym == SDLK_q && (keysym.mod & KMOD_CTRL)) {
-  //   g_base->QuitApp(true);
-  //   return;
-  // }
-
-  // Let the console intercept stuff if it wants at this point.
+  // Dev Console.
   if (auto* console = g_base->ui->dev_console()) {
+    if (keysym.sym == SDLK_BACKQUOTE || keysym.sym == SDLK_F2) {
+      // (reset input so characters don't continue walking and stuff)
+      g_base->input->ResetHoldStates();
+      console->ToggleState();
+      return;
+    }
     if (console->HandleKeyPress(&keysym)) {
       return;
     }
   }
 
   // Ctrl-V or Cmd-V sends paste commands to any interested text fields.
-  // Command-Q or Control-Q quits.
-  if (!repeat_press && keysym.sym == SDLK_v
+  if (keysym.sym == SDLK_v
       && ((keysym.mod & KMOD_CTRL) || (keysym.mod & KMOD_GUI))) {
     g_base->ui->SendWidgetMessage(WidgetMessage(WidgetMessage::Type::kPaste));
     return;
@@ -1082,93 +1098,89 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
 
   bool handled = false;
 
-  // None of the following stuff accepts key repeats.
-  if (!repeat_press) {
-    switch (keysym.sym) {
-      // Menu button on android/etc. pops up the menu.
-      case SDLK_MENU: {
-        if (!g_base->ui->MainMenuVisible()) {
-          g_base->ui->PushMainMenuPressCall(touch_input_);
-        }
-        handled = true;
-        break;
+  switch (keysym.sym) {
+    // Menu button on android/etc. pops up the menu.
+    case SDLK_MENU: {
+      if (!g_base->ui->MainMenuVisible()) {
+        g_base->ui->PushMainMenuPressCall(touch_input_);
       }
-
-      case SDLK_EQUALS:
-      case SDLK_PLUS:
-        if (keysym.mod & KMOD_CTRL) {
-          g_base->app_mode()->ChangeGameSpeed(1);
-          handled = true;
-        }
-        break;
-
-      case SDLK_MINUS:
-        if (keysym.mod & KMOD_CTRL) {
-          g_base->app_mode()->ChangeGameSpeed(-1);
-          handled = true;
-        }
-        break;
-
-      case SDLK_F5: {
-        if (g_base->ui->PartyIconVisible()) {
-          g_base->ui->ActivatePartyIcon();
-        }
-        handled = true;
-        break;
-      }
-
-      case SDLK_F7:
-        assert(g_base->logic->event_loop());
-        g_base->logic->event_loop()->PushCall(
-            [] { g_base->graphics->ToggleManualCamera(); });
-        handled = true;
-        break;
-
-      case SDLK_F8:
-        assert(g_base->logic->event_loop());
-        g_base->logic->event_loop()->PushCall(
-            [] { g_base->graphics->ToggleNetworkDebugDisplay(); });
-        handled = true;
-        break;
-
-      case SDLK_F9:
-        g_base->python->objs().PushCall(
-            BasePython::ObjID::kLanguageTestToggleCall);
-        handled = true;
-        break;
-
-      case SDLK_F10:
-        assert(g_base->logic->event_loop());
-        g_base->logic->event_loop()->PushCall(
-            [] { g_base->graphics->ToggleDebugDraw(); });
-        handled = true;
-        break;
-
-      case SDLK_ESCAPE:
-
-        if (!g_base->ui->MainMenuVisible()) {
-          // There's no main menu up. Ask for one.
-
-          // Note: keyboard_input_ may be nullptr but escape key should
-          // still function for menus; it just won't claim ownership.
-          g_base->ui->PushMainMenuPressCall(keyboard_input_);
-        } else {
-          // Ok there *is* a main menu up. Send it a cancel message.
-          g_base->ui->SendWidgetMessage(
-              WidgetMessage(WidgetMessage::Type::kCancel));
-        }
-        handled = true;
-        break;
-
-      default:
-        break;
+      handled = true;
+      break;
     }
+
+    case SDLK_EQUALS:
+    case SDLK_PLUS:
+      if (keysym.mod & KMOD_CTRL) {
+        g_base->app_mode()->ChangeGameSpeed(1);
+        handled = true;
+      }
+      break;
+
+    case SDLK_MINUS:
+      if (keysym.mod & KMOD_CTRL) {
+        g_base->app_mode()->ChangeGameSpeed(-1);
+        handled = true;
+      }
+      break;
+
+    case SDLK_F5: {
+      if (g_base->ui->PartyIconVisible()) {
+        g_base->ui->ActivatePartyIcon();
+      }
+      handled = true;
+      break;
+    }
+
+    case SDLK_F7:
+      assert(g_base->logic->event_loop());
+      g_base->logic->event_loop()->PushCall(
+          [] { g_base->graphics->ToggleManualCamera(); });
+      handled = true;
+      break;
+
+    case SDLK_F8:
+      assert(g_base->logic->event_loop());
+      g_base->logic->event_loop()->PushCall(
+          [] { g_base->graphics->ToggleNetworkDebugDisplay(); });
+      handled = true;
+      break;
+
+    case SDLK_F9:
+      g_base->python->objs().PushCall(
+          BasePython::ObjID::kLanguageTestToggleCall);
+      handled = true;
+      break;
+
+    case SDLK_F10:
+      assert(g_base->logic->event_loop());
+      g_base->logic->event_loop()->PushCall(
+          [] { g_base->graphics->ToggleDebugDraw(); });
+      handled = true;
+      break;
+
+    case SDLK_ESCAPE:
+      if (!g_base->ui->MainMenuVisible()) {
+        // There's no main menu up. Ask for one.
+
+        // Note: keyboard_input_ may be nullptr but escape key should
+        // still function for menus; it just won't claim ownership.
+        g_base->ui->PushMainMenuPressCall(keyboard_input_);
+      } else {
+        // Ok there *is* a main menu up. Send it a cancel message.
+        g_base->ui->SendWidgetMessage(
+            WidgetMessage(WidgetMessage::Type::kCancel));
+      }
+      handled = true;
+      break;
+
+    default:
+      break;
   }
 
-  // If we haven't claimed it, pass it along as potential player/widget input.
+  // If we haven't handled this, pass it along as potential player/widget input.
   if (!handled) {
     if (keyboard_input_) {
-      keyboard_input_->HandleKey(&keysym, repeat_press, true);
+      keyboard_input_->HandleKey(&keysym, true);
     }
   }
 }
@@ -1184,7 +1196,7 @@ void Input::HandleKeyRelease_(const SDL_Keysym& keysym) {
   // In some cases we may receive duplicate key-release events (if a
   // keyboard reset was run, it deals out key releases, but then the
   // keyboard driver issues them as well).
-  if (keys_held_.count(keysym.sym) == 0) {
+  if (keys_held_.find(keysym.sym) == keys_held_.end()) {
     return;
   }
 
@@ -1205,7 +1217,7 @@ void Input::HandleKeyRelease_(const SDL_Keysym& keysym) {
   }
 
   if (keyboard_input_) {
-    keyboard_input_->HandleKey(&keysym, false, false);
+    keyboard_input_->HandleKey(&keysym, false);
   }
 }
 

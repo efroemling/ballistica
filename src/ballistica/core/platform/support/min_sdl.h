@@ -328,7 +328,7 @@ typedef enum {
 #define SDLK_SCANCODE_MASK (1 << 30)
 #define SDL_SCANCODE_TO_KEYCODE(X) (X | SDLK_SCANCODE_MASK)
 
-enum {
+enum SDL_KeycodeEnum {
   SDLK_UNKNOWN = 0,
 
   SDLK_RETURN = '\r',

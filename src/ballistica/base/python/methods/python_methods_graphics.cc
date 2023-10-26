@@ -536,6 +536,7 @@ static auto PyFadeScreen(PyObject* self, PyObject* args, PyObject* keywds)
                                    &endcall)) {
     return nullptr;
   }
+  BA_PRECONDITION(g_base->InLogicThread());
   g_base->graphics->FadeScreen(static_cast<bool>(fade),
                                static_cast<int>(1000.0f * time), endcall);
   Py_RETURN_NONE;

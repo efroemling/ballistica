@@ -56,8 +56,7 @@ class EventLoop {
   auto identifier() const -> EventLoopID { return identifier_; }
 
   // Register a timer to run on the thread.
-  auto NewTimer(millisecs_t length, bool repeat,
-                const Object::Ref<Runnable>& runnable) -> Timer*;
+  auto NewTimer(millisecs_t length, bool repeat, Runnable* runnable) -> Timer*;
 
   Timer* GetTimer(int id);
   void DeleteTimer(int id);

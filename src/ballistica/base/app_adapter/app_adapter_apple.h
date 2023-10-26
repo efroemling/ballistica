@@ -41,6 +41,9 @@ class AppAdapterApple : public AppAdapter {
   auto HasDirectKeyboardInput() -> bool override;
   void EnableResizeFriendlyMode(int width, int height);
 
+  auto GetKeyRepeatDelay() -> float override;
+  auto GetKeyRepeatInterval() -> float override;
+
  protected:
   void DoPushMainThreadRunnable(Runnable* runnable) override;
   void DoPushGraphicsContextRunnable(Runnable* runnable) override;

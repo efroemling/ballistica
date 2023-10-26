@@ -429,6 +429,8 @@
     <ClCompile Include="..\..\src\ballistica\base\support\huffman.cc" />
     <ClInclude Include="..\..\src\ballistica\base\support\huffman.h" />
     <ClInclude Include="..\..\src\ballistica\base\support\plus_soft.h" />
+    <ClCompile Include="..\..\src\ballistica\base\support\repeater.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\support\repeater.h" />
     <ClCompile Include="..\..\src\ballistica\base\support\stdio_console.cc" />
     <ClInclude Include="..\..\src\ballistica\base\support\stdio_console.h" />
     <ClCompile Include="..\..\src\ballistica\base\support\stress_test.cc" />

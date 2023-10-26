@@ -98,7 +98,7 @@ static auto PyTimer(PyObject* self, PyObject* args, PyObject* keywds)
   SceneV1Context::Current().NewTimer(
       TimeType::kSim, static_cast<millisecs_t>(length * 1000.0),
       static_cast<bool>(repeat),
-      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj));
+      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj).Get());
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -207,7 +207,7 @@ static auto PyBaseTimer(PyObject* self, PyObject* args, PyObject* keywds)
   SceneV1Context::Current().NewTimer(
       TimeType::kBase, static_cast<millisecs_t>(length * 1000.0),
       static_cast<bool>(repeat),
-      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj));
+      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj).Get());
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

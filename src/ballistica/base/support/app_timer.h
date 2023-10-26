@@ -13,10 +13,15 @@ namespace ballistica::base {
 
 class AppTimer : public Object {
  public:
-  AppTimer(millisecs_t length, bool repeat,
-           const Object::Ref<Runnable>& runnable) {
+  AppTimer(millisecs_t length, bool repeat, Runnable* runnable) {
     assert(g_base->InLogicThread());
     timer_id_ = base::g_base->logic->NewAppTimer(length, repeat, runnable);
+  }
+
+  template <typename F>
+  static auto New(millisecs_t length, bool repeat, const F& lambda) {
+    return Object::New<AppTimer>(length, repeat,
+                                 NewLambdaRunnable<F>(lambda).Get());
   }
 
   void SetLength(millisecs_t length) {
@@ -31,13 +36,6 @@ class AppTimer : public Object {
  private:
   int timer_id_;
 };
-
-/// Create a AppTimer from a raw lambda.
-template <typename F>
-auto NewAppTimer(millisecs_t length, bool repeat, const F& lambda)
-    -> Object::Ref<AppTimer> {
-  return Object::New<AppTimer>(length, repeat, NewLambdaRunnable<F>(lambda));
-}
 
 }  // namespace ballistica::base
 

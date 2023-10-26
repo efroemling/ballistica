@@ -20,7 +20,6 @@ const float kDevConsoleZDepth = 0.0f;
 class DevConsole {
  public:
   DevConsole();
-  ~DevConsole();
   auto IsActive() const -> bool { return (state_ != State_::kInactive); }
   auto HandleTextEditing(const std::string& text) -> bool;
   auto HandleKeyPress(const SDL_Keysym* keysym) -> bool;
@@ -82,18 +81,18 @@ class DevConsole {
   void RefreshTabButtons_();
   void RefreshTabContents_();
 
-  bool input_text_dirty_{true};
-  bool input_enabled_{};
-  bool last_line_mesh_dirty_{true};
-  bool python_terminal_visible_{};
-  bool python_terminal_pressed_{};
-  bool refresh_pending_{};
-  int ui_lock_count_{};
+  int input_history_position_{};
+  int ui_lock_count_ : 1 {};
+  bool input_text_dirty_ : 1 {true};
+  bool input_enabled_ : 1 {};
+  bool last_line_mesh_dirty_ : 1 {true};
+  bool python_terminal_visible_ : 1 {};
+  bool python_terminal_pressed_ : 1 {};
+  bool refresh_pending_ : 1 {};
+  double transition_start_{};
   State_ state_{State_::kInactive};
   State_ state_prev_{State_::kInactive};
   millisecs_t last_input_text_change_time_{};
-  double transition_start_{};
-  int input_history_position_{};
   ImageMesh bg_mesh_;
   ImageMesh stripe_mesh_;
   ImageMesh border_mesh_;
@@ -103,15 +102,15 @@ class DevConsole {
   TextGroup input_text_group_;
   std::string last_line_;
   std::string input_string_;
-  std::list<std::string> tabs_{"Python", "AppModes", "Logging", "Graphics",
-                               "UI"};
-  std::string active_tab_{"Python"};
+  std::list<std::string> tabs_;
+  std::string active_tab_;
   PythonRef string_edit_adapter_;
-  Object::Ref<TextGroup> last_line_mesh_group_;
   std::list<std::string> input_history_;
   std::list<OutputLine_> output_lines_;
   std::vector<std::unique_ptr<Widget_> > widgets_;
   std::vector<std::unique_ptr<Widget_> > tab_buttons_;
+  Object::Ref<TextGroup> last_line_mesh_group_;
+  Object::Ref<Repeater> key_repeater_;
 };
 
 }  // namespace ballistica::base

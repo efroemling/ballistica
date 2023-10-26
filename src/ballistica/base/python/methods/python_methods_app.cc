@@ -366,7 +366,7 @@ static auto PyAppTimer(PyObject* self, PyObject* args, PyObject* keywds)
   }
   g_base->logic->NewAppTimer(
       static_cast<millisecs_t>(length * 1000.0), false,
-      Object::New<Runnable, PythonContextCallRunnable>(call_obj));
+      Object::New<Runnable, PythonContextCallRunnable>(call_obj).Get());
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1645,6 +1645,52 @@ static PyMethodDef PyAudioShutdownIsCompleteDef = {
     "(internal)\n",
 };
 
+// ----------------------- graphics_shutdown_begin -----------------------------
+
+static auto PyGraphicsShutdownBegin(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  g_base->app_adapter->PushGraphicsContextCall(
+      [] { g_base->graphics_server->Shutdown(); });
+
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGraphicsShutdownBeginDef = {
+    "graphics_shutdown_begin",             // name
+    (PyCFunction)PyGraphicsShutdownBegin,  // method
+    METH_NOARGS,                           // flags
+
+    "graphics_shutdown_begin() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// -------------------- graphics_shutdown_is_complete --------------------------
+
+static auto PyGraphicsShutdownIsComplete(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  if (g_base->graphics_server->shutdown_completed()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGraphicsShutdownIsCompleteDef = {
+    "graphics_shutdown_is_complete",            // name
+    (PyCFunction)PyGraphicsShutdownIsComplete,  // method
+    METH_NOARGS,                                // flags
+
+    "graphics_shutdown_is_complete() -> bool\n"
+    "\n"
+    "(internal)\n",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
@@ -1702,6 +1748,8 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyDevConsoleInputAdapterFinishDef,
       PyAudioShutdownBeginDef,
       PyAudioShutdownIsCompleteDef,
+      PyGraphicsShutdownBeginDef,
+      PyGraphicsShutdownIsCompleteDef,
   };
 }
 

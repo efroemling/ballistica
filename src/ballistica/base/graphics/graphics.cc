@@ -182,7 +182,7 @@ void Graphics::UpdateInitialGraphicsSettingsSend_() {
 void Graphics::StepDisplayTime() { assert(g_base->InLogicThread()); }
 
 void Graphics::AddCleanFrameCommand(const Object::Ref<PythonContextCall>& c) {
-  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base->InLogicThread());
   clean_frame_commands_.push_back(c);
 }
 
@@ -1058,7 +1058,7 @@ void Graphics::ClearFrameDefDeleteList() {
 }
 
 void Graphics::FadeScreen(bool to, millisecs_t time, PyObject* endcall) {
-  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base->InLogicThread());
   // If there's an ourstanding fade-end command, go ahead and run it.
   // (otherwise, overlapping fades can cause things to get lost)
   if (fade_end_call_.Exists()) {
@@ -1186,7 +1186,7 @@ void Graphics::DrawDevUI(FrameDef* frame_def) {
 void Graphics::BuildAndPushFrameDef() {
   assert(g_base->InLogicThread());
 
-  BA_PRECONDITION_FATAL(g_base->logic->app_bootstrapping_complete());
+  assert(g_base->logic->app_bootstrapping_complete());
   assert(camera_.Exists());
   assert(!g_core->HeadlessMode());
 

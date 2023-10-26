@@ -1,4 +1,4 @@
-### 1.7.28 (build 21491, api 8, 2023-10-22)
+### 1.7.28 (build 21510, api 8, 2023-10-26)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -154,6 +154,16 @@
   seems pretty awesome these days. It should support most stuff SDL does and
   with less configuring involved. Please holler if you come across something
   that doesn't work.
+- Mac build is also now using the Game Controller Framework to handle keyboard
+  events. This should better handle things like modifier keys and also will
+  allow us to use that exact same code on the iPad/iPhone version.
+- OS key repeat events are no longer passed through the engine. This means that
+  any time we want repeating behavior, such as holding an arrow key to move
+  through UI elements, we will need to wire it up ourselves. We already do this
+  for things like game controllers however, so this is more consistent in a way.
+- Dev console no longer claims key events unless the Python tab is showing and
+  there is a hardware keyboard attached. This allows showing dev console tabs
+  above gameplay without interfering with it.
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 

@@ -2,6 +2,7 @@
 
 #include "ballistica/base/ui/dev_console.h"
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/simple_component.h"
@@ -11,6 +12,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/repeater.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
@@ -20,14 +22,12 @@
 namespace ballistica::base {
 
 // How much of the screen the console covers when it is at full size.
-const float kDevConsoleSize = 0.9f;
-const int kDevConsoleLineLimit = 80;
-const int kDevConsoleStringBreakUpSize = 1950;
-const int kDevConsoleActivateKey1 = SDLK_BACKQUOTE;
-const int kDevConsoleActivateKey2 = SDLK_F2;
+const float kDevConsoleSize{0.9f};
+const int kDevConsoleLineLimit{80};
+const int kDevConsoleStringBreakUpSize{1950};
 const float kDevConsoleTabButtonCornerRadius{16.0f};
 
-const double kTransitionSeconds = 0.15;
+const double kTransitionSeconds{0.15};
 
 enum class DevConsoleHAnchor_ { kLeft, kCenter, kRight };
 enum class DevButtonStyle_ { kNormal, kDark };
@@ -171,11 +171,7 @@ class DevConsole::Text_ : public DevConsole::Widget_ {
   }
 
   void Draw(RenderPass* pass, float bottom) override {
-    Vector3f fgcolor;
-    Vector3f bgcolor;
-    fgcolor = Vector3f{0.8f, 0.7f, 0.8f};
-    bgcolor = Vector3f{0.25, 0.2f, 0.3f};
-
+    auto fgcolor = Vector3f{0.8f, 0.7f, 0.8f};
     DrawText(pass, &text_group, scale, bottom, x + XOffs(h_attach), y, fgcolor);
   }
 };
@@ -327,7 +323,6 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
 
   void Draw(RenderPass* pass, float bottom) override {
     DrawRect(pass, &mesh, bottom, x + XOffs(attach), y, width, height,
-
              pressed ? Vector3f{0.5f, 0.2f, 1.0f}
              : on    ? Vector3f{0.5f, 0.4f, 0.6f}
                      : Vector3f{0.25, 0.2f, 0.3f});
@@ -448,13 +443,10 @@ DevConsole::DevConsole() {
   if (g_buildconfig.test_build()) {
     title += " (test)";
   }
-
   title_text_group_.SetText(title);
   built_text_group_.SetText("Built: " __DATE__ " " __TIME__);
   prompt_text_group_.SetText(">");
 }
-
-DevConsole::~DevConsole() = default;
 
 void DevConsole::RefreshTabButtons_() {
   // IMPORTANT: This code should always be run in its own top level call and
@@ -695,22 +687,25 @@ void DevConsole::InputAdapterFinish() {
 auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
   assert(g_base->InLogicThread());
 
+  // Any presses or releases cancels repeat actions.
+  key_repeater_.Clear();
+
   // Handle our toggle buttons no matter whether we're active.
-  switch (keysym->sym) {
-    case kDevConsoleActivateKey1:
-    case kDevConsoleActivateKey2: {
-      if (!g_buildconfig.demo_build() && !g_buildconfig.arcade_build()) {
-        // (reset input so characters don't continue walking and stuff)
-        g_base->input->ResetHoldStates();
-        if (auto console = g_base->ui->dev_console()) {
-          console->ToggleState();
-        }
-      }
-      return true;
-    }
-    default:
-      break;
-  }
+  //  switch (keysym->sym) {
+  //    case kDevConsoleActivateKey1:
+  //    case kDevConsoleActivateKey2: {
+  //      if (!g_buildconfig.demo_build() && !g_buildconfig.arcade_build()) {
+  //        // (reset input so characters don't continue walking and stuff)
+  //        g_base->input->ResetHoldStates();
+  //        if (auto console = g_base->ui->dev_console()) {
+  //          console->ToggleState();
+  //        }
+  //      }
+  //      return true;
+  //    }
+  //    default:
+  //      break;
+  //  }
 
   if (state_ == State_::kInactive) {
     return false;
@@ -725,18 +720,21 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
       break;
   }
 
-  // Handle some stuff only with the Python terminal visible.
-  if (python_terminal_visible_) {
+  // If we support direct keyboard input, and python terminal is showing,
+  // handle some keys directly.
+  if (python_terminal_visible_ && g_base->ui->UIHasDirectKeyboardInput()) {
     switch (keysym->sym) {
-      case SDLK_BACKSPACE:
-      case SDLK_DELETE: {
-        std::vector<uint32_t> unichars =
-            Utils::UnicodeFromUTF8(input_string_, "fjco38");
-        if (!unichars.empty()) {
-          unichars.resize(unichars.size() - 1);
-          input_string_ = Utils::UTF8FromUnicode(unichars);
-          input_text_dirty_ = true;
-        }
+      case SDLK_BACKSPACE: {
+        key_repeater_ = Repeater::New(
+            g_base->app_adapter->GetKeyRepeatDelay(),
+            g_base->app_adapter->GetKeyRepeatInterval(), [this] {
+              auto unichars = Utils::UnicodeFromUTF8(input_string_, "fjco38");
+              if (!unichars.empty()) {
+                unichars.resize(unichars.size() - 1);
+                input_string_ = Utils::UTF8FromUnicode(unichars);
+                input_text_dirty_ = true;
+              }
+            });
         break;
       }
       case SDLK_UP:
@@ -772,8 +770,20 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
         break;
       }
     }
+    return true;
   }
-  return true;
+
+  // By default don't claim key events; we want to be able to show the
+  // console while still playing/navigating normally.
+  return false;
+}
+
+auto DevConsole::HandleKeyRelease(const SDL_Keysym* keysym) -> bool {
+  // Any presses or releases cancels repeat actions.
+  key_repeater_.Clear();
+
+  // Otherwise absorb *all* key-ups when we're active.
+  return state_ != State_::kInactive;
 }
 
 void DevConsole::Exec() {
@@ -877,17 +887,6 @@ auto DevConsole::HandleTextEditing(const std::string& text) -> bool {
   input_string_ += text;
   input_text_dirty_ = true;
   return true;
-}
-
-auto DevConsole::HandleKeyRelease(const SDL_Keysym* keysym) -> bool {
-  // Always absorb our activate keys.
-  if (keysym->sym == kDevConsoleActivateKey1
-      || keysym->sym == kDevConsoleActivateKey2) {
-    return true;
-  }
-
-  // Otherwise absorb *all* key-ups when we're active.
-  return state_ != State_::kInactive;
 }
 
 void DevConsole::Print(const std::string& s_in) {

@@ -315,4 +315,7 @@ auto AppAdapter::GetGraphicsClientContext() -> GraphicsClientContext* {
   return new GraphicsClientContext();
 }
 
+auto AppAdapter::GetKeyRepeatDelay() -> float { return 0.3f; }
+auto AppAdapter::GetKeyRepeatInterval() -> float { return 0.08f; }
+
 }  // namespace ballistica::base

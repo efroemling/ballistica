@@ -21,7 +21,7 @@ class TextPacker : public Object {
   // outside of here anyway so might as well recycle.
   void AddSpan(const std::string& text, float x, float y, const Rect& bounds);
 
-  auto hash() const -> const std::string& {
+  const auto& hash() const {
     assert(compiled_);
     return hash_;
   }
@@ -51,32 +51,32 @@ class TextPacker : public Object {
 
   // Once done adding spans, call this to calculate final span UV values,
   // texture configuration, and hash.
-  void compile();
+  void Compile();
 
-  auto spans() const -> const std::list<Span>& { return spans_; }
+  const auto& spans() const { return spans_; }
 
-  auto texture_width() const -> int {
+  auto texture_width() const {
     assert(compiled_);
     return texture_width_;
   }
 
-  auto texture_height() const -> int {
+  auto texture_height() const {
     assert(compiled_);
     return texture_height_;
   }
 
-  auto text_scale() const -> float {
+  auto text_scale() const {
     assert(compiled_);
     return text_scale_;
   }
 
  private:
+  bool compiled_{false};
   float resolution_scale_;
+  float text_scale_{};
   int texture_width_{};
   int texture_height_{};
-  float text_scale_{};
   std::string hash_;
-  bool compiled_{false};
   std::list<Span> spans_;
 };
 

@@ -99,6 +99,7 @@ class RenderPass;
 class RenderTarget;
 class RemoteAppServer;
 class RemoteControlInput;
+class Repeater;
 class ScoreToBeat;
 class AppAdapterSDL;
 class SDLContext;

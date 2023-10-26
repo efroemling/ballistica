@@ -141,8 +141,8 @@ class Graphics {
 
   static void DrawRadialMeter(MeshIndexedSimpleFull* m, float amt);
 
-  // Ways to add a few simple component types quickly.
-  // (uses particle rendering for efficient batches).
+  // Ways to add a few simple component types quickly (uses particle
+  // rendering for efficient batches).
   void DrawBlotch(const Vector3f& pos, float size, float r, float g, float b,
                   float a) {
     DoDrawBlotch(&blotch_indices_, &blotch_verts_, pos, size, r, g, b, a);
@@ -240,13 +240,8 @@ class Graphics {
                       float upper_top);
   void ReleaseFadeEndCommand();
 
-  // auto tv_border() const {
-  //   assert(g_base->InLogicThread());
-  //   return tv_border_;
-  // }
-
-  // Nodes that draw flat stuff into the overlay pass should query this z value
-  // for where to draw in z.
+  // Nodes that draw flat stuff into the overlay pass should query this z
+  // value for where to draw in z.
   auto overlay_node_z_depth() {
     fetched_overlay_node_z_depth_ = true;
     return overlay_node_z_depth_;
@@ -296,8 +291,8 @@ class Graphics {
   void AddMeshDataCreate(MeshData* d);
   void AddMeshDataDestroy(MeshData* d);
 
-  // For debugging: ensures that only transparent or opaque components
-  // are submitted while enabled.
+  // For debugging: ensures that only transparent or opaque components are
+  // submitted while enabled.
   auto drawing_transparent_only() const { return drawing_transparent_only_; }
   void set_drawing_transparent_only(bool val) {
     drawing_transparent_only_ = val;
@@ -362,8 +357,8 @@ class Graphics {
   }
 
   /// For temporary use in arbitrary threads. This should be removed when
-  /// possible and replaced with proper safe thread-specific access
-  /// patterns (so we can support switching renderers/etc.).
+  /// possible and replaced with proper safe thread-specific access patterns
+  /// (so we can support switching renderers/etc.).
   auto placeholder_client_context() const -> const GraphicsClientContext* {
     // Using this from arbitrary threads is currently ok currently since
     // context never changes once set. Will need to kill this call once that
@@ -478,18 +473,18 @@ class Graphics {
   float shadow_lower_top_{4.0f};
   float shadow_upper_bottom_{30.0f};
   float shadow_upper_top_{40.0f};
+  seconds_t last_cursor_visibility_event_time_{};
   millisecs_t fade_start_{};
   millisecs_t fade_time_{};
   millisecs_t next_stat_update_time_{};
   millisecs_t progress_bar_end_time_{-9999};
   millisecs_t last_progress_bar_draw_time_{};
   millisecs_t last_progress_bar_start_time_{};
-  microsecs_t last_suppress_gyro_time_{};
-  seconds_t last_cursor_visibility_event_time_{};
-  microsecs_t next_frame_number_filtered_increment_time_{};
-  microsecs_t last_create_frame_def_time_microsecs_{};
   millisecs_t last_create_frame_def_time_millisecs_{};
   millisecs_t last_jitter_update_time_{};
+  microsecs_t last_suppress_gyro_time_{};
+  microsecs_t next_frame_number_filtered_increment_time_{};
+  microsecs_t last_create_frame_def_time_microsecs_{};
   Object::Ref<ImageMesh> screen_mesh_;
   Object::Ref<ImageMesh> progress_bar_bottom_mesh_;
   Object::Ref<ImageMesh> progress_bar_top_mesh_;

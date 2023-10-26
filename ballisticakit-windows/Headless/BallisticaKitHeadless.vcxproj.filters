@@ -736,6 +736,12 @@
     <ClInclude Include="..\..\src\ballistica\base\support\plus_soft.h">
       <Filter>ballistica\base\support</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\support\repeater.cc">
+      <Filter>ballistica\base\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\support\repeater.h">
+      <Filter>ballistica\base\support</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\support\stdio_console.cc">
       <Filter>ballistica\base\support</Filter>
     </ClCompile>

@@ -95,7 +95,7 @@ auto PythonClassAppTimer::tp_new(PyTypeObject* type, PyObject* args,
 
   self->timer_id_ = g_base->logic->NewAppTimer(
       static_cast<millisecs_t>(length * 1000.0), repeat,
-      Object::New<Runnable, PythonContextCallRunnable>(call_obj));
+      Object::New<Runnable, PythonContextCallRunnable>(call_obj).Get());
 
   self->have_timer_ = true;
 

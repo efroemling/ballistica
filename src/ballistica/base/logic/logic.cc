@@ -100,7 +100,7 @@ void Logic::OnGraphicsReady() {
     // variety of rates anyway. NOTE: This length is currently milliseconds.
     headless_display_time_step_timer_ = event_loop()->NewTimer(
         kHeadlessMinDisplayTimeStep / 1000, true,
-        NewLambdaRunnable([this] { StepDisplayTime_(); }));
+        NewLambdaRunnable([this] { StepDisplayTime_(); }).Get());
   } else {
     // In gui mode, push an initial frame to the graphics server. From this
     // point it will be self-sustaining, sending us a frame request each
@@ -133,9 +133,9 @@ void Logic::CompleteAppBootstrapping_() {
 
   // Set up our timers.
   process_pending_work_timer_ = event_loop()->NewTimer(
-      0, true, NewLambdaRunnable([this] { ProcessPendingWork_(); }));
+      0, true, NewLambdaRunnable([this] { ProcessPendingWork_(); }).Get());
   asset_prune_timer_ = event_loop()->NewTimer(
-      2345, true, NewLambdaRunnable([] { g_base->assets->Prune(); }));
+      2345, true, NewLambdaRunnable([] { g_base->assets->Prune(); }).Get());
 
   // Let our initial dummy app-mode know it has become active.
   g_base->app_mode()->OnActivate();
@@ -635,8 +635,8 @@ void Logic::NotifyOfPendingAssetLoads() {
   UpdatePendingWorkTimer_();
 }
 
-auto Logic::NewAppTimer(millisecs_t length, bool repeat,
-                        const Object::Ref<Runnable>& runnable) -> int {
+auto Logic::NewAppTimer(millisecs_t length, bool repeat, Runnable* runnable)
+    -> int {
   // App-Timers simply get injected into our loop and run alongside our own
   // stuff.
   assert(g_base->InLogicThread());
@@ -667,7 +667,7 @@ auto Logic::NewDisplayTimer(microsecs_t length, bool repeat,
   assert(g_base->InLogicThread());
   int offset = 0;
   Timer* t = display_timers_->NewTimer(g_core->GetAppTimeMicrosecs(), length,
-                                       offset, repeat ? -1 : 0, runnable);
+                                       offset, repeat ? -1 : 0, runnable.Get());
   return t->id();
 }
 

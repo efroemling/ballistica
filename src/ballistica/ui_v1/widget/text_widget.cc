@@ -659,7 +659,6 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   if (m.has_keysym && !ShouldUseStringEditor_()) {
     last_carat_change_time_millisecs_ =
         static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
-
     text_group_dirty_ = true;
     bool claimed = false;
     switch (m.keysym.sym) {
@@ -724,112 +723,29 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         break;
     }
     if (!claimed) {
-      // Pop in a char.
-      if (editable()) {
-        claimed = true;
-
-        // #if BA_SDL2_BUILD || BA_MINSDL_BUILD
-        //         // On SDL2, chars come through as TEXT_INPUT messages;
-        //         // can ignore this.
-        // #else
-        //         std::vector<uint32_t> unichars =
-        //             Utils::UnicodeFromUTF8(text_raw_, "2jf987");
-        //         int len = static_cast<int>(unichars.size());
-
-        //         if (len < max_chars_) {
-        //           if ((m.keysym.unicode >= 32) && (m.keysym.sym != SDLK_TAB))
-        //           {
-        //             claimed = true;
-        //             int pos = carat_position_;
-        //             if (pos > len) pos = len;
-        //             unichars.insert(unichars.begin() + pos,
-        //             m.keysym.unicode); text_raw_ =
-        //             Utils::UTF8FromUnicode(unichars); text_translation_dirty_
-        //             = true; carat_position_++;
-        //           } else {
-        //             // These don't seem to come through cleanly as unicode:
-        //             // FIXME - should re-check this on SDL2 builds
-
-        //             claimed = true;
-        //             std::string s;
-        //             uint32_t pos = carat_position_;
-        //             if (pos > len) pos = len;
-        //             switch (m.keysym.sym) {
-        //               case SDLK_KP0:
-        //                 s = '0';
-        //                 break;
-        //               case SDLK_KP1:
-        //                 s = '1';
-        //                 break;
-        //               case SDLK_KP2:
-        //                 s = '2';
-        //                 break;
-        //               case SDLK_KP3:
-        //                 s = '3';
-        //                 break;
-        //               case SDLK_KP4:
-        //                 s = '4';
-        //                 break;
-        //               case SDLK_KP5:
-        //                 s = '5';
-        //                 break;
-        //               case SDLK_KP6:
-        //                 s = '6';
-        //                 break;
-        //               case SDLK_KP7:
-        //                 s = '7';
-        //                 break;
-        //               case SDLK_KP8:
-        //                 s = '8';
-        //                 break;
-        //               case SDLK_KP9:
-        //                 s = '9';
-        //                 break;
-        //               case SDLK_KP_PERIOD:
-        //                 s = '.';
-        //                 break;
-        //               case SDLK_KP_DIVIDE:
-        //                 s = '/';
-        //                 break;
-        //               case SDLK_KP_MULTIPLY:
-        //                 s = '*';
-        //                 break;
-        //               case SDLK_KP_MINUS:
-        //                 s = '-';
-        //                 break;
-        //               case SDLK_KP_PLUS:
-        //                 s = '+';
-        //                 break;
-        //               case SDLK_KP_EQUALS:
-        //                 s = '=';
-        //                 break;
-        //               default:
-        //                 break;
-        //             }
-        //             if (s.size() > 0) {
-        //               unichars.insert(unichars.begin() + pos, s[0]);
-        //               text_raw_ = Utils::UTF8FromUnicode(unichars);
-        //               text_translation_dirty_ = true;
-        //               carat_position_++;
-        //             }
-        //           }
-        //         }
-        // #endif  // BA_SDL2_BUILD
-      }
+      // Direct text edits come through as seperate events, but we still
+      // want to claim key down events here; otherwise they'll do weird
+      // stuff like navigate to other widgets.
+      claimed = true;
     }
     return claimed;
   }
   switch (m.type) {
     case base::WidgetMessage::Type::kTextInput: {
-      // If we're using an edit dialog, any attempted text input just kicks us
-      // over to that.
-      if (editable() && ShouldUseStringEditor_()) {
-        InvokeStringEditor_();
-      } else {
-        // Otherwise apply the text directly.
-        if (editable() && m.sval != nullptr) {
-          AddCharsToText_(*m.sval);
-          return true;
+      if (editable()) {
+        if (ShouldUseStringEditor_()) {
+          // Normally we shouldn't be getting direct text input events in
+          // situations where we're using string editors, but it still might
+          // be possible; for instance if a game controller is driving the
+          // ui when a key is typed. We simply ignore the event in that case
+          // because otherwise the text input would be fighting with the
+          // string-editor.
+        } else {
+          // Apply text directly.
+          if (m.sval != nullptr) {
+            AddCharsToText_(*m.sval);
+            return true;
+          }
         }
       }
       break;

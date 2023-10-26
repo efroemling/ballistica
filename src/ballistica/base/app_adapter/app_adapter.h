@@ -189,6 +189,13 @@ class AppAdapter {
   /// changing (it may be preferable to rely on dialogs for non-english
   /// languages/etc.). Default implementation returns false. This function
   /// should be callable from any thread.
+  ///
+  /// Note that UI elements wanting to accept direct keyboard input should
+  /// not call this directly, but instead should call
+  /// UI::UIHasDirectKeyboardInput, as that takes into account other factors
+  /// such as which device is currently controlling the UI (Someone
+  /// navigating the UI with a game controller may still get an on-screen
+  /// keyboard even if there is a physical keyboard attached).
   virtual auto HasDirectKeyboardInput() -> bool;
 
   /// Called in the graphics context to apply new settings coming in from
@@ -196,6 +203,9 @@ class AppAdapter {
   /// graphics system as well as before frame draws to update any new
   /// settings coming in.
   virtual void ApplyGraphicsSettings(const GraphicsSettings* settings);
+
+  virtual auto GetKeyRepeatDelay() -> float;
+  virtual auto GetKeyRepeatInterval() -> float;
 
  protected:
   AppAdapter();

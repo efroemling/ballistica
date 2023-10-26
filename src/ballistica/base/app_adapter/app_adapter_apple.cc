@@ -3,15 +3,20 @@
 
 #include "ballistica/base/app_adapter/app_adapter_apple.h"
 
-#include <BallisticaKit-Swift.h>
-
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/platform/apple/from_swift.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/event_loop.h"
+
+// clang-format off
+// This needs to be below ballistica headers since it relies on
+// some types in them but does not include headers itself.
+#include <BallisticaKit-Swift.h>
+// clang-format on
 
 namespace ballistica::base {
 
@@ -41,7 +46,7 @@ auto AppAdapterApple::ManagesMainThreadEventLoop() const -> bool {
 
 void AppAdapterApple::DoPushMainThreadRunnable(Runnable* runnable) {
   // Kick this along to swift.
-  BallisticaKit::FromCppPushRawRunnableToMain(runnable);
+  BallisticaKit::FromCpp::PushRawRunnableToMain(runnable);
 }
 
 void AppAdapterApple::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
@@ -122,16 +127,16 @@ auto AppAdapterApple::TryRender() -> bool {
     // matches what we have (or until we try for too long or fail at drawing).
     seconds_t start_time = g_core->GetAppTimeSeconds();
     for (int i = 0; i < 5; ++i) {
-      if (((std::abs(resize_target_resolution_.x
+      bool size_differs =
+          ((std::abs(resize_target_resolution_.x
                      - g_base->graphics_server->screen_pixel_width())
             > 0.01f)
            || (std::abs(resize_target_resolution_.y
                         - g_base->graphics_server->screen_pixel_height())
-               > 0.01f))
-          && g_core->GetAppTimeSeconds() - start_time < 0.1 && result) {
+               > 0.01f));
+      if (size_differs && g_core->GetAppTimeSeconds() - start_time < 0.1
+          && result) {
         result = g_base->graphics_server->TryRender();
-      } else {
-        break;
       }
     }
   }
@@ -182,13 +187,13 @@ void AppAdapterApple::SetHardwareCursorVisible(bool visible) {
   assert(g_core->InMainThread());
 
 #if BA_OSTYPE_MACOS
-  BallisticaKit::CocoaFromCppSetCursorVisible(visible);
+  BallisticaKit::CocoaFromCpp::SetCursorVisible(visible);
 #endif
 }
 
 void AppAdapterApple::TerminateApp() {
 #if BA_OSTYPE_MACOS
-  BallisticaKit::CocoaFromCppTerminateApp();
+  BallisticaKit::CocoaFromCpp::TerminateApp();
 #else
   AppAdapter::TerminateApp();
 #endif
@@ -205,7 +210,7 @@ auto AppAdapterApple::FullscreenControlAvailable() const -> bool {
 
 auto AppAdapterApple::FullscreenControlGet() const -> bool {
 #if BA_OSTYPE_MACOS
-  return BallisticaKit::CocoaFromCppGetMainWindowIsFullscreen();
+  return BallisticaKit::CocoaFromCpp::GetMainWindowIsFullscreen();
 #else
   return false;
 #endif
@@ -213,7 +218,7 @@ auto AppAdapterApple::FullscreenControlGet() const -> bool {
 
 void AppAdapterApple::FullscreenControlSet(bool fullscreen) {
 #if BA_OSTYPE_MACOS
-  return BallisticaKit::CocoaFromCppSetMainWindowFullscreen(fullscreen);
+  return BallisticaKit::CocoaFromCpp::SetMainWindowFullscreen(fullscreen);
 #endif
 }
 
@@ -223,6 +228,22 @@ auto AppAdapterApple::FullscreenControlKeyShortcut() const
 }
 
 auto AppAdapterApple::HasDirectKeyboardInput() -> bool { return true; };
+
+auto AppAdapterApple::GetKeyRepeatDelay() -> float {
+#if BA_OSTYPE_MACOS
+  return BallisticaKit::CocoaFromCpp::GetKeyRepeatDelay();
+#else
+  return AppAdapter::GetKeyRepeatDelay();
+#endif
+}
+
+auto AppAdapterApple::GetKeyRepeatInterval() -> float {
+#if BA_OSTYPE_MACOS
+  return BallisticaKit::CocoaFromCpp::GetKeyRepeatInterval();
+#else
+  return AppAdapter::GetKeyRepeatDelay();
+#endif
+}
 
 }  // namespace ballistica::base
 

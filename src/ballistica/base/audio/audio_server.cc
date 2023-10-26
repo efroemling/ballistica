@@ -161,7 +161,7 @@ void AudioServer::OnAppStartInThread_() {
   // Get our thread to give us periodic processing time.
   process_timer_ =
       event_loop()->NewTimer(kAudioProcessIntervalNormal, true,
-                             NewLambdaRunnable([this] { Process_(); }));
+                             NewLambdaRunnable([this] { Process_(); }).Get());
 
 #if BA_ENABLE_AUDIO
 

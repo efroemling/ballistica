@@ -89,8 +89,7 @@ class Logic {
   void HandleInterruptSignal();
   void HandleTerminateSignal();
 
-  auto NewAppTimer(millisecs_t length, bool repeat,
-                   const Object::Ref<Runnable>& runnable) -> int;
+  auto NewAppTimer(millisecs_t length, bool repeat, Runnable* runnable) -> int;
   void DeleteAppTimer(int timer_id);
   void SetAppTimerLength(int timer_id, millisecs_t length);
 

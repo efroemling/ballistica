@@ -194,7 +194,7 @@ auto UI::UIHasDirectKeyboardInput() const -> bool {
     // we'll probably want to pop up a controller-centric on-screen-keyboard
     // thingie instead.
     auto* ui_input_device = g_base->ui->GetUIInputDevice();
-    if (auto* keyboard = g_base->ui->GetUIInputDevice()) {
+    if (auto* keyboard = g_base->input->keyboard_input()) {
       if (ui_input_device == keyboard || ui_input_device == nullptr) {
         return true;
       }
@@ -532,7 +532,7 @@ void UI::OnAssetsAvailable() {
   assert(g_base->InLogicThread());
 
   // Spin up the dev console.
-  if (!g_core->HeadlessMode()) {
+  if (!g_core->HeadlessMode() && !g_buildconfig.demo_build()) {
     assert(dev_console_ == nullptr);
     dev_console_ = new DevConsole();
 

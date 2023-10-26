@@ -405,7 +405,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           // Top level touches eventually get passed as mouse-downs if no
           // scrolling has started.
           if (static_cast<int>(m.type)) {
-            touch_delay_timer_ = base::NewAppTimer(
+            touch_delay_timer_ = base::AppTimer::New(
                 150, false, [this] { OnTouchDelayTimerExpired(); });
           }
 

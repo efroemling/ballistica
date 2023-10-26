@@ -485,8 +485,8 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         pressed_ = true;
 
         if (repeat_) {
-          repeat_timer_ =
-              base::NewAppTimer(300, true, [this] { OnRepeatTimerExpired(); });
+          repeat_timer_ = base::AppTimer::New(
+              300, true, [this] { OnRepeatTimerExpired(); });
 
           // If we're a repeat button we trigger immediately.
           // (waiting till mouse up sort of defeats the purpose here)

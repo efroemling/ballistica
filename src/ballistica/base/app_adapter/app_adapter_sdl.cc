@@ -415,7 +415,9 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
     }
 
     case SDL_KEYDOWN: {
-      g_base->input->PushKeyPressEvent(event.key.keysym);
+      if (!event.key.repeat) {
+        g_base->input->PushKeyPressEvent(event.key.keysym);
+      }
       break;
     }
 
