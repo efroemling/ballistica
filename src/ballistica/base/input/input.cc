@@ -155,11 +155,13 @@ void Input::CreateTouchInput() {
 }
 
 void Input::AnnounceConnects_() {
+  assert(g_base->InLogicThread());
+
   static bool first_print = true;
 
   // For the first announcement just say "X controllers detected" and don't
   // have a sound.
-  if (first_print && g_core->GetAppTimeSeconds() < 2.0) {
+  if (first_print && g_core->GetAppTimeSeconds() < 3.0) {
     first_print = false;
 
     // Disabling this completely on Android for now; we often get large
@@ -237,12 +239,14 @@ void Input::ShowStandardInputDeviceConnectedMessage_(InputDevice* j) {
   }
   newly_connected_controllers_.push_back(j->GetDeviceName() + suffix);
 
-  // Set a timer to go off and announce the accumulated additions.
+  // Set a timer to go off and announce controller additions. This allows
+  // several connecting at (almost) the same time to be announced as a
+  // single event.
   if (connect_print_timer_id_ != 0) {
     g_base->logic->DeleteAppTimer(connect_print_timer_id_);
   }
   connect_print_timer_id_ = g_base->logic->NewAppTimer(
-      250, false, NewLambdaRunnable([this] { AnnounceConnects_(); }).Get());
+      500, false, NewLambdaRunnable([this] { AnnounceConnects_(); }).Get());
 }
 
 void Input::ShowStandardInputDeviceDisconnectedMessage_(InputDevice* j) {
