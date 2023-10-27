@@ -468,6 +468,11 @@ void TextWidget::set_res_scale(float res_scale) {
 void TextWidget::SetText(const std::string& text_in_raw) {
   std::string text_in = Utils::GetValidUTF8(text_in_raw.c_str(), "twst1");
 
+  // Ignore redundant sets.
+  if (text_in == text_raw_) {
+    return;
+  }
+
   // In some cases we want to make sure this is a valid resource-string
   // since catching the error here is much more useful than if we catch
   // it at draw-time.  However this is expensive so we only do it for debug
@@ -510,10 +515,6 @@ void TextWidget::SetText(const std::string& text_in_raw) {
       Python::PrintStackTrace();
     }
   }
-  if (text_in != text_raw_) {
-    text_translation_dirty_ = true;
-  }
-  text_raw_ = text_in;
 
   // Do our clamping in unicode-space.
   if (Utils::UTF8StringLength(text_raw_.c_str()) > max_chars_) {
@@ -522,6 +523,8 @@ void TextWidget::SetText(const std::string& text_in_raw) {
     uni.resize(static_cast<size_t>(max_chars_));
     text_raw_ = Utils::UTF8FromUnicode(uni);
   }
+  text_translation_dirty_ = true;
+  text_raw_ = text_in;
   carat_position_ = 9999;
 }
 

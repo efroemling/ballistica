@@ -1,4 +1,4 @@
-### 1.7.28 (build 21523, api 8, 2023-10-27)
+### 1.7.28 (build 21524, api 8, 2023-10-27)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -167,6 +167,13 @@
 - Added clipboard paste support to the dev console python terminal.
 - Added various text editing functionality to the dev console python terminal
   (cursor movement, deleting chars and words, etc.)
+- Internal on-screen-keyboard now has a cancel button (thanks vishal332008!)
+- Public servers list now shows 'No servers found' if there are no servers to
+  show instead of just remaining mysteriously blank (thanks vishal332008!)
+- Players are now prevented from rejoining a session for 10 seconds after they
+  leave to prevent game exploits. Note this is different than the existing
+  system that prevents joining a *party* for 10 seconds; this covers people
+  who never leave the party (Thanks EraOSBeta!).
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 

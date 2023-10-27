@@ -600,7 +600,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
           } else {
             a = 1;
           }
-          a *= 0.8f;
+          a *= 0.7f;
 
           // if (vr) {
           //   a *= 0.8f;
@@ -631,6 +631,8 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
           if (age < 100) {
             fade = 1.0f;
           } else {
+            // Don't fade ALL the way to black; leaves a tiny bit of color
+            // showing which looks nice.
             fade = std::max(0.07f, (200.0f - static_cast<float>(age)) / 100.0f);
           }
           c.SetColor(r * fade, g * fade, b * fade, a);
@@ -1969,7 +1971,7 @@ auto Graphics::ScreenMessageEntry::GetText() -> TextGroup& {
     if (!top_style) {
       float x_extend = 40.0f;
       float y_extend = 40.0f;
-      float y_offset = -10.0f;
+      float y_offset = -5.0f;
       float corner_radius = 60.0f;
       float width_fin = str_width + x_extend * 2.0f;
       float height_fin = str_height + y_extend * 2.0f;
