@@ -963,7 +963,6 @@ class PublicGatherTab(GatherTab):
         self._update_party_rows()
 
     def _update_party_rows(self) -> None:
-
         plus = bui.app.plus
         assert plus is not None
 
@@ -980,10 +979,7 @@ class PublicGatherTab(GatherTab):
             edit=self._host_scrollwidget,
             claims_up_down=(len(self._parties_displayed) > 0),
         )
-        bui.textwidget(
-            edit=self._no_servers_text,
-            text=''
-        )
+        bui.textwidget(edit=self._no_servers_text, text='')
 
         # Clip if we have more UI rows than parties to show.
         clipcount = len(self._ui_rows) - len(self._parties_displayed)
@@ -997,10 +993,10 @@ class PublicGatherTab(GatherTab):
             if (
                 plus.get_v1_account_state() == 'signed_in'
                 and cast(str, bui.textwidget(query=text)) == ''
-                ):
+            ):
                 bui.textwidget(
                     edit=self._no_servers_text,
-                    text=bui.Lstr(resource='noServerFoundText')
+                    text=bui.Lstr(resource='noServerFoundText'),
                 )
             return
 
