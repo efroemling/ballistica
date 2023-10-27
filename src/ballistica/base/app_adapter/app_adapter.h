@@ -15,8 +15,7 @@ namespace ballistica::base {
 /// all might share the same CorePlatform and BasePlatform classes.
 class AppAdapter {
  public:
-  /// Instantiate the AppAdapter subclass for the current build.
-  static auto Create() -> AppAdapter*;
+  AppAdapter();
 
   /// Called in the main thread when the app is being started.
   virtual void OnMainThreadStartApp();
@@ -224,7 +223,6 @@ class AppAdapter {
   auto ClipboardGetText() -> std::string;
 
  protected:
-  AppAdapter();
   virtual ~AppAdapter();
 
   /// Push a raw pointer Runnable to the platform's 'main' thread. The main

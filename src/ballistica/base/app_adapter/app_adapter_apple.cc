@@ -247,38 +247,38 @@ auto AppAdapterApple::GetKeyRepeatInterval() -> float {
 }
 
 auto AppAdapterApple::DoClipboardIsSupported() -> bool {
-#if BA_XCODE_BUILD
+#if BA_OSTYPE_MACOS
   return BallisticaKit::CocoaFromCpp::ClipboardIsSupported();
 #else
-  return CorePlatform::DoClipboardIsSupported();
+  return AppAdapter::DoClipboardIsSupported();
 #endif
 }
 
 auto AppAdapterApple::DoClipboardHasText() -> bool {
-#if BA_XCODE_BUILD
+#if BA_OSTYPE_MACOS
   return BallisticaKit::CocoaFromCpp::ClipboardHasText();
 #else
-  return CorePlatform::DoClipboardHasText();
+  return AppAdapter::DoClipboardHasText();
 #endif
 }
 
 void AppAdapterApple::DoClipboardSetText(const std::string& text) {
-#if BA_XCODE_BUILD
+#if BA_OSTYPE_MACOS
   BallisticaKit::CocoaFromCpp::ClipboardSetText(text);
 #else
-  CorePlatform::DoClipboardSetText(text);
+  AppAdapter::DoClipboardSetText(text);
 #endif
 }
 
 auto AppAdapterApple::DoClipboardGetText() -> std::string {
-#if BA_XCODE_BUILD
+#if BA_OSTYPE_MACOS
   auto contents = BallisticaKit::CocoaFromCpp::ClipboardGetText();
   if (contents) {
     return std::string(contents.get());
   }
   throw Exception("No text on clipboard.");
 #else
-  return CorePlatform::DoClipboardGetText();
+  return AppAdapter::DoClipboardGetText();
 #endif
 }
 

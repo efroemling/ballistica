@@ -8,7 +8,6 @@
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
-#include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
@@ -83,6 +82,11 @@ static auto XOffs(DevConsoleHAnchor_ attach) -> float {
   }
   assert(false);
   return 0.0f;
+}
+
+static auto IsValidHungryChar_(uint32_t this_char) -> bool {
+  return ((this_char >= 65 && this_char <= 90)
+          || (this_char >= 97 && this_char <= 122));
 }
 
 static void DrawRect(RenderPass* pass, Mesh* mesh, float bottom, float x,
@@ -677,6 +681,11 @@ void DevConsole::set_input_string(const std::string& val) {
   assert(g_base->InLogicThread());
   input_string_ = val;
   input_text_dirty_ = true;
+  // Move carat to end.
+  carat_char_ =
+      static_cast<int>(Utils::UnicodeFromUTF8(input_string_, "fj43t").size());
+  assert(CaratCharValid_());
+  carat_dirty_ = true;
 }
 
 void DevConsole::InputAdapterFinish() {
@@ -690,28 +699,11 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
   // Any presses or releases cancels repeat actions.
   key_repeater_.Clear();
 
-  // Handle our toggle buttons no matter whether we're active.
-  //  switch (keysym->sym) {
-  //    case kDevConsoleActivateKey1:
-  //    case kDevConsoleActivateKey2: {
-  //      if (!g_buildconfig.demo_build() && !g_buildconfig.arcade_build()) {
-  //        // (reset input so characters don't continue walking and stuff)
-  //        g_base->input->ResetHoldStates();
-  //        if (auto console = g_base->ui->dev_console()) {
-  //          console->ToggleState();
-  //        }
-  //      }
-  //      return true;
-  //    }
-  //    default:
-  //      break;
-  //  }
-
   if (state_ == State_::kInactive) {
     return false;
   }
 
-  // Handle some stuff only while active.
+  // Stuff we always look for.
   switch (keysym->sym) {
     case SDLK_ESCAPE:
       Dismiss();
@@ -720,54 +712,226 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
       break;
   }
 
-  // If we support direct keyboard input, and python terminal is showing,
-  // handle some keys directly.
+  // Stuff we look for only when direct keyboard input is enabled and our
+  // Python terminal is up.
   if (python_terminal_visible_ && g_base->ui->UIHasDirectKeyboardInput()) {
+    bool do_carat_right{};
+    bool do_hungry_carat_right{};
+    bool do_carat_left{};
+    bool do_hungry_carat_left{};
+    bool do_history_up{};
+    bool do_history_down{};
+    bool do_backspace{};
+    bool do_hungry_backspace{};
+    bool do_move_to_end{};
+    bool do_move_to_beginning{};
+    bool do_kill_line{};
     switch (keysym->sym) {
       case SDLK_BACKSPACE: {
-        key_repeater_ = Repeater::New(
-            g_base->app_adapter->GetKeyRepeatDelay(),
-            g_base->app_adapter->GetKeyRepeatInterval(), [this] {
-              auto unichars = Utils::UnicodeFromUTF8(input_string_, "fjco38");
-              if (!unichars.empty()) {
-                unichars.resize(unichars.size() - 1);
-                input_string_ = Utils::UTF8FromUnicode(unichars);
-                input_text_dirty_ = true;
-              }
-            });
+        if (keysym->mod & KMOD_ALT) {
+          do_hungry_backspace = true;
+        } else {
+          do_backspace = true;
+        }
         break;
       }
       case SDLK_UP:
-      case SDLK_DOWN: {
-        if (input_history_.empty()) {
-          break;
-        }
-        if (keysym->sym == SDLK_UP) {
-          input_history_position_++;
+        do_history_up = true;
+        break;
+      case SDLK_DOWN:
+        do_history_down = true;
+        break;
+      case SDLK_RIGHT:
+        if (keysym->mod & KMOD_ALT) {
+          do_hungry_carat_right = true;
         } else {
-          input_history_position_--;
-        }
-        int input_history_position_used =
-            (input_history_position_ - 1)
-            % static_cast<int>(input_history_.size());
-        int j = 0;
-        for (auto& i : input_history_) {
-          if (j == input_history_position_used) {
-            input_string_ = i;
-            input_text_dirty_ = true;
-            break;
-          }
-          j++;
+          do_carat_right = true;
         }
         break;
-      }
+      case SDLK_LEFT:
+        if (keysym->mod & KMOD_ALT) {
+          do_hungry_carat_left = true;
+        } else {
+          do_carat_left = true;
+        }
+        break;
       case SDLK_KP_ENTER:
       case SDLK_RETURN: {
         Exec();
         break;
       }
+
+      // Wheeee emacs key shortcuts!!
+      case SDLK_n:
+        if (keysym->mod & KMOD_CTRL) {
+          do_history_down = true;
+        }
+        break;
+      case SDLK_f:
+        if (keysym->mod & KMOD_CTRL) {
+          do_carat_right = true;
+        } else if (keysym->mod & KMOD_ALT) {
+          do_hungry_carat_right = true;
+        }
+        break;
+      case SDLK_b:
+        if (keysym->mod & KMOD_CTRL) {
+          do_carat_left = true;
+        } else if (keysym->mod & KMOD_ALT) {
+          do_hungry_carat_left = true;
+        }
+        break;
+      case SDLK_p:
+        if (keysym->mod & KMOD_CTRL) {
+          do_history_up = true;
+        }
+        break;
+      case SDLK_a:
+        if (keysym->mod & KMOD_CTRL) {
+          do_move_to_beginning = true;
+        }
+        break;
+      case SDLK_e:
+        if (keysym->mod & KMOD_CTRL) {
+          do_move_to_end = true;
+        }
+        break;
+      case SDLK_k:
+        if (keysym->mod & KMOD_CTRL) {
+          do_kill_line = true;
+        }
+
       default: {
         break;
+      }
+    }
+    if (do_kill_line) {
+      auto unichars = Utils::UnicodeFromUTF8(input_string_, "fjco38");
+      assert(CaratCharValid_());
+      unichars.resize(carat_char_);
+      assert(CaratCharValid_());
+      input_string_ = Utils::UTF8FromUnicode(unichars);
+      input_text_dirty_ = true;
+      carat_dirty_ = true;
+    }
+    if (do_move_to_beginning) {
+      carat_char_ = 0;
+      assert(CaratCharValid_());
+      carat_dirty_ = true;
+    }
+    if (do_move_to_end) {
+      // Move carat to end.
+      carat_char_ = static_cast<int>(
+          Utils::UnicodeFromUTF8(input_string_, "fj43t").size());
+      assert(CaratCharValid_());
+      carat_dirty_ = true;
+    }
+    if (do_hungry_backspace || do_hungry_carat_left) {
+      auto do_delete = do_hungry_backspace;
+      key_repeater_ = Repeater::New(
+          g_base->app_adapter->GetKeyRepeatDelay(),
+          g_base->app_adapter->GetKeyRepeatInterval(), [this, do_delete] {
+            auto unichars = Utils::UnicodeFromUTF8(input_string_, "fjco38");
+            bool found_valid{};
+            // Delete/move until we've found at least one valid char and the
+            // stop at the first invalid one.
+            while (carat_char_ > 0) {
+              assert(CaratCharValid_());
+              auto this_char = unichars[carat_char_ - 1];
+              auto is_valid = IsValidHungryChar_(this_char);
+              if (found_valid && !is_valid) {
+                break;
+              }
+              if (is_valid) {
+                found_valid = true;
+              }
+              if (do_delete) {
+                unichars.erase(unichars.begin() + carat_char_ - 1);
+              }
+              carat_char_ -= 1;
+              assert(CaratCharValid_());
+            }
+            input_string_ = Utils::UTF8FromUnicode(unichars);
+            input_text_dirty_ = true;
+            carat_dirty_ = true;
+          });
+    }
+    if (do_hungry_carat_right) {
+      key_repeater_ = Repeater::New(
+          g_base->app_adapter->GetKeyRepeatDelay(),
+          g_base->app_adapter->GetKeyRepeatInterval(), [this] {
+            auto unichars = Utils::UnicodeFromUTF8(input_string_, "fjco38");
+            bool found_valid{};
+            // Move until we've found at least one valid char and the
+            // stop at the first invalid one.
+            while (carat_char_ < unichars.size()) {
+              assert(CaratCharValid_());
+              auto this_char = unichars[carat_char_];
+              auto is_valid = IsValidHungryChar_(this_char);
+              if (found_valid && !is_valid) {
+                break;
+              }
+              if (is_valid) {
+                found_valid = true;
+              }
+              carat_char_ += 1;
+              assert(CaratCharValid_());
+            }
+            carat_dirty_ = true;
+          });
+    }
+    if (do_backspace) {
+      key_repeater_ = Repeater::New(
+          g_base->app_adapter->GetKeyRepeatDelay(),
+          g_base->app_adapter->GetKeyRepeatInterval(), [this] {
+            auto unichars = Utils::UnicodeFromUTF8(input_string_, "fjco38");
+            if (!unichars.empty() && carat_char_ > 0) {
+              assert(CaratCharValid_());
+              unichars.erase(unichars.begin() + carat_char_ - 1);
+              input_string_ = Utils::UTF8FromUnicode(unichars);
+              input_text_dirty_ = true;
+              carat_char_ -= 1;
+              assert(CaratCharValid_());
+              carat_dirty_ = true;
+            }
+          });
+    }
+    if (do_carat_left || do_carat_right) {
+      key_repeater_ = Repeater::New(
+          g_base->app_adapter->GetKeyRepeatDelay(),
+          g_base->app_adapter->GetKeyRepeatInterval(),
+          [do_carat_left, do_carat_right, this] {
+            int offset = do_carat_right ? 1 : -1;
+            carat_char_ = std::clamp(
+                carat_char_ + offset, 0,
+                static_cast<int>(
+                    Utils::UnicodeFromUTF8(input_string_, "fffwe").size()));
+            assert(CaratCharValid_());
+            carat_dirty_ = true;
+          });
+    }
+
+    if ((do_history_up || do_history_down) && !input_history_.empty()) {
+      if (do_history_up) {
+        input_history_position_++;
+      } else {
+        input_history_position_--;
+      }
+      int input_history_position_used =
+          (input_history_position_ - 1)
+          % static_cast<int>(input_history_.size());
+      int j = 0;
+      for (auto& i : input_history_) {
+        if (j == input_history_position_used) {
+          input_string_ = i;
+          carat_char_ = static_cast<int>(
+              Utils::UnicodeFromUTF8(input_string_, "fffwe").size());
+          assert(CaratCharValid_());
+          input_text_dirty_ = true;
+          carat_dirty_ = true;
+          break;
+        }
+        j++;
       }
     }
     return true;
@@ -776,6 +940,24 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
   // By default don't claim key events; we want to be able to show the
   // console while still playing/navigating normally.
   return false;
+}
+
+auto DevConsole::HandleTextEditing(const std::string& text) -> bool {
+  assert(g_base->InLogicThread());
+  if (state_ == State_::kInactive) {
+    return false;
+  }
+  assert(CaratCharValid_());
+  auto unichars = Utils::UnicodeFromUTF8(input_string_, "jfof8");
+  auto addunichars = Utils::UnicodeFromUTF8(text, "jfoef8");
+  unichars.insert(unichars.begin() + carat_char_, addunichars.begin(),
+                  addunichars.end());
+  input_string_ = Utils::UTF8FromUnicode(unichars);
+  input_text_dirty_ = true;
+  carat_char_ += addunichars.size();
+  assert(CaratCharValid_());
+  carat_dirty_ = true;
+  return true;
 }
 
 auto DevConsole::HandleKeyRelease(const SDL_Keysym* keysym) -> bool {
@@ -804,7 +986,17 @@ void DevConsole::Exec() {
     input_history_.pop_back();
   }
   input_string_.resize(0);
+  carat_char_ = 0;
+  assert(CaratCharValid_());
   input_text_dirty_ = true;
+  carat_dirty_ = true;
+}
+
+// Just for sanity testing.
+auto DevConsole::CaratCharValid_() -> bool {
+  return carat_char_ >= 0
+         && carat_char_
+                <= Utils::UnicodeFromUTF8(input_string_, "fwewffe").size();
 }
 
 void DevConsole::SubmitPythonCommand_(const std::string& command) {
@@ -869,24 +1061,6 @@ void DevConsole::ToggleState() {
   }
   g_base->audio->PlaySound(g_base->assets->SysSound(SysSoundID::kBlip));
   transition_start_ = g_base->logic->display_time();
-}
-
-auto DevConsole::HandleTextEditing(const std::string& text) -> bool {
-  assert(g_base->InLogicThread());
-  if (state_ == State_::kInactive) {
-    return false;
-  }
-
-  // Ignore back-tick because we use that key to toggle the console.
-  //
-  // FIXME: Perhaps should allow typing it if some control-character is
-  // held?
-  if (text == "`") {
-    return false;
-  }
-  input_string_ += text;
-  input_text_dirty_ = true;
-  return true;
 }
 
 void DevConsole::Print(const std::string& s_in) {
@@ -1013,13 +1187,14 @@ void DevConsole::Draw(FrameDef* frame_def) {
     if (input_text_dirty_) {
       input_text_group_.SetText(input_string_);
       input_text_dirty_ = false;
-      last_input_text_change_time_ = pass->frame_def()->app_time_millisecs();
     }
     {
       SimpleComponent c(pass);
       c.SetFlatness(1.0f);
       c.SetTransparent(true);
       c.SetColor(0.4f, 0.33f, 0.45f, 0.8f);
+
+      // Build.
       int elem_count = built_text_group_.GetElementCount();
       for (int e = 0; e < elem_count; e++) {
         c.SetTexture(built_text_group_.GetElementTexture(e));
@@ -1031,6 +1206,8 @@ void DevConsole::Draw(FrameDef* frame_def) {
           c.DrawMesh(built_text_group_.GetElementMesh(e));
         }
       }
+
+      // Title.
       elem_count = title_text_group_.GetElementCount();
       for (int e = 0; e < elem_count; e++) {
         c.SetTexture(title_text_group_.GetElementTexture(e));
@@ -1041,6 +1218,8 @@ void DevConsole::Draw(FrameDef* frame_def) {
           c.DrawMesh(title_text_group_.GetElementMesh(e));
         }
       }
+
+      // Prompt.
       elem_count = prompt_text_group_.GetElementCount();
       for (int e = 0; e < elem_count; e++) {
         c.SetTexture(prompt_text_group_.GetElementTexture(e));
@@ -1052,6 +1231,8 @@ void DevConsole::Draw(FrameDef* frame_def) {
           c.DrawMesh(prompt_text_group_.GetElementMesh(e));
         }
       }
+
+      // Input line.
       elem_count = input_text_group_.GetElementCount();
       for (int e = 0; e < elem_count; e++) {
         c.SetTexture(input_text_group_.GetElementTexture(e));
@@ -1065,21 +1246,34 @@ void DevConsole::Draw(FrameDef* frame_def) {
     }
 
     // Carat.
+    if (!carat_mesh_.Exists()) {
+      UpdateCarat_();
+    }
     millisecs_t real_time = pass->frame_def()->app_time_millisecs();
     if (real_time % 200 < 100
-        || (real_time - last_input_text_change_time_ < 100)) {
+        || (real_time - last_carat_x_change_time_ < 100)) {
       SimpleComponent c(pass);
       c.SetTransparent(true);
-      c.SetColor(1, 1, 1, 0.7f);
+      c.SetTexture(g_base->assets->SysTexture(SysTextureID::kShadow));
+      c.SetColor(0.8, 0.0, 1.0, 0.3f);
+      // c.SetPremultiplied(true);
       {
         auto xf = c.ScopedTransform();
-        c.Translate(
-            (19.0f
-             + g_base->text_graphics->GetStringWidth(input_string_) * 0.5f)
-                * bs,
-            bottom + 22.5f * bs, kDevConsoleZDepth);
-        c.Scale(6.0f * bs, 12.0f * bs, 1.0f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+        auto carat_x = GetCaratX_();
+        c.Translate(15.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
+        c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
+        c.Translate(carat_x, 0.0f, 0.0f);
+        c.DrawMesh(carat_glow_mesh_.Get());
+      }
+      c.SetTexture(g_base->assets->SysTexture(SysTextureID::kShadowSharp));
+      c.SetColor(1.0, 1.0, 1.0, 1.0f);
+      {
+        auto xf = c.ScopedTransform();
+        auto carat_x = GetCaratX_();
+        c.Translate(15.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
+        c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
+        c.Translate(carat_x, 0.0f, 0.0f);
+        c.DrawMesh(carat_mesh_.Get());
       }
     }
 
@@ -1189,6 +1383,88 @@ void DevConsole::StepDisplayTime() {
       python_terminal_visible_ = false;
     }
   }
+}
+
+auto DevConsole::PasteFromClipboard() -> bool {
+  if (state_ != State_::kInactive) {
+    if (python_terminal_visible_) {
+      if (g_base->app_adapter->ClipboardIsSupported()) {
+        if (g_base->app_adapter->ClipboardHasText()) {
+          auto text = g_base->app_adapter->ClipboardGetText();
+          if (strstr(text.c_str(), "\n") || strstr(text.c_str(), "\r")) {
+            g_base->audio->PlaySound(
+                g_base->assets->SysSound(SysSoundID::kErrorBeep));
+            ScreenMessage("Can only paste single lines of text.",
+                          Vector3f(1.0f, 0.0f, 0.0f));
+          } else {
+            HandleTextEditing(text);
+          }
+          // Ok, we either pasted or complained, so consider it handled.
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+void DevConsole::UpdateCarat_() {
+  auto unichars = Utils::UnicodeFromUTF8(input_string_, "fjfwef");
+  auto unichars_clamped = unichars;
+
+  unichars_clamped.resize(carat_char_);
+  auto clamped_str = Utils::UTF8FromUnicode(unichars_clamped);
+  carat_x_ = g_base->text_graphics->GetStringWidth(clamped_str);
+
+  // Use a base width if we're not covering a char, and use the char's width
+  // if we are.
+  float width = 14.0f;
+  if (carat_char_ < unichars.size()) {
+    std::vector<uint32_t> covered_char{unichars[carat_char_]};
+    auto covered_char_str = Utils::UTF8FromUnicode(covered_char);
+    width =
+        std::max(3.0f, g_base->text_graphics->GetStringWidth(covered_char_str));
+  }
+
+  float height = 32.0f;
+  float x_extend = 15.0f;
+  float y_extend = 20.0f;
+  float x_offset = 2.0f;
+  float y_offset = -0.0f;
+  float corner_radius = 20.0f;
+  float width_fin = width + x_extend * 2.0f;
+  float height_fin = height + y_extend * 2.0f;
+  float x_border =
+      NinePatchMesh::BorderForRadius(corner_radius, width_fin, height_fin);
+  float y_border =
+      NinePatchMesh::BorderForRadius(corner_radius, height_fin, width_fin);
+  carat_glow_mesh_ = Object::New<NinePatchMesh>(
+      -x_extend + x_offset, -y_extend + y_offset, 0.0f, width_fin, height_fin,
+      x_border, y_border, x_border, y_border);
+
+  corner_radius = 3.0f;
+  x_extend = 0.0f;
+  y_extend = -3.0f;
+  x_offset = 1.0f;
+  y_offset = 0.0f;
+  width_fin = width + x_extend * 2.0f;
+  height_fin = height + y_extend * 2.0f;
+  x_border =
+      NinePatchMesh::BorderForRadius(corner_radius, width_fin, height_fin);
+  y_border =
+      NinePatchMesh::BorderForRadius(corner_radius, height_fin, width_fin);
+  carat_mesh_ = Object::New<NinePatchMesh>(
+      -x_extend + x_offset, -y_extend + y_offset, 0.0f, width_fin, height_fin,
+      x_border, y_border, x_border, y_border);
+}
+
+auto DevConsole::GetCaratX_() -> float {
+  if (carat_dirty_) {
+    last_carat_x_change_time_ = g_core->GetAppTimeMillisecs();
+    UpdateCarat_();
+    carat_dirty_ = false;
+  }
+  return carat_x_;
 }
 
 }  // namespace ballistica::base

@@ -5,7 +5,6 @@
 #include "ballistica/base/assets/asset.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/graphics.h"
-#include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/support/huffman.h"
 #include "ballistica/shared/foundation/event_loop.h"
 

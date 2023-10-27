@@ -2,63 +2,16 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 
-#if BA_OSTYPE_ANDROID  // Remove conditional once android sources are public.
-#include "ballistica/base/app_adapter/app_adapter_android.h"
-#endif
-#include "ballistica/base/app_adapter/app_adapter_apple.h"
-#include "ballistica/base/app_adapter/app_adapter_headless.h"
-#include "ballistica/base/app_adapter/app_adapter_sdl.h"
-#include "ballistica/base/app_adapter/app_adapter_vr.h"
-#include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/base/networking/networking.h"
-#include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
-#include "ballistica/base/support/stress_test.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::base {
-
-auto AppAdapter::Create() -> AppAdapter* {
-  assert(g_core);
-
-// TEMP - need to init sdl on our legacy mac build even though its not
-// technically an SDL app. Kill this once the old mac build is gone.
-#if BA_LEGACY_MACOS_BUILD
-  AppAdapterSDL::InitSDL();
-#endif
-
-  AppAdapter* app_adapter{};
-
-#if BA_HEADLESS_BUILD
-  app_adapter = new AppAdapterHeadless();
-#elif BA_OSTYPE_ANDROID
-  app_adapter = new AppAdapterAndroid();
-#elif BA_XCODE_BUILD
-  app_adapter = new AppAdapterApple();
-#elif BA_RIFT_BUILD
-  // Rift build can spin up in either VR or regular mode.
-  if (g_core->vr_mode) {
-    app_adapter = new AppAdapterVR();
-  } else {
-    app_adapter = new AppAdapterSDL();
-  }
-#elif BA_CARDBOARD_BUILD
-  app_adapter = new AppAdapterVR();
-#elif BA_SDL_BUILD
-  app_adapter = new AppAdapterSDL();
-#else
-#error No app adapter defined for this build.
-#endif
-
-  assert(app_adapter);
-  return app_adapter;
-}
 
 AppAdapter::AppAdapter() = default;
 

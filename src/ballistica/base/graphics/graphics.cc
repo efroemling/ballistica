@@ -5,28 +5,23 @@
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
-#include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/base/graphics/component/post_process_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/component/special_component.h"
 #include "ballistica/base/graphics/component/sprite_component.h"
 #include "ballistica/base/graphics/graphics_server.h"
-#include "ballistica/base/graphics/graphics_vr.h"
+#include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/graphics/support/net_graph.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_config.h"
-#include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/core/core.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::base {
 
@@ -35,14 +30,6 @@ const float kScreenMeshZDepth{-0.05f};
 const float kProgressBarZDepth{0.0f};
 const int kProgressBarFadeTime{500};
 const float kDebugImgZDepth{-0.04f};
-
-auto Graphics::Create() -> Graphics* {
-#if BA_VR_BUILD
-  return new GraphicsVR();
-#else
-  return new Graphics();
-#endif
-}
 
 auto Graphics::IsShaderTransparent(ShadingType c) -> bool {
   switch (c) {
@@ -231,11 +218,9 @@ auto Graphics::VSyncFromAppConfig() -> VSyncRequest {
 }
 
 auto Graphics::GraphicsQualityFromAppConfig() -> GraphicsQualityRequest {
-  // Graphics quality.
   std::string gqualstr =
       g_base->app_config->Resolve(AppConfig::StringID::kGraphicsQuality);
   GraphicsQualityRequest graphics_quality_requested;
-
   if (gqualstr == "Auto") {
     graphics_quality_requested = GraphicsQualityRequest::kAuto;
   } else if (gqualstr == "Higher") {
@@ -361,33 +346,36 @@ auto Graphics::GetShadowDensity(float x, float y, float z) -> float {
 
 class Graphics::ScreenMessageEntry {
  public:
-  ScreenMessageEntry(std::string s_in, bool align_left_in, uint32_t c,
-                     const Vector3f& color_in, TextureAsset* texture_in,
-                     TextureAsset* tint_texture_in, const Vector3f& tint_in,
-                     const Vector3f& tint2_in)
-      : align_left(align_left_in),
+  ScreenMessageEntry(std::string text, bool top_style, uint32_t c,
+                     const Vector3f& color, TextureAsset* texture,
+                     TextureAsset* tint_texture, const Vector3f& tint,
+                     const Vector3f& tint2)
+      : top_style(top_style),
         creation_time(c),
-        s_raw(std::move(s_in)),
-        color(color_in),
-        texture(texture_in),
-        tint_texture(tint_texture_in),
-        tint(tint_in),
-        tint2(tint2_in) {}
+        s_raw(std::move(text)),
+        color(color),
+        texture(texture),
+        tint_texture(tint_texture),
+        tint(tint),
+        tint2(tint2) {}
   auto GetText() -> TextGroup&;
   void UpdateTranslation();
-  bool align_left;
+  bool top_style;
   uint32_t creation_time;
   Vector3f color;
   Vector3f tint;
   Vector3f tint2;
   std::string s_raw;
   std::string s_translated;
+  float str_width{};
+  float str_height{};
   Object::Ref<TextureAsset> texture;
   Object::Ref<TextureAsset> tint_texture;
   float v_smoothed{};
   bool translation_dirty{true};
   bool mesh_dirty{true};
   millisecs_t smooth_time{};
+  Object::Ref<NinePatchMesh> shadow_mesh_;
 
  private:
   Object::Ref<TextGroup> s_mesh_;
@@ -578,7 +566,8 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
         SimpleComponent c(pass);
         c.SetTransparent(true);
         c.SetTexture(
-            g_base->assets->SysTexture(SysTextureID::kSoftRectVertical));
+            // g_base->assets->SysTexture(SysTextureID::kSoftRectVertical));
+            g_base->assets->SysTexture(SysTextureID::kShadowSharp));
 
         float screen_width = g_base->graphics->screen_virtual_width();
 
@@ -590,6 +579,10 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
              i++) {
           // Update the translation if need be.
           i->UpdateTranslation();
+
+          // Don't actually need the text just yet but need shadow mesh
+          // which is calculated as part of it.
+          i->GetText();
 
           millisecs_t age = g_core->GetAppTimeMillisecs() - i->creation_time;
           youngest_age = std::min(youngest_age, age);
@@ -609,9 +602,9 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
           }
           a *= 0.8f;
 
-          if (vr) {
-            a *= 0.8f;
-          }
+          // if (vr) {
+          //   a *= 0.8f;
+          // }
 
           if (i->translation_dirty) {
             BA_LOG_ONCE(
@@ -619,10 +612,9 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
                 "Found dirty translation on screenmessage draw pass 1; raw="
                     + i->s_raw);
           }
-          float str_height =
-              g_base->text_graphics->GetStringHeight(i->s_translated.c_str());
-          float str_width =
-              g_base->text_graphics->GetStringWidth(i->s_translated.c_str());
+
+          float str_height = i->str_height;
+          float str_width = i->str_width;
 
           if ((str_width * scale) > (screen_width - 40)) {
             s_extra *= ((screen_width - 40) / (str_width * scale));
@@ -639,7 +631,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
           if (age < 100) {
             fade = 1.0f;
           } else {
-            fade = std::max(0.0f, (200.0f - static_cast<float>(age)) / 100.0f);
+            fade = std::max(0.07f, (200.0f - static_cast<float>(age)) / 100.0f);
           }
           c.SetColor(r * fade, g * fade, b * fade, a);
 
@@ -663,22 +655,28 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
 
             c.Translate(screen_width * 0.5f, i->v_smoothed,
                         vr ? 60 : kScreenMessageZDepth);
-            if (vr) {
-              // Let's drop down a bit in vr mode.
-              c.Translate(0, -10.0f, 0);
-              c.Scale((str_width + 60) * scale * s_extra,
-                      (str_height + 20) * scale * s_extra);
 
-              // Align our bottom with where we just scaled from.
-              c.Translate(0, 0.5f, 0);
-            } else {
-              c.Scale((str_width + 110) * scale * s_extra,
-                      (str_height + 40) * scale * s_extra);
+            // if (vr) {
+            //   // Let's drop down a bit in vr mode.
+            //   // c.Translate(0, -10.0f, 0);
+            //   // c.Scale((str_width + 60) * scale * s_extra,
+            //   //         (str_height + 20) * scale * s_extra);
+            //   c.Scale(scale * s_extra, scale * s_extra);
+
+            //   // Align our bottom with where we just scaled from.
+            //   c.Translate(0, 0.5f, 0);
+            {
+              // c.Scale((str_width + 110) * scale * s_extra,
+              //         (str_height + 40) * scale * s_extra);
+              c.Scale(scale * s_extra, scale * s_extra);
+              c.Translate(0, 20);
 
               // Align our bottom with where we just scaled from.
               c.Translate(0, 0.5f, 0);
             }
-            c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+            // c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+            assert(i->shadow_mesh_.Exists());
+            c.DrawMesh(i->shadow_mesh_.Get());
           }
 
           v += scale * (36 + str_height);
@@ -721,10 +719,8 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
                 "Found dirty translation on screenmessage draw pass 2; raw="
                     + i->s_raw);
           }
-          float str_height =
-              g_base->text_graphics->GetStringHeight(i->s_translated.c_str());
-          float str_width =
-              g_base->text_graphics->GetStringWidth(i->s_translated.c_str());
+          float str_height = i->str_height;
+          float str_width = i->str_width;
 
           if ((str_width * scale) > (screen_width - 40)) {
             s_extra *= ((screen_width - 40) / (str_width * scale));
@@ -1964,8 +1960,28 @@ auto Graphics::ScreenMessageEntry::GetText() -> TextGroup& {
   if (mesh_dirty) {
     s_mesh_->SetText(
         s_translated,
-        align_left ? TextMesh::HAlign::kLeft : TextMesh::HAlign::kCenter,
+        top_style ? TextMesh::HAlign::kLeft : TextMesh::HAlign::kCenter,
         TextMesh::VAlign::kBottom);
+
+    str_width = g_base->text_graphics->GetStringWidth(s_translated.c_str());
+    str_height = g_base->text_graphics->GetStringHeight(s_translated.c_str());
+
+    if (!top_style) {
+      float x_extend = 40.0f;
+      float y_extend = 40.0f;
+      float y_offset = -10.0f;
+      float corner_radius = 60.0f;
+      float width_fin = str_width + x_extend * 2.0f;
+      float height_fin = str_height + y_extend * 2.0f;
+      float x_border =
+          NinePatchMesh::BorderForRadius(corner_radius, width_fin, height_fin);
+      float y_border =
+          NinePatchMesh::BorderForRadius(corner_radius, height_fin, width_fin);
+      shadow_mesh_ = Object::New<NinePatchMesh>(
+          -0.5f * width_fin, -y_extend + y_offset, 0.0f, width_fin, height_fin,
+          x_border, y_border, x_border, y_border);
+    }
+
     mesh_dirty = false;
   }
   return *s_mesh_;

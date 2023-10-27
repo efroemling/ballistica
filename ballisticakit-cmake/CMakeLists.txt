@@ -436,6 +436,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/support/app_config.cc
   ${BA_SRC_ROOT}/ballistica/base/support/app_config.h
   ${BA_SRC_ROOT}/ballistica/base/support/app_timer.h
+  ${BA_SRC_ROOT}/ballistica/base/support/base_build_switches.cc
+  ${BA_SRC_ROOT}/ballistica/base/support/base_build_switches.h
   ${BA_SRC_ROOT}/ballistica/base/support/classic_soft.h
   ${BA_SRC_ROOT}/ballistica/base/support/context.cc
   ${BA_SRC_ROOT}/ballistica/base/support/context.h

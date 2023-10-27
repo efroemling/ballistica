@@ -807,23 +807,9 @@ void AppAdapterSDL::CursorPositionForDraw(float* x, float* y) {
 auto AppAdapterSDL::FullscreenControlAvailable() const -> bool { return true; }
 auto AppAdapterSDL::FullscreenControlKeyShortcut() const
     -> std::optional<std::string> {
-  if (g_buildconfig.ostype_windows()) {
-    // On Windows we support F11 and Alt+Enter to toggle fullscreen. Let's
-    // mention Alt+Enter which seems like it might be more commonly used
-    return "Alt+Enter";
-  }
-  if (g_buildconfig.ostype_macos()) {
-    // The Mac+SDL situation is a bit of a mess. By default, there is 'Enter
-    // Full Screen' in the window menu which is mapped to fn-F, but that
-    // will only work if a window was created in SDL as windowed. If we
-    // fullscreen that window and restart the app, we'll then have a *real*
-    // fullscreen sdl window and that shortcut won't work anymore. So to
-    // keep things consistent we advertise ctrl-f which we always handle
-    // ourselves. Maybe this situation will be cleaned up in SDL 3, but its
-    // not a huge deal anyway since our Cocoa Mac version behaves cleanly.
-    return "Ctrl+F";
-  }
-  return {};
+  // On our SDL build we support F11 and Alt+Enter to toggle fullscreen.
+  // Let's mention Alt+Enter which seems like it might be more commonly used
+  return "Alt+Enter";
 };
 
 auto AppAdapterSDL::SupportsVSync() -> bool const { return true; }

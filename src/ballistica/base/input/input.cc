@@ -12,10 +12,8 @@
 #include "ballistica/base/input/device/touch_input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
-#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -838,6 +836,13 @@ void Input::PushTextInputEvent(const std::string& text) {
       return;
     }
 
+    // Ignore back-tick and tilde because we use that key to toggle the console.
+    // FIXME: Perhaps should allow typing it if some control-character is
+    // held?
+    if (text == "`" || text == "~") {
+      return;
+    }
+
     // We try to handle char filtering here (to keep it consistent across
     // platforms) but make a stink if they sent us something that we can't
     // at least translate to unicode.
@@ -1065,17 +1070,9 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
   // Explicitly handle fullscreen-toggles in some cases.
   if (g_base->app_adapter->FullscreenControlAvailable()) {
     bool do_toggle{};
-    // On our Mac SDL builds we support ctrl+F for toggling fullscreen.
-    // On our nice Cocoa build, fullscreening happens magically through the
-    // view menu fullscreen control's shortcut.
-    if (g_buildconfig.ostype_macos() && !g_buildconfig.xcode_build()) {
-      if (keysym.sym == SDLK_f && ((keysym.mod & KMOD_CTRL))) {
-        do_toggle = true;
-      }
-    }
-    // On Windows and Linux we support both F11 and Alt+Enter for toggling
+    // On our SDL builds we support both F11 and Alt+Enter for toggling
     // fullscreen.
-    if (g_buildconfig.ostype_windows() || g_buildconfig.ostype_linux()) {
+    if (g_buildconfig.sdl_build()) {
       if ((keysym.sym == SDLK_F11
            || (keysym.sym == SDLK_RETURN && ((keysym.mod & KMOD_ALT))))) {
         do_toggle = true;
@@ -1089,6 +1086,19 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     }
   }
 
+  // Ctrl-V or Cmd-V sends paste commands to the console or any interested
+  // text fields.
+  if (keysym.sym == SDLK_v
+      && ((keysym.mod & KMOD_CTRL) || (keysym.mod & KMOD_GUI))) {
+    if (auto* console = g_base->ui->dev_console()) {
+      if (console->PasteFromClipboard()) {
+        return;
+      }
+    }
+    g_base->ui->SendWidgetMessage(WidgetMessage(WidgetMessage::Type::kPaste));
+    return;
+  }
+
   // Dev Console.
   if (auto* console = g_base->ui->dev_console()) {
     if (keysym.sym == SDLK_BACKQUOTE || keysym.sym == SDLK_F2) {
@@ -1100,13 +1110,6 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     if (console->HandleKeyPress(&keysym)) {
       return;
     }
-  }
-
-  // Ctrl-V or Cmd-V sends paste commands to any interested text fields.
-  if (keysym.sym == SDLK_v
-      && ((keysym.mod & KMOD_CTRL) || (keysym.mod & KMOD_GUI))) {
-    g_base->ui->SendWidgetMessage(WidgetMessage(WidgetMessage::Type::kPaste));
-    return;
   }
 
   bool handled = false;

@@ -15,8 +15,12 @@ namespace ballistica::base {
 /// with a single platform (Windows, Mac, etc.).
 class BasePlatform {
  public:
-  /// Instantiate the CorePlatform subclass for the current build.
-  static auto Create() -> BasePlatform*;
+  BasePlatform();
+
+  /// Called after our singleton has been instantiated. Any construction
+  /// functionality requiring virtual functions resolving to their final
+  /// class versions can go here.
+  virtual void PostInit();
 
 #pragma mark APP EVENTS / LIFECYCLE --------------------------------------------
 
@@ -95,6 +99,8 @@ class BasePlatform {
   /// Must be called in the logic thread.
   void StringEditorCancel();
 
+  auto ran_base_post_init() const { return ran_base_post_init_; }
+
  protected:
   /// Pop up a text edit dialog.
   virtual void DoInvokeStringEditor(const std::string& title,
@@ -107,15 +113,9 @@ class BasePlatform {
   /// Make a purchase.
   virtual void DoPurchase(const std::string& item);
 
-  BasePlatform();
   virtual ~BasePlatform();
 
  private:
-  /// Called after our singleton has been instantiated. Any construction
-  /// functionality requiring virtual functions resolving to their final
-  /// class versions can go here.
-  virtual void PostInit();
-
   bool ran_base_post_init_ : 1 {};
   PythonRef string_edit_adapter_{};
   std::string public_device_uuid_;

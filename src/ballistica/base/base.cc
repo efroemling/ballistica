@@ -20,12 +20,12 @@
 #include "ballistica/base/python/class/python_class_feature_set_data.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_config.h"
+#include "ballistica/base/support/base_build_switches.h"
 #include "ballistica/base/support/huffman.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/support/stdio_console.h"
 #include "ballistica/base/support/stress_test.h"
 #include "ballistica/base/ui/dev_console.h"
-#include "ballistica/base/ui/ui.h"
 #include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -39,7 +39,7 @@ core::CoreFeatureSet* g_core{};
 BaseFeatureSet* g_base{};
 
 BaseFeatureSet::BaseFeatureSet()
-    : app_adapter{AppAdapter::Create()},
+    : app_adapter{BaseBuildSwitches::CreateAppAdapter()},
       app_config{new AppConfig()},
       app_mode_{AppModeEmpty::GetSingleton()},
       assets{new Assets()},
@@ -51,7 +51,7 @@ BaseFeatureSet::BaseFeatureSet()
       bg_dynamics_server{g_core->HeadlessMode() ? nullptr
                                                 : new BGDynamicsServer},
       context_ref{new ContextRef(nullptr)},
-      graphics{Graphics::Create()},
+      graphics{BaseBuildSwitches::CreateGraphics()},
       graphics_server{new GraphicsServer()},
       huffman{new Huffman()},
       input{new Input()},
@@ -59,7 +59,7 @@ BaseFeatureSet::BaseFeatureSet()
       network_reader{new NetworkReader()},
       network_writer{new NetworkWriter()},
       networking{new Networking()},
-      platform{BasePlatform::Create()},
+      platform{BaseBuildSwitches::CreatePlatform()},
       python{new BasePython()},
       stdio_console{g_buildconfig.enable_stdio_console() ? new StdioConsole()
                                                          : nullptr},

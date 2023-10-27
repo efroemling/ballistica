@@ -53,8 +53,7 @@ const float kCursorZDepth{0.9f};
 // Client class for graphics operations (used from the logic thread).
 class Graphics {
  public:
-  /// Instantiate the Graphics subclass for the current build.
-  static auto Create() -> Graphics*;
+  Graphics();
 
   void OnAppStart();
   void OnAppPause();
@@ -370,7 +369,6 @@ class Graphics {
  protected:
   class ScreenMessageEntry;
 
-  Graphics();
   virtual ~Graphics();
   virtual void DoDrawFade(FrameDef* frame_def, float amt);
   static void CalcVirtualRes_(float* x, float* y);

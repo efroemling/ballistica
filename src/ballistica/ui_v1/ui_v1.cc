@@ -3,10 +3,8 @@
 #include "ballistica/ui_v1/ui_v1.h"
 
 #include "ballistica/base/app_mode/app_mode.h"
-#include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/input/input.h"
-#include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/support/root_ui.h"

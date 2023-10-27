@@ -423,6 +423,8 @@
     <ClCompile Include="..\..\src\ballistica\base\support\app_config.cc" />
     <ClInclude Include="..\..\src\ballistica\base\support\app_config.h" />
     <ClInclude Include="..\..\src\ballistica\base\support\app_timer.h" />
+    <ClCompile Include="..\..\src\ballistica\base\support\base_build_switches.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\support\base_build_switches.h" />
     <ClInclude Include="..\..\src\ballistica\base\support\classic_soft.h" />
     <ClCompile Include="..\..\src\ballistica\base\support\context.cc" />
     <ClInclude Include="..\..\src\ballistica\base\support\context.h" />

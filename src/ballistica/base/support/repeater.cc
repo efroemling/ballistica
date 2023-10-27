@@ -2,7 +2,6 @@
 
 #include "ballistica/base/support/repeater.h"
 
-#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/shared/foundation/event_loop.h"
 

@@ -1,4 +1,4 @@
-### 1.7.28 (build 21516, api 8, 2023-10-26)
+### 1.7.28 (build 21522, api 8, 2023-10-26)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -164,6 +164,9 @@
 - Dev console no longer claims key events unless the Python tab is showing and
   there is a hardware keyboard attached. This allows showing dev console tabs
   above gameplay without interfering with it.
+- Added clipboard paste support to the dev console python terminal.
+- Added various text editing functionality to the dev console python terminal
+  (cursor movement, deleting chars and words, etc.)
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 
