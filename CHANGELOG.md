@@ -6,7 +6,7 @@
   huge chunks of it and put back still-relevant pieces in a much more cleanly
   designed way. This should put us in a much better place for supporting various
   platforms and making graphical improvements going forward.
-  `ballistica/base/app_adapter/app_adapter_sdl.cc` for an example of the now
+  `ballistica/base/app_adapter/app_adapter_sdl.cc` is an example of the now
   nicely implemented system.
 - The engine now requires OpenGL 3.0 or newer on desktop and OpenGL ES 3.0 or
   newer on mobile. This means we're cutting off a few percent of old devices on
