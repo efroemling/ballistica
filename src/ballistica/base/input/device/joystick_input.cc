@@ -65,7 +65,12 @@ JoystickInput::JoystickInput(int sdl_joystick_id,
     // that instead.
     // #if BA_SDL2_BUILD
     sdl_joystick_id_ = SDL_JoystickInstanceID(sdl_joystick_);
-    raw_sdl_joystick_name_ = SDL_JoystickName(sdl_joystick_);
+    if (auto* name = SDL_JoystickName(sdl_joystick_)) {
+      raw_sdl_joystick_name_ = name;
+    } else {
+      // This can return nullptr if SDL can't find a name.
+      raw_sdl_joystick_name_ = "Unknown Controller";
+    }
 
     // Special case: on windows, xinput stuff comes in with unique names
     // "XInput Controller #3", etc.  Let's replace these with simply "XInput

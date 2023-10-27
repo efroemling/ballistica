@@ -264,10 +264,19 @@ class ControlsGuide(bs.Actor):
         bs.timer(delay, bs.WeakCall(self._start_updating))
 
     @staticmethod
-    def _meaningful_button_name(device: bs.InputDevice, button: int) -> str:
+    def _meaningful_button_name(
+        device: bs.InputDevice, button_name: str
+    ) -> str:
         """Return a flattened string button name; empty for non-meaningful."""
         if not device.has_meaningful_button_names:
             return ''
+        assert bs.app.classic is not None
+        button = bs.app.classic.get_input_device_mapped_value(
+            device, button_name
+        )
+        # -1 means unset; let's show that.
+        if button == -1:
+            return bs.Lstr(resource='configGamepadWindow.unsetText').evaluate()
         return device.get_button_name(button).evaluate()
 
     def _start_updating(self) -> None:
@@ -289,10 +298,10 @@ class ControlsGuide(bs.Actor):
     def _check_fade_in(self) -> None:
         assert bs.app.classic is not None
 
-        # If we have a touchscreen, we only fade in if we have a player with
-        # an input device that is *not* the touchscreen.
-        # (otherwise it is confusing to see the touchscreen buttons right
-        # next to our display buttons)
+        # If we have a touchscreen, we only fade in if we have a player
+        # with an input device that is *not* the touchscreen. Otherwise
+        # it is confusing to see the touchscreen buttons right next to
+        # our display buttons.
         touchscreen: bs.InputDevice | None = bs.getinputdevice(
             'TouchScreen', '#1', doraise=False
         )
@@ -318,15 +327,7 @@ class ControlsGuide(bs.Actor):
                         'buttonBomb',
                         'buttonPickUp',
                     ):
-                        if (
-                            self._meaningful_button_name(
-                                device,
-                                bs.app.classic.get_input_device_mapped_value(
-                                    device, name
-                                ),
-                            )
-                            != ''
-                        ):
+                        if self._meaningful_button_name(device, name) != '':
                             fade_in = True
                             break
                     if fade_in:
@@ -401,58 +402,30 @@ class ControlsGuide(bs.Actor):
             # We only care about movement buttons in the case of keyboards.
             if all_keyboards:
                 right_button_names.add(
-                    device.get_button_name(
-                        classic.get_input_device_mapped_value(
-                            device, 'buttonRight'
-                        )
-                    )
+                    self._meaningful_button_name(device, 'buttonRight')
                 )
                 left_button_names.add(
-                    device.get_button_name(
-                        classic.get_input_device_mapped_value(
-                            device, 'buttonLeft'
-                        )
-                    )
+                    self._meaningful_button_name(device, 'buttonLeft')
                 )
                 down_button_names.add(
-                    device.get_button_name(
-                        classic.get_input_device_mapped_value(
-                            device, 'buttonDown'
-                        )
-                    )
+                    self._meaningful_button_name(device, 'buttonDown')
                 )
                 up_button_names.add(
-                    device.get_button_name(
-                        classic.get_input_device_mapped_value(
-                            device, 'buttonUp'
-                        )
-                    )
+                    self._meaningful_button_name(device, 'buttonUp')
                 )
 
             # Ignore empty values; things like the remote app or
             # wiimotes can return these.
-            bname = self._meaningful_button_name(
-                device,
-                classic.get_input_device_mapped_value(device, 'buttonPunch'),
-            )
+            bname = self._meaningful_button_name(device, 'buttonPunch')
             if bname != '':
                 punch_button_names.add(bname)
-            bname = self._meaningful_button_name(
-                device,
-                classic.get_input_device_mapped_value(device, 'buttonJump'),
-            )
+            bname = self._meaningful_button_name(device, 'buttonJump')
             if bname != '':
                 jump_button_names.add(bname)
-            bname = self._meaningful_button_name(
-                device,
-                classic.get_input_device_mapped_value(device, 'buttonBomb'),
-            )
+            bname = self._meaningful_button_name(device, 'buttonBomb')
             if bname != '':
                 bomb_button_names.add(bname)
-            bname = self._meaningful_button_name(
-                device,
-                classic.get_input_device_mapped_value(device, 'buttonPickUp'),
-            )
+            bname = self._meaningful_button_name(device, 'buttonPickUp')
             if bname != '':
                 pickup_button_names.add(bname)
 
@@ -582,8 +555,8 @@ class ControlsGuide(bs.Actor):
             if msg.immediate:
                 self._die()
             else:
-                # If they don't need immediate,
-                # fade out our nodes and die later.
+                # If they don't need immediate, fade out our nodes and
+                # die later.
                 for node in self._nodes:
                     bs.animate(node, 'opacity', {0: node.opacity, 3.0: 0.0})
                 bs.timer(3.1, bs.WeakCall(self._die))

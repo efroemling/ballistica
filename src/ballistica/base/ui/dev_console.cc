@@ -864,7 +864,7 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
             bool found_valid{};
             // Move until we've found at least one valid char and the
             // stop at the first invalid one.
-            while (carat_char_ < unichars.size()) {
+            while (carat_char_ < static_cast<int>(unichars.size())) {
               assert(CaratCharValid_());
               auto this_char = unichars[carat_char_];
               auto is_valid = IsValidHungryChar_(this_char);
@@ -995,8 +995,8 @@ void DevConsole::Exec() {
 // Just for sanity testing.
 auto DevConsole::CaratCharValid_() -> bool {
   return carat_char_ >= 0
-         && carat_char_
-                <= Utils::UnicodeFromUTF8(input_string_, "fwewffe").size();
+         && carat_char_ <= static_cast<int>(
+                Utils::UnicodeFromUTF8(input_string_, "fwewffe").size());
 }
 
 void DevConsole::SubmitPythonCommand_(const std::string& command) {
@@ -1419,7 +1419,7 @@ void DevConsole::UpdateCarat_() {
   // Use a base width if we're not covering a char, and use the char's width
   // if we are.
   float width = 14.0f;
-  if (carat_char_ < unichars.size()) {
+  if (carat_char_ < static_cast<int>(unichars.size())) {
     std::vector<uint32_t> covered_char{unichars[carat_char_]};
     auto covered_char_str = Utils::UTF8FromUnicode(covered_char);
     width =

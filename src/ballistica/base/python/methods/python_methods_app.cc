@@ -602,7 +602,7 @@ static auto PyCommitConfig(PyObject* self, PyObject* args, PyObject* keywds)
     }
     fclose(f_out);
 
-    // Now backup any existing config to .prev.
+    // Now move any existing config to .prev.
     if (g_core->platform->FilePathExists(path)) {
       // On windows, rename doesn't overwrite existing files.. need to kill
       // the old explicitly.

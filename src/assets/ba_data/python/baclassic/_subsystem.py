@@ -627,15 +627,6 @@ class ClassicSubsystem(babase.AppSubsystem):
         """(internal)"""
         return bascenev1.get_foreground_host_activity()
 
-    def show_config_error_window(self) -> bool:
-        """(internal)"""
-        if self.platform in ('mac', 'linux', 'windows'):
-            from bauiv1lib.configerror import ConfigErrorWindow
-
-            babase.pushcall(ConfigErrorWindow)
-            return True
-        return False
-
     def value_test(
         self,
         arg: str,

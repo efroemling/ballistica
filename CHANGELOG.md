@@ -1,4 +1,4 @@
-### 1.7.28 (build 21525, api 8, 2023-10-27)
+### 1.7.28 (build 21528, api 8, 2023-10-27)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -176,6 +176,22 @@
   who never leave the party (Thanks EraOSBeta!).
 - Fixes an issue where servers could be crashed by flooding them with join
   requests (Thanks for the heads-up Era!).
+- The engine will now ignore empty device config dicts and fall back to
+  defaults; these could theoretically happen if device config code fails
+  somewhere and it previously would leave the device mysteriously inoperable.
+- The game will now show <unset> for controls with no bindings in the in-game
+  guide and controller/keyboard config screens.
+- Fixed a crash that could occur if SDL couldn't find a name for connected
+  joystick.
+- Simplified the app's handling of broken config files. Previously it would do
+  various complex things such as offering to edit the broken config on desktop
+  builds, avoiding overwriting broken configs, and automatically loading
+  previous configs. Now, if it finds a broken config, it will simply back it up
+  to a .broken file, log an error message, and then start up normally with a
+  default config. This way, things are more consistent across platforms, and
+  technical users can still fix and restore their old configs. Note that the app
+  still also writes .prev configs for extra security, though it no longer uses
+  them for anything itself.
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 

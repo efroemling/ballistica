@@ -126,12 +126,12 @@ class JoystickInput : public InputDevice {
   bool calibrate_ : 1 {};
   bool can_configure_ : 1 {};
 
-  int hat_{};
-  int analog_lr_{};
+  int hat_{0};
+  int analog_lr_{0};
   int analog_ud_{1};
 
   // Mappings of ba buttons to SDL buttons.
-  int jump_button_{};
+  int jump_button_{0};
   int punch_button_{1};
   int bomb_button_{2};
   int pickup_button_{3};

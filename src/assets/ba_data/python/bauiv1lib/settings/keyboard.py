@@ -213,6 +213,12 @@ class ConfigKeyboardWindow(bui.Window):
             scale=1.0,
         )
 
+    def _pretty_button_name(self, button_name: str) -> bui.Lstr:
+        button_id = self._settings[button_name]
+        if button_id == -1:
+            return bs.Lstr(resource='configGamepadWindow.unsetText')
+        return self._input.get_button_name(button_id)
+
     def _capture_button(
         self,
         pos: tuple[float, float],
@@ -250,7 +256,7 @@ class ConfigKeyboardWindow(bui.Window):
                 v_align='top',
                 scale=uiscale,
                 maxwidth=maxwidth,
-                text=self._input.get_button_name(self._settings[button]),
+                text=self._pretty_button_name(button),
             )
             bui.buttonwidget(
                 edit=btn,
