@@ -73,8 +73,8 @@ void SceneV1InputDeviceDelegate::RequestPlayer() {
     return;
   }
 
-  // If we have a local host-session, ask it for a player.. otherwise if we have
-  // a client-session, ask it for a player.
+  // If we have a local host-session, ask it for a player.. otherwise if we
+  // have a client-session, ask it for a player.
   assert(g_base->logic);
   if (auto* hs = dynamic_cast<HostSession*>(appmode->GetForegroundSession())) {
     {

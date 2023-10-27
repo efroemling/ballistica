@@ -1,4 +1,4 @@
-### 1.7.28 (build 21524, api 8, 2023-10-27)
+### 1.7.28 (build 21525, api 8, 2023-10-27)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -174,6 +174,8 @@
   leave to prevent game exploits. Note this is different than the existing
   system that prevents joining a *party* for 10 seconds; this covers people
   who never leave the party (Thanks EraOSBeta!).
+- Fixes an issue where servers could be crashed by flooding them with join
+  requests (Thanks for the heads-up Era!).
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 
