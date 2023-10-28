@@ -365,7 +365,7 @@ static auto PyAppTimer(PyObject* self, PyObject* args, PyObject* keywds)
     throw Exception("Timer length cannot be < 0.", PyExcType::kValue);
   }
   g_base->logic->NewAppTimer(
-      static_cast<millisecs_t>(length * 1000.0), false,
+      static_cast<microsecs_t>(length * 1000000.0), false,
       Object::New<Runnable, PythonContextCallRunnable>(call_obj).Get());
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -459,7 +459,7 @@ static auto PyDisplayTimer(PyObject* self, PyObject* args, PyObject* keywds)
   }
   g_base->logic->NewDisplayTimer(
       static_cast<microsecs_t>(length * 1000000.0), false,
-      Object::New<Runnable, PythonContextCallRunnable>(call_obj));
+      Object::New<Runnable, PythonContextCallRunnable>(call_obj).Get());
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

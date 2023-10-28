@@ -244,7 +244,8 @@ void Input::ShowStandardInputDeviceConnectedMessage_(InputDevice* j) {
     g_base->logic->DeleteAppTimer(connect_print_timer_id_);
   }
   connect_print_timer_id_ = g_base->logic->NewAppTimer(
-      500, false, NewLambdaRunnable([this] { AnnounceConnects_(); }).Get());
+      500 * 1000, false,
+      NewLambdaRunnable([this] { AnnounceConnects_(); }).Get());
 }
 
 void Input::ShowStandardInputDeviceDisconnectedMessage_(InputDevice* j) {
@@ -259,7 +260,8 @@ void Input::ShowStandardInputDeviceDisconnectedMessage_(InputDevice* j) {
     g_base->logic->DeleteAppTimer(disconnect_print_timer_id_);
   }
   disconnect_print_timer_id_ = g_base->logic->NewAppTimer(
-      250, false, NewLambdaRunnable([this] { AnnounceDisconnects_(); }).Get());
+      250 * 1000, false,
+      NewLambdaRunnable([this] { AnnounceDisconnects_(); }).Get());
 }
 
 void Input::PushAddInputDeviceCall(InputDevice* input_device,

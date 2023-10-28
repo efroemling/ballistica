@@ -25,7 +25,7 @@ void AssetsServer::OnAppStartInThread() {
   // Ask our thread to give us periodic processing time (close to but
   // not *exactly* one second; try to avoid aliasing with similar updates).
   process_timer_ = event_loop()->NewTimer(
-      987, true, NewLambdaRunnable([this] { Process(); }).Get());
+      987 * 1000, true, NewLambdaRunnable([this] { Process(); }).Get());
 }
 
 void AssetsServer::PushPendingPreload(Object::Ref<Asset>* asset_ref_ptr) {
@@ -258,7 +258,7 @@ void AssetsServer::Process() {
   // we're writing a replay.. otherwise just sleep indefinitely.
   if (pending_preloads_.empty() && pending_preloads_audio_.empty()) {
     if (writing_replay_) {
-      process_timer_->SetLength(1000);
+      process_timer_->SetLength(1000 * 1000);
     } else {
       process_timer_->SetLength(-1);
     }

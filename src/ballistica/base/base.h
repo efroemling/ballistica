@@ -53,6 +53,7 @@ class ClassicSoftInterface;
 class CollisionMeshAsset;
 class CollisionCache;
 class DevConsole;
+class DisplayTimer;
 class Context;
 class ContextRef;
 class DataAsset;

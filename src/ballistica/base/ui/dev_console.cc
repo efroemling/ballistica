@@ -85,8 +85,10 @@ static auto XOffs(DevConsoleHAnchor_ attach) -> float {
 }
 
 static auto IsValidHungryChar_(uint32_t this_char) -> bool {
+  // Include letters, numbers, and underscore.
   return ((this_char >= 65 && this_char <= 90)
-          || (this_char >= 97 && this_char <= 122));
+          || (this_char >= 97 && this_char <= 122)
+          || (this_char >= 48 && this_char <= 57) || this_char == '_');
 }
 
 static void DrawRect(RenderPass* pass, Mesh* mesh, float bottom, float x,
@@ -722,7 +724,9 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
     bool do_history_up{};
     bool do_history_down{};
     bool do_backspace{};
+    bool do_forward_delete{};
     bool do_hungry_backspace{};
+    bool do_hungry_forward_delete{};
     bool do_move_to_end{};
     bool do_move_to_beginning{};
     bool do_kill_line{};
@@ -735,6 +739,20 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
         }
         break;
       }
+      case SDLK_DELETE: {
+        if (keysym->mod & KMOD_ALT) {
+          do_hungry_forward_delete = true;
+        } else {
+          do_forward_delete = true;
+        }
+        break;
+      }
+      case SDLK_HOME:
+        do_move_to_beginning = true;
+        break;
+      case SDLK_END:
+        do_move_to_end = true;
+        break;
       case SDLK_UP:
         do_history_up = true;
         break;
@@ -791,6 +809,13 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
           do_move_to_beginning = true;
         }
         break;
+      case SDLK_d:
+        if (keysym->mod & KMOD_CTRL) {
+          do_forward_delete = true;
+        } else if (keysym->mod & KMOD_ALT) {
+          do_hungry_forward_delete = true;
+        }
+        break;
       case SDLK_e:
         if (keysym->mod & KMOD_CTRL) {
           do_move_to_end = true;
@@ -800,7 +825,6 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
         if (keysym->mod & KMOD_CTRL) {
           do_kill_line = true;
         }
-
       default: {
         break;
       }
@@ -851,15 +875,18 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
               carat_char_ -= 1;
               assert(CaratCharValid_());
             }
-            input_string_ = Utils::UTF8FromUnicode(unichars);
-            input_text_dirty_ = true;
+            if (do_delete) {
+              input_string_ = Utils::UTF8FromUnicode(unichars);
+              input_text_dirty_ = true;
+            }
             carat_dirty_ = true;
           });
     }
-    if (do_hungry_carat_right) {
+    if (do_hungry_forward_delete || do_hungry_carat_right) {
+      auto do_delete = do_hungry_forward_delete;
       key_repeater_ = Repeater::New(
           g_base->app_adapter->GetKeyRepeatDelay(),
-          g_base->app_adapter->GetKeyRepeatInterval(), [this] {
+          g_base->app_adapter->GetKeyRepeatInterval(), [this, do_delete] {
             auto unichars = Utils::UnicodeFromUTF8(input_string_, "fjco38");
             bool found_valid{};
             // Move until we've found at least one valid char and the
@@ -874,8 +901,16 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
               if (is_valid) {
                 found_valid = true;
               }
-              carat_char_ += 1;
+              if (do_delete) {
+                unichars.erase(unichars.begin() + carat_char_);
+              } else {
+                carat_char_ += 1;
+              }
               assert(CaratCharValid_());
+            }
+            if (do_delete) {
+              input_string_ = Utils::UTF8FromUnicode(unichars);
+              input_text_dirty_ = true;
             }
             carat_dirty_ = true;
           });
@@ -893,6 +928,21 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
               carat_char_ -= 1;
               assert(CaratCharValid_());
               carat_dirty_ = true;
+            }
+          });
+    }
+    if (do_forward_delete) {
+      key_repeater_ = Repeater::New(
+          g_base->app_adapter->GetKeyRepeatDelay(),
+          g_base->app_adapter->GetKeyRepeatInterval(), [this] {
+            auto unichars = Utils::UnicodeFromUTF8(input_string_, "fjco33");
+            if (!unichars.empty() && carat_char_ < unichars.size()) {
+              assert(CaratCharValid_());
+              unichars.erase(unichars.begin() + carat_char_);
+              input_string_ = Utils::UTF8FromUnicode(unichars);
+              input_text_dirty_ = true;
+              carat_dirty_ = true;  // Didn't move but might change size.
+              assert(CaratCharValid_());
             }
           });
     }

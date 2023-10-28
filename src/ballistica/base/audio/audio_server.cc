@@ -32,9 +32,9 @@ LPALCDEVICEPAUSESOFT alcDevicePauseSOFT;
 LPALCDEVICERESUMESOFT alcDeviceResumeSOFT;
 #endif
 
-const int kAudioProcessIntervalNormal{500};
-const int kAudioProcessIntervalFade{50};
-const int kAudioProcessIntervalPendingLoad{1};
+const int kAudioProcessIntervalNormal{500 * 1000};
+const int kAudioProcessIntervalFade{50 * 1000};
+const int kAudioProcessIntervalPendingLoad{1 * 1000};
 
 #if BA_DEBUG_BUILD || BA_TEST_BUILD
 const bool kShowInUseSounds{};

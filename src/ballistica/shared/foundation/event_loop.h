@@ -45,21 +45,17 @@ class EventLoop {
 
   auto thread_id() const -> std::thread::id { return thread_id_; }
 
-  // Needed in rare cases where we jump physical threads.
-  // (Our 'main' thread on Android can switch under us as
-  // rendering contexts are recreated in new threads/etc.)
-  // void set_thread_id(std::thread::id id) { thread_id_ = id; }
-
   void RunToCompletion();
   void RunSingleCycle();
 
   auto identifier() const -> EventLoopID { return identifier_; }
 
-  // Register a timer to run on the thread.
-  auto NewTimer(millisecs_t length, bool repeat, Runnable* runnable) -> Timer*;
+  /// Register a timer to run on the thread.
+  auto NewTimer(microsecs_t length, bool repeat, Runnable* runnable) -> Timer*;
 
   Timer* GetTimer(int id);
   void DeleteTimer(int id);
+
   /// Add a runnable to this thread's event-loop.
   /// Pass a Runnable that has been allocated with NewUnmanaged().
   /// It will be owned and disposed of by the thread.
@@ -160,26 +156,21 @@ class EventLoop {
   void* auto_release_pool_{};
 #endif
 
-  bool bootstrapped_{};
-  bool writing_tally_{};
-  bool suspended_{};
-  bool done_{};
-  bool acquires_python_gil_{};
   EventLoopID identifier_{EventLoopID::kInvalid};
-  millisecs_t last_suspend_time_{};
-  int listen_sd_{};
-  int messages_since_suspended_{};
-  millisecs_t last_suspended_message_report_time_{};
-  millisecs_t last_complaint_time_{};
-  ThreadSource source_;
+  ThreadSource source_{};
+  bool bootstrapped_ : 1 {};
+  bool writing_tally_ : 1 {};
+  bool suspended_ : 1 {};
+  bool done_ : 1 {};
+  bool acquires_python_gil_ : 1 {};
   std::thread::id thread_id_{};
+  std::condition_variable thread_message_cv_;
+  std::condition_variable client_listener_cv_;
   std::list<std::pair<Runnable*, bool*>> runnables_;
   std::list<Runnable*> suspend_callbacks_;
   std::list<Runnable*> unsuspend_callbacks_;
-  std::condition_variable thread_message_cv_;
-  std::condition_variable client_listener_cv_;
-  std::mutex thread_message_mutex_;
   std::list<ThreadMessage_> thread_messages_;
+  std::mutex thread_message_mutex_;
   std::mutex client_listener_mutex_;
   std::list<std::vector<char>> data_to_client_;
   PyThreadState* py_thread_state_{};

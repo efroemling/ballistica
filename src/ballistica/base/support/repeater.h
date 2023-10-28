@@ -11,6 +11,7 @@ namespace ballistica::base {
 
 /// Runs some code immediately and then repeatedly after a delay. Useful for
 /// jobs such as selecting ui elements while keys or buttons are held.
+/// Uses display-time so emphasizes visual smoothness over accuracy.
 class Repeater : public Object {
  public:
   Repeater(seconds_t initial_delay, seconds_t repeat_delay, Runnable* runnable);
@@ -26,7 +27,7 @@ class Repeater : public Object {
  private:
   seconds_t initial_delay_;
   seconds_t repeat_delay_;
-  Object::Ref<AppTimer> timer_;
+  Object::Ref<DisplayTimer> timer_;
   Object::Ref<Runnable> runnable_;
 };
 

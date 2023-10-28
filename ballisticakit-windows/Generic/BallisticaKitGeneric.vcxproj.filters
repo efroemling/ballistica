@@ -733,6 +733,9 @@
     <ClInclude Include="..\..\src\ballistica\base\support\context.h">
       <Filter>ballistica\base\support</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\support\display_timer.h">
+      <Filter>ballistica\base\support</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\support\huffman.cc">
       <Filter>ballistica\base\support</Filter>
     </ClCompile>

@@ -428,6 +428,7 @@
     <ClInclude Include="..\..\src\ballistica\base\support\classic_soft.h" />
     <ClCompile Include="..\..\src\ballistica\base\support\context.cc" />
     <ClInclude Include="..\..\src\ballistica\base\support\context.h" />
+    <ClInclude Include="..\..\src\ballistica\base\support\display_timer.h" />
     <ClCompile Include="..\..\src\ballistica\base\support\huffman.cc" />
     <ClInclude Include="..\..\src\ballistica\base\support\huffman.h" />
     <ClInclude Include="..\..\src\ballistica\base\support\plus_soft.h" />

@@ -217,12 +217,12 @@ void EventLoop::WaitForNextEvent_(bool single_cycle) {
   // If we've got active timers, wait for messages with a timeout so we can
   // run the next timer payload.
   if (!suspended_ && timers_.ActiveTimerCount() > 0) {
-    millisecs_t apptime = g_core->GetAppTimeMillisecs();
-    millisecs_t wait_time = timers_.TimeToNextExpire(apptime);
+    microsecs_t apptime = g_core->GetAppTimeMicrosecs();
+    microsecs_t wait_time = timers_.TimeToNextExpire(apptime);
     if (wait_time > 0) {
       std::unique_lock<std::mutex> lock(thread_message_mutex_);
       if (thread_messages_.empty()) {
-        thread_message_cv_.wait_for(lock, std::chrono::milliseconds(wait_time),
+        thread_message_cv_.wait_for(lock, std::chrono::microseconds(wait_time),
                                     [this] {
                                       // Go back to sleep on spurious wakeups
                                       // if we didn't wind up with any new
@@ -298,8 +298,6 @@ void EventLoop::Run_(bool single_cycle) {
           assert(!suspended_);
           RunSuspendCallbacks_();
           suspended_ = true;
-          last_suspend_time_ = g_core->GetAppTimeMillisecs();
-          messages_since_suspended_ = 0;
           break;
         }
         case ThreadMessage_::Type::kUnsuspend: {
@@ -319,7 +317,7 @@ void EventLoop::Run_(bool single_cycle) {
     }
 
     if (!suspended_) {
-      timers_.Run(g_core->GetAppTimeMillisecs());
+      timers_.Run(g_core->GetAppTimeMicrosecs());
       RunPendingRunnables_();
     }
 
@@ -607,12 +605,12 @@ auto EventLoop::AreEventLoopsSuspended() -> bool {
   return g_core->event_loops_suspended;
 }
 
-auto EventLoop::NewTimer(millisecs_t length, bool repeat, Runnable* runnable)
+auto EventLoop::NewTimer(microsecs_t length, bool repeat, Runnable* runnable)
     -> Timer* {
   assert(g_core);
   assert(ThreadIsCurrent());
   assert(Object::IsValidManagedObject(runnable));
-  return timers_.NewTimer(g_core->GetAppTimeMillisecs(), length, 0,
+  return timers_.NewTimer(g_core->GetAppTimeMicrosecs(), length, 0,
                           repeat ? -1 : 0, runnable);
 }
 
@@ -774,8 +772,8 @@ auto EventLoop::CheckPushRunnableSafety_() -> bool {
 void EventLoop::AcquireGIL_() {
   assert(g_base_soft && g_base_soft->InLogicThread());
   auto debug_timing{g_core->core_config().debug_timing};
-  millisecs_t startms{debug_timing ? core::CorePlatform::GetCurrentMillisecs()
-                                   : 0};
+  millisecs_t startmillisecs{
+      debug_timing ? core::CorePlatform::GetCurrentMillisecs() : 0};
 
   if (py_thread_state_) {
     PyEval_RestoreThread(py_thread_state_);
@@ -783,10 +781,10 @@ void EventLoop::AcquireGIL_() {
   }
 
   if (debug_timing) {
-    auto duration{core::CorePlatform::GetCurrentMillisecs() - startms};
+    auto duration{core::CorePlatform::GetCurrentMillisecs() - startmillisecs};
     if (duration > (1000 / 120)) {
-      Log(LogLevel::kInfo,
-          "GIL acquire took too long (" + std::to_string(duration) + " ms).");
+      Log(LogLevel::kInfo, "GIL acquire took too long ("
+                               + std::to_string(duration) + " millisecs).");
     }
   }
 }

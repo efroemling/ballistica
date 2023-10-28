@@ -441,6 +441,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/support/classic_soft.h
   ${BA_SRC_ROOT}/ballistica/base/support/context.cc
   ${BA_SRC_ROOT}/ballistica/base/support/context.h
+  ${BA_SRC_ROOT}/ballistica/base/support/display_timer.h
   ${BA_SRC_ROOT}/ballistica/base/support/huffman.cc
   ${BA_SRC_ROOT}/ballistica/base/support/huffman.h
   ${BA_SRC_ROOT}/ballistica/base/support/plus_soft.h
