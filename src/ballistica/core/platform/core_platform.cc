@@ -721,9 +721,9 @@ auto CorePlatform::DemangleCXXSymbol(const std::string& s) -> std::string {
 #endif
 }
 
-auto CorePlatform::NewAutoReleasePool() -> void* { throw Exception(); }
+// auto CorePlatform::NewAutoReleasePool() -> void* { throw Exception(); }
 
-void CorePlatform::DrainAutoReleasePool(void* pool) { throw Exception(); }
+// void CorePlatform::DrainAutoReleasePool(void* pool) { throw Exception(); }
 
 void CorePlatform::ResetAchievements() {
   Log(LogLevel::kError, "ResetAchievements() unimplemented");

@@ -149,11 +149,11 @@ class EventLoop {
 
   void BootstrapThread_();
 
-  void LoopUpkeep_(bool single_cycle);
+  // void LoopUpkeep_(bool single_cycle);
 
   // FIXME: Should generalize this to some sort of PlatformThreadData class.
 #if BA_XCODE_BUILD
-  void* auto_release_pool_{};
+  // void* auto_release_pool_{};
 #endif
 
   EventLoopID identifier_{EventLoopID::kInvalid};

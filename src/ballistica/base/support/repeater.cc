@@ -27,9 +27,8 @@ Repeater::Repeater(seconds_t initial_delay, seconds_t repeat_delay,
         return;
       }
       // Kick off our initial delay timer (generally the longer one).
-      weak_this->timer_ = DisplayTimer::New(
-          static_cast<microsecs_t>(weak_this->initial_delay_ * 1000000.0),
-          false, [weak_this] {
+      weak_this->timer_ =
+          DisplayTimer::New(weak_this->initial_delay_, false, [weak_this] {
             // Timer should not have fired if we died.
             assert(weak_this.Exists());
             weak_this->runnable_->RunAndLogErrors();
@@ -38,9 +37,8 @@ Repeater::Repeater(seconds_t initial_delay, seconds_t repeat_delay,
               return;
             }
             // Kick off our repeat timer (generally the short one).
-            weak_this->timer_ = DisplayTimer::New(
-                static_cast<microsecs_t>(weak_this->repeat_delay_ * 1000000.0),
-                true, [weak_this] {
+            weak_this->timer_ =
+                DisplayTimer::New(weak_this->repeat_delay_, true, [weak_this] {
                   // Timer should not have fired if we died.
                   assert(weak_this.Exists());
                   weak_this->runnable_->RunAndLogErrors();

@@ -580,7 +580,7 @@ void Logic::UpdatePendingWorkTimer_() {
   // If there's loading to do, keep at it rather vigorously.
   if (have_pending_loads_) {
     assert(process_pending_work_timer_);
-    process_pending_work_timer_->SetLength(1000);
+    process_pending_work_timer_->SetLength(1 * 1000);
   } else {
     // Otherwise we've got nothing to do; go to sleep until something
     // changes.

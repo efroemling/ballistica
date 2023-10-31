@@ -6,7 +6,6 @@
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/simple_component.h"
-#include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/platform/base_platform.h"
@@ -1299,14 +1298,13 @@ void DevConsole::Draw(FrameDef* frame_def) {
     if (!carat_mesh_.Exists()) {
       UpdateCarat_();
     }
-    millisecs_t real_time = pass->frame_def()->app_time_millisecs();
-    if (real_time % 200 < 100
-        || (real_time - last_carat_x_change_time_ < 100)) {
+    millisecs_t app_time = pass->frame_def()->app_time_millisecs();
+    millisecs_t since_change = app_time - last_carat_x_change_time_;
+    if (since_change < 300 || since_change % 1000 < 500) {
       SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetTexture(g_base->assets->SysTexture(SysTextureID::kShadow));
       c.SetColor(0.8, 0.0, 1.0, 0.3f);
-      // c.SetPremultiplied(true);
       {
         auto xf = c.ScopedTransform();
         auto carat_x = GetCaratX_();

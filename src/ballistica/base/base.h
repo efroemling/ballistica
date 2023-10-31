@@ -102,12 +102,12 @@ class RemoteAppServer;
 class RemoteControlInput;
 class Repeater;
 class ScoreToBeat;
+class ScreenMessages;
 class AppAdapterSDL;
 class SDLContext;
 class SoundAsset;
 class SpriteMesh;
 class StdioConsole;
-class StressTest;
 class Module;
 class TestInput;
 class TextGroup;
@@ -752,8 +752,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   void set_app_mode(AppMode* mode);
   auto* app_mode() const { return app_mode_; }
 
-  auto* stress_test() const { return stress_test_; }
-
   /// Whether we're running under ballisticakit_server.py
   /// (affects some app behavior).
   auto server_wrapper_managed() { return server_wrapper_managed_; }
@@ -776,7 +774,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   AppMode* app_mode_;
   PlusSoftInterface* plus_soft_{};
   ClassicSoftInterface* classic_soft_{};
-  StressTest* stress_test_;
 
   std::mutex shutdown_suppress_lock_;
   bool shutdown_suppress_disallowed_{};

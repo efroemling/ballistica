@@ -8,7 +8,6 @@
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/input/device/joystick_input.h"
 #include "ballistica/base/input/device/keyboard_input.h"
-#include "ballistica/base/input/device/test_input.h"
 #include "ballistica/base/input/device/touch_input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
@@ -760,58 +759,6 @@ void Input::PrintLockLabels_() {
   }
 
   Log(LogLevel::kError, s);
-}
-
-void Input::ProcessStressTesting(int player_count) {
-  assert(g_core->InMainThread());
-  assert(player_count >= 0);
-
-  millisecs_t time = g_core->GetAppTimeMillisecs();
-
-  // FIXME: If we don't check for stress_test_last_leave_time_ we totally
-  //  confuse the game.. need to be able to survive that.
-
-  // Kill some off if we have too many.
-  while (static_cast<int>(test_inputs_.size()) > player_count) {
-    delete test_inputs_.front();
-    test_inputs_.pop_front();
-  }
-
-  // If we have less than full test-inputs, add one randomly.
-  if (static_cast<int>(test_inputs_.size()) < player_count
-      && ((rand() % 1000 < 10))) {  // NOLINT
-    test_inputs_.push_back(new TestInput());
-  }
-
-  // Every so often lets kill the oldest one off.
-  if (explicit_bool(true)) {
-    if (test_inputs_.size() > 0 && (rand() % 2000 < 3)) {  // NOLINT
-      stress_test_last_leave_time_ = time;
-
-      // Usually do oldest; sometimes newest.
-      if (rand() % 5 == 0) {  // NOLINT
-        delete test_inputs_.back();
-        test_inputs_.pop_back();
-      } else {
-        delete test_inputs_.front();
-        test_inputs_.pop_front();
-      }
-    }
-  }
-
-  if (time - stress_test_time_ > 1000) {
-    stress_test_time_ = time;  // reset..
-    for (auto& test_input : test_inputs_) {
-      (*test_input).Reset();
-    }
-  }
-
-  while (stress_test_time_ < time) {
-    stress_test_time_++;
-    for (auto& test_input : test_inputs_) {
-      (*test_input).Process(stress_test_time_);
-    }
-  }
 }
 
 void Input::PushTextInputEvent(const std::string& text) {

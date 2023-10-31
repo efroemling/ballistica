@@ -42,7 +42,8 @@ auto CorePlatformApple::GetRealLegacyDeviceUUID(std::string* uuid) -> bool {
   return true;
 #endif
 #if BA_OSTYPE_IOS_TVOS
-  *uuid = base::AppleUtils::GetIOSUUID();
+  *uuid = std::string(BallisticaKit::UIKitFromCpp::GetLegacyDeviceUUID());
+  // *uuid = base::AppleUtils::GetIOSUUID();
   return true;
 #endif
   return false;
@@ -84,7 +85,9 @@ auto CorePlatformApple::GetDeviceUUIDInputs() -> std::list<std::string> {
 #endif  // BA_OSTYPE_MACOS
 
 #if BA_OSTYPE_IOS_TVOS
-  out.push_back(base::AppleUtils::GetIOSUUID());
+  // out.push_back(base::AppleUtils::GetIOSUUID());
+  out.push_back(
+      std::string(BallisticaKit::UIKitFromCpp::GetLegacyDeviceUUID()));
 #endif
   return out;
 }
@@ -121,7 +124,8 @@ auto CorePlatformApple::DoHasTouchScreen() -> bool {
 
 auto CorePlatformApple::GetDefaultUIScale() -> UIScale {
 #if BA_OSTYPE_IOS
-  if (base::AppleUtils::IsTablet()) {
+  if (BallisticaKit::UIKitFromCpp::IsTablet()) {
+    // if (base::AppleUtils::IsTablet()) {
     return UIScale::kMedium;
   } else {
     return UIScale::kSmall;
@@ -278,21 +282,21 @@ void CorePlatformApple::ShowOnlineScoreUI(const std::string& show,
 #endif
 }
 
-auto CorePlatformApple::NewAutoReleasePool() -> void* {
-#if BA_XCODE_BUILD
-  return base::AppleUtils::NewAutoReleasePool();
-#else
-  return CorePlatform::NewAutoReleasePool();
-#endif
-}
+// auto CorePlatformApple::NewAutoReleasePool() -> void* {
+// #if BA_XCODE_BUILD
+//   return base::AppleUtils::NewAutoReleasePool();
+// #else
+//   return CorePlatform::NewAutoReleasePool();
+// #endif
+// }
 
-void CorePlatformApple::DrainAutoReleasePool(void* pool) {
-#if BA_XCODE_BUILD
-  base::AppleUtils::DrainAutoReleasePool(pool);
-#else
-  CorePlatform::DrainAutoReleasePool(pool);
-#endif
-}
+// void CorePlatformApple::DrainAutoReleasePool(void* pool) {
+// #if BA_XCODE_BUILD
+//   base::AppleUtils::DrainAutoReleasePool(pool);
+// #else
+//   CorePlatform::DrainAutoReleasePool(pool);
+// #endif
+// }
 
 void CorePlatformApple::GameCenterLogin() {
 #if BA_USE_GAME_CENTER
@@ -331,50 +335,68 @@ void CorePlatformApple::OpenDirExternally(const std::string& path) {
 
 void CorePlatformApple::MacMusicAppInit() {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  base::AppleUtils::MacMusicAppInit();
+  BallisticaKit::CocoaFromCpp::MacMusicAppInit();
+  // base::AppleUtils::MacMusicAppInit();
 #else
   CorePlatform::MacMusicAppInit();
 #endif
 }
 auto CorePlatformApple::MacMusicAppGetVolume() -> int {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  return static_cast<int>(base::AppleUtils::MacMusicAppGetVolume());
+  return BallisticaKit::CocoaFromCpp::MacMusicAppGetVolume();
+  // return static_cast<int>(base::AppleUtils::MacMusicAppGetVolume());
 #else
   return CorePlatform::MacMusicAppGetVolume();
 #endif
 }
 void CorePlatformApple::MacMusicAppSetVolume(int volume) {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  base::AppleUtils::MacMusicAppSetVolume(volume);
+  return BallisticaKit::CocoaFromCpp::MacMusicAppSetVolume(volume);
+  // base::AppleUtils::MacMusicAppSetVolume(volume);
 #else
   CorePlatform::MacMusicAppSetVolume(volume);
 #endif
 }
+
+// KILL THIS.
 void CorePlatformApple::MacMusicAppGetLibrarySource() {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  base::AppleUtils::MacMusicAppGetLibrarySource();
+  // base::AppleUtils::MacMusicAppGetLibrarySource();
 #else
   CorePlatform::MacMusicAppGetLibrarySource();
 #endif
 }
 void CorePlatformApple::MacMusicAppStop() {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  base::AppleUtils::MacMusicAppStop();
+  return BallisticaKit::CocoaFromCpp::MacMusicAppStop();
+  // base::AppleUtils::MacMusicAppStop();
 #else
   CorePlatform::MacMusicAppStop();
 #endif
 }
+
 auto CorePlatformApple::MacMusicAppPlayPlaylist(const std::string& playlist)
     -> bool {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  return base::AppleUtils::MacMusicAppPlayPlaylist(playlist.c_str());
+  return BallisticaKit::CocoaFromCpp::MacMusicAppPlayPlaylist(playlist);
+  // return base::AppleUtils::MacMusicAppPlayPlaylist(playlist.c_str());
 #else
   return CorePlatform::MacMusicAppPlayPlaylist(playlist);
 #endif
 }
+
 auto CorePlatformApple::MacMusicAppGetPlaylists() -> std::list<std::string> {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  return base::AppleUtils::MacMusicAppGetPlaylists();
+  BallisticaKit::CocoaFromCpp::MacMusicAppGetPlaylists();
+  // mac_music_app_playlists_.clear();
+  // mac_music_app_playlists_.push_back("foof");
+  // mac_music_app_playlists_.push_back("barf");
+  //  std::list<std::string> out;
+  //  for (auto&& val : vals) {
+  //    out.push_back(std::string(val));
+  //  }
+  //  return out;
+  return mac_music_app_playlists();
 #else
   return CorePlatform::MacMusicAppGetPlaylists();
 #endif

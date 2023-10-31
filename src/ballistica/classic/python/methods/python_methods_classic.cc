@@ -4,7 +4,10 @@
 
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/logic/logic.h"
+#include "ballistica/classic/support/stress_test.h"
 #include "ballistica/scene_v1/support/scene_v1_app_mode.h"
+#include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_sys.h"
 
@@ -145,10 +148,42 @@ static PyMethodDef PyValueTestDef = {
     "(internal)",
 };
 
+// -------------------------- set_stress_testing -------------------------------
+
+static auto PySetStressTesting(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  int enable;
+  int player_count;
+  if (!PyArg_ParseTuple(args, "pi", &enable, &player_count)) {
+    return nullptr;
+  }
+  // g_base->app_adapter->PushMainThreadCall([enable, player_count] {
+  //   g_base->stress_test()->Set(enable, player_count);
+  // });
+  g_base->logic->event_loop()->PushCall([enable, player_count] {
+    g_classic->stress_test()->Set(enable, player_count);
+  });
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetStressTestingDef = {
+    "set_stress_testing",  // name
+    PySetStressTesting,    // method
+    METH_VARARGS,          // flags
+
+    "set_stress_testing(testing: bool, player_count: int) -> None\n"
+    "\n"
+    "(internal)",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
-  return {PyValueTestDef};
+  return {
+      PyValueTestDef,
+      PySetStressTestingDef,
+  };
 }
 
 #pragma clang diagnostic pop

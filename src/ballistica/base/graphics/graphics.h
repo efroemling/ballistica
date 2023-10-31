@@ -118,22 +118,12 @@ class Graphics {
     return res_y_virtual_;
   }
 
-  void ClearScreenMessageTranslations();
-
   // Given a point in space, returns the shadow density that should be drawn
   // into the shadow pass. Does this belong somewhere else?
   auto GetShadowDensity(float x, float y, float z) -> float;
 
   static void GetSafeColor(float* r, float* g, float* b,
                            float target_intensity = 0.6f);
-
-  // Print a message to the on-screen list.
-  void AddScreenMessage(const std::string& msg,
-                        const Vector3f& color = {1, 1, 1}, bool top = false,
-                        TextureAsset* texture = nullptr,
-                        TextureAsset* tint_texture = nullptr,
-                        const Vector3f& tint = {1, 1, 1},
-                        const Vector3f& tint2 = {1, 1, 1});
 
   // Fade the local screen in or out over the given time period.
   void FadeScreen(bool to, millisecs_t time, PyObject* endcall);
@@ -366,9 +356,9 @@ class Graphics {
     return client_context_snapshot_.Get()->Get();
   }
 
- protected:
-  class ScreenMessageEntry;
+  ScreenMessages* const screenmessages;
 
+ protected:
   virtual ~Graphics();
   virtual void DoDrawFade(FrameDef* frame_def, float amt);
   static void CalcVirtualRes_(float* x, float* y);
@@ -446,8 +436,6 @@ class Graphics {
   std::map<std::string, Object::Ref<NetGraph>> debug_graphs_;
   std::mutex frame_def_delete_list_mutex_;
   std::list<Object::Ref<PythonContextCall>> clean_frame_commands_;
-  std::list<ScreenMessageEntry> screen_messages_;
-  std::list<ScreenMessageEntry> screen_messages_top_;
   std::vector<FrameDef*> recycle_frame_defs_;
   std::vector<uint16_t> blotch_indices_;
   std::vector<VertexSprite> blotch_verts_;
@@ -466,7 +454,6 @@ class Graphics {
   float gyro_mag_test_{};
   float overlay_node_z_depth_{};
   float progress_bar_progress_{};
-  float screen_gamma_{1.0f};
   float shadow_lower_bottom_{-4.0f};
   float shadow_lower_top_{4.0f};
   float shadow_upper_bottom_{30.0f};

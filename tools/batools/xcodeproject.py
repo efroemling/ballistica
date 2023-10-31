@@ -50,7 +50,7 @@ def update_xcode_project(
                 for p in all_source_files
                 if os.path.splitext(p)[1] in suffixes
             ),
-            has_app_delegate_mm=True,
+            # has_app_delegate_mm=True,
             projname=projname,
         )
     else:
@@ -64,7 +64,7 @@ def update_xcode_project(
                 for p in all_source_files
                 if os.path.splitext(p)[1] in suffixes
             ),
-            has_app_delegate_mm=True,
+            # has_app_delegate_mm=True,
             projname=projname,
         )
 
@@ -83,7 +83,7 @@ class Updater:
         existing_data: str,
         sources: list[str],
         projname: str,
-        has_app_delegate_mm: bool = False,
+        # has_app_delegate_mm: bool = False,
     ) -> None:
         if not path.endswith('.xcodeproj'):
             raise RuntimeError(f"Path does not end in .xcodeproj: '{path}'.")
@@ -93,7 +93,7 @@ class Updater:
         self.existing_data = existing_data
         self.sources = sources
         self.project = None
-        self.has_app_delegate_mm = has_app_delegate_mm
+        # self.has_app_delegate_mm = has_app_delegate_mm
 
         # Project name variations.
         self.pnameu = projname
@@ -165,8 +165,8 @@ class Updater:
         srcgrp = self._get_unique_group(f'{self.pnameu} Shared')
         self.add_paths(srcgrp)
 
-        if self.has_app_delegate_mm:
-            self.mod_app_delegate_mm()
+        # if self.has_app_delegate_mm:
+        #     self.mod_app_delegate_mm()
 
         # Groups we made should be sorted already since we sorted while
         # building them, but let's sort the top level group we placed
@@ -302,6 +302,7 @@ class Updater:
             )
         return grps[0]
 
+    # (No longer used; just leaving here as reference though)
     def mod_app_delegate_mm(self) -> None:
         """Set per-file compiler flags."""
         files = self.project.get_files_by_name('app_delegate.mm')

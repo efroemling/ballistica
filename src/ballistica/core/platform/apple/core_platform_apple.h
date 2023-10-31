@@ -42,8 +42,8 @@ class CorePlatformApple : public CorePlatform {
       -> bool override;
   void ShowOnlineScoreUI(const std::string& show, const std::string& game,
                          const std::string& game_version) override;
-  auto NewAutoReleasePool() -> void* override;
-  void DrainAutoReleasePool(void* pool) override;
+  // auto NewAutoReleasePool() -> void* override;
+  // void DrainAutoReleasePool(void* pool) override;
   void ResetAchievements() override;
   void GameCenterLogin() override;
   auto IsOSPlayingMusic() -> bool override;
@@ -63,8 +63,6 @@ class CorePlatformApple : public CorePlatform {
 
  protected:
   auto DoGetDataDirectoryMonolithicDefault() -> std::string override;
-
- private:
 };
 
 }  // namespace ballistica::core

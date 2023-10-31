@@ -19,7 +19,7 @@ namespace ballistica::base {
 BasePlatformApple::BasePlatformApple() {
   // On iOS, keep the device from falling asleep in our app
 #if BA_OSTYPE_IOS_TVOS
-  AppleUtils::DisableIdleTimer();
+  // AppleUtils::DisableIdleTimer();
 #endif
 }
 
@@ -41,7 +41,7 @@ void BasePlatformApple::RestorePurchases() {
 
 void BasePlatformApple::PurchaseAck(const std::string& purchase,
                                     const std::string& order_id) {
-#if BA_XCODE_BUILD
+#if BA_XCODE_BUILD && BA_USE_STORE_KIT
   AppleUtils::PurchaseAck(purchase, order_id);
 #else
   BasePlatform::PurchaseAck(purchase, order_id);

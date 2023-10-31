@@ -251,24 +251,24 @@ void EventLoop::WaitForNextEvent_(bool single_cycle) {
 // Note to self (Oct '23): can probably kill this at some point,
 // but am still using some non-ARC objc stuff from logic thread
 // so should keep it around just a bit longer just in case.
-void EventLoop::LoopUpkeep_(bool single_cycle) {
-  assert(g_core);
-  // Keep our autorelease pool clean on mac/ios
-  // FIXME: Should define a CorePlatform::ThreadHelper or something
-  //  so we don't have platform-specific code here.
-#if BA_XCODE_BUILD
-  // Let's not do autorelease pools when being called ad-hoc,
-  // since in that case we're part of another run loop
-  // (and its crashing on drain for some reason)
-  if (!single_cycle) {
-    if (auto_release_pool_) {
-      g_core->platform->DrainAutoReleasePool(auto_release_pool_);
-      auto_release_pool_ = nullptr;
-    }
-    auto_release_pool_ = g_core->platform->NewAutoReleasePool();
-  }
-#endif
-}
+// void EventLoop::LoopUpkeep_(bool single_cycle) {
+//  assert(g_core);
+//  // Keep our autorelease pool clean on mac/ios
+//  // FIXME: Should define a CorePlatform::ThreadHelper or something
+//  //  so we don't have platform-specific code here.
+// #if BA_XCODE_BUILD
+//  // Let's not do autorelease pools when being called ad-hoc,
+//  // since in that case we're part of another run loop
+//  // (and its crashing on drain for some reason)
+//  if (!single_cycle) {
+//    if (auto_release_pool_) {
+//      g_core->platform->DrainAutoReleasePool(auto_release_pool_);
+//      auto_release_pool_ = nullptr;
+//    }
+//    auto_release_pool_ = g_core->platform->NewAutoReleasePool();
+//  }
+// #endif
+//}
 
 void EventLoop::RunToCompletion() { Run_(false); }
 void EventLoop::RunSingleCycle() { Run_(true); }
@@ -276,7 +276,7 @@ void EventLoop::RunSingleCycle() { Run_(true); }
 void EventLoop::Run_(bool single_cycle) {
   assert(g_core);
   while (true) {
-    LoopUpkeep_(single_cycle);
+    // LoopUpkeep_(single_cycle);
 
     WaitForNextEvent_(single_cycle);
 

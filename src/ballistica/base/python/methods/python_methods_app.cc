@@ -9,7 +9,6 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
-#include "ballistica/base/support/stress_test.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -783,32 +782,6 @@ static PyMethodDef PyEnvDef = {
     "such as version, platform, etc.\n"
     "This info is now exposed through babase.App; refer to those docs for\n"
     "info on specific elements."};
-
-// -------------------------- set_stress_testing -------------------------------
-
-static auto PySetStressTesting(PyObject* self, PyObject* args) -> PyObject* {
-  BA_PYTHON_TRY;
-  int enable;
-  int player_count;
-  if (!PyArg_ParseTuple(args, "pi", &enable, &player_count)) {
-    return nullptr;
-  }
-  g_base->app_adapter->PushMainThreadCall([enable, player_count] {
-    g_base->stress_test()->Set(enable, player_count);
-  });
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PySetStressTestingDef = {
-    "set_stress_testing",  // name
-    PySetStressTesting,    // method
-    METH_VARARGS,          // flags
-
-    "set_stress_testing(testing: bool, player_count: int) -> None\n"
-    "\n"
-    "(internal)",
-};
 
 // -------------------------------- emit_log -----------------------------------
 
@@ -1702,7 +1675,6 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyCanDisplayFullUnicodeDef,
       PyEmitLogDef,
       PyV1CloudLogDef,
-      PySetStressTestingDef,
       PyEnvDef,
       PyPreEnvDef,
       PyCommitConfigDef,

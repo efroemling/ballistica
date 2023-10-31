@@ -114,7 +114,6 @@ class Input {
   // something.
   auto HaveControllerWithPlayer() -> bool;
   auto HaveRemoteAppController() -> bool;
-  void ProcessStressTesting(int player_count);
   auto keyboard_input() const -> KeyboardInput* { return keyboard_input_; }
   auto keyboard_input_2() const -> KeyboardInput* { return keyboard_input_2_; }
   void CreateTouchInput();
@@ -205,7 +204,6 @@ class Input {
   std::list<std::string> input_lock_permanent_labels_;
   std::list<std::string> input_unlock_permanent_labels_;
   std::list<std::string> recent_input_locks_unlocks_;
-  std::list<TestInput*> test_inputs_;
   std::list<std::string> newly_connected_controllers_;
   std::list<std::string> newly_disconnected_controllers_;
   std::unordered_map<std::string, std::unordered_map<std::string, int> >
@@ -214,8 +212,6 @@ class Input {
   std::set<int> keys_held_;
   millisecs_t last_input_device_count_update_time_{};
   millisecs_t last_input_temp_lock_time_{};
-  millisecs_t stress_test_time_{};
-  millisecs_t stress_test_last_leave_time_{};
   void* single_touch_{};
   KeyboardInput* keyboard_input_{};
   KeyboardInput* keyboard_input_2_{};

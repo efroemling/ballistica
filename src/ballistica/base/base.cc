@@ -9,6 +9,7 @@
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
@@ -20,11 +21,11 @@
 #include "ballistica/base/python/class/python_class_feature_set_data.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_config.h"
+#include "ballistica/base/support/app_timer.h"
 #include "ballistica/base/support/base_build_switches.h"
 #include "ballistica/base/support/huffman.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/support/stdio_console.h"
-#include "ballistica/base/support/stress_test.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/core/python/core_python.h"
@@ -63,7 +64,6 @@ BaseFeatureSet::BaseFeatureSet()
       python{new BasePython()},
       stdio_console{g_buildconfig.enable_stdio_console() ? new StdioConsole()
                                                          : nullptr},
-      stress_test_{new StressTest()},
       text_graphics{new TextGraphics()},
       ui{new UI()},
       utils{new Utils()} {
@@ -465,8 +465,9 @@ auto BaseFeatureSet::InGraphicsContext() const -> bool {
 
 void BaseFeatureSet::ScreenMessage(const std::string& s,
                                    const Vector3f& color) {
-  logic->event_loop()->PushCall(
-      [this, s, color] { graphics->AddScreenMessage(s, color); });
+  logic->event_loop()->PushCall([this, s, color] {
+    graphics->screenmessages->AddScreenMessage(s, color);
+  });
 }
 
 void BaseFeatureSet::DoV1CloudLog(const std::string& msg) {

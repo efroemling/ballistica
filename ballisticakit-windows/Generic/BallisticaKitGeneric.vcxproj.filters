@@ -490,6 +490,12 @@
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\render_command_buffer.h">
       <Filter>ballistica\base\graphics\support</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\support\screen_messages.cc">
+      <Filter>ballistica\base\graphics\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\support\screen_messages.h">
+      <Filter>ballistica\base\graphics\support</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\ballistica\base\graphics\text\font_page_map_data.h">
       <Filter>ballistica\base\graphics\text</Filter>
     </ClInclude>
@@ -757,12 +763,6 @@
     <ClInclude Include="..\..\src\ballistica\base\support\stdio_console.h">
       <Filter>ballistica\base\support</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\support\stress_test.cc">
-      <Filter>ballistica\base\support</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\support\stress_test.h">
-      <Filter>ballistica\base\support</Filter>
-    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\ui\dev_console.cc">
       <Filter>ballistica\base\ui</Filter>
     </ClCompile>
@@ -798,6 +798,12 @@
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\classic\python\methods\python_methods_classic.h">
       <Filter>ballistica\classic\python\methods</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\classic\support\stress_test.cc">
+      <Filter>ballistica\classic\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\classic\support\stress_test.h">
+      <Filter>ballistica\classic\support</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\classic\support\v1_account.cc">
       <Filter>ballistica\classic\support</Filter>

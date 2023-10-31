@@ -331,7 +331,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             // click if it hasn't turned into a scroll or a child scroll.
             if (!child_is_scrolling_) {
               touch_delay_timer_ = base::AppTimer::New(
-                  150, false, [this] { OnTouchDelayTimerExpired(); });
+                  0.150, false, [this] { OnTouchDelayTimerExpired(); });
             }
           }
         }

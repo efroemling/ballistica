@@ -1,4 +1,4 @@
-### 1.7.28 (build 21531, api 8, 2023-10-27)
+### 1.7.28 (build 21543, api 8, 2023-10-31)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -196,10 +196,10 @@
   including things like the internal EventLoop timeline. Please holler if you
   notice anything running 1000x too fast or slow. In general my strategy going
   forward is to use microseconds for exact internal time values but to mostly
-  expose float seconds to the user on the Python layer. There were starting to
-  be a few cases were integer milliseconds was not enough precision for internal
-  values. For instance, if we run with unclamped framerates and hit several
-  hundred FPS, milliseconds per frame would drop to 0 which could cause
+  expose float seconds to the user, especially on the Python layer. There were
+  starting to be a few cases were integer milliseconds was not enough precision
+  for internal values. For instance, if we run with unclamped framerates and hit
+  several hundred FPS, milliseconds per frame would drop to 0 which caused some
   problems. Note that scenev1 will be remaining on milliseconds internally for
   compatibility reasons. Scenev2 should move to microseconds though.
   

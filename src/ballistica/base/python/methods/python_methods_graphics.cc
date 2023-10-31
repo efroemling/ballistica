@@ -6,6 +6,7 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
@@ -74,7 +75,7 @@ static auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
   }
 
   // This version simply displays it locally.
-  g_base->graphics->AddScreenMessage(message_str, color);
+  g_base->graphics->screenmessages->AddScreenMessage(message_str, color);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

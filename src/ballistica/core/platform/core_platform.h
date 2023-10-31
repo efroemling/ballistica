@@ -205,8 +205,8 @@ class CorePlatform {
 
 #pragma mark APPLE -------------------------------------------------------------
 
-  virtual auto NewAutoReleasePool() -> void*;
-  virtual void DrainAutoReleasePool(void* pool);
+  // virtual auto NewAutoReleasePool() -> void*;
+  // virtual void DrainAutoReleasePool(void* pool);
   // FIXME: Can we consolidate these with the general music playback calls?
   virtual void MacMusicAppInit();
   virtual auto MacMusicAppGetVolume() -> int;
@@ -396,6 +396,11 @@ class CorePlatform {
   /// Are we being run from a terminal? (should we show prompts, etc?).
   auto is_stdin_a_terminal() const { return is_stdin_a_terminal_; }
 
+  void set_music_app_playlists(const std::list<std::string>& playlists) {
+    mac_music_app_playlists_ = playlists;
+  }
+  auto mac_music_app_playlists() const { return mac_music_app_playlists_; }
+
  protected:
   /// Are we being run from a terminal? (should we show prompts, etc?).
   virtual auto GetIsStdinATerminal() -> bool;
@@ -445,7 +450,6 @@ class CorePlatform {
   /// 'noteworthy' or presented to the user as standard Log() calls are.
   virtual void HandleDebugLog(const std::string& msg);
 
- protected:
   CorePlatform();
   virtual ~CorePlatform();
 
@@ -462,6 +466,9 @@ class CorePlatform {
   std::string legacy_device_uuid_;
   std::string volatile_data_dir_;
   std::string replays_dir_;
+
+  // temp.
+  std::list<std::string> mac_music_app_playlists_;
 };
 
 /// For capturing and printing stack-traces and related errors. Platforms

@@ -13,21 +13,24 @@ namespace ballistica::base {
 
 class DisplayTimer : public Object {
  public:
-  DisplayTimer(microsecs_t length, bool repeat, Runnable* runnable) {
+  DisplayTimer(seconds_t length, bool repeat, Runnable* runnable) {
     assert(g_base->InLogicThread());
-    timer_id_ = base::g_base->logic->NewDisplayTimer(length, repeat, runnable);
+    timer_id_ = base::g_base->logic->NewDisplayTimer(
+        static_cast<microsecs_t>(length * 1000000.0), repeat, runnable);
   }
 
   template <typename F>
-  static auto New(microsecs_t length, bool repeat, const F& lambda) {
+  static auto New(seconds_t length, bool repeat, const F& lambda) {
     return Object::New<DisplayTimer>(length, repeat,
                                      NewLambdaRunnable<F>(lambda).Get());
   }
 
-  void SetLength(microsecs_t length) {
+  void SetLength(seconds_t length) {
     assert(g_base->InLogicThread());
-    base::g_base->logic->SetDisplayTimerLength(timer_id_, length);
+    base::g_base->logic->SetDisplayTimerLength(
+        timer_id_, static_cast<microsecs_t>(length * 1000000.0));
   }
+
   ~DisplayTimer() override {
     assert(g_base->InLogicThread());
     base::g_base->logic->DeleteDisplayTimer(timer_id_);

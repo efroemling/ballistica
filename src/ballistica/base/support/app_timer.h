@@ -13,20 +13,22 @@ namespace ballistica::base {
 
 class AppTimer : public Object {
  public:
-  AppTimer(microsecs_t length, bool repeat, Runnable* runnable) {
+  AppTimer(seconds_t length, bool repeat, Runnable* runnable) {
     assert(g_base->InLogicThread());
-    timer_id_ = base::g_base->logic->NewAppTimer(length, repeat, runnable);
+    timer_id_ = base::g_base->logic->NewAppTimer(
+        static_cast<microsecs_t>(length * 1000000.0), repeat, runnable);
   }
 
   template <typename F>
-  static auto New(microsecs_t length, bool repeat, const F& lambda) {
+  static auto New(seconds_t length, bool repeat, const F& lambda) {
     return Object::New<AppTimer>(length, repeat,
                                  NewLambdaRunnable<F>(lambda).Get());
   }
 
-  void SetLength(microsecs_t length) {
+  void SetLength(seconds_t length) {
     assert(g_base->InLogicThread());
-    base::g_base->logic->SetAppTimerLength(timer_id_, length);
+    base::g_base->logic->SetAppTimerLength(
+        timer_id_, static_cast<microsecs_t>(length * 1000000.0));
   }
 
   ~AppTimer() override {
