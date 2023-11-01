@@ -10,7 +10,6 @@
 #include <uuid/uuid.h>
 
 #if BA_XCODE_BUILD
-#include "ballistica/base/platform/apple/apple_utils.h"
 #include "ballistica/base/platform/apple/from_swift.h"
 #include "ballistica/shared/math/rect.h"
 #endif
@@ -358,14 +357,6 @@ void CorePlatformApple::MacMusicAppSetVolume(int volume) {
 #endif
 }
 
-// KILL THIS.
-void CorePlatformApple::MacMusicAppGetLibrarySource() {
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  // base::AppleUtils::MacMusicAppGetLibrarySource();
-#else
-  CorePlatform::MacMusicAppGetLibrarySource();
-#endif
-}
 void CorePlatformApple::MacMusicAppStop() {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
   return BallisticaKit::CocoaFromCpp::MacMusicAppStop();
@@ -419,6 +410,17 @@ auto CorePlatformApple::GetSubplatformName() -> std::string {
   return "appstore";
 #else
   return "";
+#endif
+}
+
+auto CorePlatformApple::GetLocale() -> std::string {
+#if BA_XCODE_BUILD
+  if (!locale_.has_value()) {
+    locale_ = std::string(BallisticaKit::FromCpp::GetLocaleString());
+  }
+  return *locale_;
+#else
+  return CorePlatform::GetLocale();
 #endif
 }
 

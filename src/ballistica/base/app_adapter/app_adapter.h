@@ -222,9 +222,6 @@ class AppAdapter {
   /// clipboard is unsupported or if there's no text on the clipboard.
   auto ClipboardGetText() -> std::string;
 
- protected:
-  virtual ~AppAdapter();
-
   /// Push a raw pointer Runnable to the platform's 'main' thread. The main
   /// thread should call its RunAndLogErrors() method and then delete it.
   virtual void DoPushMainThreadRunnable(Runnable* runnable) = 0;
@@ -232,6 +229,9 @@ class AppAdapter {
   /// Push a raw pointer Runnable to be run in the platform's graphics
   /// context. By default this is simply the main thread.
   virtual void DoPushGraphicsContextRunnable(Runnable* runnable);
+
+ protected:
+  virtual ~AppAdapter();
 
   virtual auto DoClipboardIsSupported() -> bool;
   virtual auto DoClipboardHasText() -> bool;

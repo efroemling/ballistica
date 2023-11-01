@@ -144,12 +144,9 @@ auto Input::GetNewNumberedIdentifier_(const std::string& name,
   return full_id;
 }
 
-void Input::CreateTouchInput() {
-  assert(g_core->InMainThread());
-  assert(touch_input_ == nullptr);
-  touch_input_ = Object::NewDeferred<TouchInput>();
-  PushAddInputDeviceCall(touch_input_, false);
-}
+// void Input::CreateTouchInput() {
+//   assert(g_core->InMainThread());
+// }
 
 void Input::AnnounceConnects_() {
   assert(g_base->InLogicThread());
@@ -559,7 +556,14 @@ void Input::UpdateEnabledControllerSubsystems_() {
   // }
 }
 
-void Input::OnAppStart() { assert(g_base->InLogicThread()); }
+void Input::OnAppStart() {
+  assert(g_base->InLogicThread());
+  if (g_core->platform->HasTouchScreen()) {
+    assert(touch_input_ == nullptr);
+    touch_input_ = Object::NewDeferred<TouchInput>();
+    PushAddInputDeviceCall(touch_input_, false);
+  }
+}
 
 void Input::OnAppPause() { assert(g_base->InLogicThread()); }
 

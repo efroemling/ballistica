@@ -6,6 +6,7 @@
 
 #include <list>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -42,8 +43,6 @@ class CorePlatformApple : public CorePlatform {
       -> bool override;
   void ShowOnlineScoreUI(const std::string& show, const std::string& game,
                          const std::string& game_version) override;
-  // auto NewAutoReleasePool() -> void* override;
-  // void DrainAutoReleasePool(void* pool) override;
   void ResetAchievements() override;
   void GameCenterLogin() override;
   auto IsOSPlayingMusic() -> bool override;
@@ -52,7 +51,6 @@ class CorePlatformApple : public CorePlatform {
   void MacMusicAppInit() override;
   auto MacMusicAppGetVolume() -> int override;
   void MacMusicAppSetVolume(int volume) override;
-  void MacMusicAppGetLibrarySource() override;
   void MacMusicAppStop() override;
   auto MacMusicAppPlayPlaylist(const std::string& playlist) -> bool override;
   auto MacMusicAppGetPlaylists() -> std::list<std::string> override;
@@ -60,9 +58,13 @@ class CorePlatformApple : public CorePlatform {
   auto GetSubplatformName() -> std::string override;
 
   auto GetDeviceUUIDInputs() -> std::list<std::string> override;
+  auto GetLocale() -> std::string override;
 
  protected:
   auto DoGetDataDirectoryMonolithicDefault() -> std::string override;
+
+ private:
+  std::optional<std::string> locale_;
 };
 
 }  // namespace ballistica::core

@@ -116,7 +116,7 @@ class Input {
   auto HaveRemoteAppController() -> bool;
   auto keyboard_input() const -> KeyboardInput* { return keyboard_input_; }
   auto keyboard_input_2() const -> KeyboardInput* { return keyboard_input_2_; }
-  void CreateTouchInput();
+  // void CreateTouchInput();
 
   void PushTextInputEvent(const std::string& text);
   void PushKeyPressEventSimple(int keycode);

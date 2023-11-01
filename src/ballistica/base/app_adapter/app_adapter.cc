@@ -20,31 +20,8 @@ AppAdapter::~AppAdapter() = default;
 auto AppAdapter::ManagesMainThreadEventLoop() const -> bool { return true; }
 
 void AppAdapter::OnMainThreadStartApp() {
-  assert(g_base);
   assert(g_core);
   assert(g_core->InMainThread());
-
-  // Add some common input devices where applicable. More specific ones (SDL
-  // Joysticks, etc.) get added in subclasses.
-
-  // FIXME: This stuff should probably go elsewhere.
-  if (!g_core->HeadlessMode()) {
-    // If we've got a nice themed hardware cursor, show it. Otherwise we'll
-    // render it manually, which is laggier but gets the job done.
-    // g_base->platform->SetHardwareCursorVisible(g_buildconfig.hardware_cursor());
-
-    // On desktop systems we just assume keyboard input exists and add it
-    // immediately.
-    if (g_core->platform->IsRunningOnDesktop()) {
-      g_base->input->PushCreateKeyboardInputDevices();
-    }
-
-    // On non-tv, non-desktop, non-vr systems, create a touchscreen input.
-    if (!g_core->platform->IsRunningOnTV() && !g_core->IsVRMode()
-        && !g_core->platform->IsRunningOnDesktop()) {
-      g_base->input->CreateTouchInput();
-    }
-  }
 }
 
 void AppAdapter::OnAppStart() { assert(g_base->InLogicThread()); }

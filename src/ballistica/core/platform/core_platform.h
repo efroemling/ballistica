@@ -211,10 +211,9 @@ class CorePlatform {
   virtual void MacMusicAppInit();
   virtual auto MacMusicAppGetVolume() -> int;
   virtual void MacMusicAppSetVolume(int volume);
-  virtual void MacMusicAppGetLibrarySource();
-  virtual void MacMusicAppStop();
-  virtual auto MacMusicAppPlayPlaylist(const std::string& playlist) -> bool;
   virtual auto MacMusicAppGetPlaylists() -> std::list<std::string>;
+  virtual auto MacMusicAppPlayPlaylist(const std::string& playlist) -> bool;
+  virtual void MacMusicAppStop();
 
 #pragma mark TEXT RENDERING ----------------------------------------------------
 

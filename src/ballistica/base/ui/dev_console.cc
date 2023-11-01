@@ -1295,7 +1295,10 @@ void DevConsole::Draw(FrameDef* frame_def) {
     }
 
     // Carat.
-    if (!carat_mesh_.Exists()) {
+    if (!carat_mesh_.Exists() || carat_dirty_) {
+      // Note: we explicitly update here if carat is dirty because
+      // that updates last_carat_change_time_ which affects whether
+      // we draw or not. GetCaratX_() only updates it *if* we draw.
       UpdateCarat_();
     }
     millisecs_t app_time = pass->frame_def()->app_time_millisecs();
@@ -1457,6 +1460,7 @@ auto DevConsole::PasteFromClipboard() -> bool {
 }
 
 void DevConsole::UpdateCarat_() {
+  last_carat_x_change_time_ = g_core->GetAppTimeMillisecs();
   auto unichars = Utils::UnicodeFromUTF8(input_string_, "fjfwef");
   auto unichars_clamped = unichars;
 
@@ -1508,7 +1512,6 @@ void DevConsole::UpdateCarat_() {
 
 auto DevConsole::GetCaratX_() -> float {
   if (carat_dirty_) {
-    last_carat_x_change_time_ = g_core->GetAppTimeMillisecs();
     UpdateCarat_();
     carat_dirty_ = false;
   }

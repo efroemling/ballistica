@@ -1088,25 +1088,6 @@ static PyMethodDef PyMacMusicAppSetVolumeDef = {
     "(internal)",
 };
 
-// ------------------------ mac_music_app_get_library --------------------------
-
-static auto PyMacMusicAppGetLibrarySource(PyObject* self, PyObject* args,
-                                          PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  g_core->platform->MacMusicAppGetLibrarySource();
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyMacMusicAppGetLibrarySourceDef = {
-    "mac_music_app_get_library_source",          // name
-    (PyCFunction)PyMacMusicAppGetLibrarySource,  // method
-    METH_VARARGS | METH_KEYWORDS,                // flags
-
-    "mac_music_app_get_library_source() -> None\n"
-    "\n"
-    "(internal)"};
-
 // --------------------------- mac_music_app_stop ------------------------------
 
 static auto PyMacMusicAppStop(PyObject* self, PyObject* args, PyObject* keywds)
@@ -1695,7 +1676,6 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyMacMusicAppInitDef,
       PyMacMusicAppGetVolumeDef,
       PyMacMusicAppSetVolumeDef,
-      PyMacMusicAppGetLibrarySourceDef,
       PyMacMusicAppStopDef,
       PyMacMusicAppPlayPlaylistDef,
       PyMacMusicAppGetPlaylistsDef,

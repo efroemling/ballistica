@@ -814,10 +814,6 @@ void CorePlatform::MacMusicAppSetVolume(int volume) {
   Log(LogLevel::kError, "MacMusicAppSetVolume() unimplemented");
 }
 
-void CorePlatform::MacMusicAppGetLibrarySource() {
-  Log(LogLevel::kError, "MacMusicAppGetLibrarySource() unimplemented");
-}
-
 void CorePlatform::MacMusicAppStop() {
   Log(LogLevel::kError, "MacMusicAppStop() unimplemented");
 }

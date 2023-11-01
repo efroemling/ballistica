@@ -274,6 +274,7 @@ ctx.filter_file_extensions = {
     '.frag',
     '.vert',
     '.xcsettings',
+    '.xcstrings',
     '.filters',
 }
 

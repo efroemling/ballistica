@@ -416,11 +416,15 @@ class Updater:
             )
 
     def _target_names_for_file(self, filename: str) -> list[str] | None:
-        # Cocoa stuff only applies to our macOS build.
+        # Cocoa stuff only applies to our macOS targets.
         if filename.startswith('Cocoa') and filename.endswith('.swift'):
-            return [f'{self.pnameu} macOS']
+            return [
+                f'{self.pnameu} macOS TestBuild',
+                f'{self.pnameu} macOS AppStore',
+                f'{self.pnameu} macOS Steam',
+            ]
 
-        # UIKit stuff applies to our iOS/tvOS builds.
+        # UIKit stuff applies to our iOS/tvOS targets.
         if filename.startswith('UIKit') and filename.endswith('.swift'):
             return [f'{self.pnameu} iOS', f'{self.pnameu} tvOS']
 

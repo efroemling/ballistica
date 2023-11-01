@@ -51,6 +51,8 @@ AppAdapterSDL::AppAdapterSDL() {
 }
 
 void AppAdapterSDL::OnMainThreadStartApp() {
+  AppAdapter::OnMainThreadStartApp();
+
   // App is starting. Let's fire up the ol' SDL.
   uint32_t sdl_flags{SDL_INIT_VIDEO | SDL_INIT_JOYSTICK};
 
@@ -79,9 +81,8 @@ void AppAdapterSDL::OnMainThreadStartApp() {
   sdl_runnable_event_id_ = SDL_RegisterEvents(1);
   assert(sdl_runnable_event_id_ != (uint32_t)-1);
 
-  // Note: parent class can add some input devices so need to bring up sdl
-  // before we let it run. That code should maybe be relocated/refactored.
-  AppAdapter::OnMainThreadStartApp();
+  // SDL builds just assume keyboard input is available.
+  g_base->input->PushCreateKeyboardInputDevices();
 
   if (g_buildconfig.enable_sdl_joysticks()) {
     // We want events from joysticks.

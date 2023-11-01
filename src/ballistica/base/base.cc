@@ -722,4 +722,8 @@ void BaseFeatureSet::QuitApp(bool confirm, QuitType quit_type) {
   }
 }
 
+void BaseFeatureSet::PushMainThreadRunnable(Runnable* runnable) {
+  app_adapter->DoPushMainThreadRunnable(runnable);
+}
+
 }  // namespace ballistica::base

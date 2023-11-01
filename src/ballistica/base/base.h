@@ -723,6 +723,8 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// loading.
   void OnAssetsAvailable();
 
+  void PushMainThreadRunnable(Runnable* runnable) override;
+
   // Const subsystems.
   AppAdapter* const app_adapter;
   AppConfig* const app_config;

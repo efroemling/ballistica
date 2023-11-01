@@ -5,6 +5,8 @@
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/logging.h"
+#include "ballistica/shared/generic/lambda_runnable.h"
+#include "ballistica/shared/python/python.h"
 
 namespace ballistica {
 
@@ -131,32 +133,38 @@ void FatalError::DoBlockingFatalErrorDialog(const std::string& message) {
   // done.
   if (g_core->InMainThread()) {
     g_core->platform->BlockingFatalErrorDialog(message);
-  } else {
-    printf("FIXME REIMPLEMENT BLOCKING FATAL ERROR FOR BG THREAD\n");
-    // bool started{};
-    // bool finished{};
-    // bool* startedptr{&started};
-    // bool* finishedptr{&finished};
-    // g_core->main_event_loop()->PushCall([message, startedptr, finishedptr] {
-    //   *startedptr = true;
-    //   g_core->platform->BlockingFatalErrorDialog(message);
-    //   *finishedptr = true;
-    // });
+  } else if (g_base_soft) {
+    bool started{};
+    bool finished{};
+    bool* startedptr{&started};
+    bool* finishedptr{&finished};
 
-    // // Wait a short amount of time for the main thread to take action.
-    // // There's a chance that it can't (if threads are paused, if it is
-    // // blocked on a synchronous call to another thread, etc.) so if we don't
-    // // see something happening soon, just give up on showing a dialog.
-    // auto starttime = core::CorePlatform::GetCurrentMillisecs();
-    // while (!started) {
-    //   if (core::CorePlatform::GetCurrentMillisecs() - starttime > 1000) {
-    //     return;
-    //   }
-    //   core::CorePlatform::SleepMillisecs(10);
-    // }
-    // while (!finished) {
-    //   core::CorePlatform::SleepMillisecs(10);
-    // }
+    // If our thread is holding the GIL, release it to give the main
+    // thread a better chance to get to the point of displaying the fatal error.
+    if (Python::HaveGIL()) {
+      Python::PermanentlyReleaseGIL();
+    }
+    g_base_soft->PushMainThreadRunnable(
+        NewLambdaRunnableUnmanaged([message, startedptr, finishedptr] {
+          *startedptr = true;
+          g_core->platform->BlockingFatalErrorDialog(message);
+          *finishedptr = true;
+        }));
+
+    // Wait a short amount of time for the main thread to take action.
+    // There's a chance that it can't (if threads are paused, if it is
+    // blocked on a synchronous call to another thread, etc.) so if we don't
+    // see something happening soon, just give up on showing a dialog.
+    auto starttime = core::CorePlatform::GetCurrentMillisecs();
+    while (!started) {
+      if (core::CorePlatform::GetCurrentMillisecs() - starttime > 3000) {
+        return;
+      }
+      core::CorePlatform::SleepMillisecs(10);
+    }
+    while (!finished) {
+      core::CorePlatform::SleepMillisecs(10);
+    }
   }
 }
 
