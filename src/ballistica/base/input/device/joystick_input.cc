@@ -148,7 +148,17 @@ auto JoystickInput::HasMeaningfulButtonNames() -> bool {
   return g_buildconfig.ostype_android();
 }
 
+void JoystickInput::SetButtonName(int button, const std::string& name) {
+  button_names_[button] = name;
+}
+
 auto JoystickInput::GetButtonName(int index) -> std::string {
+  // First check any explicit ones we were passed.
+  auto i = button_names_.find(index);
+  if (i != button_names_.end()) {
+    return i->second;
+  }
+
   // FIXME: Should get fancier here now that PS4 and XBone
   // controllers are supported through this.
   if (is_mfi_controller_) {

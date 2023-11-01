@@ -554,7 +554,6 @@ class GamepadSettingsWindow(bui.Window):
                 if self._is_secondary
                 else None
             )
-            print('got', sval1, sval2)
             assert isinstance(sval1, (int, type(None)))
             assert isinstance(sval2, (int, type(None)))
             if sval1 is not None and sval2 is not None:

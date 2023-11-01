@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_INPUT_DEVICE_JOYSTICK_INPUT_H_
 #define BALLISTICA_BASE_INPUT_DEVICE_JOYSTICK_INPUT_H_
 
+#include <map>
 #include <set>
 #include <string>
 
@@ -49,7 +50,6 @@ class JoystickInput : public InputDevice {
 
   auto GetPartyButtonName() const -> std::string override;
 
-  auto GetButtonName(int index) -> std::string override;
   auto GetAxisName(int index) -> std::string override;
 
   auto IsController() -> bool override { return true; }
@@ -72,6 +72,11 @@ class JoystickInput : public InputDevice {
   }
 
   auto HasMeaningfulButtonNames() -> bool override;
+
+  auto GetButtonName(int index) -> std::string override;
+
+  /// Custom controller types can pass in controller-specific button names.
+  void SetButtonName(int button, const std::string& name);
 
  protected:
   auto GetRawDeviceName() -> std::string override;
@@ -185,6 +190,7 @@ class JoystickInput : public InputDevice {
   std::string custom_device_name_;
   std::string raw_sdl_joystick_name_;
   std::string raw_sdl_joystick_identifier_;
+  std::map<int, std::string> button_names_;
   Object::Ref<Repeater> ui_repeater_;
 
   BA_DISALLOW_CLASS_COPIES(JoystickInput);

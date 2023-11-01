@@ -35,7 +35,7 @@ class ControlsGuide(bs.Actor):
         delay: is the time in seconds before the overlay fades in.
 
         lifespan: if not None, the overlay will fade back out and die after
-                  that long (in milliseconds).
+                  that long (in seconds).
 
         bright: if True, brighter colors will be used; handy when showing
                 over gameplay but may be too bright for join-screens, etc.
@@ -50,6 +50,7 @@ class ControlsGuide(bs.Actor):
         offs5 = 43.0 * scale
         ouya = False
         maxw = 50
+        xtweak = -2.8 * scale
         self._lifespan = lifespan
         self._dead = False
         self._bright = bright
@@ -117,7 +118,7 @@ class ControlsGuide(bs.Actor):
                 'host_only': True,
                 'shadow': 1.0,
                 'maxwidth': maxw,
-                'position': (pos[0], pos[1] - offs5),
+                'position': (pos[0] + xtweak, pos[1] - offs5),
                 'color': clr,
             },
         )
@@ -145,7 +146,7 @@ class ControlsGuide(bs.Actor):
                 'host_only': True,
                 'shadow': 1.0,
                 'maxwidth': maxw,
-                'position': (pos[0], pos[1] - offs5),
+                'position': (pos[0] + xtweak, pos[1] - offs5),
                 'color': clr,
             },
         )
@@ -173,7 +174,7 @@ class ControlsGuide(bs.Actor):
                 'host_only': True,
                 'shadow': 1.0,
                 'maxwidth': maxw,
-                'position': (pos[0], pos[1] - offs5),
+                'position': (pos[0] + xtweak, pos[1] - offs5),
                 'color': clr,
             },
         )
@@ -201,7 +202,7 @@ class ControlsGuide(bs.Actor):
                 'host_only': True,
                 'shadow': 1.0,
                 'maxwidth': maxw,
-                'position': (pos[0], pos[1] - offs5),
+                'position': (pos[0] + xtweak, pos[1] - offs5),
                 'color': clr,
             },
         )
