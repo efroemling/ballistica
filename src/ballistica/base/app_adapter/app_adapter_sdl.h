@@ -45,6 +45,8 @@ class AppAdapterSDL : public AppAdapter {
 
   auto GetGraphicsSettings() -> GraphicsSettings* override;
 
+  auto GetKeyName(int keycode) -> std::string override;
+
  protected:
   void DoPushMainThreadRunnable(Runnable* runnable) override;
   void RunMainThreadEventLoopToCompletion() override;

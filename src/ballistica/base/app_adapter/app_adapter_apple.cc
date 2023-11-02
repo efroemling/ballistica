@@ -9,6 +9,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/platform/apple/apple_utils.h"
 #include "ballistica/base/platform/apple/from_swift.h"
+#include "ballistica/base/platform/support/min_sdl_key_names.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -280,6 +281,10 @@ auto AppAdapterApple::DoClipboardGetText() -> std::string {
 #else
   return AppAdapter::DoClipboardGetText();
 #endif
+}
+
+auto AppAdapterApple::GetKeyName(int keycode) -> std::string {
+  return MinSDL_GetKeyName(keycode);
 }
 
 }  // namespace ballistica::base

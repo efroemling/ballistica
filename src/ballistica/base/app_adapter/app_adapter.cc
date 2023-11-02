@@ -302,4 +302,10 @@ auto AppAdapter::DoClipboardGetText() -> std::string {
   return "";
 }
 
+auto AppAdapter::GetKeyName(int keycode) -> std::string {
+  BA_LOG_ONCE(LogLevel::kWarning,
+              "CorePlatform::GetKeyName not implemented here.");
+  return "?";
+}
+
 }  // namespace ballistica::base

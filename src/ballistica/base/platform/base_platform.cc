@@ -7,7 +7,6 @@
 #include "ballistica/base/base.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/base/platform/support/min_sdl_key_names.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
@@ -26,20 +25,6 @@ void BasePlatform::PostInit() {
 }
 
 BasePlatform::~BasePlatform() = default;
-
-auto BasePlatform::GetKeyName(int keycode) -> std::string {
-  // On our actual SDL platforms we're trying to be *pure* sdl so
-  // call their function for this. Otherwise we call our own version
-  // of it which is basically the same thing (at least for now).
-#if BA_MINSDL_BUILD
-  return MinSDL_GetKeyName(keycode);
-#elif BA_SDL_BUILD
-  return SDL_GetKeyName(static_cast<SDL_Keycode>(keycode));
-#else
-  Log(LogLevel::kWarn, "CorePlatform::GetKeyName not implemented here.");
-  return "?";
-#endif
-}
 
 void BasePlatform::LoginAdapterGetSignInToken(const std::string& login_type,
                                               int attempt_id) {

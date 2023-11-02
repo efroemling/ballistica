@@ -843,6 +843,10 @@ auto AppAdapterSDL::DoClipboardGetText() -> std::string {
   return out_s;
 }
 
+auto AppAdapterSDL::GetKeyName(int keycode) -> std::string {
+  return SDL_GetKeyName(static_cast<SDL_Keycode>(keycode));
+}
+
 }  // namespace ballistica::base
 
 #endif  // BA_SDL_BUILD

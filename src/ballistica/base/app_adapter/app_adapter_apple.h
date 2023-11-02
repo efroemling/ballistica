@@ -43,6 +43,7 @@ class AppAdapterApple : public AppAdapter {
 
   auto GetKeyRepeatDelay() -> float override;
   auto GetKeyRepeatInterval() -> float override;
+  auto GetKeyName(int keycode) -> std::string override;
 
  protected:
   void DoPushMainThreadRunnable(Runnable* runnable) override;

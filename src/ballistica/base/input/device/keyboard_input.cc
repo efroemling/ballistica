@@ -477,7 +477,7 @@ void KeyboardInput::UpdateArrowKeys_(SDL_Keycode key) {
 }
 
 auto KeyboardInput::GetButtonName(int index) -> std::string {
-  return g_base->platform->GetKeyName(index);
+  return g_base->app_adapter->GetKeyName(index);
 }
 
 auto KeyboardInput::GetRawDeviceName() -> std::string { return "Keyboard"; }

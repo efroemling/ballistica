@@ -61,11 +61,6 @@ class BasePlatform {
   /// Called when the app should set itself up to intercept ctrl-c presses.
   virtual void SetupInterruptHandling();
 
-#pragma mark INPUT DEVICES -----------------------------------------------------
-
-  // Return a name for a ballistica keycode.
-  virtual auto GetKeyName(int keycode) -> std::string;
-
 #pragma mark ACCOUNTS ----------------------------------------------------------
 
   /// Called when a Python LoginAdapter is requesting an explicit sign-in.
