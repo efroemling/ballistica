@@ -21,6 +21,8 @@ class CorePlatformLinux : public CorePlatform {
   auto GetPlatformName() -> std::string override;
   auto GetSubplatformName() -> std::string override;
   auto GetDeviceUUIDInputs() -> std::list<std::string> override;
+  auto DoGetDeviceDescription() -> std::string override;
+  auto GetOSVersionString() -> std::string override;
 };
 
 }  // namespace ballistica::core

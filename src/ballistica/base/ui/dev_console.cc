@@ -935,7 +935,8 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
           g_base->app_adapter->GetKeyRepeatDelay(),
           g_base->app_adapter->GetKeyRepeatInterval(), [this] {
             auto unichars = Utils::UnicodeFromUTF8(input_string_, "fjco33");
-            if (!unichars.empty() && carat_char_ < unichars.size()) {
+            if (!unichars.empty()
+                && carat_char_ < static_cast<int>(unichars.size())) {
               assert(CaratCharValid_());
               unichars.erase(unichars.begin() + carat_char_);
               input_string_ = Utils::UTF8FromUnicode(unichars);

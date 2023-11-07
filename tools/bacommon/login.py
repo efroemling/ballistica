@@ -20,6 +20,9 @@ class LoginType(Enum):
     # Google Play Game Services
     GPGS = 'gpgs'
 
+    # Apple's Game Center
+    GAME_CENTER = 'game_center'
+
     @property
     def displayname(self) -> str:
         """Human readable name for this value."""
@@ -29,3 +32,5 @@ class LoginType(Enum):
                 return 'Email/Password'
             case cls.GPGS:
                 return 'Google Play Games'
+            case cls.GAME_CENTER:
+                return 'Game Center'

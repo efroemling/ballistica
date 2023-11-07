@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Provides classic app subsystem."""
+"""Provides plus app subsystem."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

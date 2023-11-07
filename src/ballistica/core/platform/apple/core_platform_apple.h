@@ -59,6 +59,9 @@ class CorePlatformApple : public CorePlatform {
 
   auto GetDeviceUUIDInputs() -> std::list<std::string> override;
   auto GetLocale() -> std::string override;
+  auto DoGetDeviceName() -> std::string override;
+  auto DoGetDeviceDescription() -> std::string override;
+  auto GetOSVersionString() -> std::string override;
 
  protected:
   auto DoGetDataDirectoryMonolithicDefault() -> std::string override;

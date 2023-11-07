@@ -33,6 +33,7 @@ class PlusSoftInterface {
   virtual auto PutLog(bool fatal) -> bool = 0;
   virtual void AAT() = 0;
   virtual void AATE() = 0;
+  virtual auto GAHU() -> std::optional<std::string> = 0;
   virtual void V1LoginDidChange() = 0;
   virtual void SetAdCompletionCall(PyObject* obj,
                                    bool pass_actually_showed) = 0;

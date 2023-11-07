@@ -13,9 +13,9 @@
 
 // We currently support regular and client builds on 64 bit mac posix
 #if __amd64__
-#define BA_PLATFORM_STRING "x86_64_macos"
+#define BA_PLATFORM_STRING "macos x86_64"
 #elif __aarch64__
-#define BA_PLATFORM_STRING "arm64_macos"
+#define BA_PLATFORM_STRING "macos arm64"
 #else
 #error Unknown processor architecture.
 #endif
@@ -26,16 +26,16 @@
 #elif __linux__
 
 #if __amd64__
-#define BA_PLATFORM_STRING "x86_64_linux"
+#define BA_PLATFORM_STRING "linux x86_64"
 #define BA_OSTYPE_LINUX 1
 #elif __i386__
-#define BA_PLATFORM_STRING "x86_32_linux"
+#define BA_PLATFORM_STRING "linux x86"
 #define BA_OSTYPE_LINUX 1
 #elif __arm__
-#define BA_PLATFORM_STRING "arm_linux"
+#define BA_PLATFORM_STRING "linux arm"
 #define BA_OSTYPE_LINUX 1
 #elif __aarch64__
-#define BA_PLATFORM_STRING "arm64_linux"
+#define BA_PLATFORM_STRING "linux arm64"
 #define BA_OSTYPE_LINUX 1
 
 #else

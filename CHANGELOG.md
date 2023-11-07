@@ -1,4 +1,4 @@
-### 1.7.28 (build 21556, api 8, 2023-11-01)
+### 1.7.28 (build 21570, api 8, 2023-11-07)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -202,6 +202,9 @@
   several hundred FPS, milliseconds per frame would drop to 0 which caused some
   problems. Note that scenev1 will be remaining on milliseconds internally for
   compatibility reasons. Scenev2 should move to microseconds though.
+- The V2 account id for the signed in account is now available at
+  `ba*.app.plus.accounts.primary.accountid` (alongside some other existing
+  account info).
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 

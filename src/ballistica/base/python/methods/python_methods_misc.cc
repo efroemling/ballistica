@@ -1682,6 +1682,27 @@ static PyMethodDef PyAssetLoadsAllowedDef = {
     "(internal)",
 };
 
+// -------------------- using_google_play_game_services ------------------------
+
+static auto PyUsingGooglePlayGameServices(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_buildconfig.use_google_play_game_services()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyUsingGooglePlayGameServicesDef = {
+    "using_google_play_game_services",           // name
+    (PyCFunction)PyUsingGooglePlayGameServices,  // method
+    METH_NOARGS,                                 // flags
+
+    "using_google_play_game_services() -> bool\n"
+    "\n"
+    "(internal)",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
@@ -1745,6 +1766,7 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PyDevConsoleBaseScaleDef,
       PyDevConsoleRequestRefreshDef,
       PyAssetLoadsAllowedDef,
+      PyUsingGooglePlayGameServicesDef,
   };
 }
 

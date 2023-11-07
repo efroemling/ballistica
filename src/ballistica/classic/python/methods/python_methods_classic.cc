@@ -157,9 +157,6 @@ static auto PySetStressTesting(PyObject* self, PyObject* args) -> PyObject* {
   if (!PyArg_ParseTuple(args, "pi", &enable, &player_count)) {
     return nullptr;
   }
-  // g_base->app_adapter->PushMainThreadCall([enable, player_count] {
-  //   g_base->stress_test()->Set(enable, player_count);
-  // });
   g_base->logic->event_loop()->PushCall([enable, player_count] {
     g_classic->stress_test()->Set(enable, player_count);
   });

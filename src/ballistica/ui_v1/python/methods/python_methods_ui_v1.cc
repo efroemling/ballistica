@@ -2717,14 +2717,14 @@ static auto PyOpenURL(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   // Need to pass a self-contained string to a lambda; not a char*.
-  std::string address2{address};
+  std::string address_s{address};
 
   assert(g_base->app_adapter);
   if (force_internal) {
     g_base->ui->ShowURL(address);
   } else {
     g_base->app_adapter->PushMainThreadCall(
-        [address2] { g_base->platform->OpenURL(address2); });
+        [address_s] { g_base->platform->OpenURL(address_s); });
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

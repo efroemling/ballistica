@@ -31,6 +31,8 @@ class AccountV2Subsystem:
     """
 
     def __init__(self) -> None:
+        from babase._login import LoginAdapterGPGS
+
         # Whether or not everything related to an initial login
         # (or lack thereof) has completed. This includes things like
         # workspace syncing. Completion of this is what flips the app
@@ -45,15 +47,7 @@ class AccountV2Subsystem:
         self._implicit_state_changed = False
         self._can_do_auto_sign_in = True
 
-        if _babase.app.classic is None:
-            raise RuntimeError('Needs updating for no-classic case.')
-
-        if (
-            _babase.app.classic.platform == 'android'
-            and _babase.app.classic.subplatform == 'google'
-        ):
-            from babase._login import LoginAdapterGPGS
-
+        if _babase.using_google_play_game_services():
             self.login_adapters[LoginType.GPGS] = LoginAdapterGPGS()
 
     def on_app_loading(self) -> None:
@@ -61,10 +55,6 @@ class AccountV2Subsystem:
 
         for adapter in self.login_adapters.values():
             adapter.on_app_loading()
-
-    def set_primary_credentials(self, credentials: str | None) -> None:
-        """Set credentials for the primary app account."""
-        raise NotImplementedError('This should be overridden.')
 
     def have_primary_credentials(self) -> bool:
         """Are credentials currently set for the primary app account?
@@ -79,10 +69,6 @@ class AccountV2Subsystem:
     def primary(self) -> AccountV2Handle | None:
         """The primary account for the app, or None if not logged in."""
         return self.do_get_primary()
-
-    def do_get_primary(self) -> AccountV2Handle | None:
-        """Internal - should be overridden by subclass."""
-        return None
 
     def on_primary_account_changed(
         self, account: AccountV2Handle | None
@@ -259,6 +245,14 @@ class AccountV2Subsystem:
         # We may want to auto-sign-in based on this new state.
         self._update_auto_sign_in()
 
+    def do_get_primary(self) -> AccountV2Handle | None:
+        """Internal - should be overridden by subclass."""
+        raise NotImplementedError('This should be overridden.')
+
+    def set_primary_credentials(self, credentials: str | None) -> None:
+        """Set credentials for the primary app account."""
+        raise NotImplementedError('This should be overridden.')
+
     def _update_auto_sign_in(self) -> None:
         plus = _babase.app.plus
         assert plus is not None
@@ -419,14 +413,21 @@ class AccountV2Handle:
     used with some operations such as cloud messaging.
     """
 
-    def __init__(self) -> None:
-        self.tag = '?'
+    accountid: str
+    tag: str
+    workspacename: str | None
+    workspaceid: str | None
+    logins: dict[LoginType, str]
 
-        self.workspacename: str | None = None
-        self.workspaceid: str | None = None
+    # def __init__(self) -> None:
 
-        # Login types and their display-names associated with this account.
-        self.logins: dict[LoginType, str] = {}
+    #     self.workspacename: str | None = None
+    #     self.workspaceid: str | None = None
+
+    #     # Login types and their display-names associated with this account.
+    #     self.logins: dict[LoginType, str] = {}
+
+    #     self.accountid: str =
 
     def __enter__(self) -> None:
         """Support for "with" statement.

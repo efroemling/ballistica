@@ -116,13 +116,15 @@ class CorePlatform {
   /// Return the directory where game replay files live.
   auto GetReplaysDir() -> std::string;
 
-  /// Return en_US or whatnot.
+  /// Return something like `en_US` or whatnot.
   virtual auto GetLocale() -> std::string;
 
   /// Get the older more complex user-agent-string, used for communication
-  /// with v1 servers/etc. This can go away eventually.
-  auto GetLegacyUserAgentString() -> std::string;
+  /// with v1 servers/etc. This should go away eventually.
+  virtual auto GetLegacyUserAgentString() -> std::string;
 
+  /// Return a human readable os version such as "10.4.2".
+  /// Can return a blank string when not known/relevant.
   virtual auto GetOSVersionString() -> std::string;
 
   /// Set an environment variable as utf8, overwriting if it already exists.
@@ -134,6 +136,9 @@ class CorePlatform {
   /// Return hostname or other id suitable for displaying in network search
   /// results, etc.
   auto GetDeviceName() -> std::string;
+
+  /// Return a general identifier for the hardware device.
+  auto GetDeviceDescription() -> std::string;
 
   /// Get a UUID for use with things like device-accounts. This function
   /// should not be used for other purposes, should not be modified, and
@@ -407,8 +412,14 @@ class CorePlatform {
   /// Called once per platform to determine touchscreen presence.
   virtual auto DoHasTouchScreen() -> bool;
 
-  /// Platforms should override this to provide device name.
+  /// Platforms should override this to provide a device name suitable for
+  /// displaying in network join lists/etc. Technically this is more like
+  /// hostname.
   virtual auto DoGetDeviceName() -> std::string;
+
+  /// Platforms should override this to provide a generic description of the
+  /// device; something like "iPhone 12 Pro".
+  virtual auto DoGetDeviceDescription() -> std::string;
 
   /// Attempt to actually create a directory.
   /// Should *not* raise Exceptions if it already exists or if quiet is true.
@@ -462,6 +473,7 @@ class CorePlatform {
   bool ran_base_post_init_ : 1 {};
   millisecs_t start_time_millisecs_{};
   std::string device_name_;
+  std::string device_description_;
   std::string legacy_device_uuid_;
   std::string volatile_data_dir_;
   std::string replays_dir_;

@@ -151,6 +151,43 @@ auto BaseFeatureSet::IsBaseCompletelyImported() -> bool {
   return base_import_completed_ && base_native_import_completed_;
 }
 
+void BaseFeatureSet::SuccessScreenMessage() {
+  if (auto* event_loop = logic->event_loop()) {
+    event_loop->PushCall([this] {
+      python->objs().Get(BasePython::ObjID::kSuccessMessageCall).Call();
+    });
+  } else {
+    Log(LogLevel::kError,
+        "SuccessScreenMessage called without logic event_loop in place.");
+  }
+}
+
+void BaseFeatureSet::ErrorScreenMessage() {
+  if (auto* event_loop = logic->event_loop()) {
+    event_loop->PushCall([this] {
+      python->objs().Get(BasePython::ObjID::kErrorMessageCall).Call();
+    });
+  } else {
+    Log(LogLevel::kError,
+        "ErrorScreenMessage called without logic event_loop in place.");
+  }
+}
+
+auto BaseFeatureSet::GetV2AccountID() -> std::optional<std::string> {
+  auto gil = Python::ScopedInterpreterLock();
+  auto result =
+      python->objs().Get(BasePython::ObjID::kGetV2AccountIdCall).Call();
+  if (result.Exists()) {
+    if (result.ValueIsNone()) {
+      return {};
+    }
+    return result.ValueAsString();
+  } else {
+    Log(LogLevel::kError, "GetV2AccountID() py call errored.");
+    return {};
+  }
+}
+
 void BaseFeatureSet::OnAssetsAvailable() {
   assert(InLogicThread());
 

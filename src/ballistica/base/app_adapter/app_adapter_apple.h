@@ -26,6 +26,8 @@ class AppAdapterApple : public AppAdapter {
     return val;
   }
 
+  void OnMainThreadStartApp() override;
+
   auto ManagesMainThreadEventLoop() const -> bool override;
   void DoApplyAppConfig() override;
 

@@ -423,10 +423,20 @@ class Updater:
                 f'{self.pnameu} macOS AppStore',
                 f'{self.pnameu} macOS Steam',
             ]
+        # A few things only for AppStore bound builds.
+        if filename == 'StoreKitContext.swift':
+            return [
+                f'{self.pnameu} iOS',
+                f'{self.pnameu} tvOS',
+                f'{self.pnameu} macOS AppStore',
+            ]
 
         # UIKit stuff applies to our iOS/tvOS targets.
         if filename.startswith('UIKit') and filename.endswith('.swift'):
-            return [f'{self.pnameu} iOS', f'{self.pnameu} tvOS']
+            return [
+                f'{self.pnameu} iOS',
+                f'{self.pnameu} tvOS',
+            ]
 
         # Everything else applies to everything.
         return None

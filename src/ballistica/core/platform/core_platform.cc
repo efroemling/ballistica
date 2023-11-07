@@ -112,6 +112,8 @@ void CorePlatform::PostInit() {
   // this sometimes (mainly on windows). Should look into that
   // more closely or at least log it somewhere.
   device_name_ = Utils::GetValidUTF8(DoGetDeviceName().c_str(), "dn");
+  device_description_ =
+      Utils::GetValidUTF8(DoGetDeviceDescription().c_str(), "fc");
   ran_base_post_init_ = true;
 
   // Are we running in a terminal?
@@ -424,6 +426,11 @@ auto CorePlatform::GetDeviceName() -> std::string {
   return device_name_;
 }
 
+auto CorePlatform::GetDeviceDescription() -> std::string {
+  assert(ran_base_post_init_);
+  return device_description_;
+}
+
 auto CorePlatform::DoGetDeviceName() -> std::string {
   // Check devicename in env_var
   char* devicename;
@@ -439,7 +446,11 @@ auto CorePlatform::DoGetDeviceName() -> std::string {
     nbuffer[sizeof(nbuffer) - 1] = 0;  // Make sure its terminated.
     return nbuffer;
   }
-  return "Untitled Device";
+  return "Unnamed Device";
+}
+
+auto CorePlatform::DoGetDeviceDescription() -> std::string {
+  return "Unknown Device Type";
 }
 
 auto CorePlatform::IsRunningOnTV() -> bool { return false; }
@@ -567,7 +578,7 @@ auto CorePlatform::GetIsStdinATerminal() -> bool {
 auto CorePlatform::GetOSVersionString() -> std::string { return ""; }
 
 auto CorePlatform::GetLegacyUserAgentString() -> std::string {
-  std::string device = GetDeviceName();
+  std::string device = GetDeviceDescription();
   std::string version = GetOSVersionString();
   if (!version.empty()) {
     version = " " + version;
@@ -597,7 +608,7 @@ auto CorePlatform::GetLegacyUserAgentString() -> std::string {
     subplatform = "DeMo";
   } else if (g_buildconfig.arcade_build()) {
     subplatform = "ArCd";
-  } else {
+  } else if (g_buildconfig.test_build()) {
     subplatform = "TstB";
   }
 
@@ -608,10 +619,10 @@ auto CorePlatform::GetLegacyUserAgentString() -> std::string {
     subplatform += " OnTV";
   }
 
-  std::string out{std::string("BallisticaKit ") + kEngineVersion + subplatform
-                  + " (" + std::to_string(kEngineBuildNumber) + ") ("
-                  + g_buildconfig.platform_string() + version + "; " + device
-                  + "; " + GetLocale() + ")"};
+  std::string out{std::string("BallisticaKit ") + kEngineVersion + " ("
+                  + std::to_string(kEngineBuildNumber) + ")" + subplatform
+                  + " (" + g_buildconfig.platform_string() + version + "; "
+                  + device + "; " + GetLocale() + ")"};
 
   // This gets shipped to various places which might choke on fancy unicode
   // characters, so let's limit to simple ascii.

@@ -340,8 +340,8 @@ class LoginAdapter:
 class LoginAdapterNative(LoginAdapter):
     """A login adapter that does its work in the native layer."""
 
-    def __init__(self) -> None:
-        super().__init__(LoginType.GPGS)
+    def __init__(self, login_type: LoginType) -> None:
+        super().__init__(login_type)
 
         # Store int ids for in-flight attempts since they may go through
         # various platform layers and back.
@@ -375,3 +375,6 @@ class LoginAdapterNative(LoginAdapter):
 
 class LoginAdapterGPGS(LoginAdapterNative):
     """Google Play Game Services adapter."""
+
+    def __init__(self) -> None:
+        super().__init__(LoginType.GPGS)

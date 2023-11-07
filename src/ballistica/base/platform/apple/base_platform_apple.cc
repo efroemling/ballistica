@@ -25,7 +25,8 @@ BasePlatformApple::BasePlatformApple() {
 
 void BasePlatformApple::DoPurchase(const std::string& item) {
 #if BA_USE_STORE_KIT
-  AppleUtils::DoStoreKitPurchase(item);
+  BallisticaKit::StoreKitContext::purchase(item);
+  // AppleUtils::DoStoreKitPurchase(item);
 #else
   BasePlatform::DoPurchase(item);
 #endif
@@ -33,7 +34,8 @@ void BasePlatformApple::DoPurchase(const std::string& item) {
 
 void BasePlatformApple::RestorePurchases() {
 #if BA_USE_STORE_KIT
-  AppleUtils::DoStoreKitPurchaseRestore();
+  BallisticaKit::StoreKitContext::restorePurchases();
+  // AppleUtils::DoStoreKitPurchaseRestore();
 #else
   BasePlatform::RestorePurchases();
 #endif
@@ -41,8 +43,9 @@ void BasePlatformApple::RestorePurchases() {
 
 void BasePlatformApple::PurchaseAck(const std::string& purchase,
                                     const std::string& order_id) {
-#if BA_XCODE_BUILD && BA_USE_STORE_KIT
-  AppleUtils::PurchaseAck(purchase, order_id);
+#if BA_USE_STORE_KIT
+  BallisticaKit::StoreKitContext::purchaseAck(purchase, order_id);
+  // AppleUtils::PurchaseAck(purchase, order_id);
 #else
   BasePlatform::PurchaseAck(purchase, order_id);
 #endif

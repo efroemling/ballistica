@@ -34,6 +34,33 @@ auto CorePlatformApple::GetDeviceV1AccountUUIDPrefix() -> std::string {
 #endif
 }
 
+auto CorePlatformApple::DoGetDeviceName() -> std::string {
+#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
+  // Ask swift for a pretty name if possible.
+  auto val = BallisticaKit::CocoaFromCpp::GetDeviceName();
+  if (val) {
+    return val.get();
+  }
+#elif BA_OSTYPE_IOS_TVOS && BA_XCODE_BUILD
+  return BallisticaKit::UIKitFromCpp::GetDeviceName();
+#endif
+  return CorePlatform::DoGetDeviceName();
+}
+
+auto CorePlatformApple::DoGetDeviceDescription() -> std::string {
+#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
+  return BallisticaKit::CocoaFromCpp::GetDeviceModelName();
+#endif
+  return CorePlatform::DoGetDeviceDescription();
+}
+
+auto CorePlatformApple::GetOSVersionString() -> std::string {
+#if BA_XCODE_BUILD
+  return BallisticaKit::FromCpp::GetOSVersion();
+#endif
+  return CorePlatform::GetOSVersionString();
+}
+
 // Legacy for device-accounts; don't modify this code.
 auto CorePlatformApple::GetRealLegacyDeviceUUID(std::string* uuid) -> bool {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD

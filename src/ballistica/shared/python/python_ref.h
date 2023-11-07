@@ -162,6 +162,8 @@ class PythonRef {
   /// Return the object's Python type object.
   auto Type() const -> PythonRef;
 
+  auto ValueIsNone() const -> bool;
+
   /// For string and babase.Lstr types, returns a utf8 string.
   /// Throws an exception for other types.
   auto ValueAsLString() const -> std::string;

@@ -51,6 +51,13 @@ void AppAdapterApple::DoPushMainThreadRunnable(Runnable* runnable) {
   BallisticaKit::FromCpp::PushRawRunnableToMain(runnable);
 }
 
+void AppAdapterApple::OnMainThreadStartApp() {
+  AppAdapter::OnMainThreadStartApp();
+#if BA_USE_STORE_KIT
+  BallisticaKit::StoreKitContext::onAppStart();
+#endif
+}
+
 void AppAdapterApple::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
 
 void AppAdapterApple::ApplyGraphicsSettings(const GraphicsSettings* settings) {

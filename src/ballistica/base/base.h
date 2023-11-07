@@ -632,6 +632,13 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
     return *context_ref;
   }
 
+  /// Utility call to print 'Success!' with a happy sound.
+  /// Safe to call from any thread.
+  void SuccessScreenMessage();
+  /// Utility call to print 'Error.' with a beep sound.
+  /// Safe to call from any thread.
+  void ErrorScreenMessage();
+
   void SetCurrentContext(const ContextRef& context);
 
   /// Try to load the plus feature-set and return whether it is available.
@@ -724,6 +731,10 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   void OnAssetsAvailable();
 
   void PushMainThreadRunnable(Runnable* runnable) override;
+
+  /// Return the currently signed in V2 account id as
+  /// reported by the Python layer.
+  auto GetV2AccountID() -> std::optional<std::string>;
 
   // Const subsystems.
   AppAdapter* const app_adapter;
