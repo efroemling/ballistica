@@ -518,10 +518,13 @@ def show_offer() -> bool:
         assert plus is not None
 
         app = bui.app
-        assert app.classic is not None
+        if app.classic is None:
+            raise RuntimeError(
+                'Classic feature-set is required to show offers.'
+            )
 
-        # Space things out a bit so we don't hit the poor user with an ad and
-        # then an in-game offer.
+        # Space things out a bit so we don't hit the poor user with an
+        # ad and then an in-game offer.
         has_been_long_enough_since_ad = True
         if app.classic.ads.last_ad_completion_time is not None and (
             bui.apptime() - app.classic.ads.last_ad_completion_time < 30.0
@@ -532,8 +535,9 @@ def show_offer() -> bool:
             app.classic.special_offer is not None
             and has_been_long_enough_since_ad
         ):
-            # Special case: for pro offers, store this in our prefs so we
-            # can re-show it if the user kills us (set phasers to 'NAG'!!!).
+            # Special case: for pro offers, store this in our prefs so
+            # we can re-show it if the user kills us (set phasers to
+            # 'NAG'!!!).
             if app.classic.special_offer.get('item') == 'pro_fullprice':
                 cfg = app.config
                 cfg['pendingSpecialOffer'] = {
@@ -543,7 +547,11 @@ def show_offer() -> bool:
                 cfg.commit()
 
             if app.classic.special_offer['item'] == 'rating':
-                feedback.ask_for_rating()
+                # Go with a native thing if we've got one.
+                if bui.native_review_request_supported():
+                    bui.native_review_request()
+                else:
+                    feedback.ask_for_rating()
             else:
                 SpecialOfferWindow(app.classic.special_offer)
 

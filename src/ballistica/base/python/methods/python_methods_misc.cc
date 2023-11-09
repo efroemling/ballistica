@@ -1724,6 +1724,45 @@ static PyMethodDef PyUsingGameCenterDef = {
     "(internal)",
 };
 
+// --------------------- native_review_request_supported -----------------------
+
+static auto PyNativeReviewRequestSupported(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_base->app_adapter->NativeReviewRequestSupported()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyNativeReviewRequestSupportedDef = {
+    "native_review_request_supported",            // name
+    (PyCFunction)PyNativeReviewRequestSupported,  // method
+    METH_NOARGS,                                  // flags
+
+    "native_review_request_supported() -> bool\n"
+    "\n"
+    "(internal)",
+};
+
+// -------------------------- native_review_request ----------------------------
+
+static auto PyNativeReviewRequest(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  g_base->app_adapter->NativeReviewRequest();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyNativeReviewRequestDef = {
+    "native_review_request",             // name
+    (PyCFunction)PyNativeReviewRequest,  // method
+    METH_NOARGS,                         // flags
+
+    "native_review_request() -> None\n"
+    "\n"
+    "(internal)",
+};
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
@@ -1789,6 +1828,8 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PyAssetLoadsAllowedDef,
       PyUsingGooglePlayGameServicesDef,
       PyUsingGameCenterDef,
+      PyNativeReviewRequestSupportedDef,
+      PyNativeReviewRequestDef,
   };
 }
 

@@ -297,6 +297,23 @@ auto AppAdapterApple::GetKeyName(int keycode) -> std::string {
   return MinSDL_GetKeyName(keycode);
 }
 
+auto AppAdapterApple::NativeReviewRequestSupported() -> bool {
+  // StoreKit currently supports this everywhere except tvOS.
+  if (g_buildconfig.xcode_build() && g_buildconfig.use_store_kit()
+      && !g_buildconfig.ostype_tvos()) {
+    return true;
+  }
+  return false;
+}
+
+void AppAdapterApple::DoNativeReviewRequest() {
+#if BA_XCODE_BUILD && BA_USE_STORE_KIT && !BA_OSTYPE_TVOS
+  BallisticaKit::StoreKitContext::requestReview();
+#else
+  FatalError("This should not be getting called.");
+#endif
+}
+
 }  // namespace ballistica::base
 
 #endif  // BA_XCODE_BUILD

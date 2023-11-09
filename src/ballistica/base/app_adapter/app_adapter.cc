@@ -308,4 +308,13 @@ auto AppAdapter::GetKeyName(int keycode) -> std::string {
   return "?";
 }
 
+auto AppAdapter::NativeReviewRequestSupported() -> bool { return false; }
+
+void AppAdapter::NativeReviewRequest() {
+  BA_PRECONDITION(NativeReviewRequestSupported());
+  PushMainThreadCall([this] { DoNativeReviewRequest(); });
+}
+
+void AppAdapter::DoNativeReviewRequest() { FatalError("Fixme unimplemented."); }
+
 }  // namespace ballistica::base

@@ -46,6 +46,7 @@ class AppAdapterApple : public AppAdapter {
   auto GetKeyRepeatDelay() -> float override;
   auto GetKeyRepeatInterval() -> float override;
   auto GetKeyName(int keycode) -> std::string override;
+  auto NativeReviewRequestSupported() -> bool override;
 
  protected:
   void DoPushMainThreadRunnable(Runnable* runnable) override;
@@ -60,6 +61,7 @@ class AppAdapterApple : public AppAdapter {
   auto DoClipboardHasText() -> bool override;
   void DoClipboardSetText(const std::string& text) override;
   auto DoClipboardGetText() -> std::string override;
+  void DoNativeReviewRequest() override;
 
  private:
   class ScopedAllowGraphics_;

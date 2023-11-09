@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from typing import Callable
 
 
-DEBUG_LOG = True
+DEBUG_LOG = False
 
 
 class LoginAdapter:

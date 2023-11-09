@@ -230,8 +230,14 @@ class AppAdapter {
   /// context. By default this is simply the main thread.
   virtual void DoPushGraphicsContextRunnable(Runnable* runnable);
 
-  // Return a name for a ballistica keyboard keycode.
+  /// Return a name for a ballistica keyboard keycode.
   virtual auto GetKeyName(int keycode) -> std::string;
+
+  /// Return whether there is a native 'review-this-app' prompt.
+  virtual auto NativeReviewRequestSupported() -> bool;
+
+  /// Asynchronously kick off a native review request.
+  void NativeReviewRequest();
 
  protected:
   virtual ~AppAdapter();
@@ -240,6 +246,10 @@ class AppAdapter {
   virtual auto DoClipboardHasText() -> bool;
   virtual void DoClipboardSetText(const std::string& text);
   virtual auto DoClipboardGetText() -> std::string;
+
+  /// Override to implement native review requests. Will be called in the
+  /// main thread.
+  virtual void DoNativeReviewRequest();
 
  private:
   void OnAppSuspend_();
