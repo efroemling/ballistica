@@ -64,12 +64,13 @@ class AccountSettingsWindow(bui.Window):
         )
 
         # Currently we can only reset achievements on game-center.
-        v1_account_type: str | None
-        if self._v1_signed_in:
-            v1_account_type = plus.get_v1_account_type()
-        else:
-            v1_account_type = None
-        self._can_reset_achievements = v1_account_type == 'Game Center'
+        # v1_account_type: str | None
+        # if self._v1_signed_in:
+        #     v1_account_type = plus.get_v1_account_type()
+        # else:
+        #     v1_account_type = None
+        # self._can_reset_achievements = v1_account_type == 'Game Center'
+        self._can_reset_achievements = False
 
         app = bui.app
         assert app.classic is not None
@@ -97,6 +98,9 @@ class AccountSettingsWindow(bui.Window):
 
         if LoginType.GPGS in plus.accounts.login_adapters:
             self._show_sign_in_buttons.append('Google Play')
+
+        if LoginType.GAME_CENTER in plus.accounts.login_adapters:
+            self._show_sign_in_buttons.append('Game Center')
 
         # Always want to show our web-based v2 login option.
         self._show_sign_in_buttons.append('V2Proxy')
@@ -242,6 +246,16 @@ class AccountSettingsWindow(bui.Window):
             False if gpgs_adapter is None else gpgs_adapter.is_back_end_active()
         )
 
+        # Ditto for Game Center.
+        game_center_adapter = plus.accounts.login_adapters.get(
+            LoginType.GAME_CENTER
+        )
+        is_game_center = (
+            False
+            if game_center_adapter is None
+            else game_center_adapter.is_back_end_active()
+        )
+
         show_signed_in_as = self._v1_signed_in
         signed_in_as_space = 95.0
 
@@ -257,6 +271,11 @@ class AccountSettingsWindow(bui.Window):
             v1_state == 'signed_out'
             and self._signing_in_adapter is None
             and 'Google Play' in self._show_sign_in_buttons
+        )
+        show_game_center_sign_in_button = (
+            v1_state == 'signed_out'
+            and self._signing_in_adapter is None
+            and 'Game Center' in self._show_sign_in_buttons
         )
         show_v2_proxy_sign_in_button = (
             v1_state == 'signed_out'
@@ -281,11 +300,9 @@ class AccountSettingsWindow(bui.Window):
         show_linked_accounts_text = self._v1_signed_in
         linked_accounts_text_space = 60.0
 
-        show_achievements_button = self._v1_signed_in and v1_account_type in (
-            'Google Play',
-            'Local',
-            'V2',
-        )
+        # Always show achievements except in the game-center case where
+        # its unified UI covers them.
+        show_achievements_button = self._v1_signed_in and not is_game_center
         achievements_button_space = 60.0
 
         show_achievements_text = (
@@ -352,6 +369,8 @@ class AccountSettingsWindow(bui.Window):
         if show_signing_in_text:
             self._sub_height += signing_in_text_space
         if show_google_play_sign_in_button:
+            self._sub_height += sign_in_button_space
+        if show_game_center_sign_in_button:
             self._sub_height += sign_in_button_space
         if show_v2_proxy_sign_in_button:
             self._sub_height += sign_in_button_space
@@ -477,22 +496,6 @@ class AccountSettingsWindow(bui.Window):
 
         if show_sign_in_benefits:
             v -= sign_in_benefits_space
-            app = bui.app
-            assert app.classic is not None
-            extra: str | bui.Lstr | None
-            if (
-                app.classic.platform in ['mac', 'ios']
-                and app.classic.subplatform == 'appstore'
-            ):
-                extra = bui.Lstr(
-                    value='\n${S}',
-                    subs=[
-                        ('${S}', bui.Lstr(resource='signInWithGameCenterText'))
-                    ],
-                )
-            else:
-                extra = ''
-
             bui.textwidget(
                 parent=self._subcontainer,
                 position=(
@@ -500,16 +503,7 @@ class AccountSettingsWindow(bui.Window):
                     v + sign_in_benefits_space * 0.4,
                 ),
                 size=(0, 0),
-                text=bui.Lstr(
-                    value='${A}${B}',
-                    subs=[
-                        (
-                            '${A}',
-                            bui.Lstr(resource=self._r + '.signInInfoText'),
-                        ),
-                        ('${B}', extra),
-                    ],
-                ),
+                text=bui.Lstr(resource=self._r + '.signInInfoText'),
                 max_height=sign_in_benefits_space * 0.9,
                 scale=0.9,
                 color=(0.75, 0.7, 0.8),
@@ -554,12 +548,57 @@ class AccountSettingsWindow(bui.Window):
                         (
                             '${B}',
                             bui.Lstr(
-                                resource=self._r + '.signInWithGooglePlayText'
+                                resource=self._r + '.signInWithText',
+                                subs=[
+                                    (
+                                        '${SERVICE}',
+                                        bui.Lstr(resource='googlePlayText'),
+                                    )
+                                ],
                             ),
                         ),
                     ],
                 ),
                 on_activate_call=lambda: self._sign_in_press(LoginType.GPGS),
+            )
+            if first_selectable is None:
+                first_selectable = btn
+            if bui.app.ui_v1.use_toolbars:
+                bui.widget(
+                    edit=btn,
+                    right_widget=bui.get_special_widget('party_button'),
+                )
+            bui.widget(edit=btn, left_widget=bbtn)
+            bui.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
+            self._sign_in_text = None
+
+        if show_game_center_sign_in_button:
+            button_width = 350
+            v -= sign_in_button_space
+            self._sign_in_google_play_button = btn = bui.buttonwidget(
+                parent=self._subcontainer,
+                position=((self._sub_width - button_width) * 0.5, v - 20),
+                autoselect=True,
+                size=(button_width, 60),
+                label=bui.Lstr(
+                    value='${A}${B}',
+                    subs=[
+                        (
+                            '${A}',
+                            bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO),
+                        ),
+                        (
+                            '${B}',
+                            bui.Lstr(
+                                resource=self._r + '.signInWithText',
+                                subs=[('${SERVICE}', 'Game Center')],
+                            ),
+                        ),
+                    ],
+                ),
+                on_activate_call=lambda: self._sign_in_press(
+                    LoginType.GAME_CENTER
+                ),
             )
             if first_selectable is None:
                 first_selectable = btn
@@ -748,7 +787,11 @@ class AccountSettingsWindow(bui.Window):
             v -= game_service_button_space * 0.85
             v1_account_type = plus.get_v1_account_type()
             if v1_account_type == 'Game Center':
-                v1_account_type_name = bui.Lstr(resource='gameCenterText')
+                # Update: Apparently Game Center is just called 'Game Center'
+                # in all languages. Can revisit if not true.
+                # https://developer.apple.com/forums/thread/725779
+                v1_account_type_name = bui.Lstr(value='Game Center')
+                # v1_account_type_name = bui.Lstr(resource='gameCenterText')
             else:
                 raise ValueError(
                     "unknown account type: '" + str(v1_account_type) + "'"
@@ -1469,8 +1512,11 @@ class AccountSettingsWindow(bui.Window):
         if isinstance(result, Exception):
             # For now just make a bit of noise if anything went wrong;
             # can get more specific as needed later.
-            logging.warning('Got error in v2 sign-in result: %s.', result)
-            bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
+            logging.warning('Got error in v2 sign-in result: %s', result)
+            bui.screenmessage(
+                bui.Lstr(resource='internal.signInNoConnectionText'),
+                color=(1, 0, 0),
+            )
             bui.getsound('error').play()
         else:
             # Success! Plug in these credentials which will begin

@@ -239,7 +239,7 @@ class CorePlatform {
   virtual void SignInV1(const std::string& account_type);
   virtual void SignOutV1();
 
-  virtual void GameCenterLogin();
+  // virtual void GameCenterLogin();
   virtual void V1LoginDidChange();
 
   /// Returns the ID to use for the device account.

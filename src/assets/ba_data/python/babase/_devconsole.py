@@ -3,6 +3,7 @@
 """Dev-Console functionality."""
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
 import logging
@@ -154,9 +155,10 @@ class DevConsoleSubsystem:
         # All tabs in the dev-console. Add your own stuff here via
         # plugins or whatnot.
         self.tabs: list[DevConsoleTabEntry] = [
-            DevConsoleTabEntry('Python', DevConsoleTabPython),
-            DevConsoleTabEntry('Test', DevConsoleTabTest),
+            DevConsoleTabEntry('Python', DevConsoleTabPython)
         ]
+        if os.environ.get('BA_DEV_CONSOLE_TEST_TAB', '0') == '1':
+            self.tabs.append(DevConsoleTabEntry('Test', DevConsoleTabTest))
         self.is_refreshing = False
 
     def do_refresh_tab(self, tabname: str) -> None:

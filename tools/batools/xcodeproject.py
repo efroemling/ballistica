@@ -424,7 +424,7 @@ class Updater:
                 f'{self.pnameu} macOS Steam',
             ]
         # A few things only for AppStore bound builds.
-        if filename == 'StoreKitContext.swift':
+        if filename in {'StoreKitContext.swift', 'GameCenterContext.swift'}:
             return [
                 f'{self.pnameu} iOS',
                 f'{self.pnameu} tvOS',

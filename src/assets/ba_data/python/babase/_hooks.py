@@ -337,6 +337,7 @@ def implicit_sign_in(
     from bacommon.login import LoginType
 
     assert _babase.app.plus is not None
+
     _babase.app.plus.accounts.on_implicit_sign_in(
         login_type=LoginType(login_type_str),
         login_id=login_id,

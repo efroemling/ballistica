@@ -1703,6 +1703,27 @@ static PyMethodDef PyUsingGooglePlayGameServicesDef = {
     "(internal)",
 };
 
+// ---------------------------- using_game_center ------------------------------
+
+static auto PyUsingGameCenter(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_buildconfig.use_game_center()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyUsingGameCenterDef = {
+    "using_game_center",             // name
+    (PyCFunction)PyUsingGameCenter,  // method
+    METH_NOARGS,                     // flags
+
+    "using_game_center() -> bool\n"
+    "\n"
+    "(internal)",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
@@ -1767,6 +1788,7 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PyDevConsoleRequestRefreshDef,
       PyAssetLoadsAllowedDef,
       PyUsingGooglePlayGameServicesDef,
+      PyUsingGameCenterDef,
   };
 }
 

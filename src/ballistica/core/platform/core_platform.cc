@@ -740,7 +740,7 @@ void CorePlatform::ResetAchievements() {
   Log(LogLevel::kError, "ResetAchievements() unimplemented");
 }
 
-void CorePlatform::GameCenterLogin() { throw Exception(); }
+// void CorePlatform::GameCenterLogin() { throw Exception(); }
 
 void CorePlatform::RunEvents() {}
 

@@ -54,15 +54,43 @@ void BasePlatformApple::PurchaseAck(const std::string& purchase,
 void BasePlatformApple::DoOpenURL(const std::string& url) {
 #if BA_XCODE_BUILD
 #if BA_OSTYPE_MACOS
-  BallisticaKit::CocoaFromCpp::OpenURL(url);
+  BallisticaKit::CocoaFromCpp::openURL(url);
 #else
-  BallisticaKit::UIKitFromCpp::OpenURL(url);
+  BallisticaKit::UIKitFromCpp::openURL(url);
 #endif  // BA_OSTYPE_MACOS
 
 #else
   // For non-xcode builds, go with the default (Python webbrowser module).
   BasePlatform::DoOpenURL(url);
 #endif  // BA_XCODE_BUILD
+}
+
+void BasePlatformApple::LoginAdapterGetSignInToken(
+    const std::string& login_type, int attempt_id) {
+#if BA_USE_GAME_CENTER
+  if (login_type == "game_center") {
+    BallisticaKit::GameCenterContext::getSignInToken(attempt_id);
+  } else {
+    Log(LogLevel::kError,
+        "Got unexpected get-sign-in-token login-type: " + login_type);
+  }
+#else
+  BasePlatform::LoginAdapterGetSignInToken(login_type, attempt_id);
+#endif
+}
+
+void BasePlatformApple::LoginAdapterBackEndActiveChange(
+    const std::string& login_type, bool active) {
+#if BA_USE_GAME_CENTER
+  if (login_type == "game_center") {
+    BallisticaKit::GameCenterContext::backEndActiveChange(active);
+  } else {
+    Log(LogLevel::kError,
+        "Got unexpected back-end-active-change login-type: " + login_type);
+  }
+#else
+  BasePlatform::LoginAdapterBackEndActiveChange(login_type, active);
+#endif
 }
 
 }  // namespace ballistica::base

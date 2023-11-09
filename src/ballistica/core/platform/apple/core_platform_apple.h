@@ -44,7 +44,7 @@ class CorePlatformApple : public CorePlatform {
   void ShowOnlineScoreUI(const std::string& show, const std::string& game,
                          const std::string& game_version) override;
   void ResetAchievements() override;
-  void GameCenterLogin() override;
+  //  void GameCenterLogin() override;
   auto IsOSPlayingMusic() -> bool override;
   void OpenFileExternally(const std::string& path) override;
   void OpenDirExternally(const std::string& path) override;

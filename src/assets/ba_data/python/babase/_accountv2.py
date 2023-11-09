@@ -31,7 +31,7 @@ class AccountV2Subsystem:
     """
 
     def __init__(self) -> None:
-        from babase._login import LoginAdapterGPGS
+        from babase._login import LoginAdapterGPGS, LoginAdapterGameCenter
 
         # Whether or not everything related to an initial login
         # (or lack thereof) has completed. This includes things like
@@ -47,8 +47,13 @@ class AccountV2Subsystem:
         self._implicit_state_changed = False
         self._can_do_auto_sign_in = True
 
+        adapter: LoginAdapter
         if _babase.using_google_play_game_services():
-            self.login_adapters[LoginType.GPGS] = LoginAdapterGPGS()
+            adapter = LoginAdapterGPGS()
+            self.login_adapters[adapter.login_type] = adapter
+        if _babase.using_game_center():
+            adapter = LoginAdapterGameCenter()
+            self.login_adapters[adapter.login_type] = adapter
 
     def on_app_loading(self) -> None:
         """Should be called at standard on_app_loading time."""
@@ -128,6 +133,8 @@ class AccountV2Subsystem:
         """An implicit sign-in happened (called by native layer)."""
         from babase._login import LoginAdapter
 
+        assert _babase.in_logic_thread()
+
         with _babase.ContextRef.empty():
             self.login_adapters[login_type].set_implicit_login_state(
                 LoginAdapter.ImplicitLoginState(
@@ -137,6 +144,7 @@ class AccountV2Subsystem:
 
     def on_implicit_sign_out(self, login_type: LoginType) -> None:
         """An implicit sign-out happened (called by native layer)."""
+        assert _babase.in_logic_thread()
         with _babase.ContextRef.empty():
             self.login_adapters[login_type].set_implicit_login_state(None)
 
@@ -260,7 +268,7 @@ class AccountV2Subsystem:
         # If implicit state has changed, try to respond.
         if self._implicit_state_changed:
             if self._implicit_signed_in_adapter is None:
-                # If implicit back-end is signed out, follow suit
+                # If implicit back-end has signed out, we follow suit
                 # immediately; no need to wait for network connectivity.
                 if DEBUG_LOG:
                     logging.debug(

@@ -11,6 +11,12 @@ if TYPE_CHECKING:
     pass
 
 
+# NOTE TO SELF:
+# Whenever adding login types here, make sure to update all
+# basn nodes before trying to send values through to bamaster,
+# as they need to be extractable by basn en route.
+
+
 class LoginType(Enum):
     """Types of logins available."""
 

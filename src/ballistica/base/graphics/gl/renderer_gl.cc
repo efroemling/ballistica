@@ -453,44 +453,51 @@ void RendererGL::CheckGLCapabilities_() {
 }
 
 auto RendererGL::GetMSAASamplesForFramebuffer_(int width, int height) -> int {
-#if BA_RIFT_BUILD
-  return 4;
-#else
-  // We currently aim for 4 up to 800 height and 2 beyond that.
-  if (height > 800) {
-    return 2;
+  if (g_buildconfig.ostype_android()) {
+    // We currently aim for 4 up to 800 height and 2 beyond that.
+    if (height > 800) {
+      return 2;
+    } else {
+      return 4;
+    }
   } else {
     return 4;
   }
-#endif
 }
 
 void RendererGL::UpdateMSAAEnabled_() {
-#if BA_RIFT_BUILD
-  if (msaa_max_samples_rgb8_ > 0) {
+  if (g_buildconfig.ostype_macos()) {
+    // Let's go ahead and flip this on for Apple Silicon Macs.
+#if __aarch64__
     enable_msaa_ = true;
+#else
+    enable_msaa_ = false;
+#endif
+  } else if (g_buildconfig.rift_build()) {
+    if (msaa_max_samples_rgb8_ > 0) {
+      enable_msaa_ = true;
+    } else {
+      enable_msaa_ = false;
+    }
+  } else if (g_buildconfig.ostype_android()) {
+    // lets allow full 1080p msaa with newer stuff..
+    int max_msaa_res = is_tegra_k1_ ? 1200 : 800;
+
+    // To start, see if it looks like we support msaa on paper.
+    enable_msaa_ =
+        ((screen_render_target()->physical_height()
+          <= static_cast<float>(max_msaa_res))
+         && (msaa_max_samples_rgb8_ > 0) && (msaa_max_samples_rgb565_ > 0));
+
+    // Ok, lets be careful here; msaa blitting/etc seems to be particular in
+    // terms of supported formats/etc so let's only enable it on
+    // explicitly-tested hardware for now.
+    if (!is_tegra_4_ && !is_tegra_k1_ && !is_recent_adreno_) {
+      enable_msaa_ = false;
+    }
   } else {
     enable_msaa_ = false;
   }
-#else
-
-  // lets allow full 1080p msaa with newer stuff..
-  int max_msaa_res = is_tegra_k1_ ? 1200 : 800;
-
-  // To start, see if it looks like we support msaa on paper.
-  enable_msaa_ =
-      ((screen_render_target()->physical_height()
-        <= static_cast<float>(max_msaa_res))
-       && (msaa_max_samples_rgb8_ > 0) && (msaa_max_samples_rgb565_ > 0));
-
-  // Ok, lets be careful here; msaa blitting/etc seems to be particular in
-  // terms of supported formats/etc so let's only enable it on
-  // explicitly-tested hardware for now.
-  if (!is_tegra_4_ && !is_tegra_k1_ && !is_recent_adreno_) {
-    enable_msaa_ = false;
-  }
-
-#endif  // BA_RIFT_BUILD
 }
 
 auto RendererGL::IsMSAAEnabled() const -> bool { return enable_msaa_; }

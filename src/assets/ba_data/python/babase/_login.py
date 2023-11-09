@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from typing import Callable
 
 
-DEBUG_LOG = False
+DEBUG_LOG = True
 
 
 class LoginAdapter:
@@ -149,7 +149,7 @@ class LoginAdapter:
         result_cb: Callable[[LoginAdapter, SignInResult | Exception], None],
         description: str,
     ) -> None:
-        """Attempt an explicit sign in via this adapter.
+        """Attempt to sign in via this adapter.
 
         This can be called even if the back-end is not implicitly signed in;
         the adapter will attempt to sign in if possible. An exception will
@@ -161,7 +161,7 @@ class LoginAdapter:
         # Have been seeing multiple sign-in attempts come through
         # nearly simultaneously which can be problematic server-side.
         # Let's error if a sign-in attempt is made within a few seconds
-        # of the last one to address this.
+        # of the last one to try and address this.
         now = time.monotonic()
         appnow = _babase.apptime()
         if self._last_sign_in_time is not None:
@@ -229,6 +229,7 @@ class LoginAdapter:
             def _got_sign_in_response(
                 response: bacommon.cloud.SignInResponse | Exception,
             ) -> None:
+                # This likely means we couldn't communicate with the server.
                 if isinstance(response, Exception):
                     if DEBUG_LOG:
                         logging.debug(
@@ -239,20 +240,18 @@ class LoginAdapter:
                         )
                     _babase.pushcall(Call(result_cb, self, response))
                 else:
-                    if DEBUG_LOG:
-                        logging.debug(
-                            'LoginAdapter: %s adapter got successful'
-                            ' sign-in response',
-                            self.login_type.name,
-                        )
+                    # This means our credentials were explicitly rejected.
                     if response.credentials is None:
                         result2: LoginAdapter.SignInResult | Exception = (
-                            RuntimeError(
-                                'No credentials returned after'
-                                ' submitting sign-in-token.'
-                            )
+                            RuntimeError('Sign-in-token was rejected.')
                         )
                     else:
+                        if DEBUG_LOG:
+                            logging.debug(
+                                'LoginAdapter: %s adapter got successful'
+                                ' sign-in response',
+                                self.login_type.name,
+                            )
                         result2 = self.SignInResult(
                             credentials=response.credentials
                         )
@@ -269,7 +268,7 @@ class LoginAdapter:
                 on_response=_got_sign_in_response,
             )
 
-        # Kick off the process by fetching a sign-in token.
+        # Kick off the sign-in process by fetching a sign-in token.
         self.get_sign_in_token(completion_cb=_got_sign_in_token_result)
 
     def is_back_end_active(self) -> bool:
@@ -282,11 +281,10 @@ class LoginAdapter:
         """Get a sign-in token from the adapter back end.
 
         This token is then passed to the master-server to complete the
-        login process.
-        The adapter can use this opportunity to bring up account creation
-        UI, call its internal sign_in function, etc. as needed.
-        The provided completion_cb should then be called with either a token
-        or None if sign in failed or was cancelled.
+        sign-in process. The adapter can use this opportunity to bring
+        up account creation UI, call its internal sign_in function, etc.
+        as needed. The provided completion_cb should then be called with
+        either a token or None if sign in failed or was cancelled.
         """
         from babase._general import Call
 
@@ -378,3 +376,10 @@ class LoginAdapterGPGS(LoginAdapterNative):
 
     def __init__(self) -> None:
         super().__init__(LoginType.GPGS)
+
+
+class LoginAdapterGameCenter(LoginAdapterNative):
+    """Apple Game Center adapter."""
+
+    def __init__(self) -> None:
+        super().__init__(LoginType.GAME_CENTER)

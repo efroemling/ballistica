@@ -48,13 +48,16 @@ auto AppAdapterApple::ManagesMainThreadEventLoop() const -> bool {
 
 void AppAdapterApple::DoPushMainThreadRunnable(Runnable* runnable) {
   // Kick this along to swift.
-  BallisticaKit::FromCpp::PushRawRunnableToMain(runnable);
+  BallisticaKit::FromCpp::pushRawRunnableToMain(runnable);
 }
 
 void AppAdapterApple::OnMainThreadStartApp() {
   AppAdapter::OnMainThreadStartApp();
 #if BA_USE_STORE_KIT
   BallisticaKit::StoreKitContext::onAppStart();
+#endif
+#if BA_USE_GAME_CENTER
+  BallisticaKit::GameCenterContext::onAppStart();
 #endif
 }
 
@@ -196,13 +199,13 @@ void AppAdapterApple::SetHardwareCursorVisible(bool visible) {
   assert(g_core->InMainThread());
 
 #if BA_OSTYPE_MACOS
-  BallisticaKit::CocoaFromCpp::SetCursorVisible(visible);
+  BallisticaKit::CocoaFromCpp::setCursorVisible(visible);
 #endif
 }
 
 void AppAdapterApple::TerminateApp() {
 #if BA_OSTYPE_MACOS
-  BallisticaKit::CocoaFromCpp::TerminateApp();
+  BallisticaKit::CocoaFromCpp::terminateApp();
 #else
   AppAdapter::TerminateApp();
 #endif
@@ -219,7 +222,7 @@ auto AppAdapterApple::FullscreenControlAvailable() const -> bool {
 
 auto AppAdapterApple::FullscreenControlGet() const -> bool {
 #if BA_OSTYPE_MACOS
-  return BallisticaKit::CocoaFromCpp::GetMainWindowIsFullscreen();
+  return BallisticaKit::CocoaFromCpp::getMainWindowIsFullscreen();
 #else
   return false;
 #endif
@@ -227,7 +230,7 @@ auto AppAdapterApple::FullscreenControlGet() const -> bool {
 
 void AppAdapterApple::FullscreenControlSet(bool fullscreen) {
 #if BA_OSTYPE_MACOS
-  return BallisticaKit::CocoaFromCpp::SetMainWindowFullscreen(fullscreen);
+  return BallisticaKit::CocoaFromCpp::setMainWindowFullscreen(fullscreen);
 #endif
 }
 
@@ -240,7 +243,7 @@ auto AppAdapterApple::HasDirectKeyboardInput() -> bool { return true; };
 
 auto AppAdapterApple::GetKeyRepeatDelay() -> float {
 #if BA_OSTYPE_MACOS
-  return BallisticaKit::CocoaFromCpp::GetKeyRepeatDelay();
+  return BallisticaKit::CocoaFromCpp::getKeyRepeatDelay();
 #else
   return AppAdapter::GetKeyRepeatDelay();
 #endif
@@ -248,7 +251,7 @@ auto AppAdapterApple::GetKeyRepeatDelay() -> float {
 
 auto AppAdapterApple::GetKeyRepeatInterval() -> float {
 #if BA_OSTYPE_MACOS
-  return BallisticaKit::CocoaFromCpp::GetKeyRepeatInterval();
+  return BallisticaKit::CocoaFromCpp::getKeyRepeatInterval();
 #else
   return AppAdapter::GetKeyRepeatDelay();
 #endif
@@ -256,7 +259,7 @@ auto AppAdapterApple::GetKeyRepeatInterval() -> float {
 
 auto AppAdapterApple::DoClipboardIsSupported() -> bool {
 #if BA_OSTYPE_MACOS
-  return BallisticaKit::CocoaFromCpp::ClipboardIsSupported();
+  return BallisticaKit::CocoaFromCpp::clipboardIsSupported();
 #else
   return AppAdapter::DoClipboardIsSupported();
 #endif
@@ -264,7 +267,7 @@ auto AppAdapterApple::DoClipboardIsSupported() -> bool {
 
 auto AppAdapterApple::DoClipboardHasText() -> bool {
 #if BA_OSTYPE_MACOS
-  return BallisticaKit::CocoaFromCpp::ClipboardHasText();
+  return BallisticaKit::CocoaFromCpp::clipboardHasText();
 #else
   return AppAdapter::DoClipboardHasText();
 #endif
@@ -272,7 +275,7 @@ auto AppAdapterApple::DoClipboardHasText() -> bool {
 
 void AppAdapterApple::DoClipboardSetText(const std::string& text) {
 #if BA_OSTYPE_MACOS
-  BallisticaKit::CocoaFromCpp::ClipboardSetText(text);
+  BallisticaKit::CocoaFromCpp::clipboardSetText(text);
 #else
   AppAdapter::DoClipboardSetText(text);
 #endif
@@ -280,7 +283,7 @@ void AppAdapterApple::DoClipboardSetText(const std::string& text) {
 
 auto AppAdapterApple::DoClipboardGetText() -> std::string {
 #if BA_OSTYPE_MACOS
-  auto contents = BallisticaKit::CocoaFromCpp::ClipboardGetText();
+  auto contents = BallisticaKit::CocoaFromCpp::clipboardGetText();
   if (contents) {
     return std::string(contents.get());
   }

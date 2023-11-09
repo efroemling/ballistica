@@ -64,10 +64,12 @@ class BasePlatform {
 #pragma mark ACCOUNTS ----------------------------------------------------------
 
   /// Called when a Python LoginAdapter is requesting an explicit sign-in.
+  /// See the LoginAdapter class in Python for usage details.
   virtual void LoginAdapterGetSignInToken(const std::string& login_type,
                                           int attempt_id);
   /// Called when a Python LoginAdapter is informing us that a back-end is
-  /// active/inactive.
+  /// active/inactive. See the LoginAdapter class in Python for usage
+  /// details.
   virtual void LoginAdapterBackEndActiveChange(const std::string& login_type,
                                                bool active);
 
