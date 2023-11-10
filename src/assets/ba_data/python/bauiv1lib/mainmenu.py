@@ -105,6 +105,7 @@ class MainMenuWindow(bui.Window):
         import bauiv1lib.gather as _unused10
         import bauiv1lib.watch as _unused11
         import bauiv1lib.play as _unused12
+        import bauiv1lib.discord as _unused13
 
     def _show_remote_app_info_on_first_launch(self) -> None:
         app = bui.app
@@ -217,7 +218,7 @@ class MainMenuWindow(bui.Window):
 
         self._have_store_button = not self._in_game
 
-        self._have_settings_button = (
+        self._have_settings_button = self._have_discord_button = (
             not self._in_game or not app.ui_v1.use_toolbars
         ) and not (self._is_demo or self._is_arcade)
 
@@ -364,6 +365,24 @@ class MainMenuWindow(bui.Window):
             self._tdelay += self._t_delay_inc
         else:
             self._store_button = None
+
+        self._discord_button: bui.Widget | None
+        if self._have_discord_button:
+            h, v, scale = positions[self._p_index]
+            self._p_index += 1
+            self._discord_button = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(h - self._button_width * 0.5 * scale, v),
+                size=(self._button_width, self._button_height),
+                scale=scale,
+                autoselect=self._use_autoselect,
+                label='Discord',
+                transition_delay=self._tdelay,
+                on_activate_call=self._discord,
+            )
+            self._tdelay += self._t_delay_inc
+        else:
+            self._discord_button = None
 
         self._quit_button: bui.Widget | None
         if not self._in_game and self._have_quit_button:
@@ -562,6 +581,8 @@ class MainMenuWindow(bui.Window):
         account_type_enable_button_sound = True
         b_count = 3  # play, help, credits
         if self._have_settings_button:
+            b_count += 1
+        if self._have_discord_button:
             b_count += 1
         if enable_account_button:
             b_count += 1
@@ -1202,6 +1223,13 @@ class MainMenuWindow(bui.Window):
             ).get_root_widget()
         )
 
+    def _discord(self) -> None:
+        # pylint: disable=cyclic-import
+        from bauiv1lib.discord import DiscordWindow
+
+        assert bui.app.classic is not None
+        DiscordWindow(origin_widget=self._settings_button).get_root_widget()
+
     def _resume_and_call(self, call: Callable[[], Any]) -> None:
         self._resume()
         call()
@@ -1232,6 +1260,8 @@ class MainMenuWindow(bui.Window):
             ui.main_menu_selection = 'Credits'
         elif sel == self._settings_button:
             ui.main_menu_selection = 'Settings'
+        elif sel == self._discord_button:
+            ui.main_menu_selection = 'Discord'
         elif sel == self._account_button:
             ui.main_menu_selection = 'Account'
         elif sel == self._store_button:
@@ -1265,6 +1295,8 @@ class MainMenuWindow(bui.Window):
             sel = self._credits_button
         elif sel_name == 'Settings':
             sel = self._settings_button
+        elif sel_name == 'Discord':
+            sel = self._discord_button
         elif sel_name == 'Account':
             sel = self._account_button
         elif sel_name == 'Store':
