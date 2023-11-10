@@ -53,6 +53,7 @@ class ClassicSoftInterface;
 class CollisionMeshAsset;
 class CollisionCache;
 class DevConsole;
+class DisplayTimer;
 class Context;
 class ContextRef;
 class DataAsset;
@@ -99,13 +100,14 @@ class RenderPass;
 class RenderTarget;
 class RemoteAppServer;
 class RemoteControlInput;
+class Repeater;
 class ScoreToBeat;
+class ScreenMessages;
 class AppAdapterSDL;
 class SDLContext;
 class SoundAsset;
 class SpriteMesh;
 class StdioConsole;
-class StressTest;
 class Module;
 class TestInput;
 class TextGroup;
@@ -630,6 +632,13 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
     return *context_ref;
   }
 
+  /// Utility call to print 'Success!' with a happy sound.
+  /// Safe to call from any thread.
+  void SuccessScreenMessage();
+  /// Utility call to print 'Error.' with a beep sound.
+  /// Safe to call from any thread.
+  void ErrorScreenMessage();
+
   void SetCurrentContext(const ContextRef& context);
 
   /// Try to load the plus feature-set and return whether it is available.
@@ -721,6 +730,12 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// loading.
   void OnAssetsAvailable();
 
+  void PushMainThreadRunnable(Runnable* runnable) override;
+
+  /// Return the currently signed in V2 account id as
+  /// reported by the Python layer.
+  auto GetV2AccountID() -> std::optional<std::string>;
+
   // Const subsystems.
   AppAdapter* const app_adapter;
   AppConfig* const app_config;
@@ -750,8 +765,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   void set_app_mode(AppMode* mode);
   auto* app_mode() const { return app_mode_; }
 
-  auto* stress_test() const { return stress_test_; }
-
   /// Whether we're running under ballisticakit_server.py
   /// (affects some app behavior).
   auto server_wrapper_managed() { return server_wrapper_managed_; }
@@ -774,7 +787,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   AppMode* app_mode_;
   PlusSoftInterface* plus_soft_{};
   ClassicSoftInterface* classic_soft_{};
-  StressTest* stress_test_;
 
   std::mutex shutdown_suppress_lock_;
   bool shutdown_suppress_disallowed_{};

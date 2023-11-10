@@ -5,44 +5,29 @@
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
-#include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/base/graphics/component/post_process_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/component/special_component.h"
 #include "ballistica/base/graphics/component/sprite_component.h"
 #include "ballistica/base/graphics/graphics_server.h"
-#include "ballistica/base/graphics/graphics_vr.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/graphics/support/net_graph.h"
-#include "ballistica/base/graphics/text/text_graphics.h"
+#include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_config.h"
-#include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/core/core.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::base {
 
-const float kScreenMessageZDepth{-0.06f};
-const float kScreenMeshZDepth{-0.05f};
+const float kScreenTextZDepth{-0.06f};
 const float kProgressBarZDepth{0.0f};
 const int kProgressBarFadeTime{500};
 const float kDebugImgZDepth{-0.04f};
-
-auto Graphics::Create() -> Graphics* {
-#if BA_VR_BUILD
-  return new GraphicsVR();
-#else
-  return new Graphics();
-#endif
-}
+const float kScreenMeshZDepth{-0.05f};
 
 auto Graphics::IsShaderTransparent(ShadingType c) -> bool {
   switch (c) {
@@ -93,7 +78,7 @@ auto Graphics::IsShaderTransparent(ShadingType c) -> bool {
   }
 }
 
-Graphics::Graphics() = default;
+Graphics::Graphics() : screenmessages{new ScreenMessages()} {}
 Graphics::~Graphics() = default;
 
 void Graphics::OnAppStart() { assert(g_base->InLogicThread()); }
@@ -182,7 +167,7 @@ void Graphics::UpdateInitialGraphicsSettingsSend_() {
 void Graphics::StepDisplayTime() { assert(g_base->InLogicThread()); }
 
 void Graphics::AddCleanFrameCommand(const Object::Ref<PythonContextCall>& c) {
-  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base->InLogicThread());
   clean_frame_commands_.push_back(c);
 }
 
@@ -231,11 +216,9 @@ auto Graphics::VSyncFromAppConfig() -> VSyncRequest {
 }
 
 auto Graphics::GraphicsQualityFromAppConfig() -> GraphicsQualityRequest {
-  // Graphics quality.
   std::string gqualstr =
       g_base->app_config->Resolve(AppConfig::StringID::kGraphicsQuality);
   GraphicsQualityRequest graphics_quality_requested;
-
   if (gqualstr == "Auto") {
     graphics_quality_requested = GraphicsQualityRequest::kAuto;
   } else if (gqualstr == "Higher") {
@@ -359,40 +342,6 @@ auto Graphics::GetShadowDensity(float x, float y, float z) -> float {
   }
 }
 
-class Graphics::ScreenMessageEntry {
- public:
-  ScreenMessageEntry(std::string s_in, bool align_left_in, uint32_t c,
-                     const Vector3f& color_in, TextureAsset* texture_in,
-                     TextureAsset* tint_texture_in, const Vector3f& tint_in,
-                     const Vector3f& tint2_in)
-      : align_left(align_left_in),
-        creation_time(c),
-        s_raw(std::move(s_in)),
-        color(color_in),
-        texture(texture_in),
-        tint_texture(tint_texture_in),
-        tint(tint_in),
-        tint2(tint2_in) {}
-  auto GetText() -> TextGroup&;
-  void UpdateTranslation();
-  bool align_left;
-  uint32_t creation_time;
-  Vector3f color;
-  Vector3f tint;
-  Vector3f tint2;
-  std::string s_raw;
-  std::string s_translated;
-  Object::Ref<TextureAsset> texture;
-  Object::Ref<TextureAsset> tint_texture;
-  float v_smoothed{};
-  bool translation_dirty{true};
-  bool mesh_dirty{true};
-  millisecs_t smooth_time{};
-
- private:
-  Object::Ref<TextGroup> s_mesh_;
-};
-
 // Draw controls and things that lie on top of the action.
 void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
   RenderPass* pass = frame_def->overlay_pass();
@@ -410,7 +359,6 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
     last_fps_ = total_frames_rendered - last_total_frames_rendered_;
     last_total_frames_rendered_ = total_frames_rendered;
   }
-  float v{};
 
   if (show_fps_) {
     char fps_str[32];
@@ -472,7 +420,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
         {
           auto xf = c.ScopedTransform();
           c.Translate(14.0f + (show_fps_ ? 30.0f : 0.0f), 0.1f,
-                      kScreenMessageZDepth);
+                      kScreenTextZDepth);
           c.Scale(0.7f, 0.7f);
           c.DrawMesh(ping_text_group_->GetElementMesh(e));
         }
@@ -500,7 +448,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
         c.SetFlatness(1.0f);
         {
           auto xf = c.ScopedTransform();
-          c.Translate(4.0f, (show_fps_ ? 66.0f : 40.0f), kScreenMessageZDepth);
+          c.Translate(4.0f, (show_fps_ ? 66.0f : 40.0f), kScreenTextZDepth);
           c.Scale(0.7f, 0.7f);
           c.DrawMesh(net_info_text_group_->GetElementMesh(e));
         }
@@ -528,382 +476,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
     }
   }
 
-  // Screen messages (bottom).
-  {
-    // Delete old ones.
-    if (!screen_messages_.empty()) {
-      millisecs_t cutoff;
-      if (g_core->GetAppTimeMillisecs() > 5000) {
-        cutoff = g_core->GetAppTimeMillisecs() - 5000;
-        for (auto i = screen_messages_.begin(); i != screen_messages_.end();) {
-          if (i->creation_time < cutoff) {
-            auto next = i;
-            next++;
-            screen_messages_.erase(i);
-            i = next;
-          } else {
-            i++;
-          }
-        }
-      }
-    }
-
-    // Delete if we have too many.
-    while ((screen_messages_.size()) > 4) {
-      screen_messages_.erase(screen_messages_.begin());
-    }
-
-    // Draw all existing.
-    if (!screen_messages_.empty()) {
-      bool vr = g_core->IsVRMode();
-
-      // These are less disruptive in the middle for menus but at the bottom
-      // during gameplay.
-      float start_v = g_base->graphics->screen_virtual_height() * 0.05f;
-      float scale;
-      switch (g_base->ui->scale()) {
-        case UIScale::kSmall:
-          scale = 1.5f;
-          break;
-        case UIScale::kMedium:
-          scale = 1.2f;
-          break;
-        default:
-          scale = 1.0f;
-          break;
-      }
-
-      // Shadows.
-      {
-        SimpleComponent c(pass);
-        c.SetTransparent(true);
-        c.SetTexture(
-            g_base->assets->SysTexture(SysTextureID::kSoftRectVertical));
-
-        float screen_width = g_base->graphics->screen_virtual_width();
-
-        v = start_v;
-
-        millisecs_t youngest_age = 9999;
-
-        for (auto i = screen_messages_.rbegin(); i != screen_messages_.rend();
-             i++) {
-          // Update the translation if need be.
-          i->UpdateTranslation();
-
-          millisecs_t age = g_core->GetAppTimeMillisecs() - i->creation_time;
-          youngest_age = std::min(youngest_age, age);
-          float s_extra = 1.0f;
-          if (age < 100) {
-            s_extra = std::min(1.2f, 1.2f * (static_cast<float>(age) / 100.0f));
-          } else if (age < 150) {
-            s_extra =
-                1.2f - 0.2f * ((150.0f - static_cast<float>(age)) / 50.0f);
-          }
-
-          float a;
-          if (age > 3000) {
-            a = 1.0f - static_cast<float>(age - 3000) / 2000;
-          } else {
-            a = 1;
-          }
-          a *= 0.8f;
-
-          if (vr) {
-            a *= 0.8f;
-          }
-
-          if (i->translation_dirty) {
-            BA_LOG_ONCE(
-                LogLevel::kWarning,
-                "Found dirty translation on screenmessage draw pass 1; raw="
-                    + i->s_raw);
-          }
-          float str_height =
-              g_base->text_graphics->GetStringHeight(i->s_translated.c_str());
-          float str_width =
-              g_base->text_graphics->GetStringWidth(i->s_translated.c_str());
-
-          if ((str_width * scale) > (screen_width - 40)) {
-            s_extra *= ((screen_width - 40) / (str_width * scale));
-          }
-
-          float r = i->color.x;
-          float g = i->color.y;
-          float b = i->color.z;
-          GetSafeColor(&r, &g, &b);
-
-          float v_extra = scale * (static_cast<float>(youngest_age) * 0.01f);
-
-          float fade;
-          if (age < 100) {
-            fade = 1.0f;
-          } else {
-            fade = std::max(0.0f, (200.0f - static_cast<float>(age)) / 100.0f);
-          }
-          c.SetColor(r * fade, g * fade, b * fade, a);
-
-          {
-            auto xf = c.ScopedTransform();
-
-            // This logic needs to run at a fixed hz or it breaks on high frame
-            // rates.
-            auto now_millisecs = pass->frame_def()->display_time_millisecs();
-            i->smooth_time = std::max(i->smooth_time, now_millisecs - 100);
-            while (i->smooth_time < now_millisecs) {
-              i->smooth_time += 1000 / 60;
-              if (i->v_smoothed == 0.0f) {
-                i->v_smoothed = v + v_extra;
-              } else {
-                float smoothing = 0.8f;
-                i->v_smoothed = smoothing * i->v_smoothed
-                                + (1.0f - smoothing) * (v + v_extra);
-              }
-            }
-
-            c.Translate(screen_width * 0.5f, i->v_smoothed,
-                        vr ? 60 : kScreenMessageZDepth);
-            if (vr) {
-              // Let's drop down a bit in vr mode.
-              c.Translate(0, -10.0f, 0);
-              c.Scale((str_width + 60) * scale * s_extra,
-                      (str_height + 20) * scale * s_extra);
-
-              // Align our bottom with where we just scaled from.
-              c.Translate(0, 0.5f, 0);
-            } else {
-              c.Scale((str_width + 110) * scale * s_extra,
-                      (str_height + 40) * scale * s_extra);
-
-              // Align our bottom with where we just scaled from.
-              c.Translate(0, 0.5f, 0);
-            }
-            c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
-          }
-
-          v += scale * (36 + str_height);
-          if (v > g_base->graphics->screen_virtual_height() + 30) {
-            break;
-          }
-        }
-        c.Submit();
-      }
-
-      // Now the strings themselves.
-      {
-        SimpleComponent c(pass);
-        c.SetTransparent(true);
-
-        float screen_width = g_base->graphics->screen_virtual_width();
-        v = start_v;
-        millisecs_t youngest_age = 9999;
-
-        for (auto i = screen_messages_.rbegin(); i != screen_messages_.rend();
-             i++) {
-          millisecs_t age = g_core->GetAppTimeMillisecs() - i->creation_time;
-          youngest_age = std::min(youngest_age, age);
-          float s_extra = 1.0f;
-          if (age < 100) {
-            s_extra = std::min(1.2f, 1.2f * (static_cast<float>(age) / 100.0f));
-          } else if (age < 150) {
-            s_extra =
-                1.2f - 0.2f * ((150.0f - static_cast<float>(age)) / 50.0f);
-          }
-          float a;
-          if (age > 3000) {
-            a = 1.0f - static_cast<float>(age - 3000) / 2000;
-          } else {
-            a = 1;
-          }
-          if (i->translation_dirty) {
-            BA_LOG_ONCE(
-                LogLevel::kWarning,
-                "Found dirty translation on screenmessage draw pass 2; raw="
-                    + i->s_raw);
-          }
-          float str_height =
-              g_base->text_graphics->GetStringHeight(i->s_translated.c_str());
-          float str_width =
-              g_base->text_graphics->GetStringWidth(i->s_translated.c_str());
-
-          if ((str_width * scale) > (screen_width - 40)) {
-            s_extra *= ((screen_width - 40) / (str_width * scale));
-          }
-          float r = i->color.x;
-          float g = i->color.y;
-          float b = i->color.z;
-          GetSafeColor(&r, &g, &b, 0.85f);
-
-          int elem_count = i->GetText().GetElementCount();
-          for (int e = 0; e < elem_count; e++) {
-            // Gracefully skip unloaded textures.
-            TextureAsset* t = i->GetText().GetElementTexture(e);
-            if (!t->preloaded()) {
-              continue;
-            }
-            c.SetTexture(t);
-            if (i->GetText().GetElementCanColor(e)) {
-              c.SetColor(r, g, b, a);
-            } else {
-              c.SetColor(1, 1, 1, a);
-            }
-            c.SetFlatness(i->GetText().GetElementMaxFlatness(e));
-            {
-              auto xf = c.ScopedTransform();
-              c.Translate(screen_width * 0.5f, i->v_smoothed,
-                          vr ? 150 : kScreenMessageZDepth);
-              c.Scale(scale * s_extra, scale * s_extra);
-              c.Translate(0, 20);
-              c.DrawMesh(i->GetText().GetElementMesh(e));
-            }
-          }
-
-          v += scale * (36 + str_height);
-          if (v > g_base->graphics->screen_virtual_height() + 30) {
-            break;
-          }
-        }
-        c.Submit();
-      }
-    }
-  }
-
-  // Screen messages (top).
-  {
-    // Delete old ones.
-    if (!screen_messages_top_.empty()) {
-      millisecs_t cutoff;
-      if (g_core->GetAppTimeMillisecs() > 5000) {
-        cutoff = g_core->GetAppTimeMillisecs() - 5000;
-        for (auto i = screen_messages_top_.begin();
-             i != screen_messages_top_.end();) {
-          if (i->creation_time < cutoff) {
-            auto next = i;
-            next++;
-            screen_messages_top_.erase(i);
-            i = next;
-          } else {
-            i++;
-          }
-        }
-      }
-    }
-
-    // Delete if we have too many.
-    while ((screen_messages_top_.size()) > 6) {
-      screen_messages_top_.erase(screen_messages_top_.begin());
-    }
-
-    if (!screen_messages_top_.empty()) {
-      SimpleComponent c(pass);
-      c.SetTransparent(true);
-
-      // Draw all existing.
-      float h = pass->virtual_width() - 300.0f;
-      v = g_base->graphics->screen_virtual_height() - 50.0f;
-
-      float v_base = g_base->graphics->screen_virtual_height();
-      float last_v = -999.0f;
-
-      float min_spacing = 25.0f;
-
-      for (auto i = screen_messages_top_.rbegin();
-           i != screen_messages_top_.rend(); i++) {
-        // Update the translation if need be.
-        i->UpdateTranslation();
-
-        millisecs_t age = g_core->GetAppTimeMillisecs() - i->creation_time;
-        float s_extra = 1.0f;
-        if (age < 100) {
-          s_extra = std::min(1.1f, 1.1f * (static_cast<float>(age) / 100.0f));
-        } else if (age < 150) {
-          s_extra = 1.1f - 0.1f * ((150.0f - static_cast<float>(age)) / 50.0f);
-        }
-
-        float a;
-        if (age > 3000) {
-          a = 1.0f - static_cast<float>(age - 3000) / 2000;
-        } else {
-          a = 1;
-        }
-
-        // This logic needs to run at a fixed hz or it breaks on high frame
-        // rates.
-        auto now_millisecs = pass->frame_def()->display_time_millisecs();
-        i->smooth_time = std::max(i->smooth_time, now_millisecs - 100);
-        while (i->smooth_time < now_millisecs) {
-          i->smooth_time += 1000 / 60;
-          i->v_smoothed += 0.1f;
-          if (i->v_smoothed - last_v < min_spacing) {
-            i->v_smoothed +=
-                8.0f * (1.0f - ((i->v_smoothed - last_v) / min_spacing));
-          }
-        }
-        last_v = i->v_smoothed;
-
-        // Draw the image if they provided one.
-        if (i->texture.Exists()) {
-          c.Submit();
-
-          SimpleComponent c2(pass);
-          c2.SetTransparent(true);
-          c2.SetTexture(i->texture);
-          if (i->tint_texture.Exists()) {
-            c2.SetColorizeTexture(i->tint_texture.Get());
-            c2.SetColorizeColor(i->tint.x, i->tint.y, i->tint.z);
-            c2.SetColorizeColor2(i->tint2.x, i->tint2.y, i->tint2.z);
-            c2.SetMaskTexture(
-                g_base->assets->SysTexture(SysTextureID::kCharacterIconMask));
-          }
-          c2.SetColor(1, 1, 1, a);
-          {
-            auto xf = c2.ScopedTransform();
-            c2.Translate(h - 14, v_base + 10 + i->v_smoothed,
-                         kScreenMessageZDepth);
-            c2.Scale(22.0f * s_extra, 22.0f * s_extra);
-            c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
-          }
-          c2.Submit();
-        }
-
-        float r = i->color.x;
-        float g = i->color.y;
-        float b = i->color.z;
-        GetSafeColor(&r, &g, &b);
-
-        int elem_count = i->GetText().GetElementCount();
-        for (int e = 0; e < elem_count; e++) {
-          // Gracefully skip unloaded textures.
-          TextureAsset* t = i->GetText().GetElementTexture(e);
-          if (!t->preloaded()) {
-            continue;
-          }
-          c.SetTexture(t);
-          if (i->GetText().GetElementCanColor(e)) {
-            c.SetColor(r, g, b, a);
-          } else {
-            c.SetColor(1, 1, 1, a);
-          }
-          c.SetShadow(-0.003f * i->GetText().GetElementUScale(e),
-                      -0.003f * i->GetText().GetElementVScale(e), 0.0f,
-                      1.0f * a);
-          c.SetFlatness(i->GetText().GetElementMaxFlatness(e));
-          c.SetMaskUV2Texture(i->GetText().GetElementMaskUV2Texture(e));
-          {
-            auto xf = c.ScopedTransform();
-            c.Translate(h, v_base + 2 + i->v_smoothed, kScreenMessageZDepth);
-            c.Scale(0.6f * s_extra, 0.6f * s_extra);
-            c.DrawMesh(i->GetText().GetElementMesh(e));
-          }
-        }
-        assert(!i->translation_dirty);
-        v -= g_base->text_graphics->GetStringHeight(i->s_translated.c_str())
-                 * 0.6f
-             + 8.0f;
-      }
-      c.Submit();
-    }
-  }
+  screenmessages->DrawMiscOverlays(frame_def);
 }
 
 auto Graphics::GetDebugGraph(const std::string& name, bool smoothed)
@@ -949,32 +522,6 @@ void Graphics::GetSafeColor(float* red, float* green, float* blue,
   }
 }
 
-void Graphics::AddScreenMessage(const std::string& msg, const Vector3f& color,
-                                bool top, TextureAsset* texture,
-                                TextureAsset* tint_texture,
-                                const Vector3f& tint, const Vector3f& tint2) {
-  assert(g_base->InLogicThread());
-
-  // So we know we're always dealing with valid utf8.
-  std::string m = Utils::GetValidUTF8(msg.c_str(), "ga9msg");
-
-  if (top) {
-    float start_v = -40.0f;
-    if (!screen_messages_top_.empty()) {
-      start_v = std::min(
-          start_v,
-          std::max(-100.0f, screen_messages_top_.back().v_smoothed - 25.0f));
-    }
-    screen_messages_top_.emplace_back(m, true, g_core->GetAppTimeMillisecs(),
-                                      color, texture, tint_texture, tint,
-                                      tint2);
-    screen_messages_top_.back().v_smoothed = start_v;
-  } else {
-    screen_messages_.emplace_back(m, false, g_core->GetAppTimeMillisecs(),
-                                  color, texture, tint_texture, tint, tint2);
-  }
-}
-
 void Graphics::Reset() {
   assert(g_base->InLogicThread());
   fade_ = 0;
@@ -984,9 +531,7 @@ void Graphics::Reset() {
     camera_ = Object::New<Camera>();
   }
 
-  // Wipe out top screen messages since they might be using textures that are
-  // being reset. Bottom ones are ok since they have no textures.
-  screen_messages_top_.clear();
+  screenmessages->Reset();
 }
 
 void Graphics::InitInternalComponents(FrameDef* frame_def) {
@@ -1058,7 +603,7 @@ void Graphics::ClearFrameDefDeleteList() {
 }
 
 void Graphics::FadeScreen(bool to, millisecs_t time, PyObject* endcall) {
-  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base->InLogicThread());
   // If there's an ourstanding fade-end command, go ahead and run it.
   // (otherwise, overlapping fades can cause things to get lost)
   if (fade_end_call_.Exists()) {
@@ -1186,7 +731,7 @@ void Graphics::DrawDevUI(FrameDef* frame_def) {
 void Graphics::BuildAndPushFrameDef() {
   assert(g_base->InLogicThread());
 
-  BA_PRECONDITION_FATAL(g_base->logic->app_bootstrapping_complete());
+  assert(g_base->logic->app_bootstrapping_complete());
   assert(camera_.Exists());
   assert(!g_core->HeadlessMode());
 
@@ -1611,16 +1156,6 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
   }
 }
 
-void Graphics::ClearScreenMessageTranslations() {
-  assert(g_base && g_base->InLogicThread());
-  for (auto&& i : screen_messages_) {
-    i.translation_dirty = true;
-  }
-  for (auto&& i : screen_messages_top_) {
-    i.translation_dirty = true;
-  }
-}
-
 void Graphics::ReturnCompletedFrameDef(FrameDef* frame_def) {
   std::scoped_lock lock(frame_def_delete_list_mutex_);
   g_base->graphics->frame_def_delete_list_.push_back(frame_def);
@@ -1951,26 +1486,6 @@ void Graphics::DrawRadialMeter(MeshIndexedSimpleFull* m, float amt) {
   }
 }
 
-auto Graphics::ScreenMessageEntry::GetText() -> TextGroup& {
-  if (translation_dirty) {
-    BA_LOG_ONCE(
-        LogLevel::kWarning,
-        "Found dirty translation on screenmessage GetText; raw=" + s_raw);
-  }
-  if (!s_mesh_.Exists()) {
-    s_mesh_ = Object::New<TextGroup>();
-    mesh_dirty = true;
-  }
-  if (mesh_dirty) {
-    s_mesh_->SetText(
-        s_translated,
-        align_left ? TextMesh::HAlign::kLeft : TextMesh::HAlign::kCenter,
-        TextMesh::VAlign::kBottom);
-    mesh_dirty = false;
-  }
-  return *s_mesh_;
-}
-
 void Graphics::OnScreenSizeChange() {}
 
 void Graphics::CalcVirtualRes_(float* x, float* y) {
@@ -2022,15 +1537,6 @@ void Graphics::SetScreenResolution(float x, float y) {
   // graphics-server to kick off drawing.
   got_screen_resolution_ = true;
   UpdateInitialGraphicsSettingsSend_();
-}
-
-void Graphics::ScreenMessageEntry::UpdateTranslation() {
-  if (translation_dirty) {
-    s_translated = g_base->assets->CompileResourceString(
-        s_raw, "Graphics::ScreenMessageEntry::UpdateTranslation");
-    translation_dirty = false;
-    mesh_dirty = true;
-  }
 }
 
 auto Graphics::CubeMapFromReflectionType(ReflectionType reflection_type)
@@ -2112,8 +1618,8 @@ void Graphics::LanguageChanged() {
     Log(LogLevel::kWarning,
         "Graphics::LanguageChanged() called during draw; should not happen.");
   }
-  // Also clear translations on all screen-messages.
-  ClearScreenMessageTranslations();
+
+  screenmessages->ClearScreenMessageTranslations();
 }
 
 auto Graphics::GraphicsQualityFromRequest(GraphicsQualityRequest request,
@@ -2136,6 +1642,7 @@ auto Graphics::GraphicsQualityFromRequest(GraphicsQualityRequest request,
       return GraphicsQuality::kLow;
   }
 }
+
 auto Graphics::TextureQualityFromRequest(TextureQualityRequest request,
                                          TextureQuality auto_val)
     -> TextureQuality {

@@ -40,7 +40,14 @@ def get_input_device_mapped_value(
                 mapping = ccfgs[devicename][unique_id]
             elif 'default' in ccfgs[devicename]:
                 mapping = ccfgs[devicename]['default']
-            if mapping is not None:
+
+            # We now use the config mapping *only* if it is not empty.
+            # There have been cases of config writing code messing up
+            # and leaving empty dicts in the app config, which currently
+            # leaves the device unusable. Alternatively, we'd perhaps
+            # want to fall back to defaults for individual missing
+            # values, but that is a bigger change we can make later.
+            if isinstance(mapping, dict) and mapping:
                 return mapping.get(name, -1)
 
     if platform == 'windows':

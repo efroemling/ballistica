@@ -112,6 +112,8 @@ void CorePlatform::PostInit() {
   // this sometimes (mainly on windows). Should look into that
   // more closely or at least log it somewhere.
   device_name_ = Utils::GetValidUTF8(DoGetDeviceName().c_str(), "dn");
+  device_description_ =
+      Utils::GetValidUTF8(DoGetDeviceDescription().c_str(), "fc");
   ran_base_post_init_ = true;
 
   // Are we running in a terminal?
@@ -424,6 +426,11 @@ auto CorePlatform::GetDeviceName() -> std::string {
   return device_name_;
 }
 
+auto CorePlatform::GetDeviceDescription() -> std::string {
+  assert(ran_base_post_init_);
+  return device_description_;
+}
+
 auto CorePlatform::DoGetDeviceName() -> std::string {
   // Check devicename in env_var
   char* devicename;
@@ -439,7 +446,11 @@ auto CorePlatform::DoGetDeviceName() -> std::string {
     nbuffer[sizeof(nbuffer) - 1] = 0;  // Make sure its terminated.
     return nbuffer;
   }
-  return "Untitled Device";
+  return "Unnamed Device";
+}
+
+auto CorePlatform::DoGetDeviceDescription() -> std::string {
+  return "Unknown Device Type";
 }
 
 auto CorePlatform::IsRunningOnTV() -> bool { return false; }
@@ -567,7 +578,7 @@ auto CorePlatform::GetIsStdinATerminal() -> bool {
 auto CorePlatform::GetOSVersionString() -> std::string { return ""; }
 
 auto CorePlatform::GetLegacyUserAgentString() -> std::string {
-  std::string device = GetDeviceName();
+  std::string device = GetDeviceDescription();
   std::string version = GetOSVersionString();
   if (!version.empty()) {
     version = " " + version;
@@ -597,7 +608,7 @@ auto CorePlatform::GetLegacyUserAgentString() -> std::string {
     subplatform = "DeMo";
   } else if (g_buildconfig.arcade_build()) {
     subplatform = "ArCd";
-  } else {
+  } else if (g_buildconfig.test_build()) {
     subplatform = "TstB";
   }
 
@@ -608,10 +619,10 @@ auto CorePlatform::GetLegacyUserAgentString() -> std::string {
     subplatform += " OnTV";
   }
 
-  std::string out{std::string("BallisticaKit ") + kEngineVersion + subplatform
-                  + " (" + std::to_string(kEngineBuildNumber) + ") ("
-                  + g_buildconfig.platform_string() + version + "; " + device
-                  + "; " + GetLocale() + ")"};
+  std::string out{std::string("BallisticaKit ") + kEngineVersion + " ("
+                  + std::to_string(kEngineBuildNumber) + ")" + subplatform
+                  + " (" + g_buildconfig.platform_string() + version + "; "
+                  + device + "; " + GetLocale() + ")"};
 
   // This gets shipped to various places which might choke on fancy unicode
   // characters, so let's limit to simple ascii.
@@ -721,15 +732,15 @@ auto CorePlatform::DemangleCXXSymbol(const std::string& s) -> std::string {
 #endif
 }
 
-auto CorePlatform::NewAutoReleasePool() -> void* { throw Exception(); }
+// auto CorePlatform::NewAutoReleasePool() -> void* { throw Exception(); }
 
-void CorePlatform::DrainAutoReleasePool(void* pool) { throw Exception(); }
+// void CorePlatform::DrainAutoReleasePool(void* pool) { throw Exception(); }
 
 void CorePlatform::ResetAchievements() {
   Log(LogLevel::kError, "ResetAchievements() unimplemented");
 }
 
-void CorePlatform::GameCenterLogin() { throw Exception(); }
+// void CorePlatform::GameCenterLogin() { throw Exception(); }
 
 void CorePlatform::RunEvents() {}
 
@@ -812,10 +823,6 @@ auto CorePlatform::MacMusicAppGetVolume() -> int {
 
 void CorePlatform::MacMusicAppSetVolume(int volume) {
   Log(LogLevel::kError, "MacMusicAppSetVolume() unimplemented");
-}
-
-void CorePlatform::MacMusicAppGetLibrarySource() {
-  Log(LogLevel::kError, "MacMusicAppGetLibrarySource() unimplemented");
 }
 
 void CorePlatform::MacMusicAppStop() {
@@ -1051,92 +1058,6 @@ auto CorePlatform::GetCurrentWholeSeconds() -> int64_t {
              std::chrono::steady_clock::now())
       .time_since_epoch()
       .count();
-}
-
-auto CorePlatform::ClipboardIsSupported() -> bool {
-  // We only call our actual virtual function once.
-  if (!have_clipboard_is_supported_) {
-    clipboard_is_supported_ = DoClipboardIsSupported();
-    have_clipboard_is_supported_ = true;
-  }
-  return clipboard_is_supported_;
-}
-
-auto CorePlatform::ClipboardHasText() -> bool {
-  // If subplatform says they don't support clipboards, don't even ask.
-  if (!ClipboardIsSupported()) {
-    return false;
-  }
-  return DoClipboardHasText();
-}
-
-void CorePlatform::ClipboardSetText(const std::string& text) {
-  // If subplatform says they don't support clipboards, this is an error.
-  if (!ClipboardIsSupported()) {
-    throw Exception("ClipboardSetText called with no clipboard support.",
-                    PyExcType::kRuntime);
-  }
-  DoClipboardSetText(text);
-}
-
-auto CorePlatform::ClipboardGetText() -> std::string {
-  // If subplatform says they don't support clipboards, this is an error.
-  if (!ClipboardIsSupported()) {
-    throw Exception("ClipboardGetText called with no clipboard support.",
-                    PyExcType::kRuntime);
-  }
-  return DoClipboardGetText();
-}
-
-auto CorePlatform::DoClipboardIsSupported() -> bool {
-  // Go through SDL functionality on SDL based platforms;
-  // otherwise default to no clipboard.
-#if BA_SDL_BUILD
-  return true;
-#else
-  return false;
-#endif
-}
-
-auto CorePlatform::DoClipboardHasText() -> bool {
-  // Go through SDL functionality on SDL based platforms;
-  // otherwise default to no clipboard.
-#if BA_SDL_BUILD
-  return SDL_HasClipboardText();
-#else
-  // Shouldn't get here since we default to no clipboard support.
-  FatalError("Shouldn't get here.");
-  return false;
-#endif
-}
-
-void CorePlatform::DoClipboardSetText(const std::string& text) {
-  // Go through SDL functionality on SDL based platforms;
-  // otherwise default to no clipboard.
-#if BA_SDL_BUILD
-  SDL_SetClipboardText(text.c_str());
-#else
-  // Shouldn't get here since we default to no clipboard support.
-  FatalError("Shouldn't get here.");
-#endif
-}
-
-auto CorePlatform::DoClipboardGetText() -> std::string {
-  // Go through SDL functionality on SDL based platforms;
-  // otherwise default to no clipboard.
-#if BA_SDL_BUILD
-  char* out = SDL_GetClipboardText();
-  if (out == nullptr) {
-    throw Exception("Error fetching clipboard contents.", PyExcType::kRuntime);
-  }
-  std::string out_s{out};
-  SDL_free(out);
-  return out_s;
-#else
-  // Shouldn't get here since we default to no clipboard support.
-  FatalError("Shouldn't get here.");
-  return "";
-#endif
 }
 
 auto CorePlatform::System(const char* cmd) -> int {

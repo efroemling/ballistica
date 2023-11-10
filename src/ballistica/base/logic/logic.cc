@@ -99,8 +99,8 @@ void Logic::OnGraphicsReady() {
     // Anyone dealing in display-time should be able to handle a wide
     // variety of rates anyway. NOTE: This length is currently milliseconds.
     headless_display_time_step_timer_ = event_loop()->NewTimer(
-        kHeadlessMinDisplayTimeStep / 1000, true,
-        NewLambdaRunnable([this] { StepDisplayTime_(); }));
+        kHeadlessMinDisplayTimeStep, true,
+        NewLambdaRunnable([this] { StepDisplayTime_(); }).Get());
   } else {
     // In gui mode, push an initial frame to the graphics server. From this
     // point it will be self-sustaining, sending us a frame request each
@@ -133,9 +133,10 @@ void Logic::CompleteAppBootstrapping_() {
 
   // Set up our timers.
   process_pending_work_timer_ = event_loop()->NewTimer(
-      0, true, NewLambdaRunnable([this] { ProcessPendingWork_(); }));
-  asset_prune_timer_ = event_loop()->NewTimer(
-      2345, true, NewLambdaRunnable([] { g_base->assets->Prune(); }));
+      0, true, NewLambdaRunnable([this] { ProcessPendingWork_(); }).Get());
+  // asset_prune_timer_ = event_loop()->NewTimer(
+  //     2345 * 1000, true, NewLambdaRunnable([] { g_base->assets->Prune();
+  //     }).Get());
 
   // Let our initial dummy app-mode know it has become active.
   g_base->app_mode()->OnActivate();
@@ -381,9 +382,7 @@ void Logic::OnAppModeChanged() {
           "Resetting headless display step timer due to app-mode change.");
     }
     assert(headless_display_time_step_timer_);
-    // NOTE: This is currently milliseconds.
-    headless_display_time_step_timer_->SetLength(kHeadlessMinDisplayTimeStep
-                                                 / 1000);
+    headless_display_time_step_timer_->SetLength(kHeadlessMinDisplayTimeStep);
   }
 }
 
@@ -439,8 +438,8 @@ void Logic::PostUpdateDisplayTimeForHeadlessMode_() {
     Log(LogLevel::kDebug, buffer);
   }
 
-  auto sleep_millisecs = headless_display_step_microsecs / 1000;
-  headless_display_time_step_timer_->SetLength(sleep_millisecs);
+  auto sleep_microsecs = headless_display_step_microsecs;
+  headless_display_time_step_timer_->SetLength(sleep_microsecs);
 }
 
 void Logic::UpdateDisplayTimeForFrameDraw_() {
@@ -581,7 +580,7 @@ void Logic::UpdatePendingWorkTimer_() {
   // If there's loading to do, keep at it rather vigorously.
   if (have_pending_loads_) {
     assert(process_pending_work_timer_);
-    process_pending_work_timer_->SetLength(1);
+    process_pending_work_timer_->SetLength(1 * 1000);
   } else {
     // Otherwise we've got nothing to do; go to sleep until something
     // changes.
@@ -635,8 +634,8 @@ void Logic::NotifyOfPendingAssetLoads() {
   UpdatePendingWorkTimer_();
 }
 
-auto Logic::NewAppTimer(millisecs_t length, bool repeat,
-                        const Object::Ref<Runnable>& runnable) -> int {
+auto Logic::NewAppTimer(microsecs_t length, bool repeat, Runnable* runnable)
+    -> int {
   // App-Timers simply get injected into our loop and run alongside our own
   // stuff.
   assert(g_base->InLogicThread());
@@ -649,7 +648,7 @@ void Logic::DeleteAppTimer(int timer_id) {
   event_loop()->DeleteTimer(timer_id);
 }
 
-void Logic::SetAppTimerLength(int timer_id, millisecs_t length) {
+void Logic::SetAppTimerLength(int timer_id, microsecs_t length) {
   assert(g_base->InLogicThread());
   Timer* t = event_loop()->GetTimer(timer_id);
   if (t) {
@@ -660,14 +659,14 @@ void Logic::SetAppTimerLength(int timer_id, millisecs_t length) {
   }
 }
 
-auto Logic::NewDisplayTimer(microsecs_t length, bool repeat,
-                            const Object::Ref<Runnable>& runnable) -> int {
+auto Logic::NewDisplayTimer(microsecs_t length, bool repeat, Runnable* runnable)
+    -> int {
   // Display-Timers go into a timer-list that we exec explicitly when we
   // step display-time.
   assert(g_base->InLogicThread());
   int offset = 0;
-  Timer* t = display_timers_->NewTimer(g_core->GetAppTimeMicrosecs(), length,
-                                       offset, repeat ? -1 : 0, runnable);
+  Timer* t = display_timers_->NewTimer(display_time_microsecs_, length, offset,
+                                       repeat ? -1 : 0, runnable);
   return t->id();
 }
 

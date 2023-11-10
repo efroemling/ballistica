@@ -6,6 +6,7 @@
 
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/graphics.h"
+#include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
@@ -98,7 +99,7 @@ static auto PyTimer(PyObject* self, PyObject* args, PyObject* keywds)
   SceneV1Context::Current().NewTimer(
       TimeType::kSim, static_cast<millisecs_t>(length * 1000.0),
       static_cast<bool>(repeat),
-      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj));
+      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj).Get());
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -207,7 +208,7 @@ static auto PyBaseTimer(PyObject* self, PyObject* args, PyObject* keywds)
   SceneV1Context::Current().NewTimer(
       TimeType::kBase, static_cast<millisecs_t>(length * 1000.0),
       static_cast<bool>(repeat),
-      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj));
+      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj).Get());
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -755,7 +756,7 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
     }
 
     // Now display it locally.
-    g_base->graphics->AddScreenMessage(
+    g_base->graphics->screenmessages->AddScreenMessage(
         message, color, static_cast<bool>(top),
         texture ? texture->texture_data() : nullptr,
         tint_texture ? tint_texture->texture_data() : nullptr, tint_color,

@@ -9,6 +9,7 @@
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/classic_soft.h"
+#include "ballistica/base/support/repeater.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -16,10 +17,6 @@
 #include "ballistica/shared/python/python_command.h"
 
 namespace ballistica::base {
-
-const char* kMFiControllerName = "iOS/Mac Controller";
-
-const int kJoystickRepeatDelay{500};
 
 // Joy values below this are candidates for calibration.
 const float kJoystickCalibrationThreshold{6000.0f};
@@ -68,7 +65,12 @@ JoystickInput::JoystickInput(int sdl_joystick_id,
     // that instead.
     // #if BA_SDL2_BUILD
     sdl_joystick_id_ = SDL_JoystickInstanceID(sdl_joystick_);
-    raw_sdl_joystick_name_ = SDL_JoystickName(sdl_joystick_);
+    if (auto* name = SDL_JoystickName(sdl_joystick_)) {
+      raw_sdl_joystick_name_ = name;
+    } else {
+      // This can return nullptr if SDL can't find a name.
+      raw_sdl_joystick_name_ = "Unknown Controller";
+    }
 
     // Special case: on windows, xinput stuff comes in with unique names
     // "XInput Controller #3", etc.  Let's replace these with simply "XInput
@@ -78,20 +80,6 @@ JoystickInput::JoystickInput(int sdl_joystick_id,
         && raw_sdl_joystick_name_.size() <= 22) {
       raw_sdl_joystick_name_ = "XInput Controller";
     }
-    // #else
-    //     raw_sdl_joystick_name_ = SDL_JoystickName(sdl_joystick_id_);
-    // #endif  // BA_SDL2_BUILD
-
-    // If its an SDL joystick and we're using our custom sdl 1.2 build, ask it.
-    // #if BA_XCODE_BUILD && BA_OSTYPE_MACOS && !BA_SDL2_BUILD
-    //     raw_sdl_joystick_identifier_ =
-    //     SDL_JoystickIdentifier(sdl_joystick_id_);
-    // #endif
-
-    // Some special-cases on mac.
-    if (strstr(raw_sdl_joystick_name_.c_str(), "PLAYSTATION") != nullptr) {
-      is_mac_ps3_controller_ = true;
-    }
 
 #else   // BA_ENABLE_SDL_JOYSTICKS
     throw Exception();  // Shouldn't happen.
@@ -100,8 +88,6 @@ JoystickInput::JoystickInput(int sdl_joystick_id,
   } else {
     // Its a manual joystick.
     sdl_joystick_ = nullptr;
-
-    is_mfi_controller_ = (custom_device_name_ == kMFiControllerName);
 
     // Hard code a few remote controls.
     // The newer way to do this is just set 'UI-Only' on the device config
@@ -162,7 +148,17 @@ auto JoystickInput::HasMeaningfulButtonNames() -> bool {
   return g_buildconfig.ostype_android();
 }
 
+void JoystickInput::SetButtonName(int button, const std::string& name) {
+  button_names_[button] = name;
+}
+
 auto JoystickInput::GetButtonName(int index) -> std::string {
+  // First check any explicit ones we were passed.
+  auto i = button_names_.find(index);
+  if (i != button_names_.end()) {
+    return i->second;
+  }
+
   // FIXME: Should get fancier here now that PS4 and XBone
   // controllers are supported through this.
   if (is_mfi_controller_) {
@@ -179,6 +175,7 @@ auto JoystickInput::GetButtonName(int index) -> std::string {
         break;
     }
   }
+
   if (g_buildconfig.ostype_android()) {
     // Special case: if this is a samsung controller, return the dice
     // button icons.
@@ -446,46 +443,6 @@ void JoystickInput::Update() {
       }
     }
   }
-
-  // If a button's being held, potentially pass repeats along.
-  if (up_held_ || down_held_ || left_held_ || right_held_) {
-    // Don't ask for the widget unless we have something held.
-    // (otherwise we prevent other inputs from getting at it)
-    if (g_base->ui->GetWidgetForInput(this)) {
-      millisecs_t repeat_delay = kJoystickRepeatDelay;
-
-      millisecs_t t = g_core->GetAppTimeMillisecs();
-      auto c = WidgetMessage::Type::kEmptyMessage;
-      if (t - last_hold_time_ < repeat_delay) {
-        return;
-      }
-
-      if (t - last_hold_time_ >= repeat_delay) {
-        bool pass = false;
-        if (up_held_) {
-          pass = true;
-          c = WidgetMessage::Type::kMoveUp;
-        } else if (down_held_) {
-          pass = true;
-          c = WidgetMessage::Type::kMoveDown;
-        } else if (left_held_) {
-          pass = true;
-          c = WidgetMessage::Type::kMoveLeft;
-        } else if (right_held_) {
-          pass = true;
-          c = WidgetMessage::Type::kMoveRight;
-        }
-        if (pass) {
-          g_base->ui->SendWidgetMessage(WidgetMessage(c));
-        }
-
-        // Set another repeat to happen sooner.
-        last_hold_time_ =
-            t
-            - static_cast<millisecs_t>(static_cast<float>(repeat_delay) * 0.8f);
-      }
-    }
-  }
 }
 
 void JoystickInput::SetStandardExtendedButtons() {
@@ -508,6 +465,8 @@ void JoystickInput::ResetHeldStates() {
   SDL_Event e;
 
   dpad_right_held_ = dpad_left_held_ = dpad_up_held_ = dpad_down_held_ = false;
+  ui_repeater_.Clear();
+
   run_buttons_held_.clear();
   run_trigger1_value_ = run_trigger2_value_ = 0.0f;
   UpdateRunningState();
@@ -594,28 +553,28 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
           || dpad_down_held_))
     return;
 
-  bool isHoldPositionEvent = false;
+  bool is_hold_position_event = false;
 
   // Keep track of whether hold-position is being held. If so, we don't send
-  // window events. (some joysticks always give us significant axis values but
+  // window events (some joysticks always give us significant axis values but
   // rely on hold position to keep from doing stuff usually).
   if (e->type == SDL_JOYBUTTONDOWN
       && e->jbutton.button == hold_position_button_) {
     need_to_send_held_state_ = true;
     hold_position_held_ = true;
-    isHoldPositionEvent = true;
+    is_hold_position_event = true;
   }
   if (e->type == SDL_JOYBUTTONUP
       && e->jbutton.button == hold_position_button_) {
     need_to_send_held_state_ = true;
     hold_position_held_ = false;
-    isHoldPositionEvent = true;
+    is_hold_position_event = true;
   }
 
   // Let's ignore events for just a moment after we're created.
   // (some joysticks seem to spit out erroneous button-pressed events when
   // first plugged in ).
-  if (time - creation_time_ < 250 && !isHoldPositionEvent) {
+  if (time - creation_time_ < 250 && !is_hold_position_event) {
     return;
   }
 
@@ -700,56 +659,13 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
     }
   }
 
-  // If its the ignore button, ignore it.
+  // If its an ignored button, ignore it.
   if ((e->type == SDL_JOYBUTTONDOWN || e->type == SDL_JOYBUTTONUP)
       && (e->jbutton.button == ignored_button_
           || e->jbutton.button == ignored_button2_
           || e->jbutton.button == ignored_button3_
           || e->jbutton.button == ignored_button4_)) {
     return;
-  }
-
-  // A little pre-filtering on mac PS3 gamepads. (try to filter out some noise
-  // we're seeing, etc).
-  if (g_buildconfig.ostype_macos() && is_mac_ps3_controller_) {
-    switch (e->type) {
-      case SDL_JOYAXISMOTION: {
-        // On my ps3 controller, I seem to be seeing occasional joy-axis-events
-        // coming in with values of -32768 when nothing is being touched.
-        // Filtering those out here.. Should look into this more and see if its
-        // SDL's fault or else forward a bug to apple.
-        if ((e->jaxis.axis == 0 || e->jaxis.axis == 1)
-            && e->jaxis.value == -32768
-            && (time - ps3_last_joy_press_time_ > 2000) && !ps3_jaxis1_pressed_
-            && !ps3_jaxis2_pressed_) {
-          printf(
-              "BAJoyStick notice: filtering out errand PS3 axis %d value of "
-              "%d\n",
-              static_cast<int>(e->jaxis.axis),
-              static_cast<int>(e->jaxis.value));
-          fflush(stdout);
-
-          // std::cout << "BSJoyStick notice: filtering out errant PS3 axis " <<
-          // int(e->jaxis.axis) << " value of " << e->jaxis.value << std::endl;
-          return;
-        }
-
-        if (abs(e->jaxis.value) >= kJoystickDiscreteThreshold) {
-          ps3_last_joy_press_time_ = time;
-        }
-
-        // Keep track of whether its pressed for next time.
-        if (e->jaxis.axis == 0) {
-          ps3_jaxis1_pressed_ = (abs(e->jaxis.value) > 3000);
-        } else if (e->jaxis.axis == 1) {
-          ps3_jaxis2_pressed_ = (abs(e->jaxis.value) > 3000);
-        }
-
-        break;
-      }
-      default:
-        break;
-    }
   }
 
   // A few high level button press interceptions.
@@ -806,111 +722,116 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
     }
   }
 
-  // If we're in a dialog, send dialog events.
-  // We keep track of special x/y values for dialog usage.
+  // If we're in the ui, send ui events.
+  // We keep track of special x/y values for ui usage.
   // These are formed as combinations of the actual joy value
   // and the hold-position state.
   // Think of hold-position as somewhat of a 'magnitude' to the joy event's
   // direction. They're really one and the same event. (we just need to store
   // their states ourselves since they don't both come through at once).
-  bool isAnalogStickJAxisEvent = false;
+  // FIXME: Ugh need to rip out this old hold-position stuff.
+  bool is_analog_stick_jaxis_event = false;
   if (e->type == SDL_JOYAXISMOTION) {
     if (e->jaxis.axis == analog_lr_) {
       dialog_jaxis_x_ = e->jaxis.value;
-      isAnalogStickJAxisEvent = true;
+      is_analog_stick_jaxis_event = true;
     } else if (e->jaxis.axis == analog_ud_) {
       dialog_jaxis_y_ = e->jaxis.value;
-      isAnalogStickJAxisEvent = true;
+      is_analog_stick_jaxis_event = true;
     }
   }
-  int dialogJaxisX = dialog_jaxis_x_;
+  int ui_jaxis_x = dialog_jaxis_x_;
   if (hold_position_held_) {
-    dialogJaxisX = 0;  // Throttle is off.
+    ui_jaxis_x = 0;  // Throttle is off.
   }
-  int dialogJaxisY = dialog_jaxis_y_;
+  int ui_jaxis_y = dialog_jaxis_y_;
   if (hold_position_held_) {
-    dialogJaxisY = 0;  // Throttle is off.
+    ui_jaxis_y = 0;  // Throttle is off.
   }
 
   // We might not wanna grab at the UI if we're a axis-motion event
   // below our 'pressed' threshold.. Otherwise fuzzy analog joystick
   // readings would cause rampant UI stealing even if no events are being sent.
-  bool would_go_to_dialog = false;
+  bool would_go_to_ui = false;
   auto wm = WidgetMessage::Type::kEmptyMessage;
 
-  if (isAnalogStickJAxisEvent || isHoldPositionEvent) {
+  if (is_analog_stick_jaxis_event || is_hold_position_event) {
     // Even when we're not sending, clear out some 'held' states.
-    if (left_held_ && dialogJaxisX >= -kJoystickDiscreteThreshold) {
+    if (left_held_ && ui_jaxis_x >= -kJoystickDiscreteThreshold) {
       left_held_ = false;
+      ui_repeater_.Clear();
     }
-    if (right_held_ && dialogJaxisX <= kJoystickDiscreteThreshold) {
+    if (right_held_ && ui_jaxis_x <= kJoystickDiscreteThreshold) {
       right_held_ = false;
+      ui_repeater_.Clear();
     }
-    if (up_held_ && dialogJaxisY >= -kJoystickDiscreteThreshold) {
+    if (up_held_ && ui_jaxis_y >= -kJoystickDiscreteThreshold) {
       up_held_ = false;
+      ui_repeater_.Clear();
     }
-    if (down_held_ && dialogJaxisY <= kJoystickDiscreteThreshold) {
+    if (down_held_ && ui_jaxis_y <= kJoystickDiscreteThreshold) {
       down_held_ = false;
+      ui_repeater_.Clear();
     }
-    if ((!right_held_) && dialogJaxisX > kJoystickDiscreteThreshold)
-      would_go_to_dialog = true;
-    if ((!left_held_) && dialogJaxisX < -kJoystickDiscreteThreshold)
-      would_go_to_dialog = true;
-    if ((!up_held_) && dialogJaxisY < -kJoystickDiscreteThreshold)
-      would_go_to_dialog = true;
-    if ((!down_held_) && dialogJaxisY > kJoystickDiscreteThreshold)
-      would_go_to_dialog = true;
+    if ((!right_held_) && ui_jaxis_x > kJoystickDiscreteThreshold) {
+      would_go_to_ui = true;
+    }
+    if ((!left_held_) && ui_jaxis_x < -kJoystickDiscreteThreshold) {
+      would_go_to_ui = true;
+    }
+    if ((!up_held_) && ui_jaxis_y < -kJoystickDiscreteThreshold) {
+      would_go_to_ui = true;
+    }
+    if ((!down_held_) && ui_jaxis_y > kJoystickDiscreteThreshold) {
+      would_go_to_ui = true;
+    }
   } else if ((e->type == SDL_JOYHATMOTION && e->jhat.hat == hat_)
              || (e->type == SDL_JOYBUTTONDOWN
                  && e->jbutton.button != hold_position_button_)) {
     // Other button-downs and hat motions always go.
-    would_go_to_dialog = true;
+    would_go_to_ui = true;
   }
 
   // Resets always circumvent dialogs.
-  if (resetting_) would_go_to_dialog = false;
+  if (resetting_) {
+    would_go_to_ui = false;
+  }
 
-  // Anything that would go to a dialog also counts to mark us as
-  // 'recently-used'.
-  if (would_go_to_dialog) {
+  // Anything that would go to ui also counts to mark us as 'recently-used'.
+  if (would_go_to_ui) {
     UpdateLastInputTime();
   }
 
-  if (would_go_to_dialog && g_base->ui->GetWidgetForInput(this)) {
-    bool pass = false;
+  if (would_go_to_ui && g_base->ui->GetWidgetForInput(this)) {
+    bool pass{};
 
     // Special case.. either joy-axis-motion or hold-position events trigger
     // these.
-    if (isAnalogStickJAxisEvent || isHoldPositionEvent) {
-      if (dialogJaxisX > kJoystickDiscreteThreshold) {
-        // To the right.
+    if (is_analog_stick_jaxis_event || is_hold_position_event) {
+      if (ui_jaxis_x > kJoystickDiscreteThreshold) {
         if (!right_held_ && !up_held_ && !down_held_) {
-          last_hold_time_ = g_core->GetAppTimeMillisecs();
           right_held_ = true;
+          pass = true;
           wm = WidgetMessage::Type::kMoveRight;
-          pass = true;
         }
-      } else if (dialogJaxisX < -kJoystickDiscreteThreshold) {
+      } else if (ui_jaxis_x < -kJoystickDiscreteThreshold) {
         if (!left_held_ && !up_held_ && !down_held_) {
-          last_hold_time_ = g_core->GetAppTimeMillisecs();
-          wm = WidgetMessage::Type::kMoveLeft;
-          pass = true;
           left_held_ = true;
+          pass = true;
+          wm = WidgetMessage::Type::kMoveLeft;
         }
       }
-      if (dialogJaxisY > kJoystickDiscreteThreshold) {
+      if (ui_jaxis_y > kJoystickDiscreteThreshold) {
         if (!down_held_ && !left_held_ && !right_held_) {
-          last_hold_time_ = g_core->GetAppTimeMillisecs();
-          wm = WidgetMessage::Type::kMoveDown;
-          pass = true;
           down_held_ = true;
-        }
-      } else if (dialogJaxisY < -kJoystickDiscreteThreshold) {
-        if (!up_held_ && !left_held_ && !right_held_) {
-          last_hold_time_ = g_core->GetAppTimeMillisecs();
-          wm = WidgetMessage::Type::kMoveUp;
           pass = true;
+          wm = WidgetMessage::Type::kMoveDown;
+        }
+      } else if (ui_jaxis_y < -kJoystickDiscreteThreshold) {
+        if (!up_held_ && !left_held_ && !right_held_) {
           up_held_ = true;
+          pass = true;
+          wm = WidgetMessage::Type::kMoveUp;
         }
       }
     }
@@ -924,7 +845,6 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
           switch (e->jhat.value) {
             case SDL_HAT_LEFT: {
               if (!left_held_) {
-                last_hold_time_ = g_core->GetAppTimeMillisecs();
                 wm = WidgetMessage::Type::kMoveLeft;
                 pass = true;
                 left_held_ = true;
@@ -935,7 +855,6 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
 
             case SDL_HAT_RIGHT: {
               if (!right_held_) {
-                last_hold_time_ = g_core->GetAppTimeMillisecs();
                 wm = WidgetMessage::Type::kMoveRight;
                 pass = true;
                 right_held_ = true;
@@ -945,7 +864,6 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
             }
             case SDL_HAT_UP: {
               if (!up_held_) {
-                last_hold_time_ = g_core->GetAppTimeMillisecs();
                 wm = WidgetMessage::Type::kMoveUp;
                 pass = true;
                 up_held_ = true;
@@ -955,7 +873,6 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
             }
             case SDL_HAT_DOWN: {
               if (!down_held_) {
-                last_hold_time_ = g_core->GetAppTimeMillisecs();
                 wm = WidgetMessage::Type::kMoveDown;
                 pass = true;
                 down_held_ = true;
@@ -968,6 +885,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
               down_held_ = false;
               left_held_ = false;
               right_held_ = false;
+              ui_repeater_.Clear();
             }
             default:
               break;
@@ -1007,7 +925,20 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
         break;
     }
     if (pass) {
-      g_base->ui->SendWidgetMessage(WidgetMessage(wm));
+      switch (wm) {
+        case WidgetMessage::Type::kMoveUp:
+        case WidgetMessage::Type::kMoveDown:
+        case WidgetMessage::Type::kMoveLeft:
+        case WidgetMessage::Type::kMoveRight:
+          // For UI movement, set up a repeater so we can hold the button.
+          ui_repeater_ = Repeater::New(
+              kUINavigationRepeatDelay, kUINavigationRepeatInterval,
+              [wm] { g_base->ui->SendWidgetMessage(WidgetMessage(wm)); });
+          break;
+        default:
+          // Other messages are just one-shots.
+          g_base->ui->SendWidgetMessage(WidgetMessage(wm));
+      }
     }
     return;
   }
@@ -1502,22 +1433,7 @@ auto JoystickInput::GetRawDeviceName() -> std::string {
 auto JoystickInput::GetDeviceExtraDescription() -> std::string {
   std::string s;
 
-  // On mac, PS3 controllers can connect via USB or bluetooth,
-  // and it can be confusing if one is doing both,
-  // so lets specify here.
-  if (GetDeviceName() == "PLAYSTATION(R)3 Controller") {
-    // For bluetooth we get a serial in the form "04-76-6e-d1-17-90" while
-    // on USB we get a simple int (the usb location id): "-9340234"
-    // so lets consider it wireless if its got a dash not at the beginning.
-    s = " (USB)";
-
-    auto dname = GetDeviceIdentifier();
-    for (const char* tst = dname.c_str(); *tst; tst++) {
-      if (*tst == '-' && tst != dname) {
-        s = " (Bluetooth)";
-      }
-    }
-  }
+  // (no longer being used).
 
   return s;
 }

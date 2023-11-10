@@ -151,6 +151,12 @@ auto PythonRef::Type() const -> PythonRef {
   return {PyObject_Type(obj_), PythonRef::kSteal};
 }
 
+auto PythonRef::ValueIsNone() const -> bool {
+  assert(Python::HaveGIL());
+  ThrowIfUnset();
+  return obj_ == Py_None;
+}
+
 auto PythonRef::ValueAsLString() const -> std::string {
   assert(Python::HaveGIL());
   ThrowIfUnset();

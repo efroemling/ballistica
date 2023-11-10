@@ -60,8 +60,15 @@ class Pruner:
 
         entries = self._get_entries()
 
+        processed_paths = set[str]()
+
         with tempfile.TemporaryDirectory() as tempdir:
             for entry in entries:
+                # Entries list might have repeats.
+                if entry.file in processed_paths:
+                    continue
+                processed_paths.add(entry.file)
+
                 if not entry.file.startswith(cwd):
                     raise CleanError(
                         f'compile-commands file {entry.file}'

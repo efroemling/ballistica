@@ -51,6 +51,8 @@ AppAdapterSDL::AppAdapterSDL() {
 }
 
 void AppAdapterSDL::OnMainThreadStartApp() {
+  AppAdapter::OnMainThreadStartApp();
+
   // App is starting. Let's fire up the ol' SDL.
   uint32_t sdl_flags{SDL_INIT_VIDEO | SDL_INIT_JOYSTICK};
 
@@ -79,9 +81,8 @@ void AppAdapterSDL::OnMainThreadStartApp() {
   sdl_runnable_event_id_ = SDL_RegisterEvents(1);
   assert(sdl_runnable_event_id_ != (uint32_t)-1);
 
-  // Note: parent class can add some input devices so need to bring up sdl
-  // before we let it run. That code should maybe be relocated/refactored.
-  AppAdapter::OnMainThreadStartApp();
+  // SDL builds just assume keyboard input is available.
+  g_base->input->PushCreateKeyboardInputDevices();
 
   if (g_buildconfig.enable_sdl_joysticks()) {
     // We want events from joysticks.
@@ -415,7 +416,9 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
     }
 
     case SDL_KEYDOWN: {
-      g_base->input->PushKeyPressEvent(event.key.keysym);
+      if (!event.key.repeat) {
+        g_base->input->PushKeyPressEvent(event.key.keysym);
+      }
       break;
     }
 
@@ -805,23 +808,9 @@ void AppAdapterSDL::CursorPositionForDraw(float* x, float* y) {
 auto AppAdapterSDL::FullscreenControlAvailable() const -> bool { return true; }
 auto AppAdapterSDL::FullscreenControlKeyShortcut() const
     -> std::optional<std::string> {
-  if (g_buildconfig.ostype_windows()) {
-    // On Windows we support F11 and Alt+Enter to toggle fullscreen. Let's
-    // mention Alt+Enter which seems like it might be more commonly used
-    return "Alt+Enter";
-  }
-  if (g_buildconfig.ostype_macos()) {
-    // The Mac+SDL situation is a bit of a mess. By default, there is 'Enter
-    // Full Screen' in the window menu which is mapped to fn-F, but that
-    // will only work if a window was created in SDL as windowed. If we
-    // fullscreen that window and restart the app, we'll then have a *real*
-    // fullscreen sdl window and that shortcut won't work anymore. So to
-    // keep things consistent we advertise ctrl-f which we always handle
-    // ourselves. Maybe this situation will be cleaned up in SDL 3, but its
-    // not a huge deal anyway since our Cocoa Mac version behaves cleanly.
-    return "Ctrl+F";
-  }
-  return {};
+  // On our SDL build we support F11 and Alt+Enter to toggle fullscreen.
+  // Let's mention Alt+Enter which seems like it might be more commonly used
+  return "Alt+Enter";
 };
 
 auto AppAdapterSDL::SupportsVSync() -> bool const { return true; }
@@ -830,6 +819,32 @@ auto AppAdapterSDL::SupportsMaxFPS() -> bool const { return true; }
 auto AppAdapterSDL::HasDirectKeyboardInput() -> bool {
   // We always provide direct keyboard events.
   return true;
+}
+
+auto AppAdapterSDL::DoClipboardIsSupported() -> bool { return true; }
+
+auto AppAdapterSDL::DoClipboardHasText() -> bool {
+  return SDL_HasClipboardText();
+}
+
+void AppAdapterSDL::DoClipboardSetText(const std::string& text) {
+  SDL_SetClipboardText(text.c_str());
+}
+
+auto AppAdapterSDL::DoClipboardGetText() -> std::string {
+  // Go through SDL functionality on SDL based platforms;
+  // otherwise default to no clipboard.
+  char* out = SDL_GetClipboardText();
+  if (out == nullptr) {
+    throw Exception("Error fetching clipboard contents.", PyExcType::kRuntime);
+  }
+  std::string out_s{out};
+  SDL_free(out);
+  return out_s;
+}
+
+auto AppAdapterSDL::GetKeyName(int keycode) -> std::string {
+  return SDL_GetKeyName(static_cast<SDL_Keycode>(keycode));
 }
 
 }  // namespace ballistica::base

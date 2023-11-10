@@ -32,9 +32,9 @@ LPALCDEVICEPAUSESOFT alcDevicePauseSOFT;
 LPALCDEVICERESUMESOFT alcDeviceResumeSOFT;
 #endif
 
-const int kAudioProcessIntervalNormal{500};
-const int kAudioProcessIntervalFade{50};
-const int kAudioProcessIntervalPendingLoad{1};
+const int kAudioProcessIntervalNormal{500 * 1000};
+const int kAudioProcessIntervalFade{50 * 1000};
+const int kAudioProcessIntervalPendingLoad{1 * 1000};
 
 #if BA_DEBUG_BUILD || BA_TEST_BUILD
 const bool kShowInUseSounds{};
@@ -161,7 +161,7 @@ void AudioServer::OnAppStartInThread_() {
   // Get our thread to give us periodic processing time.
   process_timer_ =
       event_loop()->NewTimer(kAudioProcessIntervalNormal, true,
-                             NewLambdaRunnable([this] { Process_(); }));
+                             NewLambdaRunnable([this] { Process_(); }).Get());
 
 #if BA_ENABLE_AUDIO
 

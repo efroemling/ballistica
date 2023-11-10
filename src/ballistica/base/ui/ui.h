@@ -17,6 +17,14 @@ class Widget;
 
 namespace ballistica::base {
 
+/// Delay before moving through elements in the UI when a key/button/stick
+/// is held
+const seconds_t kUINavigationRepeatDelay{0.25};
+
+/// Interval after the initial delay when moving through UI elements when a
+/// key/button/stick is held.
+const seconds_t kUINavigationRepeatInterval{0.1};
+
 // Our global UI subsystem. This acts as a manager/wrapper for individual UI
 // feature-sets that provide specific UI functionality.
 class UI {
@@ -84,10 +92,10 @@ class UI {
   auto GetUIInputDevice() const -> InputDevice*;
 
   /// Return true if there is a full desktop-style hardware keyboard
-  /// attached and the active UI InputDevice is set to it or not set. This
+  /// attached and no non-keyboard device is currently controlling the UI. This
   /// also may take language or user preferences into account. Editable text
   /// elements can use this to opt in to accepting key events directly
-  /// instead of popping up a string edit dialog.
+  /// instead of popping up string edit dialogs.
   auto UIHasDirectKeyboardInput() const -> bool;
 
   /// Schedule a back button press. Can be called from any thread.

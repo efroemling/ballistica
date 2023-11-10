@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_INPUT_DEVICE_JOYSTICK_INPUT_H_
 #define BALLISTICA_BASE_INPUT_DEVICE_JOYSTICK_INPUT_H_
 
+#include <map>
 #include <set>
 #include <string>
 
@@ -16,7 +17,7 @@ namespace ballistica::base {
 const int kJoystickDiscreteThreshold{15000};
 const float kJoystickDiscreteThresholdFloat{0.46f};
 const int kJoystickAnalogCalibrationDivisions{20};
-extern const char* kMFiControllerName;
+// extern const char* kMFiControllerName;
 
 /// A physical game controller.
 class JoystickInput : public InputDevice {
@@ -49,7 +50,6 @@ class JoystickInput : public InputDevice {
 
   auto GetPartyButtonName() const -> std::string override;
 
-  auto GetButtonName(int index) -> std::string override;
   auto GetAxisName(int index) -> std::string override;
 
   auto IsController() -> bool override { return true; }
@@ -73,6 +73,11 @@ class JoystickInput : public InputDevice {
 
   auto HasMeaningfulButtonNames() -> bool override;
 
+  auto GetButtonName(int index) -> std::string override;
+
+  /// Custom controller types can pass in controller-specific button names.
+  void SetButtonName(int button, const std::string& name);
+
  protected:
   auto GetRawDeviceName() -> std::string override;
   auto GetDeviceExtraDescription() -> std::string override;
@@ -87,51 +92,51 @@ class JoystickInput : public InputDevice {
   void UpdateRunningState();
   auto GetCalibratedValue(float raw, float neutral) const -> int32_t;
 
-  std::string raw_sdl_joystick_name_;
-  std::string raw_sdl_joystick_identifier_;
-  float run_value_{};
   JoystickInput* child_joy_stick_{};
   JoystickInput* parent_joy_stick_{};
   millisecs_t last_ui_only_print_time_{};
-  bool ui_only_{};
-  bool unassigned_buttons_run_{true};
-  bool start_button_activates_default_widget_{true};
-  bool auto_recalibrate_analog_stick_{};
   millisecs_t creation_time_{};
-  bool did_initial_reset_{};
 
   // FIXME - should take this out and replace it with a bool
   //  (we never actually access the sdl joystick directly outside of our
   //  constructor)
   SDL_Joystick* sdl_joystick_{};
 
-  bool is_test_input_{};
-  bool is_remote_control_{};
-  bool is_remote_app_{};
-  bool is_mfi_controller_{};
-  bool is_mac_ps3_controller_{};
-
-  millisecs_t ps3_last_joy_press_time_{-10000};
+  bool ui_only_ : 1 {};
+  bool unassigned_buttons_run_ : 1 {true};
+  bool start_button_activates_default_widget_ : 1 {true};
+  bool auto_recalibrate_analog_stick_ : 1 {};
+  bool did_initial_reset_ : 1 {};
+  bool is_test_input_ : 1 {};
+  bool is_remote_control_ : 1 {};
+  bool is_remote_app_ : 1 {};
+  bool is_mfi_controller_ : 1 {};
 
   // For dialogs.
-  bool left_held_{};
-  bool right_held_{};
-  bool up_held_{};
-  bool down_held_{};
-  bool hold_position_held_{};
-  bool need_to_send_held_state_{};
-  int hat_{};
-  int analog_lr_{};
+  bool left_held_ : 1 {};
+  bool right_held_ : 1 {};
+  bool up_held_ : 1 {};
+  bool down_held_ : 1 {};
+  bool hold_position_held_ : 1 {};
+  bool need_to_send_held_state_ : 1 {};
+
+  bool hat_held_ : 1 {};
+  bool dpad_right_held_ : 1 {};
+  bool dpad_left_held_ : 1 {};
+  bool dpad_up_held_ : 1 {};
+  bool dpad_down_held_ : 1 {};
+
+  bool ignore_completely_ : 1 {};
+  bool resetting_ : 1 {};
+  bool calibrate_ : 1 {};
+  bool can_configure_ : 1 {};
+
+  int hat_{0};
+  int analog_lr_{0};
   int analog_ud_{1};
-  millisecs_t last_hold_time_{};
-  bool hat_held_{};
-  bool dpad_right_held_{};
-  bool dpad_left_held_{};
-  bool dpad_up_held_{};
-  bool dpad_down_held_{};
 
   // Mappings of ba buttons to SDL buttons.
-  int jump_button_{};
+  int jump_button_{0};
   int punch_button_{1};
   int bomb_button_{2};
   int pickup_button_{3};
@@ -143,7 +148,6 @@ class JoystickInput : public InputDevice {
   // Used on rift build; we have one button which we disallow from joining but
   // the rest we allow. (all devices are treated as one and the same there).
   int remote_enter_button_{-1};
-  bool ignore_completely_{};
   int ignored_button_{-1};
   int ignored_button2_{-1};
   int ignored_button3_{-1};
@@ -153,12 +157,6 @@ class JoystickInput : public InputDevice {
   int run_trigger1_{-1};
   int run_trigger2_{-1};
   int vr_reorient_button_{-1};
-  float run_trigger1_min_{};
-  float run_trigger1_max_{};
-  float run_trigger2_min_{};
-  float run_trigger2_max_{};
-  float run_trigger1_value_{};
-  float run_trigger2_value_{};
   int left_button_{-1};
   int right_button_{-1};
   int up_button_{-1};
@@ -167,15 +165,19 @@ class JoystickInput : public InputDevice {
   int right_button2_{-1};
   int up_button2_{-1};
   int down_button2_{-1};
-  std::set<int> run_buttons_held_;
   int sdl_joystick_id_{};
-  bool ps3_jaxis1_pressed_{};
-  bool ps3_jaxis2_pressed_{};
+  float run_value_{};
+  float run_trigger1_min_{};
+  float run_trigger1_max_{};
+  float run_trigger2_min_{};
+  float run_trigger2_max_{};
+  float run_trigger1_value_{};
+  float run_trigger2_value_{};
   float calibration_threshold_{};
   float calibration_break_threshold_{};
   float analog_calibration_vals_[kJoystickAnalogCalibrationDivisions]{};
-  std::string custom_device_name_;
-  bool can_configure_{};
+  float calibrated_neutral_x_{};
+  float calibrated_neutral_y_{};
   int32_t dialog_jaxis_x_{};
   int32_t dialog_jaxis_y_{};
   int32_t jaxis_raw_x_{};
@@ -183,11 +185,13 @@ class JoystickInput : public InputDevice {
   int32_t jaxis_x_{};
   int32_t jaxis_y_{};
   millisecs_t calibration_start_time_x_{};
-  float calibrated_neutral_x_{};
   millisecs_t calibration_start_time_y_{};
-  float calibrated_neutral_y_{};
-  bool resetting_{};
-  bool calibrate_{};
+  std::set<int> run_buttons_held_;
+  std::string custom_device_name_;
+  std::string raw_sdl_joystick_name_;
+  std::string raw_sdl_joystick_identifier_;
+  std::map<int, std::string> button_names_;
+  Object::Ref<Repeater> ui_repeater_;
 
   BA_DISALLOW_CLASS_COPIES(JoystickInput);
 };

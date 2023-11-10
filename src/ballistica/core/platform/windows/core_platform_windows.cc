@@ -814,15 +814,33 @@ std::string CorePlatformWindows::DoGetDeviceName() {
   wchar_t computer_name[256];
   DWORD computer_name_size = 256;
   int result = GetComputerName(computer_name, &computer_name_size);
-  if (result == 0) {
-    device_name = "BallisticaKit Game";
-  } else {
+  if (result != 0) {
     device_name = UTF8Encode(computer_name);
-    if (device_name.size() == 0) {
-      device_name = "BallisticaKit Game";
+    if (device_name.size() != 0) {
+      return device_name;
     }
   }
-  return device_name;
+  // Fall back on default.
+  return CorePlatform::DoGetDeviceName();
+}
+
+std::string CorePlatformWindows::DoGetDeviceDescription() {
+  std::string device_name;
+  wchar_t computer_name[256];
+  DWORD computer_name_size = 256;
+
+  // We currently return computer name for both the device name
+  // and description. Is there a way to get a more hardware-y name
+  // (like manufacturer make/model?)
+  int result = GetComputerName(computer_name, &computer_name_size);
+  if (result != 0) {
+    device_name = UTF8Encode(computer_name);
+    if (device_name.size() != 0) {
+      return device_name;
+    }
+  }
+  // Fall back on default.
+  return CorePlatform::DoGetDeviceDescription();
 }
 
 bool CorePlatformWindows::DoHasTouchScreen() { return false; }

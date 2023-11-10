@@ -55,12 +55,10 @@ auto SceneV1Context::GetAsHostActivity() -> HostActivity* { return nullptr; }
 auto SceneV1Context::GetMutableScene() -> Scene* { return nullptr; }
 
 auto SceneV1Context::NewTimer(TimeType timetype, TimerMedium length,
-                              bool repeat,
-                              const Object::Ref<Runnable>& runnable) -> int {
+                              bool repeat, Runnable* runnable) -> int {
   // Make sure the passed runnable has a ref-count already
   // (don't want them to rely on us to create initial one).
-  assert(runnable.Exists());
-  assert(Object::IsValidManagedObject(runnable.Get()));
+  assert(Object::IsValidManagedObject(runnable));
 
   switch (timetype) {
     case TimeType::kSim:

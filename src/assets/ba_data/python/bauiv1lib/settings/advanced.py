@@ -807,6 +807,8 @@ class AdvancedSettingsWindow(bui.Window):
                     sel_name = 'ModdingGuide'
                 elif sel == self._language_inform_checkbox:
                     sel_name = 'LangInform'
+                elif sel == self._show_dev_console_button_check_box.widget:
+                    sel_name = 'ShowDevConsole'
                 else:
                     raise ValueError(f'unrecognized selection \'{sel}\'')
             elif sel == self._back_button:
@@ -870,6 +872,8 @@ class AdvancedSettingsWindow(bui.Window):
                     sel = self._modding_guide_button
                 elif sel_name == 'LangInform':
                     sel = self._language_inform_checkbox
+                elif sel_name == 'ShowDevConsole':
+                    sel = self._show_dev_console_button_check_box.widget
                 else:
                     sel = None
                 if sel is not None:

@@ -165,15 +165,16 @@ class MusicSubsystem:
 
     def supports_soundtrack_entry_type(self, entry_type: str) -> bool:
         """Return whether provided soundtrack entry type is supported here."""
-        uas = babase.env()['legacy_user_agent_string']
-        assert isinstance(uas, str)
-
-        # FIXME: Generalize this.
+        # Note to self; can't access babase.app.classic here because
+        # we are called during its construction.
+        env = babase.env()
+        platform = env.get('platform')
+        assert isinstance(platform, str)
         if entry_type == 'iTunesPlaylist':
-            return 'Mac' in uas
+            return platform == 'mac' and babase.is_xcode_build()
         if entry_type in ('musicFile', 'musicFolder'):
             return (
-                'android' in uas
+                platform == 'android'
                 and babase.android_get_external_files_dir() is not None
             )
         if entry_type == 'default':

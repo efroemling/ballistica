@@ -51,6 +51,18 @@ class OnScreenKeyboardWindow(Window):
                 else (0, 0),
             )
         )
+        self._cancel_button = _bauiv1.buttonwidget(
+            parent=self._root_widget,
+            scale=0.5,
+            position=(30, self._height - 55),
+            size=(60, 60),
+            label='',
+            on_activate_call=self._cancel,
+            autoselect=True,
+            color=(0.55, 0.5, 0.6),
+            icon=_bauiv1.gettexture('crossOut'),
+            iconscale=1.2,
+        )
         self._done_button = _bauiv1.buttonwidget(
             parent=self._root_widget,
             position=(self._width - 200, 44),

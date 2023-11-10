@@ -3,8 +3,10 @@
 #if BA_OSTYPE_LINUX
 #include "ballistica/core/platform/linux/core_platform_linux.h"
 
-#include <stdlib.h>
+#include <sys/utsname.h>
 
+#include <cstdlib>
+#include <cstring>
 #include <string>
 
 namespace ballistica::core {
@@ -27,6 +29,53 @@ std::string CorePlatformLinux::GenerateUUID() {
     throw Exception("kernel uuid not available");
   }
   return val;
+}
+
+auto CorePlatformLinux::DoGetDeviceDescription() -> std::string {
+  // Let's look for something pretty like "Ubuntu 20.04", etc.
+  FILE* file = fopen("/etc/os-release", "r");
+  std::optional<std::string> out;
+  if (file != NULL) {
+    char line[256];  // Adjust the buffer size as needed
+
+    while (fgets(line, sizeof(line), file)) {
+      if (strstr(line, "PRETTY_NAME=") != nullptr) {
+        // Extract the distribution name and version
+        char* start = strchr(line, '"');
+        char* end = strrchr(line, '"');
+        if (start != nullptr && end != nullptr) {
+          *end = '\0';  // Remove the trailing quote
+          out = start + 1;
+        }
+        break;
+      }
+    }
+    fclose(file);
+  }
+  if (out.has_value()) {
+    return *out;
+  }
+  return CorePlatform::GetDeviceDescription();
+}
+
+auto CorePlatformLinux::GetOSVersionString() -> std::string {
+  std::optional<std::string> out;
+  struct utsname uts;
+  if (uname(&uts) == 0) {
+    out = uts.release;
+
+    // Try to parse 3 version numbers.
+    unsigned int major, minor, bugfix;
+    if (sscanf(uts.release, "%u.%u.%u", &major, &minor, &bugfix) == 3) {
+      char buf[128];
+      snprintf(buf, sizeof(buf), "%.u.%u.%u", major, minor, bugfix);
+      out = buf;
+    }
+  }
+  if (out.has_value()) {
+    return *out;
+  }
+  return CorePlatform::GetOSVersionString();
 }
 
 auto CorePlatformLinux::GetDeviceUUIDInputs() -> std::list<std::string> {

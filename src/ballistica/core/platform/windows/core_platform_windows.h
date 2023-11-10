@@ -40,6 +40,7 @@ class CorePlatformWindows : public CorePlatform {
   void DoMakeDir(const std::string& dir, bool quiet) override;
   auto GetLocale() -> std::string override;
   auto DoGetDeviceName() -> std::string override;
+  auto DoGetDeviceDescription() -> std::string override;
   auto DoHasTouchScreen() -> bool override;
   void EmitPlatformLog(const std::string& name, LogLevel level,
                        const std::string& msg) override;

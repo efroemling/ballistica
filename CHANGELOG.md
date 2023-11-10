@@ -1,4 +1,4 @@
-### 1.7.28 (build 21491, api 8, 2023-10-22)
+### 1.7.28 (build 21583, api 8, 2023-11-09)
 
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
@@ -6,7 +6,7 @@
   huge chunks of it and put back still-relevant pieces in a much more cleanly
   designed way. This should put us in a much better place for supporting various
   platforms and making graphical improvements going forward.
-  `ballistica/base/app_adapter/app_adapter_sdl.cc` for an example of the now
+  `ballistica/base/app_adapter/app_adapter_sdl.cc` is an example of the now
   nicely implemented system.
 - The engine now requires OpenGL 3.0 or newer on desktop and OpenGL ES 3.0 or
   newer on mobile. This means we're cutting off a few percent of old devices on
@@ -154,6 +154,57 @@
   seems pretty awesome these days. It should support most stuff SDL does and
   with less configuring involved. Please holler if you come across something
   that doesn't work.
+- Mac build is also now using the Game Controller Framework to handle keyboard
+  events. This should better handle things like modifier keys and also will
+  allow us to use that exact same code on the iPad/iPhone version.
+- OS key repeat events are no longer passed through the engine. This means that
+  any time we want repeating behavior, such as holding an arrow key to move
+  through UI elements, we will need to wire it up ourselves. We already do this
+  for things like game controllers however, so this is more consistent in a way.
+- Dev console no longer claims key events unless the Python tab is showing and
+  there is a hardware keyboard attached. This allows showing dev console tabs
+  above gameplay without interfering with it.
+- Added clipboard paste support to the dev console python terminal.
+- Added various text editing functionality to the dev console python terminal
+  (cursor movement, deleting chars and words, etc.)
+- Internal on-screen-keyboard now has a cancel button (thanks vishal332008!)
+- Public servers list now shows 'No servers found' if there are no servers to
+  show instead of just remaining mysteriously blank (thanks vishal332008!)
+- Players are now prevented from rejoining a session for 10 seconds after they
+  leave to prevent game exploits. Note this is different than the existing
+  system that prevents joining a *party* for 10 seconds; this covers people
+  who never leave the party (Thanks EraOSBeta!).
+- Fixes an issue where servers could be crashed by flooding them with join
+  requests (Thanks for the heads-up Era!).
+- The engine will now ignore empty device config dicts and fall back to
+  defaults; these could theoretically happen if device config code fails
+  somewhere and it previously would leave the device mysteriously inoperable.
+- The game will now show <unset> for controls with no bindings in the in-game
+  guide and controller/keyboard config screens.
+- Fixed a crash that could occur if SDL couldn't find a name for connected
+  joystick.
+- Simplified the app's handling of broken config files. Previously it would do
+  various complex things such as offering to edit the broken config on desktop
+  builds, avoiding overwriting broken configs, and automatically loading
+  previous configs. Now, if it finds a broken config, it will simply back it up
+  to a .broken file, log an error message, and then start up normally with a
+  default config. This way, things are more consistent across platforms, and
+  technical users can still fix and restore their old configs. Note that the app
+  still also writes .prev configs for extra security, though it no longer uses
+  them for anything itself.
+- Converted more internal engine time values from milliseconds to microseconds,
+  including things like the internal EventLoop timeline. Please holler if you
+  notice anything running 1000x too fast or slow. In general my strategy going
+  forward is to use microseconds for exact internal time values but to mostly
+  expose float seconds to the user, especially on the Python layer. There were
+  starting to be a few cases were integer milliseconds was not enough precision
+  for internal values. For instance, if we run with unclamped framerates and hit
+  several hundred FPS, milliseconds per frame would drop to 0 which caused some
+  problems. Note that scenev1 will be remaining on milliseconds internally for
+  compatibility reasons. Scenev2 should move to microseconds though.
+- The V2 account id for the signed in account is now available at
+  `ba*.app.plus.accounts.primary.accountid` (alongside some other existing
+  account info).
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 

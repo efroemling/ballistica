@@ -160,10 +160,11 @@ auto TimerList::GetExpiredTimer(TimerMedium target_time) -> Timer* {
 
 auto TimerList::NewTimer(TimerMedium current_time, TimerMedium length,
                          TimerMedium offset, int repeat_count,
-                         const Object::Ref<Runnable>& runnable) -> Timer* {
+                         Runnable* runnable) -> Timer* {
   assert(!are_clearing_);
   auto* t = new Timer(this, next_timer_id_++, current_time, length, offset,
                       repeat_count);
+  assert(Object::IsValidManagedObject(runnable));
   t->runnable_ = runnable;
 
   // Clion (correctly) points out that t may get deallocated in this call,

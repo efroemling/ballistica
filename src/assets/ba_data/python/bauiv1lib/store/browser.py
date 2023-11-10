@@ -352,7 +352,7 @@ class StoreBrowserWindow(bui.Window):
 
         plus = bui.app.plus
         assert plus is not None
-        if plus.get_v1_account_state() != 'signed_in':
+        if plus.accounts.primary is None:
             account.show_sign_in_prompt()
         else:
             plus.restore_purchases()

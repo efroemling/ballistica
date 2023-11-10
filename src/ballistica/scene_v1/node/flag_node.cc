@@ -5,7 +5,6 @@
 #include "ballistica/base/dynamics/bg/bg_dynamics_shadow.h"
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
-#include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/support/area_of_interest.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/scene_v1/assets/scene_texture.h"

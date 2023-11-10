@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/python/python_ref.h"
@@ -20,7 +21,6 @@ const float kDevConsoleZDepth = 0.0f;
 class DevConsole {
  public:
   DevConsole();
-  ~DevConsole();
   auto IsActive() const -> bool { return (state_ != State_::kInactive); }
   auto HandleTextEditing(const std::string& text) -> bool;
   auto HandleKeyPress(const SDL_Keysym* keysym) -> bool;
@@ -32,6 +32,9 @@ class DevConsole {
 
   /// Tell the console to quietly go away no matter what state it is in.
   void Dismiss();
+
+  /// Attempt to Paste. Returns true if it happened.
+  auto PasteFromClipboard() -> bool;
 
   /// Print text to the console.
   void Print(const std::string& s_in);
@@ -76,24 +79,30 @@ class DevConsole {
   class OutputLine_;
   enum class State_ : uint8_t { kInactive, kMini, kFull };
 
+  auto CaratCharValid_() -> bool;
+  auto GetCaratX_() -> float;
+  void UpdateCarat_();
   auto Bottom_() const -> float;
   void SubmitPythonCommand_(const std::string& command);
   void InvokeStringEditor_();
   void RefreshTabButtons_();
   void RefreshTabContents_();
 
-  bool input_text_dirty_{true};
-  bool input_enabled_{};
-  bool last_line_mesh_dirty_{true};
-  bool python_terminal_visible_{};
-  bool python_terminal_pressed_{};
-  bool refresh_pending_{};
+  int input_history_position_{};
   int ui_lock_count_{};
+  int carat_char_{0};
   State_ state_{State_::kInactive};
   State_ state_prev_{State_::kInactive};
-  millisecs_t last_input_text_change_time_{};
-  double transition_start_{};
-  int input_history_position_{};
+  bool input_text_dirty_ : 1 {true};
+  bool input_enabled_ : 1 {};
+  bool last_line_mesh_dirty_ : 1 {true};
+  bool python_terminal_visible_ : 1 {};
+  bool python_terminal_pressed_ : 1 {};
+  bool refresh_pending_ : 1 {};
+  bool carat_dirty_ : 1 {true};
+  float carat_x_{};
+  seconds_t transition_start_{};
+  millisecs_t last_carat_x_change_time_{};
   ImageMesh bg_mesh_;
   ImageMesh stripe_mesh_;
   ImageMesh border_mesh_;
@@ -103,15 +112,17 @@ class DevConsole {
   TextGroup input_text_group_;
   std::string last_line_;
   std::string input_string_;
-  std::list<std::string> tabs_{"Python", "AppModes", "Logging", "Graphics",
-                               "UI"};
-  std::string active_tab_{"Python"};
+  std::list<std::string> tabs_;
+  std::string active_tab_;
   PythonRef string_edit_adapter_;
-  Object::Ref<TextGroup> last_line_mesh_group_;
   std::list<std::string> input_history_;
   std::list<OutputLine_> output_lines_;
   std::vector<std::unique_ptr<Widget_> > widgets_;
   std::vector<std::unique_ptr<Widget_> > tab_buttons_;
+  Object::Ref<TextGroup> last_line_mesh_group_;
+  Object::Ref<Repeater> key_repeater_;
+  Object::Ref<NinePatchMesh> carat_mesh_;
+  Object::Ref<NinePatchMesh> carat_glow_mesh_;
 };
 
 }  // namespace ballistica::base

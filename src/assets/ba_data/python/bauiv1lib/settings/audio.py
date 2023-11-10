@@ -121,7 +121,8 @@ class AudioSettingsWindow(bui.Window):
             displayname=bui.Lstr(resource=self._r + '.soundVolumeText'),
             minval=0.0,
             maxval=1.0,
-            increment=0.1,
+            increment=0.05,
+            as_percent=True,
         )
         if bui.app.ui_v1.use_toolbars:
             bui.widget(
@@ -137,9 +138,10 @@ class AudioSettingsWindow(bui.Window):
             displayname=bui.Lstr(resource=self._r + '.musicVolumeText'),
             minval=0.0,
             maxval=1.0,
-            increment=0.1,
+            increment=0.05,
             callback=music.music_volume_changed,
             changesound=False,
+            as_percent=True,
         )
 
         v -= 0.5 * spacing

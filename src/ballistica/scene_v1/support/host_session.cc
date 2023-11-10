@@ -40,7 +40,7 @@ HostSession::HostSession(PyObject* session_type_obj)
   // Create a timer to step our session scene.
   step_scene_timer_ =
       base_timers_.NewTimer(base_time_millisecs_, kGameStepMilliseconds, 0, -1,
-                            NewLambdaRunnable([this] { StepScene(); }));
+                            NewLambdaRunnable([this] { StepScene(); }).Get());
 
   // Set up our output-stream, which will go to a replay and/or the network.
   // We don't dump to a replay if we're doing the main menu; that replay
@@ -766,8 +766,8 @@ void HostSession::GetCorrectionMessages(
 }
 
 auto HostSession::NewTimer(TimeType timetype, TimerMedium length, bool repeat,
-                           const Object::Ref<Runnable>& runnable) -> int {
-  assert(runnable.IsValidManagedObject());
+                           Runnable* runnable) -> int {
+  assert(Object::IsValidManagedObject(runnable));
 
   // We currently support game and base timers.
   switch (timetype) {

@@ -26,6 +26,8 @@ class AppAdapterApple : public AppAdapter {
     return val;
   }
 
+  void OnMainThreadStartApp() override;
+
   auto ManagesMainThreadEventLoop() const -> bool override;
   void DoApplyAppConfig() override;
 
@@ -41,6 +43,11 @@ class AppAdapterApple : public AppAdapter {
   auto HasDirectKeyboardInput() -> bool override;
   void EnableResizeFriendlyMode(int width, int height);
 
+  auto GetKeyRepeatDelay() -> float override;
+  auto GetKeyRepeatInterval() -> float override;
+  auto GetKeyName(int keycode) -> std::string override;
+  auto NativeReviewRequestSupported() -> bool override;
+
  protected:
   void DoPushMainThreadRunnable(Runnable* runnable) override;
   void DoPushGraphicsContextRunnable(Runnable* runnable) override;
@@ -50,6 +57,11 @@ class AppAdapterApple : public AppAdapter {
   void SetHardwareCursorVisible(bool visible) override;
   void TerminateApp() override;
   void ApplyGraphicsSettings(const GraphicsSettings* settings) override;
+  auto DoClipboardIsSupported() -> bool override;
+  auto DoClipboardHasText() -> bool override;
+  void DoClipboardSetText(const std::string& text) override;
+  auto DoClipboardGetText() -> std::string override;
+  void DoNativeReviewRequest() override;
 
  private:
   class ScopedAllowGraphics_;

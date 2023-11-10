@@ -15,7 +15,7 @@
 
 namespace ballistica::base {
 
-static void rgba8888_unpremultiply_in_place(uint8_t* src, size_t cb) {
+static void Rgba8888UnpremultiplyInPlace_(uint8_t* src, size_t cb) {
   // Compute the actual number of pixel elements in the buffer.
   size_t cpel = cb / 4;
   auto* psrc = src;
@@ -157,7 +157,7 @@ void TextureAsset::DoPreload() {
     auto* buffer = static_cast<uint8_t*>(malloc(buffer_size));
     preload_datas_[0].buffers[0] = buffer;
     memcpy(buffer, pixels, buffer_size);
-    rgba8888_unpremultiply_in_place(buffer, buffer_size);
+    Rgba8888UnpremultiplyInPlace_(buffer, buffer_size);
     preload_datas_[0].widths[0] = width;
     preload_datas_[0].heights[0] = height;
     preload_datas_[0].formats[0] = TextureFormat::kRGBA_8888;

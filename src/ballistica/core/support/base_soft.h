@@ -44,6 +44,7 @@ class BaseSoftInterface {
   virtual auto IsAppStarted() const -> bool = 0;
   virtual auto IsAppBootstrapped() const -> bool = 0;
   virtual auto GetReturnValue() const -> int = 0;
+  virtual void PushMainThreadRunnable(Runnable* runnable) = 0;
 };
 
 }  // namespace ballistica::core

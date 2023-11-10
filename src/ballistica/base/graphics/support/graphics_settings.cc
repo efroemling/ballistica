@@ -6,7 +6,6 @@
 
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/support/app_config.h"
-#include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::base {
 

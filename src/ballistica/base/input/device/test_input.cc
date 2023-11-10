@@ -22,7 +22,7 @@ TestInput::~TestInput() {
 }
 
 void TestInput::Reset() {
-  assert(g_core->InMainThread());
+  assert(g_base->InLogicThread());
   reset_ = true;
 }
 
@@ -33,7 +33,7 @@ void TestInput::HandleAlreadyPressedTwice() {
 }
 
 void TestInput::Process(millisecs_t time) {
-  assert(g_core->InMainThread());
+  assert(g_base->InLogicThread());
 
   if (reset_) {
     reset_ = false;

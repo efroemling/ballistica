@@ -48,6 +48,7 @@ class BasePython {
     kTemporarilyUnavailableMessageCall,
     kInProgressMessageCall,
     kErrorMessageCall,
+    kSuccessMessageCall,
     kPurchaseNotValidErrorCall,
     kPurchaseAlreadyInProgressErrorCall,
     kVROrientationResetCBMessageCall,
@@ -111,6 +112,7 @@ class BasePython {
     kGetDevConsoleTabNamesCall,
     kAppDevConsoleDoRefreshTabCall,
     kUnsupportedControllerMessageCall,
+    kGetV2AccountIdCall,
     kLast  // Sentinel; must be at end.
   };
 

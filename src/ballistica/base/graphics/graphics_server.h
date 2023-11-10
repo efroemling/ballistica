@@ -231,14 +231,6 @@ class GraphicsServer {
     return tv_border_;
   }
 
-  // auto graphics_quality_set() const {
-  //   return graphics_quality_ != GraphicsQuality::kUnset;
-  // }
-
-  // auto texture_quality_set() const {
-  //   return texture_quality_ != TextureQuality::kUnset;
-  // }
-
   auto SupportsTextureCompressionType(TextureCompressionType t) const -> bool {
     assert(InGraphicsContext_());
     assert(texture_compression_types_set_);
@@ -248,10 +240,6 @@ class GraphicsServer {
 
   void SetTextureCompressionTypes(
       const std::list<TextureCompressionType>& types);
-
-  // auto texture_compression_types_are_set() const {
-  //   return texture_compression_types_set_;
-  // }
 
   void set_renderer_context_lost(bool lost) { renderer_context_lost_ = lost; }
 
@@ -289,6 +277,11 @@ class GraphicsServer {
     return texture_compression_types_;
   }
 
+  /// Start spinning down the graphics server/etc.
+  void Shutdown();
+
+  auto shutdown_completed() const { return shutdown_completed_; }
+
  private:
   /// Pass a freshly allocated GraphicsContext instance, which the graphics
   /// system will take ownership of.
@@ -324,6 +317,10 @@ class GraphicsServer {
     }
   }
 
+  TextureQualityRequest texture_quality_requested_{};
+  TextureQuality texture_quality_{};
+  GraphicsQualityRequest graphics_quality_requested_{};
+  GraphicsQuality graphics_quality_{};
   bool renderer_loaded_ : 1 {};
   bool model_view_projection_matrix_dirty_ : 1 {true};
   bool model_world_matrix_dirty_ : 1 {true};
@@ -331,11 +328,9 @@ class GraphicsServer {
   bool renderer_context_lost_ : 1 {};
   bool texture_compression_types_set_ : 1 {};
   bool cam_orient_matrix_dirty_ : 1 {true};
+  bool shutting_down_ : 1 {};
+  bool shutdown_completed_ : 1 {};
   Snapshot<GraphicsClientContext>* client_context_{};
-  TextureQualityRequest texture_quality_requested_{};
-  TextureQuality texture_quality_{};
-  GraphicsQualityRequest graphics_quality_requested_{};
-  GraphicsQuality graphics_quality_{};
   float res_x_{};
   float res_y_{};
   float res_x_virtual_{};

@@ -458,9 +458,9 @@ class PrivateGatherTab(GatherTab):
             scale=1.5,
             size=(300, 50),
             editable=True,
+            max_chars=20,
             description=bui.Lstr(resource='gatherWindow.partyCodeText'),
             autoselect=True,
-            maxwidth=250,
             h_align='left',
             v_align='center',
             text='',
@@ -962,7 +962,7 @@ class PrivateGatherTab(GatherTab):
             code = cast(str, bui.textwidget(query=self._join_party_code_text))
         if not code:
             bui.screenmessage(
-                bui.Lstr(resource='internal.invalidAddressErrorText'),
+                bui.Lstr(translate=('serverResponses', 'Invalid code.')),
                 color=(1, 0, 0),
             )
             bui.getsound('error').play()

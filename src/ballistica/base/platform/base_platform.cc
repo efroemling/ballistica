@@ -7,7 +7,6 @@
 #include "ballistica/base/base.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/base/platform/support/min_sdl_key_names.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
@@ -16,72 +15,7 @@
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_sys.h"
 
-// ------------------------- PLATFORM SELECTION --------------------------------
-
-// This ugly chunk of macros simply pulls in the correct platform class header
-// for each platform and defines the actual class g_base->platform will be.
-
-// Android ---------------------------------------------------------------------
-
-#if BA_OSTYPE_ANDROID
-#if BA_GOOGLE_BUILD
-#include "ballistica/base/platform/android/google/base_plat_andr_google.h"
-#define BA_PLATFORM_CLASS BasePlatformAndroidGoogle
-#elif BA_AMAZON_BUILD
-#include "ballistica/base/platform/android/amazon/base_plat_andr_amazon.h"
-#define BA_PLATFORM_CLASS BasePlatformAndroidAmazon
-#elif BA_CARDBOARD_BUILD
-#include "ballistica/base/platform/android/cardboard/base_pl_an_cardboard.h"
-#define BA_PLATFORM_CLASS BasePlatformAndroidCardboard
-#else  // Generic android.
-#include "ballistica/base/platform/android/base_platform_android.h"
-#define BA_PLATFORM_CLASS BasePlatformAndroid
-#endif  // (Android subplatform)
-
-// Apple -----------------------------------------------------------------------
-
-#elif BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS
-#include "ballistica/base/platform/apple/base_platform_apple.h"
-#define BA_PLATFORM_CLASS BasePlatformApple
-
-// Windows ---------------------------------------------------------------------
-
-#elif BA_OSTYPE_WINDOWS
-#if BA_RIFT_BUILD
-#include "ballistica/base/platform/windows/base_platform_windows_oculus.h"
-#define BA_PLATFORM_CLASS BasePlatformWindowsOculus
-#else  // generic windows
-#include "ballistica/base/platform/windows/base_platform_windows.h"
-#define BA_PLATFORM_CLASS BasePlatformWindows
-#endif  // windows subtype
-
-// Linux -----------------------------------------------------------------------
-
-#elif BA_OSTYPE_LINUX
-#include "ballistica/base/platform/linux/base_platform_linux.h"
-#define BA_PLATFORM_CLASS BasePlatformLinux
-#else
-
-// Generic ---------------------------------------------------------------------
-
-#define BA_PLATFORM_CLASS BasePlatform
-
-#endif
-
-// ----------------------- END PLATFORM SELECTION ------------------------------
-
-#ifndef BA_PLATFORM_CLASS
-#error no BA_PLATFORM_CLASS defined for this platform
-#endif
-
 namespace ballistica::base {
-
-auto BasePlatform::Create() -> BasePlatform* {
-  auto platform = new BA_PLATFORM_CLASS();
-  platform->PostInit();
-  assert(platform->ran_base_post_init_);
-  return platform;
-}
 
 BasePlatform::BasePlatform() = default;
 
@@ -91,20 +25,6 @@ void BasePlatform::PostInit() {
 }
 
 BasePlatform::~BasePlatform() = default;
-
-auto BasePlatform::GetKeyName(int keycode) -> std::string {
-  // On our actual SDL platforms we're trying to be *pure* sdl so
-  // call their function for this. Otherwise we call our own version
-  // of it which is basically the same thing (at least for now).
-#if BA_MINSDL_BUILD
-  return MinSDL_GetKeyName(keycode);
-#elif BA_SDL_BUILD
-  return SDL_GetKeyName(static_cast<SDL_Keycode>(keycode));
-#else
-  Log(LogLevel::kWarn, "CorePlatform::GetKeyName not implemented here.");
-  return "?";
-#endif
-}
 
 void BasePlatform::LoginAdapterGetSignInToken(const std::string& login_type,
                                               int attempt_id) {

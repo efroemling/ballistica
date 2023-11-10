@@ -13,15 +13,8 @@ namespace ballistica {
 
 /// Objects supporting strong and weak referencing and thread enforcement.
 class Object {
- protected:
-  /// Our base constructor is marked protected because we *require* Objects
-  /// to be dynamically allocated. This allows us extra measures of control
-  /// over their construction and destruction, and it does not seem that
-  /// there is a pressing use case for a statically allocated Object that
-  /// would justify diluting that control.
-  Object();
-
  public:
+  Object();
   virtual ~Object();
 
   // Object classes can provide descriptive names for themselves; these are
@@ -575,6 +568,10 @@ class Object {
   [[nodiscard]] static auto New(ARGS&&... args) -> Object::Ref<TRETURN> {
     auto* ptr = new TALLOC(std::forward<ARGS>(args)...);
 #if BA_DEBUG_BUILD
+    /// Objects assume they are statically allocated by default; it's up
+    /// to us to tell them when they're not.
+    ptr->object_is_static_allocated_ = false;
+
     /// Make sure things aren't creating strong refs to themselves in their
     /// constructors.
     if (ptr->object_has_been_strong_reffed_) {
@@ -599,6 +596,10 @@ class Object {
   [[nodiscard]] static auto NewDeferred(ARGS&&... args) -> T* {
     T* ptr = new T(std::forward<ARGS>(args)...);
 #if BA_DEBUG_BUILD
+    /// Objects assume they are statically allocated by default; it's up
+    /// to us to tell them when they're not.
+    ptr->object_is_static_allocated_ = false;
+
     /// Make sure things aren't creating strong refs to themselves in their
     /// constructors.
     if (ptr->object_has_been_strong_reffed_) {
@@ -650,6 +651,9 @@ class Object {
   [[nodiscard]] static auto NewUnmanaged(ARGS&&... args) -> T* {
     T* ptr = new T(std::forward<ARGS>(args)...);
 #if BA_DEBUG_BUILD
+    /// Objects assume they are statically allocated by default; it's up
+    /// to us to tell them when they're not.
+    ptr->object_is_static_allocated_ = false;
     ptr->object_is_unmanaged_ = true;
 #endif
     return ptr;
@@ -668,6 +672,7 @@ class Object {
   auto operator new(size_t size) -> void* { return new char[size]; }
   void ObjectUpdateForAcquire();
 
+  bool object_is_static_allocated_ : 1 {true};
   bool object_has_been_strong_reffed_ : 1 {};
   bool object_is_ref_counted_ : 1 {};
   bool object_is_pending_deferred_ : 1 {};

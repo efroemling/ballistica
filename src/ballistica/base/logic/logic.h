@@ -89,13 +89,12 @@ class Logic {
   void HandleInterruptSignal();
   void HandleTerminateSignal();
 
-  auto NewAppTimer(millisecs_t length, bool repeat,
-                   const Object::Ref<Runnable>& runnable) -> int;
+  auto NewAppTimer(microsecs_t length, bool repeat, Runnable* runnable) -> int;
   void DeleteAppTimer(int timer_id);
-  void SetAppTimerLength(int timer_id, millisecs_t length);
+  void SetAppTimerLength(int timer_id, microsecs_t length);
 
-  auto NewDisplayTimer(microsecs_t length, bool repeat,
-                       const Object::Ref<Runnable>& runnable) -> int;
+  auto NewDisplayTimer(microsecs_t length, bool repeat, Runnable* runnable)
+      -> int;
   void DeleteDisplayTimer(int timer_id);
   void SetDisplayTimerLength(int timer_id, microsecs_t length);
 
@@ -149,8 +148,6 @@ class Logic {
   bool shutdown_completed_ : 1 {};
   bool graphics_ready_ : 1 {};
   Timer* process_pending_work_timer_{};
-  Timer* asset_prune_timer_{};
-  Timer* debug_timer_{};
   EventLoop* event_loop_{};
   std::unique_ptr<TimerList> display_timers_;
 };

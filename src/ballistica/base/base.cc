@@ -9,6 +9,7 @@
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
@@ -20,12 +21,12 @@
 #include "ballistica/base/python/class/python_class_feature_set_data.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_config.h"
+#include "ballistica/base/support/app_timer.h"
+#include "ballistica/base/support/base_build_switches.h"
 #include "ballistica/base/support/huffman.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/support/stdio_console.h"
-#include "ballistica/base/support/stress_test.h"
 #include "ballistica/base/ui/dev_console.h"
-#include "ballistica/base/ui/ui.h"
 #include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -39,7 +40,7 @@ core::CoreFeatureSet* g_core{};
 BaseFeatureSet* g_base{};
 
 BaseFeatureSet::BaseFeatureSet()
-    : app_adapter{AppAdapter::Create()},
+    : app_adapter{BaseBuildSwitches::CreateAppAdapter()},
       app_config{new AppConfig()},
       app_mode_{AppModeEmpty::GetSingleton()},
       assets{new Assets()},
@@ -51,7 +52,7 @@ BaseFeatureSet::BaseFeatureSet()
       bg_dynamics_server{g_core->HeadlessMode() ? nullptr
                                                 : new BGDynamicsServer},
       context_ref{new ContextRef(nullptr)},
-      graphics{Graphics::Create()},
+      graphics{BaseBuildSwitches::CreateGraphics()},
       graphics_server{new GraphicsServer()},
       huffman{new Huffman()},
       input{new Input()},
@@ -59,11 +60,10 @@ BaseFeatureSet::BaseFeatureSet()
       network_reader{new NetworkReader()},
       network_writer{new NetworkWriter()},
       networking{new Networking()},
-      platform{BasePlatform::Create()},
+      platform{BaseBuildSwitches::CreatePlatform()},
       python{new BasePython()},
       stdio_console{g_buildconfig.enable_stdio_console() ? new StdioConsole()
                                                          : nullptr},
-      stress_test_{new StressTest()},
       text_graphics{new TextGraphics()},
       ui{new UI()},
       utils{new Utils()} {
@@ -149,6 +149,43 @@ auto BaseFeatureSet::Import() -> BaseFeatureSet* {
 
 auto BaseFeatureSet::IsBaseCompletelyImported() -> bool {
   return base_import_completed_ && base_native_import_completed_;
+}
+
+void BaseFeatureSet::SuccessScreenMessage() {
+  if (auto* event_loop = logic->event_loop()) {
+    event_loop->PushCall([this] {
+      python->objs().Get(BasePython::ObjID::kSuccessMessageCall).Call();
+    });
+  } else {
+    Log(LogLevel::kError,
+        "SuccessScreenMessage called without logic event_loop in place.");
+  }
+}
+
+void BaseFeatureSet::ErrorScreenMessage() {
+  if (auto* event_loop = logic->event_loop()) {
+    event_loop->PushCall([this] {
+      python->objs().Get(BasePython::ObjID::kErrorMessageCall).Call();
+    });
+  } else {
+    Log(LogLevel::kError,
+        "ErrorScreenMessage called without logic event_loop in place.");
+  }
+}
+
+auto BaseFeatureSet::GetV2AccountID() -> std::optional<std::string> {
+  auto gil = Python::ScopedInterpreterLock();
+  auto result =
+      python->objs().Get(BasePython::ObjID::kGetV2AccountIdCall).Call();
+  if (result.Exists()) {
+    if (result.ValueIsNone()) {
+      return {};
+    }
+    return result.ValueAsString();
+  } else {
+    Log(LogLevel::kError, "GetV2AccountID() py call errored.");
+    return {};
+  }
 }
 
 void BaseFeatureSet::OnAssetsAvailable() {
@@ -465,8 +502,9 @@ auto BaseFeatureSet::InGraphicsContext() const -> bool {
 
 void BaseFeatureSet::ScreenMessage(const std::string& s,
                                    const Vector3f& color) {
-  logic->event_loop()->PushCall(
-      [this, s, color] { graphics->AddScreenMessage(s, color); });
+  logic->event_loop()->PushCall([this, s, color] {
+    graphics->screenmessages->AddScreenMessage(s, color);
+  });
 }
 
 void BaseFeatureSet::DoV1CloudLog(const std::string& msg) {
@@ -719,6 +757,10 @@ void BaseFeatureSet::QuitApp(bool confirm, QuitType quit_type) {
   } else {
     logic->event_loop()->PushCall([this] { logic->Shutdown(); });
   }
+}
+
+void BaseFeatureSet::PushMainThreadRunnable(Runnable* runnable) {
+  app_adapter->DoPushMainThreadRunnable(runnable);
 }
 
 }  // namespace ballistica::base

@@ -107,7 +107,7 @@ class AuthenticationError(Exception):
 def is_urllib_communication_error(exc: BaseException, url: str | None) -> bool:
     """Is the provided exception from urllib a communication-related error?
 
-    Url, if provided can provide extra context for when to treat an error
+    Url, if provided, can provide extra context for when to treat an error
     as such an error.
 
     This should be passed an exception which resulted from opening or

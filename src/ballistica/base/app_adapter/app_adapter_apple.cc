@@ -3,15 +3,22 @@
 
 #include "ballistica/base/app_adapter/app_adapter_apple.h"
 
-#include <BallisticaKit-Swift.h>
-
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/platform/apple/apple_utils.h"
+#include "ballistica/base/platform/apple/from_swift.h"
+#include "ballistica/base/platform/support/min_sdl_key_names.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/event_loop.h"
+
+// clang-format off
+// This needs to be below ballistica headers since it relies on
+// some types in them but does not include headers itself.
+#include <BallisticaKit-Swift.h>
+// clang-format on
 
 namespace ballistica::base {
 
@@ -41,7 +48,17 @@ auto AppAdapterApple::ManagesMainThreadEventLoop() const -> bool {
 
 void AppAdapterApple::DoPushMainThreadRunnable(Runnable* runnable) {
   // Kick this along to swift.
-  BallisticaKit::FromCppPushRawRunnableToMain(runnable);
+  BallisticaKit::FromCpp::pushRawRunnableToMain(runnable);
+}
+
+void AppAdapterApple::OnMainThreadStartApp() {
+  AppAdapter::OnMainThreadStartApp();
+#if BA_USE_STORE_KIT
+  BallisticaKit::StoreKitContext::onAppStart();
+#endif
+#if BA_USE_GAME_CENTER
+  BallisticaKit::GameCenterContext::onAppStart();
+#endif
 }
 
 void AppAdapterApple::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
@@ -122,16 +139,16 @@ auto AppAdapterApple::TryRender() -> bool {
     // matches what we have (or until we try for too long or fail at drawing).
     seconds_t start_time = g_core->GetAppTimeSeconds();
     for (int i = 0; i < 5; ++i) {
-      if (((std::abs(resize_target_resolution_.x
+      bool size_differs =
+          ((std::abs(resize_target_resolution_.x
                      - g_base->graphics_server->screen_pixel_width())
             > 0.01f)
            || (std::abs(resize_target_resolution_.y
                         - g_base->graphics_server->screen_pixel_height())
-               > 0.01f))
-          && g_core->GetAppTimeSeconds() - start_time < 0.1 && result) {
+               > 0.01f));
+      if (size_differs && g_core->GetAppTimeSeconds() - start_time < 0.1
+          && result) {
         result = g_base->graphics_server->TryRender();
-      } else {
-        break;
       }
     }
   }
@@ -182,13 +199,13 @@ void AppAdapterApple::SetHardwareCursorVisible(bool visible) {
   assert(g_core->InMainThread());
 
 #if BA_OSTYPE_MACOS
-  BallisticaKit::CocoaFromCppSetCursorVisible(visible);
+  BallisticaKit::CocoaFromCpp::setCursorVisible(visible);
 #endif
 }
 
 void AppAdapterApple::TerminateApp() {
 #if BA_OSTYPE_MACOS
-  BallisticaKit::CocoaFromCppTerminateApp();
+  BallisticaKit::CocoaFromCpp::terminateApp();
 #else
   AppAdapter::TerminateApp();
 #endif
@@ -205,7 +222,7 @@ auto AppAdapterApple::FullscreenControlAvailable() const -> bool {
 
 auto AppAdapterApple::FullscreenControlGet() const -> bool {
 #if BA_OSTYPE_MACOS
-  return BallisticaKit::CocoaFromCppGetMainWindowIsFullscreen();
+  return BallisticaKit::CocoaFromCpp::getMainWindowIsFullscreen();
 #else
   return false;
 #endif
@@ -213,7 +230,7 @@ auto AppAdapterApple::FullscreenControlGet() const -> bool {
 
 void AppAdapterApple::FullscreenControlSet(bool fullscreen) {
 #if BA_OSTYPE_MACOS
-  return BallisticaKit::CocoaFromCppSetMainWindowFullscreen(fullscreen);
+  return BallisticaKit::CocoaFromCpp::setMainWindowFullscreen(fullscreen);
 #endif
 }
 
@@ -223,6 +240,79 @@ auto AppAdapterApple::FullscreenControlKeyShortcut() const
 }
 
 auto AppAdapterApple::HasDirectKeyboardInput() -> bool { return true; };
+
+auto AppAdapterApple::GetKeyRepeatDelay() -> float {
+#if BA_OSTYPE_MACOS
+  return BallisticaKit::CocoaFromCpp::getKeyRepeatDelay();
+#else
+  return AppAdapter::GetKeyRepeatDelay();
+#endif
+}
+
+auto AppAdapterApple::GetKeyRepeatInterval() -> float {
+#if BA_OSTYPE_MACOS
+  return BallisticaKit::CocoaFromCpp::getKeyRepeatInterval();
+#else
+  return AppAdapter::GetKeyRepeatDelay();
+#endif
+}
+
+auto AppAdapterApple::DoClipboardIsSupported() -> bool {
+#if BA_OSTYPE_MACOS
+  return BallisticaKit::CocoaFromCpp::clipboardIsSupported();
+#else
+  return AppAdapter::DoClipboardIsSupported();
+#endif
+}
+
+auto AppAdapterApple::DoClipboardHasText() -> bool {
+#if BA_OSTYPE_MACOS
+  return BallisticaKit::CocoaFromCpp::clipboardHasText();
+#else
+  return AppAdapter::DoClipboardHasText();
+#endif
+}
+
+void AppAdapterApple::DoClipboardSetText(const std::string& text) {
+#if BA_OSTYPE_MACOS
+  BallisticaKit::CocoaFromCpp::clipboardSetText(text);
+#else
+  AppAdapter::DoClipboardSetText(text);
+#endif
+}
+
+auto AppAdapterApple::DoClipboardGetText() -> std::string {
+#if BA_OSTYPE_MACOS
+  auto contents = BallisticaKit::CocoaFromCpp::clipboardGetText();
+  if (contents) {
+    return std::string(contents.get());
+  }
+  throw Exception("No text on clipboard.");
+#else
+  return AppAdapter::DoClipboardGetText();
+#endif
+}
+
+auto AppAdapterApple::GetKeyName(int keycode) -> std::string {
+  return MinSDL_GetKeyName(keycode);
+}
+
+auto AppAdapterApple::NativeReviewRequestSupported() -> bool {
+  // StoreKit currently supports this everywhere except tvOS.
+  if (g_buildconfig.xcode_build() && g_buildconfig.use_store_kit()
+      && !g_buildconfig.ostype_tvos()) {
+    return true;
+  }
+  return false;
+}
+
+void AppAdapterApple::DoNativeReviewRequest() {
+#if BA_XCODE_BUILD && BA_USE_STORE_KIT && !BA_OSTYPE_TVOS
+  BallisticaKit::StoreKitContext::requestReview();
+#else
+  FatalError("This should not be getting called.");
+#endif
+}
 
 }  // namespace ballistica::base
 

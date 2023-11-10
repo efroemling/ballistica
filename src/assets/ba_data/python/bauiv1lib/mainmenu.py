@@ -1350,7 +1350,7 @@ class MainMenuWindow(bui.Window):
         bui.app.classic.resume()
         if self._root_widget:
             bui.containerwidget(edit=self._root_widget, transition='out_right')
-        bui.app.ui_v1.clear_main_menu_window()
+        bui.app.ui_v1.clear_main_menu_window(transition='out_right')
 
         # If there's callbacks waiting for this window to go away, call them.
         for call in bui.app.ui_v1.main_menu_resume_callbacks:

@@ -57,7 +57,7 @@ void ButtonWidget::OnRepeatTimerExpired() {
     DoActivate(true);
 
     // Speed up repeats after the first.
-    repeat_timer_->SetLength(150);
+    repeat_timer_->SetLength(0.150);
   } else {
     repeat_timer_.Clear();
   }
@@ -165,7 +165,9 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
     // Account for our icon if we have it.
     float s_width_available = std::max(30.0f, width_ - 30);
-    if (show_icons) s_width_available -= (34.0f * icon_scale_);
+    if (show_icons) {
+      s_width_available -= (34.0f * icon_scale_);
+    }
 
     if ((string_width * string_scale) > s_width_available) {
       float squish_scale = s_width_available / (string_width * string_scale);
@@ -485,8 +487,8 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         pressed_ = true;
 
         if (repeat_) {
-          repeat_timer_ =
-              base::NewAppTimer(300, true, [this] { OnRepeatTimerExpired(); });
+          repeat_timer_ = base::AppTimer::New(
+              0.3, true, [this] { OnRepeatTimerExpired(); });
 
           // If we're a repeat button we trigger immediately.
           // (waiting till mouse up sort of defeats the purpose here)

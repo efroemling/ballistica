@@ -361,6 +361,7 @@ class PublicGatherTab(GatherTab):
         self._last_server_list_query_time: float | None = None
         self._join_list_column: bui.Widget | None = None
         self._join_status_text: bui.Widget | None = None
+        self._no_servers_found_text: bui.Widget | None = None
         self._host_max_party_size_value: bui.Widget | None = None
         self._host_max_party_size_minus_button: (bui.Widget | None) = None
         self._host_max_party_size_plus_button: (bui.Widget | None) = None
@@ -658,6 +659,18 @@ class PublicGatherTab(GatherTab):
             color=(0.6, 0.6, 0.6),
             position=(c_width * 0.5, c_height * 0.5),
         )
+        self._no_servers_found_text = bui.textwidget(
+            parent=self._container,
+            text='',
+            size=(0, 0),
+            scale=0.9,
+            flatness=1.0,
+            shadow=0.0,
+            h_align='center',
+            v_align='top',
+            color=(0.6, 0.6, 0.6),
+            position=(c_width * 0.5, c_height * 0.5),
+        )
 
     def _build_host_tab(
         self, region_width: float, region_height: float
@@ -950,6 +963,9 @@ class PublicGatherTab(GatherTab):
         self._update_party_rows()
 
     def _update_party_rows(self) -> None:
+        plus = bui.app.plus
+        assert plus is not None
+
         columnwidget = self._join_list_column
         if not columnwidget:
             return
@@ -963,6 +979,7 @@ class PublicGatherTab(GatherTab):
             edit=self._host_scrollwidget,
             claims_up_down=(len(self._parties_displayed) > 0),
         )
+        bui.textwidget(edit=self._no_servers_found_text, text='')
 
         # Clip if we have more UI rows than parties to show.
         clipcount = len(self._ui_rows) - len(self._parties_displayed)
@@ -972,6 +989,15 @@ class PublicGatherTab(GatherTab):
 
         # If we have no parties to show, we're done.
         if not self._parties_displayed:
+            text = self._join_status_text
+            if (
+                plus.get_v1_account_state() == 'signed_in'
+                and cast(str, bui.textwidget(query=text)) == ''
+            ):
+                bui.textwidget(
+                    edit=self._no_servers_found_text,
+                    text=bui.Lstr(resource='noServersFoundText'),
+                )
             return
 
         sub_scroll_width = 830

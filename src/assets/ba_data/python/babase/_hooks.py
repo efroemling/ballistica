@@ -33,6 +33,23 @@ def reset_to_main_menu() -> None:
         logging.warning('reset_to_main_menu: no-op due to classic not present.')
 
 
+def get_v2_account_id() -> str | None:
+    """Return the current V2 account id if signed in, or None if not."""
+    try:
+        plus = _babase.app.plus
+        if plus is not None:
+            account = plus.accounts.primary
+            if account is not None:
+                accountid = account.accountid
+                # (Avoids mypy complaints when plus is not present)
+                assert isinstance(accountid, (str, type(None)))
+                return accountid
+        return None
+    except Exception:
+        logging.exception('Error fetching v2 account id.')
+        return None
+
+
 def store_config_fullscreen_on() -> None:
     """The OS has changed our fullscreen state and we should take note."""
     _babase.app.config['Fullscreen'] = True
@@ -121,6 +138,14 @@ def error_message() -> None:
     if _babase.app.env.gui:
         _babase.getsimplesound('error').play()
         _babase.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
+
+
+def success_message() -> None:
+    from babase._language import Lstr
+
+    if _babase.app.env.gui:
+        _babase.getsimplesound('dingSmall').play()
+        _babase.screenmessage(Lstr(resource='successText'), color=(0, 1, 0))
 
 
 def purchase_not_valid_error() -> None:
@@ -312,6 +337,7 @@ def implicit_sign_in(
     from bacommon.login import LoginType
 
     assert _babase.app.plus is not None
+
     _babase.app.plus.accounts.on_implicit_sign_in(
         login_type=LoginType(login_type_str),
         login_id=login_id,

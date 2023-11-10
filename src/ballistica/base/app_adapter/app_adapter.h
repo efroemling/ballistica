@@ -15,8 +15,7 @@ namespace ballistica::base {
 /// all might share the same CorePlatform and BasePlatform classes.
 class AppAdapter {
  public:
-  /// Instantiate the AppAdapter subclass for the current build.
-  static auto Create() -> AppAdapter*;
+  AppAdapter();
 
   /// Called in the main thread when the app is being started.
   virtual void OnMainThreadStartApp();
@@ -189,6 +188,13 @@ class AppAdapter {
   /// changing (it may be preferable to rely on dialogs for non-english
   /// languages/etc.). Default implementation returns false. This function
   /// should be callable from any thread.
+  ///
+  /// Note that UI elements wanting to accept direct keyboard input should
+  /// not call this directly, but instead should call
+  /// UI::UIHasDirectKeyboardInput, as that takes into account other factors
+  /// such as which device is currently controlling the UI (Someone
+  /// navigating the UI with a game controller may still get an on-screen
+  /// keyboard even if there is a physical keyboard attached).
   virtual auto HasDirectKeyboardInput() -> bool;
 
   /// Called in the graphics context to apply new settings coming in from
@@ -197,9 +203,24 @@ class AppAdapter {
   /// settings coming in.
   virtual void ApplyGraphicsSettings(const GraphicsSettings* settings);
 
- protected:
-  AppAdapter();
-  virtual ~AppAdapter();
+  virtual auto GetKeyRepeatDelay() -> float;
+  virtual auto GetKeyRepeatInterval() -> float;
+
+  /// Return whether clipboard operations are supported at all. This gets
+  /// called when determining whether to display clipboard related UI
+  /// elements/etc.
+  auto ClipboardIsSupported() -> bool;
+
+  /// Return whether there is currently text on the clipboard.
+  auto ClipboardHasText() -> bool;
+
+  /// Set current clipboard text. Raises an Exception if clipboard is
+  /// unsupported.
+  void ClipboardSetText(const std::string& text);
+
+  /// Return current text from the clipboard. Raises an Exception if
+  /// clipboard is unsupported or if there's no text on the clipboard.
+  auto ClipboardGetText() -> std::string;
 
   /// Push a raw pointer Runnable to the platform's 'main' thread. The main
   /// thread should call its RunAndLogErrors() method and then delete it.
@@ -209,10 +230,34 @@ class AppAdapter {
   /// context. By default this is simply the main thread.
   virtual void DoPushGraphicsContextRunnable(Runnable* runnable);
 
+  /// Return a name for a ballistica keyboard keycode.
+  virtual auto GetKeyName(int keycode) -> std::string;
+
+  /// Return whether there is a native 'review-this-app' prompt.
+  virtual auto NativeReviewRequestSupported() -> bool;
+
+  /// Asynchronously kick off a native review request.
+  void NativeReviewRequest();
+
+ protected:
+  virtual ~AppAdapter();
+
+  virtual auto DoClipboardIsSupported() -> bool;
+  virtual auto DoClipboardHasText() -> bool;
+  virtual void DoClipboardSetText(const std::string& text);
+  virtual auto DoClipboardGetText() -> std::string;
+
+  /// Override to implement native review requests. Will be called in the
+  /// main thread.
+  virtual void DoNativeReviewRequest();
+
  private:
   void OnAppSuspend_();
   void OnAppUnsuspend_();
-  bool app_suspended_{};
+
+  bool app_suspended_ : 1 {};
+  bool have_clipboard_is_supported_ : 1 {};
+  bool clipboard_is_supported_ : 1 {};
 };
 
 }  // namespace ballistica::base

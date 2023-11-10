@@ -53,8 +53,7 @@ const float kCursorZDepth{0.9f};
 // Client class for graphics operations (used from the logic thread).
 class Graphics {
  public:
-  /// Instantiate the Graphics subclass for the current build.
-  static auto Create() -> Graphics*;
+  Graphics();
 
   void OnAppStart();
   void OnAppPause();
@@ -119,8 +118,6 @@ class Graphics {
     return res_y_virtual_;
   }
 
-  void ClearScreenMessageTranslations();
-
   // Given a point in space, returns the shadow density that should be drawn
   // into the shadow pass. Does this belong somewhere else?
   auto GetShadowDensity(float x, float y, float z) -> float;
@@ -128,21 +125,13 @@ class Graphics {
   static void GetSafeColor(float* r, float* g, float* b,
                            float target_intensity = 0.6f);
 
-  // Print a message to the on-screen list.
-  void AddScreenMessage(const std::string& msg,
-                        const Vector3f& color = {1, 1, 1}, bool top = false,
-                        TextureAsset* texture = nullptr,
-                        TextureAsset* tint_texture = nullptr,
-                        const Vector3f& tint = {1, 1, 1},
-                        const Vector3f& tint2 = {1, 1, 1});
-
   // Fade the local screen in or out over the given time period.
   void FadeScreen(bool to, millisecs_t time, PyObject* endcall);
 
   static void DrawRadialMeter(MeshIndexedSimpleFull* m, float amt);
 
-  // Ways to add a few simple component types quickly.
-  // (uses particle rendering for efficient batches).
+  // Ways to add a few simple component types quickly (uses particle
+  // rendering for efficient batches).
   void DrawBlotch(const Vector3f& pos, float size, float r, float g, float b,
                   float a) {
     DoDrawBlotch(&blotch_indices_, &blotch_verts_, pos, size, r, g, b, a);
@@ -240,13 +229,8 @@ class Graphics {
                       float upper_top);
   void ReleaseFadeEndCommand();
 
-  // auto tv_border() const {
-  //   assert(g_base->InLogicThread());
-  //   return tv_border_;
-  // }
-
-  // Nodes that draw flat stuff into the overlay pass should query this z value
-  // for where to draw in z.
+  // Nodes that draw flat stuff into the overlay pass should query this z
+  // value for where to draw in z.
   auto overlay_node_z_depth() {
     fetched_overlay_node_z_depth_ = true;
     return overlay_node_z_depth_;
@@ -296,8 +280,8 @@ class Graphics {
   void AddMeshDataCreate(MeshData* d);
   void AddMeshDataDestroy(MeshData* d);
 
-  // For debugging: ensures that only transparent or opaque components
-  // are submitted while enabled.
+  // For debugging: ensures that only transparent or opaque components are
+  // submitted while enabled.
   auto drawing_transparent_only() const { return drawing_transparent_only_; }
   void set_drawing_transparent_only(bool val) {
     drawing_transparent_only_ = val;
@@ -362,8 +346,8 @@ class Graphics {
   }
 
   /// For temporary use in arbitrary threads. This should be removed when
-  /// possible and replaced with proper safe thread-specific access
-  /// patterns (so we can support switching renderers/etc.).
+  /// possible and replaced with proper safe thread-specific access patterns
+  /// (so we can support switching renderers/etc.).
   auto placeholder_client_context() const -> const GraphicsClientContext* {
     // Using this from arbitrary threads is currently ok currently since
     // context never changes once set. Will need to kill this call once that
@@ -372,10 +356,9 @@ class Graphics {
     return client_context_snapshot_.Get()->Get();
   }
 
- protected:
-  class ScreenMessageEntry;
+  ScreenMessages* const screenmessages;
 
-  Graphics();
+ protected:
   virtual ~Graphics();
   virtual void DoDrawFade(FrameDef* frame_def, float amt);
   static void CalcVirtualRes_(float* x, float* y);
@@ -453,8 +436,6 @@ class Graphics {
   std::map<std::string, Object::Ref<NetGraph>> debug_graphs_;
   std::mutex frame_def_delete_list_mutex_;
   std::list<Object::Ref<PythonContextCall>> clean_frame_commands_;
-  std::list<ScreenMessageEntry> screen_messages_;
-  std::list<ScreenMessageEntry> screen_messages_top_;
   std::vector<FrameDef*> recycle_frame_defs_;
   std::vector<uint16_t> blotch_indices_;
   std::vector<VertexSprite> blotch_verts_;
@@ -473,23 +454,22 @@ class Graphics {
   float gyro_mag_test_{};
   float overlay_node_z_depth_{};
   float progress_bar_progress_{};
-  float screen_gamma_{1.0f};
   float shadow_lower_bottom_{-4.0f};
   float shadow_lower_top_{4.0f};
   float shadow_upper_bottom_{30.0f};
   float shadow_upper_top_{40.0f};
+  seconds_t last_cursor_visibility_event_time_{};
   millisecs_t fade_start_{};
   millisecs_t fade_time_{};
   millisecs_t next_stat_update_time_{};
   millisecs_t progress_bar_end_time_{-9999};
   millisecs_t last_progress_bar_draw_time_{};
   millisecs_t last_progress_bar_start_time_{};
-  microsecs_t last_suppress_gyro_time_{};
-  seconds_t last_cursor_visibility_event_time_{};
-  microsecs_t next_frame_number_filtered_increment_time_{};
-  microsecs_t last_create_frame_def_time_microsecs_{};
   millisecs_t last_create_frame_def_time_millisecs_{};
   millisecs_t last_jitter_update_time_{};
+  microsecs_t last_suppress_gyro_time_{};
+  microsecs_t next_frame_number_filtered_increment_time_{};
+  microsecs_t last_create_frame_def_time_microsecs_{};
   Object::Ref<ImageMesh> screen_mesh_;
   Object::Ref<ImageMesh> progress_bar_bottom_mesh_;
   Object::Ref<ImageMesh> progress_bar_top_mesh_;

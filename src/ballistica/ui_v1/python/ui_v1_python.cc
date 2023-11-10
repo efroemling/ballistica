@@ -2,7 +2,6 @@
 
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 
-#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/input.h"

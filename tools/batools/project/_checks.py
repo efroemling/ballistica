@@ -590,4 +590,8 @@ def check_misc(self: ProjectUpdater) -> None:
             if (
                 '// V2 Master Server:\n' '\n' '// PROD\n' '#if 1\n'
             ) not in msconfig:
-                raise CleanError('Not using prod v2 master server.')
+                if (
+                    os.environ.get('BA_ALLOW_NON_PROD_V2_MASTER_SERVER', '0')
+                    != '1'
+                ):
+                    raise CleanError('Not using prod v2 master server.')
