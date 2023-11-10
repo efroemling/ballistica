@@ -15,7 +15,6 @@ class DiscordWindow(bui.Window):
         transition: str = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-statements
         if bui.app.classic is None:
             raise RuntimeError('This requires classic support.')
 

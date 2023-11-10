@@ -1242,6 +1242,8 @@ class MainMenuWindow(bui.Window):
             logging.warning('classic is required to show game service ui')
 
     def _save_state(self) -> None:
+        # pylint: disable=too-many-branches
+
         # Don't do this for the in-game menu.
         if self._in_game:
             return
