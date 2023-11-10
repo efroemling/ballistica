@@ -16,7 +16,7 @@ import _babase
 if TYPE_CHECKING:
     from typing import Any
 
-    from babase._login import LoginAdapter
+    from babase._login import LoginAdapter, LoginInfo
 
 
 DEBUG_LOG = False
@@ -27,7 +27,7 @@ class AccountV2Subsystem:
 
     Category: **App Classes**
 
-    Access the single shared instance of this class at 'ba.app.accounts'.
+    Access the single shared instance of this class at 'ba.app.plus.accounts'.
     """
 
     def __init__(self) -> None:
@@ -425,7 +425,7 @@ class AccountV2Handle:
     tag: str
     workspacename: str | None
     workspaceid: str | None
-    logins: dict[LoginType, str]
+    logins: dict[LoginType, LoginInfo]
 
     def __enter__(self) -> None:
         """Support for "with" statement.

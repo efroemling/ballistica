@@ -2341,39 +2341,6 @@ static PyMethodDef PyUIBoundsDef = {
     "center remains onscreen.",
 };
 
-// ----------------------------- focus_window ----------------------------------
-
-static auto PyFocusWindow(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-
-  static const char* kwlist[] = {nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
-                                   const_cast<char**>(kwlist))) {
-    return nullptr;
-  }
-  assert(g_base->InLogicThread());
-  // #if BA_OSTYPE_MACOS && BA_XCODE_BUILD && !BA_HEADLESS_BUILD \
-//     && !BA_XCODE_NEW_PROJECT
-  //   SDL_ericf_focus();
-  // #else
-  // #endif
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyFocusWindowDef = {
-    "focus_window",                // name
-    (PyCFunction)PyFocusWindow,    // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "focus_window() -> None\n"
-    "\n"
-    "(internal)\n"
-    "\n"
-    "A workaround for some unintentional backgrounding that occurs on mac",
-};
-
 // ------------------------ show_online_score_ui -------------------------------
 
 static auto PyShowOnlineScoreUI(PyObject* self, PyObject* args,
@@ -2880,7 +2847,6 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyShowAdDef,
       PyShowAd2Def,
       PyShowOnlineScoreUIDef,
-      PyFocusWindowDef,
       PyButtonWidgetDef,
       PyCheckBoxWidgetDef,
       PyImageWidgetDef,

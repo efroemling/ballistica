@@ -156,7 +156,7 @@ from babase._general import (
 )
 from babase._keyboard import Keyboard
 from babase._language import Lstr, LanguageSubsystem
-from babase._login import LoginAdapter
+from babase._login import LoginAdapter, LoginInfo
 
 # noinspection PyProtectedMember
 # (PyCharm inspection bug?)
@@ -265,6 +265,7 @@ __all__ = [
     'LanguageSubsystem',
     'lock_all_input',
     'LoginAdapter',
+    'LoginInfo',
     'Lstr',
     'mac_music_app_get_playlists',
     'mac_music_app_get_volume',

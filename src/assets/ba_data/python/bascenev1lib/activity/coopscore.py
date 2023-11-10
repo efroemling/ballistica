@@ -9,6 +9,7 @@ import random
 import logging
 from typing import TYPE_CHECKING
 
+from bacommon.login import LoginType
 import bascenev1 as bs
 import bauiv1 as bui
 
@@ -59,29 +60,25 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             )
         )
 
-        self._account_type = (
-            plus.get_v1_account_type()
-            if plus.get_v1_account_state() == 'signed_in'
-            else None
-        )
-
         self._game_service_icon_color: Sequence[float] | None
         self._game_service_achievements_texture: bui.Texture | None
         self._game_service_leaderboards_texture: bui.Texture | None
 
-        if self._account_type == 'Game Center':
+        # Tie in to specific game services if they are active.
+        adapter = plus.accounts.login_adapters.get(LoginType.GPGS)
+        gpgs_active = adapter is not None and adapter.is_back_end_active()
+        adapter = plus.accounts.login_adapters.get(LoginType.GAME_CENTER)
+        game_center_active = (
+            adapter is not None and adapter.is_back_end_active()
+        )
+
+        if game_center_active:
             self._game_service_icon_color = (1.0, 1.0, 1.0)
             icon = bui.gettexture('gameCenterIcon')
             self._game_service_achievements_texture = icon
             self._game_service_leaderboards_texture = icon
             self._account_has_achievements = True
-        elif self._account_type == 'Game Circle':
-            icon = bui.gettexture('gameCircleIcon')
-            self._game_service_icon_color = (1, 1, 1)
-            self._game_service_achievements_texture = icon
-            self._game_service_leaderboards_texture = icon
-            self._account_has_achievements = True
-        elif self._account_type == 'Google Play':
+        elif gpgs_active:
             self._game_service_icon_color = (0.8, 1.0, 0.6)
             self._game_service_achievements_texture = bui.gettexture(
                 'googlePlayAchievementsIcon'

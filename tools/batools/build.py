@@ -43,8 +43,8 @@ class PyRequirement:
 # remove our custom module based stuff soon if nobody complains, which
 # would free us to theoretically move to a requirements.txt based setup.
 PY_REQUIREMENTS = [
+    PyRequirement(pipname='mypy', minversion=[1, 7, 0]),
     PyRequirement(pipname='pylint', minversion=[3, 0, 2]),
-    PyRequirement(pipname='mypy', minversion=[1, 6, 1]),
     PyRequirement(pipname='cpplint', minversion=[1, 6, 1]),
     PyRequirement(pipname='pytest', minversion=[7, 4, 2]),
     PyRequirement(pipname='pytz', minversion=[2023, 3]),

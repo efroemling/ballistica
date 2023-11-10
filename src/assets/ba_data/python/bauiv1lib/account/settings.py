@@ -63,13 +63,6 @@ class AccountSettingsWindow(bui.Window):
             1.0, bui.WeakCall(self._update), repeat=True
         )
 
-        # Currently we can only reset achievements on game-center.
-        # v1_account_type: str | None
-        # if self._v1_signed_in:
-        #     v1_account_type = plus.get_v1_account_type()
-        # else:
-        #     v1_account_type = None
-        # self._can_reset_achievements = v1_account_type == 'Game Center'
         self._can_reset_achievements = False
 
         app = bui.app
@@ -243,19 +236,13 @@ class AccountSettingsWindow(bui.Window):
         # We expose GPGS-specific functionality only if it is 'active'
         # (meaning the current GPGS player matches one of our account's
         # logins).
-        gpgs_adapter = plus.accounts.login_adapters.get(LoginType.GPGS)
-        is_gpgs = (
-            False if gpgs_adapter is None else gpgs_adapter.is_back_end_active()
-        )
+        adapter = plus.accounts.login_adapters.get(LoginType.GPGS)
+        gpgs_active = adapter is not None and adapter.is_back_end_active()
 
         # Ditto for Game Center.
-        game_center_adapter = plus.accounts.login_adapters.get(
-            LoginType.GAME_CENTER
-        )
-        is_game_center = (
-            False
-            if game_center_adapter is None
-            else game_center_adapter.is_back_end_active()
+        adapter = plus.accounts.login_adapters.get(LoginType.GAME_CENTER)
+        game_center_active = (
+            adapter is not None and adapter.is_back_end_active()
         )
 
         show_signed_in_as = self._v1_signed_in
@@ -268,23 +255,26 @@ class AccountSettingsWindow(bui.Window):
         # through that account.
         via_space = 25.0
         if show_signed_in_as and bui.app.plus is not None:
-            primary_account = bui.app.plus.accounts.primary
-            if primary_account is not None:
-                # Show Google Play Games account name if the current account
-                # has such a login attached.
-                lname = primary_account.logins.get(LoginType.GPGS)
-                if lname is not None:
-                    icontxt = bui.charstr(
-                        bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO
-                    )
-                    via_lines.append(f'{icontxt}{lname}')
-
-                # Show Game Center account name if the current account
-                # has such a login attached.
-                lname = primary_account.logins.get(LoginType.GAME_CENTER)
-                if lname is not None:
-                    icontxt = bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO)
-                    via_lines.append(f'{icontxt}{lname}')
+            accounts = bui.app.plus.accounts
+            if accounts.primary is not None:
+                # For these login types, we show 'via' IF there is a
+                # login of that type attached to our account AND it is
+                # currently active (We don't want to show 'via Game
+                # Center' if we're signed out of Game Center or
+                # currently running on Steam, even if there is a Game
+                # Center login attached to our account).
+                for ltype, lchar in [
+                    (LoginType.GPGS, bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO),
+                    (LoginType.GAME_CENTER, bui.SpecialChar.GAME_CENTER_LOGO),
+                ]:
+                    linfo = accounts.primary.logins.get(ltype)
+                    ladapter = accounts.login_adapters.get(ltype)
+                    if (
+                        linfo is not None
+                        and ladapter is not None
+                        and ladapter.is_back_end_active()
+                    ):
+                        via_lines.append(f'{bui.charstr(lchar)}{linfo.name}')
 
                 # TEMP TESTING
                 if bool(False):
@@ -326,9 +316,8 @@ class AccountSettingsWindow(bui.Window):
         sign_in_button_space = 70.0
         deprecated_space = 60
 
-        show_game_service_button = self._v1_signed_in and v1_account_type in [
-            'Game Center'
-        ]
+        # Game Center currently has a single UI for everything.
+        show_game_service_button = game_center_active
         game_service_button_space = 60.0
 
         show_what_is_v2 = self._v1_signed_in and v1_account_type == 'V2'
@@ -338,7 +327,7 @@ class AccountSettingsWindow(bui.Window):
 
         # Always show achievements except in the game-center case where
         # its unified UI covers them.
-        show_achievements_button = self._v1_signed_in and not is_game_center
+        show_achievements_button = self._v1_signed_in and not game_center_active
         achievements_button_space = 60.0
 
         show_achievements_text = (
@@ -346,7 +335,7 @@ class AccountSettingsWindow(bui.Window):
         )
         achievements_text_space = 27.0
 
-        show_leaderboards_button = self._v1_signed_in and is_gpgs
+        show_leaderboards_button = self._v1_signed_in and gpgs_active
         leaderboards_button_space = 60.0
 
         show_campaign_progress = self._v1_signed_in
@@ -383,7 +372,6 @@ class AccountSettingsWindow(bui.Window):
 
         show_sign_out_button = self._v1_signed_in and v1_account_type in [
             'Local',
-            'Google Play',
             'V2',
         ]
         sign_out_button_space = 70.0
@@ -548,7 +536,7 @@ class AccountSettingsWindow(bui.Window):
                         value='(${VIA}',
                         subs=[('${VIA}', bui.Lstr(resource='viaText'))],
                     ),
-                    scale=0.6,
+                    scale=0.5,
                     color=(0.4, 0.6, 0.4, 0.5),
                     flatness=1.0,
                     shadow=0.0,
@@ -560,7 +548,7 @@ class AccountSettingsWindow(bui.Window):
                     position=(self._sub_width * 0.5 + swidth * 0.5 + 10, v),
                     size=(0, 0),
                     text=')',
-                    scale=0.6,
+                    scale=0.5,
                     color=(0.4, 0.6, 0.4, 0.5),
                     flatness=1.0,
                     shadow=0.0,
@@ -869,14 +857,15 @@ class AccountSettingsWindow(bui.Window):
         # the button to go to OS-Specific leaderboards/high-score-lists/etc.
         if show_game_service_button:
             button_width = 300
-            v -= game_service_button_space * 0.85
-            v1_account_type = plus.get_v1_account_type()
-            if v1_account_type == 'Game Center':
+            v -= game_service_button_space * 0.6
+            if game_center_active:
                 # Update: Apparently Game Center is just called 'Game Center'
                 # in all languages. Can revisit if not true.
                 # https://developer.apple.com/forums/thread/725779
-                v1_account_type_name = bui.Lstr(value='Game Center')
-                # v1_account_type_name = bui.Lstr(resource='gameCenterText')
+                game_service_button_label = bui.Lstr(
+                    value=bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO)
+                    + 'Game Center'
+                )
             else:
                 raise ValueError(
                     "unknown account type: '" + str(v1_account_type) + "'"
@@ -889,7 +878,7 @@ class AccountSettingsWindow(bui.Window):
                 autoselect=True,
                 on_activate_call=self._on_game_service_button_press,
                 size=(button_width, 50),
-                label=v1_account_type_name,
+                label=game_service_button_label,
             )
             if first_selectable is None:
                 first_selectable = btn
@@ -899,7 +888,7 @@ class AccountSettingsWindow(bui.Window):
                     right_widget=bui.get_special_widget('party_button'),
                 )
             bui.widget(edit=btn, left_widget=bbtn)
-            v -= game_service_button_space * 0.15
+            v -= game_service_button_space * 0.4
         else:
             self.game_service_button = None
 
@@ -932,13 +921,15 @@ class AccountSettingsWindow(bui.Window):
                 autoselect=True,
                 icon=bui.gettexture(
                     'googlePlayAchievementsIcon'
-                    if is_gpgs
+                    if gpgs_active
                     else 'achievementsIcon'
                 ),
-                icon_color=(0.8, 0.95, 0.7) if is_gpgs else (0.85, 0.8, 0.9),
+                icon_color=(0.8, 0.95, 0.7)
+                if gpgs_active
+                else (0.85, 0.8, 0.9),
                 on_activate_call=(
                     self._on_custom_achievements_press
-                    if is_gpgs
+                    if gpgs_active
                     else self._on_achievements_press
                 ),
                 size=(button_width, 50),

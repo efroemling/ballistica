@@ -1,5 +1,9 @@
-### 1.7.28 (build 21583, api 8, 2023-11-09)
+### 1.7.28 (build 21585, api 8, 2023-11-10)
 
+- Turning off ticket continues on all platforms. I'll be moving the game towards
+  a new monetization scheme mostly based on cosmetics and this has always felt a
+  bit ugly pay-to-win to me, so it's time for it to go. Note that the
+  functionality is still in there if anyone wants to support it in mods.
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
   attempting to support various old/hacked versions of SDL, etc. I ripped out

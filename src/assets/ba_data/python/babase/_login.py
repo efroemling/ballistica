@@ -20,6 +20,13 @@ if TYPE_CHECKING:
 DEBUG_LOG = False
 
 
+@dataclass
+class LoginInfo:
+    """Basic info about a login available in the app.plus.accounts section."""
+
+    name: str
+
+
 class LoginAdapter:
     """Allows using implicit login types in an explicit way.
 
@@ -293,7 +300,7 @@ class LoginAdapter:
 
     def _update_implicit_login_state(self) -> None:
         # If we've received an implicit login state, schedule it to be
-        # sent along to the app. We wait until on-app-launch has been
+        # sent along to the app. We wait until on-app-loading has been
         # called so that account-client-v2 has had a chance to load
         # any existing state so it can properly respond to this.
         if self._implicit_login_state_dirty and self._on_app_loading_called:
