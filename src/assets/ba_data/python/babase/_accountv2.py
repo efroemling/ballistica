@@ -427,16 +427,6 @@ class AccountV2Handle:
     workspaceid: str | None
     logins: dict[LoginType, str]
 
-    # def __init__(self) -> None:
-
-    #     self.workspacename: str | None = None
-    #     self.workspaceid: str | None = None
-
-    #     # Login types and their display-names associated with this account.
-    #     self.logins: dict[LoginType, str] = {}
-
-    #     self.accountid: str =
-
     def __enter__(self) -> None:
         """Support for "with" statement.
 

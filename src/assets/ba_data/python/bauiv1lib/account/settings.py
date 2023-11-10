@@ -231,6 +231,8 @@ class AccountSettingsWindow(bui.Window):
         plus = bui.app.plus
         assert plus is not None
 
+        via_lines: list[str] = []
+
         primary_v2_account = plus.accounts.primary
 
         v1_state = plus.get_v1_account_state()
@@ -258,6 +260,40 @@ class AccountSettingsWindow(bui.Window):
 
         show_signed_in_as = self._v1_signed_in
         signed_in_as_space = 95.0
+
+        # To reduce confusion about the whole V2 account situation for
+        # people used to seeing their Google Play Games or Game Center
+        # account name and icon and whatnot, let's show those underneath
+        # the V2 tag to help communicate that they are in fact logged in
+        # through that account.
+        via_space = 25.0
+        if show_signed_in_as and bui.app.plus is not None:
+            primary_account = bui.app.plus.accounts.primary
+            if primary_account is not None:
+                # Show Google Play Games account name if the current account
+                # has such a login attached.
+                lname = primary_account.logins.get(LoginType.GPGS)
+                if lname is not None:
+                    icontxt = bui.charstr(
+                        bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO
+                    )
+                    via_lines.append(f'{icontxt}{lname}')
+
+                # Show Game Center account name if the current account
+                # has such a login attached.
+                lname = primary_account.logins.get(LoginType.GAME_CENTER)
+                if lname is not None:
+                    icontxt = bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO)
+                    via_lines.append(f'{icontxt}{lname}')
+
+                # TEMP TESTING
+                if bool(False):
+                    icontxt = bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO)
+                    via_lines.append(f'{icontxt}FloofDibble')
+                    icontxt = bui.charstr(
+                        bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO
+                    )
+                    via_lines.append(f'{icontxt}StinkBobble')
 
         show_sign_in_benefits = not self._v1_signed_in
         sign_in_benefits_space = 80.0
@@ -366,6 +402,7 @@ class AccountSettingsWindow(bui.Window):
         self._sub_height = 60.0
         if show_signed_in_as:
             self._sub_height += signed_in_as_space
+        self._sub_height += via_space * len(via_lines)
         if show_signing_in_text:
             self._sub_height += signing_in_text_space
         if show_google_play_sign_in_button:
@@ -484,6 +521,54 @@ class AccountSettingsWindow(bui.Window):
             self._refresh_account_name_text()
 
             v -= signed_in_as_space * 0.4
+
+            for via in via_lines:
+                v -= via_space * 0.1
+                sscale = 0.7
+                swidth = (
+                    bui.get_string_width(via, suppress_warning=True) * sscale
+                )
+                bui.textwidget(
+                    parent=self._subcontainer,
+                    position=(self._sub_width * 0.5, v),
+                    size=(0, 0),
+                    text=via,
+                    scale=sscale,
+                    color=(0.6, 0.6, 0.6),
+                    flatness=1.0,
+                    shadow=0.0,
+                    h_align='center',
+                    v_align='center',
+                )
+                bui.textwidget(
+                    parent=self._subcontainer,
+                    position=(self._sub_width * 0.5 - swidth * 0.5 - 5, v),
+                    size=(0, 0),
+                    text=bui.Lstr(
+                        value='(${VIA}',
+                        subs=[('${VIA}', bui.Lstr(resource='viaText'))],
+                    ),
+                    scale=0.6,
+                    color=(0.4, 0.6, 0.4, 0.5),
+                    flatness=1.0,
+                    shadow=0.0,
+                    h_align='right',
+                    v_align='center',
+                )
+                bui.textwidget(
+                    parent=self._subcontainer,
+                    position=(self._sub_width * 0.5 + swidth * 0.5 + 10, v),
+                    size=(0, 0),
+                    text=')',
+                    scale=0.6,
+                    color=(0.4, 0.6, 0.4, 0.5),
+                    flatness=1.0,
+                    shadow=0.0,
+                    h_align='right',
+                    v_align='center',
+                )
+
+                v -= via_space * 0.9
 
         else:
             self._account_name_text = None

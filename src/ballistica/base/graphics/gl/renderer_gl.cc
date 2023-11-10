@@ -185,9 +185,11 @@ void RendererGL::CheckGLCapabilities_() {
     basestr = "OpenGL";
   }
 
-  Log(LogLevel::kInfo, std::string("Using ") + basestr + " (vendor: " + vendor
-                           + ", renderer: " + renderer
-                           + ", version: " + version_str + ").");
+  if (g_buildconfig.debug_build()) {
+    Log(LogLevel::kInfo, std::string("Using ") + basestr + " (vendor: " + vendor
+                             + ", renderer: " + renderer
+                             + ", version: " + version_str + ").");
+  }
 
   // Build a vector of extensions. Newer GLs give us extensions as lists
   // already, but on older ones we may need to break a single string apart
