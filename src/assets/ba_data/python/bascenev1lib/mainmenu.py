@@ -827,8 +827,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         bui.apptimer(0.5, _start_menu_music)
 
     def get_year_and_name(self):
-        import time
-        from urllib.request import urlopen
+        from urllib.request import urlopen, URLError
 
         year = 2023
         try:
@@ -836,7 +835,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
 
             if response.getcode() == 200:
                 year = time.strftime('%Y', time.gmtime())
-        except:
+        except URLError:
             pass
         name = f'\xa9 2011-{year} Eric Froemling'
         return name
