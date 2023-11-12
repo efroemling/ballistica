@@ -83,7 +83,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                         'scale': scale,
                         'position': (0, 10),
                         'vr_depth': -10,
-                        'text': '\xa9 2011-2023 Eric Froemling',
+                        'text': self.get_year_and_name(),
                     },
                 )
             )
@@ -825,6 +825,21 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             bs.setmusic(bs.MusicType.MENU)
 
         bui.apptimer(0.5, _start_menu_music)
+
+    def get_year_and_name(self):
+        import time
+        from urllib.request import urlopen
+
+        year = 2023
+        try:
+            response = urlopen('https://www.ballistica.net', timeout = 5)
+
+            if response.getcode() == 200:
+                year = time.strftime('%Y', time.gmtime())
+        except:
+            pass
+        name = f'\xa9 2011-{year} Eric Froemling'
+        return name
 
 
 class NewsDisplay:
