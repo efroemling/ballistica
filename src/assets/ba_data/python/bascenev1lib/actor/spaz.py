@@ -1157,7 +1157,7 @@ class Spaz(bs.Actor):
                     bs.timer(
                         0.05,
                         bs.WeakCall(
-                            self.handlemessage, CurseExplodeMessage()
+                            self.curse_explode, msg.get_source_player(bs.Player)
                         ),
                     )
 
