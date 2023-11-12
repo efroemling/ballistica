@@ -83,7 +83,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                         'scale': scale,
                         'position': (0, 10),
                         'vr_depth': -10,
-                        'text': bs.WeakCall(self.get_year_and_name()),
+                        'text': bs.WeakCall(self.get_year_and_name),
                     },
                 )
             )
@@ -827,13 +827,13 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         bui.apptimer(0.5, _start_menu_music)
 
     def get_year_and_name(self) -> str:
-        from urllib.request import urlopen, URLError
+        from urllib.request import urlopen
 
-        year = 2023
+        year = '2023'
         try:
             urlopen('https://www.ballistica.net', timeout = 5)
             year = time.strftime('%Y', time.gmtime())
-        except URLError:
+        except Exception as e:
             pass
         name = f'\xa9 2011-{year} Eric Froemling'
         return name
