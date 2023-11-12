@@ -83,7 +83,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                         'scale': scale,
                         'position': (0, 10),
                         'vr_depth': -10,
-                        'text': bs.WeakCall(self._get_year_and_name),
+                        'text': (self._get_year_and_name()),
                     },
                 )
             )
