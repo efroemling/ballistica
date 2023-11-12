@@ -828,6 +828,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
 
     def _get_year_and_name(self) -> str:
         """Returns the year and name"""
+        # pylint: disable=consider-using-with
         from urllib.request import urlopen
 
         year = '2023'
