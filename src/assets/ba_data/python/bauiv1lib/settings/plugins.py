@@ -283,6 +283,7 @@ class PluginWindow(bui.Window):
     def _show_plugins(self) -> None:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
         plugspecs = bui.app.plugins.plugin_specs
         plugstates: dict[str, dict] = bui.app.config.setdefault('Plugins', {})
         assert isinstance(plugstates, dict)
@@ -401,7 +402,7 @@ class PluginWindow(bui.Window):
             edit=self._num_plugins_text,
             text=str(num_shown),
         )
-        
+
         if num_shown == 0:
             bui.textwidget(
             edit=self._no_plugins_installed_text,
