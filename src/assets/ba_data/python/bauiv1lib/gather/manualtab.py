@@ -801,7 +801,10 @@ class ManualGatherTab(GatherTab):
             config.commit()
             bui.getsound('gunCocking').play()
         else:
-            bui.screenmessage('Invalid Address', color=(1, 0, 0))
+            bui.screenmessage(
+                bui.Lstr(resource='internal.invalidAddressErrorText'),
+                color=(1, 0, 0),
+            )
             bui.getsound('error').play()
 
     def _host_lookup_result(
