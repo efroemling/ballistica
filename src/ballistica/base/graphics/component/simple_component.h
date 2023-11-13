@@ -7,35 +7,10 @@
 
 namespace ballistica::base {
 
-// used for UI and overlays and things - no world tinting/etc is applied
+/// Used for UI and overlays and things; no world tinting/etc is applied.
 class SimpleComponent : public RenderComponent {
  public:
-  explicit SimpleComponent(RenderPass* pass)
-      : RenderComponent(pass),
-        color_r_(1.0f),
-        color_g_(1.0f),
-        color_b_(1.0f),
-        color_a_(1.0f),
-        colorize_color_r_(1.0f),
-        colorize_color_g_(1.0f),
-        colorize_color_b_(1.0f),
-        colorize_color_a_(1.0f),
-        colorize_color2_r_(1.0f),
-        colorize_color2_g_(1.0f),
-        colorize_color2_b_(1.0f),
-        colorize_color2_a_(1.0f),
-        shadow_offset_x_(0.0f),
-        shadow_offset_y_(0.0f),
-        shadow_blur_(0.0f),
-        shadow_opacity_(0.0f),
-        glow_amount_(0.0f),
-        glow_blur_(0.0f),
-        flatness_(0.0f),
-        transparent_(false),
-        premultiplied_(false),
-        have_color_(false),
-        double_sided_(false),
-        do_colorize_2_(false) {}
+  explicit SimpleComponent(RenderPass* pass) : RenderComponent(pass) {}
 
   void SetPremultiplied(bool val) {
     EnsureConfiguring();
@@ -56,16 +31,16 @@ class SimpleComponent : public RenderComponent {
     EnsureConfiguring();
     texture_ = t;
   }
-  // used with colorize color 1 and 2
-  // red areas of the texture will get multiplied by colorize-color1
-  // and green areas by colorize-color2
+
+  /// Used with colorize color 1 and 2. Red areas of the texture will get
+  /// multiplied by colorize-color1 and green areas by colorize-color2.
   void SetColorizeTexture(TextureAsset* t) {
     EnsureConfiguring();
     colorize_texture_ = t;
   }
 
-  // Red multiplies source color, green adds colorize1-color, and blue adds
-  // white (currently requires colorize1 and colorize 2 to be set).
+  /// Red multiplies source color, green adds colorize1-color, and blue adds
+  /// white (currently requires colorize1 and colorize 2 to be set).
   void SetMaskTexture(TextureAsset* t) {
     EnsureConfiguring();
     mask_texture_ = t;
@@ -124,10 +99,10 @@ class SimpleComponent : public RenderComponent {
     do_colorize_2_ = true;
   }
 
-  void SetShadow(float offsetX, float offsetY, float blur, float opacity) {
+  void SetShadow(float offset_x, float offset_y, float blur, float opacity) {
     EnsureConfiguring();
-    shadow_offset_x_ = offsetX;
-    shadow_offset_y_ = offsetY;
+    shadow_offset_x_ = offset_x;
+    shadow_offset_y_ = offset_y;
     shadow_blur_ = blur;
     shadow_opacity_ = opacity;
   }
@@ -147,23 +122,34 @@ class SimpleComponent : public RenderComponent {
   void WriteConfig() override;
 
  protected:
-  float color_r_, color_g_, color_b_, color_a_;
-  float colorize_color_r_, colorize_color_g_, colorize_color_b_,
-      colorize_color_a_;
-  float colorize_color2_r_, colorize_color2_g_, colorize_color2_b_,
-      colorize_color2_a_;
-  float shadow_offset_x_, shadow_offset_y_, shadow_blur_, shadow_opacity_;
-  float glow_amount_, glow_blur_;
-  float flatness_;
+  bool do_colorize_2_ : 1 {};
+  bool transparent_ : 1 {};
+  bool premultiplied_ : 1 {};
+  bool have_color_ : 1 {};
+  bool double_sided_ : 1 {};
+  float color_r_{1.0f};
+  float color_g_{1.0f};
+  float color_b_{1.0f};
+  float color_a_{1.0f};
+  float colorize_color_r_{1.0f};
+  float colorize_color_g_{1.0f};
+  float colorize_color_b_{1.0f};
+  float colorize_color_a_{1.0f};
+  float colorize_color2_r_{1.0f};
+  float colorize_color2_g_{1.0f};
+  float colorize_color2_b_{1.0f};
+  float colorize_color2_a_{1.0f};
+  float shadow_offset_x_{};
+  float shadow_offset_y_{};
+  float shadow_blur_{};
+  float shadow_opacity_{};
+  float glow_amount_{};
+  float glow_blur_{};
+  float flatness_{};
   Object::Ref<TextureAsset> texture_;
   Object::Ref<TextureAsset> colorize_texture_;
   Object::Ref<TextureAsset> mask_texture_;
   Object::Ref<TextureAsset> mask_uv2_texture_;
-  bool do_colorize_2_;
-  bool transparent_;
-  bool premultiplied_;
-  bool have_color_;
-  bool double_sided_;
 };
 
 }  // namespace ballistica::base

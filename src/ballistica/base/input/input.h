@@ -157,7 +157,6 @@ class Input {
   void UpdateInputDeviceCounts_();
   auto GetNewNumberedIdentifier_(const std::string& name,
                                  const std::string& identifier) -> int;
-  void UpdateEnabledControllerSubsystems_();
   void AnnounceConnects_();
   void AnnounceDisconnects_();
   void HandleKeyPressSimple_(int keycode);
@@ -190,8 +189,6 @@ class Input {
   bool have_button_using_inputs_ : 1 {};
   bool have_start_activated_default_button_inputs_ : 1 {};
   bool have_non_touch_inputs_ : 1 {};
-  bool ignore_mfi_controllers_ : 1 {};
-  bool ignore_sdl_controllers_ : 1 {};
   millisecs_t input_idle_time_{};
   millisecs_t last_get_local_active_input_device_count_check_time_{};
   float cursor_pos_x_{};

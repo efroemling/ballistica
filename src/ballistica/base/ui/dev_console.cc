@@ -6,6 +6,7 @@
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/platform/base_platform.h"

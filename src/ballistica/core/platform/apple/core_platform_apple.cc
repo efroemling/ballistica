@@ -25,13 +25,14 @@ namespace ballistica::core {
 CorePlatformApple::CorePlatformApple() = default;
 
 auto CorePlatformApple::GetDeviceV1AccountUUIDPrefix() -> std::string {
-#if BA_OSTYPE_MACOS
-  return "m";
-#elif BA_OSTYPE_IOS_TVOS
-  return "i";
-#else
-#error FIXME
-#endif
+  if (g_buildconfig.ostype_macos()) {
+    return "m";
+  } else if (g_buildconfig.ostype_ios_tvos()) {
+    return "i";
+  } else {
+    FatalError("Unhandled V1 UUID case.");
+    return "";
+  }
 }
 
 auto CorePlatformApple::DoGetDeviceName() -> std::string {
@@ -346,22 +347,6 @@ auto CorePlatformApple::IsOSPlayingMusic() -> bool {
   // return base::AppleUtils::IsMusicPlaying();
 #else
   return CorePlatform::IsOSPlayingMusic();
-#endif
-}
-
-void CorePlatformApple::OpenFileExternally(const std::string& path) {
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  BallisticaKit::CocoaFromCpp::openFileExternally(path);
-#else
-  CorePlatform::OpenFileExternally(path);
-#endif
-}
-
-void CorePlatformApple::OpenDirExternally(const std::string& path) {
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  BallisticaKit::CocoaFromCpp::openDirExternally(path);
-#else
-  CorePlatform::OpenDirExternally(path);
 #endif
 }
 

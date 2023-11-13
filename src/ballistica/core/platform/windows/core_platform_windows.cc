@@ -964,26 +964,6 @@ std::string CorePlatformWindows::GetCWD() {
   return UTF8Encode(buffer);
 }
 
-void CorePlatformWindows::OpenFileExternally(const std::string& path) {
-  auto r = reinterpret_cast<intptr_t>(
-      ShellExecute(nullptr, _T("open"), _T("notepad.exe"),
-                   UTF8Decode(path).c_str(), nullptr, SW_SHOWNORMAL));
-  if (r <= 32) {
-    Log(LogLevel::kError, "Error " + std::to_string(r)
-                              + " on open_file_externally for '" + path + "'");
-  }
-}
-
-void CorePlatformWindows::OpenDirExternally(const std::string& path) {
-  auto r = reinterpret_cast<intptr_t>(
-      ShellExecute(nullptr, _T("open"), _T("explorer.exe"),
-                   UTF8Decode(path).c_str(), nullptr, SW_SHOWNORMAL));
-  if (r <= 32) {
-    Log(LogLevel::kError, "Error " + std::to_string(r)
-                              + " on open_dir_externally for '" + path + "'");
-  }
-}
-
 void CorePlatformWindows::Unlink(const char* path) { _unlink(path); }
 
 void CorePlatformWindows::CloseSocket(int socket) { closesocket(socket); }

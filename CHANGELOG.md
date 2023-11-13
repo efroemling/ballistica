@@ -1,4 +1,4 @@
-### 1.7.28 (build 21585, api 8, 2023-11-10)
+### 1.7.28 (build 21588, api 8, 2023-11-13)
 
 - Turning off ticket continues on all platforms. I'll be moving the game towards
   a new monetization scheme mostly based on cosmetics and this has always felt a
@@ -209,6 +209,13 @@
 - The V2 account id for the signed in account is now available at
   `ba*.app.plus.accounts.primary.accountid` (alongside some other existing
   account info).
+- (build 21585) Fixed an issue where some navigation key presses were getting
+  incorrectly absorbed by text widgets. (Thanks for the heads-up Temp!)
+- (build 21585) Fixed an issue where texture quality changes would not take
+  effect until next launch.
+- Added a 'glow_type' arg to `bauiv1.textwidget()` to adjust the glow used when
+  the text is selected. The default is 'gradient' but there is now a 'uniform'
+  option which may look better in some circumstances.
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 

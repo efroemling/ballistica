@@ -330,7 +330,6 @@ class GraphicsServer {
   bool cam_orient_matrix_dirty_ : 1 {true};
   bool shutting_down_ : 1 {};
   bool shutdown_completed_ : 1 {};
-  Snapshot<GraphicsClientContext>* client_context_{};
   float res_x_{};
   float res_y_{};
   float res_x_virtual_{};
@@ -353,6 +352,7 @@ class GraphicsServer {
   Vector3f cam_target_{0.0f, 0.0f, 0.0f};
   Matrix44f light_shadow_projection_matrix_{kMatrix44fIdentity};
   Matrix44f cam_orient_matrix_ = kMatrix44fIdentity;
+  Snapshot<GraphicsClientContext>* client_context_{};
   std::vector<Matrix44f> model_view_stack_;
   std::list<MeshData*> mesh_datas_;
   Renderer* renderer_{};

@@ -93,6 +93,30 @@ void BasePlatformApple::LoginAdapterBackEndActiveChange(
 #endif
 }
 
+auto BasePlatformApple::SupportsOpenDirExternally() -> bool {
+#if BA_XCODE_BUILD && BA_OSTYPE_MACOS
+  return true;
+#else
+  return BasePlatform::SupportsOpenDirExternally();
+#endif
+}
+
+void BasePlatformApple::OpenDirExternally(const std::string& path) {
+#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
+  BallisticaKit::CocoaFromCpp::openDirExternally(path);
+#else
+  BasePlatform::OpenDirExternally(path);
+#endif
+}
+
+void BasePlatformApple::OpenFileExternally(const std::string& path) {
+#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
+  BallisticaKit::CocoaFromCpp::openFileExternally(path);
+#else
+  BasePlatform::OpenFileExternally(path);
+#endif
+}
+
 }  // namespace ballistica::base
 
 #endif  // BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS

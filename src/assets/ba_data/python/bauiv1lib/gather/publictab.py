@@ -114,7 +114,7 @@ class UIRow:
         self._name_widget = bui.textwidget(
             text=bui.Lstr(value=party.name),
             parent=columnwidget,
-            size=(sub_scroll_width * 0.63, 20),
+            size=(sub_scroll_width * 0.46, 20),
             position=(0 + hpos, 4 + vpos),
             selectable=True,
             on_select_call=bui.WeakCall(
@@ -248,6 +248,7 @@ class AddrFetchThread(Thread):
         self._call = call
 
     def run(self) -> None:
+        sock: socket.socket | None = None
         try:
             # FIXME: Update this to work with IPv6 at some point.
             import socket
@@ -255,7 +256,6 @@ class AddrFetchThread(Thread):
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.connect(('8.8.8.8', 80))
             val = sock.getsockname()[0]
-            sock.close()
             bui.pushcall(bui.Call(self._call, val), from_other_thread=True)
         except Exception as exc:
             from efro.error import is_udp_communication_error
@@ -265,6 +265,9 @@ class AddrFetchThread(Thread):
                 pass
             else:
                 logging.exception('Error in addr-fetch-thread')
+        finally:
+            if sock is not None:
+                sock.close()
 
 
 class PingThread(Thread):
@@ -432,6 +435,7 @@ class PublicGatherTab(GatherTab):
             text=bui.Lstr(
                 resource='gatherWindow.' 'joinPublicPartyDescriptionText'
             ),
+            glow_type='uniform',
         )
         self._host_text = bui.textwidget(
             parent=self._container,
@@ -454,6 +458,7 @@ class PublicGatherTab(GatherTab):
             text=bui.Lstr(
                 resource='gatherWindow.' 'hostPublicPartyDescriptionText'
             ),
+            glow_type='uniform',
         )
         bui.widget(edit=self._join_text, up_widget=tab_button)
         bui.widget(

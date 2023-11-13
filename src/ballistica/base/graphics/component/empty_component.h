@@ -11,8 +11,7 @@ namespace ballistica::base {
 // transform/scissor/etc state changes.
 class EmptyComponent : public RenderComponent {
  public:
-  explicit EmptyComponent(RenderPass* pass)
-      : RenderComponent(pass), transparent_(false) {}
+  explicit EmptyComponent(RenderPass* pass) : RenderComponent(pass) {}
   void SetTransparent(bool val) {
     EnsureConfiguring();
     transparent_ = val;
@@ -22,7 +21,7 @@ class EmptyComponent : public RenderComponent {
   void WriteConfig() override { ConfigForEmpty(transparent_); }
 
  private:
-  bool transparent_;
+  bool transparent_{};
 };
 
 }  // namespace ballistica::base

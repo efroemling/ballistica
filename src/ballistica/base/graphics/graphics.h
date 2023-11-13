@@ -320,6 +320,8 @@ class Graphics {
   /// Called by the graphics-server when a new client context is ready.
   void set_client_context(Snapshot<GraphicsClientContext>* context);
 
+  void UpdatePlaceholderSettings();
+
   auto has_client_context() -> bool {
     return client_context_snapshot_.Exists();
   }

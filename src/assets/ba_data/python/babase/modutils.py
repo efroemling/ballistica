@@ -104,8 +104,8 @@ def show_user_scripts() -> None:
 
             _error.print_exception('error writing about_this_folder stuff')
 
-    # On a few platforms we try to open the dir in the UI.
-    if app.classic is not None and app.classic.platform in ['mac', 'windows']:
+    # On platforms that support it, open the dir in the UI.
+    if _babase.supports_open_dir_externally():
         _babase.open_dir_externally(env.python_directory_user)
 
     # Otherwise we just print a pretty version of it.

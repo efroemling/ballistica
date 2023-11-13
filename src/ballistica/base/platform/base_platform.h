@@ -98,6 +98,16 @@ class BasePlatform {
 
   auto ran_base_post_init() const { return ran_base_post_init_; }
 
+  /// Do we support opening dirs exteranlly? (via finder, windows explorer,
+  /// etc.)
+  virtual auto SupportsOpenDirExternally() -> bool;
+
+  /// Open a directory using the system default method (Finder, etc.)
+  virtual void OpenDirExternally(const std::string& path);
+
+  /// Open a file using the system default method (in another app, etc.)
+  virtual void OpenFileExternally(const std::string& path);
+
  protected:
   /// Pop up a text edit dialog.
   virtual void DoInvokeStringEditor(const std::string& title,

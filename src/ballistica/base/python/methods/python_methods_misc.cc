@@ -1395,6 +1395,31 @@ static PyMethodDef PyNativeStackTraceDef = {
     "Only use them for debugging.",
 };
 
+// --------------------- supports_open_dir_externally --------------------------
+
+static auto PySupportsOpenDirExternally(PyObject* self, PyObject* args,
+                                        PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_base->platform->SupportsOpenDirExternally()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySupportsOpenDirExternallyDef = {
+    "supports_open_dir_externally",            // name
+    (PyCFunction)PySupportsOpenDirExternally,  // method
+    METH_NOARGS,                               // flags
+
+    "supports_open_dir_externally() -> bool\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Return whether the current app/platform supports opening dirs externally\n"
+    "(in the Mac Finder, Windows Explorer, etc.).",
+};
+
 // -------------------------- open_dir_externally ------------------------------
 
 static auto PyOpenDirExternally(PyObject* self, PyObject* args,
@@ -1406,7 +1431,7 @@ static auto PyOpenDirExternally(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &path)) {
     return nullptr;
   }
-  g_core->platform->OpenDirExternally(path);
+  g_base->platform->OpenDirExternally(path);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1816,6 +1841,7 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PyGetSimpleSoundDef,
       PyHasTouchScreenDef,
       PyNativeStackTraceDef,
+      PySupportsOpenDirExternallyDef,
       PyOpenDirExternallyDef,
       PyFatalErrorDef,
       PyDevConsoleAddButtonDef,

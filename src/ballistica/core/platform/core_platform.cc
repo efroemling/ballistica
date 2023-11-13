@@ -804,14 +804,6 @@ void CorePlatform::SignOutV1() {
   Log(LogLevel::kError, "SignOutV1() unimplemented");
 }
 
-void CorePlatform::OpenFileExternally(const std::string& path) {
-  Log(LogLevel::kError, "OpenFileExternally() unimplemented");
-}
-
-void CorePlatform::OpenDirExternally(const std::string& path) {
-  Log(LogLevel::kError, "OpenDirExternally() unimplemented");
-}
-
 void CorePlatform::MacMusicAppInit() {
   Log(LogLevel::kError, "MacMusicAppInit() unimplemented");
 }

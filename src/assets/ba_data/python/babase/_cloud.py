@@ -26,6 +26,11 @@ DEBUG_LOG = False
 class CloudSubsystem(AppSubsystem):
     """Manages communication with cloud components."""
 
+    @property
+    def connected(self) -> bool:
+        """Property equivalent of CloudSubsystem.is_connected()."""
+        return self.is_connected()
+
     def is_connected(self) -> bool:
         """Return whether a connection to the cloud is present.
 

@@ -486,20 +486,21 @@ class AccountSettingsWindow(bui.Window):
                 self._account_name_what_is_text = bui.textwidget(
                     parent=self._subcontainer,
                     position=(0.0, self._account_name_what_is_y),
-                    size=(200.0, 60),
+                    size=(220.0, 60),
                     text=bui.Lstr(
                         value='${WHAT}  -->',
                         subs=[('${WHAT}', bui.Lstr(resource='whatIsThisText'))],
                     ),
                     scale=0.6,
                     color=(0.3, 0.7, 0.05),
-                    maxwidth=200.0,
+                    maxwidth=130.0,
                     h_align='right',
                     v_align='center',
                     autoselect=True,
                     selectable=True,
                     on_activate_call=show_what_is_v2_page,
                     click_activate=True,
+                    glow_type='uniform',
                 )
                 if first_selectable is None:
                     first_selectable = self._account_name_what_is_text
@@ -1281,10 +1282,20 @@ class AccountSettingsWindow(bui.Window):
         show_what_is_v2_page()
 
     def _on_manage_account_press(self) -> None:
-        bui.screenmessage(bui.Lstr(resource='oneMomentText'))
-
         plus = bui.app.plus
         assert plus is not None
+
+        # Preemptively fail if it looks like we won't be able to talk to
+        # the server anyway.
+        if not plus.cloud.connected:
+            bui.screenmessage(
+                bui.Lstr(resource='internal.unavailableNoConnectionText'),
+                color=(1, 0, 0),
+            )
+            bui.getsound('error').play()
+            return
+
+        bui.screenmessage(bui.Lstr(resource='oneMomentText'))
 
         # We expect to have a v2 account signed in if we get here.
         if plus.accounts.primary is None:
@@ -1445,7 +1456,7 @@ class AccountSettingsWindow(bui.Window):
             swidth = bui.get_string_width(name_str, suppress_warning=True)
             # Eww; number-fudging. Need to recalibrate this if
             # account name scaling changes.
-            x = self._sub_width * 0.5 - swidth * 0.75 - 170
+            x = self._sub_width * 0.5 - swidth * 0.75 - 190
 
             bui.textwidget(
                 edit=self._account_name_what_is_text,
