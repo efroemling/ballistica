@@ -405,7 +405,7 @@ class PluginWindow(bui.Window):
         if num_shown == 0:
             bui.textwidget(
             edit=self._no_plugins_installed_text,
-            text='No Plugins Installed',
+            text=bui.Lstr(resource='noPluginsInstalledText'),
         )
 
     def _save_state(self) -> None:
