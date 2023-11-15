@@ -1,4 +1,4 @@
-### 1.7.28 (build 21588, api 8, 2023-11-13)
+### 1.7.28 (build 21596, api 8, 2023-11-14)
 
 - Turning off ticket continues on all platforms. I'll be moving the game towards
   a new monetization scheme mostly based on cosmetics and this has always felt a

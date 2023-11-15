@@ -59,6 +59,8 @@ class CorePlatformApple : public CorePlatform {
   auto DoGetDeviceName() -> std::string override;
   auto DoGetDeviceDescription() -> std::string override;
   auto GetOSVersionString() -> std::string override;
+  auto CanShowBlockingFatalErrorDialog() -> bool override;
+  void BlockingFatalErrorDialog(const std::string& message) override;
 
  protected:
   auto DoGetDataDirectoryMonolithicDefault() -> std::string override;
