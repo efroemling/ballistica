@@ -48,42 +48,30 @@ auto InputDevice::GetPersistentIdentifier() const -> std::string {
 
 InputDevice::~InputDevice() { assert(g_base->InLogicThread()); }
 
-// Called to let the current host/client-session know that we'd like to control
-// something please.
+// Called to let the current host/client-session know that we'd like to
+// control something please.
 void InputDevice::RequestPlayer() {
   assert(g_base->InLogicThread());
   // Make note that we're being used in some way.
   last_input_time_millisecs_ =
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
 
-  // Tracking down a bug.
-  BA_PRECONDITION_FATAL(delegate_.Exists());
   delegate_->RequestPlayer();
 }
 
-// If we're attached to a remote player, ship completed packets every now and
-// then.
-void InputDevice::Update() {
-  // Tracking down a bug.
-  BA_PRECONDITION_FATAL(delegate_.Exists());
-  delegate_->Update();
-}
+// If we're attached to a remote player, ship completed packets every now
+// and then.
+void InputDevice::Update() { delegate_->Update(); }
 
 auto InputDevice::AttachedToPlayer() const -> bool {
-  // Tracking down a bug.
-  BA_PRECONDITION_FATAL(delegate_.Exists());
   return delegate_->AttachedToPlayer();
 }
 
-void InputDevice::DetachFromPlayer() {
-  // Tracking down a bug.
-  BA_PRECONDITION_FATAL(delegate_.Exists());
-  delegate_->DetachFromPlayer();
-}
+void InputDevice::DetachFromPlayer() { delegate_->DetachFromPlayer(); }
 
 void InputDevice::UpdateLastInputTime() {
-  // Keep our own individual time, and also let
-  // the overall input system know something happened.
+  // Keep our own individual time, and also let the overall input system
+  // know something happened.
   last_input_time_millisecs_ =
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
   g_base->input->MarkInputActive();
@@ -95,8 +83,6 @@ void InputDevice::InputCommand(InputType type, float value) {
   // Make note that we're being used in some way.
   UpdateLastInputTime();
 
-  // Tracking down a bug.
-  BA_PRECONDITION_FATAL(delegate_.Exists());
   delegate_->InputCommand(type, value);
 }
 

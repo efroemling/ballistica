@@ -49,8 +49,6 @@ class CorePlatformWindows : public CorePlatform {
   auto GetIsStdinATerminal() -> bool override;
   auto GetOSVersionString() -> std::string override;
   auto GetCWD() -> std::string override;
-  void OpenFileExternally(const std::string& path) override;
-  void OpenDirExternally(const std::string& path) override;
   void Unlink(const char* path) override;
   void CloseSocket(int socket) override;
   auto GetBroadcastAddrs() -> std::vector<uint32_t> override;

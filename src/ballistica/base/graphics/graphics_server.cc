@@ -66,7 +66,8 @@ void GraphicsServer::ApplySettings(const GraphicsSettings* settings) {
   // gathered for themself.
   g_base->app_adapter->ApplyGraphicsSettings(settings);
 
-  // Lastly, if we've not yet sent a context to the client, do so.
+  // If we've not yet sent a context to the client, do so. At some point we
+  // may support re-sending this if there are settings that change.
   if (client_context_ == nullptr) {
     set_client_context(g_base->app_adapter->GetGraphicsClientContext());
   }
@@ -387,58 +388,6 @@ void GraphicsServer::UnloadRenderer() {
   renderer_loaded_ = false;
 }
 
-// Given physical res, calculate virtual res.
-// void GraphicsServer::CalcVirtualRes_(float* x, float* y) {
-//   float x_in = *x;
-//   float y_in = *y;
-//   if (*x / *y > static_cast<float>(kBaseVirtualResX)
-//                     / static_cast<float>(kBaseVirtualResY)) {
-//     *y = kBaseVirtualResY;
-//     *x = *y * (x_in / y_in);
-//   } else {
-//     *x = kBaseVirtualResX;
-//     *y = *x * (y_in / x_in);
-//   }
-// }
-
-// void GraphicsServer::UpdateVirtualScreenRes_() {
-//   assert(g_base->app_adapter->InGraphicsContext());
-
-//   // In vr mode our virtual res is independent of our screen size.
-//   // (since it gets drawn to an overlay)
-//   if (g_core->IsVRMode()) {
-//     res_x_virtual_ = kBaseVirtualResX;
-//     res_y_virtual_ = kBaseVirtualResY;
-//   } else {
-//     res_x_virtual_ = res_x_;
-//     res_y_virtual_ = res_y_;
-//     CalcVirtualRes_(&res_x_virtual_, &res_y_virtual_);
-//   }
-// }
-
-// void GraphicsServer::SetScreenResolution(float h, float v) {
-//   assert(g_base->app_adapter->InGraphicsContext());
-
-//   // Ignore redundant sets.
-//   if (res_x_ == h && res_y_ == v) {
-//     return;
-//   }
-//   res_x_ = h;
-//   res_y_ = v;
-//   // UpdateVirtualScreenRes_();
-
-//   // Inform renderer of the change.
-//   if (renderer_) {
-//     renderer_->OnScreenSizeChange();
-//   }
-
-//   // Inform all logic thread bits of this change.
-//   g_base->logic->event_loop()->PushCall(
-//       [vx = res_x_virtual_, vy = res_y_virtual_, x = res_x_, y = res_y_] {
-//         g_base->graphics->SetScreenSize(vx, vy, x, y);
-//       });
-// }
-
 // FIXME: Shouldn't have android-specific code in here.
 void GraphicsServer::HandlePushAndroidRes(const std::string& android_res) {
   if (g_buildconfig.ostype_android()) {
@@ -577,16 +526,6 @@ void GraphicsServer::UpdateCamOrientMatrix_() {
 void GraphicsServer::PushReloadMediaCall() {
   g_base->app_adapter->PushGraphicsContextCall([this] { ReloadMedia_(); });
 }
-
-// void GraphicsServer::PushSetScreenPixelScaleCall(float pixel_scale) {
-//   g_base->app_adapter->PushGraphicsContextCall([this, pixel_scale] {
-//     assert(g_base->app_adapter->InGraphicsContext());
-//     if (!renderer_) {
-//       return;
-//     }
-//     renderer_->set_pixel_scale(pixel_scale);
-//   });
-// }
 
 void GraphicsServer::PushComponentUnloadCall(
     const std::vector<Object::Ref<Asset>*>& components) {

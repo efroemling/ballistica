@@ -112,10 +112,11 @@ auto Input::GetNewNumberedIdentifier_(const std::string& name,
     }
     if (!in_use) {
       // Ok so far its unused.. however input devices that provide non-empty
-      // identifiers (serial number, usb-id, etc) reserve their number for the
-      // duration of the game, so we need to check against all reserved numbers
-      // so we don't steal someones... (so that if they disconnect and reconnect
-      // they'll get the same number and thus the same name, etc)
+      // identifiers (serial number, usb-id, etc) reserve their number for
+      // the duration of the game, so we need to check against all reserved
+      // numbers so we don't steal someones... (so that if they disconnect
+      // and reconnect they'll get the same number and thus the same name,
+      // etc)
       if (!identifier.empty()) {
         auto i = reserved_identifiers_.find(name);
         if (i != reserved_identifiers_.end()) {
@@ -143,10 +144,6 @@ auto Input::GetNewNumberedIdentifier_(const std::string& name,
   }
   return full_id;
 }
-
-// void Input::CreateTouchInput() {
-//   assert(g_core->InMainThread());
-// }
 
 void Input::AnnounceConnects_() {
   assert(g_base->InLogicThread());
@@ -308,10 +305,10 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
   }
 
   // We also want to give this input-device as unique an identifier as
-  // possible. We ask it for its own string which hopefully includes a serial
-  // or something, but if it doesn't and thus matches an already-existing one,
-  // we tack an index on to it. that way we can at least uniquely address them
-  // based off how many are connected.
+  // possible. We ask it for its own string which hopefully includes a
+  // serial or something, but if it doesn't and thus matches an
+  // already-existing one, we tack an index on to it. that way we can at
+  // least uniquely address them based off how many are connected.
   device->set_number(GetNewNumberedIdentifier_(device->GetRawDeviceName(),
                                                device->GetDeviceIdentifier()));
 
@@ -325,21 +322,9 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
     device->UpdateMapping();
 
     // Need to do this after updating controls, as some control settings can
-    // affect things we count (such as whether start activates default button).
+    // affect things we count (such as whether start activates default
+    // button).
     UpdateInputDeviceCounts_();
-  }
-
-  if (g_buildconfig.ostype_macos()) {
-    // Special case: on mac, the first time a iOS/Mac controller is connected,
-    // let the user know they may want to enable them if they're currently set
-    // as ignored. (the default at the moment is to only use classic device
-    // support).
-    static bool printed_ios_mac_controller_warning = false;
-    if (!printed_ios_mac_controller_warning && ignore_mfi_controllers_
-        && device->IsMFiController()) {
-      ScreenMessage(R"({"r":"macControllerSubsystemMFiNoteText"})", {1, 1, 0});
-      printed_ios_mac_controller_warning = true;
-    }
   }
 
   if (standard_message && !device->ShouldBeHiddenFromUser()) {
@@ -362,16 +347,16 @@ void Input::RemoveInputDevice(InputDevice* input, bool standard_message) {
     ShowStandardInputDeviceDisconnectedMessage_(input);
   }
 
-  // Just look for it in our list.. if we find it, simply clear the ref
-  // (we need to keep the ref around so our list indices don't change).
+  // Just look for it in our list.. if we find it, simply clear the ref (we
+  // need to keep the ref around so our list indices don't change).
   for (auto& input_device : input_devices_) {
     if (input_device.Exists() && (input_device.Get() == input)) {
       // Pull it off the list before killing it (in case it tries to trigger
       // another kill itself).
       auto device = Object::Ref<InputDevice>(input_device);
 
-      // Ok we cleared its slot in our vector; now we just have
-      // the local variable 'device' keeping it alive.
+      // Ok we cleared its slot in our vector; now we just have the local
+      // variable 'device' keeping it alive.
       input_device.Clear();
 
       // Tell it to detach from anything it is controlling.
@@ -519,41 +504,7 @@ auto Input::GetConfigurableGamePads() -> std::vector<InputDevice*> {
 
 auto Input::ShouldCompletelyIgnoreInputDevice(InputDevice* input_device)
     -> bool {
-  if (g_buildconfig.ostype_macos()) {
-    if (ignore_mfi_controllers_ && input_device->IsMFiController()) {
-      return true;
-    }
-  }
-  return ignore_sdl_controllers_ && input_device->IsSDLController();
-}
-
-void Input::UpdateEnabledControllerSubsystems_() {
-  assert(g_base);
-
-  // First off, on mac, let's update whether we want to completely ignore
-  // either the classic or the iOS/Mac controller subsystems.
-  //
-  // UPDATE - these days we're mfi-only on our xcode builds (which should
-  // support older controllers too). So we don't need to touch ignore vals
-  // anywhere since we'll not get sdl ones on those builds.
-
-  // if (g_buildconfig.ostype_macos()) {
-  //   std::string sys = g_base->app_config->Resolve(
-  //       AppConfig::StringID::kMacControllerSubsystem);
-  //   if (sys == "Classic") {
-  //     ignore_mfi_controllers_ = true;
-  //     ignore_sdl_controllers_ = false;
-  //   } else if (sys == "MFi") {
-  //     ignore_mfi_controllers_ = false;
-  //     ignore_sdl_controllers_ = true;
-  //   } else if (sys == "Both") {
-  //     ignore_mfi_controllers_ = false;
-  //     ignore_sdl_controllers_ = false;
-  //   } else {
-  //     BA_LOG_ONCE(LogLevel::kError,
-  //                 "Invalid mac-controller-subsystem value: '" + sys + "'");
-  //   }
-  // }
+  return false;
 }
 
 void Input::OnAppStart() {
@@ -576,8 +527,6 @@ void Input::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 // Tells all inputs to update their controls based on the app config.
 void Input::DoApplyAppConfig() {
   assert(g_base->InLogicThread());
-
-  UpdateEnabledControllerSubsystems_();
 
   // It's technically possible that updating these controls will add or
   // remove devices, thus changing the input_devices_ list, so lets work
@@ -612,10 +561,11 @@ void Input::StepDisplayTime() {
     }
   }
 
-  // We now need to update our input-device numbers dynamically since they're
-  // based on recently-active devices.
-  // ..we do this much more often for the first few seconds to keep
-  // controller-usage from being as annoying.
+  // We now need to update our input-device numbers dynamically since
+  // they're based on recently-active devices. We do this much more often
+  // for the first few seconds to keep controller-usage from being as
+  // annoying.
+
   // millisecs_t incr = (real_time > 10000) ? 468 : 98;
   // Update: don't remember why that was annoying; trying a single value for
   // now.
@@ -780,18 +730,18 @@ void Input::PushTextInputEvent(const std::string& text) {
       return;
     }
 
-    // Also ignore if there are any mod keys being held.
-    // We process some of our own keyboard shortcuts and don't
-    // want text input to come through at the same time.
+    // Also ignore if there are any mod keys being held. We process some of
+    // our own keyboard shortcuts and don't want text input to come through
+    // at the same time.
     if (keys_held_.contains(SDLK_LCTRL) || keys_held_.contains(SDLK_RCTRL)
         || keys_held_.contains(SDLK_LALT) || keys_held_.contains(SDLK_RALT)
         || keys_held_.contains(SDLK_LGUI) || keys_held_.contains(SDLK_RGUI)) {
       return;
     }
 
-    // Ignore back-tick and tilde because we use that key to toggle the console.
-    // FIXME: Perhaps should allow typing it if some control-character is
-    // held?
+    // Ignore back-tick and tilde because we use that key to toggle the
+    // console. FIXME: Perhaps should allow typing it if some
+    // control-character is held?
     if (text == "`" || text == "~") {
       return;
     }
@@ -958,10 +908,9 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     return;
   }
 
-  // Nowadays we don't want the OS to deliver repeat events to us,
-  // so filter out any that we get and make noise that they should stop. We
-  // explicitly handle repeats for UI purposes at the InputDevice or Widget
-  // level now.
+  // Nowadays we don't want the OS to deliver repeat events to us, so filter
+  // out any that we get and make noise that they should stop. We explicitly
+  // handle repeats for UI purposes at the InputDevice or Widget level now.
   if (keys_held_.find(keysym.sym) != keys_held_.end()) {
     // Look out for several repeats coming in within the span of a few
     // seconds and complain if it happens. This should allow for the random
@@ -993,9 +942,9 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     }
   }
 
-  // Regardless of what else we do, keep track of mod key states.
-  // (for things like manual camera moves. For individual key presses
-  // ideally we should use the modifiers bundled with the key presses)
+  // Regardless of what else we do, keep track of mod key states. (for
+  // things like manual camera moves. For individual key presses ideally we
+  // should use the modifiers bundled with the key presses)
   UpdateModKeyStates_(&keysym, true);
 
   // Mobile-specific stuff.
@@ -1317,9 +1266,9 @@ void Input::HandleMouseMotion_(const Vector2f& position) {
   last_mouse_move_time_ = g_core->GetAppTimeSeconds();
   mouse_move_count_++;
 
-  // If we have a touch-input in editing mode, pass along events to it.
-  // (it usually handles its own events but here we want it to play nice
-  // with stuff under it by blocking touches, etc)
+  // If we have a touch-input in editing mode, pass along events to it. (it
+  // usually handles its own events but here we want it to play nice with
+  // stuff under it by blocking touches, etc)
   if (touch_input_ && touch_input_->editing()) {
     touch_input_->HandleTouchMoved(reinterpret_cast<void*>(1), cursor_pos_x_,
                                    cursor_pos_y_);

@@ -20,6 +20,9 @@ class BasePlatformApple : public BasePlatform {
                                   int attempt_id) override;
   void LoginAdapterBackEndActiveChange(const std::string& login_type,
                                        bool active) override;
+  auto SupportsOpenDirExternally() -> bool override;
+  void OpenDirExternally(const std::string& path) override;
+  void OpenFileExternally(const std::string& path) override;
 };
 
 }  // namespace ballistica::base

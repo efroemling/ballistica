@@ -142,6 +142,7 @@ class ManualGatherTab(GatherTab):
                 playsound=True,
             ),
             text=bui.Lstr(resource='gatherWindow.manualJoinSectionText'),
+            glow_type='uniform',
         )
         self._favorites_text = bui.textwidget(
             parent=self._container,
@@ -162,6 +163,7 @@ class ManualGatherTab(GatherTab):
                 playsound=True,
             ),
             text=bui.Lstr(resource='gatherWindow.favoritesText'),
+            glow_type='uniform',
         )
         bui.widget(edit=self._join_by_address_text, up_widget=tab_button)
         bui.widget(
@@ -316,7 +318,7 @@ class ManualGatherTab(GatherTab):
         self._check_button = bui.textwidget(
             parent=self._container,
             size=(250, 60),
-            text=bui.Lstr(resource='gatherWindow.' 'showMyAddressText'),
+            text=bui.Lstr(resource='gatherWindow.showMyAddressText'),
             v_align='center',
             h_align='center',
             click_activate=True,
@@ -331,6 +333,7 @@ class ManualGatherTab(GatherTab):
                 self._container,
                 c_width,
             ),
+            glow_type='uniform',
         )
         bui.widget(edit=self._check_button, up_widget=btn)
 

@@ -1868,6 +1868,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* query_max_chars_obj = Py_None;
   PyObject* query_description_obj = Py_None;
   PyObject* adapter_finished_obj = Py_None;
+  PyObject* glow_type_obj = Py_None;
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -1907,9 +1908,10 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "query_max_chars",
                                  "query_description",
                                  "adapter_finished",
+                                 "glow_type",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &size_obj,
           &pos_obj, &text_obj, &v_align_obj, &h_align_obj, &editable_obj,
           &padding_obj, &on_return_press_call_obj, &on_activate_call_obj,
@@ -1920,7 +1922,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &shadow_obj, &autoselect_obj, &rotate_obj, &enabled_obj,
           &force_internal_editing_obj, &always_show_carat_obj, &big_obj,
           &extra_touch_border_scale_obj, &res_scale_obj, &query_max_chars_obj,
-          &query_description_obj, &adapter_finished_obj))
+          &query_description_obj, &adapter_finished_obj, &glow_type_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2123,8 +2125,20 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
       throw Exception("Unexpected value for adapter_finished");
     }
   }
+  if (glow_type_obj != Py_None) {
+    auto glow_type_s = Python::GetPyString(glow_type_obj);
+    TextWidget::GlowType glow_type;
+    if (glow_type_s == "uniform") {
+      glow_type = TextWidget::GlowType::kUniform;
+    } else if (glow_type_s == "gradient") {
+      glow_type = TextWidget::GlowType::kGradient;
+    } else {
+      throw Exception("Invalid glow_type: " + glow_type_s, PyExcType::kValue);
+    }
+    widget->set_glow_type(glow_type);
+  }
 
-  // if making a new widget add it at the end
+  // If making a new widget, add it at the end.
   if (edit_obj == Py_None) {
     g_ui_v1->AddWidget(widget.Get(), parent_widget);
   }
@@ -2175,7 +2189,8 @@ static PyMethodDef PyTextWidgetDef = {
     "  res_scale: float | None = None,"
     "  query_max_chars: bauiv1.Widget | None = None,\n"
     "  query_description: bauiv1.Widget | None = None,\n"
-    "  adapter_finished: bool | None = None)\n"
+    "  adapter_finished: bool | None = None,\n"
+    "  glow_type: str | None = None)\n"
     "  -> bauiv1.Widget\n"
     "\n"
     "Create or edit a text widget.\n"
@@ -2725,7 +2740,7 @@ static auto PyOpenFileExternally(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &path)) {
     return nullptr;
   }
-  g_core->platform->OpenFileExternally(path);
+  g_base->platform->OpenFileExternally(path);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

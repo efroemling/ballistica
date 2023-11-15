@@ -14,6 +14,9 @@ class BasePlatformLinux : public BasePlatform {
  public:
   BasePlatformLinux();
   void DoOpenURL(const std::string& url) override;
+  auto SupportsOpenDirExternally() -> bool override;
+  void OpenDirExternally(const std::string& path) override;
+  void OpenFileExternally(const std::string& path) override;
 };
 
 }  // namespace ballistica::base

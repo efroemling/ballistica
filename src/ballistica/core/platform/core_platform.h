@@ -384,12 +384,6 @@ class CorePlatform {
   /// Pass platform-specific misc-read-vals along to the OS (as a json string).
   virtual void SetPlatformMiscReadVals(const std::string& vals);
 
-  /// Open a file using the system default method (in another app, etc.)
-  virtual void OpenFileExternally(const std::string& path);
-
-  /// Open a directory using the system default method (Finder, etc.)
-  virtual void OpenDirExternally(const std::string& path);
-
   /// Set the name of the current thread (for debugging).
   virtual void SetCurrentThreadName(const std::string& name);
 

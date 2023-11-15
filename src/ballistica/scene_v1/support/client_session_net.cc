@@ -5,6 +5,7 @@
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/net_graph.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/scene_v1/connection/connection_to_host.h"
 #include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 
@@ -118,24 +119,27 @@ void ClientSessionNet::UpdateBuffering() {
     set_consume_rate(new_consume_rate);
 
     if (g_base->graphics->network_debug_info_display_enabled()) {
+      // Plug display time into these graphs to get smoother looking updates.
+      auto now_d = g_base->logic->display_time() * 1000.0;
+
       if (auto* graph =
               g_base->graphics->GetDebugGraph("1: packet delay", false)) {
-        graph->AddSample(now, current_delay_);
+        graph->AddSample(now_d, current_delay_);
       }
       if (auto* graph =
               g_base->graphics->GetDebugGraph("2: max delay bucketed", false)) {
-        graph->AddSample(now, last_bucket_max_delay_);
+        graph->AddSample(now_d, last_bucket_max_delay_);
       }
       if (auto* graph =
               g_base->graphics->GetDebugGraph("3: filtered delay", false)) {
-        graph->AddSample(now, max_delay_smoothed_);
+        graph->AddSample(now_d, max_delay_smoothed_);
       }
       if (auto* graph = g_base->graphics->GetDebugGraph("4: run rate", false)) {
-        graph->AddSample(now, new_consume_rate);
+        graph->AddSample(now_d, new_consume_rate);
       }
       if (auto* graph =
               g_base->graphics->GetDebugGraph("5: time buffered", true)) {
-        graph->AddSample(now, base_time_buffered());
+        graph->AddSample(now_d, base_time_buffered());
       }
     }
   }

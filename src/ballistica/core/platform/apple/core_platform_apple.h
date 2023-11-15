@@ -44,10 +44,7 @@ class CorePlatformApple : public CorePlatform {
   void ShowOnlineScoreUI(const std::string& show, const std::string& game,
                          const std::string& game_version) override;
   void ResetAchievements() override;
-  //  void GameCenterLogin() override;
   auto IsOSPlayingMusic() -> bool override;
-  void OpenFileExternally(const std::string& path) override;
-  void OpenDirExternally(const std::string& path) override;
   void MacMusicAppInit() override;
   auto MacMusicAppGetVolume() -> int override;
   void MacMusicAppSetVolume(int volume) override;
@@ -62,6 +59,8 @@ class CorePlatformApple : public CorePlatform {
   auto DoGetDeviceName() -> std::string override;
   auto DoGetDeviceDescription() -> std::string override;
   auto GetOSVersionString() -> std::string override;
+  auto CanShowBlockingFatalErrorDialog() -> bool override;
+  void BlockingFatalErrorDialog(const std::string& message) override;
 
  protected:
   auto DoGetDataDirectoryMonolithicDefault() -> std::string override;

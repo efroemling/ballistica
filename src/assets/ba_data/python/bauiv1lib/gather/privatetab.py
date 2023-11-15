@@ -120,6 +120,7 @@ class PrivateGatherTab(GatherTab):
                 playsound=True,
             ),
             text=bui.Lstr(resource='gatherWindow.privatePartyJoinText'),
+            glow_type='uniform',
         )
         self._host_sub_tab_text = bui.textwidget(
             parent=self._container,
@@ -138,6 +139,7 @@ class PrivateGatherTab(GatherTab):
                 playsound=True,
             ),
             text=bui.Lstr(resource='gatherWindow.privatePartyHostText'),
+            glow_type='uniform',
         )
         bui.widget(edit=self._join_sub_tab_text, up_widget=tab_button)
         bui.widget(

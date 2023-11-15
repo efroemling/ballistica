@@ -8,7 +8,6 @@
 #include <utility>
 #include <vector>
 
-#include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/python/python_ref.h"

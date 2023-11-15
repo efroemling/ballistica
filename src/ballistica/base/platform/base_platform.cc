@@ -221,4 +221,14 @@ void BasePlatform::DoInvokeStringEditor(const std::string& title,
   Log(LogLevel::kError, "FIXME: DoInvokeStringEditor() unimplemented");
 }
 
+auto BasePlatform::SupportsOpenDirExternally() -> bool { return false; }
+
+void BasePlatform::OpenDirExternally(const std::string& path) {
+  Log(LogLevel::kError, "OpenDirExternally() unimplemented");
+}
+
+void BasePlatform::OpenFileExternally(const std::string& path) {
+  Log(LogLevel::kError, "OpenFileExternally() unimplemented");
+}
+
 }  // namespace ballistica::base

@@ -9,8 +9,7 @@ namespace ballistica::base {
 
 class PostProcessComponent : public RenderComponent {
  public:
-  explicit PostProcessComponent(RenderPass* pass)
-      : RenderComponent(pass), normal_distort_(0.0f), eyes_(false) {}
+  explicit PostProcessComponent(RenderPass* pass) : RenderComponent(pass) {}
   void SetNormalDistort(float d) {
     EnsureConfiguring();
     normal_distort_ = d;
@@ -22,8 +21,8 @@ class PostProcessComponent : public RenderComponent {
 
  protected:
   void WriteConfig() override;
-  bool eyes_;
-  float normal_distort_;
+  bool eyes_ : 1 {};
+  float normal_distort_{};
 };
 
 }  // namespace ballistica::base

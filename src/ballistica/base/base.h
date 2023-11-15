@@ -90,6 +90,7 @@ class NetGraph;
 class Networking;
 class NetworkReader;
 class NetworkWriter;
+class NinePatchMesh;
 class ObjectComponent;
 class PythonClassUISound;
 class PythonContextCall;

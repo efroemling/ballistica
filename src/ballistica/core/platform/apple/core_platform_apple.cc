@@ -4,6 +4,7 @@
 #include "ballistica/core/platform/apple/core_platform_apple.h"
 
 #if BA_XCODE_BUILD
+#include <CoreServices/CoreServices.h>
 #include <unistd.h>
 #endif
 
@@ -25,22 +26,42 @@ namespace ballistica::core {
 CorePlatformApple::CorePlatformApple() = default;
 
 auto CorePlatformApple::GetDeviceV1AccountUUIDPrefix() -> std::string {
-#if BA_OSTYPE_MACOS
-  return "m";
-#elif BA_OSTYPE_IOS_TVOS
-  return "i";
-#else
-#error FIXME
-#endif
+  if (g_buildconfig.ostype_macos()) {
+    return "m";
+  } else if (g_buildconfig.ostype_ios_tvos()) {
+    return "i";
+  } else {
+    FatalError("Unhandled V1 UUID case.");
+    return "";
+  }
 }
 
 auto CorePlatformApple::DoGetDeviceName() -> std::string {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  // Ask swift for a pretty name if possible.
-  auto val = BallisticaKit::CocoaFromCpp::getDeviceName();
-  if (val) {
-    return val.get();
+
+#pragma clang diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
+  CFStringRef machineName = CSCopyMachineName();
+  if (machineName != nullptr) {
+    char buffer[256];
+    std::string out;
+    if (CFStringGetCString(machineName, buffer, sizeof(buffer),
+                           kCFStringEncodingUTF8)) {
+      out = buffer;
+    }
+    CFRelease(machineName);
+    return out;
   }
+
+#pragma clang diagnostic pop
+
+  // FIXME - This code currently hangs if there is an apostrophe in the
+  // device name. Should hopefully be fixed in Swift 5.10.
+  // https://github.com/apple/swift/issues/69870
+
+  // Ask swift for a pretty name if possible.
+  // return BallisticaKit::CocoaFromCpp::getDeviceName();
 #elif BA_OSTYPE_IOS_TVOS && BA_XCODE_BUILD
   return BallisticaKit::UIKitFromCpp::getDeviceName();
 #endif
@@ -349,22 +370,6 @@ auto CorePlatformApple::IsOSPlayingMusic() -> bool {
 #endif
 }
 
-void CorePlatformApple::OpenFileExternally(const std::string& path) {
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  BallisticaKit::CocoaFromCpp::openFileExternally(path);
-#else
-  CorePlatform::OpenFileExternally(path);
-#endif
-}
-
-void CorePlatformApple::OpenDirExternally(const std::string& path) {
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
-  BallisticaKit::CocoaFromCpp::openDirExternally(path);
-#else
-  CorePlatform::OpenDirExternally(path);
-#endif
-}
-
 void CorePlatformApple::MacMusicAppInit() {
 #if BA_OSTYPE_MACOS && BA_XCODE_BUILD
   BallisticaKit::CocoaFromCpp::macMusicAppInit();
@@ -454,6 +459,21 @@ auto CorePlatformApple::GetLocale() -> std::string {
   return *locale_;
 #else
   return CorePlatform::GetLocale();
+#endif
+}
+
+auto CorePlatformApple::CanShowBlockingFatalErrorDialog() -> bool {
+  if (g_buildconfig.xcode_build() && g_buildconfig.ostype_macos()) {
+    return true;
+  }
+  return false;
+}
+
+void CorePlatformApple::BlockingFatalErrorDialog(const std::string& message) {
+#if BA_XCODE_BUILD && BA_OSTYPE_MACOS
+  BallisticaKit::CocoaFromCpp::blockingFatalErrorDialog(message);
+#else
+  CorePlatform::BlockingFatalErrorDialog(message);
 #endif
 }
 

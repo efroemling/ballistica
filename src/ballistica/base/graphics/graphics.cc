@@ -106,8 +106,6 @@ void Graphics::DoApplyAppConfig() {
 
   show_fps_ = g_base->app_config->Resolve(AppConfig::BoolID::kShowFPS);
   show_ping_ = g_base->app_config->Resolve(AppConfig::BoolID::kShowPing);
-  // tv_border_ =
-  // g_base->app_config->Resolve(AppConfig::BoolID::kEnableTVBorder);
 
   bool disable_camera_shake =
       g_base->app_config->Resolve(AppConfig::BoolID::kDisableCameraShake);
@@ -133,6 +131,7 @@ void Graphics::UpdateInitialGraphicsSettingsSend_() {
   // We need to send an initial graphics-settings to the server to kick
   // things off, but we need a few things to be in place first.
   auto app_config_ready = applied_app_config_;
+
   // At some point we may want to wait to know our actual screen res before
   // sending. This won't apply everywhere though since on some platforms the
   // screen doesn't exist until we send this.
@@ -149,7 +148,7 @@ void Graphics::UpdateInitialGraphicsSettingsSend_() {
     // explicitly increment its refcount here in the logic thread now and
     // then push a call back here to decrement it when we're done.
     settings->ObjectIncrementStrongRefCount();
-    // auto* s = settings_.Get();
+
     g_base->app_adapter->PushGraphicsContextCall([settings] {
       assert(g_base->app_adapter->InGraphicsContext());
       g_base->graphics_server->ApplySettings(settings->Get());
@@ -466,9 +465,8 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
       if (now - it->second->LastUsedTime() > 1000) {
         it = debug_graphs_.erase(it);
       } else {
-        it->second->Draw(pass,
-                         static_cast<double>(g_core->GetAppTimeMillisecs()),
-                         50.0f, debug_graph_y, 500.0f, 100.0f);
+        it->second->Draw(pass, g_base->logic->display_time() * 1000.0, 50.0f,
+                         debug_graph_y, 500.0f, 100.0f);
         debug_graph_y += 110.0f;
 
         ++it;
@@ -581,6 +579,9 @@ auto Graphics::GetGraphicsSettingsSnapshot() -> Snapshot<GraphicsSettings>* {
     new_settings->index = next_settings_index_++;
     settings_snapshot_ = Object::New<Snapshot<GraphicsSettings>>(new_settings);
     graphics_settings_dirty_ = false;
+
+    // This can affect placeholder settings; keep those up to date.
+    UpdatePlaceholderSettings();
   }
   assert(settings_snapshot_.Exists());
   return settings_snapshot_.Get();
@@ -1618,7 +1619,6 @@ void Graphics::LanguageChanged() {
     Log(LogLevel::kWarning,
         "Graphics::LanguageChanged() called during draw; should not happen.");
   }
-
   screenmessages->ClearScreenMessageTranslations();
 }
 
@@ -1665,19 +1665,31 @@ auto Graphics::TextureQualityFromRequest(TextureQualityRequest request,
 void Graphics::set_client_context(Snapshot<GraphicsClientContext>* context) {
   assert(g_base->InLogicThread());
 
-  // Currently we only expect this to be set once. That will change
-  // once we support renderer swapping/etc.
+  // Currently we only expect this to be set once. That will change once we
+  // support renderer swapping/etc.
   assert(!g_base->logic->graphics_ready());
   assert(!client_context_snapshot_.Exists());
   client_context_snapshot_ = context;
 
-  // Update our static placeholder value (we don't want to calc it dynamically
-  // since it can be accessed from other threads).
-  texture_quality_placeholder_ = TextureQualityFromRequest(
-      settings()->texture_quality, client_context()->auto_texture_quality);
+  // Placeholder settings are affected by client context, so update them
+  // when it changes.
+  UpdatePlaceholderSettings();
 
   // Let the logic system know its free to proceed beyond bootstrapping.
   g_base->logic->OnGraphicsReady();
+}
+
+// This call exists for the graphics-server to call when they've changed
+void Graphics::UpdatePlaceholderSettings() {
+  assert(g_base->InLogicThread());
+
+  // Need both of these in place.
+  if (!settings_snapshot_.Exists() || !has_client_context()) {
+    return;
+  }
+
+  texture_quality_placeholder_ = TextureQualityFromRequest(
+      settings()->texture_quality, client_context()->auto_texture_quality);
 }
 
 }  // namespace ballistica::base

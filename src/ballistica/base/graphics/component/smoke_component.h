@@ -9,13 +9,8 @@ namespace ballistica::base {
 
 class SmokeComponent : public RenderComponent {
  public:
-  explicit SmokeComponent(RenderPass* pass)
-      : RenderComponent(pass),
-        color_r_(1.0f),
-        color_g_(1.0f),
-        color_b_(1.0f),
-        color_a_(1.0f),
-        overlay_(false) {}
+  explicit SmokeComponent(RenderPass* pass) : RenderComponent(pass) {}
+
   void SetColor(float r, float g, float b, float a = 1.0f) {
     EnsureConfiguring();
     color_r_ = r;
@@ -23,6 +18,7 @@ class SmokeComponent : public RenderComponent {
     color_b_ = b;
     color_a_ = a;
   }
+
   void SetOverlay(bool overlay) {
     EnsureConfiguring();
     overlay_ = overlay;
@@ -30,8 +26,12 @@ class SmokeComponent : public RenderComponent {
 
  protected:
   void WriteConfig() override;
-  float color_r_, color_g_, color_b_, color_a_;
-  bool overlay_;
+
+  bool overlay_ : 1 {};
+  float color_r_{1.0f};
+  float color_g_{1.0f};
+  float color_b_{1.0f};
+  float color_a_{1.0f};
 };
 
 }  // namespace ballistica::base

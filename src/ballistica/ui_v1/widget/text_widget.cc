@@ -6,6 +6,7 @@
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/input.h"
@@ -114,8 +115,9 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     // another component at the end with the matching pop. This only works
     // because the components in the middle wind up writing to the same draw
     // list, but there is nothing checking or enforcing that so it would be
-    // easy to break. Should improve this somehow. (perhaps by using a single
-    // component and enforcing list uniformity between push/pop blocks?)
+    // easy to break. Should improve this somehow. (perhaps by using a
+    // single component and enforcing list uniformity between push/pop
+    // blocks?)
     c.PushTransform();
 
     // Move to middle, scale down, move back.
@@ -159,34 +161,68 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
 
       if (highlight_dirty_) {
-        float l_border, r_border, b_border, t_border;
-        float l2 = bound_l;
-        float r2 = bound_r;
-        float t2 = bound_t;
-        float b2 = bound_b;
-        l_border = std::max(10.0f, (r2 - l2) * 0.05f);
-        r_border = 0;
-        b_border = std::max(16.0f, (t2 - b2) * 0.16f);
-        t_border = std::max(14.0f, (t2 - b2) * 0.14f);
-        highlight_width_ = r2 - l2 + l_border + r_border;
-        highlight_height_ = t2 - b2 + b_border + t_border;
-        highlight_center_x_ = l2 - l_border + highlight_width_ * 0.5f;
-        highlight_center_y_ = b2 - b_border + highlight_height_ * 0.5f;
+        if (glow_type_ == GlowType::kGradient) {
+          float l_border, r_border, b_border, t_border;
+          float l2 = bound_l;
+          float r2 = bound_r;
+          float t2 = bound_t;
+          float b2 = bound_b;
+          l_border = std::max(10.0f, (r2 - l2) * 0.05f);
+          r_border = 0;
+          b_border = std::max(16.0f, (t2 - b2) * 0.16f);
+          t_border = std::max(14.0f, (t2 - b2) * 0.14f);
+          highlight_width_ = r2 - l2 + l_border + r_border;
+          highlight_height_ = t2 - b2 + b_border + t_border;
+          highlight_center_x_ = l2 - l_border + highlight_width_ * 0.5f;
+          highlight_center_y_ = b2 - b_border + highlight_height_ * 0.5f;
+          highlight_mesh_.Clear();
+        } else {
+          assert(glow_type_ == GlowType::kUniform);
+          float corner_radius{30.0f};
+          float width{bound_r - bound_l};
+          float height{bound_t - bound_b};
+          float x_extend{12.0f};
+          float y_extend{6.0f};
+          float x_offset{0.0f};
+          float width_fin = width + x_extend * 2.0f;
+          float height_fin = height + y_extend * 2.0f;
+          float x_border = base::NinePatchMesh::BorderForRadius(
+              corner_radius, width_fin, height_fin);
+          float y_border = base::NinePatchMesh::BorderForRadius(
+              corner_radius, height_fin, width_fin);
+
+          highlight_mesh_ = Object::New<base::NinePatchMesh>(
+              -x_extend + x_offset, -y_extend, 0.0f, width_fin, height_fin,
+              x_border, y_border, x_border, y_border);
+        }
         highlight_dirty_ = false;
       }
 
-      base::SimpleComponent c(pass);
-      c.SetTransparent(true);
-      c.SetPremultiplied(true);
-      c.SetColor(0.25f * m, 0.3f * m, 0, 0.3f * m);
-      c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kGlow));
-      {
-        auto xf = c.ScopedTransform();
-        c.Translate(highlight_center_x_, highlight_center_y_, 0.1f);
-        c.Scale(highlight_width_, highlight_height_);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage4x1));
+      if (glow_type_ == GlowType::kGradient) {
+        base::SimpleComponent c(pass);
+        c.SetTransparent(true);
+        c.SetPremultiplied(true);
+        c.SetColor(0.25f * m, 0.3f * m, 0, 0.3f * m);
+        c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kGlow));
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(highlight_center_x_, highlight_center_y_, 0.1f);
+          c.Scale(highlight_width_, highlight_height_);
+          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage4x1));
+        }
+      } else {
+        assert(glow_type_ == GlowType::kUniform);
+        base::SimpleComponent c(pass);
+        c.SetTransparent(true);
+        c.SetColor(0.9 * m, 1.0f * m, 0, 0.3f * m);
+        c.SetTexture(
+            g_base->assets->SysTexture(base::SysTextureID::kShadowSharp));
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(bound_l, bound_b, 0.1f);
+          c.DrawMesh(highlight_mesh_.Get());
+        }
       }
-      c.Submit();
     }
 
     // Outline.
@@ -660,7 +696,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     }
   }
   // If we're doing inline editing, handle some key events.
-  if (m.has_keysym && !ShouldUseStringEditor_()) {
+  if (editable() && m.has_keysym && !ShouldUseStringEditor_()) {
     last_carat_change_time_millisecs_ =
         static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
     text_group_dirty_ = true;

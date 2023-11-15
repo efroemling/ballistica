@@ -17,6 +17,26 @@ void BasePlatformLinux::DoOpenURL(const std::string& url) {
   BasePlatform::DoOpenURL(url);
 }
 
+auto BasePlatformLinux::SupportsOpenDirExternally() -> bool { return true; }
+
+void BasePlatformLinux::OpenDirExternally(const std::string& path) {
+  std::string cmd = std::string("xdg-open \"") + path + "\"";
+  int result = system(cmd.c_str());
+  if (result != 0) {
+    Log(LogLevel::kError, "Got return value " + std::to_string(result)
+                              + " on xdg-open cmd '" + cmd + "'");
+  }
+}
+
+void BasePlatformLinux::OpenFileExternally(const std::string& path) {
+  std::string cmd = std::string("xdg-open \"") + path + "\"";
+  int result = system(cmd.c_str());
+  if (result != 0) {
+    Log(LogLevel::kError, "Got return value " + std::to_string(result)
+                              + " on xdg-open cmd '" + cmd + "'");
+  }
+}
+
 }  // namespace ballistica::base
 
 #endif  // BA_OSTYPE_LINUX
