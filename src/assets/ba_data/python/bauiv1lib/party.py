@@ -40,6 +40,7 @@ class PartyWindow(bui.Window):
             if uiscale is bui.UIScale.MEDIUM
             else 600
         )
+        self._display_old_msgs = True
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -141,12 +142,6 @@ class PartyWindow(bui.Window):
             text=bui.Lstr(resource='chatMutedText'),
         )
         self._chat_texts: list[bui.Widget] = []
-
-        # add all existing messages if chat is not muted
-        if not bui.app.config.resolve('Chat Muted'):
-            msgs = bs.get_chat_messages()
-            for msg in msgs:
-                self._add_msg(msg)
 
         self._text_field = txt = bui.textwidget(
             parent=self._root_widget,
@@ -269,6 +264,12 @@ class PartyWindow(bui.Window):
                     first.delete()
         else:
             bui.textwidget(edit=self._muted_text, color=(1, 1, 1, 0.0))
+            # add all existing messages if chat is not muted
+            if self._display_old_msgs:
+                msgs = bs.get_chat_messages()
+                for msg in msgs:
+                    self._add_msg(msg)
+                self._display_old_msgs = False
 
         # update roster section
         roster = bs.get_game_roster()
@@ -466,6 +467,7 @@ class PartyWindow(bui.Window):
                 cfg = bui.app.config
                 cfg['Chat Muted'] = choice == 'mute'
                 cfg.apply_and_commit()
+                self._display_old_msgs = True
                 self._update()
         else:
             print(f'unhandled popup type: {self._popup_type}')
