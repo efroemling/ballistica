@@ -549,7 +549,10 @@ class PartyWindow(bui.Window):
             }
             config.commit()
             bui.getsound('gunCocking').play()
-            bui.screenmessage('Added to Favourites')
+            bui.screenmessage(
+                bui.Lstr(resource='addedToFavouritesText'),
+                color=(0, 1, 0),
+            )
         else:
             bui.screenmessage(
                 bui.Lstr(resource='internal.invalidAddressErrorText'),
