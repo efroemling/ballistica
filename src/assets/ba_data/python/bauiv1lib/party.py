@@ -237,11 +237,12 @@ class PartyWindow(bui.Window):
                 if uiscale is bui.UIScale.MEDIUM
                 else 1.23
             ),
-            choices=['unmute' if is_muted else 'mute'],
+            choices=['unmute' if is_muted else 'mute', 'add_to_favorites'],
             choices_display=[
                 bui.Lstr(
                     resource='chatUnMuteText' if is_muted else 'chatMuteText'
-                )
+                ),
+                bui.Lstr(value='Add to Favorites')
             ],
             current_choice='unmute' if is_muted else 'mute',
             delegate=self,
@@ -469,8 +470,92 @@ class PartyWindow(bui.Window):
                 cfg.apply_and_commit()
                 self._display_old_msgs = True
                 self._update()
+            if choice == 'add_to_favorites':
+                plus = bui.app.plus
+                assert plus is not None
+
+                if plus.get_v1_account_state() == 'signed_in':
+                    plus.add_v1_account_transaction(
+                        {
+                            'type': 'PUBLIC_PARTY_QUERY',
+                            'proto': bs.protocol_version(),
+                            'lang': bui.app.lang.language,
+                        },
+                        callback=bui.WeakCall(self._add_to_favorites),
+                    )
+                    plus.run_v1_account_transactions()
+                else:
+                    self._add_to_favorites(None)
+
         else:
             print(f'unhandled popup type: {self._popup_type}')
+
+    def _add_to_favorites(self, result: dict[str, Any] | None) -> None:
+        if result is None:
+            return
+
+        parties_in = result['l']
+
+        assert isinstance(parties_in, list)
+        info = bs.get_connection_to_host_info()
+
+        if info.get('name', '') != '':
+            title = info['name']
+        else:
+            return
+
+        for party_in in parties_in:
+            server_name = party_in['n']
+            if server_name == title:
+                assert isinstance(party_in['a'], str)
+                assert isinstance(party_in['p'], int)
+                self._save_server(title, party_in['a'], party_in['p'])
+                return
+
+    def _save_server(
+        self,
+        name_text: str,
+        address: str,
+        port_num: int
+    ) -> None:
+        addr = address
+        if addr == '':
+            bui.screenmessage(
+                bui.Lstr(resource='internal.invalidAddressErrorText'),
+                color=(1, 0, 0),
+            )
+            bui.getsound('error').play()
+            return
+        try:
+            port = port_num
+        except ValueError:
+            port = -1
+        if port > 65535 or port < 0:
+            bui.screenmessage(
+                bui.Lstr(resource='internal.invalidPortErrorText'),
+                color=(1, 0, 0),
+            )
+            bui.getsound('error').play()
+            return
+        config = bui.app.config
+
+        if addr:
+            if not isinstance(config.get('Saved Servers'), dict):
+                config['Saved Servers'] = {}
+            config['Saved Servers'][f'{addr}@{port}'] = {
+                'addr': addr,
+                'port': port,
+                'name': name_text,
+            }
+            config.commit()
+            bui.getsound('gunCocking').play()
+            bui.screenmessage('Added to Favourites')
+        else:
+            bui.screenmessage(
+                bui.Lstr(resource='internal.invalidAddressErrorText'),
+                color=(1, 0, 0),
+            )
+            bui.getsound('error').play()
 
     def popup_menu_closing(self, popup_window: PopupWindow) -> None:
         """Called when the popup is closing."""
