@@ -242,7 +242,7 @@ class PartyWindow(bui.Window):
                 bui.Lstr(
                     resource='chatUnMuteText' if is_muted else 'chatMuteText'
                 ),
-                bui.Lstr(value='Add to Favorites')
+                bui.Lstr(resource='addToFavoritesText')
             ],
             current_choice='unmute' if is_muted else 'mute',
             delegate=self,
