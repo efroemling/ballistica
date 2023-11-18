@@ -767,7 +767,7 @@ class ManualGatherTab(GatherTab):
         if num_of_fav == 0:
             bui.textwidget(
                 edit=self._no_parties_added_text,
-                text='No Parties Added',
+                text=bui.Lstr(resource='noPartiesAddedText'),
             )
 
     def on_deactivate(self) -> None:
