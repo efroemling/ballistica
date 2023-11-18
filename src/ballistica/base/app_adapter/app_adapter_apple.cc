@@ -27,7 +27,10 @@ namespace ballistica::base {
 class AppAdapterApple::ScopedAllowGraphics_ {
  public:
   explicit ScopedAllowGraphics_(AppAdapterApple* adapter) : adapter_{adapter} {
+    // We currently assume only one thread will be doing this at any given
+    // time; will need to add a lock if that's not always the case.
     assert(!adapter_->graphics_allowed_);
+    // Keep graphics thread updated each time through since it can change.
     adapter->graphics_thread_ = std::this_thread::get_id();
     adapter->graphics_allowed_ = true;
   }
@@ -99,9 +102,9 @@ void AppAdapterApple::ReloadRenderer_(const GraphicsSettings* settings) {
   gs->LoadRenderer();
 }
 
-void AppAdapterApple::UpdateScreenSizes_() {
-  assert(g_base->app_adapter->InGraphicsContext());
-}
+// void AppAdapterApple::UpdateScreenSizes_() {
+//   assert(g_base->app_adapter->InGraphicsContext());
+// }
 
 auto AppAdapterApple::TryRender() -> bool {
   auto allow = ScopedAllowGraphics_(this);
@@ -187,7 +190,7 @@ auto AppAdapterApple::ShouldUseCursor() -> bool {
 }
 
 auto AppAdapterApple::HasHardwareCursor() -> bool {
-  // (mac should be only build getting called here)
+  // Mac should be only build getting called here (see ShouldUseCursor).
   assert(g_buildconfig.ostype_macos());
 
   return true;

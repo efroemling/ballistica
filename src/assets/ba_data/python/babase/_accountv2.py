@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, assert_never
 
 from efro.call import tpartial
 from efro.error import CommunicationError
@@ -199,18 +199,26 @@ class AccountV2Subsystem:
                 state.login_id
             )
 
-            # Special case: if the user is already signed in but not with
-            # this implicit login, we may want to let them know that the
-            # 'Welcome back FOO' they likely just saw is not actually
-            # accurate.
+            # Special case: if the user is already signed in but not
+            # with this implicit login, let them know that the 'Welcome
+            # back FOO' they likely just saw is not actually accurate.
             if (
                 self.primary is not None
                 and not self.login_adapters[login_type].is_back_end_active()
             ):
+                service_str: Lstr | None
                 if login_type is LoginType.GPGS:
                     service_str = Lstr(resource='googlePlayText')
-                else:
+                elif login_type is LoginType.GAME_CENTER:
+                    # Note: Apparently Game Center is just called 'Game
+                    # Center' in all languages. Can revisit if not true.
+                    # https://developer.apple.com/forums/thread/725779
+                    service_str = Lstr(value='Game Center')
+                elif login_type is LoginType.EMAIL:
+                    # Not possible; just here for exhaustive coverage.
                     service_str = None
+                else:
+                    assert_never(login_type)
                 if service_str is not None:
                     _babase.apptimer(
                         2.0,

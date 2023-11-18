@@ -24,10 +24,6 @@ class BasePlatform {
 
 #pragma mark APP EVENTS / LIFECYCLE --------------------------------------------
 
-  /// Called to inform the platform that all subsystems are up and running
-  /// and it can start talking to them.
-  virtual void OnMainThreadStartAppComplete();
-
   // Logic thread callbacks.
   virtual void OnAppStart();
   virtual void OnAppPause();

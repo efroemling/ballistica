@@ -654,6 +654,9 @@ class AccountSettingsWindow(bui.Window):
                 position=((self._sub_width - button_width) * 0.5, v - 20),
                 autoselect=True,
                 size=(button_width, 60),
+                # Note: Apparently Game Center is just called 'Game Center'
+                # in all languages. Can revisit if not true.
+                # https://developer.apple.com/forums/thread/725779
                 label=bui.Lstr(
                     value='${A}${B}',
                     subs=[
@@ -860,7 +863,7 @@ class AccountSettingsWindow(bui.Window):
             button_width = 300
             v -= game_service_button_space * 0.6
             if game_center_active:
-                # Update: Apparently Game Center is just called 'Game Center'
+                # Note: Apparently Game Center is just called 'Game Center'
                 # in all languages. Can revisit if not true.
                 # https://developer.apple.com/forums/thread/725779
                 game_service_button_label = bui.Lstr(

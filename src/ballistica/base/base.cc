@@ -239,9 +239,6 @@ void BaseFeatureSet::StartApp() {
   // to avoid crashing if called early.
   app_started_ = true;
 
-  // Inform anyone who wants to know that we're done starting.
-  platform->OnMainThreadStartAppComplete();
-
   // As the last step of this phase, tell the logic thread to apply the app
   // config which will kick off screen creation and otherwise get the ball
   // rolling.

@@ -26,7 +26,7 @@ class PromoCodeWindow(bui.Window):
             transition = 'in_right'
 
         width = 450
-        height = 230
+        height = 330
 
         self._modal = modal
         self._r = 'promoCodeWindow'
@@ -62,17 +62,50 @@ class PromoCodeWindow(bui.Window):
             iconscale=1.2,
         )
 
+        v = height - 74
+        bui.textwidget(
+            parent=self._root_widget,
+            text=bui.Lstr(resource='codesExplainText'),
+            maxwidth=width * 0.9,
+            position=(width * 0.5, v),
+            color=(0.7, 0.7, 0.7, 1.0),
+            size=(0, 0),
+            scale=0.8,
+            h_align='center',
+            v_align='center',
+        )
+        v -= 60
+
+        bui.textwidget(
+            parent=self._root_widget,
+            text=bui.Lstr(
+                resource='supportEmailText',
+                subs=[('${EMAIL}', 'support@froemling.net')],
+            ),
+            maxwidth=width * 0.9,
+            position=(width * 0.5, v),
+            color=(0.7, 0.7, 0.7, 1.0),
+            size=(0, 0),
+            scale=0.65,
+            h_align='center',
+            v_align='center',
+        )
+
+        v -= 80
+
         bui.textwidget(
             parent=self._root_widget,
             text=bui.Lstr(resource=self._r + '.codeText'),
-            position=(22, height - 113),
+            position=(22, v),
             color=(0.8, 0.8, 0.8, 1.0),
             size=(90, 30),
             h_align='right',
         )
+        v -= 8
+
         self._text_field = bui.textwidget(
             parent=self._root_widget,
-            position=(125, height - 121),
+            position=(125, v),
             size=(280, 46),
             text='',
             h_align='left',
@@ -86,10 +119,11 @@ class PromoCodeWindow(bui.Window):
         )
         bui.widget(edit=btn, down_widget=self._text_field)
 
+        v -= 79
         b_width = 200
         self._enter_button = btn2 = bui.buttonwidget(
             parent=self._root_widget,
-            position=(width * 0.5 - b_width * 0.5, height - 200),
+            position=(width * 0.5 - b_width * 0.5, v),
             size=(b_width, 60),
             scale=1.0,
             label=bui.Lstr(
