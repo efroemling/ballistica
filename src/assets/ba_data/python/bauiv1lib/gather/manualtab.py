@@ -99,6 +99,7 @@ class ManualGatherTab(GatherTab):
         self._party_edit_name_text: bui.Widget | None = None
         self._party_edit_addr_text: bui.Widget | None = None
         self._party_edit_port_text: bui.Widget | None = None
+        self._no_parties_added_text: bui.Widget | None = None
 
     def on_activate(
         self,
@@ -834,7 +835,10 @@ class ManualGatherTab(GatherTab):
             config.commit()
             bui.getsound('gunCocking').play()
         else:
-            bui.screenmessage('Invalid Address', color=(1, 0, 0))
+            bui.screenmessage(
+                bui.Lstr(resource='internal.invalidAddressErrorText'),
+                color=(1, 0, 0),
+            )
             bui.getsound('error').play()
 
     def _host_lookup_result(
