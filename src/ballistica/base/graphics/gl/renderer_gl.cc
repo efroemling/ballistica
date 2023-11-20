@@ -72,7 +72,7 @@ RendererGL::RendererGL() {
   // Run any one-time setup the platform might need to do
   // (grabbing function pointers, etc.)
   if (!g_sys_gl_inited) {
-    SysGLInit();
+    SysGLInit(this);
     g_sys_gl_inited = true;
   }
 
@@ -152,9 +152,32 @@ static auto CheckGLExtension(const std::vector<std::string>& exts,
   return false;
 }
 
+// This is split into its own call because systems that load GL calls
+// dynamically may want to run the check before trying to load said GL
+// calls. It's better to die with a 'Your OpenGL is too old' error rather
+// than a 'Could not load function foofDinglePlop2XZ'.
+void RendererGL::CheckGLVersion() {
+  if (checked_gl_version_) {
+    return;
+  }
+  const char* version_str = (const char*)glGetString(GL_VERSION);
+  BA_PRECONDITION_FATAL(version_str);
+  // Do a rough check to make sure we're running 3 or newer of GL/GLES.
+  // This query should be available even on older versions.
+  if (version_str[0] != '3' && version_str[0] != '4') {
+    FatalError(
+        std::string("Your OpenGL version is too old (") + version_str
+        + "). We require 3.0 or later. Try updating your graphics drivers.");
+  }
+  checked_gl_version_ = true;
+}
+
 void RendererGL::CheckGLCapabilities_() {
   BA_DEBUG_CHECK_GL_ERROR;
   assert(g_base->app_adapter->InGraphicsContext());
+
+  // Die if our overall GL version is too old.
+  CheckGLVersion();
 
   const char* renderer = (const char*)glGetString(GL_RENDERER);
   BA_PRECONDITION_FATAL(renderer);
@@ -163,15 +186,9 @@ void RendererGL::CheckGLCapabilities_() {
   const char* version_str = (const char*)glGetString(GL_VERSION);
   BA_PRECONDITION_FATAL(version_str);
 
-  // Do a rough check to make sure we're running 3 or newer of GL/GLES.
-  // This query should be available even on older versions.
-  if (version_str[0] != '3' && version_str[0] != '4') {
-    FatalError(std::string("Invalid OpenGL version found (") + version_str
-               + "). We require 3.0 or later.");
-  }
-
   // Now fetch exact major/minor versions. This query requires version 3.0
-  // or newer which is why we checked that above.
+  // or newer which is why we checked overall version in CheckGLVersion()
+  // above.
   glGetError();  // Clear any existing error so we don't die on it here.
   glGetIntegerv(GL_MAJOR_VERSION, &gl_version_major_);
   BA_PRECONDITION_FATAL(glGetError() == GL_NO_ERROR);

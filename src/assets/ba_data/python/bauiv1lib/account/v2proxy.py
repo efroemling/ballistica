@@ -62,14 +62,11 @@ class V2ProxySignInWindow(bui.Window):
             label=bui.Lstr(resource='cancelText'),
             on_activate_call=self._done,
             autoselect=True,
-            color=(0.55, 0.5, 0.6),
-            textcolor=(0.75, 0.7, 0.8),
         )
 
-        if bool(False):
-            bui.containerwidget(
-                edit=self._root_widget, cancel_button=self._cancel_button
-            )
+        bui.containerwidget(
+            edit=self._root_widget, cancel_button=self._cancel_button
+        )
 
         self._update_timer: bui.AppTimer | None = None
 
