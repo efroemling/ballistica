@@ -103,7 +103,8 @@ ctx.src_unchecked_paths = {
     'ballisticakit-xcode/BallisticaKit Shared/Assets.xcassets/*/*.png',
     'ballisticakit-xcode/BallisticaKit Shared/Assets.xcassets/*/*/*.png',
     'ballisticakit-xcode/BallisticaKit Shared/Assets.xcassets/*/*/*/*/*.png',
-    'ballisticakit-xcode/BallisticaKit.xcodeproj/xcuserdata',
+    'ballisticakit-xcode/BallisticaKit.xcodeproj/'
+    'project.xcworkspace/xcuserdata',
     'ballisticakit-android/BallisticaKit/src/*/res/*/*.png',
     'ballisticakit-android/BallisticaKit/src/*/assets/ballistica_files',
     'ballisticakit-android/local.properties',

@@ -165,8 +165,6 @@ void BasePlatform::SetupInterruptHandling() {
 #endif
 }
 
-void BasePlatform::OnMainThreadStartAppComplete() {}
-
 void BasePlatform::OnAppStart() { assert(g_base->InLogicThread()); }
 void BasePlatform::OnAppPause() { assert(g_base->InLogicThread()); }
 void BasePlatform::OnAppResume() { assert(g_base->InLogicThread()); }

@@ -1,4 +1,16 @@
-### 1.7.28 (build 21596, api 8, 2023-11-14)
+### 1.7.29 (build 21612, api 8, 2023-11-20)
+
+- Simply continued work on the big 1.7.28 update. I finally got the Mac App
+  Store version of the game updated (it had been stuck at 1.4!), and it turns
+  out that Apple AppStore submissions require the version number to increase
+  each time and not just the build number, so we may start seeing more minor
+  version bumps for that reason.
+- Windows builds should now die with a clear error when the OpenGL version is
+  too old (OpenGL 3.0 or newer is required). Previously they could die with more
+  cryptic error messages such as "OpenGL function 'glActiveTexture2D' not
+  found".
+
+### 1.7.28 (build 21599, api 8, 2023-11-16)
 
 - Turning off ticket continues on all platforms. I'll be moving the game towards
   a new monetization scheme mostly based on cosmetics and this has always felt a

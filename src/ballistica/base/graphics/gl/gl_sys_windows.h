@@ -31,9 +31,13 @@ extern PFNGLGETINTERNALFORMATIVPROC glGetInternalformativ;
 extern PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC
     glGetFramebufferAttachmentParameteriv;
 extern PFNGLBLENDFUNCSEPARATEPROC glBlendFuncSeparate;
+
+// Hopefully can switch this back if SDL gets fixed.
 extern PFNGLACTIVETEXTUREPROC glActiveTextureBA;
+extern PFNGLCOMPRESSEDTEXIMAGE2DPROC glCompressedTexImage2DBA;
 // extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB;
 // extern PFNGLPOINTPARAMETERFARBPROC glPointParameterfARB;
+
 extern PFNGLPOINTPARAMETERFVARBPROC glPointParameterfvARB;
 extern PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 extern PFNGLCREATEPROGRAMPROC glCreateProgram;
@@ -74,7 +78,6 @@ extern PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
 extern PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
 extern PFNGLUNIFORMMATRIX4FVARBPROC glUniformMatrix4fv;
 extern PFNGLBINDATTRIBLOCATIONPROC glBindAttribLocation;
-extern PFNGLCOMPRESSEDTEXIMAGE2DPROC glCompressedTexImage2DBA;
 extern PFNGLGETSHADERIVPROC glGetShaderiv;
 extern PFNGLGETPROGRAMIVPROC glGetProgramiv;
 extern PFNGLDELETESHADERPROC glDeleteShader;

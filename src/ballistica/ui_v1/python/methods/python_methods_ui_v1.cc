@@ -2821,7 +2821,7 @@ static PyMethodDef PyIsPartyIconVisibleDef = {
     "(internal)",
 };
 
-// ------------------------ is_party_icon_visible ------------------------------
+// ----------------------------- toolbar_test ----------------------------------
 
 static auto PyToolbarTest(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
@@ -2839,6 +2839,31 @@ static PyMethodDef PyToolbarTestDef = {
     METH_NOARGS,                 // flags
 
     "toolbar_test() -> bool\n"
+    "\n"
+    "(internal)",
+};
+
+// ----------------------------- is_available ----------------------------------
+
+static auto PyIsAvailable(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  // Consider ourself available if the active ui delegate is us.
+  if (dynamic_cast<UIV1FeatureSet*>(g_base->ui->delegate()) != nullptr) {
+    Py_RETURN_TRUE;
+  } else {
+    Py_RETURN_FALSE;
+  }
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyIsAvailableDef = {
+    "is_available",              // name
+    (PyCFunction)PyIsAvailable,  // method
+    METH_NOARGS,                 // flags
+
+    "is_available() -> bool\n"
     "\n"
     "(internal)",
 };
@@ -2877,6 +2902,7 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyGetTextureDef,
       PyGetMeshDef,
       PyToolbarTestDef,
+      PyIsAvailableDef,
   };
 }
 

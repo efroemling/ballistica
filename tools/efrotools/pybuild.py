@@ -42,7 +42,7 @@ OPENSSL_VER_ANDROID = '3.0.12'
 
 LIBFFI_VER_APPLE = '3.4.4'
 BZIP2_VER_APPLE = '1.0.8'
-XZ_VER_APPLE = '5.4.5'
+XZ_VER_APPLE = '5.4.4'
 
 # Android repo doesn't seem to be getting updated much so manually
 # bumping various versions to keep things up to date.

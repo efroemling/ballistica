@@ -220,6 +220,7 @@ inline void glDepthRange(double min, double max) {
 #endif
 
 namespace ballistica::base {
+class RendererGL;
 
 extern bool g_sys_gl_inited;
 
@@ -228,7 +229,7 @@ extern bool g_sys_gl_inited;
 // called only once and then g_sys_gl_inited set. A platform that defines
 // this should define BA_HAS_SYS_GL_INIT; otherwise a default empty
 // implementation will be defined.
-void SysGLInit();
+void SysGLInit(RendererGL* renderer);
 
 }  // namespace ballistica::base
 

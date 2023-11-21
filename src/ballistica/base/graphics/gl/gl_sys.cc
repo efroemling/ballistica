@@ -52,7 +52,7 @@ bool g_sys_gl_inited{};
 // Provide an empty implementation of this if noone provided a real one.
 #ifndef BA_HAS_SYS_GL_INIT
 
-void SysGLInit() { assert(!g_sys_gl_inited); }
+void SysGLInit(RendererGL* renderer) { assert(!g_sys_gl_inited); }
 
 #endif  // BA_HAS_SYS_GL_INIT
 

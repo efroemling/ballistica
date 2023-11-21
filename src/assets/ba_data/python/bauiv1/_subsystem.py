@@ -67,6 +67,16 @@ class UIV1Subsystem(babase.AppSubsystem):
         self.selecting_private_party_playlist: bool = False
 
     @property
+    def available(self) -> bool:
+        """Can uiv1 currently be used?
+
+        Code that may run in headless mode, before the UI has been spun up,
+        while other ui systems are active, etc. can check this to avoid
+        likely erroring.
+        """
+        return _bauiv1.is_available()
+
+    @property
     def uiscale(self) -> babase.UIScale:
         """Current ui scale for the app."""
         return self._uiscale
