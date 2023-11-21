@@ -381,7 +381,7 @@ class ProfileBrowserWindow(bui.Window):
             account_name = plus.get_v1_account_display_string()
         else:
             account_name = None
-
+        widget_to_select = None
         for p_name, p_info in items:
             if p_name == '__account__' and account_name is None:
                 continue
@@ -415,12 +415,12 @@ class ProfileBrowserWindow(bui.Window):
             txtw = bui.textwidget(
                 parent=self._subcontainer,
                 position=(35, y_val),
-                size=((self._width - 40) / scl, 28),
+                size=((self._width - 210) / scl, 28),
                 text=bui.Lstr(value=tval),
                 h_align='left',
                 v_align='center',
                 on_select_call=bui.WeakCall(self._select, p_name, index),
-                maxwidth=self._scroll_width * 0.92,
+                maxwidth=self._scroll_width * 0.86,
                 corner_scale=scl,
                 color=bui.safecolor(color, 0.4),
                 always_highlight=True,
