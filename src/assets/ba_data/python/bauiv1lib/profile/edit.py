@@ -516,6 +516,7 @@ class EditProfileWindow(bui.Window):
         self._update_character()
 
     def assign_random_name(self) -> None:
+        """Assigning a random name to the player."""
         names = bs.get_random_names()
         name = names[random.randrange(len(names))]
         bui.textwidget(
@@ -524,7 +525,7 @@ class EditProfileWindow(bui.Window):
         )
 
     def upgrade_profile(self) -> None:
-        """Attempt to ugrade the profile to global."""
+        """Attempt to upgrade the profile to global."""
         from bauiv1lib import account
         from bauiv1lib.profile import upgrade as pupgrade
 
@@ -744,10 +745,7 @@ class EditProfileWindow(bui.Window):
             )
         if len(name) > 10 and not (self._global or self._is_account_profile):
             name = name.strip()
-            display_name = ((name[:10] + '...')
-                           if len(name) > 10
-                           else name
-            )
+            display_name = (name[:10] + '...') if len(name) > 10 else name
             bui.textwidget(
                 edit=self._clipped_name_text,
                 text=bui.Lstr(
