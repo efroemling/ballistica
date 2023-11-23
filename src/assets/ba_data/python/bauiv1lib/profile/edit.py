@@ -184,7 +184,7 @@ class EditProfileWindow(bui.Window):
         self._clipped_name_text = bui.textwidget(
             parent=self._root_widget,
             text='',
-            position=(540 + x_inset, v - 8),
+            position=(580 + x_inset, v - 8),
             flatness=1.0,
             shadow=0.0,
             scale=0.55,
@@ -390,6 +390,23 @@ class EditProfileWindow(bui.Window):
                 autoselect=True,
                 on_activate_call=self.upgrade_profile,
             )
+            self._random_name_button = bui.buttonwidget(
+                parent=self._root_widget,
+                label='',
+                size=(20, 20),
+                position=(500 + x_inset, v - 20),
+                button_type='square',
+                color=(0.6, 0.5, 0.65),
+                autoselect=True,
+                on_activate_call=self.assign_random_name,
+            )
+            bui.imagewidget(
+                parent=self._root_widget,
+                size=(20, 20),
+                draw_controller=self._random_name_button,
+                position=(501 + x_inset, v - 20),
+                texture=bui.gettexture('replayIcon'),
+            )
 
         self._update_clipped_name()
         self._clipped_name_timer = bui.AppTimer(
@@ -497,6 +514,14 @@ class EditProfileWindow(bui.Window):
             maxwidth=120,
         )
         self._update_character()
+
+    def assign_random_name(self) -> None:
+        names = bs.get_random_names()
+        name = names[random.randrange(len(names))]
+        bui.textwidget(
+            edit=self._text_field,
+            text=name,
+        )
 
     def upgrade_profile(self) -> None:
         """Attempt to ugrade the profile to global."""
@@ -719,7 +744,10 @@ class EditProfileWindow(bui.Window):
             )
         if len(name) > 10 and not (self._global or self._is_account_profile):
             name = name.strip()
-            display_name = (name[:10] + '...') if len(name) > 10 else name
+            display_name = ((name[:10] + '...')
+                           if len(name) > 10
+                           else name
+            )
             bui.textwidget(
                 edit=self._clipped_name_text,
                 text=bui.Lstr(
