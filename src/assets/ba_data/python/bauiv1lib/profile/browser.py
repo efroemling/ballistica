@@ -394,6 +394,12 @@ class ProfileBrowserWindow(bui.Window):
                 if p_name == '__account__'
                 else bui.app.classic.get_player_profile_icon(p_name) + p_name
             )
+
+            try:
+                char_index = spazzes.index(p_info['character'])
+            except Exception:
+                char_index = spazzes.index('Spaz')
+
             assert isinstance(tval, str)
             character = bui.buttonwidget(
                 parent=self._subcontainer,
@@ -404,12 +410,8 @@ class ProfileBrowserWindow(bui.Window):
                 mask_texture=bui.gettexture('characterIconMask'),
                 tint_color=color,
                 tint2_color=_highlight,
-                texture=icon_textures[
-                    spazzes.index(p_info['character'])
-                ],
-                tint_texture=icon_tint_textures[
-                    spazzes.index(p_info['character'])
-                ],
+                texture=icon_textures[char_index],
+                tint_texture=icon_tint_textures[char_index],
                 selectable=False,
             )
             txtw = bui.textwidget(
