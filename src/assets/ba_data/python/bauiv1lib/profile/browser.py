@@ -344,6 +344,7 @@ class ProfileBrowserWindow(bui.Window):
 
     def _refresh(self) -> None:
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-statements
         from efro.util import asserttype
         from bascenev1 import PlayerProfilesChangedMessage
         from bascenev1lib.actor import spazappearance
