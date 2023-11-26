@@ -550,7 +550,7 @@ class PartyWindow(bui.Window):
             config.commit()
             bui.getsound('gunCocking').play()
             bui.screenmessage(
-                bui.Lstr(resource='addedToFavouritesText'),
+                bui.Lstr(resource='addedToFavoritesText'),
                 color=(0, 1, 0),
             )
         else:
