@@ -834,6 +834,10 @@ class ManualGatherTab(GatherTab):
             }
             config.commit()
             bui.getsound('gunCocking').play()
+            bui.screenmessage(
+                bui.Lstr(resource='addedToFavoritesText'),
+                color=(0, 1, 0),
+            )
         else:
             bui.screenmessage(
                 bui.Lstr(resource='internal.invalidAddressErrorText'),
