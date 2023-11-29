@@ -1,4 +1,4 @@
-### 1.7.30 (build 21623, api 8, 2023-11-28)
+### 1.7.30 (build 21628, api 8, 2023-11-29)
 - Continued work on the big 1.7.28 update.
 - Got the Android version back up and running. There's been lots of cleanup and
   simplification on the Android layer, cleaning out years of cruft. This should
@@ -17,7 +17,9 @@
   more often and be quicker to respond when dialogs or other activities
   temporarily pop up in front of it. Please holler if you run into strange side
   effects such as the app continuing to play audio when it should not be.
-  
+- (build 21626) Fixed a bug where click/tap locations were incorrect on some
+  builds when tv-border was on (Thanks for the heads-up Loup(Dliwk's fan)!).
+
 ### 1.7.29 (build 21619, api 8, 2023-11-21)
 
 - Simply continued work on the big 1.7.28 update. I was able to finally start

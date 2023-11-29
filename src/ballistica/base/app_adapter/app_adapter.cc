@@ -97,11 +97,8 @@ void AppAdapter::SuspendApp() {
   g_core->platform->DebugLog(
       "SuspendApp@"
       + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
-  // assert(!app_pause_requested_);
-  // app_pause_requested_ = true;
   app_suspended_ = true;
   OnAppSuspend_();
-  // UpdatePauseResume_();
 
   // We assume that the OS will completely suspend our process the moment we
   // return from this call (though this is not technically true on all
@@ -149,9 +146,6 @@ void AppAdapter::UnsuspendApp() {
   g_core->platform->DebugLog(
       "UnsuspendApp@"
       + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
-  // assert(app_pause_requested_);
-  // app_pause_requested_ = false;
-  // UpdatePauseResume_();
   app_suspended_ = false;
   OnAppUnsuspend_();
   if (g_buildconfig.debug_build()) {

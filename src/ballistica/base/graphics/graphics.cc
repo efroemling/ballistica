@@ -580,6 +580,9 @@ auto Graphics::GetGraphicsSettingsSnapshot() -> Snapshot<GraphicsSettings>* {
     settings_snapshot_ = Object::New<Snapshot<GraphicsSettings>>(new_settings);
     graphics_settings_dirty_ = false;
 
+    // We keep a cached copy of this value since we use it a lot.
+    tv_border_ = settings_snapshot_->Get()->tv_border;
+
     // This can affect placeholder settings; keep those up to date.
     UpdatePlaceholderSettings();
   }
