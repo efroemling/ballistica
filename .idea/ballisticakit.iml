@@ -65,7 +65,7 @@
       <excludePattern pattern=".editorconfig" />
     </content>
     <content url="file://$MODULE_DIR$/build/dummymodules" />
-    <orderEntry type="jdk" jdkName="Python 3.11 (pyba11) (2)" jdkType="Python SDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PackageRequirementsSettings">
