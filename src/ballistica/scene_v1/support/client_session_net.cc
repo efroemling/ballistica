@@ -13,26 +13,28 @@ namespace ballistica::scene_v1 {
 
 ClientSessionNet::ClientSessionNet() {
   // Sanity check: we should only ever be writing one replay at once.
-  if (g_core->replay_open) {
+  if (g_scene_v1->replay_open) {
     Log(LogLevel::kError,
-        "g_replay_open true at netclient start; shouldn't happen.");
+        "g_scene_v1->replay_open true at netclient start;"
+        " shouldn't happen.");
   }
   assert(g_base->assets_server);
 
   // We always write replays as the highest protocol version we support.
   g_base->assets_server->PushBeginWriteReplayCall(kProtocolVersionMax);
   writing_replay_ = true;
-  g_core->replay_open = true;
+  g_scene_v1->replay_open = true;
 }
 
 ClientSessionNet::~ClientSessionNet() {
   if (writing_replay_) {
     // Sanity check: we should only ever be writing one replay at once.
-    if (!g_core->replay_open) {
+    if (!g_scene_v1->replay_open) {
       Log(LogLevel::kError,
-          "g_replay_open false at net-client close; shouldn't happen.");
+          "g_scene_v1->replay_open false at net-client close;"
+          " shouldn't happen.");
     }
-    g_core->replay_open = false;
+    g_scene_v1->replay_open = false;
     assert(g_base->assets_server);
     g_base->assets_server->PushEndWriteReplayCall();
     writing_replay_ = false;

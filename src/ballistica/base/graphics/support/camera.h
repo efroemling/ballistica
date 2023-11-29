@@ -93,25 +93,25 @@ class Camera : public Object {
 
  private:
   CameraMode mode_{CameraMode::kFollow};
-  bool manual_ : 1 {};
-  bool smooth_next_frame_ : 1 {};
-  bool have_real_areas_of_interest_ : 1 {};
-  bool lock_panning_ : 1 {};
+  bool manual_{};
+  bool smooth_next_frame_{};
+  bool have_real_areas_of_interest_{};
+  bool lock_panning_{};
 
   // Manual stuff.
-  bool panning_ : 1 {};
-  bool orbiting_ : 1 {};
-  bool rolling_ : 1 {};
-  bool trucking_ : 1 {};
-  bool alt_down_ : 1 {};
-  bool cmd_down_ : 1 {};
-  bool ctrl_down_ : 1 {};
-  bool mouse_left_down_ : 1 {};
-  bool mouse_middle_down_ : 1 {};
-  bool mouse_right_down_ : 1 {};
+  bool panning_{};
+  bool orbiting_{};
+  bool rolling_{};
+  bool trucking_{};
+  bool alt_down_{};
+  bool cmd_down_{};
+  bool ctrl_down_{};
+  bool mouse_left_down_{};
+  bool mouse_middle_down_{};
+  bool mouse_right_down_{};
 
-  bool happy_thoughts_mode_ : 1 {};
-  bool x_constrained_ : 1 {true};
+  bool happy_thoughts_mode_{};
+  bool x_constrained_{true};
   float pan_speed_scale_{1.0f};
   float heading_{kInitialHeading};
   float area_of_interest_bounds_[6]{-9999, -9999, -9999, 9999, 9999, 9999};

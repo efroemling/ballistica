@@ -84,13 +84,13 @@ class ImageNode : public Node {
     CENTER_LEFT
   };
 
-  bool host_only_ : 1 {};
-  bool front_ : 1 {};
-  bool absolute_scale_ : 1 {true};
-  bool premultiplied_ : 1 {};
-  bool fill_screen_ : 1 {};
-  bool has_alpha_channel_ : 1 {true};
-  bool dirty_ : 1 {true};
+  bool host_only_{};
+  bool front_{};
+  bool absolute_scale_{true};
+  bool premultiplied_{};
+  bool fill_screen_{};
+  bool has_alpha_channel_{true};
+  bool dirty_{true};
   Attach attach_{Attach::CENTER};
 
   float vr_depth_{};

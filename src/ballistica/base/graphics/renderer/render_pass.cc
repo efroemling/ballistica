@@ -126,7 +126,7 @@ void RenderPass::Render(RenderTarget* render_target, bool transparent) {
     case Type::kOverlayFlatPass: {
       // In vr mode we draw the flat-overlay into its own buffer so can use
       // the full depth range (shouldn't matter but why not?...) shouldn't.
-      if (g_core->IsVRMode()) {
+      if (g_core->vr_mode()) {
         // In vr mode, our overlay-flat pass is ortho-projected
         // while our regular overlay is just rendered in world space using
         // the vr-overlay matrix.

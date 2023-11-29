@@ -466,7 +466,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Ok; let 'er rip!
     exargs = ' --with-pydebug' if debug else ''
     subprocess.run(
-        f'ARCH={arch} ANDROID_API=21 ./build.sh{exargs} --without-ensurepip'
+        f'ARCH={arch} ANDROID_API=23 ./build.sh{exargs} --without-ensurepip'
         f' --with-build-python=/home/ubuntu/.py311/bin/python3.11',
         shell=True,
         check=True,

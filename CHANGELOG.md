@@ -1,10 +1,30 @@
-### 1.7.29 (build 21612, api 8, 2023-11-20)
+### 1.7.30 (build 21623, api 8, 2023-11-28)
+- Continued work on the big 1.7.28 update.
+- Got the Android version back up and running. There's been lots of cleanup and
+  simplification on the Android layer, cleaning out years of cruft. This should
+  put things in a better more maintainable place, but there will probably be
+  some bugs to iron out, so please holler if you run into any.
+- Minimum supported Android version has been bumped from 5.0 to 6.0. Some
+  upcoming tech such as ASTC textures will likely not be well supported on such
+  old devices, so I think it is better to leave them running an older version
+  that performs decently instead of a newer version that performs poorly. And
+  letting go of old Android versions lets us better support new ones.
+- Android version now uses the 'Oboe' library as an audio back-end instead of
+  OpenSL. This should result in better behaving audio in general. Please holler
+  if you experience otherwise.
+- Bundled Android Python has been bumped to version 3.11.6.
+- Android app suspend behavior has been revamped. The app should stay running
+  more often and be quicker to respond when dialogs or other activities
+  temporarily pop up in front of it. Please holler if you run into strange side
+  effects such as the app continuing to play audio when it should not be.
+  
+### 1.7.29 (build 21619, api 8, 2023-11-21)
 
-- Simply continued work on the big 1.7.28 update. I finally got the Mac App
-  Store version of the game updated (it had been stuck at 1.4!), and it turns
-  out that Apple AppStore submissions require the version number to increase
-  each time and not just the build number, so we may start seeing more minor
-  version bumps for that reason.
+- Simply continued work on the big 1.7.28 update. I was able to finally start
+  updating the Mac App Store version of the game again (it had been stuck at
+  1.4!), and it turns out that Apple AppStore submissions require the version
+  number to increase each time and not just the build number, so we may start
+  seeing more minor version number bumps for that reason.
 - Windows builds should now die with a clear error when the OpenGL version is
   too old (OpenGL 3.0 or newer is required). Previously they could die with more
   cryptic error messages such as "OpenGL function 'glActiveTexture2D' not

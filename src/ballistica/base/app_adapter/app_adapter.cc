@@ -67,15 +67,15 @@ void AppAdapter::OnAppUnsuspend_() {
   // menu doesn't really accomplish anything there.
   //
   // In general this probably should be handled at a higher level.
-  if (g_core->should_pause_active_game) {
-    g_core->should_pause_active_game = false;
+  // if (g_core->should_pause_active_game) {
+  //   g_core->should_pause_active_game = false;
 
-    // If we've been completely backgrounded, send a menu-press command to
-    // the game; this will bring up a pause menu if we're in the game/etc.
-    if (!g_base->ui->MainMenuVisible()) {
-      g_base->ui->PushMainMenuPressCall(nullptr);
-    }
-  }
+  //   // If we've been completely backgrounded, send a menu-press command to
+  //   // the game; this will bring up a pause menu if we're in the game/etc.
+  //   if (!g_base->ui->MainMenuVisible()) {
+  //     g_base->ui->PushMainMenuPressCall(nullptr);
+  //   }
+  // }
 }
 
 void AppAdapter::SuspendApp() {
@@ -142,7 +142,7 @@ void AppAdapter::UnsuspendApp() {
 
   if (!app_suspended_) {
     Log(LogLevel::kWarning,
-        "AppAdapter::UnsuspendApp() called with app not in paused state.");
+        "AppAdapter::UnsuspendApp() called with app not in suspendedstate.");
     return;
   }
   millisecs_t start_time{core::CorePlatform::GetCurrentMillisecs()};

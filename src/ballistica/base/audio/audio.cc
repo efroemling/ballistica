@@ -173,7 +173,7 @@ auto Audio::PlaySound(SoundAsset* sound, float volume)
   if (s) {
     // In vr mode, play non-positional sounds positionally in space roughly
     // where the menu is.
-    if (g_core->IsVRMode()) {
+    if (g_core->vr_mode()) {
       s->SetGain(volume);
       s->SetPositional(true);
       float x = 0.0f;

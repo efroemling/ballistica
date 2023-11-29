@@ -1070,9 +1070,9 @@ void SceneV1AppMode::Reset_() {
   PruneSessions_();
 
   // If all is well our sessions should all be dead.
-  if (g_core->session_count != 0) {
+  if (g_scene_v1->session_count != 0) {
     Log(LogLevel::kError, "Session-count is non-zero ("
-                              + std::to_string(g_core->session_count)
+                              + std::to_string(g_scene_v1->session_count)
                               + ") on Logic::Reset.");
   }
 

@@ -13,7 +13,7 @@
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
 
-// Make sure min_sdl.h stays in here even though this file compile fine
+// Make sure min_sdl.h stays in here even though this file compiles fine
 // without it. On some platforms it does a bit of magic to redefine main as
 // SDL_main which leads us to a tricky-to-diagnose linker error if it
 // removed from here.
@@ -39,8 +39,8 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 21612;
-const char* kEngineVersion = "1.7.29";
+const int kEngineBuildNumber = 21623;
+const char* kEngineVersion = "1.7.30";
 const int kEngineApiVersion = 8;
 
 #if BA_MONOLITHIC_BUILD
@@ -69,7 +69,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // If a command was passed, simply run it and exit. We want to act
     // simply as a Python interpreter in that case; we don't do any
     // environment setup (aside from the bits core does automatically such
-    // as making our built in binary modules available).
+    // as making our built-in binary modules available).
     if (l_core->core_config().call_command.has_value()) {
       auto gil{Python::ScopedInterpreterLock()};
       bool success = PythonCommand(*l_core->core_config().call_command,
@@ -152,10 +152,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
       }
     }
   }
-  if (l_base) {
-    return l_base->GetReturnValue();
-  }
-  return -1;  // Didn't even get core; something clearly wrong.
+  return 0;
 }
 
 #endif  // BA_MONOLITHIC_BUILD

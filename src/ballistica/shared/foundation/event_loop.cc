@@ -174,7 +174,7 @@ auto EventLoop::ThreadMainAssetsP_(void* data) -> void* {
 void EventLoop::PushSetSuspended(bool suspended) {
   assert(g_core);
   // Can be toggled from the main thread only.
-  assert(std::this_thread::get_id() == g_core->main_thread_id);
+  assert(std::this_thread::get_id() == g_core->main_thread_id());
   PushThreadMessage_(ThreadMessage_(suspended
                                         ? ThreadMessage_::Type::kSuspend
                                         : ThreadMessage_::Type::kUnsuspend));
@@ -538,7 +538,8 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
       }
 
       // Show count periodically.
-      if ((std::this_thread::get_id() == g_core->main_thread_id) && foo > 100) {
+      if ((std::this_thread::get_id() == g_core->main_thread_id())
+          && foo > 100) {
         foo = 0;
         log_entries.emplace_back(
             LogLevel::kInfo,
@@ -577,8 +578,8 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
 
 void EventLoop::SetEventLoopsSuspended(bool suspended) {
   assert(g_core);
-  assert(std::this_thread::get_id() == g_core->main_thread_id);
-  g_core->event_loops_suspended = suspended;
+  assert(std::this_thread::get_id() == g_core->main_thread_id());
+  g_core->set_event_loops_suspended(suspended);
   for (auto&& i : g_core->suspendable_event_loops) {
     i->PushSetSuspended(suspended);
   }
@@ -587,10 +588,10 @@ void EventLoop::SetEventLoopsSuspended(bool suspended) {
 auto EventLoop::GetStillSuspendingEventLoops() -> std::vector<EventLoop*> {
   assert(g_core);
   std::vector<EventLoop*> threads;
-  assert(std::this_thread::get_id() == g_core->main_thread_id);
+  assert(std::this_thread::get_id() == g_core->main_thread_id());
 
   // Only return results if an actual suspend is in effect.
-  if (g_core->event_loops_suspended) {
+  if (g_core->event_loops_suspended()) {
     for (auto&& i : g_core->suspendable_event_loops) {
       if (!i->suspended()) {
         threads.push_back(i);
@@ -602,7 +603,7 @@ auto EventLoop::GetStillSuspendingEventLoops() -> std::vector<EventLoop*> {
 
 auto EventLoop::AreEventLoopsSuspended() -> bool {
   assert(g_core);
-  return g_core->event_loops_suspended;
+  return g_core->event_loops_suspended();
 }
 
 auto EventLoop::NewTimer(microsecs_t length, bool repeat, Runnable* runnable)

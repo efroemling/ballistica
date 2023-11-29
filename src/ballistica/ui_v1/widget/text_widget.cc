@@ -429,7 +429,7 @@ void TextWidget::DoDrawText_(base::RenderPass* pass, float x_offset,
     }
 
     // In VR, draw everything flat because it's generally harder to read.
-    if (g_core->IsVRMode()) {
+    if (g_core->vr_mode()) {
       c.SetFlatness(text_group_->GetElementMaxFlatness(e));
     } else {
       c.SetFlatness(std::min(text_group_->GetElementMaxFlatness(e), flatness_));

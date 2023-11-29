@@ -102,34 +102,34 @@ class JoystickInput : public InputDevice {
   //  constructor)
   SDL_Joystick* sdl_joystick_{};
 
-  bool ui_only_ : 1 {};
-  bool unassigned_buttons_run_ : 1 {true};
-  bool start_button_activates_default_widget_ : 1 {true};
-  bool auto_recalibrate_analog_stick_ : 1 {};
-  bool did_initial_reset_ : 1 {};
-  bool is_test_input_ : 1 {};
-  bool is_remote_control_ : 1 {};
-  bool is_remote_app_ : 1 {};
-  bool is_mfi_controller_ : 1 {};
+  bool ui_only_{};
+  bool unassigned_buttons_run_{true};
+  bool start_button_activates_default_widget_{true};
+  bool auto_recalibrate_analog_stick_{};
+  bool did_initial_reset_{};
+  bool is_test_input_{};
+  bool is_remote_control_{};
+  bool is_remote_app_{};
+  bool is_mfi_controller_{};
 
   // For dialogs.
-  bool left_held_ : 1 {};
-  bool right_held_ : 1 {};
-  bool up_held_ : 1 {};
-  bool down_held_ : 1 {};
-  bool hold_position_held_ : 1 {};
-  bool need_to_send_held_state_ : 1 {};
+  bool left_held_{};
+  bool right_held_{};
+  bool up_held_{};
+  bool down_held_{};
+  bool hold_position_held_{};
+  bool need_to_send_held_state_{};
 
-  bool hat_held_ : 1 {};
-  bool dpad_right_held_ : 1 {};
-  bool dpad_left_held_ : 1 {};
-  bool dpad_up_held_ : 1 {};
-  bool dpad_down_held_ : 1 {};
+  bool hat_held_{};
+  bool dpad_right_held_{};
+  bool dpad_left_held_{};
+  bool dpad_up_held_{};
+  bool dpad_down_held_{};
 
-  bool ignore_completely_ : 1 {};
-  bool resetting_ : 1 {};
-  bool calibrate_ : 1 {};
-  bool can_configure_ : 1 {};
+  bool ignore_completely_{};
+  bool resetting_{};
+  bool calibrate_{};
+  bool can_configure_{};
 
   int hat_{0};
   int analog_lr_{0};

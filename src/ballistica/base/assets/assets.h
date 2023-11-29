@@ -143,9 +143,9 @@ class Assets {
 
   // Will be true while a AssetListLock exists. Good to debug-verify this
   // during any asset list access.
-  bool asset_lists_locked_ : 1 {};
-  bool asset_loads_allowed_ : 1 {};
-  bool sys_assets_loaded_ : 1 {};
+  bool asset_lists_locked_{};
+  bool asset_loads_allowed_{};
+  bool sys_assets_loaded_{};
 
   std::vector<std::string> asset_paths_;
   std::unordered_map<std::string, std::string> packages_;

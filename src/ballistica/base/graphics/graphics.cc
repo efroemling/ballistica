@@ -371,7 +371,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
     }
     SimpleComponent c(pass);
     c.SetTransparent(true);
-    if (g_core->IsVRMode()) {
+    if (g_core->vr_mode()) {
       c.SetColor(1, 1, 1, 1);
     } else {
       c.SetColor(0.8f, 0.8f, 0.8f, 1.0f);
@@ -379,7 +379,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
     int text_elem_count = fps_text_group_->GetElementCount();
     for (int e = 0; e < text_elem_count; e++) {
       c.SetTexture(fps_text_group_->GetElementTexture(e));
-      if (g_core->IsVRMode()) {
+      if (g_core->vr_mode()) {
         c.SetShadow(-0.003f * fps_text_group_->GetElementUScale(e),
                     -0.003f * fps_text_group_->GetElementVScale(e), 0.0f, 1.0f);
         c.SetMaskUV2Texture(fps_text_group_->GetElementMaskUV2Texture(e));
@@ -540,7 +540,7 @@ void Graphics::InitInternalComponents(FrameDef* frame_def) {
   // Let's draw a bit bigger than screen to account for tv-border-mode.
   float w = pass->virtual_width();
   float h = pass->virtual_height();
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     screen_mesh_->SetPositionAndSize(
         -(0.5f * kVRBorder) * w, (-0.5f * kVRBorder) * h, kScreenMeshZDepth,
         (1.0f + kVRBorder) * w, (1.0f + kVRBorder) * h);
@@ -837,7 +837,7 @@ void Graphics::BuildAndPushFrameDef() {
     // Sanity test: If we're in VR, the only reason we should have stuff in
     // the flat overlay pass is if there's windows present (we want to avoid
     // drawing/blitting the 2d UI buffer during gameplay for efficiency).
-    if (g_core->IsVRMode()) {
+    if (g_core->vr_mode()) {
       if (frame_def->GetOverlayFlatPass()->HasDrawCommands()) {
         if (!g_base->ui->MainMenuVisible()) {
           BA_LOG_ONCE(LogLevel::kError,
@@ -1518,7 +1518,7 @@ void Graphics::SetScreenResolution(float x, float y) {
 
   // Calc virtual res. In vr mode our virtual res is independent of our
   // screen size (since it gets drawn to an overlay).
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     res_x_virtual_ = kBaseVirtualResX;
     res_y_virtual_ = kBaseVirtualResY;
   } else {

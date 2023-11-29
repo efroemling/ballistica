@@ -81,7 +81,7 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
 
     // Draw all existing.
     if (!screen_messages_.empty()) {
-      bool vr = g_core->IsVRMode();
+      bool vr = g_core->vr_mode();
 
       // These are less disruptive in the middle for menus but at the bottom
       // during gameplay.

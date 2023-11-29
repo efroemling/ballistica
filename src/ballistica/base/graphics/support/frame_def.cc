@@ -31,7 +31,7 @@ FrameDef::~FrameDef() { assert(g_base->InLogicThread()); }
 
 auto FrameDef::GetOverlayFixedPass() -> RenderPass* {
   assert(g_core);
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     return overlay_fixed_pass_.get();
   } else {
     return overlay_pass_.get();
@@ -40,7 +40,7 @@ auto FrameDef::GetOverlayFixedPass() -> RenderPass* {
 
 auto FrameDef::GetOverlayFlatPass() -> RenderPass* {
   assert(g_core);
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     return overlay_flat_pass_.get();
   } else {
     return overlay_pass_.get();
@@ -102,7 +102,7 @@ void FrameDef::Reset() {
   beauty_pass_bg_->Reset();
   overlay_pass_->Reset();
   overlay_front_pass_->Reset();
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     overlay_flat_pass_->Reset();
     overlay_fixed_pass_->Reset();
     vr_cover_pass_->Reset();
@@ -120,7 +120,7 @@ void FrameDef::Complete() {
   beauty_pass_bg_->Complete();
   overlay_pass_->Complete();
   overlay_front_pass_->Complete();
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     overlay_fixed_pass_->Complete();
     overlay_flat_pass_->Complete();
     vr_cover_pass_->Complete();

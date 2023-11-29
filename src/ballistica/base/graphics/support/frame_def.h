@@ -222,11 +222,11 @@ class FrameDef {
 
  private:
   Object::Ref<Snapshot<GraphicsSettings>> settings_snapshot_;
-  bool needs_clear_ : 1 {};
-  bool rendering_ : 1 {};
-  bool orbiting_ : 1 {};
-  // bool tv_border_ : 1 {};
-  bool shadow_ortho_ : 1 {};
+  bool needs_clear_{};
+  bool rendering_{};
+  bool orbiting_{};
+  // bool tv_border_{};
+  bool shadow_ortho_{};
   BenchmarkType benchmark_type_{BenchmarkType::kNone};
   CameraMode camera_mode_{CameraMode::kFollow};
   Vector3f cam_original_{0.0f, 0.0f, 0.0f};

@@ -116,10 +116,10 @@ class AudioServer {
   float sound_pitch_{1.0f};
   float music_volume_{1.0f};
 
-  bool have_pending_loads_ : 1 {};
-  bool suspended_ : 1 {};
-  bool shutdown_completed_ : 1 {};
-  bool shutting_down_ : 1 {};
+  bool have_pending_loads_{};
+  bool suspended_{};
+  bool shutdown_completed_{};
+  bool shutting_down_{};
   seconds_t shutdown_start_time_{};
   millisecs_t last_sound_fade_process_time_{};
 

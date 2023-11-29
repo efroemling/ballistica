@@ -82,12 +82,12 @@ void CoreFeatureSet::DoImport(const CoreConfig& config) {
 }
 
 CoreFeatureSet::CoreFeatureSet(CoreConfig config)
-    : main_thread_id{std::this_thread::get_id()},
+    : main_thread_id_{std::this_thread::get_id()},
       python{new CorePython()},
       platform{CorePlatform::Create()},
       core_config_{std::move(config)},
       last_app_time_measure_microsecs_{CorePlatform::GetCurrentMicrosecs()},
-      vr_mode{config.vr_mode} {
+      vr_mode_{config.vr_mode} {
   // We're a singleton. If there's already one of us, something's wrong.
   assert(g_core == nullptr);
 }
@@ -102,11 +102,6 @@ void CoreFeatureSet::PostInit() {
   RunSanityChecks();
 
   build_src_dir_ = CalcBuildSrcDir();
-
-  // Note: this checks g_core->main_thread_id which is why it must run in
-  // PostInit and not our constructor.
-  // main_event_loop_ = new EventLoop(EventLoopID::kMain,
-  // ThreadSource::kWrapCurrent);
 
   // On monolithic builds we need to bring up Python itself.
   if (g_buildconfig.monolithic_build()) {
@@ -277,7 +272,7 @@ void CoreFeatureSet::RunSanityChecks() {
             + static_type_name<decltype(testrunnable)>(true) + "'");
   }
 
-  if (vr_mode && !g_buildconfig.vr_build()) {
+  if (vr_mode_ && !g_buildconfig.vr_build()) {
     FatalError("vr_mode enabled in core-config but we are not a vr build.");
   }
 }
@@ -308,7 +303,7 @@ auto CoreFeatureSet::HeadlessMode() -> bool {
   return g_buildconfig.headless_build();
 }
 
-auto CoreFeatureSet::IsVRMode() -> bool { return core_config_.vr_mode; }
+// auto CoreFeatureSet::vr_mode() -> bool { return core_config_.vr_mode; }
 
 static void WaitThenDie(millisecs_t wait, const std::string& action) {
   CorePlatform::SleepMillisecs(wait);

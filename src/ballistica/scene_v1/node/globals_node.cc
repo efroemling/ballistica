@@ -169,7 +169,7 @@ void GlobalsNode::SetAsForeground() {
   g_base->graphics->set_vignette_inner(Vector3f(vignette_inner()));
 
 #if BA_VR_BUILD
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     auto* graphics_vr = base::GraphicsVR::get();
     graphics_vr->set_vr_near_clip(vr_near_clip());
     graphics_vr->set_vr_overlay_center(Vector3f(vr_overlay_center()));
@@ -219,7 +219,7 @@ void GlobalsNode::SetDebrisFriction(float val) {
 void GlobalsNode::SetVRNearClip(float val) {
   vr_near_clip_ = val;
 #if BA_VR_BUILD
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     if (IsCurrentGlobals()) {
       base::GraphicsVR::get()->set_vr_near_clip(vr_near_clip_);
     }

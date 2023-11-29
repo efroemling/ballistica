@@ -172,7 +172,7 @@ void AudioServer::OnAppStartInThread_() {
 // On the rift build in vr mode we need to make sure we open the rift audio
 // device.
 #if BA_RIFT_BUILD
-    if (g_core->IsVRMode()) {
+    if (g_core->vr_mode()) {
       ALboolean enumeration =
           alcIsExtensionPresent(nullptr, "ALC_ENUMERATE_ALL_EXT");
       if (enumeration == AL_FALSE) {
@@ -777,7 +777,7 @@ AudioServer::ThreadSource_::ThreadSource_(AudioServer* audio_thread_in,
   } else {
     // In vr mode we keep the microphone a bit closer to the camera
     // for realism purposes, so we need stuff louder in general.
-    if (g_core->IsVRMode()) {
+    if (g_core->vr_mode()) {
       alSourcef(source_, AL_MAX_DISTANCE, 100);
       alSourcef(source_, AL_REFERENCE_DISTANCE, 7.5f);
     } else {
@@ -1060,7 +1060,7 @@ void AudioServer::ThreadSource_::ExecPlay() {
     bool do_normal = true;
     // In vr mode, play non-positional sounds positionally in space roughly
     // where the menu is.
-    if (g_core->IsVRMode()) {
+    if (g_core->vr_mode()) {
       do_normal = false;
       SetPositional(true);
       SetPosition(0.0f, 4.5f, -3.0f);

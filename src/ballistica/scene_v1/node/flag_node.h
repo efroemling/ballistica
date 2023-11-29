@@ -48,8 +48,8 @@ class FlagNode : public Node {
   void UpdateSpringPoint(int p1, int p2, float rest_length);
 
   base::GraphicsQuality graphics_quality_{};
-  bool light_weight_ : 1 {};
-  bool have_flag_impulse_ : 1 {};
+  bool light_weight_{};
+  bool have_flag_impulse_{};
   base::AreaOfInterest* area_of_interest_{};
   Part part_;
   std::vector<float> color_ = {1.0f, 1.0f, 1.0f};

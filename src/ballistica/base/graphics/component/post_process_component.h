@@ -21,7 +21,7 @@ class PostProcessComponent : public RenderComponent {
 
  protected:
   void WriteConfig() override;
-  bool eyes_ : 1 {};
+  bool eyes_{};
   float normal_distort_{};
 };
 

@@ -732,19 +732,11 @@ auto CorePlatform::DemangleCXXSymbol(const std::string& s) -> std::string {
 #endif
 }
 
-// auto CorePlatform::NewAutoReleasePool() -> void* { throw Exception(); }
-
-// void CorePlatform::DrainAutoReleasePool(void* pool) { throw Exception(); }
-
 void CorePlatform::ResetAchievements() {
   Log(LogLevel::kError, "ResetAchievements() unimplemented");
 }
 
-// void CorePlatform::GameCenterLogin() { throw Exception(); }
-
 void CorePlatform::RunEvents() {}
-
-auto CorePlatform::GetMemUsageInfo() -> std::string { return "0,0,0"; }
 
 void CorePlatform::MusicPlayerPlay(PyObject* target) {
   Log(LogLevel::kError, "MusicPlayerPlay() unimplemented on this platform");

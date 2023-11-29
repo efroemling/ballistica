@@ -102,10 +102,6 @@ void AppAdapterApple::ReloadRenderer_(const GraphicsSettings* settings) {
   gs->LoadRenderer();
 }
 
-// void AppAdapterApple::UpdateScreenSizes_() {
-//   assert(g_base->app_adapter->InGraphicsContext());
-// }
-
 auto AppAdapterApple::TryRender() -> bool {
   auto allow = ScopedAllowGraphics_(this);
 

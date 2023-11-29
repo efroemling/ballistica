@@ -29,6 +29,23 @@ class CoreConfig {
   /// Enable vr mode on supported platforms.
   bool vr_mode{};
 
+  /// Log various stages/times in the bootstrapping process.
+  bool lifecycle_log{};
+
+  /// Normally early C++ Log() calls are held until babase has been imported
+  /// so that when they are pushed out to the Python logging calls they are
+  /// properly routed through the full engine. If you are not using babase
+  /// or are trying to debug early issues you can flip this off to push
+  /// things to Python as soon as technically possible.
+  bool hold_early_logs{true};
+
+  /// Let the engine know there's a debugger attached so it should do things
+  /// like abort() instead of exiting with error codes.
+  bool debugger_attached{};
+
+  /// Enables some extra timing logs/prints.
+  bool debug_timing{};
+
   /// If set, the app should exit immediately with this return code (on
   /// applicable platforms). This can be set by command-line parsing in
   /// response to arguments such as 'version' or 'help' which are processed
@@ -50,23 +67,6 @@ class CoreConfig {
 
   /// Explicitly passed user-python (mods) dir.
   std::optional<std::string> user_python_dir{};
-
-  /// Log various stages/times in the bootstrapping process.
-  bool lifecycle_log{};
-
-  /// Normally early C++ Log() calls are held until babase has been imported
-  /// so that when they are pushed out to the Python logging calls they are
-  /// properly routed through the full engine. If you are not using babase
-  /// or are trying to debug early issues you can flip this off to push
-  /// things to Python as soon as technically possible.
-  bool hold_early_logs{true};
-
-  /// Let the engine know there's a debugger attached so it should do things
-  /// like abort() instead of exiting with error codes.
-  bool debugger_attached{};
-
-  /// Enables some extra timing logs/prints.
-  bool debug_timing{};
 };
 
 }  // namespace ballistica::core

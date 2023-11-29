@@ -27,7 +27,7 @@ class SmokeComponent : public RenderComponent {
  protected:
   void WriteConfig() override;
 
-  bool overlay_ : 1 {};
+  bool overlay_{};
   float color_r_{1.0f};
   float color_g_{1.0f};
   float color_b_{1.0f};

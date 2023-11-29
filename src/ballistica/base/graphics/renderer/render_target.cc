@@ -21,7 +21,7 @@ void RenderTarget::OnScreenSizeChange() {
 
 auto RenderTarget::GetScissorX(float x) const -> float {
   assert(g_core);
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     // map -0.05f to 1.1f in logical coordinates to 0 to 1 physical ones
     float res_x_virtual = g_base->graphics_server->screen_virtual_width();
     return physical_width_
@@ -41,7 +41,7 @@ auto RenderTarget::GetScissorX(float x) const -> float {
 }
 auto RenderTarget::GetScissorY(float y) const -> float {
   assert(g_core);
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     // map -0.05f to 1.1f in logical coordinates to 0 to 1 physical ones
     float res_y_virtual = g_base->graphics_server->screen_virtual_height();
     return physical_height_
@@ -62,7 +62,7 @@ auto RenderTarget::GetScissorY(float y) const -> float {
 }
 auto RenderTarget::GetScissorScaleX() const -> float {
   assert(g_core);
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     float f = physical_width_ / g_base->graphics_server->screen_virtual_width();
     return f / (1.0f + kVRBorder);
   } else {
@@ -76,7 +76,7 @@ auto RenderTarget::GetScissorScaleX() const -> float {
 
 auto RenderTarget::GetScissorScaleY() const -> float {
   assert(g_core);
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     float f =
         physical_height_ / g_base->graphics_server->screen_virtual_height();
     return f / (1.0f + kVRBorder);

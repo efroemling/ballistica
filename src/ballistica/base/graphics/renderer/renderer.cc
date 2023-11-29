@@ -46,7 +46,7 @@ void Renderer::PreprocessFrameDef(FrameDef* frame_def) {
   // Some VR environments muck with render states before/after
   // they call us; resync as needed....
 #if BA_VR_BUILD
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     VRSyncRenderStates();
   }
 #endif  // BA_VR_BUILD
@@ -138,7 +138,7 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
 #endif
   backing->DrawBegin(backing_needs_clear);
 
-  bool overlays_in_3d = g_core->IsVRMode();
+  bool overlays_in_3d = g_core->vr_mode();
   bool overlays_in_2d = !overlays_in_3d;
 
   // Draw opaque stuff front-to-back.
@@ -245,7 +245,7 @@ void Renderer::FinishFrameDef(FrameDef* frame_def) {
 #if BA_VR_BUILD
 
 void Renderer::VRPreprocess(FrameDef* frame_def) {
-  if (!g_core->IsVRMode()) {
+  if (!g_core->vr_mode()) {
     return;
   }
 
@@ -330,7 +330,7 @@ void Renderer::VRPreprocess(FrameDef* frame_def) {
 }
 
 void Renderer::VRUpdateForEyeRender(FrameDef* frame_def) {
-  if (!g_core->IsVRMode()) {
+  if (!g_core->vr_mode()) {
     return;
   }
   VREyeRenderBegin();
@@ -381,7 +381,7 @@ void Renderer::VRUpdateForEyeRender(FrameDef* frame_def) {
 }
 
 void Renderer::VRDrawOverlayFlatPass(FrameDef* frame_def) {
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     // The overlay-flat pass should generally only have commands in it
     // when UI is visible; skip rendering it if not.
     if (frame_def->overlay_flat_pass()->HasDrawCommands()) {
@@ -437,7 +437,7 @@ void Renderer::UpdateSizesQualitiesAndColors(FrameDef* frame_def) {
   if (last_render_quality_ != frame_def->quality()) {
     light_render_target_.Clear();
     light_shadow_render_target_.Clear();
-    if (g_core->IsVRMode()) {
+    if (g_core->vr_mode()) {
       vr_overlay_flat_render_target_.Clear();
     }
   }
@@ -450,7 +450,7 @@ void Renderer::UpdateSizesQualitiesAndColors(FrameDef* frame_def) {
   set_tint(1.5f * frame_def->tint());  // FIXME; why the 1.5?
   set_ambient_color(frame_def->ambient_color());
   set_vignette_inner(frame_def->vignette_inner());
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     // In VR mode we dont want vignetting;
     // just use the inner color for both in and out.
     set_vignette_outer(frame_def->vignette_inner());

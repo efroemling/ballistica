@@ -34,9 +34,9 @@ class ConnectionToHost : public Connection {
   std::string peer_hash_input_;
   std::string peer_hash_;
   // Can remove once back-compat protocol is > 29
-  bool ignore_old_attach_remote_player_packets_ : 1 {};
-  bool printed_connect_message_ : 1 {};
-  bool got_host_info_ : 1 {};
+  bool ignore_old_attach_remote_player_packets_{};
+  bool printed_connect_message_{};
+  bool got_host_info_{};
   int protocol_version_{-1};
   int build_number_{};
   millisecs_t last_ping_send_time_{};

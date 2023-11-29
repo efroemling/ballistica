@@ -112,14 +112,6 @@ struct AppAdapterSDL::GraphicsSettings_ : public GraphicsSettings {
   int max_fps = g_base->app_config->Resolve(AppConfig::IntID::kMaxFPS);
 };
 
-void AppAdapterSDL::DoApplyAppConfig() {
-  assert(g_base->InLogicThread());
-
-  // Android res string.
-  // std::string android_res =
-  //     g_base->app_config->Resolve(AppConfig::StringID::kResolutionAndroid);
-}
-
 auto AppAdapterSDL::GetGraphicsSettings() -> GraphicsSettings* {
   assert(g_base->InLogicThread());
   return new GraphicsSettings_();

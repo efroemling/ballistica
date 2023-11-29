@@ -267,9 +267,7 @@ class GraphicsSettingsWindow(bui.Window):
                         bui.Lstr(resource='nativeText'),
                     ]
                     for res in [1440, 1080, 960, 720, 480]:
-                        # Nav bar is 72px so lets allow for that in what
-                        # choices we show.
-                        if native_res[1] >= res - 72:
+                        if native_res[1] >= res:
                             res_str = f'{res}p'
                             choices.append(res_str)
                             choices_display.append(bui.Lstr(value=res_str))

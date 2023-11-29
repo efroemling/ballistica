@@ -70,7 +70,7 @@ class AppAdapterApple : public AppAdapter {
   void ReloadRenderer_(const GraphicsSettings* settings);
 
   std::thread::id graphics_thread_{};
-  bool graphics_allowed_ : 1 {};
+  bool graphics_allowed_{};
   uint8_t resize_friendly_frames_{};
   Vector2f resize_target_resolution_{-1.0f, -1.0f};
   std::mutex graphics_calls_mutex_;

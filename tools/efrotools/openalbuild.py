@@ -29,7 +29,7 @@ def _build_dir(arch: str, mode: str) -> str:
     return f'build/openal_build_android_{arch}_{mode}'
 
 
-def build(arch: str, mode: str) -> None:
+def build_openal(arch: str, mode: str) -> None:
     """Do the thing."""
     from efrotools import replace_exact
 
@@ -38,6 +38,8 @@ def build(arch: str, mode: str) -> None:
 
     if mode not in MODES:
         raise CleanError(f"Invalid mode '{mode}'.")
+
+    enable_oboe = True
 
     # Get ndk path.
     ndk_path = (
@@ -49,6 +51,7 @@ def build(arch: str, mode: str) -> None:
         .stdout.decode()
         .strip()
     )
+    # os.environ['NDK_ROOT'] = ndk_path
 
     # Grab from git and build.
     builddir = _build_dir(arch, mode)
@@ -58,9 +61,27 @@ def build(arch: str, mode: str) -> None:
         ['git', 'clone', 'https://github.com/kcat/openal-soft.git', builddir],
         check=True,
     )
+    subprocess.run(['git', 'checkout', '1.23.1'], check=True, cwd=builddir)
 
-    commit = 'd3875f3'  # Version 1.23.1
-    subprocess.run(['git', 'checkout', commit], check=True, cwd=builddir)
+    if enable_oboe:
+        builddir_oboe = f'{builddir}_oboe'
+        subprocess.run(['rm', '-rf', builddir_oboe], check=True)
+        subprocess.run(
+            ['mkdir', '-p', os.path.dirname(builddir_oboe)], check=True
+        )
+        subprocess.run(
+            [
+                'git',
+                'clone',
+                'https://github.com/google/oboe',
+                builddir_oboe,
+            ],
+            check=True,
+        )
+        subprocess.run(
+            ['git', 'checkout', '1.8.0'], check=True, cwd=builddir_oboe
+        )
+        print(f'FULLY GOT {builddir_oboe}')
 
     # One bit of filtering: by default, openalsoft sends all sorts of
     # log messages to the android log. This is reasonable since its
@@ -85,16 +106,38 @@ def build(arch: str, mode: str) -> None:
     with open(loggingpath, 'w', encoding='utf-8') as outfile:
         outfile.write(txt)
 
+    android_platform = 23
+
     subprocess.run(
         [
             'cmake',
             '.',
             f'-DANDROID_ABI={ARCHS[arch]}',
-            '-DANDROID_NATIVE_API_LEVEL=21',
+            f'-DCMAKE_BUILD_TYPE={mode}',
+            '-DCMAKE_TOOLCHAIN_FILE='
+            f'{ndk_path}/build/cmake/android.toolchain.cmake',
+            f'-DANDROID_PLATFORM={android_platform}',
+        ],
+        cwd=builddir_oboe,
+        check=True,
+    )
+    subprocess.run(['make'], cwd=builddir_oboe, check=True)
+
+    subprocess.run(
+        [
+            'cmake',
+            '.',
+            f'-DANDROID_ABI={ARCHS[arch]}',
+            '-DALSOFT_INSTALL=0',  # Prevents odd error.
+            '-DALSOFT_REQUIRE_OBOE=1',
+            '-DALSOFT_BACKEND_OPENSL=0',
+            '-DALSOFT_BACKEND_WAVE=0',
             f'-DCMAKE_BUILD_TYPE={mode}',
             '-DLIBTYPE=STATIC',
             '-DCMAKE_TOOLCHAIN_FILE='
             f'{ndk_path}/build/cmake/android.toolchain.cmake',
+            f'-DOBOE_SOURCE={os.path.abspath(builddir_oboe)}',
+            f'-DANDROID_PLATFORM={android_platform}',
         ],
         cwd=builddir,
         check=True,
@@ -129,9 +172,13 @@ def gather() -> None:
     for arch, andrarch in ARCHS.items():
         for mode in MODES:
             builddir = _build_dir(arch, mode)
+            builddir_oboe = f'{builddir}_oboe'
             installdir = f'{outdir}/lib/{andrarch}_{mode}'
             subprocess.run(['mkdir', '-p', installdir], check=True)
             subprocess.run(
                 ['cp', f'{builddir}/libopenal.a', installdir], check=True
+            )
+            subprocess.run(
+                ['cp', f'{builddir_oboe}/liboboe.a', installdir], check=True
             )
     print('OpenAL gather successful!')

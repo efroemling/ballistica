@@ -270,8 +270,6 @@ class GraphicsServer {
     return texture_quality_requested_;
   }
 
-  void HandlePushAndroidRes(const std::string& android_res);
-
   auto texture_compression_types() const {
     assert(texture_compression_types_set_);
     return texture_compression_types_;
@@ -321,15 +319,15 @@ class GraphicsServer {
   TextureQuality texture_quality_{};
   GraphicsQualityRequest graphics_quality_requested_{};
   GraphicsQuality graphics_quality_{};
-  bool renderer_loaded_ : 1 {};
-  bool model_view_projection_matrix_dirty_ : 1 {true};
-  bool model_world_matrix_dirty_ : 1 {true};
-  bool tv_border_ : 1 {};
-  bool renderer_context_lost_ : 1 {};
-  bool texture_compression_types_set_ : 1 {};
-  bool cam_orient_matrix_dirty_ : 1 {true};
-  bool shutting_down_ : 1 {};
-  bool shutdown_completed_ : 1 {};
+  bool renderer_loaded_{};
+  bool model_view_projection_matrix_dirty_{true};
+  bool model_world_matrix_dirty_{true};
+  bool tv_border_{};
+  bool renderer_context_lost_{};
+  bool texture_compression_types_set_{};
+  bool cam_orient_matrix_dirty_{true};
+  bool shutting_down_{};
+  bool shutdown_completed_{};
   float res_x_{};
   float res_y_{};
   float res_x_virtual_{};

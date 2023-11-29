@@ -222,7 +222,7 @@ void TerrainNode::Draw(base::FrameDef* frame_def) {
   if (!mesh_.Exists()) {
     return;
   }
-  if (vr_only_ && !g_core->IsVRMode()) {
+  if (vr_only_ && !g_core->vr_mode()) {
     return;
   }
   base::ObjectComponent c(overlay_      ? frame_def->overlay_3d_pass()

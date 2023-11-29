@@ -185,10 +185,10 @@ class Input {
   int mouse_move_count_{};
   int input_lock_count_temp_{};
   int input_lock_count_permanent_{};
-  bool input_active_ : 1 {};
-  bool have_button_using_inputs_ : 1 {};
-  bool have_start_activated_default_button_inputs_ : 1 {};
-  bool have_non_touch_inputs_ : 1 {};
+  bool input_active_{};
+  bool have_button_using_inputs_{};
+  bool have_start_activated_default_button_inputs_{};
+  bool have_non_touch_inputs_{};
   millisecs_t input_idle_time_{};
   millisecs_t last_get_local_active_input_device_count_check_time_{};
   float cursor_pos_x_{};

@@ -30,7 +30,6 @@ class AppAdapterSDL : public AppAdapter {
   AppAdapterSDL();
 
   void OnMainThreadStartApp() override;
-  void DoApplyAppConfig() override;
 
   auto TryRender() -> bool;
 
@@ -77,11 +76,11 @@ class AppAdapterSDL : public AppAdapter {
   void SleepUntilNextEventCycle_(microsecs_t cycle_start_time);
 
   int max_fps_{60};
-  bool done_ : 1 {};
-  bool fullscreen_ : 1 {};
-  bool vsync_actually_enabled_ : 1 {};
-  bool debug_log_sdl_frame_timing_ : 1 {};
-  bool hidden_ : 1 {};
+  bool done_{};
+  bool fullscreen_{};
+  bool vsync_actually_enabled_{};
+  bool debug_log_sdl_frame_timing_{};
+  bool hidden_{};
 
   /// With this off, graphics call pushes simply get pushed to the main
   /// thread and graphics code is allowed to run any time in the main
@@ -90,8 +89,8 @@ class AppAdapterSDL : public AppAdapter {
   /// allowed during draws. This strictness is generally not needed here but
   /// can be useful to test with, as it more closely matches other platforms
   /// that require such a setup.
-  bool strict_graphics_context_ : 1 {};
-  bool strict_graphics_allowed_ : 1 {};
+  bool strict_graphics_context_{};
+  bool strict_graphics_allowed_{};
   VSync vsync_{VSync::kUnset};
   uint32_t sdl_runnable_event_id_{};
   std::mutex strict_graphics_calls_mutex_;

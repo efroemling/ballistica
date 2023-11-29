@@ -140,16 +140,16 @@ auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
   assert(g_base->app_adapter->InGraphicsContext());
   millisecs_t start_time = g_core->GetAppTimeMillisecs();
 
-  // Don't bother waiting if we can't/shouldn't render anyway.
-  if (!renderer_ || shutting_down_ || g_base->app_adapter->app_suspended()) {
-    return nullptr;
-  }
-
-  // Do some incremental loading every time we try to render.
-  g_base->assets->RunPendingGraphicsLoads();
-
   // Spin and wait for a short bit for a frame_def to appear.
   while (true) {
+    // Stop waiting if we can't/shouldn't render anyway.
+    if (!renderer_ || shutting_down_ || g_base->app_adapter->app_suspended()) {
+      return nullptr;
+    }
+
+    // Do a bit of incremental loading every time through.
+    g_base->assets->RunPendingGraphicsLoads();
+
     FrameDef* frame_def{};
     {
       std::scoped_lock llock(frame_def_mutex_);
@@ -166,10 +166,7 @@ auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
       return frame_def;
     }
 
-    // If there's no frame_def for us, sleep for a bit and wait for it. But
-    // if we've been waiting for too long, give up. On some platforms such
-    // as Android, this frame will still get flipped whether we draw in it
-    // or not, so we *really* want to not skip drawing if we can help it.
+    // If there's no frame_def for us, sleep for a bit and wait for it.
     millisecs_t t = g_core->GetAppTimeMillisecs() - start_time;
     if (t >= 1000) {
       if (g_buildconfig.debug_build()) {
@@ -386,29 +383,6 @@ void GraphicsServer::UnloadRenderer() {
   renderer_->Unload();
 
   renderer_loaded_ = false;
-}
-
-// FIXME: Shouldn't have android-specific code in here.
-void GraphicsServer::HandlePushAndroidRes(const std::string& android_res) {
-  if (g_buildconfig.ostype_android()) {
-    assert(renderer_);
-    if (renderer_ == nullptr) {
-      return;
-    }
-    // We push android res to the java layer here.  We don't actually worry
-    // about screen-size-changed callbacks and whatnot, since those will
-    // happen automatically once things actually change. We just want to be
-    // sure that we have a renderer so we can calc what our auto res should
-    // be.
-    assert(renderer_);
-    std::string fin_res;
-    if (android_res == "Auto") {
-      fin_res = renderer_->GetAutoAndroidRes();
-    } else {
-      fin_res = android_res;
-    }
-    g_core->platform->AndroidSetResString(fin_res);
-  }
 }
 
 void GraphicsServer::SetTextureCompressionTypes(

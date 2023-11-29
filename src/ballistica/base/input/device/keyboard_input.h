@@ -32,15 +32,15 @@ class KeyboardInput : public InputDevice {
  private:
   void UpdateArrowKeys_(SDL_Keycode key);
   void UpdateRun_(SDL_Keycode key, bool down);
-  bool down_held_ : 1 {};
-  bool up_held_ : 1 {};
-  bool left_held_ : 1 {};
-  bool right_held_ : 1 {};
-  bool enable_child_ : 1 {};
-  bool left_key_assigned_ : 1 {};
-  bool right_key_assigned_ : 1 {};
-  bool up_key_assigned_ : 1 {};
-  bool down_key_assigned_ : 1 {};
+  bool down_held_{};
+  bool up_held_{};
+  bool left_held_{};
+  bool right_held_{};
+  bool enable_child_{};
+  bool left_key_assigned_{};
+  bool right_key_assigned_{};
+  bool up_key_assigned_{};
+  bool down_key_assigned_{};
   SDL_Keycode up_key_{};
   SDL_Keycode down_key_{};
   SDL_Keycode left_key_{};

@@ -122,11 +122,11 @@ class SimpleComponent : public RenderComponent {
   void WriteConfig() override;
 
  protected:
-  bool do_colorize_2_ : 1 {};
-  bool transparent_ : 1 {};
-  bool premultiplied_ : 1 {};
-  bool have_color_ : 1 {};
-  bool double_sided_ : 1 {};
+  bool do_colorize_2_{};
+  bool transparent_{};
+  bool premultiplied_{};
+  bool have_color_{};
+  bool double_sided_{};
   float color_r_{1.0f};
   float color_g_{1.0f};
   float color_b_{1.0f};

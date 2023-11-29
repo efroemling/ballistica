@@ -388,6 +388,10 @@ class SceneV1FeatureSet : public FeatureSetNativeComponent {
   // Our subcomponents.
   SceneV1Python* const python;
 
+  // FIXME: should be private.
+  int session_count{};
+  bool replay_open{};
+
  private:
   void SetupNodeMessageType_(const std::string& name, NodeMessageType val,
                              const std::string& format);
