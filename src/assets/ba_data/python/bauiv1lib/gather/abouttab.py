@@ -80,15 +80,12 @@ class AboutGatherTab(GatherTab):
 
         bui.textwidget(
             parent=self._container,
-            position=(
-                region_width * 0.5,
-                c_height_2 * (0.58 if include_invite else 0.5),
-            ),
+            position=(region_width * 0.5, c_height_2 * 0.58),
             color=(0.6, 1.0, 0.6),
             scale=msc_scale,
             size=(0, 0),
             maxwidth=region_width * 0.9,
-            max_height=c_height_2 * (0.7 if include_invite else 0.9),
+            max_height=c_height_2 * 0.7,
             h_align='center',
             v_align='center',
             text=message,
@@ -97,7 +94,7 @@ class AboutGatherTab(GatherTab):
         if include_invite:
             bui.textwidget(
                 parent=self._container,
-                position=(region_width * 0.57, 35),
+                position=(region_width * 0.57, 85),
                 color=(0, 1, 0),
                 scale=0.6,
                 size=(0, 0),
@@ -112,7 +109,7 @@ class AboutGatherTab(GatherTab):
             )
             bui.buttonwidget(
                 parent=self._container,
-                position=(region_width * 0.59, 10),
+                position=(region_width * 0.59, 60),
                 size=(230, 50),
                 color=(0.54, 0.42, 0.56),
                 textcolor=(0, 1, 0),
@@ -124,6 +121,32 @@ class AboutGatherTab(GatherTab):
                 on_activate_call=bui.WeakCall(self._invite_to_try_press),
                 up_widget=tab_button,
             )
+
+        bui.textwidget(
+            parent=self._container,
+            position=(region_width * 0.57, 15 if include_invite else 75),
+            color=(0.6, 0.6, 1),
+            scale=0.6,
+            size=(0, 0),
+            maxwidth=region_width * 0.5,
+            h_align='right',
+            v_align='center',
+            flatness=1.0,
+            text='Want to look for new people to play with?\nJoin our Discord'
+                 ' and find new friends!',
+        )
+        bui.buttonwidget(
+            parent=self._container,
+            position=(region_width * 0.59, -10 if include_invite else 50),
+            size=(230, 50),
+            color=(0.54, 0.42, 0.56),
+            textcolor=(0.6, 0.6, 1),
+            label='Join The Discord',
+            autoselect=True,
+            on_activate_call=bui.WeakCall(self._join_the_discord_press),
+            up_widget=tab_button,
+        )
+
         return self._container
 
     def _invite_to_try_press(self) -> None:
@@ -137,3 +160,10 @@ class AboutGatherTab(GatherTab):
             show_sign_in_prompt()
             return
         handle_app_invites_press()
+
+    def _join_the_discord_press(self) -> None:
+        # pylint: disable=cyclic-import
+        from bauiv1lib.discord import DiscordWindow
+
+        assert bui.app.classic is not None
+        DiscordWindow().get_root_widget()
