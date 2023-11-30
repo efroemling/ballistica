@@ -51,7 +51,7 @@ def sortlines() -> None:
 def openal_build_android() -> None:
     """Build openalsoft for android."""
     from efro.error import CleanError
-    from efrotools.openalbuild import build
+    from efrotools.openalbuild import build_openal
 
     pcommand.disallow_in_batch()
 
@@ -62,7 +62,7 @@ def openal_build_android() -> None:
             ' and one <MODE> arg: debug, release'
         )
 
-    build(args[0], args[1])
+    build_openal(args[0], args[1])
 
 
 def openal_gather() -> None:

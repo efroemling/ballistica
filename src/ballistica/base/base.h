@@ -272,6 +272,7 @@ enum class TextureCompressionType : uint8_t {
   kPVR,
   kETC1,
   kETC2,
+  kASTC,
 };
 
 enum class TextureMinQuality : uint8_t {
@@ -611,10 +612,10 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// Issue a high level app quit request. Can be called from any thread and
   /// can be safely called repeatedly. If 'confirm' is true, a confirmation
   /// dialog will be presented if the environment and situation allows;
-  /// otherwise the quit will be immediate. A QuitType arg can optionally be
-  /// passed to influence quit behavior; on some platforms such as mobile
-  /// the default is for the app to recede to the background but physically
-  /// remain running.
+  /// otherwise the quit process will start immediately. A QuitType arg can
+  /// optionally be passed to influence quit behavior; on some platforms
+  /// such as mobile the default is for the app to recede to the background
+  /// but physically remain running.
   void QuitApp(bool confirm = false, QuitType quit_type = QuitType::kSoft);
 
   /// Called when app shutdown process completes. Sets app to exit.
@@ -773,10 +774,10 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   // Non-const bits (fixme: clean up access to these).
   TouchInput* touch_input{};
 
-  auto return_value() const { return return_value_; }
-  void set_return_value(int val) { return_value_ = val; }
+  // auto return_value() const { return return_value_; }
+  // void set_return_value(int val) { return_value_ = val; }
 
-  auto GetReturnValue() const -> int override;
+  // auto GetReturnValue() const -> int override;
 
  private:
   BaseFeatureSet();
@@ -791,7 +792,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   std::mutex shutdown_suppress_lock_;
   bool shutdown_suppress_disallowed_{};
-  int shutdown_suppress_count_{};
   bool tried_importing_plus_{};
   bool tried_importing_classic_{};
   bool tried_importing_ui_v1_{};
@@ -802,7 +802,8 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   bool base_native_import_completed_{};
   bool basn_log_behavior_{};
   bool server_wrapper_managed_{};
-  int return_value_{};
+  int shutdown_suppress_count_{};
+  // int return_value_{};
 };
 
 }  // namespace ballistica::base

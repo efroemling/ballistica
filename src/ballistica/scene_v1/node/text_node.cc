@@ -367,11 +367,11 @@ void TextNode::Draw(base::FrameDef* frame_def) {
     text_width_dirty_ = false;
   }
 
-  bool vr_2d_text = (g_core->IsVRMode() && !in_world_);
+  bool vr_2d_text = (g_core->vr_mode() && !in_world_);
 
   // in vr mode we use the fixed overlay position if our scene is set for
   // that
-  bool vr_use_fixed = (g_core->IsVRMode() && scene()->use_fixed_vr_overlay());
+  bool vr_use_fixed = (g_core->vr_mode() && scene()->use_fixed_vr_overlay());
 
   // FIXME - in VR, fixed and front are currently mutually exclusive; need to
   // implement that.
@@ -635,7 +635,7 @@ void TextNode::Draw(base::FrameDef* frame_def) {
       } else {
         c.SetColor(1, 1, 1, fin_a);
       }
-      if (g_core->IsVRMode()) {
+      if (g_core->vr_mode()) {
         c.SetFlatness(text_group_.GetElementMaxFlatness(e));
       } else {
         c.SetFlatness(

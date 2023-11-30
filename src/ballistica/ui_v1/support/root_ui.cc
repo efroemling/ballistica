@@ -173,7 +173,7 @@ void RootUI::Draw(base::FrameDef* frame_def) {
         draw_menu_button = false;
       }
     } else if (g_buildconfig.rift_build()) {
-      if (g_core->IsVRMode()) {
+      if (g_core->vr_mode()) {
         draw_menu_button = false;
       }
     }

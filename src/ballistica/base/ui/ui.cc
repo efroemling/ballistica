@@ -39,7 +39,7 @@ UI::UI() {
   }
   if (!force_scale_) {
     // Use automatic val.
-    if (g_core->IsVRMode() || g_core->platform->IsRunningOnTV()) {
+    if (g_core->vr_mode() || g_core->platform->IsRunningOnTV()) {
       // VR and TV modes always use medium.
       scale_ = UIScale::kMedium;
     } else {

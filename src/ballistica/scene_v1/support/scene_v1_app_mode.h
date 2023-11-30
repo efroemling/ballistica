@@ -213,16 +213,16 @@ class SceneV1AppMode : public base::AppMode {
   Object::WeakRef<Scene> foreground_scene_;
   Object::WeakRef<Session> foreground_session_;
 
-  bool chat_muted_ : 1 {};
-  bool in_update_ : 1 {};
-  bool kick_idle_players_ : 1 {};
-  bool public_party_enabled_ : 1 {};
-  bool public_party_queue_enabled_ : 1 {true};
-  bool require_client_authentication_ : 1 {};
-  bool idle_exiting_ : 1 {};
-  bool game_roster_dirty_ : 1 {};
-  bool kick_vote_in_progress_ : 1 {};
-  bool kick_voting_enabled_ : 1 {true};
+  bool chat_muted_{};
+  bool in_update_{};
+  bool kick_idle_players_{};
+  bool public_party_enabled_{};
+  bool public_party_queue_enabled_{true};
+  bool require_client_authentication_{};
+  bool idle_exiting_{};
+  bool game_roster_dirty_{};
+  bool kick_vote_in_progress_{};
+  bool kick_voting_enabled_{true};
 
   cJSON* game_roster_{};
   millisecs_t last_game_roster_send_time_{};

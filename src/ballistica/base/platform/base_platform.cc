@@ -107,7 +107,7 @@ void BasePlatform::PurchaseAck(const std::string& purchase,
 void BasePlatform::OpenURL(const std::string& url) {
   // Can't open URLs in VR - just tell the Python layer to show the url in the
   // gui.
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     g_base->ui->ShowURL(url);
     return;
   }

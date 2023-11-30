@@ -2497,8 +2497,15 @@ static auto PySetPartyIconAlwaysVisible(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &value)) {
     return nullptr;
   }
-  assert(g_base->input);
-  g_ui_v1->root_ui()->set_always_draw_party_icon(static_cast<bool>(value));
+  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base);
+  assert(g_ui_v1);
+  auto* root_ui = g_ui_v1->root_ui();
+  if (root_ui == nullptr) {
+    throw Exception("ui-v1 root ui not found.");
+  }
+
+  root_ui->set_always_draw_party_icon(static_cast<bool>(value));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -2524,8 +2531,15 @@ static auto PySetPartyWindowOpen(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &value)) {
     return nullptr;
   }
+  BA_PRECONDITION(g_base->InLogicThread());
   assert(g_base->input);
-  g_ui_v1->root_ui()->set_party_window_open(static_cast<bool>(value));
+  assert(g_ui_v1);
+  auto* root_ui = g_ui_v1->root_ui();
+  if (root_ui == nullptr) {
+    throw Exception("ui-v1 root ui not found.");
+  }
+
+  root_ui->set_party_window_open(static_cast<bool>(value));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -2800,6 +2814,7 @@ static PyMethodDef PyConsolePrintDef = {
 
 static auto PyIsPartyIconVisible(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
   bool party_button_active = (g_base->app_mode()->HasConnectionToClients()
                               || g_base->app_mode()->HasConnectionToHost()
                               || g_ui_v1->root_ui()->always_draw_party_icon());

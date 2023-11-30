@@ -4971,8 +4971,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
 
       int elem_count = name_text_group_.GetElementCount();
       float s_extra =
-          (g_core->IsVRMode() || g_base->ui->scale() == UIScale::kSmall) ? 1.2f
-                                                                         : 1.0f;
+          (g_core->vr_mode() || g_base->ui->scale() == UIScale::kSmall) ? 1.2f
+                                                                        : 1.0f;
 
       for (int e = 0; e < elem_count; e++) {
         // Gracefully skip unloaded textures.

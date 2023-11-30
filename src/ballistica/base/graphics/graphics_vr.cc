@@ -151,7 +151,7 @@ void GraphicsVR::DrawUI(FrameDef* frame_def) {
 void GraphicsVR::CalcVROverlayMatrices(FrameDef* frame_def) {
   // For VR mode, calc our overlay matrix for use in positioning overlay
   // elements.
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     Vector3f cam_target_pt(frame_def->cam_target_original());
     Matrix44f vr_overlay_matrix{kMatrix44fIdentity};
     Matrix44f vr_overlay_matrix_fixed{kMatrix44fIdentity};
@@ -278,7 +278,7 @@ void GraphicsVR::DrawVROverlay(FrameDef* frame_def) {
   // the overlay-flat pass (otherwise it may get skipped).
   // This should be a safe assumption since this is pretty much just for
   // widgets.
-  if (g_core->IsVRMode() && frame_def->overlay_flat_pass()->HasDrawCommands()) {
+  if (g_core->vr_mode() && frame_def->overlay_flat_pass()->HasDrawCommands()) {
     // Draw our overlay-flat stuff into our overlay pass.
     SpecialComponent c(frame_def->overlay_pass(),
                        SpecialComponent::Source::kVROverlayBuffer);
@@ -314,7 +314,7 @@ void GraphicsVR::DrawOverlayBounds(RenderPass* pass) {
 }
 
 void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
-  if (!g_core->IsVRMode()) {
+  if (!g_core->vr_mode()) {
     return;
   }
 

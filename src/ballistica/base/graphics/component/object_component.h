@@ -115,12 +115,12 @@ class ObjectComponent : public RenderComponent {
  protected:
   ReflectionType reflection_{ReflectionType::kNone};
   LightShadowType light_shadow_{LightShadowType::kObject};
-  bool world_space_ : 1 {};
-  bool transparent_ : 1 {};
-  bool premultiplied_ : 1 {};
-  bool have_color_add_ : 1 {};
-  bool double_sided_ : 1 {};
-  bool do_colorize_2_ : 1 {};
+  bool world_space_{};
+  bool transparent_{};
+  bool premultiplied_{};
+  bool have_color_add_{};
+  bool double_sided_{};
+  bool do_colorize_2_{};
   float color_r_{1.0f};
   float color_g_{1.0f};
   float color_b_{1.0f};

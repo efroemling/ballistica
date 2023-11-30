@@ -37,9 +37,9 @@ class SpriteComponent : public RenderComponent {
 
  protected:
   void WriteConfig() override;
-  bool have_color_ : 1 {};
-  bool camera_aligned_ : 1 {};
-  bool overlay_ : 1 {};
+  bool have_color_{};
+  bool camera_aligned_{};
+  bool overlay_{};
   uint8_t exponent_{1};
   float color_r_{1.0f};
   float color_g_{1.0f};

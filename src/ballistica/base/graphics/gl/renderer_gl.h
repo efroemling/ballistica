@@ -261,23 +261,23 @@ class RendererGL : public Renderer {
   void SetBlendPremult(bool b);
 
   GraphicsQuality vignette_quality_{};
-  bool blend_ : 1 {};
-  bool blend_premult_ : 1 {};
-  bool first_extension_check_ : 1 {true};
-  bool is_tegra_4_ : 1 {};
-  bool is_tegra_k1_ : 1 {};
-  bool is_recent_adreno_ : 1 {};
-  bool is_adreno_ : 1 {};
-  bool enable_msaa_ : 1 {};
-  bool draw_at_equal_depth_ : 1 {};
-  bool depth_writing_enabled_ : 1 {};
-  bool depth_testing_enabled_ : 1 {};
-  bool data_loaded_ : 1 {};
-  bool draw_front_ : 1 {};
-  bool got_screen_framebuffer_ : 1 {};
-  bool double_sided_ : 1 {};
-  bool invalidate_framebuffer_support_ : 1 {};
-  bool checked_gl_version_ : 1 {};
+  bool blend_{};
+  bool blend_premult_{};
+  bool first_extension_check_{true};
+  bool is_tegra_4_{};
+  bool is_tegra_k1_{};
+  bool is_recent_adreno_{};
+  bool is_adreno_{};
+  bool enable_msaa_{};
+  bool draw_at_equal_depth_{};
+  bool depth_writing_enabled_{};
+  bool depth_testing_enabled_{};
+  bool data_loaded_{};
+  bool draw_front_{};
+  bool got_screen_framebuffer_{};
+  bool double_sided_{};
+  bool invalidate_framebuffer_support_{};
+  bool checked_gl_version_{};
   GLint gl_version_major_{};
   GLint gl_version_minor_{};
   int last_blur_res_count_{};
@@ -342,8 +342,7 @@ class RendererGL : public Renderer {
   static bool funky_depth_issue_set_;
   static bool funky_depth_issue_;
 #if BA_OSTYPE_ANDROID
-  static bool is_speedy_android_device_;
-  static bool is_extra_speedy_android_device_;
+  bool is_speedy_android_device_{};
 #endif
   ProgramGL* current_program_{};
   std::vector<Rect> scissor_rects_;

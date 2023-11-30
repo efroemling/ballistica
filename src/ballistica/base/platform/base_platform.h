@@ -119,7 +119,7 @@ class BasePlatform {
   virtual ~BasePlatform();
 
  private:
-  bool ran_base_post_init_ : 1 {};
+  bool ran_base_post_init_{};
   PythonRef string_edit_adapter_{};
   std::string public_device_uuid_;
 };

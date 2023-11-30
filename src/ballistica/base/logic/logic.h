@@ -140,13 +140,13 @@ class Logic {
   seconds_t recent_display_time_increments_[kDisplayTimeSampleCount]{};
   int recent_display_time_increments_index_{-1};
 
-  bool app_bootstrapping_complete_ : 1 {};
-  bool have_pending_loads_ : 1 {};
-  bool debug_log_display_time_ : 1 {};
-  bool applied_app_config_ : 1 {};
-  bool shutting_down_ : 1 {};
-  bool shutdown_completed_ : 1 {};
-  bool graphics_ready_ : 1 {};
+  bool app_bootstrapping_complete_{};
+  bool have_pending_loads_{};
+  bool debug_log_display_time_{};
+  bool applied_app_config_{};
+  bool shutting_down_{};
+  bool shutdown_completed_{};
+  bool graphics_ready_{};
   Timer* process_pending_work_timer_{};
   EventLoop* event_loop_{};
   std::unique_ptr<TimerList> display_timers_;

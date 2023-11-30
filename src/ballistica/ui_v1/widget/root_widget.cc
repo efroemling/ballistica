@@ -111,7 +111,7 @@ RootWidget::~RootWidget() = default;
 auto RootWidget::AddCover(float h_align, VAlign v_align, float x, float y,
                           float w, float h, float o) -> RootWidget::Button* {
   // Currently just not doing these in vr mode.
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     return nullptr;
   }
 

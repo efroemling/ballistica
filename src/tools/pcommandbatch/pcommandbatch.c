@@ -36,10 +36,10 @@ struct Context_ {
 };
 
 int path_exists_(const char* path);
-int establish_connection_(const struct Context_* ctx);
+int establish_connection_(struct Context_* ctx);
 int calc_paths_(struct Context_* ctx);
 int send_command_(struct Context_* ctx, int argc, char** argv);
-int handle_response_(const struct Context_* ctx);
+int handle_response_(struct Context_* ctx);
 
 // Read all data from a socket and return as a malloc'ed null-terminated
 // string.
@@ -192,7 +192,7 @@ int path_exists_(const char* path) {
   return (stat(path, &file_stat) != -1);
 }
 
-int establish_connection_(const struct Context_* ctx) {
+int establish_connection_(struct Context_* ctx) {
   char state_file_path_full[256];
   snprintf(state_file_path_full, sizeof(state_file_path_full),
            "%s/worker_state_%s_%d", ctx->state_dir_path, ctx->instance_prefix,
@@ -338,7 +338,8 @@ int establish_connection_(const struct Context_* ctx) {
         return -1;
       }
     }
-    if (retry_attempt >= 10) {
+    // Let's stop at 5, which will be about a minute of waiting total.
+    if (retry_attempt >= 5) {
       fprintf(stderr,
               "Error: pcommandbatch client %s_%d (pid %d): too many "
               "retry attempts; giving up.\n",
@@ -346,6 +347,11 @@ int establish_connection_(const struct Context_* ctx) {
       close(sockfd);
       return -1;
     }
+
+    // Am currently seeing the occasional hang in this loop. Let's flip
+    // into verbose if that might be happening to diagnose.
+    ctx->verbose = 1;
+
     if (ctx->verbose) {
       fprintf(
           stderr,
@@ -493,7 +499,7 @@ int send_command_(struct Context_* ctx, int argc, char** argv) {
   return 0;
 }
 
-int handle_response_(const struct Context_* ctx) {
+int handle_response_(struct Context_* ctx) {
   char* inbuf = read_string_from_socket_(ctx);
 
   // Getting null or an empty string response imply something is broken.

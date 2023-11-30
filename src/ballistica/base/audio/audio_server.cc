@@ -28,8 +28,8 @@ extern std::string g_rift_audio_device_name;
 #endif
 
 #if BA_OSTYPE_ANDROID
-LPALCDEVICEPAUSESOFT alcDevicePauseSOFT;
-LPALCDEVICERESUMESOFT alcDeviceResumeSOFT;
+LPALCDEVICEPAUSESOFT alcDevicePauseSOFT{};
+LPALCDEVICERESUMESOFT alcDeviceResumeSOFT{};
 #endif
 
 const int kAudioProcessIntervalNormal{500 * 1000};
@@ -172,7 +172,7 @@ void AudioServer::OnAppStartInThread_() {
 // On the rift build in vr mode we need to make sure we open the rift audio
 // device.
 #if BA_RIFT_BUILD
-    if (g_core->IsVRMode()) {
+    if (g_core->vr_mode()) {
       ALboolean enumeration =
           alcIsExtensionPresent(nullptr, "ALC_ENUMERATE_ALL_EXT");
       if (enumeration == AL_FALSE) {
@@ -219,8 +219,10 @@ void AudioServer::OnAppStartInThread_() {
     if (alcIsExtensionPresent(device, "ALC_SOFT_pause_device")) {
       alcDevicePauseSOFT = reinterpret_cast<LPALCDEVICEPAUSESOFT>(
           alcGetProcAddress(device, "alcDevicePauseSOFT"));
+      BA_PRECONDITION_FATAL(alcDevicePauseSOFT != nullptr);
       alcDeviceResumeSOFT = reinterpret_cast<LPALCDEVICERESUMESOFT>(
           alcGetProcAddress(device, "alcDeviceResumeSOFT"));
+      BA_PRECONDITION_FATAL(alcDeviceResumeSOFT != nullptr);
     } else {
       FatalError("ALC_SOFT pause/resume functionality not found.");
     }
@@ -331,21 +333,37 @@ void AudioServer::SetSuspended_(bool suspend) {
       alcMakeContextCurrent(nullptr);
 #endif
 
-// On android lets tell open-sl to stop its processing.
+      // Pause OpenALSoft.
 #if BA_OSTYPE_ANDROID
-      alcDevicePauseSOFT(alcGetContextsDevice(impl_->alc_context));
+      BA_PRECONDITION_FATAL(alcDevicePauseSOFT != nullptr);
+      BA_PRECONDITION_FATAL(impl_ != nullptr && impl_->alc_context != nullptr);
+      auto* device = alcGetContextsDevice(impl_->alc_context);
+      BA_PRECONDITION_FATAL(device != nullptr);
+
+      try {
+        alcDevicePauseSOFT(device);
+      } catch (const std::exception& e) {
+        g_core->platform->DebugLog(
+            std::string("EXC pausing alcDevice: ")
+            + g_core->platform->DemangleCXXSymbol(typeid(e).name()) + " "
+            + e.what());
+        throw;
+      } catch (...) {
+        g_core->platform->DebugLog("UNKNOWN EXC pausing alcDevice");
+        throw;
+      }
 #endif
 
       suspended_ = true;
     }
   } else {
-    // unsuspend if requested..
+    // Unsuspend if requested.
     if (suspend) {
       Log(LogLevel::kError,
           "Got audio suspend request when already suspended.");
     } else {
 #if BA_OSTYPE_IOS_TVOS
-      // apple recommends this during audio-interruptions..
+      // Apple recommends this during audio-interruptions.
       // http://developer.apple.com/library/ios/#documentation/Audio/
       // Conceptual/AudioSessionProgrammingGuide/Cookbook/
       // Cookbook.html#//apple_ref/doc/uid/TP40007875-CH6-SW38
@@ -356,7 +374,22 @@ void AudioServer::SetSuspended_(bool suspend) {
 
 // On android lets tell openal-soft to stop processing.
 #if BA_OSTYPE_ANDROID
-      alcDeviceResumeSOFT(alcGetContextsDevice(impl_->alc_context));
+      BA_PRECONDITION_FATAL(alcDeviceResumeSOFT != nullptr);
+      BA_PRECONDITION_FATAL(impl_ != nullptr && impl_->alc_context != nullptr);
+      auto* device = alcGetContextsDevice(impl_->alc_context);
+      BA_PRECONDITION_FATAL(device != nullptr);
+      try {
+        alcDeviceResumeSOFT(device);
+      } catch (const std::exception& e) {
+        g_core->platform->DebugLog(
+            std::string("EXC resuming alcDevice: ")
+            + g_core->platform->DemangleCXXSymbol(typeid(e).name()) + " "
+            + e.what());
+        throw;
+      } catch (...) {
+        g_core->platform->DebugLog("UNKNOWN EXC resuming alcDevice");
+        throw;
+      }
 #endif
       suspended_ = false;
 #if BA_ENABLE_AUDIO
@@ -777,7 +810,7 @@ AudioServer::ThreadSource_::ThreadSource_(AudioServer* audio_thread_in,
   } else {
     // In vr mode we keep the microphone a bit closer to the camera
     // for realism purposes, so we need stuff louder in general.
-    if (g_core->IsVRMode()) {
+    if (g_core->vr_mode()) {
       alSourcef(source_, AL_MAX_DISTANCE, 100);
       alSourcef(source_, AL_REFERENCE_DISTANCE, 7.5f);
     } else {
@@ -1060,7 +1093,7 @@ void AudioServer::ThreadSource_::ExecPlay() {
     bool do_normal = true;
     // In vr mode, play non-positional sounds positionally in space roughly
     // where the menu is.
-    if (g_core->IsVRMode()) {
+    if (g_core->vr_mode()) {
       do_normal = false;
       SetPositional(true);
       SetPosition(0.0f, 4.5f, -3.0f);

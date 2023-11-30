@@ -730,7 +730,7 @@ void BaseFeatureSet::ShutdownSuppressDisallow() {
   shutdown_suppress_disallowed_ = true;
 }
 
-auto BaseFeatureSet::GetReturnValue() const -> int { return return_value(); }
+// auto BaseFeatureSet::GetReturnValue() const -> int { return return_value(); }
 
 void BaseFeatureSet::QuitApp(bool confirm, QuitType quit_type) {
   // If they want a confirm dialog and we're able to present one, do that.

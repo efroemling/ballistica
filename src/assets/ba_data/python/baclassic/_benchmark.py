@@ -55,7 +55,6 @@ def run_stress_test(
     round_duration: int = 30,
 ) -> None:
     """Run a stress test."""
-    from babase import modutils
 
     babase.screenmessage(
         "Beginning stress test.. use 'End Test' to stop testing.",
@@ -69,17 +68,6 @@ def run_stress_test(
                 'player_count': player_count,
                 'round_duration': round_duration,
             }
-        )
-        babase.apptimer(
-            7.0,
-            babase.Call(
-                babase.screenmessage,
-                (
-                    'stats will be written to '
-                    + modutils.get_human_readable_user_scripts_path()
-                    + '/stress_test_stats.csv'
-                ),
-            ),
         )
 
 

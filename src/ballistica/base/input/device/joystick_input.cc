@@ -683,7 +683,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
     }
 
     // On our Oculus build, select presses reset the orientation.
-    if (e->jbutton.button == vr_reorient_button_ && g_core->IsVRMode()) {
+    if (e->jbutton.button == vr_reorient_button_ && g_core->vr_mode()) {
       ScreenMessage(g_base->assets->GetResourceString("vrOrientationResetText"),
                     {0, 1, 0});
       g_core->reset_vr_orientation = true;

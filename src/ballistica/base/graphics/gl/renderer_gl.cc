@@ -57,11 +57,6 @@ namespace ballistica::base {
 bool RendererGL::funky_depth_issue_set_{};
 bool RendererGL::funky_depth_issue_{};
 
-#if BA_OSTYPE_ANDROID
-bool RendererGL::is_speedy_android_device_{};
-bool RendererGL::is_extra_speedy_android_device_{};
-#endif
-
 RendererGL::RendererGL() {
   assert(g_base->app_adapter->InGraphicsContext());
 
@@ -121,10 +116,14 @@ auto RendererGL::GLErrorToString(GLenum err) -> std::string {
 static auto CheckGLExtension(const std::vector<std::string>& exts,
                              const char* ext) -> bool {
   assert(strlen(ext) < 100);
-  const int variant_count{8};
+  const int variant_count{10};
   char variants[variant_count][128];
   int i = 0;
   snprintf(variants[i], sizeof(variants[i]), "OES_%s", ext);
+  i++;
+  snprintf(variants[i], sizeof(variants[i]), "GL_OES_%s", ext);
+  i++;
+  snprintf(variants[i], sizeof(variants[i]), "GL_KHR_%s", ext);
   i++;
   snprintf(variants[i], sizeof(variants[i]), "GL_ARB_%s", ext);
   i++;
@@ -162,12 +161,28 @@ void RendererGL::CheckGLVersion() {
   }
   const char* version_str = (const char*)glGetString(GL_VERSION);
   BA_PRECONDITION_FATAL(version_str);
-  // Do a rough check to make sure we're running 3 or newer of GL/GLES.
-  // This query should be available even on older versions.
-  if (version_str[0] != '3' && version_str[0] != '4') {
-    FatalError(
-        std::string("Your OpenGL version is too old (") + version_str
-        + "). We require 3.0 or later. Try updating your graphics drivers.");
+
+  // Do a rough check to make sure we're running 3 or newer of GL/GLES. This
+  // query should be available even on older versions which is why we do it
+  // before the GL_MAJOR_VERSION/GL_MINOR_VERSION business which is not.
+  if (gl_is_es()) {
+    // GL ES version strings start with 'OpenGL ES X' with X being version.
+    const char* prefix = "OpenGL ES ";
+    int prefixlen = strlen(prefix);
+    BA_PRECONDITION_FATAL(!strncmp(version_str, prefix, prefixlen));
+    if (version_str[prefixlen] != '3') {
+      FatalError(
+          std::string("Your OpenGL ES version is too old (") + version_str
+          + "). We require 3.0 or later. Try updating your graphics drivers.");
+    }
+  } else {
+    // Regular GL version strings start with numeric version.
+
+    if (version_str[0] != '3' && version_str[0] != '4') {
+      FatalError(
+          std::string("Your OpenGL version is too old (") + version_str
+          + "). We require 3.0 or later. Try updating your graphics drivers.");
+    }
   }
   checked_gl_version_ = true;
 }
@@ -280,8 +295,12 @@ void RendererGL::CheckGLCapabilities_() {
 
   // Flag certain devices as 'speedy' - we use this to enable high/higher
   // quality and whatnot (even in cases where ES3 isnt available).
-  is_speedy_android_device_ = true;
-  is_extra_speedy_android_device_ = false;
+
+  // Let just consider ES 3.2 stuff speedy.
+  assert(gl_version_major() == 3);
+  is_speedy_android_device_ = gl_version_minor() >= 2;
+
+  // is_extra_speedy_android_device_ = false;
   is_adreno_ = (strstr(renderer, "Adreno") != nullptr);
   // draws_shields_funny_ = false;  // Start optimistic.
 
@@ -347,9 +366,9 @@ void RendererGL::CheckGLCapabilities_() {
   // g_core->platform->set_is_tegra_k1(is_tegra_k1_);
 
   // Extra-speedy implies speedy too..
-  if (is_extra_speedy_android_device_) {
-    is_speedy_android_device_ = true;
-  }
+  // if (is_extra_speedy_android_device_) {
+  //   is_speedy_android_device_ = true;
+  // }
 
 #endif  // BA_OSTYPE_ANDROID
 
@@ -366,12 +385,12 @@ void RendererGL::CheckGLCapabilities_() {
     }
   }
 
-  // All android devices should support etc1.
+  // Pretty much all Android devices should support ETC1.
   if (CheckGLExtension(extensions, "compressed_ETC1_RGB8_texture")) {
     c_types.push_back(TextureCompressionType::kETC1);
   } else {
     if (g_buildconfig.ostype_android()) {
-      Log(LogLevel::kError, "Android device missing ETC1 support");
+      Log(LogLevel::kError, "Android device missing ETC1 support.");
     }
   }
 
@@ -379,6 +398,11 @@ void RendererGL::CheckGLCapabilities_() {
   // eventually get there).
   if (gl_is_es()) {
     c_types.push_back(TextureCompressionType::kETC2);
+  }
+
+  // ASTC is generally available on newer mobile hardware.
+  if (CheckGLExtension(extensions, "texture_compression_astc_ldr")) {
+    c_types.push_back(TextureCompressionType::kASTC);
   }
 
   g_base->graphics_server->SetTextureCompressionTypes(c_types);
@@ -822,7 +846,7 @@ void RendererGL::SyncGLState_() {
   BA_DEBUG_CHECK_GL_ERROR;
 
 #if BA_RIFT_BUILD
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     glFrontFace(GL_CCW);
   }
   BA_DEBUG_CHECK_GL_ERROR;
@@ -862,7 +886,7 @@ void RendererGL::SyncGLState_() {
   // texture, and in that case we need alpha to accumulate; not get
   // overwritten. could probably enable this everywhere but I don't know if
   // it's supported on all hardware or slower.
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
 #if BA_OSTYPE_WINDOWS
     if (glBlendFuncSeparate == nullptr) {
       FatalError(
@@ -2374,7 +2398,7 @@ void RendererGL::SetBlendPremult(bool b) {
       // texture, and in that case we need alpha to accumulate; not get
       // overwritten. could probably enable this everywhere but I don't know if
       // it's supported on all hardware or is slower or whatnot..
-      if (g_core->IsVRMode()) {
+      if (g_core->vr_mode()) {
         glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE,
                             GL_ONE_MINUS_SRC_ALPHA);
       } else {
@@ -2543,26 +2567,12 @@ auto RendererGL::GetFunkyDepthIssue_() -> bool {
 std::string RendererGL::GetAutoAndroidRes() {
   assert(g_base->app_adapter->InGraphicsContext());
 
-  const char* renderer = (const char*)glGetString(GL_RENDERER);
-
-  // On the adreno 4xxx or 5xxx series we should be able to do anything.
-  if (strstr(renderer, "Adreno (TM) 4") || strstr(renderer, "Adreno (TM) 5")) {
+  // Simplifying this to just 1080p for anything we label 'speedy' and 720p
+  // for everything else.
+  if (is_speedy_android_device_) {
     return "1080p";
   }
-
-  // On extra-speedy devices we should be able to do 1920x1200.
-  if (is_extra_speedy_android_device_) {
-    return "1080p";
-  }
-
-  // Amazon Fire tablet (as of Jan '18) needs REAL low res to feel smooth.
-  if (g_core->platform->GetDeviceName() == "Amazon KFAUWI") {
-    return "480p";
-  }
-
-  // fall back to the old 'Auto' values elsewhere
-  // - this is generally 720p (but varies in a few cases)
-  return "Auto";
+  return "720p";
 }
 #endif  // BA_OSTYPE_ANDROID
 
@@ -2574,18 +2584,10 @@ auto RendererGL::GetAutoTextureQuality() -> TextureQuality {
 #if BA_OSTYPE_ANDROID
   {
     // Lets be cheaper in VR mode since we have to draw twice.
-    if (g_core->IsVRMode()) {
-      qual = TextureQuality::kMedium;
+    if (g_core->vr_mode()) {
+      qual = TextureQuality::kHigh;
     } else {
-      // On android we default to high quality mode if we support ETC2;
-      // otherwise go with medium.
-      if (g_base->graphics_server->SupportsTextureCompressionType(
-              TextureCompressionType::kETC2)
-          || is_speedy_android_device_) {
-        qual = TextureQuality::kHigh;
-      } else {
-        qual = TextureQuality::kMedium;
-      }
+      qual = TextureQuality::kHigh;
     }
   }
 #else  // BA_OSTYPE_ANDROID
@@ -2603,10 +2605,10 @@ auto RendererGL::GetAutoGraphicsQuality() -> GraphicsQuality {
   GraphicsQuality q{GraphicsQuality::kMedium};
 #if BA_OSTYPE_ANDROID
   // lets be cheaper in VR mode since we draw twice..
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     q = GraphicsQuality::kMedium;
   } else {
-    if (is_extra_speedy_android_device_) {
+    if (is_speedy_android_device_) {
       q = GraphicsQuality::kHigher;
     } else {
       q = GraphicsQuality::kHigh;
@@ -3262,7 +3264,7 @@ void RendererGL::CardboardDisableScissor() { glDisable(GL_SCISSOR_TEST); }
 void RendererGL::CardboardEnableScissor() { glEnable(GL_SCISSOR_TEST); }
 
 void RendererGL::VREyeRenderBegin() {
-  assert(g_core->IsVRMode());
+  assert(g_core->vr_mode());
 
   // On rift we need to turn off srgb conversion for each eye render
   // so we can dump our linear data into oculus' srgb buffer as-is.
@@ -3284,7 +3286,7 @@ void RendererGL::VRSyncRenderStates() {
 void RendererGL::RenderFrameDefEnd() {
   // Need to set some states to keep cardboard happy.
 #if BA_CARDBOARD_BUILD
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     SyncGLState_();
     glEnable(GL_SCISSOR_TEST);
   }

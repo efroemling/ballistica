@@ -301,9 +301,6 @@ class CorePlatform {
   /// return nullptr.
   virtual auto GetStackTrace() -> PlatformStackTrace*;
 
-  // Called during stress testing.
-  virtual auto GetMemUsageInfo() -> std::string;
-
   /// Optionally override fatal error reporting. If true is returned, default
   /// fatal error reporting will not run.
   virtual auto ReportFatalError(const std::string& message,
@@ -458,13 +455,13 @@ class CorePlatform {
   virtual ~CorePlatform();
 
  private:
-  bool is_stdin_a_terminal_ : 1 {};
-  bool have_has_touchscreen_value_ : 1 {};
-  bool have_touchscreen_ : 1 {};
-  bool is_tegra_k1_ : 1 {};
-  bool made_volatile_data_dir_ : 1 {};
-  bool have_device_uuid_ : 1 {};
-  bool ran_base_post_init_ : 1 {};
+  bool is_stdin_a_terminal_{};
+  bool have_has_touchscreen_value_{};
+  bool have_touchscreen_{};
+  bool is_tegra_k1_{};
+  bool made_volatile_data_dir_{};
+  bool have_device_uuid_{};
+  bool ran_base_post_init_{};
   millisecs_t start_time_millisecs_{};
   std::string device_name_;
   std::string device_description_;

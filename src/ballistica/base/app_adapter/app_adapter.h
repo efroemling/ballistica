@@ -106,7 +106,7 @@ class AppAdapter {
   /// values.
   virtual void CursorPositionForDraw(float* x, float* y);
 
-  /// Put the app into a paused state. Should be called from the main
+  /// Put the app into a suspended state. Should be called from the main
   /// thread. Pauses work, closes network sockets, etc. May correspond to
   /// being backgrounded on mobile, being minimized on desktop, etc. It is
   /// assumed that, as soon as this call returns, all work is finished and
@@ -114,9 +114,9 @@ class AppAdapter {
   /// effects.
   void SuspendApp();
 
-  /// Resume the app; can correspond to foregrounding on mobile,
-  /// unminimizing on desktop, etc. Spins threads back up, re-opens network
-  /// sockets, etc.
+  /// Return the app to a running state from a suspended one. Can correspond
+  /// to foregrounding on mobile, unminimizing on desktop, etc. Spins
+  /// threads back up, re-opens network sockets, etc.
   void UnsuspendApp();
 
   auto app_suspended() const { return app_suspended_; }
@@ -255,9 +255,9 @@ class AppAdapter {
   void OnAppSuspend_();
   void OnAppUnsuspend_();
 
-  bool app_suspended_ : 1 {};
-  bool have_clipboard_is_supported_ : 1 {};
-  bool clipboard_is_supported_ : 1 {};
+  bool app_suspended_{};
+  bool have_clipboard_is_supported_{};
+  bool clipboard_is_supported_{};
 };
 
 }  // namespace ballistica::base

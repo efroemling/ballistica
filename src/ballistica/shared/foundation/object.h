@@ -672,12 +672,12 @@ class Object {
   auto operator new(size_t size) -> void* { return new char[size]; }
   void ObjectUpdateForAcquire();
 
-  bool object_is_static_allocated_ : 1 {true};
-  bool object_has_been_strong_reffed_ : 1 {};
-  bool object_is_ref_counted_ : 1 {};
-  bool object_is_pending_deferred_ : 1 {};
-  bool object_is_unmanaged_ : 1 {};
-  bool object_is_dead_ : 1 {};
+  bool object_is_static_allocated_{true};
+  bool object_has_been_strong_reffed_{};
+  bool object_is_ref_counted_{};
+  bool object_is_pending_deferred_{};
+  bool object_is_unmanaged_{};
+  bool object_is_dead_{};
   Object* object_next_{};
   Object* object_prev_{};
   ThreadOwnership thread_ownership_{ThreadOwnership::kClassDefault};

@@ -100,7 +100,7 @@ auto BaseBuildSwitches::CreateAppAdapter() -> AppAdapter* {
   app_adapter = new AppAdapterApple();
 #elif BA_RIFT_BUILD
   // Rift build can spin up in either VR or regular mode.
-  if (g_core->vr_mode) {
+  if (g_core->vr_mode()) {
     app_adapter = new AppAdapterVR();
   } else {
     app_adapter = new AppAdapterSDL();

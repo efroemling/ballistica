@@ -751,7 +751,7 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "subplatform", g_core->platform->GetSubplatformName().c_str(),
         "ui_scale", ui_scale,
         "on_tv", g_core->platform->IsRunningOnTV() ? Py_True : Py_False,
-        "vr_mode", g_core->IsVRMode() ? Py_True : Py_False,
+        "vr_mode", g_core->vr_mode() ? Py_True : Py_False,
         "demo_mode", g_buildconfig.demo_build() ? Py_True : Py_False,
         "arcade_mode", g_buildconfig.arcade_build() ? Py_True : Py_False,
         "headless_mode", g_core->HeadlessMode() ? Py_True : Py_False,

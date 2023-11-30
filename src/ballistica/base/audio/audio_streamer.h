@@ -48,9 +48,9 @@ class AudioStreamer : public Object {
 
  private:
   Format format_{Format::kInvalid};
-  bool playing_ : 1 {};
-  bool loops_ : 1 {};
-  bool eof_ : 1 {};
+  bool playing_{};
+  bool loops_{};
+  bool eof_{};
   ALuint buffers_[kAudioStreamBufferCount]{};
   ALuint source_{};
   std::string file_name_;

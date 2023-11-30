@@ -158,11 +158,11 @@ class EventLoop {
 
   EventLoopID identifier_{EventLoopID::kInvalid};
   ThreadSource source_{};
-  bool bootstrapped_ : 1 {};
-  bool writing_tally_ : 1 {};
-  bool suspended_ : 1 {};
-  bool done_ : 1 {};
-  bool acquires_python_gil_ : 1 {};
+  bool bootstrapped_{};
+  bool writing_tally_{};
+  bool suspended_{};
+  bool done_{};
+  bool acquires_python_gil_{};
   std::thread::id thread_id_{};
   std::condition_variable thread_message_cv_;
   std::condition_variable client_listener_cv_;

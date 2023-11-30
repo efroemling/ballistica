@@ -99,10 +99,10 @@ class Dynamics : public Object {
   int skid_sound_count_{};
   int roll_sound_count_{};
   int collision_count_{};
-  bool in_process_ : 1 {};
-  bool in_collide_message_ : 1 {};
-  bool collide_message_reverse_order_ : 1 {};
-  bool processing_collisions_ : 1 {};
+  bool in_process_{};
+  bool in_collide_message_{};
+  bool collide_message_reverse_order_{};
+  bool processing_collisions_{};
   dWorldID ode_world_{};
   dJointGroupID ode_contact_group_{};
   dSpaceID ode_space_{};
