@@ -392,20 +392,13 @@ class EditProfileWindow(bui.Window):
             )
             self._random_name_button = bui.buttonwidget(
                 parent=self._root_widget,
-                label='',
-                size=(20, 20),
-                position=(500 + x_inset, v - 20),
+                label=bui.Lstr(resource='randomText'),
+                size=(30, 20),
+                position=(495 + x_inset, v - 20),
                 button_type='square',
                 color=(0.6, 0.5, 0.65),
                 autoselect=True,
                 on_activate_call=self.assign_random_name,
-            )
-            bui.imagewidget(
-                parent=self._root_widget,
-                size=(20, 20),
-                draw_controller=self._random_name_button,
-                position=(501 + x_inset, v - 20),
-                texture=bui.gettexture('replayIcon'),
             )
 
         self._update_clipped_name()
