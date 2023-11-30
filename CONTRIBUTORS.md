@@ -41,9 +41,9 @@
 - Modder
 
 ### Era0S
-- Community Suggestions Implementer
 - Bug Fixer
 - Modder
+- Added a feature
 
 ### VinniTR
 - Fixes
