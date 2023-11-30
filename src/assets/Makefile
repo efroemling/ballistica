@@ -350,7 +350,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/tournamentbutton.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/creditslist.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/debug.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/discord.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/feedback.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/fileselector.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__init__.py \
@@ -624,7 +623,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/tournamentbutton.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/creditslist.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/debug.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/discord.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/feedback.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/fileselector.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/__init__.cpython-311.opt-1.pyc \
