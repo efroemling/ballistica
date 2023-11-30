@@ -1507,9 +1507,18 @@ class AccountSettingsWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.profile.browser import ProfileBrowserWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
-        ProfileBrowserWindow(origin_widget=self._player_profiles_button)
+        bui.app.ui_v1.set_main_menu_window(
+            ProfileBrowserWindow(
+                origin_widget=self._player_profiles_button
+            ).get_root_widget(),
+            from_window=self._root_widget,
+        )
 
     def _cancel_sign_in_press(self) -> None:
         # If we're waiting on an adapter to give us credentials, abort.
@@ -1670,6 +1679,10 @@ class AccountSettingsWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.mainmenu import MainMenuWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
@@ -1678,7 +1691,8 @@ class AccountSettingsWindow(bui.Window):
         if not self._modal:
             assert bui.app.classic is not None
             bui.app.ui_v1.set_main_menu_window(
-                MainMenuWindow(transition='in_left').get_root_widget()
+                MainMenuWindow(transition='in_left').get_root_widget(),
+                from_window=self._root_widget,
             )
 
     def _save_state(self) -> None:

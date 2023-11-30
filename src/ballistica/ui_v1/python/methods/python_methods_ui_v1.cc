@@ -1219,17 +1219,17 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (transition_obj != Py_None) {
     std::string t = Python::GetPyString(transition_obj);
     if (t == "in_left")
-      widget->SetTransition(ContainerWidget::TRANSITION_IN_LEFT);
+      widget->SetTransition(ContainerWidget::TransitionType::kInLeft);
     else if (t == "in_right")
-      widget->SetTransition(ContainerWidget::TRANSITION_IN_RIGHT);
+      widget->SetTransition(ContainerWidget::TransitionType::kInRight);
     else if (t == "out_left")
-      widget->SetTransition(ContainerWidget::TRANSITION_OUT_LEFT);
+      widget->SetTransition(ContainerWidget::TransitionType::kOutLeft);
     else if (t == "out_right")
-      widget->SetTransition(ContainerWidget::TRANSITION_OUT_RIGHT);
+      widget->SetTransition(ContainerWidget::TransitionType::kOutRight);
     else if (t == "in_scale")
-      widget->SetTransition(ContainerWidget::TRANSITION_IN_SCALE);
+      widget->SetTransition(ContainerWidget::TransitionType::kInScale);
     else if (t == "out_scale")
-      widget->SetTransition(ContainerWidget::TRANSITION_OUT_SCALE);
+      widget->SetTransition(ContainerWidget::TransitionType::kOutScale);
   }
 
   if (cancel_button_obj != Py_None) {

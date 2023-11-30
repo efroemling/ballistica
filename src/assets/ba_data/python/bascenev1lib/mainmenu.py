@@ -317,7 +317,8 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     from bauiv1lib.kiosk import KioskWindow
 
                     bs.app.ui_v1.set_main_menu_window(
-                        KioskWindow().get_root_widget()
+                        KioskWindow().get_root_widget(),
+                        from_window=False,  # Disable check here.
                     )
                 # ..or in normal cases go back to the main menu
                 else:
@@ -326,14 +327,16 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                         from bauiv1lib.gather import GatherWindow
 
                         bs.app.ui_v1.set_main_menu_window(
-                            GatherWindow(transition=None).get_root_widget()
+                            GatherWindow(transition=None).get_root_widget(),
+                            from_window=False,  # Disable check here.
                         )
                     elif main_menu_location == 'Watch':
                         # pylint: disable=cyclic-import
                         from bauiv1lib.watch import WatchWindow
 
                         bs.app.ui_v1.set_main_menu_window(
-                            WatchWindow(transition=None).get_root_widget()
+                            WatchWindow(transition=None).get_root_widget(),
+                            from_window=False,  # Disable check here.
                         )
                     elif main_menu_location == 'Team Game Select':
                         # pylint: disable=cyclic-import
@@ -344,7 +347,8 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                         bs.app.ui_v1.set_main_menu_window(
                             PlaylistBrowserWindow(
                                 sessiontype=bs.DualTeamSession, transition=None
-                            ).get_root_widget()
+                            ).get_root_widget(),
+                            from_window=False,  # Disable check here.
                         )
                     elif main_menu_location == 'Free-for-All Game Select':
                         # pylint: disable=cyclic-import
@@ -356,28 +360,34 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                             PlaylistBrowserWindow(
                                 sessiontype=bs.FreeForAllSession,
                                 transition=None,
-                            ).get_root_widget()
+                            ).get_root_widget(),
+                            from_window=False,  # Disable check here.
                         )
                     elif main_menu_location == 'Coop Select':
                         # pylint: disable=cyclic-import
                         from bauiv1lib.coop.browser import CoopBrowserWindow
 
                         bs.app.ui_v1.set_main_menu_window(
-                            CoopBrowserWindow(transition=None).get_root_widget()
+                            CoopBrowserWindow(
+                                transition=None
+                            ).get_root_widget(),
+                            from_window=False,  # Disable check here.
                         )
                     elif main_menu_location == 'Benchmarks & Stress Tests':
                         # pylint: disable=cyclic-import
                         from bauiv1lib.debug import DebugWindow
 
                         bs.app.ui_v1.set_main_menu_window(
-                            DebugWindow(transition=None).get_root_widget()
+                            DebugWindow(transition=None).get_root_widget(),
+                            from_window=False,  # Disable check here.
                         )
                     else:
                         # pylint: disable=cyclic-import
                         from bauiv1lib.mainmenu import MainMenuWindow
 
                         bs.app.ui_v1.set_main_menu_window(
-                            MainMenuWindow(transition=None).get_root_widget()
+                            MainMenuWindow(transition=None).get_root_widget(),
+                            from_window=None,
                         )
 
                 # attempt to show any pending offers immediately.

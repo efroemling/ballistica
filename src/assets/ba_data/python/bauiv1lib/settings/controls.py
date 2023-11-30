@@ -367,18 +367,27 @@ class ControlsSettingsWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.keyboard import ConfigKeyboardWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
             ConfigKeyboardWindow(
                 bs.getinputdevice('Keyboard', '#1')
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _config_keyboard2(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.keyboard import ConfigKeyboardWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
@@ -386,40 +395,56 @@ class ControlsSettingsWindow(bui.Window):
         bui.app.ui_v1.set_main_menu_window(
             ConfigKeyboardWindow(
                 bs.getinputdevice('Keyboard', '#2')
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _do_mobile_devices(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.remoteapp import RemoteAppSettingsWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            RemoteAppSettingsWindow().get_root_widget()
+            RemoteAppSettingsWindow().get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _do_gamepads(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.gamepadselect import GamepadSelectWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            GamepadSelectWindow().get_root_widget()
+            GamepadSelectWindow().get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _do_touchscreen(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.touchscreen import TouchscreenSettingsWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            TouchscreenSettingsWindow().get_root_widget()
+            TouchscreenSettingsWindow().get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _save_state(self) -> None:
@@ -466,11 +491,16 @@ class ControlsSettingsWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.allsettings import AllSettingsWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            AllSettingsWindow(transition='in_left').get_root_widget()
+            AllSettingsWindow(transition='in_left').get_root_widget(),
+            from_window=self._root_widget,
         )

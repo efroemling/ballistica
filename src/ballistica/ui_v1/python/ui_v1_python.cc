@@ -115,7 +115,7 @@ void UIV1Python::InvokeStringEditor(PyObject* string_edit_adapter_instance) {
                  PythonRef::kSteal);
   Object::New<base::PythonContextCall>(
       objs().Get(ObjID::kOnScreenKeyboardClass))
-      ->ScheduleOnce(args);
+      ->Schedule(args);
 }
 
 void UIV1Python::LaunchStringEditOld(TextWidget* w) {
@@ -131,7 +131,7 @@ void UIV1Python::LaunchStringEditOld(TextWidget* w) {
                  PythonRef::kSteal);
   Object::New<base::PythonContextCall>(
       objs().Get(ObjID::kOnScreenKeyboardClass))
-      ->ScheduleOnce(args);
+      ->Schedule(args);
 }
 
 void UIV1Python::InvokeQuitWindow(QuitType quit_type) {

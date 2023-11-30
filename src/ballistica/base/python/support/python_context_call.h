@@ -42,33 +42,15 @@ class PythonContextCall : public Object {
   /// context_ref-call is guaranteed to exist until run.
   void Schedule();
 
-  /// Schedule only if this instance is not already scheduled. Generally a
-  /// good idea unless you know you need multiple runs scheduled. Avoids
-  /// problems such as UIs expecting to be activated only once getting
-  /// activated twice due to two simultenous key presses.
-  void ScheduleOnce();
-
   /// Run in an upcoming cycle of the logic thread with provided args. Must
   /// be called from the logic thread. This form creates a strong-reference
   /// so the context_ref-call is guaranteed to exist until run.
   void Schedule(const PythonRef& args);
 
-  /// Schedule only if this instance is not already scheduled. Generally a
-  /// good idea unless you know you need multiple runs scheduled. Avoids
-  /// problems such as UIs expecting to be activated only once getting
-  /// activated twice due to two simultenous key presses.
-  void ScheduleOnce(const PythonRef& args);
-
   /// Run in an upcoming cycle of the logic thread. Must be called from the
   /// logic thread. This form creates a weak-reference and is a no-op if the
   /// context_ref-call is destroyed before its scheduled run.
   void ScheduleWeak();
-
-  /// Schedule weakly only if this instance is not already scheduled.
-  /// Generally a good idea unless you know you need multiple runs
-  /// scheduled. Avoids problems such as UIs expecting to be activated only
-  /// once getting activated twice due to two simultenous key presses.
-  void ScheduleWeakOnce();
 
   /// Run in an upcoming cycle of the logic thread with provided args. Must
   /// be called from the logic thread. This form creates a weak-reference
@@ -76,22 +58,10 @@ class PythonContextCall : public Object {
   /// scheduled run.
   void ScheduleWeak(const PythonRef& args);
 
-  /// Schedule weakly only if this instance is not already scheduled.
-  /// Generally a good idea unless you know you need multiple runs
-  /// scheduled. Avoids problems such as UIs expecting to be activated only
-  /// once getting activated twice due to two simultenous key presses.
-  void ScheduleWeakOnce(const PythonRef& args);
-
-  auto IsScheduled() const {
-    assert(g_base->InLogicThread());
-    return schedule_count_ > 0;
-  }
-
  private:
   void GetTrace();  // we try to grab basic trace info
 
   int line_{};
-  int schedule_count_{};
   bool dead_{};
   std::string file_loc_;
   PythonRef object_;

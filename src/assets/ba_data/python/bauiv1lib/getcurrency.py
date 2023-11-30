@@ -732,8 +732,13 @@ class GetCurrencyWindow(bui.Window):
     def _back(self) -> None:
         from bauiv1lib.store import browser
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         if self._transitioning_out:
             return
+
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
         )
@@ -745,7 +750,9 @@ class GetCurrencyWindow(bui.Window):
             ).get_root_widget()
             if not self._from_modal_store:
                 assert bui.app.classic is not None
-                bui.app.ui_v1.set_main_menu_window(window)
+                bui.app.ui_v1.set_main_menu_window(
+                    window, from_window=self._root_widget
+                )
         self._transitioning_out = True
 
 

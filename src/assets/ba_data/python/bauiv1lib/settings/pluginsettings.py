@@ -161,10 +161,15 @@ class PluginSettingsWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.plugins import PluginWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            PluginWindow(transition='in_left').get_root_widget()
+            PluginWindow(transition='in_left').get_root_widget(),
+            from_window=self._root_widget,
         )

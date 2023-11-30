@@ -18,12 +18,18 @@ class EditProfileWindow(bui.Window):
     # FIXME: WILL NEED TO CHANGE THIS FOR UILOCATION.
     def reload_window(self) -> None:
         """Transitions out and recreates ourself."""
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
             EditProfileWindow(
                 self.getname(), self._in_main_menu
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def __init__(
@@ -653,6 +659,10 @@ class EditProfileWindow(bui.Window):
     def _cancel(self) -> None:
         from bauiv1lib.profile.browser import ProfileBrowserWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
@@ -660,7 +670,8 @@ class EditProfileWindow(bui.Window):
                 'in_left',
                 selected_profile=self._existing_profile,
                 in_main_menu=self._in_main_menu,
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _set_color(self, color: tuple[float, float, float]) -> None:
@@ -759,6 +770,10 @@ class EditProfileWindow(bui.Window):
         """Save has been selected."""
         from bauiv1lib.profile.browser import ProfileBrowserWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return False
+
         plus = bui.app.plus
         assert plus is not None
 
@@ -808,6 +823,7 @@ class EditProfileWindow(bui.Window):
                     'in_left',
                     selected_profile=new_name,
                     in_main_menu=self._in_main_menu,
-                ).get_root_widget()
+                ).get_root_widget(),
+                from_window=self._root_widget,
             )
         return True

@@ -276,11 +276,16 @@ class TouchscreenSettingsWindow(bui.Window):
     def _back(self) -> None:
         from bauiv1lib.settings import controls
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
             controls.ControlsSettingsWindow(
                 transition='in_left'
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
         bs.set_touchscreen_editing(False)

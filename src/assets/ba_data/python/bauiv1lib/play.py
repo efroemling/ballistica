@@ -521,13 +521,19 @@ class PlayWindow(bui.Window):
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         if self._is_main_menu:
             from bauiv1lib.mainmenu import MainMenuWindow
 
             self._save_state()
             assert bui.app.classic is not None
             bui.app.ui_v1.set_main_menu_window(
-                MainMenuWindow(transition='in_left').get_root_widget()
+                MainMenuWindow(transition='in_left').get_root_widget(),
+                from_window=self._root_widget,
             )
             bui.containerwidget(
                 edit=self._root_widget, transition=self._transition_out
@@ -538,7 +544,8 @@ class PlayWindow(bui.Window):
             self._save_state()
             assert bui.app.classic is not None
             bui.app.ui_v1.set_main_menu_window(
-                GatherWindow(transition='in_left').get_root_widget()
+                GatherWindow(transition='in_left').get_root_widget(),
+                from_window=self._root_widget,
             )
             bui.containerwidget(
                 edit=self._root_widget, transition=self._transition_out
@@ -548,6 +555,10 @@ class PlayWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.account import show_sign_in_prompt
         from bauiv1lib.coop.browser import CoopBrowserWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         plus = bui.app.plus
         assert plus is not None
@@ -559,12 +570,19 @@ class PlayWindow(bui.Window):
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            CoopBrowserWindow(origin_widget=self._coop_button).get_root_widget()
+            CoopBrowserWindow(
+                origin_widget=self._coop_button
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _team_tourney(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.playlist.browser import PlaylistBrowserWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
@@ -572,12 +590,17 @@ class PlayWindow(bui.Window):
         bui.app.ui_v1.set_main_menu_window(
             PlaylistBrowserWindow(
                 origin_widget=self._teams_button, sessiontype=bs.DualTeamSession
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _free_for_all(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.playlist.browser import PlaylistBrowserWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
@@ -586,7 +609,8 @@ class PlayWindow(bui.Window):
             PlaylistBrowserWindow(
                 origin_widget=self._free_for_all_button,
                 sessiontype=bs.FreeForAllSession,
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _draw_dude(

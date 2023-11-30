@@ -14,20 +14,21 @@ namespace ballistica::ui_v1 {
 // Base class for widgets that contain other widgets.
 class ContainerWidget : public Widget {
  public:
-  explicit ContainerWidget(float width = 0, float height = 0);
+  explicit ContainerWidget(float width = 0.0f, float height = 0.0f);
   ~ContainerWidget() override;
 
   void Draw(base::RenderPass* pass, bool transparent) override;
 
   auto HandleMessage(const base::WidgetMessage& m) -> bool override;
 
-  enum TransitionType {
-    TRANSITION_OUT_LEFT,
-    TRANSITION_OUT_RIGHT,
-    TRANSITION_IN_LEFT,
-    TRANSITION_IN_RIGHT,
-    TRANSITION_IN_SCALE,
-    TRANSITION_OUT_SCALE
+  enum class TransitionType {
+    kUnset,
+    kOutLeft,
+    kOutRight,
+    kInLeft,
+    kInRight,
+    kInScale,
+    kOutScale
   };
 
   void SetTransition(TransitionType t);
@@ -49,6 +50,7 @@ class ContainerWidget : public Widget {
     width_ = w;
     MarkForUpdate();
   }
+
   virtual void SetHeight(float h) {
     bg_dirty_ = glow_dirty_ = true;
     height_ = h;
@@ -67,6 +69,7 @@ class ContainerWidget : public Widget {
     CheckLayout();
     return width_;
   }
+
   auto GetHeight() -> float override {
     CheckLayout();
     return height_;
@@ -76,8 +79,8 @@ class ContainerWidget : public Widget {
 
   auto HasKeySelectableChild() const -> bool;
 
-  void set_is_window_stack(bool a) { is_window_stack_ = a; }
   auto is_window_stack() const -> bool { return is_window_stack_; }
+  void set_is_window_stack(bool a) { is_window_stack_ = a; }
 
   auto GetChildCount() const -> int {
     assert(g_base->InLogicThread());
@@ -166,6 +169,8 @@ class ContainerWidget : public Widget {
   // (used for toolbar focusing; may not always equal selected widget
   // if the topmost one is transitioning out, etc.)
   auto GetTopmostToolbarInfluencingWidget() -> Widget*;
+
+  auto IsTransitioningOut() const -> bool override;
 
  protected:
   virtual void OnCancelCustom() {}

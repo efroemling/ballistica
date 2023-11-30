@@ -142,13 +142,18 @@ class PromoCodeWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.advanced import AdvancedSettingsWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
         )
         if not self._modal:
             assert bui.app.classic is not None
             bui.app.ui_v1.set_main_menu_window(
-                AdvancedSettingsWindow(transition='in_left').get_root_widget()
+                AdvancedSettingsWindow(transition='in_left').get_root_widget(),
+                from_window=self._root_widget,
             )
 
     def _activate_enter_button(self) -> None:
@@ -157,6 +162,10 @@ class PromoCodeWindow(bui.Window):
     def _do_enter(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.advanced import AdvancedSettingsWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         plus = bui.app.plus
         assert plus is not None
@@ -167,7 +176,8 @@ class PromoCodeWindow(bui.Window):
         if not self._modal:
             assert bui.app.classic is not None
             bui.app.ui_v1.set_main_menu_window(
-                AdvancedSettingsWindow(transition='in_left').get_root_widget()
+                AdvancedSettingsWindow(transition='in_left').get_root_widget(),
+                from_window=self._root_widget,
             )
         plus.add_v1_account_transaction(
             {

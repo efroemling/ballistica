@@ -270,12 +270,17 @@ class GatherWindow(bui.Window):
         """Called by the private-hosting tab to select a playlist."""
         from bauiv1lib.play import PlayWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.selecting_private_party_playlist = True
         bui.app.ui_v1.set_main_menu_window(
-            PlayWindow(origin_widget=origin_widget).get_root_widget()
+            PlayWindow(origin_widget=origin_widget).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _set_tab(self, tab_id: TabID) -> None:
@@ -383,11 +388,16 @@ class GatherWindow(bui.Window):
     def _back(self) -> None:
         from bauiv1lib.mainmenu import MainMenuWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            MainMenuWindow(transition='in_left').get_root_widget()
+            MainMenuWindow(transition='in_left').get_root_widget(),
+            from_window=self._root_widget,
         )

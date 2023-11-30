@@ -271,14 +271,23 @@ class ConfigKeyboardWindow(bui.Window):
     def _cancel(self) -> None:
         from bauiv1lib.settings.controls import ControlsSettingsWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            ControlsSettingsWindow(transition='in_left').get_root_widget()
+            ControlsSettingsWindow(transition='in_left').get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _save(self) -> None:
         from bauiv1lib.settings.controls import ControlsSettingsWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         assert bui.app.classic is not None
         bui.containerwidget(edit=self._root_widget, transition='out_right')
@@ -314,7 +323,8 @@ class ConfigKeyboardWindow(bui.Window):
             )
         bui.app.config.apply_and_commit()
         bui.app.ui_v1.set_main_menu_window(
-            ControlsSettingsWindow(transition='in_left').get_root_widget()
+            ControlsSettingsWindow(transition='in_left').get_root_widget(),
+            from_window=self._root_widget,
         )
 
 

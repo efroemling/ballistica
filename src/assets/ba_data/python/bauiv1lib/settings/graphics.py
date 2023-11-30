@@ -436,6 +436,10 @@ class GraphicsSettingsWindow(bui.Window):
     def _back(self) -> None:
         from bauiv1lib.settings import allsettings
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         # Applying max-fps takes a few moments. Apply if it hasn't been
         # yet.
         self._apply_max_fps()
@@ -447,7 +451,8 @@ class GraphicsSettingsWindow(bui.Window):
         bui.app.ui_v1.set_main_menu_window(
             allsettings.AllSettingsWindow(
                 transition='in_left'
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _set_quality(self, quality: str) -> None:

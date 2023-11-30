@@ -1,4 +1,4 @@
-### 1.7.30 (build 21636, api 8, 2023-11-30)
+### 1.7.30 (build 21639, api 8, 2023-11-30)
 - Continued work on the big 1.7.28 update.
 - Got the Android version back up and running. There's been lots of cleanup and
   simplification on the Android layer, cleaning out years of cruft. This should
@@ -21,9 +21,16 @@
   builds when tv-border was on (Thanks for the heads-up Loup(Dliwk's fan)!).
 - (build 21631) Fixes an issue where '^^^^^^^^^^^^^' lines in stack traces could
   get chopped into tiny bits each on their own line in the dev console.
-- Fixed a longstanding issue where multiple key presses simultaneously could
-  cause multiple windows to pop up where only one is expected. Please holler if
-  you still see this problem happening anywhere.
+- Hopefully finally fixed a longstanding issue where obscure cases such as
+  multiple key presses simultaneously could cause multiple main menu windows to
+  pop up. Please holler if you still see this problem happening anywhere. Also
+  added a few related safety checks and warnings to help ensure UI code is free
+  from such problems going forward. To make sure your custom UIs are behaving
+  well in this system, do the following two things: 1) any time you call
+  `set_main_menu_window()`, pass your existing main menu window root widget as
+  `from_window`. 2) In any call that can lead to you switching the main menu
+  window, check if your root widget is dead or transitioning out first and abort
+  if it is. See any window in `ui_v1_lib` for examples.
 
 ### 1.7.29 (build 21619, api 8, 2023-11-21)
 

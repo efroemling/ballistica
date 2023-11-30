@@ -39,6 +39,7 @@ class UIV1Python {
     kQuitWindowCall,
     kDeviceMenuPressCall,
     kShowURLWindowCall,
+    kDoubleTransitionOutWarningCall,
     kTextWidgetStringEditAdapterClass,
     kLast  // Sentinel; must be at end.
   };

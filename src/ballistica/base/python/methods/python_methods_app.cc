@@ -279,7 +279,7 @@ static auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds)
     if (!g_base->InLogicThread()) {
       throw Exception("You must use from_other_thread mode.");
     }
-    Object::New<PythonContextCall>(call_obj)->ScheduleOnce();
+    Object::New<PythonContextCall>(call_obj)->Schedule();
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

@@ -1019,6 +1019,10 @@ class CoopBrowserWindow(bui.Window):
         from bauiv1lib.account import show_sign_in_prompt
         from bauiv1lib.league.rankwindow import LeagueRankWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         plus = bui.app.plus
         assert plus is not None
 
@@ -1032,7 +1036,8 @@ class CoopBrowserWindow(bui.Window):
         bui.app.ui_v1.set_main_menu_window(
             LeagueRankWindow(
                 origin_widget=self._league_rank_button.get_button()
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _switch_to_score(
@@ -1042,6 +1047,10 @@ class CoopBrowserWindow(bui.Window):
     ) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.account import show_sign_in_prompt
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         plus = bui.app.plus
         assert plus is not None
@@ -1058,7 +1067,8 @@ class CoopBrowserWindow(bui.Window):
                 origin_widget=self._store_button.get_button(),
                 show_tab=show_tab,
                 back_location='CoopBrowserWindow',
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def is_tourney_data_up_to_date(self) -> bool:
@@ -1218,6 +1228,10 @@ class CoopBrowserWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.play import PlayWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         # If something is selected, store it.
         self._save_state()
         bui.containerwidget(
@@ -1225,7 +1239,8 @@ class CoopBrowserWindow(bui.Window):
         )
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            PlayWindow(transition='in_left').get_root_widget()
+            PlayWindow(transition='in_left').get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _save_state(self) -> None:
