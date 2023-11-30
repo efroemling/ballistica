@@ -5710,6 +5710,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/cyborgIcon.dds \
   $(BUILD_DIR)/ba_data/textures/cyborgIconColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/discordLogo.dds \
+  $(BUILD_DIR)/ba_data/textures/discordServer.dds \
   $(BUILD_DIR)/ba_data/textures/doomShroomBGColor.dds \
   $(BUILD_DIR)/ba_data/textures/doomShroomLevelColor.dds \
   $(BUILD_DIR)/ba_data/textures/doomShroomPreview.dds \
@@ -6113,6 +6114,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/cyborgIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/cyborgIconColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/discordLogo.pvr \
+  $(BUILD_DIR)/ba_data/textures/discordServer.pvr \
   $(BUILD_DIR)/ba_data/textures/doomShroomBGColor.pvr \
   $(BUILD_DIR)/ba_data/textures/doomShroomLevelColor.pvr \
   $(BUILD_DIR)/ba_data/textures/doomShroomPreview.pvr \
@@ -6516,6 +6518,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/cyborgIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/cyborgIconColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/discordLogo.ktx \
+  $(BUILD_DIR)/ba_data/textures/discordServer.ktx \
   $(BUILD_DIR)/ba_data/textures/doomShroomBGColor.ktx \
   $(BUILD_DIR)/ba_data/textures/doomShroomLevelColor.ktx \
   $(BUILD_DIR)/ba_data/textures/doomShroomPreview.ktx \
@@ -6919,6 +6922,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/cyborgIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/cyborgIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/discordLogo_preview.png \
+  $(BUILD_DIR)/ba_data/textures/discordServer_preview.png \
   $(BUILD_DIR)/ba_data/textures/doomShroomBGColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/doomShroomLevelColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/doomShroomPreview_preview.png \

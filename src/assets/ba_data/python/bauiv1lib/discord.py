@@ -95,10 +95,10 @@ class DiscordWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width / 2 - 60, self._height - 100),
             text='We have our own Discord server where you can:\n- Find new'
-                 ' friends and people to play with\n- Participate in Office'
-                 ' Hours/Coffee with Eric\n- Share mods, plugins, art, and'
-                 ' memes\n- Report bugs and make feature suggestions\n'
-                 '- Troubleshoot issues',
+            ' friends and people to play with\n- Participate in Office'
+            ' Hours/Coffee with Eric\n- Share mods, plugins, art, and'
+            ' memes\n- Report bugs and make feature suggestions\n'
+            '- Troubleshoot issues',
             maxwidth=(self._width - 10) / 2,
             color=(1, 1, 1, 1),
             h_align='left',

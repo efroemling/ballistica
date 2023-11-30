@@ -133,7 +133,7 @@ class AboutGatherTab(GatherTab):
             v_align='center',
             flatness=1.0,
             text='Want to look for new people to play with?\nJoin our Discord'
-                 ' and find new friends!',
+            ' and find new friends!',
         )
         bui.buttonwidget(
             parent=self._container,
