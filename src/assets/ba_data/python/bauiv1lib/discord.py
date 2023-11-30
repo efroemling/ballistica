@@ -88,7 +88,7 @@ class DiscordWindow(bui.Window):
             parent=self._root_widget,
             position=(40, -15),
             size=(min_size, min_size),
-            texture=bui.gettexture('discordPreview'),
+            texture=bui.gettexture('discordServer'),
         )
 
         bui.textwidget(
