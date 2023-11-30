@@ -562,7 +562,7 @@ void ButtonWidget::DoActivate(bool is_repeat) {
   if (auto* call = on_activate_call_.Get()) {
     // Call this in the next cycle (don't want to risk mucking with UI from
     // within a UI loop.)
-    call->ScheduleWeak();
+    call->ScheduleWeakOnce();
     return;
   }
 }

@@ -247,7 +247,7 @@ void CheckBoxWidget::Activate() {
 
     // Call this in the next cycle (don't want to risk mucking with UI from
     // within a UI loop)
-    call->ScheduleWeak(args);
+    call->ScheduleWeakOnce(args);
   }
 }
 

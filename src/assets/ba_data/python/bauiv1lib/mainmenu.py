@@ -311,8 +311,8 @@ class MainMenuWindow(bui.Window):
                         else self._confirm_end_game
                     ),
                 )
-            # Assume we're in a client-session.
             else:
+                # Assume we're in a client-session.
                 bui.buttonwidget(
                     parent=self._root_widget,
                     position=(h - self._button_width * 0.5 * scale, v),
@@ -360,7 +360,6 @@ class MainMenuWindow(bui.Window):
                 tilt_scale=0.0,
                 draw_controller=store_button,
             )
-
             self._tdelay += self._t_delay_inc
         else:
             self._store_button = None

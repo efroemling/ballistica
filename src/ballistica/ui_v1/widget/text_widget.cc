@@ -592,7 +592,7 @@ void TextWidget::Activate() {
   if (auto* call = on_activate_call_.Get()) {
     // Call this in the next cycle (don't wanna risk mucking with UI from
     // within a UI loop).
-    call->ScheduleWeak();
+    call->ScheduleWeakOnce();
   }
 
   // Bring up an editor if applicable.
@@ -720,7 +720,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             claimed = true;
             // Call this in the next cycle (don't wanna risk mucking with UI
             // from within a UI loop)
-            call->ScheduleWeak();
+            call->ScheduleWeakOnce();
           }
         }
         break;
