@@ -241,7 +241,7 @@ class PartyWindow(bui.Window):
             choices_display=[
                 bui.Lstr(
                     resource='chatUnMuteText' if is_muted else 'chatMuteText'
-                ),
+                )
             ],
             current_choice='unmute' if is_muted else 'mute',
             delegate=self,
