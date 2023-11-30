@@ -88,7 +88,7 @@ void Widget::SetSelected(bool s, SelectionCause cause) {
   if (selected_ && on_select_call_.Exists()) {
     // Call this in the next cycle (don't wanna risk mucking
     // with UI from within a UI loop).
-    on_select_call_->ScheduleWeak();
+    on_select_call_->ScheduleWeakOnce();
   }
 }
 

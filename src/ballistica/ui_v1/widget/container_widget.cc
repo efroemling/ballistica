@@ -347,7 +347,7 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
           // Call this in the next cycle (don't wanna risk mucking with UI from
           // within a UI loop).
-          call->ScheduleWeak();
+          call->ScheduleWeakOnce();
         } else {
           OnCancelCustom();
         }
@@ -631,7 +631,7 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         if (!claimed && on_outside_click_call_.Exists()) {
           // Call this in the next cycle (don't wanna risk mucking with UI from
           // within a UI loop).
-          on_outside_click_call_->ScheduleWeak();
+          on_outside_click_call_->ScheduleWeakOnce();
         }
 
         // Always claim if they want.
@@ -1071,7 +1071,7 @@ void ContainerWidget::Activate() {
   if (auto* call = on_activate_call_.Get()) {
     // Call this in the next cycle (don't wanna risk mucking with UI from within
     // a UI loop).
-    call->ScheduleWeak();
+    call->ScheduleWeakOnce();
   }
 }
 
@@ -1182,6 +1182,7 @@ void ContainerWidget::SetTransition(TransitionType t) {
     dynamics_update_time_millisecs_ = display_time_millisecs;
     transitioning_ = true;
     transitioning_out_ = true;
+    ignore_input_ = true;
   } else {
     // Calculate the screen size in our own local space - we'll
     // animate an offset to slide on/off screen.

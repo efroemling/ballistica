@@ -1,4 +1,4 @@
-### 1.7.30 (build 21630, api 8, 2023-11-29)
+### 1.7.30 (build 21636, api 8, 2023-11-30)
 - Continued work on the big 1.7.28 update.
 - Got the Android version back up and running. There's been lots of cleanup and
   simplification on the Android layer, cleaning out years of cruft. This should
@@ -19,6 +19,11 @@
   effects such as the app continuing to play audio when it should not be.
 - (build 21626) Fixed a bug where click/tap locations were incorrect on some
   builds when tv-border was on (Thanks for the heads-up Loup(Dliwk's fan)!).
+- (build 21631) Fixes an issue where '^^^^^^^^^^^^^' lines in stack traces could
+  get chopped into tiny bits each on their own line in the dev console.
+- Fixed a longstanding issue where multiple key presses simultaneously could
+  cause multiple windows to pop up where only one is expected. Please holler if
+  you still see this problem happening anywhere.
 
 ### 1.7.29 (build 21619, api 8, 2023-11-21)
 

@@ -11,10 +11,10 @@
 
 namespace ballistica::base {
 
-// A callable and ballistica context-state wrapped up in a convenient package.
-// Handy for use with user-submitted callbacks, as it restores context
-// state from when it was created and prints various useful bits of context
-// info on exceptions.
+// A callable and ballistica context-state wrapped up in a convenient
+// package. Handy for use with user-submitted callbacks, as it restores
+// context state from when it was created and prints various useful bits of
+// context info on exceptions.
 class PythonContextCall : public Object {
  public:
   static auto current_call() -> PythonContextCall* { return current_call_; }
@@ -37,35 +37,65 @@ class PythonContextCall : public Object {
   auto file_loc() const -> const std::string& { return file_loc_; }
   void PrintContext();
 
-  /// Run in an upcoming cycle of the logic thread.
-  /// Must be called from the logic thread.
-  /// This form creates a strong-reference so the context_ref-call is guaranteed
-  /// to exist until run.
+  /// Run in an upcoming cycle of the logic thread. Must be called from the
+  /// logic thread. This form creates a strong-reference so the
+  /// context_ref-call is guaranteed to exist until run.
   void Schedule();
-  /// Run in an upcoming cycle of the logic thread with provided args.
-  /// Must be called from the logic thread.
-  /// This form creates a strong-reference so the context_ref-call is guaranteed
-  /// to exist until run.
+
+  /// Schedule only if this instance is not already scheduled. Generally a
+  /// good idea unless you know you need multiple runs scheduled. Avoids
+  /// problems such as UIs expecting to be activated only once getting
+  /// activated twice due to two simultenous key presses.
+  void ScheduleOnce();
+
+  /// Run in an upcoming cycle of the logic thread with provided args. Must
+  /// be called from the logic thread. This form creates a strong-reference
+  /// so the context_ref-call is guaranteed to exist until run.
   void Schedule(const PythonRef& args);
-  /// Run in an upcoming cycle of the logic thread.
-  /// Must be called from the logic thread.
-  /// This form creates a weak-reference and is a no-op if the context_ref-call
-  /// is destroyed before its scheduled run.
+
+  /// Schedule only if this instance is not already scheduled. Generally a
+  /// good idea unless you know you need multiple runs scheduled. Avoids
+  /// problems such as UIs expecting to be activated only once getting
+  /// activated twice due to two simultenous key presses.
+  void ScheduleOnce(const PythonRef& args);
+
+  /// Run in an upcoming cycle of the logic thread. Must be called from the
+  /// logic thread. This form creates a weak-reference and is a no-op if the
+  /// context_ref-call is destroyed before its scheduled run.
   void ScheduleWeak();
-  /// Run in an upcoming cycle of the logic thread with provided args.
-  /// Must be called from the logic thread.
-  /// This form creates a weak-reference and is a no-op if the context_ref-call
-  /// is destroyed before its scheduled run.
+
+  /// Schedule weakly only if this instance is not already scheduled.
+  /// Generally a good idea unless you know you need multiple runs
+  /// scheduled. Avoids problems such as UIs expecting to be activated only
+  /// once getting activated twice due to two simultenous key presses.
+  void ScheduleWeakOnce();
+
+  /// Run in an upcoming cycle of the logic thread with provided args. Must
+  /// be called from the logic thread. This form creates a weak-reference
+  /// and is a no-op if the context_ref-call is destroyed before its
+  /// scheduled run.
   void ScheduleWeak(const PythonRef& args);
+
+  /// Schedule weakly only if this instance is not already scheduled.
+  /// Generally a good idea unless you know you need multiple runs
+  /// scheduled. Avoids problems such as UIs expecting to be activated only
+  /// once getting activated twice due to two simultenous key presses.
+  void ScheduleWeakOnce(const PythonRef& args);
+
+  auto IsScheduled() const {
+    assert(g_base->InLogicThread());
+    return schedule_count_ > 0;
+  }
 
  private:
   void GetTrace();  // we try to grab basic trace info
-  std::string file_loc_;
+
   int line_{};
-  bool dead_ = false;
+  int schedule_count_{};
+  bool dead_{};
+  std::string file_loc_;
   PythonRef object_;
   base::ContextRef context_state_;
-  // base::Context* context_target_sanity_test_{};
   static PythonContextCall* current_call_;
 };
 

@@ -615,7 +615,7 @@ void Graphics::FadeScreen(bool to, millisecs_t time, PyObject* endcall) {
       Log(LogLevel::kWarning,
           "2 fades overlapping; running first fade-end-call early.");
     }
-    fade_end_call_->Schedule();
+    fade_end_call_->ScheduleOnce();
     fade_end_call_.Clear();
   }
   set_fade_start_on_next_draw_ = true;
@@ -1021,7 +1021,7 @@ void Graphics::DrawFades(FrameDef* frame_def) {
     } else {
       fade_ = 0;
       if (!was_done && fade_end_call_.Exists()) {
-        fade_end_call_->Schedule();
+        fade_end_call_->ScheduleOnce();
         fade_end_call_.Clear();
       }
     }

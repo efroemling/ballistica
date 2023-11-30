@@ -125,10 +125,19 @@ void PythonContextCall::Schedule() {
   Object::Ref<PythonContextCall> ref(this);
 
   assert(base::g_base);
+  schedule_count_++;
   base::g_base->logic->event_loop()->PushCall([ref] {
     assert(ref.Exists());
+    ref->schedule_count_--;
+    assert(ref->schedule_count_ >= 0);
     ref->Run();
   });
+}
+void PythonContextCall::ScheduleOnce() {
+  if (schedule_count_ > 0) {
+    return;
+  }
+  Schedule();
 }
 
 void PythonContextCall::Schedule(const PythonRef& args) {
@@ -136,10 +145,19 @@ void PythonContextCall::Schedule(const PythonRef& args) {
   BA_PRECONDITION(g_base->InLogicThread());
   Object::Ref<PythonContextCall> ref(this);
   assert(base::g_base);
+  schedule_count_++;
   base::g_base->logic->event_loop()->PushCall([ref, args] {
     assert(ref.Exists());
+    ref->schedule_count_--;
+    assert(ref->schedule_count_ >= 0);
     ref->Run(args);
   });
+}
+void PythonContextCall::ScheduleOnce(const PythonRef& args) {
+  if (schedule_count_ > 0) {
+    return;
+  }
+  Schedule(args);
 }
 
 void PythonContextCall::ScheduleWeak() {
@@ -147,11 +165,21 @@ void PythonContextCall::ScheduleWeak() {
   BA_PRECONDITION(g_base->InLogicThread());
   Object::WeakRef<PythonContextCall> ref(this);
   assert(base::g_base);
+  schedule_count_++;
   base::g_base->logic->event_loop()->PushCall([ref] {
     if (auto* call = ref.Get()) {
+      call->schedule_count_--;
+      assert(call->schedule_count_ >= 0);
       call->Run();
     }
   });
+}
+
+void PythonContextCall::ScheduleWeakOnce() {
+  if (schedule_count_ > 0) {
+    return;
+  }
+  ScheduleWeak();
 }
 
 void PythonContextCall::ScheduleWeak(const PythonRef& args) {
@@ -159,11 +187,21 @@ void PythonContextCall::ScheduleWeak(const PythonRef& args) {
   BA_PRECONDITION(g_base->InLogicThread());
   Object::WeakRef<PythonContextCall> ref(this);
   assert(base::g_base);
+  schedule_count_++;
   base::g_base->logic->event_loop()->PushCall([ref, args] {
     if (auto* call = ref.Get()) {
+      call->schedule_count_--;
+      assert(call->schedule_count_ >= 0);
       call->Run(args);
     }
   });
+}
+
+void PythonContextCall::ScheduleWeakOnce(const PythonRef& args) {
+  if (schedule_count_ > 0) {
+    return;
+  }
+  ScheduleWeak(args);
 }
 
 }  // namespace ballistica::base
