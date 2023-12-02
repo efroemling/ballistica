@@ -82,7 +82,7 @@ static const char* const scancode_names[SDL_NUM_SCANCODES] = {
     "F12",
     "PrintScreen",
     "ScrollLock",
-    "OnAppPause",
+    "Pause",
     "Insert",
     "Home",
     "PageUp",

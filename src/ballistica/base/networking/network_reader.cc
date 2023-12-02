@@ -25,7 +25,7 @@ void NetworkReader::SetPort(int port) {
   thread_ = new std::thread(RunThreadStatic_, this);
 }
 
-void NetworkReader::OnAppPause() {
+void NetworkReader::OnAppSuspend() {
   assert(g_core->InMainThread());
   assert(!paused_);
   {
@@ -42,7 +42,7 @@ void NetworkReader::OnAppPause() {
   }
 }
 
-void NetworkReader::OnAppResume() {
+void NetworkReader::OnAppUnsuspend() {
   assert(g_core->InMainThread());
   assert(paused_);
 

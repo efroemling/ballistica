@@ -688,13 +688,14 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   // If we're doing inline editing, handle clipboard paste.
   if (editable() && !ShouldUseStringEditor_()
       && m.type == base::WidgetMessage::Type::kPaste) {
-    if (g_base->app_adapter->ClipboardIsSupported()) {
-      if (g_base->app_adapter->ClipboardHasText()) {
+    if (g_base->ClipboardIsSupported()) {
+      if (g_base->ClipboardHasText()) {
         // Just enter it char by char as if we had typed it...
-        AddCharsToText_(g_base->app_adapter->ClipboardGetText());
+        AddCharsToText_(g_base->ClipboardGetText());
       }
     }
   }
+
   // If we're doing inline editing, handle some key events.
   if (editable() && m.has_keysym && !ShouldUseStringEditor_()) {
     last_carat_change_time_millisecs_ =

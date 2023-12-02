@@ -14,8 +14,8 @@ void AppMode::OnActivate() {}
 void AppMode::OnDeactivate() {}
 
 void AppMode::OnAppStart() {}
-void AppMode::OnAppPause() {}
-void AppMode::OnAppResume() {}
+void AppMode::OnAppSuspend() {}
+void AppMode::OnAppUnsuspend() {}
 void AppMode::OnAppShutdown() {}
 void AppMode::OnAppShutdownComplete() {}
 

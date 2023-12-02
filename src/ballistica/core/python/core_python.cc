@@ -10,9 +10,9 @@
 
 namespace ballistica::core {
 
-void LowLevelPythonDebugLog(const char* msg) {
+static void PythonLowLevelDebugLog_(const char* msg) {
   assert(g_core);
-  g_core->platform->DebugLog(msg);
+  g_core->platform->LowLevelDebugLog(msg);
 }
 
 static void CheckPyInitStatus(const char* where, const PyStatus& status) {
@@ -28,7 +28,7 @@ void CorePython::InitPython() {
 
   // Install our low level logger in our custom Python builds.
 #ifdef PY_HAVE_BALLISTICA_LOW_LEVEL_DEBUG_LOG
-  Py_BallisticaLowLevelDebugLog = LowLevelPythonDebugLog;
+  Py_BallisticaLowLevelDebugLog = PythonLowLevelDebugLog_;
 #endif
 
   // Flip on some extra runtime debugging options in debug builds.

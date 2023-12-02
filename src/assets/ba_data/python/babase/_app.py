@@ -230,6 +230,15 @@ class App:
         self.plugins = PluginSubsystem()
 
     @property
+    def active(self) -> bool:
+        """Whether the app is currently front and center.
+
+        This will be False when the app is hidden, other activities
+        are covering it, etc. (depending on the platform).
+        """
+        return _babase.app_is_active()
+
+    @property
     def aioloop(self) -> asyncio.AbstractEventLoop:
         """The logic thread's asyncio event loop.
 

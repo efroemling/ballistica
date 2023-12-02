@@ -103,7 +103,9 @@ auto CorePlatform::Create() -> CorePlatform* {
   return platform;
 }
 
-void CorePlatform::DebugLog(const std::string& msg) { HandleDebugLog(msg); }
+void CorePlatform::LowLevelDebugLog(const std::string& msg) {
+  HandleLowLevelDebugLog(msg);
+}
 
 CorePlatform::CorePlatform() : start_time_millisecs_(GetCurrentMillisecs()) {}
 
@@ -1021,7 +1023,7 @@ auto CorePlatform::HavePermission(Permission p) -> bool {
 void CorePlatform::SetDebugKey(const std::string& key,
                                const std::string& value) {}
 
-void CorePlatform::HandleDebugLog(const std::string& msg) {}
+void CorePlatform::HandleLowLevelDebugLog(const std::string& msg) {}
 
 auto CorePlatform::GetCurrentMillisecs() -> millisecs_t {
   return std::chrono::time_point_cast<std::chrono::milliseconds>(

@@ -148,8 +148,8 @@ class SceneV1AppMode : public base::AppMode {
   auto IsPlayerBanned(const PlayerSpec& spec) -> bool;
   void BanPlayer(const PlayerSpec& spec, millisecs_t duration);
   void OnAppStart() override;
-  void OnAppPause() override;
-  void OnAppResume() override;
+  void OnAppSuspend() override;
+  void OnAppUnsuspend() override;
   auto InClassicMainMenuSession() const -> bool override;
   auto CreateInputDeviceDelegate(base::InputDevice* device)
       -> base::InputDeviceDelegate* override;

@@ -66,7 +66,6 @@ class AppAdapterApple : public AppAdapter {
  private:
   class ScopedAllowGraphics_;
 
-  // void UpdateScreenSizes_();
   void ReloadRenderer_(const GraphicsSettings* settings);
 
   std::thread::id graphics_thread_{};

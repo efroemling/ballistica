@@ -609,6 +609,31 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// Start app systems in motion.
   void StartApp() override;
 
+  /// Set the app's active state. Should be called from the main thread.
+  /// Generally called by the AppAdapter. Being inactive means the app
+  /// experience is not front and center and thus it may want to throttle
+  /// down its rendering rate, pause single play gameplay, etc. This does
+  /// not, however, cause any extreme action such as halting event loops;
+  /// use Suspend/Resume for that. And note that the app may still be
+  /// visible while inactive, so it should not *completely* stop
+  /// drawing/etc.
+  void SetAppActive(bool active);
+
+  /// Put the app into a suspended state. Should be called from the main
+  /// thread. Generally called by the AppAdapter. Suspends event loops,
+  /// closes network sockets, etc. Generally corresponds to being
+  /// backgrounded on mobile platforms. It is assumed that, as soon as this
+  /// call returns, all engine work is finished and all threads can be
+  /// immediately suspended by the OS without any problems.
+  void SuspendApp();
+
+  /// Return the app to a running state from a suspended one. Can correspond
+  /// to foregrounding on mobile, unminimizing on desktop, etc. Spins
+  /// threads back up, re-opens network sockets, etc.
+  void UnsuspendApp();
+
+  auto app_suspended() const { return app_suspended_; }
+
   /// Issue a high level app quit request. Can be called from any thread and
   /// can be safely called repeatedly. If 'confirm' is true, a confirmation
   /// dialog will be presented if the environment and situation allows;
@@ -738,6 +763,22 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// reported by the Python layer.
   auto GetV2AccountID() -> std::optional<std::string>;
 
+  /// Return whether clipboard operations are supported at all. This gets
+  /// called when determining whether to display clipboard related UI
+  /// elements/etc.
+  auto ClipboardIsSupported() -> bool;
+
+  /// Return whether there is currently text on the clipboard.
+  auto ClipboardHasText() -> bool;
+
+  /// Set current clipboard text. Raises an Exception if clipboard is
+  /// unsupported.
+  void ClipboardSetText(const std::string& text);
+
+  /// Return current text from the clipboard. Raises an Exception if
+  /// clipboard is unsupported or if there's no text on the clipboard.
+  auto ClipboardGetText() -> std::string;
+
   // Const subsystems.
   AppAdapter* const app_adapter;
   AppConfig* const app_config;
@@ -774,10 +815,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   // Non-const bits (fixme: clean up access to these).
   TouchInput* touch_input{};
 
-  // auto return_value() const { return return_value_; }
-  // void set_return_value(int val) { return_value_ = val; }
-
-  // auto GetReturnValue() const -> int override;
+  auto app_active() const { return app_active_; }
 
  private:
   BaseFeatureSet();
@@ -789,8 +827,12 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   AppMode* app_mode_;
   PlusSoftInterface* plus_soft_{};
   ClassicSoftInterface* classic_soft_{};
-
   std::mutex shutdown_suppress_lock_;
+  bool have_clipboard_is_supported_{};
+  bool clipboard_is_supported_{};
+  bool app_active_set_{};
+  bool app_active_{true};
+  bool app_suspended_{};
   bool shutdown_suppress_disallowed_{};
   bool tried_importing_plus_{};
   bool tried_importing_classic_{};
@@ -803,7 +845,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   bool basn_log_behavior_{};
   bool server_wrapper_managed_{};
   int shutdown_suppress_count_{};
-  // int return_value_{};
 };
 
 }  // namespace ballistica::base

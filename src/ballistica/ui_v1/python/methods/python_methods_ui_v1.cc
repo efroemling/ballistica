@@ -2416,9 +2416,9 @@ static auto PyShowAd(PyObject* self, PyObject* args, PyObject* keywds)
                                       static_cast<bool>(pass_actually_showed));
 
   // In cases where we support ads, store our callback and kick one off.
-  // We'll then fire our callback once its done.
-  // If we *don't* support ads, just store our callback and then kick off
-  // an ad-view-complete message ourself so the event flow is similar..
+  // We'll then fire our callback once its done. If we *don't* support ads,
+  // just store our callback and then kick off an ad-view-complete message
+  // ourself so the event flow is similar..
   if (g_core->platform->GetHasAds()) {
     g_core->platform->ShowAd(purpose);
   } else {

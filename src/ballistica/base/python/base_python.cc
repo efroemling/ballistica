@@ -149,12 +149,12 @@ void BasePython::OnAppStart() {
   objs().Get(BasePython::ObjID::kAppOnNativeStartCall).Call();
 }
 
-void BasePython::OnAppPause() {
+void BasePython::OnAppSuspend() {
   assert(g_base->InLogicThread());
   objs().Get(BasePython::ObjID::kAppOnNativeSuspendCall).Call();
 }
 
-void BasePython::OnAppResume() {
+void BasePython::OnAppUnsuspend() {
   assert(g_base->InLogicThread());
   objs().Get(BasePython::ObjID::kAppOnNativeUnsuspendCall).Call();
 }

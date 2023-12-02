@@ -38,7 +38,7 @@ void Logging::V1CloudLog(const std::string& msg) {
 
   if (g_core) {
     // (ship to things like Crashlytics crash-logging)
-    g_core->platform->DebugLog(msg);
+    g_core->platform->LowLevelDebugLog(msg);
 
     // Add to our complete v1-cloud-log.
     std::scoped_lock lock(g_core->v1_cloud_log_mutex);

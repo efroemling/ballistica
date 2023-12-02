@@ -129,7 +129,7 @@ static PyMethodDef PyHasTouchScreenDef = {
 
 static auto PyClipboardIsSupported(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_base->app_adapter->ClipboardIsSupported()) {
+  if (g_base->ClipboardIsSupported()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -155,7 +155,7 @@ static PyMethodDef PyClipboardIsSupportedDef = {
 
 static auto PyClipboardHasText(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_base->app_adapter->ClipboardHasText()) {
+  if (g_base->ClipboardHasText()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -188,7 +188,7 @@ static auto PyClipboardSetText(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &value)) {
     return nullptr;
   }
-  g_base->app_adapter->ClipboardSetText(value);
+  g_base->ClipboardSetText(value);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -212,7 +212,7 @@ static PyMethodDef PyClipboardSetTextDef = {
 
 static auto PyClipboardGetText(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  return PyUnicode_FromString(g_base->app_adapter->ClipboardGetText().c_str());
+  return PyUnicode_FromString(g_base->ClipboardGetText().c_str());
   Py_RETURN_FALSE;
   BA_PYTHON_CATCH;
 }

@@ -81,9 +81,9 @@ void UI::OnAppStart() {
   }
 }
 
-void UI::OnAppPause() { assert(g_base->InLogicThread()); }
+void UI::OnAppSuspend() { assert(g_base->InLogicThread()); }
 
-void UI::OnAppResume() {
+void UI::OnAppUnsuspend() {
   assert(g_base->InLogicThread());
   SetUIInputDevice(nullptr);
 }

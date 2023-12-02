@@ -143,7 +143,7 @@ auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
   // Spin and wait for a short bit for a frame_def to appear.
   while (true) {
     // Stop waiting if we can't/shouldn't render anyway.
-    if (!renderer_ || shutting_down_ || g_base->app_adapter->app_suspended()) {
+    if (!renderer_ || shutting_down_ || g_base->app_suspended()) {
       return nullptr;
     }
 

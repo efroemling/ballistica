@@ -26,8 +26,8 @@ class AppMode {
 
   /// Logic thread callbacks that run while the app-mode is active.
   virtual void OnAppStart();
-  virtual void OnAppPause();
-  virtual void OnAppResume();
+  virtual void OnAppSuspend();
+  virtual void OnAppUnsuspend();
   virtual void OnAppShutdown();
   virtual void OnAppShutdownComplete();
   virtual void DoApplyAppConfig();

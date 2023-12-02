@@ -48,9 +48,9 @@ void Logic::OnAppStart() {
 
   // Stay informed when our event loop is pausing/unpausing.
   event_loop_->AddSuspendCallback(
-      NewLambdaRunnableUnmanaged([this] { OnAppPause(); }));
+      NewLambdaRunnableUnmanaged([this] { OnAppSuspend(); }));
   event_loop_->AddUnsuspendCallback(
-      NewLambdaRunnableUnmanaged([this] { OnAppResume(); }));
+      NewLambdaRunnableUnmanaged([this] { OnAppUnsuspend(); }));
 
   // Running in a specific order here and should try to stick to it in
   // other OnAppXXX callbacks so any subsystem interdependencies behave
@@ -179,40 +179,40 @@ void Logic::OnInitialAppModeSet() {
   }
 }
 
-void Logic::OnAppPause() {
+void Logic::OnAppSuspend() {
   assert(g_base->InLogicThread());
   assert(g_base->CurrentContext().IsEmpty());
 
   // Note: keep these in opposite order of OnAppStart.
-  g_base->python->OnAppPause();
+  g_base->python->OnAppSuspend();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnAppPause();
+    g_base->plus()->OnAppSuspend();
   }
-  g_base->app_mode()->OnAppPause();
-  g_base->ui->OnAppPause();
-  g_base->input->OnAppPause();
-  g_base->audio->OnAppPause();
-  g_base->graphics->OnAppPause();
-  g_base->platform->OnAppPause();
-  g_base->app_adapter->OnAppPause();
+  g_base->app_mode()->OnAppSuspend();
+  g_base->ui->OnAppSuspend();
+  g_base->input->OnAppSuspend();
+  g_base->audio->OnAppSuspend();
+  g_base->graphics->OnAppSuspend();
+  g_base->platform->OnAppSuspend();
+  g_base->app_adapter->OnAppSuspend();
 }
 
-void Logic::OnAppResume() {
+void Logic::OnAppUnsuspend() {
   assert(g_base->InLogicThread());
   assert(g_base->CurrentContext().IsEmpty());
 
   // Note: keep these in the same order as OnAppStart.
-  g_base->app_adapter->OnAppResume();
-  g_base->platform->OnAppResume();
-  g_base->graphics->OnAppResume();
-  g_base->audio->OnAppResume();
-  g_base->input->OnAppResume();
-  g_base->ui->OnAppResume();
-  g_base->app_mode()->OnAppResume();
+  g_base->app_adapter->OnAppUnsuspend();
+  g_base->platform->OnAppUnsuspend();
+  g_base->graphics->OnAppUnsuspend();
+  g_base->audio->OnAppUnsuspend();
+  g_base->input->OnAppUnsuspend();
+  g_base->ui->OnAppUnsuspend();
+  g_base->app_mode()->OnAppUnsuspend();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnAppResume();
+    g_base->plus()->OnAppUnsuspend();
   }
-  g_base->python->OnAppResume();
+  g_base->python->OnAppUnsuspend();
 }
 
 void Logic::Shutdown() {

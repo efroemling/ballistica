@@ -115,8 +115,10 @@ class AudioServer {
   float sound_volume_{1.0f};
   float sound_pitch_{1.0f};
   float music_volume_{1.0f};
+  float app_active_volume_{1.0f};
 
   bool have_pending_loads_{};
+  bool app_active_{true};
   bool suspended_{};
   bool shutdown_completed_{};
   bool shutting_down_{};

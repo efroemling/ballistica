@@ -516,9 +516,9 @@ void Input::OnAppStart() {
   }
 }
 
-void Input::OnAppPause() { assert(g_base->InLogicThread()); }
+void Input::OnAppSuspend() { assert(g_base->InLogicThread()); }
 
-void Input::OnAppResume() { assert(g_base->InLogicThread()); }
+void Input::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
 
 void Input::OnAppShutdown() { assert(g_base->InLogicThread()); }
 

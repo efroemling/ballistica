@@ -24,8 +24,8 @@ class NetworkReader {
  public:
   NetworkReader();
   void SetPort(int port);
-  void OnAppPause();
-  void OnAppResume();
+  void OnAppSuspend();
+  void OnAppUnsuspend();
   auto port4() const { return port4_; }
   auto port6() const { return port6_; }
   auto sd_mutex() -> std::mutex& { return sd_mutex_; }

@@ -250,6 +250,166 @@ void BaseFeatureSet::StartApp() {
   g_core->LifecycleLog("start-app end (main thread)");
 }
 
+void BaseFeatureSet::SuspendApp() {
+  assert(g_core);
+  assert(g_core->InMainThread());
+
+  if (app_suspended_) {
+    Log(LogLevel::kWarning,
+        "AppAdapter::SuspendApp() called with app already suspended.");
+    return;
+  }
+
+  millisecs_t start_time{core::CorePlatform::GetCurrentMillisecs()};
+
+  // Apple mentioned 5 seconds to run stuff once backgrounded or they bring
+  // down the hammer. Let's aim to stay under 2.
+  millisecs_t max_duration{2000};
+
+  g_core->platform->LowLevelDebugLog(
+      "SuspendApp@"
+      + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
+  app_suspended_ = true;
+
+  // IMPORTANT: Any pause related stuff that event-loop-threads need to do
+  // should be done from their registered pause-callbacks. If we instead
+  // push runnables to them from here they may or may not be called before
+  // their event-loop is actually paused.
+
+  // Pause all event loops.
+  EventLoop::SetEventLoopsSuspended(true);
+
+  if (g_base->network_reader) {
+    g_base->network_reader->OnAppSuspend();
+  }
+  g_base->networking->OnAppSuspend();
+
+  // We assume that the OS will completely suspend our process the moment we
+  // return from this call (though this is not technically true on all
+  // platforms). So we want to spin here and give our various event loop
+  // threads time to park themselves.
+  std::vector<EventLoop*> running_loops;
+  do {
+    // If/when we get to a point with no threads waiting to be paused, we're
+    // good to go.
+    // auto loops{EventLoop::GetStillSuspendingEventLoops()};
+    running_loops = EventLoop::GetStillSuspendingEventLoops();
+    // running_loop_count = loops.size();
+    if (running_loops.empty()) {
+      if (g_buildconfig.debug_build()) {
+        Log(LogLevel::kDebug,
+            "SuspendApp() completed in "
+                + std::to_string(core::CorePlatform::GetCurrentMillisecs()
+                                 - start_time)
+                + "ms.");
+      }
+      return;
+    }
+  } while (std::abs(core::CorePlatform::GetCurrentMillisecs() - start_time)
+           < max_duration);
+
+  // If we made it here, we timed out. Complain.
+  std::string msg =
+      std::string("SuspendApp() took too long; ")
+      + std::to_string(running_loops.size())
+      + " event-loops not yet suspended after "
+      + std::to_string(core::CorePlatform::GetCurrentMillisecs() - start_time)
+      + " ms: (";
+  bool first = true;
+  for (auto* loop : running_loops) {
+    if (!first) {
+      msg += ", ";
+    }
+    // Note: not adding a default here so compiler complains if we
+    // add/change something.
+    switch (loop->identifier()) {
+      case EventLoopID::kInvalid:
+        msg += "invalid";
+        break;
+      case EventLoopID::kLogic:
+        msg += "logic";
+        break;
+      case EventLoopID::kAssets:
+        msg += "assets";
+        break;
+      case EventLoopID::kFileOut:
+        msg += "fileout";
+        break;
+      case EventLoopID::kMain:
+        msg += "main";
+        break;
+      case EventLoopID::kAudio:
+        msg += "audio";
+        break;
+      case EventLoopID::kNetworkWrite:
+        msg += "networkwrite";
+        break;
+      case EventLoopID::kSuicide:
+        msg += "suicide";
+        break;
+      case EventLoopID::kStdin:
+        msg += "stdin";
+        break;
+      case EventLoopID::kBGDynamics:
+        msg += "bgdynamics";
+        break;
+    }
+    first = false;
+  }
+  msg += ").";
+
+  Log(LogLevel::kError, msg);
+}
+
+void BaseFeatureSet::UnsuspendApp() {
+  assert(g_core);
+  assert(g_core->InMainThread());
+
+  if (!app_suspended_) {
+    Log(LogLevel::kWarning,
+        "AppAdapter::UnsuspendApp() called with app not in suspendedstate.");
+    return;
+  }
+  millisecs_t start_time{core::CorePlatform::GetCurrentMillisecs()};
+  g_core->platform->LowLevelDebugLog(
+      "UnsuspendApp@"
+      + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
+  app_suspended_ = false;
+
+  // Spin all event-loops back up.
+  EventLoop::SetEventLoopsSuspended(false);
+
+  // Run resumes that expect to happen in the main thread.
+  g_base->network_reader->OnAppUnsuspend();
+  g_base->networking->OnAppUnsuspend();
+
+  // When resuming from a suspended state, we may want to pause whatever
+  // game was running when we last were active.
+  //
+  // TODO(efro): we should make this smarter so it doesn't happen if we're
+  // in a network game or something that we can't pause; bringing up the
+  // menu doesn't really accomplish anything there.
+  //
+  // In general this probably should be handled at a higher level.
+  // if (g_core->should_pause_active_game) {
+  //   g_core->should_pause_active_game = false;
+
+  //   // If we've been completely backgrounded, send a menu-press command to
+  //   // the game; this will bring up a pause menu if we're in the game/etc.
+  //   if (!g_base->ui->MainMenuVisible()) {
+  //     g_base->ui->PushMainMenuPressCall(nullptr);
+  //   }
+  // }
+
+  if (g_buildconfig.debug_build()) {
+    Log(LogLevel::kDebug,
+        "UnsuspendApp() completed in "
+            + std::to_string(core::CorePlatform::GetCurrentMillisecs()
+                             - start_time)
+            + "ms.");
+  }
+}
+
 void BaseFeatureSet::OnAppShutdownComplete() {
   assert(g_core->InMainThread());
   assert(g_core);
@@ -758,6 +918,59 @@ void BaseFeatureSet::QuitApp(bool confirm, QuitType quit_type) {
 
 void BaseFeatureSet::PushMainThreadRunnable(Runnable* runnable) {
   app_adapter->DoPushMainThreadRunnable(runnable);
+}
+
+auto BaseFeatureSet::ClipboardIsSupported() -> bool {
+  // We only call our actual virtual function once.
+  if (!have_clipboard_is_supported_) {
+    clipboard_is_supported_ = app_adapter->DoClipboardIsSupported();
+    have_clipboard_is_supported_ = true;
+  }
+  return clipboard_is_supported_;
+}
+
+auto BaseFeatureSet::ClipboardHasText() -> bool {
+  // If subplatform says they don't support clipboards, don't even ask.
+  if (!ClipboardIsSupported()) {
+    return false;
+  }
+  return app_adapter->DoClipboardHasText();
+}
+
+void BaseFeatureSet::ClipboardSetText(const std::string& text) {
+  // If subplatform says they don't support clipboards, this is an error.
+  if (!ClipboardIsSupported()) {
+    throw Exception("ClipboardSetText called with no clipboard support.",
+                    PyExcType::kRuntime);
+  }
+  app_adapter->DoClipboardSetText(text);
+}
+
+auto BaseFeatureSet::ClipboardGetText() -> std::string {
+  // If subplatform says they don't support clipboards, this is an error.
+  if (!ClipboardIsSupported()) {
+    throw Exception("ClipboardGetText called with no clipboard support.",
+                    PyExcType::kRuntime);
+  }
+  return app_adapter->DoClipboardGetText();
+}
+
+void BaseFeatureSet::SetAppActive(bool active) {
+  assert(InMainThread());
+  g_core->platform->LowLevelDebugLog(
+      "SetAppActive(" + std::to_string(active) + ")@"
+      + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
+
+  printf("APP ACTIVE %d\n", static_cast<int>(active));
+
+  // Issue a gentle warning if they are feeding us the same state twice in a
+  // row; might imply faulty logic.
+  if (app_active_set_ && app_active_ == active) {
+    Log(LogLevel::kWarning, "SetAppActive called with state "
+                                + std::to_string(active) + " twice in a row.");
+  }
+  app_active_set_ = true;
+  app_active_ = active;
 }
 
 }  // namespace ballistica::base

@@ -31,9 +31,9 @@ void Networking::DoApplyAppConfig() {
   }
 }
 
-void Networking::OnAppPause() {}
+void Networking::OnAppSuspend() {}
 
-void Networking::OnAppResume() {}
+void Networking::OnAppUnsuspend() {}
 
 void Networking::SendTo(const std::vector<uint8_t>& buffer,
                         const SockAddr& addr) {

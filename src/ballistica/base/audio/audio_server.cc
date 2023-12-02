@@ -4,6 +4,7 @@
 
 #include <algorithm>
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/audio/al_sys.h"
@@ -111,7 +112,7 @@ class AudioServer::ThreadSource_ : public Object {
   std::unique_ptr<AudioSource> client_source_;
   float fade_{1.0f};
   float gain_{1.0f};
-  AudioServer* audio_thread_{};
+  AudioServer* audio_server_{};
   bool valid_{};
   const Object::Ref<SoundAsset>* source_sound_{};
   int id_{};
@@ -343,13 +344,13 @@ void AudioServer::SetSuspended_(bool suspend) {
       try {
         alcDevicePauseSOFT(device);
       } catch (const std::exception& e) {
-        g_core->platform->DebugLog(
+        g_core->platform->LowLevelDebugLog(
             std::string("EXC pausing alcDevice: ")
             + g_core->platform->DemangleCXXSymbol(typeid(e).name()) + " "
             + e.what());
         throw;
       } catch (...) {
-        g_core->platform->DebugLog("UNKNOWN EXC pausing alcDevice");
+        g_core->platform->LowLevelDebugLog("UNKNOWN EXC pausing alcDevice");
         throw;
       }
 #endif
@@ -381,13 +382,13 @@ void AudioServer::SetSuspended_(bool suspend) {
       try {
         alcDeviceResumeSOFT(device);
       } catch (const std::exception& e) {
-        g_core->platform->DebugLog(
+        g_core->platform->LowLevelDebugLog(
             std::string("EXC resuming alcDevice: ")
             + g_core->platform->DemangleCXXSymbol(typeid(e).name()) + " "
             + e.what());
         throw;
       } catch (...) {
-        g_core->platform->DebugLog("UNKNOWN EXC resuming alcDevice");
+        g_core->platform->LowLevelDebugLog("UNKNOWN EXC resuming alcDevice");
         throw;
       }
 #endif
@@ -689,7 +690,7 @@ void AudioServer::Process_() {
   assert(g_base->InAudioThread());
   millisecs_t real_time = g_core->GetAppTimeMillisecs();
 
-  // If we're suspended we don't do nothin'.
+  // Only do real work if we're in normal running mode.
   if (!suspended_ && !shutting_down_) {
     // Do some loading...
     have_pending_loads_ = g_base->assets->RunPendingAudioLoads();
@@ -708,6 +709,21 @@ void AudioServer::Process_() {
       last_stream_process_time_ = real_time;
       for (auto&& i : streaming_sources_) {
         i->Update();
+      }
+    }
+
+    // If the app has switched active/inactive state, update
+    // our volumes (we may silence our audio in these cases).
+    auto app_active = g_base->app_active();
+    if (app_active != app_active_) {
+      app_active_ = app_active;
+      if (g_base->app_adapter->ShouldSilenceAudioWhenInactive()) {
+        app_active_volume_ = app_active ? 1.0f : 0.0f;
+      } else {
+        app_active_volume_ = 1.0f;
+      }
+      for (auto&& i : sources_) {
+        i->UpdateVolume();
       }
     }
 
@@ -792,9 +808,9 @@ void AudioServer::FadeSoundOut(uint32_t play_id, uint32_t time) {
 //   delete c;
 // }
 
-AudioServer::ThreadSource_::ThreadSource_(AudioServer* audio_thread_in,
+AudioServer::ThreadSource_::ThreadSource_(AudioServer* audio_server_in,
                                           int id_in, bool* valid_out)
-    : id_(id_in), audio_thread_(audio_thread_in) {
+    : id_(id_in), audio_server_(audio_server_in) {
 #if BA_ENABLE_AUDIO
   assert(g_core);
   assert(valid_out != nullptr);
@@ -839,10 +855,10 @@ AudioServer::ThreadSource_::~ThreadSource_() {
   Stop();
 
   // Remove us from sources list.
-  for (auto i = audio_thread_->sources_.begin();
-       i != audio_thread_->sources_.end(); ++i) {
+  for (auto i = audio_server_->sources_.begin();
+       i != audio_server_->sources_.end(); ++i) {
     if (*i == this) {
-      audio_thread_->sources_.erase(i);
+      audio_server_->sources_.erase(i);
       break;
     }
   }
@@ -1079,12 +1095,12 @@ void AudioServer::ThreadSource_::ExecPlay() {
     looping_ = false;
 
     // Push us on the list of streaming sources if we're not on it.
-    for (auto&& i : audio_thread_->streaming_sources_) {
+    for (auto&& i : audio_server_->streaming_sources_) {
       if (i == this) {
         throw Exception();
       }
     }
-    audio_thread_->streaming_sources_.push_back(this);
+    audio_server_->streaming_sources_.push_back(this);
 
     // Make sure stereo sounds aren't positional.
     // This is default behavior on Mac/Win, but we enforce it for linux.
@@ -1162,10 +1178,10 @@ void AudioServer::ThreadSource_::ExecStop() {
   if (streamer_.Exists()) {
     assert(is_streamed_);
     streamer_->Stop();
-    for (auto i = audio_thread_->streaming_sources_.begin();
-         i != audio_thread_->streaming_sources_.end(); ++i) {
+    for (auto i = audio_server_->streaming_sources_.begin();
+         i != audio_server_->streaming_sources_.end(); ++i) {
       if (*i == this) {
-        audio_thread_->streaming_sources_.erase(i);
+        audio_server_->streaming_sources_.erase(i);
         break;
       }
     }
@@ -1182,15 +1198,16 @@ void AudioServer::ThreadSource_::ExecStop() {
 void AudioServer::ThreadSource_::UpdateVolume() {
 #if BA_ENABLE_AUDIO
   assert(g_base->InAudioThread());
-  if (g_base->audio_server->suspended_
-      || g_base->audio_server->shutting_down_) {
+  if (audio_server_->suspended_ || audio_server_->shutting_down_) {
     return;
   }
   float val = gain_ * fade_;
+  val *= audio_server_->app_active_volume_;
+
   if (current_is_music()) {
-    val *= audio_thread_->music_volume_ / 7.0f;
+    val *= audio_server_->music_volume_ / 7.0f;
   } else {
-    val *= audio_thread_->sound_volume_;
+    val *= audio_server_->sound_volume_;
   }
   alSourcef(source_, AL_GAIN, std::max(0.0f, val));
   CHECK_AL_ERROR;
@@ -1208,7 +1225,7 @@ void AudioServer::ThreadSource_::UpdatePitch() {
   float val = 1.0f;
   if (current_is_music()) {
   } else {
-    val *= audio_thread_->sound_pitch_;
+    val *= audio_server_->sound_pitch_;
   }
   alSourcef(source_, AL_PITCH, val);
   CHECK_AL_ERROR;

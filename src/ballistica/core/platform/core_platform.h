@@ -54,9 +54,8 @@ class CorePlatform {
   /// fopen() supporting UTF8 strings.
   virtual auto FOpen(const char* path, const char* mode) -> FILE*;
 
-  /// rename() supporting UTF8 strings.
-  /// For cross-platform consistency, this should also remove any file that
-  /// exists at the target location first.
+  /// rename() supporting UTF8 strings. For cross-platform consistency, this
+  /// should also remove any file that exists at the target location first.
   virtual auto Rename(const char* oldname, const char* newname) -> int;
 
   /// Simple cross-platform check for existence of a file.
@@ -332,26 +331,30 @@ class CorePlatform {
   /// This is expected to be lightweight as it may be called often.
   virtual void SetDebugKey(const std::string& key, const std::string& value);
 
-  void DebugLog(const std::string& msg);
+  /// Print a log message to be included in crash logs or other debug
+  /// mechanisms (example: Crashlytics). V1-cloud-log messages get forwarded
+  /// to here as well. It can be useful to call this directly to report extra
+  /// details that may help in debugging, as these calls are not considered
+  /// 'noteworthy' or presented to the user as standard Log() calls are.
+  void LowLevelDebugLog(const std::string& msg);
 
 #pragma mark MISC --------------------------------------------------------------
 
-  /// Return a time measurement in milliseconds since launch.
-  /// It *should* be monotonic.
-  /// For most purposes, AppTime values are preferable since their progression
-  /// pauses during app suspension and they are 100% guaranteed to not go
-  /// backwards.
+  /// Return a time measurement in milliseconds since launch. It *should* be
+  /// monotonic. For most purposes, AppTime values are preferable since
+  /// their progression pauses during app suspension and they are 100%
+  /// guaranteed to not go backwards.
   auto GetTicks() const -> millisecs_t;
 
-  /// Return a raw current milliseconds value. It *should* be monotonic.
-  /// It is relative to an undefined start point; only use it for time
+  /// Return a raw current milliseconds value. It *should* be monotonic. It
+  /// is relative to an undefined start point; only use it for time
   /// differences. Generally the AppTime values are preferable since their
   /// progression pauses during app suspension and they are 100% guaranteed
   /// to not go backwards.
   static auto GetCurrentMillisecs() -> millisecs_t;
 
-  /// Return a raw current microseconds value. It *should* be monotonic.
-  /// It is relative to an undefined start point; only use it for time
+  /// Return a raw current microseconds value. It *should* be monotonic. It
+  /// is relative to an undefined start point; only use it for time
   /// differences. Generally the AppTime values are preferable since their
   /// progression pauses during app suspension and they are 100% guaranteed
   /// to not go backwards.
@@ -378,14 +381,15 @@ class CorePlatform {
   /// Is the OS currently playing music? (so we can avoid doing so).
   virtual auto IsOSPlayingMusic() -> bool;
 
-  /// Pass platform-specific misc-read-vals along to the OS (as a json string).
+  /// Pass platform-specific misc-read-vals along to the OS (as a json
+  /// string).
   virtual void SetPlatformMiscReadVals(const std::string& vals);
 
   /// Set the name of the current thread (for debugging).
   virtual void SetCurrentThreadName(const std::string& name);
 
-  // If display-resolution can be directly set on this platform,
-  // return true and set the native full res here.  Otherwise return false;
+  // If display-resolution can be directly set on this platform, return true
+  // and set the native full res here. Otherwise return false;
   virtual auto GetDisplayResolution(int* x, int* y) -> bool;
 
   /// Are we being run from a terminal? (should we show prompts, etc?).
@@ -412,44 +416,39 @@ class CorePlatform {
   /// device; something like "iPhone 12 Pro".
   virtual auto DoGetDeviceDescription() -> std::string;
 
-  /// Attempt to actually create a directory.
-  /// Should *not* raise Exceptions if it already exists or if quiet is true.
+  /// Attempt to actually create a directory. Should *not* raise Exceptions
+  /// if it already exists or if quiet is true.
   virtual void DoMakeDir(const std::string& dir, bool quiet);
 
-  /// Attempt to actually get an abs path. This will only be called if
-  /// the path is valid and exists.
+  /// Attempt to actually get an abs path. This will only be called if the
+  /// path is valid and exists.
   virtual auto DoAbsPath(const std::string& path, std::string* outpath) -> bool;
 
-  /// Calc the user scripts dir path for this platform.
-  /// This will be called once and the path cached.
+  /// Calc the user scripts dir path for this platform. This will be called
+  /// once and the path cached.
   virtual auto DoGetUserPythonDirectoryMonolithicDefault()
       -> std::optional<std::string>;
 
-  /// Return the default config directory for this platform.
-  /// This will be used as the config dir if not overridden via command
-  /// line options, etc.
+  /// Return the default config directory for this platform. This will be
+  /// used as the config dir if not overridden via command line options,
+  /// etc.
   virtual auto DoGetConfigDirectoryMonolithicDefault()
       -> std::optional<std::string>;
 
-  /// Return the default data directory for this platform.
-  /// This will be used as the data dir if not overridden by core-config, etc.
-  /// This is the one monolithic-default value that is not optional.
+  /// Return the default data directory for this platform. This will be used
+  /// as the data dir if not overridden by core-config, etc. This is the one
+  /// monolithic-default value that is not optional.
   virtual auto DoGetDataDirectoryMonolithicDefault() -> std::string;
 
-  /// Return the default Volatile data dir for this platform.
-  /// This will be used as the volatile-data-dir if not overridden via command
-  /// line options/etc.
+  /// Return the default Volatile data dir for this platform. This will be
+  /// used as the volatile-data-dir if not overridden via command line
+  /// options/etc.
   virtual auto GetDefaultVolatileDataDirectory() -> std::string;
 
   /// Generate a random UUID string.
   virtual auto GenerateUUID() -> std::string;
 
-  /// Print a log message to be included in crash logs or other debug
-  /// mechanisms (example: Crashlytics). V1-cloud-log messages get forwarded
-  /// to here as well. It can be useful to call this directly to report extra
-  /// details that may help in debugging, as these calls are not considered
-  /// 'noteworthy' or presented to the user as standard Log() calls are.
-  virtual void HandleDebugLog(const std::string& msg);
+  virtual void HandleLowLevelDebugLog(const std::string& msg);
 
   CorePlatform();
   virtual ~CorePlatform();

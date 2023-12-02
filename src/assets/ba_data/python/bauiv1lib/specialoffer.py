@@ -551,9 +551,11 @@ def show_offer() -> bool:
                 if bui.native_review_request_supported():
                     bui.native_review_request()
                 else:
-                    feedback.ask_for_rating()
+                    if app.ui_v1.available:
+                        feedback.ask_for_rating()
             else:
-                SpecialOfferWindow(app.classic.special_offer)
+                if app.ui_v1.available:
+                    SpecialOfferWindow(app.classic.special_offer)
 
             app.classic.special_offer = None
             return True
