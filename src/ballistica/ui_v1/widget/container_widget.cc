@@ -1158,17 +1158,23 @@ void ContainerWidget::SetStartButton(ButtonWidget* button) {
 }
 
 static auto _IsTransitionOut(ContainerWidget::TransitionType type) {
+  // Note: framing this without a 'default:' so we get compiler warnings
+  // when enums are added/removed.
+  bool val = false;
   switch (type) {
     case ContainerWidget::TransitionType::kUnset:
     case ContainerWidget::TransitionType::kInLeft:
     case ContainerWidget::TransitionType::kInRight:
     case ContainerWidget::TransitionType::kInScale:
-      return false;
+      val = false;
+      break;
     case ContainerWidget::TransitionType::kOutLeft:
     case ContainerWidget::TransitionType::kOutRight:
     case ContainerWidget::TransitionType::kOutScale:
-      return true;
+      val = true;
+      break;
   }
+  return val;
 }
 
 void ContainerWidget::SetTransition(TransitionType t) {
