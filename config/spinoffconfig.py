@@ -195,6 +195,7 @@ ctx.filter_file_names = {
     '.projectile',
     '.editorconfig',
     'ci.yml',
+    'cd.yml',
     'LICENSE',
     'cloudtool',
     'bacloud',
