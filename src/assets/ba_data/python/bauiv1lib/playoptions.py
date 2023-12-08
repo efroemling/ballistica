@@ -482,9 +482,12 @@ class PlayOptionsWindow(PopupWindow):
             cfg['Private Party Host Session Type'] = typename
             bui.getsound('gunCocking').play()
             assert bui.app.classic is not None
+            # Note: this is a wonky situation where we aren't actually
+            # the main window but we set it on behalf of the main window
+            # that popped us up.
             bui.app.ui_v1.set_main_menu_window(
                 GatherWindow(transition='in_right').get_root_widget(),
-                from_window=self.root_widget,
+                from_window=False,  # Disable this test.
             )
             self._transition_out(transition='out_left')
             if self._delegate is not None:

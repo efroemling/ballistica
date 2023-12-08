@@ -97,6 +97,8 @@ class EventLoop {
   auto suspended() { return suspended_; }
   auto done() -> bool { return done_; }
 
+  auto name() const { return name_; }
+
  private:
   struct ThreadMessage_ {
     enum class Type { kShutdown = 999, kRunnable, kSuspend, kUnsuspend };
@@ -149,13 +151,6 @@ class EventLoop {
 
   void BootstrapThread_();
 
-  // void LoopUpkeep_(bool single_cycle);
-
-  // FIXME: Should generalize this to some sort of PlatformThreadData class.
-#if BA_XCODE_BUILD
-  // void* auto_release_pool_{};
-#endif
-
   EventLoopID identifier_{EventLoopID::kInvalid};
   ThreadSource source_{};
   bool bootstrapped_{};
@@ -173,6 +168,7 @@ class EventLoop {
   std::mutex thread_message_mutex_;
   std::mutex client_listener_mutex_;
   std::list<std::vector<char>> data_to_client_;
+  std::string name_;
   PyThreadState* py_thread_state_{};
   TimerList timers_;
 };

@@ -1788,6 +1788,32 @@ static PyMethodDef PyNativeReviewRequestDef = {
     "\n"
     "(internal)",
 };
+
+// ------------------------------- temp_testing --------------------------------
+
+static auto PyTempTesting(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  std::string devstr = g_core->platform->GetDeviceName() + " "
+                       + g_core->platform->GetOSVersionString();
+  if (devstr == "samsung SM-N950F 7.1.1") {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyTempTestingDef = {
+    "temp_testing",              // name
+    (PyCFunction)PyTempTesting,  // method
+    METH_NOARGS,                 // flags
+
+    "temp_testing() -> bool\n"
+    "\n"
+    "(internal)",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
@@ -1856,6 +1882,7 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PyUsingGameCenterDef,
       PyNativeReviewRequestSupportedDef,
       PyNativeReviewRequestDef,
+      PyTempTestingDef,
   };
 }
 

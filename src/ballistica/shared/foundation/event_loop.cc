@@ -342,47 +342,46 @@ void EventLoop::GetThreadMessages_(std::list<ThreadMessage_>* messages) {
 void EventLoop::BootstrapThread_() {
   assert(!bootstrapped_);
   thread_id_ = std::this_thread::get_id();
-  const char* name;
   const char* id_string;
 
   switch (identifier_) {
     case EventLoopID::kLogic:
-      name = "logic";
+      name_ = "logic";
       id_string = "ballistica logic";
       break;
     case EventLoopID::kStdin:
-      name = "stdin";
+      name_ = "stdin";
       id_string = "ballistica stdin";
       break;
     case EventLoopID::kAssets:
-      name = "assets";
+      name_ = "assets";
       id_string = "ballistica assets";
       break;
     case EventLoopID::kFileOut:
-      name = "fileout";
+      name_ = "fileout";
       id_string = "ballistica file-out";
       break;
     case EventLoopID::kMain:
-      name = "main";
+      name_ = "main";
       id_string = "ballistica main";
       break;
     case EventLoopID::kAudio:
-      name = "audio";
+      name_ = "audio";
       id_string = "ballistica audio";
       break;
     case EventLoopID::kBGDynamics:
-      name = "bgdynamics";
+      name_ = "bgdynamics";
       id_string = "ballistica bg-dynamics";
       break;
     case EventLoopID::kNetworkWrite:
-      name = "networkwrite";
+      name_ = "networkwrite";
       id_string = "ballistica network-write";
       break;
     default:
       throw Exception();
   }
-  assert(name && id_string);
-  SetInternalThreadName_(name);
+  assert(!name_.empty() && id_string);
+  SetInternalThreadName_(name_);
 
   // Note: we currently don't do this for our main thread because it
   // changes the process name we see in top/etc. Should look into that.
@@ -552,8 +551,7 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
       if (!sent_error) {
         sent_error = true;
         log_entries.emplace_back(
-            LogLevel::kError,
-            "ThreadMessage list > 1000 in thread: " + CurrentThreadName());
+            LogLevel::kError, "ThreadMessage list > 1000 in thread: " + name_);
 
         LogThreadMessageTally_(&log_entries);
       }
@@ -561,8 +559,7 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
 
     // Prevent runaway mem usage if the list gets out of control.
     if (thread_messages_.size() > 10000) {
-      FatalError("ThreadMessage list > 10000 in thread: "
-                 + CurrentThreadName());
+      FatalError("ThreadMessage list > 10000 in thread: " + name_);
     }
 
     // Unlock thread-message list and inform thread that there's something

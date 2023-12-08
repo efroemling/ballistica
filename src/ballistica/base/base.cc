@@ -198,6 +198,8 @@ void BaseFeatureSet::StartApp() {
   BA_PRECONDITION(g_core->InMainThread());
   BA_PRECONDITION(g_base);
 
+  auto start_time = g_core->GetAppTimeSeconds();
+
   // Currently limiting this to once per process.
   BA_PRECONDITION(!called_start_app_);
   called_start_app_ = true;
@@ -248,6 +250,17 @@ void BaseFeatureSet::StartApp() {
   }
 
   g_core->LifecycleLog("start-app end (main thread)");
+
+  // Make some noise if this takes more than a few seconds. If we pass 5
+  // seconds or so we start to trigger App-Not-Responding reports which
+  // isn't good.
+  auto duration = g_core->GetAppTimeSeconds() - start_time;
+  if (duration > 3.0) {
+    char buffer[128];
+    snprintf(buffer, sizeof(buffer),
+             "StartApp() took too long (%.2lf seconds).", duration);
+    Log(LogLevel::kWarning, buffer);
+  }
 }
 
 void BaseFeatureSet::SuspendApp() {
@@ -889,8 +902,6 @@ void BaseFeatureSet::ShutdownSuppressDisallow() {
   assert(!shutdown_suppress_disallowed_);
   shutdown_suppress_disallowed_ = true;
 }
-
-// auto BaseFeatureSet::GetReturnValue() const -> int { return return_value(); }
 
 void BaseFeatureSet::QuitApp(bool confirm, QuitType quit_type) {
   // If they want a confirm dialog and we're able to present one, do that.

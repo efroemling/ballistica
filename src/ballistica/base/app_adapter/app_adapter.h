@@ -135,11 +135,14 @@ class AppAdapter {
   /// Return whether this AppAdapter supports max-fps controls for its display.
   virtual auto SupportsMaxFPS() -> bool const;
 
-  /// Return whether audio should be silenced when the app is inactive.
-  /// On Desktop systems it is generally normal to continue to hear things
-  /// even if their windows are hidden, but on mobile we probably want to
-  /// silence our audio when phone calls, ads, etc. pop up over it.
-  virtual auto ShouldSilenceAudioWhenInactive() -> bool const;
+  /// Return whether audio should be silenced when the app goes inactive. On
+  /// Desktop systems it is generally normal to continue to hear things even
+  /// if their windows are hidden, but on mobile we probably want to silence
+  /// our audio when phone calls, ads, etc. pop up over it. Note that this
+  /// is called each time the app goes inactive, so the adapter may choose
+  /// to selectively silence audio depending on what caused the inactive
+  /// switch.
+  virtual auto ShouldSilenceAudioForInactive() -> bool const;
 
   /// Return whether this platform supports soft-quit. A soft quit is
   /// when the app is reset/backgrounded/etc. but remains running in case

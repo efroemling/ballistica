@@ -718,7 +718,6 @@ def logcat() -> None:
         raise CleanError('Expected 2 args')
     adb = sys.argv[2]
     plat = sys.argv[3]
-    print('plat is', plat)
 
     # My amazon tablet chokes on the color format.
     if plat == 'amazon':

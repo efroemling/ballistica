@@ -158,10 +158,10 @@ class CoreFeatureSet {
   bool v1_cloud_log_full{};
   int master_server_source{};
   std::vector<EventLoop*> suspendable_event_loops;
-  std::mutex v1_cloud_log_mutex;
-  std::string v1_cloud_log;
   std::mutex thread_name_map_mutex;
   std::unordered_map<std::thread::id, std::string> thread_name_map;
+  std::mutex v1_cloud_log_mutex;
+  std::string v1_cloud_log;
 
 #if BA_DEBUG_BUILD
   std::mutex object_list_mutex;

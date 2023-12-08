@@ -151,8 +151,6 @@ void AppAdapter::NativeReviewRequest() {
 
 void AppAdapter::DoNativeReviewRequest() { FatalError("Fixme unimplemented."); }
 
-auto AppAdapter::ShouldSilenceAudioWhenInactive() -> bool const {
-  return false;
-}
+auto AppAdapter::ShouldSilenceAudioForInactive() -> bool const { return false; }
 
 }  // namespace ballistica::base

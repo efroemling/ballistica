@@ -1,4 +1,4 @@
-### 1.7.30 (build 21657, api 8, 2023-12-02)
+### 1.7.30 (build 21693, api 8, 2023-12-08)
 - Continued work on the big 1.7.28 update.
 - Got the Android version back up and running. There's been lots of cleanup and
   simplification on the Android layer, cleaning out years of cruft. This should
@@ -15,8 +15,14 @@
 - Bundled Android Python has been bumped to version 3.11.6.
 - Android app suspend behavior has been revamped. The app should stay running
   more often and be quicker to respond when dialogs or other activities
-  temporarily pop up in front of it. Please holler if you run into strange side
+  temporarily pop up in front of it. This also allows it to continue playing
+  music over other activities such as Google Play Games
+  Achievements/Leaderboards screens. Please holler if you run into strange side
   effects such as the app continuing to play audio when it should not be.
+- Modernized the Android fullscreen setup code when running in Android 11 or
+  newer. The game should now use the whole screen area, including the area
+  around notches or camera cutouts. Please holler if you are seeing any problems
+  related to this.
 - (build 21626) Fixed a bug where click/tap locations were incorrect on some
   builds when tv-border was on (Thanks for the heads-up Loup(Dliwk's fan)!).
 - (build 21631) Fixes an issue where '^^^^^^^^^^^^^' lines in stack traces could
@@ -31,6 +37,12 @@
   `from_window`. 2) In any call that can lead to you switching the main menu
   window, check if your root widget is dead or transitioning out first and abort
   if it is. See any window in `ui_v1_lib` for examples.
+- (build 21691) Fixed a bug causing touches to not register in some cases on
+  newer Android devices. (Huge thanks to JESWIN A J for helping me track that
+  down!).
+- Temporarily removed the pause-the-game-when-backgrounded behavior for locally
+  hosted games, mainly due to the code being hacky. Will try to restore this
+  functionality in a cleaner way soon.
 
 ### 1.7.29 (build 21619, api 8, 2023-11-21)
 

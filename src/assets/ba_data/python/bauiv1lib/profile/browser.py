@@ -257,7 +257,7 @@ class ProfileBrowserWindow(bui.Window):
             EditProfileWindow(
                 existing_profile=None, in_main_menu=self._in_main_menu
             ).get_root_widget(),
-            from_window=self._root_widget,
+            from_window=self._root_widget if self._in_main_menu else False,
         )
 
     def _delete_profile(self) -> None:
@@ -323,7 +323,7 @@ class ProfileBrowserWindow(bui.Window):
             EditProfileWindow(
                 self._selected_profile, in_main_menu=self._in_main_menu
             ).get_root_widget(),
-            from_window=self._root_widget,
+            from_window=self._root_widget if self._in_main_menu else False,
         )
 
     def _select(self, name: str, index: int) -> None:

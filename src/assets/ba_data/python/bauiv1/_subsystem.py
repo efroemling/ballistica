@@ -209,8 +209,12 @@ class UIV1Subsystem(babase.AppSubsystem):
 
     def clear_main_menu_window(self, transition: str | None = None) -> None:
         """Clear any existing 'main' window with the provided transition."""
+        assert transition is None or not transition.endswith('_in')
         if self._main_menu_window:
-            if transition is not None:
+            if (
+                transition is not None
+                and not self._main_menu_window.transitioning_out
+            ):
                 _bauiv1.containerwidget(
                     edit=self._main_menu_window, transition=transition
                 )

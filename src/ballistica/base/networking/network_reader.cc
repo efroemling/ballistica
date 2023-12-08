@@ -33,12 +33,10 @@ void NetworkReader::OnAppSuspend() {
     paused_ = true;
   }
 
-  // Ok now attempt to send a quick ping to ourself to wake us up so we can kill
-  // our socket.
+  // It's possible that we get suspended before port is set, so this could
+  // still be -1.
   if (port4_ != -1) {
     PokeSelf_();
-  } else {
-    Log(LogLevel::kError, "NetworkReader port is -1 on pause");
   }
 }
 
