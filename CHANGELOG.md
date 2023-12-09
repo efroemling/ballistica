@@ -1,4 +1,6 @@
-### 1.7.30 (build 21693, api 8, 2023-12-08)
+### 1.7.31 (build 21700, api 8, 2023-12-09)
+
+### 1.7.30 (build 21697, api 8, 2023-12-08)
 - Continued work on the big 1.7.28 update.
 - Got the Android version back up and running. There's been lots of cleanup and
   simplification on the Android layer, cleaning out years of cruft. This should
