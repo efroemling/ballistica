@@ -6,7 +6,7 @@ height="50" alt="logo">
 
 ***-ica***: collection of things relating to a specific theme.
 
-[![](https://github.com/efroemling/ballistica/actions/workflows/ci.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/ci.yml)
+[![](https://github.com/efroemling/ballistica/actions/workflows/ci.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/ci.yml) [![](https://github.com/efroemling/ballistica/actions/workflows/cd.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/cd.yml)
 
 The Ballistica project is the foundation for
 [BombSquad](https://www.froemling.net/apps/bombsquad) and potentially other
@@ -52,7 +52,7 @@ want to keep that spirit alive as the Ballistica project moves forward. Whether
 this means making it easier to share mods, organize tournaments, join up with
 friends, teach each other some Python, or whatever else. Life is short; let's
 play some games. Or make them. Maybe both.
-  
+
 ### Frequently Asked Questions
 
 * **Q: What's with this name? Is it BombSquad or Ballistica?**
@@ -86,4 +86,4 @@ Playstation / My Toaster??**
   for more details or the [Ballistica
   Downloads](https://ballistica.net/downloads) page for early test builds on
   some platforms.
-  
+
