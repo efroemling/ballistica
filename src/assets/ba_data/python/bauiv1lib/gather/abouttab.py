@@ -16,10 +16,6 @@ if TYPE_CHECKING:
 class AboutGatherTab(GatherTab):
     """The about tab in the gather UI"""
 
-    def __init__(self, window: GatherWindow) -> None:
-        super().__init__(window)
-        self._container: bui.Widget | None = None
-
     def on_activate(
         self,
         parent_widget: bui.Widget,
@@ -34,6 +30,40 @@ class AboutGatherTab(GatherTab):
         plus = bui.app.plus
         assert plus is not None
 
+        try_tickets = plus.get_v1_account_misc_read_val(
+            'friendTryTickets', None
+        )
+
+        show_message = True
+        # Squish message as needed to get things to fit nicely at
+        # various scales.
+        uiscale = bui.app.ui_v1.uiscale
+        message_height = (
+            210
+            if uiscale is bui.UIScale.SMALL
+            else 305
+            if uiscale is bui.UIScale.MEDIUM
+            else 370
+        )
+        # Let's not talk about sharing in vr-mode; its tricky to fit more
+        # than one head in a VR-headset.
+        show_message_extra = not bui.app.env.vr
+        message_extra_height = 60
+        show_invite = try_tickets is not None
+        invite_height = 80
+        show_discord = True
+        discord_height = 80
+
+        c_height = 0
+        if show_message:
+            c_height += message_height
+        if show_message_extra:
+            c_height += message_extra_height
+        if show_invite:
+            c_height += invite_height
+        if show_discord:
+            c_height += discord_height
+
         party_button_label = bui.charstr(bui.SpecialChar.TOP_BUTTON)
         message = bui.Lstr(
             resource='gatherWindow.aboutDescriptionText',
@@ -43,9 +73,7 @@ class AboutGatherTab(GatherTab):
             ],
         )
 
-        # Let's not talk about sharing in vr-mode; its tricky to fit more
-        # than one head in a VR-headset ;-)
-        if not bui.app.env.vr:
+        if show_message_extra:
             message = bui.Lstr(
                 value='${A}\n\n${B}',
                 subs=[
@@ -59,46 +87,52 @@ class AboutGatherTab(GatherTab):
                     ),
                 ],
             )
-        string_height = 400
-        include_invite = True
-        include_discord = False  # Need to fix spacing on small first.
-        msc_scale = 1.1
-        c_height_2 = min(region_height, string_height * msc_scale + 100)
-        try_tickets = plus.get_v1_account_misc_read_val(
-            'friendTryTickets', None
-        )
 
-        if try_tickets is None:
-            include_invite = False
-        self._container = bui.containerwidget(
+        scroll_widget = bui.scrollwidget(
             parent=parent_widget,
+            position=(region_left, region_bottom),
+            size=(region_width, region_height),
+            highlight=False,
+            border_opacity=0,
+        )
+        msc_scale = 1.1
+
+        container = bui.containerwidget(
+            parent=scroll_widget,
             position=(
                 region_left,
-                region_bottom + (region_height - c_height_2) * 0.5,
+                region_bottom + (region_height - c_height) * 0.5,
             ),
-            size=(region_width, c_height_2),
+            size=(region_width, c_height),
             background=False,
-            selectable=include_invite or include_discord,
+            selectable=show_invite or show_discord,
         )
-        bui.widget(edit=self._container, up_widget=tab_button)
+        # Allows escaping if we select the container somehow (though
+        # shouldn't be possible when buttons are present).
+        bui.widget(edit=container, up_widget=tab_button)
 
-        bui.textwidget(
-            parent=self._container,
-            position=(region_width * 0.5, c_height_2 * 0.58),
-            color=(0.6, 1.0, 0.6),
-            scale=msc_scale,
-            size=(0, 0),
-            maxwidth=region_width * 0.9,
-            max_height=c_height_2 * 0.7,
-            h_align='center',
-            v_align='center',
-            text=message,
-        )
-
-        if include_invite:
+        y = c_height - 30
+        if show_message:
             bui.textwidget(
-                parent=self._container,
-                position=(region_width * 0.57, 35),
+                parent=container,
+                position=(region_width * 0.5, y),
+                color=(0.6, 1.0, 0.6),
+                scale=msc_scale,
+                size=(0, 0),
+                maxwidth=region_width * 0.9,
+                max_height=message_height,
+                h_align='center',
+                v_align='top',
+                text=message,
+            )
+            y -= message_height
+            if show_message_extra:
+                y -= message_extra_height
+
+        if show_invite:
+            bui.textwidget(
+                parent=container,
+                position=(region_width * 0.57, y),
                 color=(0, 1, 0),
                 scale=0.6,
                 size=(0, 0),
@@ -112,8 +146,8 @@ class AboutGatherTab(GatherTab):
                 ),
             )
             invite_button = bui.buttonwidget(
-                parent=self._container,
-                position=(region_width * 0.59, 10),
+                parent=container,
+                position=(region_width * 0.59, y - 25),
                 size=(230, 50),
                 color=(0.54, 0.42, 0.56),
                 textcolor=(0, 1, 0),
@@ -125,13 +159,14 @@ class AboutGatherTab(GatherTab):
                 on_activate_call=bui.WeakCall(self._invite_to_try_press),
                 up_widget=tab_button,
             )
+            y -= invite_height
         else:
             invite_button = None
 
-        if include_discord:
+        if show_discord:
             bui.textwidget(
-                parent=self._container,
-                position=(region_width * 0.57, 15 if include_invite else 75),
+                parent=container,
+                position=(region_width * 0.57, y),
                 color=(0.6, 0.6, 1),
                 scale=0.6,
                 size=(0, 0),
@@ -139,26 +174,29 @@ class AboutGatherTab(GatherTab):
                 h_align='right',
                 v_align='center',
                 flatness=1.0,
-                text=(
-                    'Want to look for new people to play with?\n'
-                    'Join our Discord and find new friends!'
-                ),
+                text=bui.Lstr(resource='discordFriendsText'),
             )
-            bui.buttonwidget(
-                parent=self._container,
-                position=(region_width * 0.59, -10 if include_invite else 50),
+            discord_button = bui.buttonwidget(
+                parent=container,
+                position=(region_width * 0.59, y - 25),
                 size=(230, 50),
                 color=(0.54, 0.42, 0.56),
                 textcolor=(0.6, 0.6, 1),
-                label='Join The Discord',
+                label=bui.Lstr(resource='discordJoinText'),
                 autoselect=True,
                 on_activate_call=bui.WeakCall(self._join_the_discord_press),
                 up_widget=(
                     invite_button if invite_button is not None else tab_button
                 ),
             )
+            y -= discord_height
+        else:
+            discord_button = None
 
-        return self._container
+        if discord_button is not None:
+            pass
+
+        return scroll_widget
 
     def _invite_to_try_press(self) -> None:
         from bauiv1lib.account import show_sign_in_prompt

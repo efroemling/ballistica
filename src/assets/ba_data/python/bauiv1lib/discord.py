@@ -73,6 +73,7 @@ class DiscordWindow(bui.Window):
                 edit=self._root_widget, cancel_button=self._back_button
             )
 
+        # Do we need to translate 'Discord'? Or is that always the name?
         self._title_text = bui.textwidget(
             parent=self._root_widget,
             position=(0, self._height - 52),
@@ -91,6 +92,9 @@ class DiscordWindow(bui.Window):
             texture=bui.gettexture('discordServer'),
         )
 
+        # Hmm should we translate this? The discord server is mostly
+        # English so being able to read this might be a good screening
+        # process?..
         bui.textwidget(
             parent=self._root_widget,
             position=(self._width / 2 - 60, self._height - 100),
@@ -110,7 +114,7 @@ class DiscordWindow(bui.Window):
             position=(self._width / 2 - 30, 20),
             size=(self._width / 2 - 60, 60),
             autoselect=True,
-            label='Join The Discord',
+            label=bui.Lstr(resource='discordJoinText'),
             text_scale=1.0,
             on_activate_call=bui.Call(
                 bui.open_url, 'https://ballistica.net/discord'
