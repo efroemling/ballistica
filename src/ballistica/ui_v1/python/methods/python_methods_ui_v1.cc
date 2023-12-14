@@ -2589,90 +2589,6 @@ static PyMethodDef PyGetSpecialWidgetDef = {
     "(internal)",
 };
 
-// -------------------------- have_incentivized_ad -----------------------------
-
-// returns an extra hash value that can be incorporated into security checks;
-// this contains things like whether console commands have been run, etc.
-static auto PyHaveIncentivizedAd(PyObject* self, PyObject* args,
-                                 PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  static const char* kwlist[] = {nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
-                                   const_cast<char**>(kwlist))) {
-    return nullptr;
-  }
-  if (g_core->have_incentivized_ad) {
-    Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
-  }
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyHaveIncentivizedAdDef = {
-    "have_incentivized_ad",             // name
-    (PyCFunction)PyHaveIncentivizedAd,  // method
-    METH_VARARGS | METH_KEYWORDS,       // flags
-
-    "have_incentivized_ad() -> bool\n"
-    "\n"
-    "(internal)",
-};
-
-// ----------------------------- can_show_ad -----------------------------------
-
-// this returns whether it makes sense to show an currently
-static auto PyCanShowAd(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-
-  BA_PRECONDITION(g_base->InLogicThread());
-  // if we've got any network connections, no ads.
-  // (don't want to make someone on the other end wait or risk disconnecting
-  // them or whatnot). Also disallow ads if remote apps are connected; at least
-  // on Android, ads pause our activity which disconnects the remote app.
-  // (need to fix this).
-  if (g_base->app_mode()->HasConnectionToHost()
-      || g_base->app_mode()->HasConnectionToClients()
-      || g_base->input->HaveRemoteAppController()) {
-    Py_RETURN_FALSE;
-  }
-  Py_RETURN_TRUE;  // all systems go..
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyCanShowAdDef = {
-    "can_show_ad",                 // name
-    (PyCFunction)PyCanShowAd,      // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-    "can_show_ad() -> bool\n"
-    "\n"
-    "(internal)",
-};
-
-// ---------------------------- has_video_ads ----------------------------------
-
-static auto PyHasVideoAds(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  if (g_core->platform->GetHasVideoAds()) {
-    Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
-  }
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyHasVideoAdsDef = {
-    "has_video_ads",               // name
-    (PyCFunction)PyHasVideoAds,    // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "has_video_ads() -> bool\n"
-    "\n"
-    "(internal)",
-};
-
 // ------------------------------ back_press -----------------------------------
 
 static auto PyBackPress(PyObject* self, PyObject* args, PyObject* keywds)
@@ -2893,9 +2809,6 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyOpenFileExternallyDef,
       PyOpenURLDef,
       PyBackPressDef,
-      PyHasVideoAdsDef,
-      PyCanShowAdDef,
-      PyHaveIncentivizedAdDef,
       PyGetSpecialWidgetDef,
       PySetPartyWindowOpenDef,
       PySetPartyIconAlwaysVisibleDef,

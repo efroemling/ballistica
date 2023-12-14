@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from babase._login import LoginAdapter, LoginInfo
 
 
-DEBUG_LOG = _babase.temp_testing()
+DEBUG_LOG = False
 
 
 class AccountV2Subsystem:

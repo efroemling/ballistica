@@ -97,7 +97,7 @@ class AdsSubsystem:
         show = True
 
         # No ads without net-connections, etc.
-        if not bauiv1.can_show_ad():
+        if not plus.can_show_ad():
             show = False
         if classic.accounts.have_pro():
             show = False  # Pro disables interstitials.
@@ -135,7 +135,7 @@ class AdsSubsystem:
                 # ad-show-threshold and see if we should *actually* show
                 # (we reach our threshold faster the longer we've been
                 # playing).
-                base = 'ads' if bauiv1.has_video_ads() else 'ads2'
+                base = 'ads' if plus.has_video_ads() else 'ads2'
                 min_lc = plus.get_v1_account_misc_read_val(base + '.minLC', 0.0)
                 max_lc = plus.get_v1_account_misc_read_val(base + '.maxLC', 5.0)
                 min_lc_scale = plus.get_v1_account_misc_read_val(

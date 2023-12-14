@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from typing import Callable
 
 
-DEBUG_LOG = _babase.temp_testing()
+DEBUG_LOG = False
 
 
 @dataclass

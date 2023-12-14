@@ -18,7 +18,7 @@ auto ConnectionToHostUDP::SwitchProtocol() -> bool {
 
     // Need a new request id so we ignore further responses to our previous
     // requests.
-    GetRequestID();
+    GetRequestID_();
     return true;
   }
   return false;
@@ -32,7 +32,7 @@ ConnectionToHostUDP::ConnectionToHostUDP(const SockAddr& addr)
       did_die_(false),
       last_host_response_time_millisecs_(
           static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0)) {
-  GetRequestID();
+  GetRequestID_();
   if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
     if (appmode->connections()->GetPrintUDPConnectProgress()) {
       ScreenMessage(g_base->assets->GetResourceString("connectingToPartyText"));
@@ -46,11 +46,11 @@ ConnectionToHostUDP::~ConnectionToHostUDP() {
   set_connection_dying(true);
 }
 
-void ConnectionToHostUDP::GetRequestID() {
+void ConnectionToHostUDP::GetRequestID_() {
   // We store a unique-ish request ID to minimize the chance that data for
-  // previous connections/etc will muck with us.
-  // Try to start this value at something that won't be common in packets to
-  // minimize chance of garbage packets causing trouble.
+  // previous connections/etc will muck with us. Try to start this value at
+  // something that won't be common in packets to minimize chance of garbage
+  // packets causing trouble.
   static auto next_request_id =
       static_cast<uint8_t>(71 + (rand() % 151));  // NOLINT
   request_id_ = next_request_id++;
@@ -95,13 +95,14 @@ void ConnectionToHostUDP::Update() {
                     {1, 0, 0});
     }
 
-    // Die immediately in this case; no use trying to wait for a disconnect-ack
-    // since we've already given up hope of hearing from them.
+    // Die immediately in this case; no use trying to wait for a
+    // disconnect-ack since we've already given up hope of hearing from
+    // them.
     Die();
     return;
   } else if (errored()) {
-    // If we've errored, keep sending disconnect-requests periodically.
-    // Once we get a response (or time out in the above code) we'll die.
+    // If we've errored, keep sending disconnect-requests periodically. Once
+    // we get a response (or time out in the above code) we'll die.
     if (current_time_millisecs - last_disconnect_request_time_ > 1000) {
       last_disconnect_request_time_ = current_time_millisecs;
 
@@ -189,8 +190,8 @@ void ConnectionToHostUDP::Error(const std::string& msg) {
 auto ConnectionToHostUDP::GetAsUDP() -> ConnectionToHostUDP* { return this; }
 
 void ConnectionToHostUDP::RequestDisconnect() {
-  // Mark us as errored so all future communication results in more disconnect
-  // requests.
+  // Mark us as errored so all future communication results in more
+  // disconnect requests.
   set_errored(true);
   if (client_id_ != -1) {
     SendDisconnectRequest();

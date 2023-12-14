@@ -152,7 +152,6 @@ ctx.filter_dirs = {
     'ballisticakit-cmake',
     'ballisticakit-xcode/BallisticaKit.xcodeproj',
     'ballisticakit-ios.xcodeproj',
-    'ballisticakit-mac.xcodeproj',
     'config',
     'src/assets/pdoc',
 }

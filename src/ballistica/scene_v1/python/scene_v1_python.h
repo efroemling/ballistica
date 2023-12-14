@@ -91,6 +91,7 @@ class SceneV1Python {
     kGetPlayerIconCall,
     kFilterChatMessageCall,
     kHandleLocalChatMessageCall,
+    kHostInfoClass,
     kLast  // Sentinel; must be at end.
   };
 

@@ -10,6 +10,7 @@ from bascenev1._player import Player
 from bascenev1._dependency import AssetPackage
 from bascenev1._activity import Activity
 from bascenev1._session import Session
+from bascenev1._net import HostInfo
 import _bascenev1
 
 # The C++ layer looks for this variable:
@@ -30,4 +31,5 @@ values = [
     AssetPackage,  # kAssetPackageClass
     Activity,  # kActivityClass
     Session,  # kSceneV1SessionClass
+    HostInfo,  # kHostInfoClass
 ]

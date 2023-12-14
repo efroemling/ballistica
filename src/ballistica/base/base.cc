@@ -195,6 +195,12 @@ void BaseFeatureSet::OnAssetsAvailable() {
 }
 
 void BaseFeatureSet::StartApp() {
+  // {
+  //   // TEST - recreate the ID python dumps in its thread tracebacks.
+  //   auto val = PyThread_get_thread_ident();
+  //   printf("MAIN THREAD IS %#018lx\n", val);
+  // }
+
   BA_PRECONDITION(g_core->InMainThread());
   BA_PRECONDITION(g_base);
 

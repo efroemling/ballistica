@@ -24,6 +24,8 @@ if TYPE_CHECKING:
 # instead of these or to make the meta system aware of arbitrary classes.
 EXPORT_CLASS_NAME_SHORTCUTS: dict[str, str] = {
     'plugin': 'babase.Plugin',
+    # DEPRECATED as of 12/2023. Currently am warning if finding these
+    # but should take this out eventually.
     'keyboard': 'babase.Keyboard',
 }
 
@@ -414,30 +416,27 @@ class DirectoryScan:
                 if export_class_name is not None:
                     classname = modulename + '.' + export_class_name
 
-                    # Since we'll soon have multiple versions of 'game'
-                    # classes we need to migrate people to using base
-                    # class names for them.
-                    if exporttypestr == 'game':
+                    # Migrating away from the 'keyboard' name shortcut
+                    # since it's specific to bauiv1; warn if we find it.
+                    if exporttypestr == 'keyboard':
                         logging.warning(
                             "metascan: %s:%d: '# ba_meta export"
-                            " game' tag should be replaced by '# ba_meta"
-                            " export bascenev1.GameActivity'.",
+                            " keyboard' tag should be replaced by '# ba_meta"
+                            " export bauiv1.Keyboard'.",
                             subpath,
                             lindex + 1,
                         )
                         self.results.announce_errors_occurred = True
-                    else:
-                        # If export type is one of our shortcuts, sub in the
-                        # actual class path. Otherwise assume its a classpath
-                        # itself.
-                        exporttype = EXPORT_CLASS_NAME_SHORTCUTS.get(
-                            exporttypestr
-                        )
-                        if exporttype is None:
-                            exporttype = exporttypestr
-                        self.results.exports.setdefault(exporttype, []).append(
-                            classname
-                        )
+
+                    # If export type is one of our shortcuts, sub in the
+                    # actual class path. Otherwise assume its a classpath
+                    # itself.
+                    exporttype = EXPORT_CLASS_NAME_SHORTCUTS.get(exporttypestr)
+                    if exporttype is None:
+                        exporttype = exporttypestr
+                    self.results.exports.setdefault(exporttype, []).append(
+                        classname
+                    )
 
     def _get_export_class_name(
         self, subpath: Path, lines: list[str], lindex: int

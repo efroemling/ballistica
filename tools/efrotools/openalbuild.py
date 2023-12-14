@@ -62,7 +62,7 @@ def build_openal(arch: str, mode: str) -> None:
     )
     # subprocess.run(['git', 'checkout', '1.23.1'], check=True, cwd=builddir)
     subprocess.run(
-        ['git', 'checkout', '5b5b948516f7340810ebbfdd5e46eb40f85d2e56'],
+        ['git', 'checkout', 'b81a270f6c1e795ca70d7684e0ccf35a19f247e2'],
         check=True,
         cwd=builddir,
     )

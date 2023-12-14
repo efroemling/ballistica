@@ -25,10 +25,6 @@ class EventLoop {
                      ThreadSource source = ThreadSource::kCreate);
   virtual ~EventLoop();
 
-  void ClearCurrentThreadName();
-
-  static auto CurrentThreadName() -> std::string;
-
   static void SetEventLoopsSuspended(bool enable);
   static auto AreEventLoopsSuspended() -> bool;
 
@@ -113,7 +109,6 @@ class EventLoop {
         : type(type), runnable(runnable), completion_flag{completion_flag} {}
   };
   auto CheckPushRunnableSafety_() -> bool;
-  void SetInternalThreadName_(const std::string& name);
   void WaitForNextEvent_(bool single_cycle);
   void LogThreadMessageTally_(
       std::vector<std::pair<LogLevel, std::string>>* log_entries);

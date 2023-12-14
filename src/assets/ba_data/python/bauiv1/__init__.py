@@ -62,7 +62,6 @@ from babase import (
     is_browser_likely_available,
     is_running_on_fire_tv,
     is_xcode_build,
-    Keyboard,
     lock_all_input,
     LoginAdapter,
     LoginInfo,
@@ -94,7 +93,6 @@ from babase import (
 
 from _bauiv1 import (
     buttonwidget,
-    can_show_ad,
     checkboxwidget,
     columnwidget,
     containerwidget,
@@ -103,8 +101,6 @@ from _bauiv1 import (
     getmesh,
     getsound,
     gettexture,
-    has_video_ads,
-    have_incentivized_ad,
     hscrollwidget,
     imagewidget,
     is_party_icon_visible,
@@ -125,6 +121,7 @@ from _bauiv1 import (
     Widget,
     widget,
 )
+from bauiv1._keyboard import Keyboard
 from bauiv1._uitypes import Window, uicleanupcheck
 from bauiv1._subsystem import UIV1Subsystem
 
@@ -144,7 +141,6 @@ __all__ = [
     'AppTimer',
     'buttonwidget',
     'Call',
-    'can_show_ad',
     'fullscreen_control_available',
     'fullscreen_control_get',
     'fullscreen_control_key_shortcut',
@@ -178,8 +174,6 @@ __all__ = [
     'getmesh',
     'getsound',
     'gettexture',
-    'has_video_ads',
-    'have_incentivized_ad',
     'have_permission',
     'hscrollwidget',
     'imagewidget',

@@ -144,6 +144,12 @@ class CoreFeatureSet {
     return using_custom_app_python_dir_;
   }
 
+  /// Register various info about the current thread.
+  void RegisterThread(const std::string& name);
+
+  /// Should be called by a thread before it exits.
+  void UnregisterThread();
+
   // Subsystems.
   CorePython* const python;
   CorePlatform* const platform;
@@ -158,8 +164,6 @@ class CoreFeatureSet {
   bool v1_cloud_log_full{};
   int master_server_source{};
   std::vector<EventLoop*> suspendable_event_loops;
-  std::mutex thread_name_map_mutex;
-  std::unordered_map<std::thread::id, std::string> thread_name_map;
   std::mutex v1_cloud_log_mutex;
   std::string v1_cloud_log;
 
@@ -173,6 +177,7 @@ class CoreFeatureSet {
   auto vr_mode() const { return vr_mode_; }
   auto event_loops_suspended() const { return event_loops_suspended_; }
   void set_event_loops_suspended(bool val) { event_loops_suspended_ = val; }
+  static auto CurrentThreadName() -> std::string;
 
  private:
   explicit CoreFeatureSet(CoreConfig config);
@@ -204,6 +209,8 @@ class CoreFeatureSet {
   std::optional<std::string> ba_env_user_python_dir_;
   std::optional<std::string> ba_env_site_python_dir_;
   std::string ba_env_data_dir_;
+  std::mutex thread_info_map_mutex_;
+  std::unordered_map<std::thread::id, std::string> thread_info_map_;
 };
 
 }  // namespace ballistica::core

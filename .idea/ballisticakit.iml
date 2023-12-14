@@ -21,7 +21,6 @@
       <excludeFolder url="file://$MODULE_DIR$/ballisticakit-android" />
       <excludeFolder url="file://$MODULE_DIR$/ballisticakit-cmake" />
       <excludeFolder url="file://$MODULE_DIR$/ballisticakit-ios.xcodeproj" />
-      <excludeFolder url="file://$MODULE_DIR$/ballisticakit-mac.xcodeproj" />
       <excludeFolder url="file://$MODULE_DIR$/ballisticakit-windows" />
       <excludeFolder url="file://$MODULE_DIR$/ballisticakit-windows-oculus" />
       <excludeFolder url="file://$MODULE_DIR$/ballisticakit-xcode" />

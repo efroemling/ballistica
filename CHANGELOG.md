@@ -1,5 +1,7 @@
-### 1.7.31 (build 21700, api 8, 2023-12-09)
-
+### 1.7.31 (build 21707, api 8, 2023-12-13)
+- added `bascenev1.get_connection_to_host_info_2()` which is an improved
+  type-safe version of `bascenev1.get_connection_to_host_info()`.
+  
 ### 1.7.30 (build 21697, api 8, 2023-12-08)
 - Continued work on the big 1.7.28 update.
 - Got the Android version back up and running. There's been lots of cleanup and

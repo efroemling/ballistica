@@ -325,7 +325,7 @@ def dump_app_state(
     )
 
 
-def log_dumped_app_state() -> None:
+def log_dumped_app_state(from_previous_run: bool = False) -> None:
     """If an app-state dump exists, log it and clear it. No-op otherwise."""
 
     try:
@@ -352,8 +352,13 @@ def log_dumped_app_state() -> None:
 
             metadata = dataclass_from_json(DumpedAppStateMetadata, appstatedata)
 
+            header = (
+                'Found app state dump from previous app run'
+                if from_previous_run
+                else 'App state dump'
+            )
             out += (
-                f'App state dump:\nReason: {metadata.reason}\n'
+                f'{header}:\nReason: {metadata.reason}\n'
                 f'Time: {metadata.app_time:.2f}'
             )
             tbpath = os.path.join(
@@ -383,7 +388,7 @@ class AppHealthMonitor(AppSubsystem):
 
     def on_app_loading(self) -> None:
         # If any traceback dumps happened last run, log and clear them.
-        log_dumped_app_state()
+        log_dumped_app_state(from_previous_run=True)
 
     def _app_monitor_thread_main(self) -> None:
         _babase.set_thread_name('ballistica app-monitor')

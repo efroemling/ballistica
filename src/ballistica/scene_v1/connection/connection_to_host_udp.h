@@ -23,8 +23,8 @@ class ConnectionToHostUDP : public ConnectionToHost {
   void set_client_id(int val) { client_id_ = val; }
   auto client_id() const -> int { return client_id_; }
 
-  // Attempt connecting via a different protocol.  If none are left to try,
-  // returns false.
+  /// Attempt connecting via a different protocol. If none are left to try,
+  /// returns false.
   auto SwitchProtocol() -> bool;
   void RequestDisconnect() override;
 
@@ -32,16 +32,18 @@ class ConnectionToHostUDP : public ConnectionToHost {
   void Error(const std::string& error_msg) override;
   void Die();
   void SendDisconnectRequest();
+  const auto& addr() const { return *addr_; }
 
  private:
-  void GetRequestID();
-  uint8_t request_id_{};
-  std::unique_ptr<SockAddr> addr_;
+  void GetRequestID_();
+
   bool did_die_{};
+  uint8_t request_id_{};
+  int client_id_{};
   millisecs_t last_client_id_request_time_{};
   millisecs_t last_disconnect_request_time_{};
-  int client_id_{};
   millisecs_t last_host_response_time_millisecs_{};
+  std::unique_ptr<SockAddr> addr_;
 };
 
 }  // namespace ballistica::scene_v1

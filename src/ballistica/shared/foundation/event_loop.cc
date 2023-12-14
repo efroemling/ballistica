@@ -98,21 +98,6 @@ EventLoop::EventLoop(EventLoopID identifier_in, ThreadSource source)
   }
 }
 
-void EventLoop::SetInternalThreadName_(const std::string& name) {
-  assert(g_core);
-  std::scoped_lock lock(g_core->thread_name_map_mutex);
-  g_core->thread_name_map[std::this_thread::get_id()] = name;
-}
-
-void EventLoop::ClearCurrentThreadName() {
-  assert(g_core);
-  std::scoped_lock lock(g_core->thread_name_map_mutex);
-  auto i = g_core->thread_name_map.find(std::this_thread::get_id());
-  if (i != g_core->thread_name_map.end()) {
-    g_core->thread_name_map.erase(i);
-  }
-}
-
 // These are all exactly the same; its just a way to try and clarify
 // in stack traces which thread is running in case it is not otherwise
 // evident.
@@ -341,53 +326,40 @@ void EventLoop::GetThreadMessages_(std::list<ThreadMessage_>* messages) {
 
 void EventLoop::BootstrapThread_() {
   assert(!bootstrapped_);
+  assert(g_core);
   thread_id_ = std::this_thread::get_id();
   const char* id_string;
 
   switch (identifier_) {
     case EventLoopID::kLogic:
       name_ = "logic";
-      id_string = "ballistica logic";
       break;
     case EventLoopID::kStdin:
       name_ = "stdin";
-      id_string = "ballistica stdin";
       break;
     case EventLoopID::kAssets:
       name_ = "assets";
-      id_string = "ballistica assets";
       break;
     case EventLoopID::kFileOut:
       name_ = "fileout";
-      id_string = "ballistica file-out";
       break;
     case EventLoopID::kMain:
       name_ = "main";
-      id_string = "ballistica main";
       break;
     case EventLoopID::kAudio:
       name_ = "audio";
-      id_string = "ballistica audio";
       break;
     case EventLoopID::kBGDynamics:
       name_ = "bgdynamics";
-      id_string = "ballistica bg-dynamics";
       break;
     case EventLoopID::kNetworkWrite:
       name_ = "networkwrite";
-      id_string = "ballistica network-write";
       break;
     default:
       throw Exception();
   }
-  assert(!name_.empty() && id_string);
-  SetInternalThreadName_(name_);
-
-  // Note: we currently don't do this for our main thread because it
-  // changes the process name we see in top/etc. Should look into that.
-  if (identifier_ != EventLoopID::kMain) {
-    g_core->platform->SetCurrentThreadName(id_string);
-  }
+  assert(!name_.empty());
+  g_core->RegisterThread(name_);
   bootstrapped_ = true;
 }
 
@@ -410,7 +382,7 @@ auto EventLoop::ThreadMain_() -> int {
 
     RunToCompletion();
 
-    ClearCurrentThreadName();
+    g_core->UnregisterThread();
     return 0;
   } catch (const std::exception& e) {
     auto error_msg = std::string("Unhandled exception in ")
@@ -620,35 +592,6 @@ Timer* EventLoop::GetTimer(int id) {
 void EventLoop::DeleteTimer(int id) {
   assert(ThreadIsCurrent());
   timers_.DeleteTimer(id);
-}
-
-auto EventLoop::CurrentThreadName() -> std::string {
-  if (g_core == nullptr) {
-    return "unknown(not-yet-inited)";
-  }
-  {
-    std::scoped_lock lock(g_core->thread_name_map_mutex);
-    auto i = g_core->thread_name_map.find(std::this_thread::get_id());
-    if (i != g_core->thread_name_map.end()) {
-      return i->second;
-    }
-  }
-
-  // Ask pthread for the thread name if we don't have one.
-  // FIXME - move this to platform.
-#if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS || BA_OSTYPE_LINUX
-  std::string name = "unknown (sys-name=";
-  char buffer[256];
-  int result = pthread_getname_np(pthread_self(), buffer, sizeof(buffer));
-  if (result == 0) {
-    name += std::string("\"") + buffer + "\")";
-  } else {
-    name += "<error " + std::to_string(result) + ">";
-  }
-  return name;
-#else
-  return "unknown";
-#endif
 }
 
 void EventLoop::RunPendingRunnables_() {

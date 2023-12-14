@@ -334,7 +334,7 @@ class GetCurrencyWindow(bui.Window):
             tex_scale=1.2,
         )  # 19.99-ish
 
-        self._enable_ad_button = bui.has_video_ads()
+        self._enable_ad_button = plus.has_video_ads()
         h = self._width * 0.5 + 110.0
         v = self._height - b_size[1] - 115.0
 
@@ -561,7 +561,7 @@ class GetCurrencyWindow(bui.Window):
                     next_reward_ad_time
                 )
             now = datetime.datetime.utcnow()
-            if bui.have_incentivized_ad() and (
+            if plus.have_incentivized_ad() and (
                 next_reward_ad_time is None or next_reward_ad_time <= now
             ):
                 self._ad_button_greyed = False

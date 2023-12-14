@@ -91,12 +91,16 @@ void FatalError::ReportFatalError(const std::string& message,
       if (trace) {
         std::string tracestr = trace->FormatForDisplay();
         if (!tracestr.empty()) {
-          logmsg += ("\nCPP-STACK-TRACE-BEGIN:\n" + tracestr
-                     + "\nCPP-STACK-TRACE-END");
+          logmsg +=
+              (("\n----------------------- BALLISTICA-NATIVE-STACK-TRACE-BEGIN "
+                "--------------------\n")
+               + tracestr
+               + ("\n----------------------- BALLISTICA-NATIVE-STACK-TRACE-END "
+                  "----------------------"));
         }
         delete trace;
       } else {
-        logmsg += "\n(CPP-STACK-TRACE-UNAVAILABLE)";
+        logmsg += "\n(BALLISTICA-NATIVE-STACK-TRACE-UNAVAILABLE)";
       }
     }
   }
@@ -155,12 +159,10 @@ void FatalError::DoBlockingFatalErrorDialog(const std::string& message) {
     bool* startedptr{&started};
     bool* finishedptr{&finished};
 
-    // If our thread is holding the GIL, release it to give the main thread
-    // a better chance of getting to the point of displaying the fatal
-    // error.
-    if (Python::HaveGIL()) {
-      Python::PermanentlyReleaseGIL();
-    }
+    // If our thread is holding the GIL, release it while we spin; otherwise
+    // we can wind up in deadlock if the main thread wants it.
+    Python::ScopedInterpreterLockRelease gil_release;
+
     g_base_soft->PushMainThreadRunnable(
         NewLambdaRunnableUnmanaged([message, startedptr, finishedptr] {
           *startedptr = true;

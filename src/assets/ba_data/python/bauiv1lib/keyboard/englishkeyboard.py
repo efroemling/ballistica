@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import babase
+import bauiv1 as bui
 
 if TYPE_CHECKING:
     from typing import Iterable
@@ -33,15 +33,15 @@ def split(chars: Iterable[str], maxlen: int) -> list[list[str]]:
 
 
 def generate_emojis(maxlen: int) -> list[list[str]]:
-    """Generates a lot of UTF8 emojis prepared for babase.Keyboard pages"""
+    """Generates a lot of UTF8 emojis prepared for bui.Keyboard pages"""
     all_emojis = split([chr(i) for i in range(0x1F601, 0x1F650)], maxlen)
     all_emojis += split([chr(i) for i in range(0x2702, 0x27B1)], maxlen)
     all_emojis += split([chr(i) for i in range(0x1F680, 0x1F6C1)], maxlen)
     return all_emojis
 
 
-# ba_meta export keyboard
-class EnglishKeyboard(babase.Keyboard):
+# ba_meta export bauiv1.Keyboard
+class EnglishKeyboard(bui.Keyboard):
     """Default English keyboard."""
 
     name = 'English'

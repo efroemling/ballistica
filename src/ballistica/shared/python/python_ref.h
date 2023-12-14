@@ -118,7 +118,9 @@ class PythonRef {
   /// Release the held reference (if one is held).
   void Release();
 
-  /// Clear the ref without decrementing its count and return the raw PyObject*
+  /// Clear the ref without decrementing its count and return the raw
+  /// PyObject*. Useful for functions that are expected to return a new
+  /// Python ref.
   auto HandOver() -> PyObject* {
     assert(obj_);
     PyObject* obj = obj_;
@@ -151,8 +153,9 @@ class PythonRef {
   /// Throws Exception if an error occurs.
   auto DictGetItem(const char* name) const -> PythonRef;
 
-  /// The equivalent of calling Python str() on the contained PyObject.
-  /// Gracefully handles invalid refs.
+  /// The equivalent of calling Python str() on the contained PyObject, and
+  /// gracefully handles invalid refs. To throw exceptions on invalid refs,
+  /// use ValueAsString();
   auto Str() const -> std::string;
 
   /// The equivalent of calling repr() on the contained PyObject.
