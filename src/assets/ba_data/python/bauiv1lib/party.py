@@ -93,9 +93,10 @@ class PartyWindow(bui.Window):
             iconscale=1.2,
         )
 
-        info = bs.get_connection_to_host_info()
-        if info.get('name', '') != '':
-            title = bui.Lstr(value=info['name'])
+        info = bs.get_connection_to_host_info_2()
+
+        if info is not None and info.name != '':
+            title = bui.Lstr(value=info.name)
         else:
             title = bui.Lstr(resource=self._r + '.titleText')
 
@@ -483,7 +484,8 @@ class PartyWindow(bui.Window):
             kick_str = bui.Lstr(resource='kickText')
         else:
             # kick-votes appeared in build 14248
-            if bs.get_connection_to_host_info().get('build_number', 0) < 14248:
+            info = bs.get_connection_to_host_info_2()
+            if info is None or info.build_number < 14248:
                 return
             kick_str = bui.Lstr(resource='kickVoteText')
         assert bui.app.classic is not None

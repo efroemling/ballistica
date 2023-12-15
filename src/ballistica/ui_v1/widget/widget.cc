@@ -88,7 +88,7 @@ void Widget::SetSelected(bool s, SelectionCause cause) {
   if (selected_ && on_select_call_.Exists()) {
     // Call this in the next cycle (don't wanna risk mucking
     // with UI from within a UI loop).
-    on_select_call_->ScheduleWeakOnce();
+    on_select_call_->ScheduleWeak();
   }
 }
 
@@ -237,5 +237,7 @@ auto Widget::IsSelectableViaKeys() -> bool { return true; }
 auto Widget::IsAcceptingInput() const -> bool { return true; }
 
 void Widget::Activate() {}
+
+auto Widget::IsTransitioningOut() const -> bool { return false; }
 
 }  // namespace ballistica::ui_v1

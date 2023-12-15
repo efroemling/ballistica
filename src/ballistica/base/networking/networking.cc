@@ -31,9 +31,9 @@ void Networking::DoApplyAppConfig() {
   }
 }
 
-void Networking::OnAppPause() {}
+void Networking::OnAppSuspend() {}
 
-void Networking::OnAppResume() {}
+void Networking::OnAppUnsuspend() {}
 
 void Networking::SendTo(const std::vector<uint8_t>& buffer,
                         const SockAddr& addr) {
@@ -50,7 +50,7 @@ void Networking::SendTo(const std::vector<uint8_t>& buffer,
   if (sd != -1) {
     sendto(sd, (const char*)&buffer[0],
            static_cast_check_fit<socket_send_length_t>(buffer.size()), 0,
-           addr.GetSockAddr(), addr.GetSockAddrLen());
+           addr.AsSockAddr(), addr.GetSockAddrLen());
   }
 }
 

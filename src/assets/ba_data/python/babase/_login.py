@@ -145,7 +145,7 @@ class LoginAdapter:
         is actually being used by the app. It should therefore register
         unlocked achievements, leaderboard scores, allow viewing native
         UIs, etc. When not active it should ignore everything and behave
-        as if logged out, even if it technically is still logged in.
+        as if signed out, even if it technically is still signed in.
         """
         assert _babase.in_logic_thread()
         del active  # Unused.

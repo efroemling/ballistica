@@ -44,6 +44,27 @@ static PyMethodDef PyAppNameDef = {
     "(internal)\n",
 };
 
+// ------------------------------ app_is_active --------------------------------
+
+static auto PyAppIsActive(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  if (g_base->app_active()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAppIsActiveDef = {
+    "app_is_active",             // name
+    (PyCFunction)PyAppIsActive,  // method
+    METH_NOARGS,                 // flags
+
+    "app_is_active() -> bool\n"
+    "\n"
+    "(internal)\n",
+};
 // --------------------------------- run_app -----------------------------------
 
 static auto PyRunApp(PyObject* self) -> PyObject* {
@@ -279,7 +300,7 @@ static auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds)
     if (!g_base->InLogicThread()) {
       throw Exception("You must use from_other_thread mode.");
     }
-    Object::New<PythonContextCall>(call_obj)->ScheduleOnce();
+    Object::New<PythonContextCall>(call_obj)->Schedule();
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1650,6 +1671,7 @@ static PyMethodDef PyGraphicsShutdownIsCompleteDef = {
 auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
   return {
       PyAppNameDef,
+      PyAppIsActiveDef,
       PyRunAppDef,
       PyAppNameUpperDef,
       PyIsXCodeBuildDef,

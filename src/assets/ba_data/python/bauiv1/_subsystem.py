@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import logging
+import inspect
 from typing import TYPE_CHECKING
 
 import babase
@@ -116,21 +117,69 @@ class UIV1Subsystem(babase.AppSubsystem):
         # FIXME: Can probably kill this if we do immediate UI death checks.
         self.upkeeptimer = babase.AppTimer(2.6543, ui_upkeep, repeat=True)
 
-    def set_main_menu_window(self, window: bauiv1.Widget) -> None:
-        """Set the current 'main' window, replacing any existing."""
+    def set_main_menu_window(
+        self,
+        window: bauiv1.Widget,
+        from_window: bauiv1.Widget | None | bool = True,
+    ) -> None:
+        """Set the current 'main' window, replacing any existing.
+
+        If 'from_window' is passed as a bauiv1.Widget or None, a warning
+        will be issued if it that value does not match the current main
+        window. This can help clean up flawed code that can lead to bad
+        UI states. A value of False will disable the check.
+        """
+
         existing = self._main_menu_window
-        from inspect import currentframe, getframeinfo
+
+        try:
+            if isinstance(from_window, bool):
+                # For default val True we warn that the arg wasn't
+                # passed. False can be explicitly passed to disable this
+                # check.
+                if from_window is True:
+                    caller_frame = inspect.stack()[1]
+                    caller_filename = caller_frame.filename
+                    caller_line_number = caller_frame.lineno
+                    logging.warning(
+                        'set_main_menu_window() should be passed a'
+                        " 'from_window' value to help ensure proper UI behavior"
+                        ' (%s line %i).',
+                        caller_filename,
+                        caller_line_number,
+                    )
+            else:
+                # For everything else, warn if what they passed wasn't
+                # the previous main menu widget.
+                if from_window is not existing:
+                    caller_frame = inspect.stack()[1]
+                    caller_filename = caller_frame.filename
+                    caller_line_number = caller_frame.lineno
+                    logging.warning(
+                        "set_main_menu_window() was passed 'from_window' %s"
+                        ' but existing main-menu-window is %s. (%s line %i).',
+                        from_window,
+                        existing,
+                        caller_filename,
+                        caller_line_number,
+                    )
+        except Exception:
+            # Prevent any bugs in these checks from causing problems.
+            logging.exception('Error checking from_window')
+
+        # Once the above code leads to us fixing all leftover window bugs
+        # at the source, we can kill the code below.
 
         # Let's grab the location where we were called from to report
         # if we have to force-kill the existing window (which normally
         # should not happen).
         frameline = None
         try:
-            frame = currentframe()
+            frame = inspect.currentframe()
             if frame is not None:
                 frame = frame.f_back
             if frame is not None:
-                frameinfo = getframeinfo(frame)
+                frameinfo = inspect.getframeinfo(frame)
                 frameline = f'{frameinfo.filename} {frameinfo.lineno}'
         except Exception:
             logging.exception('Error calcing line for set_main_menu_window')
@@ -160,13 +209,18 @@ class UIV1Subsystem(babase.AppSubsystem):
 
     def clear_main_menu_window(self, transition: str | None = None) -> None:
         """Clear any existing 'main' window with the provided transition."""
+        assert transition is None or not transition.endswith('_in')
         if self._main_menu_window:
-            if transition is not None:
+            if (
+                transition is not None
+                and not self._main_menu_window.transitioning_out
+            ):
                 _bauiv1.containerwidget(
                     edit=self._main_menu_window, transition=transition
                 )
             else:
                 self._main_menu_window.delete()
+            self._main_menu_window = None
 
     def add_main_menu_close_callback(self, call: Callable[[], Any]) -> None:
         """(internal)"""

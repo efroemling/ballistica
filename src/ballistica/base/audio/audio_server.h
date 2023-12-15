@@ -67,6 +67,8 @@ class AudioServer {
 
   auto event_loop() const -> EventLoop* { return event_loop_; }
 
+  void OnDeviceDisconnected();
+
  private:
   class ThreadSource_;
   struct Impl_;
@@ -90,6 +92,7 @@ class AudioServer {
 
   void Reset_();
   void Process_();
+  void ProcessDeviceDisconnects_(seconds_t real_time_seconds);
 
   /// Send a component to the audio thread to delete.
   // void DeleteAssetComponent_(Asset* c);
@@ -115,12 +118,18 @@ class AudioServer {
   float sound_volume_{1.0f};
   float sound_pitch_{1.0f};
   float music_volume_{1.0f};
+  float app_active_volume_{1.0f};
 
   bool have_pending_loads_{};
+  bool app_active_{true};
   bool suspended_{};
   bool shutdown_completed_{};
   bool shutting_down_{};
+  bool reported_reset_fail_{};
+  int al_source_count_{};
+  seconds_t last_reset_attempt_time_{-999.0};
   seconds_t shutdown_start_time_{};
+  seconds_t last_started_playing_time_{};
   millisecs_t last_sound_fade_process_time_{};
 
   /// Indexed list of sources.
@@ -144,8 +153,6 @@ class AudioServer {
 
   // Our list of sound media components to delete via the main thread.
   std::vector<const Object::Ref<SoundAsset>*> sound_ref_delete_list_;
-
-  int al_source_count_{};
 };
 
 }  // namespace ballistica::base

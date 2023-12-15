@@ -368,12 +368,64 @@ void CoreFeatureSet::StartSuicideTimer(const std::string& action,
   }
 }
 
-// auto CoreFeatureSet::InMainThread() -> bool {
-//   return std::this_thread::get_id() == main_thread_id;
-//   // if (main_event_loop_) {
-//   //   return main_event_loop_->ThreadIsCurrent();
-//   // }
-//   // return false;
-// }
+void CoreFeatureSet::RegisterThread(const std::string& name) {
+  {
+    std::scoped_lock lock(thread_info_map_mutex_);
+
+    // Should be registering each thread just once.
+    assert(thread_info_map_.find(std::this_thread::get_id())
+           == thread_info_map_.end());
+    thread_info_map_[std::this_thread::get_id()] = name;
+  }
+
+  // Also set the name at the OS leve when possible. Prepend 'ballistica'
+  // since there's generally lots of other random threads in the mix.
+  //
+  // Note that we currently don't do this for our main thread because (on
+  // Linux at least) that changes the process name we see in top/etc. On
+  // other platforms we could reconsider, but its generally clear what the
+  // main thread is anyway in most scenarios.
+  if (!InMainThread()) {
+    g_core->platform->SetCurrentThreadName("ballistica " + name);
+  }
+}
+
+void CoreFeatureSet::UnregisterThread() {
+  std::scoped_lock lock(thread_info_map_mutex_);
+  auto i = thread_info_map_.find(std::this_thread::get_id());
+  assert(i != thread_info_map_.end());
+  if (i != thread_info_map_.end()) {
+    thread_info_map_.erase(i);
+  }
+}
+
+auto CoreFeatureSet::CurrentThreadName() -> std::string {
+  if (g_core == nullptr) {
+    return "unknown(not-yet-inited)";
+  }
+  {
+    std::scoped_lock lock(g_core->thread_info_map_mutex_);
+    auto i = g_core->thread_info_map_.find(std::this_thread::get_id());
+    if (i != g_core->thread_info_map_.end()) {
+      return i->second;
+    }
+  }
+
+  // Ask pthread for the thread name if we don't have one.
+  // FIXME - move this to platform.
+#if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS || BA_OSTYPE_LINUX
+  std::string name = "unknown (sys-name=";
+  char buffer[256];
+  int result = pthread_getname_np(pthread_self(), buffer, sizeof(buffer));
+  if (result == 0) {
+    name += std::string("\"") + buffer + "\")";
+  } else {
+    name += "<error " + std::to_string(result) + ">";
+  }
+  return name;
+#else
+  return "unknown";
+#endif
+}
 
 }  // namespace ballistica::core

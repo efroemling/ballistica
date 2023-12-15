@@ -155,27 +155,24 @@ void Input::AnnounceConnects_() {
   if (first_print && g_core->GetAppTimeSeconds() < 3.0) {
     first_print = false;
 
-    // Disabling this completely on Android for now; we often get large
-    // numbers of devices there that aren't actually devices.
-    bool do_print_initial_counts{!g_buildconfig.ostype_android()};
-
     // If there's been several connected, just give a number.
-    if (explicit_bool(do_print_initial_counts)) {
-      if (newly_connected_controllers_.size() > 1) {
-        std::string s =
-            g_base->assets->GetResourceString("controllersDetectedText");
-        Utils::StringReplaceOne(
-            &s, "${COUNT}",
-            std::to_string(newly_connected_controllers_.size()));
-        ScreenMessage(s);
-      } else {
-        ScreenMessage(
-            g_base->assets->GetResourceString("controllerDetectedText"));
-      }
+    if (newly_connected_controllers_.size() > 1) {
+      std::string s =
+          g_base->assets->GetResourceString("controllersDetectedText");
+      Utils::StringReplaceOne(
+          &s, "${COUNT}", std::to_string(newly_connected_controllers_.size()));
+      ScreenMessage(s);
+    } else {
+      ScreenMessage(
+          g_base->assets->GetResourceString("controllerDetectedText"));
     }
+
   } else {
     // If there's been several connected, just give a number.
     if (newly_connected_controllers_.size() > 1) {
+      for (auto&& s : newly_connected_controllers_) {
+        Log(LogLevel::kInfo, "GOT CONTROLLER " + s);
+      }
       std::string s =
           g_base->assets->GetResourceString("controllersConnectedText");
       Utils::StringReplaceOne(
@@ -193,7 +190,6 @@ void Input::AnnounceConnects_() {
       g_base->audio->PlaySound(g_base->assets->SysSound(SysSoundID::kGunCock));
     }
   }
-
   newly_connected_controllers_.clear();
 }
 
@@ -222,6 +218,14 @@ void Input::AnnounceDisconnects_() {
 
 void Input::ShowStandardInputDeviceConnectedMessage_(InputDevice* j) {
   assert(g_base->InLogicThread());
+
+  // On Android we never show messages for initial input-devices; we often
+  // get large numbers of strange virtual devices that aren't actually
+  // controllers so this is more confusing than helpful.
+  if (g_buildconfig.ostype_android() && g_core->GetAppTimeSeconds() < 3.0) {
+    return;
+  }
+
   std::string suffix;
   suffix += j->GetPersistentIdentifier();
   suffix += j->GetDeviceExtraDescription();
@@ -516,9 +520,9 @@ void Input::OnAppStart() {
   }
 }
 
-void Input::OnAppPause() { assert(g_base->InLogicThread()); }
+void Input::OnAppSuspend() { assert(g_base->InLogicThread()); }
 
-void Input::OnAppResume() { assert(g_base->InLogicThread()); }
+void Input::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
 
 void Input::OnAppShutdown() { assert(g_base->InLogicThread()); }
 
@@ -1239,7 +1243,14 @@ void Input::HandleSmoothMouseScroll_(const Vector2f& velocity, bool momentum) {
 }
 
 void Input::PushMouseMotionEvent(const Vector2f& position) {
-  assert(g_base->logic->event_loop());
+  auto* loop = g_base->logic->event_loop();
+  assert(loop);
+
+  // Don't overload it with events if it's stuck.
+  if (!loop->CheckPushSafety()) {
+    return;
+  }
+
   g_base->logic->event_loop()->PushCall(
       [this, position] { HandleMouseMotion_(position); });
 }

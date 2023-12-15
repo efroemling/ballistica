@@ -663,11 +663,16 @@ class WatchWindow(bui.Window):
     def _back(self) -> None:
         from bauiv1lib.mainmenu import MainMenuWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            MainMenuWindow(transition='in_left').get_root_widget()
+            MainMenuWindow(transition='in_left').get_root_widget(),
+            from_window=self._root_widget,
         )

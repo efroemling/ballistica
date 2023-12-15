@@ -5,13 +5,17 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/core/python/core_python.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
 #include "ballistica/scene_v1/connection/connection_to_host.h"
+#include "ballistica/scene_v1/connection/connection_to_host_udp.h"
+#include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/shared/math/vector3f.h"
 #include "ballistica/shared/networking/sockaddr.h"
 #include "ballistica/shared/python/python.h"
+#include "ballistica/shared/python/python_ref.h"
 #include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::scene_v1 {
@@ -20,8 +24,7 @@ namespace ballistica::scene_v1 {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 
-// ------------------------- get_public_party_enabled
-// ---------------------------
+// ----------------------- get_public_party_enabled  ---------------------------
 
 static auto PyGetPublicPartyEnabled(PyObject* self, PyObject* args,
                                     PyObject* keywds) -> PyObject* {
@@ -411,7 +414,10 @@ static auto PyGetConnectionToHostInfo(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  // Error if we're not in our app-mode.
+  BA_LOG_ONCE(LogLevel::kWarning,
+              "bascenev1.get_connection_to_host_info() is deprecated; use "
+              "bascenev1.get_connection_to_host_info_2().");
+  BA_PRECONDITION(g_base->InLogicThread());
   auto* appmode = SceneV1AppMode::GetActiveOrThrow();
 
   ConnectionToHost* hc = appmode->connections()->connection_to_host();
@@ -433,6 +439,57 @@ static PyMethodDef PyGetConnectionToHostInfoDef = {
     "get_connection_to_host_info() -> dict\n"
     "\n"
     "(internal)",
+};
+
+// --------------------- get_connection_to_host_info_2 -------------------------
+
+static auto PyGetConnectionToHostInfo2(PyObject* self, PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  static const char* kwlist[] = {nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
+                                   const_cast<char**>(kwlist))) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+
+  ConnectionToHost* hc = appmode->connections()->connection_to_host();
+  if (hc) {
+    PythonRef addr_obj;
+    PythonRef port_obj;
+    if (ConnectionToHostUDP* hcu = dynamic_cast<ConnectionToHostUDP*>(hc)) {
+      addr_obj.Steal(PyUnicode_FromString(hcu->addr().AddressString().c_str()));
+      port_obj.Steal(PyLong_FromLong(hcu->addr().Port()));
+    } else {
+      addr_obj.Acquire(Py_None);
+      port_obj.Acquire(Py_None);
+    }
+    auto args =
+        g_core->python->objs().Get(core::CorePython::ObjID::kEmptyTuple);
+    auto keywds = PythonRef::Stolen(Py_BuildValue(
+        "{sssisOsO}", "name", hc->party_name().c_str(), "build_number",
+        hc->build_number(), "address", addr_obj.Get(), "port", port_obj.Get()));
+    auto result = g_scene_v1->python->objs()
+                      .Get(SceneV1Python::ObjID::kHostInfoClass)
+                      .Call(args, keywds);
+    if (!result.Exists()) {
+      throw Exception("Failed to instantiate HostInfo.", PyExcType::kRuntime);
+    }
+    return result.HandOver();
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetConnectionToHostInfo2Def = {
+    "get_connection_to_host_info_2",          // name
+    (PyCFunction)PyGetConnectionToHostInfo2,  // method
+    METH_VARARGS | METH_KEYWORDS,             // flags
+
+    "get_connection_to_host_info_2() -> bascenev1.HostInfo | None\n"
+    "\n"
+    "Return info about the host we are currently connected to.",
 };
 
 // --------------------------- disconnect_from_host ----------------------------
@@ -701,6 +758,7 @@ static auto PyChatMessage(PyObject* self, PyObject* args, PyObject* keywds)
                                    &clients_obj, &sender_override_obj)) {
     return nullptr;
   }
+  BA_PRECONDITION(g_base->InLogicThread());
   auto* appmode = SceneV1AppMode::GetActiveOrThrow();
 
   message = g_base->python->GetPyLString(message_obj);
@@ -775,6 +833,7 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
       PyDisconnectClientDef,
       PyGetClientPublicDeviceUUIDDef,
       PyGetConnectionToHostInfoDef,
+      PyGetConnectionToHostInfo2Def,
       PyClientInfoQueryResponseDef,
       PyConnectToPartyDef,
       PySetAuthenticateClientsDef,

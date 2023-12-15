@@ -106,14 +106,14 @@ void SceneV1AppMode::OnAppShutdown() {
   connections_->Shutdown();
 }
 
-void SceneV1AppMode::OnAppPause() {
+void SceneV1AppMode::OnAppSuspend() {
   assert(g_base->InLogicThread());
 
   // App is going into background or whatnot. Kill any sockets/etc.
   EndHostScanning();
 }
 
-void SceneV1AppMode::OnAppResume() { assert(g_base->InLogicThread()); }
+void SceneV1AppMode::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
 
 // Note: for now we're making our host-scan network calls directly from the
 // logic thread. This is generally not a good idea since it appears that even

@@ -1441,9 +1441,9 @@ void DevConsole::StepDisplayTime() {
 auto DevConsole::PasteFromClipboard() -> bool {
   if (state_ != State_::kInactive) {
     if (python_terminal_visible_) {
-      if (g_base->app_adapter->ClipboardIsSupported()) {
-        if (g_base->app_adapter->ClipboardHasText()) {
-          auto text = g_base->app_adapter->ClipboardGetText();
+      if (g_base->ClipboardIsSupported()) {
+        if (g_base->ClipboardHasText()) {
+          auto text = g_base->ClipboardGetText();
           if (strstr(text.c_str(), "\n") || strstr(text.c_str(), "\r")) {
             g_base->audio->PlaySound(
                 g_base->assets->SysSound(SysSoundID::kErrorBeep));

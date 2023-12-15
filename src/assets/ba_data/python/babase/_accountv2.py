@@ -186,9 +186,10 @@ class AccountV2Subsystem:
         cfgkey = 'ImplicitLoginStates'
         cfgdict = _babase.app.config.setdefault(cfgkey, {})
 
-        # Store which (if any) adapter is currently implicitly signed in.
-        # Making the assumption there will only ever be one implicit
-        # adapter at a time; may need to update this if that changes.
+        # Store which (if any) adapter is currently implicitly signed
+        # in. Making the assumption there will only ever be one implicit
+        # adapter at a time; may need to revisit this logic if that
+        # changes.
         prev_state = cfgdict.get(login_type.value)
         if state is None:
             self._implicit_signed_in_adapter = None
@@ -296,9 +297,8 @@ class AccountV2Subsystem:
                 # Consider this an 'explicit' sign in because the
                 # implicit-login state change presumably was triggered
                 # by some user action (signing in, signing out, or
-                # switching accounts via the back-end).
-                # NOTE: should test case where we don't have
-                # connectivity here.
+                # switching accounts via the back-end). NOTE: should
+                # test case where we don't have connectivity here.
                 if plus.cloud.is_connected():
                     if DEBUG_LOG:
                         logging.debug(

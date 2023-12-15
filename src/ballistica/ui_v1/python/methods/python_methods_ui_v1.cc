@@ -1219,17 +1219,17 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (transition_obj != Py_None) {
     std::string t = Python::GetPyString(transition_obj);
     if (t == "in_left")
-      widget->SetTransition(ContainerWidget::TRANSITION_IN_LEFT);
+      widget->SetTransition(ContainerWidget::TransitionType::kInLeft);
     else if (t == "in_right")
-      widget->SetTransition(ContainerWidget::TRANSITION_IN_RIGHT);
+      widget->SetTransition(ContainerWidget::TransitionType::kInRight);
     else if (t == "out_left")
-      widget->SetTransition(ContainerWidget::TRANSITION_OUT_LEFT);
+      widget->SetTransition(ContainerWidget::TransitionType::kOutLeft);
     else if (t == "out_right")
-      widget->SetTransition(ContainerWidget::TRANSITION_OUT_RIGHT);
+      widget->SetTransition(ContainerWidget::TransitionType::kOutRight);
     else if (t == "in_scale")
-      widget->SetTransition(ContainerWidget::TRANSITION_IN_SCALE);
+      widget->SetTransition(ContainerWidget::TransitionType::kInScale);
     else if (t == "out_scale")
-      widget->SetTransition(ContainerWidget::TRANSITION_OUT_SCALE);
+      widget->SetTransition(ContainerWidget::TransitionType::kOutScale);
   }
 
   if (cancel_button_obj != Py_None) {
@@ -2416,9 +2416,9 @@ static auto PyShowAd(PyObject* self, PyObject* args, PyObject* keywds)
                                       static_cast<bool>(pass_actually_showed));
 
   // In cases where we support ads, store our callback and kick one off.
-  // We'll then fire our callback once its done.
-  // If we *don't* support ads, just store our callback and then kick off
-  // an ad-view-complete message ourself so the event flow is similar..
+  // We'll then fire our callback once its done. If we *don't* support ads,
+  // just store our callback and then kick off an ad-view-complete message
+  // ourself so the event flow is similar..
   if (g_core->platform->GetHasAds()) {
     g_core->platform->ShowAd(purpose);
   } else {
@@ -2585,90 +2585,6 @@ static PyMethodDef PyGetSpecialWidgetDef = {
     METH_VARARGS | METH_KEYWORDS,     // flags
 
     "get_special_widget(name: str) -> bauiv1.Widget\n"
-    "\n"
-    "(internal)",
-};
-
-// -------------------------- have_incentivized_ad -----------------------------
-
-// returns an extra hash value that can be incorporated into security checks;
-// this contains things like whether console commands have been run, etc.
-static auto PyHaveIncentivizedAd(PyObject* self, PyObject* args,
-                                 PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  static const char* kwlist[] = {nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
-                                   const_cast<char**>(kwlist))) {
-    return nullptr;
-  }
-  if (g_core->have_incentivized_ad) {
-    Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
-  }
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyHaveIncentivizedAdDef = {
-    "have_incentivized_ad",             // name
-    (PyCFunction)PyHaveIncentivizedAd,  // method
-    METH_VARARGS | METH_KEYWORDS,       // flags
-
-    "have_incentivized_ad() -> bool\n"
-    "\n"
-    "(internal)",
-};
-
-// ----------------------------- can_show_ad -----------------------------------
-
-// this returns whether it makes sense to show an currently
-static auto PyCanShowAd(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-
-  BA_PRECONDITION(g_base->InLogicThread());
-  // if we've got any network connections, no ads.
-  // (don't want to make someone on the other end wait or risk disconnecting
-  // them or whatnot). Also disallow ads if remote apps are connected; at least
-  // on Android, ads pause our activity which disconnects the remote app.
-  // (need to fix this).
-  if (g_base->app_mode()->HasConnectionToHost()
-      || g_base->app_mode()->HasConnectionToClients()
-      || g_base->input->HaveRemoteAppController()) {
-    Py_RETURN_FALSE;
-  }
-  Py_RETURN_TRUE;  // all systems go..
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyCanShowAdDef = {
-    "can_show_ad",                 // name
-    (PyCFunction)PyCanShowAd,      // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-    "can_show_ad() -> bool\n"
-    "\n"
-    "(internal)",
-};
-
-// ---------------------------- has_video_ads ----------------------------------
-
-static auto PyHasVideoAds(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  if (g_core->platform->GetHasVideoAds()) {
-    Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
-  }
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyHasVideoAdsDef = {
-    "has_video_ads",               // name
-    (PyCFunction)PyHasVideoAds,    // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "has_video_ads() -> bool\n"
     "\n"
     "(internal)",
 };
@@ -2893,9 +2809,6 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyOpenFileExternallyDef,
       PyOpenURLDef,
       PyBackPressDef,
-      PyHasVideoAdsDef,
-      PyCanShowAdDef,
-      PyHaveIncentivizedAdDef,
       PyGetSpecialWidgetDef,
       PySetPartyWindowOpenDef,
       PySetPartyIconAlwaysVisibleDef,

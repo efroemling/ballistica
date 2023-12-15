@@ -800,5 +800,6 @@ class ClassicSubsystem(babase.AppSubsystem):
                 bauiv1.getsound('swish').play()
 
             babase.app.ui_v1.set_main_menu_window(
-                MainMenuWindow().get_root_widget()
+                MainMenuWindow().get_root_widget(),
+                from_window=False,  # Disable check here.
             )

@@ -103,7 +103,9 @@ auto CorePlatform::Create() -> CorePlatform* {
   return platform;
 }
 
-void CorePlatform::DebugLog(const std::string& msg) { HandleDebugLog(msg); }
+void CorePlatform::LowLevelDebugLog(const std::string& msg) {
+  HandleLowLevelDebugLog(msg);
+}
 
 CorePlatform::CorePlatform() : start_time_millisecs_(GetCurrentMillisecs()) {}
 
@@ -824,11 +826,9 @@ auto CorePlatform::MacMusicAppGetPlaylists() -> std::list<std::string> {
 }
 
 void CorePlatform::SetCurrentThreadName(const std::string& name) {
-  // Currently we leave the main thread alone, otherwise we show up as
-  // "BallisticaMainThread" under "top" on linux (should check other platforms).
-  if (g_core->InMainThread()) {
-    return;
-  }
+  // We should never be doing this for the main thread.
+  BA_PRECONDITION_FATAL(!g_core->InMainThread());
+
 #if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS
   pthread_setname_np(name.c_str());
 #elif BA_OSTYPE_LINUX || BA_OSTYPE_ANDROID
@@ -1021,7 +1021,7 @@ auto CorePlatform::HavePermission(Permission p) -> bool {
 void CorePlatform::SetDebugKey(const std::string& key,
                                const std::string& value) {}
 
-void CorePlatform::HandleDebugLog(const std::string& msg) {}
+void CorePlatform::HandleLowLevelDebugLog(const std::string& msg) {}
 
 auto CorePlatform::GetCurrentMillisecs() -> millisecs_t {
   return std::chrono::time_point_cast<std::chrono::milliseconds>(

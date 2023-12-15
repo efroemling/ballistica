@@ -249,3 +249,18 @@ class PlusSubsystem(AppSubsystem):
     ) -> None:
         """(internal)"""
         return _baplus.tournament_query(callback, args)
+
+    @staticmethod
+    def have_incentivized_ad() -> bool:
+        """Is an incentivized ad available?"""
+        return _baplus.have_incentivized_ad()
+
+    @staticmethod
+    def has_video_ads() -> bool:
+        """Are video ads available?"""
+        return _baplus.has_video_ads()
+
+    @staticmethod
+    def can_show_ad() -> bool:
+        """Can we show an ad?"""
+        return _baplus.can_show_ad()

@@ -214,6 +214,10 @@ class ProfileBrowserWindow(bui.Window):
         from bauiv1lib.profile.edit import EditProfileWindow
         from bauiv1lib.purchase import PurchaseWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         plus = bui.app.plus
         assert plus is not None
 
@@ -254,7 +258,8 @@ class ProfileBrowserWindow(bui.Window):
         bui.app.ui_v1.set_main_menu_window(
             EditProfileWindow(
                 existing_profile=None, in_main_menu=self._in_main_menu
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget if self._in_main_menu else False,
         )
 
     def _delete_profile(self) -> None:
@@ -303,6 +308,10 @@ class ProfileBrowserWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.profile.edit import EditProfileWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         if self._selected_profile is None:
             bui.getsound('error').play()
             bui.screenmessage(
@@ -315,7 +324,8 @@ class ProfileBrowserWindow(bui.Window):
         bui.app.ui_v1.set_main_menu_window(
             EditProfileWindow(
                 self._selected_profile, in_main_menu=self._in_main_menu
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget if self._in_main_menu else False,
         )
 
     def _select(self, name: str, index: int) -> None:
@@ -326,6 +336,10 @@ class ProfileBrowserWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.account.settings import AccountSettingsWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         assert bui.app.classic is not None
 
         self._save_state()
@@ -335,7 +349,8 @@ class ProfileBrowserWindow(bui.Window):
         if self._in_main_menu:
             assert bui.app.classic is not None
             bui.app.ui_v1.set_main_menu_window(
-                AccountSettingsWindow(transition='in_left').get_root_widget()
+                AccountSettingsWindow(transition='in_left').get_root_widget(),
+                from_window=self._root_widget,
             )
 
         # If we're being called up standalone, handle pause/resume ourself.

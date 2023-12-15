@@ -41,5 +41,6 @@ class AppDelegate:
                 sessiontype,
                 settings,
                 completion_call=completion_call,
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=False,  # Disable check since we don't know.
         )

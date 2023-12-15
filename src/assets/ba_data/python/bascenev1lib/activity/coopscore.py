@@ -190,7 +190,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         super().__del__()
 
         # If our UI is still up, kill it.
-        if self._root_ui:
+        if self._root_ui and not self._root_ui.transitioning_out:
             with bui.ContextRef.empty():
                 bui.containerwidget(edit=self._root_ui, transition='out_left')
 

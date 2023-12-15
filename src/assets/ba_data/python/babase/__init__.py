@@ -154,7 +154,6 @@ from babase._general import (
     getclass,
     get_type_name,
 )
-from babase._keyboard import Keyboard
 from babase._language import Lstr, LanguageSubsystem
 from babase._login import LoginAdapter, LoginInfo
 
@@ -261,7 +260,6 @@ __all__ = [
     'is_point_in_box',
     'is_running_on_fire_tv',
     'is_xcode_build',
-    'Keyboard',
     'LanguageSubsystem',
     'lock_all_input',
     'LoginAdapter',

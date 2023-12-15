@@ -39,7 +39,7 @@ def build_openal(arch: str, mode: str) -> None:
     if mode not in MODES:
         raise CleanError(f"Invalid mode '{mode}'.")
 
-    enable_oboe = True
+    # enable_oboe = True
 
     # Get ndk path.
     ndk_path = (
@@ -51,9 +51,8 @@ def build_openal(arch: str, mode: str) -> None:
         .stdout.decode()
         .strip()
     )
-    # os.environ['NDK_ROOT'] = ndk_path
 
-    # Grab from git and build.
+    # Grab OpenALSoft
     builddir = _build_dir(arch, mode)
     subprocess.run(['rm', '-rf', builddir], check=True)
     subprocess.run(['mkdir', '-p', os.path.dirname(builddir)], check=True)
@@ -61,27 +60,27 @@ def build_openal(arch: str, mode: str) -> None:
         ['git', 'clone', 'https://github.com/kcat/openal-soft.git', builddir],
         check=True,
     )
-    subprocess.run(['git', 'checkout', '1.23.1'], check=True, cwd=builddir)
+    # subprocess.run(['git', 'checkout', '1.23.1'], check=True, cwd=builddir)
+    subprocess.run(
+        ['git', 'checkout', 'b81a270f6c1e795ca70d7684e0ccf35a19f247e2'],
+        check=True,
+        cwd=builddir,
+    )
 
-    if enable_oboe:
-        builddir_oboe = f'{builddir}_oboe'
-        subprocess.run(['rm', '-rf', builddir_oboe], check=True)
-        subprocess.run(
-            ['mkdir', '-p', os.path.dirname(builddir_oboe)], check=True
-        )
-        subprocess.run(
-            [
-                'git',
-                'clone',
-                'https://github.com/google/oboe',
-                builddir_oboe,
-            ],
-            check=True,
-        )
-        subprocess.run(
-            ['git', 'checkout', '1.8.0'], check=True, cwd=builddir_oboe
-        )
-        print(f'FULLY GOT {builddir_oboe}')
+    # Grab Oboe
+    builddir_oboe = f'{builddir}_oboe'
+    subprocess.run(['rm', '-rf', builddir_oboe], check=True)
+    subprocess.run(['mkdir', '-p', os.path.dirname(builddir_oboe)], check=True)
+    subprocess.run(
+        [
+            'git',
+            'clone',
+            'https://github.com/google/oboe',
+            builddir_oboe,
+        ],
+        check=True,
+    )
+    subprocess.run(['git', 'checkout', '1.8.0'], check=True, cwd=builddir_oboe)
 
     # One bit of filtering: by default, openalsoft sends all sorts of
     # log messages to the android log. This is reasonable since its
@@ -104,6 +103,67 @@ def build_openal(arch: str, mode: str) -> None:
         '    }',
     )
     with open(loggingpath, 'w', encoding='utf-8') as outfile:
+        outfile.write(txt)
+
+    # Add a function to set a logging function so we can gather info
+    # on AL fatal errors/etc.
+    # fpath = f'{builddir}/alc/alc.cpp'
+    # with open(fpath, encoding='utf-8') as infile:
+    #     txt = infile.read()
+    # txt = replace_exact(
+    #     txt,
+    #     'ALC_API ALCenum ALC_APIENTRY alcGetError(ALCdevice *device)\n',
+    #     (
+    #         'void (*alcDebugLogger)(const char*) = nullptr;\n'
+    #         '\n'
+    #         'ALC_API void ALC_APIENTRY'
+    #         ' alcSetDebugLogger(void (*fn)(const char*)) {\n'
+    #         '    alcDebugLogger = fn;\n'
+    #         '}\n'
+    #         '\n'
+    #         'ALC_API ALCenum ALC_APIENTRY alcGetError(ALCdevice *device)\n'
+    #     ),
+    # )
+    # with open(fpath, 'w', encoding='utf-8') as outfile:
+    #     outfile.write(txt)
+
+    # fpath = f'{builddir}/include/AL/alc.h'
+    # with open(fpath, encoding='utf-8') as infile:
+    #     txt = infile.read()
+    # txt = replace_exact(
+    #     txt,
+    #     'ALC_API ALCenum ALC_APIENTRY alcGetError(ALCdevice *device);\n',
+    #     'ALC_API ALCenum ALC_APIENTRY alcGetError(ALCdevice *device);\n'
+    #     'ALC_API void ALC_APIENTRY alcSetDebugLogger('
+    #     'void (*fn)(const char*));\n',
+    # )
+    # with open(fpath, 'w', encoding='utf-8') as outfile:
+    #     outfile.write(txt)
+
+    fpath = f'{builddir}/core/except.h'
+    with open(fpath, encoding='utf-8') as infile:
+        txt = infile.read()
+    txt = replace_exact(
+        txt,
+        '#define END_API_FUNC catch(...) { std::terminate(); }\n',
+        '#define END_API_FUNC\n',
+    )
+    txt = replace_exact(
+        txt, '#define START_API_FUNC try\n', '#define START_API_FUNC\n'
+    )
+    # txt = replace_exact(
+    #     txt,
+    #     '#define END_API_FUNC catch(...) { std::terminate(); }\n',
+    #     'extern void (*alcDebugLogger)(const char*);\n'
+    #     '\n'
+    #     '#define END_API_FUNC catch(...) { \\\n'
+    #     '  if (alcDebugLogger != nullptr) { \\\n'
+    #     '    alcDebugLogger("UNKNOWN OpenALSoft fatal exception."); \\\n'
+    #     '  } \\\n'
+    #     '  std::terminate(); \\\n'
+    #     '}\n'
+    # )
+    with open(fpath, 'w', encoding='utf-8') as outfile:
         outfile.write(txt)
 
     android_platform = 23

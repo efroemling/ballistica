@@ -351,7 +351,8 @@ class SoundtrackEditWindow(bui.Window):
             soundtrack[musictype] = entry
 
         bui.app.ui_v1.set_main_menu_window(
-            cls(state, transition='in_left').get_root_widget()
+            cls(state, transition='in_left').get_root_widget(),
+            from_window=False,  # Disable check here.
         )
 
     def _get_entry(
@@ -359,6 +360,11 @@ class SoundtrackEditWindow(bui.Window):
     ) -> None:
         assert bui.app.classic is not None
         music = bui.app.classic.music
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         if selection_target_name != '':
             selection_target_name = "'" + selection_target_name + "'"
         state = {
@@ -375,7 +381,8 @@ class SoundtrackEditWindow(bui.Window):
                 entry,
                 selection_target_name,
             )
-            .get_root_widget()
+            .get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _test(self, song_type: bs.MusicType) -> None:
@@ -422,6 +429,10 @@ class SoundtrackEditWindow(bui.Window):
     def _cancel(self) -> None:
         from bauiv1lib.soundtrack import browser as stb
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         assert bui.app.classic is not None
         music = bui.app.classic.music
 
@@ -429,11 +440,16 @@ class SoundtrackEditWindow(bui.Window):
         music.set_music_play_mode(bui.app.classic.MusicPlayMode.REGULAR)
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         bui.app.ui_v1.set_main_menu_window(
-            stb.SoundtrackBrowserWindow(transition='in_left').get_root_widget()
+            stb.SoundtrackBrowserWindow(transition='in_left').get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _do_it(self) -> None:
         from bauiv1lib.soundtrack import browser as stb
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         assert bui.app.classic is not None
         music = bui.app.classic.music
@@ -483,7 +499,8 @@ class SoundtrackEditWindow(bui.Window):
         )
 
         bui.app.ui_v1.set_main_menu_window(
-            stb.SoundtrackBrowserWindow(transition='in_left').get_root_widget()
+            stb.SoundtrackBrowserWindow(transition='in_left').get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _do_it_with_sound(self) -> None:

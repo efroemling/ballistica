@@ -466,7 +466,7 @@ auto CorePlatformApple::CanShowBlockingFatalErrorDialog() -> bool {
   if (g_buildconfig.xcode_build() && g_buildconfig.ostype_macos()) {
     return true;
   }
-  return false;
+  return CorePlatform::CanShowBlockingFatalErrorDialog();
 }
 
 void CorePlatformApple::BlockingFatalErrorDialog(const std::string& message) {

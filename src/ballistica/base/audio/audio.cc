@@ -33,9 +33,9 @@ void Audio::Reset() {
 
 void Audio::OnAppStart() { assert(g_base->InLogicThread()); }
 
-void Audio::OnAppPause() { assert(g_base->InLogicThread()); }
+void Audio::OnAppSuspend() { assert(g_base->InLogicThread()); }
 
-void Audio::OnAppResume() { assert(g_base->InLogicThread()); }
+void Audio::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
 
 void Audio::OnAppShutdown() { assert(g_base->InLogicThread()); }
 

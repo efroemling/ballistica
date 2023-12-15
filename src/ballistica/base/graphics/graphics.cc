@@ -83,12 +83,12 @@ Graphics::~Graphics() = default;
 
 void Graphics::OnAppStart() { assert(g_base->InLogicThread()); }
 
-void Graphics::OnAppPause() {
+void Graphics::OnAppSuspend() {
   assert(g_base->InLogicThread());
   SetGyroEnabled(false);
 }
 
-void Graphics::OnAppResume() {
+void Graphics::OnAppUnsuspend() {
   assert(g_base->InLogicThread());
   g_base->graphics->SetGyroEnabled(true);
 }
@@ -615,7 +615,7 @@ void Graphics::FadeScreen(bool to, millisecs_t time, PyObject* endcall) {
       Log(LogLevel::kWarning,
           "2 fades overlapping; running first fade-end-call early.");
     }
-    fade_end_call_->ScheduleOnce();
+    fade_end_call_->Schedule();
     fade_end_call_.Clear();
   }
   set_fade_start_on_next_draw_ = true;
@@ -993,7 +993,10 @@ void Graphics::DrawFades(FrameDef* frame_def) {
   // Guard against accidental fades that never fade back in.
   if (fade_ <= 0.0f && fade_out_) {
     millisecs_t faded_time = real_time - (fade_start_ + fade_time_);
-    if (faded_time > 15000) {
+
+    // TEMP HACK - don't trigger this while inactive.
+    // Need to make overall fade logic smarter.
+    if (faded_time > 15000 && g_base->app_active()) {
       Log(LogLevel::kError, "FORCE-ENDING STUCK FADE");
       fade_out_ = false;
       fade_ = 1.0f;
@@ -1021,7 +1024,7 @@ void Graphics::DrawFades(FrameDef* frame_def) {
     } else {
       fade_ = 0;
       if (!was_done && fade_end_call_.Exists()) {
-        fade_end_call_->ScheduleOnce();
+        fade_end_call_->Schedule();
         fade_end_call_.Clear();
       }
     }

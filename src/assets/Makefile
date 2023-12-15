@@ -178,7 +178,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_error.py \
   $(BUILD_DIR)/ba_data/python/babase/_general.py \
   $(BUILD_DIR)/ba_data/python/babase/_hooks.py \
-  $(BUILD_DIR)/ba_data/python/babase/_keyboard.py \
   $(BUILD_DIR)/ba_data/python/babase/_language.py \
   $(BUILD_DIR)/ba_data/python/babase/_login.py \
   $(BUILD_DIR)/ba_data/python/babase/_math.py \
@@ -237,6 +236,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_messages.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_multiteamsession.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_music.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_net.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_nodeactor.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_player.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_playlist.py \
@@ -326,6 +326,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/batemplatefs/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_hooks.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_keyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
@@ -452,7 +453,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_error.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_general.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_hooks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_keyboard.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_language.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_login.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_math.cpython-311.opt-1.pyc \
@@ -511,6 +511,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_messages.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_multiteamsession.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_music.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_net.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_nodeactor.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_player.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_playlist.cpython-311.opt-1.pyc \
@@ -600,6 +601,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/_subsystem.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/__init__.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_hooks.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_keyboard.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_subsystem.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_uitypes.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/onscreenkeyboard.cpython-311.opt-1.pyc \

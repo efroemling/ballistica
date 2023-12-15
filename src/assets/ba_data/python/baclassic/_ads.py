@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import time
+import asyncio
+import logging
 from typing import TYPE_CHECKING
 
 import babase
@@ -31,6 +33,7 @@ class AdsSubsystem:
         self.last_in_game_ad_remove_message_show_time: float | None = None
         self.last_ad_completion_time: float | None = None
         self.last_ad_was_short = False
+        self._fallback_task: asyncio.Task | None = None
 
     def do_remove_in_game_ads_message(self) -> None:
         """(internal)"""
@@ -94,7 +97,7 @@ class AdsSubsystem:
         show = True
 
         # No ads without net-connections, etc.
-        if not bauiv1.can_show_ad():
+        if not plus.can_show_ad():
             show = False
         if classic.accounts.have_pro():
             show = False  # Pro disables interstitials.
@@ -132,7 +135,7 @@ class AdsSubsystem:
                 # ad-show-threshold and see if we should *actually* show
                 # (we reach our threshold faster the longer we've been
                 # playing).
-                base = 'ads' if bauiv1.has_video_ads() else 'ads2'
+                base = 'ads' if plus.has_video_ads() else 'ads2'
                 min_lc = plus.get_v1_account_misc_read_val(base + '.minLC', 0.0)
                 max_lc = plus.get_v1_account_misc_read_val(base + '.maxLC', 5.0)
                 min_lc_scale = plus.get_v1_account_misc_read_val(
@@ -181,36 +184,53 @@ class AdsSubsystem:
 
         # If we're *still* cleared to show, actually tell the system to show.
         if show:
-            # As a safety-check, set up an object that will run
-            # the completion callback if we've returned and sat for 10 seconds
-            # (in case some random ad network doesn't properly deliver its
-            # completion callback).
+            # As a safety-check, we set up an object that will run the
+            # completion callback if we've returned and sat for several
+            # seconds (in case some random ad network doesn't properly
+            # deliver its completion callback).
             class _Payload:
                 def __init__(self, pcall: Callable[[], Any]):
                     self._call = pcall
                     self._ran = False
 
                 def run(self, fallback: bool = False) -> None:
-                    """Run fallback call (and issue a warning about it)."""
+                    """Run the payload."""
                     assert app.classic is not None
                     if not self._ran:
                         if fallback:
                             lanst = app.classic.ads.last_ad_network_set_time
-                            print(
-                                'ERROR: relying on fallback ad-callback! '
-                                'last network: '
-                                + app.classic.ads.last_ad_network
-                                + ' (set '
-                                + str(int(time.time() - lanst))
-                                + 's ago); purpose='
-                                + app.classic.ads.last_ad_purpose
+                            logging.error(
+                                'Relying on fallback ad-callback! '
+                                'last network: %s (set %s seconds ago);'
+                                ' purpose=%s.',
+                                app.classic.ads.last_ad_network,
+                                time.time() - lanst,
+                                app.classic.ads.last_ad_purpose,
                             )
                         babase.pushcall(self._call)
                         self._ran = True
 
             payload = _Payload(call)
+
+            # Set up our backup.
             with babase.ContextRef.empty():
-                babase.apptimer(5.0, lambda: payload.run(fallback=True))
+                # Note to self: Previously this was a simple 5 second
+                # timer because the app got totally suspended while ads
+                # were showing (which delayed the timer), but these days
+                # the app may continue to run, so we need to be more
+                # careful and only fire the fallback after we see that
+                # the app has been front-and-center for several seconds.
+                async def add_fallback_task() -> None:
+                    activesecs = 5
+                    while activesecs > 0:
+                        if babase.app.active:
+                            activesecs -= 1
+                        await asyncio.sleep(1.0)
+                    payload.run(fallback=True)
+
+                _fallback_task = babase.app.aioloop.create_task(
+                    add_fallback_task()
+                )
             self.show_ad('between_game', on_completion_call=payload.run)
         else:
             babase.pushcall(call)  # Just run the callback without the ad.

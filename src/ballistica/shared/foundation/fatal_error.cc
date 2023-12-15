@@ -15,15 +15,31 @@ namespace ballistica {
 using core::g_base_soft;
 using core::g_core;
 
+bool FatalError::reported_{};
+
+void FatalError::DoFatalError(const std::string& message) {
+  // Let the user and/or master-server know we're dying.
+  ReportFatalError(message, false);
+
+  // In some cases we prefer to cleanly exit the app with an error code
+  // in a way that won't wind up as a crash report; this avoids polluting
+  // our crash reports list with stuff from dev builds.
+  bool try_to_exit_cleanly =
+      !(core::g_base_soft && core::g_base_soft->IsUnmodifiedBlessedBuild());
+  bool handled = HandleFatalError(try_to_exit_cleanly, false);
+  if (!handled) {
+    abort();
+  }
+}
+
 void FatalError::ReportFatalError(const std::string& message,
                                   bool in_top_level_exception_handler) {
-  // We want to report the first fatal error that happens; if further ones
-  // happen they are probably red herrings.
-  static bool ran = false;
-  if (ran) {
+  // We want to report only the first fatal error that happens; if further
+  // ones happen they are likely red herrings triggered by the first.
+  if (reported_) {
     return;
   }
-  ran = true;
+  reported_ = true;
 
   // Our main goal here varies based off whether we are an unmodified
   // blessed build. If we are, our main goal is to communicate as much info
@@ -75,12 +91,16 @@ void FatalError::ReportFatalError(const std::string& message,
       if (trace) {
         std::string tracestr = trace->FormatForDisplay();
         if (!tracestr.empty()) {
-          logmsg += ("\nCPP-STACK-TRACE-BEGIN:\n" + tracestr
-                     + "\nCPP-STACK-TRACE-END");
+          logmsg +=
+              (("\n----------------------- BALLISTICA-NATIVE-STACK-TRACE-BEGIN "
+                "--------------------\n")
+               + tracestr
+               + ("\n----------------------- BALLISTICA-NATIVE-STACK-TRACE-END "
+                  "----------------------"));
         }
         delete trace;
       } else {
-        logmsg += "\n(CPP-STACK-TRACE-UNAVAILABLE)";
+        logmsg += "\n(BALLISTICA-NATIVE-STACK-TRACE-UNAVAILABLE)";
       }
     }
   }
@@ -139,11 +159,10 @@ void FatalError::DoBlockingFatalErrorDialog(const std::string& message) {
     bool* startedptr{&started};
     bool* finishedptr{&finished};
 
-    // If our thread is holding the GIL, release it to give the main
-    // thread a better chance to get to the point of displaying the fatal error.
-    if (Python::HaveGIL()) {
-      Python::PermanentlyReleaseGIL();
-    }
+    // If our thread is holding the GIL, release it while we spin; otherwise
+    // we can wind up in deadlock if the main thread wants it.
+    Python::ScopedInterpreterLockRelease gil_release;
+
     g_base_soft->PushMainThreadRunnable(
         NewLambdaRunnableUnmanaged([message, startedptr, finishedptr] {
           *startedptr = true;
@@ -152,7 +171,7 @@ void FatalError::DoBlockingFatalErrorDialog(const std::string& message) {
         }));
 
     // Wait a short amount of time for the main thread to take action.
-    // There's a chance that it can't (if threads are paused, if it is
+    // There's a chance that it can't (if threads are suspended, if it is
     // blocked on a synchronous call to another thread, etc.) so if we don't
     // see something happening soon, just give up on showing a dialog.
     auto starttime = core::CorePlatform::GetCurrentMillisecs();
@@ -192,7 +211,7 @@ auto FatalError::HandleFatalError(bool exit_cleanly,
   }
 
   // Otherwise its up to who called us (they might let the caught exception
-  // bubble up)
+  // bubble up).
   return false;
 }
 

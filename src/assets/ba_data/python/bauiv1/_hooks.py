@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import logging
+import inspect
 from typing import TYPE_CHECKING
 
 import _bauiv1
@@ -87,3 +88,19 @@ def show_url_window(address: str) -> None:
         return
 
     app.classic.show_url_window(address)
+
+
+def double_transition_out_warning() -> None:
+    """Called if a widget is set to transition out twice."""
+    caller_frame = inspect.stack()[1]
+    caller_filename = caller_frame.filename
+    caller_line_number = caller_frame.lineno
+    logging.warning(
+        'ContainerWidget was set to transition out twice;'
+        ' this often implies buggy code (%s line %s).\n'
+        ' Generally you should check the value of'
+        ' _root_widget.transitioning_out and only kick off transitions'
+        ' when that is False.',
+        caller_filename,
+        caller_line_number,
+    )

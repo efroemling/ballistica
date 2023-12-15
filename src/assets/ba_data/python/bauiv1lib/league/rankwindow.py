@@ -1142,6 +1142,10 @@ class LeagueRankWindow(bui.Window):
     def _back(self) -> None:
         from bauiv1lib.coop.browser import CoopBrowserWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
@@ -1149,5 +1153,6 @@ class LeagueRankWindow(bui.Window):
         if not self._modal:
             assert bui.app.classic is not None
             bui.app.ui_v1.set_main_menu_window(
-                CoopBrowserWindow(transition='in_left').get_root_widget()
+                CoopBrowserWindow(transition='in_left').get_root_widget(),
+                from_window=self._root_widget,
             )

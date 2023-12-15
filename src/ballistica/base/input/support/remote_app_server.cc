@@ -376,8 +376,10 @@ auto RemoteAppServer::GetClient(int request_id, struct sockaddr* addr,
                                                              Vector3f(1, 1, 1));
         });
         g_base->logic->event_loop()->PushCall([] {
-          g_base->audio->PlaySound(
-              g_base->assets->SysSound(SysSoundID::kGunCock));
+          if (g_base->assets->asset_loads_allowed()) {
+            g_base->audio->PlaySound(
+                g_base->assets->SysSound(SysSoundID::kGunCock));
+          }
         });
       }
       clients_[i].in_use = true;
@@ -426,9 +428,12 @@ auto RemoteAppServer::GetClient(int request_id, struct sockaddr* addr,
       });
 
       g_base->logic->event_loop()->PushCall([] {
-        g_base->audio->PlaySound(
-            g_base->assets->SysSound(SysSoundID::kGunCock));
+        if (g_base->assets->asset_loads_allowed()) {
+          g_base->audio->PlaySound(
+              g_base->assets->SysSound(SysSoundID::kGunCock));
+        }
       });
+
       std::string utf8 = Utils::GetValidUTF8(clients_[i].display_name, "rsgc1");
       clients_[i].joystick_ = Object::NewDeferred<JoystickInput>(
           -1,  // not an sdl joystick

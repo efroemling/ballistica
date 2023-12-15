@@ -58,8 +58,8 @@ auto BasePlatform::GetPublicDeviceUUID() -> std::string {
     // We used to plug version in directly here, but that caused uuids to
     // shuffle too rapidly during periods of rapid development. This
     // keeps it more constant.
-    // __last_rand_uuid_component_shuffle_date__ 2023 6 15
-    auto rand_uuid_component{"JVRWZ82D4WMBO110OA0IFJV7JKMQV8W3"};
+    // __last_rand_uuid_component_shuffle_date__ 2023 12 13
+    auto rand_uuid_component{"7YM96RZHN6ZCPZGTQONULZO1JU5NMMC7"};
 
     inputs.emplace_back(rand_uuid_component);
     auto gil{Python::ScopedInterpreterLock()};
@@ -166,8 +166,8 @@ void BasePlatform::SetupInterruptHandling() {
 }
 
 void BasePlatform::OnAppStart() { assert(g_base->InLogicThread()); }
-void BasePlatform::OnAppPause() { assert(g_base->InLogicThread()); }
-void BasePlatform::OnAppResume() { assert(g_base->InLogicThread()); }
+void BasePlatform::OnAppSuspend() { assert(g_base->InLogicThread()); }
+void BasePlatform::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
 void BasePlatform::OnAppShutdown() { assert(g_base->InLogicThread()); }
 void BasePlatform::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 void BasePlatform::OnScreenSizeChange() { assert(g_base->InLogicThread()); }

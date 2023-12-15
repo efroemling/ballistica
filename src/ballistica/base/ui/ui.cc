@@ -81,9 +81,9 @@ void UI::OnAppStart() {
   }
 }
 
-void UI::OnAppPause() { assert(g_base->InLogicThread()); }
+void UI::OnAppSuspend() { assert(g_base->InLogicThread()); }
 
-void UI::OnAppResume() {
+void UI::OnAppUnsuspend() {
   assert(g_base->InLogicThread());
   SetUIInputDevice(nullptr);
 }
@@ -236,9 +236,6 @@ void UI::MainMenuPress_(InputDevice* device) {
   assert(g_base->InLogicThread());
   if (auto* ui_delegate = g_base->ui->delegate()) {
     ui_delegate->DoHandleDeviceMenuPress(device);
-  } else {
-    Log(LogLevel::kWarning,
-        "UI::MainMenuPress called without ui_v1 present; unexpected.");
   }
 }
 

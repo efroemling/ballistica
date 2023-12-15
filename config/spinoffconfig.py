@@ -152,7 +152,6 @@ ctx.filter_dirs = {
     'ballisticakit-cmake',
     'ballisticakit-xcode/BallisticaKit.xcodeproj',
     'ballisticakit-ios.xcodeproj',
-    'ballisticakit-mac.xcodeproj',
     'config',
     'src/assets/pdoc',
 }
@@ -195,6 +194,7 @@ ctx.filter_file_names = {
     '.projectile',
     '.editorconfig',
     'ci.yml',
+    'cd.yml',
     'LICENSE',
     'cloudtool',
     'bacloud',

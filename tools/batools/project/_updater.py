@@ -426,7 +426,6 @@ class ProjectUpdater:
         # from batools.xcode import update_xcode_project
 
         for projpath in [
-            # 'ballisticakit-mac.xcodeproj/project.pbxproj',
             # 'ballisticakit-ios.xcodeproj/project.pbxproj',
             'ballisticakit-xcode/BallisticaKit.xcodeproj/project.pbxproj',
         ]:

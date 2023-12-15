@@ -22,8 +22,8 @@ class AppAdapter {
 
   // Logic thread callbacks.
   virtual void OnAppStart();
-  virtual void OnAppPause();
-  virtual void OnAppResume();
+  virtual void OnAppSuspend();
+  virtual void OnAppUnsuspend();
   virtual void OnAppShutdown();
   virtual void OnAppShutdownComplete();
   virtual void OnScreenSizeChange();
@@ -88,9 +88,9 @@ class AppAdapter {
   /// plugged in or unplugged/etc. Default implementation returns true.
   virtual auto ShouldUseCursor() -> bool;
 
-  /// Return whether the app-adapter is having the OS show a cursor.
-  /// If this returns false, the engine will take care of drawing a cursor
-  /// when necessary. If true, SetHardwareCursorVisible will be called
+  /// Return whether the app-adapter is having the OS show a cursor. If this
+  /// returns false, the engine will take care of drawing a cursor when
+  /// necessary. If true, SetHardwareCursorVisible will be called
   /// periodically to inform the adapter what the cursor state should be.
   /// The default implementation returns false;
   virtual auto HasHardwareCursor() -> bool;
@@ -105,21 +105,6 @@ class AppAdapter {
   /// subclasses may want to override to provide slightly more up to date
   /// values.
   virtual void CursorPositionForDraw(float* x, float* y);
-
-  /// Put the app into a suspended state. Should be called from the main
-  /// thread. Pauses work, closes network sockets, etc. May correspond to
-  /// being backgrounded on mobile, being minimized on desktop, etc. It is
-  /// assumed that, as soon as this call returns, all work is finished and
-  /// all threads can be suspended by the OS without any negative side
-  /// effects.
-  void SuspendApp();
-
-  /// Return the app to a running state from a suspended one. Can correspond
-  /// to foregrounding on mobile, unminimizing on desktop, etc. Spins
-  /// threads back up, re-opens network sockets, etc.
-  void UnsuspendApp();
-
-  auto app_suspended() const { return app_suspended_; }
 
   /// Return whether this AppAdapter supports a 'fullscreen' toggle for its
   /// display. This will affect whether that option is available in display
@@ -149,6 +134,15 @@ class AppAdapter {
 
   /// Return whether this AppAdapter supports max-fps controls for its display.
   virtual auto SupportsMaxFPS() -> bool const;
+
+  /// Return whether audio should be silenced when the app goes inactive. On
+  /// Desktop systems it is generally normal to continue to hear things even
+  /// if their windows are hidden, but on mobile we probably want to silence
+  /// our audio when phone calls, ads, etc. pop up over it. Note that this
+  /// is called each time the app goes inactive, so the adapter may choose
+  /// to selectively silence audio depending on what caused the inactive
+  /// switch.
+  virtual auto ShouldSilenceAudioForInactive() -> bool const;
 
   /// Return whether this platform supports soft-quit. A soft quit is
   /// when the app is reset/backgrounded/etc. but remains running in case
@@ -206,22 +200,6 @@ class AppAdapter {
   virtual auto GetKeyRepeatDelay() -> float;
   virtual auto GetKeyRepeatInterval() -> float;
 
-  /// Return whether clipboard operations are supported at all. This gets
-  /// called when determining whether to display clipboard related UI
-  /// elements/etc.
-  auto ClipboardIsSupported() -> bool;
-
-  /// Return whether there is currently text on the clipboard.
-  auto ClipboardHasText() -> bool;
-
-  /// Set current clipboard text. Raises an Exception if clipboard is
-  /// unsupported.
-  void ClipboardSetText(const std::string& text);
-
-  /// Return current text from the clipboard. Raises an Exception if
-  /// clipboard is unsupported or if there's no text on the clipboard.
-  auto ClipboardGetText() -> std::string;
-
   /// Push a raw pointer Runnable to the platform's 'main' thread. The main
   /// thread should call its RunAndLogErrors() method and then delete it.
   virtual void DoPushMainThreadRunnable(Runnable* runnable) = 0;
@@ -239,25 +217,19 @@ class AppAdapter {
   /// Asynchronously kick off a native review request.
   void NativeReviewRequest();
 
- protected:
-  virtual ~AppAdapter();
-
   virtual auto DoClipboardIsSupported() -> bool;
   virtual auto DoClipboardHasText() -> bool;
   virtual void DoClipboardSetText(const std::string& text);
   virtual auto DoClipboardGetText() -> std::string;
+
+ protected:
+  virtual ~AppAdapter();
 
   /// Override to implement native review requests. Will be called in the
   /// main thread.
   virtual void DoNativeReviewRequest();
 
  private:
-  void OnAppSuspend_();
-  void OnAppUnsuspend_();
-
-  bool app_suspended_{};
-  bool have_clipboard_is_supported_{};
-  bool clipboard_is_supported_{};
 };
 
 }  // namespace ballistica::base

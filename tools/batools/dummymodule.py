@@ -216,6 +216,12 @@ def _writefuncs(
                     'import bascenev1  # pylint: disable=cyclic-import\n'
                     'return bascenev1.Time(0.0)'
                 )
+            elif returns == 'bascenev1.HostInfo | None':
+                returnstr = (
+                    'import bascenev1  # pylint: disable=cyclic-import\n'
+                    'return bascenev1.HostInfo(\'dummyname\', -1,'
+                    ' \'dummy_addr\', -1)'
+                )
             elif returns == 'babase.DisplayTime':
                 returnstr = (
                     'import babase  # pylint: disable=cyclic-import\n'

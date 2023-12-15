@@ -17,7 +17,8 @@
 #include <alc.h>
 #endif
 
-#if BA_OSTYPE_ANDROID
+#if BA_OPENAL_IS_SOFT
+#define AL_ALEXT_PROTOTYPES
 #include <alext.h>
 #endif
 

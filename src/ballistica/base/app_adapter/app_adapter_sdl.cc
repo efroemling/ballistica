@@ -471,6 +471,9 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
             // it to the config so that UIs can poll for it and pick up the
             // change. We don't do this on other platforms where a maximized
             // window is more distinctly different than a fullscreen one.
+            // Though I guess some Linux window managers have a fullscreen
+            // function so theoretically we should there. Le sigh. Maybe SDL
+            // 3 will tidy up this situation.
             fullscreen_ = true;
             g_base->logic->event_loop()->PushCall([] {
               g_base->python->objs()
@@ -497,18 +500,22 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
           break;
 
         case SDL_WINDOWEVENT_HIDDEN: {
-          // Let's keep track of when we're hidden so we can stop drawing
-          // and sleep more. Theoretically we could put the app into a full
-          // suspended state like we do on mobile (pausing event loops/etc.)
-          // but that would be more involved; we'd need to ignore most SDL
-          // events while sleeping (except for SDL_WINDOWEVENT_SHOWN) and
-          // would need to rebuild our controller lists/etc when we resume.
-          // For now just gonna keep things simple and keep running.
+          // We plug this into the app's overall 'Active' state so it can
+          // pause stuff or throttle down processing or whatever else.
+          if (!hidden_) {
+            g_base->SetAppActive(false);
+          }
+          // Also note that we are *completely* hidden, so we can totally
+          // stop drawing ('Inactive' app state does not imply this in and
+          // of itself).
           hidden_ = true;
           break;
         }
 
         case SDL_WINDOWEVENT_SHOWN: {
+          if (hidden_) {
+            g_base->SetAppActive(true);
+          }
           hidden_ = false;
           break;
         }

@@ -52,11 +52,11 @@ class Logic {
 
   /// Called when our event-loop pauses. Informs Python and other
   /// subsystems.
-  void OnAppPause();
+  void OnAppSuspend();
 
   /// Called when our event-loop resumes. Informs Python and other
   /// subsystems.
-  void OnAppResume();
+  void OnAppUnsuspend();
 
   void OnAppShutdown();
   void OnAppShutdownComplete();

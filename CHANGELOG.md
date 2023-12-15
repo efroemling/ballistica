@@ -1,4 +1,10 @@
-### 1.7.30 (build 21636, api 8, 2023-11-30)
+### 1.7.31 (build 21707, api 8, 2023-12-13)
+- Added `bascenev1.get_connection_to_host_info_2()` which is an improved
+  type-safe version of `bascenev1.get_connection_to_host_info()`.
+- There is now a link to the official Discord server in the About section
+  (thanks EraOSBeta!).
+  
+### 1.7.30 (build 21697, api 8, 2023-12-08)
 - Continued work on the big 1.7.28 update.
 - Got the Android version back up and running. There's been lots of cleanup and
   simplification on the Android layer, cleaning out years of cruft. This should
@@ -15,15 +21,34 @@
 - Bundled Android Python has been bumped to version 3.11.6.
 - Android app suspend behavior has been revamped. The app should stay running
   more often and be quicker to respond when dialogs or other activities
-  temporarily pop up in front of it. Please holler if you run into strange side
+  temporarily pop up in front of it. This also allows it to continue playing
+  music over other activities such as Google Play Games
+  Achievements/Leaderboards screens. Please holler if you run into strange side
   effects such as the app continuing to play audio when it should not be.
+- Modernized the Android fullscreen setup code when running in Android 11 or
+  newer. The game should now use the whole screen area, including the area
+  around notches or camera cutouts. Please holler if you are seeing any problems
+  related to this.
 - (build 21626) Fixed a bug where click/tap locations were incorrect on some
   builds when tv-border was on (Thanks for the heads-up Loup(Dliwk's fan)!).
 - (build 21631) Fixes an issue where '^^^^^^^^^^^^^' lines in stack traces could
   get chopped into tiny bits each on their own line in the dev console.
-- Fixed a longstanding issue where multiple key presses simultaneously could
-  cause multiple windows to pop up where only one is expected. Please holler if
-  you still see this problem happening anywhere.
+- Hopefully finally fixed a longstanding issue where obscure cases such as
+  multiple key presses simultaneously could cause multiple main menu windows to
+  pop up. Please holler if you still see this problem happening anywhere. Also
+  added a few related safety checks and warnings to help ensure UI code is free
+  from such problems going forward. To make sure your custom UIs are behaving
+  well in this system, do the following two things: 1) any time you call
+  `set_main_menu_window()`, pass your existing main menu window root widget as
+  `from_window`. 2) In any call that can lead to you switching the main menu
+  window, check if your root widget is dead or transitioning out first and abort
+  if it is. See any window in `ui_v1_lib` for examples.
+- (build 21691) Fixed a bug causing touches to not register in some cases on
+  newer Android devices. (Huge thanks to JESWIN A J for helping me track that
+  down!).
+- Temporarily removed the pause-the-game-when-backgrounded behavior for locally
+  hosted games, mainly due to the code being hacky. Will try to restore this
+  functionality in a cleaner way soon.
 
 ### 1.7.29 (build 21619, api 8, 2023-11-21)
 

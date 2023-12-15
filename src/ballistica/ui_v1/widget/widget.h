@@ -46,7 +46,8 @@ class Widget : public Object {
   // Whether the widget (or its children) is selectable in any way.
   virtual auto IsSelectable() -> bool;
 
-  // Whether the widget can be selected by default with direction/tab presses.
+  // Whether the widget can be selected by default with direction/tab
+  // presses.
   virtual auto IsSelectableViaKeys() -> bool;
 
   // Is the widget currently accepting input?
@@ -83,8 +84,8 @@ class Widget : public Object {
   // If this widget is in a container, return it.
   auto parent_widget() const -> ContainerWidget* { return parent_widget_; }
 
-  // Return the container_widget containing this widget, or the owner-widget if
-  // there is no parent.
+  // Return the container_widget containing this widget, or the owner-widget
+  // if there is no parent.
   auto GetOwnerWidget() const -> Widget*;
 
   auto down_widget() const -> Widget* { return down_widget_.Get(); }
@@ -116,25 +117,23 @@ class Widget : public Object {
   // redirecting them to transient per-window stuff).
   void set_neighbors_locked(bool locked) { neighbors_locked_ = locked; }
 
-  // Widgets normally draw with a local depth range of 0-1.
-  // It can be useful to limit drawing to a subsection of that region however
-  // (for manually resolving overlap issues with widgets at the same depth,
-  // etc).
+  // Widgets normally draw with a local depth range of 0-1. It can be useful
+  // to limit drawing to a subsection of that region however (for manually
+  // resolving overlap issues with widgets at the same depth, etc).
   void SetDepthRange(float minDepth, float maxDepth);
 
   auto depth_range_min() const -> float { return depth_range_min_; }
   auto depth_range_max() const -> float { return depth_range_max_; }
 
-  // For use by ContainerWidgets.
-  // (we probably should just this functionality to all widgets)
+  // For use by ContainerWidgets (we probably should just add this
+  // functionality to all widgets).
   void set_parent_widget(ContainerWidget* c) { parent_widget_ = c; }
 
   auto IsInMainStack() const -> bool;
   auto IsInOverlayStack() const -> bool;
 
-  // For use when embedding widgets inside others manually.
-  // This will allow proper selection states/etc to trickle down to the
-  // lowest-level child.
+  // For use when embedding widgets inside others manually. This will allow
+  // proper selection states/etc to trickle down to the lowest-level child.
   void set_owner_widget(Widget* o) { owner_widget_ = o; }
   virtual auto GetWidgetTypeName() -> std::string { return "widget"; }
   virtual auto HasChildren() const -> bool { return false; }
@@ -167,21 +166,24 @@ class Widget : public Object {
   void ScreenPointToWidget(float* x, float* y) const;
   void WidgetPointToScreen(float* x, float* y) const;
 
-  // Draw-control parents are used to give one widget some basic visual control
-  // over others, allowing them to inherit things like draw-brightness and tilt
-  // shift (for cases such as images drawn over buttons).
-  // Ideally we'd probably want to extend the parent mechanism for this, but
-  // this works for now.
+  // Draw-control parents are used to give one widget some basic visual
+  // control over others, allowing them to inherit things like
+  // draw-brightness and tilt shift (for cases such as images drawn over
+  // buttons). Ideally we'd probably want to extend the parent mechanism for
+  // this, but this works for now.
   auto draw_control_parent() const -> Widget* {
     return draw_control_parent_.Get();
   }
   void set_draw_control_parent(Widget* w) { draw_control_parent_ = w; }
 
-  // Can be used to ask link-parents how bright to draw.
-  // Note: make sure the value returned here does not get changed when draw()
-  // is run, since parts of draw-controlled children may query this before
-  // draw() and parts after. (and they need to line up visually)
+  // Can be used to ask link-parents how bright to draw. Note: make sure the
+  // value returned here does not get changed when draw() is run, since
+  // parts of draw-controlled children may query this before draw() and
+  // parts after. (and they need to line up visually)
   virtual auto GetDrawBrightness(millisecs_t current_time) const -> float;
+
+  /// Is this widget in the process of transitioning out before dying?
+  virtual auto IsTransitioningOut() const -> bool;
 
   // Extra buffer added around widgets when they are centered-on.
   void set_show_buffer_top(float b) { show_buffer_top_ = b; }
@@ -206,8 +208,8 @@ class Widget : public Object {
 
   virtual void OnLanguageChange() {}
 
-  // Primitive janktastic child culling for use by containers.
-  // (should really implement something more proper...)
+  // Primitive janktastic child culling for use by containers (should really
+  // implement something more proper).
   auto simple_culling_v() const -> float { return simple_culling_v_; }
   auto simple_culling_h() const -> float { return simple_culling_h_; }
   auto simple_culling_bottom() const -> float { return simple_culling_bottom_; }
@@ -224,14 +226,17 @@ class Widget : public Object {
  private:
   auto GetPyWidget(bool new_ref) -> PyObject*;
   virtual void SetSelected(bool s, SelectionCause cause);
+  bool selected_{};
+  bool visible_in_container_{true};
+  bool neighbors_locked_{};
+  bool auto_select_{};
+  ToolbarVisibility toolbar_visibility_{ToolbarVisibility::kMenuMinimalNoBack};
   float simple_culling_h_{-1.0f};
   float simple_culling_v_{-1.0f};
   float simple_culling_left_{};
   float simple_culling_right_{};
   float simple_culling_bottom_{};
   float simple_culling_top_{};
-  ToolbarVisibility toolbar_visibility_{ToolbarVisibility::kMenuMinimalNoBack};
-  PyObject* py_ref_{};
   float show_buffer_top_{20.0f};
   float show_buffer_bottom_{20.0f};
   float show_buffer_left_{20.0f};
@@ -241,12 +246,9 @@ class Widget : public Object {
   Object::WeakRef<Widget> up_widget_;
   Object::WeakRef<Widget> left_widget_;
   Object::WeakRef<Widget> right_widget_;
-  bool neighbors_locked_{};
-  bool auto_select_{};
   ContainerWidget* parent_widget_{};
+  PyObject* py_ref_{};
   Widget* owner_widget_{};
-  bool selected_{};
-  bool visible_in_container_{true};
   float tx_{};
   float ty_{};
   float stack_offset_x_{};

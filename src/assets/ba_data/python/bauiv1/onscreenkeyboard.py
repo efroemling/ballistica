@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 import babase
 
 import _bauiv1
+from bauiv1._keyboard import Keyboard
 from bauiv1._uitypes import Window
 
 if TYPE_CHECKING:
@@ -252,9 +253,7 @@ class OnScreenKeyboardWindow(Window):
                     # Show change instructions only if we have more than one
                     # keyboard option.
                     keyboards = (
-                        babase.app.meta.scanresults.exports_of_class(
-                            babase.Keyboard
-                        )
+                        babase.app.meta.scanresults.exports_of_class(Keyboard)
                         if babase.app.meta.scanresults is not None
                         else []
                     )
@@ -286,10 +285,10 @@ class OnScreenKeyboardWindow(Window):
 
     def _get_keyboard(self) -> bui.Keyboard:
         assert babase.app.meta.scanresults is not None
-        classname = babase.app.meta.scanresults.exports_of_class(
-            babase.Keyboard
-        )[self._keyboard_index]
-        kbclass = babase.getclass(classname, babase.Keyboard)
+        classname = babase.app.meta.scanresults.exports_of_class(Keyboard)[
+            self._keyboard_index
+        ]
+        kbclass = babase.getclass(classname, Keyboard)
         return kbclass()
 
     def _refresh(self) -> None:
@@ -384,9 +383,7 @@ class OnScreenKeyboardWindow(Window):
 
     def _next_keyboard(self) -> None:
         assert babase.app.meta.scanresults is not None
-        kbexports = babase.app.meta.scanresults.exports_of_class(
-            babase.Keyboard
-        )
+        kbexports = babase.app.meta.scanresults.exports_of_class(Keyboard)
         self._keyboard_index = (self._keyboard_index + 1) % len(kbexports)
 
         self._load_keyboard()

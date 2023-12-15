@@ -1329,6 +1329,10 @@ class StoreBrowserWindow(bui.Window):
         from bauiv1lib.account import show_sign_in_prompt
         from bauiv1lib.getcurrency import GetCurrencyWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         plus = bui.app.plus
         assert plus is not None
 
@@ -1343,12 +1347,18 @@ class StoreBrowserWindow(bui.Window):
         ).get_root_widget()
         if not self._modal:
             assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_menu_window(window)
+            bui.app.ui_v1.set_main_menu_window(
+                window, from_window=self._root_widget
+            )
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.coop.browser import CoopBrowserWindow
         from bauiv1lib.mainmenu import MainMenuWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         self._save_state()
         bui.containerwidget(
@@ -1358,11 +1368,13 @@ class StoreBrowserWindow(bui.Window):
             assert bui.app.classic is not None
             if self._back_location == 'CoopBrowserWindow':
                 bui.app.ui_v1.set_main_menu_window(
-                    CoopBrowserWindow(transition='in_left').get_root_widget()
+                    CoopBrowserWindow(transition='in_left').get_root_widget(),
+                    from_window=self._root_widget,
                 )
             else:
                 bui.app.ui_v1.set_main_menu_window(
-                    MainMenuWindow(transition='in_left').get_root_widget()
+                    MainMenuWindow(transition='in_left').get_root_widget(),
+                    from_window=self._root_widget,
                 )
         if self._on_close_call is not None:
             self._on_close_call()

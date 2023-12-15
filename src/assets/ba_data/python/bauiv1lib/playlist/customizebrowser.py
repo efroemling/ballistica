@@ -323,6 +323,10 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.playlist import browser
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         if self._selected_playlist_name is not None:
             cfg = bui.app.config
             cfg[
@@ -337,7 +341,8 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         bui.app.ui_v1.set_main_menu_window(
             browser.PlaylistBrowserWindow(
                 transition='in_left', sessiontype=self._sessiontype
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _select(self, name: str, index: int) -> None:

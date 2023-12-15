@@ -21,8 +21,8 @@ class Input {
   Input();
 
   void OnAppStart();
-  void OnAppPause();
-  void OnAppResume();
+  void OnAppSuspend();
+  void OnAppUnsuspend();
   void OnAppShutdown();
   void OnAppShutdownComplete();
   void StepDisplayTime();
