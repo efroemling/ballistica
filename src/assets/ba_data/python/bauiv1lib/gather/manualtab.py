@@ -746,6 +746,7 @@ class ManualGatherTab(GatherTab):
             )
             if i == 0:
                 bui.widget(edit=txt, up_widget=self._favorites_text)
+                self._favorite_selected = server
             bui.widget(
                 edit=txt,
                 left_widget=self._favorites_connect_button,
