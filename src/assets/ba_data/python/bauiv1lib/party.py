@@ -482,7 +482,11 @@ class PartyWindow(bui.Window):
                         port_num=info.port,
                     )
                 else:
-                    bui.screenmessage('Not connected to a server')
+                    bui.screenmessage(
+                        bui.Lstr(
+                            resource='NotConnectedToServerText'
+                        )
+                    )
         else:
             print(f'unhandled popup type: {self._popup_type}')
 
@@ -501,6 +505,8 @@ class PartyWindow(bui.Window):
             bui.getsound('error').play()
             return
         port = port_num
+        if port_num is None:
+            port = -1  
         if port > 65535 or port < 0:
             bui.screenmessage(
                 bui.Lstr(resource='internal.invalidPortErrorText'),
