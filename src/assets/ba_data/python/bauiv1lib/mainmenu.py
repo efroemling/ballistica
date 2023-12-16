@@ -1244,10 +1244,12 @@ class MainMenuWindow(bui.Window):
 
     def _do_game_service_press(self) -> None:
         self._save_state()
-        if bui.app.classic is not None:
-            bui.app.classic.show_online_score_ui()
+        if bui.app.plus is not None:
+            bui.app.plus.show_game_service_ui()
         else:
-            logging.warning('classic is required to show game service ui')
+            logging.warning(
+                'plus feature-set is required to show game service ui'
+            )
 
     def _save_state(self) -> None:
         # Don't do this for the in-game menu.

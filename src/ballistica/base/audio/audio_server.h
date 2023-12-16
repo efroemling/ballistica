@@ -29,9 +29,6 @@ class AudioServer {
   void PushSetVolumesCall(float music_volume, float sound_volume);
   void PushSetSoundPitchCall(float val);
 
-  // static void BeginInterruption();
-  // static void EndInterruption();
-
   void PushSetListenerPositionCall(const Vector3f& p);
   void PushSetListenerOrientationCall(const Vector3f& forward,
                                       const Vector3f& up);
@@ -68,6 +65,7 @@ class AudioServer {
   auto event_loop() const -> EventLoop* { return event_loop_; }
 
   void OnDeviceDisconnected();
+  void OpenALSoftLogCallback(const std::string& msg);
 
  private:
   class ThreadSource_;
@@ -131,6 +129,9 @@ class AudioServer {
   seconds_t shutdown_start_time_{};
   seconds_t last_started_playing_time_{};
   millisecs_t last_sound_fade_process_time_{};
+
+  std::mutex openalsoft_log_mutex_;
+  std::string openalsoft_log_;
 
   /// Indexed list of sources.
   std::vector<ThreadSource_*> sources_;

@@ -590,9 +590,8 @@ void TextWidget::Activate() {
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
 
   if (auto* call = on_activate_call_.Get()) {
-    // Call this in the next cycle (don't wanna risk mucking with UI from
-    // within a UI loop).
-    call->ScheduleWeak();
+    // Schedule this to run immediately after any current UI traversal.
+    call->ScheduleInUIOperation();
   }
 
   // Bring up an editor if applicable.
@@ -719,9 +718,8 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         } else {
           if (auto* call = on_return_press_call_.Get()) {
             claimed = true;
-            // Call this in the next cycle (don't wanna risk mucking with UI
-            // from within a UI loop)
-            call->ScheduleWeak();
+            // Schedule this to run immediately after any current UI traversal.
+            call->ScheduleInUIOperation();
           }
         }
         break;

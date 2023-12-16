@@ -1,8 +1,19 @@
-### 1.7.31 (build 21707, api 8, 2023-12-13)
+### 1.7.31 (build 21726, api 8, 2023-12-16)
 - Added `bascenev1.get_connection_to_host_info_2()` which is an improved
   type-safe version of `bascenev1.get_connection_to_host_info()`.
 - There is now a link to the official Discord server in the About section
   (thanks EraOSBeta!).
+- Native stack traces now work on Android; woohoo! Should be very helpful for
+  debugging.
+- Added the concept of 'ui-operations' in the native layer to hopefully clear
+  out the remaining double-window bugs. Basically, widgets used to schedule
+  their payload commands to a future cycle of the event loop, meaning it was
+  possible for commands that switched the main window to get scheduled twice
+  before the first one ran (due to 2 key presses, etc), which could lead to all
+  sorts of weirdness happening such as multiple windows popping up when one was
+  intended. Now, however, such commands get scheduled to a current
+  'ui-operation' and then run *almost* immediately, which should prevent such
+  situations. Please holler if you run into any UI weirdness at this point.
   
 ### 1.7.30 (build 21697, api 8, 2023-12-08)
 - Continued work on the big 1.7.28 update.

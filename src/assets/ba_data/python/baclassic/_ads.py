@@ -9,7 +9,6 @@ import logging
 from typing import TYPE_CHECKING
 
 import babase
-import bauiv1
 import bascenev1
 
 if TYPE_CHECKING:
@@ -72,7 +71,8 @@ class AdsSubsystem:
     ) -> None:
         """(internal)"""
         self.last_ad_purpose = purpose
-        bauiv1.show_ad(purpose, on_completion_call)
+        assert babase.app.plus is not None
+        babase.app.plus.show_ad(purpose, on_completion_call)
 
     def show_ad_2(
         self,
@@ -81,7 +81,8 @@ class AdsSubsystem:
     ) -> None:
         """(internal)"""
         self.last_ad_purpose = purpose
-        bauiv1.show_ad_2(purpose, on_completion_call)
+        assert babase.app.plus is not None
+        babase.app.plus.show_ad_2(purpose, on_completion_call)
 
     def call_after_ad(self, call: Callable[[], Any]) -> None:
         """Run a call after potentially showing an ad."""

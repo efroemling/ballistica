@@ -1501,6 +1501,9 @@
     <ClInclude Include="..\..\src\ballistica\shared\generic\lambda_runnable.h">
       <Filter>ballistica\shared\generic</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\generic\native_stack_trace.h">
+      <Filter>ballistica\shared\generic</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\shared\generic\runnable.cc">
       <Filter>ballistica\shared\generic</Filter>
     </ClCompile>

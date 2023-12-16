@@ -1258,19 +1258,21 @@ class AccountSettingsWindow(bui.Window):
         self._needs_refresh = False
 
     def _on_game_service_button_press(self) -> None:
-        if bui.app.classic is not None:
-            bui.app.classic.show_online_score_ui()
+        if bui.app.plus is not None:
+            bui.app.plus.show_game_service_ui()
         else:
-            logging.warning('game service ui not available without classic.')
+            logging.warning(
+                'game-service-ui not available without plus feature-set.'
+            )
 
     def _on_custom_achievements_press(self) -> None:
-        if bui.app.classic is not None:
+        if bui.app.plus is not None:
             bui.apptimer(
                 0.15,
-                bui.Call(bui.app.classic.show_online_score_ui, 'achievements'),
+                bui.Call(bui.app.plus.show_game_service_ui, 'achievements'),
             )
         else:
-            logging.warning('show_online_score_ui requires classic')
+            logging.warning('show_game_service_ui requires plus feature-set.')
 
     def _on_achievements_press(self) -> None:
         # pylint: disable=cyclic-import
@@ -1327,13 +1329,13 @@ class AccountSettingsWindow(bui.Window):
         bui.open_url(response.url)
 
     def _on_leaderboards_press(self) -> None:
-        if bui.app.classic is not None:
+        if bui.app.plus is not None:
             bui.apptimer(
                 0.15,
-                bui.Call(bui.app.classic.show_online_score_ui, 'leaderboards'),
+                bui.Call(bui.app.plus.show_game_service_ui, 'leaderboards'),
             )
         else:
-            logging.warning('show_online_score_ui requires classic')
+            logging.warning('show_game_service_ui requires classic')
 
     def _have_unlinkable_v1_accounts(self) -> bool:
         plus = bui.app.plus

@@ -284,20 +284,20 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             self.end({'outcome': 'next_level'})
 
     def _ui_gc(self) -> None:
-        if bs.app.classic is not None:
-            bs.app.classic.show_online_score_ui(
+        if bs.app.plus is not None:
+            bs.app.plus.show_game_service_ui(
                 'leaderboard',
                 game=self._game_name_str,
                 game_version=self._game_config_str,
             )
         else:
-            logging.warning('show_online_score_ui requires classic')
+            logging.warning('show_game_service_ui requires plus feature-set')
 
     def _ui_show_achievements(self) -> None:
-        if bs.app.classic is not None:
-            bs.app.classic.show_online_score_ui('achievements')
+        if bs.app.plus is not None:
+            bs.app.plus.show_game_service_ui('achievements')
         else:
-            logging.warning('show_online_score_ui requires classic')
+            logging.warning('show_game_service_ui requires plus feature-set')
 
     def _ui_worlds_best(self) -> None:
         if self._score_link is None:

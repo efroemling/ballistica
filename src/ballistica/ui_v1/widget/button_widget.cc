@@ -54,10 +54,18 @@ void ButtonWidget::SetIcon(base::TextureAsset* val) { icon_ = val; }
 void ButtonWidget::OnRepeatTimerExpired() {
   // Repeat our action unless we somehow lost focus but didn't get a mouse-up.
   if (IsHierarchySelected() && pressed_) {
+    // Gather up any user code triggered by this stuff and run it at the end
+    // before we return.
+    base::UI::OperationContext ui_op_context;
+
     DoActivate(true);
 
     // Speed up repeats after the first.
     repeat_timer_->SetLength(0.150);
+
+    // Run any calls built up by UI callbacks.
+    ui_op_context.Finish();
+
   } else {
     repeat_timer_.Clear();
   }
@@ -560,9 +568,8 @@ void ButtonWidget::DoActivate(bool is_repeat) {
     }
   }
   if (auto* call = on_activate_call_.Get()) {
-    // Call this in the next cycle (don't want to risk mucking with UI from
-    // within a UI loop.)
-    call->ScheduleWeak();
+    // Schedule this to run immediately after any current UI traversal.
+    call->ScheduleInUIOperation();
     return;
   }
 }

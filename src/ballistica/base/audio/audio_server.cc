@@ -4,6 +4,11 @@
 
 #include <algorithm>
 
+// Ew fixme.
+#if BA_OSTYPE_ANDROID
+#include <android/log.h>
+#endif
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/sound_asset.h"
@@ -34,6 +39,8 @@ LPALCDEVICERESUMESOFT alcDeviceResumeSOFT{};
 LPALCRESETDEVICESOFT alcResetDeviceSOFT{};
 LPALEVENTCALLBACKSOFT alEventCallbackSOFT{};
 LPALEVENTCONTROLSOFT alEventControlSOFT{};
+// LPALSOFTSETLOGCALLBACK alsoft_set_log_callback{};
+
 #endif
 
 const int kAudioProcessIntervalNormal{500 * 1000};
@@ -168,7 +175,41 @@ static void ALEventCallback_(ALenum eventType, ALuint object, ALuint param,
                                 + std::to_string(static_cast<int>(eventType)));
   }
 }
+
+// FIXME: Should convert this to a generalized OpenALSoft log handler since
+// we might want to wire it up on other platforms too.
+#if BA_OSTYPE_ANDROID
+static void ALCustomAndroidLogCallback_(int severity, const char* msg) {
+  // Let's log everything directly that is a warning or worse and store
+  // everything else (up to some size limit). We can then explicitly ship
+  // the full log if a serious problem occurs.
+  if (severity >= ANDROID_LOG_WARN) {
+    __android_log_print(severity, "BallisticaKit", "openal-log: %s", msg);
+  }
+  g_base->audio_server->OpenALSoftLogCallback(msg);
+}
+#endif  // BA_OSTYPE_ANDROID
+
+void ALCustomLogCallback_(void* userptr, char level, const char* message,
+                          int length) noexcept {
+  // Log(LogLevel::kInfo, "HELLO FROM GENERIC CUSTOM LOGGER");
+}
+
 #endif  // BA_OPENAL_IS_SOFT
+
+void AudioServer::OpenALSoftLogCallback(const std::string& msg) {
+  size_t log_cap{1024 * 11};
+  std::scoped_lock lock(openalsoft_log_mutex_);
+
+  if (openalsoft_log_.size() < log_cap) {
+    openalsoft_log_ += "openal-log("
+                       + std::to_string(g_core->GetAppTimeSeconds())
+                       + "s): " + msg;
+    if (openalsoft_log_.size() >= log_cap) {
+      openalsoft_log_ += "\n<max openalsoft log storage size reached>\n";
+    }
+  }
+}
 
 void AudioServer::OnAppStartInThread_() {
   assert(g_base->InAudioThread());
@@ -219,14 +260,38 @@ void AudioServer::OnAppStartInThread_() {
     }
 #endif  // BA_RIFT_BUILD
 
+    // Wire up our custom log callback where applicable.
+#if BA_OSTYPE_ANDROID
+    // alsoft_set_log_callback(ALCustomLogCallback_, nullptr);
+    alcSetCustomAndroidLogger(ALCustomAndroidLogCallback_);
+#endif
+
     auto* device = alcOpenDevice(al_device_name);
     if (!device) {
+      if (g_buildconfig.ostype_android()) {
+        std::scoped_lock lock(openalsoft_log_mutex_);
+        Log(LogLevel::kError,
+            "------------------------"
+            " OPENALSOFT-FATAL-ERROR-LOG-BEGIN ----------------------\n"
+                + openalsoft_log_
+            + "\n-------------------------"
+              " OPENALSOFT-FATAL-ERROR-LOG-END -----------------------");
+      }
       FatalError(
           "No audio devices found. Do you have speakers/headphones/etc. "
           "connected?");
     }
     impl_->alc_context = alcCreateContext(device, nullptr);
     if (!impl_->alc_context) {
+      if (g_buildconfig.ostype_android()) {
+        std::scoped_lock lock(openalsoft_log_mutex_);
+        Log(LogLevel::kError,
+            "------------------------"
+            " OPENALSOFT-FATAL-ERROR-LOG-BEGIN ----------------------\n"
+                + openalsoft_log_
+            + "\n-------------------------"
+              " OPENALSOFT-FATAL-ERROR-LOG-END -----------------------");
+      }
       FatalError(
           "Unable to init audio. Do you have speakers/headphones/etc. "
           "connected?");
@@ -253,6 +318,9 @@ void AudioServer::OnAppStartInThread_() {
     alEventControlSOFT = reinterpret_cast<LPALEVENTCONTROLSOFT>(
         alcGetProcAddress(device, "alEventControlSOFT"));
     BA_PRECONDITION_FATAL(alEventControlSOFT != nullptr);
+    // alsoft_set_log_callback = reinterpret_cast<LPALSOFTSETLOGCALLBACK>(
+    //     alcGetProcAddress(device, "alsoft_set_log_callback"));
+    // BA_PRECONDITION_FATAL(alsoft_set_log_callback != nullptr);
 
     // Ask to be notified when a device is disconnected.
     alEventCallbackSOFT(ALEventCallback_, nullptr);

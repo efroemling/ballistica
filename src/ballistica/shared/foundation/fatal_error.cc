@@ -6,6 +6,7 @@
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/logging.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
+#include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/python/python.h"
 
 namespace ballistica {
@@ -87,7 +88,7 @@ void FatalError::ReportFatalError(const std::string& message,
   // since we know where those are anyway.
   if (!in_top_level_exception_handler) {
     if (g_core && g_core->platform) {
-      core::PlatformStackTrace* trace{g_core->platform->GetStackTrace()};
+      NativeStackTrace* trace{g_core->platform->GetNativeStackTrace()};
       if (trace) {
         std::string tracestr = trace->FormatForDisplay();
         if (!tracestr.empty()) {

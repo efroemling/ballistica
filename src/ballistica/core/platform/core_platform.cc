@@ -9,10 +9,15 @@
 
 // Trying to avoid platform-specific headers here except for
 // a few mostly-cross-platform bits where its worth the mess.
-#if !BA_OSTYPE_WINDOWS
 #if BA_ENABLE_EXECINFO_BACKTRACES
+#if BA_OSTYPE_ANDROID
+#include "ballistica/core/platform/android/execinfo.h"
+#else
 #include <execinfo.h>
-#endif
+#endif  // BA_OSTYPE_ANDROID
+#endif  // BA_ENABLE_EXECINFO_BACKTRACES
+
+#if !BA_OSTYPE_WINDOWS
 #include <cxxabi.h>
 #include <unistd.h>
 #endif
@@ -20,6 +25,7 @@
 #include "ballistica/core/platform/support/min_sdl.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/networking/networking_sys.h"
 #include "ballistica/shared/python/python.h"
@@ -689,10 +695,10 @@ auto CorePlatform::HaveLeaderboard(const std::string& game,
   return false;
 }
 
-void CorePlatform::ShowOnlineScoreUI(const std::string& show,
+void CorePlatform::ShowGameServiceUI(const std::string& show,
                                      const std::string& game,
                                      const std::string& game_version) {
-  Log(LogLevel::kError, "FIXME: ShowOnlineScoreUI() unimplemented");
+  Log(LogLevel::kError, "FIXME: ShowGameServiceUI() unimplemented");
 }
 
 void CorePlatform::AndroidSetResString(const std::string& res) {
@@ -952,7 +958,7 @@ auto CorePlatform::GetSubplatformName() -> std::string {
 #if BA_ENABLE_EXECINFO_BACKTRACES
 
 // Stack traces using the functionality in execinfo.h
-class PlatformStackTraceExecInfo : public PlatformStackTrace {
+class NativeStackTraceExecInfo : public NativeStackTrace {
  public:
   static constexpr int kMaxStackLevels = 64;
 
@@ -960,14 +966,23 @@ class PlatformStackTraceExecInfo : public PlatformStackTrace {
   // construction but should do the bare minimum amount of work to store it. Any
   // expensive operations such as symbolification should be deferred until
   // FormatForDisplay().
-  PlatformStackTraceExecInfo() { nsize_ = backtrace(array_, kMaxStackLevels); }
+  NativeStackTraceExecInfo() { nsize_ = backtrace(array_, kMaxStackLevels); }
 
   auto FormatForDisplay() noexcept -> std::string override {
     try {
       std::string s;
       char** symbols = backtrace_symbols(array_, nsize_);
       for (int i = 0; i < nsize_; i++) {
-        s += std::string(symbols[i]);
+        const char* symbol = symbols[i];
+        // Special case for Android: there's usually a horrific mess of a
+        // pathname leading up to libmain.so, which we should never really
+        // care about, so let's strip that out if possible.
+        if (g_buildconfig.ostype_android()) {
+          if (const char* s2 = strstr(symbol, "/libmain.so")) {
+            symbol = s2 + 1;
+          }
+        }
+        s += std::string(symbol);
         if (i < nsize_ - 1) {
           s += "\n";
         }
@@ -979,9 +994,9 @@ class PlatformStackTraceExecInfo : public PlatformStackTrace {
     }
   }
 
-  auto Copy() const noexcept -> PlatformStackTrace* override {
+  auto Copy() const noexcept -> NativeStackTrace* override {
     try {
-      auto s = new PlatformStackTraceExecInfo(*this);
+      auto s = new NativeStackTraceExecInfo(*this);
 
       // Vanilla copy constructor should do the right thing here.
       assert(s->nsize_ == nsize_
@@ -999,11 +1014,11 @@ class PlatformStackTraceExecInfo : public PlatformStackTrace {
 };
 #endif
 
-auto CorePlatform::GetStackTrace() -> PlatformStackTrace* {
+auto CorePlatform::GetNativeStackTrace() -> NativeStackTrace* {
 // Our default handler here supports execinfo backtraces where available
 // and gives nothing elsewhere.
 #if BA_ENABLE_EXECINFO_BACKTRACES
-  return new PlatformStackTraceExecInfo();
+  return new NativeStackTraceExecInfo();
 #else
   return nullptr;
 #endif

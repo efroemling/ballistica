@@ -6,6 +6,7 @@
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/support/app_config.h"
+#include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/support/root_ui.h"
 #include "ballistica/ui_v1/widget/root_widget.h"
@@ -70,10 +71,6 @@ void UIV1FeatureSet::DoHandleDeviceMenuPress(base::InputDevice* device) {
 }
 
 void UIV1FeatureSet::DoShowURL(const std::string& url) { python->ShowURL(url); }
-
-// void UIV1FeatureSet::DoQuitWindow() {
-//   g_ui_v1->python->objs().Get(UIV1Python::ObjID::kQuitWindowCall).Call();
-// }
 
 bool UIV1FeatureSet::MainMenuVisible() {
   // We consider anything on our screen or overlay stacks to be a 'main menu'.
@@ -296,7 +293,7 @@ UIV1FeatureSet::UILock::UILock(bool write) {
   assert(g_base->InLogicThread());
 
   if (write && g_ui_v1->ui_lock_count_ != 0) {
-    BA_LOG_ERROR_TRACE_ONCE("Illegal operation: UI is locked");
+    BA_LOG_ERROR_NATIVE_TRACE_ONCE("Illegal operation: UI is locked.");
   }
   g_ui_v1->ui_lock_count_++;
 }
@@ -304,7 +301,7 @@ UIV1FeatureSet::UILock::UILock(bool write) {
 UIV1FeatureSet::UILock::~UILock() {
   g_ui_v1->ui_lock_count_--;
   if (g_ui_v1->ui_lock_count_ < 0) {
-    BA_LOG_ERROR_TRACE_ONCE("ui_lock_count_ < 0");
+    BA_LOG_ERROR_NATIVE_TRACE_ONCE("ui_lock_count_ < 0");
     g_ui_v1->ui_lock_count_ = 0;
   }
 }

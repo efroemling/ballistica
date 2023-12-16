@@ -287,7 +287,7 @@ void HostSession::RemovePlayer(Player* player) {
       return;
     }
   }
-  BA_LOG_ERROR_TRACE("Player not found in HostSession::RemovePlayer()");
+  BA_LOG_ERROR_PYTHON_TRACE("Player not found in HostSession::RemovePlayer()");
 }
 
 void HostSession::IssuePlayerLeft(Player* player) {

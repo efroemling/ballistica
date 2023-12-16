@@ -87,35 +87,6 @@ static PyMethodDef PyGetTextureDef = {
     "Load a texture for use in the ui.",
 };
 
-// ------------------------------- getmesh -------------------------------------
-
-static auto PyGetMesh(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  const char* name;
-  static const char* kwlist[] = {"name", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char**>(kwlist), &name)) {
-    return nullptr;
-  }
-  {
-    base::Assets::AssetListLock lock;
-    return PythonClassUIMesh::Create(g_base->assets->GetMesh(name));
-  }
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyGetMeshDef = {
-    "getmesh",                     // name
-    (PyCFunction)PyGetMesh,        // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "getmesh(name: str) -> bauiv1.Mesh\n"
-    "\n"
-    "Load a mesh for use solely in the local user interface.",
-};
-
 // -------------------------- get_qrcode_texture -------------------------------
 
 static auto PyGetQRCodeTexture(PyObject* self, PyObject* args, PyObject* keywds)
@@ -144,6 +115,35 @@ static PyMethodDef PyGetQRCodeTextureDef = {
     "Return a QR code texture.\n"
     "\n"
     "The provided url must be 64 bytes or less.",
+};
+
+// ------------------------------- getmesh -------------------------------------
+
+static auto PyGetMesh(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* name;
+  static const char* kwlist[] = {"name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &name)) {
+    return nullptr;
+  }
+  {
+    base::Assets::AssetListLock lock;
+    return PythonClassUIMesh::Create(g_base->assets->GetMesh(name));
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetMeshDef = {
+    "getmesh",                     // name
+    (PyCFunction)PyGetMesh,        // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "getmesh(name: str) -> bauiv1.Mesh\n"
+    "\n"
+    "Load a mesh for use solely in the local user interface.",
 };
 
 // ----------------------------- buttonwidget ----------------------------------
@@ -249,6 +249,10 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (!g_base->CurrentContext().IsEmpty()) {
     throw Exception("UI functions must be called with no context set.");
   }
+
+  // Gather up any user code triggered by this stuff and run it at the end
+  // before we return.
+  base::UI::OperationContext ui_op_context;
 
   // Grab the edited widget or create a new one.
   Object::Ref<ButtonWidget> b;
@@ -444,6 +448,9 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     g_ui_v1->AddWidget(b.Get(), parent_widget);
   }
 
+  // Run any calls built up by UI callbacks.
+  ui_op_context.Finish();
+
   return b->NewPyRef();
 
   BA_PYTHON_CATCH;
@@ -552,6 +559,10 @@ static auto PyCheckBoxWidget(PyObject* self, PyObject* args, PyObject* keywds)
     throw Exception("UI functions must be called with no context set.");
   }
 
+  // Gather up any user code triggered by this stuff and run it at the end
+  // before we return.
+  base::UI::OperationContext ui_op_context;
+
   // Grab the edited widget or create a new one.
   Object::Ref<CheckBoxWidget> widget;
   if (edit_obj != Py_None) {
@@ -632,6 +643,9 @@ static auto PyCheckBoxWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (edit_obj == Py_None) {
     g_ui_v1->AddWidget(widget.Get(), parent_widget);
   }
+
+  // Run any calls built up by UI callbacks.
+  ui_op_context.Finish();
 
   return widget->NewPyRef();
 
@@ -724,6 +738,10 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (!g_base->CurrentContext().IsEmpty()) {
     throw Exception("UI functions must be called with no context set.");
   }
+
+  // Gather up any user code triggered by this stuff and run it at the end
+  // before we return.
+  base::UI::OperationContext ui_op_context;
 
   // Grab the edited widget or create a new one.
   Object::Ref<ImageWidget> b;
@@ -821,6 +839,9 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
     g_ui_v1->AddWidget(b.Get(), parent_widget);
   }
 
+  // Run any calls built up by UI callbacks.
+  ui_op_context.Finish();
+
   return b->NewPyRef();
   BA_PYTHON_CATCH;
 }
@@ -914,6 +935,10 @@ static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
     throw Exception("UI functions must be called with no context set.");
   }
 
+  // Gather up any user code triggered by this stuff and run it at the end
+  // before we return.
+  base::UI::OperationContext ui_op_context;
+
   // Grab the edited widget or create a new one.
   Object::Ref<ColumnWidget> widget;
   if (edit_obj != Py_None) {
@@ -970,7 +995,13 @@ static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
     widget->set_background(Python::GetPyBool(background_obj));
   }
   if (selected_child_obj != Py_None) {
+    // Need to wrap this in an operation because it can trigger user code.
+    base::UI::OperationContext operation_context;
+
     widget->SelectWidget(UIV1Python::GetPyWidget(selected_child_obj));
+
+    // Run any user code/etc.
+    operation_context.Finish();
   }
   if (visible_child_obj != Py_None) {
     widget->ShowWidget(UIV1Python::GetPyWidget(visible_child_obj));
@@ -990,6 +1021,9 @@ static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (edit_obj == Py_None) {
     g_ui_v1->AddWidget(widget.Get(), parent_widget);
   }
+
+  // Run any calls built up by UI callbacks.
+  ui_op_context.Finish();
 
   return widget->NewPyRef();
 
@@ -1120,6 +1154,9 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
     throw Exception("UI functions must be called with no context set.");
   }
 
+  // Defer any user code triggered by selects/etc until the end.
+  base::UI::OperationContext ui_op_context;
+
   // Grab the edited widget or create a new one.
   Object::Ref<ContainerWidget> widget;
   if (edit_obj != Py_None) {
@@ -1207,7 +1244,7 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
     widget->SetRootSelectable(Python::GetPyBool(root_selectable_obj));
   }
   if (selected_child_obj != Py_None) {
-    // special case: passing 0 implies deselect
+    // Special case: passing 0 implies deselect.
     if (PyLong_Check(selected_child_obj)
         && (PyLong_AsLong(selected_child_obj) == 0)) {
       widget->SelectWidget(nullptr);
@@ -1218,18 +1255,19 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   if (transition_obj != Py_None) {
     std::string t = Python::GetPyString(transition_obj);
-    if (t == "in_left")
+    if (t == "in_left") {
       widget->SetTransition(ContainerWidget::TransitionType::kInLeft);
-    else if (t == "in_right")
+    } else if (t == "in_right") {
       widget->SetTransition(ContainerWidget::TransitionType::kInRight);
-    else if (t == "out_left")
+    } else if (t == "out_left") {
       widget->SetTransition(ContainerWidget::TransitionType::kOutLeft);
-    else if (t == "out_right")
+    } else if (t == "out_right") {
       widget->SetTransition(ContainerWidget::TransitionType::kOutRight);
-    else if (t == "in_scale")
+    } else if (t == "in_scale") {
       widget->SetTransition(ContainerWidget::TransitionType::kInScale);
-    else if (t == "out_scale")
+    } else if (t == "out_scale") {
       widget->SetTransition(ContainerWidget::TransitionType::kOutScale);
+    }
   }
 
   if (cancel_button_obj != Py_None) {
@@ -1301,6 +1339,10 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
     widget->set_claims_outside_clicks(
         Python::GetPyBool(claim_outside_clicks_obj));
   }
+
+  // Run any calls built up by UI callbacks.
+  ui_op_context.Finish();
+
   return widget->NewPyRef();
   BA_PYTHON_CATCH;
 }
@@ -1387,6 +1429,10 @@ static auto PyRowWidget(PyObject* self, PyObject* args, PyObject* keywds)
     throw Exception("UI functions must be called with no context set.");
   }
 
+  // Gather up any user code triggered by this stuff and run it at the end
+  // before we return.
+  base::UI::OperationContext ui_op_context;
+
   // Grab the edited widget or create a new one.
   Object::Ref<RowWidget> widget;
   if (edit_obj != Py_None) {
@@ -1442,6 +1488,9 @@ static auto PyRowWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (edit_obj == Py_None) {
     g_ui_v1->AddWidget(widget.Get(), parent_widget);
   }
+
+  // Run any calls built up by UI callbacks.
+  ui_op_context.Finish();
 
   return widget->NewPyRef();
 
@@ -1532,6 +1581,10 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
     throw Exception("UI functions must be called with no context set.");
   }
 
+  // Gather up any user code triggered by this stuff and run it at the end
+  // before we return.
+  base::UI::OperationContext ui_op_context;
+
   // Grab the edited widget or create a new one.
   Object::Ref<ScrollWidget> widget;
   if (edit_obj != Py_None) {
@@ -1615,6 +1668,10 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (edit_obj == Py_None) {
     g_ui_v1->AddWidget(widget.Get(), parent_widget);
   }
+
+  // Run any calls built up by UI callbacks.
+  ui_op_context.Finish();
+
   return widget->NewPyRef();
 
   BA_PYTHON_CATCH;
@@ -1710,6 +1767,10 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
     throw Exception("UI functions must be called with no context set.");
   }
 
+  // Gather up any user code triggered by this stuff and run it at the end
+  // before we return.
+  base::UI::OperationContext ui_op_context;
+
   // Grab the edited widget or create a new one.
   Object::Ref<HScrollWidget> widget;
   if (edit_obj != Py_None) {
@@ -1788,6 +1849,10 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (edit_obj == Py_None) {
     g_ui_v1->AddWidget(widget.Get(), parent_widget);
   }
+
+  // Run any calls built up by UI callbacks.
+  ui_op_context.Finish();
+
   return widget->NewPyRef();
 
   BA_PYTHON_CATCH;
@@ -1931,6 +1996,8 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // Grab the edited widget or create a new one.
   Object::Ref<TextWidget> widget;
+
+  // Handle query special cases first.
   if (query_obj != Py_None) {
     widget = dynamic_cast<TextWidget*>(UIV1Python::GetPyWidget(query_obj));
     if (!widget.Exists()) {
@@ -1957,6 +2024,13 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
     return PyUnicode_FromString(widget->description().c_str());
   }
+
+  // Ok it's not a query; it's a create or edit.
+
+  // Gather up any user code triggered by this stuff and run it at the end
+  // before we return.
+  base::UI::OperationContext ui_op_context;
+
   if (edit_obj != Py_None) {
     widget = dynamic_cast<TextWidget*>(UIV1Python::GetPyWidget(edit_obj));
     if (!widget.Exists()) {
@@ -2142,6 +2216,10 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (edit_obj == Py_None) {
     g_ui_v1->AddWidget(widget.Get(), parent_widget);
   }
+
+  // Run any calls built up by UI callbacks.
+  ui_op_context.Finish();
+
   return widget->NewPyRef();
 
   BA_PYTHON_CATCH;
@@ -2241,6 +2319,10 @@ static auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
     throw Exception("UI functions must be called with no context set.");
   }
 
+  // Gather up any user code triggered by this stuff and run it at the end
+  // before we return.
+  base::UI::OperationContext ui_op_context;
+
   Widget* widget = nullptr;
   if (edit_obj != Py_None) {
     widget = UIV1Python::GetPyWidget(edit_obj);
@@ -2292,6 +2374,9 @@ static auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
   if (autoselect_obj != Py_None) {
     widget->set_auto_select(Python::GetPyBool(autoselect_obj));
   }
+
+  // Run any calls built up by UI callbacks.
+  ui_op_context.Finish();
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -2354,135 +2439,6 @@ static PyMethodDef PyUIBoundsDef = {
     "the range of values that can be plugged into a root level\n"
     "bauiv1.ContainerWidget's stack_offset value while guaranteeing that its\n"
     "center remains onscreen.",
-};
-
-// ------------------------ show_online_score_ui -------------------------------
-
-static auto PyShowOnlineScoreUI(PyObject* self, PyObject* args,
-                                PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  const char* show = "general";
-  PyObject* game_obj = Py_None;
-  PyObject* game_version_obj = Py_None;
-  static const char* kwlist[] = {"show", "game", "game_version", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sOO",
-                                   const_cast<char**>(kwlist), &show, &game_obj,
-                                   &game_version_obj)) {
-    return nullptr;
-  }
-  std::string game;
-  if (game_obj != Py_None) {
-    game = Python::GetPyString(game_obj);
-  }
-  std::string game_version;
-  if (game_version_obj != Py_None) {
-    game_version = Python::GetPyString(game_version_obj);
-  }
-  g_base->app_adapter->PushMainThreadCall([show, game, game_version] {
-    assert(g_core->InMainThread());
-    g_core->platform->ShowOnlineScoreUI(show, game, game_version);
-  });
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyShowOnlineScoreUIDef = {
-    "show_online_score_ui",            // name
-    (PyCFunction)PyShowOnlineScoreUI,  // method
-    METH_VARARGS | METH_KEYWORDS,      // flags
-
-    "show_online_score_ui(show: str = 'general', game: str | None = None,\n"
-    "  game_version: str | None = None) -> None\n"
-    "\n"
-    "(internal)",
-};
-
-// -------------------------------- show_ad ------------------------------------
-
-static auto PyShowAd(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  BA_PRECONDITION(g_base->InLogicThread());
-  const char* purpose;
-  PyObject* on_completion_call_obj = Py_None;
-  int pass_actually_showed = false;
-  static const char* kwlist[] = {"purpose", "on_completion_call", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "s|O", const_cast<char**>(kwlist), &purpose,
-          &on_completion_call_obj, &pass_actually_showed)) {
-    return nullptr;
-  }
-  g_base->plus()->SetAdCompletionCall(on_completion_call_obj,
-                                      static_cast<bool>(pass_actually_showed));
-
-  // In cases where we support ads, store our callback and kick one off.
-  // We'll then fire our callback once its done. If we *don't* support ads,
-  // just store our callback and then kick off an ad-view-complete message
-  // ourself so the event flow is similar..
-  if (g_core->platform->GetHasAds()) {
-    g_core->platform->ShowAd(purpose);
-  } else {
-    g_base->plus()->PushAdViewComplete(purpose, false);
-  }
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyShowAdDef = {
-    "show_ad",                     // name
-    (PyCFunction)PyShowAd,         // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "show_ad(purpose: str,\n"
-    "  on_completion_call: Callable[[], None] | None = None)\n"
-    " -> None\n"
-    "\n"
-    "(internal)",
-};
-
-// ------------------------------ show_ad_2 ------------------------------------
-
-// (same as PyShowAd but passes actually_showed arg in callback)
-static auto PyShowAd2(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-
-  BA_PRECONDITION(g_base->InLogicThread());
-  const char* purpose;
-  PyObject* on_completion_call_obj = Py_None;
-  int pass_actually_showed = true;
-  static const char* kwlist[] = {"purpose", "on_completion_call", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "s|O", const_cast<char**>(kwlist), &purpose,
-          &on_completion_call_obj, &pass_actually_showed)) {
-    return nullptr;
-  }
-  g_base->plus()->SetAdCompletionCall(on_completion_call_obj,
-                                      static_cast<bool>(pass_actually_showed));
-
-  // In cases where we support ads, store our callback and kick one off.
-  // We'll then fire our callback once its done.
-  // If we *don't* support ads, just store our callback and then kick off
-  // an ad-view-complete message ourself so the event flow is similar..
-  if (g_core->platform->GetHasAds()) {
-    g_core->platform->ShowAd(purpose);
-  } else {
-    g_base->plus()->PushAdViewComplete(purpose, false);
-  }
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyShowAd2Def = {
-    "show_ad_2",                   // name
-    (PyCFunction)PyShowAd2,        // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "show_ad_2(purpose: str,\n"
-    " on_completion_call: Callable[[bool], None] | None = None)\n"
-    " -> None\n"
-    "\n"
-    "(internal)",
 };
 
 // --------------------- set_party_icon_always_visible -------------------------
@@ -2658,74 +2614,6 @@ static PyMethodDef PyOpenURLDef = {
     "is True).",
 };
 
-// ------------------------- open_file_externally ------------------------------
-
-static auto PyOpenFileExternally(PyObject* self, PyObject* args,
-                                 PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-
-  char* path = nullptr;
-  static const char* kwlist[] = {"path", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char**>(kwlist), &path)) {
-    return nullptr;
-  }
-  g_base->platform->OpenFileExternally(path);
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyOpenFileExternallyDef = {
-    "open_file_externally",             // name
-    (PyCFunction)PyOpenFileExternally,  // method
-    METH_VARARGS | METH_KEYWORDS,       // flags
-
-    "open_file_externally(path: str) -> None\n"
-    "\n"
-    "(internal)\n"
-    "\n"
-    "Open the provided file in the default external app.",
-};
-
-// ----------------------------- console_print ---------------------------------
-
-static auto PyConsolePrint(PyObject* self, PyObject* args) -> PyObject* {
-  BA_PYTHON_TRY;
-
-  if (!g_core->HeadlessMode()) {
-    Py_ssize_t tuple_size = PyTuple_GET_SIZE(args);
-    PyObject* obj;
-    for (Py_ssize_t i = 0; i < tuple_size; i++) {
-      obj = PyTuple_GET_ITEM(args, i);
-      PyObject* str_obj = PyObject_Str(obj);
-      if (!str_obj) {
-        PyErr_Clear();  // In case this is caught without setting the py exc.
-        throw Exception();
-      }
-      const char* c = PyUnicode_AsUTF8(str_obj);
-      g_base->PushDevConsolePrintCall(c);
-      Py_DECREF(str_obj);
-    }
-  }
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyConsolePrintDef = {
-    "console_print",  // name
-    PyConsolePrint,   // method
-    METH_VARARGS,     // flags
-
-    "console_print(*args: Any) -> None\n"
-    "\n"
-    "(internal)\n"
-    "\n"
-    "Print the provided args to the game console (using str()).\n"
-    "For most debugging/info purposes you should just use Python's "
-    "standard\n"
-    "print, which will show up in the game console as well.",
-};
-
 // ------------------------ is_party_icon_visible ------------------------------
 
 static auto PyIsPartyIconVisible(PyObject* self) -> PyObject* {
@@ -2803,18 +2691,12 @@ static PyMethodDef PyIsAvailableDef = {
 
 auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
   return {
-      PyGetQRCodeTextureDef,
       PyIsPartyIconVisibleDef,
-      PyConsolePrintDef,
-      PyOpenFileExternallyDef,
       PyOpenURLDef,
       PyBackPressDef,
       PyGetSpecialWidgetDef,
       PySetPartyWindowOpenDef,
       PySetPartyIconAlwaysVisibleDef,
-      PyShowAdDef,
-      PyShowAd2Def,
-      PyShowOnlineScoreUIDef,
       PyButtonWidgetDef,
       PyCheckBoxWidgetDef,
       PyImageWidgetDef,
@@ -2828,6 +2710,7 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyUIBoundsDef,
       PyGetSoundDef,
       PyGetTextureDef,
+      PyGetQRCodeTextureDef,
       PyGetMeshDef,
       PyToolbarTestDef,
       PyIsAvailableDef,

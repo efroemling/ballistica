@@ -48,9 +48,9 @@ class ButtonWidget : public Widget {
     icon_color_alpha_ = a;
   }
   auto set_text_flatness(float f) { text_flatness_ = f; }
-  enum class Style { kRegular, kBack, kBackSmall, kTab, kSquare };
+  enum class Style : uint8_t { kRegular, kBack, kBackSmall, kTab, kSquare };
   auto set_style(Style s) { style_ = s; }
-  enum class IconType { kNone, kCancel, kStart };
+  enum class IconType : uint8_t { kNone, kCancel, kStart };
   void set_text(const std::string& text);
   auto text() const -> std::string { return text_->text_raw(); }
   auto set_icon_type(IconType i) { icon_type_ = i; }
@@ -91,37 +91,32 @@ class ButtonWidget : public Widget {
   bool color_set_ = false;
   void DoActivate(bool is_repeat = false);
   auto GetMult(millisecs_t current_time) const -> float;
-  IconType icon_type_ = IconType::kNone;
-  bool enabled_ = true;
-  bool selectable_ = true;
-  float icon_tint_ = 0.0f;
-  Style style_ = Style::kRegular;
-  bool sound_enabled_ = true;
-  bool mouse_over_ = false;
-  bool repeat_ = false;
-  bool pressed_ = false;
-  float extra_touch_border_scale_ = 1.0f;
-  float width_ = 50.0f;
-  float height_ = 30.0f;
-  float text_scale_ = 1.0f;
-  float text_width_ = 0.0f;
-  float color_red_ = 0.5f;
-  float color_green_ = 0.7f;
-  float color_blue_ = 0.2f;
-  float icon_color_red_ = 1.0f;
-  float icon_color_green_ = 1.0f;
-  float icon_color_blue_ = 1.0f;
-  float icon_color_alpha_ = 1.0f;
-  Object::Ref<base::TextureAsset> texture_;
-  Object::Ref<base::TextureAsset> icon_;
-  Object::Ref<base::TextureAsset> tint_texture_;
-  Object::Ref<base::TextureAsset> mask_texture_;
-  Object::Ref<base::MeshAsset> mesh_transparent_;
-  Object::Ref<base::MeshAsset> mesh_opaque_;
-  float icon_scale_{1.0f};
+
+  IconType icon_type_{};
+  Style style_{};
+  bool enabled_{true};
+  bool selectable_{true};
+  bool sound_enabled_{true};
+  bool mouse_over_{};
+  bool repeat_{};
+  bool pressed_{};
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t birth_time_millisecs_{};
   millisecs_t transition_delay_{};
+  float icon_tint_{};
+  float extra_touch_border_scale_{1.0f};
+  float width_{50.0f};
+  float height_{30.0f};
+  float text_scale_{1.0f};
+  float text_width_{0.0f};
+  float color_red_{0.5f};
+  float color_green_{0.7f};
+  float color_blue_{0.2f};
+  float icon_color_red_{1.0f};
+  float icon_color_green_{1.0f};
+  float icon_color_blue_{1.0f};
+  float icon_color_alpha_{1.0f};
+  float icon_scale_{1.0f};
   float opacity_{1.0f};
   float text_flatness_{0.5f};
   float text_color_r_{0.75f};
@@ -134,11 +129,17 @@ class ButtonWidget : public Widget {
   float tint2_color_red_{1.0f};
   float tint2_color_green_{1.0f};
   float tint2_color_blue_{1.0f};
+  Object::Ref<base::TextureAsset> texture_;
+  Object::Ref<base::TextureAsset> icon_;
+  Object::Ref<base::TextureAsset> tint_texture_;
+  Object::Ref<base::TextureAsset> mask_texture_;
+  Object::Ref<base::MeshAsset> mesh_transparent_;
+  Object::Ref<base::MeshAsset> mesh_opaque_;
 
-  // Keep these at the bottom, so they're torn down first.
+  // Keep these at the bottom so they're torn down first (this was a problem
+  // at some point though I don't remember details).
   Object::Ref<TextWidget> text_;
   Object::Ref<base::PythonContextCall> on_activate_call_;
-  // Object::Ref<AppTimerOld<ButtonWidget> > repeat_timer_;
   Object::Ref<base::AppTimer> repeat_timer_;
 };
 

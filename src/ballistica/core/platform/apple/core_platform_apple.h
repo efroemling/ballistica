@@ -41,7 +41,7 @@ class CorePlatformApple : public CorePlatform {
   void ReportAchievement(const std::string& achievement) override;
   auto HaveLeaderboard(const std::string& game, const std::string& config)
       -> bool override;
-  void ShowOnlineScoreUI(const std::string& show, const std::string& game,
+  void ShowGameServiceUI(const std::string& show, const std::string& game,
                          const std::string& game_version) override;
   void ResetAchievements() override;
   auto IsOSPlayingMusic() -> bool override;

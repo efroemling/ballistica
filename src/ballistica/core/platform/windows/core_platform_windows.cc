@@ -40,6 +40,7 @@
 #endif
 
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/networking/networking_sys.h"
 
@@ -52,7 +53,7 @@ namespace ballistica::core {
 static const int kTraceMaxStackFrames{256};
 static const int kTraceMaxFunctionNameLength{1024};
 
-class WinStackTrace : public PlatformStackTrace {
+class WinStackTrace : public NativeStackTrace {
  public:
   explicit WinStackTrace(CorePlatformWindows* platform) : platform_{platform} {
     number_of_frames_ =
@@ -67,7 +68,7 @@ class WinStackTrace : public PlatformStackTrace {
 
   // Should return a copy of itself allocated via new() (or nullptr if not
   // possible).
-  auto Copy() const noexcept -> PlatformStackTrace* override {
+  auto Copy() const noexcept -> NativeStackTrace* override {
     try {
       auto s = new WinStackTrace(*this);
 
@@ -169,7 +170,7 @@ auto CorePlatformWindows::FormatWinStackTraceForDisplay(
   }
 }
 
-auto CorePlatformWindows::GetStackTrace() -> PlatformStackTrace* {
+auto CorePlatformWindows::GetNativeStackTrace() -> NativeStackTrace* {
   return new WinStackTrace(this);
 }
 

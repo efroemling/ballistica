@@ -6,6 +6,7 @@
 
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
+#include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/python/python.h"
 
 // Snippets of compiled functionality used by our evil macros.
@@ -35,7 +36,6 @@ void MacroFunctionTimerEndThread(core::CoreFeatureSet* corefs,
   if (g_buildconfig.test_build()) {
     return;
   }
-  // EW: Using core's internal globals directly; shouldn't do this.
   assert(corefs);
   millisecs_t endtime = corefs->platform->GetTicks();
   if (endtime - starttime > time) {
@@ -53,7 +53,6 @@ void MacroFunctionTimerEndEx(core::CoreFeatureSet* corefs,
   if (g_buildconfig.test_build()) {
     return;
   }
-  // EW: Using core's internal globals directly; shouldn't do this.
   assert(corefs);
   millisecs_t endtime = corefs->platform->GetTicks();
   if (endtime - starttime > time) {
@@ -72,7 +71,6 @@ void MacroFunctionTimerEndThreadEx(core::CoreFeatureSet* corefs,
   if (g_buildconfig.test_build()) {
     return;
   }
-  // EW: Using core's internal globals directly; shouldn't do this.
   assert(corefs);
   millisecs_t endtime = corefs->platform->GetTicks();
   if (endtime - starttime > time) {
@@ -91,7 +89,6 @@ void MacroTimeCheckEnd(core::CoreFeatureSet* corefs, millisecs_t starttime,
   if (g_buildconfig.test_build()) {
     return;
   }
-  // EW: Using core's internal globals directly; shouldn't do this.
   assert(corefs);
   millisecs_t e = corefs->platform->GetTicks();
   if (e - starttime > time) {
@@ -102,12 +99,28 @@ void MacroTimeCheckEnd(core::CoreFeatureSet* corefs, millisecs_t starttime,
   }
 }
 
-void MacroLogErrorTrace(core::CoreFeatureSet* corefs, const std::string& msg,
-                        const char* fname, int line) {
+void MacroLogErrorNativeTrace(core::CoreFeatureSet* corefs,
+                              const std::string& msg, const char* fname,
+                              int line) {
   char buffer[2048];
   snprintf(buffer, sizeof(buffer), "%s:%d:", MacroPathFilter(corefs, fname),
            line);
-  buffer[sizeof(buffer) - 1] = 0;
+  auto trace = corefs->platform->GetNativeStackTrace();
+  auto trace_s =
+      trace ? trace->FormatForDisplay() : "<native stack trace unavailable>";
+  Log(LogLevel::kError,
+      std::string(buffer) + " error: " + msg + "\n" + trace_s);
+}
+
+void MacroLogErrorPythonTrace(core::CoreFeatureSet* corefs,
+                              const std::string& msg, const char* fname,
+                              int line) {
+  char buffer[2048];
+  snprintf(buffer, sizeof(buffer), "%s:%d:", MacroPathFilter(corefs, fname),
+           line);
+  // FIXME: Should have the trace be part of the log; not a separate print.
+  //  Since our logging goes through Python anyway, we should just ask
+  //  Python do include the trace in our log call.
   Python::PrintStackTrace();
   Log(LogLevel::kError, std::string(buffer) + " error: " + msg);
 }
@@ -117,7 +130,6 @@ void MacroLogError(core::CoreFeatureSet* corefs, const std::string& msg,
   char e_buffer[2048];
   snprintf(e_buffer, sizeof(e_buffer), "%s:%d:", MacroPathFilter(corefs, fname),
            line);
-  e_buffer[sizeof(e_buffer) - 1] = 0;
   Log(LogLevel::kError, std::string(e_buffer) + " error: " + msg);
 }
 
@@ -128,7 +140,8 @@ void MacroLogPythonTrace(core::CoreFeatureSet* corefs, const std::string& msg) {
 
 auto MacroPathFilter(core::CoreFeatureSet* corefs, const char* filename)
     -> const char* {
-  // If we've got a build_src_dir set and filename starts with it, skip past it.
+  // If we've got a build_src_dir set and filename starts with it, skip past
+  // it.
   assert(corefs);
   if (corefs && !corefs->build_src_dir().empty()
       && strstr(filename, core::g_core->build_src_dir().c_str()) == filename) {

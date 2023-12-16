@@ -689,6 +689,7 @@
     <ClCompile Include="..\..\src\ballistica\shared\generic\json.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\json.h" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\lambda_runnable.h" />
+    <ClInclude Include="..\..\src\ballistica\shared\generic\native_stack_trace.h" />
     <ClCompile Include="..\..\src\ballistica\shared\generic\runnable.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\runnable.h" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\snapshot.h" />

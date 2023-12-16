@@ -75,19 +75,34 @@
   type(const type& foo) = delete;      \
   type& operator=(const type& src) = delete; /* NOLINT (macro parens) */
 
-// Call this for errors which are non-fatal but should be noted so they can be
-// fixed.
-#define BA_LOG_ERROR_TRACE(msg) \
-  ::ballistica::MacroLogErrorTrace(g_core, msg, __FILE__, __LINE__)
+// Call this for errors which are non-fatal but should be noted so they can
+// be fixed.
+#define BA_LOG_ERROR_NATIVE_TRACE(msg) \
+  ::ballistica::MacroLogErrorNativeTrace(g_core, msg, __FILE__, __LINE__)
 
-#define BA_LOG_ERROR_TRACE_ONCE(msg)                                     \
-  {                                                                      \
-    static bool did_log_error_trace_here = false;                        \
-    if (!did_log_error_trace_here) {                                     \
-      ::ballistica::MacroLogErrorTrace(g_core, msg, __FILE__, __LINE__); \
-      did_log_error_trace_here = true;                                   \
-    }                                                                    \
-  }                                                                      \
+#define BA_LOG_ERROR_NATIVE_TRACE_ONCE(msg)                                    \
+  {                                                                            \
+    static bool did_log_error_trace_here = false;                              \
+    if (!did_log_error_trace_here) {                                           \
+      ::ballistica::MacroLogErrorNativeTrace(g_core, msg, __FILE__, __LINE__); \
+      did_log_error_trace_here = true;                                         \
+    }                                                                          \
+  }                                                                            \
+  ((void)0)  // (see 'Trailing-semicolon note' at top)
+
+// Call this for errors which are non-fatal but should be noted so they can
+// be fixed.
+#define BA_LOG_ERROR_PYTHON_TRACE(msg) \
+  ::ballistica::MacroLogErrorPythonTrace(g_core, msg, __FILE__, __LINE__)
+
+#define BA_LOG_ERROR_PYTHON_TRACE_ONCE(msg)                                    \
+  {                                                                            \
+    static bool did_log_error_trace_here = false;                              \
+    if (!did_log_error_trace_here) {                                           \
+      ::ballistica::MacroLogErrorPythonTrace(g_core, msg, __FILE__, __LINE__); \
+      did_log_error_trace_here = true;                                         \
+    }                                                                          \
+  }                                                                            \
   ((void)0)  // (see 'Trailing-semicolon note' at top)
 
 #define BA_LOG_ONCE(lvl, msg)      \
@@ -175,8 +190,12 @@ void MacroFunctionTimerEndThreadEx(core::CoreFeatureSet* corefs,
 void MacroTimeCheckEnd(core::CoreFeatureSet* corefs, millisecs_t starttime,
                        millisecs_t time, const char* name, const char* file,
                        int line);
-void MacroLogErrorTrace(core::CoreFeatureSet* corefs, const std::string& msg,
-                        const char* fname, int line);
+void MacroLogErrorNativeTrace(core::CoreFeatureSet* corefs,
+                              const std::string& msg, const char* fname,
+                              int line);
+void MacroLogErrorPythonTrace(core::CoreFeatureSet* corefs,
+                              const std::string& msg, const char* fname,
+                              int line);
 void MacroLogError(core::CoreFeatureSet* corefs, const std::string& msg,
                    const char* fname, int line);
 void MacroLogPythonTrace(core::CoreFeatureSet* corefs, const std::string& msg);

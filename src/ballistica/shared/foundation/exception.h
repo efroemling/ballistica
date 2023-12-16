@@ -36,10 +36,6 @@ namespace ballistica {
 // std::runtime_error at a later time and also catches exceptions coming from
 // std itself.
 
-namespace core {
-class PlatformStackTrace;
-}
-
 /// Get a short description for an exception.
 /// By default, our Exception classes provide what() values that may include
 /// backtraces of the throw location or other extended info that can be useful
@@ -77,7 +73,7 @@ class Exception : public std::exception {
   std::string message_;
   std::string full_description_;
   PyExcType python_type_;
-  core::PlatformStackTrace* stack_trace_{};
+  NativeStackTrace* stack_trace_{};
 };
 
 }  // namespace ballistica

@@ -31,6 +31,8 @@ def _build_dir(arch: str, mode: str) -> str:
 
 def build_openal(arch: str, mode: str) -> None:
     """Do the thing."""
+    # pylint: disable=too-many-statements
+    # pylint: disable=too-many-locals
     from efrotools import replace_exact
 
     if arch not in ARCHS:
@@ -39,7 +41,11 @@ def build_openal(arch: str, mode: str) -> None:
     if mode not in MODES:
         raise CleanError(f"Invalid mode '{mode}'.")
 
-    # enable_oboe = True
+    # If true, we suppress most OpenAL logs to keep logcat tidier.
+    reduce_logs = False
+
+    # Inject a function to reroute OpenAL logs to ourself.
+    reroute_logs = True
 
     # Get ndk path.
     ndk_path = (
@@ -60,9 +66,13 @@ def build_openal(arch: str, mode: str) -> None:
         ['git', 'clone', 'https://github.com/kcat/openal-soft.git', builddir],
         check=True,
     )
-    # subprocess.run(['git', 'checkout', '1.23.1'], check=True, cwd=builddir)
     subprocess.run(
-        ['git', 'checkout', 'b81a270f6c1e795ca70d7684e0ccf35a19f247e2'],
+        [
+            'git',
+            'checkout',
+            # '1.23.1',
+            '1381a951bea78c67281a2e844e6db1dedbd5ed7c',
+        ],
         check=True,
         cwd=builddir,
     )
@@ -87,59 +97,102 @@ def build_openal(arch: str, mode: str) -> None:
     # possible to filter by tag/level. However I'd prefer it to send
     # only the ones that it would send to stderr so I don't always have
     # to worry about filtering.
-    loggingpath = f'{builddir}/core/logging.cpp'
-    with open(loggingpath, encoding='utf-8') as infile:
-        txt = infile.read()
+    if reduce_logs or reroute_logs:
+        loggingpath = f'{builddir}/core/logging.cpp'
+        with open(loggingpath, encoding='utf-8') as infile:
+            txt = infile.read()
 
+        logcall = (
+            '__android_log_print(android_severity(level),'
+            ' "openal", "%s", str);'
+        )
+        condition = 'gLogLevel >= level' if reduce_logs else 'true'
+        if reroute_logs:
+            logcall = (
+                'if (alcCustomAndroidLogger) {\n'
+                '    alcCustomAndroidLogger(android_severity(level), str);\n'
+                '} else {\n'
+                f'  {logcall}\n'
+                '}'
+            )
+        txt = replace_exact(
+            txt,
+            (
+                '    __android_log_print(android_severity(level),'
+                ' "openal", "%s", str);'
+            ),
+            (
+                '    // ericf tweak; only send logs that meet some condition.\n'
+                f'    if ({condition}) {{\n'
+                f'       {logcall}\n'
+                '    }'
+            ),
+        )
+
+        # Note to self: looks like there's actually already a log
+        # redirect callback function in OpenALSoft, but it's not an
+        # official extension yet and I haven't been able to get it
+        # working in its current form. Ideally should adopt that
+        # eventually though.
+        if reroute_logs:
+            txt = replace_exact(
+                txt,
+                'namespace {\n',
+                (
+                    'extern void (*alcCustomAndroidLogger)(int, const char*);\n'
+                    '\n'
+                    'namespace {\n'
+                ),
+            )
+        with open(loggingpath, 'w', encoding='utf-8') as outfile:
+            outfile.write(txt)
+
+    # Add a function to set a logging function so we can capture OpenAL
+    # logging.
+    fpath = f'{builddir}/alc/alc.cpp'
+    with open(fpath, encoding='utf-8') as infile:
+        txt = infile.read()
     txt = replace_exact(
         txt,
-        '    __android_log_print(android_severity(level),'
-        ' "openal", "%s", str);',
-        '    // ericf tweak; only send logs to'
-        ' android that we\'d send to stderr.\n'
-        '    if (gLogLevel >= level) {\n'
-        '        __android_log_print(android_severity(level),'
-        ' "openal", "%s", str);\n'
-        '    }',
+        'ALC_API ALCenum ALC_APIENTRY'
+        ' alcGetError(ALCdevice *device) noexcept\n',
+        (
+            'void (*alcCustomAndroidLogger)(int, const char*) = nullptr;\n'
+            '\n'
+            'ALC_API void ALC_APIENTRY'
+            ' alcSetCustomAndroidLogger(void (*fn)(int, const char*)) {\n'
+            '    alcCustomAndroidLogger = fn;\n'
+            '}\n'
+            '\n'
+            'ALC_API ALCenum ALC_APIENTRY'
+            ' alcGetError(ALCdevice *device) noexcept\n'
+        ),
     )
-    with open(loggingpath, 'w', encoding='utf-8') as outfile:
+    with open(fpath, 'w', encoding='utf-8') as outfile:
         outfile.write(txt)
 
-    # Add a function to set a logging function so we can gather info
-    # on AL fatal errors/etc.
-    # fpath = f'{builddir}/alc/alc.cpp'
-    # with open(fpath, encoding='utf-8') as infile:
-    #     txt = infile.read()
-    # txt = replace_exact(
-    #     txt,
-    #     'ALC_API ALCenum ALC_APIENTRY alcGetError(ALCdevice *device)\n',
-    #     (
-    #         'void (*alcDebugLogger)(const char*) = nullptr;\n'
-    #         '\n'
-    #         'ALC_API void ALC_APIENTRY'
-    #         ' alcSetDebugLogger(void (*fn)(const char*)) {\n'
-    #         '    alcDebugLogger = fn;\n'
-    #         '}\n'
-    #         '\n'
-    #         'ALC_API ALCenum ALC_APIENTRY alcGetError(ALCdevice *device)\n'
-    #     ),
-    # )
-    # with open(fpath, 'w', encoding='utf-8') as outfile:
-    #     outfile.write(txt)
+    fpath = f'{builddir}/include/AL/alc.h'
+    with open(fpath, encoding='utf-8') as infile:
+        txt = infile.read()
+    txt = replace_exact(
+        txt,
+        (
+            'ALC_API ALCenum ALC_APIENTRY'
+            ' alcGetError(ALCdevice *device) ALC_API_NOEXCEPT;\n'
+        ),
+        (
+            'ALC_API ALCenum ALC_APIENTRY'
+            ' alcGetError(ALCdevice *device) ALC_API_NOEXCEPT;\n'
+            'ALC_API void ALC_APIENTRY alcSetCustomAndroidLogger('
+            'void (*fn)(int, const char*));\n'
+        ),
+    )
+    with open(fpath, 'w', encoding='utf-8') as outfile:
+        outfile.write(txt)
 
-    # fpath = f'{builddir}/include/AL/alc.h'
-    # with open(fpath, encoding='utf-8') as infile:
-    #     txt = infile.read()
-    # txt = replace_exact(
-    #     txt,
-    #     'ALC_API ALCenum ALC_APIENTRY alcGetError(ALCdevice *device);\n',
-    #     'ALC_API ALCenum ALC_APIENTRY alcGetError(ALCdevice *device);\n'
-    #     'ALC_API void ALC_APIENTRY alcSetDebugLogger('
-    #     'void (*fn)(const char*));\n',
-    # )
-    # with open(fpath, 'w', encoding='utf-8') as outfile:
-    #     outfile.write(txt)
-
+    # Let's modify the try/catch around api calls so that we can catch
+    # and inspect exceptions thrown by them instead of it just resulting
+    # in an insta-terminate.
     fpath = f'{builddir}/core/except.h'
     with open(fpath, encoding='utf-8') as infile:
         txt = infile.read()
@@ -151,18 +204,6 @@ def build_openal(arch: str, mode: str) -> None:
     txt = replace_exact(
         txt, '#define START_API_FUNC try\n', '#define START_API_FUNC\n'
     )
-    # txt = replace_exact(
-    #     txt,
-    #     '#define END_API_FUNC catch(...) { std::terminate(); }\n',
-    #     'extern void (*alcDebugLogger)(const char*);\n'
-    #     '\n'
-    #     '#define END_API_FUNC catch(...) { \\\n'
-    #     '  if (alcDebugLogger != nullptr) { \\\n'
-    #     '    alcDebugLogger("UNKNOWN OpenALSoft fatal exception."); \\\n'
-    #     '  } \\\n'
-    #     '  std::terminate(); \\\n'
-    #     '}\n'
-    # )
     with open(fpath, 'w', encoding='utf-8') as outfile:
         outfile.write(txt)
 

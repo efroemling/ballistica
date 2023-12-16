@@ -20,7 +20,6 @@ def get_input_device_mapped_value(
     This checks the user config and falls back to default values
     where available.
     """
-    # pylint: disable=too-many-statements
     # pylint: disable=too-many-return-statements
     # pylint: disable=too-many-branches
 
@@ -83,91 +82,6 @@ def get_input_device_mapped_value(
                 'triggerRun1': 5,
             }.get(name, -1)
 
-    # Look for some exact types.
-    if babase.is_running_on_fire_tv():
-        if devicename in ['Thunder', 'Amazon Fire Game Controller']:
-            return {
-                'triggerRun2': 23,
-                'unassignedButtonsRun': False,
-                'buttonPickUp': 101,
-                'buttonBomb': 98,
-                'buttonJump': 97,
-                'analogStickDeadZone': 0.0,
-                'startButtonActivatesDefaultWidget': False,
-                'buttonStart': 83,
-                'buttonPunch': 100,
-                'buttonRun2': 103,
-                'buttonRun1': 104,
-                'triggerRun1': 24,
-            }.get(name, -1)
-        if devicename == 'NYKO PLAYPAD PRO':
-            return {
-                'triggerRun2': 23,
-                'triggerRun1': 24,
-                'buttonPickUp': 101,
-                'buttonBomb': 98,
-                'buttonJump': 97,
-                'buttonUp': 20,
-                'buttonLeft': 22,
-                'buttonRight': 23,
-                'buttonStart': 83,
-                'buttonPunch': 100,
-                'buttonDown': 21,
-            }.get(name, -1)
-        if devicename == 'Logitech Dual Action':
-            return {
-                'triggerRun2': 23,
-                'triggerRun1': 24,
-                'buttonPickUp': 98,
-                'buttonBomb': 101,
-                'buttonJump': 100,
-                'buttonStart': 109,
-                'buttonPunch': 97,
-            }.get(name, -1)
-        if devicename == 'Xbox 360 Wireless Receiver':
-            return {
-                'triggerRun2': 23,
-                'triggerRun1': 24,
-                'buttonPickUp': 101,
-                'buttonBomb': 98,
-                'buttonJump': 97,
-                'buttonUp': 20,
-                'buttonLeft': 22,
-                'buttonRight': 23,
-                'buttonStart': 83,
-                'buttonPunch': 100,
-                'buttonDown': 21,
-            }.get(name, -1)
-        if devicename == 'Microsoft X-Box 360 pad':
-            return {
-                'triggerRun2': 23,
-                'triggerRun1': 24,
-                'buttonPickUp': 101,
-                'buttonBomb': 98,
-                'buttonJump': 97,
-                'buttonStart': 83,
-                'buttonPunch': 100,
-            }.get(name, -1)
-        if devicename in [
-            'Amazon Remote',
-            'Amazon Bluetooth Dev',
-            'Amazon Fire TV Remote',
-        ]:
-            return {
-                'triggerRun2': 23,
-                'triggerRun1': 24,
-                'buttonPickUp': 24,
-                'buttonBomb': 91,
-                'buttonJump': 86,
-                'buttonUp': 20,
-                'buttonLeft': 22,
-                'startButtonActivatesDefaultWidget': False,
-                'buttonRight': 23,
-                'buttonStart': 83,
-                'buttonPunch': 90,
-                'buttonDown': 21,
-            }.get(name, -1)
-
     elif 'NVIDIA SHIELD;' in useragentstring:
         if 'NVIDIA Controller' in devicename:
             return {
@@ -181,112 +95,6 @@ def get_input_device_mapped_value(
                 'buttonPunch': 100,
                 'buttonIgnored': 184,
                 'buttonIgnored2': 86,
-            }.get(name, -1)
-    elif platform == 'mac':
-        if devicename == 'PLAYSTATION(R)3 Controller':
-            return {
-                'buttonLeft': 8,
-                'buttonUp': 5,
-                'buttonRight': 6,
-                'buttonDown': 7,
-                'buttonJump': 15,
-                'buttonPunch': 16,
-                'buttonBomb': 14,
-                'buttonPickUp': 13,
-                'buttonStart': 4,
-                'buttonIgnored': 17,
-            }.get(name, -1)
-        if devicename in ['Wireless 360 Controller', 'Controller']:
-            # Xbox360 gamepads
-            return {
-                'analogStickDeadZone': 1.2,
-                'buttonBomb': 13,
-                'buttonDown': 2,
-                'buttonJump': 12,
-                'buttonLeft': 3,
-                'buttonPickUp': 15,
-                'buttonPunch': 14,
-                'buttonRight': 4,
-                'buttonStart': 5,
-                'buttonUp': 1,
-                'triggerRun1': 5,
-                'triggerRun2': 6,
-                'buttonIgnored': 11,
-            }.get(name, -1)
-        if devicename in [
-            'Logitech Dual Action',
-            'Logitech Cordless RumblePad 2',
-        ]:
-            return {
-                'buttonJump': 2,
-                'buttonPunch': 1,
-                'buttonBomb': 3,
-                'buttonPickUp': 4,
-                'buttonStart': 10,
-            }.get(name, -1)
-
-        # Old gravis gamepad.
-        if devicename == 'GamePad Pro USB ':
-            return {
-                'buttonJump': 2,
-                'buttonPunch': 1,
-                'buttonBomb': 3,
-                'buttonPickUp': 4,
-                'buttonStart': 10,
-            }.get(name, -1)
-
-        if devicename == 'Microsoft SideWinder Plug & Play Game Pad':
-            return {
-                'buttonJump': 1,
-                'buttonPunch': 3,
-                'buttonBomb': 2,
-                'buttonPickUp': 4,
-                'buttonStart': 6,
-            }.get(name, -1)
-
-        # Saitek P2500 Rumble Force Pad.. (hopefully works for others too?..)
-        if devicename == 'Saitek P2500 Rumble Force Pad':
-            return {
-                'buttonJump': 3,
-                'buttonPunch': 1,
-                'buttonBomb': 4,
-                'buttonPickUp': 2,
-                'buttonStart': 11,
-            }.get(name, -1)
-
-        # Some crazy 'Senze' dual gamepad.
-        if devicename == 'Twin USB Joystick':
-            return {
-                'analogStickLR': 3,
-                'analogStickLR_B': 7,
-                'analogStickUD': 4,
-                'analogStickUD_B': 8,
-                'buttonBomb': 2,
-                'buttonBomb_B': 14,
-                'buttonJump': 3,
-                'buttonJump_B': 15,
-                'buttonPickUp': 1,
-                'buttonPickUp_B': 13,
-                'buttonPunch': 4,
-                'buttonPunch_B': 16,
-                'buttonRun1': 7,
-                'buttonRun1_B': 19,
-                'buttonRun2': 8,
-                'buttonRun2_B': 20,
-                'buttonStart': 10,
-                'buttonStart_B': 22,
-                'enableSecondary': 1,
-                'unassignedButtonsRun': False,
-            }.get(name, -1)
-        if devicename == 'USB Gamepad ':  # some weird 'JITE' gamepad
-            return {
-                'analogStickLR': 4,
-                'analogStickUD': 5,
-                'buttonJump': 3,
-                'buttonPunch': 4,
-                'buttonBomb': 2,
-                'buttonPickUp': 1,
-                'buttonStart': 10,
             }.get(name, -1)
 
     default_android_mapping = {
@@ -310,6 +118,41 @@ def get_input_device_mapped_value(
 
     # Generic android...
     if platform == 'android':
+        if devicename in ['Amazon Fire Game Controller']:
+            return {
+                'triggerRun2': 23,
+                'unassignedButtonsRun': False,
+                'buttonPickUp': 101,
+                'buttonBomb': 98,
+                'buttonJump': 97,
+                'analogStickDeadZone': 0.0,
+                'startButtonActivatesDefaultWidget': False,
+                'buttonStart': 83,
+                'buttonPunch': 100,
+                'buttonRun2': 103,
+                'buttonRun1': 104,
+                'triggerRun1': 24,
+            }.get(name, -1)
+        if devicename in [
+            'Amazon Remote',
+            'Amazon Bluetooth Dev',
+            'Amazon Fire TV Remote',
+        ]:
+            return {
+                'triggerRun2': 23,
+                'triggerRun1': 24,
+                'buttonPickUp': 24,
+                'buttonBomb': 91,
+                'buttonJump': 86,
+                'buttonUp': 20,
+                'buttonLeft': 22,
+                'startButtonActivatesDefaultWidget': False,
+                'buttonRight': 23,
+                'buttonStart': 83,
+                'buttonPunch': 90,
+                'buttonDown': 21,
+            }.get(name, -1)
+
         # Steelseries stratus xl.
         if devicename == 'SteelSeries Stratus XL':
             return {
@@ -387,14 +230,6 @@ def get_input_device_mapped_value(
                 'uiOnly': True,
             }.get(name, -1)
 
-        # flag particular gamepads to use exact android defaults..
-        # (so they don't even ask to configure themselves)
-        if devicename in [
-            'Samsung Game Pad EI-GP20',
-            'ASUS Gamepad',
-        ] or devicename.startswith('Freefly VR Glide'):
-            return default_android_mapping.get(name, -1)
-
         # Nvidia controller is default, but gets some strange
         # keypresses we want to ignore.. touching the touchpad,
         # so lets ignore those.
@@ -452,76 +287,11 @@ def get_input_device_mapped_value(
             'buttonRight': 100,
         }.get(name, -1)
 
-    # Ok, this gamepad's not in our specific preset list;
-    # fall back to some (hopefully) reasonable defaults.
-
-    # Leaving these in here for now but not gonna add any more now that we have
-    # fancy-pants config sharing across the internet.
-    if platform == 'mac':
-        if 'PLAYSTATION' in devicename:  # ps3 gamepad?..
-            return {
-                'buttonLeft': 8,
-                'buttonUp': 5,
-                'buttonRight': 6,
-                'buttonDown': 7,
-                'buttonJump': 15,
-                'buttonPunch': 16,
-                'buttonBomb': 14,
-                'buttonPickUp': 13,
-                'buttonStart': 4,
-            }.get(name, -1)
-
-        # Dual Action Config - hopefully applies to more...
-        if 'Logitech' in devicename:
-            return {
-                'buttonJump': 2,
-                'buttonPunch': 1,
-                'buttonBomb': 3,
-                'buttonPickUp': 4,
-                'buttonStart': 10,
-            }.get(name, -1)
-
-        # Saitek P2500 Rumble Force Pad.. (hopefully works for others too?..)
-        if 'Saitek' in devicename:
-            return {
-                'buttonJump': 3,
-                'buttonPunch': 1,
-                'buttonBomb': 4,
-                'buttonPickUp': 2,
-                'buttonStart': 11,
-            }.get(name, -1)
-
-        # Gravis stuff?...
-        if 'GamePad' in devicename:
-            return {
-                'buttonJump': 2,
-                'buttonPunch': 1,
-                'buttonBomb': 3,
-                'buttonPickUp': 4,
-                'buttonStart': 10,
-            }.get(name, -1)
+    # Ok, this gamepad's not in our specific preset list; fall back to
+    # some (hopefully) reasonable defaults.
 
     # Reasonable defaults.
     if platform == 'android':
-        if babase.is_running_on_fire_tv():
-            # Mostly same as default firetv controller.
-            return {
-                'triggerRun2': 23,
-                'triggerRun1': 24,
-                'buttonPickUp': 101,
-                'buttonBomb': 98,
-                'buttonJump': 97,
-                'buttonStart': 83,
-                'buttonPunch': 100,
-                'buttonDown': 21,
-                'buttonUp': 20,
-                'buttonLeft': 22,
-                'buttonRight': 23,
-                'startButtonActivatesDefaultWidget': False,
-            }.get(name, -1)
-
-        # Mostly same as 'Gamepad' except with 'menu' for default start
-        # button instead of 'mode'.
         return default_android_mapping.get(name, -1)
 
     # Is there a point to any sort of fallbacks here?.. should check.
@@ -540,9 +310,9 @@ def _gen_android_input_hash() -> str:
 
     md5 = hashlib.md5()
 
-    # Currently we just do a single hash of *all* inputs on android
-    # and that's it.. good enough.
-    # (grabbing mappings for a specific device looks to be non-trivial)
+    # Currently we just do a single hash of *all* inputs on android and
+    # that's it. Good enough. (grabbing mappings for a specific device
+    # looks to be non-trivial)
     for dirname in [
         '/system/usr/keylayout',
         '/data/usr/keylayout',
@@ -551,9 +321,9 @@ def _gen_android_input_hash() -> str:
         try:
             if os.path.isdir(dirname):
                 for f_name in os.listdir(dirname):
-                    # This is usually volume keys and stuff;
-                    # assume we can skip it?..
-                    # (since it'll vary a lot across devices)
+                    # This is usually volume keys and stuff; assume we
+                    # can skip it?.. (since it'll vary a lot across
+                    # devices)
                     if f_name == 'gpio-keys.kl':
                         continue
                     try:
@@ -576,8 +346,8 @@ def get_input_device_map_hash() -> str:
     """
     app = babase.app
 
-    # Currently only using this when classic is present.
-    # Need to replace with a modern equivalent.
+    # Currently only using this when classic is present. Need to replace
+    # with a modern equivalent.
     if app.classic is not None:
         try:
             if app.classic.input_map_hash is None:

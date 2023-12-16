@@ -323,14 +323,14 @@ auto CorePlatformApple::HaveLeaderboard(const std::string& game,
 #endif
 }
 
-void CorePlatformApple::ShowOnlineScoreUI(const std::string& show,
+void CorePlatformApple::ShowGameServiceUI(const std::string& show,
                                           const std::string& game,
                                           const std::string& game_version) {
 #if BA_USE_GAME_CENTER
-  BallisticaKit::GameCenterContext::showOnlineScoreUI(show, game, game_version);
-  // base::AppleUtils::ShowOnlineScoreUI(show, game, game_version);
+  BallisticaKit::GameCenterContext::showGameServiceUI(show, game, game_version);
+  // base::AppleUtils::ShowGameServiceUI(show, game, game_version);
 #else
-  CorePlatform::ShowOnlineScoreUI(show, game, game_version);
+  CorePlatform::ShowGameServiceUI(show, game, game_version);
 #endif
 }
 
