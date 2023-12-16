@@ -238,10 +238,13 @@ class PartyWindow(bui.Window):
                 if uiscale is bui.UIScale.MEDIUM
                 else 1.23
             ),
-            choices=['unmute' if is_muted else 'mute'],
+            choices=['unmute' if is_muted else 'mute', 'add_to_favorites'],
             choices_display=[
                 bui.Lstr(
                     resource='chatUnMuteText' if is_muted else 'chatMuteText'
+                ),
+                bui.Lstr(
+                    resource='AddToFavoritesText'
                 )
             ],
             current_choice='unmute' if is_muted else 'mute',
@@ -470,8 +473,63 @@ class PartyWindow(bui.Window):
                 cfg.apply_and_commit()
                 self._display_old_msgs = True
                 self._update()
+            if choice == 'add_to_favorites':
+                info = bs.get_connection_to_host_info_2()
+                if info is not None:
+                    self._add_to_favorites(
+                        name=info.name,
+                        address=info.address,
+                        port_num=info.port,
+                    )
+                else:
+                    bui.screenmessage('Not connected to a server')
         else:
             print(f'unhandled popup type: {self._popup_type}')
+
+    def _add_to_favorites(
+        self,
+        name: str,
+        address: str,
+        port_num: int
+    ) -> None:
+        addr = address
+        if addr == '':
+            bui.screenmessage(
+                bui.Lstr(resource='internal.invalidAddressErrorText'),
+                color=(1, 0, 0),
+            )
+            bui.getsound('error').play()
+            return
+        port = port_num
+        if port > 65535 or port < 0:
+            bui.screenmessage(
+                bui.Lstr(resource='internal.invalidPortErrorText'),
+                color=(1, 0, 0),
+            )
+            bui.getsound('error').play()
+            return
+        config = bui.app.config
+
+        if addr:
+            if not isinstance(config.get('Saved Servers'), dict):
+                config['Saved Servers'] = {}
+            config['Saved Servers'][f'{addr}@{port}'] = {
+                'addr': addr,
+                'port': port,
+                'name': name,
+            }
+            config.commit()
+            bui.getsound('gunCocking').play()
+            bui.screenmessage(
+                bui.Lstr(value='Added To Favorites'),
+                color=(0, 1, 0),
+            )
+        else:
+            bui.screenmessage(
+                bui.Lstr(resource='internal.invalidAddressErrorText'),
+                color=(1, 0, 0),
+            )
+            bui.getsound('error').play()
 
     def popup_menu_closing(self, popup_window: PopupWindow) -> None:
         """Called when the popup is closing."""
