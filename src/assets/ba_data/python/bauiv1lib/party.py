@@ -489,8 +489,8 @@ class PartyWindow(bui.Window):
     def _add_to_favorites(
         self,
         name: str,
-        address: str,
-        port_num: int
+        address: str | None,
+        port_num: int | None
     ) -> None:
         addr = address
         if addr == '':
