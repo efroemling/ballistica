@@ -504,9 +504,7 @@ class PartyWindow(bui.Window):
             )
             bui.getsound('error').play()
             return
-        port = port_num
-        if port_num is None:
-            port = -1  
+        port = port_num if port_num is not None else -1
         if port > 65535 or port < 0:
             bui.screenmessage(
                 bui.Lstr(resource='internal.invalidPortErrorText'),
