@@ -1,4 +1,6 @@
-### 1.7.31 (build 21726, api 8, 2023-12-16)
+### 1.7.32 (build 21728, api 8, 2023-12-17)
+
+### 1.7.31 (build 21727, api 8, 2023-12-17)
 - Added `bascenev1.get_connection_to_host_info_2()` which is an improved
   type-safe version of `bascenev1.get_connection_to_host_info()`.
 - There is now a link to the official Discord server in the About section
