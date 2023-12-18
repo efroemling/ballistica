@@ -511,41 +511,6 @@ class MainMenuWindow(bui.Window):
                 size=(0, 0),
                 scale=3.0 * t_scale,
             )
-            btn = bui.buttonwidget(
-                parent=self._root_widget,
-                position=(h + b_buffer + 60, v - b_size - b_buffer + v_offs),
-                button_type='square',
-                size=(b_size, b_size),
-                label='',
-                autoselect=True,
-                on_activate_call=bui.Call(self._pause_replay),
-            )
-            bui.textwidget(
-                parent=self._root_widget,
-                draw_controller=btn,
-                text='|',
-                position=(
-                    (h + b_size * 0.5 + b_buffer) + 54,
-                    v - b_size * 0.5 - b_buffer + 5 * t_scale + v_offs,
-                ),
-                h_align='center',
-                v_align='center',
-                size=(0, 0),
-                scale=0.7,
-            )
-            bui.textwidget(
-                parent=self._root_widget,
-                draw_controller=btn,
-                text='>',
-                position=(
-                    (h + b_size * 0.5 + b_buffer) + 62,
-                    v - b_size * 0.5 - b_buffer + 5 * t_scale + v_offs,
-                ),
-                h_align='center',
-                v_align='center',
-                size=(0, 0),
-                scale=3.0 * t_scale,
-            )
 
     def _refresh_not_in_game(
         self, positions: list[tuple[float, float, float]]
@@ -1068,9 +1033,6 @@ class MainMenuWindow(bui.Window):
                 subs=[('${SPEED}', str(actual_speed))],
             ),
         )
-
-    def _pause_replay(self) -> None:
-       bs.pause_replay()
 
     def _quit(self) -> None:
         # pylint: disable=cyclic-import
