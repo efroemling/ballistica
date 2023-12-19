@@ -197,9 +197,11 @@ class ProfileBrowserWindow(bui.Window):
         bui.containerwidget(
             edit=self._root_widget, selected_child=self._scrollwidget
         )
-        self._columnwidget = bui.columnwidget(
-            parent=self._scrollwidget, border=2, margin=0
-        )
+        self._subcontainer = bui.containerwidget(
+                parent=self._scrollwidget,
+                size=(self._scroll_width, 32),
+                background=False,
+            )
         v -= 255
         self._profiles: dict[str, dict[str, Any]] | None = None
         self._selected_profile = selected_profile
@@ -357,8 +359,10 @@ class ProfileBrowserWindow(bui.Window):
 
     def _refresh(self) -> None:
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-statements
         from efro.util import asserttype
         from bascenev1 import PlayerProfilesChangedMessage
+        from bascenev1lib.actor import spazappearance
 
         assert bui.app.classic is not None
 
@@ -374,14 +378,27 @@ class ProfileBrowserWindow(bui.Window):
         assert self._profiles is not None
         items = list(self._profiles.items())
         items.sort(key=lambda x: asserttype(x[0], str).lower())
+        spazzes = spazappearance.get_appearances()
+        spazzes.sort()
+        icon_textures = [
+            bui.gettexture(bui.app.classic.spaz_appearances[s].icon_texture)
+            for s in spazzes
+        ]
+        icon_tint_textures = [
+            bui.gettexture(
+                bui.app.classic.spaz_appearances[s].icon_mask_texture
+            )
+            for s in spazzes
+        ]
         index = 0
+        y_val = 35 * (len(self._profiles) - 1)
         account_name: str | None
         if plus.get_v1_account_state() == 'signed_in':
             account_name = plus.get_v1_account_display_string()
         else:
             account_name = None
         widget_to_select = None
-        for p_name, _ in items:
+        for p_name, p_info in items:
             if p_name == '__account__' and account_name is None:
                 continue
             color, _highlight = bui.app.classic.get_player_profile_colors(
@@ -393,10 +410,29 @@ class ProfileBrowserWindow(bui.Window):
                 if p_name == '__account__'
                 else bui.app.classic.get_player_profile_icon(p_name) + p_name
             )
+
+            try:
+                char_index = spazzes.index(p_info['character'])
+            except Exception:
+                char_index = spazzes.index('Spaz')
+
             assert isinstance(tval, str)
+            character = bui.buttonwidget(
+                parent=self._subcontainer,
+                position=(0, y_val),
+                size=(28, 28),
+                label='',
+                color=(1, 1, 1),
+                mask_texture=bui.gettexture('characterIconMask'),
+                tint_color=color,
+                tint2_color=_highlight,
+                texture=icon_textures[char_index],
+                tint_texture=icon_tint_textures[char_index],
+                selectable=False,
+            )
             txtw = bui.textwidget(
-                parent=self._columnwidget,
-                position=(0, 32),
+                parent=self._subcontainer,
+                position=(35, y_val),
                 size=((self._width - 210) / scl, 28),
                 text=bui.Lstr(value=tval),
                 h_align='left',
@@ -411,8 +447,11 @@ class ProfileBrowserWindow(bui.Window):
             )
             if index == 0:
                 bui.widget(edit=txtw, up_widget=self._back_button)
+                if self._selected_profile is None:
+                    self._selected_profile = p_name
             bui.widget(edit=txtw, show_buffer_top=40, show_buffer_bottom=40)
             self._profile_widgets.append(txtw)
+            self._profile_widgets.append(character)
 
             # Select/show this one if it was previously selected
             # (but defer till after this loop since our height is
@@ -421,10 +460,15 @@ class ProfileBrowserWindow(bui.Window):
                 widget_to_select = txtw
 
             index += 1
+            y_val -= 35
 
+        bui.containerwidget(
+            edit=self._subcontainer,
+            size=(self._scroll_width, index * 35),
+        )
         if widget_to_select is not None:
-            bui.columnwidget(
-                edit=self._columnwidget,
+            bui.containerwidget(
+                edit=self._subcontainer,
                 selected_child=widget_to_select,
                 visible_child=widget_to_select,
             )

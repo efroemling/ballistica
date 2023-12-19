@@ -190,7 +190,7 @@ class EditProfileWindow(bui.Window):
         self._clipped_name_text = bui.textwidget(
             parent=self._root_widget,
             text='',
-            position=(540 + x_inset, v - 8),
+            position=(580 + x_inset, v - 8),
             flatness=1.0,
             shadow=0.0,
             scale=0.55,
@@ -396,6 +396,16 @@ class EditProfileWindow(bui.Window):
                 autoselect=True,
                 on_activate_call=self.upgrade_profile,
             )
+            self._random_name_button = bui.buttonwidget(
+                parent=self._root_widget,
+                label=bui.Lstr(resource='randomText'),
+                size=(30, 20),
+                position=(495 + x_inset, v - 20),
+                button_type='square',
+                color=(0.6, 0.5, 0.65),
+                autoselect=True,
+                on_activate_call=self.assign_random_name,
+            )
 
         self._update_clipped_name()
         self._clipped_name_timer = bui.AppTimer(
@@ -504,8 +514,17 @@ class EditProfileWindow(bui.Window):
         )
         self._update_character()
 
+    def assign_random_name(self) -> None:
+        """Assigning a random name to the player."""
+        names = bs.get_random_names()
+        name = names[random.randrange(len(names))]
+        bui.textwidget(
+            edit=self._text_field,
+            text=name,
+        )
+
     def upgrade_profile(self) -> None:
-        """Attempt to ugrade the profile to global."""
+        """Attempt to upgrade the profile to global."""
         from bauiv1lib import account
         from bauiv1lib.profile import upgrade as pupgrade
 

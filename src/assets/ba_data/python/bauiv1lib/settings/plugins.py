@@ -129,6 +129,15 @@ class PluginWindow(bui.Window):
 
         settings_button_x = 670 if uiscale is bui.UIScale.SMALL else 570
 
+        self._num_plugins_text = bui.textwidget(
+            parent=self._root_widget,
+            position=(settings_button_x - 130, self._height - 38),
+            size=(0, 0),
+            text='',
+            h_align='center',
+            v_align='center',
+        )
+
         self._category_button = bui.buttonwidget(
             parent=self._root_widget,
             scale=0.7,
@@ -173,6 +182,17 @@ class PluginWindow(bui.Window):
             claims_left_right=True,
         )
         bui.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
+
+        self._no_plugins_installed_text = bui.textwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, self._height * 0.5),
+            size=(0, 0),
+            text='',
+            color=(0.6, 0.6, 0.6),
+            scale=0.8,
+            h_align='center',
+            v_align='center',
+        )
 
         if bui.app.meta.scanresults is None:
             bui.screenmessage(
@@ -268,6 +288,7 @@ class PluginWindow(bui.Window):
     def _show_plugins(self) -> None:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
         plugspecs = bui.app.plugins.plugin_specs
         plugstates: dict[str, dict] = bui.app.config.setdefault('Plugins', {})
         assert isinstance(plugstates, dict)
@@ -278,6 +299,11 @@ class PluginWindow(bui.Window):
         num_disabled = 0
 
         plugspecs_sorted = sorted(plugspecs.items())
+
+        bui.textwidget(
+            edit=self._no_plugins_installed_text,
+            text='',
+        )
 
         for _classpath, plugspec in plugspecs_sorted:
             # counting number of enabled and disabled plugins
@@ -376,6 +402,17 @@ class PluginWindow(bui.Window):
             # keyboard/button nav.
             bui.widget(edit=check, show_buffer_top=40, show_buffer_bottom=40)
             num_shown += 1
+
+        bui.textwidget(
+            edit=self._num_plugins_text,
+            text=str(num_shown),
+        )
+
+        if num_shown == 0:
+            bui.textwidget(
+            edit=self._no_plugins_installed_text,
+            text=bui.Lstr(resource='noPluginsInstalledText'),
+        )
 
     def _save_state(self) -> None:
         try:
