@@ -243,9 +243,7 @@ class PartyWindow(bui.Window):
                 bui.Lstr(
                     resource='chatUnMuteText' if is_muted else 'chatMuteText'
                 ),
-                bui.Lstr(
-                    resource='AddToFavoritesText'
-                )
+                bui.Lstr(resource='AddToFavoritesText'),
             ],
             current_choice='unmute' if is_muted else 'mute',
             delegate=self,
@@ -483,18 +481,13 @@ class PartyWindow(bui.Window):
                     )
                 else:
                     bui.screenmessage(
-                        bui.Lstr(
-                            resource='NotConnectedToServerText'
-                        )
+                        bui.Lstr(resource='NotConnectedToServerText')
                     )
         else:
             print(f'unhandled popup type: {self._popup_type}')
 
     def _add_to_favorites(
-        self,
-        name: str,
-        address: str | None,
-        port_num: int | None
+        self, name: str, address: str | None, port_num: int | None
     ) -> None:
         addr = address
         if addr == '':

@@ -198,10 +198,10 @@ class ProfileBrowserWindow(bui.Window):
             edit=self._root_widget, selected_child=self._scrollwidget
         )
         self._subcontainer = bui.containerwidget(
-                parent=self._scrollwidget,
-                size=(self._scroll_width, 32),
-                background=False,
-            )
+            parent=self._scrollwidget,
+            size=(self._scroll_width, 32),
+            background=False,
+        )
         v -= 255
         self._profiles: dict[str, dict[str, Any]] | None = None
         self._selected_profile = selected_profile

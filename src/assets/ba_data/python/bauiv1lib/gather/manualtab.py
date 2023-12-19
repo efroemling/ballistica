@@ -470,7 +470,7 @@ class ManualGatherTab(GatherTab):
                     (190 if uiscale is bui.UIScale.SMALL else 225)
                     + sub_scroll_width * 0.5
                 ),
-                v + sub_scroll_height * 0.5
+                v + sub_scroll_height * 0.5,
             ),
             glow_type='uniform',
         )
