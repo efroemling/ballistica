@@ -1,4 +1,5 @@
 ### 1.7.32 (build 21735, api 8, 2023-12-19)
+- Added an 'Add to Favorites' entry to the party menu (Thanks vishal332008!)
 
 ### 1.7.31 (build 21727, api 8, 2023-12-17)
 - Added `bascenev1.get_connection_to_host_info_2()` which is an improved

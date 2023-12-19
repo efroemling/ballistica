@@ -768,7 +768,7 @@ class ManualGatherTab(GatherTab):
         if num_of_fav == 0:
             bui.textwidget(
                 edit=self._no_parties_added_text,
-                text=bui.Lstr(resource='noPartiesAddedText'),
+                text=bui.Lstr(resource='gatherWindow.noPartiesAddedText'),
             )
 
     def on_deactivate(self) -> None:
@@ -836,7 +836,9 @@ class ManualGatherTab(GatherTab):
             config.commit()
             bui.getsound('gunCocking').play()
             bui.screenmessage(
-                bui.Lstr(resource='addedToFavoritesText'),
+                bui.Lstr(
+                    resource='addedToFavoritesText', subs=[('${NAME}', addr)]
+                ),
                 color=(0, 1, 0),
             )
         else:

@@ -229,6 +229,23 @@ class PartyWindow(bui.Window):
         is_muted = bui.app.config.resolve('Chat Muted')
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
+
+        choices: list[str] = ['unmute' if is_muted else 'mute']
+        choices_display: list[bui.Lstr] = [
+            bui.Lstr(resource='chatUnMuteText' if is_muted else 'chatMuteText')
+        ]
+
+        # Allow the 'Add to Favorites' option only if we're actually
+        # connected to a party and if it doesn't seem to be a private
+        # party (those are dynamically assigned addresses and ports so
+        # it makes no sense to save them).
+        server_info = bs.get_connection_to_host_info_2()
+        if server_info is not None and not server_info.name.startswith(
+            'Private Party '
+        ):
+            choices.append('add_to_favorites')
+            choices_display.append(bui.Lstr(resource='addToFavoritesText'))
+
         PopupMenuWindow(
             position=self._menu_button.get_screen_space_center(),
             scale=(
@@ -238,13 +255,8 @@ class PartyWindow(bui.Window):
                 if uiscale is bui.UIScale.MEDIUM
                 else 1.23
             ),
-            choices=['unmute' if is_muted else 'mute', 'add_to_favorites'],
-            choices_display=[
-                bui.Lstr(
-                    resource='chatUnMuteText' if is_muted else 'chatMuteText'
-                ),
-                bui.Lstr(resource='AddToFavoritesText'),
-            ],
+            choices=choices,
+            choices_display=choices_display,
             current_choice='unmute' if is_muted else 'mute',
             delegate=self,
         )
@@ -480,9 +492,12 @@ class PartyWindow(bui.Window):
                         port_num=info.port,
                     )
                 else:
+                    # We should not allow the user to see this option
+                    # if they aren't in a server; this is our bad.
                     bui.screenmessage(
-                        bui.Lstr(resource='NotConnectedToServerText')
+                        bui.Lstr(resource='errorText'), color=(1, 0, 0)
                     )
+                    bui.getsound('error').play()
         else:
             print(f'unhandled popup type: {self._popup_type}')
 
@@ -505,6 +520,11 @@ class PartyWindow(bui.Window):
             )
             bui.getsound('error').play()
             return
+
+        # Avoid empty names.
+        if not name:
+            name = f'{addr}@{port}'
+
         config = bui.app.config
 
         if addr:
@@ -518,7 +538,9 @@ class PartyWindow(bui.Window):
             config.commit()
             bui.getsound('gunCocking').play()
             bui.screenmessage(
-                bui.Lstr(value='Added To Favorites'),
+                bui.Lstr(
+                    resource='addedToFavoritesText', subs=[('${NAME}', name)]
+                ),
                 color=(0, 1, 0),
             )
         else:
