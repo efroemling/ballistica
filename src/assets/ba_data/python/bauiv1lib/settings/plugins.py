@@ -110,11 +110,11 @@ class PluginWindow(bui.Window):
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 38),
+            position=(self._width * 0.5, self._height - 41),
             size=(0, 0),
             text=bui.Lstr(resource='pluginsText'),
             color=app.ui_v1.title_color,
-            maxwidth=200,
+            maxwidth=170,
             h_align='center',
             v_align='center',
         )
@@ -131,7 +131,7 @@ class PluginWindow(bui.Window):
 
         self._num_plugins_text = bui.textwidget(
             parent=self._root_widget,
-            position=(settings_button_x - 130, self._height - 38),
+            position=(settings_button_x - 130, self._height - 41),
             size=(0, 0),
             text='',
             h_align='center',

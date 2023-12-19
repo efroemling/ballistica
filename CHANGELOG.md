@@ -1,5 +1,10 @@
 ### 1.7.32 (build 21735, api 8, 2023-12-19)
+- Fixed a screen message that no one will ever see (Thanks vishal332008?...)
+- Plugins window now displays 'No Plugins Installed' when no plugins are present (Thanks vishal332008!)
+- Old messages are now displayed as soon as you press 'Unmute Chat' (Thanks vishal332008!)
 - Added an 'Add to Favorites' entry to the party menu (Thanks vishal332008!)
+- Now displays 'No Parties Added' in favorites tab if no favorites are present (Thanks vishal332008!)
+- Now shows character icons in the profiles list window (Thanks vishal332008!)
 
 ### 1.7.31 (build 21727, api 8, 2023-12-17)
 - Added `bascenev1.get_connection_to_host_info_2()` which is an improved
