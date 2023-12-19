@@ -598,6 +598,7 @@ class WatchWindow(bui.Window):
                     edit=txt,
                     up_widget=self._tab_row.tabs[self.TabID.MY_REPLAYS].button,
                 )
+                self._my_replay_selected = name
 
     def _save_state(self) -> None:
         try:
