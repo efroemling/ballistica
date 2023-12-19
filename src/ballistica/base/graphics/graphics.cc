@@ -385,7 +385,11 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
         c.SetMaskUV2Texture(fps_text_group_->GetElementMaskUV2Texture(e));
       }
       c.SetFlatness(1.0f);
-      c.DrawMesh(fps_text_group_->GetElementMesh(e));
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(6.0f, 6.0f, kScreenTextZDepth);
+        c.DrawMesh(fps_text_group_->GetElementMesh(e));
+      }
     }
     c.Submit();
   }
@@ -418,7 +422,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
         c.SetFlatness(1.0f);
         {
           auto xf = c.ScopedTransform();
-          c.Translate(14.0f + (show_fps_ ? 30.0f : 0.0f), 0.1f,
+          c.Translate(6.0f + 14.0f + (show_fps_ ? 35.0f : 0.0f), 6.0f + 1.0f,
                       kScreenTextZDepth);
           c.Scale(0.7f, 0.7f);
           c.DrawMesh(ping_text_group_->GetElementMesh(e));

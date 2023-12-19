@@ -239,4 +239,7 @@ class V2ProxySignInWindow(bui.Window):
             )
 
     def _done(self) -> None:
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
         bui.containerwidget(edit=self._root_widget, transition='out_scale')

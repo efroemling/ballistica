@@ -123,15 +123,16 @@ class AudioServer {
   bool suspended_{};
   bool shutdown_completed_{};
   bool shutting_down_{};
-  bool reported_reset_fail_{};
+  bool report_reset_results_{};
+  int reset_result_reports_remaining_{3};
   int al_source_count_{};
   seconds_t last_reset_attempt_time_{-999.0};
   seconds_t shutdown_start_time_{};
   seconds_t last_started_playing_time_{};
   millisecs_t last_sound_fade_process_time_{};
 
-  std::mutex openalsoft_log_mutex_;
-  std::string openalsoft_log_;
+  std::mutex openalsoft_android_log_mutex_;
+  std::string openalsoft_android_log_;
 
   /// Indexed list of sources.
   std::vector<ThreadSource_*> sources_;

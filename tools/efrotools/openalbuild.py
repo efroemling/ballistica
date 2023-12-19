@@ -47,6 +47,9 @@ def build_openal(arch: str, mode: str) -> None:
     # Inject a function to reroute OpenAL logs to ourself.
     reroute_logs = True
 
+    # Inject an env var to force Oboe to use OpenSL backend.
+    opensl_fallback_option = True
+
     # Get ndk path.
     ndk_path = (
         subprocess.run(
@@ -71,7 +74,8 @@ def build_openal(arch: str, mode: str) -> None:
             'git',
             'checkout',
             # '1.23.1',
-            '1381a951bea78c67281a2e844e6db1dedbd5ed7c',
+            # '1381a951bea78c67281a2e844e6db1dedbd5ed7c',
+            'bc83c874ff15b29fdab9b6c0bf40b268345b3026',
         ],
         check=True,
         cwd=builddir,
@@ -92,11 +96,69 @@ def build_openal(arch: str, mode: str) -> None:
     )
     subprocess.run(['git', 'checkout', '1.8.0'], check=True, cwd=builddir_oboe)
 
-    # One bit of filtering: by default, openalsoft sends all sorts of
-    # log messages to the android log. This is reasonable since its
-    # possible to filter by tag/level. However I'd prefer it to send
-    # only the ones that it would send to stderr so I don't always have
-    # to worry about filtering.
+    if opensl_fallback_option:
+        oboepath = f'{builddir}/alc/backends/oboe.cpp'
+        with open(oboepath, encoding='utf-8') as infile:
+            txt = infile.read()
+
+        # Also disable opening a stream just to test that it works.
+        txt = replace_exact(
+            txt,
+            (
+                '    /* Open a basic output stream, just to ensure'
+                ' it can work. */\n'
+                '    oboe::ManagedStream stream;\n'
+                '    oboe::Result result{oboe::AudioStreamBuilder{}'
+                '.setDirection(oboe::Direction::Output)\n'
+                '        ->setPerformanceMode(oboe::PerformanceMode::'
+                'LowLatency)\n'
+                '        ->openManagedStream(stream)};\n'
+                '    if(result != oboe::Result::OK)\n'
+                '        throw al::backend_exception{al::backend_error::'
+                'DeviceError, "Failed to create stream: %s",\n'
+                '            oboe::convertToText(result)};\n'
+            ),
+            (
+                '    /* Open a basic output stream, just to ensure'
+                ' it can work. */\n'
+                ' // DISABLED BY ERICF\n'
+                ' //    oboe::ManagedStream stream;\n'
+                ' //   oboe::Result result{oboe::AudioStreamBuilder{}'
+                '.setDirection(oboe::Direction::Output)\n'
+                ' //       ->setPerformanceMode(oboe::PerformanceMode::'
+                'LowLatency)\n'
+                ' //       ->openManagedStream(stream)};\n'
+                ' //   if(result != oboe::Result::OK)\n'
+                ' //       throw al::backend_exception{al::backend_error::'
+                'DeviceError, "Failed to create stream: %s",\n'
+                ' //           oboe::convertToText(result)};\n'
+            ),
+        )
+        txt = replace_exact(
+            txt,
+            (
+                '    builder.setPerformanceMode('
+                'oboe::PerformanceMode::LowLatency);\n'
+            ),
+            (
+                '    builder.setPerformanceMode('
+                'oboe::PerformanceMode::LowLatency);\n'
+                '    if (getenv("BA_OBOE_USE_OPENSLES")) {\n'
+                '        TRACE("BA_OBOE_USE_OPENSLES set;'
+                ' Using OpenSLES\\n");\n'
+                '        builder.setAudioApi(oboe::AudioApi::OpenSLES);\n'
+                '    }\n'
+            ),
+        )
+
+        with open(oboepath, 'w', encoding='utf-8') as outfile:
+            outfile.write(txt)
+
+    # By default, openalsoft sends all sorts of log messages to the
+    # android log. This is reasonable since its possible to filter by
+    # tag/level. However I'd prefer it to send only the ones that it
+    # would send to stderr so I don't always have to worry about
+    # filtering.
     if reduce_logs or reroute_logs:
         loggingpath = f'{builddir}/core/logging.cpp'
         with open(loggingpath, encoding='utf-8') as infile:

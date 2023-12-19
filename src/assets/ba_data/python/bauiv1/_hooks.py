@@ -99,8 +99,8 @@ def double_transition_out_warning() -> None:
         'ContainerWidget was set to transition out twice;'
         ' this often implies buggy code (%s line %s).\n'
         ' Generally you should check the value of'
-        ' _root_widget.transitioning_out and only kick off transitions'
-        ' when that is False.',
+        ' _root_widget.transitioning_out and perform no actions if that'
+        ' is True.',
         caller_filename,
         caller_line_number,
     )

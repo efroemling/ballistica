@@ -4,6 +4,8 @@
 
 #include <algorithm>
 
+#include "ballistica/shared/buildconfig/buildconfig_common.h"
+
 // Ew fixme.
 #if BA_OSTYPE_ANDROID
 #include <android/log.h>
@@ -199,14 +201,15 @@ void ALCustomLogCallback_(void* userptr, char level, const char* message,
 
 void AudioServer::OpenALSoftLogCallback(const std::string& msg) {
   size_t log_cap{1024 * 11};
-  std::scoped_lock lock(openalsoft_log_mutex_);
+  std::scoped_lock lock(openalsoft_android_log_mutex_);
 
-  if (openalsoft_log_.size() < log_cap) {
-    openalsoft_log_ += "openal-log("
-                       + std::to_string(g_core->GetAppTimeSeconds())
-                       + "s): " + msg;
-    if (openalsoft_log_.size() >= log_cap) {
-      openalsoft_log_ += "\n<max openalsoft log storage size reached>\n";
+  if (openalsoft_android_log_.size() < log_cap) {
+    openalsoft_android_log_ += "openal-log("
+                               + std::to_string(g_core->GetAppTimeSeconds())
+                               + "s): " + msg;
+    if (openalsoft_android_log_.size() >= log_cap) {
+      openalsoft_android_log_ +=
+          "\n<max openalsoft log storage size reached>\n";
     }
   }
 }
@@ -223,6 +226,25 @@ void AudioServer::OnAppStartInThread_() {
 
   // Bring up OpenAL stuff.
   {
+    // Android-specific workaround; seeing lots of random crashes on Xiaomi
+    // Android 11 since switching from OpenALSoft's OpenSL backend to it's
+    // Oboe backend (which itself uses AAudio on newer Androids). Trying
+    // Oboe's OpenSL backend to see if it heads off the crashes.
+    {
+      std::string prefix = "Xiaomi ";
+      if (g_core->platform->GetDeviceName().compare(0, prefix.size(), prefix)
+          == 0) {
+        std::string prefix2 = "11";
+        if (g_core->platform->GetOSVersionString().compare(0, prefix2.size(),
+                                                           prefix2)
+            == 0) {
+          Log(LogLevel::kInfo,
+              "Xiaomi Android 11 detected; using OpenSL instead of AAudio.");
+          g_core->platform->SetEnv("BA_OBOE_USE_OPENSLES", "1");
+        }
+      }
+    }
+
     const char* al_device_name{};
 
 // On the rift build in vr mode we need to make sure we open the rift audio
@@ -269,28 +291,106 @@ void AudioServer::OnAppStartInThread_() {
     auto* device = alcOpenDevice(al_device_name);
     if (!device) {
       if (g_buildconfig.ostype_android()) {
-        std::scoped_lock lock(openalsoft_log_mutex_);
+        std::scoped_lock lock(openalsoft_android_log_mutex_);
         Log(LogLevel::kError,
             "------------------------"
             " OPENALSOFT-FATAL-ERROR-LOG-BEGIN ----------------------\n"
-                + openalsoft_log_
+                + openalsoft_android_log_
             + "\n-------------------------"
               " OPENALSOFT-FATAL-ERROR-LOG-END -----------------------");
+        openalsoft_android_log_.clear();
       }
       FatalError(
           "No audio devices found. Do you have speakers/headphones/etc. "
           "connected?");
     }
+
     impl_->alc_context = alcCreateContext(device, nullptr);
-    if (!impl_->alc_context) {
-      if (g_buildconfig.ostype_android()) {
-        std::scoped_lock lock(openalsoft_log_mutex_);
+
+    // Android special case: if we fail, try again after a few seconds.
+    if (!impl_->alc_context && g_buildconfig.ostype_android()) {
+      Log(LogLevel::kError,
+          "Failed creating AL context; waiting and trying again.");
+      {
+        std::scoped_lock lock(openalsoft_android_log_mutex_);
+        Log(LogLevel::kWarning,
+            "------------------------"
+            " OPENALSOFT-ERROR-LOG-BEGIN ----------------------\n"
+                + openalsoft_android_log_
+            + "\n-------------------------"
+              " OPENALSOFT-ERROR-LOG-END -----------------------");
+        openalsoft_android_log_.clear();
+      }
+      alcCloseDevice(device);
+      g_core->platform->SleepSeconds(1.0);
+      device = alcOpenDevice(al_device_name);
+      alGetError();  // Clear any errors.
+
+      if (!device) {
+        std::scoped_lock lock(openalsoft_android_log_mutex_);
         Log(LogLevel::kError,
             "------------------------"
             " OPENALSOFT-FATAL-ERROR-LOG-BEGIN ----------------------\n"
-                + openalsoft_log_
+                + openalsoft_android_log_
             + "\n-------------------------"
               " OPENALSOFT-FATAL-ERROR-LOG-END -----------------------");
+        openalsoft_android_log_.clear();
+        FatalError("Fallback attempt device create failed.");
+      }
+      impl_->alc_context = alcCreateContext(device, nullptr);
+      if (impl_->alc_context) {
+        // For now want to explicitly know if this works.
+        Log(LogLevel::kWarning, "Backup AL context creation successful!");
+      }
+    }
+
+    // Android special case: if we fail, try OpenSL back-end.
+    if (!impl_->alc_context && g_buildconfig.ostype_android()) {
+      Log(LogLevel::kError,
+          "Failed second time creating AL context; trying OpenSL backend.");
+      {
+        std::scoped_lock lock(openalsoft_android_log_mutex_);
+        Log(LogLevel::kWarning,
+            "------------------------"
+            " OPENALSOFT-ERROR-LOG-BEGIN ----------------------\n"
+                + openalsoft_android_log_
+            + "\n-------------------------"
+              " OPENALSOFT-ERROR-LOG-END -----------------------");
+        openalsoft_android_log_.clear();
+      }
+      alcCloseDevice(device);
+      g_core->platform->SetEnv("BA_OBOE_USE_OPENSLES", "1");
+      device = alcOpenDevice(al_device_name);
+      alGetError();  // Clear any errors.
+      if (!device) {
+        std::scoped_lock lock(openalsoft_android_log_mutex_);
+        Log(LogLevel::kError,
+            "------------------------"
+            " OPENALSOFT-FATAL-ERROR-LOG-BEGIN ----------------------\n"
+                + openalsoft_android_log_
+            + "\n-------------------------"
+              " OPENALSOFT-FATAL-ERROR-LOG-END -----------------------");
+        openalsoft_android_log_.clear();
+        FatalError("Fallback attempt 2 device create failed.");
+      }
+      impl_->alc_context = alcCreateContext(device, nullptr);
+      if (impl_->alc_context) {
+        // For now want to explicitly know if this works.
+        Log(LogLevel::kWarning, "Backup AL context creation 2 successful!");
+      }
+    }
+
+    // Fail at this point if we've got nothing.
+    if (!impl_->alc_context) {
+      if (g_buildconfig.ostype_android()) {
+        std::scoped_lock lock(openalsoft_android_log_mutex_);
+        Log(LogLevel::kError,
+            "------------------------"
+            " OPENALSOFT-FATAL-ERROR-LOG-BEGIN ----------------------\n"
+                + openalsoft_android_log_
+            + "\n-------------------------"
+              " OPENALSOFT-FATAL-ERROR-LOG-END -----------------------");
+        openalsoft_android_log_.clear();
       }
       FatalError(
           "Unable to init audio. Do you have speakers/headphones/etc. "
@@ -808,26 +908,60 @@ void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
   CHECK_AL_ERROR;
   if (connected == 0 && real_time_seconds - last_reset_attempt_time_ > 10.0) {
     Log(LogLevel::kInfo, "OpenAL device disconnected; resetting...");
+    if (g_buildconfig.ostype_android()) {
+      std::scoped_lock lock(openalsoft_android_log_mutex_);
+      openalsoft_android_log_ +=
+          "DEVICE DISCONNECT DETECTED; ATTEMPTING RESET\n";
+    }
     last_reset_attempt_time_ = real_time_seconds;
     BA_PRECONDITION_FATAL(alcResetDeviceSOFT != nullptr);
-    alcResetDeviceSOFT(device, nullptr);
+    auto result = alcResetDeviceSOFT(device, nullptr);
     CHECK_AL_ERROR;
 
-    // Make noise if this ever fails to bring the device back.
+    Log(LogLevel::kInfo, std::string("alcResetDeviceSOFT returned ")
+                             + (result == ALC_TRUE ? "ALC_TRUE" : "ALC_FALSE"));
+
+    // Check to see if this brought the device back.
     ALCint connected{-1};
     alcGetIntegerv(device, ALC_CONNECTED, sizeof(connected), &connected);
     CHECK_AL_ERROR;
 
-    // If we were successful, don't require a wait for the next reset.
-    // (otherwise plugging in headphones and then unplugging will stay quiet
-    // for 10 seconds).
+    // If we were successful, clear out the wait for the next reset.
+    // Otherwise plugging in headphones and then unplugging them immediately
+    // will result in 10 seconds of silence.
     if (connected == 1) {
+      if (result == ALC_FALSE) {
+        Log(LogLevel::kWarning,
+            "Got ALC_FALSE for alcResetDeviceSOFT but device is now connected. "
+            "Odd.");
+      }
       last_reset_attempt_time_ = -999.0;
     }
 
-    if (connected == 0 && !reported_reset_fail_) {
-      reported_reset_fail_ = true;
-      Log(LogLevel::kError, "alcResetDeviceSOFT failed to reconnect device.");
+    // If we're ever *not* immediately successful, flip on reporting to try
+    // and figure out what's going on. We then report the next few attempt
+    // results regardless of outcome.
+    if (connected == 0) {
+      report_reset_results_ = true;
+    }
+    if (report_reset_results_ && reset_result_reports_remaining_ > 0) {
+      reset_result_reports_remaining_ -= 1;
+      if (connected != 0) {
+        Log(LogLevel::kInfo,
+            "alcResetDeviceSOFT successfully reconnected device.");
+      } else {
+        Log(LogLevel::kError, "alcResetDeviceSOFT failed to reconnect device.");
+      }
+      if (g_buildconfig.ostype_android()) {
+        std::scoped_lock lock(openalsoft_android_log_mutex_);
+        Log(LogLevel::kWarning,
+            "------------------------"
+            " OPENALSOFT-RECONNECT-LOG-BEGIN ----------------------\n"
+                + openalsoft_android_log_
+            + "\n-------------------------"
+              " OPENALSOFT-RECONNECT-LOG-END -----------------------");
+        openalsoft_android_log_.clear();
+      }
     }
   }
 #endif  // BA_OPENAL_IS_SOFT

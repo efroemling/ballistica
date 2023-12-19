@@ -512,9 +512,17 @@ class PartyWindow(bui.Window):
 
     def close(self) -> None:
         """Close the window."""
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bui.containerwidget(edit=self._root_widget, transition='out_scale')
 
     def close_with_sound(self) -> None:
         """Close the window and make a lovely sound."""
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bui.getsound('swish').play()
         self.close()
