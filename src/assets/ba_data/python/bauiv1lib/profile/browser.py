@@ -447,6 +447,8 @@ class ProfileBrowserWindow(bui.Window):
             )
             if index == 0:
                 bui.widget(edit=txtw, up_widget=self._back_button)
+                if self._selected_profile is None:
+                    self._selected_profile = p_name
             bui.widget(edit=txtw, show_buffer_top=40, show_buffer_bottom=40)
             self._profile_widgets.append(txtw)
             self._profile_widgets.append(character)
