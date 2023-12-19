@@ -346,9 +346,8 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         } else if (auto* call = on_cancel_call_.Get()) {
           claimed = true;
 
-          // Call this in the next cycle (don't wanna risk mucking with UI from
-          // within a UI loop).
-          call->ScheduleWeak();
+          // Schedule this to run immediately after any current UI traversal.
+          call->ScheduleInUIOperation();
         } else {
           OnCancelCustom();
         }
@@ -630,9 +629,8 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
         // Call our outside-click callback if unclaimed.
         if (!claimed && on_outside_click_call_.Exists()) {
-          // Call this in the next cycle (don't wanna risk mucking with UI from
-          // within a UI loop).
-          on_outside_click_call_->ScheduleWeak();
+          // Schedule this to run immediately after any current UI traversal.
+          on_outside_click_call_->ScheduleInUIOperation();
         }
 
         // Always claim if they want.
@@ -1070,9 +1068,8 @@ void ContainerWidget::Activate() {
   last_activate_time_millisecs_ =
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
   if (auto* call = on_activate_call_.Get()) {
-    // Call this in the next cycle (don't wanna risk mucking with UI from within
-    // a UI loop).
-    call->ScheduleWeak();
+    // Schedule this to run immediately after any current UI traversal.
+    call->ScheduleInUIOperation();
   }
 }
 

@@ -264,3 +264,26 @@ class PlusSubsystem(AppSubsystem):
     def can_show_ad() -> bool:
         """Can we show an ad?"""
         return _baplus.can_show_ad()
+
+    @staticmethod
+    def show_ad(
+        purpose: str, on_completion_call: Callable[[], None] | None = None
+    ) -> None:
+        """Show an ad."""
+        _baplus.show_ad(purpose, on_completion_call)
+
+    @staticmethod
+    def show_ad_2(
+        purpose: str, on_completion_call: Callable[[bool], None] | None = None
+    ) -> None:
+        """Show an ad."""
+        _baplus.show_ad_2(purpose, on_completion_call)
+
+    @staticmethod
+    def show_game_service_ui(
+        show: str = 'general',
+        game: str | None = None,
+        game_version: str | None = None,
+    ) -> None:
+        """Show game-service provided UI."""
+        _baplus.show_game_service_ui(show, game, game_version)

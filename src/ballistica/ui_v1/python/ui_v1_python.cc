@@ -110,28 +110,23 @@ void UIV1Python::InvokeStringEditor(PyObject* string_edit_adapter_instance) {
   base::ScopedSetContext ssc(nullptr);
   g_base->audio->PlaySound(g_base->assets->SysSound(base::SysSoundID::kSwish));
 
-  // Schedule this in the next cycle to be safe.
   PythonRef args(Py_BuildValue("(O)", string_edit_adapter_instance),
                  PythonRef::kSteal);
-  Object::New<base::PythonContextCall>(
-      objs().Get(ObjID::kOnScreenKeyboardClass))
-      ->Schedule(args);
-}
 
-void UIV1Python::LaunchStringEditOld(TextWidget* w) {
-  assert(g_base->InLogicThread());
-  BA_PRECONDITION(w);
+  auto context_call = Object::New<base::PythonContextCall>(
+      objs().Get(ObjID::kOnScreenKeyboardClass));
 
-  base::ScopedSetContext ssc(nullptr);
-  g_base->audio->PlaySound(g_base->assets->SysSound(base::SysSoundID::kSwish));
-
-  // Gotta run this in the next cycle.
-  PythonRef args(Py_BuildValue("(Osi)", w->BorrowPyRef(),
-                               w->description().c_str(), w->max_chars()),
-                 PythonRef::kSteal);
-  Object::New<base::PythonContextCall>(
-      objs().Get(ObjID::kOnScreenKeyboardClass))
-      ->Schedule(args);
+  // This is probably getting called from within UI handling, so we
+  // need to schedule things to run post-ui-traversal in that case.
+  if (g_base->ui->InUIOperation()) {
+    context_call->ScheduleInUIOperation(args);
+  } else {
+    // Otherwise just run immediately.
+    Log(LogLevel::kWarning,
+        "UIV1Python::InvokeStringEditor running outside of UIInteraction; "
+        "unexpected.");
+    context_call->Run(args);
+  }
 }
 
 void UIV1Python::InvokeQuitWindow(QuitType quit_type) {

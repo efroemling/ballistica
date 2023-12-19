@@ -42,6 +42,7 @@ class EventLoop;
 class FeatureSetNativeComponent;
 class JsonDict;
 class Matrix44f;
+class NativeStackTrace;
 class Object;
 class Python;
 class PythonRef;

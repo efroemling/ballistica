@@ -396,6 +396,7 @@ auto EventLoop::ThreadMain_() -> int {
     // report logs with reports from dev builds.
     bool try_to_exit_cleanly =
         !(g_base_soft && g_base_soft->IsUnmodifiedBlessedBuild());
+
     bool handled = FatalError::HandleFatalError(try_to_exit_cleanly, true);
 
     // Do the default thing if platform didn't handle it.

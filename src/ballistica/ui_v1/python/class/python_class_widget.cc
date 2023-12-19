@@ -40,7 +40,7 @@ void PythonClassWidget::SetupType(PyTypeObject* cls) {
       "\n"
       "This class represents a weak reference to a widget object\n"
       "in the internal C++ layer. Currently, functions such as\n"
-      "babase.buttonwidget() must be used to instantiate or edit these.\n"
+      "bauiv1.buttonwidget() must be used to instantiate or edit these.\n"
       "Attributes:\n"
       "    " ATTR_TRANSITIONING_OUT " (bool):\n"
       "        Whether this widget is in the process of dying (read only).\n"
@@ -72,7 +72,9 @@ auto PythonClassWidget::Create(Widget* widget) -> PyObject* {
   assert(TypeIsSetUp(&type_obj));
   auto* py_widget = reinterpret_cast<PythonClassWidget*>(
       PyObject_CallObject(reinterpret_cast<PyObject*>(&type_obj), nullptr));
-  if (!py_widget) throw Exception("babase.Widget creation failed");
+  if (!py_widget) {
+    throw Exception("bauiv1.Widget creation failed");
+  }
 
   *py_widget->widget_ = widget;
 
@@ -285,6 +287,10 @@ auto PythonClassWidget::Delete(PythonClassWidget* self, PyObject* args,
           args, keywds, "|i", const_cast<char**>(kwlist), &ignore_missing)) {
     return nullptr;
   }
+
+  // Defer any user code triggered by selects/etc until the end.
+  base::UI::OperationContext ui_op_context;
+
   Widget* w = self->widget_->Get();
   if (!w) {
     if (!ignore_missing) {
@@ -298,6 +304,9 @@ auto PythonClassWidget::Delete(PythonClassWidget* self, PyObject* args,
       Log(LogLevel::kError, "Can't delete widget: no parent.");
     }
   }
+
+  // Run any user code that got triggered.
+  ui_op_context.Finish();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

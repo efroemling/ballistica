@@ -697,6 +697,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/generic/json.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/json.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/lambda_runnable.h
+  ${BA_SRC_ROOT}/ballistica/shared/generic/native_stack_trace.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/runnable.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/runnable.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/snapshot.h

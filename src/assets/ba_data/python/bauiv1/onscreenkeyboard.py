@@ -58,6 +58,7 @@ class OnScreenKeyboardWindow(Window):
             position=(30, self._height - 55),
             size=(60, 60),
             label='',
+            enable_sound=False,
             on_activate_call=self._cancel,
             autoselect=True,
             color=(0.55, 0.5, 0.6),

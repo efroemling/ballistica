@@ -281,7 +281,7 @@ class CorePlatform {
   virtual auto HaveLeaderboard(const std::string& game,
                                const std::string& config) -> bool;
 
-  virtual void ShowOnlineScoreUI(const std::string& show,
+  virtual void ShowGameServiceUI(const std::string& show,
                                  const std::string& game,
                                  const std::string& game_version);
   virtual void ResetAchievements();
@@ -294,11 +294,11 @@ class CorePlatform {
 
 #pragma mark ERRORS & DEBUGGING ------------------------------------------------
 
-  /// Should return a subclass of PlatformStackTrace allocated via new. It
+  /// Should return a subclass of NativeStackTrace allocated via new. It
   /// is up to the caller to call delete on the returned trace when done
   /// with it. Platforms with no meaningful stack trace functionality can
   /// return nullptr.
-  virtual auto GetStackTrace() -> PlatformStackTrace*;
+  virtual auto GetNativeStackTrace() -> NativeStackTrace*;
 
   /// Optionally override fatal error reporting. If true is returned, default
   /// fatal error reporting will not run.
@@ -470,25 +470,6 @@ class CorePlatform {
 
   // temp.
   std::list<std::string> mac_music_app_playlists_;
-};
-
-/// For capturing and printing stack-traces and related errors. Platforms
-/// should subclass this and return instances in GetStackTrace(). Stack
-/// trace classes should capture the stack state immediately upon
-/// construction but should do the bare minimum amount of work to store it.
-/// Any expensive operations such as symbolification should be deferred
-/// until FormatForDisplay().
-class PlatformStackTrace {
- public:
-  virtual ~PlatformStackTrace() = default;
-
-  // Return a human readable version of the trace (with symbolification if
-  // available).
-  virtual auto FormatForDisplay() noexcept -> std::string = 0;
-
-  // Should return a copy of itself allocated via new() (or nullptr if not
-  // possible).
-  virtual auto Copy() const noexcept -> PlatformStackTrace* = 0;
 };
 
 }  // namespace ballistica::core

@@ -23,11 +23,17 @@ void HScrollWidget::OnTouchDelayTimerExpired() {
   if (touch_held_) {
     // Pass a mouse-down event if we haven't moved.
     if (!touch_is_scrolling_ && !touch_down_sent_) {
+      // Gather up any user code triggered by this stuff and run it at the end
+      // before we return.
+      base::UI::OperationContext ui_op_context;
+
       ContainerWidget::HandleMessage(base::WidgetMessage(
           base::WidgetMessage::Type::kMouseDown, nullptr, touch_x_, touch_y_,
           static_cast<float>(touch_held_click_count_)));
       touch_down_sent_ = true;
-    } else {
+
+      // Run any calls built up by UI callbacks.
+      ui_op_context.Finish();
     }
   }
 

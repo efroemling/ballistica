@@ -77,13 +77,22 @@ class UI {
   /// Draw dev UI on top.
   void DrawDev(FrameDef* frame_def);
 
+  /// Add a runnable to be run as part of the currently-being-processed UI
+  /// operation. Pass a Runnable that has been allocated with
+  /// NewUnmanaged(). It will be owned and disposed of by the UI from this
+  /// point. Must be called from the logic thread.
+  void PushUIOperationRunnable(Runnable* runnable);
+
+  auto InUIOperation() -> bool;
+
   /// Return the widget an input-device should send commands to, if any.
   /// Potentially assigns UI control to the provide device, so only call
   /// this if you intend on actually sending a message to that widget.
   auto GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget*;
 
-  /// Send a message to the active widget.
-  auto SendWidgetMessage(const WidgetMessage& msg) -> int;
+  /// Send a message to the active widget. This is a high level call that
+  /// should only be used by top level event handling/etc.
+  auto SendWidgetMessage(const WidgetMessage& msg) -> bool;
 
   /// Set the device controlling the UI.
   void SetUIInputDevice(InputDevice* input_device);
@@ -123,12 +132,28 @@ class UI {
 
   auto* delegate() const { return delegate_; }
 
+  class OperationContext {
+   public:
+    OperationContext();
+    ~OperationContext();
+    /// Should be called before returning from the high level event handling
+    /// call.
+    void Finish();
+    void AddRunnable(Runnable* runnable);
+
+   private:
+    bool ran_finish_{};
+    OperationContext* parent_{};
+    std::vector<Runnable*> runnables_;
+  };
+
  private:
   void MainMenuPress_(InputDevice* device);
   auto DevConsoleButtonSize_() const -> float;
   auto InDevConsoleButton_(float x, float y) const -> bool;
   void DrawDevConsoleButton_(FrameDef* frame_def);
 
+  OperationContext* operation_context_{};
   base::UIDelegateInterface* delegate_{};
   DevConsole* dev_console_{};
   std::string dev_console_startup_messages_;

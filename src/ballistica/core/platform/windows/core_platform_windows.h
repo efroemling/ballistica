@@ -21,7 +21,7 @@ class CorePlatformWindows : public CorePlatform {
   static auto UTF8Encode(const std::wstring& wstr) -> std::string;
   static auto UTF8Decode(const std::string& str) -> std::wstring;
 
-  auto GetStackTrace() -> PlatformStackTrace* override;
+  auto GetNativeStackTrace() -> NativeStackTrace* override;
   auto GetDeviceV1AccountUUIDPrefix() -> std::string override { return "w"; }
   auto GetDeviceUUIDInputs() -> std::list<std::string> override;
   auto GenerateUUID() -> std::string override;

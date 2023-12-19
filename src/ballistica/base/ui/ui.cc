@@ -2,6 +2,8 @@
 
 #include "ballistica/base/ui/ui.h"
 
+#include <exception>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/simple_component.h"
@@ -12,11 +14,99 @@
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/macros.h"
+#include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
 
 static const int kUIOwnerTimeoutSeconds = 30;
+
+/// We use this to gather up runnables triggered by UI elements in response
+/// to stuff happening (mouse clicks, elements being added or removed,
+/// etc.). It's a bad idea to run such runnables immediately because they
+/// might modify UI lists we're in the process of traversing. It's also a
+/// bad idea to schedule such runnables in the event loop, because a
+/// runnable may wish to modify the UI to prevent further runs from
+/// happening and that won't work if multiple runnables can be scheduled
+/// before the first runs. So our goldilocks approach here is to gather
+/// all runnables that get scheduled as part of each operation and then
+/// run them explicitly once we are safely out of any UI list traversal.
+UI::OperationContext::OperationContext() {
+  assert(g_base->InLogicThread());
+
+  // Register ourself as current only if there is none.
+  parent_ = g_base->ui->operation_context_;
+  if (parent_ == nullptr) {
+    g_base->ui->operation_context_ = this;
+  }
+}
+
+UI::OperationContext::~OperationContext() {
+  assert(g_base->InLogicThread());
+
+  // If we registered ourself as the top level context, unregister.
+  if (parent_ == nullptr) {
+    assert(g_base->ui->operation_context_ == this);
+    g_base->ui->operation_context_ = nullptr;
+  } else {
+    // If a context was set when we came into existence, it should
+    // still be that same context when we go out of existence.
+    assert(g_base->ui->operation_context_ == parent_);
+    assert(runnables_.empty());
+  }
+
+  // Complain if our Finish() call was never run (unless we're being torn
+  // down due to an exception).
+  if (!ran_finish_ && !std::current_exception()) {
+    BA_LOG_ERROR_NATIVE_TRACE_ONCE(
+        "UI::InteractionContext_ being torn down without Complete called.");
+  }
+
+  // Our runnables are raw unmanaged pointers; need to explicitly kill them.
+  // Finish generally clears these out as it goes, but there might be some
+  // left in the case of exceptions or infinite loop breakouts.
+  for (auto* ptr : runnables_) {
+    delete ptr;
+  }
+}
+
+void UI::OperationContext::AddRunnable(Runnable* runnable) {
+  // This should only be getting called when we installed ourself as top
+  // level context.
+  assert(parent_ == nullptr);
+  assert(Object::IsValidUnmanagedObject(runnable));
+  runnables_.push_back(runnable);
+}
+
+/// Should be explicitly called at the end of the operation.
+void UI::OperationContext::Finish() {
+  assert(g_base->InLogicThread());
+  assert(!ran_finish_);
+  ran_finish_ = true;
+
+  // Run pent up runnaables. It's possible that the payload of something
+  // scheduled here will itself schedule something here, so we need to do
+  // this in a loop (and watch for infinite ones).
+  int cycle_count{};
+  while (!runnables_.empty()) {
+    std::vector<Runnable*> runnables;
+    runnables.swap(runnables_);
+    for (auto* runnable : runnables) {
+      runnable->RunAndLogErrors();
+      // Our runnables are raw unmanaged pointers; need to explicitly kill
+      // them.
+      delete runnable;
+    }
+    cycle_count += 1;
+    if (cycle_count >= 10) {
+      BA_LOG_ERROR_NATIVE_TRACE(
+          "UIOperationCount cycle-count hit max; you probably have an infinite "
+          "loop.");
+      break;
+    }
+  }
+}
 
 UI::UI() {
   assert(g_core);
@@ -57,12 +147,6 @@ void UI::StepDisplayTime() {
 
 void UI::OnAppStart() {
   assert(g_base->InLogicThread());
-
-  // if (auto* ui_delegate = g_base->ui->delegate()) {
-  // printf("HAVE DEL %d\n",
-  //        static_cast<int>(g_base->ui->delegate() != nullptr));
-  // g_base->ui_v1()->OnAppStart();
-  // }
 
   // Make sure user knows when forced-ui-scale is enabled.
   if (force_scale_) {
@@ -129,6 +213,8 @@ auto UI::PartyWindowOpen() -> bool {
 
 auto UI::HandleMouseDown(int button, float x, float y, bool double_click)
     -> bool {
+  assert(g_base->InLogicThread());
+
   bool handled{};
 
   // Dev console button.
@@ -265,11 +351,20 @@ auto UI::ShouldShowButtonShortcuts() const -> bool {
   return g_base->input->have_non_touch_inputs();
 }
 
-auto UI::SendWidgetMessage(const WidgetMessage& m) -> int {
+auto UI::SendWidgetMessage(const WidgetMessage& m) -> bool {
+  OperationContext operation_context;
+
+  bool result;
   if (auto* ui_delegate = g_base->ui->delegate()) {
-    return ui_delegate->SendWidgetMessage(m);
+    result = ui_delegate->SendWidgetMessage(m);
+  } else {
+    result = false;
   }
-  return false;
+
+  // Run anything we triggered.
+  operation_context.Finish();
+
+  return result;
 }
 
 void UI::OnScreenSizeChange() {
@@ -539,6 +634,30 @@ void UI::OnAssetsAvailable() {
       dev_console_startup_messages_.clear();
     }
   }
+}
+
+void UI::PushUIOperationRunnable(Runnable* runnable) {
+  assert(g_base->InLogicThread());
+
+  if (operation_context_ != nullptr) {
+    operation_context_->AddRunnable(runnable);
+    return;
+  }
+
+  // For now, gracefully fall back to pushing an event if there's no current
+  // operation. Once we've got any bugs cleared out, can leave this as just
+  // an error log.
+
+  auto trace = g_core->platform->GetNativeStackTrace();
+  BA_LOG_ERROR_NATIVE_TRACE_ONCE(
+      "UI::PushUIOperationRunnable() called outside of UI operation.");
+
+  g_base->logic->event_loop()->PushRunnable(runnable);
+}
+
+auto UI::InUIOperation() -> bool {
+  assert(g_base->InLogicThread());
+  return operation_context_ != nullptr;
 }
 
 }  // namespace ballistica::base

@@ -3,8 +3,10 @@
 #include "ballistica/base/python/support/python_context_call.h"
 
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/generic/lambda_runnable.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_sys.h"
@@ -164,6 +166,30 @@ void PythonContextCall::ScheduleWeak(const PythonRef& args) {
       call->Run(args);
     }
   });
+}
+
+void PythonContextCall::ScheduleInUIOperation() {
+  // Since we're mucking with Object::WeakRefs, need to limit to logic thread.
+  BA_PRECONDITION(g_base->InLogicThread());
+  Object::Ref<PythonContextCall> ref(this);
+  assert(base::g_base);
+
+  g_base->ui->PushUIOperationRunnable(NewLambdaRunnableUnmanaged([ref] {
+    assert(ref.Exists());
+    ref->Run();
+  }));
+}
+
+void PythonContextCall::ScheduleInUIOperation(const PythonRef& args) {
+  // Since we're mucking with Object::WeakRefs, need to limit to logic thread.
+  BA_PRECONDITION(g_base->InLogicThread());
+  Object::Ref<PythonContextCall> ref(this);
+  assert(base::g_base);
+
+  g_base->ui->PushUIOperationRunnable(NewLambdaRunnableUnmanaged([ref, args] {
+    assert(ref.Exists());
+    ref->Run(args);
+  }));
 }
 
 }  // namespace ballistica::base

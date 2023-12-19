@@ -39,8 +39,8 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 21707;
-const char* kEngineVersion = "1.7.31";
+const int kEngineBuildNumber = 21728;
+const char* kEngineVersion = "1.7.32";
 const int kEngineApiVersion = 8;
 
 #if BA_MONOLITHIC_BUILD
@@ -164,8 +164,9 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // with reports from dev builds.
     bool try_to_exit_cleanly = !(l_base && l_base->IsUnmodifiedBlessedBuild());
 
-    // If this returns true, it means the app is handling things (showing a
-    // fatal error dialog, etc.) and it's out of our hands.
+    // If this returns true, it means the platform/app-adapter is handling
+    // things (showing a fatal error dialog, etc.) and it's out of our
+    // hands.
     bool handled = FatalError::HandleFatalError(try_to_exit_cleanly, true);
 
     // If it's not been handled, take the app down ourself.
@@ -229,8 +230,9 @@ class IncrementalInitRunner_ {
       // with reports from dev builds.
       bool try_to_exit_cleanly = !(base_ && base_->IsUnmodifiedBlessedBuild());
 
-      // If this returns true, it means the app is handling things (showing a
-      // fatal error dialog, etc.) and it's out of our hands.
+      // If this returns true, it means the platform/app-adapter is handling
+      // things (showing a fatal error dialog, etc.) and it's out of our
+      // hands.
       bool handled = FatalError::HandleFatalError(try_to_exit_cleanly, true);
 
       // If it's not been handled, take the app down ourself.

@@ -451,15 +451,6 @@ class ClassicSubsystem(babase.AppSubsystem):
             if playtype in val.get_play_types()
         )
 
-    def show_online_score_ui(
-        self,
-        show: str = 'general',
-        game: str | None = None,
-        game_version: str | None = None,
-    ) -> None:
-        """(internal)"""
-        bauiv1.show_online_score_ui(show, game, game_version)
-
     def game_begin_analytics(self) -> None:
         """(internal)"""
         from baclassic import _analytics

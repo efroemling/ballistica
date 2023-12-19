@@ -52,9 +52,9 @@ class EventLoop {
   Timer* GetTimer(int id);
   void DeleteTimer(int id);
 
-  /// Add a runnable to this thread's event-loop.
-  /// Pass a Runnable that has been allocated with NewUnmanaged().
-  /// It will be owned and disposed of by the thread.
+  /// Add a runnable to this thread's event-loop. Pass a Runnable that has
+  /// been allocated with NewUnmanaged(). It will be owned and disposed of
+  /// by the thread.
   void PushRunnable(Runnable* runnable);
 
   /// Convenience function to push a lambda as a runnable.
@@ -63,7 +63,8 @@ class EventLoop {
     PushRunnable(NewLambdaRunnableUnmanaged(lambda));
   }
 
-  /// Add a runnable to this thread's event-loop and wait until it completes.
+  /// Add a runnable to this thread's event-loop and wait until it
+  /// completes.
   void PushRunnableSynchronous(Runnable* runnable);
 
   /// Convenience function to push a lambda as a runnable.

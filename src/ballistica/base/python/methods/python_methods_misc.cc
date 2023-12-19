@@ -14,6 +14,7 @@
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
@@ -232,24 +233,6 @@ static PyMethodDef PyClipboardGetTextDef = {
     " this function.",
 };
 
-// ---------------------------- is_running_on_ouya -----------------------------
-
-auto PyIsRunningOnOuya(PyObject* self, PyObject* args) -> PyObject* {
-  BA_PYTHON_TRY;
-  Py_RETURN_FALSE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyIsRunningOnOuyaDef = {
-    "is_running_on_ouya",  // name
-    PyIsRunningOnOuya,     // method
-    METH_VARARGS,          // flags
-
-    "is_running_on_ouya() -> bool\n"
-    "\n"
-    "(internal)",
-};
-
 // ------------------------------ setup_sigint ---------------------------------
 
 static auto PySetUpSigInt(PyObject* self) -> PyObject* {
@@ -269,27 +252,6 @@ static PyMethodDef PySetUpSigIntDef = {
     METH_NOARGS,                 // flags
 
     "setup_sigint() -> None\n"
-    "\n"
-    "(internal)",
-};
-
-// -------------------------- is_running_on_fire_tv ----------------------------
-
-static auto PyIsRunningOnFireTV(PyObject* self, PyObject* args) -> PyObject* {
-  BA_PYTHON_TRY;
-  if (g_core->platform->IsRunningOnFireTV()) {
-    Py_RETURN_TRUE;
-  }
-  Py_RETURN_FALSE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyIsRunningOnFireTVDef = {
-    "is_running_on_fire_tv",  // name
-    PyIsRunningOnFireTV,      // method
-    METH_VARARGS,             // flags
-
-    "is_running_on_fire_tv() -> bool\n"
     "\n"
     "(internal)",
 };
@@ -1369,7 +1331,7 @@ static PyMethodDef PyUnlockAllInputDef = {
 static auto PyNativeStackTrace(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_core);
-  auto* trace = g_core->platform->GetStackTrace();
+  auto* trace = g_core->platform->GetNativeStackTrace();
   if (!trace) {
     Py_RETURN_NONE;
   }
@@ -1814,6 +1776,35 @@ static PyMethodDef PyTempTestingDef = {
     "(internal)",
 };
 
+// ------------------------- open_file_externally ------------------------------
+
+static auto PyOpenFileExternally(PyObject* self, PyObject* args,
+                                 PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  char* path = nullptr;
+  static const char* kwlist[] = {"path", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &path)) {
+    return nullptr;
+  }
+  g_base->platform->OpenFileExternally(path);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyOpenFileExternallyDef = {
+    "open_file_externally",             // name
+    (PyCFunction)PyOpenFileExternally,  // method
+    METH_VARARGS | METH_KEYWORDS,       // flags
+
+    "open_file_externally(path: str) -> None\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Open the provided file in the default external app.",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
@@ -1859,8 +1850,6 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PyInLogicThreadDef,
       PyRequestPermissionDef,
       PyHavePermissionDef,
-      PyIsRunningOnFireTVDef,
-      PyIsRunningOnOuyaDef,
       PyUnlockAllInputDef,
       PyLockAllInputDef,
       PySetUpSigIntDef,
@@ -1883,6 +1872,7 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PyNativeReviewRequestSupportedDef,
       PyNativeReviewRequestDef,
       PyTempTestingDef,
+      PyOpenFileExternallyDef,
   };
 }
 

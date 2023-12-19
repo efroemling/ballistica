@@ -245,9 +245,8 @@ void CheckBoxWidget::Activate() {
     PythonRef args(Py_BuildValue("(O)", checked_ ? Py_True : Py_False),
                    PythonRef::kSteal);
 
-    // Call this in the next cycle (don't want to risk mucking with UI from
-    // within a UI loop)
-    call->ScheduleWeak(args);
+    // Schedule this to run immediately after any current UI traversal.
+    call->ScheduleInUIOperation(args);
   }
 }
 
