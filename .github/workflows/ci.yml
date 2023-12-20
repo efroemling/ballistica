@@ -22,7 +22,9 @@ jobs:
       with:
         python-version: '3.11'
     - name: Install dependencies
-      run: tools/pcommand install_pip_reqs
+      run: |
+        tools/pcommand install_pip_reqs
+        apt install libsdl2-dev
     - name: Run checks
       run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 BA_APP_RUN_ENABLE_BUILDS=1 make check
 
