@@ -50,6 +50,8 @@ def build_openal(arch: str, mode: str) -> None:
     # Inject an env var to force Oboe to use OpenSL backend.
     opensl_fallback_option = True
 
+    # set_game_usage = True
+
     # Get ndk path.
     ndk_path = (
         subprocess.run(
@@ -75,7 +77,8 @@ def build_openal(arch: str, mode: str) -> None:
             'checkout',
             # '1.23.1',
             # '1381a951bea78c67281a2e844e6db1dedbd5ed7c',
-            'bc83c874ff15b29fdab9b6c0bf40b268345b3026',
+            # 'bc83c874ff15b29fdab9b6c0bf40b268345b3026',
+            '59c466077fd6f16af64afcc6260bb61aa4e632dc',
         ],
         check=True,
         cwd=builddir,
@@ -96,7 +99,7 @@ def build_openal(arch: str, mode: str) -> None:
     )
     subprocess.run(['git', 'checkout', '1.8.0'], check=True, cwd=builddir_oboe)
 
-    if opensl_fallback_option:
+    if bool(True):
         oboepath = f'{builddir}/alc/backends/oboe.cpp'
         with open(oboepath, encoding='utf-8') as infile:
             txt = infile.read()
@@ -134,22 +137,39 @@ def build_openal(arch: str, mode: str) -> None:
                 ' //           oboe::convertToText(result)};\n'
             ),
         )
-        txt = replace_exact(
-            txt,
-            (
-                '    builder.setPerformanceMode('
-                'oboe::PerformanceMode::LowLatency);\n'
-            ),
-            (
-                '    builder.setPerformanceMode('
-                'oboe::PerformanceMode::LowLatency);\n'
-                '    if (getenv("BA_OBOE_USE_OPENSLES")) {\n'
-                '        TRACE("BA_OBOE_USE_OPENSLES set;'
-                ' Using OpenSLES\\n");\n'
-                '        builder.setAudioApi(oboe::AudioApi::OpenSLES);\n'
-                '    }\n'
-            ),
-        )
+        # Add our fallback option.
+        if opensl_fallback_option:
+            txt = replace_exact(
+                txt,
+                (
+                    '    builder.setPerformanceMode('
+                    'oboe::PerformanceMode::LowLatency);\n'
+                ),
+                (
+                    '    builder.setPerformanceMode('
+                    'oboe::PerformanceMode::LowLatency);\n'
+                    '    if (getenv("BA_OBOE_USE_OPENSLES")) {\n'
+                    '        TRACE("BA_OBOE_USE_OPENSLES set;'
+                    ' Using OpenSLES\\n");\n'
+                    '        builder.setAudioApi(oboe::AudioApi::OpenSLES);\n'
+                    '    }\n'
+                ),
+            )
+        # Set game mode.
+        # if set_game_usage:
+        #     txt = replace_exact(
+        #         txt,
+        #         (
+        #             '    builder.setPerformanceMode('
+        #             'oboe::PerformanceMode::LowLatency);\n'
+        #         ),
+        #         (
+        #             '    builder.setPerformanceMode('
+        #             'oboe::PerformanceMode::LowLatency);\n'
+        #             '    builder.setUsage('
+        #             'oboe::Usage::Game);\n'
+        #         ),
+        #     )
 
         with open(oboepath, 'w', encoding='utf-8') as outfile:
             outfile.write(txt)

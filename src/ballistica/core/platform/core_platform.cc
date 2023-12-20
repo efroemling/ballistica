@@ -2,6 +2,8 @@
 
 #include "ballistica/core/platform/core_platform.h"
 
+#include <stdexcept>
+
 #if !BA_OSTYPE_WINDOWS
 #include <dirent.h>
 #endif
@@ -966,12 +968,26 @@ class NativeStackTraceExecInfo : public NativeStackTrace {
   // construction but should do the bare minimum amount of work to store it. Any
   // expensive operations such as symbolification should be deferred until
   // FormatForDisplay().
-  NativeStackTraceExecInfo() { nsize_ = backtrace(array_, kMaxStackLevels); }
+  NativeStackTraceExecInfo() {
+    nsize_ = backtrace(array_, kMaxStackLevels);
+    // backtrace() is supposed to clamp return values to the size of
+    // array we passed; make sure that's happening (debugging odd crash).
+    if (nsize_ > kMaxStackLevels) {
+      g_core->platform->LowLevelDebugLog(
+          "backtrace() yielded " + std::to_string(nsize_)
+          + " which is larger than our available size "
+          + std::to_string(kMaxStackLevels));
+      nsize_ = kMaxStackLevels;
+    }
+  }
 
   auto FormatForDisplay() noexcept -> std::string override {
     try {
       std::string s;
       char** symbols = backtrace_symbols(array_, nsize_);
+      if (symbols == nullptr) {
+        return "backtrace_symbols yielded nullptr";
+      }
       for (int i = 0; i < nsize_; i++) {
         const char* symbol = symbols[i];
         // Special case for Android: there's usually a horrific mess of a

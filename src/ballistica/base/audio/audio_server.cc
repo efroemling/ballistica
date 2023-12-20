@@ -322,7 +322,7 @@ void AudioServer::OnAppStartInThread_() {
         openalsoft_android_log_.clear();
       }
       alcCloseDevice(device);
-      g_core->platform->SleepSeconds(1.0);
+      g_core->platform->SleepSeconds(2.0);
       device = alcOpenDevice(al_device_name);
       alGetError();  // Clear any errors.
 
@@ -906,6 +906,11 @@ void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
   ALCint connected{-1};
   alcGetIntegerv(device, ALC_CONNECTED, sizeof(connected), &connected);
   CHECK_AL_ERROR;
+  if (connected == 0) {
+    reconnect_fail_count_++;
+  } else {
+    reconnect_fail_count_ = 0;
+  }
   if (connected == 0 && real_time_seconds - last_reset_attempt_time_ > 10.0) {
     Log(LogLevel::kInfo, "OpenAL device disconnected; resetting...");
     if (g_buildconfig.ostype_android()) {
@@ -918,50 +923,70 @@ void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
     auto result = alcResetDeviceSOFT(device, nullptr);
     CHECK_AL_ERROR;
 
-    Log(LogLevel::kInfo, std::string("alcResetDeviceSOFT returned ")
-                             + (result == ALC_TRUE ? "ALC_TRUE" : "ALC_FALSE"));
+    // Log(LogLevel::kInfo, std::string("alcResetDeviceSOFT returned ")
+    //                          + (result == ALC_TRUE ? "ALC_TRUE" :
+    //                          "ALC_FALSE"));
 
     // Check to see if this brought the device back.
-    ALCint connected{-1};
-    alcGetIntegerv(device, ALC_CONNECTED, sizeof(connected), &connected);
-    CHECK_AL_ERROR;
+    // ALCint connected{-1};
+    // alcGetIntegerv(device, ALC_CONNECTED, sizeof(connected), &connected);
+    // CHECK_AL_ERROR;
 
     // If we were successful, clear out the wait for the next reset.
     // Otherwise plugging in headphones and then unplugging them immediately
     // will result in 10 seconds of silence.
-    if (connected == 1) {
-      if (result == ALC_FALSE) {
-        Log(LogLevel::kWarning,
-            "Got ALC_FALSE for alcResetDeviceSOFT but device is now connected. "
-            "Odd.");
-      }
+    if (result == ALC_TRUE) {
       last_reset_attempt_time_ = -999.0;
+      if (g_buildconfig.ostype_android()) {
+        std::scoped_lock lock(openalsoft_android_log_mutex_);
+        openalsoft_android_log_ += "DEVICE RESET SUCCESSFUL\n";
+      }
+    } else {
+      if (g_buildconfig.ostype_android()) {
+        std::scoped_lock lock(openalsoft_android_log_mutex_);
+        openalsoft_android_log_ += "DEVICE RESET FAILED\n";
+      }
     }
 
     // If we're ever *not* immediately successful, flip on reporting to try
-    // and figure out what's going on. We then report the next few attempt
-    // results regardless of outcome.
-    if (connected == 0) {
-      report_reset_results_ = true;
-    }
-    if (report_reset_results_ && reset_result_reports_remaining_ > 0) {
-      reset_result_reports_remaining_ -= 1;
-      if (connected != 0) {
-        Log(LogLevel::kInfo,
-            "alcResetDeviceSOFT successfully reconnected device.");
-      } else {
-        Log(LogLevel::kError, "alcResetDeviceSOFT failed to reconnect device.");
-      }
-      if (g_buildconfig.ostype_android()) {
-        std::scoped_lock lock(openalsoft_android_log_mutex_);
-        Log(LogLevel::kWarning,
+    // and figure out what's going on. After that point we'll report subsequent
+    // if (connected == 0) {
+    //   report_reset_results_ = true;
+    // }
+    // if (report_reset_results_ && reset_result_reports_remaining_ > 0) {
+    //   reset_result_reports_remaining_ -= 1;
+    //   if (connected != 0) {
+    //     Log(LogLevel::kInfo,
+    //         "alcResetDeviceSOFT successfully reconnected device.");
+    //   } else {
+    //     Log(LogLevel::kError, "alcResetDeviceSOFT failed to reconnect
+    //     device.");
+    //   }
+    //   if (g_buildconfig.ostype_android()) {
+    //     std::scoped_lock lock(openalsoft_android_log_mutex_);
+    //     Log(LogLevel::kWarning,
+    //         "------------------------"
+    //         " OPENALSOFT-RECONNECT-LOG-BEGIN ----------------------\n"
+    //             + openalsoft_android_log_
+    //         + "\n-------------------------"
+    //           " OPENALSOFT-RECONNECT-LOG-END -----------------------");
+    //     openalsoft_android_log_.clear();
+    //   }
+    // }
+  }
+
+  // If we've failed at reconnecting a few times in a row, ship logs.
+  if (reconnect_fail_count_ == 3) {
+    if (g_buildconfig.ostype_android()) {
+      std::scoped_lock lock(openalsoft_android_log_mutex_);
+      Log(LogLevel::kWarning,
+            "Got 3 reconnect fails in a row; dumping OpenAL log.\n"
             "------------------------"
             " OPENALSOFT-RECONNECT-LOG-BEGIN ----------------------\n"
                 + openalsoft_android_log_
             + "\n-------------------------"
               " OPENALSOFT-RECONNECT-LOG-END -----------------------");
-        openalsoft_android_log_.clear();
-      }
+      openalsoft_android_log_.clear();
     }
   }
 #endif  // BA_OPENAL_IS_SOFT

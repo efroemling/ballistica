@@ -1,4 +1,4 @@
-### 1.7.32 (build 21735, api 8, 2023-12-19)
+### 1.7.32 (build 21737, api 8, 2023-12-19)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
 - Plugins window now displays 'No Plugins Installed' when no plugins are present (Thanks vishal332008!)
 - Old messages are now displayed as soon as you press 'Unmute Chat' (Thanks vishal332008!)
