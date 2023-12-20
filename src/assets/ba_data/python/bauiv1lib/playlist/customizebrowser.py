@@ -47,8 +47,8 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         self._r = 'gameListWindow'
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 750.0 if uiscale is bui.UIScale.SMALL else 650.0
-        x_inset = 50.0 if uiscale is bui.UIScale.SMALL else 0.0
+        self._width = 850.0 if uiscale is bui.UIScale.SMALL else 650.0
+        x_inset = 100.0 if uiscale is bui.UIScale.SMALL else 0.0
         self._height = (
             380.0
             if uiscale is bui.UIScale.SMALL

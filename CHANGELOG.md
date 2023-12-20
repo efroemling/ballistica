@@ -5,6 +5,12 @@
 - Added an 'Add to Favorites' entry to the party menu (Thanks vishal332008!)
 - Now displays 'No Parties Added' in favorites tab if no favorites are present (Thanks vishal332008!)
 - Now shows character icons in the profiles list window (Thanks vishal332008!)
+- Added a Random button for names in the Player Profiles window (Thanks vishal332008!)
+- Fixed a bug where no server is selected by default in the favorites tab (Thanks vishal332008!)
+- Fixed a bug where no replay is selected by default in the watch tab (Thanks vishal332008!)
+- Fixed a bug where no profile is selected by default in the profile tab (Thanks vishal332008!)
+- Fixed a number of UI screens so that ugly window edges are no longer visible
+  in corners on modern ultra wide phone displays.
 
 ### 1.7.31 (build 21727, api 8, 2023-12-17)
 - Added `bascenev1.get_connection_to_host_info_2()` which is an improved

@@ -32,8 +32,8 @@ class PlayWindow(bui.Window):
         self._is_main_menu = not bui.app.ui_v1.selecting_private_party_playlist
 
         uiscale = bui.app.ui_v1.uiscale
-        width = 1000 if uiscale is bui.UIScale.SMALL else 800
-        x_offs = 100 if uiscale is bui.UIScale.SMALL else 0
+        width = 1100 if uiscale is bui.UIScale.SMALL else 800
+        x_offs = 150 if uiscale is bui.UIScale.SMALL else 0
         height = 550
         button_width = 400
 

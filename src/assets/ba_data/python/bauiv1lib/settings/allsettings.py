@@ -40,8 +40,8 @@ class AllSettingsWindow(bui.Window):
             scale_origin = None
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        width = 900 if uiscale is bui.UIScale.SMALL else 580
-        x_inset = 75 if uiscale is bui.UIScale.SMALL else 0
+        width = 1000 if uiscale is bui.UIScale.SMALL else 580
+        x_inset = 125 if uiscale is bui.UIScale.SMALL else 0
         height = 435
         self._r = 'settingsWindow'
         top_extra = 20 if uiscale is bui.UIScale.SMALL else 0

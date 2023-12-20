@@ -47,8 +47,8 @@ class AdvancedSettingsWindow(bui.Window):
             scale_origin = None
 
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 870.0 if uiscale is bui.UIScale.SMALL else 670.0
-        x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 970.0 if uiscale is bui.UIScale.SMALL else 670.0
+        x_inset = 150 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
             390.0
             if uiscale is bui.UIScale.SMALL

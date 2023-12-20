@@ -76,8 +76,8 @@ class StoreBrowserWindow(bui.Window):
         self._on_close_call = on_close_call
         self._show_tab = show_tab
         self._modal = modal
-        self._width = 1240 if uiscale is bui.UIScale.SMALL else 1040
-        self._x_inset = x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 1440 if uiscale is bui.UIScale.SMALL else 1040
+        self._x_inset = x_inset = 200 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
             578
             if uiscale is bui.UIScale.SMALL

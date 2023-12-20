@@ -55,8 +55,8 @@ class WatchWindow(bui.Window):
         self._my_replay_rename_text: bui.Widget | None = None
         self._r = 'watchWindow'
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 1240 if uiscale is bui.UIScale.SMALL else 1040
-        x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 1440 if uiscale is bui.UIScale.SMALL else 1040
+        x_inset = 200 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
             578
             if uiscale is bui.UIScale.SMALL

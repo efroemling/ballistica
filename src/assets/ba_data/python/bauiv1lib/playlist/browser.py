@@ -62,8 +62,8 @@ class PlaylistBrowserWindow(bui.Window):
         )
 
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 900.0 if uiscale is bui.UIScale.SMALL else 800.0
-        x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 1100.0 if uiscale is bui.UIScale.SMALL else 800.0
+        x_inset = 150 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
             480
             if uiscale is bui.UIScale.SMALL

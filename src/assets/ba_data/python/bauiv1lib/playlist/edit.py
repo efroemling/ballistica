@@ -31,8 +31,8 @@ class PlaylistEditWindow(bui.Window):
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 770 if uiscale is bui.UIScale.SMALL else 670
-        x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 870 if uiscale is bui.UIScale.SMALL else 670
+        x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
             400
             if uiscale is bui.UIScale.SMALL

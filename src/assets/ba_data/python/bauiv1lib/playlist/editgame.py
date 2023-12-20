@@ -103,8 +103,8 @@ class PlaylistEditGameWindow(bui.Window):
         self._choice_selections: dict[str, int] = {}
 
         uiscale = bui.app.ui_v1.uiscale
-        width = 720 if uiscale is bui.UIScale.SMALL else 620
-        x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
+        width = 820 if uiscale is bui.UIScale.SMALL else 620
+        x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         height = (
             365
             if uiscale is bui.UIScale.SMALL

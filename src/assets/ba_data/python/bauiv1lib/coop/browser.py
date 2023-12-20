@@ -85,8 +85,8 @@ class CoopBrowserWindow(bui.Window):
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 1320 if uiscale is bui.UIScale.SMALL else 1120
-        self._x_inset = x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 1520 if uiscale is bui.UIScale.SMALL else 1120
+        self._x_inset = x_inset = 200 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
             657
             if uiscale is bui.UIScale.SMALL

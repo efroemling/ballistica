@@ -69,8 +69,8 @@ class AccountSettingsWindow(bui.Window):
         assert app.classic is not None
         uiscale = app.ui_v1.uiscale
 
-        self._width = 760 if uiscale is bui.UIScale.SMALL else 660
-        x_offs = 50 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 860 if uiscale is bui.UIScale.SMALL else 660
+        x_offs = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
             390
             if uiscale is bui.UIScale.SMALL

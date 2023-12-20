@@ -44,8 +44,8 @@ class PlaylistMapSelectWindow(bui.Window):
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        width = 715 if uiscale is bui.UIScale.SMALL else 615
-        x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
+        width = 815 if uiscale is bui.UIScale.SMALL else 615
+        x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         height = (
             400
             if uiscale is bui.UIScale.SMALL

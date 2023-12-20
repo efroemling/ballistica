@@ -36,8 +36,8 @@ class HelpWindow(bui.Window):
         self._main_menu = main_menu
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        width = 950 if uiscale is bui.UIScale.SMALL else 750
-        x_offs = 100 if uiscale is bui.UIScale.SMALL else 0
+        width = 1050 if uiscale is bui.UIScale.SMALL else 750
+        x_offs = 150 if uiscale is bui.UIScale.SMALL else 0
         height = (
             460
             if uiscale is bui.UIScale.SMALL

@@ -60,8 +60,8 @@ class EditProfileWindow(bui.Window):
             self._highlight,
         ) = bui.app.classic.get_player_profile_colors(existing_profile)
         uiscale = bui.app.ui_v1.uiscale
-        self._width = width = 780.0 if uiscale is bui.UIScale.SMALL else 680.0
-        self._x_inset = x_inset = 50.0 if uiscale is bui.UIScale.SMALL else 0.0
+        self._width = width = 880.0 if uiscale is bui.UIScale.SMALL else 680.0
+        self._x_inset = x_inset = 100.0 if uiscale is bui.UIScale.SMALL else 0.0
         self._height = height = (
             350.0
             if uiscale is bui.UIScale.SMALL

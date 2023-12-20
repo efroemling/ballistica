@@ -33,8 +33,8 @@ class ProfileBrowserWindow(bui.Window):
             back_label = bui.Lstr(resource='doneText')
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 700.0 if uiscale is bui.UIScale.SMALL else 600.0
-        x_inset = 50.0 if uiscale is bui.UIScale.SMALL else 0.0
+        self._width = 800.0 if uiscale is bui.UIScale.SMALL else 600.0
+        x_inset = 100.0 if uiscale is bui.UIScale.SMALL else 0.0
         self._height = (
             360.0
             if uiscale is bui.UIScale.SMALL
