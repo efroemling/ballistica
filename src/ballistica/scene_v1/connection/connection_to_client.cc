@@ -654,42 +654,28 @@ void ConnectionToClient::HandleMessagePacket(
       if (auto* hs =
               dynamic_cast<HostSession*>(appmode->GetForegroundSession())) {
         if (!cid->AttachedToPlayer()) {
-          millisecs_t seconds_since_last_left =
-              (g_core->GetAppTimeMillisecs() - last_remove_player_time_) / 1000;
-          int min_seconds_since_left = 10;
+          bool still_waiting_for_auth =
+              (appmode->require_client_authentication()
+               && !got_info_from_master_server_);
 
-          // If someone on this connection left less than 10 seconds ago,
-          // prevent them from immediately jumping back in.
-          if (seconds_since_last_left < min_seconds_since_left) {
+          // If we're not allowing peer client-info and have yet to get
+          // master-server info for this client, delay their join (we'll
+          // eventually give up and just give them a blank slate).
+          if (still_waiting_for_auth
+              && (g_core->GetAppTimeMillisecs() - creation_time() < 10000)) {
             SendScreenMessage(
-                "{\"t\":[\"serverResponses\",\"You can join in ${COUNT} "
-                "seconds.\"],\"s\":[[\"${COUNT}\",\""
-                    + std::to_string(min_seconds_since_left
-                                     - seconds_since_last_left)
-                    + "\"]]}",
+                "{\"v\":\"${A}...\",\"s\":[[\"${A}\",{\"r\":"
+                "\"loadingTryAgainText\",\"f\":\"loadingText\"}]]}",
                 1, 1, 0);
           } else {
-            bool still_waiting = (appmode->require_client_authentication()
-                                  && !got_info_from_master_server_);
-            // If we're not allowing peer client-info and have yet to get
-            // master-server info for this client, delay their join (we'll
-            // eventually give up and just give them a blank slate).
-            if (still_waiting
-                && (g_core->GetAppTimeMillisecs() - creation_time() < 10000)) {
-              SendScreenMessage(
-                  "{\"v\":\"${A}...\",\"s\":[[\"${A}\",{\"r\":"
-                  "\"loadingTryAgainText\",\"f\":\"loadingText\"}]]}",
-                  1, 1, 0);
-            } else {
-              // Either timed out or have info; let the request go through.
-              if (still_waiting) {
-                Log(LogLevel::kError,
-                    "Allowing player-request without client\'s master-server "
-                    "info (build "
-                        + std::to_string(build_number_) + ")");
-              }
-              hs->RequestPlayer(cid_d);
+            // Either timed out or have info; let the request go through.
+            if (still_waiting_for_auth) {
+              Log(LogLevel::kError,
+                  "Allowing player-request without client\'s master-server "
+                  "info (build "
+                      + std::to_string(build_number_) + ")");
             }
+            hs->RequestPlayer(cid_d);
           }
         }
       } else {

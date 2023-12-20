@@ -1,4 +1,4 @@
-### 1.7.32 (build 21737, api 8, 2023-12-19)
+### 1.7.32 (build 21739, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
 - Plugins window now displays 'No Plugins Installed' when no plugins are present (Thanks vishal332008!)
 - Old messages are now displayed as soon as you press 'Unmute Chat' (Thanks vishal332008!)
@@ -11,6 +11,13 @@
 - Fixed a bug where no profile is selected by default in the profile tab (Thanks vishal332008!)
 - Fixed a number of UI screens so that ugly window edges are no longer visible
   in corners on modern ultra wide phone displays.
+- Added a `player_rejoin_cooldown` server config option. This defaults to 10
+  seconds for servers but 0 for normal gui clients. This mechanism had been
+  introduced recently to combat multiplayer fast-rejoin exploits and was set to
+  10 seconds everywhere, but it could tend to be annoying for local single
+  player play, dev testing, etc. Hopefully this strikes a good balance now.
+- Removed the player-rejoin-cooldown mechanism from the C++ layer since it was
+  redundant with the Python level one and didn't cover as many cases.
 
 ### 1.7.31 (build 21727, api 8, 2023-12-17)
 - Added `bascenev1.get_connection_to_host_info_2()` which is an improved

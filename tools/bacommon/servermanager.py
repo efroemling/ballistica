@@ -152,6 +152,11 @@ class ServerConfig:
     # (internal) stress-testing mode.
     stress_test_players: int | None = None
 
+    # How many seconds individual players from a given account must wait
+    # before rejoining the game. This can help suppress exploits
+    # involving leaving and rejoining or switching teams rapidly.
+    player_rejoin_cooldown: float = 10.0
+
 
 # NOTE: as much as possible, communication from the server-manager to the
 # child-process should go through these and not ad-hoc Python string commands

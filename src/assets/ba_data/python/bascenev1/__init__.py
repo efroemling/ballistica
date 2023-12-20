@@ -228,7 +228,7 @@ from bascenev1._settings import (
     IntSetting,
     Setting,
 )
-from bascenev1._session import Session
+from bascenev1._session import Session, set_player_rejoin_cooldown
 from bascenev1._stats import PlayerScoredMessage, PlayerRecord, Stats
 from bascenev1._team import SessionTeam, Team, EmptyTeam
 from bascenev1._teamgame import TeamGameActivity
@@ -419,6 +419,7 @@ __all__ = [
     'set_public_party_name',
     'set_public_party_queue_enabled',
     'set_public_party_stats_url',
+    'set_player_rejoin_cooldown',
     'set_replay_speed_exponent',
     'set_touchscreen_editing',
     'setmusic',

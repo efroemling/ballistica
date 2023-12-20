@@ -906,12 +906,20 @@ void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
   ALCint connected{-1};
   alcGetIntegerv(device, ALC_CONNECTED, sizeof(connected), &connected);
   CHECK_AL_ERROR;
-  if (connected == 0) {
-    reconnect_fail_count_++;
-  } else {
-    reconnect_fail_count_ = 0;
+  if (connected != 0) {
+    last_connected_time_ = real_time_seconds;
+    // reconnect_fail_count_ = 0;
   }
-  if (connected == 0 && real_time_seconds - last_reset_attempt_time_ > 10.0) {
+  // else {
+  // reconnect_fail_count_ = 0;
+  // }
+
+  // Retry less often once we've been failing for a while.
+  seconds_t retry_interval =
+      real_time_seconds - last_connected_time_ > 20.0 ? 10.0 : 3.0;
+
+  if (connected == 0
+      && real_time_seconds - last_reset_attempt_time_ >= retry_interval) {
     Log(LogLevel::kInfo, "OpenAL device disconnected; resetting...");
     if (g_buildconfig.ostype_android()) {
       std::scoped_lock lock(openalsoft_android_log_mutex_);
@@ -936,15 +944,15 @@ void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
     // Otherwise plugging in headphones and then unplugging them immediately
     // will result in 10 seconds of silence.
     if (result == ALC_TRUE) {
-      last_reset_attempt_time_ = -999.0;
+      // last_reset_attempt_time_ = -999.0;
       if (g_buildconfig.ostype_android()) {
         std::scoped_lock lock(openalsoft_android_log_mutex_);
-        openalsoft_android_log_ += "DEVICE RESET SUCCESSFUL\n";
+        openalsoft_android_log_ += "DEVICE RESET CALL SUCCESSFUL\n";
       }
     } else {
       if (g_buildconfig.ostype_android()) {
         std::scoped_lock lock(openalsoft_android_log_mutex_);
-        openalsoft_android_log_ += "DEVICE RESET FAILED\n";
+        openalsoft_android_log_ += "DEVICE RESET CALL FAILED\n";
       }
     }
 
@@ -975,12 +983,14 @@ void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
     // }
   }
 
-  // If we've failed at reconnecting a few times in a row, ship logs.
-  if (reconnect_fail_count_ == 3) {
+  // If we've failed at reconnecting for a while, ship logs once.
+  if (real_time_seconds - last_connected_time_ > 20.0
+      && !shipped_reconnect_logs_) {
+    shipped_reconnect_logs_ = true;
     if (g_buildconfig.ostype_android()) {
       std::scoped_lock lock(openalsoft_android_log_mutex_);
       Log(LogLevel::kWarning,
-            "Got 3 reconnect fails in a row; dumping OpenAL log.\n"
+            "Have been disconnected for a while; dumping OpenAL log.\n"
             "------------------------"
             " OPENALSOFT-RECONNECT-LOG-BEGIN ----------------------\n"
                 + openalsoft_android_log_

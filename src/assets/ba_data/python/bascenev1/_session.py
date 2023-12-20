@@ -18,10 +18,16 @@ if TYPE_CHECKING:
 
     import bascenev1
 
-# How long someone who left the session (but not the party) must
+# How many seconds someone who left the session (but not the party) must
 # wait to rejoin the session again. Intended to prevent game exploits
 # such as skipping respawn waits.
-REJOIN_COOLDOWN = 10
+_g_player_rejoin_cooldown: float = 0.0
+
+
+def set_player_rejoin_cooldown(cooldown: float) -> None:
+    """Set the cooldown for individual players rejoining after leaving."""
+    global _g_player_rejoin_cooldown  # pylint: disable=global-statement
+    _g_player_rejoin_cooldown = max(0.0, cooldown)
 
 
 class Session:
@@ -270,7 +276,11 @@ class Session:
             leave_time = self._players_on_wait.get(identifier)
             if leave_time:
                 diff = str(
-                    math.ceil(REJOIN_COOLDOWN - babase.apptime() + leave_time)
+                    math.ceil(
+                        _g_player_rejoin_cooldown
+                        - babase.apptime()
+                        + leave_time
+                    )
                 )
                 _bascenev1.broadcastmessage(
                     babase.Lstr(
@@ -310,7 +320,7 @@ class Session:
             self._players_on_wait[identifier] = babase.apptime()
             with babase.ContextRef.empty():
                 self._waitlist_timers[identifier] = babase.AppTimer(
-                    REJOIN_COOLDOWN,
+                    _g_player_rejoin_cooldown,
                     babase.Call(self._remove_player_from_waitlist, identifier),
                 )
 
