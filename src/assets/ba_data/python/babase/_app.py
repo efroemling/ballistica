@@ -437,6 +437,12 @@ class App:
         self._native_shutdown_complete_called = True
         self._update_state()
 
+    def on_native_active_changed(self) -> None:
+        """Called by the native layer when the app active state changes."""
+        assert _babase.in_logic_thread()
+        if self._mode is not None:
+            self._mode.on_app_active_changed()
+
     def read_config(self) -> None:
         """(internal)"""
         from babase._appconfig import read_app_config

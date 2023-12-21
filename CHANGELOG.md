@@ -1,4 +1,4 @@
-### 1.7.32 (build 21739, api 8, 2023-12-20)
+### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
 - Plugins window now displays 'No Plugins Installed' when no plugins are present (Thanks vishal332008!)
 - Old messages are now displayed as soon as you press 'Unmute Chat' (Thanks vishal332008!)
@@ -18,6 +18,11 @@
   player play, dev testing, etc. Hopefully this strikes a good balance now.
 - Removed the player-rejoin-cooldown mechanism from the C++ layer since it was
   redundant with the Python level one and didn't cover as many cases.
+- Restored the behavior from before 1.7.28 where backgrounding the app would
+  bring up the main menu and pause the action. Now it is implemented more
+  cleanly however (an `on_app_active_changed()` call in the `AppMode` class).
+  This means that it also applies to other platforms when the app reaches the
+  'inactive' state; for instance when minimizing the window on the SDL build.
 
 ### 1.7.31 (build 21727, api 8, 2023-12-17)
 - Added `bascenev1.get_connection_to_host_info_2()` which is an improved

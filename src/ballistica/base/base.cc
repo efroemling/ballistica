@@ -402,24 +402,6 @@ void BaseFeatureSet::UnsuspendApp() {
   g_base->network_reader->OnAppUnsuspend();
   g_base->networking->OnAppUnsuspend();
 
-  // When resuming from a suspended state, we may want to pause whatever
-  // game was running when we last were active.
-  //
-  // TODO(efro): we should make this smarter so it doesn't happen if we're
-  // in a network game or something that we can't pause; bringing up the
-  // menu doesn't really accomplish anything there.
-  //
-  // In general this probably should be handled at a higher level.
-  // if (g_core->should_pause_active_game) {
-  //   g_core->should_pause_active_game = false;
-
-  //   // If we've been completely backgrounded, send a menu-press command to
-  //   // the game; this will bring up a pause menu if we're in the game/etc.
-  //   if (!g_base->ui->MainMenuVisible()) {
-  //     g_base->ui->PushMainMenuPressCall(nullptr);
-  //   }
-  // }
-
   if (g_buildconfig.debug_build()) {
     Log(LogLevel::kDebug,
         "UnsuspendApp() completed in "
@@ -974,20 +956,30 @@ auto BaseFeatureSet::ClipboardGetText() -> std::string {
 
 void BaseFeatureSet::SetAppActive(bool active) {
   assert(InMainThread());
+
+  // Note: in some cases I'm seeing repeat active/inactive sets; for example
+  // on Mac SDL if I hide the app and then click on it in the dock I get a
+  // 'inactive' for the hide followed by a 'active', 'inactive', 'active' on
+  // the dock click. So our strategy here to filter that out is just to tell
+  // the logic thread that it has changed but have them directly read the
+  // shared atomic value, so they should generally skip over flip-flops like
+  // that and will just read the final value a few times in a row.
+
   g_core->platform->LowLevelDebugLog(
       "SetAppActive(" + std::to_string(active) + ")@"
       + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
 
-  printf("APP ACTIVE %d\n", static_cast<int>(active));
-
   // Issue a gentle warning if they are feeding us the same state twice in a
-  // row; might imply faulty logic.
+  // row; might imply faulty logic on an app-adapter or whatnot.
   if (app_active_set_ && app_active_ == active) {
     Log(LogLevel::kWarning, "SetAppActive called with state "
                                 + std::to_string(active) + " twice in a row.");
   }
   app_active_set_ = true;
   app_active_ = active;
+
+  g_base->logic->event_loop()->PushCall(
+      [] { g_base->logic->OnAppActiveChanged(); });
 }
 
 }  // namespace ballistica::base

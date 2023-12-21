@@ -23,6 +23,8 @@ class BasePython {
   void OnScreenSizeChange();
   void StepDisplayTime();
 
+  void OnAppActiveChanged();
+
   void Reset();
 
   /// Specific Python objects we hold in objs_.
@@ -113,6 +115,7 @@ class BasePython {
     kAppDevConsoleDoRefreshTabCall,
     kUnsupportedControllerMessageCall,
     kGetV2AccountIdCall,
+    kAppOnNativeActiveChangedCall,
     kLast  // Sentinel; must be at end.
   };
 

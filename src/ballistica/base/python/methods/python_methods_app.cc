@@ -49,7 +49,11 @@ static PyMethodDef PyAppNameDef = {
 static auto PyAppIsActive(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
 
-  if (g_base->app_active()) {
+  // Note: we're limiting this to the logic thread and using the logic
+  // thread's version of app-active here. If we ever need the main thread's
+  // version we'll have to do something different.
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (g_base->logic->app_active()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -1666,6 +1670,31 @@ static PyMethodDef PyGraphicsShutdownIsCompleteDef = {
     "(internal)\n",
 };
 
+// --------------------------- invoke_main_menu --------------------------------
+
+static auto PyInvokeMainMenu(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (!g_base->ui->MainMenuVisible()) {
+    g_base->ui->PushMainMenuPressCall(nullptr);
+  }
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyInvokeMainMenuDef = {
+    "invoke_main_menu",             // name
+    (PyCFunction)PyInvokeMainMenu,  // method
+    METH_NOARGS,                    // flags
+
+    "invoke_main_menu() -> None\n"
+    "\n"
+    "High level call to bring up the main menu if it is not present.\n"
+    "\n"
+    "This is essentially the same as pressing the menu button on a controller.",
+};
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
@@ -1724,6 +1753,7 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyAudioShutdownIsCompleteDef,
       PyGraphicsShutdownBeginDef,
       PyGraphicsShutdownIsCompleteDef,
+      PyInvokeMainMenuDef,
   };
 }
 

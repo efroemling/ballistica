@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_BASE_H_
 #define BALLISTICA_BASE_BASE_H_
 
+#include <atomic>
 #include <mutex>
 #include <set>
 #include <string>
@@ -815,7 +816,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   // Non-const bits (fixme: clean up access to these).
   TouchInput* touch_input{};
 
-  auto app_active() const { return app_active_; }
+  auto app_active() -> bool const { return app_active_; }
 
  private:
   BaseFeatureSet();
@@ -831,7 +832,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   bool have_clipboard_is_supported_{};
   bool clipboard_is_supported_{};
   bool app_active_set_{};
-  bool app_active_{true};
   bool app_suspended_{};
   bool shutdown_suppress_disallowed_{};
   bool tried_importing_plus_{};
@@ -844,6 +844,10 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   bool base_native_import_completed_{};
   bool basn_log_behavior_{};
   bool server_wrapper_managed_{};
+  /// Main thread informs logic thread when this changes, but then logic
+  /// reads original value set by main. need to be sure they never read
+  /// stale values.
+  std::atomic_bool app_active_{true};
   int shutdown_suppress_count_{};
 };
 

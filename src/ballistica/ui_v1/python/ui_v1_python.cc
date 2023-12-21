@@ -85,7 +85,6 @@ void UIV1Python::ShowURL(const std::string& url) {
 }
 
 void UIV1Python::HandleDeviceMenuPress(base::InputDevice* device) {
-  assert(device);
   assert(objs().Exists(ObjID::kDeviceMenuPressCall));
 
   // Ignore if input is locked or we've not yet got a root widget.

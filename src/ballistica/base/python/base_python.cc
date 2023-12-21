@@ -613,4 +613,9 @@ auto BasePython::CanPyStringEditAdapterBeReplaced(PyObject* o) -> bool {
   return false;
 }
 
+void BasePython::OnAppActiveChanged() {
+  assert(g_base->InLogicThread());
+  objs().Get(BasePython::ObjID::kAppOnNativeActiveChangedCall).Call();
+}
+
 }  // namespace ballistica::base

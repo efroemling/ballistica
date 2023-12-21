@@ -691,4 +691,21 @@ void Logic::ProcessPendingWork_() {
   UpdatePendingWorkTimer_();
 }
 
+void Logic::OnAppActiveChanged() {
+  assert(g_base->InLogicThread());
+
+  // Note: we keep our own active state here in the logic thread and
+  // simply refresh it from the atomic value from the main thread here.
+  // There are occasions where the main thread's value flip-flops back
+  // and forth quickly and we'll generally skip over those this way.
+  auto app_active = g_base->app_active();
+  if (app_active != app_active_) {
+    app_active_ = app_active;
+
+    // For now just informing Python (which informs Python level app-mode).
+    // Can expand this to inform everyone else if needed.
+    g_base->python->OnAppActiveChanged();
+  }
+}
+
 }  // namespace ballistica::base

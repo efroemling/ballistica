@@ -61,6 +61,8 @@ class Logic {
   void OnAppShutdown();
   void OnAppShutdownComplete();
 
+  void OnAppActiveChanged();
+
   void OnAppModeChanged();
 
   void DoApplyAppConfig();
@@ -118,6 +120,8 @@ class Logic {
 
   auto graphics_ready() const { return graphics_ready_; }
 
+  auto app_active() const { return app_active_; }
+
  private:
   void UpdateDisplayTimeForFrameDraw_();
   void UpdateDisplayTimeForHeadlessMode_();
@@ -140,6 +144,9 @@ class Logic {
   seconds_t recent_display_time_increments_[kDisplayTimeSampleCount]{};
   int recent_display_time_increments_index_{-1};
 
+  /// The logic thread maintains its own app-active state which is
+  /// driven by the app-thread's state in g_base.
+  bool app_active_{true};
   bool app_bootstrapping_complete_{};
   bool have_pending_loads_{};
   bool debug_log_display_time_{};
