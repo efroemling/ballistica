@@ -37,12 +37,12 @@
 - Added feature
 
 ### Vishal332008
-- Bug Fixer
+- QoL and Bug Fixer
 - Modder
 
 ### Era0S
 - Community Suggestions Implementer
-- Bug Fixer
+- QoL and Bug Fixer
 - Modder
 
 ### VinniTR
