@@ -47,9 +47,13 @@ class ServerConfig:
     # Max devices in the party. Note that this does *NOT* mean max players.
     # Any device in the party can have more than one player on it if they have
     # multiple controllers. Also, this number currently includes the server so
-    # generally make it 1 bigger than you need. Max-players is not currently
-    # exposed but I'll try to add that soon.
+    # generally make it 1 bigger than you need.
     max_party_size: int = 6
+
+    # Max players that can join a session. If present this will override the
+    # session's preferred max_players. if a value below 0 is given player limit
+    # will be removed.
+    session_max_players_override: int | None = None
 
     # Options here are 'ffa' (free-for-all), 'teams' and 'coop' (cooperative)
     # This value is ignored if you supply a playlist_code (see below).

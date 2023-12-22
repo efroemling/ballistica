@@ -427,6 +427,10 @@ class ServerController:
             self._config.player_rejoin_cooldown
         )
 
+        bascenev1.set_max_players_override(
+            self._config.session_max_players_override
+        )
+
         # And here.. we.. go.
         if self._config.stress_test_players is not None:
             # Special case: run a stress test.
