@@ -101,8 +101,8 @@ class ClassicSubsystem(babase.AppSubsystem):
         self.maps: dict[str, type[bascenev1.Map]] = {}
 
         # Gameplay.
-        self.teams_series_length = 7
-        self.ffa_series_length = 24
+        self.teams_series_length = 7  # deprecated, left for old mods
+        self.ffa_series_length = 24  # deprecated, left for old mods
         self.coop_session_args: dict = {}
 
         # UI.
