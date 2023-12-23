@@ -1,5 +1,6 @@
 ### 1.7.33 (build 21743, api 8, 2023-12-21)
 - Exposed an override for `bascenev1.Session`'s max players on servers (by EraOSBeta)
+- Added UI for customizing teams and FFA series length (by EraOSBeta, idea by 3alTemp)
 
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
