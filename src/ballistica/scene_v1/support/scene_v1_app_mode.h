@@ -96,11 +96,14 @@ class SceneV1AppMode : public base::AppMode {
   auto debug_speed_mult() const -> float { return debug_speed_mult_; }
   auto replay_speed_exponent() const -> int { return replay_speed_exponent_; }
   auto replay_speed_mult() const -> float { return replay_speed_mult_; }
+  auto is_replay_paused() const -> bool { return replay_paused_; }
   void OnScreenSizeChange() override;
   auto kick_idle_players() const -> bool { return kick_idle_players_; }
   void LanguageChanged() override;
   void SetDebugSpeedExponent(int val);
   void SetReplaySpeedExponent(int val);
+  void PauseReplay();
+  void ResumeReplay();
   void set_admin_public_ids(const std::set<std::string>& ids) {
     admin_public_ids_ = ids;
   }
@@ -223,6 +226,7 @@ class SceneV1AppMode : public base::AppMode {
   bool game_roster_dirty_{};
   bool kick_vote_in_progress_{};
   bool kick_voting_enabled_{true};
+  bool replay_paused_{false};
 
   cJSON* game_roster_{};
   millisecs_t last_game_roster_send_time_{};

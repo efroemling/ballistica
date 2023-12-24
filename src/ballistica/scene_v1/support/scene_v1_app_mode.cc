@@ -1224,6 +1224,14 @@ void SceneV1AppMode::SetReplaySpeedExponent(int val) {
   replay_speed_mult_ = powf(2.0f, static_cast<float>(replay_speed_exponent_));
 }
 
+void SceneV1AppMode::PauseReplay() {
+  replay_paused_ = true;
+}
+
+void SceneV1AppMode::ResumeReplay() {
+  replay_paused_ = false;
+}
+
 void SceneV1AppMode::SetDebugSpeedExponent(int val) {
   debug_speed_exponent_ = val;
   debug_speed_mult_ = powf(2.0f, static_cast<float>(debug_speed_exponent_));
