@@ -36,7 +36,7 @@ ClientSessionReplay::~ClientSessionReplay() {
 
   // we no longer are responsible for feeding clients to this device..
   appmode->connections()->UnregisterClientController(this);
-
+  appmode->ResumeReplay();
   if (file_) {
     fclose(file_);
     file_ = nullptr;
