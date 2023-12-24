@@ -32,7 +32,16 @@
 
 #define WIN32_LEAN_AND_MEAN  // Exclude rarely-used stuff from Windows headers
 
-#define BA_PLATFORM_STRING "x86_windows"
+#if defined(_M_ARM64)
+#define BA_PLATFORM_STRING "windows arm64"
+#elif defined(_M_IX86)
+#define BA_PLATFORM_STRING "windows x86"
+#elif defined(_M_X64)
+#define BA_PLATFORM_STRING "windows x86_64"
+#else
+#error unknown cpu architecture
+#endif
+
 #define BA_OSTYPE_WINDOWS 1
 
 #define BA_SOCKET_SEND_DATA_TYPE char

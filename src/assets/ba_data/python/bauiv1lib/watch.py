@@ -55,8 +55,8 @@ class WatchWindow(bui.Window):
         self._my_replay_rename_text: bui.Widget | None = None
         self._r = 'watchWindow'
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 1240 if uiscale is bui.UIScale.SMALL else 1040
-        x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 1440 if uiscale is bui.UIScale.SMALL else 1040
+        x_inset = 200 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
             578
             if uiscale is bui.UIScale.SMALL
@@ -598,6 +598,7 @@ class WatchWindow(bui.Window):
                     edit=txt,
                     up_widget=self._tab_row.tabs[self.TabID.MY_REPLAYS].button,
                 )
+                self._my_replay_selected = name
 
     def _save_state(self) -> None:
         try:
@@ -663,11 +664,16 @@ class WatchWindow(bui.Window):
     def _back(self) -> None:
         from bauiv1lib.mainmenu import MainMenuWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            MainMenuWindow(transition='in_left').get_root_widget()
+            MainMenuWindow(transition='in_left').get_root_widget(),
+            from_window=self._root_widget,
         )

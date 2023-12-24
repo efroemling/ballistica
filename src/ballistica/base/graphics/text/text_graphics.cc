@@ -116,8 +116,7 @@ TextGraphics::TextGraphics() {
     }
   }
 
-  // init glyph values for our big font page
-  // (a 8x8 array)
+  // Init glyph values for our big font page (a 8x8 array).
   {
     float x_offs = 0.009f;
     float y_offs = 0.0059f;
@@ -284,7 +283,7 @@ TextGraphics::TextGraphics() {
             (1.0f / 8.0f) * static_cast<float>(x + 1) + x_offs + scale_extra;
         g.tex_max_y = (1.0f / 8.0f) * static_cast<float>(y) + y_offs;
 
-        // just scooted letters over.. account for that
+        // Just scooted letters over; account for that.
         float foo_x = 0.0183f;
         float foo_y = 0.000f;
         g.tex_min_x += foo_x;
@@ -292,12 +291,12 @@ TextGraphics::TextGraphics() {
         g.tex_min_y += foo_y;
         g.tex_max_y += foo_y;
 
-        // clamp based on char width
+        // Clamp based on char width.
         float scale = w * 1.32f;
         g.x_size *= scale;
         g.tex_max_x = g.tex_min_x + (g.tex_max_x - g.tex_min_x) * scale;
 
-        // add bot offset
+        // Add bot offset.
         if (bot_offset != 0.0f) {
           g.tex_min_y = g.tex_max_y
                         + (g.tex_min_y - g.tex_max_y)
@@ -305,7 +304,7 @@ TextGraphics::TextGraphics() {
           g.pen_offset_y -= bot_offset;
           g.y_size += bot_offset;
         }
-        // add left offset
+        // Add left offset.
         if (left_offset != 0.0f) {
           g.tex_min_x = g.tex_max_x
                         + (g.tex_min_x - g.tex_max_x)
@@ -313,14 +312,14 @@ TextGraphics::TextGraphics() {
           g.pen_offset_x -= left_offset;
           g.x_size += left_offset;
         }
-        // add right offset
+        // Add right offset.
         if (right_offset != 0.0f) {
           g.tex_max_x = g.tex_min_x
                         + (g.tex_max_x - g.tex_min_x)
                               * ((g.x_size + right_offset) / g.x_size);
           g.x_size += right_offset;
         }
-        // add top offset
+        // Add top offset.
         if (top_offset != 0.0f) {
           g.tex_max_y = g.tex_min_y
                         + (g.tex_max_y - g.tex_min_y)
@@ -844,13 +843,13 @@ void TextGraphics::GetFontPageCharRange(int page, uint32_t* first_char,
   // Our special pages:
   switch (page) {
     case static_cast<int>(FontPage::kOSRendered): {
-      // we allow the OS to render anything not in one of our glyph textures
-      // (technically this overlaps the private-use range which we use our own
-      // textures for, but that's handled as a special-case by
-      // TextGroup::setText
+      // We allow the OS to render anything not in one of our glyph textures
+      // (technically this overlaps the private-use range which we use our
+      // own textures for, but that's handled as a special-case by
+      // TextGroup::SetText.
       (*first_char) = kGlyphCount;
-      (*last_char) = kTextMaxUnicodeVal;  // hmm what's the max unicode value we
-                                          // should ever see?..
+      // hmm what's the max unicode value we should ever see?..
+      (*last_char) = kTextMaxUnicodeVal;
       break;
     }
     case static_cast<int>(FontPage::kExtras1): {
@@ -887,52 +886,57 @@ void TextGraphics::GetFontPagesForText(const std::string& text,
   int last_page = -1;
   std::vector<uint32_t> unicode = Utils::UnicodeFromUTF8(text, "c03853");
   for (uint32_t val : unicode) {
-    int page;
+    int page{-1};
 
-    // Hack: allow showing euro even if we don't support unicode font rendering.
-    if (g_buildconfig.enable_os_font_rendering()) {
-      if (val == 8364) {
-        val = 0xE000;
-      }
-    }
+    // Hack: allow showing euro even if we don't support unicode font
+    // rendering.
+    // if (g_buildconfig.enable_os_font_rendering()) {
+    //   if (val == 8364) {
+    //     val = 0xE000;
+    //   }
+    // }
 
-    // For values in the custom-char range (U+E000–U+F8FF) we point at our own
-    // custom page(s)
+    bool covered{};
+
+    // For values in the custom-char range (U+E000–U+F8FF) we point at our
+    // own custom page(s)
     if (val >= 0xE000 && val <= 0xF8FF) {
       // The 25 chars after this are in our fontExtras sheet.
       if (val < 0xE000 + 25) {
         // Special value denoting our custom font page.
         page = static_cast<int>(FontPage::kExtras1);
+        covered = true;
       } else if (val < 0xE000 + 50) {
         // Special value denoting our custom font page.
         page = static_cast<int>(FontPage::kExtras2);
+        covered = true;
       } else if (val < 0xE000 + 75) {
         // Special value denoting our custom font page.
         page = static_cast<int>(FontPage::kExtras3);
+        covered = true;
       } else if (val < 0xE000 + 100) {
         // Special value denoting our custom font page.
         page = static_cast<int>(FontPage::kExtras4);
-      } else {
-        // We dont cover this.. just go with '?'
-        val = '?';
-        page = g_glyph_map[val];
+        covered = true;
       }
-    } else if (val >= kGlyphCount) {
-      // Otherwise if its outside of our texture-coverage area.
+    } else if (val < kGlyphCount) {
+      page = g_glyph_map[val];
+      covered = true;
+    }
+
+    if (!covered) {
       if (g_buildconfig.enable_os_font_rendering()) {
         page = static_cast<int>(FontPage::kOSRendered);
       } else {
         val = '?';
         page = g_glyph_map[val];
       }
-    } else {
-      // yay we cover it!
-      page = g_glyph_map[val];
     }
-    // compare to lastPage to avoid doing a set insert for *everything* since
-    // most will be the same
+
+    // Compare to last_page to avoid doing a set insert for *everything*
+    // since most will be the same.
     if (page != last_page) {
-      (*font_pages).insert(page);
+      font_pages->insert(page);
       last_page = page;
     }
   }
@@ -1009,12 +1013,8 @@ void TextGraphics::GetOSTextSpanBoundsAndWidth(const std::string& s, Rect* r,
     // Send this entry to the back of the list since we used it.
     text_span_bounds_cache_.erase(entry->list_iterator_);
 
-    // I guess inspection doesn't realize entry lives on after this?...
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "UnusedValue"
     entry->list_iterator_ =
         text_span_bounds_cache_.insert(text_span_bounds_cache_.end(), entry);
-#pragma clang diagnostic pop
     return;
   }
   auto entry(Object::New<TextSpanBoundsCacheEntry>());
@@ -1068,7 +1068,9 @@ auto TextGraphics::GetStringWidth(const char* text, bool big) -> float {
         line_length += GetOSTextSpanWidth(s);
         os_span.clear();
       }
-      if (line_length > max_line_length) max_line_length = line_length;
+      if (line_length > max_line_length) {
+        max_line_length = line_length;
+      }
       line_length = 0;
       t++;
     } else {
@@ -1145,7 +1147,9 @@ void TextGraphics::BreakUpString(const char* text, float width,
         s_begin = t;
       }
     } else {
-      if (*t == 0) throw Exception();
+      if (*t == 0) {
+        throw Exception();
+      }
       uint32_t val = Utils::GetUTF8Value(t);
       Utils::AdvanceUTF8(&t);
 

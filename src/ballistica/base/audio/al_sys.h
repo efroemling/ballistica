@@ -17,8 +17,16 @@
 #include <alc.h>
 #endif
 
-#if BA_OSTYPE_ANDROID
+#if BA_OPENAL_IS_SOFT
+#define AL_ALEXT_PROTOTYPES
 #include <alext.h>
+// Has not been formalized into an extension yet (from alc/inprogext.h"
+// typedef void(ALC_APIENTRY* LPALSOFTLOGCALLBACK)(void* userptr, char level,
+//                                                 const char* message,
+//                                                 int length) noexcept;
+// typedef void(ALC_APIENTRY* LPALSOFTSETLOGCALLBACK)(LPALSOFTLOGCALLBACK
+// callback,
+//                                                    void* userptr) noexcept;
 #endif
 
 #define CHECK_AL_ERROR _check_al_error(__FILE__, __LINE__)

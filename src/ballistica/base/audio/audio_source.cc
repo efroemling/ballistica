@@ -15,7 +15,7 @@ AudioSource::AudioSource(int id_in) : id_(id_in) {}
 AudioSource::~AudioSource() { assert(client_queue_size_ == 0); }
 
 void AudioSource::MakeAvailable(uint32_t play_id_new) {
-  assert(AudioServer::source_id_from_play_id(play_id_new) == id_);
+  assert(AudioServer::SourceIdFromPlayId(play_id_new) == id_);
   assert(client_queue_size_ == 0);
   assert(locked());
   play_id_ = play_id_new;

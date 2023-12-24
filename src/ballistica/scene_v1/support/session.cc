@@ -7,7 +7,7 @@
 namespace ballistica::scene_v1 {
 
 Session::Session() {
-  g_core->session_count++;
+  g_scene_v1->session_count++;
 
   auto* appmode = SceneV1AppMode::GetActiveOrThrow();
 
@@ -15,7 +15,7 @@ Session::Session() {
   appmode->SetForegroundSession(this);
 }
 
-Session::~Session() { g_core->session_count--; }
+Session::~Session() { g_scene_v1->session_count--; }
 
 void Session::Update(int time_advance_millisecs, double time_advance) {}
 
@@ -32,8 +32,6 @@ void Session::Draw(base::FrameDef*) {}
 void Session::OnScreenSizeChange() {}
 
 void Session::LanguageChanged() {}
-
-void Session::GraphicsQualityChanged(base::GraphicsQuality q) {}
 
 void Session::DebugSpeedMultChanged() {}
 

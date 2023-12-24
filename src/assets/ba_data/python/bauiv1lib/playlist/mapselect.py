@@ -44,8 +44,8 @@ class PlaylistMapSelectWindow(bui.Window):
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        width = 715 if uiscale is bui.UIScale.SMALL else 615
-        x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
+        width = 815 if uiscale is bui.UIScale.SMALL else 615
+        x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         height = (
             400
             if uiscale is bui.UIScale.SMALL
@@ -273,6 +273,10 @@ class PlaylistMapSelectWindow(bui.Window):
     def _select(self, map_name: str) -> None:
         from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._config['settings']['map'] = map_name
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
@@ -285,7 +289,8 @@ class PlaylistMapSelectWindow(bui.Window):
                 default_selection='map',
                 transition='in_left',
                 edit_info=self._edit_info,
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _select_with_delay(self, map_name: str) -> None:
@@ -295,6 +300,10 @@ class PlaylistMapSelectWindow(bui.Window):
 
     def _cancel(self) -> None:
         from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
@@ -307,5 +316,6 @@ class PlaylistMapSelectWindow(bui.Window):
                 default_selection='map',
                 transition='in_left',
                 edit_info=self._edit_info,
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )

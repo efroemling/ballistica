@@ -121,7 +121,8 @@ class AudioSettingsWindow(bui.Window):
             displayname=bui.Lstr(resource=self._r + '.soundVolumeText'),
             minval=0.0,
             maxval=1.0,
-            increment=0.1,
+            increment=0.05,
+            as_percent=True,
         )
         if bui.app.ui_v1.use_toolbars:
             bui.widget(
@@ -137,9 +138,10 @@ class AudioSettingsWindow(bui.Window):
             displayname=bui.Lstr(resource=self._r + '.musicVolumeText'),
             minval=0.0,
             maxval=1.0,
-            increment=0.1,
+            increment=0.05,
             callback=music.music_volume_changed,
             changesound=False,
+            as_percent=True,
         )
 
         v -= 0.5 * spacing
@@ -235,6 +237,10 @@ class AudioSettingsWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.soundtrack import browser as stb
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         # We require disk access for soundtracks;
         # if we don't have it, request it.
         if not bui.have_permission(bui.Permission.STORAGE):
@@ -254,12 +260,17 @@ class AudioSettingsWindow(bui.Window):
         bui.app.ui_v1.set_main_menu_window(
             stb.SoundtrackBrowserWindow(
                 origin_widget=self._soundtrack_button
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings import allsettings
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         self._save_state()
         bui.containerwidget(
@@ -269,7 +280,8 @@ class AudioSettingsWindow(bui.Window):
         bui.app.ui_v1.set_main_menu_window(
             allsettings.AllSettingsWindow(
                 transition='in_left'
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _save_state(self) -> None:

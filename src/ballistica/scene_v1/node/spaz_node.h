@@ -277,7 +277,6 @@ class SpazNode : public Node {
 
   // Reset to a standing, non-moving state at the given point.
   void Stand(float x, float y, float z, float angle);
-  void OnGraphicsQualityChanged(base::GraphicsQuality q) override;
   void UpdateForGraphicsQuality(base::GraphicsQuality q);
   void UpdateAreaOfInterest();
   auto CollideCallback(dContact* c, int count, RigidBody* colliding_body,
@@ -515,6 +514,7 @@ class SpazNode : public Node {
   bool has_eyelids_{true};
   bool running_{};
   bool billboard_cross_out_{};
+  base::GraphicsQuality graphics_quality_{};
   Object::Ref<RigidBody> hair_front_right_body_;
   JointFixedEF* hair_front_right_joint_{};
   Object::Ref<RigidBody> hair_front_left_body_;

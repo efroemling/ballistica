@@ -55,6 +55,7 @@ class SigningConfig:
 
 class _Section(Enum):
     COMPILEC = 'CompileC'
+    COMPILEXCSTRINGS = 'CompileXCStrings'
     SWIFTCOMPILE = 'SwiftCompile'
     SWIFTGENERATEPCH = 'SwiftGeneratePch'
     SWIFTDRIVER = 'SwiftDriver'
@@ -91,6 +92,7 @@ class _Section(Enum):
     EXTRACTAPPINTENTSMETADATA = 'ExtractAppIntentsMetadata'
     SWIFTMERGEGENERATEDHEADERS = 'SwiftMergeGeneratedHeaders'
     GENERATEDSYMFILE = 'GenerateDSYMFile'
+    GENERATEASSETSYMBOLS = 'GenerateAssetSymbols'
 
 
 class XCodeBuild:
@@ -575,6 +577,12 @@ class XCodeBuild:
                 line,
                 ignore_line_starts=['builtin-validationUtility'],
             )
+        elif self._section is _Section.COMPILEXCSTRINGS:
+            self._print_simple_section_line(
+                line,
+                prefix='Compiling strings',
+                ignore_line_start_tails=['/xcstringstool'],
+            )
         elif self._section is _Section.CONVERTICONSETFILE:
             self._print_simple_section_line(
                 line,
@@ -653,6 +661,9 @@ class XCodeBuild:
                     '/copypng',
                     '/iconutil',
                 ],
+                ignore_containing=[
+                    'note: detected encoding of input file as Unicode (UTF-8)'
+                ],
             )
         elif self._section is _Section.PROCESSPRODUCTPACKAGING:
             if '.net.froemling.ballistica.ios"' in line:
@@ -689,6 +700,17 @@ class XCodeBuild:
                     '"com.apple.Music.library.read",',
                 ],
             )
+        elif self._section is _Section.GENERATEASSETSYMBOLS:
+            self._print_simple_section_line(
+                line,
+                ignore_containing=[
+                    '/* com.apple.actool.compilation-results */',
+                    '/GeneratedAssetSymbols-Index.plist',
+                    '/GeneratedAssetSymbols.h',
+                    '/GeneratedAssetSymbols.swift',
+                ],
+            )
+
         elif self._section is _Section.PROCESSPRODUCTPACKAGINGDER:
             self._print_simple_section_line(
                 line,
@@ -944,12 +966,16 @@ class XCodeBuild:
         prefix_index: int | None = None,
         ignore_line_starts: list[str] | None = None,
         ignore_line_start_tails: list[str] | None = None,
+        ignore_containing: list[str] | None = None,
         prefix_unexpected: bool = True,
     ) -> None:
+        # pylint: disable=too-many-branches
         if ignore_line_starts is None:
             ignore_line_starts = []
         if ignore_line_start_tails is None:
             ignore_line_start_tails = []
+        if ignore_containing is None:
+            ignore_containing = []
 
         # First line of the section.
         if self._section_line_count == 0:
@@ -975,6 +1001,8 @@ class XCodeBuild:
                 return
         if any(splits[0].endswith(tail) for tail in ignore_line_start_tails):
             return
+        if any(c in line for c in ignore_containing):
+            return
 
         # Fall back on printing anything we don't recognize.
         if prefix is None and prefix_unexpected:
@@ -983,8 +1011,8 @@ class XCodeBuild:
             # on to clarify in that case (unless requested not to).
             assert self._section is not None
             sys.stdout.write(
-                f'{Clr.YLW}Unexpected {self._section.value}'
-                f' Output:{Clr.RST} {line}'
+                f'{Clr.YLW}Unfiltered Output (Section {self._section.value}):'
+                f'{Clr.RST} {line}'
             )
         else:
             sys.stdout.write(line)

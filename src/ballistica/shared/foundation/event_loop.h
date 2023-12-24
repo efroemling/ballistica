@@ -25,10 +25,6 @@ class EventLoop {
                      ThreadSource source = ThreadSource::kCreate);
   virtual ~EventLoop();
 
-  void ClearCurrentThreadName();
-
-  static auto CurrentThreadName() -> std::string;
-
   static void SetEventLoopsSuspended(bool enable);
   static auto AreEventLoopsSuspended() -> bool;
 
@@ -45,25 +41,20 @@ class EventLoop {
 
   auto thread_id() const -> std::thread::id { return thread_id_; }
 
-  // Needed in rare cases where we jump physical threads.
-  // (Our 'main' thread on Android can switch under us as
-  // rendering contexts are recreated in new threads/etc.)
-  // void set_thread_id(std::thread::id id) { thread_id_ = id; }
-
   void RunToCompletion();
   void RunSingleCycle();
 
   auto identifier() const -> EventLoopID { return identifier_; }
 
-  // Register a timer to run on the thread.
-  auto NewTimer(millisecs_t length, bool repeat,
-                const Object::Ref<Runnable>& runnable) -> Timer*;
+  /// Register a timer to run on the thread.
+  auto NewTimer(microsecs_t length, bool repeat, Runnable* runnable) -> Timer*;
 
   Timer* GetTimer(int id);
   void DeleteTimer(int id);
-  /// Add a runnable to this thread's event-loop.
-  /// Pass a Runnable that has been allocated with NewUnmanaged().
-  /// It will be owned and disposed of by the thread.
+
+  /// Add a runnable to this thread's event-loop. Pass a Runnable that has
+  /// been allocated with NewUnmanaged(). It will be owned and disposed of
+  /// by the thread.
   void PushRunnable(Runnable* runnable);
 
   /// Convenience function to push a lambda as a runnable.
@@ -72,7 +63,8 @@ class EventLoop {
     PushRunnable(NewLambdaRunnableUnmanaged(lambda));
   }
 
-  /// Add a runnable to this thread's event-loop and wait until it completes.
+  /// Add a runnable to this thread's event-loop and wait until it
+  /// completes.
   void PushRunnableSynchronous(Runnable* runnable);
 
   /// Convenience function to push a lambda as a runnable.
@@ -102,6 +94,8 @@ class EventLoop {
   auto suspended() { return suspended_; }
   auto done() -> bool { return done_; }
 
+  auto name() const { return name_; }
+
  private:
   struct ThreadMessage_ {
     enum class Type { kShutdown = 999, kRunnable, kSuspend, kUnsuspend };
@@ -116,9 +110,7 @@ class EventLoop {
         : type(type), runnable(runnable), completion_flag{completion_flag} {}
   };
   auto CheckPushRunnableSafety_() -> bool;
-  void SetInternalThreadName_(const std::string& name);
   void WaitForNextEvent_(bool single_cycle);
-  void LoopUpkeep_(bool single_cycle);
   void LogThreadMessageTally_(
       std::vector<std::pair<LogLevel, std::string>>* log_entries);
   void PushLocalRunnable_(Runnable* runnable, bool* completion_flag);
@@ -155,34 +147,24 @@ class EventLoop {
 
   void BootstrapThread_();
 
+  EventLoopID identifier_{EventLoopID::kInvalid};
+  ThreadSource source_{};
+  bool bootstrapped_{};
   bool writing_tally_{};
   bool suspended_{};
-  millisecs_t last_suspend_time_{};
-  int messages_since_suspended_{};
-  millisecs_t last_suspended_message_report_time_{};
   bool done_{};
-  ThreadSource source_;
-  int listen_sd_{};
-  std::thread::id thread_id_{};
-  EventLoopID identifier_{EventLoopID::kInvalid};
-  millisecs_t last_complaint_time_{};
   bool acquires_python_gil_{};
-
-  // FIXME: Should generalize this to some sort of PlatformThreadData class.
-#if BA_XCODE_BUILD
-  void* auto_release_pool_{};
-#endif
-
-  bool bootstrapped_{};
+  std::thread::id thread_id_{};
+  std::condition_variable thread_message_cv_;
+  std::condition_variable client_listener_cv_;
   std::list<std::pair<Runnable*, bool*>> runnables_;
   std::list<Runnable*> suspend_callbacks_;
   std::list<Runnable*> unsuspend_callbacks_;
-  std::condition_variable thread_message_cv_;
-  std::mutex thread_message_mutex_;
   std::list<ThreadMessage_> thread_messages_;
-  std::condition_variable client_listener_cv_;
+  std::mutex thread_message_mutex_;
   std::mutex client_listener_mutex_;
   std::list<std::vector<char>> data_to_client_;
+  std::string name_;
   PyThreadState* py_thread_state_{};
   TimerList timers_;
 };

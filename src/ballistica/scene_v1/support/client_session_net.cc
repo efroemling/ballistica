@@ -5,6 +5,7 @@
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/net_graph.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/scene_v1/connection/connection_to_host.h"
 #include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 
@@ -12,24 +13,28 @@ namespace ballistica::scene_v1 {
 
 ClientSessionNet::ClientSessionNet() {
   // Sanity check: we should only ever be writing one replay at once.
-  if (g_core->replay_open) {
+  if (g_scene_v1->replay_open) {
     Log(LogLevel::kError,
-        "g_replay_open true at netclient start; shouldn't happen.");
+        "g_scene_v1->replay_open true at netclient start;"
+        " shouldn't happen.");
   }
   assert(g_base->assets_server);
-  g_base->assets_server->PushBeginWriteReplayCall(kProtocolVersion);
+
+  // We always write replays as the highest protocol version we support.
+  g_base->assets_server->PushBeginWriteReplayCall(kProtocolVersionMax);
   writing_replay_ = true;
-  g_core->replay_open = true;
+  g_scene_v1->replay_open = true;
 }
 
 ClientSessionNet::~ClientSessionNet() {
   if (writing_replay_) {
     // Sanity check: we should only ever be writing one replay at once.
-    if (!g_core->replay_open) {
+    if (!g_scene_v1->replay_open) {
       Log(LogLevel::kError,
-          "g_replay_open false at net-client close; shouldn't happen.");
+          "g_scene_v1->replay_open false at net-client close;"
+          " shouldn't happen.");
     }
-    g_core->replay_open = false;
+    g_scene_v1->replay_open = false;
     assert(g_base->assets_server);
     g_base->assets_server->PushEndWriteReplayCall();
     writing_replay_ = false;
@@ -116,24 +121,27 @@ void ClientSessionNet::UpdateBuffering() {
     set_consume_rate(new_consume_rate);
 
     if (g_base->graphics->network_debug_info_display_enabled()) {
+      // Plug display time into these graphs to get smoother looking updates.
+      auto now_d = g_base->logic->display_time() * 1000.0;
+
       if (auto* graph =
               g_base->graphics->GetDebugGraph("1: packet delay", false)) {
-        graph->AddSample(now, current_delay_);
+        graph->AddSample(now_d, current_delay_);
       }
       if (auto* graph =
               g_base->graphics->GetDebugGraph("2: max delay bucketed", false)) {
-        graph->AddSample(now, last_bucket_max_delay_);
+        graph->AddSample(now_d, last_bucket_max_delay_);
       }
       if (auto* graph =
               g_base->graphics->GetDebugGraph("3: filtered delay", false)) {
-        graph->AddSample(now, max_delay_smoothed_);
+        graph->AddSample(now_d, max_delay_smoothed_);
       }
       if (auto* graph = g_base->graphics->GetDebugGraph("4: run rate", false)) {
-        graph->AddSample(now, new_consume_rate);
+        graph->AddSample(now_d, new_consume_rate);
       }
       if (auto* graph =
               g_base->graphics->GetDebugGraph("5: time buffered", true)) {
-        graph->AddSample(now, base_time_buffered());
+        graph->AddSample(now_d, base_time_buffered());
       }
     }
   }

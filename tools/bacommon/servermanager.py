@@ -143,8 +143,19 @@ class ServerConfig:
     # queue spamming attacks.
     enable_queue: bool = True
 
+    # Protocol version we host with. Currently the default is 33 which
+    # still allows older 1.4 game clients to connect. Explicitly setting
+    # to 35 no longer allows those clients but adds/fixes a few things
+    # such as making camera shake properly work in net games.
+    protocol_version: int | None = None
+
     # (internal) stress-testing mode.
     stress_test_players: int | None = None
+
+    # How many seconds individual players from a given account must wait
+    # before rejoining the game. This can help suppress exploits
+    # involving leaving and rejoining or switching teams rapidly.
+    player_rejoin_cooldown: float = 10.0
 
 
 # NOTE: as much as possible, communication from the server-manager to the

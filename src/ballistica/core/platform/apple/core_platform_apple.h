@@ -6,6 +6,7 @@
 
 #include <list>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -21,13 +22,11 @@ class CorePlatformApple : public CorePlatform {
   auto GenerateUUID() -> std::string override;
   auto DoGetConfigDirectoryMonolithicDefault()
       -> std::optional<std::string> override;
-  auto GetLocale() -> std::string override;
-  auto DoGetDeviceName() -> std::string override;
   auto DoHasTouchScreen() -> bool override;
-  auto GetUIScale() -> UIScale override;
+  auto GetDefaultUIScale() -> UIScale override;
   auto IsRunningOnDesktop() -> bool override;
-  void DisplayLog(const std::string& name, LogLevel level,
-                  const std::string& msg) override;
+  void EmitPlatformLog(const std::string& name, LogLevel level,
+                       const std::string& msg) override;
   void GetTextBoundsAndWidth(const std::string& text, Rect* r,
                              float* width) override;
   void FreeTextTexture(void* tex) override;
@@ -42,35 +41,32 @@ class CorePlatformApple : public CorePlatform {
   void ReportAchievement(const std::string& achievement) override;
   auto HaveLeaderboard(const std::string& game, const std::string& config)
       -> bool override;
-  void ShowOnlineScoreUI(const std::string& show, const std::string& game,
+  void ShowGameServiceUI(const std::string& show, const std::string& game,
                          const std::string& game_version) override;
-  auto NewAutoReleasePool() -> void* override;
-  void DrainAutoReleasePool(void* pool) override;
   void ResetAchievements() override;
-  void GameCenterLogin() override;
   auto IsOSPlayingMusic() -> bool override;
-  void OpenFileExternally(const std::string& path) override;
-  void OpenDirExternally(const std::string& path) override;
   void MacMusicAppInit() override;
   auto MacMusicAppGetVolume() -> int override;
   void MacMusicAppSetVolume(int volume) override;
-  void MacMusicAppGetLibrarySource() override;
   void MacMusicAppStop() override;
   auto MacMusicAppPlayPlaylist(const std::string& playlist) -> bool override;
   auto MacMusicAppGetPlaylists() -> std::list<std::string> override;
   auto GetPlatformName() -> std::string override;
   auto GetSubplatformName() -> std::string override;
 
-  auto DoClipboardIsSupported() -> bool override;
-  auto DoClipboardHasText() -> bool override;
-  void DoClipboardSetText(const std::string& text) override;
-  auto DoClipboardGetText() -> std::string override;
   auto GetDeviceUUIDInputs() -> std::list<std::string> override;
+  auto GetLocale() -> std::string override;
+  auto DoGetDeviceName() -> std::string override;
+  auto DoGetDeviceDescription() -> std::string override;
+  auto GetOSVersionString() -> std::string override;
+  auto CanShowBlockingFatalErrorDialog() -> bool override;
+  void BlockingFatalErrorDialog(const std::string& message) override;
 
  protected:
   auto DoGetDataDirectoryMonolithicDefault() -> std::string override;
 
  private:
+  std::optional<std::string> locale_;
 };
 
 }  // namespace ballistica::core

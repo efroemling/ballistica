@@ -17,7 +17,6 @@ class UIV1Python {
   void AddPythonClasses(PyObject* module);
   void ImportPythonObjs();
 
-  void LaunchStringEditOld(TextWidget* w);
   void InvokeStringEditor(PyObject* string_edit_adapter_instance);
   void HandleDeviceMenuPress(base::InputDevice* device);
   void ShowURL(const std::string& url);
@@ -39,6 +38,7 @@ class UIV1Python {
     kQuitWindowCall,
     kDeviceMenuPressCall,
     kShowURLWindowCall,
+    kDoubleTransitionOutWarningCall,
     kTextWidgetStringEditAdapterClass,
     kLast  // Sentinel; must be at end.
   };

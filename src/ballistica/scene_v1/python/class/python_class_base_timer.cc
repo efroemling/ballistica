@@ -94,7 +94,7 @@ auto PythonClassBaseTimer::tp_new(PyTypeObject* type, PyObject* args,
   self->timer_id_ = SceneV1Context::Current().NewTimer(
       TimeType::kBase, static_cast<millisecs_t>(length * 1000.0),
       static_cast<bool>(repeat),
-      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj));
+      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj).Get());
   self->have_timer_ = true;
 
   return reinterpret_cast<PyObject*>(self);

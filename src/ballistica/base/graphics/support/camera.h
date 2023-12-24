@@ -92,17 +92,11 @@ class Camera : public Object {
   void set_pan_speed_scale(float val) { pan_speed_scale_ = val; }
 
  private:
-  float pan_speed_scale_{1.0f};
-  bool lock_panning_{};
-  Vector3f vr_offset_{0.0f, 0.0f, 0.0f};
-  Vector3f vr_extra_offset_{0.0f, 0.0f, 0.0f};
-  Vector3f vr_offset_smooth_{0.0f, 0.0f, 0.0f};
-  millisecs_t last_mode_set_time_{};
-  std::list<AreaOfInterest> areas_of_interest_;
   CameraMode mode_{CameraMode::kFollow};
   bool manual_{};
   bool smooth_next_frame_{};
   bool have_real_areas_of_interest_{};
+  bool lock_panning_{};
 
   // Manual stuff.
   bool panning_{};
@@ -115,14 +109,34 @@ class Camera : public Object {
   bool mouse_left_down_{};
   bool mouse_middle_down_{};
   bool mouse_right_down_{};
+
+  bool happy_thoughts_mode_{};
+  bool x_constrained_{true};
+  float pan_speed_scale_{1.0f};
   float heading_{kInitialHeading};
-  Vector3f extra_pos_{0.0f, 0.0f, 0.0f};
-  Vector3f extra_pos_2_{0.0f, 0.0f, 0.0f};
   float area_of_interest_bounds_[6]{-9999, -9999, -9999, 9999, 9999, 9999};
   float pan_pos_{};
   float pan_speed_{};
   float pan_target_{};
   float shake_amount_{};
+  float target_radius_{2.0f};
+  float target_radius_smoothed_{2.0f};
+  float field_of_view_x_{5.0f};
+  float field_of_view_y_{kCameraFOVY};
+  float field_of_view_x_smoothed_{1.0f};
+  float field_of_view_y_smoothed_{1.0f};
+  float min_target_radius_{5.0f};
+  float area_of_interest_near_{1.0f};
+  float area_of_interest_far_{2.0f};
+  float xy_constrain_blend_{0.5f};
+  // millisecs_t last_mode_set_time_{};
+  millisecs_t last_listener_update_time_{};
+  millisecs_t time_{};
+  Vector3f vr_offset_{0.0f, 0.0f, 0.0f};
+  Vector3f vr_extra_offset_{0.0f, 0.0f, 0.0f};
+  Vector3f vr_offset_smooth_{0.0f, 0.0f, 0.0f};
+  Vector3f extra_pos_{0.0f, 0.0f, 0.0f};
+  Vector3f extra_pos_2_{0.0f, 0.0f, 0.0f};
   Vector3f shake_pos_{0.0f, 0.0f, 0.0f};
   Vector3f shake_vel_{0.0f, 0.0f, 0.0f};
   Vector3f position_{0.0f, 1.0f, -1.0f};
@@ -131,20 +145,8 @@ class Camera : public Object {
   Vector3f position_offset_smoothed_{0.0f, 0.0f, 0.0f};
   Vector3f smooth_speed_{0.0f, 0.0f, 0.0f};
   Vector3f smooth_speed_2_{0.0f, 0.0f, 0.0f};
-  float target_radius_{2.0f};
-  float target_radius_smoothed_{2.0f};
-  float field_of_view_x_{5.0f};
-  float field_of_view_y_{kCameraFOVY};
-  float field_of_view_x_smoothed_{1.0f};
-  float field_of_view_y_smoothed_{1.0f};
-  millisecs_t last_listener_update_time_{};
-  bool happy_thoughts_mode_{};
-  float min_target_radius_{5.0f};
   Vector3f up_{0.0f, 1.0f, 0.0f};
-  float area_of_interest_near_{1.0f};
-  float area_of_interest_far_{2.0f};
-  bool x_constrained_{true};
-  float xy_constrain_blend_{0.5f};
+  std::list<AreaOfInterest> areas_of_interest_;
   std::vector<Vector3f> area_of_interest_points_{{0.0f, 0.0f, 0.0f}};
 };
 

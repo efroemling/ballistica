@@ -27,14 +27,16 @@ SessionStream::SessionStream(HostSession* host_session, bool save_replay)
       host_session_{host_session} {
   if (save_replay) {
     // Sanity check - we should only ever be writing one replay at once.
-    if (g_core->replay_open) {
+    if (g_scene_v1->replay_open) {
       Log(LogLevel::kError,
-          "g_replay_open true at replay start; shouldn't happen.");
+          "g_scene_v1->replay_open true at replay start;"
+          " shouldn't happen.");
     }
+    // We always write replays as the max protocol version we support.
     assert(g_base->assets_server);
-    g_base->assets_server->PushBeginWriteReplayCall(kProtocolVersion);
+    g_base->assets_server->PushBeginWriteReplayCall(kProtocolVersionMax);
     writing_replay_ = true;
-    g_core->replay_open = true;
+    g_scene_v1->replay_open = true;
   }
 
   // If we're the live output-stream from a host-session,
@@ -51,11 +53,12 @@ SessionStream::~SessionStream() {
 
   if (writing_replay_) {
     // Sanity check: We should only ever be writing one replay at once.
-    if (!g_core->replay_open) {
+    if (!g_scene_v1->replay_open) {
       Log(LogLevel::kError,
-          "g_replay_open false at replay close; shouldn't happen.");
+          "g_scene_v1->replay_open false at replay close;"
+          " shouldn't happen.");
     }
-    g_core->replay_open = false;
+    g_scene_v1->replay_open = false;
     assert(g_base->assets_server);
     g_base->assets_server->PushEndWriteReplayCall();
     writing_replay_ = false;
@@ -185,14 +188,15 @@ void SessionStream::Fail() {
   Log(LogLevel::kError, "Error writing replay file");
   if (writing_replay_) {
     // Sanity check: We should only ever be writing one replay at once.
-    if (!g_core->replay_open) {
+    if (!g_scene_v1->replay_open) {
       Log(LogLevel::kError,
-          "g_replay_open false at replay close; shouldn't happen.");
+          "g_scene_v1->replay_open false at replay close;"
+          " shouldn't happen.");
     }
     assert(g_base->assets_server);
     g_base->assets_server->PushEndWriteReplayCall();
     writing_replay_ = false;
-    g_core->replay_open = false;
+    g_scene_v1->replay_open = false;
   }
 }
 
@@ -205,9 +209,6 @@ void SessionStream::Flush() {
   }
 }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "ConstantParameter"
-
 // Writes just a command.
 void SessionStream::WriteCommand(SessionCommand cmd) {
   assert(out_command_.empty());
@@ -218,8 +219,6 @@ void SessionStream::WriteCommand(SessionCommand cmd) {
   uint8_t* ptr = &out_command_[size];
   *ptr = static_cast<uint8_t>(cmd);
 }
-
-#pragma clang diagnostic pop
 
 // Writes a command plus an int to the stream, using whatever size is optimal.
 void SessionStream::WriteCommandInt32(SessionCommand cmd, int32_t value) {
@@ -1120,6 +1119,13 @@ void SessionStream::EmitBGDynamics(const base::BGDynamicsEmission& e) {
   fvals[6] = e.scale;
   fvals[7] = e.spread;
   WriteFloats(8, fvals);
+  EndCommand();
+}
+
+void SessionStream::EmitCameraShake(float intensity) {
+  WriteCommand(SessionCommand::kCameraShake);
+  // FIXME: We shouldn't need to be passing all these as full floats. :-(
+  WriteFloat(intensity);
   EndCommand();
 }
 

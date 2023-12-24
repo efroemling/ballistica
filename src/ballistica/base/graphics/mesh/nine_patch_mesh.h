@@ -18,7 +18,7 @@ class NinePatchMesh : public MeshIndexedSimpleFull {
 
   /// Calculate a border value for a NinePatchMesh based on dimensions and a
   /// desired max corner radius. For calculating left or right borders,
-  /// matching_dimension should be width and other_dimension should be
+  /// `matching_dimension` should be width and `other_dimension` should be
   /// height. For top or bottom borders it is the opposite.
   static auto BorderForRadius(float corner_radius, float matching_dimension,
                               float other_dimension) -> float {

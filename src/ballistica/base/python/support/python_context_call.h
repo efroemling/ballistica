@@ -11,10 +11,10 @@
 
 namespace ballistica::base {
 
-// A callable and ballistica context-state wrapped up in a convenient package.
-// Handy for use with user-submitted callbacks, as it restores context
-// state from when it was created and prints various useful bits of context
-// info on exceptions.
+// A callable and ballistica context-state wrapped up in a convenient
+// package. Handy for use with user-submitted callbacks, as it restores
+// context state from when it was created and prints various useful bits of
+// context info on exceptions.
 class PythonContextCall : public Object {
  public:
   static auto current_call() -> PythonContextCall* { return current_call_; }
@@ -37,35 +37,57 @@ class PythonContextCall : public Object {
   auto file_loc() const -> const std::string& { return file_loc_; }
   void PrintContext();
 
-  /// Run in an upcoming cycle of the logic thread.
-  /// Must be called from the logic thread.
-  /// This form creates a strong-reference so the context_ref-call is guaranteed
-  /// to exist until run.
+  /// Run in an upcoming cycle of the logic thread. Must be called from the
+  /// logic thread. This form creates a strong-reference so the
+  /// context_ref-call is guaranteed to exist until run.
   void Schedule();
-  /// Run in an upcoming cycle of the logic thread with provided args.
-  /// Must be called from the logic thread.
-  /// This form creates a strong-reference so the context_ref-call is guaranteed
-  /// to exist until run.
+
+  /// Run in an upcoming cycle of the logic thread with provided args. Must
+  /// be called from the logic thread. This form creates a strong-reference
+  /// so the context_ref-call is guaranteed to exist until run.
   void Schedule(const PythonRef& args);
-  /// Run in an upcoming cycle of the logic thread.
-  /// Must be called from the logic thread.
-  /// This form creates a weak-reference and is a no-op if the context_ref-call
-  /// is destroyed before its scheduled run.
+
+  /// Run in an upcoming cycle of the logic thread. Must be called from the
+  /// logic thread. This form creates a weak-reference and is a no-op if the
+  /// context_ref-call is destroyed before its scheduled run.
   void ScheduleWeak();
-  /// Run in an upcoming cycle of the logic thread with provided args.
-  /// Must be called from the logic thread.
-  /// This form creates a weak-reference and is a no-op if the context_ref-call
-  /// is destroyed before its scheduled run.
+
+  /// Run in an upcoming cycle of the logic thread with provided args. Must
+  /// be called from the logic thread. This form creates a weak-reference
+  /// and is a no-op if the context_ref-call is destroyed before its
+  /// scheduled run.
   void ScheduleWeak(const PythonRef& args);
+
+  /// Schedule a call to run as part of a current UI interaction such as a
+  /// button being clicked. Must be called from the logic thread. Calls
+  /// scheduled this way will be run as part of the handling of the event
+  /// that triggered them, though safely outside of any UI traversal. This
+  /// avoids pitfalls that can arise with regular Schedule() where calls
+  /// that run some action and then disable further UI interaction can get
+  /// run twice due to interaction not actually being disabled until the
+  /// next event loop cycle, potentially allowing multiple calls to be
+  /// scheduled before the disable happens.
+  void ScheduleInUIOperation();
+
+  /// Schedule a call to run as part of a current UI interaction such as a
+  /// button being clicked. Must be called from the logic thread. Calls
+  /// scheduled this way will be run as part of the handling of the event
+  /// that triggered them, though safely outside of any UI traversal. This
+  /// avoids pitfalls that can arise with regular Schedule() where calls
+  /// that run some action and then disable further UI interaction can get
+  /// run twice due to interaction not actually being disabled until the
+  /// next event loop cycle, potentially allowing multiple calls to be
+  /// scheduled before the disable happens.
+  void ScheduleInUIOperation(const PythonRef& args);
 
  private:
   void GetTrace();  // we try to grab basic trace info
-  std::string file_loc_;
+
   int line_{};
-  bool dead_ = false;
+  bool dead_{};
+  std::string file_loc_;
   PythonRef object_;
   base::ContextRef context_state_;
-  // base::Context* context_target_sanity_test_{};
   static PythonContextCall* current_call_;
 };
 

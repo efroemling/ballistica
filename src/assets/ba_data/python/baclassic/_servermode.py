@@ -423,6 +423,10 @@ class ServerController:
         bascenev1.set_public_party_stats_url(self._config.stats_url)
         bascenev1.set_public_party_enabled(self._config.party_is_public)
 
+        bascenev1.set_player_rejoin_cooldown(
+            self._config.player_rejoin_cooldown
+        )
+
         # And here.. we.. go.
         if self._config.stress_test_players is not None:
             # Special case: run a stress test.

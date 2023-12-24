@@ -82,12 +82,12 @@ void CoreFeatureSet::DoImport(const CoreConfig& config) {
 }
 
 CoreFeatureSet::CoreFeatureSet(CoreConfig config)
-    : main_thread_id{std::this_thread::get_id()},
+    : main_thread_id_{std::this_thread::get_id()},
       python{new CorePython()},
       platform{CorePlatform::Create()},
       core_config_{std::move(config)},
       last_app_time_measure_microsecs_{CorePlatform::GetCurrentMicrosecs()},
-      vr_mode{config.vr_mode} {
+      vr_mode_{config.vr_mode} {
   // We're a singleton. If there's already one of us, something's wrong.
   assert(g_core == nullptr);
 }
@@ -102,11 +102,6 @@ void CoreFeatureSet::PostInit() {
   RunSanityChecks();
 
   build_src_dir_ = CalcBuildSrcDir();
-
-  // Note: this checks g_core->main_thread_id which is why it must run in
-  // PostInit and not our constructor.
-  // main_event_loop_ = new EventLoop(EventLoopID::kMain,
-  // ThreadSource::kWrapCurrent);
 
   // On monolithic builds we need to bring up Python itself.
   if (g_buildconfig.monolithic_build()) {
@@ -277,7 +272,7 @@ void CoreFeatureSet::RunSanityChecks() {
             + static_type_name<decltype(testrunnable)>(true) + "'");
   }
 
-  if (vr_mode && !g_buildconfig.vr_build()) {
+  if (vr_mode_ && !g_buildconfig.vr_build()) {
     FatalError("vr_mode enabled in core-config but we are not a vr build.");
   }
 }
@@ -308,7 +303,7 @@ auto CoreFeatureSet::HeadlessMode() -> bool {
   return g_buildconfig.headless_build();
 }
 
-auto CoreFeatureSet::IsVRMode() -> bool { return core_config_.vr_mode; }
+// auto CoreFeatureSet::vr_mode() -> bool { return core_config_.vr_mode; }
 
 static void WaitThenDie(millisecs_t wait, const std::string& action) {
   CorePlatform::SleepMillisecs(wait);
@@ -373,12 +368,64 @@ void CoreFeatureSet::StartSuicideTimer(const std::string& action,
   }
 }
 
-// auto CoreFeatureSet::InMainThread() -> bool {
-//   return std::this_thread::get_id() == main_thread_id;
-//   // if (main_event_loop_) {
-//   //   return main_event_loop_->ThreadIsCurrent();
-//   // }
-//   // return false;
-// }
+void CoreFeatureSet::RegisterThread(const std::string& name) {
+  {
+    std::scoped_lock lock(thread_info_map_mutex_);
+
+    // Should be registering each thread just once.
+    assert(thread_info_map_.find(std::this_thread::get_id())
+           == thread_info_map_.end());
+    thread_info_map_[std::this_thread::get_id()] = name;
+  }
+
+  // Also set the name at the OS leve when possible. Prepend 'ballistica'
+  // since there's generally lots of other random threads in the mix.
+  //
+  // Note that we currently don't do this for our main thread because (on
+  // Linux at least) that changes the process name we see in top/etc. On
+  // other platforms we could reconsider, but its generally clear what the
+  // main thread is anyway in most scenarios.
+  if (!InMainThread()) {
+    g_core->platform->SetCurrentThreadName("ballistica " + name);
+  }
+}
+
+void CoreFeatureSet::UnregisterThread() {
+  std::scoped_lock lock(thread_info_map_mutex_);
+  auto i = thread_info_map_.find(std::this_thread::get_id());
+  assert(i != thread_info_map_.end());
+  if (i != thread_info_map_.end()) {
+    thread_info_map_.erase(i);
+  }
+}
+
+auto CoreFeatureSet::CurrentThreadName() -> std::string {
+  if (g_core == nullptr) {
+    return "unknown(not-yet-inited)";
+  }
+  {
+    std::scoped_lock lock(g_core->thread_info_map_mutex_);
+    auto i = g_core->thread_info_map_.find(std::this_thread::get_id());
+    if (i != g_core->thread_info_map_.end()) {
+      return i->second;
+    }
+  }
+
+  // Ask pthread for the thread name if we don't have one.
+  // FIXME - move this to platform.
+#if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS || BA_OSTYPE_LINUX
+  std::string name = "unknown (sys-name=";
+  char buffer[256];
+  int result = pthread_getname_np(pthread_self(), buffer, sizeof(buffer));
+  if (result == 0) {
+    name += std::string("\"") + buffer + "\")";
+  } else {
+    name += "<error " + std::to_string(result) + ">";
+  }
+  return name;
+#else
+  return "unknown";
+#endif
+}
 
 }  // namespace ballistica::core

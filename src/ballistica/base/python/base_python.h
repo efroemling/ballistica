@@ -15,13 +15,15 @@ class BasePython {
 
   void OnMainThreadStartApp();
   void OnAppStart();
-  void OnAppPause();
-  void OnAppResume();
+  void OnAppSuspend();
+  void OnAppUnsuspend();
   void OnAppShutdown();
   void OnAppShutdownComplete();
   void DoApplyAppConfig();
   void OnScreenSizeChange();
   void StepDisplayTime();
+
+  void OnAppActiveChanged();
 
   void Reset();
 
@@ -38,6 +40,8 @@ class BasePython {
     kConfig,
     kAppOnNativeBootstrappingCompleteCall,
     kResetToMainMenuCall,
+    kStoreConfigFullscreenOnCall,
+    kStoreConfigFullscreenOffCall,
     kSetConfigFullscreenOnCall,
     kSetConfigFullscreenOffCall,
     kNotSignedInScreenMessageCall,
@@ -46,6 +50,7 @@ class BasePython {
     kTemporarilyUnavailableMessageCall,
     kInProgressMessageCall,
     kErrorMessageCall,
+    kSuccessMessageCall,
     kPurchaseNotValidErrorCall,
     kPurchaseAlreadyInProgressErrorCall,
     kVROrientationResetCBMessageCall,
@@ -108,6 +113,9 @@ class BasePython {
     kDevConsoleStringEditAdapterClass,
     kGetDevConsoleTabNamesCall,
     kAppDevConsoleDoRefreshTabCall,
+    kUnsupportedControllerMessageCall,
+    kGetV2AccountIdCall,
+    kAppOnNativeActiveChangedCall,
     kLast  // Sentinel; must be at end.
   };
 

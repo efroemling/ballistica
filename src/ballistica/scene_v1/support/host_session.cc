@@ -40,7 +40,7 @@ HostSession::HostSession(PyObject* session_type_obj)
   // Create a timer to step our session scene.
   step_scene_timer_ =
       base_timers_.NewTimer(base_time_millisecs_, kGameStepMilliseconds, 0, -1,
-                            NewLambdaRunnable([this] { StepScene(); }));
+                            NewLambdaRunnable([this] { StepScene(); }).Get());
 
   // Set up our output-stream, which will go to a replay and/or the network.
   // We don't dump to a replay if we're doing the main menu; that replay
@@ -151,16 +151,6 @@ void HostSession::LanguageChanged() {
   // Also let all our activities know.
   for (auto&& i : host_activities_) {
     i->LanguageChanged();
-  }
-}
-
-void HostSession::GraphicsQualityChanged(base::GraphicsQuality q) {
-  // Let our internal scene know.
-  scene()->GraphicsQualityChanged(q);
-
-  // Let all our activities know.
-  for (auto&& i : host_activities_) {
-    i->GraphicsQualityChanged(q);
   }
 }
 
@@ -297,7 +287,7 @@ void HostSession::RemovePlayer(Player* player) {
       return;
     }
   }
-  BA_LOG_ERROR_TRACE("Player not found in HostSession::RemovePlayer()");
+  BA_LOG_ERROR_PYTHON_TRACE("Player not found in HostSession::RemovePlayer()");
 }
 
 void HostSession::IssuePlayerLeft(Player* player) {
@@ -776,8 +766,8 @@ void HostSession::GetCorrectionMessages(
 }
 
 auto HostSession::NewTimer(TimeType timetype, TimerMedium length, bool repeat,
-                           const Object::Ref<Runnable>& runnable) -> int {
-  assert(runnable.IsValidManagedObject());
+                           Runnable* runnable) -> int {
+  assert(Object::IsValidManagedObject(runnable));
 
   // We currently support game and base timers.
   switch (timetype) {

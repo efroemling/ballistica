@@ -2,6 +2,8 @@
 
 #include "ballistica/core/platform/core_platform.h"
 
+#include <stdexcept>
+
 #if !BA_OSTYPE_WINDOWS
 #include <dirent.h>
 #endif
@@ -9,10 +11,15 @@
 
 // Trying to avoid platform-specific headers here except for
 // a few mostly-cross-platform bits where its worth the mess.
-#if !BA_OSTYPE_WINDOWS
 #if BA_ENABLE_EXECINFO_BACKTRACES
+#if BA_OSTYPE_ANDROID
+#include "ballistica/core/platform/android/execinfo.h"
+#else
 #include <execinfo.h>
-#endif
+#endif  // BA_OSTYPE_ANDROID
+#endif  // BA_ENABLE_EXECINFO_BACKTRACES
+
+#if !BA_OSTYPE_WINDOWS
 #include <cxxabi.h>
 #include <unistd.h>
 #endif
@@ -20,6 +27,7 @@
 #include "ballistica/core/platform/support/min_sdl.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/networking/networking_sys.h"
 #include "ballistica/shared/python/python.h"
@@ -103,7 +111,9 @@ auto CorePlatform::Create() -> CorePlatform* {
   return platform;
 }
 
-void CorePlatform::DebugLog(const std::string& msg) { HandleDebugLog(msg); }
+void CorePlatform::LowLevelDebugLog(const std::string& msg) {
+  HandleLowLevelDebugLog(msg);
+}
 
 CorePlatform::CorePlatform() : start_time_millisecs_(GetCurrentMillisecs()) {}
 
@@ -112,6 +122,8 @@ void CorePlatform::PostInit() {
   // this sometimes (mainly on windows). Should look into that
   // more closely or at least log it somewhere.
   device_name_ = Utils::GetValidUTF8(DoGetDeviceName().c_str(), "dn");
+  device_description_ =
+      Utils::GetValidUTF8(DoGetDeviceDescription().c_str(), "fc");
   ran_base_post_init_ = true;
 
   // Are we running in a terminal?
@@ -424,6 +436,11 @@ auto CorePlatform::GetDeviceName() -> std::string {
   return device_name_;
 }
 
+auto CorePlatform::GetDeviceDescription() -> std::string {
+  assert(ran_base_post_init_);
+  return device_description_;
+}
+
 auto CorePlatform::DoGetDeviceName() -> std::string {
   // Check devicename in env_var
   char* devicename;
@@ -439,7 +456,11 @@ auto CorePlatform::DoGetDeviceName() -> std::string {
     nbuffer[sizeof(nbuffer) - 1] = 0;  // Make sure its terminated.
     return nbuffer;
   }
-  return "Untitled Device";
+  return "Unnamed Device";
+}
+
+auto CorePlatform::DoGetDeviceDescription() -> std::string {
+  return "Unknown Device Type";
 }
 
 auto CorePlatform::IsRunningOnTV() -> bool { return false; }
@@ -465,24 +486,29 @@ auto CorePlatform::IsRunningOnDesktop() -> bool {
   return true;
 }
 
-void CorePlatform::SleepMillisecs(millisecs_t ms) {
-  std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+void CorePlatform::SleepSeconds(seconds_t duration) {
+  std::this_thread::sleep_for(
+      std::chrono::microseconds(static_cast<microsecs_t>(duration * 1000000)));
 }
 
-void CorePlatform::SleepMicrosecs(millisecs_t ms) {
-  std::this_thread::sleep_for(std::chrono::microseconds(ms));
+void CorePlatform::SleepMillisecs(millisecs_t duration) {
+  std::this_thread::sleep_for(std::chrono::milliseconds(duration));
+}
+
+void CorePlatform::SleepMicrosecs(millisecs_t duration) {
+  std::this_thread::sleep_for(std::chrono::microseconds(duration));
 }
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "NullDereferences"
 
-auto CorePlatform::GetUIScale() -> UIScale {
+auto CorePlatform::GetDefaultUIScale() -> UIScale {
   // Handles mac/pc/linux cases.
   return UIScale::kLarge;
 }
 
-void CorePlatform::DisplayLog(const std::string& name, LogLevel level,
-                              const std::string& msg) {
+void CorePlatform::EmitPlatformLog(const std::string& name, LogLevel level,
+                                   const std::string& msg) {
   // Do nothing by default.
 }
 
@@ -562,7 +588,7 @@ auto CorePlatform::GetIsStdinATerminal() -> bool {
 auto CorePlatform::GetOSVersionString() -> std::string { return ""; }
 
 auto CorePlatform::GetLegacyUserAgentString() -> std::string {
-  std::string device = GetDeviceName();
+  std::string device = GetDeviceDescription();
   std::string version = GetOSVersionString();
   if (!version.empty()) {
     version = " " + version;
@@ -592,7 +618,7 @@ auto CorePlatform::GetLegacyUserAgentString() -> std::string {
     subplatform = "DeMo";
   } else if (g_buildconfig.arcade_build()) {
     subplatform = "ArCd";
-  } else {
+  } else if (g_buildconfig.test_build()) {
     subplatform = "TstB";
   }
 
@@ -603,10 +629,10 @@ auto CorePlatform::GetLegacyUserAgentString() -> std::string {
     subplatform += " OnTV";
   }
 
-  std::string out{std::string("BallisticaKit ") + kEngineVersion + subplatform
-                  + " (" + std::to_string(kEngineBuildNumber) + ") ("
-                  + g_buildconfig.platform_string() + version + "; " + device
-                  + "; " + GetLocale() + ")"};
+  std::string out{std::string("BallisticaKit ") + kEngineVersion + " ("
+                  + std::to_string(kEngineBuildNumber) + ")" + subplatform
+                  + " (" + g_buildconfig.platform_string() + version + "; "
+                  + device + "; " + GetLocale() + ")"};
 
   // This gets shipped to various places which might choke on fancy unicode
   // characters, so let's limit to simple ascii.
@@ -671,10 +697,10 @@ auto CorePlatform::HaveLeaderboard(const std::string& game,
   return false;
 }
 
-void CorePlatform::ShowOnlineScoreUI(const std::string& show,
+void CorePlatform::ShowGameServiceUI(const std::string& show,
                                      const std::string& game,
                                      const std::string& game_version) {
-  Log(LogLevel::kError, "FIXME: ShowOnlineScoreUI() unimplemented");
+  Log(LogLevel::kError, "FIXME: ShowGameServiceUI() unimplemented");
 }
 
 void CorePlatform::AndroidSetResString(const std::string& res) {
@@ -716,19 +742,11 @@ auto CorePlatform::DemangleCXXSymbol(const std::string& s) -> std::string {
 #endif
 }
 
-auto CorePlatform::NewAutoReleasePool() -> void* { throw Exception(); }
-
-void CorePlatform::DrainAutoReleasePool(void* pool) { throw Exception(); }
-
 void CorePlatform::ResetAchievements() {
   Log(LogLevel::kError, "ResetAchievements() unimplemented");
 }
 
-void CorePlatform::GameCenterLogin() { throw Exception(); }
-
 void CorePlatform::RunEvents() {}
-
-auto CorePlatform::GetMemUsageInfo() -> std::string { return "0,0,0"; }
 
 void CorePlatform::MusicPlayerPlay(PyObject* target) {
   Log(LogLevel::kError, "MusicPlayerPlay() unimplemented on this platform");
@@ -788,14 +806,6 @@ void CorePlatform::SignOutV1() {
   Log(LogLevel::kError, "SignOutV1() unimplemented");
 }
 
-void CorePlatform::OpenFileExternally(const std::string& path) {
-  Log(LogLevel::kError, "OpenFileExternally() unimplemented");
-}
-
-void CorePlatform::OpenDirExternally(const std::string& path) {
-  Log(LogLevel::kError, "OpenDirExternally() unimplemented");
-}
-
 void CorePlatform::MacMusicAppInit() {
   Log(LogLevel::kError, "MacMusicAppInit() unimplemented");
 }
@@ -807,10 +817,6 @@ auto CorePlatform::MacMusicAppGetVolume() -> int {
 
 void CorePlatform::MacMusicAppSetVolume(int volume) {
   Log(LogLevel::kError, "MacMusicAppSetVolume() unimplemented");
-}
-
-void CorePlatform::MacMusicAppGetLibrarySource() {
-  Log(LogLevel::kError, "MacMusicAppGetLibrarySource() unimplemented");
 }
 
 void CorePlatform::MacMusicAppStop() {
@@ -828,11 +834,9 @@ auto CorePlatform::MacMusicAppGetPlaylists() -> std::list<std::string> {
 }
 
 void CorePlatform::SetCurrentThreadName(const std::string& name) {
-  // Currently we leave the main thread alone, otherwise we show up as
-  // "BallisticaMainThread" under "top" on linux (should check other platforms).
-  if (g_core->InMainThread()) {
-    return;
-  }
+  // We should never be doing this for the main thread.
+  BA_PRECONDITION_FATAL(!g_core->InMainThread());
+
 #if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS
   pthread_setname_np(name.c_str());
 #elif BA_OSTYPE_LINUX || BA_OSTYPE_ANDROID
@@ -956,7 +960,7 @@ auto CorePlatform::GetSubplatformName() -> std::string {
 #if BA_ENABLE_EXECINFO_BACKTRACES
 
 // Stack traces using the functionality in execinfo.h
-class PlatformStackTraceExecInfo : public PlatformStackTrace {
+class NativeStackTraceExecInfo : public NativeStackTrace {
  public:
   static constexpr int kMaxStackLevels = 64;
 
@@ -964,14 +968,37 @@ class PlatformStackTraceExecInfo : public PlatformStackTrace {
   // construction but should do the bare minimum amount of work to store it. Any
   // expensive operations such as symbolification should be deferred until
   // FormatForDisplay().
-  PlatformStackTraceExecInfo() { nsize_ = backtrace(array_, kMaxStackLevels); }
+  NativeStackTraceExecInfo() {
+    nsize_ = backtrace(array_, kMaxStackLevels);
+    // backtrace() is supposed to clamp return values to the size of
+    // array we passed; make sure that's happening (debugging odd crash).
+    if (nsize_ > kMaxStackLevels) {
+      g_core->platform->LowLevelDebugLog(
+          "backtrace() yielded " + std::to_string(nsize_)
+          + " which is larger than our available size "
+          + std::to_string(kMaxStackLevels));
+      nsize_ = kMaxStackLevels;
+    }
+  }
 
   auto FormatForDisplay() noexcept -> std::string override {
     try {
       std::string s;
       char** symbols = backtrace_symbols(array_, nsize_);
+      if (symbols == nullptr) {
+        return "backtrace_symbols yielded nullptr";
+      }
       for (int i = 0; i < nsize_; i++) {
-        s += std::string(symbols[i]);
+        const char* symbol = symbols[i];
+        // Special case for Android: there's usually a horrific mess of a
+        // pathname leading up to libmain.so, which we should never really
+        // care about, so let's strip that out if possible.
+        if (g_buildconfig.ostype_android()) {
+          if (const char* s2 = strstr(symbol, "/libmain.so")) {
+            symbol = s2 + 1;
+          }
+        }
+        s += std::string(symbol);
         if (i < nsize_ - 1) {
           s += "\n";
         }
@@ -983,9 +1010,9 @@ class PlatformStackTraceExecInfo : public PlatformStackTrace {
     }
   }
 
-  auto Copy() const noexcept -> PlatformStackTrace* override {
+  auto Copy() const noexcept -> NativeStackTrace* override {
     try {
-      auto s = new PlatformStackTraceExecInfo(*this);
+      auto s = new NativeStackTraceExecInfo(*this);
 
       // Vanilla copy constructor should do the right thing here.
       assert(s->nsize_ == nsize_
@@ -1003,11 +1030,11 @@ class PlatformStackTraceExecInfo : public PlatformStackTrace {
 };
 #endif
 
-auto CorePlatform::GetStackTrace() -> PlatformStackTrace* {
+auto CorePlatform::GetNativeStackTrace() -> NativeStackTrace* {
 // Our default handler here supports execinfo backtraces where available
 // and gives nothing elsewhere.
 #if BA_ENABLE_EXECINFO_BACKTRACES
-  return new PlatformStackTraceExecInfo();
+  return new NativeStackTraceExecInfo();
 #else
   return nullptr;
 #endif
@@ -1025,7 +1052,7 @@ auto CorePlatform::HavePermission(Permission p) -> bool {
 void CorePlatform::SetDebugKey(const std::string& key,
                                const std::string& value) {}
 
-void CorePlatform::HandleDebugLog(const std::string& msg) {}
+void CorePlatform::HandleLowLevelDebugLog(const std::string& msg) {}
 
 auto CorePlatform::GetCurrentMillisecs() -> millisecs_t {
   return std::chrono::time_point_cast<std::chrono::milliseconds>(
@@ -1046,92 +1073,6 @@ auto CorePlatform::GetCurrentWholeSeconds() -> int64_t {
              std::chrono::steady_clock::now())
       .time_since_epoch()
       .count();
-}
-
-auto CorePlatform::ClipboardIsSupported() -> bool {
-  // We only call our actual virtual function once.
-  if (!have_clipboard_is_supported_) {
-    clipboard_is_supported_ = DoClipboardIsSupported();
-    have_clipboard_is_supported_ = true;
-  }
-  return clipboard_is_supported_;
-}
-
-auto CorePlatform::ClipboardHasText() -> bool {
-  // If subplatform says they don't support clipboards, don't even ask.
-  if (!ClipboardIsSupported()) {
-    return false;
-  }
-  return DoClipboardHasText();
-}
-
-void CorePlatform::ClipboardSetText(const std::string& text) {
-  // If subplatform says they don't support clipboards, this is an error.
-  if (!ClipboardIsSupported()) {
-    throw Exception("ClipboardSetText called with no clipboard support.",
-                    PyExcType::kRuntime);
-  }
-  DoClipboardSetText(text);
-}
-
-auto CorePlatform::ClipboardGetText() -> std::string {
-  // If subplatform says they don't support clipboards, this is an error.
-  if (!ClipboardIsSupported()) {
-    throw Exception("ClipboardGetText called with no clipboard support.",
-                    PyExcType::kRuntime);
-  }
-  return DoClipboardGetText();
-}
-
-auto CorePlatform::DoClipboardIsSupported() -> bool {
-  // Go through SDL functionality on SDL based platforms;
-  // otherwise default to no clipboard.
-#if BA_SDL_BUILD
-  return true;
-#else
-  return false;
-#endif
-}
-
-auto CorePlatform::DoClipboardHasText() -> bool {
-  // Go through SDL functionality on SDL based platforms;
-  // otherwise default to no clipboard.
-#if BA_SDL_BUILD
-  return SDL_HasClipboardText();
-#else
-  // Shouldn't get here since we default to no clipboard support.
-  FatalError("Shouldn't get here.");
-  return false;
-#endif
-}
-
-void CorePlatform::DoClipboardSetText(const std::string& text) {
-  // Go through SDL functionality on SDL based platforms;
-  // otherwise default to no clipboard.
-#if BA_SDL_BUILD
-  SDL_SetClipboardText(text.c_str());
-#else
-  // Shouldn't get here since we default to no clipboard support.
-  FatalError("Shouldn't get here.");
-#endif
-}
-
-auto CorePlatform::DoClipboardGetText() -> std::string {
-  // Go through SDL functionality on SDL based platforms;
-  // otherwise default to no clipboard.
-#if BA_SDL_BUILD
-  char* out = SDL_GetClipboardText();
-  if (out == nullptr) {
-    throw Exception("Error fetching clipboard contents.", PyExcType::kRuntime);
-  }
-  std::string out_s{out};
-  SDL_free(out);
-  return out_s;
-#else
-  // Shouldn't get here since we default to no clipboard support.
-  FatalError("Shouldn't get here.");
-  return "";
-#endif
 }
 
 auto CorePlatform::System(const char* cmd) -> int {

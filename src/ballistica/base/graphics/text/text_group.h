@@ -87,7 +87,7 @@ class TextGroup : public Object {
   Object::Ref<TextureAsset> os_texture_;
   std::vector<std::unique_ptr<TextMeshEntry>> entries_;
   std::string text_;
-  bool big_;
+  bool big_{};
 };
 
 }  // namespace ballistica::base

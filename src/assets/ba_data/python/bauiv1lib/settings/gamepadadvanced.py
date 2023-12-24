@@ -452,7 +452,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
                 ),
             )
 
-        bui.apptimer(0, doit)
+        bui.pushcall(doit)
         return btn, btn2
 
     def _inc(

@@ -11,15 +11,18 @@ namespace ballistica::base {
 class BasePlatformApple : public BasePlatform {
  public:
   BasePlatformApple();
-
   void DoPurchase(const std::string& item) override;
   void RestorePurchases() override;
   void PurchaseAck(const std::string& purchase,
                    const std::string& order_id) override;
-
   void DoOpenURL(const std::string& url) override;
-
- private:
+  void LoginAdapterGetSignInToken(const std::string& login_type,
+                                  int attempt_id) override;
+  void LoginAdapterBackEndActiveChange(const std::string& login_type,
+                                       bool active) override;
+  auto SupportsOpenDirExternally() -> bool override;
+  void OpenDirExternally(const std::string& path) override;
+  void OpenFileExternally(const std::string& path) override;
 };
 
 }  // namespace ballistica::base

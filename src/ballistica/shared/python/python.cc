@@ -416,9 +416,7 @@ class Python::ScopedInterpreterLock::Impl {
 };
 
 Python::ScopedInterpreterLock::ScopedInterpreterLock()
-    : impl_{new Python::ScopedInterpreterLock::Impl()}
-// impl_{std::make_unique<Python::ScopedInterpreterLock::Impl>()}
-{}
+    : impl_{new Python::ScopedInterpreterLock::Impl()} {}
 
 Python::ScopedInterpreterLock::~ScopedInterpreterLock() { delete impl_; }
 

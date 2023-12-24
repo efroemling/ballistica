@@ -66,13 +66,6 @@ class CoreFeatureSet {
   /// Apply the config set up by baenv to the engine.
   void ApplyBaEnvConfig();
 
-  // Call this if the main thread changes.
-  // Fixme: Should come up with something less hacky feeling.
-  // void UpdateMainThreadID();
-
-  // auto* main_event_loop() const { return main_event_loop_; }
-  auto IsVRMode() -> bool;
-
   /// Are we running headless?
   auto HeadlessMode() -> bool;
 
@@ -101,7 +94,7 @@ class CoreFeatureSet {
   /// considered the 'main' thread; on most platforms it is the one where
   /// UI calls must be run/etc.
   auto InMainThread() -> bool {
-    return std::this_thread::get_id() == main_thread_id;
+    return std::this_thread::get_id() == main_thread_id();
   }
 
   /// Log a boot-related message (only if core_config.lifecycle_log is true).
@@ -151,36 +144,40 @@ class CoreFeatureSet {
     return using_custom_app_python_dir_;
   }
 
+  /// Register various info about the current thread.
+  void RegisterThread(const std::string& name);
+
+  /// Should be called by a thread before it exits.
+  void UnregisterThread();
+
   // Subsystems.
   CorePython* const python;
   CorePlatform* const platform;
 
   // The following are misc values that should be migrated to applicable
-  // subsystem classes.
-  bool event_loops_suspended{};
+  // subsystem classes or private vars.
   bool workspaces_in_use{};
-  bool replay_open{};
-  std::vector<EventLoop*> suspendable_event_loops;
-  std::mutex v1_cloud_log_mutex;
-  std::string v1_cloud_log;
+  bool have_incentivized_ad{false};
+  bool reset_vr_orientation{};
+  bool user_ran_commands{};
   bool did_put_v1_cloud_log{};
   bool v1_cloud_log_full{};
   int master_server_source{};
-  int session_count{};
-  bool have_incentivized_ad{false};
-  bool should_pause_active_game{};
-  bool reset_vr_orientation{};
-  bool user_ran_commands{};
-  std::thread::id main_thread_id{};
-  bool vr_mode;
-  std::mutex thread_name_map_mutex;
-  std::unordered_map<std::thread::id, std::string> thread_name_map;
+  std::vector<EventLoop*> suspendable_event_loops;
+  std::mutex v1_cloud_log_mutex;
+  std::string v1_cloud_log;
 
 #if BA_DEBUG_BUILD
   std::mutex object_list_mutex;
   Object* object_list_first{};
   int object_count{};
 #endif
+
+  std::thread::id main_thread_id() const { return main_thread_id_; }
+  auto vr_mode() const { return vr_mode_; }
+  auto event_loops_suspended() const { return event_loops_suspended_; }
+  void set_event_loops_suspended(bool val) { event_loops_suspended_ = val; }
+  static auto CurrentThreadName() -> std::string;
 
  private:
   explicit CoreFeatureSet(CoreConfig config);
@@ -189,23 +186,31 @@ class CoreFeatureSet {
   void RunSanityChecks();
   void UpdateAppTime();
   void PostInit();
+
+  // Note to self: don't use single bits for these as they may be owned by
+  // different threads.
+  bool event_loops_suspended_{};
   bool tried_importing_base_{};
-  // EventLoop* main_event_loop_{};
-  CoreConfig core_config_;
   bool started_suicide_{};
+  bool have_ba_env_vals_{};
+  bool vr_mode_{};
+  bool using_custom_app_python_dir_{};
+
+  std::thread::id main_thread_id_{};
+  CoreConfig core_config_;
   std::string build_src_dir_;
   microsecs_t app_time_microsecs_{};
   microsecs_t last_app_time_measure_microsecs_;
   std::mutex app_time_mutex_;
   std::string legacy_user_agent_string_{
       "BA_USER_AGENT_UNSET (" BA_PLATFORM_STRING ")"};
-  bool have_ba_env_vals_{};
   std::optional<std::string> ba_env_app_python_dir_;
   std::string ba_env_config_dir_;
   std::optional<std::string> ba_env_user_python_dir_;
   std::optional<std::string> ba_env_site_python_dir_;
   std::string ba_env_data_dir_;
-  bool using_custom_app_python_dir_{};
+  std::mutex thread_info_map_mutex_;
+  std::unordered_map<std::thread::id, std::string> thread_info_map_;
 };
 
 }  // namespace ballistica::core

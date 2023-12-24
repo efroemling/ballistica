@@ -311,8 +311,8 @@ class MainMenuWindow(bui.Window):
                         else self._confirm_end_game
                     ),
                 )
-            # Assume we're in a client-session.
             else:
+                # Assume we're in a client-session.
                 bui.buttonwidget(
                     parent=self._root_widget,
                     position=(h - self._button_width * 0.5 * scale, v),
@@ -360,7 +360,6 @@ class MainMenuWindow(bui.Window):
                 tilt_scale=0.0,
                 draw_controller=store_button,
             )
-
             self._tdelay += self._t_delay_inc
         else:
             self._store_button = None
@@ -1039,6 +1038,10 @@ class MainMenuWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.confirm import QuitWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         # Note: Normally we should go through bui.quit(confirm=True) but
         # invoking the window directly lets us scale it up from the
         # button.
@@ -1048,16 +1051,25 @@ class MainMenuWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.kiosk import KioskWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            KioskWindow(transition='in_left').get_root_widget()
+            KioskWindow(transition='in_left').get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _show_account_window(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.account.settings import AccountSettingsWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
@@ -1065,13 +1077,18 @@ class MainMenuWindow(bui.Window):
         bui.app.ui_v1.set_main_menu_window(
             AccountSettingsWindow(
                 origin_widget=self._account_button
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _on_store_pressed(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.store.browser import StoreBrowserWindow
         from bauiv1lib.account import show_sign_in_prompt
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         plus = bui.app.plus
         assert plus is not None
@@ -1085,7 +1102,8 @@ class MainMenuWindow(bui.Window):
         bui.app.ui_v1.set_main_menu_window(
             StoreBrowserWindow(
                 origin_widget=self._store_button
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _is_benchmark(self) -> bool:
@@ -1150,8 +1168,11 @@ class MainMenuWindow(bui.Window):
 
     def _end_game(self) -> None:
         assert bui.app.classic is not None
-        if not self._root_widget:
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
             return
+
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         bui.app.classic.return_to_main_menu_session_gracefully(reset_ui=False)
 
@@ -1167,18 +1188,27 @@ class MainMenuWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.creditslist import CreditsListWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
             CreditsListWindow(
                 origin_widget=self._credits_button
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _howtoplay(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.helpui import HelpWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
@@ -1186,12 +1216,17 @@ class MainMenuWindow(bui.Window):
         bui.app.ui_v1.set_main_menu_window(
             HelpWindow(
                 main_menu=True, origin_widget=self._how_to_play_button
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _settings(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.allsettings import AllSettingsWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
@@ -1199,7 +1234,8 @@ class MainMenuWindow(bui.Window):
         bui.app.ui_v1.set_main_menu_window(
             AllSettingsWindow(
                 origin_widget=self._settings_button
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _resume_and_call(self, call: Callable[[], Any]) -> None:
@@ -1208,10 +1244,12 @@ class MainMenuWindow(bui.Window):
 
     def _do_game_service_press(self) -> None:
         self._save_state()
-        if bui.app.classic is not None:
-            bui.app.classic.show_online_score_ui()
+        if bui.app.plus is not None:
+            bui.app.plus.show_game_service_ui()
         else:
-            logging.warning('classic is required to show game service ui')
+            logging.warning(
+                'plus feature-set is required to show game service ui'
+            )
 
     def _save_state(self) -> None:
         # Don't do this for the in-game menu.
@@ -1282,27 +1320,41 @@ class MainMenuWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.gather import GatherWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            GatherWindow(origin_widget=self._gather_button).get_root_widget()
+            GatherWindow(origin_widget=self._gather_button).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _watch_press(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.watch import WatchWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            WatchWindow(origin_widget=self._watch_button).get_root_widget()
+            WatchWindow(origin_widget=self._watch_button).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _play_press(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.play import PlayWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
@@ -1310,7 +1362,8 @@ class MainMenuWindow(bui.Window):
         assert bui.app.classic is not None
         bui.app.ui_v1.selecting_private_party_playlist = False
         bui.app.ui_v1.set_main_menu_window(
-            PlayWindow(origin_widget=self._start_button).get_root_widget()
+            PlayWindow(origin_widget=self._start_button).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _resume(self) -> None:
@@ -1318,7 +1371,7 @@ class MainMenuWindow(bui.Window):
         bui.app.classic.resume()
         if self._root_widget:
             bui.containerwidget(edit=self._root_widget, transition='out_right')
-        bui.app.ui_v1.clear_main_menu_window()
+        bui.app.ui_v1.clear_main_menu_window(transition='out_right')
 
         # If there's callbacks waiting for this window to go away, call them.
         for call in bui.app.ui_v1.main_menu_resume_callbacks:

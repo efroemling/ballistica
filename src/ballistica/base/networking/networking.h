@@ -127,8 +127,8 @@ class Networking {
 
   // Called on mobile platforms when going into the background, etc
   // (when all networking should be shut down)
-  void OnAppPause();
-  void OnAppResume();
+  void OnAppSuspend();
+  void OnAppUnsuspend();
 
   auto remote_server_accepting_connections() -> bool {
     return remote_server_accepting_connections_;

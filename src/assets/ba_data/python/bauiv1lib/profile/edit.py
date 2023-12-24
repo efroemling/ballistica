@@ -18,12 +18,18 @@ class EditProfileWindow(bui.Window):
     # FIXME: WILL NEED TO CHANGE THIS FOR UILOCATION.
     def reload_window(self) -> None:
         """Transitions out and recreates ourself."""
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
             EditProfileWindow(
                 self.getname(), self._in_main_menu
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def __init__(
@@ -54,8 +60,8 @@ class EditProfileWindow(bui.Window):
             self._highlight,
         ) = bui.app.classic.get_player_profile_colors(existing_profile)
         uiscale = bui.app.ui_v1.uiscale
-        self._width = width = 780.0 if uiscale is bui.UIScale.SMALL else 680.0
-        self._x_inset = x_inset = 50.0 if uiscale is bui.UIScale.SMALL else 0.0
+        self._width = width = 880.0 if uiscale is bui.UIScale.SMALL else 680.0
+        self._x_inset = x_inset = 100.0 if uiscale is bui.UIScale.SMALL else 0.0
         self._height = height = (
             350.0
             if uiscale is bui.UIScale.SMALL
@@ -184,7 +190,7 @@ class EditProfileWindow(bui.Window):
         self._clipped_name_text = bui.textwidget(
             parent=self._root_widget,
             text='',
-            position=(540 + x_inset, v - 8),
+            position=(580 + x_inset, v - 8),
             flatness=1.0,
             shadow=0.0,
             scale=0.55,
@@ -390,6 +396,16 @@ class EditProfileWindow(bui.Window):
                 autoselect=True,
                 on_activate_call=self.upgrade_profile,
             )
+            self._random_name_button = bui.buttonwidget(
+                parent=self._root_widget,
+                label=bui.Lstr(resource='randomText'),
+                size=(30, 20),
+                position=(495 + x_inset, v - 20),
+                button_type='square',
+                color=(0.6, 0.5, 0.65),
+                autoselect=True,
+                on_activate_call=self.assign_random_name,
+            )
 
         self._update_clipped_name()
         self._clipped_name_timer = bui.AppTimer(
@@ -498,8 +514,17 @@ class EditProfileWindow(bui.Window):
         )
         self._update_character()
 
+    def assign_random_name(self) -> None:
+        """Assigning a random name to the player."""
+        names = bs.get_random_names()
+        name = names[random.randrange(len(names))]
+        bui.textwidget(
+            edit=self._text_field,
+            text=name,
+        )
+
     def upgrade_profile(self) -> None:
-        """Attempt to ugrade the profile to global."""
+        """Attempt to upgrade the profile to global."""
         from bauiv1lib import account
         from bauiv1lib.profile import upgrade as pupgrade
 
@@ -653,6 +678,10 @@ class EditProfileWindow(bui.Window):
     def _cancel(self) -> None:
         from bauiv1lib.profile.browser import ProfileBrowserWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
@@ -660,7 +689,8 @@ class EditProfileWindow(bui.Window):
                 'in_left',
                 selected_profile=self._existing_profile,
                 in_main_menu=self._in_main_menu,
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _set_color(self, color: tuple[float, float, float]) -> None:
@@ -759,6 +789,10 @@ class EditProfileWindow(bui.Window):
         """Save has been selected."""
         from bauiv1lib.profile.browser import ProfileBrowserWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return False
+
         plus = bui.app.plus
         assert plus is not None
 
@@ -808,6 +842,7 @@ class EditProfileWindow(bui.Window):
                     'in_left',
                     selected_profile=new_name,
                     in_main_menu=self._in_main_menu,
-                ).get_root_widget()
+                ).get_root_widget(),
+                from_window=self._root_widget,
             )
         return True

@@ -15,6 +15,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/core/platform/windows/core_platform_windows.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
 
@@ -59,6 +60,30 @@ void BasePlatformWindows::SetupInterruptHandling() {
   // Set up Ctrl-C handling.
   if (!SetConsoleCtrlHandler(CtrlHandler, TRUE)) {
     Log(LogLevel::kError, "Error on SetConsoleCtrlHandler()");
+  }
+}
+
+auto BasePlatformWindows::SupportsOpenDirExternally() -> bool { return true; }
+
+void BasePlatformWindows::OpenDirExternally(const std::string& path) {
+  auto r = reinterpret_cast<intptr_t>(
+      ShellExecute(nullptr, _T("open"), _T("explorer.exe"),
+                   core::CorePlatformWindows::UTF8Decode(path).c_str(), nullptr,
+                   SW_SHOWNORMAL));
+  if (r <= 32) {
+    Log(LogLevel::kError, "Error " + std::to_string(r)
+                              + " on open_dir_externally for '" + path + "'");
+  }
+}
+
+void BasePlatformWindows::OpenFileExternally(const std::string& path) {
+  auto r = reinterpret_cast<intptr_t>(
+      ShellExecute(nullptr, _T("open"), _T("notepad.exe"),
+                   core::CorePlatformWindows::UTF8Decode(path).c_str(), nullptr,
+                   SW_SHOWNORMAL));
+  if (r <= 32) {
+    Log(LogLevel::kError, "Error " + std::to_string(r)
+                              + " on open_file_externally for '" + path + "'");
   }
 }
 

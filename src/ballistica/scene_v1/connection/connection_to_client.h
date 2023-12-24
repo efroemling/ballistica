@@ -55,10 +55,17 @@ class ConnectionToClient : public Connection {
   // or their peer name if they have no players.
   auto GetCombinedSpec() -> PlayerSpec;
 
+  auto protocol_version() const {
+    assert(protocol_version_ != -1);
+    return protocol_version_;
+  }
+
  private:
   virtual auto ShouldPrintIncompatibleClientErrors() const -> bool;
   auto GetClientInputDevice(int remote_id) -> ClientInputDevice*;
   void Error(const std::string& error_msg) override;
+
+  int protocol_version_;
   std::string our_handshake_player_spec_str_;
   std::string our_handshake_salt_;
   std::string peer_public_account_id_;

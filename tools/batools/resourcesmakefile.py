@@ -309,7 +309,22 @@ class ResourcesMakefileGenerator:
         ]
         for size in sizes:
             res = int(size[0] * size[1])
-            src = os.path.join('icon', 'icon_clipped_mac.png')
+            # The largest size gets used by the Mac App Store, and lots
+            # of games seem to fill their entire icon canvas instead of
+            # sticking with the big-sur icon size, so ours looks kinda
+            # small next to those if we don't do the same. Strangely,
+            # iOS apps in the Mac App Store also show up large like that
+            # (as of Nov 2023). So we use a separate as-big-as-possible
+            # icon for our largest size only. The downside of this is
+            # our icon changes in appearance if someone cranks the
+            # finder view options icon size slider all the way up, but
+            # who actually does that?
+            srcname = (
+                'icon_clipped_mac_app_store.png'
+                if size[0] == 512
+                else 'icon_clipped_mac.png'
+            )
+            src = os.path.join('icon', srcname)
             dst = os.path.join(
                 ROOT_DIR,
                 f'{self.namel}-xcode',

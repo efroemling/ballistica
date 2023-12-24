@@ -198,7 +198,7 @@ class PlaylistAddGameWindow(bui.Window):
             txt = bui.textwidget(
                 parent=self._column,
                 position=(0, 0),
-                size=(self._width - 88, 24),
+                size=(self._scroll_width * 1.1, 24),
                 text=gametype.get_display_string(),
                 h_align='left',
                 v_align='center',

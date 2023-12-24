@@ -63,20 +63,14 @@ class AccountSettingsWindow(bui.Window):
             1.0, bui.WeakCall(self._update), repeat=True
         )
 
-        # Currently we can only reset achievements on game-center.
-        v1_account_type: str | None
-        if self._v1_signed_in:
-            v1_account_type = plus.get_v1_account_type()
-        else:
-            v1_account_type = None
-        self._can_reset_achievements = v1_account_type == 'Game Center'
+        self._can_reset_achievements = False
 
         app = bui.app
         assert app.classic is not None
         uiscale = app.ui_v1.uiscale
 
-        self._width = 760 if uiscale is bui.UIScale.SMALL else 660
-        x_offs = 50 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 860 if uiscale is bui.UIScale.SMALL else 660
+        x_offs = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
             390
             if uiscale is bui.UIScale.SMALL
@@ -97,6 +91,9 @@ class AccountSettingsWindow(bui.Window):
 
         if LoginType.GPGS in plus.accounts.login_adapters:
             self._show_sign_in_buttons.append('Google Play')
+
+        if LoginType.GAME_CENTER in plus.accounts.login_adapters:
+            self._show_sign_in_buttons.append('Game Center')
 
         # Always want to show our web-based v2 login option.
         self._show_sign_in_buttons.append('V2Proxy')
@@ -227,6 +224,8 @@ class AccountSettingsWindow(bui.Window):
         plus = bui.app.plus
         assert plus is not None
 
+        via_lines: list[str] = []
+
         primary_v2_account = plus.accounts.primary
 
         v1_state = plus.get_v1_account_state()
@@ -237,13 +236,54 @@ class AccountSettingsWindow(bui.Window):
         # We expose GPGS-specific functionality only if it is 'active'
         # (meaning the current GPGS player matches one of our account's
         # logins).
-        gpgs_adapter = plus.accounts.login_adapters.get(LoginType.GPGS)
-        is_gpgs = (
-            False if gpgs_adapter is None else gpgs_adapter.is_back_end_active()
+        adapter = plus.accounts.login_adapters.get(LoginType.GPGS)
+        gpgs_active = adapter is not None and adapter.is_back_end_active()
+
+        # Ditto for Game Center.
+        adapter = plus.accounts.login_adapters.get(LoginType.GAME_CENTER)
+        game_center_active = (
+            adapter is not None and adapter.is_back_end_active()
         )
 
         show_signed_in_as = self._v1_signed_in
         signed_in_as_space = 95.0
+
+        # To reduce confusion about the whole V2 account situation for
+        # people used to seeing their Google Play Games or Game Center
+        # account name and icon and whatnot, let's show those underneath
+        # the V2 tag to help communicate that they are in fact logged in
+        # through that account.
+        via_space = 25.0
+        if show_signed_in_as and bui.app.plus is not None:
+            accounts = bui.app.plus.accounts
+            if accounts.primary is not None:
+                # For these login types, we show 'via' IF there is a
+                # login of that type attached to our account AND it is
+                # currently active (We don't want to show 'via Game
+                # Center' if we're signed out of Game Center or
+                # currently running on Steam, even if there is a Game
+                # Center login attached to our account).
+                for ltype, lchar in [
+                    (LoginType.GPGS, bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO),
+                    (LoginType.GAME_CENTER, bui.SpecialChar.GAME_CENTER_LOGO),
+                ]:
+                    linfo = accounts.primary.logins.get(ltype)
+                    ladapter = accounts.login_adapters.get(ltype)
+                    if (
+                        linfo is not None
+                        and ladapter is not None
+                        and ladapter.is_back_end_active()
+                    ):
+                        via_lines.append(f'{bui.charstr(lchar)}{linfo.name}')
+
+                # TEMP TESTING
+                if bool(False):
+                    icontxt = bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO)
+                    via_lines.append(f'{icontxt}FloofDibble')
+                    icontxt = bui.charstr(
+                        bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO
+                    )
+                    via_lines.append(f'{icontxt}StinkBobble')
 
         show_sign_in_benefits = not self._v1_signed_in
         sign_in_benefits_space = 80.0
@@ -258,6 +298,11 @@ class AccountSettingsWindow(bui.Window):
             and self._signing_in_adapter is None
             and 'Google Play' in self._show_sign_in_buttons
         )
+        show_game_center_sign_in_button = (
+            v1_state == 'signed_out'
+            and self._signing_in_adapter is None
+            and 'Game Center' in self._show_sign_in_buttons
+        )
         show_v2_proxy_sign_in_button = (
             v1_state == 'signed_out'
             and self._signing_in_adapter is None
@@ -271,9 +316,8 @@ class AccountSettingsWindow(bui.Window):
         sign_in_button_space = 70.0
         deprecated_space = 60
 
-        show_game_service_button = self._v1_signed_in and v1_account_type in [
-            'Game Center'
-        ]
+        # Game Center currently has a single UI for everything.
+        show_game_service_button = game_center_active
         game_service_button_space = 60.0
 
         show_what_is_v2 = self._v1_signed_in and v1_account_type == 'V2'
@@ -281,11 +325,9 @@ class AccountSettingsWindow(bui.Window):
         show_linked_accounts_text = self._v1_signed_in
         linked_accounts_text_space = 60.0
 
-        show_achievements_button = self._v1_signed_in and v1_account_type in (
-            'Google Play',
-            'Local',
-            'V2',
-        )
+        # Always show achievements except in the game-center case where
+        # its unified UI covers them.
+        show_achievements_button = self._v1_signed_in and not game_center_active
         achievements_button_space = 60.0
 
         show_achievements_text = (
@@ -293,7 +335,7 @@ class AccountSettingsWindow(bui.Window):
         )
         achievements_text_space = 27.0
 
-        show_leaderboards_button = self._v1_signed_in and is_gpgs
+        show_leaderboards_button = self._v1_signed_in and gpgs_active
         leaderboards_button_space = 60.0
 
         show_campaign_progress = self._v1_signed_in
@@ -330,7 +372,6 @@ class AccountSettingsWindow(bui.Window):
 
         show_sign_out_button = self._v1_signed_in and v1_account_type in [
             'Local',
-            'Google Play',
             'V2',
         ]
         sign_out_button_space = 70.0
@@ -349,9 +390,12 @@ class AccountSettingsWindow(bui.Window):
         self._sub_height = 60.0
         if show_signed_in_as:
             self._sub_height += signed_in_as_space
+        self._sub_height += via_space * len(via_lines)
         if show_signing_in_text:
             self._sub_height += signing_in_text_space
         if show_google_play_sign_in_button:
+            self._sub_height += sign_in_button_space
+        if show_game_center_sign_in_button:
             self._sub_height += sign_in_button_space
         if show_v2_proxy_sign_in_button:
             self._sub_height += sign_in_button_space
@@ -442,20 +486,21 @@ class AccountSettingsWindow(bui.Window):
                 self._account_name_what_is_text = bui.textwidget(
                     parent=self._subcontainer,
                     position=(0.0, self._account_name_what_is_y),
-                    size=(200.0, 60),
+                    size=(220.0, 60),
                     text=bui.Lstr(
                         value='${WHAT}  -->',
                         subs=[('${WHAT}', bui.Lstr(resource='whatIsThisText'))],
                     ),
                     scale=0.6,
                     color=(0.3, 0.7, 0.05),
-                    maxwidth=200.0,
+                    maxwidth=130.0,
                     h_align='right',
                     v_align='center',
                     autoselect=True,
                     selectable=True,
                     on_activate_call=show_what_is_v2_page,
                     click_activate=True,
+                    glow_type='uniform',
                 )
                 if first_selectable is None:
                     first_selectable = self._account_name_what_is_text
@@ -465,6 +510,54 @@ class AccountSettingsWindow(bui.Window):
             self._refresh_account_name_text()
 
             v -= signed_in_as_space * 0.4
+
+            for via in via_lines:
+                v -= via_space * 0.1
+                sscale = 0.7
+                swidth = (
+                    bui.get_string_width(via, suppress_warning=True) * sscale
+                )
+                bui.textwidget(
+                    parent=self._subcontainer,
+                    position=(self._sub_width * 0.5, v),
+                    size=(0, 0),
+                    text=via,
+                    scale=sscale,
+                    color=(0.6, 0.6, 0.6),
+                    flatness=1.0,
+                    shadow=0.0,
+                    h_align='center',
+                    v_align='center',
+                )
+                bui.textwidget(
+                    parent=self._subcontainer,
+                    position=(self._sub_width * 0.5 - swidth * 0.5 - 5, v),
+                    size=(0, 0),
+                    text=bui.Lstr(
+                        value='(${VIA}',
+                        subs=[('${VIA}', bui.Lstr(resource='viaText'))],
+                    ),
+                    scale=0.5,
+                    color=(0.4, 0.6, 0.4, 0.5),
+                    flatness=1.0,
+                    shadow=0.0,
+                    h_align='right',
+                    v_align='center',
+                )
+                bui.textwidget(
+                    parent=self._subcontainer,
+                    position=(self._sub_width * 0.5 + swidth * 0.5 + 10, v),
+                    size=(0, 0),
+                    text=')',
+                    scale=0.5,
+                    color=(0.4, 0.6, 0.4, 0.5),
+                    flatness=1.0,
+                    shadow=0.0,
+                    h_align='right',
+                    v_align='center',
+                )
+
+                v -= via_space * 0.9
 
         else:
             self._account_name_text = None
@@ -477,22 +570,6 @@ class AccountSettingsWindow(bui.Window):
 
         if show_sign_in_benefits:
             v -= sign_in_benefits_space
-            app = bui.app
-            assert app.classic is not None
-            extra: str | bui.Lstr | None
-            if (
-                app.classic.platform in ['mac', 'ios']
-                and app.classic.subplatform == 'appstore'
-            ):
-                extra = bui.Lstr(
-                    value='\n${S}',
-                    subs=[
-                        ('${S}', bui.Lstr(resource='signInWithGameCenterText'))
-                    ],
-                )
-            else:
-                extra = ''
-
             bui.textwidget(
                 parent=self._subcontainer,
                 position=(
@@ -500,16 +577,7 @@ class AccountSettingsWindow(bui.Window):
                     v + sign_in_benefits_space * 0.4,
                 ),
                 size=(0, 0),
-                text=bui.Lstr(
-                    value='${A}${B}',
-                    subs=[
-                        (
-                            '${A}',
-                            bui.Lstr(resource=self._r + '.signInInfoText'),
-                        ),
-                        ('${B}', extra),
-                    ],
-                ),
+                text=bui.Lstr(resource=self._r + '.signInInfoText'),
                 max_height=sign_in_benefits_space * 0.9,
                 scale=0.9,
                 color=(0.75, 0.7, 0.8),
@@ -554,12 +622,60 @@ class AccountSettingsWindow(bui.Window):
                         (
                             '${B}',
                             bui.Lstr(
-                                resource=self._r + '.signInWithGooglePlayText'
+                                resource=self._r + '.signInWithText',
+                                subs=[
+                                    (
+                                        '${SERVICE}',
+                                        bui.Lstr(resource='googlePlayText'),
+                                    )
+                                ],
                             ),
                         ),
                     ],
                 ),
                 on_activate_call=lambda: self._sign_in_press(LoginType.GPGS),
+            )
+            if first_selectable is None:
+                first_selectable = btn
+            if bui.app.ui_v1.use_toolbars:
+                bui.widget(
+                    edit=btn,
+                    right_widget=bui.get_special_widget('party_button'),
+                )
+            bui.widget(edit=btn, left_widget=bbtn)
+            bui.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
+            self._sign_in_text = None
+
+        if show_game_center_sign_in_button:
+            button_width = 350
+            v -= sign_in_button_space
+            self._sign_in_google_play_button = btn = bui.buttonwidget(
+                parent=self._subcontainer,
+                position=((self._sub_width - button_width) * 0.5, v - 20),
+                autoselect=True,
+                size=(button_width, 60),
+                # Note: Apparently Game Center is just called 'Game Center'
+                # in all languages. Can revisit if not true.
+                # https://developer.apple.com/forums/thread/725779
+                label=bui.Lstr(
+                    value='${A}${B}',
+                    subs=[
+                        (
+                            '${A}',
+                            bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO),
+                        ),
+                        (
+                            '${B}',
+                            bui.Lstr(
+                                resource=self._r + '.signInWithText',
+                                subs=[('${SERVICE}', 'Game Center')],
+                            ),
+                        ),
+                    ],
+                ),
+                on_activate_call=lambda: self._sign_in_press(
+                    LoginType.GAME_CENTER
+                ),
             )
             if first_selectable is None:
                 first_selectable = btn
@@ -704,7 +820,7 @@ class AccountSettingsWindow(bui.Window):
                 position=((self._sub_width - button_width) * 0.5, v + 30),
                 autoselect=True,
                 size=(button_width, 60),
-                label=bui.Lstr(resource=self._r + '.manageAccountText'),
+                label=bui.Lstr(resource=f'{self._r}.manageAccountText'),
                 color=(0.55, 0.5, 0.6),
                 icon=bui.gettexture('settingsIcon'),
                 textcolor=(0.75, 0.7, 0.8),
@@ -745,10 +861,15 @@ class AccountSettingsWindow(bui.Window):
         # the button to go to OS-Specific leaderboards/high-score-lists/etc.
         if show_game_service_button:
             button_width = 300
-            v -= game_service_button_space * 0.85
-            v1_account_type = plus.get_v1_account_type()
-            if v1_account_type == 'Game Center':
-                v1_account_type_name = bui.Lstr(resource='gameCenterText')
+            v -= game_service_button_space * 0.6
+            if game_center_active:
+                # Note: Apparently Game Center is just called 'Game Center'
+                # in all languages. Can revisit if not true.
+                # https://developer.apple.com/forums/thread/725779
+                game_service_button_label = bui.Lstr(
+                    value=bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO)
+                    + 'Game Center'
+                )
             else:
                 raise ValueError(
                     "unknown account type: '" + str(v1_account_type) + "'"
@@ -761,7 +882,7 @@ class AccountSettingsWindow(bui.Window):
                 autoselect=True,
                 on_activate_call=self._on_game_service_button_press,
                 size=(button_width, 50),
-                label=v1_account_type_name,
+                label=game_service_button_label,
             )
             if first_selectable is None:
                 first_selectable = btn
@@ -771,7 +892,7 @@ class AccountSettingsWindow(bui.Window):
                     right_widget=bui.get_special_widget('party_button'),
                 )
             bui.widget(edit=btn, left_widget=bbtn)
-            v -= game_service_button_space * 0.15
+            v -= game_service_button_space * 0.4
         else:
             self.game_service_button = None
 
@@ -804,13 +925,15 @@ class AccountSettingsWindow(bui.Window):
                 autoselect=True,
                 icon=bui.gettexture(
                     'googlePlayAchievementsIcon'
-                    if is_gpgs
+                    if gpgs_active
                     else 'achievementsIcon'
                 ),
-                icon_color=(0.8, 0.95, 0.7) if is_gpgs else (0.85, 0.8, 0.9),
+                icon_color=(0.8, 0.95, 0.7)
+                if gpgs_active
+                else (0.85, 0.8, 0.9),
                 on_activate_call=(
                     self._on_custom_achievements_press
-                    if is_gpgs
+                    if gpgs_active
                     else self._on_achievements_press
                 ),
                 size=(button_width, 50),
@@ -1135,19 +1258,21 @@ class AccountSettingsWindow(bui.Window):
         self._needs_refresh = False
 
     def _on_game_service_button_press(self) -> None:
-        if bui.app.classic is not None:
-            bui.app.classic.show_online_score_ui()
+        if bui.app.plus is not None:
+            bui.app.plus.show_game_service_ui()
         else:
-            logging.warning('game service ui not available without classic.')
+            logging.warning(
+                'game-service-ui not available without plus feature-set.'
+            )
 
     def _on_custom_achievements_press(self) -> None:
-        if bui.app.classic is not None:
+        if bui.app.plus is not None:
             bui.apptimer(
                 0.15,
-                bui.Call(bui.app.classic.show_online_score_ui, 'achievements'),
+                bui.Call(bui.app.plus.show_game_service_ui, 'achievements'),
             )
         else:
-            logging.warning('show_online_score_ui requires classic')
+            logging.warning('show_game_service_ui requires plus feature-set.')
 
     def _on_achievements_press(self) -> None:
         # pylint: disable=cyclic-import
@@ -1162,10 +1287,20 @@ class AccountSettingsWindow(bui.Window):
         show_what_is_v2_page()
 
     def _on_manage_account_press(self) -> None:
-        bui.screenmessage(bui.Lstr(resource='oneMomentText'))
-
         plus = bui.app.plus
         assert plus is not None
+
+        # Preemptively fail if it looks like we won't be able to talk to
+        # the server anyway.
+        if not plus.cloud.connected:
+            bui.screenmessage(
+                bui.Lstr(resource='internal.unavailableNoConnectionText'),
+                color=(1, 0, 0),
+            )
+            bui.getsound('error').play()
+            return
+
+        bui.screenmessage(bui.Lstr(resource='oneMomentText'))
 
         # We expect to have a v2 account signed in if we get here.
         if plus.accounts.primary is None:
@@ -1184,6 +1319,9 @@ class AccountSettingsWindow(bui.Window):
         self, response: bacommon.cloud.ManageAccountResponse | Exception
     ) -> None:
         if isinstance(response, Exception) or response.url is None:
+            logging.warning(
+                'Got error in manage-account-response: %s.', response
+            )
             bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
             bui.getsound('error').play()
             return
@@ -1191,13 +1329,13 @@ class AccountSettingsWindow(bui.Window):
         bui.open_url(response.url)
 
     def _on_leaderboards_press(self) -> None:
-        if bui.app.classic is not None:
+        if bui.app.plus is not None:
             bui.apptimer(
                 0.15,
-                bui.Call(bui.app.classic.show_online_score_ui, 'leaderboards'),
+                bui.Call(bui.app.plus.show_game_service_ui, 'leaderboards'),
             )
         else:
-            logging.warning('show_online_score_ui requires classic')
+            logging.warning('show_game_service_ui requires classic')
 
     def _have_unlinkable_v1_accounts(self) -> bool:
         plus = bui.app.plus
@@ -1323,7 +1461,7 @@ class AccountSettingsWindow(bui.Window):
             swidth = bui.get_string_width(name_str, suppress_warning=True)
             # Eww; number-fudging. Need to recalibrate this if
             # account name scaling changes.
-            x = self._sub_width * 0.5 - swidth * 0.75 - 170
+            x = self._sub_width * 0.5 - swidth * 0.75 - 190
 
             bui.textwidget(
                 edit=self._account_name_what_is_text,
@@ -1371,9 +1509,18 @@ class AccountSettingsWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.profile.browser import ProfileBrowserWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
-        ProfileBrowserWindow(origin_widget=self._player_profiles_button)
+        bui.app.ui_v1.set_main_menu_window(
+            ProfileBrowserWindow(
+                origin_widget=self._player_profiles_button
+            ).get_root_widget(),
+            from_window=self._root_widget,
+        )
 
     def _cancel_sign_in_press(self) -> None:
         # If we're waiting on an adapter to give us credentials, abort.
@@ -1466,7 +1613,11 @@ class AccountSettingsWindow(bui.Window):
         if isinstance(result, Exception):
             # For now just make a bit of noise if anything went wrong;
             # can get more specific as needed later.
-            bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
+            logging.warning('Got error in v2 sign-in result: %s', result)
+            bui.screenmessage(
+                bui.Lstr(resource='internal.signInNoConnectionText'),
+                color=(1, 0, 0),
+            )
             bui.getsound('error').play()
         else:
             # Success! Plug in these credentials which will begin
@@ -1530,6 +1681,10 @@ class AccountSettingsWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.mainmenu import MainMenuWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
@@ -1538,7 +1693,8 @@ class AccountSettingsWindow(bui.Window):
         if not self._modal:
             assert bui.app.classic is not None
             bui.app.ui_v1.set_main_menu_window(
-                MainMenuWindow(transition='in_left').get_root_widget()
+                MainMenuWindow(transition='in_left').get_root_widget(),
+                from_window=self._root_widget,
             )
 
     def _save_state(self) -> None:

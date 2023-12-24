@@ -12,23 +12,19 @@
 namespace ballistica {
 
 /// Objects supporting strong and weak referencing and thread enforcement.
-/// A rule or two for for Objects:
-/// Don't throw exceptions out of object destructors;
-/// This will break references to that object and lead to crashes if/when they
-/// are used.
 class Object {
  public:
   Object();
   virtual ~Object();
 
-  // Object classes can provide descriptive names for themselves;
-  // these are used for debugging and other purposes.
-  // The default is to use the C++ symbol name, demangling it when possible.
-  // IMPORTANT: Do not rely on this being consistent across builds/platforms.
+  // Object classes can provide descriptive names for themselves; these are
+  // used for debugging and other purposes. The default is to use the C++
+  // symbol name, demangling it when possible. IMPORTANT: Do not rely on
+  // this being consistent across builds/platforms.
   virtual auto GetObjectTypeName() const -> std::string;
 
-  // Provide a brief description of this particular object; by default returns
-  // type-name plus address.
+  // Provide a brief description of this particular object; by default
+  // returns type-name plus address.
   virtual auto GetObjectDescription() const -> std::string;
 
   enum class ThreadOwnership {
@@ -42,25 +38,26 @@ class Object {
 
 #if BA_DEBUG_BUILD
 
-  /// This is called when adding or removing a reference to an Object;
-  /// it can perform sanity-tests to make sure references are not being
-  /// added at incorrect times or from incorrect threads.
-  /// The default implementation uses the per-object
-  /// ThreadOwnership/EventLoopID values accessible below. NOTE: this
-  /// check runs only in the debug build so don't add any logical side-effects!
-  virtual void ObjectThreadCheck();
+  /// This is called when adding or removing a reference to an Object; it
+  /// can perform sanity-tests to make sure references are not being added
+  /// at incorrect times or from incorrect threads. The default
+  /// implementation uses the per-object ThreadOwnership/EventLoopID values
+  /// accessible below.
+  ///
+  /// NOTE: This check runs *only* in the debug build so don't include any
+  /// logical side-effects in these checks!
+  void ObjectThreadCheck() const;
 
 #endif
 
-  /// Called by the default ObjectThreadCheck() to determine ThreadOwnership
-  /// for an Object.  The default uses the object's individual value
-  /// (which defaults to ThreadOwnership::kClassDefault and can be set via
-  /// SetThreadOwnership())
+  /// Called by the default ObjectThreadCheck() to determine ownership for
+  /// an Object. By default, an object is owned by a specific thread,
+  /// defaulting to the logic thread.
   virtual auto GetThreadOwnership() const -> ThreadOwnership;
 
-  /// Return the exact thread to check for with ThreadOwnership::kClassDefault
-  /// (in the default ObjectThreadCheck implementation at least).
-  /// Default returns EventLoopID::kLogic
+  /// Return the exact thread to check for with
+  /// ThreadOwnership::kClassDefault (in the default ObjectThreadCheck
+  /// implementation at least). Default returns EventLoopID::kLogic
   virtual auto GetDefaultOwnerThread() const -> EventLoopID;
 
   /// Set thread ownership for an individual object.
@@ -73,12 +70,12 @@ class Object {
 #endif
   }
 
-  // Return true if the provided obj ptr is not null, is ref-counted, and has at
-  // least 1 strong ref. This is generally a good thing for calls accepting
-  // object ptrs to check. It is considered bad practice to perform operations
-  // with not-yet-reffed objects. Note that in some cases this may return
-  // false positives, so only use this as a sanity check and only take action
-  // for a negative result.
+  // Return true if the provided obj ptr is not null, is ref-counted, and
+  // has at least 1 strong ref. This is generally a good thing for calls
+  // accepting object ptrs to check. It is considered bad practice to
+  // perform operations with not-yet-reffed objects. Note that in some cases
+  // this may return false positives, so only use this as a sanity check and
+  // only take action for a negative result.
   static auto IsValidManagedObject(Object* obj) -> bool {
     if (!obj) {
       return false;
@@ -91,11 +88,11 @@ class Object {
     return (obj->object_strong_ref_count_ > 0);
   }
 
-  // Return true if the object seems to be valid and was allocated as unmanaged.
-  // Code that plans to explicitly delete raw passed pointers can check this
-  // for peace of mind. Note that for some build types this will return false
-  // positives, so only use this as a sanity check and only take action for
-  // negative results.
+  // Return true if the object seems to be valid and was allocated as
+  // unmanaged. Code that plans to explicitly delete raw passed pointers can
+  // check this for peace of mind. Note that for some build types this will
+  // return false positives, so only use this as a sanity check and only
+  // take action for negative results.
   static auto IsValidUnmanagedObject(Object* obj) -> bool {
     if (!obj) {
       return false;
@@ -108,12 +105,53 @@ class Object {
       return false;
     }
 #endif
-    // We don't store specifics in release builds; assume everything is peachy.
+    // We don't store specifics in release builds; assume everything is
+    // peachy.
     return true;
   }
+
   auto object_strong_ref_count() const -> int {
     return object_strong_ref_count_;
   }
+
+  /// Increment the strong reference count for an Object. In most cases you
+  /// should let Ref objects handle this for you and not call this directly.
+  void ObjectIncrementStrongRefCount() {
+#if BA_DEBUG_BUILD
+    ObjectUpdateForAcquire();
+    ObjectThreadCheck();
+
+    // Obvs shouldn't be referencing dead stuff.
+    assert(!object_is_dead_);
+
+    // Complain if trying ot create a ref to a non-ref-counted obj.
+    if (!object_is_ref_counted_) {
+      FatalError("Attempting to create a strong-ref to non-refcounted obj: "
+                 + GetObjectDescription());
+    }
+    object_has_been_strong_reffed_ = true;
+#endif  // BA_DEBUG_BUILD
+
+    object_strong_ref_count_++;
+  }
+
+  /// Decrement the strong reference count for the Object, deleting it if it
+  /// hits zero. In most cases you should let Ref objects handle this for
+  /// you and not call this directly.
+  void ObjectDecrementStrongRefCount() {
+#if BA_DEBUG_BUILD
+    ObjectThreadCheck();
+#endif
+    assert(object_strong_ref_count_ > 0);
+    object_strong_ref_count_--;
+    if (object_strong_ref_count_ == 0) {
+#if BA_DEBUG_BUILD
+      object_is_dead_ = true;
+#endif
+      delete this;
+    }
+  }
+
   template <typename T = Object>
   class Ref;
   template <typename T = Object>
@@ -193,9 +231,8 @@ class Object {
             PyExcType::kReference);
       }
 
-      // Yes, reinterpret_cast is evil, but we make sure
-      // we only operate on cases where this is valid
-      // (see Acquire()).
+      // Yes, reinterpret_cast is evil, but we make sure we only operate on
+      // cases where this is valid (see Acquire()).
       return *reinterpret_cast<T*>(obj_);
     }
 
@@ -207,8 +244,8 @@ class Object {
             PyExcType::kReference);
       }
 
-      // Yes, reinterpret_cast is evil, but we make sure we only operate
-      // on cases where this is valid (see Acquire()).
+      // Yes, reinterpret_cast is evil, but we make sure we only operate on
+      // cases where this is valid (see Acquire()).
       return reinterpret_cast<T*>(obj_);
     }
 
@@ -263,8 +300,8 @@ class Object {
     auto operator=(U* ptr) -> WeakRef<T>& {
       Release();
 
-      // Go through our template type instead of assigning directly
-      // to our Object* so we catch invalid assigns at compile-time.
+      // Go through our template type instead of assigning directly to our
+      // Object* so we catch invalid assigns at compile-time.
       T* tmp = ptr;
       if (tmp) Acquire(tmp);
 
@@ -295,13 +332,13 @@ class Object {
     // Default constructor.
     WeakRef() = default;
 
-    /// Copy constructor. Note that, by making this explicit, we require code
-    /// to be a bit more verbose. For example, we can't just do 'return
-    /// some_ref;' from a function and instead have to do 'return
-    /// Object::WeakRef<SomeType>(some_ref)'. However I feel this extra
-    /// verbosity is good; we're tossing around a mix of pointers and
-    /// strong-refs and weak-refs so it's good to be aware exactly where refs
-    /// are being added/etc.
+    /// Copy constructor. Note that, by making this explicit, we require
+    /// code to be a bit more verbose. For example, we can't just do 'return
+    /// some_ref;' from a function that returns a WeakRef and instead have
+    /// to do 'return Object::WeakRef<SomeType>(some_ref)'. However I feel
+    /// this extra verbosity is good; we're tossing around a mix of pointers
+    /// and strong-refs and weak-refs so it's good to be aware exactly where
+    /// refs are being added/etc.
     explicit WeakRef(const WeakRef<T>& ref) { *this = ref.Get(); }
 
     /// Create from a pointer of any compatible type.
@@ -469,13 +506,13 @@ class Object {
     /// Default constructor.
     Ref() = default;
 
-    /// Copy constructor. Note that, by making this explicit, we require code
-    /// to be a bit more verbose. For example, we can't just do 'return
-    /// some_ref;' from a function and instead have to do 'return
-    /// Object::Ref<SomeType>(some_ref)'. However I feel this extra verbosity
-    /// is good; we're tossing around a mix of pointers and strong-refs and
-    /// weak-refs so it's good to be aware exactly where refs are being
-    /// added/etc.
+    /// Copy constructor. Note that, by making this explicit, we require
+    /// code to be a bit more verbose. For example, we can't just do 'return
+    /// some_ref;' from a function that returns a Ref and instead have to do
+    /// 'return Object::Ref<SomeType>(some_ref)'. However I feel this extra
+    /// verbosity is good; we're tossing around a mix of pointers and
+    /// strong-refs and weak-refs so it's good to be aware exactly where
+    /// refs are being added/etc.
     explicit Ref(const Ref<T>& ref) { *this = ref.Get(); }
 
     /// Create from a compatible pointer.
@@ -505,42 +542,16 @@ class Object {
                         PyExcType::kReference);
       }
 
-#if BA_DEBUG_BUILD
-      obj->ObjectUpdateForAcquire();
-      obj->ObjectThreadCheck();
-
-      // Obvs shouldn't be referencing dead stuff.
-      assert(!obj->object_is_dead_);
-
-      // Complain if trying ot create a ref to a non-ref-counted obj.
-      if (!obj->object_is_ref_counted_) {
-        FatalError("Attempting to create a strong-ref to non-refcounted obj: "
-                   + obj->GetObjectDescription());
-      }
-      obj->object_has_been_strong_reffed_ = true;
-#endif  // BA_DEBUG_BUILD
-
-      obj->object_strong_ref_count_++;
+      obj->ObjectIncrementStrongRefCount();
       obj_ = obj;
     }
 
     void Release() {
       if (obj_ != nullptr) {
-#if BA_DEBUG_BUILD
-        obj_->ObjectThreadCheck();
-#endif
-        assert(obj_->object_strong_ref_count_ > 0);
-        obj_->object_strong_ref_count_--;
-        T* tmp = obj_;
-
-        // Invalidate ref *before* delete to avoid potential double-release.
+        auto* obj = obj_;
+        // Invalidate ref *before* to avoid potential recursive-release.
         obj_ = nullptr;
-        if (tmp->object_strong_ref_count_ == 0) {
-#if BA_DEBUG_BUILD
-          tmp->object_is_dead_ = true;
-#endif
-          delete tmp;
-        }
+        obj->ObjectDecrementStrongRefCount();
       }
     }
     T* obj_{};
@@ -549,14 +560,18 @@ class Object {
   /// Object::New<Type>(): The preferred way to create ref-counted Objects.
   /// Allocates a new Object with the provided args and returns a strong
   /// reference to it.
-  /// Generally you pass a single type to be instantiated and returned,
-  /// but you can optionally specify the two separately.
-  /// (for instance you may want to create a Button but return
-  /// a Ref to a Widget)
+  ///
+  /// Generally you pass a single type to be instantiated and returned, but
+  /// you can optionally specify the two separately. For example, you may
+  /// want to create a Button but return a Ref to a Widget.
   template <typename TRETURN, typename TALLOC = TRETURN, typename... ARGS>
   [[nodiscard]] static auto New(ARGS&&... args) -> Object::Ref<TRETURN> {
     auto* ptr = new TALLOC(std::forward<ARGS>(args)...);
 #if BA_DEBUG_BUILD
+    /// Objects assume they are statically allocated by default; it's up
+    /// to us to tell them when they're not.
+    ptr->object_is_static_allocated_ = false;
+
     /// Make sure things aren't creating strong refs to themselves in their
     /// constructors.
     if (ptr->object_has_been_strong_reffed_) {
@@ -581,6 +596,10 @@ class Object {
   [[nodiscard]] static auto NewDeferred(ARGS&&... args) -> T* {
     T* ptr = new T(std::forward<ARGS>(args)...);
 #if BA_DEBUG_BUILD
+    /// Objects assume they are statically allocated by default; it's up
+    /// to us to tell them when they're not.
+    ptr->object_is_static_allocated_ = false;
+
     /// Make sure things aren't creating strong refs to themselves in their
     /// constructors.
     if (ptr->object_has_been_strong_reffed_) {
@@ -632,6 +651,9 @@ class Object {
   [[nodiscard]] static auto NewUnmanaged(ARGS&&... args) -> T* {
     T* ptr = new T(std::forward<ARGS>(args)...);
 #if BA_DEBUG_BUILD
+    /// Objects assume they are statically allocated by default; it's up
+    /// to us to tell them when they're not.
+    ptr->object_is_static_allocated_ = false;
     ptr->object_is_unmanaged_ = true;
 #endif
     return ptr;
@@ -642,12 +664,15 @@ class Object {
 
  private:
 #if BA_DEBUG_BUILD
-  // Making operator new private here to help ensure all of our dynamic
-  // allocation/deallocation goes through our special functions (New(),
-  // NewDeferred(), etc.). However, sticking with original new for release
-  // builds since it may handle corner cases that this does not.
+  // Making operator new private here purely to help enforce all of our
+  // dynamic allocation/deallocation going through our special functions
+  // (New(), NewDeferred(), etc.). However, sticking with original new for
+  // release builds since we don't actually intend to muck with its runtime
+  // behavior and the default might be somehow smarter than ours here.
   auto operator new(size_t size) -> void* { return new char[size]; }
   void ObjectUpdateForAcquire();
+
+  bool object_is_static_allocated_{true};
   bool object_has_been_strong_reffed_{};
   bool object_is_ref_counted_{};
   bool object_is_pending_deferred_{};
@@ -661,8 +686,8 @@ class Object {
   millisecs_t object_birth_time_{};
   bool object_printed_warning_{};
 #endif
-  int object_strong_ref_count_{};
   WeakRefBase* object_weak_refs_{};
+  int object_strong_ref_count_{};
   BA_DISALLOW_CLASS_COPIES(Object);
 };  // Object
 

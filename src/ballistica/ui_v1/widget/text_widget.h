@@ -21,8 +21,9 @@ class TextWidget : public Widget {
   void SetHeight(float heightIn);
   auto GetWidth() -> float override;
   auto GetHeight() -> float override;
-  enum class HAlign { kLeft, kCenter, kRight };
-  enum class VAlign { kTop, kCenter, kBottom };
+  enum class HAlign : uint8_t { kLeft, kCenter, kRight };
+  enum class VAlign : uint8_t { kTop, kCenter, kBottom };
+  enum class GlowType : uint8_t { kGradient, kUniform };
   auto HandleMessage(const base::WidgetMessage& m) -> bool override;
   auto IsSelectable() -> bool override {
     return (enabled_ && (editable_ || selectable_));
@@ -87,6 +88,13 @@ class TextWidget : public Widget {
   void set_extra_touch_border_scale(float scale) {
     extra_touch_border_scale_ = scale;
   }
+  void set_glow_type(GlowType glow_type) {
+    if (glow_type == glow_type_) {
+      return;
+    }
+    glow_type_ = glow_type;
+    highlight_dirty_ = true;
+  }
 
  private:
   auto ScaleAdjustedX_(float x) -> float;
@@ -101,18 +109,35 @@ class TextWidget : public Widget {
                     float max_height_scale);
   void DoDrawText_(base::RenderPass* pass, float x_offset, float y_offset,
                    float max_width_scale, float max_height_scale);
-  float res_scale_{1.0f};
+
+  HAlign alignment_h_{HAlign::kLeft};
+  VAlign alignment_v_{VAlign::kTop};
+  GlowType glow_type_{GlowType::kGradient};
   bool enabled_{true};
-  millisecs_t birth_time_millisecs_{};
+  bool big_{};
+  bool force_internal_editing_{};
+  bool always_show_carat_{};
+  bool highlight_dirty_{true};
+  bool text_translation_dirty_{true};
+  bool text_group_dirty_{true};
+  bool outline_dirty_{true};
+  bool click_activate_{};
+  bool mouse_over_{};
+  bool pressed_{};
+  bool pressed_activate_{};
+  bool always_highlight_{};
+  bool editable_{};
+  bool selectable_{};
+  bool clear_pressed_{};
+  bool clear_mouse_over_{};
+  bool do_clear_button_{true};
+  int carat_position_{9999};
+  int max_chars_{99999};
+  float res_scale_{1.0f};
   float transition_delay_{};
   float max_width_{-1.0f};
   float max_height_{-1.0f};
   float extra_touch_border_scale_{1.0f};
-  Object::Ref<base::TextGroup> text_group_;
-  bool big_{};
-  bool force_internal_editing_{};
-  bool always_show_carat_{};
-  std::string description_{"Text"};
   float highlight_width_{};
   float highlight_height_{};
   float highlight_center_x_{};
@@ -124,42 +149,28 @@ class TextWidget : public Widget {
   float text_width_{};
   float text_height_{};
   float rotate_{};
-  bool highlight_dirty_{true};
-  bool text_translation_dirty_{true};
-  bool text_group_dirty_{true};
-  bool outline_dirty_{true};
-  bool click_activate_{};
-  int max_chars_{99999};
   float color_r_{1.0f};
   float color_g_{1.0f};
   float color_b_{1.0f};
   float color_a_{1.0f};
-  bool mouse_over_{};
+  float flatness_{};
+  float shadow_{0.5f};
   float padding_{};
-  bool pressed_{};
-  bool pressed_activate_{};
-  bool always_highlight_{};
-  int carat_position_{9999};
-  bool editable_{};
-  bool selectable_{};
   float width_{50.0f};
   float height_{30.0f};
-  bool clear_pressed_{};
-  bool clear_mouse_over_{};
-  bool do_clear_button_{true};
   float center_scale_{1.0f};
   std::string text_raw_;
   std::string text_translated_;
-  HAlign alignment_h_{HAlign::kLeft};
-  VAlign alignment_v_{VAlign::kTop};
-  float flatness_{};
-  float shadow_{0.5f};
+  millisecs_t birth_time_millisecs_{};
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t last_carat_change_time_millisecs_{};
+  std::string description_{"Text"};
+  Object::Ref<base::TextGroup> text_group_;
 
   // We keep these at the bottom so they're torn down first.
   Object::Ref<base::PythonContextCall> on_return_press_call_;
   Object::Ref<base::PythonContextCall> on_activate_call_;
+  Object::Ref<base::NinePatchMesh> highlight_mesh_;
   PythonRef string_edit_adapter_;
 };
 

@@ -82,7 +82,7 @@ static const char* const scancode_names[SDL_NUM_SCANCODES] = {
     "F12",
     "PrintScreen",
     "ScrollLock",
-    "OnAppPause",
+    "Pause",
     "Insert",
     "Home",
     "PageUp",
@@ -366,6 +366,22 @@ auto MinSDL_GetKeyName(int keycode) -> std::string {
   SDL_Keycode key{keycode};
   static char name[8];
   char* end;
+
+  // Handle a few specially per platform.
+  if (g_buildconfig.ostype_macos()) {
+    switch (key) {
+      case SDLK_LGUI:
+        return "Left Command";
+      case SDLK_RGUI:
+        return "Right Command";
+      case SDLK_LALT:
+        return "Left Option";
+      case SDLK_RALT:
+        return "Right Option";
+      default:
+        break;
+    }
+  }
 
   if (key & SDLK_SCANCODE_MASK) {
     return GetScancodeName((SDL_Scancode)(key & ~SDLK_SCANCODE_MASK));

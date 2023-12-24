@@ -82,7 +82,6 @@ class Renderer {
   auto light_pitch() const -> float { return light_pitch_; }
   auto light_heading() const -> float { return light_heading_; }
   void set_pixel_scale(float s) { pixel_scale_requested_ = s; }
-  // void set_screen_gamma(float val) { screen_gamma_requested_ = val; }
   void set_debug_draw_mode(bool debugModeIn) { debug_draw_mode_ = debugModeIn; }
   auto debug_draw_mode() -> bool { return debug_draw_mode_; }
 
@@ -269,7 +268,6 @@ class Renderer {
   Vector3f vignette_outer_{0.0f, 0.0f, 0.0f};
   Vector3f vignette_inner_{1.0f, 1.0f, 1.0f};
   int shadow_res_{-1};
-  // float screen_gamma_requested_{1.0f};
   float screen_gamma_{1.0f};
   float pixel_scale_requested_{1.0f};
   float pixel_scale_{1.0f};

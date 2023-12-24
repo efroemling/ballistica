@@ -148,8 +148,8 @@ class SceneV1AppMode : public base::AppMode {
   auto IsPlayerBanned(const PlayerSpec& spec) -> bool;
   void BanPlayer(const PlayerSpec& spec, millisecs_t duration);
   void OnAppStart() override;
-  void OnAppPause() override;
-  void OnAppResume() override;
+  void OnAppSuspend() override;
+  void OnAppUnsuspend() override;
   auto InClassicMainMenuSession() const -> bool override;
   auto CreateInputDeviceDelegate(base::InputDevice* device)
       -> base::InputDeviceDelegate* override;
@@ -172,7 +172,6 @@ class SceneV1AppMode : public base::AppMode {
                        sockaddr_storage* from) override;
   void DrawWorld(base::FrameDef* frame_def) override;
   auto DoesWorldFillScreen() -> bool override;
-  void GraphicsQualityChanged(base::GraphicsQuality quality) override;
   void RunMainMenu();
 
   auto dynamics_sync_time() const { return dynamics_sync_time_; }
@@ -182,41 +181,56 @@ class SceneV1AppMode : public base::AppMode {
   auto buffer_time() const { return buffer_time_; }
   void set_buffer_time(int val) { buffer_time_ = val; }
   void OnActivate() override;
-  auto GetHeadlessDisplayStep() -> microsecs_t override;
+  auto GetHeadlessNextDisplayTimeStep() -> microsecs_t override;
+
+  auto host_protocol_version() const {
+    assert(host_protocol_version_ != -1);
+    return host_protocol_version_;
+  }
 
  private:
-  void PruneScanResults();
-  void UpdateKickVote();
   SceneV1AppMode();
-  auto GetGameRosterMessage() -> std::vector<uint8_t>;
-  void Reset();
-  void PruneSessions();
-  void HandleQuitOnIdle();
-  struct ScanResultsEntryPriv;
+  void PruneScanResults_();
+  void UpdateKickVote_();
+  auto GetGameRosterMessage_() -> std::vector<uint8_t>;
+  void Reset_();
+  void PruneSessions_();
+  void HandleQuitOnIdle_();
+
+  struct ScanResultsEntryPriv_;
+
   // Note: would use an unordered_map here but gcc doesn't seem to allow
   // forward declarations of their template params.
-  std::map<std::string, ScanResultsEntryPriv> scan_results_;
+  std::map<std::string, ScanResultsEntryPriv_> scan_results_;
   std::mutex scan_results_mutex_;
   uint32_t next_scan_query_id_{};
   int scan_socket_{-1};
+  int host_protocol_version_{-1};
 
   std::list<std::string> chat_messages_;
-  bool chat_muted_{};
   // *All* existing sessions (including old ones waiting to shut down).
   std::vector<Object::Ref<Session> > sessions_;
   Object::WeakRef<Scene> foreground_scene_;
   Object::WeakRef<Session> foreground_session_;
 
+  bool chat_muted_{};
+  bool in_update_{};
+  bool kick_idle_players_{};
+  bool public_party_enabled_{};
+  bool public_party_queue_enabled_{true};
+  bool require_client_authentication_{};
+  bool idle_exiting_{};
   bool game_roster_dirty_{};
+  bool kick_vote_in_progress_{};
+  bool kick_voting_enabled_{true};
+
+  cJSON* game_roster_{};
   millisecs_t last_game_roster_send_time_{};
   std::unique_ptr<ConnectionSet> connections_;
-  cJSON* game_roster_{};
   Object::WeakRef<ConnectionToClient> kick_vote_starter_;
   Object::WeakRef<ConnectionToClient> kick_vote_target_;
   millisecs_t kick_vote_end_time_{};
-  bool kick_vote_in_progress_{};
   int last_kick_votes_needed_{-1};
-  bool kick_voting_enabled_{true};
   millisecs_t legacy_display_time_millisecs_{};
   millisecs_t legacy_display_time_millisecs_prev_{-1};
 
@@ -229,28 +243,22 @@ class SceneV1AppMode : public base::AppMode {
   // it over the network.
   int buffer_time_{};
 
-  bool in_update_{};
   millisecs_t next_long_update_report_time_{};
   int debug_speed_exponent_{};
-  float debug_speed_mult_{1.0f};
   int replay_speed_exponent_{};
-  float replay_speed_mult_{1.0f};
-  bool kick_idle_players_{};
-  std::set<std::string> admin_public_ids_;
-  millisecs_t last_connection_to_client_join_time_{};
-  bool public_party_enabled_{};
   int public_party_size_{1};  // Always count ourself (is that what we want?).
   int public_party_max_size_{8};
-  bool public_party_queue_enabled_{true};
   int public_party_player_count_{0};
   int public_party_max_player_count_{8};
+  float debug_speed_mult_{1.0f};
+  float replay_speed_mult_{1.0f};
+  std::set<std::string> admin_public_ids_;
+  millisecs_t last_connection_to_client_join_time_{};
   std::string public_party_name_;
   std::string public_party_min_league_;
   std::string public_party_stats_url_;
-  bool require_client_authentication_{};
   std::list<std::pair<millisecs_t, PlayerSpec> > banned_players_;
   std::optional<float> idle_exit_minutes_{};
-  bool idle_exiting_{};
   std::optional<uint32_t> internal_music_play_id_{};
 };
 

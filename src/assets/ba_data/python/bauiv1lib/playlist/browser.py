@@ -62,8 +62,8 @@ class PlaylistBrowserWindow(bui.Window):
         )
 
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 900.0 if uiscale is bui.UIScale.SMALL else 800.0
-        x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 1100.0 if uiscale is bui.UIScale.SMALL else 800.0
+        x_inset = 150 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
             480
             if uiscale is bui.UIScale.SMALL
@@ -684,6 +684,10 @@ class PlaylistBrowserWindow(bui.Window):
             PlaylistCustomizeBrowserWindow,
         )
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
@@ -691,12 +695,17 @@ class PlaylistBrowserWindow(bui.Window):
             PlaylistCustomizeBrowserWindow(
                 origin_widget=self._customize_button,
                 sessiontype=self._sessiontype,
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _on_back_press(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.play import PlayWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         # Store our selected playlist if that's changed.
         if self._selected_playlist is not None:
@@ -716,7 +725,8 @@ class PlaylistBrowserWindow(bui.Window):
         )
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            PlayWindow(transition='in_left').get_root_widget()
+            PlayWindow(transition='in_left').get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _save_state(self) -> None:

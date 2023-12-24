@@ -40,6 +40,7 @@ class PartyWindow(bui.Window):
             if uiscale is bui.UIScale.MEDIUM
             else 600
         )
+        self._display_old_msgs = True
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -92,9 +93,10 @@ class PartyWindow(bui.Window):
             iconscale=1.2,
         )
 
-        info = bs.get_connection_to_host_info()
-        if info.get('name', '') != '':
-            title = bui.Lstr(value=info['name'])
+        info = bs.get_connection_to_host_info_2()
+
+        if info is not None and info.name != '':
+            title = bui.Lstr(value=info.name)
         else:
             title = bui.Lstr(resource=self._r + '.titleText')
 
@@ -141,12 +143,6 @@ class PartyWindow(bui.Window):
             text=bui.Lstr(resource='chatMutedText'),
         )
         self._chat_texts: list[bui.Widget] = []
-
-        # add all existing messages if chat is not muted
-        if not bui.app.config.resolve('Chat Muted'):
-            msgs = bs.get_chat_messages()
-            for msg in msgs:
-                self._add_msg(msg)
 
         self._text_field = txt = bui.textwidget(
             parent=self._root_widget,
@@ -233,6 +229,23 @@ class PartyWindow(bui.Window):
         is_muted = bui.app.config.resolve('Chat Muted')
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
+
+        choices: list[str] = ['unmute' if is_muted else 'mute']
+        choices_display: list[bui.Lstr] = [
+            bui.Lstr(resource='chatUnMuteText' if is_muted else 'chatMuteText')
+        ]
+
+        # Allow the 'Add to Favorites' option only if we're actually
+        # connected to a party and if it doesn't seem to be a private
+        # party (those are dynamically assigned addresses and ports so
+        # it makes no sense to save them).
+        server_info = bs.get_connection_to_host_info_2()
+        if server_info is not None and not server_info.name.startswith(
+            'Private Party '
+        ):
+            choices.append('add_to_favorites')
+            choices_display.append(bui.Lstr(resource='addToFavoritesText'))
+
         PopupMenuWindow(
             position=self._menu_button.get_screen_space_center(),
             scale=(
@@ -242,12 +255,8 @@ class PartyWindow(bui.Window):
                 if uiscale is bui.UIScale.MEDIUM
                 else 1.23
             ),
-            choices=['unmute' if is_muted else 'mute'],
-            choices_display=[
-                bui.Lstr(
-                    resource='chatUnMuteText' if is_muted else 'chatMuteText'
-                )
-            ],
+            choices=choices,
+            choices_display=choices_display,
             current_choice='unmute' if is_muted else 'mute',
             delegate=self,
         )
@@ -269,6 +278,12 @@ class PartyWindow(bui.Window):
                     first.delete()
         else:
             bui.textwidget(edit=self._muted_text, color=(1, 1, 1, 0.0))
+            # add all existing messages if chat is not muted
+            if self._display_old_msgs:
+                msgs = bs.get_chat_messages()
+                for msg in msgs:
+                    self._add_msg(msg)
+                self._display_old_msgs = False
 
         # update roster section
         roster = bs.get_game_roster()
@@ -466,9 +481,74 @@ class PartyWindow(bui.Window):
                 cfg = bui.app.config
                 cfg['Chat Muted'] = choice == 'mute'
                 cfg.apply_and_commit()
+                self._display_old_msgs = True
                 self._update()
+            if choice == 'add_to_favorites':
+                info = bs.get_connection_to_host_info_2()
+                if info is not None:
+                    self._add_to_favorites(
+                        name=info.name,
+                        address=info.address,
+                        port_num=info.port,
+                    )
+                else:
+                    # We should not allow the user to see this option
+                    # if they aren't in a server; this is our bad.
+                    bui.screenmessage(
+                        bui.Lstr(resource='errorText'), color=(1, 0, 0)
+                    )
+                    bui.getsound('error').play()
         else:
             print(f'unhandled popup type: {self._popup_type}')
+
+    def _add_to_favorites(
+        self, name: str, address: str | None, port_num: int | None
+    ) -> None:
+        addr = address
+        if addr == '':
+            bui.screenmessage(
+                bui.Lstr(resource='internal.invalidAddressErrorText'),
+                color=(1, 0, 0),
+            )
+            bui.getsound('error').play()
+            return
+        port = port_num if port_num is not None else -1
+        if port > 65535 or port < 0:
+            bui.screenmessage(
+                bui.Lstr(resource='internal.invalidPortErrorText'),
+                color=(1, 0, 0),
+            )
+            bui.getsound('error').play()
+            return
+
+        # Avoid empty names.
+        if not name:
+            name = f'{addr}@{port}'
+
+        config = bui.app.config
+
+        if addr:
+            if not isinstance(config.get('Saved Servers'), dict):
+                config['Saved Servers'] = {}
+            config['Saved Servers'][f'{addr}@{port}'] = {
+                'addr': addr,
+                'port': port,
+                'name': name,
+            }
+            config.commit()
+            bui.getsound('gunCocking').play()
+            bui.screenmessage(
+                bui.Lstr(
+                    resource='addedToFavoritesText', subs=[('${NAME}', name)]
+                ),
+                color=(0, 1, 0),
+            )
+        else:
+            bui.screenmessage(
+                bui.Lstr(resource='internal.invalidAddressErrorText'),
+                color=(1, 0, 0),
+            )
+            bui.getsound('error').play()
 
     def popup_menu_closing(self, popup_window: PopupWindow) -> None:
         """Called when the popup is closing."""
@@ -481,7 +561,8 @@ class PartyWindow(bui.Window):
             kick_str = bui.Lstr(resource='kickText')
         else:
             # kick-votes appeared in build 14248
-            if bs.get_connection_to_host_info().get('build_number', 0) < 14248:
+            info = bs.get_connection_to_host_info_2()
+            if info is None or info.build_number < 14248:
                 return
             kick_str = bui.Lstr(resource='kickVoteText')
         assert bui.app.classic is not None
@@ -510,9 +591,17 @@ class PartyWindow(bui.Window):
 
     def close(self) -> None:
         """Close the window."""
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bui.containerwidget(edit=self._root_widget, transition='out_scale')
 
     def close_with_sound(self) -> None:
         """Close the window and make a lovely sound."""
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bui.getsound('swish').play()
         self.close()

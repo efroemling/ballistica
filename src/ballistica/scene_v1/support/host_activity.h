@@ -25,7 +25,7 @@ class HostActivity : public SceneV1Context {
 
   // ContextTarget time/timer support.
   auto NewTimer(TimeType timetype, TimerMedium length, bool repeat,
-                const Object::Ref<Runnable>& runnable) -> int override;
+                Runnable* runnable) -> int override;
   void DeleteTimer(TimeType timetype, int timer_id) override;
   auto GetTime(TimeType timetype) -> millisecs_t override;
 
@@ -57,7 +57,6 @@ class HostActivity : public SceneV1Context {
   void OnScreenSizeChange();
   void LanguageChanged();
   void DebugSpeedMultChanged();
-  void GraphicsQualityChanged(base::GraphicsQuality q);
 
   // Used to register python calls created in this context so we can make sure
   // they got properly cleaned up.
@@ -78,11 +77,9 @@ class HostActivity : public SceneV1Context {
 
  private:
   void HandleOutOfBoundsNodes();
-  auto NewSimTimer(millisecs_t length, bool repeat,
-                   const Object::Ref<Runnable>& runnable) -> int;
+  auto NewSimTimer(millisecs_t length, bool repeat, Runnable* runnable) -> int;
   void DeleteSimTimer(int timer_id);
-  auto NewBaseTimer(millisecs_t length, bool repeat,
-                    const Object::Ref<Runnable>& runnable) -> int;
+  auto NewBaseTimer(millisecs_t length, bool repeat, Runnable* runnable) -> int;
   void DeleteBaseTimer(int timer_id);
   void UpdateStepTimerLength();
   void StepScene();

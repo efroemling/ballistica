@@ -178,7 +178,7 @@ void HostActivity::Start() {
   // Create our step timer - gets called whenever scene should step.
   step_scene_timer_id_ =
       host_session->NewTimer(TimeType::kBase, kGameStepMilliseconds, true,
-                             NewLambdaRunnable([this] { StepScene(); }));
+                             NewLambdaRunnable([this] { StepScene(); }).Get());
   session_base_timer_ids_.push_back(step_scene_timer_id_);
   UpdateStepTimerLength();
 }
@@ -363,7 +363,7 @@ auto HostActivity::globals_node() const -> GlobalsNode* {
 }
 
 auto HostActivity::NewSimTimer(millisecs_t length, bool repeat,
-                               const Object::Ref<Runnable>& runnable) -> int {
+                               Runnable* runnable) -> int {
   if (shutting_down_) {
     BA_LOG_PYTHON_TRACE_ONCE(
         "WARNING: Creating game timer during host-activity shutdown");
@@ -384,7 +384,7 @@ auto HostActivity::NewSimTimer(millisecs_t length, bool repeat,
 }
 
 auto HostActivity::NewBaseTimer(millisecs_t length, bool repeat,
-                                const Object::Ref<Runnable>& runnable) -> int {
+                                Runnable* runnable) -> int {
   if (shutting_down_) {
     BA_LOG_PYTHON_TRACE_ONCE(
         "WARNING: Creating session-time timer during host-activity shutdown");
@@ -483,9 +483,6 @@ void HostActivity::PruneSessionBaseTimers() {
 void HostActivity::OnScreenSizeChange() { scene()->OnScreenSizeChange(); }
 void HostActivity::LanguageChanged() { scene()->LanguageChanged(); }
 void HostActivity::DebugSpeedMultChanged() { UpdateStepTimerLength(); }
-void HostActivity::GraphicsQualityChanged(base::GraphicsQuality q) {
-  scene()->GraphicsQualityChanged(q);
-}
 
 void HostActivity::Draw(base::FrameDef* frame_def) {
   if (!started_) {
@@ -546,10 +543,10 @@ void HostActivity::DumpFullState(SessionStream* out) {
 }
 
 auto HostActivity::NewTimer(TimeType timetype, TimerMedium length, bool repeat,
-                            const Object::Ref<Runnable>& runnable) -> int {
+                            Runnable* runnable) -> int {
   // Make sure the runnable passed in is reference-managed already.
   // (we may not add an initial reference ourself)
-  assert(runnable.IsValidManagedObject());
+  assert(Object::IsValidManagedObject(runnable));
 
   // We currently support game and base timers.
   switch (timetype) {

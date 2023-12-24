@@ -211,7 +211,7 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
   if (host_only_ && !context_ref().GetHostSession()) {
     return;
   }
-  bool vr = g_core->IsVRMode();
+  bool vr = g_core->vr_mode();
 
   // In vr mode we use the fixed overlay position if our scene
   // is set for that.

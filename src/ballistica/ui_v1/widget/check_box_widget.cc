@@ -245,9 +245,8 @@ void CheckBoxWidget::Activate() {
     PythonRef args(Py_BuildValue("(O)", checked_ ? Py_True : Py_False),
                    PythonRef::kSteal);
 
-    // Call this in the next cycle (don't want to risk mucking with UI from
-    // within a UI loop)
-    call->ScheduleWeak(args);
+    // Schedule this to run immediately after any current UI traversal.
+    call->ScheduleInUIOperation(args);
   }
 }
 
@@ -271,12 +270,13 @@ auto CheckBoxWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float x = m.fval1;
       float y = m.fval2;
       bool claimed = (m.fval3 > 0.0f);
-      if (claimed)
+      if (claimed) {
         mouse_over_ = false;
-      else
+      } else {
         mouse_over_ =
             ((x >= (-left_overlap)) && (x < (width_ + right_overlap))
              && (y >= (-bottom_overlap)) && (y < (height_ + top_overlap)));
+      }
       return mouse_over_;
     }
     case base::WidgetMessage::Type::kMouseDown: {

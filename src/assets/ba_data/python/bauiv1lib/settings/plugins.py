@@ -110,11 +110,11 @@ class PluginWindow(bui.Window):
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 38),
+            position=(self._width * 0.5, self._height - 41),
             size=(0, 0),
             text=bui.Lstr(resource='pluginsText'),
             color=app.ui_v1.title_color,
-            maxwidth=200,
+            maxwidth=170,
             h_align='center',
             v_align='center',
         )
@@ -128,6 +128,15 @@ class PluginWindow(bui.Window):
             )
 
         settings_button_x = 670 if uiscale is bui.UIScale.SMALL else 570
+
+        self._num_plugins_text = bui.textwidget(
+            parent=self._root_widget,
+            position=(settings_button_x - 130, self._height - 41),
+            size=(0, 0),
+            text='',
+            h_align='center',
+            v_align='center',
+        )
 
         self._category_button = bui.buttonwidget(
             parent=self._root_widget,
@@ -174,6 +183,17 @@ class PluginWindow(bui.Window):
         )
         bui.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
 
+        self._no_plugins_installed_text = bui.textwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, self._height * 0.5),
+            size=(0, 0),
+            text='',
+            color=(0.6, 0.6, 0.6),
+            scale=0.8,
+            h_align='center',
+            v_align='center',
+        )
+
         if bui.app.meta.scanresults is None:
             bui.screenmessage(
                 'Still scanning plugins; please try again.', color=(1, 0, 0)
@@ -212,11 +232,16 @@ class PluginWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.pluginsettings import PluginSettingsWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            PluginSettingsWindow(transition='in_right').get_root_widget()
+            PluginSettingsWindow(transition='in_right').get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _show_category_options(self) -> None:
@@ -263,6 +288,7 @@ class PluginWindow(bui.Window):
     def _show_plugins(self) -> None:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
         plugspecs = bui.app.plugins.plugin_specs
         plugstates: dict[str, dict] = bui.app.config.setdefault('Plugins', {})
         assert isinstance(plugstates, dict)
@@ -273,6 +299,11 @@ class PluginWindow(bui.Window):
         num_disabled = 0
 
         plugspecs_sorted = sorted(plugspecs.items())
+
+        bui.textwidget(
+            edit=self._no_plugins_installed_text,
+            text='',
+        )
 
         for _classpath, plugspec in plugspecs_sorted:
             # counting number of enabled and disabled plugins
@@ -372,6 +403,17 @@ class PluginWindow(bui.Window):
             bui.widget(edit=check, show_buffer_top=40, show_buffer_bottom=40)
             num_shown += 1
 
+        bui.textwidget(
+            edit=self._num_plugins_text,
+            text=str(num_shown),
+        )
+
+        if num_shown == 0:
+            bui.textwidget(
+                edit=self._no_plugins_installed_text,
+                text=bui.Lstr(resource='noPluginsInstalledText'),
+            )
+
     def _save_state(self) -> None:
         try:
             sel = self._root_widget.get_selected_child()
@@ -412,11 +454,16 @@ class PluginWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.advanced import AdvancedSettingsWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            AdvancedSettingsWindow(transition='in_left').get_root_widget()
+            AdvancedSettingsWindow(transition='in_left').get_root_widget(),
+            from_window=self._root_widget,
         )

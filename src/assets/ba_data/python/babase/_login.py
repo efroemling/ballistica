@@ -20,6 +20,13 @@ if TYPE_CHECKING:
 DEBUG_LOG = False
 
 
+@dataclass
+class LoginInfo:
+    """Basic info about a login available in the app.plus.accounts section."""
+
+    name: str
+
+
 class LoginAdapter:
     """Allows using implicit login types in an explicit way.
 
@@ -138,7 +145,7 @@ class LoginAdapter:
         is actually being used by the app. It should therefore register
         unlocked achievements, leaderboard scores, allow viewing native
         UIs, etc. When not active it should ignore everything and behave
-        as if logged out, even if it technically is still logged in.
+        as if signed out, even if it technically is still signed in.
         """
         assert _babase.in_logic_thread()
         del active  # Unused.
@@ -149,7 +156,7 @@ class LoginAdapter:
         result_cb: Callable[[LoginAdapter, SignInResult | Exception], None],
         description: str,
     ) -> None:
-        """Attempt an explicit sign in via this adapter.
+        """Attempt to sign in via this adapter.
 
         This can be called even if the back-end is not implicitly signed in;
         the adapter will attempt to sign in if possible. An exception will
@@ -161,7 +168,7 @@ class LoginAdapter:
         # Have been seeing multiple sign-in attempts come through
         # nearly simultaneously which can be problematic server-side.
         # Let's error if a sign-in attempt is made within a few seconds
-        # of the last one to address this.
+        # of the last one to try and address this.
         now = time.monotonic()
         appnow = _babase.apptime()
         if self._last_sign_in_time is not None:
@@ -229,6 +236,7 @@ class LoginAdapter:
             def _got_sign_in_response(
                 response: bacommon.cloud.SignInResponse | Exception,
             ) -> None:
+                # This likely means we couldn't communicate with the server.
                 if isinstance(response, Exception):
                     if DEBUG_LOG:
                         logging.debug(
@@ -239,20 +247,18 @@ class LoginAdapter:
                         )
                     _babase.pushcall(Call(result_cb, self, response))
                 else:
-                    if DEBUG_LOG:
-                        logging.debug(
-                            'LoginAdapter: %s adapter got successful'
-                            ' sign-in response',
-                            self.login_type.name,
-                        )
+                    # This means our credentials were explicitly rejected.
                     if response.credentials is None:
                         result2: LoginAdapter.SignInResult | Exception = (
-                            RuntimeError(
-                                'No credentials returned after'
-                                ' submitting sign-in-token.'
-                            )
+                            RuntimeError('Sign-in-token was rejected.')
                         )
                     else:
+                        if DEBUG_LOG:
+                            logging.debug(
+                                'LoginAdapter: %s adapter got successful'
+                                ' sign-in response',
+                                self.login_type.name,
+                            )
                         result2 = self.SignInResult(
                             credentials=response.credentials
                         )
@@ -269,7 +275,7 @@ class LoginAdapter:
                 on_response=_got_sign_in_response,
             )
 
-        # Kick off the process by fetching a sign-in token.
+        # Kick off the sign-in process by fetching a sign-in token.
         self.get_sign_in_token(completion_cb=_got_sign_in_token_result)
 
     def is_back_end_active(self) -> bool:
@@ -282,11 +288,10 @@ class LoginAdapter:
         """Get a sign-in token from the adapter back end.
 
         This token is then passed to the master-server to complete the
-        login process.
-        The adapter can use this opportunity to bring up account creation
-        UI, call its internal sign_in function, etc. as needed.
-        The provided completion_cb should then be called with either a token
-        or None if sign in failed or was cancelled.
+        sign-in process. The adapter can use this opportunity to bring
+        up account creation UI, call its internal sign_in function, etc.
+        as needed. The provided completion_cb should then be called with
+        either a token or None if sign in failed or was cancelled.
         """
         from babase._general import Call
 
@@ -295,7 +300,7 @@ class LoginAdapter:
 
     def _update_implicit_login_state(self) -> None:
         # If we've received an implicit login state, schedule it to be
-        # sent along to the app. We wait until on-app-launch has been
+        # sent along to the app. We wait until on-app-loading has been
         # called so that account-client-v2 has had a chance to load
         # any existing state so it can properly respond to this.
         if self._implicit_login_state_dirty and self._on_app_loading_called:
@@ -340,8 +345,8 @@ class LoginAdapter:
 class LoginAdapterNative(LoginAdapter):
     """A login adapter that does its work in the native layer."""
 
-    def __init__(self) -> None:
-        super().__init__(LoginType.GPGS)
+    def __init__(self, login_type: LoginType) -> None:
+        super().__init__(login_type)
 
         # Store int ids for in-flight attempts since they may go through
         # various platform layers and back.
@@ -375,3 +380,13 @@ class LoginAdapterNative(LoginAdapter):
 
 class LoginAdapterGPGS(LoginAdapterNative):
     """Google Play Game Services adapter."""
+
+    def __init__(self) -> None:
+        super().__init__(LoginType.GPGS)
+
+
+class LoginAdapterGameCenter(LoginAdapterNative):
+    """Apple Game Center adapter."""
+
+    def __init__(self) -> None:
+        super().__init__(LoginType.GAME_CENTER)

@@ -6,13 +6,15 @@
 #include <list>
 #include <map>
 #include <mutex>
-#include <set>
 #include <string>
 #include <vector>
 
 #include "ballistica/base/base.h"
+#include "ballistica/base/graphics/support/graphics_client_context.h"
+#include "ballistica/base/graphics/support/graphics_settings.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/foundation/types.h"
+#include "ballistica/shared/generic/snapshot.h"
 #include "ballistica/shared/math/matrix44f.h"
 #include "ballistica/shared/math/rect.h"
 #include "ballistica/shared/math/vector2f.h"
@@ -51,21 +53,20 @@ const float kCursorZDepth{0.9f};
 // Client class for graphics operations (used from the logic thread).
 class Graphics {
  public:
-  /// Instantiate the Graphics subclass for the current build.
-  static auto Create() -> Graphics*;
+  Graphics();
 
   void OnAppStart();
-  void OnAppPause();
-  void OnAppResume();
+  void OnAppSuspend();
+  void OnAppUnsuspend();
   void OnAppShutdown();
   void OnAppShutdownComplete();
   void OnScreenSizeChange();
   void DoApplyAppConfig();
 
-  /// Called by the graphics server to keep us up to date in the logic
-  /// thread. Dispatches the news to all logic subsystems that care.
-  void SetScreenSize(float virtual_width, float virtual_height,
-                     float physical_width, float physical_height);
+  /// Should be called by the app-adapter to keep the engine informed
+  /// on the drawable area it has to work with (in pixels).
+  void SetScreenResolution(float x, float y);
+
   void StepDisplayTime();
 
   auto TextureQualityFromAppConfig() -> TextureQualityRequest;
@@ -97,15 +98,25 @@ class Graphics {
   // Called when the GraphicsServer has sent us a frame-def for deletion.
   void ReturnCompletedFrameDef(FrameDef* frame_def);
 
-  auto screen_pixel_width() const { return res_x_; }
-  auto screen_pixel_height() const { return res_y_; }
+  auto screen_pixel_width() const {
+    assert(g_base->InLogicThread());
+    return res_x_;
+  }
+  auto screen_pixel_height() const {
+    assert(g_base->InLogicThread());
+    return res_y_;
+  }
 
-  // Return the size of the virtual screen.  This value should always
+  // Return the current size of the virtual screen. This value should always
   // be used for interface positioning, etc.
-  auto screen_virtual_width() const { return res_x_virtual_; }
-  auto screen_virtual_height() const { return res_y_virtual_; }
-
-  void ClearScreenMessageTranslations();
+  auto screen_virtual_width() const {
+    assert(g_base->InLogicThread());
+    return res_x_virtual_;
+  }
+  auto screen_virtual_height() const {
+    assert(g_base->InLogicThread());
+    return res_y_virtual_;
+  }
 
   // Given a point in space, returns the shadow density that should be drawn
   // into the shadow pass. Does this belong somewhere else?
@@ -114,21 +125,13 @@ class Graphics {
   static void GetSafeColor(float* r, float* g, float* b,
                            float target_intensity = 0.6f);
 
-  // Print a message to the on-screen list.
-  void AddScreenMessage(const std::string& msg,
-                        const Vector3f& color = {1, 1, 1}, bool top = false,
-                        TextureAsset* texture = nullptr,
-                        TextureAsset* tint_texture = nullptr,
-                        const Vector3f& tint = {1, 1, 1},
-                        const Vector3f& tint2 = {1, 1, 1});
-
   // Fade the local screen in or out over the given time period.
   void FadeScreen(bool to, millisecs_t time, PyObject* endcall);
 
   static void DrawRadialMeter(MeshIndexedSimpleFull* m, float amt);
 
-  // Ways to add a few simple component types quickly.
-  // (uses particle rendering for efficient batches).
+  // Ways to add a few simple component types quickly (uses particle
+  // rendering for efficient batches).
   void DrawBlotch(const Vector3f& pos, float size, float r, float g, float b,
                   float a) {
     DoDrawBlotch(&blotch_indices_, &blotch_verts_, pos, size, r, g, b, a);
@@ -226,13 +229,8 @@ class Graphics {
                       float upper_top);
   void ReleaseFadeEndCommand();
 
-  auto tv_border() const {
-    assert(g_base->InLogicThread());
-    return tv_border_;
-  }
-
-  // Nodes that draw flat stuff into the overlay pass should query this z value
-  // for where to draw in z.
+  // Nodes that draw flat stuff into the overlay pass should query this z
+  // value for where to draw in z.
   auto overlay_node_z_depth() {
     fetched_overlay_node_z_depth_ = true;
     return overlay_node_z_depth_;
@@ -270,17 +268,6 @@ class Graphics {
     return y * (res_y_virtual_ / res_y_);
   }
 
-  // FIXME: This should probably move to Renderer or AppAdapter once we
-  // support switching renderers.
-  auto supports_high_quality_graphics() const {
-    assert(has_supports_high_quality_graphics_value_);
-    return supports_high_quality_graphics_;
-  }
-  void SetSupportsHighQualityGraphics(bool s);
-  auto has_supports_high_quality_graphics_value() const {
-    return has_supports_high_quality_graphics_value_;
-  }
-
   void set_internal_components_inited(bool val) {
     internal_components_inited_ = val;
   }
@@ -293,8 +280,8 @@ class Graphics {
   void AddMeshDataCreate(MeshData* d);
   void AddMeshDataDestroy(MeshData* d);
 
-  // For debugging: ensures that only transparent or opaque components
-  // are submitted while enabled.
+  // For debugging: ensures that only transparent or opaque components are
+  // submitted while enabled.
   auto drawing_transparent_only() const { return drawing_transparent_only_; }
   void set_drawing_transparent_only(bool val) {
     drawing_transparent_only_ = val;
@@ -322,19 +309,66 @@ class Graphics {
     camera_gyro_explicitly_disabled_ = disabled;
   }
 
+  auto* settings() const {
+    assert(g_base->InLogicThread());
+    assert(settings_snapshot_.Exists());
+    return settings_snapshot_.Get()->Get();
+  }
+
+  auto GetGraphicsSettingsSnapshot() -> Snapshot<GraphicsSettings>*;
+
+  /// Called by the graphics-server when a new client context is ready.
+  void set_client_context(Snapshot<GraphicsClientContext>* context);
+
+  void UpdatePlaceholderSettings();
+
+  auto has_client_context() -> bool {
+    return client_context_snapshot_.Exists();
+  }
+
+  auto client_context() const -> const GraphicsClientContext* {
+    assert(g_base->InLogicThread());
+    assert(client_context_snapshot_.Exists());
+    return client_context_snapshot_.Get()->Get();
+  }
+
+  static auto GraphicsQualityFromRequest(GraphicsQualityRequest request,
+                                         GraphicsQuality auto_val)
+      -> GraphicsQuality;
+  static auto TextureQualityFromRequest(TextureQualityRequest request,
+                                        TextureQuality auto_val)
+      -> TextureQuality;
+
+  /// For temporary use from arbitrary threads. This should be removed when
+  /// possible and replaced with proper safe thread-specific access patterns
+  /// (so we can support switching renderers/etc.).
+  auto placeholder_texture_quality() const {
+    assert(client_context_snapshot_.Exists());
+    return texture_quality_placeholder_;
+  }
+
+  /// For temporary use in arbitrary threads. This should be removed when
+  /// possible and replaced with proper safe thread-specific access patterns
+  /// (so we can support switching renderers/etc.).
+  auto placeholder_client_context() const -> const GraphicsClientContext* {
+    // Using this from arbitrary threads is currently ok currently since
+    // context never changes once set. Will need to kill this call once that
+    // can happen though.
+    assert(client_context_snapshot_.Exists());
+    return client_context_snapshot_.Get()->Get();
+  }
+
+  ScreenMessages* const screenmessages;
+
  protected:
-  Graphics();
   virtual ~Graphics();
   virtual void DoDrawFade(FrameDef* frame_def, float amt);
-
- private:
-  class ScreenMessageEntry;
+  static void CalcVirtualRes_(float* x, float* y);
   void DrawBoxingGlovesTest(FrameDef* frame_def);
   void DrawBlotches(FrameDef* frame_def);
   void DrawCursor(FrameDef* frame_def);
   void DrawFades(FrameDef* frame_def);
   void DrawDebugBuffers(RenderPass* pass);
-
   void UpdateAndDrawProgressBar(FrameDef* frame_def);
   void DoDrawBlotch(std::vector<uint16_t>* indices,
                     std::vector<VertexSprite>* verts, const Vector3f& pos,
@@ -347,11 +381,17 @@ class Graphics {
   void DrawProgressBar(RenderPass* pass, float opacity);
   void UpdateProgressBarProgress(float target);
   void UpdateGyro(microsecs_t time, microsecs_t elapsed);
+  void UpdateInitialGraphicsSettingsSend_();
 
+  int last_total_frames_rendered_{};
+  int last_fps_{};
+  int progress_bar_loads_{};
+  int frame_def_count_{};
+  int frame_def_count_filtered_{};
+  int next_settings_index_{};
+  TextureQuality texture_quality_placeholder_{};
   bool drawing_transparent_only_{};
   bool drawing_opaque_only_{};
-  bool has_supports_high_quality_graphics_value_{};
-  bool supports_high_quality_graphics_{};
   bool internal_components_inited_{};
   bool fade_out_{true};
   bool progress_bar_{};
@@ -371,20 +411,17 @@ class Graphics {
   bool shadow_ortho_{};
   bool fetched_overlay_node_z_depth_{};
   bool gyro_broken_{};
-  GraphicsQuality last_frame_def_graphics_quality_{GraphicsQuality::kUnset};
-  std::list<Object::Ref<PythonContextCall>> clean_frame_commands_;
-  std::vector<MeshData*> mesh_data_creates_;
-  std::vector<MeshData*> mesh_data_destroys_;
-  microsecs_t last_create_frame_def_time_microsecs_{};
-  millisecs_t last_create_frame_def_time_millisecs_{};
+  bool set_fade_start_on_next_draw_{};
+  bool graphics_settings_dirty_{true};
+  bool applied_app_config_{};
+  bool sent_initial_graphics_settings_{};
+  bool got_screen_resolution_{};
   Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
   Vector2f shadow_scale_{1.0f, 1.0f};
   Vector3f tint_{1.0f, 1.0f, 1.0f};
   Vector3f ambient_color_{1.0f, 1.0f, 1.0f};
   Vector3f vignette_outer_{0.0f, 0.0f, 0.0f};
   Vector3f vignette_inner_{1.0f, 1.0f, 1.0f};
-  std::vector<FrameDef*> recycle_frame_defs_;
-  millisecs_t last_jitter_update_time_{};
   Vector3f jitter_{0.0f, 0.0f, 0.0f};
   Vector3f accel_smoothed_{0.0f, 0.0f, 0.0f};
   Vector3f accel_smoothed2_{0.0f, 0.0f, 0.0f};
@@ -394,8 +431,47 @@ class Graphics {
   Vector3f tilt_smoothed_{0.0f, 0.0f, 0.0f};
   Vector3f tilt_vel_{0.0f, 0.0f, 0.0f};
   Vector3f tilt_pos_{0.0f, 0.0f, 0.0f};
+  Vector3f gyro_vals_{0.0f, 0.0, 0.0f};
+  std::string fps_string_;
+  std::string ping_string_;
+  std::string net_info_string_;
+  std::map<std::string, Object::Ref<NetGraph>> debug_graphs_;
+  std::mutex frame_def_delete_list_mutex_;
+  std::list<Object::Ref<PythonContextCall>> clean_frame_commands_;
+  std::vector<FrameDef*> recycle_frame_defs_;
+  std::vector<uint16_t> blotch_indices_;
+  std::vector<VertexSprite> blotch_verts_;
+  std::vector<uint16_t> blotch_soft_indices_;
+  std::vector<VertexSprite> blotch_soft_verts_;
+  std::vector<uint16_t> blotch_soft_obj_indices_;
+  std::vector<VertexSprite> blotch_soft_obj_verts_;
+  std::vector<FrameDef*> frame_def_delete_list_;
+  std::vector<MeshData*> mesh_data_creates_;
+  std::vector<MeshData*> mesh_data_destroys_;
+  float fade_{};
+  float res_x_{256.0f};
+  float res_y_{256.0f};
+  float res_x_virtual_{256.0f};
+  float res_y_virtual_{256.0f};
   float gyro_mag_test_{};
   float overlay_node_z_depth_{};
+  float progress_bar_progress_{};
+  float shadow_lower_bottom_{-4.0f};
+  float shadow_lower_top_{4.0f};
+  float shadow_upper_bottom_{30.0f};
+  float shadow_upper_top_{40.0f};
+  seconds_t last_cursor_visibility_event_time_{};
+  millisecs_t fade_start_{};
+  millisecs_t fade_time_{};
+  millisecs_t next_stat_update_time_{};
+  millisecs_t progress_bar_end_time_{-9999};
+  millisecs_t last_progress_bar_draw_time_{};
+  millisecs_t last_progress_bar_start_time_{};
+  millisecs_t last_create_frame_def_time_millisecs_{};
+  millisecs_t last_jitter_update_time_{};
+  microsecs_t last_suppress_gyro_time_{};
+  microsecs_t next_frame_number_filtered_increment_time_{};
+  microsecs_t last_create_frame_def_time_microsecs_{};
   Object::Ref<ImageMesh> screen_mesh_;
   Object::Ref<ImageMesh> progress_bar_bottom_mesh_;
   Object::Ref<ImageMesh> progress_bar_top_mesh_;
@@ -406,49 +482,10 @@ class Graphics {
   Object::Ref<SpriteMesh> shadow_blotch_mesh_;
   Object::Ref<SpriteMesh> shadow_blotch_soft_mesh_;
   Object::Ref<SpriteMesh> shadow_blotch_soft_obj_mesh_;
-  std::string fps_string_;
-  std::string ping_string_;
-  std::string net_info_string_;
-  std::vector<uint16_t> blotch_indices_;
-  std::vector<VertexSprite> blotch_verts_;
-  std::vector<uint16_t> blotch_soft_indices_;
-  std::vector<VertexSprite> blotch_soft_verts_;
-  std::vector<uint16_t> blotch_soft_obj_indices_;
-  std::vector<VertexSprite> blotch_soft_obj_verts_;
-  std::map<std::string, Object::Ref<NetGraph>> debug_graphs_;
-  std::mutex frame_def_delete_list_mutex_;
-  std::vector<FrameDef*> frame_def_delete_list_;
   Object::Ref<Camera> camera_;
-  millisecs_t next_stat_update_time_{};
-  int last_total_frames_rendered_{};
-  int last_fps_{};
-  std::list<ScreenMessageEntry> screen_messages_;
-  std::list<ScreenMessageEntry> screen_messages_top_;
-  bool set_fade_start_on_next_draw_{};
-  millisecs_t fade_start_{};
-  millisecs_t fade_time_{};
-  float fade_{};
-  Vector3f gyro_vals_{0.0f, 0.0, 0.0f};
-  float res_x_{100};
-  float res_y_{100};
-  float res_x_virtual_{100};
-  float res_y_virtual_{100};
-  int progress_bar_loads_{};
-  millisecs_t progress_bar_end_time_{-9999};
-  millisecs_t last_progress_bar_draw_time_{};
-  millisecs_t last_progress_bar_start_time_{};
-  float progress_bar_progress_{};
-  float screen_gamma_{1.0f};
-  float shadow_lower_bottom_{-4.0f};
-  float shadow_lower_top_{4.0f};
-  float shadow_upper_bottom_{30.0f};
-  float shadow_upper_top_{40.0f};
-  millisecs_t last_cursor_visibility_event_time_{};
-  microsecs_t next_frame_number_filtered_increment_time_{};
-  int64_t frame_def_count_{};
-  int64_t frame_def_count_filtered_{};
-  microsecs_t last_suppress_gyro_time_{};
   Object::Ref<PythonContextCall> fade_end_call_;
+  Object::Ref<Snapshot<GraphicsSettings>> settings_snapshot_;
+  Object::Ref<Snapshot<GraphicsClientContext>> client_context_snapshot_;
 };
 
 }  // namespace ballistica::base

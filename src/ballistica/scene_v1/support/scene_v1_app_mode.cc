@@ -11,7 +11,6 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/plus_soft.h"
-#include "ballistica/base/ui/ui.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client_udp.h"
 #include "ballistica/scene_v1/connection/connection_to_host.h"
@@ -46,7 +45,7 @@ const int kKickVoteFailRetryDelayInitiatorExtra = 120000;
 // to kick).
 const int kKickVoteMinimumClients = (g_buildconfig.headless_build() ? 3 : 4);
 
-struct SceneV1AppMode::ScanResultsEntryPriv {
+struct SceneV1AppMode::ScanResultsEntryPriv_ {
   scene_v1::PlayerSpec player_spec;
   std::string address;
   uint32_t last_query_id{};
@@ -78,7 +77,16 @@ static SceneV1AppMode* g_scene_v1_app_mode{};
 
 void SceneV1AppMode::OnActivate() {
   assert(g_base->InLogicThread());
-  Reset();
+
+  // Make sure we pull this only once when we are first active.
+  if (host_protocol_version_ == -1) {
+    host_protocol_version_ =
+        std::clamp(g_base->app_config->Resolve(
+                       base::AppConfig::IntID::kSceneV1HostProtocol),
+                   kProtocolVersionHostMin, kProtocolVersionMax);
+  }
+
+  Reset_();
 
   // We use UIV1.
   if (!g_core->HeadlessMode()) {
@@ -98,19 +106,20 @@ void SceneV1AppMode::OnAppShutdown() {
   connections_->Shutdown();
 }
 
-void SceneV1AppMode::OnAppPause() {
+void SceneV1AppMode::OnAppSuspend() {
   assert(g_base->InLogicThread());
 
   // App is going into background or whatnot. Kill any sockets/etc.
   EndHostScanning();
 }
 
-void SceneV1AppMode::OnAppResume() { assert(g_base->InLogicThread()); }
+void SceneV1AppMode::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
 
 // Note: for now we're making our host-scan network calls directly from the
-// logic thread. This is generally not a good idea since it appears that even in
-// non-blocking mode they're still blocking for 3-4ms sometimes. But for now
-// since this is only used minimally and only while in the UI I guess it's ok.
+// logic thread. This is generally not a good idea since it appears that even
+// in non-blocking mode they're still blocking for 3-4ms sometimes. But for
+// now since this is only used minimally and only while in the UI I guess it's
+// ok.
 void SceneV1AppMode::HostScanCycle() {
   assert(g_base->InLogicThread());
 
@@ -258,7 +267,7 @@ void SceneV1AppMode::HostScanCycle() {
               bool do_update_entry = (i == scan_results_.end()
                                       || i->second.last_query_id != query_id);
               if (do_update_entry) {
-                ScanResultsEntryPriv& entry(scan_results_[key]);
+                ScanResultsEntryPriv_& entry(scan_results_[key]);
                 entry.player_spec = scene_v1::PlayerSpec(player_spec_str);
                 char buffer2[256];
                 entry.address = inet_ntop(
@@ -269,7 +278,7 @@ void SceneV1AppMode::HostScanCycle() {
                 entry.last_contact_time = g_core->GetAppTimeMillisecs();
               }
             }
-            PruneScanResults();
+            PruneScanResults_();
           }
         } else {
           Log(LogLevel::kError,
@@ -290,7 +299,7 @@ void SceneV1AppMode::EndHostScanning() {
   }
 }
 
-void SceneV1AppMode::PruneScanResults() {
+void SceneV1AppMode::PruneScanResults_() {
   millisecs_t t = g_core->GetAppTimeMillisecs();
   auto i = scan_results_.begin();
   while (i != scan_results_.end()) {
@@ -311,13 +320,13 @@ auto SceneV1AppMode::GetScanResults()
     std::scoped_lock lock(scan_results_mutex_);
     int out_num = 0;
     for (auto&& i : scan_results_) {
-      ScanResultsEntryPriv& in(i.second);
+      ScanResultsEntryPriv_& in(i.second);
       ScanResultsEntry& out(results[out_num]);
       out.display_string = in.player_spec.GetDisplayString();
       out.address = in.address;
       out_num++;
     }
-    PruneScanResults();
+    PruneScanResults_();
   }
   return results;
 }
@@ -399,8 +408,8 @@ auto SceneV1AppMode::HandleJSONPing(const std::string& data_str)
   }
   cJSON_Delete(data);
 
-  // Ok lets include some basic info that might be pertinent to someone pinging
-  // us. Currently that includes our current/max connection count.
+  // Ok lets include some basic info that might be pertinent to someone
+  // pinging us. Currently that includes our current/max connection count.
   char buffer[256];
   snprintf(buffer, sizeof(buffer), R"({"b":%d,"ps":%d,"psmx":%d})",
            kEngineBuildNumber, public_party_size(), public_party_max_size());
@@ -420,7 +429,7 @@ auto SceneV1AppMode::GetPartySize() const -> int {
   return cJSON_GetArraySize(game_roster_);
 }
 
-auto SceneV1AppMode::GetHeadlessDisplayStep() -> microsecs_t {
+auto SceneV1AppMode::GetHeadlessNextDisplayTimeStep() -> microsecs_t {
   std::optional<microsecs_t> min_time_to_next;
   for (auto&& i : sessions_) {
     if (!i.Exists()) {
@@ -436,7 +445,7 @@ auto SceneV1AppMode::GetHeadlessDisplayStep() -> microsecs_t {
     }
   }
   return min_time_to_next.has_value() ? *min_time_to_next
-                                      : base::kAppModeMaxHeadlessDisplayStep;
+                                      : base::kHeadlessMaxDisplayTimeStep;
 }
 
 void SceneV1AppMode::StepDisplayTime() {
@@ -468,15 +477,15 @@ void SceneV1AppMode::StepDisplayTime() {
   }
   legacy_display_time_millisecs_prev_ = legacy_display_time_millisecs_;
 
-  UpdateKickVote();
+  UpdateKickVote_();
 
-  HandleQuitOnIdle();
+  HandleQuitOnIdle_();
 
   // Send the game roster to our clients if it's changed recently.
   if (game_roster_dirty_) {
     if (app_time > last_game_roster_send_time_ + 2500) {
       // Now send it to all connected clients.
-      std::vector<uint8_t> msg = GetGameRosterMessage();
+      std::vector<uint8_t> msg = GetGameRosterMessage_();
       for (auto&& c : connections()->GetConnectionsToClients()) {
         c->SendReliableMessage(msg);
       }
@@ -501,7 +510,7 @@ void SceneV1AppMode::StepDisplayTime() {
   }
 
   // Go ahead and prune dead ones.
-  PruneSessions();
+  PruneSessions_();
 
   in_update_ = false;
 
@@ -521,7 +530,7 @@ void SceneV1AppMode::StepDisplayTime() {
   }
 }
 
-auto SceneV1AppMode::GetGameRosterMessage() -> std::vector<uint8_t> {
+auto SceneV1AppMode::GetGameRosterMessage_() -> std::vector<uint8_t> {
   // This message is simply a flattened json string of our roster (including
   // terminating char).
   char* s = cJSON_PrintUnformatted(game_roster_);
@@ -661,7 +670,7 @@ void SceneV1AppMode::UpdateGameRoster() {
   game_roster_dirty_ = true;
 }
 
-void SceneV1AppMode::UpdateKickVote() {
+void SceneV1AppMode::UpdateKickVote_() {
   if (!kick_vote_in_progress_) {
     return;
   }
@@ -973,7 +982,7 @@ void SceneV1AppMode::LaunchHostSession(PyObject* session_type_obj,
   base::ScopedSetContext ssc(nullptr);
 
   // This should kill any current session and get us back to a blank slate.
-  Reset();
+  Reset_();
 
   Object::WeakRef<Session> old_foreground_session(foreground_session_);
   try {
@@ -1004,7 +1013,7 @@ void SceneV1AppMode::LaunchReplaySession(const std::string& file_name) {
   base::ScopedSetContext ssc(nullptr);
 
   // This should kill any current session and get us back to a blank slate.
-  Reset();
+  Reset_();
 
   // Create the new session.
   Object::WeakRef<Session> old_foreground_session(foreground_session_);
@@ -1034,7 +1043,7 @@ void SceneV1AppMode::LaunchClientSession() {
   base::ScopedSetContext ssc(nullptr);
 
   // This should kill any current session and get us back to a blank slate.
-  Reset();
+  Reset_();
 
   // Create the new session.
   Object::WeakRef<Session> old_foreground_session(foreground_session_);
@@ -1052,18 +1061,18 @@ void SceneV1AppMode::LaunchClientSession() {
 }
 
 // Reset to a blank slate.
-void SceneV1AppMode::Reset() {
+void SceneV1AppMode::Reset_() {
   assert(g_base);
   assert(g_base->InLogicThread());
 
   // Tear down our existing session.
   foreground_session_.Clear();
-  PruneSessions();
+  PruneSessions_();
 
   // If all is well our sessions should all be dead.
-  if (g_core->session_count != 0) {
+  if (g_scene_v1->session_count != 0) {
     Log(LogLevel::kError, "Session-count is non-zero ("
-                              + std::to_string(g_core->session_count)
+                              + std::to_string(g_scene_v1->session_count)
                               + ") on Logic::Reset.");
   }
 
@@ -1174,7 +1183,7 @@ void SceneV1AppMode::DoApplyAppConfig() {
       base::AppConfig::OptionalFloatID::kIdleExitMinutes);
 }
 
-void SceneV1AppMode::PruneSessions() {
+void SceneV1AppMode::PruneSessions_() {
   bool have_dead_session = false;
   for (auto&& i : sessions_) {
     if (i.Exists()) {
@@ -1302,15 +1311,6 @@ void SceneV1AppMode::SetPublicPartyStatsURL(const std::string& url) {
   }
 }
 
-void SceneV1AppMode::GraphicsQualityChanged(base::GraphicsQuality quality) {
-  for (auto&& i : sessions_) {
-    if (!i.Exists()) {
-      continue;
-    }
-    i->GraphicsQualityChanged(quality);
-  }
-}
-
 void SceneV1AppMode::SetPublicPartyPlayerCount(int count) {
   assert(g_base->InLogicThread());
   if (count == public_party_player_count_) {
@@ -1368,7 +1368,7 @@ void SceneV1AppMode::BanPlayer(const PlayerSpec& spec, millisecs_t duration) {
   banned_players_.emplace_back(g_core->GetAppTimeMillisecs() + duration, spec);
 }
 
-void SceneV1AppMode::HandleQuitOnIdle() {
+void SceneV1AppMode::HandleQuitOnIdle_() {
   if (idle_exit_minutes_) {
     auto idle_seconds{static_cast<float>(g_base->input->input_idle_time())
                       * 0.001f};
@@ -1443,7 +1443,7 @@ void SceneV1AppMode::HandleGameQuery(const char* buffer, size_t size,
 
     msg[0] = BA_PACKET_HOST_QUERY_RESPONSE;
     memcpy(msg + 1, &query_id, 4);
-    uint32_t protocol_version = kProtocolVersion;
+    uint32_t protocol_version = host_protocol_version();
     memcpy(msg + 5, &protocol_version, 4);
     msg[9] = static_cast<char>(usid.size());
     msg[10] = static_cast<char>(player_spec_string.size());

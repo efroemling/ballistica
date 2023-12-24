@@ -19,12 +19,10 @@ Widget::~Widget() {
     Py_DECREF(py_ref_);
   }
 
-  // The very last thing we do is call our on-delete calls.
-  // We need to be prepared for anything happening as a result of this,
-  // so let's work off a copy of our callback list in case it gets mucked with.
   auto on_delete_calls = on_delete_calls_;
   for (auto&& i : on_delete_calls) {
-    i->Run();
+    i->ScheduleInUIOperation();
+    // i->Run();
   }
 }
 
@@ -83,12 +81,13 @@ auto Widget::IsInOverlayStack() const -> bool {
 }
 
 void Widget::SetSelected(bool s, SelectionCause cause) {
-  if (selected_ == s) return;
+  if (selected_ == s) {
+    return;
+  }
   selected_ = s;
   if (selected_ && on_select_call_.Exists()) {
-    // Call this in the next cycle (don't wanna risk mucking
-    // with UI from within a UI loop).
-    on_select_call_->ScheduleWeak();
+    // Schedule this to run immediately after any current UI traversal.
+    on_select_call_->ScheduleInUIOperation();
   }
 }
 
@@ -237,5 +236,7 @@ auto Widget::IsSelectableViaKeys() -> bool { return true; }
 auto Widget::IsAcceptingInput() const -> bool { return true; }
 
 void Widget::Activate() {}
+
+auto Widget::IsTransitioningOut() const -> bool { return false; }
 
 }  // namespace ballistica::ui_v1

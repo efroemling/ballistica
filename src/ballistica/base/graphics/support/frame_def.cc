@@ -31,7 +31,7 @@ FrameDef::~FrameDef() { assert(g_base->InLogicThread()); }
 
 auto FrameDef::GetOverlayFixedPass() -> RenderPass* {
   assert(g_core);
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     return overlay_fixed_pass_.get();
   } else {
     return overlay_pass_.get();
@@ -40,7 +40,7 @@ auto FrameDef::GetOverlayFixedPass() -> RenderPass* {
 
 auto FrameDef::GetOverlayFlatPass() -> RenderPass* {
   assert(g_core);
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     return overlay_flat_pass_.get();
   } else {
     return overlay_pass_.get();
@@ -49,6 +49,13 @@ auto FrameDef::GetOverlayFlatPass() -> RenderPass* {
 
 void FrameDef::Reset() {
   assert(g_base->InLogicThread());
+
+  // Update & grab the current settings.
+  settings_snapshot_ = g_base->graphics->GetGraphicsSettingsSnapshot();
+
+  auto* settings = settings_snapshot_->Get();
+  auto* client_context = g_base->graphics->client_context();
+
   app_time_microsecs_ = 0;
   display_time_microsecs_ = 0;
   display_time_elapsed_microsecs_ = 0;
@@ -68,11 +75,17 @@ void FrameDef::Reset() {
   mesh_index_sizes_.clear();
   mesh_buffers_.clear();
 
-  quality_ = g_base->graphics_server->quality();
+  quality_ = Graphics::GraphicsQualityFromRequest(
+      settings->graphics_quality, client_context->auto_graphics_quality);
 
-  assert(g_base->graphics->has_supports_high_quality_graphics_value());
+  texture_quality_ = Graphics::TextureQualityFromRequest(
+      settings->texture_quality, client_context->auto_texture_quality);
+
+  // pixel_scale_ = g_base->graphics->settings()->pixel_scale;
+
+  // assert(g_base->graphics->has_supports_high_quality_graphics_value());
   orbiting_ = (g_base->graphics->camera()->mode() == CameraMode::kOrbit);
-  tv_border_ = g_base->graphics->tv_border();
+  // tv_border_ = g_base->graphics->tv_border();
 
   shadow_offset_ = g_base->graphics->shadow_offset();
   shadow_scale_ = g_base->graphics->shadow_scale();
@@ -89,7 +102,7 @@ void FrameDef::Reset() {
   beauty_pass_bg_->Reset();
   overlay_pass_->Reset();
   overlay_front_pass_->Reset();
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     overlay_flat_pass_->Reset();
     overlay_fixed_pass_->Reset();
     vr_cover_pass_->Reset();
@@ -99,21 +112,21 @@ void FrameDef::Reset() {
   beauty_pass_->set_floor_reflection(g_base->graphics->floor_reflection());
 }
 
-void FrameDef::Finalize() {
+void FrameDef::Complete() {
   assert(!defining_component_);
-  light_pass_->Finalize();
-  light_shadow_pass_->Finalize();
-  beauty_pass_->Finalize();
-  beauty_pass_bg_->Finalize();
-  overlay_pass_->Finalize();
-  overlay_front_pass_->Finalize();
-  if (g_core->IsVRMode()) {
-    overlay_fixed_pass_->Finalize();
-    overlay_flat_pass_->Finalize();
-    vr_cover_pass_->Finalize();
+  light_pass_->Complete();
+  light_shadow_pass_->Complete();
+  beauty_pass_->Complete();
+  beauty_pass_bg_->Complete();
+  overlay_pass_->Complete();
+  overlay_front_pass_->Complete();
+  if (g_core->vr_mode()) {
+    overlay_fixed_pass_->Complete();
+    overlay_flat_pass_->Complete();
+    vr_cover_pass_->Complete();
   }
-  overlay_3d_pass_->Finalize();
-  blit_pass_->Finalize();
+  overlay_3d_pass_->Complete();
+  blit_pass_->Complete();
 }
 
 void FrameDef::AddMesh(Mesh* mesh) {

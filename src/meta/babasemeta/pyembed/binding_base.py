@@ -21,6 +21,8 @@ from babase import (
 # The C++ layer looks for this variable:
 values = [
     _hooks.reset_to_main_menu,  # kResetToMainMenuCall
+    _hooks.store_config_fullscreen_on,  # kStoreConfigFullscreenOnCall
+    _hooks.store_config_fullscreen_off,  # kStoreConfigFullscreenOffCall
     _hooks.set_config_fullscreen_on,  # kSetConfigFullscreenOnCall
     _hooks.set_config_fullscreen_off,  # kSetConfigFullscreenOffCall
     _hooks.not_signed_in_screen_message,  # kNotSignedInScreenMessageCall
@@ -29,6 +31,7 @@ values = [
     _hooks.temporarily_unavailable_message,  # kTemporarilyUnavailableMessageCall
     _hooks.in_progress_message,  # kInProgressMessageCall
     _hooks.error_message,  # kErrorMessageCall
+    _hooks.success_message,  # kSuccessMessageCall
     _hooks.purchase_not_valid_error,  # kPurchaseNotValidErrorCall
     _hooks.purchase_already_in_progress_error,  # kPurchaseAlreadyInProgressErrorCall
     _hooks.orientation_reset_cb_message,  # kVROrientationResetCBMessageCall
@@ -54,6 +57,8 @@ values = [
     _hooks.show_post_purchase_message,  # kShowPostPurchaseMessageCall
     _hooks.string_edit_adapter_can_be_replaced,  # kStringEditAdapterCanBeReplacedCall
     _hooks.get_dev_console_tab_names,  # kGetDevConsoleTabNamesCall
+    _hooks.unsupported_controller_message,  # kUnsupportedControllerMessageCall
+    _hooks.get_v2_account_id,  # kGetV2AccountIdCall
     _language.Lstr,  # kLStrClass
     _general.Call,  # kCallClass
     _apputils.garbage_collect_session_end,  # kGarbageCollectSessionEndCall

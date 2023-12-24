@@ -140,7 +140,6 @@ class PlayOptionsWindow(PopupWindow):
         if show_shuffle_check_box:
             self._height += 40
 
-        # Creates our _root_widget.
         uiscale = bui.app.ui_v1.uiscale
         scale = (
             1.69
@@ -149,6 +148,7 @@ class PlayOptionsWindow(PopupWindow):
             if uiscale is bui.UIScale.MEDIUM
             else 0.85
         )
+        # Creates our _root_widget.
         super().__init__(
             position=scale_origin, size=(self._width, self._height), scale=scale
         )
@@ -448,6 +448,10 @@ class PlayOptionsWindow(PopupWindow):
         self._transition_out()
 
     def _on_ok_press(self) -> None:
+        # no-op if our underlying widget is dead or on its way out.
+        if not self.root_widget or self.root_widget.transitioning_out:
+            return
+
         # Disallow if our playlist has disappeared.
         if not self._does_target_playlist_exist():
             return
@@ -478,8 +482,12 @@ class PlayOptionsWindow(PopupWindow):
             cfg['Private Party Host Session Type'] = typename
             bui.getsound('gunCocking').play()
             assert bui.app.classic is not None
+            # Note: this is a wonky situation where we aren't actually
+            # the main window but we set it on behalf of the main window
+            # that popped us up.
             bui.app.ui_v1.set_main_menu_window(
-                GatherWindow(transition='in_right').get_root_widget()
+                GatherWindow(transition='in_right').get_root_widget(),
+                from_window=False,  # Disable this test.
             )
             self._transition_out(transition='out_left')
             if self._delegate is not None:

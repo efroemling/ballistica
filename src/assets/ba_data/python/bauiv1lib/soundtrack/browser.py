@@ -394,13 +394,18 @@ class SoundtrackBrowserWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.settings import audio
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            audio.AudioSettingsWindow(transition='in_left').get_root_widget()
+            audio.AudioSettingsWindow(transition='in_left').get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _edit_soundtrack_with_sound(self) -> None:
@@ -420,6 +425,10 @@ class SoundtrackBrowserWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.purchase import PurchaseWindow
         from bauiv1lib.soundtrack.edit import SoundtrackEditWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         if (
             bui.app.classic is not None
@@ -443,7 +452,8 @@ class SoundtrackBrowserWindow(bui.Window):
         bui.app.ui_v1.set_main_menu_window(
             SoundtrackEditWindow(
                 existing_soundtrack=self._selected_soundtrack
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _get_soundtrack_display_name(self, soundtrack: str) -> bui.Lstr:

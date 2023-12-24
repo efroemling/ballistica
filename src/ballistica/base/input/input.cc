@@ -8,11 +8,9 @@
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/input/device/joystick_input.h"
 #include "ballistica/base/input/device/keyboard_input.h"
-#include "ballistica/base/input/device/test_input.h"
 #include "ballistica/base/input/device/touch_input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
-#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -114,10 +112,11 @@ auto Input::GetNewNumberedIdentifier_(const std::string& name,
     }
     if (!in_use) {
       // Ok so far its unused.. however input devices that provide non-empty
-      // identifiers (serial number, usb-id, etc) reserve their number for the
-      // duration of the game, so we need to check against all reserved numbers
-      // so we don't steal someones... (so that if they disconnect and reconnect
-      // they'll get the same number and thus the same name, etc)
+      // identifiers (serial number, usb-id, etc) reserve their number for
+      // the duration of the game, so we need to check against all reserved
+      // numbers so we don't steal someones... (so that if they disconnect
+      // and reconnect they'll get the same number and thus the same name,
+      // etc)
       if (!identifier.empty()) {
         auto i = reserved_identifiers_.find(name);
         if (i != reserved_identifiers_.end()) {
@@ -146,43 +145,34 @@ auto Input::GetNewNumberedIdentifier_(const std::string& name,
   return full_id;
 }
 
-void Input::CreateTouchInput() {
-  assert(g_core->InMainThread());
-  assert(touch_input_ == nullptr);
-  touch_input_ = Object::NewDeferred<TouchInput>();
-  PushAddInputDeviceCall(touch_input_, false);
-}
-
 void Input::AnnounceConnects_() {
+  assert(g_base->InLogicThread());
+
   static bool first_print = true;
 
   // For the first announcement just say "X controllers detected" and don't
   // have a sound.
-  if (first_print && g_core->GetAppTimeMillisecs() < 10000) {
+  if (first_print && g_core->GetAppTimeSeconds() < 3.0) {
     first_print = false;
 
-    // Disabling this completely for now; being more lenient with devices
-    // allowed on Android means this will often come back with large
-    // numbers.
-    bool do_print{false};
-
     // If there's been several connected, just give a number.
-    if (explicit_bool(do_print)) {
-      if (newly_connected_controllers_.size() > 1) {
-        std::string s =
-            g_base->assets->GetResourceString("controllersDetectedText");
-        Utils::StringReplaceOne(
-            &s, "${COUNT}",
-            std::to_string(newly_connected_controllers_.size()));
-        ScreenMessage(s);
-      } else {
-        ScreenMessage(
-            g_base->assets->GetResourceString("controllerDetectedText"));
-      }
+    if (newly_connected_controllers_.size() > 1) {
+      std::string s =
+          g_base->assets->GetResourceString("controllersDetectedText");
+      Utils::StringReplaceOne(
+          &s, "${COUNT}", std::to_string(newly_connected_controllers_.size()));
+      ScreenMessage(s);
+    } else {
+      ScreenMessage(
+          g_base->assets->GetResourceString("controllerDetectedText"));
     }
+
   } else {
     // If there's been several connected, just give a number.
     if (newly_connected_controllers_.size() > 1) {
+      for (auto&& s : newly_connected_controllers_) {
+        Log(LogLevel::kInfo, "GOT CONTROLLER " + s);
+      }
       std::string s =
           g_base->assets->GetResourceString("controllersConnectedText");
       Utils::StringReplaceOne(
@@ -200,7 +190,6 @@ void Input::AnnounceConnects_() {
       g_base->audio->PlaySound(g_base->assets->SysSound(SysSoundID::kGunCock));
     }
   }
-
   newly_connected_controllers_.clear();
 }
 
@@ -229,6 +218,14 @@ void Input::AnnounceDisconnects_() {
 
 void Input::ShowStandardInputDeviceConnectedMessage_(InputDevice* j) {
   assert(g_base->InLogicThread());
+
+  // On Android we never show messages for initial input-devices; we often
+  // get large numbers of strange virtual devices that aren't actually
+  // controllers so this is more confusing than helpful.
+  if (g_buildconfig.ostype_android() && g_core->GetAppTimeSeconds() < 3.0) {
+    return;
+  }
+
   std::string suffix;
   suffix += j->GetPersistentIdentifier();
   suffix += j->GetDeviceExtraDescription();
@@ -237,12 +234,15 @@ void Input::ShowStandardInputDeviceConnectedMessage_(InputDevice* j) {
   }
   newly_connected_controllers_.push_back(j->GetDeviceName() + suffix);
 
-  // Set a timer to go off and announce the accumulated additions.
+  // Set a timer to go off and announce controller additions. This allows
+  // several connecting at (almost) the same time to be announced as a
+  // single event.
   if (connect_print_timer_id_ != 0) {
     g_base->logic->DeleteAppTimer(connect_print_timer_id_);
   }
   connect_print_timer_id_ = g_base->logic->NewAppTimer(
-      250, false, NewLambdaRunnable([this] { AnnounceConnects_(); }));
+      500 * 1000, false,
+      NewLambdaRunnable([this] { AnnounceConnects_(); }).Get());
 }
 
 void Input::ShowStandardInputDeviceDisconnectedMessage_(InputDevice* j) {
@@ -257,7 +257,8 @@ void Input::ShowStandardInputDeviceDisconnectedMessage_(InputDevice* j) {
     g_base->logic->DeleteAppTimer(disconnect_print_timer_id_);
   }
   disconnect_print_timer_id_ = g_base->logic->NewAppTimer(
-      250, false, NewLambdaRunnable([this] { AnnounceDisconnects_(); }));
+      250 * 1000, false,
+      NewLambdaRunnable([this] { AnnounceDisconnects_(); }).Get());
 }
 
 void Input::PushAddInputDeviceCall(InputDevice* input_device,
@@ -308,10 +309,10 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
   }
 
   // We also want to give this input-device as unique an identifier as
-  // possible. We ask it for its own string which hopefully includes a serial
-  // or something, but if it doesn't and thus matches an already-existing one,
-  // we tack an index on to it. that way we can at least uniquely address them
-  // based off how many are connected.
+  // possible. We ask it for its own string which hopefully includes a
+  // serial or something, but if it doesn't and thus matches an
+  // already-existing one, we tack an index on to it. that way we can at
+  // least uniquely address them based off how many are connected.
   device->set_number(GetNewNumberedIdentifier_(device->GetRawDeviceName(),
                                                device->GetDeviceIdentifier()));
 
@@ -325,21 +326,9 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
     device->UpdateMapping();
 
     // Need to do this after updating controls, as some control settings can
-    // affect things we count (such as whether start activates default button).
+    // affect things we count (such as whether start activates default
+    // button).
     UpdateInputDeviceCounts_();
-  }
-
-  if (g_buildconfig.ostype_macos()) {
-    // Special case: on mac, the first time a iOS/Mac controller is connected,
-    // let the user know they may want to enable them if they're currently set
-    // as ignored. (the default at the moment is to only use classic device
-    // support).
-    static bool printed_ios_mac_controller_warning = false;
-    if (!printed_ios_mac_controller_warning && ignore_mfi_controllers_
-        && device->IsMFiController()) {
-      ScreenMessage(R"({"r":"macControllerSubsystemMFiNoteText"})", {1, 1, 0});
-      printed_ios_mac_controller_warning = true;
-    }
   }
 
   if (standard_message && !device->ShouldBeHiddenFromUser()) {
@@ -362,16 +351,16 @@ void Input::RemoveInputDevice(InputDevice* input, bool standard_message) {
     ShowStandardInputDeviceDisconnectedMessage_(input);
   }
 
-  // Just look for it in our list.. if we find it, simply clear the ref
-  // (we need to keep the ref around so our list indices don't change).
+  // Just look for it in our list.. if we find it, simply clear the ref (we
+  // need to keep the ref around so our list indices don't change).
   for (auto& input_device : input_devices_) {
     if (input_device.Exists() && (input_device.Get() == input)) {
       // Pull it off the list before killing it (in case it tries to trigger
       // another kill itself).
       auto device = Object::Ref<InputDevice>(input_device);
 
-      // Ok we cleared its slot in our vector; now we just have
-      // the local variable 'device' keeping it alive.
+      // Ok we cleared its slot in our vector; now we just have the local
+      // variable 'device' keeping it alive.
       input_device.Clear();
 
       // Tell it to detach from anything it is controlling.
@@ -519,43 +508,21 @@ auto Input::GetConfigurableGamePads() -> std::vector<InputDevice*> {
 
 auto Input::ShouldCompletelyIgnoreInputDevice(InputDevice* input_device)
     -> bool {
-  if (g_buildconfig.ostype_macos()) {
-    if (ignore_mfi_controllers_ && input_device->IsMFiController()) {
-      return true;
-    }
-  }
-  return ignore_sdl_controllers_ && input_device->IsSDLController();
+  return false;
 }
 
-void Input::UpdateEnabledControllerSubsystems_() {
-  assert(g_base);
-
-  // First off, on mac, let's update whether we want to completely ignore
-  // either the classic or the iOS/Mac controller subsystems.
-  if (g_buildconfig.ostype_macos()) {
-    std::string sys = g_base->app_config->Resolve(
-        AppConfig::StringID::kMacControllerSubsystem);
-    if (sys == "Classic") {
-      ignore_mfi_controllers_ = true;
-      ignore_sdl_controllers_ = false;
-    } else if (sys == "MFi") {
-      ignore_mfi_controllers_ = false;
-      ignore_sdl_controllers_ = true;
-    } else if (sys == "Both") {
-      ignore_mfi_controllers_ = false;
-      ignore_sdl_controllers_ = false;
-    } else {
-      BA_LOG_ONCE(LogLevel::kError,
-                  "Invalid mac-controller-subsystem value: '" + sys + "'");
-    }
+void Input::OnAppStart() {
+  assert(g_base->InLogicThread());
+  if (g_core->platform->HasTouchScreen()) {
+    assert(touch_input_ == nullptr);
+    touch_input_ = Object::NewDeferred<TouchInput>();
+    PushAddInputDeviceCall(touch_input_, false);
   }
 }
 
-void Input::OnAppStart() { assert(g_base->InLogicThread()); }
+void Input::OnAppSuspend() { assert(g_base->InLogicThread()); }
 
-void Input::OnAppPause() { assert(g_base->InLogicThread()); }
-
-void Input::OnAppResume() { assert(g_base->InLogicThread()); }
+void Input::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
 
 void Input::OnAppShutdown() { assert(g_base->InLogicThread()); }
 
@@ -564,8 +531,6 @@ void Input::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 // Tells all inputs to update their controls based on the app config.
 void Input::DoApplyAppConfig() {
   assert(g_base->InLogicThread());
-
-  UpdateEnabledControllerSubsystems_();
 
   // It's technically possible that updating these controls will add or
   // remove devices, thus changing the input_devices_ list, so lets work
@@ -600,10 +565,11 @@ void Input::StepDisplayTime() {
     }
   }
 
-  // We now need to update our input-device numbers dynamically since they're
-  // based on recently-active devices.
-  // ..we do this much more often for the first few seconds to keep
-  // controller-usage from being as annoying.
+  // We now need to update our input-device numbers dynamically since
+  // they're based on recently-active devices. We do this much more often
+  // for the first few seconds to keep controller-usage from being as
+  // annoying.
+
   // millisecs_t incr = (real_time > 10000) ? 468 : 98;
   // Update: don't remember why that was annoying; trying a single value for
   // now.
@@ -753,70 +719,61 @@ void Input::PrintLockLabels_() {
   Log(LogLevel::kError, s);
 }
 
-void Input::ProcessStressTesting(int player_count) {
-  assert(g_core->InMainThread());
-  assert(player_count >= 0);
-
-  millisecs_t time = g_core->GetAppTimeMillisecs();
-
-  // FIXME: If we don't check for stress_test_last_leave_time_ we totally
-  //  confuse the game.. need to be able to survive that.
-
-  // Kill some off if we have too many.
-  while (static_cast<int>(test_inputs_.size()) > player_count) {
-    delete test_inputs_.front();
-    test_inputs_.pop_front();
-  }
-
-  // If we have less than full test-inputs, add one randomly.
-  if (static_cast<int>(test_inputs_.size()) < player_count
-      && ((rand() % 1000 < 10))) {  // NOLINT
-    test_inputs_.push_back(new TestInput());
-  }
-
-  // Every so often lets kill the oldest one off.
-  if (explicit_bool(true)) {
-    if (test_inputs_.size() > 0 && (rand() % 2000 < 3)) {  // NOLINT
-      stress_test_last_leave_time_ = time;
-
-      // Usually do oldest; sometimes newest.
-      if (rand() % 5 == 0) {  // NOLINT
-        delete test_inputs_.back();
-        test_inputs_.pop_back();
-      } else {
-        delete test_inputs_.front();
-        test_inputs_.pop_front();
-      }
-    }
-  }
-
-  if (time - stress_test_time_ > 1000) {
-    stress_test_time_ = time;  // reset..
-    for (auto& test_input : test_inputs_) {
-      (*test_input).Reset();
-    }
-  }
-  while (stress_test_time_ < time) {
-    stress_test_time_++;
-    for (auto& test_input : test_inputs_) {
-      (*test_input).Process(stress_test_time_);
-    }
-  }
-}
-
 void Input::PushTextInputEvent(const std::string& text) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall([this, text] {
     MarkInputActive();
 
-    // Ignore  if input is locked.
+    // If the app doesn't want direct text input right now, ignore.
+    if (!g_base->app_adapter->HasDirectKeyboardInput()) {
+      return;
+    }
+
+    // Ignore if input is locked.
     if (IsInputLocked()) {
       return;
     }
+
+    // Also ignore if there are any mod keys being held. We process some of
+    // our own keyboard shortcuts and don't want text input to come through
+    // at the same time.
+    if (keys_held_.contains(SDLK_LCTRL) || keys_held_.contains(SDLK_RCTRL)
+        || keys_held_.contains(SDLK_LALT) || keys_held_.contains(SDLK_RALT)
+        || keys_held_.contains(SDLK_LGUI) || keys_held_.contains(SDLK_RGUI)) {
+      return;
+    }
+
+    // Ignore back-tick and tilde because we use that key to toggle the
+    // console. FIXME: Perhaps should allow typing it if some
+    // control-character is held?
+    if (text == "`" || text == "~") {
+      return;
+    }
+
+    // We try to handle char filtering here (to keep it consistent across
+    // platforms) but make a stink if they sent us something that we can't
+    // at least translate to unicode.
+    if (!Utils::IsValidUTF8(text)) {
+      Log(LogLevel::kWarning, "PushTextInputEvent passed invalid utf-8 text.");
+      return;
+    }
+
+    // Now scan through unicode vals and ignore stuff like tabs and newlines
+    // and backspaces. We want to limit this mechanism to direct simple
+    // lines of text. Anything needing something fancier should go through a
+    // proper OS-managed text input dialog or whatnot.
+    auto univals = Utils::UnicodeFromUTF8(text, "80ff83");
+    for (auto&& unival : univals) {
+      if (unival < 32) {
+        return;
+      }
+    }
+
     if (g_base && g_base->ui->dev_console() != nullptr
         && g_base->ui->dev_console()->HandleTextEditing(text)) {
       return;
     }
+
     g_base->ui->SendWidgetMessage(WidgetMessage(
         WidgetMessage::Type::kTextInput, nullptr, 0, 0, 0, 0, text.c_str()));
   });
@@ -955,6 +912,33 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     return;
   }
 
+  // Nowadays we don't want the OS to deliver repeat events to us, so filter
+  // out any that we get and make noise that they should stop. We explicitly
+  // handle repeats for UI purposes at the InputDevice or Widget level now.
+  if (keys_held_.find(keysym.sym) != keys_held_.end()) {
+    // Look out for several repeats coming in within the span of a few
+    // seconds and complain if it happens. This should allow for the random
+    // fluke repeat key press event due to funky OS circumstances.
+    static int count{};
+    static seconds_t last_count_reset_time{};
+    auto now = g_core->GetAppTimeSeconds();
+    if (now - last_count_reset_time > 2.0) {
+      count = 0;
+      last_count_reset_time = now;
+    } else {
+      count++;
+      if (count > 10) {
+        BA_LOG_ONCE(
+            LogLevel::kWarning,
+            "Input::HandleKeyPress_ seems to be getting passed repeat key"
+            " press events. Only initial press events should be passed.");
+      }
+    }
+    return;
+  }
+
+  keys_held_.insert(keysym.sym);
+
   // If someone is capturing these events, give them a crack at it.
   if (keyboard_input_capture_press_) {
     if (keyboard_input_capture_press_(keysym)) {
@@ -962,45 +946,45 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     }
   }
 
-  // Regardless of what else we do, keep track of mod key states.
-  // (for things like manual camera moves. For individual key presses
-  // ideally we should use the modifiers bundled with the key presses)
+  // Regardless of what else we do, keep track of mod key states. (for
+  // things like manual camera moves. For individual key presses ideally we
+  // should use the modifiers bundled with the key presses)
   UpdateModKeyStates_(&keysym, true);
 
-  bool repeat_press;
-  if (keys_held_.count(keysym.sym) != 0) {
-    repeat_press = true;
-  } else {
-    repeat_press = false;
-    keys_held_.insert(keysym.sym);
-  }
-
   // Mobile-specific stuff.
-  if (g_buildconfig.ostype_ios_tvos() || g_buildconfig.ostype_android()) {
-    switch (keysym.sym) {
-      // FIXME: See if this stuff is still necessary. Was this perhaps
-      //  specifically to support the console?
-      case SDLK_DELETE:
-      case SDLK_RETURN:
-      case SDLK_KP_ENTER:
-      case SDLK_BACKSPACE: {
-        // FIXME: I don't remember what this was put here for, but now that
-        //  we have hardware keyboards it crashes text fields by sending
-        //  them a TEXT_INPUT message with no string.. I made them resistant
-        //  to that case but wondering if we can take this out?
-        g_base->ui->SendWidgetMessage(
-            WidgetMessage(WidgetMessage::Type::kTextInput, &keysym));
-        break;
-      }
-      default:
-        break;
-    }
-  }
+  //  if (g_buildconfig.ostype_ios_tvos() || g_buildconfig.ostype_android()) {
+  //    switch (keysym.sym) {
+  //      // FIXME: See if this stuff is still necessary. Was this perhaps
+  //      //  specifically to support the console?
+  //      case SDLK_DELETE:
+  //      case SDLK_RETURN:
+  //      case SDLK_KP_ENTER:
+  //      case SDLK_BACKSPACE: {
+  //        // FIXME: I don't remember what this was put here for, but now that
+  //        //  we have hardware keyboards it crashes text fields by sending
+  //        //  them a TEXT_INPUT message with no string.. I made them resistant
+  //        //  to that case but wondering if we can take this out?
+  //        g_base->ui->SendWidgetMessage(
+  //            WidgetMessage(WidgetMessage::Type::kTextInput, &keysym));
+  //        break;
+  //      }
+  //      default:
+  //        break;
+  //    }
+  //  }
 
-  // Command-F or Control-F toggles full-screen if the app-adapter supports it.
-  if (g_base->app_adapter->CanToggleFullscreen()) {
-    if (!repeat_press && keysym.sym == SDLK_f
-        && ((keysym.mod & KMOD_CTRL) || (keysym.mod & KMOD_GUI))) {
+  // Explicitly handle fullscreen-toggles in some cases.
+  if (g_base->app_adapter->FullscreenControlAvailable()) {
+    bool do_toggle{};
+    // On our SDL builds we support both F11 and Alt+Enter for toggling
+    // fullscreen.
+    if (g_buildconfig.sdl_build()) {
+      if ((keysym.sym == SDLK_F11
+           || (keysym.sym == SDLK_RETURN && ((keysym.mod & KMOD_ALT))))) {
+        do_toggle = true;
+      }
+    }
+    if (do_toggle) {
       g_base->python->objs()
           .Get(BasePython::ObjID::kToggleFullscreenCall)
           .Call();
@@ -1008,117 +992,117 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     }
   }
 
-  // Control-Q quits. On Mac, the usual Cmd-Q gets handled
-  // by the app-adapter implicitly.
-  if (!repeat_press && keysym.sym == SDLK_q && (keysym.mod & KMOD_CTRL)) {
-    g_base->QuitApp(true);
+  // Ctrl-V or Cmd-V sends paste commands to the console or any interested
+  // text fields.
+  if (keysym.sym == SDLK_v
+      && ((keysym.mod & KMOD_CTRL) || (keysym.mod & KMOD_GUI))) {
+    if (auto* console = g_base->ui->dev_console()) {
+      if (console->PasteFromClipboard()) {
+        return;
+      }
+    }
+    g_base->ui->SendWidgetMessage(WidgetMessage(WidgetMessage::Type::kPaste));
     return;
   }
 
-  // Let the console intercept stuff if it wants at this point.
+  // Dev Console.
   if (auto* console = g_base->ui->dev_console()) {
+    if (keysym.sym == SDLK_BACKQUOTE || keysym.sym == SDLK_F2) {
+      // (reset input so characters don't continue walking and stuff)
+      g_base->input->ResetHoldStates();
+      console->ToggleState();
+      return;
+    }
     if (console->HandleKeyPress(&keysym)) {
       return;
     }
   }
 
-  // Ctrl-V or Cmd-V sends paste commands to any interested text fields.
-  // Command-Q or Control-Q quits.
-  if (!repeat_press && keysym.sym == SDLK_v
-      && ((keysym.mod & KMOD_CTRL) || (keysym.mod & KMOD_GUI))) {
-    g_base->ui->SendWidgetMessage(WidgetMessage(WidgetMessage::Type::kPaste));
-    return;
-  }
-
   bool handled = false;
 
-  // None of the following stuff accepts key repeats.
-  if (!repeat_press) {
-    switch (keysym.sym) {
-      // Menu button on android/etc. pops up the menu.
-      case SDLK_MENU: {
-        if (!g_base->ui->MainMenuVisible()) {
-          g_base->ui->PushMainMenuPressCall(touch_input_);
-        }
-        handled = true;
-        break;
+  switch (keysym.sym) {
+    // Menu button on android/etc. pops up the menu.
+    case SDLK_MENU: {
+      if (!g_base->ui->MainMenuVisible()) {
+        g_base->ui->PushMainMenuPressCall(touch_input_);
       }
-
-      case SDLK_EQUALS:
-      case SDLK_PLUS:
-        if (keysym.mod & KMOD_CTRL) {
-          g_base->app_mode()->ChangeGameSpeed(1);
-          handled = true;
-        }
-        break;
-
-      case SDLK_MINUS:
-        if (keysym.mod & KMOD_CTRL) {
-          g_base->app_mode()->ChangeGameSpeed(-1);
-          handled = true;
-        }
-        break;
-
-      case SDLK_F5: {
-        if (g_base->ui->PartyIconVisible()) {
-          g_base->ui->ActivatePartyIcon();
-        }
-        handled = true;
-        break;
-      }
-
-      case SDLK_F7:
-        assert(g_base->logic->event_loop());
-        g_base->logic->event_loop()->PushCall(
-            [] { g_base->graphics->ToggleManualCamera(); });
-        handled = true;
-        break;
-
-      case SDLK_F8:
-        assert(g_base->logic->event_loop());
-        g_base->logic->event_loop()->PushCall(
-            [] { g_base->graphics->ToggleNetworkDebugDisplay(); });
-        handled = true;
-        break;
-
-      case SDLK_F9:
-        g_base->python->objs().PushCall(
-            BasePython::ObjID::kLanguageTestToggleCall);
-        handled = true;
-        break;
-
-      case SDLK_F10:
-        assert(g_base->logic->event_loop());
-        g_base->logic->event_loop()->PushCall(
-            [] { g_base->graphics->ToggleDebugDraw(); });
-        handled = true;
-        break;
-
-      case SDLK_ESCAPE:
-
-        if (!g_base->ui->MainMenuVisible()) {
-          // There's no main menu up. Ask for one.
-
-          // Note: keyboard_input_ may be nullptr but escape key should
-          // still function for menus; it just won't claim ownership.
-          g_base->ui->PushMainMenuPressCall(keyboard_input_);
-        } else {
-          // Ok there *is* a main menu up. Send it a cancel message.
-          g_base->ui->SendWidgetMessage(
-              WidgetMessage(WidgetMessage::Type::kCancel));
-        }
-        handled = true;
-        break;
-
-      default:
-        break;
+      handled = true;
+      break;
     }
+
+    case SDLK_EQUALS:
+    case SDLK_PLUS:
+      if (keysym.mod & KMOD_CTRL) {
+        g_base->app_mode()->ChangeGameSpeed(1);
+        handled = true;
+      }
+      break;
+
+    case SDLK_MINUS:
+      if (keysym.mod & KMOD_CTRL) {
+        g_base->app_mode()->ChangeGameSpeed(-1);
+        handled = true;
+      }
+      break;
+
+    case SDLK_F5: {
+      if (g_base->ui->PartyIconVisible()) {
+        g_base->ui->ActivatePartyIcon();
+      }
+      handled = true;
+      break;
+    }
+
+    case SDLK_F7:
+      assert(g_base->logic->event_loop());
+      g_base->logic->event_loop()->PushCall(
+          [] { g_base->graphics->ToggleManualCamera(); });
+      handled = true;
+      break;
+
+    case SDLK_F8:
+      assert(g_base->logic->event_loop());
+      g_base->logic->event_loop()->PushCall(
+          [] { g_base->graphics->ToggleNetworkDebugDisplay(); });
+      handled = true;
+      break;
+
+    case SDLK_F9:
+      g_base->python->objs().PushCall(
+          BasePython::ObjID::kLanguageTestToggleCall);
+      handled = true;
+      break;
+
+    case SDLK_F10:
+      assert(g_base->logic->event_loop());
+      g_base->logic->event_loop()->PushCall(
+          [] { g_base->graphics->ToggleDebugDraw(); });
+      handled = true;
+      break;
+
+    case SDLK_ESCAPE:
+      if (!g_base->ui->MainMenuVisible()) {
+        // There's no main menu up. Ask for one.
+
+        // Note: keyboard_input_ may be nullptr but escape key should
+        // still function for menus; it just won't claim ownership.
+        g_base->ui->PushMainMenuPressCall(keyboard_input_);
+      } else {
+        // Ok there *is* a main menu up. Send it a cancel message.
+        g_base->ui->SendWidgetMessage(
+            WidgetMessage(WidgetMessage::Type::kCancel));
+      }
+      handled = true;
+      break;
+
+    default:
+      break;
   }
 
-  // If we haven't claimed it, pass it along as potential player/widget input.
+  // If we haven't handled this, pass it along as potential player/widget input.
   if (!handled) {
     if (keyboard_input_) {
-      keyboard_input_->HandleKey(&keysym, repeat_press, true);
+      keyboard_input_->HandleKey(&keysym, true);
     }
   }
 }
@@ -1134,7 +1118,7 @@ void Input::HandleKeyRelease_(const SDL_Keysym& keysym) {
   // In some cases we may receive duplicate key-release events (if a
   // keyboard reset was run, it deals out key releases, but then the
   // keyboard driver issues them as well).
-  if (keys_held_.count(keysym.sym) == 0) {
+  if (keys_held_.find(keysym.sym) == keys_held_.end()) {
     return;
   }
 
@@ -1155,7 +1139,7 @@ void Input::HandleKeyRelease_(const SDL_Keysym& keysym) {
   }
 
   if (keyboard_input_) {
-    keyboard_input_->HandleKey(&keysym, false, false);
+    keyboard_input_->HandleKey(&keysym, false);
   }
 }
 
@@ -1247,7 +1231,7 @@ void Input::HandleSmoothMouseScroll_(const Vector2f& velocity, bool momentum) {
       WidgetMessage(WidgetMessage::Type::kMouseWheelVelocityH, nullptr,
                     cursor_pos_x_, cursor_pos_y_, velocity.x, momentum));
 
-  last_mouse_move_time_ = g_core->GetAppTimeMillisecs();
+  last_mouse_move_time_ = g_core->GetAppTimeSeconds();
   mouse_move_count_++;
 
   Camera* camera = g_base->graphics->camera();
@@ -1259,7 +1243,14 @@ void Input::HandleSmoothMouseScroll_(const Vector2f& velocity, bool momentum) {
 }
 
 void Input::PushMouseMotionEvent(const Vector2f& position) {
-  assert(g_base->logic->event_loop());
+  auto* loop = g_base->logic->event_loop();
+  assert(loop);
+
+  // Don't overload it with events if it's stuck.
+  if (!loop->CheckPushSafety()) {
+    return;
+  }
+
   g_base->logic->event_loop()->PushCall(
       [this, position] { HandleMouseMotion_(position); });
 }
@@ -1283,12 +1274,12 @@ void Input::HandleMouseMotion_(const Vector2f& position) {
   cursor_pos_y_ = g_base->graphics->PixelToVirtualY(
       position.y * g_base->graphics->screen_pixel_height());
 
-  last_mouse_move_time_ = g_core->GetAppTimeMillisecs();
+  last_mouse_move_time_ = g_core->GetAppTimeSeconds();
   mouse_move_count_++;
 
-  // If we have a touch-input in editing mode, pass along events to it.
-  // (it usually handles its own events but here we want it to play nice
-  // with stuff under it by blocking touches, etc)
+  // If we have a touch-input in editing mode, pass along events to it. (it
+  // usually handles its own events but here we want it to play nice with
+  // stuff under it by blocking touches, etc)
   if (touch_input_ && touch_input_->editing()) {
     touch_input_->HandleTouchMoved(reinterpret_cast<void*>(1), cursor_pos_x_,
                                    cursor_pos_y_);
@@ -1324,7 +1315,7 @@ void Input::HandleMouseDown_(int button, const Vector2f& position) {
     return;
   }
 
-  last_mouse_move_time_ = g_core->GetAppTimeMillisecs();
+  last_mouse_move_time_ = g_core->GetAppTimeSeconds();
   mouse_move_count_++;
 
   // Convert normalized view coords to our virtual ones.
@@ -1389,8 +1380,8 @@ void Input::HandleMouseUp_(int button, const Vector2f& position) {
       position.y * g_base->graphics->screen_pixel_height());
 
   // If we have a touch-input in editing mode, pass along events to it.
-  // (it usually handles its own events but here we want it to play nice
-  // with stuff under it by blocking touches, etc)
+  // It usually handles its own events but here we want it to play nice
+  // with stuff under it by blocking touches, etc.
   if (touch_input_ && touch_input_->editing()) {
     touch_input_->HandleTouchUp(reinterpret_cast<void*>(1), cursor_pos_x_,
                                 cursor_pos_y_);
@@ -1431,9 +1422,6 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
 
   MarkInputActive();
 
-  // float x = e.x;
-  // float y = e.y;
-
   if (g_buildconfig.ostype_ios_tvos()) {
     printf("FIXME: update touch handling\n");
   }
@@ -1463,8 +1451,8 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
     }
   }
 
-  // We keep track of one 'single' touch which we pass along as
-  // mouse events which covers most UI stuff.
+  // We keep track of one 'single' touch which we pass along as mouse events
+  // which covers most UI stuff.
   if (e.type == TouchEvent::Type::kDown && single_touch_ == nullptr) {
     single_touch_ = e.touch;
     HandleMouseDown_(SDL_BUTTON_LEFT, Vector2f(e.x, e.y));
@@ -1474,8 +1462,8 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
     HandleMouseMotion_(Vector2f(e.x, e.y));
   }
 
-  // Currently just applying touch-cancel the same as touch-up here;
-  // perhaps should be smarter in the future.
+  // Currently just applying touch-cancel the same as touch-up here; perhaps
+  // should be smarter in the future.
   if ((e.type == TouchEvent::Type::kUp || e.type == TouchEvent::Type::kCanceled)
       && (e.touch == single_touch_ || e.overall)) {
     single_touch_ = nullptr;
@@ -1529,13 +1517,9 @@ auto Input::IsCursorVisible() const -> bool {
   }
   bool val;
 
-  // Show our cursor if any dialogs/windows are up or else if its been moved
-  // very recently.
-  if (g_base->ui->MainMenuVisible()) {
-    val = (g_core->GetAppTimeMillisecs() - last_mouse_move_time_ < 5000);
-  } else {
-    val = (g_core->GetAppTimeMillisecs() - last_mouse_move_time_ < 1000);
-  }
+  // Show our cursor only if its been moved recently.
+  val = (g_core->GetAppTimeSeconds() - last_mouse_move_time_ < 2.071);
+
   return val;
 }
 

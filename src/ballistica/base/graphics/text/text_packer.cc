@@ -24,11 +24,11 @@ void TextPacker::AddSpan(const std::string& text, float x, float y,
 }
 
 // FIXME - we currently run into minor problems because we measure our text
-//  bounds at one size and then scale that linearly when trying to fit things
-//  into the texture.  However, fonts don't always scale linearly (and even when
-//  that's an option it can be expensive).
+//  bounds at one size and then scale that linearly when trying to fit
+//  things into the texture. However, fonts don't always scale linearly (and
+//  even when that's an option it can be expensive).
 
-void TextPacker::compile() {
+void TextPacker::Compile() {
   assert(!compiled_);
   if (spans_.empty()) {
     compiled_ = true;
@@ -57,24 +57,23 @@ void TextPacker::compile() {
     width *= 2;
   }
 
-  // Alternately, if we're too big, crank our scale down so that our widest span
-  // fits.
+  // Alternately, if we're too big, crank our scale down so that our widest
+  // span fits.
   if (widest_unscaled_span_width * scale > width * 0.9f) {
     scale *= ((width * 0.9f) / (widest_unscaled_span_width * scale));
   }
   float start_height = height;
   int mini_shrink_tries = 0;
 
-  // Ok; we've now locked in a width and scale.
-  // Now we go through and position our spans.
-  // We may need to do this more than once if our height comes out too big.
-  // (hopefully this will never be a problem in practice)
+  // Ok; we've now locked in a width and scale. Now we go through and
+  // position our spans. We may need to do this more than once if our height
+  // comes out too big. (hopefully this will never be a problem in practice)
   while (true) {
     height = start_height;
 
-    // We currently just lay out left-to-right, top-to-bottom.
-    // This could be somewhat wasteful in particular configurations.
-    // (leaving half-filled lines, etc) so it might be worth improving later.
+    // We currently just lay out left-to-right, top-to-bottom. This could be
+    // somewhat wasteful in particular configurations. (leaving half-filled
+    // lines, etc) so it might be worth improving later.
     float widest_fill_right = 0.0f;
     float fill_right = 0.0f;
     float fill_bottom = 0.0f;
@@ -87,26 +86,27 @@ void TextPacker::compile() {
       // Start a new line if this would put us past the end.
       if (fill_right + span_width > width) {
         if (fill_right > widest_fill_right) {
-          widest_fill_right = fill_right;  // Keep track of how far over we go.
+          // Keep track of how far over we go.
+          widest_fill_right = fill_right;
         }
         fill_right = 0.0f;
         fill_bottom += line_height;
         line_height = 0.0f;
       }
 
-      // Position x such that x + left bound - buffer lines up with our current
-      // right point.
+      // Position x such that x + left bound - buffer lines up with our
+      // current right point.
       float to_left = (i.bounds.l - span_buffer) * scale;
       i.tex_x = fill_right - to_left;
       fill_right += span_width;
 
-      // Position y such that y - top bound - buffer lines up with our current
-      // bottom point.
+      // Position y such that y - top bound - buffer lines up with our
+      // current bottom point.
       float to_top = (-i.bounds.t - span_buffer) * scale;
       i.tex_y = fill_bottom - to_top;
 
-      // If our total height is greater than the current line height, expand the
-      // line's.
+      // If our total height is greater than the current line height, expand
+      // the line's.
       if (span_height > line_height) {
         line_height = span_height;
       }
@@ -125,9 +125,9 @@ void TextPacker::compile() {
       // If it doesn't fit, repeat again with a smaller scale until it does.
 
       // Dropping our scale has a disproportional effect on the final height
-      // (since it opens up more relative horizontal space).
-      // I'm not sure how to figure out how much to drop by other than
-      // incrementally dropping values until we fit.
+      // (since it opens up more relative horizontal space). I'm not sure
+      // how to figure out how much to drop by other than incrementally
+      // dropping values until we fit.
       scale *= 0.75f;
 
     } else if (((widest_fill_right < (width * mini_shrink_threshold_h)
@@ -135,15 +135,15 @@ void TextPacker::compile() {
                 || fill_bottom + line_height
                        < (height * mini_shrink_threshold_v))
                && mini_shrink_tries < 3) {
-      // If we're here it means we *barely* use more than half of the texture in
-      // one direction or the other; let's shrink just a tiny bit and we should
-      // be able to chop our texture size in half
+      // If we're here it means we *barely* use more than half of the
+      // texture in one direction or the other; let's shrink just a tiny bit
+      // and we should be able to chop our texture size in half
       if (widest_fill_right < width * mini_shrink_threshold_h && width > 16) {
         float scale_val = 0.99f * (((width * 0.5f) / widest_fill_right));
         if (scale_val < 1.0f) {
-          // FIXME - should think about a fixed multiplier here;
-          //  under the hood the system might be caching glyphs based on scale
-          //  and this would leave us with fewer different scales in the end and
+          // FIXME - should think about a fixed multiplier here; under the
+          //  hood the system might be caching glyphs based on scale and
+          //  this would leave us with fewer different scales in the end and
           //  thus better caching performance
           scale *= scale_val;
         }
@@ -151,9 +151,9 @@ void TextPacker::compile() {
       } else {
         float scale_val = 0.99f * (height * 0.5f) / (fill_bottom + line_height);
         if (scale_val < 1.0f) {
-          // FIXME - should think about a fixed multiplier here;
-          //  under the hood the system might be caching glyphs based on scale
-          //  and this would leave us with fewer different scales in the end and
+          // FIXME - should think about a fixed multiplier here; under the
+          //  hood the system might be caching glyphs based on scale and
+          //  this would leave us with fewer different scales in the end and
           //  thus better caching performance
           scale *= scale_val;
         }
@@ -165,8 +165,8 @@ void TextPacker::compile() {
     }
   }
 
-  // Lastly, now that our texture width and height are completely finalized, we
-  // can calculate UVs.
+  // Lastly, now that our texture width and height are completely finalized,
+  // we can calculate UVs.
   for (auto&& i : spans_) {
     // Now store uv coords for this span; they should include the buffer.
     i.u_min = (i.tex_x + (i.bounds.l - span_buffer) * scale) / width;
@@ -182,11 +182,11 @@ void TextPacker::compile() {
   }
 
   // TODO(ericf): now we calculate a hash that's unique to this text
-  //  configuration; we'll use that as a key for the texture we'll generate/use.
-  //  ..this way multiple meshes can share the same generated texture.
-  //  *technically* we could calculate this hash and check for an existing
-  //  texture before we bother laying out our spans, but that might not save us
-  //  much time and would complicate things.
+  //  configuration; we'll use that as a key for the texture we'll
+  //  generate/use. ..this way multiple meshes can share the same generated
+  //  texture. *technically* we could calculate this hash and check for an
+  //  existing texture before we bother laying out our spans, but that might
+  //  not save us much time and would complicate things.
   hash_ = std::to_string(resolution_scale_);
   for (auto&& i : spans_) {
     char buffer[64];

@@ -166,6 +166,10 @@ namespace ballistica {
 #define BA_AMAZON_BUILD 0
 #endif
 
+#ifndef BA_STEAM_BUILD
+#define BA_STEAM_BUILD 0
+#endif
+
 #ifndef BA_GOOGLE_BUILD
 #define BA_GOOGLE_BUILD 0
 #endif
@@ -259,6 +263,7 @@ class BuildConfig {
   bool google_build() const { return EXPBOOL_(BA_GOOGLE_BUILD); }
   bool demo_build() const { return EXPBOOL_(BA_DEMO_BUILD); }
   bool arcade_build() const { return EXPBOOL_(BA_ARCADE_BUILD); }
+  bool steam_build() const { return EXPBOOL_(BA_STEAM_BUILD); }
   bool contains_python_dist() const {
     return EXPBOOL_(BA_CONTAINS_PYTHON_DIST);
   }

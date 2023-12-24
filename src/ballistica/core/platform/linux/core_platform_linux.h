@@ -16,11 +16,11 @@ class CorePlatformLinux : public CorePlatform {
   auto GetDeviceV1AccountUUIDPrefix() -> std::string override { return "l"; }
   auto GenerateUUID() -> std::string override;
   auto DoHasTouchScreen() -> bool override;
-  void OpenFileExternally(const std::string& path) override;
-  void OpenDirExternally(const std::string& path) override;
   auto GetPlatformName() -> std::string override;
   auto GetSubplatformName() -> std::string override;
   auto GetDeviceUUIDInputs() -> std::list<std::string> override;
+  auto DoGetDeviceDescription() -> std::string override;
+  auto GetOSVersionString() -> std::string override;
 };
 
 }  // namespace ballistica::core

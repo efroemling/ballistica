@@ -12,14 +12,14 @@
 
 namespace ballistica::base {
 
-/// A module that handles audio processing.
+/// Wrangles audio off in its own thread.
 class AudioServer {
  public:
-  static auto source_id_from_play_id(uint32_t play_id) -> uint32_t {
+  static auto SourceIdFromPlayId(uint32_t play_id) -> uint32_t {
     return play_id & 0xFFFFu;
   }
 
-  static auto play_count_from_play_id(uint32_t play_id) -> uint32_t {
+  static auto PlayCountFromPlayId(uint32_t play_id) -> uint32_t {
     return play_id >> 16u;
   }
 
@@ -28,10 +28,6 @@ class AudioServer {
 
   void PushSetVolumesCall(float music_volume, float sound_volume);
   void PushSetSoundPitchCall(float val);
-  void PushSetSuspendedCall(bool pause);
-
-  static void BeginInterruption();
-  static void EndInterruption();
 
   void PushSetListenerPositionCall(const Vector3f& p);
   void PushSetListenerOrientationCall(const Vector3f& forward,
@@ -41,10 +37,12 @@ class AudioServer {
   void PushComponentUnloadCall(
       const std::vector<Object::Ref<Asset>*>& components);
 
-  /// For use by g_logic_module().
   void ClearSoundRefDeleteList();
 
-  auto paused() const -> bool { return paused_; }
+  auto paused() const -> bool { return suspended_; }
+
+  void Shutdown();
+  auto shutdown_completed() const { return shutdown_completed_; }
 
   // Client sources use these to pass settings to the server.
   void PushSourceSetIsMusicCall(uint32_t play_id, bool val);
@@ -66,38 +64,41 @@ class AudioServer {
 
   auto event_loop() const -> EventLoop* { return event_loop_; }
 
- private:
-  class ThreadSource;
-  struct Impl;
+  void OnDeviceDisconnected();
+  void OpenALSoftLogCallback(const std::string& msg);
 
-  void OnAppStartInThread();
+ private:
+  class ThreadSource_;
+  struct Impl_;
+
+  void OnAppStartInThread_();
   ~AudioServer();
 
-  void OnThreadPause();
-  void OnThreadResume();
+  void OnThreadSuspend_();
+  void OnThreadUnsuspend_();
 
-  void SetPaused(bool paused);
+  void SetSuspended_(bool suspended);
 
-  void SetMusicVolume(float volume);
-  void SetSoundVolume(float volume);
-  void SetSoundPitch(float pitch);
-  auto music_volume() -> float { return music_volume_; }
-  auto sound_volume() -> float { return sound_volume_; }
-  auto sound_pitch() -> float { return sound_pitch_; }
+  void SetMusicVolume_(float volume);
+  void SetSoundVolume_(float volume);
+  void SetSoundPitch_(float pitch);
+
+  void CompleteShutdown_();
 
   /// If a sound play id is currently playing, return the sound.
-  auto GetPlayingSound(uint32_t play_id) -> ThreadSource*;
+  auto GetPlayingSound_(uint32_t play_id) -> ThreadSource_*;
 
-  void Reset();
-  void Process();
+  void Reset_();
+  void Process_();
+  void ProcessDeviceDisconnects_(seconds_t real_time_seconds);
 
   /// Send a component to the audio thread to delete.
-  void DeleteAssetComponent(Asset* c);
+  // void DeleteAssetComponent_(Asset* c);
 
-  void UpdateTimerInterval();
-  void UpdateAvailableSources();
-  void UpdateMusicPlayState();
-  void ProcessSoundFades();
+  void UpdateTimerInterval_();
+  void UpdateAvailableSources_();
+  void UpdateMusicPlayState_();
+  void ProcessSoundFades_();
 
   // Some threads such as audio hold onto allocated Media-Component-Refs to keep
   // media components alive that they need.  Media-Component-Refs, however, must
@@ -107,32 +108,49 @@ class AudioServer {
 
   // Note: should use unique_ptr for this, but build fails on raspberry pi
   // (gcc 8.3.0). Works on Ubuntu 9.3 so should try again later.
-  // std::unique_ptr<Impl> impl_{};
-  Impl* impl_{};
+  std::unique_ptr<Impl_> impl_{};
+  // Impl* impl_{};
 
   EventLoop* event_loop_{};
   Timer* process_timer_{};
-  bool have_pending_loads_{};
-  bool paused_{};
-  millisecs_t last_sound_fade_process_time_{};
-
   float sound_volume_{1.0f};
   float sound_pitch_{1.0f};
   float music_volume_{1.0f};
+  float app_active_volume_{1.0f};
+
+  bool have_pending_loads_{};
+  bool app_active_{true};
+  bool suspended_{};
+  bool shutdown_completed_{};
+  bool shutting_down_{};
+  bool shipped_reconnect_logs_{};
+  // bool report_reset_results_{};
+  // int reset_result_reports_remaining_{3};
+  // int reconnect_fail_count_{};
+  int al_source_count_{};
+  seconds_t last_connected_time_{};
+  seconds_t last_reset_attempt_time_{-999.0};
+  seconds_t shutdown_start_time_{};
+  seconds_t last_started_playing_time_{};
+  millisecs_t last_sound_fade_process_time_{};
+
+  std::mutex openalsoft_android_log_mutex_;
+  std::string openalsoft_android_log_;
 
   /// Indexed list of sources.
-  std::vector<ThreadSource*> sources_;
-  std::vector<ThreadSource*> streaming_sources_;
+  std::vector<ThreadSource_*> sources_;
+  std::vector<ThreadSource_*> streaming_sources_;
   millisecs_t last_stream_process_time_{};
+  millisecs_t last_sanity_check_time_{};
 
   // Holds refs to all sources.
   // Use sources, not this, for faster iterating.
-  std::vector<Object::Ref<ThreadSource> > sound_source_refs_;
-  struct SoundFadeNode;
+  std::vector<Object::Ref<ThreadSource_>> sound_source_refs_;
+  struct SoundFadeNode_;
 
   // NOTE: would use unordered_map here but gcc doesn't seem to allow
   // forward-declared template params with them.
-  std::map<int, SoundFadeNode> sound_fade_nodes_;
+  std::map<int, SoundFadeNode_> sound_fade_nodes_;
 
   // This mutex controls access to our list of media component shared ptrs to
   // delete in the main thread.
@@ -140,10 +158,6 @@ class AudioServer {
 
   // Our list of sound media components to delete via the main thread.
   std::vector<const Object::Ref<SoundAsset>*> sound_ref_delete_list_;
-
-  millisecs_t last_sanity_check_time_{};
-
-  static int al_source_count_;
 };
 
 }  // namespace ballistica::base

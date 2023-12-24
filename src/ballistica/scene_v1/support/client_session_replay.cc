@@ -253,7 +253,7 @@ void ClientSessionReplay::OnReset(bool rewind) {
       Error("error reading version");
       return;
     }
-    if (version > kProtocolVersion || version < kProtocolVersionMin) {
+    if (version > kProtocolVersionMax || version < kProtocolVersionClientMin) {
       ScreenMessage(g_base->assets->GetResourceString("replayVersionErrorText"),
                     {1, 0, 0});
       End();

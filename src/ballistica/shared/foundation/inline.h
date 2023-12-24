@@ -88,8 +88,7 @@ template <typename OUT_TYPE, typename IN_TYPE>
 auto static_cast_check_type(IN_TYPE in) -> OUT_TYPE {
   auto out_static = static_cast<OUT_TYPE>(in);
   if (g_buildconfig.debug_build()) {
-    auto out_dynamic = dynamic_cast<OUT_TYPE>(in);
-    assert(out_static == out_dynamic);
+    assert(out_static == dynamic_cast<OUT_TYPE>(in));
   }
   return out_static;
 }

@@ -5,19 +5,22 @@
 
 #include "SDL.h"
 #include "ballistica/base/graphics/gl/gl_sys.h"
+#include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/shared/ballistica.h"
 
 #pragma comment(lib, "opengl32.lib")
-// #pragma comment(lib, "glu32.lib")
 
 PFNGLGETINTERNALFORMATIVPROC glGetInternalformativ{};
 PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC
 glGetFramebufferAttachmentParameteriv{};
 PFNGLBLENDFUNCSEPARATEPROC glBlendFuncSeparate{};
+
+PFNGLCOMPRESSEDTEXIMAGE2DPROC glCompressedTexImage2DBA{};
 PFNGLACTIVETEXTUREPROC glActiveTextureBA{};
+// PFNGLCOMPRESSEDTEXIMAGE2DPROC glCompressedTexImageARB{};
 // PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB{};
+
 PFNGLPOINTPARAMETERFVARBPROC glPointParameterfvARB{};
-// PFNGLPOINTPARAMETERFARBPROC glPointParameterfARB{};
 PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT{};
 PFNGLCREATEPROGRAMPROC glCreateProgram{};
 PFNGLCREATESHADERPROC glCreateShader{};
@@ -57,7 +60,6 @@ PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray{};
 PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray{};
 PFNGLUNIFORMMATRIX4FVARBPROC glUniformMatrix4fv{};
 PFNGLBINDATTRIBLOCATIONPROC glBindAttribLocation{};
-PFNGLCOMPRESSEDTEXIMAGE2DPROC glCompressedTexImage2DBA{};
 PFNGLGETSHADERIVPROC glGetShaderiv{};
 PFNGLGETPROGRAMIVPROC glGetProgramiv{};
 PFNGLDELETESHADERPROC glDeleteShader{};
@@ -90,10 +92,15 @@ static auto GetGLFunc_(const char* name, bool required) -> void* {
 #define GET2(PTRTYPE, FUNC, REQUIRED) \
   FUNC##BA = (PTRTYPE)GetGLFunc_(#FUNC, REQUIRED)
 
-void SysGLInit() {
+void SysGLInit(RendererGL* renderer) {
   assert(!g_sys_gl_inited);
 
   SDL_GL_LoadLibrary(nullptr);
+
+  // Check overall GL version here before loading any extended functions.
+  // We'd rather die with a 'Your OpenGL is too old' error rather than a
+  // 'Could not load function foofDinglePlop2XZ'.
+  renderer->CheckGLVersion();
 
   void* testval{};
 
@@ -104,18 +111,13 @@ void SysGLInit() {
   // so we can survive without it.
   GET(PFNGLGETINTERNALFORMATIVPROC, glGetInternalformativ, false);
 
-  // For checking srgb stuff.
+  GET(PFNGLBLENDFUNCSEPARATEPROC, glBlendFuncSeparate, true);
   GET(PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC,
-      glGetFramebufferAttachmentParameteriv, false);
-
-  // Needed for VR overlay.
-  GET(PFNGLBLENDFUNCSEPARATEPROC, glBlendFuncSeparate, false);
-
+      glGetFramebufferAttachmentParameteriv, true);
+  GET(PFNGLGETSTRINGIPROC, glGetStringi, true);
   GET2(PFNGLACTIVETEXTUREPROC, glActiveTexture, true);
-  // GET(PFNGLCLIENTACTIVETEXTUREARBPROC, glClientActiveTextureARB, true);
   GET(PFNWGLSWAPINTERVALEXTPROC, wglSwapIntervalEXT, true);
   GET(PFNGLPOINTPARAMETERFVARBPROC, glPointParameterfvARB, true);
-  // GET(PFNGLPOINTPARAMETERFARBPROC, glPointParameterfARB, true);
   GET(PFNGLCREATEPROGRAMPROC, glCreateProgram, true);
   GET(PFNGLCREATESHADERPROC, glCreateShader, true);
   GET(PFNGLSHADERSOURCEPROC, glShaderSource, true);
@@ -159,7 +161,6 @@ void SysGLInit() {
   GET(PFNGLDETACHSHADERPROC, glDetachShader, true);
   GET(PFNGLGETSHADERINFOLOGPROC, glGetShaderInfoLog, true);
   GET(PFNGLGETPROGRAMINFOLOGPROC, glGetProgramInfoLog, true);
-  GET(PFNGLGETSTRINGIPROC, glGetStringi, true);
   GET(PFNGLBINDVERTEXARRAYPROC, glBindVertexArray, true);
   GET(PFNGLGENVERTEXARRAYSPROC, glGenVertexArrays, true);
   GET(PFNGLDELETEVERTEXARRAYSPROC, glDeleteVertexArrays, true);

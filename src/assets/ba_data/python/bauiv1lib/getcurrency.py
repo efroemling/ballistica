@@ -334,7 +334,7 @@ class GetCurrencyWindow(bui.Window):
             tex_scale=1.2,
         )  # 19.99-ish
 
-        self._enable_ad_button = bui.has_video_ads()
+        self._enable_ad_button = plus.has_video_ads()
         h = self._width * 0.5 + 110.0
         v = self._height - b_size[1] - 115.0
 
@@ -561,7 +561,7 @@ class GetCurrencyWindow(bui.Window):
                     next_reward_ad_time
                 )
             now = datetime.datetime.utcnow()
-            if bui.have_incentivized_ad() and (
+            if plus.have_incentivized_ad() and (
                 next_reward_ad_time is None or next_reward_ad_time <= now
             ):
                 self._ad_button_greyed = False
@@ -732,8 +732,13 @@ class GetCurrencyWindow(bui.Window):
     def _back(self) -> None:
         from bauiv1lib.store import browser
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         if self._transitioning_out:
             return
+
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
         )
@@ -745,7 +750,9 @@ class GetCurrencyWindow(bui.Window):
             ).get_root_widget()
             if not self._from_modal_store:
                 assert bui.app.classic is not None
-                bui.app.ui_v1.set_main_menu_window(window)
+                bui.app.ui_v1.set_main_menu_window(
+                    window, from_window=self._root_widget
+                )
         self._transitioning_out = True
 
 

@@ -54,10 +54,18 @@ void ButtonWidget::SetIcon(base::TextureAsset* val) { icon_ = val; }
 void ButtonWidget::OnRepeatTimerExpired() {
   // Repeat our action unless we somehow lost focus but didn't get a mouse-up.
   if (IsHierarchySelected() && pressed_) {
+    // Gather up any user code triggered by this stuff and run it at the end
+    // before we return.
+    base::UI::OperationContext ui_op_context;
+
     DoActivate(true);
 
     // Speed up repeats after the first.
-    repeat_timer_->SetLength(150);
+    repeat_timer_->SetLength(0.150);
+
+    // Run any calls built up by UI callbacks.
+    ui_op_context.Finish();
+
   } else {
     repeat_timer_.Clear();
   }
@@ -165,7 +173,9 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
     // Account for our icon if we have it.
     float s_width_available = std::max(30.0f, width_ - 30);
-    if (show_icons) s_width_available -= (34.0f * icon_scale_);
+    if (show_icons) {
+      s_width_available -= (34.0f * icon_scale_);
+    }
 
     if ((string_width * string_scale) > s_width_available) {
       float squish_scale = s_width_available / (string_width * string_scale);
@@ -485,8 +495,8 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         pressed_ = true;
 
         if (repeat_) {
-          repeat_timer_ =
-              base::NewAppTimer(300, true, [this] { OnRepeatTimerExpired(); });
+          repeat_timer_ = base::AppTimer::New(
+              0.3, true, [this] { OnRepeatTimerExpired(); });
 
           // If we're a repeat button we trigger immediately.
           // (waiting till mouse up sort of defeats the purpose here)
@@ -558,9 +568,8 @@ void ButtonWidget::DoActivate(bool is_repeat) {
     }
   }
   if (auto* call = on_activate_call_.Get()) {
-    // Call this in the next cycle (don't want to risk mucking with UI from
-    // within a UI loop.)
-    call->ScheduleWeak();
+    // Schedule this to run immediately after any current UI traversal.
+    call->ScheduleInUIOperation();
     return;
   }
 }

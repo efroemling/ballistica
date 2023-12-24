@@ -8,6 +8,7 @@
 
 #include "ballistica/base/input/device/input_device.h"
 #include "ballistica/core/platform/support/min_sdl.h"
+#include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::base {
 
@@ -15,7 +16,7 @@ class KeyboardInput : public InputDevice {
  public:
   explicit KeyboardInput(KeyboardInput* parent);
   ~KeyboardInput() override;
-  auto HandleKey(const SDL_Keysym* keysym, bool repeat, bool down) -> bool;
+  auto HandleKey(const SDL_Keysym* keysym, bool down) -> bool;
   void UpdateMapping() override;
   auto GetRawDeviceName() -> std::string override;
   void ResetHeldStates() override;
@@ -29,8 +30,17 @@ class KeyboardInput : public InputDevice {
   auto GetButtonName(int index) -> std::string override;
 
  private:
-  void UpdateArrowKeys(SDL_Keycode key);
-  void UpdateRun(SDL_Keycode key, bool down);
+  void UpdateArrowKeys_(SDL_Keycode key);
+  void UpdateRun_(SDL_Keycode key, bool down);
+  bool down_held_{};
+  bool up_held_{};
+  bool left_held_{};
+  bool right_held_{};
+  bool enable_child_{};
+  bool left_key_assigned_{};
+  bool right_key_assigned_{};
+  bool up_key_assigned_{};
+  bool down_key_assigned_{};
   SDL_Keycode up_key_{};
   SDL_Keycode down_key_{};
   SDL_Keycode left_key_{};
@@ -41,18 +51,10 @@ class KeyboardInput : public InputDevice {
   SDL_Keycode pick_up_key_{};
   SDL_Keycode hold_position_key_{};
   SDL_Keycode start_key_{};
-  bool down_held_{};
-  bool up_held_{};
-  bool left_held_{};
-  bool right_held_{};
-  bool enable_child_{};
-  bool left_key_assigned_{};
-  bool right_key_assigned_{};
-  bool up_key_assigned_{};
-  bool down_key_assigned_{};
   KeyboardInput* parent_keyboard_input_{};
   KeyboardInput* child_keyboard_input_{};
   std::set<int> keys_held_;
+  Object::Ref<Repeater> ui_repeater_;
 };
 
 }  // namespace ballistica::base

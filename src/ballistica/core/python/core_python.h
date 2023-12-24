@@ -45,7 +45,7 @@ class CorePython {
 
   /// Calls Python logging function (logging.error, logging.warning, etc.)
   /// Can be called from any thread at any time. If called before Python
-  /// logging is available, logs locally using Logging::DisplayLog()
+  /// logging is available, logs locally using Logging::EmitPlatformLog()
   /// (with an added warning).
   void LoggingCall(LogLevel loglevel, const std::string& msg);
   void ImportPythonObjs();

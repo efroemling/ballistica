@@ -213,6 +213,12 @@ class ConfigKeyboardWindow(bui.Window):
             scale=1.0,
         )
 
+    def _pretty_button_name(self, button_name: str) -> bui.Lstr:
+        button_id = self._settings[button_name]
+        if button_id == -1:
+            return bs.Lstr(resource='configGamepadWindow.unsetText')
+        return self._input.get_button_name(button_id)
+
     def _capture_button(
         self,
         pos: tuple[float, float],
@@ -250,7 +256,7 @@ class ConfigKeyboardWindow(bui.Window):
                 v_align='top',
                 scale=uiscale,
                 maxwidth=maxwidth,
-                text=self._input.get_button_name(self._settings[button]),
+                text=self._pretty_button_name(button),
             )
             bui.buttonwidget(
                 edit=btn,
@@ -265,14 +271,23 @@ class ConfigKeyboardWindow(bui.Window):
     def _cancel(self) -> None:
         from bauiv1lib.settings.controls import ControlsSettingsWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            ControlsSettingsWindow(transition='in_left').get_root_widget()
+            ControlsSettingsWindow(transition='in_left').get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _save(self) -> None:
         from bauiv1lib.settings.controls import ControlsSettingsWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         assert bui.app.classic is not None
         bui.containerwidget(edit=self._root_widget, transition='out_right')
@@ -308,7 +323,8 @@ class ConfigKeyboardWindow(bui.Window):
             )
         bui.app.config.apply_and_commit()
         bui.app.ui_v1.set_main_menu_window(
-            ControlsSettingsWindow(transition='in_left').get_root_widget()
+            ControlsSettingsWindow(transition='in_left').get_root_widget(),
+            from_window=self._root_widget,
         )
 
 

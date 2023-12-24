@@ -113,6 +113,14 @@ class ObjectComponent : public RenderComponent {
   void WriteConfig() override;
 
  protected:
+  ReflectionType reflection_{ReflectionType::kNone};
+  LightShadowType light_shadow_{LightShadowType::kObject};
+  bool world_space_{};
+  bool transparent_{};
+  bool premultiplied_{};
+  bool have_color_add_{};
+  bool double_sided_{};
+  bool do_colorize_2_{};
   float color_r_{1.0f};
   float color_g_{1.0f};
   float color_b_{1.0f};
@@ -133,14 +141,6 @@ class ObjectComponent : public RenderComponent {
   float reflection_scale_b_{1.0f};
   Object::Ref<TextureAsset> texture_;
   Object::Ref<TextureAsset> colorize_texture_;
-  ReflectionType reflection_{ReflectionType::kNone};
-  LightShadowType light_shadow_{LightShadowType::kObject};
-  bool world_space_{};
-  bool transparent_{};
-  bool premultiplied_{};
-  bool have_color_add_{};
-  bool double_sided_{};
-  bool do_colorize_2_{};
 };
 
 }  // namespace ballistica::base

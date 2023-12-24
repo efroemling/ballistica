@@ -2,8 +2,10 @@
 
 #include "ballistica/base/input/device/keyboard_input.h"
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/support/classic_soft.h"
+#include "ballistica/base/support/repeater.h"
 #include "ballistica/base/ui/ui.h"
 
 namespace ballistica::base {
@@ -42,10 +44,12 @@ KeyboardInput::KeyboardInput(KeyboardInput* parent_keyboard_input_in) {
 
 KeyboardInput::~KeyboardInput() = default;
 
-auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool repeat, bool down)
-    -> bool {
+auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
   // Only allow the *main* keyboard to talk to the UI
   if (parent_keyboard_input_ == nullptr) {
+    // Any new event coming in cancels repeats.
+    ui_repeater_.Clear();
+
     if (g_base->ui->GetWidgetForInput(this)) {
       bool pass = false;
       auto c = WidgetMessage::Type::kEmptyMessage;
@@ -78,10 +82,8 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool repeat, bool down)
           case SDLK_SPACE:
           case SDLK_KP_ENTER:
           case SDLK_RETURN:
-            if (!repeat) {
-              c = WidgetMessage::Type::kActivate;
-              pass = true;
-            }
+            c = WidgetMessage::Type::kActivate;
+            pass = true;
             break;
           case SDLK_ESCAPE:
             // (limit to kb1 so we don't get double-beeps on failure)
@@ -123,31 +125,43 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool repeat, bool down)
         }
       }
       if (pass) {
-        g_base->ui->SendWidgetMessage(WidgetMessage(c, keysym));
+        // For movement and key press widget events, set up repeats.
+        // Otherwise run a single time immediately.
+        switch (c) {
+          case WidgetMessage::Type::kMoveUp:
+          case WidgetMessage::Type::kMoveDown:
+          case WidgetMessage::Type::kMoveLeft:
+          case WidgetMessage::Type::kMoveRight:
+          case WidgetMessage::Type::kKey:
+            // Note: Need to pass keysym along as a value; not a pointer.
+            ui_repeater_ = Repeater::New(
+                g_base->app_adapter->GetKeyRepeatDelay(),
+                g_base->app_adapter->GetKeyRepeatInterval(),
+                [c, keysym = *keysym] {
+                  g_base->ui->SendWidgetMessage(WidgetMessage(c, &keysym));
+                });
+            break;
+          default:
+            g_base->ui->SendWidgetMessage(WidgetMessage(c, keysym));
+            break;
+        }
       }
       return (pass);
     }
   }
 
   // Bring up menu if start is pressed.
-  if (keysym->sym == start_key_ && !repeat && !g_base->ui->MainMenuVisible()) {
+  if (keysym->sym == start_key_ && !g_base->ui->MainMenuVisible()) {
     g_base->ui->PushMainMenuPressCall(this);
     return true;
   }
 
-// Clion seems to think child_keyboard_input_ will never be set here (it will).
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "UnreachableCode"
-#pragma ide diagnostic ignored "ConstantConditionsOC"
-
   // At this point, if we have a child input, let it try to handle things.
   if (child_keyboard_input_ && enable_child_) {
-    if (child_keyboard_input_->HandleKey(keysym, repeat, down)) {
+    if (child_keyboard_input_->HandleKey(keysym, down)) {
       return true;
     }
   }
-
-#pragma clang diagnostic pop
 
   if (!AttachedToPlayer()) {
     if (down
@@ -173,151 +187,150 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool repeat, bool down)
   // (removing init values from input_type and input_type_2 gives a
   // 'possibly uninited value used' warning but leaving them gives a
   // 'values unused' warning. Grumble.)
-  explicit_bool(input_type
-                == (explicit_bool(false) ? input_type_2 : InputType::kLast));
+  //  explicit_bool(input_type
+  //                == (explicit_bool(false) ? input_type_2 :
+  //                InputType::kLast));
 
-  if (!repeat) {
-    // Keyboard 1 supports assigned keys plus arrow keys if they're unused.
-    if (keysym->sym == left_key_
-        || (device_number() == 1 && keysym->sym == SDLK_LEFT
-            && !left_key_assigned())) {
-      player_input = true;
-      input_type = InputType::kLeftRight;
-      left_held_ = down;
-      if (down) {
-        if (right_held_) {
-          input_value = 0;
-        } else {
-          input_value = -32767;
-        }
+  // Keyboard 1 supports assigned keys plus arrow keys if they're unused.
+  if (keysym->sym == left_key_
+      || (device_number() == 1 && keysym->sym == SDLK_LEFT
+          && !left_key_assigned())) {
+    player_input = true;
+    input_type = InputType::kLeftRight;
+    left_held_ = down;
+    if (down) {
+      if (right_held_) {
+        input_value = 0;
       } else {
-        if (right_held_) {
-          input_value = 32767;
-        }
-      }
-    } else if (keysym->sym == right_key_
-               || (device_number() == 1 && keysym->sym == SDLK_RIGHT
-                   && !right_key_assigned())) {
-      // Keyboard 1 supports assigned keys plus arrow keys if they're unused.
-      player_input = true;
-      input_type = InputType::kLeftRight;
-      right_held_ = down;
-      if (down) {
-        if (left_held_) {
-          input_value = 0;
-        } else {
-          input_value = 32767;
-        }
-      } else {
-        if (left_held_) {
-          input_value = -32767;
-        }
-      }
-    } else if (keysym->sym == up_key_
-               || (device_number() == 1 && keysym->sym == SDLK_UP
-                   && !up_key_assigned())) {
-      player_input = true;
-      input_type = InputType::kUpDown;
-      up_held_ = down;
-      if (down) {
-        if (down_held_) {
-          input_value = 0;
-        } else {
-          input_value = 32767;
-        }
-      } else {
-        if (down_held_) input_value = -32767;
-      }
-    } else if (keysym->sym == down_key_
-               || (device_number() == 1 && keysym->sym == SDLK_DOWN
-                   && !down_key_assigned())) {
-      player_input = true;
-      input_type = InputType::kUpDown;
-      down_held_ = down;
-      if (down) {
-        if (up_held_) {
-          input_value = 0;
-        } else {
-          input_value = -32767;
-        }
-      } else {
-        if (up_held_) input_value = 32767;
-      }
-    } else if (keysym->sym == punch_key_) {
-      player_input = true;
-      UpdateRun(keysym->sym, down);
-      if (down) {
-        input_type = InputType::kPunchPress;
-      } else {
-        input_type = InputType::kPunchRelease;
-      }
-    } else if (keysym->sym == bomb_key_) {
-      player_input = true;
-      UpdateRun(keysym->sym, down);
-      if (down)
-        input_type = InputType::kBombPress;
-      else
-        input_type = InputType::kBombRelease;
-    } else if (keysym->sym == hold_position_key_) {
-      player_input = true;
-      if (down) {
-        input_type = InputType::kHoldPositionPress;
-      } else {
-        input_type = InputType::kHoldPositionRelease;
-      }
-    } else if (keysym->sym == pick_up_key_) {
-      player_input = true;
-      UpdateRun(keysym->sym, down);
-      if (down) {
-        input_type = InputType::kPickUpPress;
-      } else {
-        input_type = InputType::kPickUpRelease;
-      }
-    } else if ((device_number() == 1 && keysym->sym == SDLK_RETURN)
-               || (device_number() == 1 && keysym->sym == SDLK_KP_ENTER)
-               || keysym->sym == jump_key_) {
-      // Keyboard 1 claims certain keys if they are otherwise unclaimed
-      // (arrow keys, enter/return, etc).
-      player_input = true;
-      UpdateRun(keysym->sym, down);
-      if (down) {
-        input_type = InputType::kJumpPress;
-        have_input_2 = true;
-        input_type_2 = InputType::kFlyPress;
-      } else {
-        input_type = InputType::kJumpRelease;
-        have_input_2 = true;
-        input_type_2 = InputType::kFlyRelease;
+        input_value = -32767;
       }
     } else {
-      // Any other keys get processed as run keys.
-      // keypad keys go to player 2 - anything else to player 1.
-      switch (keysym->sym) {
-        case SDLK_KP_0:
-        case SDLK_KP_1:
-        case SDLK_KP_2:
-        case SDLK_KP_3:
-        case SDLK_KP_4:
-        case SDLK_KP_5:
-        case SDLK_KP_6:
-        case SDLK_KP_7:
-        case SDLK_KP_8:
-        case SDLK_KP_9:
-        case SDLK_KP_PLUS:
-        case SDLK_KP_MINUS:
-        case SDLK_KP_ENTER:
-          if (device_number() == 2) {
-            UpdateRun(keysym->sym, down);
-            return true;
-          }
-          break;
-        default:
-          if (device_number() == 1) {
-            UpdateRun(keysym->sym, down);
-            return true;
-          }
-          break;
+      if (right_held_) {
+        input_value = 32767;
       }
+    }
+  } else if (keysym->sym == right_key_
+             || (device_number() == 1 && keysym->sym == SDLK_RIGHT
+                 && !right_key_assigned())) {
+    // Keyboard 1 supports assigned keys plus arrow keys if they're unused.
+    player_input = true;
+    input_type = InputType::kLeftRight;
+    right_held_ = down;
+    if (down) {
+      if (left_held_) {
+        input_value = 0;
+      } else {
+        input_value = 32767;
+      }
+    } else {
+      if (left_held_) {
+        input_value = -32767;
+      }
+    }
+  } else if (keysym->sym == up_key_
+             || (device_number() == 1 && keysym->sym == SDLK_UP
+                 && !up_key_assigned())) {
+    player_input = true;
+    input_type = InputType::kUpDown;
+    up_held_ = down;
+    if (down) {
+      if (down_held_) {
+        input_value = 0;
+      } else {
+        input_value = 32767;
+      }
+    } else {
+      if (down_held_) input_value = -32767;
+    }
+  } else if (keysym->sym == down_key_
+             || (device_number() == 1 && keysym->sym == SDLK_DOWN
+                 && !down_key_assigned())) {
+    player_input = true;
+    input_type = InputType::kUpDown;
+    down_held_ = down;
+    if (down) {
+      if (up_held_) {
+        input_value = 0;
+      } else {
+        input_value = -32767;
+      }
+    } else {
+      if (up_held_) input_value = 32767;
+    }
+  } else if (keysym->sym == punch_key_) {
+    player_input = true;
+    UpdateRun_(keysym->sym, down);
+    if (down) {
+      input_type = InputType::kPunchPress;
+    } else {
+      input_type = InputType::kPunchRelease;
+    }
+  } else if (keysym->sym == bomb_key_) {
+    player_input = true;
+    UpdateRun_(keysym->sym, down);
+    if (down)
+      input_type = InputType::kBombPress;
+    else
+      input_type = InputType::kBombRelease;
+  } else if (keysym->sym == hold_position_key_) {
+    player_input = true;
+    if (down) {
+      input_type = InputType::kHoldPositionPress;
+    } else {
+      input_type = InputType::kHoldPositionRelease;
+    }
+  } else if (keysym->sym == pick_up_key_) {
+    player_input = true;
+    UpdateRun_(keysym->sym, down);
+    if (down) {
+      input_type = InputType::kPickUpPress;
+    } else {
+      input_type = InputType::kPickUpRelease;
+    }
+  } else if ((device_number() == 1 && keysym->sym == SDLK_RETURN)
+             || (device_number() == 1 && keysym->sym == SDLK_KP_ENTER)
+             || keysym->sym == jump_key_) {
+    // Keyboard 1 claims certain keys if they are otherwise unclaimed
+    // (arrow keys, enter/return, etc).
+    player_input = true;
+    UpdateRun_(keysym->sym, down);
+    if (down) {
+      input_type = InputType::kJumpPress;
+      have_input_2 = true;
+      input_type_2 = InputType::kFlyPress;
+    } else {
+      input_type = InputType::kJumpRelease;
+      have_input_2 = true;
+      input_type_2 = InputType::kFlyRelease;
+    }
+  } else {
+    // Any other keys get processed as run keys.
+    // keypad keys go to player 2 - anything else to player 1.
+    switch (keysym->sym) {
+      case SDLK_KP_0:
+      case SDLK_KP_1:
+      case SDLK_KP_2:
+      case SDLK_KP_3:
+      case SDLK_KP_4:
+      case SDLK_KP_5:
+      case SDLK_KP_6:
+      case SDLK_KP_7:
+      case SDLK_KP_8:
+      case SDLK_KP_9:
+      case SDLK_KP_PLUS:
+      case SDLK_KP_MINUS:
+      case SDLK_KP_ENTER:
+        if (device_number() == 2) {
+          UpdateRun_(keysym->sym, down);
+          return true;
+        }
+        break;
+      default:
+        if (device_number() == 1) {
+          UpdateRun_(keysym->sym, down);
+          return true;
+        }
+        break;
     }
   }
 
@@ -344,7 +357,7 @@ void KeyboardInput::ResetHeldStates() {
   }
 }
 
-void KeyboardInput::UpdateRun(SDL_Keycode key, bool down) {
+void KeyboardInput::UpdateRun_(SDL_Keycode key, bool down) {
   bool was_held = (!keys_held_.empty());
   if (down) {
     keys_held_.insert(key);
@@ -407,51 +420,51 @@ void KeyboardInput::UpdateMapping() {
 
   int val = cl ? cl->GetControllerValue(this, "buttonJump") : -1;
   jump_key_ = (val == -1) ? jump_key_default : (SDL_Keycode)val;
-  UpdateArrowKeys(jump_key_);
+  UpdateArrowKeys_(jump_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonPunch") : -1;
   punch_key_ = (val == -1) ? punch_key_default : (SDL_Keycode)val;
-  UpdateArrowKeys(punch_key_);
+  UpdateArrowKeys_(punch_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonBomb") : -1;
   bomb_key_ = (val == -1) ? bomb_key_default : (SDL_Keycode)val;
-  UpdateArrowKeys(bomb_key_);
+  UpdateArrowKeys_(bomb_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonPickUp") : -1;
   pick_up_key_ = (val == -1) ? pick_up_key_default : (SDL_Keycode)val;
-  UpdateArrowKeys(pick_up_key_);
+  UpdateArrowKeys_(pick_up_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonHoldPosition") : -1;
   hold_position_key_ =
       (val == -1) ? hold_position_key_default : (SDL_Keycode)val;
-  UpdateArrowKeys(hold_position_key_);
+  UpdateArrowKeys_(hold_position_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonStart") : -1;
   start_key_ = (val == -1) ? start_key_default : (SDL_Keycode)val;
-  UpdateArrowKeys(start_key_);
+  UpdateArrowKeys_(start_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonUp") : -1;
   up_key_ = (val == -1) ? up_key_default : (SDL_Keycode)val;
-  UpdateArrowKeys(up_key_);
+  UpdateArrowKeys_(up_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonDown") : -1;
   down_key_ = (val == -1) ? down_key_default : (SDL_Keycode)val;
-  UpdateArrowKeys(down_key_);
+  UpdateArrowKeys_(down_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonLeft") : -1;
   left_key_ = (val == -1) ? left_key_default : (SDL_Keycode)val;
-  UpdateArrowKeys(left_key_);
+  UpdateArrowKeys_(left_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonRight") : -1;
   right_key_ = (val == -1) ? right_key_default : (SDL_Keycode)val;
-  UpdateArrowKeys(right_key_);
+  UpdateArrowKeys_(right_key_);
 
   enable_child_ = true;
 
   up_held_ = down_held_ = left_held_ = right_held_ = false;
 }
 
-void KeyboardInput::UpdateArrowKeys(SDL_Keycode key) {
+void KeyboardInput::UpdateArrowKeys_(SDL_Keycode key) {
   if (key == SDLK_UP) {
     up_key_assigned_ = true;
   } else if (key == SDLK_DOWN) {
@@ -464,8 +477,7 @@ void KeyboardInput::UpdateArrowKeys(SDL_Keycode key) {
 }
 
 auto KeyboardInput::GetButtonName(int index) -> std::string {
-  return g_base->platform->GetKeyName(index);
-  // return InputDevice::GetButtonName(index);
+  return g_base->app_adapter->GetKeyName(index);
 }
 
 auto KeyboardInput::GetRawDeviceName() -> std::string { return "Keyboard"; }

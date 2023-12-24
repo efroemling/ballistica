@@ -51,6 +51,8 @@ AppAdapterSDL::AppAdapterSDL() {
 }
 
 void AppAdapterSDL::OnMainThreadStartApp() {
+  AppAdapter::OnMainThreadStartApp();
+
   // App is starting. Let's fire up the ol' SDL.
   uint32_t sdl_flags{SDL_INIT_VIDEO | SDL_INIT_JOYSTICK};
 
@@ -59,12 +61,16 @@ void AppAdapterSDL::OnMainThreadStartApp() {
         "AppAdapterSDL strict_graphics_context_ is enabled."
         " Remember to turn this off.");
   }
+
   // We may or may not want xinput on windows.
   if (g_buildconfig.ostype_windows()) {
     if (!g_core->platform->GetLowLevelConfigValue("enablexinput", 1)) {
       SDL_SetHint(SDL_HINT_XINPUT_ENABLED, "0");
     }
   }
+
+  // We wrangle our own signal handling; don't bring SDL into it.
+  SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
 
   int result = SDL_Init(sdl_flags);
   if (result < 0) {
@@ -75,9 +81,8 @@ void AppAdapterSDL::OnMainThreadStartApp() {
   sdl_runnable_event_id_ = SDL_RegisterEvents(1);
   assert(sdl_runnable_event_id_ != (uint32_t)-1);
 
-  // Note: parent class can add some input devices so need to bring up sdl
-  // before we let it run. That code should maybe be relocated/refactored.
-  AppAdapter::OnMainThreadStartApp();
+  // SDL builds just assume keyboard input is available.
+  g_base->input->PushCreateKeyboardInputDevices();
 
   if (g_buildconfig.enable_sdl_joysticks()) {
     // We want events from joysticks.
@@ -96,36 +101,111 @@ void AppAdapterSDL::OnMainThreadStartApp() {
     }
   }
 
-  // We currently use a software cursor, so hide the system one.
+  // This adapter draws a software cursor; hide the actual OS one.
   SDL_ShowCursor(SDL_DISABLE);
 }
 
-void AppAdapterSDL::DoApplyAppConfig() {
-  assert(g_base->InLogicThread());
-
-  g_base->graphics_server->PushSetScreenPixelScaleCall(
-      g_base->app_config->Resolve(AppConfig::FloatID::kScreenPixelScale));
-
-  auto graphics_quality_requested =
-      g_base->graphics->GraphicsQualityFromAppConfig();
-
-  auto texture_quality_requested =
-      g_base->graphics->TextureQualityFromAppConfig();
-
-  // Android res string.
-  // std::string android_res =
-  //     g_base->app_config->Resolve(AppConfig::StringID::kResolutionAndroid);
-
+/// Our particular flavor of graphics settings.
+struct AppAdapterSDL::GraphicsSettings_ : public GraphicsSettings {
   bool fullscreen = g_base->app_config->Resolve(AppConfig::BoolID::kFullscreen);
-
-  auto vsync = g_base->graphics->VSyncFromAppConfig();
+  VSyncRequest vsync = g_base->graphics->VSyncFromAppConfig();
   int max_fps = g_base->app_config->Resolve(AppConfig::IntID::kMaxFPS);
+};
 
-  // Tell the main thread to set up the screen with these settings.
-  g_base->app_adapter->PushMainThreadCall([=] {
-    SetScreen_(fullscreen, max_fps, vsync, texture_quality_requested,
-               graphics_quality_requested);
-  });
+auto AppAdapterSDL::GetGraphicsSettings() -> GraphicsSettings* {
+  assert(g_base->InLogicThread());
+  return new GraphicsSettings_();
+}
+
+void AppAdapterSDL::ApplyGraphicsSettings(
+    const GraphicsSettings* settings_base) {
+  assert(g_core->InMainThread());
+  assert(!g_core->HeadlessMode());
+
+  // In strict mode, allow graphics stuff while in here.
+  auto allow = ScopedAllowGraphics_(this);
+
+  // Settings will always be our subclass (since we created it).
+  auto* settings = static_cast<const GraphicsSettings_*>(settings_base);
+
+  // Apply any changes.
+  bool do_toggle_fs{};
+  bool do_set_existing_fullscreen{};
+
+  auto* graphics_server = g_base->graphics_server;
+
+  // We need a full renderer reload if quality values have changed
+  // or if we don't have a renderer yet.
+  bool need_full_reload = ((sdl_window_ == nullptr
+                            || graphics_server->texture_quality_requested()
+                                   != settings->texture_quality)
+                           || (graphics_server->graphics_quality_requested()
+                               != settings->graphics_quality));
+
+  if (need_full_reload) {
+    ReloadRenderer_(settings);
+  } else if (settings->fullscreen != fullscreen_) {
+    SDL_SetWindowFullscreen(
+        sdl_window_, settings->fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+    fullscreen_ = settings->fullscreen;
+  }
+
+  // VSync always gets set independent of the screen (though we set it down
+  // here to make sure we have a screen when its set).
+  VSync vsync;
+  switch (settings->vsync) {
+    case VSyncRequest::kNever:
+      vsync = VSync::kNever;
+      break;
+    case VSyncRequest::kAlways:
+      vsync = VSync::kAlways;
+      break;
+    case VSyncRequest::kAuto:
+      vsync = VSync::kAdaptive;
+      break;
+    default:
+      vsync = VSync::kNever;
+      break;
+  }
+  if (vsync != vsync_) {
+    switch (vsync) {
+      case VSync::kUnset:
+      case VSync::kNever: {
+        SDL_GL_SetSwapInterval(0);
+        vsync_actually_enabled_ = false;
+        break;
+      }
+      case VSync::kAlways: {
+        SDL_GL_SetSwapInterval(1);
+        vsync_actually_enabled_ = true;
+        break;
+      }
+      case VSync::kAdaptive: {
+        // In this case, let's try setting to 'adaptive' and turn it off if
+        // that is unsupported.
+        auto result = SDL_GL_SetSwapInterval(-1);
+        if (result == 0) {
+          vsync_actually_enabled_ = true;
+        } else {
+          SDL_GL_SetSwapInterval(0);
+          vsync_actually_enabled_ = false;
+        }
+        break;
+      }
+    }
+    vsync_ = vsync;
+  }
+
+  // This we can set anytime. Probably could have just set it from the logic
+  // thread where we read it, but let's be pedantic and keep everything to
+  // the main thread.
+  max_fps_ = settings->max_fps;
+
+  // Take -1 to mean no max. Otherwise clamp to a reasonable range.
+  if (max_fps_ != -1) {
+    max_fps_ = std::max(10, max_fps_);
+    max_fps_ = std::min(99999, max_fps_);
+  }
 }
 
 void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
@@ -154,7 +234,7 @@ void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
 
 auto AppAdapterSDL::TryRender() -> bool {
   if (strict_graphics_context_) {
-    // In strict mode, allow graphics stuff in here. Normally we allow it
+    // In strict mode, allow graphics stuff in here. Otherwise we allow it
     // anywhere in the main thread.
     auto allow = ScopedAllowGraphics_(this);
 
@@ -175,7 +255,7 @@ auto AppAdapterSDL::TryRender() -> bool {
     // Lastly render.
     return g_base->graphics_server->TryRender();
   } else {
-    // Simple path; just render.
+    // Simpler path; just render.
     return g_base->graphics_server->TryRender();
   }
 }
@@ -184,7 +264,7 @@ void AppAdapterSDL::SleepUntilNextEventCycle_(microsecs_t cycle_start_time) {
   // Special case: if we're hidden, we simply sleep for a long bit; no fancy
   // timing.
   if (hidden_) {
-    g_core->platform->SleepMillisecs(100);
+    g_core->platform->SleepSeconds(0.1);
     return;
   }
 
@@ -328,7 +408,9 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
     }
 
     case SDL_KEYDOWN: {
-      g_base->input->PushKeyPressEvent(event.key.keysym);
+      if (!event.key.repeat) {
+        g_base->input->PushKeyPressEvent(event.key.keysym);
+      }
       break;
     }
 
@@ -355,12 +437,14 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
       break;
 
     case SDL_QUIT:
-      if (g_core->GetAppTimeMillisecs() - last_windowevent_close_time_ < 100) {
+      if (g_core->GetAppTimeSeconds() - last_windowevent_close_time_ < 0.1) {
         // If they hit the window close button, skip the confirm.
         g_base->QuitApp(false);
       } else {
-        // By default, confirm before quitting.
-        g_base->QuitApp(true);
+        // For all other quits we might want to default to a confirm dialog.
+        // Update: going to try without confirm for a bit and see how that
+        // feels.
+        g_base->QuitApp(false);
       }
       break;
 
@@ -374,7 +458,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
         case SDL_WINDOWEVENT_CLOSE: {
           // Simply note that this happened. We use this to adjust our
           // SDL_QUIT behavior (quit is called right after this).
-          last_windowevent_close_time_ = g_core->GetAppTimeMillisecs();
+          last_windowevent_close_time_ = g_core->GetAppTimeSeconds();
           break;
         }
 
@@ -387,10 +471,13 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
             // it to the config so that UIs can poll for it and pick up the
             // change. We don't do this on other platforms where a maximized
             // window is more distinctly different than a fullscreen one.
+            // Though I guess some Linux window managers have a fullscreen
+            // function so theoretically we should there. Le sigh. Maybe SDL
+            // 3 will tidy up this situation.
             fullscreen_ = true;
             g_base->logic->event_loop()->PushCall([] {
               g_base->python->objs()
-                  .Get(BasePython::ObjID::kSetConfigFullscreenOnCall)
+                  .Get(BasePython::ObjID::kStoreConfigFullscreenOnCall)
                   .Call();
             });
           }
@@ -403,7 +490,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
             fullscreen_ = false;
             g_base->logic->event_loop()->PushCall([] {
               g_base->python->objs()
-                  .Get(BasePython::ObjID::kSetConfigFullscreenOffCall)
+                  .Get(BasePython::ObjID::kStoreConfigFullscreenOffCall)
                   .Call();
             });
           }
@@ -413,18 +500,22 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
           break;
 
         case SDL_WINDOWEVENT_HIDDEN: {
-          // Let's keep track of when we're hidden so we can stop drawing
-          // and sleep more. Theoretically we could put the app into a full
-          // suspended state like we do on mobile (pausing event loops/etc.)
-          // but that would be more involved; we'd need to ignore most SDL
-          // events while sleeping (except for SDL_WINDOWEVENT_SHOWN) and
-          // would need to rebuild our controller lists/etc when we resume.
-          // For now just gonna keep things simple and keep running.
+          // We plug this into the app's overall 'Active' state so it can
+          // pause stuff or throttle down processing or whatever else.
+          if (!hidden_) {
+            g_base->SetAppActive(false);
+          }
+          // Also note that we are *completely* hidden, so we can totally
+          // stop drawing ('Inactive' app state does not imply this in and
+          // of itself).
           hidden_ = true;
           break;
         }
 
         case SDL_WINDOWEVENT_SHOWN: {
+          if (hidden_) {
+            g_base->SetAppActive(true);
+          }
           hidden_ = false;
           break;
         }
@@ -540,114 +631,7 @@ auto AppAdapterSDL::GetSDLJoystickInput_(int sdl_joystick_id) const
   return nullptr;  // Epic fail.
 }
 
-void AppAdapterSDL::SetScreen_(
-    bool fullscreen, int max_fps, VSyncRequest vsync_requested,
-    TextureQualityRequest texture_quality_requested,
-    GraphicsQualityRequest graphics_quality_requested) {
-  assert(g_core->InMainThread());
-  assert(!g_core->HeadlessMode());
-
-  // In strict mode, allow graphics stuff in here.
-  auto allow = ScopedAllowGraphics_(this);
-
-  // If we know what we support, filter our request types to what is
-  // supported. This will keep us from rebuilding contexts if request type
-  // is flipping between different types that we don't support.
-  if (g_base->graphics->has_supports_high_quality_graphics_value()) {
-    if (!g_base->graphics->supports_high_quality_graphics()
-        && graphics_quality_requested > GraphicsQualityRequest::kMedium) {
-      graphics_quality_requested = GraphicsQualityRequest::kMedium;
-    }
-  }
-
-  bool do_toggle_fs{};
-  bool do_set_existing_fullscreen{};
-
-  auto* gs = g_base->graphics_server;
-
-  // We need a full renderer reload if quality values have changed
-  // or if we don't have one yet.
-  bool need_full_reload =
-      ((sdl_window_ == nullptr
-        || gs->texture_quality_requested() != texture_quality_requested)
-       || (gs->graphics_quality_requested() != graphics_quality_requested)
-       || !gs->texture_quality_set() || !gs->graphics_quality_set());
-
-  if (need_full_reload) {
-    ReloadRenderer_(fullscreen, graphics_quality_requested,
-                    texture_quality_requested);
-  } else if (fullscreen != fullscreen_) {
-    SDL_SetWindowFullscreen(sdl_window_,
-                            fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-    fullscreen_ = fullscreen;
-  }
-
-  // VSync always gets set independent of the screen (though we set it down
-  // here to make sure we have a screen when its set).
-  VSync vsync;
-  switch (vsync_requested) {
-    case VSyncRequest::kNever:
-      vsync = VSync::kNever;
-      break;
-    case VSyncRequest::kAlways:
-      vsync = VSync::kAlways;
-      break;
-    case VSyncRequest::kAuto:
-      vsync = VSync::kAdaptive;
-      break;
-    default:
-      vsync = VSync::kNever;
-      break;
-  }
-  if (vsync != vsync_) {
-    switch (vsync) {
-      case VSync::kUnset:
-      case VSync::kNever: {
-        SDL_GL_SetSwapInterval(0);
-        vsync_actually_enabled_ = false;
-        break;
-      }
-      case VSync::kAlways: {
-        SDL_GL_SetSwapInterval(1);
-        vsync_actually_enabled_ = true;
-        break;
-      }
-      case VSync::kAdaptive: {
-        // In this case, let's try setting to 'adaptive' and turn it off if
-        // that is unsupported.
-        auto result = SDL_GL_SetSwapInterval(-1);
-        if (result == 0) {
-          vsync_actually_enabled_ = true;
-        } else {
-          SDL_GL_SetSwapInterval(0);
-          vsync_actually_enabled_ = false;
-        }
-        break;
-      }
-    }
-    vsync_ = vsync;
-  }
-
-  // This we can set anytime. Probably could have just set it from the logic
-  // thread where we read it, but let's be pedantic and keep everything to
-  // the main thread.
-  max_fps_ = max_fps;
-
-  // Take -1 to mean no max. Otherwise clamp to a reasonable range.
-  if (max_fps_ != -1) {
-    max_fps_ = std::max(10, max_fps_);
-    max_fps_ = std::min(99999, max_fps_);
-  }
-
-  // Let the logic thread know we've got a graphics system up and running.
-  // It may use this cue to kick off asset loads and other bootstrapping.
-  g_base->logic->event_loop()->PushCall(
-      [] { g_base->logic->OnGraphicsReady(); });
-}
-
-void AppAdapterSDL::ReloadRenderer_(
-    bool fullscreen, GraphicsQualityRequest graphics_quality_requested,
-    TextureQualityRequest texture_quality_requested) {
+void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
   assert(g_base->app_adapter->InGraphicsContext());
 
   auto* gs = g_base->graphics_server;
@@ -658,7 +642,7 @@ void AppAdapterSDL::ReloadRenderer_(
 
   // If we don't haven't yet, create our window and renderer.
   if (!sdl_window_) {
-    fullscreen_ = fullscreen;
+    fullscreen_ = settings->fullscreen;
 
     // A reasonable default window size.
     auto width = static_cast<int>(kBaseVirtualResX * 0.8f);
@@ -666,7 +650,7 @@ void AppAdapterSDL::ReloadRenderer_(
 
     uint32_t flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN
                      | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
-    if (fullscreen) {
+    if (settings->fullscreen) {
       flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
     }
 
@@ -723,15 +707,16 @@ void AppAdapterSDL::ReloadRenderer_(
     }
   }
 
-  // Update graphics quality based on request.
-  gs->set_graphics_quality_requested(graphics_quality_requested);
-  gs->set_texture_quality_requested(texture_quality_requested);
+  // Update graphics-server's qualities based on request.
+  gs->set_graphics_quality_requested(settings->graphics_quality);
+  gs->set_texture_quality_requested(settings->texture_quality);
 
   gs->LoadRenderer();
 }
 
 void AppAdapterSDL::UpdateScreenSizes_() {
-  assert(g_base->app_adapter->InGraphicsContext());
+  // This runs in the main thread in response to SDL events.
+  assert(g_core->InMainThread());
 
   // Grab logical window dimensions (points?). This is the coordinate space
   // SDL's events deal in.
@@ -743,11 +728,15 @@ void AppAdapterSDL::UpdateScreenSizes_() {
   // dimensions.
   int pixels_x, pixels_y;
   SDL_GL_GetDrawableSize(sdl_window_, &pixels_x, &pixels_y);
-  g_base->graphics_server->SetScreenResolution(static_cast<float>(pixels_x),
-                                               static_cast<float>(pixels_y));
+
+  // Push this over to the logic thread which owns the canonical value
+  // for this.
+  g_base->logic->event_loop()->PushCall([pixels_x, pixels_y] {
+    g_base->graphics->SetScreenResolution(static_cast<float>(pixels_x),
+                                          static_cast<float>(pixels_y));
+  });
 }
 
-/// As a default, allow graphics stuff in the main thread.
 auto AppAdapterSDL::InGraphicsContext() -> bool {
   // In strict mode, make sure we're in the right thread *and* within our
   // render call.
@@ -815,9 +804,47 @@ void AppAdapterSDL::CursorPositionForDraw(float* x, float* y) {
   *y = immediate_y;
 }
 
-auto AppAdapterSDL::CanToggleFullscreen() -> bool const { return true; }
+auto AppAdapterSDL::FullscreenControlAvailable() const -> bool { return true; }
+auto AppAdapterSDL::FullscreenControlKeyShortcut() const
+    -> std::optional<std::string> {
+  // On our SDL build we support F11 and Alt+Enter to toggle fullscreen.
+  // Let's mention Alt+Enter which seems like it might be more commonly used
+  return "Alt+Enter";
+};
+
 auto AppAdapterSDL::SupportsVSync() -> bool const { return true; }
 auto AppAdapterSDL::SupportsMaxFPS() -> bool const { return true; }
+
+auto AppAdapterSDL::HasDirectKeyboardInput() -> bool {
+  // We always provide direct keyboard events.
+  return true;
+}
+
+auto AppAdapterSDL::DoClipboardIsSupported() -> bool { return true; }
+
+auto AppAdapterSDL::DoClipboardHasText() -> bool {
+  return SDL_HasClipboardText();
+}
+
+void AppAdapterSDL::DoClipboardSetText(const std::string& text) {
+  SDL_SetClipboardText(text.c_str());
+}
+
+auto AppAdapterSDL::DoClipboardGetText() -> std::string {
+  // Go through SDL functionality on SDL based platforms;
+  // otherwise default to no clipboard.
+  char* out = SDL_GetClipboardText();
+  if (out == nullptr) {
+    throw Exception("Error fetching clipboard contents.", PyExcType::kRuntime);
+  }
+  std::string out_s{out};
+  SDL_free(out);
+  return out_s;
+}
+
+auto AppAdapterSDL::GetKeyName(int keycode) -> std::string {
+  return SDL_GetKeyName(static_cast<SDL_Keycode>(keycode));
+}
 
 }  // namespace ballistica::base
 

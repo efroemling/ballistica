@@ -44,10 +44,13 @@ class FlagNode : public Node {
   void UpdateDimensions();
   void ResetFlagMesh();
   void UpdateFlagMesh();
-  void OnGraphicsQualityChanged(base::GraphicsQuality q) override;
   void UpdateForGraphicsQuality(base::GraphicsQuality q);
   void UpdateSpringPoint(int p1, int p2, float rest_length);
-  base::AreaOfInterest* area_of_interest_ = nullptr;
+
+  base::GraphicsQuality graphics_quality_{};
+  bool light_weight_{};
+  bool have_flag_impulse_{};
+  base::AreaOfInterest* area_of_interest_{};
   Part part_;
   std::vector<float> color_ = {1.0f, 1.0f, 1.0f};
   Object::Ref<RigidBody> body_;
@@ -56,15 +59,13 @@ class FlagNode : public Node {
   Object::Ref<FullShadowSet> full_shadow_set_;
   Object::Ref<SimpleShadowSet> simple_shadow_set_;
   int wind_rand_{};
+  int footing_{};
   float wind_rand_x_{};
   float wind_rand_y_{};
   float wind_rand_z_{};
   float flag_impulse_add_x_{};
   float flag_impulse_add_y_{};
   float flag_impulse_add_z_{};
-  bool have_flag_impulse_{};
-  int footing_{};
-  bool light_weight_{};
   Vector3f flag_points_[25]{};
   Vector3f flag_normals_[25]{};
   Vector3f flag_velocities_[25]{};

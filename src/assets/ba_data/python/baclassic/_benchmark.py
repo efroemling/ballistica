@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import babase
 import bascenev1
+import _baclassic
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -54,7 +55,6 @@ def run_stress_test(
     round_duration: int = 30,
 ) -> None:
     """Run a stress test."""
-    from babase import modutils
 
     babase.screenmessage(
         "Beginning stress test.. use 'End Test' to stop testing.",
@@ -69,22 +69,12 @@ def run_stress_test(
                 'round_duration': round_duration,
             }
         )
-        babase.apptimer(
-            7.0,
-            babase.Call(
-                babase.screenmessage,
-                (
-                    'stats will be written to '
-                    + modutils.get_human_readable_user_scripts_path()
-                    + '/stress_test_stats.csv'
-                ),
-            ),
-        )
 
 
 def stop_stress_test() -> None:
     """End a running stress test."""
-    babase.set_stress_testing(False, 0)
+
+    _baclassic.set_stress_testing(False, 0)
     assert babase.app.classic is not None
     try:
         if babase.app.classic.stress_test_reset_timer is not None:
@@ -134,14 +124,14 @@ def start_stress_test(args: dict[str, Any]) -> None:
                 babase.Call(bascenev1.new_host_session, FreeForAllSession),
             ),
         )
-    babase.set_stress_testing(True, args['player_count'])
+    _baclassic.set_stress_testing(True, args['player_count'])
     babase.app.classic.stress_test_reset_timer = babase.AppTimer(
         args['round_duration'], babase.Call(_reset_stress_test, args)
     )
 
 
 def _reset_stress_test(args: dict[str, Any]) -> None:
-    babase.set_stress_testing(False, args['player_count'])
+    _baclassic.set_stress_testing(False, args['player_count'])
     babase.screenmessage('Resetting stress test...')
     session = bascenev1.get_foreground_host_session()
     assert session is not None

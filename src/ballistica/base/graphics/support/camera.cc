@@ -23,9 +23,8 @@ const float kPanMax = 9.0f;
 const float kPanMin = -9.0f;
 
 Camera::Camera()
-    : last_mode_set_time_(g_core->GetAppTimeMillisecs()),
-      lock_panning_(g_core->IsVRMode()),
-      pan_speed_scale_(g_core->IsVRMode() ? 0.3f : 1.0f) {}
+    : lock_panning_(g_core->vr_mode()),
+      pan_speed_scale_(g_core->vr_mode() ? 0.3f : 1.0f) {}
 
 Camera::~Camera() = default;
 
@@ -202,7 +201,7 @@ void Camera::UpdatePosition() {
       if (explicit_bool(true)) {
         float lr_jitter;
         {
-          if (g_core->IsVRMode()) {
+          if (g_core->vr_mode()) {
             lr_jitter = 0.0f;
           } else {
             lr_jitter =
@@ -493,7 +492,7 @@ void Camera::UpdatePosition() {
             // our fixed-overlay matrix and our regular overlay matrix come out
             // the same.
             if (g_buildconfig.vr_build()) {
-              if (g_core->IsVRMode()) {
+              if (g_core->vr_mode()) {
                 // Only apply map's X offset if camera is locked.
                 x_min = x_max =
                     position_.x
@@ -607,14 +606,15 @@ void Camera::Update(millisecs_t elapsed) {
   float damping = 0.006f;
   float damping2 = 0.006f;
   float xy_blend_speed = 0.0002f;
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  time_ += elapsed;
+  // millisecs_t real_time = g_core->GetAppTimeMillisecs();
 
   // Prevent camera "explosions" if we've been unable to update for a while.
   elapsed = std::min(millisecs_t{100}, elapsed);
   auto elapsedf{static_cast<float>(elapsed)};
 
   // In normal mode we orbit; in vr mode we don't.
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     heading_ = -0.3f;
   } else {
     heading_ += static_cast<float>(elapsed) / 10000.0f;
@@ -652,22 +652,22 @@ void Camera::Update(millisecs_t elapsed) {
     xy_constrain_blend_ = std::max(0.0f, xy_constrain_blend_);
   }
 
-  if (!g_core->IsVRMode()) {
-    smooth_speed_.x += elapsedf * rand_component
-                       * (-0.5f
-                          + Utils::precalc_rand_1((real_time / rand_incr_1)
-                                                  % kPrecalcRandsCount));
-    smooth_speed_.y += elapsedf * rand_component
-                       * (-0.5f
-                          + Utils::precalc_rand_2((real_time / rand_incr_2)
-                                                  % kPrecalcRandsCount));
-    smooth_speed_.z += elapsedf * rand_component
-                       * (-0.5f
-                          + Utils::precalc_rand_3((real_time / rand_incr_3)
-                                                  % kPrecalcRandsCount));
+  if (!g_core->vr_mode()) {
+    smooth_speed_.x +=
+        elapsedf * rand_component
+        * (-0.5f
+           + Utils::precalc_rand_1((time_ / rand_incr_1) % kPrecalcRandsCount));
+    smooth_speed_.y +=
+        elapsedf * rand_component
+        * (-0.5f
+           + Utils::precalc_rand_2((time_ / rand_incr_2) % kPrecalcRandsCount));
+    smooth_speed_.z +=
+        elapsedf * rand_component
+        * (-0.5f
+           + Utils::precalc_rand_3((time_ / rand_incr_3) % kPrecalcRandsCount));
   }
 
-  if (RandomFloat() < 0.1f && !g_core->IsVRMode()) {
+  if (RandomFloat() < 0.1f && !g_core->vr_mode()) {
     smooth_speed_2_.x +=
         elapsedf * rand_component * 4.0f * (-0.5f + RandomFloat());
     smooth_speed_2_.y +=
@@ -714,15 +714,14 @@ void Camera::Update(millisecs_t elapsed) {
       shake_vel_.x +=
           0.05f * shake_amount_
           * (0.5f
-             - Utils::precalc_rand_1(real_time % 122 * i % kPrecalcRandsCount));
+             - Utils::precalc_rand_1(time_ % 122 * i % kPrecalcRandsCount));
       shake_vel_.y +=
           0.05f * shake_amount_
           * (0.5f
-             - Utils::precalc_rand_2(real_time % 323 * i % kPrecalcRandsCount));
+             - Utils::precalc_rand_2(time_ % 323 * i % kPrecalcRandsCount));
       shake_vel_.z +=
           0.05f * shake_amount_
-          * (0.5f
-             - Utils::precalc_rand_3(real_time % 76 * i % kPrecalcRandsCount));
+          * (0.5f - Utils::precalc_rand_3(time_ % 76 * i % kPrecalcRandsCount));
     }
 
     for (int j = 0; j < iterations; j++) {
@@ -737,13 +736,13 @@ void Camera::Update(millisecs_t elapsed) {
   }
 
   // Update audio position more often in vr since we can whip our head around.
-  uint32_t interval = g_core->IsVRMode() ? 50 : 100;
+  uint32_t interval = g_core->vr_mode() ? 50 : 100;
 
   // Occasionally, update microphone position for audio.
-  if (real_time - last_listener_update_time_ > interval) {
-    last_listener_update_time_ = real_time;
+  if (time_ - last_listener_update_time_ > interval) {
+    last_listener_update_time_ = time_;
     bool do_regular_update = true;
-    if (g_core->IsVRMode()) {
+    if (g_core->vr_mode()) {
 #if BA_VR_MODE
       GraphicsVR* vrgraphics = GraphicsVR::get();
       do_regular_update = false;
@@ -891,7 +890,8 @@ void Camera::SetMode(CameraMode m) {
   if (mode_ != m) {
     mode_ = m;
     smooth_next_frame_ = false;
-    last_mode_set_time_ = g_core->GetAppTimeMillisecs();
+    // last_mode_set_time_ = g_core->GetAppTimeMillisecs();
+    // last_mode_set_time_ = time_;
     heading_ = kInitialHeading;
   }
 }
@@ -984,7 +984,7 @@ void Camera::ApplyToFrameDef(FrameDef* frame_def) {
 
   // If we're vr, apply current vr offsets.
   // FIXME: should create a VRCamera subclass or whatnot.
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     if (mode_ == CameraMode::kFollow) {
       Vector3f cam_original = frame_def->cam_original();
 
@@ -1013,7 +1013,7 @@ void Camera::ApplyToFrameDef(FrameDef* frame_def) {
         up_, 4, 1000.0f,
         -1.0f,  // Auto x fov.
         final_fov_y
-            * (g_base->graphics->tv_border() ? (1.0f + kTVBorder) : 1.0f),
+            * (frame_def->settings()->tv_border ? (1.0f + kTVBorder) : 1.0f),
         false, 0, 0, 0, 0,  // Not using tangent fovs.
         area_of_interest_points_);
   }

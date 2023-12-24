@@ -5,44 +5,29 @@
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
-#include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/base/graphics/component/post_process_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/component/special_component.h"
 #include "ballistica/base/graphics/component/sprite_component.h"
 #include "ballistica/base/graphics/graphics_server.h"
-#include "ballistica/base/graphics/graphics_vr.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/graphics/support/net_graph.h"
-#include "ballistica/base/graphics/text/text_graphics.h"
+#include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_config.h"
-#include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/core/core.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::base {
 
-const float kScreenMessageZDepth{-0.06f};
-const float kScreenMeshZDepth{-0.05f};
+const float kScreenTextZDepth{-0.06f};
 const float kProgressBarZDepth{0.0f};
 const int kProgressBarFadeTime{500};
 const float kDebugImgZDepth{-0.04f};
-
-auto Graphics::Create() -> Graphics* {
-#if BA_VR_BUILD
-  return new GraphicsVR();
-#else
-  return new Graphics();
-#endif
-}
+const float kScreenMeshZDepth{-0.05f};
 
 auto Graphics::IsShaderTransparent(ShadingType c) -> bool {
   switch (c) {
@@ -93,17 +78,17 @@ auto Graphics::IsShaderTransparent(ShadingType c) -> bool {
   }
 }
 
-Graphics::Graphics() = default;
+Graphics::Graphics() : screenmessages{new ScreenMessages()} {}
 Graphics::~Graphics() = default;
 
 void Graphics::OnAppStart() { assert(g_base->InLogicThread()); }
 
-void Graphics::OnAppPause() {
+void Graphics::OnAppSuspend() {
   assert(g_base->InLogicThread());
   SetGyroEnabled(false);
 }
 
-void Graphics::OnAppResume() {
+void Graphics::OnAppUnsuspend() {
   assert(g_base->InLogicThread());
   g_base->graphics->SetGyroEnabled(true);
 }
@@ -115,9 +100,12 @@ void Graphics::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 void Graphics::DoApplyAppConfig() {
   assert(g_base->InLogicThread());
 
+  // Any time we load the config we ship a new graphics-settings to
+  // the graphics server since something likely changed.
+  graphics_settings_dirty_ = true;
+
   show_fps_ = g_base->app_config->Resolve(AppConfig::BoolID::kShowFPS);
   show_ping_ = g_base->app_config->Resolve(AppConfig::BoolID::kShowPing);
-  tv_border_ = g_base->app_config->Resolve(AppConfig::BoolID::kEnableTVBorder);
 
   bool disable_camera_shake =
       g_base->app_config->Resolve(AppConfig::BoolID::kDisableCameraShake);
@@ -126,12 +114,59 @@ void Graphics::DoApplyAppConfig() {
   bool disable_camera_gyro =
       g_base->app_config->Resolve(AppConfig::BoolID::kDisableCameraGyro);
   set_camera_gyro_explicitly_disabled(disable_camera_gyro);
+
+  applied_app_config_ = true;
+
+  // At this point we may want to send initial graphics settings to the
+  // graphics server if we haven't.
+  UpdateInitialGraphicsSettingsSend_();
+}
+
+void Graphics::UpdateInitialGraphicsSettingsSend_() {
+  assert(g_base->InLogicThread());
+  if (sent_initial_graphics_settings_) {
+    return;
+  }
+
+  // We need to send an initial graphics-settings to the server to kick
+  // things off, but we need a few things to be in place first.
+  auto app_config_ready = applied_app_config_;
+
+  // At some point we may want to wait to know our actual screen res before
+  // sending. This won't apply everywhere though since on some platforms the
+  // screen doesn't exist until we send this.
+  auto screen_resolution_ready = true;
+
+  if (app_config_ready && screen_resolution_ready) {
+    // Update/grab the current settings snapshot.
+    auto* settings = GetGraphicsSettingsSnapshot();
+
+    // We need to explicitly push settings to the graphics server to kick
+    // things off. We need to keep this settings instance alive until
+    // handled by the graphics context (which might be in another thread
+    // where we're not allowed to muck with settings' refs from). So let's
+    // explicitly increment its refcount here in the logic thread now and
+    // then push a call back here to decrement it when we're done.
+    settings->ObjectIncrementStrongRefCount();
+
+    g_base->app_adapter->PushGraphicsContextCall([settings] {
+      assert(g_base->app_adapter->InGraphicsContext());
+      g_base->graphics_server->ApplySettings(settings->Get());
+      g_base->logic->event_loop()->PushCall([settings] {
+        // Release our strong ref back here in the logic thread.
+        assert(g_base->InLogicThread());
+        settings->ObjectDecrementStrongRefCount();
+      });
+    });
+
+    sent_initial_graphics_settings_ = true;
+  }
 }
 
 void Graphics::StepDisplayTime() { assert(g_base->InLogicThread()); }
 
 void Graphics::AddCleanFrameCommand(const Object::Ref<PythonContextCall>& c) {
-  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base->InLogicThread());
   clean_frame_commands_.push_back(c);
 }
 
@@ -180,11 +215,9 @@ auto Graphics::VSyncFromAppConfig() -> VSyncRequest {
 }
 
 auto Graphics::GraphicsQualityFromAppConfig() -> GraphicsQualityRequest {
-  // Graphics quality.
   std::string gqualstr =
       g_base->app_config->Resolve(AppConfig::StringID::kGraphicsQuality);
   GraphicsQualityRequest graphics_quality_requested;
-
   if (gqualstr == "Auto") {
     graphics_quality_requested = GraphicsQualityRequest::kAuto;
   } else if (gqualstr == "Higher") {
@@ -308,39 +341,6 @@ auto Graphics::GetShadowDensity(float x, float y, float z) -> float {
   }
 }
 
-class Graphics::ScreenMessageEntry {
- public:
-  ScreenMessageEntry(std::string s_in, bool align_left_in, uint32_t c,
-                     const Vector3f& color_in, TextureAsset* texture_in,
-                     TextureAsset* tint_texture_in, const Vector3f& tint_in,
-                     const Vector3f& tint2_in)
-      : align_left(align_left_in),
-        creation_time(c),
-        s_raw(std::move(s_in)),
-        color(color_in),
-        texture(texture_in),
-        tint_texture(tint_texture_in),
-        tint(tint_in),
-        tint2(tint2_in) {}
-  auto GetText() -> TextGroup&;
-  void UpdateTranslation();
-  bool align_left;
-  uint32_t creation_time;
-  Vector3f color;
-  Vector3f tint;
-  Vector3f tint2;
-  std::string s_raw;
-  std::string s_translated;
-  Object::Ref<TextureAsset> texture;
-  Object::Ref<TextureAsset> tint_texture;
-  float v_smoothed{};
-  bool translation_dirty{true};
-  bool mesh_dirty{true};
-
- private:
-  Object::Ref<TextGroup> s_mesh_;
-};
-
 // Draw controls and things that lie on top of the action.
 void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
   RenderPass* pass = frame_def->overlay_pass();
@@ -358,7 +358,6 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
     last_fps_ = total_frames_rendered - last_total_frames_rendered_;
     last_total_frames_rendered_ = total_frames_rendered;
   }
-  float v{};
 
   if (show_fps_) {
     char fps_str[32];
@@ -372,7 +371,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
     }
     SimpleComponent c(pass);
     c.SetTransparent(true);
-    if (g_core->IsVRMode()) {
+    if (g_core->vr_mode()) {
       c.SetColor(1, 1, 1, 1);
     } else {
       c.SetColor(0.8f, 0.8f, 0.8f, 1.0f);
@@ -380,13 +379,17 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
     int text_elem_count = fps_text_group_->GetElementCount();
     for (int e = 0; e < text_elem_count; e++) {
       c.SetTexture(fps_text_group_->GetElementTexture(e));
-      if (g_core->IsVRMode()) {
+      if (g_core->vr_mode()) {
         c.SetShadow(-0.003f * fps_text_group_->GetElementUScale(e),
                     -0.003f * fps_text_group_->GetElementVScale(e), 0.0f, 1.0f);
         c.SetMaskUV2Texture(fps_text_group_->GetElementMaskUV2Texture(e));
       }
       c.SetFlatness(1.0f);
-      c.DrawMesh(fps_text_group_->GetElementMesh(e));
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(6.0f, 6.0f, kScreenTextZDepth);
+        c.DrawMesh(fps_text_group_->GetElementMesh(e));
+      }
     }
     c.Submit();
   }
@@ -419,8 +422,8 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
         c.SetFlatness(1.0f);
         {
           auto xf = c.ScopedTransform();
-          c.Translate(14.0f + (show_fps_ ? 30.0f : 0.0f), 0.1f,
-                      kScreenMessageZDepth);
+          c.Translate(6.0f + 14.0f + (show_fps_ ? 35.0f : 0.0f), 6.0f + 1.0f,
+                      kScreenTextZDepth);
           c.Scale(0.7f, 0.7f);
           c.DrawMesh(ping_text_group_->GetElementMesh(e));
         }
@@ -448,7 +451,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
         c.SetFlatness(1.0f);
         {
           auto xf = c.ScopedTransform();
-          c.Translate(4.0f, (show_fps_ ? 66.0f : 40.0f), kScreenMessageZDepth);
+          c.Translate(4.0f, (show_fps_ ? 66.0f : 40.0f), kScreenTextZDepth);
           c.Scale(0.7f, 0.7f);
           c.DrawMesh(net_info_text_group_->GetElementMesh(e));
         }
@@ -466,9 +469,8 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
       if (now - it->second->LastUsedTime() > 1000) {
         it = debug_graphs_.erase(it);
       } else {
-        it->second->Draw(pass,
-                         static_cast<double>(g_core->GetAppTimeMillisecs()),
-                         50.0f, debug_graph_y, 500.0f, 100.0f);
+        it->second->Draw(pass, g_base->logic->display_time() * 1000.0, 50.0f,
+                         debug_graph_y, 500.0f, 100.0f);
         debug_graph_y += 110.0f;
 
         ++it;
@@ -476,367 +478,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
     }
   }
 
-  // Screen messages (bottom).
-  {
-    // Delete old ones.
-    if (!screen_messages_.empty()) {
-      millisecs_t cutoff;
-      if (g_core->GetAppTimeMillisecs() > 5000) {
-        cutoff = g_core->GetAppTimeMillisecs() - 5000;
-        for (auto i = screen_messages_.begin(); i != screen_messages_.end();) {
-          if (i->creation_time < cutoff) {
-            auto next = i;
-            next++;
-            screen_messages_.erase(i);
-            i = next;
-          } else {
-            i++;
-          }
-        }
-      }
-    }
-
-    // Delete if we have too many.
-    while ((screen_messages_.size()) > 4) {
-      screen_messages_.erase(screen_messages_.begin());
-    }
-
-    // Draw all existing.
-    if (!screen_messages_.empty()) {
-      bool vr = g_core->IsVRMode();
-
-      // These are less disruptive in the middle for menus but at the bottom
-      // during gameplay.
-      float start_v = g_base->graphics->screen_virtual_height() * 0.05f;
-      float scale;
-      switch (g_base->ui->scale()) {
-        case UIScale::kSmall:
-          scale = 1.5f;
-          break;
-        case UIScale::kMedium:
-          scale = 1.2f;
-          break;
-        default:
-          scale = 1.0f;
-          break;
-      }
-
-      // Shadows.
-      {
-        SimpleComponent c(pass);
-        c.SetTransparent(true);
-        c.SetTexture(
-            g_base->assets->SysTexture(SysTextureID::kSoftRectVertical));
-
-        float screen_width = g_base->graphics->screen_virtual_width();
-
-        v = start_v;
-
-        millisecs_t youngest_age = 9999;
-
-        for (auto i = screen_messages_.rbegin(); i != screen_messages_.rend();
-             i++) {
-          // Update the translation if need be.
-          i->UpdateTranslation();
-
-          millisecs_t age = g_core->GetAppTimeMillisecs() - i->creation_time;
-          youngest_age = std::min(youngest_age, age);
-          float s_extra = 1.0f;
-          if (age < 100) {
-            s_extra = std::min(1.2f, 1.2f * (static_cast<float>(age) / 100.0f));
-          } else if (age < 150) {
-            s_extra =
-                1.2f - 0.2f * ((150.0f - static_cast<float>(age)) / 50.0f);
-          }
-
-          float a;
-          if (age > 3000) {
-            a = 1.0f - static_cast<float>(age - 3000) / 2000;
-          } else {
-            a = 1;
-          }
-          a *= 0.8f;
-
-          if (vr) {
-            a *= 0.8f;
-          }
-
-          if (i->translation_dirty) {
-            BA_LOG_ONCE(
-                LogLevel::kWarning,
-                "Found dirty translation on screenmessage draw pass 1; raw="
-                    + i->s_raw);
-          }
-          float str_height =
-              g_base->text_graphics->GetStringHeight(i->s_translated.c_str());
-          float str_width =
-              g_base->text_graphics->GetStringWidth(i->s_translated.c_str());
-
-          if ((str_width * scale) > (screen_width - 40)) {
-            s_extra *= ((screen_width - 40) / (str_width * scale));
-          }
-
-          float r = i->color.x;
-          float g = i->color.y;
-          float b = i->color.z;
-          GetSafeColor(&r, &g, &b);
-
-          float v_extra = scale * (static_cast<float>(youngest_age) * 0.01f);
-
-          float fade;
-          if (age < 100) {
-            fade = 1.0f;
-          } else {
-            fade = std::max(0.0f, (200.0f - static_cast<float>(age)) / 100.0f);
-          }
-          c.SetColor(r * fade, g * fade, b * fade, a);
-
-          {
-            auto xf = c.ScopedTransform();
-
-            if (i->v_smoothed == 0.0f) {
-              i->v_smoothed = v + v_extra;
-            } else {
-              float smoothing = 0.8f;
-              i->v_smoothed = smoothing * i->v_smoothed
-                              + (1.0f - smoothing) * (v + v_extra);
-            }
-            c.Translate(screen_width * 0.5f, i->v_smoothed,
-                        vr ? 60 : kScreenMessageZDepth);
-            if (vr) {
-              // Let's drop down a bit in vr mode.
-              c.Translate(0, -10.0f, 0);
-              c.Scale((str_width + 60) * scale * s_extra,
-                      (str_height + 20) * scale * s_extra);
-
-              // Align our bottom with where we just scaled from.
-              c.Translate(0, 0.5f, 0);
-            } else {
-              c.Scale((str_width + 110) * scale * s_extra,
-                      (str_height + 40) * scale * s_extra);
-
-              // Align our bottom with where we just scaled from.
-              c.Translate(0, 0.5f, 0);
-            }
-            c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
-          }
-
-          v += scale * (36 + str_height);
-          if (v > g_base->graphics->screen_virtual_height() + 30) {
-            break;
-          }
-        }
-        c.Submit();
-      }
-
-      // Now the strings themselves.
-      {
-        SimpleComponent c(pass);
-        c.SetTransparent(true);
-
-        float screen_width = g_base->graphics->screen_virtual_width();
-        v = start_v;
-        millisecs_t youngest_age = 9999;
-
-        for (auto i = screen_messages_.rbegin(); i != screen_messages_.rend();
-             i++) {
-          millisecs_t age = g_core->GetAppTimeMillisecs() - i->creation_time;
-          youngest_age = std::min(youngest_age, age);
-          float s_extra = 1.0f;
-          if (age < 100) {
-            s_extra = std::min(1.2f, 1.2f * (static_cast<float>(age) / 100.0f));
-          } else if (age < 150) {
-            s_extra =
-                1.2f - 0.2f * ((150.0f - static_cast<float>(age)) / 50.0f);
-          }
-          float a;
-          if (age > 3000) {
-            a = 1.0f - static_cast<float>(age - 3000) / 2000;
-          } else {
-            a = 1;
-          }
-          if (i->translation_dirty) {
-            BA_LOG_ONCE(
-                LogLevel::kWarning,
-                "Found dirty translation on screenmessage draw pass 2; raw="
-                    + i->s_raw);
-          }
-          float str_height =
-              g_base->text_graphics->GetStringHeight(i->s_translated.c_str());
-          float str_width =
-              g_base->text_graphics->GetStringWidth(i->s_translated.c_str());
-
-          if ((str_width * scale) > (screen_width - 40)) {
-            s_extra *= ((screen_width - 40) / (str_width * scale));
-          }
-          float r = i->color.x;
-          float g = i->color.y;
-          float b = i->color.z;
-          GetSafeColor(&r, &g, &b, 0.85f);
-
-          int elem_count = i->GetText().GetElementCount();
-          for (int e = 0; e < elem_count; e++) {
-            // Gracefully skip unloaded textures.
-            TextureAsset* t = i->GetText().GetElementTexture(e);
-            if (!t->preloaded()) {
-              continue;
-            }
-            c.SetTexture(t);
-            if (i->GetText().GetElementCanColor(e)) {
-              c.SetColor(r, g, b, a);
-            } else {
-              c.SetColor(1, 1, 1, a);
-            }
-            c.SetFlatness(i->GetText().GetElementMaxFlatness(e));
-            {
-              auto xf = c.ScopedTransform();
-              c.Translate(screen_width * 0.5f, i->v_smoothed,
-                          vr ? 150 : kScreenMessageZDepth);
-              c.Scale(scale * s_extra, scale * s_extra);
-              c.Translate(0, 20);
-              c.DrawMesh(i->GetText().GetElementMesh(e));
-            }
-          }
-
-          v += scale * (36 + str_height);
-          if (v > g_base->graphics->screen_virtual_height() + 30) {
-            break;
-          }
-        }
-        c.Submit();
-      }
-    }
-  }
-
-  // Screen messages (top).
-  {
-    // Delete old ones.
-    if (!screen_messages_top_.empty()) {
-      millisecs_t cutoff;
-      if (g_core->GetAppTimeMillisecs() > 5000) {
-        cutoff = g_core->GetAppTimeMillisecs() - 5000;
-        for (auto i = screen_messages_top_.begin();
-             i != screen_messages_top_.end();) {
-          if (i->creation_time < cutoff) {
-            auto next = i;
-            next++;
-            screen_messages_top_.erase(i);
-            i = next;
-          } else {
-            i++;
-          }
-        }
-      }
-    }
-
-    // Delete if we have too many.
-    while ((screen_messages_top_.size()) > 6) {
-      screen_messages_top_.erase(screen_messages_top_.begin());
-    }
-
-    if (!screen_messages_top_.empty()) {
-      SimpleComponent c(pass);
-      c.SetTransparent(true);
-
-      // Draw all existing.
-      float h = pass->virtual_width() - 300.0f;
-      v = g_base->graphics->screen_virtual_height() - 50.0f;
-
-      float v_base = g_base->graphics->screen_virtual_height();
-      float last_v = -999.0f;
-
-      float min_spacing = 25.0f;
-
-      for (auto i = screen_messages_top_.rbegin();
-           i != screen_messages_top_.rend(); i++) {
-        // Update the translation if need be.
-        i->UpdateTranslation();
-
-        millisecs_t age = g_core->GetAppTimeMillisecs() - i->creation_time;
-        float s_extra = 1.0f;
-        if (age < 100) {
-          s_extra = std::min(1.1f, 1.1f * (static_cast<float>(age) / 100.0f));
-        } else if (age < 150) {
-          s_extra = 1.1f - 0.1f * ((150.0f - static_cast<float>(age)) / 50.0f);
-        }
-
-        float a;
-        if (age > 3000) {
-          a = 1.0f - static_cast<float>(age - 3000) / 2000;
-        } else {
-          a = 1;
-        }
-
-        i->v_smoothed += 0.1f;
-        if (i->v_smoothed - last_v < min_spacing) {
-          i->v_smoothed +=
-              8.0f * (1.0f - ((i->v_smoothed - last_v) / min_spacing));
-        }
-        last_v = i->v_smoothed;
-
-        // Draw the image if they provided one.
-        if (i->texture.Exists()) {
-          c.Submit();
-
-          SimpleComponent c2(pass);
-          c2.SetTransparent(true);
-          c2.SetTexture(i->texture);
-          if (i->tint_texture.Exists()) {
-            c2.SetColorizeTexture(i->tint_texture.Get());
-            c2.SetColorizeColor(i->tint.x, i->tint.y, i->tint.z);
-            c2.SetColorizeColor2(i->tint2.x, i->tint2.y, i->tint2.z);
-            c2.SetMaskTexture(
-                g_base->assets->SysTexture(SysTextureID::kCharacterIconMask));
-          }
-          c2.SetColor(1, 1, 1, a);
-          {
-            auto xf = c2.ScopedTransform();
-            c2.Translate(h - 14, v_base + 10 + i->v_smoothed,
-                         kScreenMessageZDepth);
-            c2.Scale(22.0f * s_extra, 22.0f * s_extra);
-            c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
-          }
-          c2.Submit();
-        }
-
-        float r = i->color.x;
-        float g = i->color.y;
-        float b = i->color.z;
-        GetSafeColor(&r, &g, &b);
-
-        int elem_count = i->GetText().GetElementCount();
-        for (int e = 0; e < elem_count; e++) {
-          // Gracefully skip unloaded textures.
-          TextureAsset* t = i->GetText().GetElementTexture(e);
-          if (!t->preloaded()) {
-            continue;
-          }
-          c.SetTexture(t);
-          if (i->GetText().GetElementCanColor(e)) {
-            c.SetColor(r, g, b, a);
-          } else {
-            c.SetColor(1, 1, 1, a);
-          }
-          c.SetShadow(-0.003f * i->GetText().GetElementUScale(e),
-                      -0.003f * i->GetText().GetElementVScale(e), 0.0f,
-                      1.0f * a);
-          c.SetFlatness(i->GetText().GetElementMaxFlatness(e));
-          c.SetMaskUV2Texture(i->GetText().GetElementMaskUV2Texture(e));
-          {
-            auto xf = c.ScopedTransform();
-            c.Translate(h, v_base + 2 + i->v_smoothed, kScreenMessageZDepth);
-            c.Scale(0.6f * s_extra, 0.6f * s_extra);
-            c.DrawMesh(i->GetText().GetElementMesh(e));
-          }
-        }
-        assert(!i->translation_dirty);
-        v -= g_base->text_graphics->GetStringHeight(i->s_translated.c_str())
-                 * 0.6f
-             + 8.0f;
-      }
-      c.Submit();
-    }
-  }
+  screenmessages->DrawMiscOverlays(frame_def);
 }
 
 auto Graphics::GetDebugGraph(const std::string& name, bool smoothed)
@@ -864,11 +506,11 @@ void Graphics::GetSafeColor(float* red, float* green, float* blue,
     *blue = std::min(1.0f, (*blue) * s);
   }
 
-  // We may still be short of our target intensity due to clamping (ie: (10,0,0)
-  // will not look any brighter than (1,0,0)) if that's the case, just convert
-  // the difference to a grey value and add that to all channels... this *still*
-  // might not get us there so lets do it a few times if need be.  (i'm sure
-  // there's a less bone-headed way to do this)
+  // We may still be short of our target intensity due to clamping (ie:
+  // (10,0,0) will not look any brighter than (1,0,0)) if that's the case,
+  // just convert the difference to a grey value and add that to all
+  // channels... this *still* might not get us there so lets do it a few times
+  // if need be.  (i'm sure there's a less bone-headed way to do this)
   for (int i = 0; i < 4; i++) {
     float remaining =
         (0.2989f * (*red) + 0.5870f * (*green) + 0.1140f * (*blue)) - 1.0f;
@@ -882,32 +524,6 @@ void Graphics::GetSafeColor(float* red, float* green, float* blue,
   }
 }
 
-void Graphics::AddScreenMessage(const std::string& msg, const Vector3f& color,
-                                bool top, TextureAsset* texture,
-                                TextureAsset* tint_texture,
-                                const Vector3f& tint, const Vector3f& tint2) {
-  assert(g_base->InLogicThread());
-
-  // So we know we're always dealing with valid utf8.
-  std::string m = Utils::GetValidUTF8(msg.c_str(), "ga9msg");
-
-  if (top) {
-    float start_v = -40.0f;
-    if (!screen_messages_top_.empty()) {
-      start_v = std::min(
-          start_v,
-          std::max(-100.0f, screen_messages_top_.back().v_smoothed - 25.0f));
-    }
-    screen_messages_top_.emplace_back(m, true, g_core->GetAppTimeMillisecs(),
-                                      color, texture, tint_texture, tint,
-                                      tint2);
-    screen_messages_top_.back().v_smoothed = start_v;
-  } else {
-    screen_messages_.emplace_back(m, false, g_core->GetAppTimeMillisecs(),
-                                  color, texture, tint_texture, tint, tint2);
-  }
-}
-
 void Graphics::Reset() {
   assert(g_base->InLogicThread());
   fade_ = 0;
@@ -917,9 +533,7 @@ void Graphics::Reset() {
     camera_ = Object::New<Camera>();
   }
 
-  // Wipe out top screen messages since they might be using textures that are
-  // being reset. Bottom ones are ok since they have no textures.
-  screen_messages_top_.clear();
+  screenmessages->Reset();
 }
 
 void Graphics::InitInternalComponents(FrameDef* frame_def) {
@@ -930,7 +544,7 @@ void Graphics::InitInternalComponents(FrameDef* frame_def) {
   // Let's draw a bit bigger than screen to account for tv-border-mode.
   float w = pass->virtual_width();
   float h = pass->virtual_height();
-  if (g_core->IsVRMode()) {
+  if (g_core->vr_mode()) {
     screen_mesh_->SetPositionAndSize(
         -(0.5f * kVRBorder) * w, (-0.5f * kVRBorder) * h, kScreenMeshZDepth,
         (1.0f + kVRBorder) * w, (1.0f + kVRBorder) * h);
@@ -960,6 +574,26 @@ auto Graphics::GetEmptyFrameDef() -> FrameDef* {
   return frame_def;
 }
 
+auto Graphics::GetGraphicsSettingsSnapshot() -> Snapshot<GraphicsSettings>* {
+  assert(g_base->InLogicThread());
+
+  // If need be, ask the app-adapter to build us a new settings instance.
+  if (graphics_settings_dirty_) {
+    auto* new_settings = g_base->app_adapter->GetGraphicsSettings();
+    new_settings->index = next_settings_index_++;
+    settings_snapshot_ = Object::New<Snapshot<GraphicsSettings>>(new_settings);
+    graphics_settings_dirty_ = false;
+
+    // We keep a cached copy of this value since we use it a lot.
+    tv_border_ = settings_snapshot_->Get()->tv_border;
+
+    // This can affect placeholder settings; keep those up to date.
+    UpdatePlaceholderSettings();
+  }
+  assert(settings_snapshot_.Exists());
+  return settings_snapshot_.Get();
+}
+
 void Graphics::ClearFrameDefDeleteList() {
   assert(g_base->InLogicThread());
   std::scoped_lock lock(frame_def_delete_list_mutex_);
@@ -977,7 +611,7 @@ void Graphics::ClearFrameDefDeleteList() {
 }
 
 void Graphics::FadeScreen(bool to, millisecs_t time, PyObject* endcall) {
-  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base->InLogicThread());
   // If there's an ourstanding fade-end command, go ahead and run it.
   // (otherwise, overlapping fades can cause things to get lost)
   if (fade_end_call_.Exists()) {
@@ -1050,14 +684,13 @@ void Graphics::UpdateGyro(microsecs_t time_microsecs,
   tilt_vel_ = tilt_smoothed_ * 3.0f;
   tilt_pos_ += tilt_vel_ * timescale;
 
-  // Technically this will behave slightly differently at different time scales,
-  // but it should be close to correct..
-  // tilt_pos_ *= 0.991f;
+  // Technically this will behave slightly differently at different time
+  // scales, but it should be close to correct.. tilt_pos_ *= 0.991f;
   tilt_pos_ *= std::max(0.0f, 1.0f - 0.01f * timescale);
 
   // Some gyros seem wonky and either give us crazy big values or consistently
-  // offset ones. Let's keep a running tally of magnitude that slowly drops over
-  // time, and if it reaches a certain value lets just kill gyro input.
+  // offset ones. Let's keep a running tally of magnitude that slowly drops
+  // over time, and if it reaches a certain value lets just kill gyro input.
   if (gyro_broken_) {
     tilt_pos_ *= 0.0f;
   } else {
@@ -1105,6 +738,8 @@ void Graphics::DrawDevUI(FrameDef* frame_def) {
 
 void Graphics::BuildAndPushFrameDef() {
   assert(g_base->InLogicThread());
+
+  assert(g_base->logic->app_bootstrapping_complete());
   assert(camera_.Exists());
   assert(!g_core->HeadlessMode());
 
@@ -1112,10 +747,6 @@ void Graphics::BuildAndPushFrameDef() {
   // doesn't muck with our lists/etc. while we're using them.
   assert(!building_frame_def_);
   building_frame_def_ = true;
-
-  // We should not be building/pushing any frames until the native
-  // layer is fully bootstrapped.
-  BA_PRECONDITION_FATAL(g_base->logic->app_bootstrapping_complete());
 
   microsecs_t app_time_microsecs = g_core->GetAppTimeMicrosecs();
 
@@ -1172,13 +803,6 @@ void Graphics::BuildAndPushFrameDef() {
     internal_components_inited_ = true;
   }
 
-  // If graphics quality has changed since our last draw, inform anyone who
-  // wants to know.
-  if (last_frame_def_graphics_quality_ != frame_def->quality()) {
-    last_frame_def_graphics_quality_ = frame_def->quality();
-    g_base->app_mode()->GraphicsQualityChanged(frame_def->quality());
-  }
-
   ApplyCamera(frame_def);
 
   if (progress_bar_) {
@@ -1220,7 +844,7 @@ void Graphics::BuildAndPushFrameDef() {
     // Sanity test: If we're in VR, the only reason we should have stuff in
     // the flat overlay pass is if there's windows present (we want to avoid
     // drawing/blitting the 2d UI buffer during gameplay for efficiency).
-    if (g_core->IsVRMode()) {
+    if (g_core->vr_mode()) {
       if (frame_def->GetOverlayFlatPass()->HasDrawCommands()) {
         if (!g_base->ui->MainMenuVisible()) {
           BA_LOG_ONCE(LogLevel::kError,
@@ -1239,7 +863,7 @@ void Graphics::BuildAndPushFrameDef() {
     RunCleanFrameCommands();
   }
 
-  frame_def->Finalize();
+  frame_def->Complete();
 
   // Include all mesh-data loads and unloads that have accumulated up to
   // this point the graphics thread will have to handle these before
@@ -1373,7 +997,10 @@ void Graphics::DrawFades(FrameDef* frame_def) {
   // Guard against accidental fades that never fade back in.
   if (fade_ <= 0.0f && fade_out_) {
     millisecs_t faded_time = real_time - (fade_start_ + fade_time_);
-    if (faded_time > 15000) {
+
+    // TEMP HACK - don't trigger this while inactive.
+    // Need to make overall fade logic smarter.
+    if (faded_time > 15000 && g_base->app_active()) {
       Log(LogLevel::kError, "FORCE-ENDING STUCK FADE");
       fade_out_ = false;
       fade_ = 1.0f;
@@ -1450,10 +1077,10 @@ void Graphics::DoDrawFade(FrameDef* frame_def, float amt) {
 void Graphics::DrawCursor(FrameDef* frame_def) {
   assert(g_base->InLogicThread());
 
-  millisecs_t app_time_millisecs = frame_def->app_time_millisecs();
+  auto app_time = frame_def->app_time();
 
-  bool can_show_cursor = g_base->app_adapter->ShouldUseCursor();
-  bool should_show_cursor =
+  auto can_show_cursor = g_base->app_adapter->ShouldUseCursor();
+  auto should_show_cursor =
       camera_->manual() || g_base->input->IsCursorVisible();
 
   if (g_base->app_adapter->HasHardwareCursor()) {
@@ -1467,9 +1094,9 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
     // Ship this state when it changes and also every now and then just in
     // case things go wonky.
     if (new_cursor_visibility != hardware_cursor_visible_
-        || app_time_millisecs - last_cursor_visibility_event_time_ > 2000) {
+        || app_time - last_cursor_visibility_event_time_ > 2.137) {
       hardware_cursor_visible_ = new_cursor_visibility;
-      last_cursor_visibility_event_time_ = app_time_millisecs;
+      last_cursor_visibility_event_time_ = app_time;
       g_base->app_adapter->PushMainThreadCall([this] {
         assert(g_core && g_core->InMainThread());
         g_base->app_adapter->SetHardwareCursorVisible(hardware_cursor_visible_);
@@ -1485,9 +1112,9 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
       {
         auto xf = c.ScopedTransform();
 
-        // Note: we don't plug in known cursor position values here; we tell the
-        // renderer to insert the latest values on its end; this can lessen
-        // cursor lag substantially.
+        // Note: we don't plug in known cursor position values here; we tell
+        // the renderer to insert the latest values on its end; this can
+        // lessen cursor lag substantially.
         c.CursorTranslate();
         c.Translate(csize * 0.40f, csize * -0.38f, kCursorZDepth);
         c.Scale(csize, csize);
@@ -1537,21 +1164,6 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
     c.SetTexture(g_base->assets->SysTexture(SysTextureID::kLightSoft));
     c.DrawMesh(shadow_blotch_soft_obj_mesh_.Get());
     c.Submit();
-  }
-}
-
-void Graphics::SetSupportsHighQualityGraphics(bool s) {
-  supports_high_quality_graphics_ = s;
-  has_supports_high_quality_graphics_value_ = true;
-}
-
-void Graphics::ClearScreenMessageTranslations() {
-  assert(g_base && g_base->InLogicThread());
-  for (auto&& i : screen_messages_) {
-    i.translation_dirty = true;
-  }
-  for (auto&& i : screen_messages_top_) {
-    i.translation_dirty = true;
   }
 }
 
@@ -1885,51 +1497,57 @@ void Graphics::DrawRadialMeter(MeshIndexedSimpleFull* m, float amt) {
   }
 }
 
-auto Graphics::ScreenMessageEntry::GetText() -> TextGroup& {
-  if (translation_dirty) {
-    BA_LOG_ONCE(
-        LogLevel::kWarning,
-        "Found dirty translation on screenmessage GetText; raw=" + s_raw);
-  }
-  if (!s_mesh_.Exists()) {
-    s_mesh_ = Object::New<TextGroup>();
-    mesh_dirty = true;
-  }
-  if (mesh_dirty) {
-    s_mesh_->SetText(
-        s_translated,
-        align_left ? TextMesh::HAlign::kLeft : TextMesh::HAlign::kCenter,
-        TextMesh::VAlign::kBottom);
-    mesh_dirty = false;
-  }
-  return *s_mesh_;
-}
-
 void Graphics::OnScreenSizeChange() {}
 
-void Graphics::SetScreenSize(float virtual_width, float virtual_height,
-                             float pixel_width, float pixel_height) {
+void Graphics::CalcVirtualRes_(float* x, float* y) {
+  float x_in = *x;
+  float y_in = *y;
+  if (*x / *y > static_cast<float>(kBaseVirtualResX)
+                    / static_cast<float>(kBaseVirtualResY)) {
+    *y = kBaseVirtualResY;
+    *x = *y * (x_in / y_in);
+  } else {
+    *x = kBaseVirtualResX;
+    *y = *x * (y_in / x_in);
+  }
+}
+
+void Graphics::SetScreenResolution(float x, float y) {
   assert(g_base->InLogicThread());
-  res_x_virtual_ = virtual_width;
-  res_y_virtual_ = virtual_height;
-  res_x_ = pixel_width;
-  res_y_ = pixel_height;
+
+  // Ignore redundant sets.
+  if (res_x_ == x && res_y_ == y) {
+    return;
+  }
+
+  // We'll need to ship a new settings to the server with this change.
+  graphics_settings_dirty_ = true;
+
+  res_x_ = x;
+  res_y_ = y;
+
+  // Calc virtual res. In vr mode our virtual res is independent of our
+  // screen size (since it gets drawn to an overlay).
+  if (g_core->vr_mode()) {
+    res_x_virtual_ = kBaseVirtualResX;
+    res_y_virtual_ = kBaseVirtualResY;
+  } else {
+    res_x_virtual_ = res_x_;
+    res_y_virtual_ = res_y_;
+    CalcVirtualRes_(&res_x_virtual_, &res_y_virtual_);
+  }
 
   // Need to rebuild internal components (some are sized to the screen).
   internal_components_inited_ = false;
 
-  // This will inform all applicable logic thread subsystems.
-  g_base->logic->OnScreenSizeChange(virtual_width, virtual_height, pixel_width,
-                                    pixel_height);
-}
+  // Inform all our logic thread buddies of this change.
+  g_base->logic->OnScreenSizeChange(res_x_virtual_, res_y_virtual_, res_x_,
+                                    res_y_);
 
-void Graphics::ScreenMessageEntry::UpdateTranslation() {
-  if (translation_dirty) {
-    s_translated = g_base->assets->CompileResourceString(
-        s_raw, "Graphics::ScreenMessageEntry::UpdateTranslation");
-    translation_dirty = false;
-    mesh_dirty = true;
-  }
+  // This may trigger us sending initial graphics settings to the
+  // graphics-server to kick off drawing.
+  got_screen_resolution_ = true;
+  UpdateInitialGraphicsSettingsSend_();
 }
 
 auto Graphics::CubeMapFromReflectionType(ReflectionType reflection_type)
@@ -2011,8 +1629,77 @@ void Graphics::LanguageChanged() {
     Log(LogLevel::kWarning,
         "Graphics::LanguageChanged() called during draw; should not happen.");
   }
-  // Also clear translations on all screen-messages.
-  ClearScreenMessageTranslations();
+  screenmessages->ClearScreenMessageTranslations();
+}
+
+auto Graphics::GraphicsQualityFromRequest(GraphicsQualityRequest request,
+                                          GraphicsQuality auto_val)
+    -> GraphicsQuality {
+  switch (request) {
+    case GraphicsQualityRequest::kLow:
+      return GraphicsQuality::kLow;
+    case GraphicsQualityRequest::kMedium:
+      return GraphicsQuality::kMedium;
+    case GraphicsQualityRequest::kHigh:
+      return GraphicsQuality::kHigh;
+    case GraphicsQualityRequest::kHigher:
+      return GraphicsQuality::kHigher;
+    case GraphicsQualityRequest::kAuto:
+      return auto_val;
+    default:
+      Log(LogLevel::kError, "Unhandled GraphicsQualityRequest value: "
+                                + std::to_string(static_cast<int>(request)));
+      return GraphicsQuality::kLow;
+  }
+}
+
+auto Graphics::TextureQualityFromRequest(TextureQualityRequest request,
+                                         TextureQuality auto_val)
+    -> TextureQuality {
+  switch (request) {
+    case TextureQualityRequest::kLow:
+      return TextureQuality::kLow;
+    case TextureQualityRequest::kMedium:
+      return TextureQuality::kMedium;
+    case TextureQualityRequest::kHigh:
+      return TextureQuality::kHigh;
+    case TextureQualityRequest::kAuto:
+      return auto_val;
+    default:
+      Log(LogLevel::kError, "Unhandled TextureQualityRequest value: "
+                                + std::to_string(static_cast<int>(request)));
+      return TextureQuality::kLow;
+  }
+}
+
+void Graphics::set_client_context(Snapshot<GraphicsClientContext>* context) {
+  assert(g_base->InLogicThread());
+
+  // Currently we only expect this to be set once. That will change once we
+  // support renderer swapping/etc.
+  assert(!g_base->logic->graphics_ready());
+  assert(!client_context_snapshot_.Exists());
+  client_context_snapshot_ = context;
+
+  // Placeholder settings are affected by client context, so update them
+  // when it changes.
+  UpdatePlaceholderSettings();
+
+  // Let the logic system know its free to proceed beyond bootstrapping.
+  g_base->logic->OnGraphicsReady();
+}
+
+// This call exists for the graphics-server to call when they've changed
+void Graphics::UpdatePlaceholderSettings() {
+  assert(g_base->InLogicThread());
+
+  // Need both of these in place.
+  if (!settings_snapshot_.Exists() || !has_client_context()) {
+    return;
+  }
+
+  texture_quality_placeholder_ = TextureQualityFromRequest(
+      settings()->texture_quality, client_context()->auto_texture_quality);
 }
 
 }  // namespace ballistica::base

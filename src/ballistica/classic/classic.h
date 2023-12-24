@@ -28,6 +28,7 @@ namespace ballistica::classic {
 // Predeclared types our feature-set provides.
 class ClassicFeatureSet;
 class ClassicPython;
+class StressTest;
 class V1Account;
 
 enum class V1AccountType {
@@ -107,9 +108,12 @@ class ClassicFeatureSet : public FeatureSetNativeComponent,
   void set_v1_account_type(V1AccountType tp) { v1_account_type_ = tp; }
   void PlayMusic(const std::string& music_type, bool continuous) override;
 
+  auto* stress_test() const { return stress_test_; }
+
  private:
   ClassicFeatureSet();
   V1AccountType v1_account_type_{V1AccountType::kInvalid};
+  StressTest* stress_test_;
 };
 
 }  // namespace ballistica::classic

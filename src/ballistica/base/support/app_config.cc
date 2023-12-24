@@ -208,6 +208,8 @@ void AppConfig::SetupEntries() {
 
   int_entries_[IntID::kPort] = IntEntry("Port", kDefaultPort);
   int_entries_[IntID::kMaxFPS] = IntEntry("Max FPS", 60);
+  int_entries_[IntID::kSceneV1HostProtocol] =
+      IntEntry("SceneV1 Host Protocol", 33);
 
   bool_entries_[BoolID::kTouchControlsSwipeHidden] =
       BoolEntry("Touch Controls Swipe Hidden", false);

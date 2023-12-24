@@ -31,6 +31,7 @@ class AppMode:
         AppExperience associated with the AppMode must be supported by
         the current app and runtime environment.
         """
+        # FIXME: check AppExperience.
         return cls._supports_intent(intent)
 
     @classmethod
@@ -51,3 +52,10 @@ class AppMode:
 
     def on_deactivate(self) -> None:
         """Called when the mode is being deactivated."""
+
+    def on_app_active_changed(self) -> None:
+        """Called when babase.app.active changes.
+
+        The app-mode may want to take action such as pausing a running
+        game in such cases.
+        """

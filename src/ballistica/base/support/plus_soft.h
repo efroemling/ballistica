@@ -19,8 +19,8 @@ namespace ballistica::base {
 class PlusSoftInterface {
  public:
   virtual void OnAppStart() = 0;
-  virtual void OnAppPause() = 0;
-  virtual void OnAppResume() = 0;
+  virtual void OnAppSuspend() = 0;
+  virtual void OnAppUnsuspend() = 0;
   virtual void OnAppShutdown() = 0;
   virtual void OnAppShutdownComplete() = 0;
   virtual void DoApplyAppConfig() = 0;
@@ -33,6 +33,7 @@ class PlusSoftInterface {
   virtual auto PutLog(bool fatal) -> bool = 0;
   virtual void AAT() = 0;
   virtual void AATE() = 0;
+  virtual auto GAHU() -> std::optional<std::string> = 0;
   virtual void V1LoginDidChange() = 0;
   virtual void SetAdCompletionCall(PyObject* obj,
                                    bool pass_actually_showed) = 0;

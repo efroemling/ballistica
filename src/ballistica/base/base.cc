@@ -9,6 +9,7 @@
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
@@ -20,12 +21,12 @@
 #include "ballistica/base/python/class/python_class_feature_set_data.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_config.h"
+#include "ballistica/base/support/app_timer.h"
+#include "ballistica/base/support/base_build_switches.h"
 #include "ballistica/base/support/huffman.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/support/stdio_console.h"
-#include "ballistica/base/support/stress_test.h"
 #include "ballistica/base/ui/dev_console.h"
-#include "ballistica/base/ui/ui.h"
 #include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -39,7 +40,7 @@ core::CoreFeatureSet* g_core{};
 BaseFeatureSet* g_base{};
 
 BaseFeatureSet::BaseFeatureSet()
-    : app_adapter{AppAdapter::Create()},
+    : app_adapter{BaseBuildSwitches::CreateAppAdapter()},
       app_config{new AppConfig()},
       app_mode_{AppModeEmpty::GetSingleton()},
       assets{new Assets()},
@@ -51,7 +52,7 @@ BaseFeatureSet::BaseFeatureSet()
       bg_dynamics_server{g_core->HeadlessMode() ? nullptr
                                                 : new BGDynamicsServer},
       context_ref{new ContextRef(nullptr)},
-      graphics{Graphics::Create()},
+      graphics{BaseBuildSwitches::CreateGraphics()},
       graphics_server{new GraphicsServer()},
       huffman{new Huffman()},
       input{new Input()},
@@ -59,11 +60,10 @@ BaseFeatureSet::BaseFeatureSet()
       network_reader{new NetworkReader()},
       network_writer{new NetworkWriter()},
       networking{new Networking()},
-      platform{BasePlatform::Create()},
+      platform{BaseBuildSwitches::CreatePlatform()},
       python{new BasePython()},
       stdio_console{g_buildconfig.enable_stdio_console() ? new StdioConsole()
                                                          : nullptr},
-      stress_test_{new StressTest()},
       text_graphics{new TextGraphics()},
       ui{new UI()},
       utils{new Utils()} {
@@ -151,6 +151,43 @@ auto BaseFeatureSet::IsBaseCompletelyImported() -> bool {
   return base_import_completed_ && base_native_import_completed_;
 }
 
+void BaseFeatureSet::SuccessScreenMessage() {
+  if (auto* event_loop = logic->event_loop()) {
+    event_loop->PushCall([this] {
+      python->objs().Get(BasePython::ObjID::kSuccessMessageCall).Call();
+    });
+  } else {
+    Log(LogLevel::kError,
+        "SuccessScreenMessage called without logic event_loop in place.");
+  }
+}
+
+void BaseFeatureSet::ErrorScreenMessage() {
+  if (auto* event_loop = logic->event_loop()) {
+    event_loop->PushCall([this] {
+      python->objs().Get(BasePython::ObjID::kErrorMessageCall).Call();
+    });
+  } else {
+    Log(LogLevel::kError,
+        "ErrorScreenMessage called without logic event_loop in place.");
+  }
+}
+
+auto BaseFeatureSet::GetV2AccountID() -> std::optional<std::string> {
+  auto gil = Python::ScopedInterpreterLock();
+  auto result =
+      python->objs().Get(BasePython::ObjID::kGetV2AccountIdCall).Call();
+  if (result.Exists()) {
+    if (result.ValueIsNone()) {
+      return {};
+    }
+    return result.ValueAsString();
+  } else {
+    Log(LogLevel::kError, "GetV2AccountID() py call errored.");
+    return {};
+  }
+}
+
 void BaseFeatureSet::OnAssetsAvailable() {
   assert(InLogicThread());
 
@@ -158,8 +195,16 @@ void BaseFeatureSet::OnAssetsAvailable() {
 }
 
 void BaseFeatureSet::StartApp() {
+  // {
+  //   // TEST - recreate the ID python dumps in its thread tracebacks.
+  //   auto val = PyThread_get_thread_ident();
+  //   printf("MAIN THREAD IS %#018lx\n", val);
+  // }
+
   BA_PRECONDITION(g_core->InMainThread());
   BA_PRECONDITION(g_base);
+
+  auto start_time = g_core->GetAppTimeSeconds();
 
   // Currently limiting this to once per process.
   BA_PRECONDITION(!called_start_app_);
@@ -197,13 +242,10 @@ void BaseFeatureSet::StartApp() {
   assets_server->OnMainThreadStartApp();
   app_adapter->OnMainThreadStartApp();
 
-  // Take note that we're now 'running'. Various code such as anything that
-  // pushes messages to threads can watch for this state to avoid crashing
-  // if called early.
+  // Ok; we're now official 'started'. Various code such as anything that
+  // pushes messages to threads can watch for this state (via IsAppStarted()
+  // to avoid crashing if called early.
   app_started_ = true;
-
-  // Inform anyone who wants to know that we're done starting.
-  platform->OnMainThreadStartAppComplete();
 
   // As the last step of this phase, tell the logic thread to apply the app
   // config which will kick off screen creation and otherwise get the ball
@@ -214,6 +256,159 @@ void BaseFeatureSet::StartApp() {
   }
 
   g_core->LifecycleLog("start-app end (main thread)");
+
+  // Make some noise if this takes more than a few seconds. If we pass 5
+  // seconds or so we start to trigger App-Not-Responding reports which
+  // isn't good.
+  auto duration = g_core->GetAppTimeSeconds() - start_time;
+  if (duration > 3.0) {
+    char buffer[128];
+    snprintf(buffer, sizeof(buffer),
+             "StartApp() took too long (%.2lf seconds).", duration);
+    Log(LogLevel::kWarning, buffer);
+  }
+}
+
+void BaseFeatureSet::SuspendApp() {
+  assert(g_core);
+  assert(g_core->InMainThread());
+
+  if (app_suspended_) {
+    Log(LogLevel::kWarning,
+        "AppAdapter::SuspendApp() called with app already suspended.");
+    return;
+  }
+
+  millisecs_t start_time{core::CorePlatform::GetCurrentMillisecs()};
+
+  // Apple mentioned 5 seconds to run stuff once backgrounded or they bring
+  // down the hammer. Let's aim to stay under 2.
+  millisecs_t max_duration{2000};
+
+  g_core->platform->LowLevelDebugLog(
+      "SuspendApp@"
+      + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
+  app_suspended_ = true;
+
+  // IMPORTANT: Any pause related stuff that event-loop-threads need to do
+  // should be done from their registered pause-callbacks. If we instead
+  // push runnables to them from here they may or may not be called before
+  // their event-loop is actually paused.
+
+  // Pause all event loops.
+  EventLoop::SetEventLoopsSuspended(true);
+
+  if (g_base->network_reader) {
+    g_base->network_reader->OnAppSuspend();
+  }
+  g_base->networking->OnAppSuspend();
+
+  // We assume that the OS will completely suspend our process the moment we
+  // return from this call (though this is not technically true on all
+  // platforms). So we want to spin here and give our various event loop
+  // threads time to park themselves.
+  std::vector<EventLoop*> running_loops;
+  do {
+    // If/when we get to a point with no threads waiting to be paused, we're
+    // good to go.
+    // auto loops{EventLoop::GetStillSuspendingEventLoops()};
+    running_loops = EventLoop::GetStillSuspendingEventLoops();
+    // running_loop_count = loops.size();
+    if (running_loops.empty()) {
+      if (g_buildconfig.debug_build()) {
+        Log(LogLevel::kDebug,
+            "SuspendApp() completed in "
+                + std::to_string(core::CorePlatform::GetCurrentMillisecs()
+                                 - start_time)
+                + "ms.");
+      }
+      return;
+    }
+  } while (std::abs(core::CorePlatform::GetCurrentMillisecs() - start_time)
+           < max_duration);
+
+  // If we made it here, we timed out. Complain.
+  std::string msg =
+      std::string("SuspendApp() took too long; ")
+      + std::to_string(running_loops.size())
+      + " event-loops not yet suspended after "
+      + std::to_string(core::CorePlatform::GetCurrentMillisecs() - start_time)
+      + " ms: (";
+  bool first = true;
+  for (auto* loop : running_loops) {
+    if (!first) {
+      msg += ", ";
+    }
+    // Note: not adding a default here so compiler complains if we
+    // add/change something.
+    switch (loop->identifier()) {
+      case EventLoopID::kInvalid:
+        msg += "invalid";
+        break;
+      case EventLoopID::kLogic:
+        msg += "logic";
+        break;
+      case EventLoopID::kAssets:
+        msg += "assets";
+        break;
+      case EventLoopID::kFileOut:
+        msg += "fileout";
+        break;
+      case EventLoopID::kMain:
+        msg += "main";
+        break;
+      case EventLoopID::kAudio:
+        msg += "audio";
+        break;
+      case EventLoopID::kNetworkWrite:
+        msg += "networkwrite";
+        break;
+      case EventLoopID::kSuicide:
+        msg += "suicide";
+        break;
+      case EventLoopID::kStdin:
+        msg += "stdin";
+        break;
+      case EventLoopID::kBGDynamics:
+        msg += "bgdynamics";
+        break;
+    }
+    first = false;
+  }
+  msg += ").";
+
+  Log(LogLevel::kError, msg);
+}
+
+void BaseFeatureSet::UnsuspendApp() {
+  assert(g_core);
+  assert(g_core->InMainThread());
+
+  if (!app_suspended_) {
+    Log(LogLevel::kWarning,
+        "AppAdapter::UnsuspendApp() called with app not in suspendedstate.");
+    return;
+  }
+  millisecs_t start_time{core::CorePlatform::GetCurrentMillisecs()};
+  g_core->platform->LowLevelDebugLog(
+      "UnsuspendApp@"
+      + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
+  app_suspended_ = false;
+
+  // Spin all event-loops back up.
+  EventLoop::SetEventLoopsSuspended(false);
+
+  // Run resumes that expect to happen in the main thread.
+  g_base->network_reader->OnAppUnsuspend();
+  g_base->networking->OnAppUnsuspend();
+
+  if (g_buildconfig.debug_build()) {
+    Log(LogLevel::kDebug,
+        "UnsuspendApp() completed in "
+            + std::to_string(core::CorePlatform::GetCurrentMillisecs()
+                             - start_time)
+            + "ms.");
+  }
 }
 
 void BaseFeatureSet::OnAppShutdownComplete() {
@@ -420,6 +615,10 @@ auto BaseFeatureSet::IsUnmodifiedBlessedBuild() -> bool {
   return false;
 }
 
+auto BaseFeatureSet::InMainThread() const -> bool {
+  return g_core->InMainThread();
+}
+
 auto BaseFeatureSet::InAssetsThread() const -> bool {
   if (auto* loop = assets_server->event_loop()) {
     return loop->ThreadIsCurrent();
@@ -461,8 +660,9 @@ auto BaseFeatureSet::InGraphicsContext() const -> bool {
 
 void BaseFeatureSet::ScreenMessage(const std::string& s,
                                    const Vector3f& color) {
-  logic->event_loop()->PushCall(
-      [this, s, color] { graphics->AddScreenMessage(s, color); });
+  logic->event_loop()->PushCall([this, s, color] {
+    graphics->screenmessages->AddScreenMessage(s, color);
+  });
 }
 
 void BaseFeatureSet::DoV1CloudLog(const std::string& msg) {
@@ -658,6 +858,10 @@ void BaseFeatureSet::DoPushObjCall(const PythonObjectSetBase* objset, int id,
 
 auto BaseFeatureSet::IsAppStarted() const -> bool { return app_started_; }
 
+auto BaseFeatureSet::IsAppBootstrapped() const -> bool {
+  return logic->app_bootstrapping_complete();
+}
+
 auto BaseFeatureSet::ShutdownSuppressBegin() -> bool {
   std::scoped_lock lock(shutdown_suppress_lock_);
 
@@ -687,8 +891,6 @@ void BaseFeatureSet::ShutdownSuppressDisallow() {
   shutdown_suppress_disallowed_ = true;
 }
 
-auto BaseFeatureSet::GetReturnValue() const -> int { return return_value(); }
-
 void BaseFeatureSet::QuitApp(bool confirm, QuitType quit_type) {
   // If they want a confirm dialog and we're able to present one, do that.
   if (confirm && !g_core->HeadlessMode() && !g_base->input->IsInputLocked()
@@ -711,6 +913,73 @@ void BaseFeatureSet::QuitApp(bool confirm, QuitType quit_type) {
   } else {
     logic->event_loop()->PushCall([this] { logic->Shutdown(); });
   }
+}
+
+void BaseFeatureSet::PushMainThreadRunnable(Runnable* runnable) {
+  app_adapter->DoPushMainThreadRunnable(runnable);
+}
+
+auto BaseFeatureSet::ClipboardIsSupported() -> bool {
+  // We only call our actual virtual function once.
+  if (!have_clipboard_is_supported_) {
+    clipboard_is_supported_ = app_adapter->DoClipboardIsSupported();
+    have_clipboard_is_supported_ = true;
+  }
+  return clipboard_is_supported_;
+}
+
+auto BaseFeatureSet::ClipboardHasText() -> bool {
+  // If subplatform says they don't support clipboards, don't even ask.
+  if (!ClipboardIsSupported()) {
+    return false;
+  }
+  return app_adapter->DoClipboardHasText();
+}
+
+void BaseFeatureSet::ClipboardSetText(const std::string& text) {
+  // If subplatform says they don't support clipboards, this is an error.
+  if (!ClipboardIsSupported()) {
+    throw Exception("ClipboardSetText called with no clipboard support.",
+                    PyExcType::kRuntime);
+  }
+  app_adapter->DoClipboardSetText(text);
+}
+
+auto BaseFeatureSet::ClipboardGetText() -> std::string {
+  // If subplatform says they don't support clipboards, this is an error.
+  if (!ClipboardIsSupported()) {
+    throw Exception("ClipboardGetText called with no clipboard support.",
+                    PyExcType::kRuntime);
+  }
+  return app_adapter->DoClipboardGetText();
+}
+
+void BaseFeatureSet::SetAppActive(bool active) {
+  assert(InMainThread());
+
+  // Note: in some cases I'm seeing repeat active/inactive sets; for example
+  // on Mac SDL if I hide the app and then click on it in the dock I get a
+  // 'inactive' for the hide followed by a 'active', 'inactive', 'active' on
+  // the dock click. So our strategy here to filter that out is just to tell
+  // the logic thread that it has changed but have them directly read the
+  // shared atomic value, so they should generally skip over flip-flops like
+  // that and will just read the final value a few times in a row.
+
+  g_core->platform->LowLevelDebugLog(
+      "SetAppActive(" + std::to_string(active) + ")@"
+      + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
+
+  // Issue a gentle warning if they are feeding us the same state twice in a
+  // row; might imply faulty logic on an app-adapter or whatnot.
+  if (app_active_set_ && app_active_ == active) {
+    Log(LogLevel::kWarning, "SetAppActive called with state "
+                                + std::to_string(active) + " twice in a row.");
+  }
+  app_active_set_ = true;
+  app_active_ = active;
+
+  g_base->logic->event_loop()->PushCall(
+      [] { g_base->logic->OnAppActiveChanged(); });
 }
 
 }  // namespace ballistica::base

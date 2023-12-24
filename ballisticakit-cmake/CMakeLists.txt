@@ -353,9 +353,15 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/camera.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/frame_def.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/frame_def.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/graphics_client_context.cc
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/graphics_client_context.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/graphics_settings.cc
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/graphics_settings.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/net_graph.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/net_graph.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/render_command_buffer.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/screen_messages.cc
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/screen_messages.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/text/font_page_map_data.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/text/text_graphics.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/text/text_graphics.h
@@ -432,16 +438,19 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/support/app_config.cc
   ${BA_SRC_ROOT}/ballistica/base/support/app_config.h
   ${BA_SRC_ROOT}/ballistica/base/support/app_timer.h
+  ${BA_SRC_ROOT}/ballistica/base/support/base_build_switches.cc
+  ${BA_SRC_ROOT}/ballistica/base/support/base_build_switches.h
   ${BA_SRC_ROOT}/ballistica/base/support/classic_soft.h
   ${BA_SRC_ROOT}/ballistica/base/support/context.cc
   ${BA_SRC_ROOT}/ballistica/base/support/context.h
+  ${BA_SRC_ROOT}/ballistica/base/support/display_timer.h
   ${BA_SRC_ROOT}/ballistica/base/support/huffman.cc
   ${BA_SRC_ROOT}/ballistica/base/support/huffman.h
   ${BA_SRC_ROOT}/ballistica/base/support/plus_soft.h
+  ${BA_SRC_ROOT}/ballistica/base/support/repeater.cc
+  ${BA_SRC_ROOT}/ballistica/base/support/repeater.h
   ${BA_SRC_ROOT}/ballistica/base/support/stdio_console.cc
   ${BA_SRC_ROOT}/ballistica/base/support/stdio_console.h
-  ${BA_SRC_ROOT}/ballistica/base/support/stress_test.cc
-  ${BA_SRC_ROOT}/ballistica/base/support/stress_test.h
   ${BA_SRC_ROOT}/ballistica/base/ui/dev_console.cc
   ${BA_SRC_ROOT}/ballistica/base/ui/dev_console.h
   ${BA_SRC_ROOT}/ballistica/base/ui/ui.cc
@@ -454,6 +463,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/classic/python/classic_python.h
   ${BA_SRC_ROOT}/ballistica/classic/python/methods/python_methods_classic.cc
   ${BA_SRC_ROOT}/ballistica/classic/python/methods/python_methods_classic.h
+  ${BA_SRC_ROOT}/ballistica/classic/support/stress_test.cc
+  ${BA_SRC_ROOT}/ballistica/classic/support/stress_test.h
   ${BA_SRC_ROOT}/ballistica/classic/support/v1_account.cc
   ${BA_SRC_ROOT}/ballistica/classic/support/v1_account.h
   ${BA_SRC_ROOT}/ballistica/core/core.cc
@@ -686,8 +697,10 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/generic/json.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/json.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/lambda_runnable.h
+  ${BA_SRC_ROOT}/ballistica/shared/generic/native_stack_trace.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/runnable.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/runnable.h
+  ${BA_SRC_ROOT}/ballistica/shared/generic/snapshot.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/timer_list.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/timer_list.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/utf8.cc

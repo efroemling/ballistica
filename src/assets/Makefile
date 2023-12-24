@@ -178,7 +178,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_error.py \
   $(BUILD_DIR)/ba_data/python/babase/_general.py \
   $(BUILD_DIR)/ba_data/python/babase/_hooks.py \
-  $(BUILD_DIR)/ba_data/python/babase/_keyboard.py \
   $(BUILD_DIR)/ba_data/python/babase/_language.py \
   $(BUILD_DIR)/ba_data/python/babase/_login.py \
   $(BUILD_DIR)/ba_data/python/babase/_math.py \
@@ -237,6 +236,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_messages.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_multiteamsession.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_music.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_net.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_nodeactor.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_player.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_playlist.py \
@@ -326,6 +326,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/batemplatefs/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_hooks.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_keyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
@@ -341,7 +342,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/characterpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/colorpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/config.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/configerror.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/confirm.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/continues.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__init__.py \
@@ -351,6 +351,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/tournamentbutton.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/creditslist.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/debug.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/discord.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/feedback.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/fileselector.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__init__.py \
@@ -452,7 +453,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_error.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_general.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_hooks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_keyboard.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_language.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_login.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_math.cpython-311.opt-1.pyc \
@@ -511,6 +511,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_messages.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_multiteamsession.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_music.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_net.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_nodeactor.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_player.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_playlist.cpython-311.opt-1.pyc \
@@ -600,6 +601,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/_subsystem.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/__init__.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_hooks.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_keyboard.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_subsystem.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_uitypes.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/onscreenkeyboard.cpython-311.opt-1.pyc \
@@ -615,7 +617,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/characterpicker.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/colorpicker.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/config.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/configerror.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/confirm.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/continues.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/__init__.cpython-311.opt-1.pyc \
@@ -625,6 +626,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/tournamentbutton.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/creditslist.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/debug.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/discord.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/feedback.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/fileselector.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/__init__.cpython-311.opt-1.pyc \
@@ -5710,6 +5712,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/cyborgIcon.dds \
   $(BUILD_DIR)/ba_data/textures/cyborgIconColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/discordLogo.dds \
+  $(BUILD_DIR)/ba_data/textures/discordServer.dds \
   $(BUILD_DIR)/ba_data/textures/doomShroomBGColor.dds \
   $(BUILD_DIR)/ba_data/textures/doomShroomLevelColor.dds \
   $(BUILD_DIR)/ba_data/textures/doomShroomPreview.dds \
@@ -6113,6 +6116,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/cyborgIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/cyborgIconColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/discordLogo.pvr \
+  $(BUILD_DIR)/ba_data/textures/discordServer.pvr \
   $(BUILD_DIR)/ba_data/textures/doomShroomBGColor.pvr \
   $(BUILD_DIR)/ba_data/textures/doomShroomLevelColor.pvr \
   $(BUILD_DIR)/ba_data/textures/doomShroomPreview.pvr \
@@ -6516,6 +6520,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/cyborgIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/cyborgIconColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/discordLogo.ktx \
+  $(BUILD_DIR)/ba_data/textures/discordServer.ktx \
   $(BUILD_DIR)/ba_data/textures/doomShroomBGColor.ktx \
   $(BUILD_DIR)/ba_data/textures/doomShroomLevelColor.ktx \
   $(BUILD_DIR)/ba_data/textures/doomShroomPreview.ktx \
@@ -6919,6 +6924,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/cyborgIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/cyborgIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/discordLogo_preview.png \
+  $(BUILD_DIR)/ba_data/textures/discordServer_preview.png \
   $(BUILD_DIR)/ba_data/textures/doomShroomBGColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/doomShroomLevelColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/doomShroomPreview_preview.png \

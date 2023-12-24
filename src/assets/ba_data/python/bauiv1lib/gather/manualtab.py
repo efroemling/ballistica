@@ -99,6 +99,7 @@ class ManualGatherTab(GatherTab):
         self._party_edit_name_text: bui.Widget | None = None
         self._party_edit_addr_text: bui.Widget | None = None
         self._party_edit_port_text: bui.Widget | None = None
+        self._no_parties_added_text: bui.Widget | None = None
 
     def on_activate(
         self,
@@ -142,6 +143,7 @@ class ManualGatherTab(GatherTab):
                 playsound=True,
             ),
             text=bui.Lstr(resource='gatherWindow.manualJoinSectionText'),
+            glow_type='uniform',
         )
         self._favorites_text = bui.textwidget(
             parent=self._container,
@@ -162,6 +164,7 @@ class ManualGatherTab(GatherTab):
                 playsound=True,
             ),
             text=bui.Lstr(resource='gatherWindow.favoritesText'),
+            glow_type='uniform',
         )
         bui.widget(edit=self._join_by_address_text, up_widget=tab_button)
         bui.widget(
@@ -316,7 +319,7 @@ class ManualGatherTab(GatherTab):
         self._check_button = bui.textwidget(
             parent=self._container,
             size=(250, 60),
-            text=bui.Lstr(resource='gatherWindow.' 'showMyAddressText'),
+            text=bui.Lstr(resource='gatherWindow.showMyAddressText'),
             v_align='center',
             h_align='center',
             click_activate=True,
@@ -331,6 +334,7 @@ class ManualGatherTab(GatherTab):
                 self._container,
                 c_width,
             ),
+            glow_type='uniform',
         )
         bui.widget(edit=self._check_button, up_widget=btn)
 
@@ -451,6 +455,24 @@ class ManualGatherTab(GatherTab):
             border=2,
             margin=0,
             claims_left_right=True,
+        )
+
+        self._no_parties_added_text = bui.textwidget(
+            parent=self._container,
+            size=(0, 0),
+            h_align='center',
+            v_align='center',
+            text='',
+            color=(0.6, 0.6, 0.6),
+            scale=1.2,
+            position=(
+                (
+                    (190 if uiscale is bui.UIScale.SMALL else 225)
+                    + sub_scroll_width * 0.5
+                ),
+                v + sub_scroll_height * 0.5,
+            ),
+            glow_type='uniform',
         )
 
         self._favorite_selected = None
@@ -695,6 +717,12 @@ class ManualGatherTab(GatherTab):
 
         assert self._favorites_scroll_width is not None
         assert self._favorites_connect_button is not None
+
+        bui.textwidget(
+            edit=self._no_parties_added_text,
+            text='',
+        )
+        num_of_fav = 0
         for i, server in enumerate(servers):
             txt = bui.textwidget(
                 parent=self._columnwidget,
@@ -718,11 +746,13 @@ class ManualGatherTab(GatherTab):
             )
             if i == 0:
                 bui.widget(edit=txt, up_widget=self._favorites_text)
+                self._favorite_selected = server
             bui.widget(
                 edit=txt,
                 left_widget=self._favorites_connect_button,
                 right_widget=txt,
             )
+            num_of_fav = num_of_fav + 1
 
         # If there's no servers, allow selecting out of the scroll area
         bui.containerwidget(
@@ -735,6 +765,11 @@ class ManualGatherTab(GatherTab):
             up_widget=self._favorites_text,
             left_widget=self._favorites_connect_button,
         )
+        if num_of_fav == 0:
+            bui.textwidget(
+                edit=self._no_parties_added_text,
+                text=bui.Lstr(resource='gatherWindow.noPartiesAddedText'),
+            )
 
     def on_deactivate(self) -> None:
         self._access_check_timer = None
@@ -800,8 +835,17 @@ class ManualGatherTab(GatherTab):
             }
             config.commit()
             bui.getsound('gunCocking').play()
+            bui.screenmessage(
+                bui.Lstr(
+                    resource='addedToFavoritesText', subs=[('${NAME}', addr)]
+                ),
+                color=(0, 1, 0),
+            )
         else:
-            bui.screenmessage('Invalid Address', color=(1, 0, 0))
+            bui.screenmessage(
+                bui.Lstr(resource='internal.invalidAddressErrorText'),
+                color=(1, 0, 0),
+            )
             bui.getsound('error').play()
 
     def _host_lookup_result(

@@ -17,6 +17,8 @@ class AppAdapterHeadless : public AppAdapter {
 
   void DoApplyAppConfig() override;
 
+  auto GetGraphicsClientContext() -> GraphicsClientContext* override;
+
  protected:
   void DoPushMainThreadRunnable(Runnable* runnable) override;
   void RunMainThreadEventLoopToCompletion() override;

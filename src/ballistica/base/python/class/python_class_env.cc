@@ -149,7 +149,7 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
       BoolEntry_(g_core->platform->IsRunningOnTV(),
                  "Whether the app is targeting a TV-centric experience.");
 
-  envs["vr"] = BoolEntry_(g_core->IsVRMode(),
+  envs["vr"] = BoolEntry_(g_core->vr_mode(),
                           "Whether the app is currently running in VR.");
 
   envs["arcade"] =

@@ -5,12 +5,26 @@
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/audio/audio_source.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
 
 Audio::Audio() = default;
+
+auto Audio::UseLowQualityAudio() -> bool {
+  assert(g_base->InLogicThread());
+  // Currently just piggybacking off graphics quality here.
+  if (g_core->HeadlessMode() || g_base->graphics->has_client_context()) {
+    return true;
+  }
+  // We don't have a frame-def to look at so need to calc this ourself; ugh.
+  auto quality = Graphics::GraphicsQualityFromRequest(
+      g_base->graphics->settings()->graphics_quality,
+      g_base->graphics->client_context()->auto_graphics_quality);
+  return quality < GraphicsQuality::kMedium;
+}
 
 void Audio::Reset() {
   assert(g_base->InLogicThread());
@@ -19,9 +33,9 @@ void Audio::Reset() {
 
 void Audio::OnAppStart() { assert(g_base->InLogicThread()); }
 
-void Audio::OnAppPause() { assert(g_base->InLogicThread()); }
+void Audio::OnAppSuspend() { assert(g_base->InLogicThread()); }
 
-void Audio::OnAppResume() { assert(g_base->InLogicThread()); }
+void Audio::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
 
 void Audio::OnAppShutdown() { assert(g_base->InLogicThread()); }
 
@@ -101,7 +115,7 @@ auto Audio::SourceBeginNew() -> AudioSource* {
 #pragma clang diagnostic pop
 
 auto Audio::IsSoundPlaying(uint32_t play_id) -> bool {
-  uint32_t source_id = AudioServer::source_id_from_play_id(play_id);
+  uint32_t source_id = AudioServer::SourceIdFromPlayId(play_id);
   assert(client_sources_.size() > source_id);
   client_sources_[source_id]->Lock(2);
   bool result = (client_sources_[source_id]->play_id() == play_id);
@@ -112,7 +126,7 @@ auto Audio::IsSoundPlaying(uint32_t play_id) -> bool {
 auto Audio::SourceBeginExisting(uint32_t play_id, int debug_id)
     -> AudioSource* {
   BA_DEBUG_FUNCTION_TIMER_BEGIN();
-  uint32_t source_id = AudioServer::source_id_from_play_id(play_id);
+  uint32_t source_id = AudioServer::SourceIdFromPlayId(play_id);
 
   // Ok, the audio thread fills in this source list,
   // so theoretically a client could call this before the audio thread
@@ -159,7 +173,7 @@ auto Audio::PlaySound(SoundAsset* sound, float volume)
   if (s) {
     // In vr mode, play non-positional sounds positionally in space roughly
     // where the menu is.
-    if (g_core->IsVRMode()) {
+    if (g_core->vr_mode()) {
       s->SetGain(volume);
       s->SetPositional(true);
       float x = 0.0f;

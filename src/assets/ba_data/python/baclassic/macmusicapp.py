@@ -80,14 +80,13 @@ class _MacMusicAppThread(threading.Thread):
     def run(self) -> None:
         """Run the Music.app thread."""
         babase.set_thread_name('BA_MacMusicAppThread')
-        babase.mac_music_app_init()
 
         # Let's mention to the user we're launching Music.app in case
         # it causes any funny business (this used to background the app
         # sometimes, though I think that is fixed now)
         def do_print() -> None:
             babase.apptimer(
-                1.0,
+                0.5,
                 babase.Call(
                     babase.screenmessage,
                     babase.Lstr(resource='usingItunesText'),
@@ -97,9 +96,8 @@ class _MacMusicAppThread(threading.Thread):
 
         babase.pushcall(do_print, from_other_thread=True)
 
-        # Here we grab this to force the actual launch.
-        babase.mac_music_app_get_volume()
-        babase.mac_music_app_get_library_source()
+        babase.mac_music_app_init()
+
         done = False
         while not done:
             self._commands_available.wait()

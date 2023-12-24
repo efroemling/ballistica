@@ -15,19 +15,19 @@ namespace ballistica::base {
 /// with a single platform (Windows, Mac, etc.).
 class BasePlatform {
  public:
-  /// Instantiate the CorePlatform subclass for the current build.
-  static auto Create() -> BasePlatform*;
+  BasePlatform();
+
+  /// Called after our singleton has been instantiated. Any construction
+  /// functionality requiring virtual functions resolving to their final
+  /// class versions can go here.
+  virtual void PostInit();
 
 #pragma mark APP EVENTS / LIFECYCLE --------------------------------------------
 
-  /// Called to inform the platform that all subsystems are up and running
-  /// and it can start talking to them.
-  virtual void OnMainThreadStartAppComplete();
-
   // Logic thread callbacks.
   virtual void OnAppStart();
-  virtual void OnAppPause();
-  virtual void OnAppResume();
+  virtual void OnAppSuspend();
+  virtual void OnAppUnsuspend();
   virtual void OnAppShutdown();
   virtual void OnAppShutdownComplete();
   virtual void OnScreenSizeChange();
@@ -57,20 +57,18 @@ class BasePlatform {
   /// Called when the app should set itself up to intercept ctrl-c presses.
   virtual void SetupInterruptHandling();
 
-#pragma mark INPUT DEVICES -----------------------------------------------------
-
-  // Return a name for a ballistica keycode.
-  virtual auto GetKeyName(int keycode) -> std::string;
-
 #pragma mark ACCOUNTS ----------------------------------------------------------
 
   /// Called when a Python LoginAdapter is requesting an explicit sign-in.
+  /// See the LoginAdapter class in Python for usage details.
   virtual void LoginAdapterGetSignInToken(const std::string& login_type,
                                           int attempt_id);
   /// Called when a Python LoginAdapter is informing us that a back-end is
-  /// active/inactive.
+  /// active/inactive. See the LoginAdapter class in Python for usage
+  /// details.
   virtual void LoginAdapterBackEndActiveChange(const std::string& login_type,
                                                bool active);
+
 #pragma mark MISC --------------------------------------------------------------
 
   /// Do we define a platform-specific string editor? This is something like
@@ -94,6 +92,18 @@ class BasePlatform {
   /// Must be called in the logic thread.
   void StringEditorCancel();
 
+  auto ran_base_post_init() const { return ran_base_post_init_; }
+
+  /// Do we support opening dirs exteranlly? (via finder, windows explorer,
+  /// etc.)
+  virtual auto SupportsOpenDirExternally() -> bool;
+
+  /// Open a directory using the system default method (Finder, etc.)
+  virtual void OpenDirExternally(const std::string& path);
+
+  /// Open a file using the system default method (in another app, etc.)
+  virtual void OpenFileExternally(const std::string& path);
+
  protected:
   /// Pop up a text edit dialog.
   virtual void DoInvokeStringEditor(const std::string& title,
@@ -106,17 +116,11 @@ class BasePlatform {
   /// Make a purchase.
   virtual void DoPurchase(const std::string& item);
 
-  BasePlatform();
   virtual ~BasePlatform();
 
  private:
-  /// Called after our singleton has been instantiated. Any construction
-  /// functionality requiring virtual functions resolving to their final
-  /// class versions can go here.
-  virtual void PostInit();
-
-  PythonRef string_edit_adapter_{};
   bool ran_base_post_init_{};
+  PythonRef string_edit_adapter_{};
   std::string public_device_uuid_;
 };
 

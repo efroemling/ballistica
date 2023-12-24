@@ -40,7 +40,8 @@ void AppAdapterVR::PushVRSimpleRemoteStateCall(
 }
 
 void AppAdapterVR::VRSetDrawDimensions(int w, int h) {
-  g_base->graphics_server->SetScreenResolution(w, h);
+  FatalError("FIXME UPDATE SET-SCREEN-RESOLUTION");
+  // g_base->graphics_server->SetScreenResolution(w, h);
 }
 
 void AppAdapterVR::VRPreDraw() {

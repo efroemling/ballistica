@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_BASE_H_
 #define BALLISTICA_BASE_BASE_H_
 
+#include <atomic>
 #include <mutex>
 #include <set>
 #include <string>
@@ -53,12 +54,15 @@ class ClassicSoftInterface;
 class CollisionMeshAsset;
 class CollisionCache;
 class DevConsole;
+class DisplayTimer;
 class Context;
 class ContextRef;
 class DataAsset;
 class FrameDef;
 class Graphics;
 class GraphicsServer;
+struct GraphicsSettings;
+struct GraphicsClientContext;
 class Huffman;
 class ImageMesh;
 class Input;
@@ -87,6 +91,7 @@ class NetGraph;
 class Networking;
 class NetworkReader;
 class NetworkWriter;
+class NinePatchMesh;
 class ObjectComponent;
 class PythonClassUISound;
 class PythonContextCall;
@@ -97,13 +102,14 @@ class RenderPass;
 class RenderTarget;
 class RemoteAppServer;
 class RemoteControlInput;
+class Repeater;
 class ScoreToBeat;
+class ScreenMessages;
 class AppAdapterSDL;
 class SDLContext;
 class SoundAsset;
 class SpriteMesh;
 class StdioConsole;
-class StressTest;
 class Module;
 class TestInput;
 class TextGroup;
@@ -267,6 +273,7 @@ enum class TextureCompressionType : uint8_t {
   kPVR,
   kETC1,
   kETC2,
+  kASTC,
 };
 
 enum class TextureMinQuality : uint8_t {
@@ -603,14 +610,38 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// Start app systems in motion.
   void StartApp() override;
 
-  /// Issue a high level app quit request. Can be called from any thread.
-  /// 'soft' means the app can simply reset/hide itself instead of actually
-  /// exiting the process (common behavior on mobile platforms). 'back'
-  /// means that a soft-quit should behave as if a back-button was pressed,
-  /// which may trigger different behavior in the OS than a standard soft
-  /// quit. If 'confirm' is true, a confirmation dialog will be presented if
-  /// the current app-mode provides one and the app is in gui mode.
-  /// Otherwise the quit will be immediate.
+  /// Set the app's active state. Should be called from the main thread.
+  /// Generally called by the AppAdapter. Being inactive means the app
+  /// experience is not front and center and thus it may want to throttle
+  /// down its rendering rate, pause single play gameplay, etc. This does
+  /// not, however, cause any extreme action such as halting event loops;
+  /// use Suspend/Resume for that. And note that the app may still be
+  /// visible while inactive, so it should not *completely* stop
+  /// drawing/etc.
+  void SetAppActive(bool active);
+
+  /// Put the app into a suspended state. Should be called from the main
+  /// thread. Generally called by the AppAdapter. Suspends event loops,
+  /// closes network sockets, etc. Generally corresponds to being
+  /// backgrounded on mobile platforms. It is assumed that, as soon as this
+  /// call returns, all engine work is finished and all threads can be
+  /// immediately suspended by the OS without any problems.
+  void SuspendApp();
+
+  /// Return the app to a running state from a suspended one. Can correspond
+  /// to foregrounding on mobile, unminimizing on desktop, etc. Spins
+  /// threads back up, re-opens network sockets, etc.
+  void UnsuspendApp();
+
+  auto app_suspended() const { return app_suspended_; }
+
+  /// Issue a high level app quit request. Can be called from any thread and
+  /// can be safely called repeatedly. If 'confirm' is true, a confirmation
+  /// dialog will be presented if the environment and situation allows;
+  /// otherwise the quit process will start immediately. A QuitType arg can
+  /// optionally be passed to influence quit behavior; on some platforms
+  /// such as mobile the default is for the app to recede to the background
+  /// but physically remain running.
   void QuitApp(bool confirm = false, QuitType quit_type = QuitType::kSoft);
 
   /// Called when app shutdown process completes. Sets app to exit.
@@ -628,6 +659,13 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
     assert(InLogicThread());  // Up to caller to ensure this.
     return *context_ref;
   }
+
+  /// Utility call to print 'Success!' with a happy sound.
+  /// Safe to call from any thread.
+  void SuccessScreenMessage();
+  /// Utility call to print 'Error.' with a beep sound.
+  /// Safe to call from any thread.
+  void ErrorScreenMessage();
 
   void SetCurrentContext(const ContextRef& context);
 
@@ -663,6 +701,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// allowing certain functionality before this time.
   auto IsBaseCompletelyImported() -> bool;
 
+  auto InMainThread() const -> bool;
   auto InAssetsThread() const -> bool override;
   auto InLogicThread() const -> bool override;
   auto InAudioThread() const -> bool override;
@@ -673,10 +712,17 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// High level screen-message call usable from any thread.
   void ScreenMessage(const std::string& s, const Vector3f& color) override;
 
-  /// Has StartApp been called (and completely finished its work)?
-  /// Code that sends calls/messages to other threads or otherwise uses
-  /// app functionality may want to check this to avoid crashes.
+  /// Has StartApp been called (and completely finished its work)? Code that
+  /// sends calls/messages to other threads or otherwise uses app
+  /// functionality may want to check this to avoid crashes. Note that some
+  /// app functionality such as loading assets is not available until
+  /// IsAppBootstrapped returns true. This call is thread safe.
   auto IsAppStarted() const -> bool override;
+
+  /// Has the app bootstrapping phase completed? The bootstrapping phase
+  /// involves initial screen/graphics setup. Asset loading is not allowed
+  /// until it is complete.
+  auto IsAppBootstrapped() const -> bool override;
 
   void PlusDirectSendV1CloudLogs(const std::string& prefix,
                                  const std::string& suffix, bool instant,
@@ -712,6 +758,28 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// loading.
   void OnAssetsAvailable();
 
+  void PushMainThreadRunnable(Runnable* runnable) override;
+
+  /// Return the currently signed in V2 account id as
+  /// reported by the Python layer.
+  auto GetV2AccountID() -> std::optional<std::string>;
+
+  /// Return whether clipboard operations are supported at all. This gets
+  /// called when determining whether to display clipboard related UI
+  /// elements/etc.
+  auto ClipboardIsSupported() -> bool;
+
+  /// Return whether there is currently text on the clipboard.
+  auto ClipboardHasText() -> bool;
+
+  /// Set current clipboard text. Raises an Exception if clipboard is
+  /// unsupported.
+  void ClipboardSetText(const std::string& text);
+
+  /// Return current text from the clipboard. Raises an Exception if
+  /// clipboard is unsupported or if there's no text on the clipboard.
+  auto ClipboardGetText() -> std::string;
+
   // Const subsystems.
   AppAdapter* const app_adapter;
   AppConfig* const app_config;
@@ -741,8 +809,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   void set_app_mode(AppMode* mode);
   auto* app_mode() const { return app_mode_; }
 
-  auto* stress_test() const { return stress_test_; }
-
   /// Whether we're running under ballisticakit_server.py
   /// (affects some app behavior).
   auto server_wrapper_managed() { return server_wrapper_managed_; }
@@ -750,10 +816,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   // Non-const bits (fixme: clean up access to these).
   TouchInput* touch_input{};
 
-  auto return_value() const { return return_value_; }
-  void set_return_value(int val) { return_value_ = val; }
-
-  auto GetReturnValue() const -> int override;
+  auto app_active() -> bool const { return app_active_; }
 
  private:
   BaseFeatureSet();
@@ -765,11 +828,12 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   AppMode* app_mode_;
   PlusSoftInterface* plus_soft_{};
   ClassicSoftInterface* classic_soft_{};
-  StressTest* stress_test_;
-
   std::mutex shutdown_suppress_lock_;
+  bool have_clipboard_is_supported_{};
+  bool clipboard_is_supported_{};
+  bool app_active_set_{};
+  bool app_suspended_{};
   bool shutdown_suppress_disallowed_{};
-  int shutdown_suppress_count_{};
   bool tried_importing_plus_{};
   bool tried_importing_classic_{};
   bool tried_importing_ui_v1_{};
@@ -780,7 +844,11 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   bool base_native_import_completed_{};
   bool basn_log_behavior_{};
   bool server_wrapper_managed_{};
-  int return_value_{};
+  /// Main thread informs logic thread when this changes, but then logic
+  /// reads original value set by main. need to be sure they never read
+  /// stale values.
+  std::atomic_bool app_active_{true};
+  int shutdown_suppress_count_{};
 };
 
 }  // namespace ballistica::base

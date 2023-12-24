@@ -4,11 +4,11 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode_empty.h"
+#include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
-#include "ballistica/base/support/stress_test.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -44,6 +44,31 @@ static PyMethodDef PyAppNameDef = {
     "(internal)\n",
 };
 
+// ------------------------------ app_is_active --------------------------------
+
+static auto PyAppIsActive(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  // Note: we're limiting this to the logic thread and using the logic
+  // thread's version of app-active here. If we ever need the main thread's
+  // version we'll have to do something different.
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (g_base->logic->app_active()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAppIsActiveDef = {
+    "app_is_active",             // name
+    (PyCFunction)PyAppIsActive,  // method
+    METH_NOARGS,                 // flags
+
+    "app_is_active() -> bool\n"
+    "\n"
+    "(internal)\n",
+};
 // --------------------------------- run_app -----------------------------------
 
 static auto PyRunApp(PyObject* self) -> PyObject* {
@@ -364,8 +389,8 @@ static auto PyAppTimer(PyObject* self, PyObject* args, PyObject* keywds)
     throw Exception("Timer length cannot be < 0.", PyExcType::kValue);
   }
   g_base->logic->NewAppTimer(
-      static_cast<millisecs_t>(length * 1000.0), false,
-      Object::New<Runnable, PythonContextCallRunnable>(call_obj));
+      static_cast<microsecs_t>(length * 1000000.0), false,
+      Object::New<Runnable, PythonContextCallRunnable>(call_obj).Get());
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -458,7 +483,7 @@ static auto PyDisplayTimer(PyObject* self, PyObject* args, PyObject* keywds)
   }
   g_base->logic->NewDisplayTimer(
       static_cast<microsecs_t>(length * 1000000.0), false,
-      Object::New<Runnable, PythonContextCallRunnable>(call_obj));
+      Object::New<Runnable, PythonContextCallRunnable>(call_obj).Get());
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -533,7 +558,7 @@ static PyMethodDef PyQuitDef = {
     METH_VARARGS | METH_KEYWORDS,  // flags
 
     "quit(confirm: bool = False,\n"
-    "          quit_type: babase.QuitType = babase.QuitType.SOFT\n"
+    "          quit_type: babase.QuitType | None = None\n"
     ") -> None\n"
     "\n"
     "Quit the app.\n"
@@ -542,7 +567,8 @@ static PyMethodDef PyQuitDef = {
     "\n"
     "If 'confirm' is True, a confirm dialog will be presented if conditions\n"
     "allow; otherwise the quit will still be immediate.\n"
-    "See docs for babase.QuitType for explanations of its behavior."};
+    "See docs for babase.QuitType for explanations of the optional\n"
+    "'quit_type' arg."};
 
 // ----------------------------- apply_config ----------------------------------
 
@@ -600,7 +626,7 @@ static auto PyCommitConfig(PyObject* self, PyObject* args, PyObject* keywds)
     }
     fclose(f_out);
 
-    // Now backup any existing config to .prev.
+    // Now move any existing config to .prev.
     if (g_core->platform->FilePathExists(path)) {
       // On windows, rename doesn't overwrite existing files.. need to kill
       // the old explicitly.
@@ -728,11 +754,8 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "ss"  // ui_scale
         "sO"  // on_tv
         "sO"  // vr_mode
-        // "sO"  // toolbar_test
         "sO"  // demo_mode
         "sO"  // arcade_mode
-        // "sO"  // iircade_mode
-        // "si"  // protocol_version
         "sO"  // headless_mode
         "sO"  // python_directory_app_site
         "ss"  // device_name
@@ -753,11 +776,9 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "subplatform", g_core->platform->GetSubplatformName().c_str(),
         "ui_scale", ui_scale,
         "on_tv", g_core->platform->IsRunningOnTV() ? Py_True : Py_False,
-        "vr_mode", g_core->IsVRMode() ? Py_True : Py_False,
+        "vr_mode", g_core->vr_mode() ? Py_True : Py_False,
         "demo_mode", g_buildconfig.demo_build() ? Py_True : Py_False,
         "arcade_mode", g_buildconfig.arcade_build() ? Py_True : Py_False,
-        // "iircade_mode", g_buildconfig.iircade_build() ? Py_True: Py_False,
-        // "protocol_version", kProtocolVersion,
         "headless_mode", g_core->HeadlessMode() ? Py_True : Py_False,
         "python_directory_app_site",
           site_py_dir ? *PythonRef::FromString(*site_py_dir) : Py_None,
@@ -787,35 +808,9 @@ static PyMethodDef PyEnvDef = {
     "This info is now exposed through babase.App; refer to those docs for\n"
     "info on specific elements."};
 
-// -------------------------- set_stress_testing -------------------------------
+// -------------------------------- emit_log -----------------------------------
 
-static auto PySetStressTesting(PyObject* self, PyObject* args) -> PyObject* {
-  BA_PYTHON_TRY;
-  int enable;
-  int player_count;
-  if (!PyArg_ParseTuple(args, "pi", &enable, &player_count)) {
-    return nullptr;
-  }
-  g_base->app_adapter->PushMainThreadCall([enable, player_count] {
-    g_base->stress_test()->Set(enable, player_count);
-  });
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PySetStressTestingDef = {
-    "set_stress_testing",  // name
-    PySetStressTesting,    // method
-    METH_VARARGS,          // flags
-
-    "set_stress_testing(testing: bool, player_count: int) -> None\n"
-    "\n"
-    "(internal)",
-};
-
-// ------------------------------ display_log ----------------------------------
-
-static auto PyDisplayLog(PyObject* self, PyObject* args, PyObject* keywds)
+static auto PyEmitLog(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {"name", "level", "message", nullptr};
@@ -842,25 +837,25 @@ static auto PyDisplayLog(PyObject* self, PyObject* args, PyObject* keywds)
     level = LogLevel::kCritical;
   } else {
     // Assume we should avoid Log() calls here since it could infinite loop.
-    fprintf(stderr, "Invalid log level to display_log(): %s\n", levelstr);
+    fprintf(stderr, "Invalid log level to emit_log(): %s\n", levelstr);
     level = LogLevel::kInfo;
   }
-  Logging::DisplayLog(name, level, message);
+  Logging::EmitLog(name, level, message);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyDisplayLogDef = {
-    "display_log",                 // name
-    (PyCFunction)PyDisplayLog,     // method
+static PyMethodDef PyEmitLogDef = {
+    "emit_log",                    // name
+    (PyCFunction)PyEmitLog,        // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "display_log(name: str, level: str, message: str) -> None\n"
+    "emit_log(name: str, level: str, message: str) -> None\n"
     "\n"
     "(internal)\n"
     "\n"
-    "Sends a log message to the in-game console and any per-platform\n"
+    "Sends a log message to the in-app console and any per-platform\n"
     "log destinations (Android log, etc.). This generally is not called\n"
     "directly and should instead be fed Python logging output.",
 };
@@ -1117,25 +1112,6 @@ static PyMethodDef PyMacMusicAppSetVolumeDef = {
     "\n"
     "(internal)",
 };
-
-// ------------------------ mac_music_app_get_library --------------------------
-
-static auto PyMacMusicAppGetLibrarySource(PyObject* self, PyObject* args,
-                                          PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  g_core->platform->MacMusicAppGetLibrarySource();
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyMacMusicAppGetLibrarySourceDef = {
-    "mac_music_app_get_library_source",          // name
-    (PyCFunction)PyMacMusicAppGetLibrarySource,  // method
-    METH_VARARGS | METH_KEYWORDS,                // flags
-
-    "mac_music_app_get_library_source() -> None\n"
-    "\n"
-    "(internal)"};
 
 // --------------------------- mac_music_app_stop ------------------------------
 
@@ -1602,18 +1578,135 @@ static PyMethodDef PyDevConsoleInputAdapterFinishDef = {
     "(internal)\n",
 };
 
+// -------------------------- audio_shutdown_begin -----------------------------
+
+static auto PyAudioShutdownBegin(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  auto* audio_event_loop = g_base->audio_server->event_loop();
+  BA_PRECONDITION(audio_event_loop);
+  audio_event_loop->PushCall([] { g_base->audio_server->Shutdown(); });
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAudioShutdownBeginDef = {
+    "audio_shutdown_begin",             // name
+    (PyCFunction)PyAudioShutdownBegin,  // method
+    METH_NOARGS,                        // flags
+
+    "audio_shutdown_begin() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// ----------------------- audio_shutdown_is_complete --------------------------
+
+static auto PyAudioShutdownIsComplete(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  if (g_base->audio_server->shutdown_completed()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAudioShutdownIsCompleteDef = {
+    "audio_shutdown_is_complete",            // name
+    (PyCFunction)PyAudioShutdownIsComplete,  // method
+    METH_NOARGS,                             // flags
+
+    "audio_shutdown_is_complete() -> bool\n"
+    "\n"
+    "(internal)\n",
+};
+
+// ----------------------- graphics_shutdown_begin -----------------------------
+
+static auto PyGraphicsShutdownBegin(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  g_base->app_adapter->PushGraphicsContextCall(
+      [] { g_base->graphics_server->Shutdown(); });
+
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGraphicsShutdownBeginDef = {
+    "graphics_shutdown_begin",             // name
+    (PyCFunction)PyGraphicsShutdownBegin,  // method
+    METH_NOARGS,                           // flags
+
+    "graphics_shutdown_begin() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// -------------------- graphics_shutdown_is_complete --------------------------
+
+static auto PyGraphicsShutdownIsComplete(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  if (g_base->graphics_server->shutdown_completed()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGraphicsShutdownIsCompleteDef = {
+    "graphics_shutdown_is_complete",            // name
+    (PyCFunction)PyGraphicsShutdownIsComplete,  // method
+    METH_NOARGS,                                // flags
+
+    "graphics_shutdown_is_complete() -> bool\n"
+    "\n"
+    "(internal)\n",
+};
+
+// --------------------------- invoke_main_menu --------------------------------
+
+static auto PyInvokeMainMenu(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (!g_base->ui->MainMenuVisible()) {
+    g_base->ui->PushMainMenuPressCall(nullptr);
+  }
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyInvokeMainMenuDef = {
+    "invoke_main_menu",             // name
+    (PyCFunction)PyInvokeMainMenu,  // method
+    METH_NOARGS,                    // flags
+
+    "invoke_main_menu() -> None\n"
+    "\n"
+    "High level call to bring up the main menu if it is not present.\n"
+    "\n"
+    "This is essentially the same as pressing the menu button on a controller.",
+};
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
   return {
       PyAppNameDef,
+      PyAppIsActiveDef,
       PyRunAppDef,
       PyAppNameUpperDef,
       PyIsXCodeBuildDef,
       PyCanDisplayFullUnicodeDef,
-      PyDisplayLogDef,
+      PyEmitLogDef,
       PyV1CloudLogDef,
-      PySetStressTestingDef,
       PyEnvDef,
       PyPreEnvDef,
       PyCommitConfigDef,
@@ -1634,7 +1727,6 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyMacMusicAppInitDef,
       PyMacMusicAppGetVolumeDef,
       PyMacMusicAppSetVolumeDef,
-      PyMacMusicAppGetLibrarySourceDef,
       PyMacMusicAppStopDef,
       PyMacMusicAppPlayPlaylistDef,
       PyMacMusicAppGetPlaylistsDef,
@@ -1657,6 +1749,11 @@ auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
       PyGetDevConsoleInputTextDef,
       PySetDevConsoleInputTextDef,
       PyDevConsoleInputAdapterFinishDef,
+      PyAudioShutdownBeginDef,
+      PyAudioShutdownIsCompleteDef,
+      PyGraphicsShutdownBeginDef,
+      PyGraphicsShutdownIsCompleteDef,
+      PyInvokeMainMenuDef,
   };
 }
 

@@ -23,17 +23,18 @@ class AudioStreamer : public Object {
   auto Play() -> bool;
   void Stop();
   void Update();
-  enum Format { INVALID_FORMAT, MONO16_FORMAT, STEREO16_FORMAT };
+  enum class Format : uint8_t { kInvalid, kMono16, kStereo16 };
   auto al_format() const -> ALenum {
     switch (format_) {
-      case MONO16_FORMAT:
+      case Format::kMono16:
         return AL_FORMAT_MONO16;
-      case STEREO16_FORMAT:
+      case Format::kStereo16:
         return AL_FORMAT_STEREO16;
       default:
         break;
     }
-    return INVALID_FORMAT;
+    FatalError("Invalid AL format.");
+    return AL_FORMAT_MONO16;
   }
   auto loops() const -> bool { return loops_; }
   auto file_name() const -> const std::string& { return file_name_; }
@@ -46,13 +47,13 @@ class AudioStreamer : public Object {
   void set_format(Format format) { format_ = format; }
 
  private:
-  Format format_ = INVALID_FORMAT;
-  bool playing_ = false;
+  Format format_{Format::kInvalid};
+  bool playing_{};
+  bool loops_{};
+  bool eof_{};
   ALuint buffers_[kAudioStreamBufferCount]{};
-  ALuint source_ = 0;
+  ALuint source_{};
   std::string file_name_;
-  bool loops_ = false;
-  bool eof_ = false;
 };
 
 #endif  // BA_ENABLE_AUDIO

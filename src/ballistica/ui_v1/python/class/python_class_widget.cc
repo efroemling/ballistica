@@ -17,6 +17,12 @@ auto PythonClassWidget::nb_bool(PythonClassWidget* self) -> int {
 
 PyNumberMethods PythonClassWidget::as_number_;
 
+// Attrs we expose through our custom getattr/setattr.
+#define ATTR_TRANSITIONING_OUT "transitioning_out"
+
+// The set we expose via dir().
+static const char* extra_dir_attrs[] = {ATTR_TRANSITIONING_OUT, nullptr};
+
 auto PythonClassWidget::type_name() -> const char* { return "Widget"; }
 
 void PythonClassWidget::SetupType(PyTypeObject* cls) {
@@ -24,6 +30,9 @@ void PythonClassWidget::SetupType(PyTypeObject* cls) {
   // Fully qualified type path we will be exposed as:
   cls->tp_name = "bauiv1.Widget";
   cls->tp_basicsize = sizeof(PythonClassWidget);
+
+  // clang-format off
+
   cls->tp_doc =
       "Internal type for low level UI elements; buttons, windows, etc.\n"
       "\n"
@@ -31,11 +40,22 @@ void PythonClassWidget::SetupType(PyTypeObject* cls) {
       "\n"
       "This class represents a weak reference to a widget object\n"
       "in the internal C++ layer. Currently, functions such as\n"
-      "babase.buttonwidget() must be used to instantiate or edit these.";
+      "bauiv1.buttonwidget() must be used to instantiate or edit these.\n"
+      "Attributes:\n"
+      "    " ATTR_TRANSITIONING_OUT " (bool):\n"
+      "        Whether this widget is in the process of dying (read only).\n"
+      "\n"
+      "        It can be useful to check this on a window's root widget to\n"
+      "        prevent multiple window actions from firing simultaneously,\n"
+      "        potentially leaving the UI in a broken state.\n";
+
+  // clang-format on
+
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
   cls->tp_repr = (reprfunc)tp_repr;
   cls->tp_methods = tp_methods;
+  cls->tp_getattro = (getattrofunc)tp_getattro;
 
   // we provide number methods only for bool functionality
   memset(&as_number_, 0, sizeof(as_number_));
@@ -44,7 +64,7 @@ void PythonClassWidget::SetupType(PyTypeObject* cls) {
 }
 
 auto PythonClassWidget::Create(Widget* widget) -> PyObject* {
-  // Make sure we only have one python ref per widget.
+  // Make sure we only have one Python ref per Widget.
   if (widget) {
     assert(!widget->has_py_ref());
   }
@@ -52,7 +72,9 @@ auto PythonClassWidget::Create(Widget* widget) -> PyObject* {
   assert(TypeIsSetUp(&type_obj));
   auto* py_widget = reinterpret_cast<PythonClassWidget*>(
       PyObject_CallObject(reinterpret_cast<PyObject*>(&type_obj), nullptr));
-  if (!py_widget) throw Exception("babase.Widget creation failed");
+  if (!py_widget) {
+    throw Exception("bauiv1.Widget creation failed");
+  }
 
   *py_widget->widget_ = widget;
 
@@ -62,8 +84,54 @@ auto PythonClassWidget::Create(Widget* widget) -> PyObject* {
 
 auto PythonClassWidget::GetWidget() const -> Widget* {
   Widget* w = widget_->Get();
-  if (!w) throw Exception("Invalid widget");
+  if (!w) {
+    throw Exception("Invalid Widget", PyExcType::kReference);
+  }
   return w;
+}
+
+auto PythonClassWidget::tp_getattro(PythonClassWidget* self, PyObject* attr)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  // Assuming this will always be a str?
+  assert(PyUnicode_Check(attr));
+
+  const char* s = PyUnicode_AsUTF8(attr);
+  if (!strcmp(s, ATTR_TRANSITIONING_OUT)) {
+    Widget* w = self->widget_->Get();
+    if (!w) {
+      throw Exception("Invalid Widget", PyExcType::kReference);
+    }
+    if (w->IsTransitioningOut()) {
+      Py_RETURN_TRUE;
+    }
+    Py_RETURN_FALSE;
+  }
+
+  // Fall back to generic behavior.
+  PyObject* val;
+  val = PyObject_GenericGetAttr(reinterpret_cast<PyObject*>(self), attr);
+  return val;
+  BA_PYTHON_CATCH;
+}
+
+auto PythonClassWidget::tp_setattro(PythonClassWidget* self, PyObject* attr,
+                                    PyObject* val) -> int {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  // Assuming this will always be a str?
+  assert(PyUnicode_Check(attr));
+  const char* s = PyUnicode_AsUTF8(attr);
+
+  throw Exception("Attr '" + std::string(PyUnicode_AsUTF8(attr))
+                      + "' is not settable on SessionPlayer objects.",
+                  PyExcType::kAttribute);
+  BA_PYTHON_INT_CATCH;
 }
 
 auto PythonClassWidget::tp_repr(PythonClassWidget* self) -> PyObject* {
@@ -96,8 +164,8 @@ auto PythonClassWidget::tp_new(PyTypeObject* type, PyObject* args,
 
 void PythonClassWidget::tp_dealloc(PythonClassWidget* self) {
   BA_PYTHON_TRY;
-  // these have to be destructed in the logic thread - send them along to it if
-  // need be
+  // these have to be destructed in the logic thread - send them along to it
+  // if need be
   if (!g_base->InLogicThread()) {
     Object::WeakRef<Widget>* w = self->widget_;
     g_base->logic->event_loop()->PushCall([w] { delete w; });
@@ -219,6 +287,10 @@ auto PythonClassWidget::Delete(PythonClassWidget* self, PyObject* args,
           args, keywds, "|i", const_cast<char**>(kwlist), &ignore_missing)) {
     return nullptr;
   }
+
+  // Defer any user code triggered by selects/etc until the end.
+  base::UI::OperationContext ui_op_context;
+
   Widget* w = self->widget_->Get();
   if (!w) {
     if (!ignore_missing) {
@@ -232,6 +304,9 @@ auto PythonClassWidget::Delete(PythonClassWidget* self, PyObject* args,
       Log(LogLevel::kError, "Can't delete widget: no parent.");
     }
   }
+
+  // Run any user code that got triggered.
+  ui_op_context.Finish();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

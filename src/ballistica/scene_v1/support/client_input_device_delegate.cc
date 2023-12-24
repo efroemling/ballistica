@@ -29,8 +29,14 @@ void ClientInputDeviceDelegate::AttachToLocalPlayer(Player* player) {
     }
 
     // We also need to send an old-style message as a fallback.
+    //
     // FIXME: Can remove this once backwards-compat-protocol is > 29.
-    {
+    //
+    // UPDATE: Only send this if player id fits. This could cause problems
+    //   for older clients in very rare cases, but the only alternative is
+    //   to not support those clients. I doubt there are many such old
+    //   clients out there anyway.
+    if (player->id() < 256) {
       std::vector<uint8_t> data(3);
       data[0] = BA_MESSAGE_ATTACH_REMOTE_PLAYER;
       data[1] = static_cast_check_fit<uint8_t>(remote_device_id_);

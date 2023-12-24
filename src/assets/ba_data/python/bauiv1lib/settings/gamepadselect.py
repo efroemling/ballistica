@@ -29,16 +29,17 @@ def gamepad_configure_callback(event: dict[str, Any]) -> None:
         logging.exception('Error transitioning out main_menu_window.')
     bui.getsound('activateBeep').play()
     bui.getsound('swish').play()
-    inputdevice = event['input_device']
-    assert isinstance(inputdevice, bs.InputDevice)
-    if inputdevice.allows_configuring:
+    device = event['input_device']
+    assert isinstance(device, bs.InputDevice)
+    if device.allows_configuring:
         bui.app.ui_v1.set_main_menu_window(
-            gamepad.GamepadSettingsWindow(inputdevice).get_root_widget()
+            gamepad.GamepadSettingsWindow(device).get_root_widget(),
+            from_window=None,
         )
     else:
         width = 700
         height = 200
-        button_width = 100
+        button_width = 80
         uiscale = bui.app.ui_v1.uiscale
         dlg = bui.containerwidget(
             scale=(
@@ -51,9 +52,14 @@ def gamepad_configure_callback(event: dict[str, Any]) -> None:
             size=(width, height),
             transition='in_right',
         )
-        bui.app.ui_v1.set_main_menu_window(dlg)
-        device_name = inputdevice.name
-        if device_name == 'iDevice':
+        bui.app.ui_v1.set_main_menu_window(dlg, from_window=None)
+
+        if device.allows_configuring_in_system_settings:
+            msg = bui.Lstr(
+                resource='configureDeviceInSystemSettingsText',
+                subs=[('${DEVICE}', device.name)],
+            )
+        elif device.is_controller_app:
             msg = bui.Lstr(
                 resource='bsRemoteConfigureInAppText',
                 subs=[('${REMOTE_APP_NAME}', bui.get_remote_app_name())],
@@ -61,7 +67,7 @@ def gamepad_configure_callback(event: dict[str, Any]) -> None:
         else:
             msg = bui.Lstr(
                 resource='cantConfigureDeviceText',
-                subs=[('${DEVICE}', device_name)],
+                subs=[('${DEVICE}', device.name)],
             )
         bui.textwidget(
             parent=dlg,
@@ -76,12 +82,17 @@ def gamepad_configure_callback(event: dict[str, Any]) -> None:
         def _ok() -> None:
             from bauiv1lib.settings import controls
 
+            # no-op if our underlying widget is dead or on its way out.
+            if not dlg or dlg.transitioning_out:
+                return
+
             bui.containerwidget(edit=dlg, transition='out_right')
             assert bui.app.classic is not None
             bui.app.ui_v1.set_main_menu_window(
                 controls.ControlsSettingsWindow(
                     transition='in_left'
-                ).get_root_widget()
+                ).get_root_widget(),
+                from_window=dlg,
             )
 
         bui.buttonwidget(
@@ -186,11 +197,16 @@ class GamepadSelectWindow(bui.Window):
     def _back(self) -> None:
         from bauiv1lib.settings import controls
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bs.release_gamepad_input()
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
             controls.ControlsSettingsWindow(
                 transition='in_left'
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )

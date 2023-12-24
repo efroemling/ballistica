@@ -92,7 +92,8 @@ class PlaylistEditController:
         bui.app.ui_v1.set_main_menu_window(
             PlaylistEditWindow(
                 editcontroller=self, transition=transition
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=False,  # Disable this check.
         )
 
     def get_config_name(self) -> str:
@@ -150,7 +151,8 @@ class PlaylistEditController:
         assert bui.app.classic is not None
         bui.app.ui_v1.clear_main_menu_window(transition='out_left')
         bui.app.ui_v1.set_main_menu_window(
-            PlaylistAddGameWindow(editcontroller=self).get_root_widget()
+            PlaylistAddGameWindow(editcontroller=self).get_root_widget(),
+            from_window=None,
         )
 
     def edit_game_pressed(self) -> None:
@@ -175,7 +177,8 @@ class PlaylistEditController:
         bui.app.ui_v1.set_main_menu_window(
             PlaylistEditWindow(
                 editcontroller=self, transition='in_left'
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=None,
         )
 
     def _show_edit_ui(
@@ -205,7 +208,8 @@ class PlaylistEditController:
                 bui.app.ui_v1.set_main_menu_window(
                     PlaylistEditWindow(
                         editcontroller=self, transition='in_left'
-                    ).get_root_widget()
+                    ).get_root_widget(),
+                    from_window=None,
                 )
 
             # Otherwise we were adding; go back to the add type choice list.
@@ -214,7 +218,8 @@ class PlaylistEditController:
                 bui.app.ui_v1.set_main_menu_window(
                     PlaylistAddGameWindow(
                         editcontroller=self, transition='in_left'
-                    ).get_root_widget()
+                    ).get_root_widget(),
+                    from_window=None,
                 )
         else:
             # Make sure type is in there.
@@ -236,5 +241,6 @@ class PlaylistEditController:
             bui.app.ui_v1.set_main_menu_window(
                 PlaylistEditWindow(
                     editcontroller=self, transition='in_left'
-                ).get_root_widget()
+                ).get_root_widget(),
+                from_window=None,
             )

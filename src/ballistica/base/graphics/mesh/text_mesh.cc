@@ -360,7 +360,7 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
   // compile it and add its final spans to our mesh.
   if (packer) {
     std::vector<TextPacker::Span> spans;
-    packer->compile();
+    packer->Compile();
 
     // DEBUGGING - add a single quad above our first
     // span showing the entire texture for debugging purposes

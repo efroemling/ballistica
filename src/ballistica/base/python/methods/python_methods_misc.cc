@@ -5,6 +5,7 @@
 #include <list>
 #include <unordered_map>
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/platform/base_platform.h"
@@ -13,6 +14,7 @@
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
@@ -33,6 +35,8 @@ static auto PyGetSimpleSound(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &name)) {
     return nullptr;
   }
+  BA_PRECONDITION(g_base->InLogicThread());
+  BA_PRECONDITION(g_base->assets->asset_loads_allowed());
   {
     Assets::AssetListLock lock;
     return PythonClassSimpleSound::Create(g_base->assets->GetSound(name));
@@ -126,7 +130,7 @@ static PyMethodDef PyHasTouchScreenDef = {
 
 static auto PyClipboardIsSupported(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_core->platform->ClipboardIsSupported()) {
+  if (g_base->ClipboardIsSupported()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -152,7 +156,7 @@ static PyMethodDef PyClipboardIsSupportedDef = {
 
 static auto PyClipboardHasText(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_core->platform->ClipboardHasText()) {
+  if (g_base->ClipboardHasText()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -185,7 +189,7 @@ static auto PyClipboardSetText(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &value)) {
     return nullptr;
   }
-  g_core->platform->ClipboardSetText(value);
+  g_base->ClipboardSetText(value);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -209,7 +213,7 @@ static PyMethodDef PyClipboardSetTextDef = {
 
 static auto PyClipboardGetText(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  return PyUnicode_FromString(g_core->platform->ClipboardGetText().c_str());
+  return PyUnicode_FromString(g_base->ClipboardGetText().c_str());
   Py_RETURN_FALSE;
   BA_PYTHON_CATCH;
 }
@@ -227,24 +231,6 @@ static PyMethodDef PyClipboardGetTextDef = {
     "\n"
     "Ensure that babase.clipboard_has_text() returns True before calling\n"
     " this function.",
-};
-
-// ---------------------------- is_running_on_ouya -----------------------------
-
-auto PyIsRunningOnOuya(PyObject* self, PyObject* args) -> PyObject* {
-  BA_PYTHON_TRY;
-  Py_RETURN_FALSE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyIsRunningOnOuyaDef = {
-    "is_running_on_ouya",  // name
-    PyIsRunningOnOuya,     // method
-    METH_VARARGS,          // flags
-
-    "is_running_on_ouya() -> bool\n"
-    "\n"
-    "(internal)",
 };
 
 // ------------------------------ setup_sigint ---------------------------------
@@ -266,27 +252,6 @@ static PyMethodDef PySetUpSigIntDef = {
     METH_NOARGS,                 // flags
 
     "setup_sigint() -> None\n"
-    "\n"
-    "(internal)",
-};
-
-// -------------------------- is_running_on_fire_tv ----------------------------
-
-static auto PyIsRunningOnFireTV(PyObject* self, PyObject* args) -> PyObject* {
-  BA_PYTHON_TRY;
-  if (g_core->platform->IsRunningOnFireTV()) {
-    Py_RETURN_TRUE;
-  }
-  Py_RETURN_FALSE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyIsRunningOnFireTVDef = {
-    "is_running_on_fire_tv",  // name
-    PyIsRunningOnFireTV,      // method
-    METH_VARARGS,             // flags
-
-    "is_running_on_fire_tv() -> bool\n"
     "\n"
     "(internal)",
 };
@@ -1366,7 +1331,7 @@ static PyMethodDef PyUnlockAllInputDef = {
 static auto PyNativeStackTrace(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_core);
-  auto* trace = g_core->platform->GetStackTrace();
+  auto* trace = g_core->platform->GetNativeStackTrace();
   if (!trace) {
     Py_RETURN_NONE;
   }
@@ -1392,6 +1357,31 @@ static PyMethodDef PyNativeStackTraceDef = {
     "Only use them for debugging.",
 };
 
+// --------------------- supports_open_dir_externally --------------------------
+
+static auto PySupportsOpenDirExternally(PyObject* self, PyObject* args,
+                                        PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_base->platform->SupportsOpenDirExternally()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySupportsOpenDirExternallyDef = {
+    "supports_open_dir_externally",            // name
+    (PyCFunction)PySupportsOpenDirExternally,  // method
+    METH_NOARGS,                               // flags
+
+    "supports_open_dir_externally() -> bool\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Return whether the current app/platform supports opening dirs externally\n"
+    "(in the Mac Finder, Windows Explorer, etc.).",
+};
+
 // -------------------------- open_dir_externally ------------------------------
 
 static auto PyOpenDirExternally(PyObject* self, PyObject* args,
@@ -1403,7 +1393,7 @@ static auto PyOpenDirExternally(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &path)) {
     return nullptr;
   }
-  g_core->platform->OpenDirExternally(path);
+  g_base->platform->OpenDirExternally(path);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1658,6 +1648,163 @@ static PyMethodDef PyDevConsoleRequestRefreshDef = {
     "(internal)",
 };
 
+// -------------------------- asset_loads_allowed ------------------------------
+
+static auto PyAssetLoadsAllowed(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_base->assets->asset_loads_allowed()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAssetLoadsAllowedDef = {
+    "asset_loads_allowed",             // name
+    (PyCFunction)PyAssetLoadsAllowed,  // method
+    METH_NOARGS,                       // flags
+
+    "asset_loads_allowed() -> bool\n"
+    "\n"
+    "(internal)",
+};
+
+// -------------------- using_google_play_game_services ------------------------
+
+static auto PyUsingGooglePlayGameServices(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_buildconfig.use_google_play_game_services()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyUsingGooglePlayGameServicesDef = {
+    "using_google_play_game_services",           // name
+    (PyCFunction)PyUsingGooglePlayGameServices,  // method
+    METH_NOARGS,                                 // flags
+
+    "using_google_play_game_services() -> bool\n"
+    "\n"
+    "(internal)",
+};
+
+// ---------------------------- using_game_center ------------------------------
+
+static auto PyUsingGameCenter(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_buildconfig.use_game_center()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyUsingGameCenterDef = {
+    "using_game_center",             // name
+    (PyCFunction)PyUsingGameCenter,  // method
+    METH_NOARGS,                     // flags
+
+    "using_game_center() -> bool\n"
+    "\n"
+    "(internal)",
+};
+
+// --------------------- native_review_request_supported -----------------------
+
+static auto PyNativeReviewRequestSupported(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_base->app_adapter->NativeReviewRequestSupported()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyNativeReviewRequestSupportedDef = {
+    "native_review_request_supported",            // name
+    (PyCFunction)PyNativeReviewRequestSupported,  // method
+    METH_NOARGS,                                  // flags
+
+    "native_review_request_supported() -> bool\n"
+    "\n"
+    "(internal)",
+};
+
+// -------------------------- native_review_request ----------------------------
+
+static auto PyNativeReviewRequest(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  g_base->app_adapter->NativeReviewRequest();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyNativeReviewRequestDef = {
+    "native_review_request",             // name
+    (PyCFunction)PyNativeReviewRequest,  // method
+    METH_NOARGS,                         // flags
+
+    "native_review_request() -> None\n"
+    "\n"
+    "(internal)",
+};
+
+// ------------------------------- temp_testing --------------------------------
+
+static auto PyTempTesting(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  std::string devstr = g_core->platform->GetDeviceName() + " "
+                       + g_core->platform->GetOSVersionString();
+  if (devstr == "samsung SM-N950F 7.1.1") {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyTempTestingDef = {
+    "temp_testing",              // name
+    (PyCFunction)PyTempTesting,  // method
+    METH_NOARGS,                 // flags
+
+    "temp_testing() -> bool\n"
+    "\n"
+    "(internal)",
+};
+
+// ------------------------- open_file_externally ------------------------------
+
+static auto PyOpenFileExternally(PyObject* self, PyObject* args,
+                                 PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  char* path = nullptr;
+  static const char* kwlist[] = {"path", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &path)) {
+    return nullptr;
+  }
+  g_base->platform->OpenFileExternally(path);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyOpenFileExternallyDef = {
+    "open_file_externally",             // name
+    (PyCFunction)PyOpenFileExternally,  // method
+    METH_VARARGS | METH_KEYWORDS,       // flags
+
+    "open_file_externally(path: str) -> None\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Open the provided file in the default external app.",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
@@ -1703,14 +1850,13 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PyInLogicThreadDef,
       PyRequestPermissionDef,
       PyHavePermissionDef,
-      PyIsRunningOnFireTVDef,
-      PyIsRunningOnOuyaDef,
       PyUnlockAllInputDef,
       PyLockAllInputDef,
       PySetUpSigIntDef,
       PyGetSimpleSoundDef,
       PyHasTouchScreenDef,
       PyNativeStackTraceDef,
+      PySupportsOpenDirExternallyDef,
       PyOpenDirExternallyDef,
       PyFatalErrorDef,
       PyDevConsoleAddButtonDef,
@@ -1720,6 +1866,13 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PyDevConsoleTabHeightDef,
       PyDevConsoleBaseScaleDef,
       PyDevConsoleRequestRefreshDef,
+      PyAssetLoadsAllowedDef,
+      PyUsingGooglePlayGameServicesDef,
+      PyUsingGameCenterDef,
+      PyNativeReviewRequestSupportedDef,
+      PyNativeReviewRequestDef,
+      PyTempTestingDef,
+      PyOpenFileExternallyDef,
   };
 }
 

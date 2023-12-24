@@ -114,7 +114,7 @@ class UIRow:
         self._name_widget = bui.textwidget(
             text=bui.Lstr(value=party.name),
             parent=columnwidget,
-            size=(sub_scroll_width * 0.63, 20),
+            size=(sub_scroll_width * 0.46, 20),
             position=(0 + hpos, 4 + vpos),
             selectable=True,
             on_select_call=bui.WeakCall(
@@ -248,6 +248,7 @@ class AddrFetchThread(Thread):
         self._call = call
 
     def run(self) -> None:
+        sock: socket.socket | None = None
         try:
             # FIXME: Update this to work with IPv6 at some point.
             import socket
@@ -255,7 +256,6 @@ class AddrFetchThread(Thread):
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.connect(('8.8.8.8', 80))
             val = sock.getsockname()[0]
-            sock.close()
             bui.pushcall(bui.Call(self._call, val), from_other_thread=True)
         except Exception as exc:
             from efro.error import is_udp_communication_error
@@ -265,6 +265,9 @@ class AddrFetchThread(Thread):
                 pass
             else:
                 logging.exception('Error in addr-fetch-thread')
+        finally:
+            if sock is not None:
+                sock.close()
 
 
 class PingThread(Thread):
@@ -361,6 +364,7 @@ class PublicGatherTab(GatherTab):
         self._last_server_list_query_time: float | None = None
         self._join_list_column: bui.Widget | None = None
         self._join_status_text: bui.Widget | None = None
+        self._no_servers_found_text: bui.Widget | None = None
         self._host_max_party_size_value: bui.Widget | None = None
         self._host_max_party_size_minus_button: (bui.Widget | None) = None
         self._host_max_party_size_plus_button: (bui.Widget | None) = None
@@ -431,6 +435,7 @@ class PublicGatherTab(GatherTab):
             text=bui.Lstr(
                 resource='gatherWindow.' 'joinPublicPartyDescriptionText'
             ),
+            glow_type='uniform',
         )
         self._host_text = bui.textwidget(
             parent=self._container,
@@ -453,6 +458,7 @@ class PublicGatherTab(GatherTab):
             text=bui.Lstr(
                 resource='gatherWindow.' 'hostPublicPartyDescriptionText'
             ),
+            glow_type='uniform',
         )
         bui.widget(edit=self._join_text, up_widget=tab_button)
         bui.widget(
@@ -655,6 +661,18 @@ class PublicGatherTab(GatherTab):
             h_align='center',
             v_align='top',
             maxwidth=c_width,
+            color=(0.6, 0.6, 0.6),
+            position=(c_width * 0.5, c_height * 0.5),
+        )
+        self._no_servers_found_text = bui.textwidget(
+            parent=self._container,
+            text='',
+            size=(0, 0),
+            scale=0.9,
+            flatness=1.0,
+            shadow=0.0,
+            h_align='center',
+            v_align='top',
             color=(0.6, 0.6, 0.6),
             position=(c_width * 0.5, c_height * 0.5),
         )
@@ -950,6 +968,9 @@ class PublicGatherTab(GatherTab):
         self._update_party_rows()
 
     def _update_party_rows(self) -> None:
+        plus = bui.app.plus
+        assert plus is not None
+
         columnwidget = self._join_list_column
         if not columnwidget:
             return
@@ -963,6 +984,7 @@ class PublicGatherTab(GatherTab):
             edit=self._host_scrollwidget,
             claims_up_down=(len(self._parties_displayed) > 0),
         )
+        bui.textwidget(edit=self._no_servers_found_text, text='')
 
         # Clip if we have more UI rows than parties to show.
         clipcount = len(self._ui_rows) - len(self._parties_displayed)
@@ -972,6 +994,15 @@ class PublicGatherTab(GatherTab):
 
         # If we have no parties to show, we're done.
         if not self._parties_displayed:
+            text = self._join_status_text
+            if (
+                plus.get_v1_account_state() == 'signed_in'
+                and cast(str, bui.textwidget(query=text)) == ''
+            ):
+                bui.textwidget(
+                    edit=self._no_servers_found_text,
+                    text=bui.Lstr(resource='noServersFoundText'),
+                )
             return
 
         sub_scroll_width = 830

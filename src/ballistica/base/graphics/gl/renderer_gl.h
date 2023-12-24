@@ -64,6 +64,7 @@ class RendererGL : public Renderer {
   class ProgramSpriteGL;
 
  public:
+  void CheckGLVersion();
   static void CheckGLError(const char* file, int line);
   static auto GLErrorToString(GLenum err) -> std::string;
   static auto GetGLTextureFormat(TextureFormat f) -> GLenum;
@@ -259,6 +260,7 @@ class RendererGL : public Renderer {
   void SetBlend(bool b);
   void SetBlendPremult(bool b);
 
+  GraphicsQuality vignette_quality_{};
   bool blend_{};
   bool blend_premult_{};
   bool first_extension_check_{true};
@@ -275,6 +277,7 @@ class RendererGL : public Renderer {
   bool got_screen_framebuffer_{};
   bool double_sided_{};
   bool invalidate_framebuffer_support_{};
+  bool checked_gl_version_{};
   GLint gl_version_major_{};
   GLint gl_version_minor_{};
   int last_blur_res_count_{};
@@ -291,7 +294,6 @@ class RendererGL : public Renderer {
   GLint screen_framebuffer_{};
   GLuint random_tex_{};
   GLuint vignette_tex_{};
-  GraphicsQuality vignette_quality_{};
   GLint viewport_x_{};
   GLint viewport_y_{};
   GLint viewport_width_{};
@@ -340,8 +342,7 @@ class RendererGL : public Renderer {
   static bool funky_depth_issue_set_;
   static bool funky_depth_issue_;
 #if BA_OSTYPE_ANDROID
-  static bool is_speedy_android_device_;
-  static bool is_extra_speedy_android_device_;
+  bool is_speedy_android_device_{};
 #endif
   ProgramGL* current_program_{};
   std::vector<Rect> scissor_rects_;

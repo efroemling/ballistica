@@ -11,6 +11,7 @@
 
 #include "ballistica/base/base.h"
 #include "ballistica/shared/foundation/object.h"
+#include "ballistica/shared/foundation/types.h"
 
 namespace ballistica::base {
 
@@ -20,8 +21,8 @@ class Input {
   Input();
 
   void OnAppStart();
-  void OnAppPause();
-  void OnAppResume();
+  void OnAppSuspend();
+  void OnAppUnsuspend();
   void OnAppShutdown();
   void OnAppShutdownComplete();
   void StepDisplayTime();
@@ -113,10 +114,9 @@ class Input {
   // something.
   auto HaveControllerWithPlayer() -> bool;
   auto HaveRemoteAppController() -> bool;
-  void ProcessStressTesting(int player_count);
   auto keyboard_input() const -> KeyboardInput* { return keyboard_input_; }
   auto keyboard_input_2() const -> KeyboardInput* { return keyboard_input_2_; }
-  void CreateTouchInput();
+  // void CreateTouchInput();
 
   void PushTextInputEvent(const std::string& text);
   void PushKeyPressEventSimple(int keycode);
@@ -157,7 +157,6 @@ class Input {
   void UpdateInputDeviceCounts_();
   auto GetNewNumberedIdentifier_(const std::string& name,
                                  const std::string& identifier) -> int;
-  void UpdateEnabledControllerSubsystems_();
   void AnnounceConnects_();
   void AnnounceDisconnects_();
   void HandleKeyPressSimple_(int keycode);
@@ -179,49 +178,44 @@ class Input {
   void DestroyKeyboardInputDevices_();
   void AddFakeMods_(SDL_Keysym* sym);
 
-  HandleKeyPressCall* keyboard_input_capture_press_{};
-  HandleKeyReleaseCall* keyboard_input_capture_release_{};
-  HandleJoystickEventCall* joystick_input_capture_{};
-  bool input_active_{};
-  millisecs_t input_idle_time_{};
-  int local_active_input_device_count_{};
-  millisecs_t last_get_local_active_input_device_count_check_time_{};
-  std::unordered_map<std::string, std::unordered_map<std::string, int> >
-      reserved_identifiers_;
-  int max_controller_count_so_far_{};
-  std::list<std::string> newly_connected_controllers_;
-  std::list<std::string> newly_disconnected_controllers_;
   int connect_print_timer_id_{};
   int disconnect_print_timer_id_{};
+  int max_controller_count_so_far_{};
+  int local_active_input_device_count_{};
+  int mouse_move_count_{};
+  int input_lock_count_temp_{};
+  int input_lock_count_permanent_{};
+  bool input_active_{};
   bool have_button_using_inputs_{};
   bool have_start_activated_default_button_inputs_{};
   bool have_non_touch_inputs_{};
+  millisecs_t input_idle_time_{};
+  millisecs_t last_get_local_active_input_device_count_check_time_{};
   float cursor_pos_x_{};
   float cursor_pos_y_{};
   millisecs_t last_click_time_{};
   millisecs_t double_click_time_{200};
-  millisecs_t last_mouse_move_time_{};
-  int mouse_move_count_{};
-  std::vector<Object::Ref<InputDevice> > input_devices_;
-  KeyboardInput* keyboard_input_{};
-  KeyboardInput* keyboard_input_2_{};
-  TouchInput* touch_input_{};
-  int input_lock_count_temp_{};
-  int input_lock_count_permanent_{};
+  seconds_t last_mouse_move_time_{};
   std::list<std::string> input_lock_temp_labels_;
   std::list<std::string> input_unlock_temp_labels_;
   std::list<std::string> input_lock_permanent_labels_;
   std::list<std::string> input_unlock_permanent_labels_;
   std::list<std::string> recent_input_locks_unlocks_;
+  std::list<std::string> newly_connected_controllers_;
+  std::list<std::string> newly_disconnected_controllers_;
+  std::unordered_map<std::string, std::unordered_map<std::string, int> >
+      reserved_identifiers_;
+  std::vector<Object::Ref<InputDevice> > input_devices_;
   std::set<int> keys_held_;
   millisecs_t last_input_device_count_update_time_{};
   millisecs_t last_input_temp_lock_time_{};
-  bool ignore_mfi_controllers_{};
-  bool ignore_sdl_controllers_{};
-  std::list<TestInput*> test_inputs_;
-  millisecs_t stress_test_time_{};
-  millisecs_t stress_test_last_leave_time_{};
   void* single_touch_{};
+  KeyboardInput* keyboard_input_{};
+  KeyboardInput* keyboard_input_2_{};
+  TouchInput* touch_input_{};
+  HandleKeyPressCall* keyboard_input_capture_press_{};
+  HandleKeyReleaseCall* keyboard_input_capture_release_{};
+  HandleJoystickEventCall* joystick_input_capture_{};
 };
 
 }  // namespace ballistica::base

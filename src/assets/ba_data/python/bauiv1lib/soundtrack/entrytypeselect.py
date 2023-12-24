@@ -166,6 +166,10 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
             MacMusicAppPlaylistSelectWindow,
         )
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bui.containerwidget(edit=self._root_widget, transition='out_left')
 
         current_playlist_entry: str | None
@@ -181,13 +185,18 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
         bui.app.ui_v1.set_main_menu_window(
             MacMusicAppPlaylistSelectWindow(
                 self._callback, current_playlist_entry, self._current_entry
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _on_music_file_press(self) -> None:
         from babase import android_get_external_files_dir
         from baclassic.osmusic import OSMusicPlayer
         from bauiv1lib.fileselector import FileSelectorWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         base_path = android_get_external_files_dir()
@@ -201,12 +210,17 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
                     OSMusicPlayer.get_valid_music_file_extensions()
                 ),
                 allow_folders=False,
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _on_music_folder_press(self) -> None:
         from bauiv1lib.fileselector import FileSelectorWindow
         from babase import android_get_external_files_dir
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         base_path = android_get_external_files_dir()
@@ -218,7 +232,8 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
                 show_base_path=False,
                 valid_file_extensions=[],
                 allow_folders=True,
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _music_file_selector_cb(self, result: str | None) -> None:

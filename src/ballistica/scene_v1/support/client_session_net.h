@@ -26,8 +26,6 @@ class ClientSessionNet : public ClientSession {
 
  private:
   struct SampleBucket {
-    //    int least_buffered_count{};
-    //    int most_buffered_count{};
     int max_delay_from_projection{};
   };
 
@@ -39,21 +37,16 @@ class ClientSessionNet : public ClientSession {
   auto GetBucketNum() -> int;
 
   bool writing_replay_{};
+  int delay_sample_counter_{};
+  float max_delay_smoothed_{};
+  float last_bucket_max_delay_{};
+  float current_delay_{};
   millisecs_t base_time_received_{};
   millisecs_t last_base_time_receive_time_{};
   millisecs_t leading_base_time_received_{};
   millisecs_t leading_base_time_receive_time_{};
   Object::WeakRef<ConnectionToHost> connection_to_host_;
   std::vector<SampleBucket> buckets_{5};
-
-  //  float bucket_max_smoothed_{};
-  //  float bucket_min_smoothed_{};
-  float max_delay_smoothed_{};
-  float last_bucket_max_delay_{};
-  float current_delay_{};
-
-  int delay_sample_counter_{};
-  // int adjust_counter_{};
 };
 
 }  // namespace ballistica::scene_v1

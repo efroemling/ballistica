@@ -54,9 +54,8 @@ class CorePlatform {
   /// fopen() supporting UTF8 strings.
   virtual auto FOpen(const char* path, const char* mode) -> FILE*;
 
-  /// rename() supporting UTF8 strings.
-  /// For cross-platform consistency, this should also remove any file that
-  /// exists at the target location first.
+  /// rename() supporting UTF8 strings. For cross-platform consistency, this
+  /// should also remove any file that exists at the target location first.
   virtual auto Rename(const char* oldname, const char* newname) -> int;
 
   /// Simple cross-platform check for existence of a file.
@@ -76,47 +75,25 @@ class CorePlatform {
   /// requires the path to already exist.
   auto AbsPath(const std::string& path, std::string* outpath) -> bool;
 
-#pragma mark CLIPBOARD ---------------------------------------------------------
-
-  /// Return whether clipboard operations are supported at all. This gets
-  /// called when determining whether to display clipboard related UI
-  /// elements/etc.
-  auto ClipboardIsSupported() -> bool;
-
-  /// Return whether there is currently text on the clipboard.
-  auto ClipboardHasText() -> bool;
-
-  /// Set current clipboard text. Raises an Exception if clipboard is
-  /// unsupported.
-  void ClipboardSetText(const std::string& text);
-
-  /// Return current text from the clipboard. Raises an Exception if
-  /// clipboard is unsupported or if there's no text on the clipboard.
-  auto ClipboardGetText() -> std::string;
-
 #pragma mark PRINTING/LOGGING --------------------------------------------------
 
   /// Display a message to any default log for the platform (android log,
-  /// etc.) Note that this can be called from any thread.
-  virtual void DisplayLog(const std::string& name, LogLevel level,
-                          const std::string& msg);
+  /// etc.) Note that this can be called from any thread. Default
+  /// implementation does nothing.
+  virtual void EmitPlatformLog(const std::string& name, LogLevel level,
+                               const std::string& msg);
 
 #pragma mark ENVIRONMENT -------------------------------------------------------
 
-  // Return a simple name for the platform: 'mac', 'windows', 'linux', etc.
+  /// Return a simple name for the platform: 'mac', 'windows', 'linux', etc.
   virtual auto GetPlatformName() -> std::string;
 
-  // Return a simple name for the subplatform: 'amazon', 'google', etc.
+  /// Return a simple name for the subplatform: 'amazon', 'google', etc.
   virtual auto GetSubplatformName() -> std::string;
-
-  // Are we running in event-push-mode? With this on, we return from Main()
-  // and the system handles the event loop. With it off, we loop in Main()
-  // ourself.
-  // virtual auto IsEventPushMode() -> bool;
 
   /// Return the interface type based on the environment (phone, tablet,
   /// etc).
-  virtual auto GetUIScale() -> UIScale;
+  virtual auto GetDefaultUIScale() -> UIScale;
 
   /// Return default DataDirectory value for monolithic builds.
   auto GetDataDirectoryMonolithicDefault() -> std::string;
@@ -138,13 +115,15 @@ class CorePlatform {
   /// Return the directory where game replay files live.
   auto GetReplaysDir() -> std::string;
 
-  /// Return en_US or whatnot.
+  /// Return something like `en_US` or whatnot.
   virtual auto GetLocale() -> std::string;
 
   /// Get the older more complex user-agent-string, used for communication
-  /// with v1 servers/etc. This can go away eventually.
-  auto GetLegacyUserAgentString() -> std::string;
+  /// with v1 servers/etc. This should go away eventually.
+  virtual auto GetLegacyUserAgentString() -> std::string;
 
+  /// Return a human readable os version such as "10.4.2".
+  /// Can return a blank string when not known/relevant.
   virtual auto GetOSVersionString() -> std::string;
 
   /// Set an environment variable as utf8, overwriting if it already exists.
@@ -156,6 +135,9 @@ class CorePlatform {
   /// Return hostname or other id suitable for displaying in network search
   /// results, etc.
   auto GetDeviceName() -> std::string;
+
+  /// Return a general identifier for the hardware device.
+  auto GetDeviceDescription() -> std::string;
 
   /// Get a UUID for use with things like device-accounts. This function
   /// should not be used for other purposes, should not be modified, and
@@ -227,16 +209,15 @@ class CorePlatform {
 
 #pragma mark APPLE -------------------------------------------------------------
 
-  virtual auto NewAutoReleasePool() -> void*;
-  virtual void DrainAutoReleasePool(void* pool);
+  // virtual auto NewAutoReleasePool() -> void*;
+  // virtual void DrainAutoReleasePool(void* pool);
   // FIXME: Can we consolidate these with the general music playback calls?
   virtual void MacMusicAppInit();
   virtual auto MacMusicAppGetVolume() -> int;
   virtual void MacMusicAppSetVolume(int volume);
-  virtual void MacMusicAppGetLibrarySource();
-  virtual void MacMusicAppStop();
-  virtual auto MacMusicAppPlayPlaylist(const std::string& playlist) -> bool;
   virtual auto MacMusicAppGetPlaylists() -> std::list<std::string>;
+  virtual auto MacMusicAppPlayPlaylist(const std::string& playlist) -> bool;
+  virtual void MacMusicAppStop();
 
 #pragma mark TEXT RENDERING ----------------------------------------------------
 
@@ -257,7 +238,7 @@ class CorePlatform {
   virtual void SignInV1(const std::string& account_type);
   virtual void SignOutV1();
 
-  virtual void GameCenterLogin();
+  // virtual void GameCenterLogin();
   virtual void V1LoginDidChange();
 
   /// Returns the ID to use for the device account.
@@ -300,7 +281,7 @@ class CorePlatform {
   virtual auto HaveLeaderboard(const std::string& game,
                                const std::string& config) -> bool;
 
-  virtual void ShowOnlineScoreUI(const std::string& show,
+  virtual void ShowGameServiceUI(const std::string& show,
                                  const std::string& game,
                                  const std::string& game_version);
   virtual void ResetAchievements();
@@ -313,14 +294,11 @@ class CorePlatform {
 
 #pragma mark ERRORS & DEBUGGING ------------------------------------------------
 
-  /// Should return a subclass of PlatformStackTrace allocated via new. It
+  /// Should return a subclass of NativeStackTrace allocated via new. It
   /// is up to the caller to call delete on the returned trace when done
   /// with it. Platforms with no meaningful stack trace functionality can
   /// return nullptr.
-  virtual auto GetStackTrace() -> PlatformStackTrace*;
-
-  // Called during stress testing.
-  virtual auto GetMemUsageInfo() -> std::string;
+  virtual auto GetNativeStackTrace() -> NativeStackTrace*;
 
   /// Optionally override fatal error reporting. If true is returned, default
   /// fatal error reporting will not run.
@@ -353,26 +331,30 @@ class CorePlatform {
   /// This is expected to be lightweight as it may be called often.
   virtual void SetDebugKey(const std::string& key, const std::string& value);
 
-  void DebugLog(const std::string& msg);
+  /// Print a log message to be included in crash logs or other debug
+  /// mechanisms (example: Crashlytics). V1-cloud-log messages get forwarded
+  /// to here as well. It can be useful to call this directly to report extra
+  /// details that may help in debugging, as these calls are not considered
+  /// 'noteworthy' or presented to the user as standard Log() calls are.
+  void LowLevelDebugLog(const std::string& msg);
 
 #pragma mark MISC --------------------------------------------------------------
 
-  /// Return a time measurement in milliseconds since launch.
-  /// It *should* be monotonic.
-  /// For most purposes, AppTime values are preferable since their progression
-  /// pauses during app suspension and they are 100% guaranteed to not go
-  /// backwards.
+  /// Return a time measurement in milliseconds since launch. It *should* be
+  /// monotonic. For most purposes, AppTime values are preferable since
+  /// their progression pauses during app suspension and they are 100%
+  /// guaranteed to not go backwards.
   auto GetTicks() const -> millisecs_t;
 
-  /// Return a raw current milliseconds value. It *should* be monotonic.
-  /// It is relative to an undefined start point; only use it for time
+  /// Return a raw current milliseconds value. It *should* be monotonic. It
+  /// is relative to an undefined start point; only use it for time
   /// differences. Generally the AppTime values are preferable since their
   /// progression pauses during app suspension and they are 100% guaranteed
   /// to not go backwards.
   static auto GetCurrentMillisecs() -> millisecs_t;
 
-  /// Return a raw current microseconds value. It *should* be monotonic.
-  /// It is relative to an undefined start point; only use it for time
+  /// Return a raw current microseconds value. It *should* be monotonic. It
+  /// is relative to an undefined start point; only use it for time
   /// differences. Generally the AppTime values are preferable since their
   /// progression pauses during app suspension and they are 100% guaranteed
   /// to not go backwards.
@@ -385,9 +367,9 @@ class CorePlatform {
   /// to not go backwards.
   static auto GetCurrentWholeSeconds() -> int64_t;
 
-  static void SleepMillisecs(millisecs_t ms);
-
-  static void SleepMicrosecs(millisecs_t ms);
+  static void SleepSeconds(seconds_t duration);
+  static void SleepMillisecs(millisecs_t duration);
+  static void SleepMicrosecs(microsecs_t duration);
 
   /// Given a C++ symbol, attempt to return a pretty one.
   virtual auto DemangleCXXSymbol(const std::string& s) -> std::string;
@@ -399,24 +381,24 @@ class CorePlatform {
   /// Is the OS currently playing music? (so we can avoid doing so).
   virtual auto IsOSPlayingMusic() -> bool;
 
-  /// Pass platform-specific misc-read-vals along to the OS (as a json string).
+  /// Pass platform-specific misc-read-vals along to the OS (as a json
+  /// string).
   virtual void SetPlatformMiscReadVals(const std::string& vals);
-
-  /// Open a file using the system default method (in another app, etc.)
-  virtual void OpenFileExternally(const std::string& path);
-
-  /// Open a directory using the system default method (Finder, etc.)
-  virtual void OpenDirExternally(const std::string& path);
 
   /// Set the name of the current thread (for debugging).
   virtual void SetCurrentThreadName(const std::string& name);
 
-  // If display-resolution can be directly set on this platform,
-  // return true and set the native full res here.  Otherwise return false;
+  // If display-resolution can be directly set on this platform, return true
+  // and set the native full res here. Otherwise return false;
   virtual auto GetDisplayResolution(int* x, int* y) -> bool;
 
   /// Are we being run from a terminal? (should we show prompts, etc?).
   auto is_stdin_a_terminal() const { return is_stdin_a_terminal_; }
+
+  void set_music_app_playlists(const std::list<std::string>& playlists) {
+    mac_music_app_playlists_ = playlists;
+  }
+  auto mac_music_app_playlists() const { return mac_music_app_playlists_; }
 
  protected:
   /// Are we being run from a terminal? (should we show prompts, etc?).
@@ -425,54 +407,49 @@ class CorePlatform {
   /// Called once per platform to determine touchscreen presence.
   virtual auto DoHasTouchScreen() -> bool;
 
-  /// Platforms should override this to provide device name.
+  /// Platforms should override this to provide a device name suitable for
+  /// displaying in network join lists/etc. Technically this is more like
+  /// hostname.
   virtual auto DoGetDeviceName() -> std::string;
 
-  /// Attempt to actually create a directory.
-  /// Should *not* raise Exceptions if it already exists or if quiet is true.
+  /// Platforms should override this to provide a generic description of the
+  /// device; something like "iPhone 12 Pro".
+  virtual auto DoGetDeviceDescription() -> std::string;
+
+  /// Attempt to actually create a directory. Should *not* raise Exceptions
+  /// if it already exists or if quiet is true.
   virtual void DoMakeDir(const std::string& dir, bool quiet);
 
-  /// Attempt to actually get an abs path. This will only be called if
-  /// the path is valid and exists.
+  /// Attempt to actually get an abs path. This will only be called if the
+  /// path is valid and exists.
   virtual auto DoAbsPath(const std::string& path, std::string* outpath) -> bool;
 
-  /// Calc the user scripts dir path for this platform.
-  /// This will be called once and the path cached.
+  /// Calc the user scripts dir path for this platform. This will be called
+  /// once and the path cached.
   virtual auto DoGetUserPythonDirectoryMonolithicDefault()
       -> std::optional<std::string>;
 
-  /// Return the default config directory for this platform.
-  /// This will be used as the config dir if not overridden via command
-  /// line options, etc.
+  /// Return the default config directory for this platform. This will be
+  /// used as the config dir if not overridden via command line options,
+  /// etc.
   virtual auto DoGetConfigDirectoryMonolithicDefault()
       -> std::optional<std::string>;
 
-  /// Return the default data directory for this platform.
-  /// This will be used as the data dir if not overridden by core-config, etc.
-  /// This is the one monolithic-default value that is not optional.
+  /// Return the default data directory for this platform. This will be used
+  /// as the data dir if not overridden by core-config, etc. This is the one
+  /// monolithic-default value that is not optional.
   virtual auto DoGetDataDirectoryMonolithicDefault() -> std::string;
 
-  /// Return the default Volatile data dir for this platform.
-  /// This will be used as the volatile-data-dir if not overridden via command
-  /// line options/etc.
+  /// Return the default Volatile data dir for this platform. This will be
+  /// used as the volatile-data-dir if not overridden via command line
+  /// options/etc.
   virtual auto GetDefaultVolatileDataDirectory() -> std::string;
 
   /// Generate a random UUID string.
   virtual auto GenerateUUID() -> std::string;
 
-  virtual auto DoClipboardIsSupported() -> bool;
-  virtual auto DoClipboardHasText() -> bool;
-  virtual void DoClipboardSetText(const std::string& text);
-  virtual auto DoClipboardGetText() -> std::string;
+  virtual void HandleLowLevelDebugLog(const std::string& msg);
 
-  /// Print a log message to be included in crash logs or other debug
-  /// mechanisms (example: Crashlytics). V1-cloud-log messages get forwarded
-  /// to here as well. It can be useful to call this directly to report extra
-  /// details that may help in debugging, as these calls are not considered
-  /// 'noteworthy' or presented to the user as standard Log() calls are.
-  virtual void HandleDebugLog(const std::string& msg);
-
- protected:
   CorePlatform();
   virtual ~CorePlatform();
 
@@ -481,35 +458,18 @@ class CorePlatform {
   bool have_has_touchscreen_value_{};
   bool have_touchscreen_{};
   bool is_tegra_k1_{};
-  bool have_clipboard_is_supported_{};
-  bool clipboard_is_supported_{};
   bool made_volatile_data_dir_{};
   bool have_device_uuid_{};
   bool ran_base_post_init_{};
   millisecs_t start_time_millisecs_{};
   std::string device_name_;
+  std::string device_description_;
   std::string legacy_device_uuid_;
   std::string volatile_data_dir_;
   std::string replays_dir_;
-};
 
-/// For capturing and printing stack-traces and related errors. Platforms
-/// should subclass this and return instances in GetStackTrace(). Stack
-/// trace classes should capture the stack state immediately upon
-/// construction but should do the bare minimum amount of work to store it.
-/// Any expensive operations such as symbolification should be deferred
-/// until FormatForDisplay().
-class PlatformStackTrace {
- public:
-  virtual ~PlatformStackTrace() = default;
-
-  // Return a human readable version of the trace (with symbolification if
-  // available).
-  virtual auto FormatForDisplay() noexcept -> std::string = 0;
-
-  // Should return a copy of itself allocated via new() (or nullptr if not
-  // possible).
-  virtual auto Copy() const noexcept -> PlatformStackTrace* = 0;
+  // temp.
+  std::list<std::string> mac_music_app_playlists_;
 };
 
 }  // namespace ballistica::core

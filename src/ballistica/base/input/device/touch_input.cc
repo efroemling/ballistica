@@ -8,6 +8,7 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/shared/foundation/macros.h"
 
 namespace ballistica::base {
 
@@ -47,20 +48,20 @@ void TouchInput::HandleTouchEvent(TouchEvent::Type type, void* touch, float x,
   switch (type) {
     case TouchEvent::Type::kDown: {
       HandleTouchDown(touch, x, y);
-      break;
+      return;
     }
     case TouchEvent::Type::kCanceled:
     case TouchEvent::Type::kUp: {
       HandleTouchUp(touch, x, y);
-      break;
+      return;
     }
     case TouchEvent::Type::kMoved: {
       HandleTouchMoved(touch, x, y);
-      break;
+      return;
     }
-    default:
-      throw Exception();
   }
+  BA_LOG_ERROR_NATIVE_TRACE_ONCE("Unhandled touch event type "
+                                 + std::to_string(static_cast<int>(type)));
 }
 
 TouchInput::TouchInput() {
@@ -119,7 +120,13 @@ void TouchInput::UpdateButtons(bool new_touch) {
   } else if (pickup_mag == max_mag) {
     closest_to_pickup = true;
   } else {
-    throw Exception();
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer),
+             "TouchInput closest-to logic fail; bomb_mag=%f"
+             " punch_mag=%f jump_mag=%f pickup_mag=%f max_mag=%f",
+             bomb_mag, punch_mag, jump_mag, pickup_mag, max_mag);
+    BA_LOG_ERROR_NATIVE_TRACE_ONCE(buffer);
+    closest_to_bomb = true;
   }
   if (buttons_touch_) {
     last_buttons_touch_time_ = g_core->GetAppTimeMillisecs();

@@ -3,6 +3,7 @@
 #include "ballistica/base/app_mode/app_mode.h"
 
 #include "ballistica/base/input/device/input_device_delegate.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/support/context.h"
 
 namespace ballistica::base {
@@ -13,8 +14,8 @@ void AppMode::OnActivate() {}
 void AppMode::OnDeactivate() {}
 
 void AppMode::OnAppStart() {}
-void AppMode::OnAppPause() {}
-void AppMode::OnAppResume() {}
+void AppMode::OnAppSuspend() {}
+void AppMode::OnAppUnsuspend() {}
 void AppMode::OnAppShutdown() {}
 void AppMode::OnAppShutdownComplete() {}
 
@@ -35,16 +36,14 @@ void AppMode::HandleGameQuery(const char* buffer, size_t size,
 
 auto AppMode::DoesWorldFillScreen() -> bool { return false; }
 
-void AppMode::GraphicsQualityChanged(GraphicsQuality quality) {}
-
 void AppMode::DrawWorld(FrameDef* frame_def) {}
 
 void AppMode::ChangeGameSpeed(int offs) {}
 
 void AppMode::StepDisplayTime() {}
 
-auto AppMode::GetHeadlessDisplayStep() -> microsecs_t {
-  return kAppModeMaxHeadlessDisplayStep;
+auto AppMode::GetHeadlessNextDisplayTimeStep() -> microsecs_t {
+  return kHeadlessMaxDisplayTimeStep;
 }
 
 auto AppMode::GetPartySize() const -> int { return 0; }

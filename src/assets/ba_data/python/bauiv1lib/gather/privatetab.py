@@ -120,6 +120,7 @@ class PrivateGatherTab(GatherTab):
                 playsound=True,
             ),
             text=bui.Lstr(resource='gatherWindow.privatePartyJoinText'),
+            glow_type='uniform',
         )
         self._host_sub_tab_text = bui.textwidget(
             parent=self._container,
@@ -138,6 +139,7 @@ class PrivateGatherTab(GatherTab):
                 playsound=True,
             ),
             text=bui.Lstr(resource='gatherWindow.privatePartyHostText'),
+            glow_type='uniform',
         )
         bui.widget(edit=self._join_sub_tab_text, up_widget=tab_button)
         bui.widget(
@@ -458,9 +460,9 @@ class PrivateGatherTab(GatherTab):
             scale=1.5,
             size=(300, 50),
             editable=True,
+            max_chars=20,
             description=bui.Lstr(resource='gatherWindow.partyCodeText'),
             autoselect=True,
-            maxwidth=250,
             h_align='left',
             v_align='center',
             text='',
@@ -962,7 +964,7 @@ class PrivateGatherTab(GatherTab):
             code = cast(str, bui.textwidget(query=self._join_party_code_text))
         if not code:
             bui.screenmessage(
-                bui.Lstr(resource='internal.invalidAddressErrorText'),
+                bui.Lstr(translate=('serverResponses', 'Invalid code.')),
                 color=(1, 0, 0),
             )
             bui.getsound('error').play()

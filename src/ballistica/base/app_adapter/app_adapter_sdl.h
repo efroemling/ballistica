@@ -30,13 +30,21 @@ class AppAdapterSDL : public AppAdapter {
   AppAdapterSDL();
 
   void OnMainThreadStartApp() override;
-  void DoApplyAppConfig() override;
 
   auto TryRender() -> bool;
 
-  auto CanToggleFullscreen() -> bool const override;
+  auto FullscreenControlAvailable() const -> bool override;
+  auto FullscreenControlKeyShortcut() const
+      -> std::optional<std::string> override;
   auto SupportsVSync() -> bool const override;
   auto SupportsMaxFPS() -> bool const override;
+
+  auto HasDirectKeyboardInput() -> bool override;
+  void ApplyGraphicsSettings(const GraphicsSettings* settings) override;
+
+  auto GetGraphicsSettings() -> GraphicsSettings* override;
+
+  auto GetKeyName(int keycode) -> std::string override;
 
  protected:
   void DoPushMainThreadRunnable(Runnable* runnable) override;
@@ -45,17 +53,18 @@ class AppAdapterSDL : public AppAdapter {
   auto InGraphicsContext() -> bool override;
   void DoPushGraphicsContextRunnable(Runnable* runnable) override;
   void CursorPositionForDraw(float* x, float* y) override;
+  auto DoClipboardIsSupported() -> bool override;
+  auto DoClipboardHasText() -> bool override;
+  void DoClipboardSetText(const std::string& text) override;
+  auto DoClipboardGetText() -> std::string override;
 
  private:
   class ScopedAllowGraphics_;
-  void SetScreen_(bool fullscreen, int max_fps, VSyncRequest vsync_requested,
-                  TextureQualityRequest texture_quality_requested,
-                  GraphicsQualityRequest graphics_quality_requested);
+  struct GraphicsSettings_;
+
   void HandleSDLEvent_(const SDL_Event& event);
   void UpdateScreenSizes_();
-  void ReloadRenderer_(bool fullscreen,
-                       GraphicsQualityRequest graphics_quality_requested,
-                       TextureQualityRequest texture_quality_requested);
+  void ReloadRenderer_(const GraphicsSettings_* settings);
   void OnSDLJoystickAdded_(int index);
   void OnSDLJoystickRemoved_(int index);
   // Given an SDL joystick ID, returns our Ballistica input for it.
@@ -66,11 +75,12 @@ class AppAdapterSDL : public AppAdapter {
   void RemoveSDLInputDevice_(int index);
   void SleepUntilNextEventCycle_(microsecs_t cycle_start_time);
 
-  bool done_ : 1 {};
-  bool fullscreen_ : 1 {};
-  bool vsync_actually_enabled_ : 1 {};
-  bool debug_log_sdl_frame_timing_ : 1 {};
-  bool hidden_ : 1 {};
+  int max_fps_{60};
+  bool done_{};
+  bool fullscreen_{};
+  bool vsync_actually_enabled_{};
+  bool debug_log_sdl_frame_timing_{};
+  bool hidden_{};
 
   /// With this off, graphics call pushes simply get pushed to the main
   /// thread and graphics code is allowed to run any time in the main
@@ -79,19 +89,18 @@ class AppAdapterSDL : public AppAdapter {
   /// allowed during draws. This strictness is generally not needed here but
   /// can be useful to test with, as it more closely matches other platforms
   /// that require such a setup.
-  bool strict_graphics_context_ : 1 {};
-  bool strict_graphics_allowed_ : 1 {};
-  std::mutex strict_graphics_calls_mutex_;
-  std::vector<Runnable*> strict_graphics_calls_;
+  bool strict_graphics_context_{};
+  bool strict_graphics_allowed_{};
   VSync vsync_{VSync::kUnset};
   uint32_t sdl_runnable_event_id_{};
-  int max_fps_{60};
+  std::mutex strict_graphics_calls_mutex_;
+  std::vector<Runnable*> strict_graphics_calls_;
   microsecs_t oversleep_{};
   std::vector<JoystickInput*> sdl_joysticks_;
   Vector2f window_size_{1.0f, 1.0f};
   SDL_Window* sdl_window_{};
   void* sdl_gl_context_{};
-  millisecs_t last_windowevent_close_time_{};
+  seconds_t last_windowevent_close_time_{};
 };
 
 }  // namespace ballistica::base

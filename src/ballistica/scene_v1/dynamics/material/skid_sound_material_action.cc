@@ -2,7 +2,7 @@
 
 #include "ballistica/scene_v1/dynamics/material/skid_sound_material_action.h"
 
-#include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/audio/audio.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/dynamics/material/material_context.h"
 #include "ballistica/scene_v1/support/client_session.h"
@@ -34,10 +34,8 @@ void SkidSoundMaterialAction::Apply(MaterialContext* context,
   assert(context->dynamics.Exists());
   assert(context->dynamics->in_process());
 
-  // For now lets avoid this in low-quality graphics mode
-  // (should we make a low-quality sound mode?).
-  if (g_base->graphics_server
-      && g_base->graphics_server->quality() < base::GraphicsQuality::kMedium) {
+  // Avoid this if we're cutting corners.
+  if (g_base->audio->UseLowQualityAudio()) {
     return;
   }
 

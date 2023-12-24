@@ -61,7 +61,7 @@ class SceneV1Context : public base::Context {
   // Default NewTimer implementation throws a descriptive error, so it can
   // be useful to fall back on for unsupported cases.
   virtual auto NewTimer(TimeType timetype, TimerMedium length, bool repeat,
-                        const Object::Ref<Runnable>& runnable) -> int;
+                        Runnable* runnable) -> int;
   virtual void DeleteTimer(TimeType timetype, int timer_id);
 
   virtual auto GetTexture(const std::string& name) -> Object::Ref<SceneTexture>;

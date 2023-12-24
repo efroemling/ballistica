@@ -24,10 +24,17 @@ void ScrollWidget::OnTouchDelayTimerExpired() {
   if (touch_held_) {
     // Pass a mouse-down event if we haven't moved.
     if (!touch_is_scrolling_ && !touch_down_sent_) {
+      // Gather up any user code triggered by this stuff and run it at the end
+      // before we return.
+      base::UI::OperationContext ui_op_context;
+
       ContainerWidget::HandleMessage(base::WidgetMessage(
           base::WidgetMessage::Type::kMouseDown, nullptr, touch_x_, touch_y_,
           static_cast<float>(touch_held_click_count_)));
       touch_down_sent_ = true;
+
+      // Run any calls built up by UI callbacks.
+      ui_op_context.Finish();
     }
   }
 
@@ -330,8 +337,8 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             // After a short delay we go ahead and handle this as a regular
             // click if it hasn't turned into a scroll or a child scroll.
             if (!child_is_scrolling_) {
-              touch_delay_timer_ = base::NewAppTimer(
-                  150, false, [this] { OnTouchDelayTimerExpired(); });
+              touch_delay_timer_ = base::AppTimer::New(
+                  0.150, false, [this] { OnTouchDelayTimerExpired(); });
             }
           }
         }

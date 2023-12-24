@@ -31,8 +31,8 @@ class PlaylistEditWindow(bui.Window):
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 770 if uiscale is bui.UIScale.SMALL else 670
-        x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 870 if uiscale is bui.UIScale.SMALL else 670
+        x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
             400
             if uiscale is bui.UIScale.SMALL
@@ -283,6 +283,10 @@ class PlaylistEditWindow(bui.Window):
             PlaylistCustomizeBrowserWindow,
         )
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bui.getsound('powerdown01').play()
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
@@ -293,7 +297,8 @@ class PlaylistEditWindow(bui.Window):
                 select_playlist=(
                     self._editcontroller.get_existing_playlist_name()
                 ),
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _add(self) -> None:
@@ -314,6 +319,10 @@ class PlaylistEditWindow(bui.Window):
         from bauiv1lib.playlist.customizebrowser import (
             PlaylistCustomizeBrowserWindow,
         )
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         plus = bui.app.plus
         assert plus is not None
@@ -380,7 +389,8 @@ class PlaylistEditWindow(bui.Window):
                 transition='in_left',
                 sessiontype=self._editcontroller.get_session_type(),
                 select_playlist=new_name,
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _save_press_with_sound(self) -> None:

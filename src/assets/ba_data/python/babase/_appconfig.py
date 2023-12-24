@@ -101,15 +101,13 @@ class AppConfig(dict):
         self.commit()
 
 
-def read_app_config() -> tuple[AppConfig, bool]:
+def read_app_config() -> AppConfig:
     """Read the app config."""
     import os
     import json
 
-    config_file_healthy = False
-
-    # NOTE: it is assumed that this only gets called once and the
-    # config object will not change from here on out
+    # NOTE: it is assumed that this only gets called once and the config
+    # object will not change from here on out
     config_file_path = _babase.app.env.config_file_path
     config_contents = ''
     try:
@@ -119,20 +117,16 @@ def read_app_config() -> tuple[AppConfig, bool]:
             config = AppConfig(json.loads(config_contents))
         else:
             config = AppConfig()
-        config_file_healthy = True
 
     except Exception:
         logging.exception(
-            "Error reading config file at time %.3f: '%s'.",
+            "Error reading config file '%s' at time %.3f.\n"
+            "Backing up broken config to'%s.broken'.",
+            config_file_path,
             _babase.apptime(),
             config_file_path,
         )
 
-        # Whenever this happens lets back up the broken one just in case it
-        # gets overwritten accidentally.
-        logging.info(
-            "Backing up current config file to '%s.broken'", config_file_path
-        )
         try:
             import shutil
 
@@ -141,23 +135,10 @@ def read_app_config() -> tuple[AppConfig, bool]:
             logging.exception('Error copying broken config.')
         config = AppConfig()
 
-        # Now attempt to read one of our 'prev' backup copies.
-        prev_path = config_file_path + '.prev'
-        try:
-            if os.path.exists(prev_path):
-                with open(prev_path, encoding='utf-8') as infile:
-                    config_contents = infile.read()
-                config = AppConfig(json.loads(config_contents))
-            else:
-                config = AppConfig()
-            config_file_healthy = True
-            logging.info('Successfully read backup config.')
-        except Exception:
-            logging.exception('Error reading prev backup config.')
-    return config, config_file_healthy
+    return config
 
 
-def commit_app_config(force: bool = False) -> None:
+def commit_app_config() -> None:
     """Commit the config to persistent storage.
 
     Category: **General Utility Functions**
@@ -167,10 +148,4 @@ def commit_app_config(force: bool = False) -> None:
     plus = _babase.app.plus
     assert plus is not None
 
-    if not _babase.app.config_file_healthy and not force:
-        logging.warning(
-            'Current config file is broken; '
-            'skipping write to avoid losing settings.'
-        )
-        return
     plus.mark_config_dirty()

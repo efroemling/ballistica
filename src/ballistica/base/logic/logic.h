@@ -4,7 +4,6 @@
 #define BALLISTICA_BASE_LOGIC_LOGIC_H_
 
 #include <memory>
-#include <set>
 #include <string>
 
 #include "ballistica/shared/foundation/object.h"
@@ -12,6 +11,15 @@
 namespace ballistica::base {
 
 const int kDisplayTimeSampleCount{15};
+
+/// The max amount of time a headless app can sleep if no events are pending.
+/// This should not be *too* high or it might cause delays when going from
+/// no events present to events present.
+const microsecs_t kHeadlessMaxDisplayTimeStep{500000};
+
+/// The min amount of time a headless app can sleep. This provides an upper
+/// limit on stepping overhead in cases where events are densely packed.
+const microsecs_t kHeadlessMinDisplayTimeStep{1000};
 
 /// The logic subsystem of the app. This runs on a dedicated thread and is
 /// where most high level app logic happens. Much app functionality
@@ -44,14 +52,16 @@ class Logic {
 
   /// Called when our event-loop pauses. Informs Python and other
   /// subsystems.
-  void OnAppPause();
+  void OnAppSuspend();
 
   /// Called when our event-loop resumes. Informs Python and other
   /// subsystems.
-  void OnAppResume();
+  void OnAppUnsuspend();
 
   void OnAppShutdown();
   void OnAppShutdownComplete();
+
+  void OnAppActiveChanged();
 
   void OnAppModeChanged();
 
@@ -63,8 +73,9 @@ class Logic {
   /// graphical builds we also use this opportunity to step our logic.
   void Draw();
 
-  /// Kick off an app shutdown. Shutdown is an asynchronous process which
-  /// may take a bit of time to complete. Safe to call repeatedly.
+  /// Kick off a low level app shutdown. Shutdown is an asynchronous process
+  /// which may take up to a few seconds to complete. This is safe to call
+  /// repeatedly but must be called from the logic thread.
   void Shutdown();
 
   /// Should be called by the Python layer when it has completed all
@@ -80,13 +91,12 @@ class Logic {
   void HandleInterruptSignal();
   void HandleTerminateSignal();
 
-  auto NewAppTimer(millisecs_t length, bool repeat,
-                   const Object::Ref<Runnable>& runnable) -> int;
+  auto NewAppTimer(microsecs_t length, bool repeat, Runnable* runnable) -> int;
   void DeleteAppTimer(int timer_id);
-  void SetAppTimerLength(int timer_id, millisecs_t length);
+  void SetAppTimerLength(int timer_id, microsecs_t length);
 
-  auto NewDisplayTimer(microsecs_t length, bool repeat,
-                       const Object::Ref<Runnable>& runnable) -> int;
+  auto NewDisplayTimer(microsecs_t length, bool repeat, Runnable* runnable)
+      -> int;
   void DeleteDisplayTimer(int timer_id);
   void SetDisplayTimerLength(int timer_id, microsecs_t length);
 
@@ -108,40 +118,45 @@ class Logic {
   auto shutting_down() const { return shutting_down_; }
   auto shutdown_completed() const { return shutdown_completed_; }
 
- private:
-  void UpdateDisplayTimeForFrameDraw();
-  void UpdateDisplayTimeForHeadlessMode();
-  void PostUpdateDisplayTimeForHeadlessMode();
-  void CompleteAppBootstrapping();
-  void ProcessPendingWork();
-  void UpdatePendingWorkTimer();
-  void StepDisplayTime();
+  auto graphics_ready() const { return graphics_ready_; }
 
-  double display_time_{};
+  auto app_active() const { return app_active_; }
+
+ private:
+  void UpdateDisplayTimeForFrameDraw_();
+  void UpdateDisplayTimeForHeadlessMode_();
+  void PostUpdateDisplayTimeForHeadlessMode_();
+  void CompleteAppBootstrapping_();
+  void ProcessPendingWork_();
+  void UpdatePendingWorkTimer_();
+  void StepDisplayTime_();
+
+  seconds_t display_time_{};
+  seconds_t display_time_increment_{1.0 / 60.0};
   microsecs_t display_time_microsecs_{};
-  double display_time_increment_{1.0 / 60.0};
   microsecs_t display_time_increment_microsecs_{1000000 / 60};
 
+  // Headless scheduling.
+  Timer* headless_display_time_step_timer_{};
+
   // GUI scheduling.
-  double last_display_time_update_app_time_{-1.0};
-  double recent_display_time_increments_[kDisplayTimeSampleCount]{};
+  seconds_t last_display_time_update_app_time_{-1.0};
+  seconds_t recent_display_time_increments_[kDisplayTimeSampleCount]{};
   int recent_display_time_increments_index_{-1};
 
-  // Headless scheduling.
-
-  std::unique_ptr<TimerList> display_timers_;
-  EventLoop* event_loop_{};
-  Timer* process_pending_work_timer_{};
-  Timer* headless_display_time_step_timer_{};
-  Timer* asset_prune_timer_{};
-  Timer* debug_timer_{};
+  /// The logic thread maintains its own app-active state which is
+  /// driven by the app-thread's state in g_base.
+  bool app_active_{true};
   bool app_bootstrapping_complete_{};
   bool have_pending_loads_{};
   bool debug_log_display_time_{};
   bool applied_app_config_{};
   bool shutting_down_{};
   bool shutdown_completed_{};
-  bool on_initial_screen_creation_complete_called_{};
+  bool graphics_ready_{};
+  Timer* process_pending_work_timer_{};
+  EventLoop* event_loop_{};
+  std::unique_ptr<TimerList> display_timers_;
 };
 
 }  // namespace ballistica::base

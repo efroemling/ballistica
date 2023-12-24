@@ -32,6 +32,7 @@ class Command(Enum):
     CLEAN_CHECK = 'cleancheck'
     OVERRIDE = 'override'
     DIFF = 'diff'
+    DESCRIBE_PATH = 'describe-path'
     BACKPORT = 'backport'
     CREATE = 'create'
     ADD_SUBMODULE_PARENT = 'add-submodule-parent'
@@ -94,6 +95,8 @@ def _main() -> None:
         single_run_mode = SpinoffContext.Mode.CLEAN_CHECK
     elif cmd is Command.DIFF:
         single_run_mode = SpinoffContext.Mode.DIFF
+    elif cmd is Command.DESCRIBE_PATH:
+        single_run_mode = SpinoffContext.Mode.DESCRIBE_PATH
     elif cmd is Command.OVERRIDE:
         _do_override(src_root, dst_root)
     elif cmd is Command.BACKPORT:
@@ -115,6 +118,12 @@ def _main() -> None:
         assert_never(cmd)
 
     if single_run_mode is not None:
+        from efrotools import extract_flag
+
+        args = sys.argv[2:]
+        force = extract_flag(args, '--force')
+        verbose = extract_flag(args, '--verbose')
+        print_full_lists = extract_flag(args, '--full')
         if src_root is None:
             if '--soft' in sys.argv:
                 return
@@ -123,6 +132,15 @@ def _main() -> None:
                 ' you appear to be in a src project.'
                 " To silently no-op in this case, pass '--soft'."
             )
+
+        describe_path: str | None
+        if single_run_mode is SpinoffContext.Mode.DESCRIBE_PATH:
+            if len(args) != 1:
+                raise CleanError(f'Expected a single path arg; got {args}.')
+            describe_path = args[0]
+        else:
+            describe_path = None
+
         # SpinoffContext should never be relying on relative paths, so let's
         # keep ourself honest by making sure.
         os.chdir('/')
@@ -130,9 +148,10 @@ def _main() -> None:
             src_root,
             dst_root,
             single_run_mode,
-            force='--force' in sys.argv,
-            verbose='--verbose' in sys.argv,
-            print_full_lists='--full' in sys.argv,
+            force=force,
+            verbose=verbose,
+            print_full_lists=print_full_lists,
+            describe_path=describe_path,
         ).run()
 
 
@@ -581,6 +600,8 @@ def _print_available_commands() -> None:
             'Remove files from spinoff, leaving local copies in place.\n'
             f' {bgn}backport [file]{end}      '
             'Help get changes to spinoff dst files back to src.\n'
+            f' {bgn}describe-path [path]{end}'
+            ' Tells whether a path is spinoff-managed/etc.\n'
             f' {bgn}create [name, path]{end}  '
             'Create a new spinoff project based on this src one.\n'
             '                      Name should be passed in CamelCase form.\n'

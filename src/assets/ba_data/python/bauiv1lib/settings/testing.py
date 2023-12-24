@@ -217,6 +217,10 @@ class TestingWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.advanced import AdvancedSettingsWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         backwin = (
             self._back_call()
@@ -224,4 +228,6 @@ class TestingWindow(bui.Window):
             else AdvancedSettingsWindow(transition='in_left')
         )
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(backwin.get_root_widget())
+        bui.app.ui_v1.set_main_menu_window(
+            backwin.get_root_widget(), from_window=self._root_widget
+        )

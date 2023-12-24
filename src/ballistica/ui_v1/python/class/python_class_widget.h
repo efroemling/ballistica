@@ -26,6 +26,9 @@ class PythonClassWidget : public PythonClass {
   static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
       -> PyObject*;
   static void tp_dealloc(PythonClassWidget* self);
+  static auto tp_getattro(PythonClassWidget* self, PyObject* attr) -> PyObject*;
+  static auto tp_setattro(PythonClassWidget* self, PyObject* attr,
+                          PyObject* val) -> int;
   static auto Exists(PythonClassWidget* self) -> PyObject*;
   static auto GetWidgetType(PythonClassWidget* self) -> PyObject*;
   static auto Activate(PythonClassWidget* self) -> PyObject*;

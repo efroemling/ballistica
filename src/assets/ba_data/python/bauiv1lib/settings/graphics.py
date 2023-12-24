@@ -52,7 +52,7 @@ class GraphicsSettingsWindow(bui.Window):
         self._show_fullscreen = False
         fullscreen_spacing_top = spacing * 0.2
         fullscreen_spacing = spacing * 1.2
-        if bui.can_toggle_fullscreen():
+        if bui.fullscreen_control_available():
             self._show_fullscreen = True
             height += fullscreen_spacing + fullscreen_spacing_top
 
@@ -122,21 +122,29 @@ class GraphicsSettingsWindow(bui.Window):
         self._fullscreen_checkbox: bui.Widget | None = None
         if self._show_fullscreen:
             v -= fullscreen_spacing_top
-            self._fullscreen_checkbox = ConfigCheckBox(
+            # Fullscreen control does not necessarily talk to the
+            # app config so we have to wrangle it manually instead of
+            # using a config-checkbox.
+            label = bui.Lstr(resource=f'{self._r}.fullScreenText')
+
+            # Show keyboard shortcut alongside the control if they
+            # provide one.
+            shortcut = bui.fullscreen_control_key_shortcut()
+            if shortcut is not None:
+                label = bui.Lstr(
+                    value='$(NAME) [$(SHORTCUT)]',
+                    subs=[('$(NAME)', label), ('$(SHORTCUT)', shortcut)],
+                )
+            self._fullscreen_checkbox = bui.checkboxwidget(
                 parent=self._root_widget,
                 position=(100, v),
-                maxwidth=200,
+                value=bui.fullscreen_control_get(),
+                on_value_change_call=bui.fullscreen_control_set,
+                maxwidth=250,
                 size=(300, 30),
-                configkey='Fullscreen',
-                displayname=bui.Lstr(
-                    resource=self._r
-                    + (
-                        '.fullScreenCmdText'
-                        if app.classic.platform == 'mac'
-                        else '.fullScreenCtrlText'
-                    )
-                ),
-            ).widget
+                text=label,
+            )
+
             if not self._have_selected_child:
                 bui.containerwidget(
                     edit=self._root_widget,
@@ -259,9 +267,7 @@ class GraphicsSettingsWindow(bui.Window):
                         bui.Lstr(resource='nativeText'),
                     ]
                     for res in [1440, 1080, 960, 720, 480]:
-                        # Nav bar is 72px so lets allow for that in what
-                        # choices we show.
-                        if native_res[1] >= res - 72:
+                        if native_res[1] >= res:
                             res_str = f'{res}p'
                             choices.append(res_str)
                             choices_display.append(bui.Lstr(value=res_str))
@@ -430,6 +436,10 @@ class GraphicsSettingsWindow(bui.Window):
     def _back(self) -> None:
         from bauiv1lib.settings import allsettings
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         # Applying max-fps takes a few moments. Apply if it hasn't been
         # yet.
         self._apply_max_fps()
@@ -441,7 +451,8 @@ class GraphicsSettingsWindow(bui.Window):
         bui.app.ui_v1.set_main_menu_window(
             allsettings.AllSettingsWindow(
                 transition='in_left'
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _set_quality(self, quality: str) -> None:
@@ -528,8 +539,10 @@ class GraphicsSettingsWindow(bui.Window):
                     and bui.apptime() - self._last_max_fps_set_time > 1.0
                 ):
                     self._apply_max_fps()
+
         if self._show_fullscreen:
+            # Keep the fullscreen checkbox up to date with the current value.
             bui.checkboxwidget(
                 edit=self._fullscreen_checkbox,
-                value=bui.app.config.resolve('Fullscreen'),
+                value=bui.fullscreen_control_get(),
             )

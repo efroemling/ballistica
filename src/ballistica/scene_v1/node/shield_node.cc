@@ -260,7 +260,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
     c.Submit();
 
     // Nifty intersection effects in fancy graphics mode.
-    if (frame_def->has_depth_texture()) {
+    if (frame_def->HasDepthTexture()) {
       base::ShieldComponent c2(frame_def->overlay_3d_pass());
       {
         auto xf = c2.ScopedTransform();
@@ -273,7 +273,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
       }
       c2.Submit();
     }
-    if (frame_def->has_depth_texture()) {
+    if (frame_def->HasDepthTexture()) {
       base::PostProcessComponent c2(frame_def->blit_pass());
       c2.SetNormalDistort(distort);
       {

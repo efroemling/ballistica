@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Provides classic app subsystem."""
+"""Provides plus app subsystem."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -249,3 +249,41 @@ class PlusSubsystem(AppSubsystem):
     ) -> None:
         """(internal)"""
         return _baplus.tournament_query(callback, args)
+
+    @staticmethod
+    def have_incentivized_ad() -> bool:
+        """Is an incentivized ad available?"""
+        return _baplus.have_incentivized_ad()
+
+    @staticmethod
+    def has_video_ads() -> bool:
+        """Are video ads available?"""
+        return _baplus.has_video_ads()
+
+    @staticmethod
+    def can_show_ad() -> bool:
+        """Can we show an ad?"""
+        return _baplus.can_show_ad()
+
+    @staticmethod
+    def show_ad(
+        purpose: str, on_completion_call: Callable[[], None] | None = None
+    ) -> None:
+        """Show an ad."""
+        _baplus.show_ad(purpose, on_completion_call)
+
+    @staticmethod
+    def show_ad_2(
+        purpose: str, on_completion_call: Callable[[bool], None] | None = None
+    ) -> None:
+        """Show an ad."""
+        _baplus.show_ad_2(purpose, on_completion_call)
+
+    @staticmethod
+    def show_game_service_ui(
+        show: str = 'general',
+        game: str | None = None,
+        game_version: str | None = None,
+    ) -> None:
+        """Show game-service provided UI."""
+        _baplus.show_game_service_ui(show, game, game_version)

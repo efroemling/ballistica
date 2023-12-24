@@ -11,6 +11,7 @@
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
 #include "ballistica/shared/python/python.h"
+#include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/button_widget.h"
 #include "ballistica/ui_v1/widget/root_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"
@@ -345,9 +346,8 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         } else if (auto* call = on_cancel_call_.Get()) {
           claimed = true;
 
-          // Call this in the next cycle (don't wanna risk mucking with UI from
-          // within a UI loop).
-          call->ScheduleWeak();
+          // Schedule this to run immediately after any current UI traversal.
+          call->ScheduleInUIOperation();
         } else {
           OnCancelCustom();
         }
@@ -629,9 +629,8 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
         // Call our outside-click callback if unclaimed.
         if (!claimed && on_outside_click_call_.Exists()) {
-          // Call this in the next cycle (don't wanna risk mucking with UI from
-          // within a UI loop).
-          on_outside_click_call_->ScheduleWeak();
+          // Schedule this to run immediately after any current UI traversal.
+          on_outside_click_call_->ScheduleInUIOperation();
         }
 
         // Always claim if they want.
@@ -793,7 +792,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     bg_dirty_ = true;
 
     if (!draw_transparent) {
-      if (transition_type_ == TRANSITION_IN_SCALE) {
+      if (transition_type_ == TransitionType::kInScale) {
         if (net_time - dynamics_update_time_millisecs_ > 1000)
           dynamics_update_time_millisecs_ = net_time - 1000;
         while (net_time - dynamics_update_time_millisecs_ > 5) {
@@ -808,7 +807,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             transitioning_ = false;
           }
         }
-      } else if (transition_type_ == TRANSITION_OUT_SCALE) {
+      } else if (transition_type_ == TransitionType::kOutScale) {
         if (net_time - dynamics_update_time_millisecs_ > 1000)
           dynamics_update_time_millisecs_ = net_time - 1000;
         while (net_time - dynamics_update_time_millisecs_ > 5) {
@@ -908,8 +907,8 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
       // If we're scaling in or out, update our transition offset
       // (so we can zoom from a point somewhere else on screen).
-      if (transition_type_ == TRANSITION_IN_SCALE
-          || transition_type_ == TRANSITION_OUT_SCALE) {
+      if (transition_type_ == TransitionType::kInScale
+          || transition_type_ == TransitionType::kOutScale) {
         // Add a fudge factor since our scale point isn't exactly in our center.
         // :-(
         float xdiff = scale_origin_stack_offset_x_ - stack_offset_x()
@@ -1069,9 +1068,8 @@ void ContainerWidget::Activate() {
   last_activate_time_millisecs_ =
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
   if (auto* call = on_activate_call_.Get()) {
-    // Call this in the next cycle (don't wanna risk mucking with UI from within
-    // a UI loop).
-    call->ScheduleWeak();
+    // Schedule this to run immediately after any current UI traversal.
+    call->ScheduleInUIOperation();
   }
 }
 
@@ -1156,8 +1154,29 @@ void ContainerWidget::SetStartButton(ButtonWidget* button) {
   button->set_icon_type(ButtonWidget::IconType::kStart);
 }
 
+static auto _IsTransitionOut(ContainerWidget::TransitionType type) {
+  // Note: framing this without a 'default:' so we get compiler warnings
+  // when enums are added/removed.
+  bool val = false;
+  switch (type) {
+    case ContainerWidget::TransitionType::kUnset:
+    case ContainerWidget::TransitionType::kInLeft:
+    case ContainerWidget::TransitionType::kInRight:
+    case ContainerWidget::TransitionType::kInScale:
+      val = false;
+      break;
+    case ContainerWidget::TransitionType::kOutLeft:
+    case ContainerWidget::TransitionType::kOutRight:
+    case ContainerWidget::TransitionType::kOutScale:
+      val = true;
+      break;
+  }
+  return val;
+}
+
 void ContainerWidget::SetTransition(TransitionType t) {
   BA_DEBUG_UI_READ_LOCK;
+  assert(g_base->InLogicThread());
 
   bg_dirty_ = glow_dirty_ = true;
   ContainerWidget* parent = parent_widget();
@@ -1167,21 +1186,31 @@ void ContainerWidget::SetTransition(TransitionType t) {
   parent->CheckLayout();
   auto display_time_millisecs =
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
+
+  // Warn if setting out-transition twice. This likely means a window is
+  // switching to another window twice which can leave the UI broken.
+  if (_IsTransitionOut(transition_type_) && _IsTransitionOut(t)) {
+    g_ui_v1->python->objs()
+        .Get(UIV1Python::ObjID::kDoubleTransitionOutWarningCall)
+        .Call();
+  }
+
   transition_type_ = t;
 
   // Scale transitions are simpler.
-  if (t == TRANSITION_IN_SCALE) {
+  if (t == TransitionType::kInScale) {
     transition_start_time_ = display_time_millisecs;
     dynamics_update_time_millisecs_ = display_time_millisecs;
     transitioning_ = true;
     transitioning_out_ = false;
     transition_scale_ = 0.0f;
     d_transition_scale_ = 0.0f;
-  } else if (t == TRANSITION_OUT_SCALE) {
+  } else if (t == TransitionType::kOutScale) {
     transition_start_time_ = display_time_millisecs;
     dynamics_update_time_millisecs_ = display_time_millisecs;
     transitioning_ = true;
     transitioning_out_ = true;
+    ignore_input_ = true;
   } else {
     // Calculate the screen size in our own local space - we'll
     // animate an offset to slide on/off screen.
@@ -1194,7 +1223,7 @@ void ContainerWidget::SetTransition(TransitionType t) {
 
     // In case we're mid-transition, this avoids hitches.
     float y_offs = 2.0f;
-    if (t == TRANSITION_IN_LEFT) {
+    if (t == TransitionType::kInLeft) {
       transition_start_time_ = display_time_millisecs;
       transition_start_offset_ = screen_min_x - width_ - 100;
       transition_offset_x_smoothed_ = transition_start_offset_;
@@ -1203,7 +1232,7 @@ void ContainerWidget::SetTransition(TransitionType t) {
       transitioning_ = true;
       dynamics_update_time_millisecs_ = display_time_millisecs;
       transitioning_out_ = false;
-    } else if (t == TRANSITION_IN_RIGHT) {
+    } else if (t == TransitionType::kInRight) {
       transition_start_time_ = display_time_millisecs;
       transition_start_offset_ = screen_max_x + 100;
       transition_offset_x_smoothed_ = transition_start_offset_;
@@ -1212,7 +1241,7 @@ void ContainerWidget::SetTransition(TransitionType t) {
       transitioning_ = true;
       dynamics_update_time_millisecs_ = display_time_millisecs;
       transitioning_out_ = false;
-    } else if (t == TRANSITION_OUT_LEFT) {
+    } else if (t == TransitionType::kOutLeft) {
       transition_start_time_ = display_time_millisecs;
       transition_start_offset_ = transition_offset_x_;
       transition_target_offset_ = -2.0f * (screen_max_x - screen_min_x);
@@ -1222,7 +1251,7 @@ void ContainerWidget::SetTransition(TransitionType t) {
       dynamics_update_time_millisecs_ = display_time_millisecs;
       transitioning_out_ = true;
       ignore_input_ = true;
-    } else if (t == TRANSITION_OUT_RIGHT) {
+    } else if (t == TransitionType::kOutRight) {
       transition_start_time_ = display_time_millisecs;
       transition_start_offset_ = transition_offset_x_;
       transition_target_offset_ = 2.0f * (screen_max_x - screen_min_x);
@@ -1278,8 +1307,9 @@ void ContainerWidget::DeleteWidget(Widget* w) {
 
   assert(found);
 
-  // Special case: if we're the overlay stack and we've deleted our last widget,
-  // try to reselect whatever was last selected before the overlay stack.
+  // Special case: if we're the overlay stack and we've deleted our last
+  // widget, try to reselect whatever was last selected before the overlay
+  // stack.
   if (is_overlay_window_stack_) {
     if (widgets_.empty()) {
       // Eww this logic should be in some sort of controller.
@@ -1297,8 +1327,9 @@ void ContainerWidget::DeleteWidget(Widget* w) {
       if ((**i).IsSelectable()) {
         // A change on the main or overlay window stack changes the global
         // selection (unless its on the main window stack and there's already
-        // something on the overlay stack) in all other cases we just shift our
-        // direct selected child (which may not affect the global selection).
+        // something on the overlay stack) in all other cases we just shift
+        // our direct selected child (which may not affect the global
+        // selection).
         if (is_window_stack_
             && (is_overlay_window_stack_
                 || !g_ui_v1->root_widget()
@@ -1321,8 +1352,8 @@ void ContainerWidget::DeleteWidget(Widget* w) {
 }
 
 auto ContainerWidget::GetTopmostToolbarInfluencingWidget() -> Widget* {
-  // Look for the first window that is accepting input (filters out windows that
-  // are transitioning out) and also set to affect the toolbar state.
+  // Look for the first window that is accepting input (filters out windows
+  // that are transitioning out) and also set to affect the toolbar state.
   for (auto w = widgets_.rbegin(); w != widgets_.rend(); ++w) {
     if ((**w).IsAcceptingInput()
         && (**w).toolbar_visibility() != ToolbarVisibility::kInherit) {
@@ -1437,9 +1468,8 @@ void ContainerWidget::SetSelected(bool s, SelectionCause cause) {
       }
     }
   } else {
-    // if we're being deselected and we have a selected child, tell them they're
-    // deselected
-    // if (selected_widget_) {
+    // if we're being deselected and we have a selected child, tell them
+    // they're deselected if (selected_widget_) {
     // }
   }
 }
@@ -1582,8 +1612,8 @@ void ContainerWidget::SelectDownWidget() {
       selected_widget_->GetCenter(&our_x, &our_y);
       w = GetClosestDownWidget(our_x, our_y, selected_widget_);
       if (!w) {
-        // If we found no viable children and we're under the main window stack,
-        // see if we should pass focus to a toolbar widget.
+        // If we found no viable children and we're under the main window
+        // stack, see if we should pass focus to a toolbar widget.
         if (IsInMainStack()) {
           float x = our_x;
           float y = our_y;
@@ -1711,7 +1741,8 @@ void ContainerWidget::SelectLeftWidget() {
       float our_x, our_y;
       selected_widget_->GetCenter(&our_x, &our_y);
       w = GetClosestLeftWidget(our_x, our_y, selected_widget_);
-      // When we find no viable targets for an autoselect widget we do nothing.
+      // When we find no viable targets for an autoselect widget we do
+      // nothing.
       if (!w) {
         return;
       }
@@ -1842,8 +1873,8 @@ void ContainerWidget::SelectNextWidget() {
         return;
       } else if (selected_widget_
                  == nullptr) {  // NOLINT(bugprone-branch-clone)
-        // We've got no selection and we've scanned the whole list to no avail,
-        // fail.
+        // We've got no selection and we've scanned the whole list to no
+        // avail, fail.
         PrintExitListInstructions(old_last_prev_next_time);
         return;
       } else if (selection_loops()) {
@@ -1994,6 +2025,10 @@ void ContainerWidget::OnLanguageChange() {
       widget->OnLanguageChange();
     }
   }
+}
+
+auto ContainerWidget::IsTransitioningOut() const -> bool {
+  return transitioning_out_;
 }
 
 }  // namespace ballistica::ui_v1

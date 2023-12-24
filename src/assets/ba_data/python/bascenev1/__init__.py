@@ -78,6 +78,7 @@ from _bascenev1 import (
     end_host_scanning,
     get_chat_messages,
     get_connection_to_host_info,
+    get_connection_to_host_info_2,
     get_foreground_host_activity,
     get_foreground_host_session,
     get_game_port,
@@ -202,6 +203,7 @@ from bascenev1._multiteamsession import (
     DEFAULT_TEAM_NAMES,
 )
 from bascenev1._music import MusicType, setmusic
+from bascenev1._net import HostInfo
 from bascenev1._nodeactor import NodeActor
 from bascenev1._powerup import get_default_powerup_distribution
 from bascenev1._profile import (
@@ -226,7 +228,7 @@ from bascenev1._settings import (
     IntSetting,
     Setting,
 )
-from bascenev1._session import Session
+from bascenev1._session import Session, set_player_rejoin_cooldown
 from bascenev1._stats import PlayerScoredMessage, PlayerRecord, Stats
 from bascenev1._team import SessionTeam, Team, EmptyTeam
 from bascenev1._teamgame import TeamGameActivity
@@ -303,6 +305,7 @@ __all__ = [
     'GameTip',
     'get_chat_messages',
     'get_connection_to_host_info',
+    'get_connection_to_host_info_2',
     'get_default_free_for_all_playlist',
     'get_default_teams_playlist',
     'get_default_powerup_distribution',
@@ -338,6 +341,7 @@ __all__ = [
     'have_connected_clients',
     'have_touchscreen_input',
     'HitMessage',
+    'HostInfo',
     'host_scan_cycle',
     'ImpactDamageMessage',
     'increment_analytics_count',
@@ -415,6 +419,7 @@ __all__ = [
     'set_public_party_name',
     'set_public_party_queue_enabled',
     'set_public_party_stats_url',
+    'set_player_rejoin_cooldown',
     'set_replay_speed_exponent',
     'set_touchscreen_editing',
     'setmusic',

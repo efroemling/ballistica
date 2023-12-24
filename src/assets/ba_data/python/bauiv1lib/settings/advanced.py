@@ -47,8 +47,8 @@ class AdvancedSettingsWindow(bui.Window):
             scale_origin = None
 
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 870.0 if uiscale is bui.UIScale.SMALL else 670.0
-        x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 970.0 if uiscale is bui.UIScale.SMALL else 670.0
+        x_inset = 150 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
             390.0
             if uiscale is bui.UIScale.SMALL
@@ -682,17 +682,26 @@ class AdvancedSettingsWindow(bui.Window):
     def _on_vr_test_press(self) -> None:
         from bauiv1lib.settings.vrtesting import VRTestingWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            VRTestingWindow(transition='in_right').get_root_widget()
+            VRTestingWindow(transition='in_right').get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _on_net_test_press(self) -> None:
         plus = bui.app.plus
         assert plus is not None
         from bauiv1lib.settings.nettesting import NetTestingWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         # Net-testing requires a signed in v1 account.
         if plus.get_v1_account_state() != 'signed_in':
@@ -706,7 +715,8 @@ class AdvancedSettingsWindow(bui.Window):
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            NetTestingWindow(transition='in_right').get_root_widget()
+            NetTestingWindow(transition='in_right').get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _on_friend_promo_code_press(self) -> None:
@@ -724,16 +734,25 @@ class AdvancedSettingsWindow(bui.Window):
     def _on_plugins_button_press(self) -> None:
         from bauiv1lib.settings.plugins import PluginWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            PluginWindow(origin_widget=self._plugins_button).get_root_widget()
+            PluginWindow(origin_widget=self._plugins_button).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _on_promo_code_press(self) -> None:
         from bauiv1lib.promocode import PromoCodeWindow
         from bauiv1lib.account import show_sign_in_prompt
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
         plus = bui.app.plus
         assert plus is not None
@@ -742,23 +761,30 @@ class AdvancedSettingsWindow(bui.Window):
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
+
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
             PromoCodeWindow(
                 origin_widget=self._promo_code_button
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _on_benchmark_press(self) -> None:
         from bauiv1lib.debug import DebugWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            DebugWindow(transition='in_right').get_root_widget()
+            DebugWindow(transition='in_right').get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _save_state(self) -> None:
@@ -807,6 +833,8 @@ class AdvancedSettingsWindow(bui.Window):
                     sel_name = 'ModdingGuide'
                 elif sel == self._language_inform_checkbox:
                     sel_name = 'LangInform'
+                elif sel == self._show_dev_console_button_check_box.widget:
+                    sel_name = 'ShowDevConsole'
                 else:
                     raise ValueError(f'unrecognized selection \'{sel}\'')
             elif sel == self._back_button:
@@ -870,6 +898,8 @@ class AdvancedSettingsWindow(bui.Window):
                     sel = self._modding_guide_button
                 elif sel_name == 'LangInform':
                     sel = self._language_inform_checkbox
+                elif sel_name == 'ShowDevConsole':
+                    sel = self._show_dev_console_button_check_box.widget
                 else:
                     sel = None
                 if sel is not None:
@@ -904,11 +934,16 @@ class AdvancedSettingsWindow(bui.Window):
     def _do_back(self) -> None:
         from bauiv1lib.settings.allsettings import AllSettingsWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         self._save_state()
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
         )
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            AllSettingsWindow(transition='in_left').get_root_widget()
+            AllSettingsWindow(transition='in_left').get_root_widget(),
+            from_window=self._root_widget,
         )

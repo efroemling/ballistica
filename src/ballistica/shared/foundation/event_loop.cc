@@ -98,21 +98,6 @@ EventLoop::EventLoop(EventLoopID identifier_in, ThreadSource source)
   }
 }
 
-void EventLoop::SetInternalThreadName_(const std::string& name) {
-  assert(g_core);
-  std::scoped_lock lock(g_core->thread_name_map_mutex);
-  g_core->thread_name_map[std::this_thread::get_id()] = name;
-}
-
-void EventLoop::ClearCurrentThreadName() {
-  assert(g_core);
-  std::scoped_lock lock(g_core->thread_name_map_mutex);
-  auto i = g_core->thread_name_map.find(std::this_thread::get_id());
-  if (i != g_core->thread_name_map.end()) {
-    g_core->thread_name_map.erase(i);
-  }
-}
-
 // These are all exactly the same; its just a way to try and clarify
 // in stack traces which thread is running in case it is not otherwise
 // evident.
@@ -174,7 +159,7 @@ auto EventLoop::ThreadMainAssetsP_(void* data) -> void* {
 void EventLoop::PushSetSuspended(bool suspended) {
   assert(g_core);
   // Can be toggled from the main thread only.
-  assert(std::this_thread::get_id() == g_core->main_thread_id);
+  assert(std::this_thread::get_id() == g_core->main_thread_id());
   PushThreadMessage_(ThreadMessage_(suspended
                                         ? ThreadMessage_::Type::kSuspend
                                         : ThreadMessage_::Type::kUnsuspend));
@@ -217,12 +202,12 @@ void EventLoop::WaitForNextEvent_(bool single_cycle) {
   // If we've got active timers, wait for messages with a timeout so we can
   // run the next timer payload.
   if (!suspended_ && timers_.ActiveTimerCount() > 0) {
-    millisecs_t apptime = g_core->GetAppTimeMillisecs();
-    millisecs_t wait_time = timers_.TimeToNextExpire(apptime);
+    microsecs_t apptime = g_core->GetAppTimeMicrosecs();
+    microsecs_t wait_time = timers_.TimeToNextExpire(apptime);
     if (wait_time > 0) {
       std::unique_lock<std::mutex> lock(thread_message_mutex_);
       if (thread_messages_.empty()) {
-        thread_message_cv_.wait_for(lock, std::chrono::milliseconds(wait_time),
+        thread_message_cv_.wait_for(lock, std::chrono::microseconds(wait_time),
                                     [this] {
                                       // Go back to sleep on spurious wakeups
                                       // if we didn't wind up with any new
@@ -248,24 +233,27 @@ void EventLoop::WaitForNextEvent_(bool single_cycle) {
   }
 }
 
-void EventLoop::LoopUpkeep_(bool single_cycle) {
-  assert(g_core);
-  // Keep our autorelease pool clean on mac/ios
-  // FIXME: Should define a CorePlatform::ThreadHelper or something
-  //  so we don't have platform-specific code here.
-#if BA_XCODE_BUILD
-  // Let's not do autorelease pools when being called ad-hoc,
-  // since in that case we're part of another run loop
-  // (and its crashing on drain for some reason)
-  if (!single_cycle) {
-    if (auto_release_pool_) {
-      g_core->platform->DrainAutoReleasePool(auto_release_pool_);
-      auto_release_pool_ = nullptr;
-    }
-    auto_release_pool_ = g_core->platform->NewAutoReleasePool();
-  }
-#endif
-}
+// Note to self (Oct '23): can probably kill this at some point,
+// but am still using some non-ARC objc stuff from logic thread
+// so should keep it around just a bit longer just in case.
+// void EventLoop::LoopUpkeep_(bool single_cycle) {
+//  assert(g_core);
+//  // Keep our autorelease pool clean on mac/ios
+//  // FIXME: Should define a CorePlatform::ThreadHelper or something
+//  //  so we don't have platform-specific code here.
+// #if BA_XCODE_BUILD
+//  // Let's not do autorelease pools when being called ad-hoc,
+//  // since in that case we're part of another run loop
+//  // (and its crashing on drain for some reason)
+//  if (!single_cycle) {
+//    if (auto_release_pool_) {
+//      g_core->platform->DrainAutoReleasePool(auto_release_pool_);
+//      auto_release_pool_ = nullptr;
+//    }
+//    auto_release_pool_ = g_core->platform->NewAutoReleasePool();
+//  }
+// #endif
+//}
 
 void EventLoop::RunToCompletion() { Run_(false); }
 void EventLoop::RunSingleCycle() { Run_(true); }
@@ -273,7 +261,7 @@ void EventLoop::RunSingleCycle() { Run_(true); }
 void EventLoop::Run_(bool single_cycle) {
   assert(g_core);
   while (true) {
-    LoopUpkeep_(single_cycle);
+    // LoopUpkeep_(single_cycle);
 
     WaitForNextEvent_(single_cycle);
 
@@ -295,8 +283,6 @@ void EventLoop::Run_(bool single_cycle) {
           assert(!suspended_);
           RunSuspendCallbacks_();
           suspended_ = true;
-          last_suspend_time_ = g_core->GetAppTimeMillisecs();
-          messages_since_suspended_ = 0;
           break;
         }
         case ThreadMessage_::Type::kUnsuspend: {
@@ -316,7 +302,7 @@ void EventLoop::Run_(bool single_cycle) {
     }
 
     if (!suspended_) {
-      timers_.Run(g_core->GetAppTimeMillisecs());
+      timers_.Run(g_core->GetAppTimeMicrosecs());
       RunPendingRunnables_();
     }
 
@@ -340,54 +326,40 @@ void EventLoop::GetThreadMessages_(std::list<ThreadMessage_>* messages) {
 
 void EventLoop::BootstrapThread_() {
   assert(!bootstrapped_);
+  assert(g_core);
   thread_id_ = std::this_thread::get_id();
-  const char* name;
   const char* id_string;
 
   switch (identifier_) {
     case EventLoopID::kLogic:
-      name = "logic";
-      id_string = "ballistica logic";
+      name_ = "logic";
       break;
     case EventLoopID::kStdin:
-      name = "stdin";
-      id_string = "ballistica stdin";
+      name_ = "stdin";
       break;
     case EventLoopID::kAssets:
-      name = "assets";
-      id_string = "ballistica assets";
+      name_ = "assets";
       break;
     case EventLoopID::kFileOut:
-      name = "fileout";
-      id_string = "ballistica file-out";
+      name_ = "fileout";
       break;
     case EventLoopID::kMain:
-      name = "main";
-      id_string = "ballistica main";
+      name_ = "main";
       break;
     case EventLoopID::kAudio:
-      name = "audio";
-      id_string = "ballistica audio";
+      name_ = "audio";
       break;
     case EventLoopID::kBGDynamics:
-      name = "bgdynamics";
-      id_string = "ballistica bg-dynamics";
+      name_ = "bgdynamics";
       break;
     case EventLoopID::kNetworkWrite:
-      name = "networkwrite";
-      id_string = "ballistica network-write";
+      name_ = "networkwrite";
       break;
     default:
       throw Exception();
   }
-  assert(name && id_string);
-  SetInternalThreadName_(name);
-
-  // Note: we currently don't do this for our main thread because it
-  // changes the process name we see in top/etc. Should look into that.
-  if (identifier_ != EventLoopID::kMain) {
-    g_core->platform->SetCurrentThreadName(id_string);
-  }
+  assert(!name_.empty());
+  g_core->RegisterThread(name_);
   bootstrapped_ = true;
 }
 
@@ -410,7 +382,7 @@ auto EventLoop::ThreadMain_() -> int {
 
     RunToCompletion();
 
-    ClearCurrentThreadName();
+    g_core->UnregisterThread();
     return 0;
   } catch (const std::exception& e) {
     auto error_msg = std::string("Unhandled exception in ")
@@ -424,6 +396,7 @@ auto EventLoop::ThreadMain_() -> int {
     // report logs with reports from dev builds.
     bool try_to_exit_cleanly =
         !(g_base_soft && g_base_soft->IsUnmodifiedBlessedBuild());
+
     bool handled = FatalError::HandleFatalError(try_to_exit_cleanly, true);
 
     // Do the default thing if platform didn't handle it.
@@ -537,7 +510,8 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
       }
 
       // Show count periodically.
-      if ((std::this_thread::get_id() == g_core->main_thread_id) && foo > 100) {
+      if ((std::this_thread::get_id() == g_core->main_thread_id())
+          && foo > 100) {
         foo = 0;
         log_entries.emplace_back(
             LogLevel::kInfo,
@@ -550,8 +524,7 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
       if (!sent_error) {
         sent_error = true;
         log_entries.emplace_back(
-            LogLevel::kError,
-            "ThreadMessage list > 1000 in thread: " + CurrentThreadName());
+            LogLevel::kError, "ThreadMessage list > 1000 in thread: " + name_);
 
         LogThreadMessageTally_(&log_entries);
       }
@@ -559,8 +532,7 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
 
     // Prevent runaway mem usage if the list gets out of control.
     if (thread_messages_.size() > 10000) {
-      FatalError("ThreadMessage list > 10000 in thread: "
-                 + CurrentThreadName());
+      FatalError("ThreadMessage list > 10000 in thread: " + name_);
     }
 
     // Unlock thread-message list and inform thread that there's something
@@ -576,8 +548,8 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
 
 void EventLoop::SetEventLoopsSuspended(bool suspended) {
   assert(g_core);
-  assert(std::this_thread::get_id() == g_core->main_thread_id);
-  g_core->event_loops_suspended = suspended;
+  assert(std::this_thread::get_id() == g_core->main_thread_id());
+  g_core->set_event_loops_suspended(suspended);
   for (auto&& i : g_core->suspendable_event_loops) {
     i->PushSetSuspended(suspended);
   }
@@ -586,10 +558,10 @@ void EventLoop::SetEventLoopsSuspended(bool suspended) {
 auto EventLoop::GetStillSuspendingEventLoops() -> std::vector<EventLoop*> {
   assert(g_core);
   std::vector<EventLoop*> threads;
-  assert(std::this_thread::get_id() == g_core->main_thread_id);
+  assert(std::this_thread::get_id() == g_core->main_thread_id());
 
   // Only return results if an actual suspend is in effect.
-  if (g_core->event_loops_suspended) {
+  if (g_core->event_loops_suspended()) {
     for (auto&& i : g_core->suspendable_event_loops) {
       if (!i->suspended()) {
         threads.push_back(i);
@@ -601,15 +573,15 @@ auto EventLoop::GetStillSuspendingEventLoops() -> std::vector<EventLoop*> {
 
 auto EventLoop::AreEventLoopsSuspended() -> bool {
   assert(g_core);
-  return g_core->event_loops_suspended;
+  return g_core->event_loops_suspended();
 }
 
-auto EventLoop::NewTimer(millisecs_t length, bool repeat,
-                         const Object::Ref<Runnable>& runnable) -> Timer* {
+auto EventLoop::NewTimer(microsecs_t length, bool repeat, Runnable* runnable)
+    -> Timer* {
   assert(g_core);
   assert(ThreadIsCurrent());
-  assert(runnable.Exists());
-  return timers_.NewTimer(g_core->GetAppTimeMillisecs(), length, 0,
+  assert(Object::IsValidManagedObject(runnable));
+  return timers_.NewTimer(g_core->GetAppTimeMicrosecs(), length, 0,
                           repeat ? -1 : 0, runnable);
 }
 
@@ -621,35 +593,6 @@ Timer* EventLoop::GetTimer(int id) {
 void EventLoop::DeleteTimer(int id) {
   assert(ThreadIsCurrent());
   timers_.DeleteTimer(id);
-}
-
-auto EventLoop::CurrentThreadName() -> std::string {
-  if (g_core == nullptr) {
-    return "unknown(not-yet-inited)";
-  }
-  {
-    std::scoped_lock lock(g_core->thread_name_map_mutex);
-    auto i = g_core->thread_name_map.find(std::this_thread::get_id());
-    if (i != g_core->thread_name_map.end()) {
-      return i->second;
-    }
-  }
-
-  // Ask pthread for the thread name if we don't have one.
-  // FIXME - move this to platform.
-#if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS || BA_OSTYPE_LINUX
-  std::string name = "unknown (sys-name=";
-  char buffer[256];
-  int result = pthread_getname_np(pthread_self(), buffer, sizeof(buffer));
-  if (result == 0) {
-    name += std::string("\"") + buffer + "\")";
-  } else {
-    name += "<error " + std::to_string(result) + ">";
-  }
-  return name;
-#else
-  return "unknown";
-#endif
 }
 
 void EventLoop::RunPendingRunnables_() {
@@ -771,8 +714,8 @@ auto EventLoop::CheckPushRunnableSafety_() -> bool {
 void EventLoop::AcquireGIL_() {
   assert(g_base_soft && g_base_soft->InLogicThread());
   auto debug_timing{g_core->core_config().debug_timing};
-  millisecs_t startms{debug_timing ? core::CorePlatform::GetCurrentMillisecs()
-                                   : 0};
+  millisecs_t startmillisecs{
+      debug_timing ? core::CorePlatform::GetCurrentMillisecs() : 0};
 
   if (py_thread_state_) {
     PyEval_RestoreThread(py_thread_state_);
@@ -780,10 +723,10 @@ void EventLoop::AcquireGIL_() {
   }
 
   if (debug_timing) {
-    auto duration{core::CorePlatform::GetCurrentMillisecs() - startms};
+    auto duration{core::CorePlatform::GetCurrentMillisecs() - startmillisecs};
     if (duration > (1000 / 120)) {
-      Log(LogLevel::kInfo,
-          "GIL acquire took too long (" + std::to_string(duration) + " ms).");
+      Log(LogLevel::kInfo, "GIL acquire took too long ("
+                               + std::to_string(duration) + " millisecs).");
     }
   }
 }

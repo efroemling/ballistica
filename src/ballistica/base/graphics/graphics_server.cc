@@ -32,15 +32,89 @@ void GraphicsServer::EnqueueFrameDef(FrameDef* framedef) {
   }
 }
 
+void GraphicsServer::ApplySettings(const GraphicsSettings* settings) {
+  assert(g_base->InGraphicsContext());
+
+  // Only push each unique settings instance through once.
+  if (settings->index == settings_index_) {
+    return;
+  }
+  settings_index_ = settings->index;
+
+  assert(settings->resolution.x >= 0.0f && settings->resolution.y >= 0.0f
+         && settings->resolution_virtual.x >= 0.0f
+         && settings->resolution_virtual.y >= 0.0f);
+
+  // Pull a few things out ourself such as screen resolution.
+  tv_border_ = settings->tv_border;
+  if (renderer_) {
+    renderer_->set_pixel_scale(settings->pixel_scale);
+  }
+  // Note: not checking virtual res here; assuming it only changes when
+  // actual res changes.
+  if (res_x_ != settings->resolution.x || res_y_ != settings->resolution.y) {
+    res_x_ = settings->resolution.x;
+    res_y_ = settings->resolution.y;
+    res_x_virtual_ = settings->resolution_virtual.x;
+    res_y_virtual_ = settings->resolution_virtual.y;
+    if (renderer_) {
+      renderer_->OnScreenSizeChange();
+    }
+  }
+
+  // Kick this over to the app-adapter to apply whatever settings they
+  // gathered for themself.
+  g_base->app_adapter->ApplyGraphicsSettings(settings);
+
+  // If we've not yet sent a context to the client, do so. At some point we
+  // may support re-sending this if there are settings that change.
+  if (client_context_ == nullptr) {
+    set_client_context(g_base->app_adapter->GetGraphicsClientContext());
+  }
+}
+
+void GraphicsServer::set_client_context(GraphicsClientContext* context) {
+  assert(g_base->InGraphicsContext());
+
+  // We have to do a bit of a song and dance with these context pointers.
+  // We wrap the context in an immutable object wrapper which is owned by
+  // the logic thread and that takes care of killing it when no longer
+  // used there, but we also need to keep it alive here in our thread.
+  // (which may not be the logic thread). So to accomplish that, we
+  // immediately ship a refcount increment over to the logic thread, and
+  // once we're done with an obj we ship a decrement.
+
+  auto* old_wrapper = client_context_;
+  auto* new_wrapper =
+      Object::NewDeferred<Snapshot<GraphicsClientContext>>(context);
+
+  client_context_ = new_wrapper;
+
+  g_base->logic->event_loop()->PushCall([old_wrapper, new_wrapper] {
+    // (This has to happen in logic thread).
+    auto ref = Object::CompleteDeferred(new_wrapper);
+
+    // Free the old one which the graphics server doesn't need anymore.
+    if (old_wrapper) {
+      old_wrapper->ObjectDecrementStrongRefCount();
+    }
+
+    // Keep the new one alive for the graphics server.
+    ref->ObjectIncrementStrongRefCount();
+
+    // Plug the new one in for logic to start using.
+    g_base->graphics->set_client_context(new_wrapper);
+  });
+}
+
 auto GraphicsServer::TryRender() -> bool {
   assert(g_base->app_adapter->InGraphicsContext());
 
   bool success{};
 
   if (FrameDef* frame_def = WaitForRenderFrameDef_()) {
-    // Apply settings such as tv-mode that were passed along via the
-    // frame-def.
-    ApplyFrameDefSettings(frame_def);
+    // Apply any new graphics settings passed along via the frame-def.
+    ApplySettings(frame_def->settings());
 
     // Note: we run mesh-updates on each frame-def that comes through even
     // if we don't actually render the frame.
@@ -58,27 +132,24 @@ auto GraphicsServer::TryRender() -> bool {
     // Send this frame_def back to the logic thread for deletion or recycling.
     g_base->graphics->ReturnCompletedFrameDef(frame_def);
   }
+
   return success;
 }
 
 auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
   assert(g_base->app_adapter->InGraphicsContext());
-  millisecs_t app_time = g_core->GetAppTimeMillisecs();
-
-  if (!renderer_) {
-    return nullptr;
-  }
-
-  // If the app is paused, never render.
-  if (g_base->app_adapter->app_suspended()) {
-    return nullptr;
-  }
-
-  // Do some incremental loading every time we try to render.
-  g_base->assets->RunPendingGraphicsLoads();
+  millisecs_t start_time = g_core->GetAppTimeMillisecs();
 
   // Spin and wait for a short bit for a frame_def to appear.
   while (true) {
+    // Stop waiting if we can't/shouldn't render anyway.
+    if (!renderer_ || shutting_down_ || g_base->app_suspended()) {
+      return nullptr;
+    }
+
+    // Do a bit of incremental loading every time through.
+    g_base->assets->RunPendingGraphicsLoads();
+
     FrameDef* frame_def{};
     {
       std::scoped_lock llock(frame_def_mutex_);
@@ -95,27 +166,19 @@ auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
       return frame_def;
     }
 
-    // If there's no frame_def for us, sleep for a bit and wait for it. But
-    // if we've been waiting for too long, give up. On some platforms such
-    // as Android, this frame will still get flipped whether we draw in it
-    // or not, so we *really* want to not skip drawing if we can help it.
-    millisecs_t t = g_core->GetAppTimeMillisecs() - app_time;
+    // If there's no frame_def for us, sleep for a bit and wait for it.
+    millisecs_t t = g_core->GetAppTimeMillisecs() - start_time;
     if (t >= 1000) {
       if (g_buildconfig.debug_build()) {
         Log(LogLevel::kWarning,
-            "GraphicsServer: aborting GetRenderFrameDef after "
-                + std::to_string(t) + "ms.");
+            "GraphicsServer: timed out at " + std::to_string(t)
+                + "ms waiting for logic thread to send us a FrameDef.");
       }
       break;  // Fail.
     }
     core::CorePlatform::SleepMillisecs(1);
   }
   return nullptr;
-}
-
-void GraphicsServer::ApplyFrameDefSettings(FrameDef* frame_def) {
-  assert(g_base->app_adapter->InGraphicsContext());
-  tv_border_ = frame_def->tv_border();
 }
 
 // Runs any mesh updates contained in the frame-def.
@@ -242,24 +305,6 @@ void GraphicsServer::ReloadLostRenderer() {
   });
 }
 
-void GraphicsServer::SetNullGraphics() {
-  // We don't actually make or update a renderer in headless, but we
-  // still need to set our list of supported textures types/etc. to avoid
-  // complaints.
-  std::list<TextureCompressionType> c_types;
-  SetTextureCompressionTypes(c_types);
-  graphics_quality_requested_ = GraphicsQualityRequest::kLow;
-  graphics_quality_ = GraphicsQuality::kLow;
-  graphics_quality_set_ = true;
-  texture_quality_requested_ = TextureQualityRequest::kLow;
-  texture_quality_ = TextureQuality::kLow;
-  texture_quality_set_ = true;
-
-  // Let the logic thread know screen creation is done (or lack thereof).
-  g_base->logic->event_loop()->PushCall(
-      [] { g_base->logic->OnGraphicsReady(); });
-}
-
 void GraphicsServer::set_renderer(Renderer* renderer) {
   assert(g_base->app_adapter->InGraphicsContext());
   assert(!renderer_loaded_);
@@ -279,59 +324,11 @@ void GraphicsServer::LoadRenderer() {
     return;
   }
 
-  switch (graphics_quality_requested_) {
-    case GraphicsQualityRequest::kLow:
-      graphics_quality_ = GraphicsQuality::kLow;
-      break;
-    case GraphicsQualityRequest::kMedium:
-      graphics_quality_ = GraphicsQuality::kMedium;
-      break;
-    case GraphicsQualityRequest::kHigh:
-      graphics_quality_ = GraphicsQuality::kHigh;
-      break;
-    case GraphicsQualityRequest::kHigher:
-      graphics_quality_ = GraphicsQuality::kHigher;
-      break;
-    case GraphicsQualityRequest::kAuto:
-      graphics_quality_ = renderer_->GetAutoGraphicsQuality();
-      break;
-    default:
-      Log(LogLevel::kError,
-          "Unhandled GraphicsQualityRequest value: "
-              + std::to_string(static_cast<int>(graphics_quality_requested_)));
-      graphics_quality_ = GraphicsQuality::kLow;
-  }
+  graphics_quality_ = Graphics::GraphicsQualityFromRequest(
+      graphics_quality_requested_, renderer_->GetAutoGraphicsQuality());
 
-  // If we don't support high quality graphics, make sure we're no higher than
-  // medium.
-  BA_PRECONDITION(g_base->graphics->has_supports_high_quality_graphics_value());
-  if (!g_base->graphics->supports_high_quality_graphics()
-      && graphics_quality_ > GraphicsQuality::kMedium) {
-    graphics_quality_ = GraphicsQuality::kMedium;
-  }
-  graphics_quality_set_ = true;
-
-  // Update texture quality based on request.
-  switch (texture_quality_requested_) {
-    case TextureQualityRequest::kLow:
-      texture_quality_ = TextureQuality::kLow;
-      break;
-    case TextureQualityRequest::kMedium:
-      texture_quality_ = TextureQuality::kMedium;
-      break;
-    case TextureQualityRequest::kHigh:
-      texture_quality_ = TextureQuality::kHigh;
-      break;
-    case TextureQualityRequest::kAuto:
-      texture_quality_ = renderer_->GetAutoTextureQuality();
-      break;
-    default:
-      Log(LogLevel::kError,
-          "Unhandled TextureQualityRequest value: "
-              + std::to_string(static_cast<int>(texture_quality_requested_)));
-      texture_quality_ = TextureQuality::kLow;
-  }
-  texture_quality_set_ = true;
+  texture_quality_ = Graphics::TextureQualityFromRequest(
+      texture_quality_requested_, renderer_->GetAutoTextureQuality());
 
   // Ok we've got our qualities figured out; now load/update the renderer.
   renderer_->Load();
@@ -386,81 +383,6 @@ void GraphicsServer::UnloadRenderer() {
   renderer_->Unload();
 
   renderer_loaded_ = false;
-}
-
-// Given physical res, calculate virtual res.
-void GraphicsServer::CalcVirtualRes_(float* x, float* y) {
-  float x_in = *x;
-  float y_in = *y;
-  if (*x / *y > static_cast<float>(kBaseVirtualResX)
-                    / static_cast<float>(kBaseVirtualResY)) {
-    *y = kBaseVirtualResY;
-    *x = *y * (x_in / y_in);
-  } else {
-    *x = kBaseVirtualResX;
-    *y = *x * (y_in / x_in);
-  }
-}
-
-void GraphicsServer::UpdateVirtualScreenRes_() {
-  assert(g_base->app_adapter->InGraphicsContext());
-
-  // In vr mode our virtual res is independent of our screen size.
-  // (since it gets drawn to an overlay)
-  if (g_core->IsVRMode()) {
-    res_x_virtual_ = kBaseVirtualResX;
-    res_y_virtual_ = kBaseVirtualResY;
-  } else {
-    res_x_virtual_ = res_x_;
-    res_y_virtual_ = res_y_;
-    CalcVirtualRes_(&res_x_virtual_, &res_y_virtual_);
-  }
-}
-
-void GraphicsServer::SetScreenResolution(float h, float v) {
-  assert(g_base->app_adapter->InGraphicsContext());
-
-  // Ignore redundant sets.
-  if (res_x_ == h && res_y_ == v) {
-    return;
-  }
-  res_x_ = h;
-  res_y_ = v;
-  UpdateVirtualScreenRes_();
-
-  // Inform renderer of the change.
-  if (renderer_) {
-    renderer_->OnScreenSizeChange();
-  }
-
-  // Inform all logic thread bits of this change.
-  g_base->logic->event_loop()->PushCall(
-      [vx = res_x_virtual_, vy = res_y_virtual_, x = res_x_, y = res_y_] {
-        g_base->graphics->SetScreenSize(vx, vy, x, y);
-      });
-}
-
-// FIXME: Shouldn't have android-specific code in here.
-void GraphicsServer::HandlePushAndroidRes(const std::string& android_res) {
-  if (g_buildconfig.ostype_android()) {
-    assert(renderer_);
-    if (renderer_ == nullptr) {
-      return;
-    }
-    // We push android res to the java layer here.  We don't actually worry
-    // about screen-size-changed callbacks and whatnot, since those will
-    // happen automatically once things actually change. We just want to be
-    // sure that we have a renderer so we can calc what our auto res should
-    // be.
-    assert(renderer_);
-    std::string fin_res;
-    if (android_res == "Auto") {
-      fin_res = renderer_->GetAutoAndroidRes();
-    } else {
-      fin_res = android_res;
-    }
-    g_core->platform->AndroidSetResString(fin_res);
-  }
 }
 
 void GraphicsServer::SetTextureCompressionTypes(
@@ -579,16 +501,6 @@ void GraphicsServer::PushReloadMediaCall() {
   g_base->app_adapter->PushGraphicsContextCall([this] { ReloadMedia_(); });
 }
 
-void GraphicsServer::PushSetScreenPixelScaleCall(float pixel_scale) {
-  g_base->app_adapter->PushGraphicsContextCall([this, pixel_scale] {
-    assert(g_base->app_adapter->InGraphicsContext());
-    if (!renderer_) {
-      return;
-    }
-    renderer_->set_pixel_scale(pixel_scale);
-  });
-}
-
 void GraphicsServer::PushComponentUnloadCall(
     const std::vector<Object::Ref<Asset>*>& components) {
   g_base->app_adapter->PushGraphicsContextCall([components] {
@@ -620,6 +532,17 @@ void GraphicsServer::PushRemoveRenderHoldCall() {
 
 auto GraphicsServer::InGraphicsContext_() const -> bool {
   return g_base->app_adapter->InGraphicsContext();
+}
+
+void GraphicsServer::Shutdown() {
+  BA_PRECONDITION(!shutting_down_);
+  BA_PRECONDITION(g_base->InGraphicsContext());
+  shutting_down_ = true;
+
+  // We don't actually do anything here currently; just take note
+  // that we're shutting down so we no longer wait for frames to come
+  // in from the main thread.
+  shutdown_completed_ = true;
 }
 
 }  // namespace ballistica::base

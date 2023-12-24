@@ -4,7 +4,7 @@
 
 #include "ballistica/base/assets/asset.h"
 #include "ballistica/base/assets/assets.h"
-#include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/support/huffman.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
@@ -25,7 +25,7 @@ void AssetsServer::OnAppStartInThread() {
   // Ask our thread to give us periodic processing time (close to but
   // not *exactly* one second; try to avoid aliasing with similar updates).
   process_timer_ = event_loop()->NewTimer(
-      987, true, NewLambdaRunnable([this] { Process(); }));
+      987 * 1000, true, NewLambdaRunnable([this] { Process(); }).Get());
 }
 
 void AssetsServer::PushPendingPreload(Object::Ref<Asset>* asset_ref_ptr) {
@@ -221,12 +221,18 @@ void AssetsServer::WriteReplayMessages() {
 void AssetsServer::Process() {
   // Make sure we don't do any loading until we know what kind/quality of
   // textures we'll be loading.
-  if (!g_base->assets || !g_base->graphics_server
-      || !g_base->graphics_server
-              ->texture_compression_types_are_set()  // NOLINT
-      || !g_base->graphics_server->texture_quality_set()) {
+
+  // FIXME - we'll need to revisit this when adding support for
+  // renderer switches, since this is not especially thread-safe.
+
+  if (!g_base->graphics->has_client_context()) {
     return;
   }
+  // if (!g_base->assets ||
+  //     || !g_base->graphics->texture_compression_types_are_set()  // NOLINT
+  //     || !g_base->graphics_server->texture_quality_set()) {
+  //   return;
+  // }
 
   // Process exactly 1 preload item. Empty out our non-audio list first
   // (audio is less likely to cause noticeable hitches if it needs to be loaded
@@ -252,7 +258,7 @@ void AssetsServer::Process() {
   // we're writing a replay.. otherwise just sleep indefinitely.
   if (pending_preloads_.empty() && pending_preloads_audio_.empty()) {
     if (writing_replay_) {
-      process_timer_->SetLength(1000);
+      process_timer_->SetLength(1000 * 1000);
     } else {
       process_timer_->SetLength(-1);
     }

@@ -73,6 +73,7 @@ class BGDynamicsServer {
     auto GetDefaultOwnerThread() const -> EventLoopID override {
       return EventLoopID::kBGDynamics;
     }
+    GraphicsQuality graphics_quality{};
     int step_millisecs{};
     Vector3f cam_pos{0.0f, 0.0f, 0.0f};
 

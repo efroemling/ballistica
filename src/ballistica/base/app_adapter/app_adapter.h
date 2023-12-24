@@ -15,20 +15,29 @@ namespace ballistica::base {
 /// all might share the same CorePlatform and BasePlatform classes.
 class AppAdapter {
  public:
-  /// Instantiate the AppAdapter subclass for the current build.
-  static auto Create() -> AppAdapter*;
+  AppAdapter();
 
   /// Called in the main thread when the app is being started.
   virtual void OnMainThreadStartApp();
 
   // Logic thread callbacks.
   virtual void OnAppStart();
-  virtual void OnAppPause();
-  virtual void OnAppResume();
+  virtual void OnAppSuspend();
+  virtual void OnAppUnsuspend();
   virtual void OnAppShutdown();
   virtual void OnAppShutdownComplete();
   virtual void OnScreenSizeChange();
   virtual void DoApplyAppConfig();
+
+  /// When called, should allocate an instance of a GraphicsSettings
+  /// subclass using 'new', fill it out, and return it. Runs in the logic
+  /// thread.
+  virtual auto GetGraphicsSettings() -> GraphicsSettings*;
+
+  /// When called, should allocate an instance of a GraphicsClientContext
+  /// subclass using 'new', fill it out, and return it. Runs in the graphics
+  /// context.
+  virtual auto GetGraphicsClientContext() -> GraphicsClientContext*;
 
   /// Return whether this class manages the main thread event loop itself.
   /// Default is true. If this is true, RunMainThreadEventLoopToCompletion()
@@ -79,9 +88,9 @@ class AppAdapter {
   /// plugged in or unplugged/etc. Default implementation returns true.
   virtual auto ShouldUseCursor() -> bool;
 
-  /// Return whether the app-adapter is having the OS show a cursor.
-  /// If this returns false, the engine will take care of drawing a cursor
-  /// when necessary. If true, SetHardwareCursorVisible will be called
+  /// Return whether the app-adapter is having the OS show a cursor. If this
+  /// returns false, the engine will take care of drawing a cursor when
+  /// necessary. If true, SetHardwareCursorVisible will be called
   /// periodically to inform the adapter what the cursor state should be.
   /// The default implementation returns false;
   virtual auto HasHardwareCursor() -> bool;
@@ -97,31 +106,43 @@ class AppAdapter {
   /// values.
   virtual void CursorPositionForDraw(float* x, float* y);
 
-  /// Put the app into a paused state. Should be called from the main
-  /// thread. Pauses work, closes network sockets, etc. May correspond to
-  /// being backgrounded on mobile, being minimized on desktop, etc. It is
-  /// assumed that, as soon as this call returns, all work is finished and
-  /// all threads can be suspended by the OS without any negative side
-  /// effects.
-  void SuspendApp();
-
-  /// Resume the app; can correspond to foregrounding on mobile,
-  /// unminimizing on desktop, etc. Spins threads back up, re-opens network
-  /// sockets, etc.
-  void UnsuspendApp();
-
-  auto app_suspended() const { return app_suspended_; }
-
   /// Return whether this AppAdapter supports a 'fullscreen' toggle for its
-  /// display. This currently will simply affect whether that option is
-  /// available in display settings or via a hotkey.
-  virtual auto CanToggleFullscreen() -> bool const;
+  /// display. This will affect whether that option is available in display
+  /// settings or via a hotkey. Must be called from the logic thread.
+  virtual auto FullscreenControlAvailable() const -> bool;
+
+  /// AppAdapters supporting a 'fullscreen' control should return the
+  /// current fullscreen state here. By default this simply returns the
+  /// app-config fullscreen value (so assumes the actual state is synced to
+  /// that). Must be called from the logic thread.
+  virtual auto FullscreenControlGet() const -> bool;
+
+  /// AppAdapters supporting a 'fullscreen' control should set the
+  /// current fullscreen state here. By default this simply sets the
+  /// app-config fullscreen value (so assumes the actual state is synced to
+  /// that). Must be called from the logic thread.
+  virtual void FullscreenControlSet(bool fullscreen);
+
+  /// AppAdapters supporting a 'fullscreen' control can return a key name
+  /// here to display if they support toggling via key ('ctrl-F', etc.).
+  /// Must be called from the logic thread.
+  virtual auto FullscreenControlKeyShortcut() const
+      -> std::optional<std::string>;
 
   /// Return whether this AppAdapter supports vsync controls for its display.
   virtual auto SupportsVSync() -> bool const;
 
   /// Return whether this AppAdapter supports max-fps controls for its display.
   virtual auto SupportsMaxFPS() -> bool const;
+
+  /// Return whether audio should be silenced when the app goes inactive. On
+  /// Desktop systems it is generally normal to continue to hear things even
+  /// if their windows are hidden, but on mobile we probably want to silence
+  /// our audio when phone calls, ads, etc. pop up over it. Note that this
+  /// is called each time the app goes inactive, so the adapter may choose
+  /// to selectively silence audio depending on what caused the inactive
+  /// switch.
+  virtual auto ShouldSilenceAudioForInactive() -> bool const;
 
   /// Return whether this platform supports soft-quit. A soft quit is
   /// when the app is reset/backgrounded/etc. but remains running in case
@@ -153,9 +174,31 @@ class AppAdapter {
   /// this point.
   virtual void TerminateApp();
 
- protected:
-  AppAdapter();
-  virtual ~AppAdapter();
+  /// Should return whether there is a keyboard attached that will deliver
+  /// direct text-editing related events to the app. When this is false,
+  /// alternate entry methods such as keyboard-entry-dialogs and on-screen
+  /// keyboards will be used. This value can change based on conditions such
+  /// as a hardware keyboard getting attached or detached or the language
+  /// changing (it may be preferable to rely on dialogs for non-english
+  /// languages/etc.). Default implementation returns false. This function
+  /// should be callable from any thread.
+  ///
+  /// Note that UI elements wanting to accept direct keyboard input should
+  /// not call this directly, but instead should call
+  /// UI::UIHasDirectKeyboardInput, as that takes into account other factors
+  /// such as which device is currently controlling the UI (Someone
+  /// navigating the UI with a game controller may still get an on-screen
+  /// keyboard even if there is a physical keyboard attached).
+  virtual auto HasDirectKeyboardInput() -> bool;
+
+  /// Called in the graphics context to apply new settings coming in from
+  /// the logic subsystem. This will be called initially to jump-start the
+  /// graphics system as well as before frame draws to update any new
+  /// settings coming in.
+  virtual void ApplyGraphicsSettings(const GraphicsSettings* settings);
+
+  virtual auto GetKeyRepeatDelay() -> float;
+  virtual auto GetKeyRepeatInterval() -> float;
 
   /// Push a raw pointer Runnable to the platform's 'main' thread. The main
   /// thread should call its RunAndLogErrors() method and then delete it.
@@ -165,10 +208,28 @@ class AppAdapter {
   /// context. By default this is simply the main thread.
   virtual void DoPushGraphicsContextRunnable(Runnable* runnable);
 
+  /// Return a name for a ballistica keyboard keycode.
+  virtual auto GetKeyName(int keycode) -> std::string;
+
+  /// Return whether there is a native 'review-this-app' prompt.
+  virtual auto NativeReviewRequestSupported() -> bool;
+
+  /// Asynchronously kick off a native review request.
+  void NativeReviewRequest();
+
+  virtual auto DoClipboardIsSupported() -> bool;
+  virtual auto DoClipboardHasText() -> bool;
+  virtual void DoClipboardSetText(const std::string& text);
+  virtual auto DoClipboardGetText() -> std::string;
+
+ protected:
+  virtual ~AppAdapter();
+
+  /// Override to implement native review requests. Will be called in the
+  /// main thread.
+  virtual void DoNativeReviewRequest();
+
  private:
-  void OnAppSuspend_();
-  void OnAppUnsuspend_();
-  bool app_suspended_{};
 };
 
 }  // namespace ballistica::base

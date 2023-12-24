@@ -208,7 +208,7 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
                                            PyObject* attr) -> PyObject* {
   BA_PYTHON_TRY;
 
-  assert(g_base->InLogicThread());
+  BA_PRECONDITION(g_base->InLogicThread());
 
   // Assuming this will always be a str?
   assert(PyUnicode_Check(attr));
@@ -327,6 +327,9 @@ auto PythonClassSessionPlayer::tp_setattro(PythonClassSessionPlayer* self,
                                            PyObject* attr, PyObject* val)
     -> int {
   BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
   // Assuming this will always be a str?
   assert(PyUnicode_Check(attr));
   const char* s = PyUnicode_AsUTF8(attr);

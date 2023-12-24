@@ -4,6 +4,7 @@
 
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
+#include "ballistica/shared/generic/native_stack_trace.h"
 
 namespace ballistica {
 
@@ -21,7 +22,7 @@ Exception::Exception(std::string message_in, PyExcType python_type)
   // If core has been inited, attempt to capture a stack-trace here we
   // can print out later if desired.
   if (core::g_core) {
-    stack_trace_ = core::g_core->platform->GetStackTrace();
+    stack_trace_ = core::g_core->platform->GetNativeStackTrace();
   }
 }
 
@@ -31,7 +32,7 @@ Exception::Exception(PyExcType python_type) : python_type_(python_type) {
   // If core has been inited, attempt to capture a stack-trace here we
   // can print out later if desired.
   if (core::g_core) {
-    stack_trace_ = core::g_core->platform->GetStackTrace();
+    stack_trace_ = core::g_core->platform->GetNativeStackTrace();
   }
 }
 

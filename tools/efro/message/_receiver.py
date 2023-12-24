@@ -310,7 +310,9 @@ class MessageReceiver:
                         msgtype.__qualname__,
                     )
                 else:
-                    logging.exception('Error in efro.message handling.')
+                    logging.exception(
+                        'Error handling raw efro.message. msg=%s', msg
+                    )
             return rstr
 
     def handle_raw_message_async(
@@ -367,7 +369,12 @@ class MessageReceiver:
                     msgtype.__qualname__,
                 )
             else:
-                logging.exception('Error in efro.message handling.')
+                logging.exception(
+                    'Error handling raw async efro.message.'
+                    ' msgtype=%s msg_decoded=%s.',
+                    msgtype,
+                    msg_decoded,
+                )
         return rstr
 
     async def _handle_raw_message_async(

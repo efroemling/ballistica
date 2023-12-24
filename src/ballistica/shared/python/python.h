@@ -41,7 +41,8 @@ class Python {
 
   /// Use this to protect Python code that may be run in cases where we
   /// don't hold the Global Interpreter Lock (GIL). (Basically anything
-  /// outside of the logic thread).
+  /// outside of the logic thread). This will release and then restore
+  /// the GIL if it is held initially; otherwise it is a no-op.
   class ScopedInterpreterLock {
    public:
     ScopedInterpreterLock();
@@ -49,9 +50,6 @@ class Python {
 
    private:
     class Impl;
-    // Note: should use unique_ptr for this, but build fails on raspberry pi
-    // (gcc 8.3.0). Works on Ubuntu 9.3 so should try again later.
-    // std::unique_ptr<Impl> impl_{};
     Impl* impl_{};
   };
 
@@ -64,9 +62,6 @@ class Python {
 
    private:
     class Impl;
-    // Note: should use unique_ptr for this, but build fails on raspberry pi
-    // (gcc 8.3.0). Works on Ubuntu 9.3 so should try again later.
-    // std::unique_ptr<Impl> impl_{};
     Impl* impl_{};
   };
 

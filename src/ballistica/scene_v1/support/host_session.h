@@ -38,7 +38,7 @@ class HostSession : public Session {
 
   // ContextTarget time/timer support
   auto NewTimer(TimeType timetype, TimerMedium length, bool repeat,
-                const Object::Ref<Runnable>& runnable) -> int override;
+                Runnable* runnable) -> int override;
   void DeleteTimer(TimeType timetype, int timer_id) override;
   auto GetTime(TimeType timetype) -> millisecs_t override;
 
@@ -70,7 +70,6 @@ class HostSession : public Session {
   void Draw(base::FrameDef* f) override;
   void OnScreenSizeChange() override;
   void LanguageChanged() override;
-  void GraphicsQualityChanged(base::GraphicsQuality q) override;
   void DebugSpeedMultChanged() override;
   auto GetHostSession() -> HostSession* override;
   auto GetMutableScene() -> Scene* override;

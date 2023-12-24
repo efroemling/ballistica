@@ -438,10 +438,16 @@ class GameActivity(Activity[PlayerT, TeamT]):
         assert classic is not None
         continues_window = classic.continues_window
 
+        # Turning these off. I want to migrate towards monetization that
+        # feels less pay-to-win-ish.
+        allow_continues = False
+
         plus = babase.app.plus
         try:
-            if plus is not None and plus.get_v1_account_misc_read_val(
-                'enableContinues', False
+            if (
+                plus is not None
+                and plus.get_v1_account_misc_read_val('enableContinues', False)
+                and allow_continues
             ):
                 session = self.session
 

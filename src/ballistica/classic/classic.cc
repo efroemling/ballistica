@@ -2,7 +2,9 @@
 
 #include "ballistica/classic/classic.h"
 
+#include "ballistica/base/support/app_timer.h"
 #include "ballistica/classic/python/classic_python.h"
+#include "ballistica/classic/support/stress_test.h"
 #include "ballistica/classic/support/v1_account.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
@@ -54,7 +56,9 @@ void ClassicFeatureSet::OnModuleExec(PyObject* module) {
 }
 
 ClassicFeatureSet::ClassicFeatureSet()
-    : python{new ClassicPython()}, v1_account{new V1Account()} {
+    : python{new ClassicPython()},
+      v1_account{new V1Account()},
+      stress_test_{new StressTest()} {
   // We're a singleton. If there's already one of us, something's wrong.
   assert(g_classic == nullptr);
 }

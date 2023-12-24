@@ -43,8 +43,8 @@ class PyRequirement:
 # remove our custom module based stuff soon if nobody complains, which
 # would free us to theoretically move to a requirements.txt based setup.
 PY_REQUIREMENTS = [
-    PyRequirement(pipname='pylint', minversion=[3, 0, 1]),
-    PyRequirement(pipname='mypy', minversion=[1, 6, 0]),
+    PyRequirement(pipname='mypy', minversion=[1, 7, 0]),
+    PyRequirement(pipname='pylint', minversion=[3, 0, 2]),
     PyRequirement(pipname='cpplint', minversion=[1, 6, 1]),
     PyRequirement(pipname='pytest', minversion=[7, 4, 2]),
     PyRequirement(pipname='pytz', minversion=[2023, 3]),
@@ -601,6 +601,7 @@ def _get_server_config_raw_contents(projroot: str) -> str:
 
 def _get_server_config_template_yaml(projroot: str) -> str:
     # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
     import yaml
 
     lines_in = _get_server_config_raw_contents(projroot).splitlines()
@@ -664,6 +665,8 @@ def _get_server_config_template_yaml(projroot: str) -> str:
                 vval = 'https://mystatssite.com/showstats?player=${ACCOUNT}'
             elif vname == 'admins':
                 vval = ['pb-yOuRAccOuNtIdHErE', 'pb-aNdMayBeAnotherHeRE']
+            elif vname == 'protocol_version':
+                vval = 35
             lines_out += [
                 '#' + l for l in yaml.dump({vname: vval}).strip().splitlines()
             ]

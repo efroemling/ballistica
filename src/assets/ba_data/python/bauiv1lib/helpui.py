@@ -36,8 +36,8 @@ class HelpWindow(bui.Window):
         self._main_menu = main_menu
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        width = 950 if uiscale is bui.UIScale.SMALL else 750
-        x_offs = 100 if uiscale is bui.UIScale.SMALL else 0
+        width = 1050 if uiscale is bui.UIScale.SMALL else 750
+        x_offs = 150 if uiscale is bui.UIScale.SMALL else 0
         height = (
             460
             if uiscale is bui.UIScale.SMALL
@@ -645,11 +645,16 @@ class HelpWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.mainmenu import MainMenuWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
         )
         if self._main_menu:
             assert bui.app.classic is not None
             bui.app.ui_v1.set_main_menu_window(
-                MainMenuWindow(transition='in_left').get_root_widget()
+                MainMenuWindow(transition='in_left').get_root_widget(),
+                from_window=self._root_widget,
             )

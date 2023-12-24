@@ -6,6 +6,7 @@
 
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/graphics.h"
+#include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
@@ -98,7 +99,7 @@ static auto PyTimer(PyObject* self, PyObject* args, PyObject* keywds)
   SceneV1Context::Current().NewTimer(
       TimeType::kSim, static_cast<millisecs_t>(length * 1000.0),
       static_cast<bool>(repeat),
-      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj));
+      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj).Get());
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -207,7 +208,7 @@ static auto PyBaseTimer(PyObject* self, PyObject* args, PyObject* keywds)
   SceneV1Context::Current().NewTimer(
       TimeType::kBase, static_cast<millisecs_t>(length * 1000.0),
       static_cast<bool>(repeat),
-      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj));
+      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj).Get());
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -755,7 +756,7 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
     }
 
     // Now display it locally.
-    g_base->graphics->AddScreenMessage(
+    g_base->graphics->screenmessages->AddScreenMessage(
         message, color, static_cast<bool>(top),
         texture ? texture->texture_data() : nullptr,
         tint_texture ? tint_texture->texture_data() : nullptr, tint_color,
@@ -1046,7 +1047,24 @@ static auto PyCameraShake(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &intensity)) {
     return nullptr;
   }
-  g_base->graphics->LocalCameraShake(intensity);
+
+  if (Scene* scene = ContextRefSceneV1::FromCurrent().GetMutableScene()) {
+    // Send to clients/replays (IF we're servering protocol 35+).
+    if (SceneV1AppMode::GetSingleton()->host_protocol_version() >= 35) {
+      if (SessionStream* output_stream = scene->GetSceneStream()) {
+        output_stream->EmitCameraShake(intensity);
+      }
+    }
+
+    // Depict locally.
+    if (!g_core->HeadlessMode()) {
+      g_base->graphics->LocalCameraShake(intensity);
+    }
+  } else {
+    throw Exception("Can't shake the camera in this context_ref.",
+                    PyExcType::kContext);
+  }
+
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1172,9 +1190,13 @@ static auto PyEmitFx(PyObject* self, PyObject* args, PyObject* keywds)
     e.spread = spread;
     e.chunk_type = chunk_type;
     e.tendril_type = tendril_type;
+
+    // Send to clients/replays.
     if (SessionStream* output_stream = scene->GetSceneStream()) {
       output_stream->EmitBGDynamics(e);
     }
+
+    // Depict locally.
     if (!g_core->HeadlessMode()) {
       g_base->bg_dynamics->Emit(e);
     }
@@ -1722,7 +1744,8 @@ static PyMethodDef PyHandleAppIntentExecDef = {
 
 static auto PyProtocolVersion(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  return PyLong_FromLong(kProtocolVersion);
+  return PyLong_FromLong(
+      SceneV1AppMode::GetSingleton()->host_protocol_version());
   BA_PYTHON_CATCH;
 }
 

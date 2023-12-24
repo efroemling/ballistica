@@ -14,7 +14,7 @@ from efrotools import readfile, writefile, replace_exact
 
 # Python version we build here (not necessarily same as we use in repo).
 PY_VER_ANDROID = '3.11'
-PY_VER_EXACT_ANDROID = '3.11.5'
+PY_VER_EXACT_ANDROID = '3.11.6'
 PY_VER_APPLE = '3.11'
 PY_VER_EXACT_APPLE = '3.11.5'
 
@@ -36,9 +36,9 @@ VERSION_MIN_TVOS = '9.0'
 # See https://stackoverflow.com/questions/74059978/
 # why-is-lldb-generating-exc-bad-instruction-with-user-compiled-library-on-macos
 #
-# For now will try to ride out this LTS version as long as possible.
-OPENSSL_VER_APPLE = '3.0.10'
-OPENSSL_VER_ANDROID = '3.0.10'
+# For now will try to ride out this 3.0 LTS version as long as possible.
+OPENSSL_VER_APPLE = '3.0.12'
+OPENSSL_VER_ANDROID = '3.0.12'
 
 LIBFFI_VER_APPLE = '3.4.4'
 BZIP2_VER_APPLE = '1.0.8'
@@ -47,14 +47,14 @@ XZ_VER_APPLE = '5.4.4'
 # Android repo doesn't seem to be getting updated much so manually
 # bumping various versions to keep things up to date.
 ZLIB_VER_ANDROID = '1.3'
-XZ_VER_ANDROID = '5.4.4'
+XZ_VER_ANDROID = '5.4.5'
 BZIP2_VER_ANDROID = '1.0.8'
 GDBM_VER_ANDROID = '1.23'
 LIBFFI_VER_ANDROID = '3.4.4'
-LIBUUID_VER_ANDROID = ('2.38', '2.38.1')
-NCURSES_VER_ANDROID = '6.3'
+LIBUUID_VER_ANDROID = ('2.39', '2.39.2')
+NCURSES_VER_ANDROID = '6.4'
 READLINE_VER_ANDROID = '8.2'
-SQLITE_VER_ANDROID = ('2023', '3430000')
+SQLITE_VER_ANDROID = ('2023', '3440000')
 
 # Filenames we prune from Python lib dirs in source repo to cut down on
 # size.
@@ -466,7 +466,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Ok; let 'er rip!
     exargs = ' --with-pydebug' if debug else ''
     subprocess.run(
-        f'ARCH={arch} ANDROID_API=21 ./build.sh{exargs} --without-ensurepip'
+        f'ARCH={arch} ANDROID_API=23 ./build.sh{exargs} --without-ensurepip'
         f' --with-build-python=/home/ubuntu/.py311/bin/python3.11',
         shell=True,
         check=True,

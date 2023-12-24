@@ -68,6 +68,11 @@ class CoreConfig;
 /// Entry point for standard monolithic builds. Handles all initing and
 /// running.
 auto MonolithicMain(const core::CoreConfig& config) -> int;
+
+/// Special alternate version of MonolithicMain which breaks its work into
+/// pieces; used to reduce app-not-responding reports from slow Android
+/// devices. Call this repeatedly until it returns true;
+auto MonolithicMainIncremental(const core::CoreConfig* config) -> bool;
 #endif  // BA_MONOLITHIC_BUILD
 
 // Print a momentary message on the screen.

@@ -165,7 +165,6 @@ class _Outputter:
                 )
             return value if self._create else None
 
-        # noinspection PyPep8
         if origin is typing.Union or origin is types.UnionType:
             # Currently, the only unions we support are None/Value
             # (translated from Optional), which we verified on prep.

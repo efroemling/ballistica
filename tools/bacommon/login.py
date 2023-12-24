@@ -11,6 +11,12 @@ if TYPE_CHECKING:
     pass
 
 
+# NOTE TO SELF:
+# Whenever adding login types here, make sure to update all
+# basn nodes before trying to send values through to bamaster,
+# as they need to be extractable by basn en route.
+
+
 class LoginType(Enum):
     """Types of logins available."""
 
@@ -19,6 +25,9 @@ class LoginType(Enum):
 
     # Google Play Game Services
     GPGS = 'gpgs'
+
+    # Apple's Game Center
+    GAME_CENTER = 'game_center'
 
     @property
     def displayname(self) -> str:
@@ -29,3 +38,5 @@ class LoginType(Enum):
                 return 'Email/Password'
             case cls.GPGS:
                 return 'Google Play Games'
+            case cls.GAME_CENTER:
+                return 'Game Center'

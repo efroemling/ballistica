@@ -103,8 +103,8 @@ class PlaylistEditGameWindow(bui.Window):
         self._choice_selections: dict[str, int] = {}
 
         uiscale = bui.app.ui_v1.uiscale
-        width = 720 if uiscale is bui.UIScale.SMALL else 620
-        x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
+        width = 820 if uiscale is bui.UIScale.SMALL else 620
+        x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         height = (
             365
             if uiscale is bui.UIScale.SMALL
@@ -514,6 +514,10 @@ class PlaylistEditGameWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.playlist.mapselect import PlaylistMapSelectWindow
 
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
         # Replace ourself with the map-select UI.
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
@@ -524,7 +528,8 @@ class PlaylistEditGameWindow(bui.Window):
                 copy.deepcopy(self._getconfig()),
                 self._edit_info,
                 self._completion_call,
-            ).get_root_widget()
+            ).get_root_widget(),
+            from_window=self._root_widget,
         )
 
     def _choice_inc(

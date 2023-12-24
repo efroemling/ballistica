@@ -1,19 +1,128 @@
-### 1.7.28 (build 21445, api 8, 2023-10-11)
+### 1.7.33 (build 21743, api 8, 2023-12-21)
 
+### 1.7.32 (build 21741, api 8, 2023-12-20)
+- Fixed a screen message that no one will ever see (Thanks vishal332008?...)
+- Plugins window now displays 'No Plugins Installed' when no plugins are present (Thanks vishal332008!)
+- Old messages are now displayed as soon as you press 'Unmute Chat' (Thanks vishal332008!)
+- Added an 'Add to Favorites' entry to the party menu (Thanks vishal332008!)
+- Now displays 'No Parties Added' in favorites tab if no favorites are present (Thanks vishal332008!)
+- Now shows character icons in the profiles list window (Thanks vishal332008!)
+- Added a Random button for names in the Player Profiles window (Thanks vishal332008!)
+- Fixed a bug where no server is selected by default in the favorites tab (Thanks vishal332008!)
+- Fixed a bug where no replay is selected by default in the watch tab (Thanks vishal332008!)
+- Fixed a bug where no profile is selected by default in the profile tab (Thanks vishal332008!)
+- Fixed a number of UI screens so that ugly window edges are no longer visible
+  in corners on modern ultra wide phone displays.
+- Added a `player_rejoin_cooldown` server config option. This defaults to 10
+  seconds for servers but 0 for normal gui clients. This mechanism had been
+  introduced recently to combat multiplayer fast-rejoin exploits and was set to
+  10 seconds everywhere, but it could tend to be annoying for local single
+  player play, dev testing, etc. Hopefully this strikes a good balance now.
+- Removed the player-rejoin-cooldown mechanism from the C++ layer since it was
+  redundant with the Python level one and didn't cover as many cases.
+- Restored the behavior from before 1.7.28 where backgrounding the app would
+  bring up the main menu and pause the action. Now it is implemented more
+  cleanly however (an `on_app_active_changed()` call in the `AppMode` class).
+  This means that it also applies to other platforms when the app reaches the
+  'inactive' state; for instance when minimizing the window on the SDL build.
+
+### 1.7.31 (build 21727, api 8, 2023-12-17)
+- Added `bascenev1.get_connection_to_host_info_2()` which is an improved
+  type-safe version of `bascenev1.get_connection_to_host_info()`.
+- There is now a link to the official Discord server in the About section
+  (thanks EraOSBeta!).
+- Native stack traces now work on Android; woohoo! Should be very helpful for
+  debugging.
+- Added the concept of 'ui-operations' in the native layer to hopefully clear
+  out the remaining double-window bugs. Basically, widgets used to schedule
+  their payload commands to a future cycle of the event loop, meaning it was
+  possible for commands that switched the main window to get scheduled twice
+  before the first one ran (due to 2 key presses, etc), which could lead to all
+  sorts of weirdness happening such as multiple windows popping up when one was
+  intended. Now, however, such commands get scheduled to a current
+  'ui-operation' and then run *almost* immediately, which should prevent such
+  situations. Please holler if you run into any UI weirdness at this point.
+  
+### 1.7.30 (build 21697, api 8, 2023-12-08)
+- Continued work on the big 1.7.28 update.
+- Got the Android version back up and running. There's been lots of cleanup and
+  simplification on the Android layer, cleaning out years of cruft. This should
+  put things in a better more maintainable place, but there will probably be
+  some bugs to iron out, so please holler if you run into any.
+- Minimum supported Android version has been bumped from 5.0 to 6.0. Some
+  upcoming tech such as ASTC textures will likely not be well supported on such
+  old devices, so I think it is better to leave them running an older version
+  that performs decently instead of a newer version that performs poorly. And
+  letting go of old Android versions lets us better support new ones.
+- Android version now uses the 'Oboe' library as an audio back-end instead of
+  OpenSL. This should result in better behaving audio in general. Please holler
+  if you experience otherwise.
+- Bundled Android Python has been bumped to version 3.11.6.
+- Android app suspend behavior has been revamped. The app should stay running
+  more often and be quicker to respond when dialogs or other activities
+  temporarily pop up in front of it. This also allows it to continue playing
+  music over other activities such as Google Play Games
+  Achievements/Leaderboards screens. Please holler if you run into strange side
+  effects such as the app continuing to play audio when it should not be.
+- Modernized the Android fullscreen setup code when running in Android 11 or
+  newer. The game should now use the whole screen area, including the area
+  around notches or camera cutouts. Please holler if you are seeing any problems
+  related to this.
+- (build 21626) Fixed a bug where click/tap locations were incorrect on some
+  builds when tv-border was on (Thanks for the heads-up Loup(Dliwk's fan)!).
+- (build 21631) Fixes an issue where '^^^^^^^^^^^^^' lines in stack traces could
+  get chopped into tiny bits each on their own line in the dev console.
+- Hopefully finally fixed a longstanding issue where obscure cases such as
+  multiple key presses simultaneously could cause multiple main menu windows to
+  pop up. Please holler if you still see this problem happening anywhere. Also
+  added a few related safety checks and warnings to help ensure UI code is free
+  from such problems going forward. To make sure your custom UIs are behaving
+  well in this system, do the following two things: 1) any time you call
+  `set_main_menu_window()`, pass your existing main menu window root widget as
+  `from_window`. 2) In any call that can lead to you switching the main menu
+  window, check if your root widget is dead or transitioning out first and abort
+  if it is. See any window in `ui_v1_lib` for examples.
+- (build 21691) Fixed a bug causing touches to not register in some cases on
+  newer Android devices. (Huge thanks to JESWIN A J for helping me track that
+  down!).
+- Temporarily removed the pause-the-game-when-backgrounded behavior for locally
+  hosted games, mainly due to the code being hacky. Will try to restore this
+  functionality in a cleaner way soon.
+
+### 1.7.29 (build 21619, api 8, 2023-11-21)
+
+- Simply continued work on the big 1.7.28 update. I was able to finally start
+  updating the Mac App Store version of the game again (it had been stuck at
+  1.4!), and it turns out that Apple AppStore submissions require the version
+  number to increase each time and not just the build number, so we may start
+  seeing more minor version number bumps for that reason.
+- Windows builds should now die with a clear error when the OpenGL version is
+  too old (OpenGL 3.0 or newer is required). Previously they could die with more
+  cryptic error messages such as "OpenGL function 'glActiveTexture2D' not
+  found".
+
+### 1.7.28 (build 21599, api 8, 2023-11-16)
+
+- Turning off ticket continues on all platforms. I'll be moving the game towards
+  a new monetization scheme mostly based on cosmetics and this has always felt a
+  bit ugly pay-to-win to me, so it's time for it to go. Note that the
+  functionality is still in there if anyone wants to support it in mods.
 - Massively cleaned up code related to rendering and window systems (OpenGL,
   SDL, etc). This code had been growing into a nasty tangle for 15 years
   attempting to support various old/hacked versions of SDL, etc. I ripped out
   huge chunks of it and put back still-relevant pieces in a much more cleanly
   designed way. This should put us in a much better place for supporting various
-  platforms and making graphical improvements going forward. See
-  `ballistica/base/app_adapter/app_adapter_sdl.cc` for an example of the now
+  platforms and making graphical improvements going forward.
+  `ballistica/base/app_adapter/app_adapter_sdl.cc` is an example of the now
   nicely implemented system.
 - The engine now requires OpenGL 3.0 or newer on desktop and OpenGL ES 3.0 or
   newer on mobile. This means we're cutting off a few percent of old devices on
   Android that only support ES 2, but ES 3 has been out for 10 years now so I
   feel it is time. As mentioned above, this allows massively cleaning up the
-  graphics code which means we can start to improve it.
-- Removed gamma controls. These were only active on the old Mac version anyway
+  graphics code which means we can start to improve it. Ideally now the GL
+  renderer can be abstracted a bit more which will make the process of writing
+  other renderers easier.
+- Removed gamma controls. These were only active on the old Mac builds anyway
   and are being removed from the upcoming SDL3, so if we want this sort of thing
   we should do it through shading in the renderer now.
 - Implemented both vsync and max-fps for the SDL build of the game. This means
@@ -129,7 +238,87 @@
   before. It also takes a `confirm` bool arg which allows it to be used to bring
   up a confirm dialog.
 - Clicking on a window close button to quit no longer brings up a confirm dialog
-  and instead quits immediately (though with a proper graceful shutdown).
+  and instead quits immediately (though with a proper graceful shutdown and a
+  lovely little fade).
+- Camera shake is now supported in network games and replays. Somehow I didn't
+  notice that was missing for years. The downside is this requires a server to
+  be hosting protocol 35, which cuts off support for 1.4 clients. So for now I
+  am keeping the default at 33. Once there a fewer 1.4 clients around we can
+  consider changing this (if everything hasn't moved to SceneV2 by then).
+- Added a server option to set the hosting protocol for servers who might want
+  to allow camera shake (or other minor features/fixes) that don't work in the
+  default protocol 33. See `protocol_version` in `config.yaml`. Just remember
+  that you will be cutting off support for older clients if you use 35.
+- Fixed a bug with screen-messages animating off screen too fast when frame
+  rates are high.
+- Added a proper graceful shutdown process for the audio server. This should
+  result in fewer ugly pops and warning messages when the app is quit.
+- Tidied up some keyboard shortcuts to be more platform-appropriate. For
+  example, toggling fullscreen on Windows is now Alt+Enter or F11.
+- Fancy rebuilt Mac build should now automatically sync its frame rate to the
+  display its running on (using CVDisplayLinks, not VSync).
+- Mac build is now relying solely on Apple's Game Controller Framework, which
+  seems pretty awesome these days. It should support most stuff SDL does and
+  with less configuring involved. Please holler if you come across something
+  that doesn't work.
+- Mac build is also now using the Game Controller Framework to handle keyboard
+  events. This should better handle things like modifier keys and also will
+  allow us to use that exact same code on the iPad/iPhone version.
+- OS key repeat events are no longer passed through the engine. This means that
+  any time we want repeating behavior, such as holding an arrow key to move
+  through UI elements, we will need to wire it up ourselves. We already do this
+  for things like game controllers however, so this is more consistent in a way.
+- Dev console no longer claims key events unless the Python tab is showing and
+  there is a hardware keyboard attached. This allows showing dev console tabs
+  above gameplay without interfering with it.
+- Added clipboard paste support to the dev console python terminal.
+- Added various text editing functionality to the dev console python terminal
+  (cursor movement, deleting chars and words, etc.)
+- Internal on-screen-keyboard now has a cancel button (thanks vishal332008!)
+- Public servers list now shows 'No servers found' if there are no servers to
+  show instead of just remaining mysteriously blank (thanks vishal332008!)
+- Players are now prevented from rejoining a session for 10 seconds after they
+  leave to prevent game exploits. Note this is different than the existing
+  system that prevents joining a *party* for 10 seconds; this covers people
+  who never leave the party (Thanks EraOSBeta!).
+- Fixes an issue where servers could be crashed by flooding them with join
+  requests (Thanks for the heads-up Era!).
+- The engine will now ignore empty device config dicts and fall back to
+  defaults; these could theoretically happen if device config code fails
+  somewhere and it previously would leave the device mysteriously inoperable.
+- The game will now show <unset> for controls with no bindings in the in-game
+  guide and controller/keyboard config screens.
+- Fixed a crash that could occur if SDL couldn't find a name for connected
+  joystick.
+- Simplified the app's handling of broken config files. Previously it would do
+  various complex things such as offering to edit the broken config on desktop
+  builds, avoiding overwriting broken configs, and automatically loading
+  previous configs. Now, if it finds a broken config, it will simply back it up
+  to a .broken file, log an error message, and then start up normally with a
+  default config. This way, things are more consistent across platforms, and
+  technical users can still fix and restore their old configs. Note that the app
+  still also writes .prev configs for extra security, though it no longer uses
+  them for anything itself.
+- Converted more internal engine time values from milliseconds to microseconds,
+  including things like the internal EventLoop timeline. Please holler if you
+  notice anything running 1000x too fast or slow. In general my strategy going
+  forward is to use microseconds for exact internal time values but to mostly
+  expose float seconds to the user, especially on the Python layer. There were
+  starting to be a few cases were integer milliseconds was not enough precision
+  for internal values. For instance, if we run with unclamped framerates and hit
+  several hundred FPS, milliseconds per frame would drop to 0 which caused some
+  problems. Note that scenev1 will be remaining on milliseconds internally for
+  compatibility reasons. Scenev2 should move to microseconds though.
+- The V2 account id for the signed in account is now available at
+  `ba*.app.plus.accounts.primary.accountid` (alongside some other existing
+  account info).
+- (build 21585) Fixed an issue where some navigation key presses were getting
+  incorrectly absorbed by text widgets. (Thanks for the heads-up Temp!)
+- (build 21585) Fixed an issue where texture quality changes would not take
+  effect until next launch.
+- Added a 'glow_type' arg to `bauiv1.textwidget()` to adjust the glow used when
+  the text is selected. The default is 'gradient' but there is now a 'uniform'
+  option which may look better in some circumstances.
   
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 

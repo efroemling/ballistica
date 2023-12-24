@@ -5,6 +5,9 @@
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/logging.h"
+#include "ballistica/shared/generic/lambda_runnable.h"
+#include "ballistica/shared/generic/native_stack_trace.h"
+#include "ballistica/shared/python/python.h"
 
 namespace ballistica {
 
@@ -13,15 +16,31 @@ namespace ballistica {
 using core::g_base_soft;
 using core::g_core;
 
+bool FatalError::reported_{};
+
+void FatalError::DoFatalError(const std::string& message) {
+  // Let the user and/or master-server know we're dying.
+  ReportFatalError(message, false);
+
+  // In some cases we prefer to cleanly exit the app with an error code
+  // in a way that won't wind up as a crash report; this avoids polluting
+  // our crash reports list with stuff from dev builds.
+  bool try_to_exit_cleanly =
+      !(core::g_base_soft && core::g_base_soft->IsUnmodifiedBlessedBuild());
+  bool handled = HandleFatalError(try_to_exit_cleanly, false);
+  if (!handled) {
+    abort();
+  }
+}
+
 void FatalError::ReportFatalError(const std::string& message,
                                   bool in_top_level_exception_handler) {
-  // We want to report the first fatal error that happens; if further ones
-  // happen they are probably red herrings.
-  static bool ran = false;
-  if (ran) {
+  // We want to report only the first fatal error that happens; if further
+  // ones happen they are likely red herrings triggered by the first.
+  if (reported_) {
     return;
   }
-  ran = true;
+  reported_ = true;
 
   // Our main goal here varies based off whether we are an unmodified
   // blessed build. If we are, our main goal is to communicate as much info
@@ -69,16 +88,20 @@ void FatalError::ReportFatalError(const std::string& message,
   // since we know where those are anyway.
   if (!in_top_level_exception_handler) {
     if (g_core && g_core->platform) {
-      core::PlatformStackTrace* trace{g_core->platform->GetStackTrace()};
+      NativeStackTrace* trace{g_core->platform->GetNativeStackTrace()};
       if (trace) {
         std::string tracestr = trace->FormatForDisplay();
         if (!tracestr.empty()) {
-          logmsg += ("\nCPP-STACK-TRACE-BEGIN:\n" + tracestr
-                     + "\nCPP-STACK-TRACE-END");
+          logmsg +=
+              (("\n----------------------- BALLISTICA-NATIVE-STACK-TRACE-BEGIN "
+                "--------------------\n")
+               + tracestr
+               + ("\n----------------------- BALLISTICA-NATIVE-STACK-TRACE-END "
+                  "----------------------"));
         }
         delete trace;
       } else {
-        logmsg += "\n(CPP-STACK-TRACE-UNAVAILABLE)";
+        logmsg += "\n(BALLISTICA-NATIVE-STACK-TRACE-UNAVAILABLE)";
       }
     }
   }
@@ -92,7 +115,7 @@ void FatalError::ReportFatalError(const std::string& message,
   // momentarily, and also go to platform-specific logging and good ol'
   // stderr.
   Logging::V1CloudLog(logmsg);
-  Logging::DisplayLog("root", LogLevel::kCritical, logmsg);
+  Logging::EmitLog("root", LogLevel::kCritical, logmsg);
   fprintf(stderr, "%s\n", logmsg.c_str());
 
   std::string prefix = "FATAL-ERROR-LOG:";
@@ -131,32 +154,37 @@ void FatalError::DoBlockingFatalErrorDialog(const std::string& message) {
   // done.
   if (g_core->InMainThread()) {
     g_core->platform->BlockingFatalErrorDialog(message);
-  } else {
-    printf("FIXME REIMPLEMENT BLOCKING FATAL ERROR FOR BG THREAD\n");
-    // bool started{};
-    // bool finished{};
-    // bool* startedptr{&started};
-    // bool* finishedptr{&finished};
-    // g_core->main_event_loop()->PushCall([message, startedptr, finishedptr] {
-    //   *startedptr = true;
-    //   g_core->platform->BlockingFatalErrorDialog(message);
-    //   *finishedptr = true;
-    // });
+  } else if (g_base_soft) {
+    bool started{};
+    bool finished{};
+    bool* startedptr{&started};
+    bool* finishedptr{&finished};
 
-    // // Wait a short amount of time for the main thread to take action.
-    // // There's a chance that it can't (if threads are paused, if it is
-    // // blocked on a synchronous call to another thread, etc.) so if we don't
-    // // see something happening soon, just give up on showing a dialog.
-    // auto starttime = core::CorePlatform::GetCurrentMillisecs();
-    // while (!started) {
-    //   if (core::CorePlatform::GetCurrentMillisecs() - starttime > 1000) {
-    //     return;
-    //   }
-    //   core::CorePlatform::SleepMillisecs(10);
-    // }
-    // while (!finished) {
-    //   core::CorePlatform::SleepMillisecs(10);
-    // }
+    // If our thread is holding the GIL, release it while we spin; otherwise
+    // we can wind up in deadlock if the main thread wants it.
+    Python::ScopedInterpreterLockRelease gil_release;
+
+    g_base_soft->PushMainThreadRunnable(
+        NewLambdaRunnableUnmanaged([message, startedptr, finishedptr] {
+          *startedptr = true;
+          g_core->platform->BlockingFatalErrorDialog(message);
+          *finishedptr = true;
+        }));
+
+    // Wait a short amount of time for the main thread to take action.
+    // There's a chance that it can't (if threads are suspended, if it is
+    // blocked on a synchronous call to another thread, etc.) so if we don't
+    // see something happening soon, just give up on showing a dialog.
+    auto starttime = core::CorePlatform::GetCurrentMillisecs();
+    while (!started) {
+      if (core::CorePlatform::GetCurrentMillisecs() - starttime > 3000) {
+        return;
+      }
+      core::CorePlatform::SleepMillisecs(10);
+    }
+    while (!finished) {
+      core::CorePlatform::SleepMillisecs(10);
+    }
   }
 }
 
@@ -175,16 +203,16 @@ auto FatalError::HandleFatalError(bool exit_cleanly,
   // bring the app down ourself.
   if (!in_top_level_exception_handler) {
     if (exit_cleanly) {
-      Logging::DisplayLog("root", LogLevel::kCritical, "Calling exit(1)...");
+      Logging::EmitLog("root", LogLevel::kCritical, "Calling exit(1)...");
       exit(1);
     } else {
-      Logging::DisplayLog("root", LogLevel::kCritical, "Calling abort()...");
+      Logging::EmitLog("root", LogLevel::kCritical, "Calling abort()...");
       abort();
     }
   }
 
   // Otherwise its up to who called us (they might let the caught exception
-  // bubble up)
+  // bubble up).
   return false;
 }
 

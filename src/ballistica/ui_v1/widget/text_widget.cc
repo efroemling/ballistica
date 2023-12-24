@@ -2,9 +2,11 @@
 
 #include "ballistica/ui_v1/widget/text_widget.h"
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/input.h"
@@ -113,8 +115,9 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     // another component at the end with the matching pop. This only works
     // because the components in the middle wind up writing to the same draw
     // list, but there is nothing checking or enforcing that so it would be
-    // easy to break. Should improve this somehow. (perhaps by using a single
-    // component and enforcing list uniformity between push/pop blocks?)
+    // easy to break. Should improve this somehow. (perhaps by using a
+    // single component and enforcing list uniformity between push/pop
+    // blocks?)
     c.PushTransform();
 
     // Move to middle, scale down, move back.
@@ -158,34 +161,68 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
 
       if (highlight_dirty_) {
-        float l_border, r_border, b_border, t_border;
-        float l2 = bound_l;
-        float r2 = bound_r;
-        float t2 = bound_t;
-        float b2 = bound_b;
-        l_border = std::max(10.0f, (r2 - l2) * 0.05f);
-        r_border = 0;
-        b_border = std::max(16.0f, (t2 - b2) * 0.16f);
-        t_border = std::max(14.0f, (t2 - b2) * 0.14f);
-        highlight_width_ = r2 - l2 + l_border + r_border;
-        highlight_height_ = t2 - b2 + b_border + t_border;
-        highlight_center_x_ = l2 - l_border + highlight_width_ * 0.5f;
-        highlight_center_y_ = b2 - b_border + highlight_height_ * 0.5f;
+        if (glow_type_ == GlowType::kGradient) {
+          float l_border, r_border, b_border, t_border;
+          float l2 = bound_l;
+          float r2 = bound_r;
+          float t2 = bound_t;
+          float b2 = bound_b;
+          l_border = std::max(10.0f, (r2 - l2) * 0.05f);
+          r_border = 0;
+          b_border = std::max(16.0f, (t2 - b2) * 0.16f);
+          t_border = std::max(14.0f, (t2 - b2) * 0.14f);
+          highlight_width_ = r2 - l2 + l_border + r_border;
+          highlight_height_ = t2 - b2 + b_border + t_border;
+          highlight_center_x_ = l2 - l_border + highlight_width_ * 0.5f;
+          highlight_center_y_ = b2 - b_border + highlight_height_ * 0.5f;
+          highlight_mesh_.Clear();
+        } else {
+          assert(glow_type_ == GlowType::kUniform);
+          float corner_radius{30.0f};
+          float width{bound_r - bound_l};
+          float height{bound_t - bound_b};
+          float x_extend{12.0f};
+          float y_extend{6.0f};
+          float x_offset{0.0f};
+          float width_fin = width + x_extend * 2.0f;
+          float height_fin = height + y_extend * 2.0f;
+          float x_border = base::NinePatchMesh::BorderForRadius(
+              corner_radius, width_fin, height_fin);
+          float y_border = base::NinePatchMesh::BorderForRadius(
+              corner_radius, height_fin, width_fin);
+
+          highlight_mesh_ = Object::New<base::NinePatchMesh>(
+              -x_extend + x_offset, -y_extend, 0.0f, width_fin, height_fin,
+              x_border, y_border, x_border, y_border);
+        }
         highlight_dirty_ = false;
       }
 
-      base::SimpleComponent c(pass);
-      c.SetTransparent(true);
-      c.SetPremultiplied(true);
-      c.SetColor(0.25f * m, 0.3f * m, 0, 0.3f * m);
-      c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kGlow));
-      {
-        auto xf = c.ScopedTransform();
-        c.Translate(highlight_center_x_, highlight_center_y_, 0.1f);
-        c.Scale(highlight_width_, highlight_height_);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage4x1));
+      if (glow_type_ == GlowType::kGradient) {
+        base::SimpleComponent c(pass);
+        c.SetTransparent(true);
+        c.SetPremultiplied(true);
+        c.SetColor(0.25f * m, 0.3f * m, 0, 0.3f * m);
+        c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kGlow));
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(highlight_center_x_, highlight_center_y_, 0.1f);
+          c.Scale(highlight_width_, highlight_height_);
+          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage4x1));
+        }
+      } else {
+        assert(glow_type_ == GlowType::kUniform);
+        base::SimpleComponent c(pass);
+        c.SetTransparent(true);
+        c.SetColor(0.9 * m, 1.0f * m, 0, 0.3f * m);
+        c.SetTexture(
+            g_base->assets->SysTexture(base::SysTextureID::kShadowSharp));
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(bound_l, bound_b, 0.1f);
+          c.DrawMesh(highlight_mesh_.Get());
+        }
       }
-      c.Submit();
     }
 
     // Outline.
@@ -392,7 +429,7 @@ void TextWidget::DoDrawText_(base::RenderPass* pass, float x_offset,
     }
 
     // In VR, draw everything flat because it's generally harder to read.
-    if (g_core->IsVRMode()) {
+    if (g_core->vr_mode()) {
       c.SetFlatness(text_group_->GetElementMaxFlatness(e));
     } else {
       c.SetFlatness(std::min(text_group_->GetElementMaxFlatness(e), flatness_));
@@ -467,6 +504,11 @@ void TextWidget::set_res_scale(float res_scale) {
 void TextWidget::SetText(const std::string& text_in_raw) {
   std::string text_in = Utils::GetValidUTF8(text_in_raw.c_str(), "twst1");
 
+  // Ignore redundant sets.
+  if (text_in == text_raw_) {
+    return;
+  }
+
   // In some cases we want to make sure this is a valid resource-string
   // since catching the error here is much more useful than if we catch
   // it at draw-time.  However this is expensive so we only do it for debug
@@ -509,10 +551,6 @@ void TextWidget::SetText(const std::string& text_in_raw) {
       Python::PrintStackTrace();
     }
   }
-  if (text_in != text_raw_) {
-    text_translation_dirty_ = true;
-  }
-  text_raw_ = text_in;
 
   // Do our clamping in unicode-space.
   if (Utils::UTF8StringLength(text_raw_.c_str()) > max_chars_) {
@@ -521,6 +559,8 @@ void TextWidget::SetText(const std::string& text_in_raw) {
     uni.resize(static_cast<size_t>(max_chars_));
     text_raw_ = Utils::UTF8FromUnicode(uni);
   }
+  text_translation_dirty_ = true;
+  text_raw_ = text_in;
   carat_position_ = 9999;
 }
 
@@ -550,9 +590,8 @@ void TextWidget::Activate() {
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
 
   if (auto* call = on_activate_call_.Get()) {
-    // Call this in the next cycle (don't wanna risk mucking with UI from
-    // within a UI loop).
-    call->ScheduleWeak();
+    // Schedule this to run immediately after any current UI traversal.
+    call->ScheduleInUIOperation();
   }
 
   // Bring up an editor if applicable.
@@ -562,12 +601,7 @@ void TextWidget::Activate() {
 }
 
 auto TextWidget::ShouldUseStringEditor_() const -> bool {
-  if (g_core->HeadlessMode()) {
-    BA_LOG_ONCE(
-        LogLevel::kError,
-        "ShouldUseStringEditDialog_ called in headless; should not happen.");
-    return false;
-  }
+  assert(!g_core->HeadlessMode());  // Should not get called here.
 
   // Obscure cases such as the text-widget *on* our built-in on-screen
   // editor (obviously it should itself not pop up an editor).
@@ -581,7 +615,7 @@ auto TextWidget::ShouldUseStringEditor_() const -> bool {
     return true;
   }
 
-  // If we can take direct key events, no string-editor needed.
+  // If the UI is getting fed actual keyboard events, no string-editor needed.
   return !g_base->ui->UIHasDirectKeyboardInput();
 }
 
@@ -653,18 +687,18 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   // If we're doing inline editing, handle clipboard paste.
   if (editable() && !ShouldUseStringEditor_()
       && m.type == base::WidgetMessage::Type::kPaste) {
-    if (g_core->platform->ClipboardIsSupported()) {
-      if (g_core->platform->ClipboardHasText()) {
+    if (g_base->ClipboardIsSupported()) {
+      if (g_base->ClipboardHasText()) {
         // Just enter it char by char as if we had typed it...
-        AddCharsToText_(g_core->platform->ClipboardGetText());
+        AddCharsToText_(g_base->ClipboardGetText());
       }
     }
   }
+
   // If we're doing inline editing, handle some key events.
-  if (m.has_keysym && !ShouldUseStringEditor_()) {
+  if (editable() && m.has_keysym && !ShouldUseStringEditor_()) {
     last_carat_change_time_millisecs_ =
         static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
-
     text_group_dirty_ = true;
     bool claimed = false;
     switch (m.keysym.sym) {
@@ -684,9 +718,8 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         } else {
           if (auto* call = on_return_press_call_.Get()) {
             claimed = true;
-            // Call this in the next cycle (don't wanna risk mucking with UI
-            // from within a UI loop)
-            call->ScheduleWeak();
+            // Schedule this to run immediately after any current UI traversal.
+            call->ScheduleInUIOperation();
           }
         }
         break;
@@ -729,112 +762,29 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         break;
     }
     if (!claimed) {
-      // Pop in a char.
-      if (editable()) {
-        claimed = true;
-
-        // #if BA_SDL2_BUILD || BA_MINSDL_BUILD
-        //         // On SDL2, chars come through as TEXT_INPUT messages;
-        //         // can ignore this.
-        // #else
-        //         std::vector<uint32_t> unichars =
-        //             Utils::UnicodeFromUTF8(text_raw_, "2jf987");
-        //         int len = static_cast<int>(unichars.size());
-
-        //         if (len < max_chars_) {
-        //           if ((m.keysym.unicode >= 32) && (m.keysym.sym != SDLK_TAB))
-        //           {
-        //             claimed = true;
-        //             int pos = carat_position_;
-        //             if (pos > len) pos = len;
-        //             unichars.insert(unichars.begin() + pos,
-        //             m.keysym.unicode); text_raw_ =
-        //             Utils::UTF8FromUnicode(unichars); text_translation_dirty_
-        //             = true; carat_position_++;
-        //           } else {
-        //             // These don't seem to come through cleanly as unicode:
-        //             // FIXME - should re-check this on SDL2 builds
-
-        //             claimed = true;
-        //             std::string s;
-        //             uint32_t pos = carat_position_;
-        //             if (pos > len) pos = len;
-        //             switch (m.keysym.sym) {
-        //               case SDLK_KP0:
-        //                 s = '0';
-        //                 break;
-        //               case SDLK_KP1:
-        //                 s = '1';
-        //                 break;
-        //               case SDLK_KP2:
-        //                 s = '2';
-        //                 break;
-        //               case SDLK_KP3:
-        //                 s = '3';
-        //                 break;
-        //               case SDLK_KP4:
-        //                 s = '4';
-        //                 break;
-        //               case SDLK_KP5:
-        //                 s = '5';
-        //                 break;
-        //               case SDLK_KP6:
-        //                 s = '6';
-        //                 break;
-        //               case SDLK_KP7:
-        //                 s = '7';
-        //                 break;
-        //               case SDLK_KP8:
-        //                 s = '8';
-        //                 break;
-        //               case SDLK_KP9:
-        //                 s = '9';
-        //                 break;
-        //               case SDLK_KP_PERIOD:
-        //                 s = '.';
-        //                 break;
-        //               case SDLK_KP_DIVIDE:
-        //                 s = '/';
-        //                 break;
-        //               case SDLK_KP_MULTIPLY:
-        //                 s = '*';
-        //                 break;
-        //               case SDLK_KP_MINUS:
-        //                 s = '-';
-        //                 break;
-        //               case SDLK_KP_PLUS:
-        //                 s = '+';
-        //                 break;
-        //               case SDLK_KP_EQUALS:
-        //                 s = '=';
-        //                 break;
-        //               default:
-        //                 break;
-        //             }
-        //             if (s.size() > 0) {
-        //               unichars.insert(unichars.begin() + pos, s[0]);
-        //               text_raw_ = Utils::UTF8FromUnicode(unichars);
-        //               text_translation_dirty_ = true;
-        //               carat_position_++;
-        //             }
-        //           }
-        //         }
-        // #endif  // BA_SDL2_BUILD
-      }
+      // Direct text edits come through as seperate events, but we still
+      // want to claim key down events here; otherwise they'll do weird
+      // stuff like navigate to other widgets.
+      claimed = true;
     }
     return claimed;
   }
   switch (m.type) {
     case base::WidgetMessage::Type::kTextInput: {
-      // If we're using an edit dialog, any attempted text input just kicks us
-      // over to that.
-      if (editable() && ShouldUseStringEditor_()) {
-        InvokeStringEditor_();
-      } else {
-        // Otherwise apply the text directly.
-        if (editable() && m.sval != nullptr) {
-          AddCharsToText_(*m.sval);
-          return true;
+      if (editable()) {
+        if (ShouldUseStringEditor_()) {
+          // Normally we shouldn't be getting direct text input events in
+          // situations where we're using string editors, but it still might
+          // be possible; for instance if a game controller is driving the
+          // ui when a key is typed. We simply ignore the event in that case
+          // because otherwise the text input would be fighting with the
+          // string-editor.
+        } else {
+          // Apply text directly.
+          if (m.sval != nullptr) {
+            AddCharsToText_(*m.sval);
+            return true;
+          }
         }
       }
       break;
