@@ -83,7 +83,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                         'scale': scale,
                         'position': (0, 10),
                         'vr_depth': -10,
-                        'text': '\xa9 2011-2023 Eric Froemling',
+                        'text': '\xa9 2011-2024 Eric Froemling',
                     },
                 )
             )
