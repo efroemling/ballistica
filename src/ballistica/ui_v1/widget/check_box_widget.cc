@@ -237,7 +237,7 @@ void CheckBoxWidget::SetValue(bool value) {
 }
 
 void CheckBoxWidget::Activate() {
-  g_base->audio->PlaySound(g_base->assets->SysSound(base::SysSoundID::kSwish3));
+  g_base->audio->SafePlaySysSound(base::SysSoundID::kSwish3);
   checked_ = !checked_;
   check_dirty_ = true;
   last_change_time_ = g_core->GetAppTimeMillisecs();

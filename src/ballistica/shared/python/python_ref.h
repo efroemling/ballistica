@@ -171,6 +171,7 @@ class PythonRef {
   /// Throws an exception for other types.
   auto ValueAsLString() const -> std::string;
 
+  auto ValueIsString() const -> bool;
   auto ValueAsString() const -> std::string;
   auto ValueAsStringSequence() const -> std::list<std::string>;
   auto ValueAsOptionalString() const -> std::optional<std::string>;

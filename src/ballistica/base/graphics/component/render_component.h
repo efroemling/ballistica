@@ -240,7 +240,7 @@ class RenderComponent {
   }
 
  protected:
-  enum class State { kConfiguring, kDrawing, kSubmitted };
+  enum class State : uint8_t { kConfiguring, kDrawing, kSubmitted };
   void EnsureConfiguring() {
     if (state_ != State::kConfiguring) {
 #if BA_DEBUG_BUILD
@@ -331,8 +331,8 @@ class RenderComponent {
   // stream.
   virtual void WriteConfig() = 0;
 
-  RenderCommandBuffer* cmd_buffer_{};
   State state_{State::kConfiguring};
+  RenderCommandBuffer* cmd_buffer_{};
   RenderPass* pass_;
 
  public:

@@ -39,7 +39,6 @@ namespace ballistica::base {
 constexpr int kMaxGLTexUnitsUsed = 5;
 
 class RendererGL : public Renderer {
-  class FakeVertexArrayObject;
   class TextureDataGL;
   class MeshAssetDataGL;
   class MeshDataGL;

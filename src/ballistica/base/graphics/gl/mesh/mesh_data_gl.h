@@ -202,7 +202,6 @@ class RendererGL::MeshDataGL : public MeshRendererData {
   RendererGL* renderer_{};
   uint32_t elem_count_{};
   GLuint index_type_{GL_UNSIGNED_SHORT};
-  FakeVertexArrayObject* fake_vao_{};
 };
 
 }  // namespace ballistica::base

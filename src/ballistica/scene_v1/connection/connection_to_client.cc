@@ -82,8 +82,9 @@ ConnectionToClient::~ConnectionToClient() {
     std::string s = g_base->assets->GetResourceString("playerLeftPartyText");
     Utils::StringReplaceOne(&s, "${NAME}", peer_spec().GetDisplayString());
     ScreenMessage(s, {1, 0.5f, 0.0f});
-    g_base->audio->PlaySound(
-        g_base->assets->SysSound(base::SysSoundID::kCorkPop));
+    if (g_base->assets->sys_assets_loaded()) {
+      g_base->audio->SafePlaySysSound(base::SysSoundID::kCorkPop);
+    }
   }
 }
 
@@ -234,8 +235,9 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
           Utils::StringReplaceOne(&s, "${NAME}",
                                   peer_spec().GetDisplayString());
           ScreenMessage(s, {0.5f, 1, 0.5f});
-          g_base->audio->PlaySound(
-              g_base->assets->SysSound(base::SysSoundID::kGunCock));
+          if (g_base->assets->sys_assets_loaded()) {
+            g_base->audio->SafePlaySysSound(base::SysSoundID::kGunCock);
+          }
         }
 
         // Also mark the time for flashing the 'someone just joined your

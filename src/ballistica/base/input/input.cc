@@ -187,7 +187,7 @@ void Input::AnnounceConnects_() {
       ScreenMessage(s);
     }
     if (g_base->assets->sys_assets_loaded()) {
-      g_base->audio->PlaySound(g_base->assets->SysSound(SysSoundID::kGunCock));
+      g_base->audio->SafePlaySysSound(SysSoundID::kGunCock);
     }
   }
   newly_connected_controllers_.clear();
@@ -210,7 +210,7 @@ void Input::AnnounceDisconnects_() {
     ScreenMessage(s);
   }
   if (g_base->assets->sys_assets_loaded()) {
-    g_base->audio->PlaySound(g_base->assets->SysSound(SysSoundID::kCorkPop));
+    g_base->audio->SafePlaySysSound(SysSoundID::kCorkPop);
   }
 
   newly_disconnected_controllers_.clear();

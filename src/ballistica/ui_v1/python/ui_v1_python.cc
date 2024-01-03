@@ -107,7 +107,7 @@ void UIV1Python::InvokeStringEditor(PyObject* string_edit_adapter_instance) {
   BA_PRECONDITION(string_edit_adapter_instance);
 
   base::ScopedSetContext ssc(nullptr);
-  g_base->audio->PlaySound(g_base->assets->SysSound(base::SysSoundID::kSwish));
+  g_base->audio->SafePlaySysSound(base::SysSoundID::kSwish);
 
   PythonRef args(Py_BuildValue("(O)", string_edit_adapter_instance),
                  PythonRef::kSteal);
@@ -139,7 +139,7 @@ void UIV1Python::InvokeQuitWindow(QuitType quit_type) {
     }
   }
 
-  g_base->audio->PlaySound(g_base->assets->SysSound(base::SysSoundID::kSwish));
+  g_base->audio->SafePlaySysSound(base::SysSoundID::kSwish);
   auto py_enum = g_base->python->PyQuitType(quit_type);
   auto args = PythonRef::Stolen(Py_BuildValue("(O)", py_enum.Get()));
   objs().Get(UIV1Python::ObjID::kQuitWindowCall).Call(args);

@@ -1160,8 +1160,7 @@ void SceneV1AppMode::LocalDisplayChatMessage(
         g_scene_v1->python->HandleLocalChatMessage(final_message);
       }
       if (!chat_muted_) {
-        g_base->audio->PlaySound(
-            g_base->assets->SysSound(base::SysSoundID::kTap));
+        g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
       }
     }
   }

@@ -218,7 +218,8 @@ auto NetworkReader::RunThread_() -> int {
           sd = sd6_;
           can_read = can_read_6;
         } else {
-          FatalError("Should not get here.");
+          FatalError("Should not get here; s_index=" + std::to_string(s_index)
+                     + ".");
           sd = -1;
           can_read = false;
         }

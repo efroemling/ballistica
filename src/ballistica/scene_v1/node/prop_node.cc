@@ -100,7 +100,7 @@ void PropNode::SetIsAreaOfInterest(bool val) {
 void PropNode::Draw(base::FrameDef* frame_def) {
 #if !BA_HEADLESS_BUILD
 
-  // need our texture, mesh, and body to be present to draw..
+  // We need a texture, mesh, and body to be present to draw.
   if ((!mesh_.Exists()) || (!color_texture_.Exists()) || (!body_.Exists())) {
     return;
   }

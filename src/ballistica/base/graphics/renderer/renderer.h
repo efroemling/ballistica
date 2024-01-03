@@ -193,6 +193,7 @@ class Renderer {
   virtual void RenderFrameDefEnd() = 0;
   virtual void CardboardDisableScissor() = 0;
   virtual void CardboardEnableScissor() = 0;
+
 #if BA_VR_BUILD
   void VRTransformToRightHand();
   void VRTransformToLeftHand();
@@ -207,30 +208,24 @@ class Renderer {
   void DrawWorldToCameraBuffer(FrameDef* frame_def);
   void UpdatePixelScaleAndBackingBuffer(FrameDef* frame_def);
   void UpdateCameraRenderTargets(FrameDef* frame_def);
-  // #if BA_OSTYPE_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
-  //   void HandleFunkyMacGammaIssue(FrameDef* frame_def);
-  // #endif
   void LoadMedia(FrameDef* frame_def);
   void UpdateDOFParams(FrameDef* frame_def);
+
 #if BA_VR_BUILD
   void VRPreprocess(FrameDef* frame_def);
   void VRUpdateForEyeRender(FrameDef* frame_def);
   void VRDrawOverlayFlatPass(FrameDef* frame_def);
+#endif  // BA_VR_BUILD
+
+#if BA_VR_BUILD
+
+  bool vr_use_fov_tangents_{};
+
   // Raw values from vr system.
   VRHandsState vr_raw_hands_state_{};
-  float vr_raw_head_tx_{};
-  float vr_raw_head_ty_{};
-  float vr_raw_head_tz_{};
-  float vr_raw_head_yaw_{};
-  float vr_raw_head_pitch_{};
-  float vr_raw_head_roll_{};
-  // Final game-space transforms.
-  Matrix44f vr_base_transform_{kMatrix44fIdentity};
-  Matrix44f vr_transform_right_hand_{kMatrix44fIdentity};
-  Matrix44f vr_transform_left_hand_{kMatrix44fIdentity};
-  Matrix44f vr_transform_head_{kMatrix44fIdentity};
-  // Values for current eye render.
-  bool vr_use_fov_tangents_{};
+  int vr_eye_{};
+  int vr_viewport_x_{};
+  int vr_viewport_y_{};
   float vr_fov_l_tan_{1.0f};
   float vr_fov_r_tan_{1.0f};
   float vr_fov_b_tan_{1.0f};
@@ -240,37 +235,59 @@ class Renderer {
   float vr_eye_x_{};
   float vr_eye_y_{};
   float vr_eye_z_{};
-  int vr_eye_{};
   float vr_eye_yaw_{};
   float vr_eye_pitch_{};
   float vr_eye_roll_{};
-  int vr_viewport_x_{};
-  int vr_viewport_y_{};
+  float vr_raw_head_tx_{};
+  float vr_raw_head_ty_{};
+  float vr_raw_head_tz_{};
+  float vr_raw_head_yaw_{};
+  float vr_raw_head_pitch_{};
+  float vr_raw_head_roll_{};
+  Matrix44f vr_base_transform_{kMatrix44fIdentity};
+  Matrix44f vr_transform_right_hand_{kMatrix44fIdentity};
+  Matrix44f vr_transform_left_hand_{kMatrix44fIdentity};
+  Matrix44f vr_transform_head_{kMatrix44fIdentity};
 #endif  // BA_VR_BUILD
 
+  // The *actual* current quality (set based on the currently-rendering
+  // frame_def)
+  GraphicsQuality last_render_quality_{GraphicsQuality::kLow};
+  bool debug_draw_mode_{};
   bool screen_size_dirty_{};
   bool msaa_enabled_dirty_{};
-  millisecs_t dof_update_time_{};
   bool dof_delay_{true};
+  bool drawing_reflection_{};
+  bool shadow_ortho_{};
+
+  int last_commands_buffer_size_{};
+  int last_f_vals_buffer_size_{};
+  int last_i_vals_buffer_size_{};
+  int last_meshes_buffer_size_{};
+  int last_textures_buffer_size_{};
+  int frames_rendered_count_{};
+  int blur_res_count_{};
+  int shadow_res_{-1};
+
   float dof_near_smoothed_{};
   float dof_far_smoothed_{};
-  bool drawing_reflection_{};
-  int blur_res_count_{};
   float light_pitch_{};
   float light_heading_{};
   float light_tz_{-22.0f};
-  Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
   float shadow_scale_x_{1.0f};
   float shadow_scale_z_{1.0f};
-  bool shadow_ortho_{};
+  float screen_gamma_{1.0f};
+  float pixel_scale_requested_{1.0f};
+  float pixel_scale_{1.0f};
+
+  millisecs_t last_screen_gamma_update_time_{};
+  millisecs_t dof_update_time_{};
+
+  Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
   Vector3f tint_{1.0f, 1.0f, 1.0f};
   Vector3f ambient_color_{1.0f, 1.0f, 1.0f};
   Vector3f vignette_outer_{0.0f, 0.0f, 0.0f};
   Vector3f vignette_inner_{1.0f, 1.0f, 1.0f};
-  int shadow_res_{-1};
-  float screen_gamma_{1.0f};
-  float pixel_scale_requested_{1.0f};
-  float pixel_scale_{1.0f};
   Object::Ref<RenderTarget> screen_render_target_;
   Object::Ref<RenderTarget> backing_render_target_;
   Object::Ref<RenderTarget> camera_render_target_;
@@ -278,18 +295,6 @@ class Renderer {
   Object::Ref<RenderTarget> light_render_target_;
   Object::Ref<RenderTarget> light_shadow_render_target_;
   Object::Ref<RenderTarget> vr_overlay_flat_render_target_;
-  millisecs_t last_screen_gamma_update_time_{};
-  int last_commands_buffer_size_{};
-  int last_f_vals_buffer_size_{};
-  int last_i_vals_buffer_size_{};
-  int last_meshes_buffer_size_{};
-  int last_textures_buffer_size_{};
-  bool debug_draw_mode_{};
-  int frames_rendered_count_{};
-
-  // The *actual* current quality (set based on the
-  // currently-rendering frame_def)
-  GraphicsQuality last_render_quality_{GraphicsQuality::kLow};
 };
 
 }  // namespace ballistica::base

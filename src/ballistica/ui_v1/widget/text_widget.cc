@@ -711,8 +711,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       case SDLK_KP_ENTER:
         if (g_buildconfig.ostype_ios_tvos() || g_buildconfig.ostype_android()) {
           // On mobile, return currently just deselects us.
-          g_base->audio->PlaySound(
-              g_base->assets->SysSound(base::SysSoundID::kSwish));
+          g_base->audio->SafePlaySysSound(base::SysSoundID::kSwish);
           parent_widget()->SelectWidget(nullptr);
           return true;
         } else {
@@ -847,8 +846,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           pressed_activate_ =
               (click_count == 2 || click_activate_) && !editable_;
           if (click_count == 1) {
-            g_base->audio->PlaySound(
-                g_base->assets->SysSound(base::SysSoundID::kTap));
+            g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
           }
         }
         return true;
@@ -871,8 +869,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         carat_position_ = 0;
         text_group_dirty_ = true;
         clear_pressed_ = false;
-        g_base->audio->PlaySound(
-            g_base->assets->SysSound(base::SysSoundID::kTap));
+        g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
         return true;
       }
       clear_pressed_ = false;

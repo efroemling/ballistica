@@ -1,4 +1,4 @@
-### 1.7.33 (build 21743, api 8, 2023-12-21)
+### 1.7.33 (build 21747, api 8, 2024-01-03)
 
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
