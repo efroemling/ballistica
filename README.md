@@ -77,7 +77,7 @@ play some games. Or make them. Maybe both.
   question is basically '1.8'.
 
 * **Q: When will BombSquad be released on iOS / Steam / Switch / Xbox /
-Playstation / My toaster??**
+PlayStation / My toaster??**
   * A: The 2.0 update will be the big 'relaunch' release and the plan is to
   launch on at least iOS and Steam at that time. I'm trying to get there as fast
   as I can. As far as consoles, I'd love to and hope to at some point but have
