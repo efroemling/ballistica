@@ -1,4 +1,4 @@
-### 1.7.33 (build 21751, api 8, 2024-01-05)
+### 1.7.33 (build 21753, api 8, 2024-01-05)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).
 - Added a 'Show Demos When Idle' option in advanced settings. If enabled, the
@@ -483,7 +483,7 @@
   you run into any problems because of this and we can make an option to use the
   old behavior where Ballistica's app and site paths get placed at the end.
 - It is now possible to manually run the app loop even on monolithic builds;
-  just do `PYTHONPATH=ba_data/python ./ballisticacore -c "import baenv;
+  just do `PYTHONPATH=ba_data/python ./ballisticakit -c "import baenv;
   baenv.configure(); import babase; babase.app.run()"`. This is basically the
   same thing modular builds are doing except that they use a regular Python
   interpreter instead of the ballisticakit binary.
@@ -814,7 +814,7 @@
   future, the default BallisticaKit app may be expanded with editing
   functionality and I feel the name 'Kit' fits better for something used that
   way than 'Core' does.
-- The `ballisticakit_internal` precompiled library has been renamed to
+- The `ballisticacore_internal` precompiled library has been renamed to
   `ballistica_plus`. This name better describes what it actually is (basically
   precompiled native portion of the `plus` feature set). Also by removing the
   'kit' from the end it will no longer be renamed in spinoff projects, meaning
@@ -1566,7 +1566,7 @@
   `prefab-gui-debug` (more consistent with the existing `prefab-server-debug`
   targets).
 - Windows builds now go to build/windows instead of
-  `ballisticakit_windows/build`.
+  `ballisticacore_windows/build`.
 - Lots of project reorganization to allow things such as documentation or the
   dummy `_ba.py` module to be rebuilt from the public repo.
 - Added network flood attack mitigation.
@@ -2222,7 +2222,7 @@
 
 ### 1.4.111 (14286)
 
-- BallisticaKit Pro now unlocks 2 additional characters
+- BombSquad Pro now unlocks 2 additional characters
 - multi-line chat messages are now clamped down to 1 line; should prevent
   annoying multi-line fullscreen message spam
 
@@ -2299,7 +2299,7 @@
 ### 1.4.95 (14236)
 
 - added a port option to the config, so it's now possible to host multiple
-  parties on one machine (note that ballisticakit 1.4.95+ is required to connect
+  parties on one machine (note that bombsquad 1.4.95+ is required to connect
   ports aside from 43210)
 
 ### 1.4.95 (14234)
@@ -2309,14 +2309,14 @@
 
 ### 1.4.95 (14233)
 
-- ballisticakit (both `bs_headless` and regular) now reads commands from
+- bombsquad (both `bs_headless` and regular) now reads commands from
   standard input, making it easier to run commands via scripts or the terminal
 - server now runs using a 'server' account-type instead of the local 'device'
   account. (avoids daily-ticket-reward messages and other stuff that's not
   relevant to servers)
 - the server script now passes args to the game as a json file instead of
   individual args; this should keep things cleaner and more expandable
-- the `ballisticakit_server` script also now reads commands from stdin, allowing
+- the `bombsquad_server` script also now reads commands from stdin, allowing
   reconfiguring server settings on the fly
 - added more options such as the ability to set game series lengths and to host
   a non-public party
