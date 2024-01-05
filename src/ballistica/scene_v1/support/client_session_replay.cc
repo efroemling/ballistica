@@ -17,6 +17,9 @@ namespace ballistica::scene_v1 {
 auto ClientSessionReplay::GetActualTimeAdvanceMillisecs(
     double base_advance_millisecs) -> double {
   auto* appmode = SceneV1AppMode::GetActiveOrFatal();
+  if (appmode->is_replay_paused()) {
+    return 0.0;
+  }
   return base_advance_millisecs * pow(2.0f, appmode->replay_speed_exponent());
 }
 

@@ -514,24 +514,29 @@ class MainMenuWindow(bui.Window):
                 size=(0, 0),
                 scale=3.0 * t_scale,
             )
-            btn = bui.buttonwidget(
+            self._pause_resume_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
                 position=(h - b_size * 0.5, v - b_size - b_buffer_2 + v_offs),
                 button_type='square',
                 size=(b_size, b_size),
-                label='',
+                label=bui.charstr(
+                    bui.SpecialChar.PLAY_BUTTON
+                    if bs.is_replay_paused()
+                    else bui.SpecialChar.PAUSE_BUTTON
+                ),
                 autoselect=True,
                 on_activate_call=bui.Call(self._pause_or_resume_replay),
             )
-            self._pause_and_resume_image = bui.imagewidget(
-                parent=self._root_widget,
-                size=(b_size, b_size),
-                draw_controller=btn,
-                position=(h - b_size * 0.47, v - b_size - b_buffer_2 + v_offs),
-                texture=bui.gettexture(
-                    'pauseIcon' if bs.is_replay_paused() else 'resumeIcon'
-                ),
-            )
+            # self._pause_and_resume_image = bui.imagewidget(
+            #     parent=self._root_widget,
+            #     size=(b_size, b_size),
+            #     draw_controller=btn,
+            #     position=(h - b_size * 0.47,
+            # v - b_size - b_buffer_2 + v_offs),
+            #     texture=bui.gettexture(
+            #         'pauseIcon' if bs.is_replay_paused() else 'resumeIcon'
+            #     ),
+            # )
 
     def _refresh_not_in_game(
         self, positions: list[tuple[float, float, float]]
@@ -1058,15 +1063,15 @@ class MainMenuWindow(bui.Window):
     def _pause_or_resume_replay(self) -> None:
         if bs.is_replay_paused():
             bs.resume_replay()
-            bui.imagewidget(
-                edit=self._pause_and_resume_image,
-                texture=bui.gettexture('resumeIcon'),
+            bui.buttonwidget(
+                edit=self._pause_resume_button,
+                label=bui.charstr(bui.SpecialChar.PAUSE_BUTTON),
             )
         else:
             bs.pause_replay()
-            bui.imagewidget(
-                edit=self._pause_and_resume_image,
-                texture=bui.gettexture('pauseIcon'),
+            bui.buttonwidget(
+                edit=self._pause_resume_button,
+                label=bui.charstr(bui.SpecialChar.PLAY_BUTTON),
             )
 
     def _quit(self) -> None:

@@ -1238,6 +1238,13 @@ void Assets::InitSpecialChars() {
   special_char_strings_[SpecialChar::kPlayPauseButton] = "\xee\x80\x8E";
   special_char_strings_[SpecialChar::kFastForwardButton] = "\xee\x80\x8F";
   special_char_strings_[SpecialChar::kDpadCenterButton] = "\xee\x80\x90";
+  special_char_strings_[SpecialChar::kPlayStationCrossButton] = "\xee\x80\x91";
+  special_char_strings_[SpecialChar::kPlayStationCircleButton] = "\xee\x80\x92";
+  special_char_strings_[SpecialChar::kPlayStationTriangleButton] =
+      "\xee\x80\x93";
+  special_char_strings_[SpecialChar::kPlayStationSquareButton] = "\xee\x80\x94";
+  special_char_strings_[SpecialChar::kPlayButton] = "\xee\x80\x95";
+  special_char_strings_[SpecialChar::kPauseButton] = "\xee\x80\x96";
 
   special_char_strings_[SpecialChar::kOuyaButtonO] = "\xee\x80\x99";
   special_char_strings_[SpecialChar::kOuyaButtonU] = "\xee\x80\x9A";

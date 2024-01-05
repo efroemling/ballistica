@@ -174,11 +174,6 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
   if (shutting_down_) {
     return;
   }
-  if (auto* appmode = SceneV1AppMode::GetActiveOrThrow()) {
-    if (appmode->is_replay_paused()) {
-      return;
-    }
-  }
 
   // Allow replays to modulate speed, etc.
   // Also plug in our more exact time-advance here instead of the old int one.
