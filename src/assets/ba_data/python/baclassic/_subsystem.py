@@ -69,7 +69,8 @@ class ClassicSubsystem(babase.AppSubsystem):
 
         # Misc.
         self.tips: list[str] = []
-        self.stress_test_reset_timer: babase.AppTimer | None = None
+        self.stress_test_update_timer: babase.AppTimer | None = None
+        self.stress_test_update_timer_2: babase.AppTimer | None = None
         self.value_test_defaults: dict = {}
         self.special_offer: dict | None = None
         self.ping_thread_count = 0
@@ -555,11 +556,18 @@ class ClassicSubsystem(babase.AppSubsystem):
         playlist_name: str = '__default__',
         player_count: int = 8,
         round_duration: int = 30,
+        attract_mode: bool = False,
     ) -> None:
         """Run a stress test."""
         from baclassic._benchmark import run_stress_test as run
 
-        run(playlist_type, playlist_name, player_count, round_duration)
+        run(
+            playlist_type=playlist_type,
+            playlist_name=playlist_name,
+            player_count=player_count,
+            round_duration=round_duration,
+            attract_mode=attract_mode,
+        )
 
     def get_input_device_mapped_value(
         self, device: bascenev1.InputDevice, name: str

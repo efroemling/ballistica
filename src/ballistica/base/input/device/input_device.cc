@@ -52,9 +52,9 @@ InputDevice::~InputDevice() { assert(g_base->InLogicThread()); }
 // control something please.
 void InputDevice::RequestPlayer() {
   assert(g_base->InLogicThread());
+
   // Make note that we're being used in some way.
-  last_input_time_millisecs_ =
-      static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
+  UpdateLastActiveTime();
 
   delegate_->RequestPlayer();
 }
@@ -69,11 +69,19 @@ auto InputDevice::AttachedToPlayer() const -> bool {
 
 void InputDevice::DetachFromPlayer() { delegate_->DetachFromPlayer(); }
 
-void InputDevice::UpdateLastInputTime() {
-  // Keep our own individual time, and also let the overall input system
-  // know something happened.
-  last_input_time_millisecs_ =
+void InputDevice::UpdateLastActiveTime() {
+  // Special case: in attract-mode, prevent our virtual test devices from
+  // affecting input last-active times otherwise it'll kick us out of
+  // attract mode.
+  if (allow_input_in_attract_mode_ && g_base->input->attract_mode()) {
+    return;
+  }
+
+  // Mark active time on this specific device.
+  last_active_time_millisecs_ =
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
+
+  // Mark input in general as active also.
   g_base->input->MarkInputActive();
 }
 
@@ -81,7 +89,7 @@ void InputDevice::InputCommand(InputType type, float value) {
   assert(g_base->InLogicThread());
 
   // Make note that we're being used in some way.
-  UpdateLastInputTime();
+  UpdateLastActiveTime();
 
   delegate_->InputCommand(type, value);
 }

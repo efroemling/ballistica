@@ -1110,7 +1110,7 @@ class MainMenuWindow(bui.Window):
         session = bs.get_foreground_host_session()
         return getattr(session, 'benchmark_type', None) == 'cpu' or (
             bui.app.classic is not None
-            and bui.app.classic.stress_test_reset_timer is not None
+            and bui.app.classic.stress_test_update_timer is not None
         )
 
     def _confirm_end_game(self) -> None:

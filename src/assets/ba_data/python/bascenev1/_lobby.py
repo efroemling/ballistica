@@ -441,7 +441,7 @@ class Chooser:
         # list might have changed.
         input_device = self._sessionplayer.inputdevice
         is_remote = input_device.is_remote_client
-        is_test_input = input_device.name.startswith('TestInput')
+        is_test_input = input_device.is_test_input
 
         # Pull this player's list of unlocked characters.
         if is_remote:

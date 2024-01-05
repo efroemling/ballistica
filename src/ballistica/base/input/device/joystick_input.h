@@ -59,6 +59,8 @@ class JoystickInput : public InputDevice {
 
   auto IsUIOnly() -> bool override { return ui_only_; }
 
+  void set_is_test_input(bool val) { is_test_input_ = val; }
+
   auto IsTestInput() -> bool override { return is_test_input_; }
   auto IsRemoteApp() -> bool override { return is_remote_app_; }
   auto IsMFiController() -> bool override { return is_mfi_controller_; }

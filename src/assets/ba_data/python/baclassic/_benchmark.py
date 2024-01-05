@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import random
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import babase
@@ -48,64 +49,74 @@ def run_cpu_benchmark() -> None:
     bascenev1.new_host_session(BenchmarkSession, benchmark_type='cpu')
 
 
+@dataclass
+class _StressTestArgs:
+    playlist_type: str
+    playlist_name: str
+    player_count: int
+    round_duration: int
+    attract_mode: bool
+
+
 def run_stress_test(
     playlist_type: str = 'Random',
     playlist_name: str = '__default__',
     player_count: int = 8,
     round_duration: int = 30,
+    attract_mode: bool = False,
 ) -> None:
     """Run a stress test."""
 
-    babase.screenmessage(
-        "Beginning stress test.. use 'End Test' to stop testing.",
-        color=(1, 1, 0),
-    )
     with babase.ContextRef.empty():
-        start_stress_test(
-            {
-                'playlist_type': playlist_type,
-                'playlist_name': playlist_name,
-                'player_count': player_count,
-                'round_duration': round_duration,
-            }
+        if not attract_mode:
+            babase.screenmessage(
+                "Beginning stress test.. use 'End Test' to stop testing.",
+                color=(1, 1, 0),
+            )
+        _start_stress_test(
+            _StressTestArgs(
+                playlist_type=playlist_type,
+                playlist_name=playlist_name,
+                player_count=player_count,
+                round_duration=round_duration,
+                attract_mode=attract_mode,
+            )
         )
 
 
 def stop_stress_test() -> None:
     """End a running stress test."""
 
-    _baclassic.set_stress_testing(False, 0)
     assert babase.app.classic is not None
-    try:
-        if babase.app.classic.stress_test_reset_timer is not None:
-            babase.screenmessage('Ending stress test...', color=(1, 1, 0))
-    except Exception:
-        pass
-    babase.app.classic.stress_test_reset_timer = None
+
+    _baclassic.set_stress_testing(False, 0, False)
+    babase.app.classic.stress_test_update_timer = None
+    babase.app.classic.stress_test_update_timer_2 = None
 
 
-def start_stress_test(args: dict[str, Any]) -> None:
+def _start_stress_test(args: _StressTestArgs) -> None:
     """(internal)"""
     from bascenev1 import DualTeamSession, FreeForAllSession
 
     assert babase.app.classic is not None
 
     appconfig = babase.app.config
-    playlist_type = args['playlist_type']
+    playlist_type = args.playlist_type
     if playlist_type == 'Random':
         if random.random() < 0.5:
             playlist_type = 'Teams'
         else:
             playlist_type = 'Free-For-All'
-    babase.screenmessage(
-        'Running Stress Test (listType="'
-        + playlist_type
-        + '", listName="'
-        + args['playlist_name']
-        + '")...'
-    )
+    if not args.attract_mode:
+        babase.screenmessage(
+            'Running Stress Test (listType="'
+            + playlist_type
+            + '", listName="'
+            + args.playlist_name
+            + '")...'
+        )
     if playlist_type == 'Teams':
-        appconfig['Team Tournament Playlist Selection'] = args['playlist_name']
+        appconfig['Team Tournament Playlist Selection'] = args.playlist_name
         appconfig['Team Tournament Playlist Randomize'] = 1
         babase.apptimer(
             1.0,
@@ -115,7 +126,7 @@ def start_stress_test(args: dict[str, Any]) -> None:
             ),
         )
     else:
-        appconfig['Free-for-All Playlist Selection'] = args['playlist_name']
+        appconfig['Free-for-All Playlist Selection'] = args.playlist_name
         appconfig['Free-for-All Playlist Randomize'] = 1
         babase.apptimer(
             1.0,
@@ -124,19 +135,38 @@ def start_stress_test(args: dict[str, Any]) -> None:
                 babase.Call(bascenev1.new_host_session, FreeForAllSession),
             ),
         )
-    _baclassic.set_stress_testing(True, args['player_count'])
-    babase.app.classic.stress_test_reset_timer = babase.AppTimer(
-        args['round_duration'], babase.Call(_reset_stress_test, args)
+    _baclassic.set_stress_testing(True, args.player_count, args.attract_mode)
+    babase.app.classic.stress_test_update_timer = babase.AppTimer(
+        args.round_duration, babase.Call(_reset_stress_test, args)
     )
+    if args.attract_mode:
+        babase.app.classic.stress_test_update_timer_2 = babase.AppTimer(
+            0.48, babase.Call(_update_attract_mode_test, args), repeat=True
+        )
 
 
-def _reset_stress_test(args: dict[str, Any]) -> None:
-    _baclassic.set_stress_testing(False, args['player_count'])
-    babase.screenmessage('Resetting stress test...')
+def _update_attract_mode_test(args: _StressTestArgs) -> None:
+    if babase.get_input_idle_time() < 5.0:
+        _reset_stress_test(args)
+
+
+def _reset_stress_test(args: _StressTestArgs) -> None:
+    _baclassic.set_stress_testing(False, args.player_count, False)
+    if not args.attract_mode:
+        babase.screenmessage('Resetting stress test...')
     session = bascenev1.get_foreground_host_session()
     assert session is not None
     session.end()
-    babase.apptimer(1.0, babase.Call(start_stress_test, args))
+
+    assert babase.app.classic is not None
+    babase.app.classic.stress_test_update_timer = None
+    babase.app.classic.stress_test_update_timer_2 = None
+
+    # For regular stress tests we keep the party going. For attract-mode
+    # we just end back at the main menu. If things are idle there then
+    # we'll get sent back to a new stress test.
+    if not args.attract_mode:
+        babase.apptimer(1.0, babase.Call(_start_stress_test, args))
 
 
 def run_gpu_benchmark() -> None:

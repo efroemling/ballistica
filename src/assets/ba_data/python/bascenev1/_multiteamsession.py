@@ -70,6 +70,10 @@ class MultiTeamSession(Session):
 
         show_tutorial = cfg.get('Show Tutorial', True)
 
+        # Special case: don't show tutorial while stress testing.
+        if classic.stress_test_update_timer is not None:
+            show_tutorial = False
+
         self._tutorial_activity_instance: bascenev1.Activity | None
         if show_tutorial:
             from bascenev1lib.tutorial import TutorialActivity

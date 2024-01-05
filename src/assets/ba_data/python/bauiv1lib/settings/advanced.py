@@ -94,7 +94,7 @@ class AdvancedSettingsWindow(bui.Window):
         self._scroll_width = self._width - (100 + 2 * x_inset)
         self._scroll_height = self._height - 115.0
         self._sub_width = self._scroll_width * 0.95
-        self._sub_height = 766.0
+        self._sub_height = 808.0
 
         if self._show_always_use_internal_keyboard:
             self._sub_height += 62
@@ -490,6 +490,17 @@ class AdvancedSettingsWindow(bui.Window):
         )
 
         v -= 42
+        self._show_demos_when_idle_check_box = ConfigCheckBox(
+            parent=self._subcontainer,
+            position=(50, v),
+            size=(self._sub_width - 100, 30),
+            configkey='Show Demos When Idle',
+            displayname=bui.Lstr(resource=f'{self._r}.showDemosWhenIdleText'),
+            scale=1.0,
+            maxwidth=430,
+        )
+
+        v -= 42
         self._disable_camera_shake_check_box = ConfigCheckBox(
             parent=self._subcontainer,
             position=(50, v),
@@ -575,12 +586,18 @@ class AdvancedSettingsWindow(bui.Window):
                 up_widget=self._always_use_internal_keyboard_check_box.widget,
             )
         else:
-            bui.widget(
-                edit=self._modding_guide_button,
-                up_widget=self._kick_idle_players_check_box.widget,
+            # ew.
+            next_widget_up = (
+                self._disable_gyro_check_box.widget
+                if self._disable_gyro_check_box is not None
+                else self._disable_camera_shake_check_box.widget
             )
             bui.widget(
-                edit=self._kick_idle_players_check_box.widget,
+                edit=self._modding_guide_button,
+                up_widget=next_widget_up,
+            )
+            bui.widget(
+                edit=next_widget_up,
                 down_widget=self._modding_guide_button,
             )
 
@@ -803,6 +820,8 @@ class AdvancedSettingsWindow(bui.Window):
                     sel_name = 'Benchmarks'
                 elif sel == self._kick_idle_players_check_box.widget:
                     sel_name = 'KickIdlePlayers'
+                elif sel == self._show_demos_when_idle_check_box.widget:
+                    sel_name = 'ShowDemosWhenIdle'
                 elif sel == self._show_game_ping_check_box.widget:
                     sel_name = 'ShowPing'
                 elif sel == self._disable_camera_shake_check_box.widget:
@@ -870,6 +889,8 @@ class AdvancedSettingsWindow(bui.Window):
                     sel = self._benchmarks_button
                 elif sel_name == 'KickIdlePlayers':
                     sel = self._kick_idle_players_check_box.widget
+                elif sel_name == 'ShowDemosWhenIdle':
+                    sel = self._show_demos_when_idle_check_box.widget
                 elif sel_name == 'ShowPing':
                     sel = self._show_game_ping_check_box.widget
                 elif sel_name == 'DisableCameraShake':

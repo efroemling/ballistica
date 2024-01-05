@@ -93,8 +93,8 @@ class InputDevice : public Object {
   /// that button activates default widgets (will cause a start icon to show up
   /// on them).
   virtual auto start_button_activates_default_widget() -> bool { return false; }
-  auto last_input_time_millisecs() const -> millisecs_t {
-    return last_input_time_millisecs_;
+  auto last_active_time_millisecs() const -> millisecs_t {
+    return last_active_time_millisecs_;
   }
   virtual auto ShouldBeHiddenFromUser() -> bool;
 
@@ -117,7 +117,7 @@ class InputDevice : public Object {
   /// been added to the input-device list, have a valid ID, name, etc.
   virtual void OnAdded() {}
 
-  void UpdateLastInputTime();
+  void UpdateLastActiveTime();
 
   auto delegate() -> InputDeviceDelegate& {
     // TEMP - Tracking down a crash in the wild.
@@ -136,18 +136,27 @@ class InputDevice : public Object {
   auto custom_default_player_name() const -> std::string {
     return custom_default_player_name_;
   }
+
   void set_custom_default_player_name(const std::string& val) {
     custom_default_player_name_ = val;
+  }
+
+  auto allow_input_in_attract_mode() const {
+    return allow_input_in_attract_mode_;
+  }
+
+  void set_allow_input_in_attract_mode(bool allow) {
+    allow_input_in_attract_mode_ = allow;
   }
 
  private:
   Object::Ref<InputDeviceDelegate> delegate_;
 
-  // note: this is in base-net-time
-  millisecs_t last_input_time_millisecs_{};
+  millisecs_t last_active_time_millisecs_{};
 
   int index_{-1};   // Our overall device index.
   int number_{-1};  // Our type-specific number.
+  bool allow_input_in_attract_mode_{};
 
   std::string custom_default_player_name_;
 
