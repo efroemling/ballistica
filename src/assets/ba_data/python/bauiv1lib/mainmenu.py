@@ -70,6 +70,7 @@ class MainMenuWindow(bui.Window):
         self._how_to_play_button: bui.Widget | None = None
         self._credits_button: bui.Widget | None = None
         self._settings_button: bui.Widget | None = None
+        self._pause_and_resume_image: bui.Widget | None = None
         self._next_refresh_allow_time = 0.0
 
         self._store_char_tex = self._get_store_char_tex()
@@ -431,13 +432,15 @@ class MainMenuWindow(bui.Window):
         # media players but this works for now).
         if bs.is_in_replay():
             b_size = 50.0
-            b_buffer = 10.0
+            b_buffer_1 = 50.0
+            b_buffer_2 = 10.0
             t_scale = 0.75
             assert bui.app.classic is not None
             uiscale = bui.app.ui_v1.uiscale
             if uiscale is bui.UIScale.SMALL:
                 b_size *= 0.6
-                b_buffer *= 1.0
+                b_buffer_1 *= 0.8
+                b_buffer_2 *= 1.0
                 v_offs = -40
                 t_scale = 0.5
             elif uiscale is bui.UIScale.MEDIUM:
@@ -467,8 +470,8 @@ class MainMenuWindow(bui.Window):
             btn = bui.buttonwidget(
                 parent=self._root_widget,
                 position=(
-                    h - b_size - b_buffer,
-                    v - b_size - b_buffer + v_offs,
+                    h - b_size - b_buffer_1,
+                    v - b_size - b_buffer_2 + v_offs,
                 ),
                 button_type='square',
                 size=(b_size, b_size),
@@ -481,8 +484,8 @@ class MainMenuWindow(bui.Window):
                 draw_controller=btn,
                 text='-',
                 position=(
-                    h - b_size * 0.5 - b_buffer,
-                    v - b_size * 0.5 - b_buffer + 5 * t_scale + v_offs,
+                    h - b_size * 0.5 - b_buffer_1,
+                    v - b_size * 0.5 - b_buffer_2 + 5 * t_scale + v_offs,
                 ),
                 h_align='center',
                 v_align='center',
@@ -491,7 +494,10 @@ class MainMenuWindow(bui.Window):
             )
             btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(h + b_buffer, v - b_size - b_buffer + v_offs),
+                position=(
+                    h + b_buffer_1,
+                    v - b_size - b_buffer_2 + v_offs
+                ),
                 button_type='square',
                 size=(b_size, b_size),
                 label='',
@@ -503,13 +509,37 @@ class MainMenuWindow(bui.Window):
                 draw_controller=btn,
                 text='+',
                 position=(
-                    h + b_size * 0.5 + b_buffer,
-                    v - b_size * 0.5 - b_buffer + 5 * t_scale + v_offs,
+                    h + b_size * 0.5 + b_buffer_1,
+                    v - b_size * 0.5 - b_buffer_2 + 5 * t_scale + v_offs,
                 ),
                 h_align='center',
                 v_align='center',
                 size=(0, 0),
                 scale=3.0 * t_scale,
+            )
+            btn = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(
+                    h - b_size * 0.5,
+                    v - b_size - b_buffer_2 + v_offs
+                ),
+                button_type='square',
+                size=(b_size, b_size),
+                label='',
+                autoselect=True,
+                on_activate_call=bui.Call(self._pause_or_resume_replay),
+            )
+            self._pause_and_resume_image = bui.imagewidget(
+                parent=self._root_widget,
+                size=(b_size, b_size),
+                draw_controller=btn,
+                position=(
+                    h - b_size * 0.47,
+                    v - b_size - b_buffer_2 + v_offs
+                ),
+                texture=bui.gettexture(
+                    'pauseIcon' if bs.is_replay_paused() else 'resumeIcon'
+                ),
             )
 
     def _refresh_not_in_game(
@@ -1033,6 +1063,20 @@ class MainMenuWindow(bui.Window):
                 subs=[('${SPEED}', str(actual_speed))],
             ),
         )
+
+    def _pause_or_resume_replay(self) -> None:
+        if bs.is_replay_paused():
+            bs.resume_replay()
+            bui.imagewidget(
+                edit=self._pause_and_resume_image,
+                texture=bui.gettexture('resumeIcon'),
+            )
+        else:
+            bs.pause_replay()
+            bui.imagewidget(
+                edit=self._pause_and_resume_image,
+                texture=bui.gettexture('pauseIcon'),
+            )
 
     def _quit(self) -> None:
         # pylint: disable=cyclic-import
