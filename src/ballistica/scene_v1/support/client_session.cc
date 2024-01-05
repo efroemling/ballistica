@@ -177,7 +177,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
   if (auto* appmode = SceneV1AppMode::GetActiveOrThrow()) {
     if (appmode->is_replay_paused()) {
       return;
-    } 
+    }
   }
 
   // Allow replays to modulate speed, etc.

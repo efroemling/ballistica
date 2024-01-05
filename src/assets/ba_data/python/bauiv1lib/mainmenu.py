@@ -494,10 +494,7 @@ class MainMenuWindow(bui.Window):
             )
             btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(
-                    h + b_buffer_1,
-                    v - b_size - b_buffer_2 + v_offs
-                ),
+                position=(h + b_buffer_1, v - b_size - b_buffer_2 + v_offs),
                 button_type='square',
                 size=(b_size, b_size),
                 label='',
@@ -519,10 +516,7 @@ class MainMenuWindow(bui.Window):
             )
             btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(
-                    h - b_size * 0.5,
-                    v - b_size - b_buffer_2 + v_offs
-                ),
+                position=(h - b_size * 0.5, v - b_size - b_buffer_2 + v_offs),
                 button_type='square',
                 size=(b_size, b_size),
                 label='',
@@ -533,10 +527,7 @@ class MainMenuWindow(bui.Window):
                 parent=self._root_widget,
                 size=(b_size, b_size),
                 draw_controller=btn,
-                position=(
-                    h - b_size * 0.47,
-                    v - b_size - b_buffer_2 + v_offs
-                ),
+                position=(h - b_size * 0.47, v - b_size - b_buffer_2 + v_offs),
                 texture=bui.gettexture(
                     'pauseIcon' if bs.is_replay_paused() else 'resumeIcon'
                 ),

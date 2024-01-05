@@ -1502,8 +1502,7 @@ static PyMethodDef PySetReplaySpeedExponentDef = {
 
 // -------------------------- is_replay_paused ---------------------------------
 
-static auto PyIsReplayPaused(PyObject* self, PyObject* args)
-    -> PyObject* {
+static auto PyIsReplayPaused(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   auto* appmode = SceneV1AppMode::GetActiveOrThrow();
   if (appmode->is_replay_paused()) {
@@ -1515,9 +1514,9 @@ static auto PyIsReplayPaused(PyObject* self, PyObject* args)
 }
 
 static PyMethodDef PyIsReplayPausedDef = {
-    "is_replay_paused",     // name
-    PyIsReplayPaused,       // method
-    METH_VARARGS,           // flags
+    "is_replay_paused",  // name
+    PyIsReplayPaused,    // method
+    METH_VARARGS,        // flags
 
     "is_replay_paused() -> bool\n"
     "\n"
@@ -1527,8 +1526,7 @@ static PyMethodDef PyIsReplayPausedDef = {
 };
 // ------------------------ pause_replay ---------------------------------------
 
-static auto PyPauseReplay(PyObject* self, PyObject* args)
-    -> PyObject* {
+static auto PyPauseReplay(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   auto* appmode = SceneV1AppMode::GetActiveOrThrow();
   appmode->PauseReplay();
@@ -1537,9 +1535,9 @@ static auto PyPauseReplay(PyObject* self, PyObject* args)
 }
 
 static PyMethodDef PyPauseReplayDef = {
-    "pause_replay",    // name
-    PyPauseReplay,     // method
-    METH_VARARGS,      // flags
+    "pause_replay",  // name
+    PyPauseReplay,   // method
+    METH_VARARGS,    // flags
 
     "pause_replay() -> None\n"
     "\n"
@@ -1550,8 +1548,7 @@ static PyMethodDef PyPauseReplayDef = {
 
 // ------------------------ resume_replay --------------------------------------
 
-static auto PyResumeReplay(PyObject* self, PyObject* args)
-    -> PyObject* {
+static auto PyResumeReplay(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   auto* appmode = SceneV1AppMode::GetActiveOrThrow();
   appmode->ResumeReplay();
@@ -1560,9 +1557,9 @@ static auto PyResumeReplay(PyObject* self, PyObject* args)
 }
 
 static PyMethodDef PyResumeReplayDef = {
-    "resume_replay",    // name
-    PyResumeReplay,     // method
-    METH_VARARGS,       // flags
+    "resume_replay",  // name
+    PyResumeReplay,   // method
+    METH_VARARGS,     // flags
 
     "resume_replay() -> None\n"
     "\n"
