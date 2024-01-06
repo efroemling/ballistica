@@ -526,13 +526,16 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
             return
 
         team = player.team
-        # For each "point" our player has touched the flag (Could be multiple),
-        # deduct one from both our player and the flag's return touches variable.
+        # For each "point" our player has touched theflag (Could be multiple),
+        # deduct one from both our player and
+        # the flag's return touches variable.
         for _ in range(player.touching_own_flag):
             # Deduct
             player.touching_own_flag -= 1
             team.flag_return_touches -= 1
-            # Update our flag's timer accordingly (Prevents immediate resets in case there might be more people touching it).
+            # Update our flag's timer accordingly
+            # (Prevents immediate resets in case
+            # there might be more people touching it).
             if team.flag_return_touches == 0:
                 team.touch_return_timer = None
                 team.touch_return_timer_ticking = None
