@@ -76,6 +76,7 @@ class Assets {
   // available.
   auto SysTexture(SysTextureID id) -> TextureAsset*;
   auto SysCubeMapTexture(SysCubeMapTextureID id) -> TextureAsset*;
+  auto IsValidSysSound(SysSoundID id) -> bool;
   auto SysSound(SysSoundID id) -> SoundAsset*;
   auto SysMesh(SysMeshID id) -> MeshAsset*;
 

@@ -67,7 +67,9 @@ class TeamGameActivity(GameActivity[PlayerT, TeamT]):
         # On the first game, show the controls UI momentarily.
         # (unless we're being run in co-op mode, in which case we leave
         # it up to them)
-        if not isinstance(self.session, CoopSession):
+        if not isinstance(self.session, CoopSession) and getattr(
+            self, 'show_controls_guide', True
+        ):
             attrname = '_have_shown_ctrl_help_overlay'
             if not getattr(self.session, attrname, False):
                 delay = 4.0

@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "ballistica/base/base.h"
+#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/foundation/types.h"
 
@@ -62,7 +63,14 @@ class Input {
   void Reset();
   void LockAllInput(bool permanent, const std::string& label);
   void UnlockAllInput(bool permanent, const std::string& label);
-  auto IsInputLocked() const -> bool {
+  auto IsInputLocked(InputDevice* device = nullptr) const -> bool {
+    // Special case; in attract-mode we ignore all input except our
+    // dummy controllers.
+    if (attract_mode_) {
+      if (!ShouldAllowInputInAttractMode_(device)) {
+        return true;
+      }
+    }
     return input_lock_count_temp_ > 0 || input_lock_count_permanent_ > 0;
   }
   auto cursor_pos_x() const -> float { return cursor_pos_x_; }
@@ -92,12 +100,7 @@ class Input {
   }
   void Draw(FrameDef* frame_def);
 
-  // Get the total idle time for the system.
-  // FIXME - should better coordinate this with InputDevice::getLastUsedTime().
-  // auto GetIdleTime() const -> millisecs_t;
-
-  // Should be called whenever user-input of some form comes through.
-  // void ResetIdleTime() { last_input_time_ = GetAppTimeMillisecs(); }
+  /// Should be called whenever user-input of some form comes through.
   auto MarkInputActive() { input_active_ = true; }
 
   // returns true if more than one non-keyboard device has been active recently
@@ -153,7 +156,11 @@ class Input {
   void ReleaseJoystickInput();
   void RebuildInputDeviceDelegates();
 
+  auto attract_mode() const { return attract_mode_; }
+  void set_attract_mode(bool val) { attract_mode_ = val; }
+
  private:
+  auto ShouldAllowInputInAttractMode_(InputDevice* device) const -> bool;
   void UpdateInputDeviceCounts_();
   auto GetNewNumberedIdentifier_(const std::string& name,
                                  const std::string& identifier) -> int;
@@ -183,8 +190,9 @@ class Input {
   int max_controller_count_so_far_{};
   int local_active_input_device_count_{};
   int mouse_move_count_{};
-  int input_lock_count_temp_{};
-  int input_lock_count_permanent_{};
+  int8_t input_lock_count_temp_{};
+  int8_t input_lock_count_permanent_{};
+  bool attract_mode_{};
   bool input_active_{};
   bool have_button_using_inputs_{};
   bool have_start_activated_default_button_inputs_{};

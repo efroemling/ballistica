@@ -23,16 +23,27 @@ def import_baenv_and_run_configure(
     data_dir: str | None,
     user_python_dir: str | None,
     contains_python_dist: bool,
-) -> None:
-    """Import baenv and run its configure method."""
-    import baenv
+) -> None | str:
+    """Import baenv and run its configure method.
 
-    baenv.configure(
-        config_dir=config_dir,
-        data_dir=data_dir,
-        user_python_dir=user_python_dir,
-        contains_python_dist=contains_python_dist,
-    )
+    On success, returns None. On Failure, attempts to return an error
+    traceback as a string (logging may not yet be functional at this point
+    so we need to be direct).
+    """
+    try:
+        import baenv
+
+        baenv.configure(
+            config_dir=config_dir,
+            data_dir=data_dir,
+            user_python_dir=user_python_dir,
+            contains_python_dist=contains_python_dist,
+        )
+        return None
+    except Exception:
+        import traceback
+
+        return traceback.format_exc()
 
 
 def get_env_config() -> baenv.EnvConfig:

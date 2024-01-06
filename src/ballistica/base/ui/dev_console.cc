@@ -1110,7 +1110,7 @@ void DevConsole::ToggleState() {
       state_ = State_::kInactive;
       break;
   }
-  g_base->audio->PlaySound(g_base->assets->SysSound(SysSoundID::kBlip));
+  g_base->audio->SafePlaySysSound(SysSoundID::kBlip);
   transition_start_ = g_base->logic->display_time();
 }
 
@@ -1445,8 +1445,7 @@ auto DevConsole::PasteFromClipboard() -> bool {
         if (g_base->ClipboardHasText()) {
           auto text = g_base->ClipboardGetText();
           if (strstr(text.c_str(), "\n") || strstr(text.c_str(), "\r")) {
-            g_base->audio->PlaySound(
-                g_base->assets->SysSound(SysSoundID::kErrorBeep));
+            g_base->audio->SafePlaySysSound(SysSoundID::kErrorBeep);
             ScreenMessage("Can only paste single lines of text.",
                           Vector3f(1.0f, 0.0f, 0.0f));
           } else {

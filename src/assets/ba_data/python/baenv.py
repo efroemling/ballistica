@@ -52,7 +52,7 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 21743
+TARGET_BALLISTICA_BUILD = 21756
 TARGET_BALLISTICA_VERSION = '1.7.33'
 
 
@@ -350,9 +350,15 @@ def _setup_paths(
         # platforms where there is no write access to said built-in
         # stuff.
         check_dir = Path(user_python_dir, 'sys', TARGET_BALLISTICA_VERSION)
-        if check_dir.is_dir():
-            app_python_dir = str(check_dir)
-            is_user_app_python_dir = True
+        try:
+            if check_dir.is_dir():
+                app_python_dir = str(check_dir)
+                is_user_app_python_dir = True
+        except PermissionError:
+            logging.warning(
+                "PermissionError checking user-app-python-dir path '%s'.",
+                check_dir,
+            )
 
         # Ok, now apply these to sys.path.
 

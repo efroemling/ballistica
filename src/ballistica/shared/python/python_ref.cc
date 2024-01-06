@@ -157,6 +157,12 @@ auto PythonRef::ValueIsNone() const -> bool {
   return obj_ == Py_None;
 }
 
+auto PythonRef::ValueIsString() const -> bool {
+  assert(Python::HaveGIL());
+  ThrowIfUnset();
+  return Python::IsPyString(obj_);
+}
+
 auto PythonRef::ValueAsLString() const -> std::string {
   assert(Python::HaveGIL());
   ThrowIfUnset();

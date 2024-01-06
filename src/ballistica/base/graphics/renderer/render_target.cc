@@ -39,6 +39,7 @@ auto RenderTarget::GetScissorX(float x) const -> float {
     }
   }
 }
+
 auto RenderTarget::GetScissorY(float y) const -> float {
   assert(g_core);
   if (g_core->vr_mode()) {
@@ -60,6 +61,7 @@ auto RenderTarget::GetScissorY(float y) const -> float {
     }
   }
 }
+
 auto RenderTarget::GetScissorScaleX() const -> float {
   assert(g_core);
   if (g_core->vr_mode()) {

@@ -19,7 +19,7 @@ class RendererGL::MeshAssetDataGL : public MeshAssetRendererData {
   enum BufferType { kVertices, kIndices, kBufferCount };
 
   MeshAssetDataGL(const MeshAsset& model, RendererGL* renderer)
-      : renderer_(renderer), fake_vao_(nullptr) {
+      : renderer_(renderer) {
 #if BA_DEBUG_BUILD
     name_ = model.GetName();
 #endif
@@ -150,7 +150,7 @@ class RendererGL::MeshAssetDataGL : public MeshAssetRendererData {
   GLuint index_type_{};
   GLuint vao_{};
   GLuint vbos_[kBufferCount]{};
-  FakeVertexArrayObject* fake_vao_{};
+  // FakeVertexArrayObject* fake_vao_{};
 };
 
 }  // namespace ballistica::base

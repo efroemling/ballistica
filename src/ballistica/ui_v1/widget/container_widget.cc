@@ -607,8 +607,7 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
               // First click just selects.
               if (click_count == 1) {
-                g_base->audio->PlaySound(
-                    g_base->assets->SysSound(base::SysSoundID::kTap));
+                g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
               }
             } else {
               // Special case: If we've got a child text widget that's
@@ -1637,8 +1636,7 @@ void ContainerWidget::SelectDownWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_base->audio->PlaySound(
-              g_base->assets->SysSound(base::SysSoundID::kTap));
+          g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
         }
       }
     } else {
@@ -1702,8 +1700,7 @@ void ContainerWidget::SelectUpWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_base->audio->PlaySound(
-              g_base->assets->SysSound(base::SysSoundID::kTap));
+          g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
         }
       }
     } else {
@@ -1755,8 +1752,7 @@ void ContainerWidget::SelectLeftWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_base->audio->PlaySound(
-              g_base->assets->SysSound(base::SysSoundID::kTap));
+          g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
         }
       }
     } else {
@@ -1808,8 +1804,7 @@ void ContainerWidget::SelectRightWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_base->audio->PlaySound(
-              g_base->assets->SysSound(base::SysSoundID::kTap));
+          g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
         }
       }
     } else {
@@ -1891,8 +1886,7 @@ void ContainerWidget::SelectNextWidget() {
     }
     if ((**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
       SelectWidget(&(**i), SelectionCause::NEXT_SELECTED);
-      g_base->audio->PlaySound(
-          g_base->assets->SysSound(base::SysSoundID::kTap));
+      g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
       return;
     }
     i++;
@@ -1907,8 +1901,7 @@ void ContainerWidget::PrintExitListInstructions(
     if ((t - old_last_prev_next_time > 250)
         && (t - last_list_exit_instructions_print_time_ > 5000)) {
       last_list_exit_instructions_print_time_ = t;
-      g_base->audio->PlaySound(
-          g_base->assets->SysSound(base::SysSoundID::kErrorBeep));
+      g_base->audio->SafePlaySysSound(base::SysSoundID::kErrorBeep);
       std::string s = g_base->assets->GetResourceString("arrowsToExitListText");
       {
         // Left arrow.
@@ -1981,8 +1974,7 @@ void ContainerWidget::SelectPrevWidget() {
 
     if ((**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
       SelectWidget(&(**i), SelectionCause::PREV_SELECTED);
-      g_base->audio->PlaySound(
-          g_base->assets->SysSound(base::SysSoundID::kTap));
+      g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
       return;
     }
     i++;

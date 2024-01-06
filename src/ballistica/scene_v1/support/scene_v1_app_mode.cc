@@ -2,7 +2,6 @@
 
 #include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 
-#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/base/graphics/graphics.h"
@@ -1160,8 +1159,7 @@ void SceneV1AppMode::LocalDisplayChatMessage(
         g_scene_v1->python->HandleLocalChatMessage(final_message);
       }
       if (!chat_muted_) {
-        g_base->audio->PlaySound(
-            g_base->assets->SysSound(base::SysSoundID::kTap));
+        g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
       }
     }
   }
@@ -1223,6 +1221,10 @@ void SceneV1AppMode::SetReplaySpeedExponent(int val) {
   replay_speed_exponent_ = std::min(3, std::max(-3, val));
   replay_speed_mult_ = powf(2.0f, static_cast<float>(replay_speed_exponent_));
 }
+
+void SceneV1AppMode::PauseReplay() { replay_paused_ = true; }
+
+void SceneV1AppMode::ResumeReplay() { replay_paused_ = false; }
 
 void SceneV1AppMode::SetDebugSpeedExponent(int val) {
   debug_speed_exponent_ = val;

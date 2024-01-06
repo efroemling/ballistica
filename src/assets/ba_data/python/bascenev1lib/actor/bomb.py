@@ -1145,14 +1145,12 @@ class Bomb(bs.Actor):
             self.explode()
         elif isinstance(msg, ImpactMessage):
             self._handle_impact()
-        # Ok the logic below looks like it was backwards to me.
-        # Disabling for now; can bring back if need be.
-        # elif isinstance(msg, bs.PickedUpMessage):
-        #     # Change our source to whoever just picked us up *only* if it
-        #     # is None. This way we can get points for killing bots with their
-        #     # own bombs. Hmm would there be a downside to this?
-        #     if self._source_player is not None:
-        #         self._source_player = msg.node.source_player
+        elif isinstance(msg, bs.PickedUpMessage):
+            # Change our source to whoever just picked us up *only* if it
+            # is None. This way we can get points for killing bots with their
+            # own bombs. Hmm would there be a downside to this?
+            if self._source_player is None:
+                self._source_player = msg.node.source_player
         elif isinstance(msg, SplatMessage):
             self._handle_splat()
         elif isinstance(msg, bs.DroppedMessage):

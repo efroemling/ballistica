@@ -4,16 +4,23 @@
 
 #include "ballistica/base/input/device/joystick_input.h"
 #include "ballistica/base/input/input.h"
-#include "ballistica/core/platform/support/min_sdl.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/math/random.h"
 
 namespace ballistica::base {
 
 TestInput::TestInput() {
+  // In attract-mode (pretty demos) we want this to look more like
+  // real people connecting to the game, so just say 'Controller'.
+  const char* device_name =
+      g_base->input->attract_mode() ? "Controller" : "TestInput";
+
   joystick_ = Object::NewDeferred<JoystickInput>(-1,  // not an sdl joystick
-                                                 "TestInput",  // device name
+                                                 device_name,  // device name
                                                  false,   // allow configuring?
                                                  false);  // calibrate?;
+  joystick_->set_allow_input_in_attract_mode(true);
+  joystick_->set_is_test_input(true);
   g_base->input->PushAddInputDeviceCall(joystick_, true);
 }
 
@@ -53,6 +60,11 @@ void TestInput::Process(millisecs_t time) {
 
     // Do absolutely nothing before join start time.
     if (time < join_start_time_) {
+      return;
+    }
+
+    // Do nothing while any UI is up.
+    if (g_base->ui->MainMenuVisible()) {
       return;
     }
 

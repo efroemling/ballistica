@@ -11,8 +11,9 @@
 
 namespace ballistica {
 
-// Note: implicitly using core's internal globals here, so our behavior is
-// undefined if core has not been imported by *someone*.
+// Note: implicitly using core's internal globals here, but we should try to
+// behave reasonably if they're not inited since fatal errors can happen any
+// time.
 using core::g_base_soft;
 using core::g_core;
 
@@ -121,8 +122,8 @@ void FatalError::ReportFatalError(const std::string& message,
   std::string prefix = "FATAL-ERROR-LOG:";
   std::string suffix;
 
-  // If we have no core state yet, include this message explicitly
-  // since it won't be part of the standard log.
+  // If we have no core state yet, include this message explicitly since it
+  // won't be part of the standard log.
   if (g_core == nullptr) {
     suffix = logmsg;
   }
@@ -147,7 +148,7 @@ void FatalError::ReportFatalError(const std::string& message,
 }
 
 void FatalError::DoBlockingFatalErrorDialog(const std::string& message) {
-  // We should not get here without this intact.
+  // Should not be possible to get here without this intact.
   assert(g_core);
   // If we're in the main thread; just fire off the dialog directly.
   // Otherwise tell the main thread to do it and wait around until it's

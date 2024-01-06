@@ -11,7 +11,7 @@ namespace ballistica::classic {
 
 class StressTest {
  public:
-  void Set(bool enable, int player_count);
+  void Set(bool enable, int player_count, bool attract_mode);
   void Update();
 
  private:
@@ -23,8 +23,7 @@ class StressTest {
   int stress_test_player_count_{8};
   int last_total_frames_rendered_{};
   bool stress_testing_{};
-  // millisecs_t last_stress_test_update_time_{};
-  // FILE* stress_test_stats_file_{};
+  bool attract_mode_{};
   Object::Ref<base::AppTimer> update_timer_{};
 };
 

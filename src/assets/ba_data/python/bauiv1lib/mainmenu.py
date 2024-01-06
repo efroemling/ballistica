@@ -431,13 +431,15 @@ class MainMenuWindow(bui.Window):
         # media players but this works for now).
         if bs.is_in_replay():
             b_size = 50.0
-            b_buffer = 10.0
+            b_buffer_1 = 50.0
+            b_buffer_2 = 10.0
             t_scale = 0.75
             assert bui.app.classic is not None
             uiscale = bui.app.ui_v1.uiscale
             if uiscale is bui.UIScale.SMALL:
                 b_size *= 0.6
-                b_buffer *= 1.0
+                b_buffer_1 *= 0.8
+                b_buffer_2 *= 1.0
                 v_offs = -40
                 t_scale = 0.5
             elif uiscale is bui.UIScale.MEDIUM:
@@ -467,8 +469,8 @@ class MainMenuWindow(bui.Window):
             btn = bui.buttonwidget(
                 parent=self._root_widget,
                 position=(
-                    h - b_size - b_buffer,
-                    v - b_size - b_buffer + v_offs,
+                    h - b_size - b_buffer_1,
+                    v - b_size - b_buffer_2 + v_offs,
                 ),
                 button_type='square',
                 size=(b_size, b_size),
@@ -481,8 +483,8 @@ class MainMenuWindow(bui.Window):
                 draw_controller=btn,
                 text='-',
                 position=(
-                    h - b_size * 0.5 - b_buffer,
-                    v - b_size * 0.5 - b_buffer + 5 * t_scale + v_offs,
+                    h - b_size * 0.5 - b_buffer_1,
+                    v - b_size * 0.5 - b_buffer_2 + 5 * t_scale + v_offs,
                 ),
                 h_align='center',
                 v_align='center',
@@ -491,7 +493,7 @@ class MainMenuWindow(bui.Window):
             )
             btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(h + b_buffer, v - b_size - b_buffer + v_offs),
+                position=(h + b_buffer_1, v - b_size - b_buffer_2 + v_offs),
                 button_type='square',
                 size=(b_size, b_size),
                 label='',
@@ -503,13 +505,26 @@ class MainMenuWindow(bui.Window):
                 draw_controller=btn,
                 text='+',
                 position=(
-                    h + b_size * 0.5 + b_buffer,
-                    v - b_size * 0.5 - b_buffer + 5 * t_scale + v_offs,
+                    h + b_size * 0.5 + b_buffer_1,
+                    v - b_size * 0.5 - b_buffer_2 + 5 * t_scale + v_offs,
                 ),
                 h_align='center',
                 v_align='center',
                 size=(0, 0),
                 scale=3.0 * t_scale,
+            )
+            self._pause_resume_button = btn = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(h - b_size * 0.5, v - b_size - b_buffer_2 + v_offs),
+                button_type='square',
+                size=(b_size, b_size),
+                label=bui.charstr(
+                    bui.SpecialChar.PLAY_BUTTON
+                    if bs.is_replay_paused()
+                    else bui.SpecialChar.PAUSE_BUTTON
+                ),
+                autoselect=True,
+                on_activate_call=bui.Call(self._pause_or_resume_replay),
             )
 
     def _refresh_not_in_game(
@@ -1034,6 +1049,20 @@ class MainMenuWindow(bui.Window):
             ),
         )
 
+    def _pause_or_resume_replay(self) -> None:
+        if bs.is_replay_paused():
+            bs.resume_replay()
+            bui.buttonwidget(
+                edit=self._pause_resume_button,
+                label=bui.charstr(bui.SpecialChar.PAUSE_BUTTON),
+            )
+        else:
+            bs.pause_replay()
+            bui.buttonwidget(
+                edit=self._pause_resume_button,
+                label=bui.charstr(bui.SpecialChar.PLAY_BUTTON),
+            )
+
     def _quit(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.confirm import QuitWindow
@@ -1110,7 +1139,7 @@ class MainMenuWindow(bui.Window):
         session = bs.get_foreground_host_session()
         return getattr(session, 'benchmark_type', None) == 'cpu' or (
             bui.app.classic is not None
-            and bui.app.classic.stress_test_reset_timer is not None
+            and bui.app.classic.stress_test_update_timer is not None
         )
 
     def _confirm_end_game(self) -> None:

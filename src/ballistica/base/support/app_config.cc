@@ -169,7 +169,6 @@ void AppConfig::CompleteMap(const T& entry_map) {
 
 void AppConfig::SetupEntries() {
   // Register all our typed entries.
-  float_entries_[FloatID::kScreenGamma] = FloatEntry("Screen Gamma", 1.0F);
   float_entries_[FloatID::kScreenPixelScale] =
       FloatEntry("Screen Pixel Scale", 1.0F);
   float_entries_[FloatID::kTouchControlsScale] =
@@ -236,6 +235,8 @@ void AppConfig::SetupEntries() {
       BoolEntry("Disable Camera Shake", false);
   bool_entries_[BoolID::kDisableCameraGyro] =
       BoolEntry("Disable Camera Gyro", false);
+  bool_entries_[BoolID::kShowDemosWhenIdle] =
+      BoolEntry("Show Demos When Idle", false);
 
   // Now add everything to our name map and make sure all is kosher.
   CompleteMap(float_entries_);

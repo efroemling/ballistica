@@ -44,10 +44,6 @@ JoystickInput::JoystickInput(int sdl_joystick_id,
     analog_calibration_val = 0.6f;
   }
 
-  if (custom_device_name == "TestInput") {
-    is_test_input_ = true;
-  }
-
   sdl_joystick_id_ = sdl_joystick_id;
 
   // Non-negative values here mean its an SDL joystick.
@@ -799,7 +795,9 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
 
   // Anything that would go to ui also counts to mark us as 'recently-used'.
   if (would_go_to_ui) {
-    UpdateLastInputTime();
+    if (!(allow_input_in_attract_mode() && g_base->input->attract_mode())) {
+      UpdateLastActiveTime();
+    }
   }
 
   if (would_go_to_ui && g_base->ui->GetWidgetForInput(this)) {

@@ -14,8 +14,6 @@
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/foundation/macros.h"
-#include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
@@ -427,8 +425,7 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget* {
     // they're not the chosen one.
     if (time - last_widget_input_reject_err_sound_time_ > 5000) {
       last_widget_input_reject_err_sound_time_ = time;
-      g_base->audio->PlaySound(
-          g_base->assets->SysSound(SysSoundID::kErrorBeep));
+      g_base->audio->SafePlaySysSound(SysSoundID::kErrorBeep);
       print_menu_owner = true;
     }
     ret_val = nullptr;  // Rejected!

@@ -9,8 +9,8 @@
 
 namespace ballistica::base {
 
-// The portion of a mesh that is owned by the graphics thread.
-// This contains the renderer-specific data (GL buffers, etc)
+/// The portion of a mesh that is owned by the graphics server. This
+/// contains the renderer-specific data (GL buffers, etc).
 class MeshData {
  public:
   MeshData(MeshDataType type, MeshDrawType draw_type)

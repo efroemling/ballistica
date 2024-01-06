@@ -557,14 +557,11 @@ void ButtonWidget::DoActivate(bool is_repeat) {
   if (sound_enabled_) {
     int r = rand() % 3;  // NOLINT
     if (r == 0) {
-      g_base->audio->PlaySound(
-          g_base->assets->SysSound(base::SysSoundID::kSwish));
+      g_base->audio->SafePlaySysSound(base::SysSoundID::kSwish);
     } else if (r == 1) {
-      g_base->audio->PlaySound(
-          g_base->assets->SysSound(base::SysSoundID::kSwish2));
+      g_base->audio->SafePlaySysSound(base::SysSoundID::kSwish2);
     } else {
-      g_base->audio->PlaySound(
-          g_base->assets->SysSound(base::SysSoundID::kSwish3));
+      g_base->audio->SafePlaySysSound(base::SysSoundID::kSwish3);
     }
   }
   if (auto* call = on_activate_call_.Get()) {

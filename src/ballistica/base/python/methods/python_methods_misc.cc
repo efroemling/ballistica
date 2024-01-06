@@ -1805,6 +1805,26 @@ static PyMethodDef PyOpenFileExternallyDef = {
     "Open the provided file in the default external app.",
 };
 
+// --------------------------- get_input_idle_time -----------------------------
+
+static auto PyGetInputIdleTime(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+  return PyFloat_FromDouble(0.001 * g_base->input->input_idle_time());
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetInputIdleTimeDef = {
+    "get_input_idle_time",            // name
+    (PyCFunction)PyGetInputIdleTime,  // method
+    METH_NOARGS,                      // flags
+
+    "get_input_idle_time() -> float\n"
+    "\n"
+    "Return seconds since any local input occurred (touch, keypress, etc.).",
+};
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
@@ -1873,6 +1893,7 @@ auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
       PyNativeReviewRequestDef,
       PyTempTestingDef,
       PyOpenFileExternallyDef,
+      PyGetInputIdleTimeDef,
   };
 }
 

@@ -42,6 +42,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         self._language: str | None = None
         self._update_timer: bs.Timer | None = None
         self._news: NewsDisplay | None = None
+        self._attract_mode_timer: bs.Timer | None = None
 
     def on_transition_in(self) -> None:
         # pylint: disable=too-many-locals
@@ -83,7 +84,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                         'scale': scale,
                         'position': (0, 10),
                         'vr_depth': -10,
-                        'text': '\xa9 2011-2023 Eric Froemling',
+                        'text': '\xa9 2011-2024 Eric Froemling',
                     },
                 )
             )
@@ -295,6 +296,10 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         if not (env.demo or env.arcade) and not app.ui_v1.use_toolbars:
             self._news = NewsDisplay(self)
 
+        self._attract_mode_timer = bs.Timer(
+            3.12, self._update_attract_mode, repeat=True
+        )
+
         # Bring up the last place we were, or start at the main menu otherwise.
         with bs.ContextRef.empty():
             from bauiv1lib import specialoffer
@@ -387,7 +392,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
 
                         bs.app.ui_v1.set_main_menu_window(
                             MainMenuWindow(transition=None).get_root_widget(),
-                            from_window=None,
+                            from_window=False,  # Disable check here.
                         )
 
                 # attempt to show any pending offers immediately.
@@ -403,6 +408,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                             bui.apptimer(2.0, specialoffer.show_offer)
 
                     bui.apptimer(2.0, try_again)
+
         app.classic.main_menu_did_initial_transition = True
 
     def _update(self) -> None:
@@ -835,6 +841,26 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             bs.setmusic(bs.MusicType.MENU)
 
         bui.apptimer(0.5, _start_menu_music)
+
+    def _update_attract_mode(self) -> None:
+        if bui.app.classic is None:
+            return
+
+        if not bui.app.config.resolve('Show Demos When Idle'):
+            return
+
+        threshold = 20.0
+
+        # If we're idle *and* have been in this activity for that long,
+        # flip over to our cpu demo.
+        if bui.get_input_idle_time() > threshold and bs.time() > threshold:
+            bui.app.classic.run_stress_test(
+                playlist_type='Random',
+                playlist_name='__default__',
+                player_count=8,
+                round_duration=20,
+                attract_mode=True,
+            )
 
 
 class NewsDisplay:

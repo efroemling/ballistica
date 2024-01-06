@@ -73,6 +73,9 @@ void PythonClassInputDevice::SetupType(PyTypeObject* cls) {
       "   is_remote_client (bool):\n"
       "      Whether this input-device represents a remotely-connected\n"
       "      client.\n"
+      "\n"
+      "   is_test_input (bool):\n"
+      "      Whether this input-device is a dummy device for testing.\n"
       "\n";
 
   cls->tp_new = tp_new;
@@ -261,6 +264,16 @@ auto PythonClassInputDevice::tp_getattro(PythonClassInputDevice* self,
       throw Exception(PyExcType::kInputDeviceNotFound);
     }
     if (delegate->IsRemoteClient()) {
+      Py_RETURN_TRUE;
+    } else {
+      Py_RETURN_FALSE;
+    }
+  } else if (!strcmp(s, "is_test_input")) {
+    auto* delegate = self->input_device_delegate_->Get();
+    if (!delegate) {
+      throw Exception(PyExcType::kInputDeviceNotFound);
+    }
+    if (delegate->input_device().IsTestInput()) {
       Py_RETURN_TRUE;
     } else {
       Py_RETURN_FALSE;

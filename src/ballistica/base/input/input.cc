@@ -170,9 +170,6 @@ void Input::AnnounceConnects_() {
   } else {
     // If there's been several connected, just give a number.
     if (newly_connected_controllers_.size() > 1) {
-      for (auto&& s : newly_connected_controllers_) {
-        Log(LogLevel::kInfo, "GOT CONTROLLER " + s);
-      }
       std::string s =
           g_base->assets->GetResourceString("controllersConnectedText");
       Utils::StringReplaceOne(
@@ -187,7 +184,7 @@ void Input::AnnounceConnects_() {
       ScreenMessage(s);
     }
     if (g_base->assets->sys_assets_loaded()) {
-      g_base->audio->PlaySound(g_base->assets->SysSound(SysSoundID::kGunCock));
+      g_base->audio->SafePlaySysSound(SysSoundID::kGunCock);
     }
   }
   newly_connected_controllers_.clear();
@@ -210,7 +207,7 @@ void Input::AnnounceDisconnects_() {
     ScreenMessage(s);
   }
   if (g_base->assets->sys_assets_loaded()) {
-    g_base->audio->PlaySound(g_base->assets->SysSound(SysSoundID::kCorkPop));
+    g_base->audio->SafePlaySysSound(SysSoundID::kCorkPop);
   }
 
   newly_disconnected_controllers_.clear();
@@ -392,9 +389,9 @@ void Input::UpdateInputDeviceCounts_() {
     // just due to those)
     if (input_device.Exists()
         && ((*input_device).IsTouchScreen() || (*input_device).IsKeyboard()
-            || ((*input_device).last_input_time_millisecs() != 0
+            || ((*input_device).last_active_time_millisecs() != 0
                 && current_time_millisecs
-                           - (*input_device).last_input_time_millisecs()
+                           - (*input_device).last_active_time_millisecs()
                        < 60000))) {
       total++;
       if (!(*input_device).IsTouchScreen()) {
@@ -441,9 +438,9 @@ auto Input::GetLocalActiveInputDeviceCount() -> int {
       if (input_device.Exists() && !input_device->IsKeyboard()
           && !input_device->IsTouchScreen() && !input_device->IsUIOnly()
           && input_device->IsLocal()
-          && (input_device->last_input_time_millisecs() != 0
+          && (input_device->last_active_time_millisecs() != 0
               && current_time_millisecs
-                         - input_device->last_input_time_millisecs()
+                         - input_device->last_active_time_millisecs()
                      < 60000)) {
         count++;
       }
@@ -639,8 +636,9 @@ void Input::UnlockAllInput(bool permanent, const std::string& label) {
       permanent ? "permanent unlock: "
                 : "temp unlock: " + label + " time "
                       + std::to_string(g_core->GetAppTimeMillisecs()));
-  while (recent_input_locks_unlocks_.size() > 10)
+  while (recent_input_locks_unlocks_.size() > 10) {
     recent_input_locks_unlocks_.pop_front();
+  }
 
   if (permanent) {
     input_lock_count_permanent_--;
@@ -722,15 +720,15 @@ void Input::PrintLockLabels_() {
 void Input::PushTextInputEvent(const std::string& text) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall([this, text] {
+    // Mark as active even if input is locked.
     MarkInputActive();
 
-    // If the app doesn't want direct text input right now, ignore.
-    if (!g_base->app_adapter->HasDirectKeyboardInput()) {
+    if (IsInputLocked()) {
       return;
     }
 
-    // Ignore if input is locked.
-    if (IsInputLocked()) {
+    // If the app doesn't want direct text input right now, ignore.
+    if (!g_base->app_adapter->HasDirectKeyboardInput()) {
       return;
     }
 
@@ -795,15 +793,13 @@ void Input::HandleJoystickEvent_(const SDL_Event& event,
   if (ShouldCompletelyIgnoreInputDevice(input_device)) {
     return;
   }
-  if (IsInputLocked()) {
+
+  // Mark as active even if input is locked.
+  input_device->UpdateLastActiveTime();
+
+  if (IsInputLocked(input_device)) {
     return;
   }
-
-  // Make note that we're not idle.
-  MarkInputActive();
-
-  // And that this particular device isn't idle either.
-  input_device->UpdateLastInputTime();
 
   // If someone is capturing these events, give them a crack at it.
   if (joystick_input_capture_) {
@@ -905,9 +901,9 @@ void Input::HandleKeyReleaseSimple_(int keycode) {
 void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
   assert(g_base->InLogicThread());
 
+  // Mark as active even if input is locked.
   MarkInputActive();
 
-  // Ignore all key presses if input is locked.
   if (IsInputLocked()) {
     return;
   }
@@ -1180,8 +1176,9 @@ void Input::PushMouseScrollEvent(const Vector2f& amount) {
 void Input::HandleMouseScroll_(const Vector2f& amount) {
   assert(g_base->InLogicThread());
 
-  // If input is locked, allow it to mark us active but nothing more.
+  // Mark as active even if input is locked.
   MarkInputActive();
+
   if (IsInputLocked()) {
     return;
   }
@@ -1217,8 +1214,9 @@ void Input::PushSmoothMouseScrollEvent(const Vector2f& velocity,
 void Input::HandleSmoothMouseScroll_(const Vector2f& velocity, bool momentum) {
   assert(g_base->InLogicThread());
 
-  // If input is locked, allow it to mark us active but nothing more.
+  // Mark as active even if input is locked.
   MarkInputActive();
+
   if (IsInputLocked()) {
     return;
   }
@@ -1259,6 +1257,7 @@ void Input::HandleMouseMotion_(const Vector2f& position) {
   assert(g_base);
   assert(g_base->InLogicThread());
 
+  // Mark as active even if input is locked.
   MarkInputActive();
 
   if (IsInputLocked()) {
@@ -1309,6 +1308,7 @@ void Input::HandleMouseDown_(int button, const Vector2f& position) {
   assert(g_base);
   assert(g_base->InLogicThread());
 
+  // Mark as active even if input is locked.
   MarkInputActive();
 
   if (IsInputLocked()) {
@@ -1416,11 +1416,12 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
   assert(g_base->InLogicThread());
   assert(g_base->graphics);
 
+  // Mark as active even if input is locked.
+  MarkInputActive();
+
   if (IsInputLocked()) {
     return;
   }
-
-  MarkInputActive();
 
   if (g_buildconfig.ostype_ios_tvos()) {
     printf("FIXME: update touch handling\n");
@@ -1562,6 +1563,13 @@ void Input::LsInputDevices() {
   }
 
   Log(LogLevel::kInfo, out);
+}
+
+auto Input::ShouldAllowInputInAttractMode_(InputDevice* device) const -> bool {
+  if (device == nullptr) {
+    return false;
+  }
+  return device->allow_input_in_attract_mode();
 }
 
 }  // namespace ballistica::base

@@ -14,7 +14,7 @@ class RenderTarget : public Object {
   auto GetThreadOwnership() const -> ThreadOwnership override {
     return ThreadOwnership::kGraphicsContext;
   }
-  enum class Type { kScreen, kFramebuffer };
+  enum class Type : uint8_t { kScreen, kFramebuffer };
   explicit RenderTarget(Type type);
   ~RenderTarget() override;
 
@@ -36,10 +36,10 @@ class RenderTarget : public Object {
   auto GetScissorY(float y) const -> float;
 
  protected:
-  float physical_width_{};
-  float physical_height_{};
   bool depth_{};
   Type type_{};
+  float physical_width_{};
+  float physical_height_{};
 };
 
 }  // namespace ballistica::base

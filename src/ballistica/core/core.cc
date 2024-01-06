@@ -8,6 +8,7 @@
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/types.h"
 
 namespace ballistica::core {
 
@@ -75,7 +76,8 @@ void CoreFeatureSet::DoImport(const CoreConfig& config) {
   // didn't exist before. Can at least add an offset to give an accurate
   // time though.
   auto seconds_since_actual_start =
-      static_cast<double>(CorePlatform::GetCurrentMillisecs() - start_millisecs)
+      static_cast<seconds_t>(CorePlatform::GetCurrentMillisecs()
+                             - start_millisecs)
       / 1000.0;
   g_core->LifecycleLog("core import begin", -seconds_since_actual_start);
   g_core->LifecycleLog("core import end");
@@ -320,9 +322,9 @@ auto CoreFeatureSet::GetAppTimeMicrosecs() -> microsecs_t {
   return app_time_microsecs_;
 }
 
-auto CoreFeatureSet::GetAppTimeSeconds() -> double {
+auto CoreFeatureSet::GetAppTimeSeconds() -> seconds_t {
   UpdateAppTime();
-  return static_cast<double>(app_time_microsecs_) / 1000000;
+  return static_cast<seconds_t>(app_time_microsecs_) / 1000000;
 }
 
 void CoreFeatureSet::UpdateAppTime() {

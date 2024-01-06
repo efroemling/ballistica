@@ -244,10 +244,12 @@ void CorePython::MonolithicModeBaEnvConfigure() {
   auto default_py_dir = std::string("ba_data") + BA_DIRSLASH + "python";
   auto data_dir_mono_default =
       g_core->platform->GetDataDirectoryMonolithicDefault();
+
   // Keep path clean if data-dir val is ".".
   if (data_dir_mono_default != ".") {
     default_py_dir = data_dir_mono_default + BA_DIRSLASH + default_py_dir;
   }
+
   auto args = PythonRef::Stolen(Py_BuildValue("(s)", default_py_dir.c_str()));
   objs().Get(ObjID::kPrependSysPathCall).Call(args);
 
@@ -259,8 +261,9 @@ void CorePython::MonolithicModeBaEnvConfigure() {
       g_core->platform->GetDataDirectoryMonolithicDefault();
   std::optional<std::string> user_python_dir =
       g_core->platform->GetUserPythonDirectoryMonolithicDefault();
+
+  // clang-format off
   auto kwargs =
-      // clang-format off
     PythonRef::Stolen(Py_BuildValue(
       "{"
       "sO"  // config_dir
@@ -277,14 +280,15 @@ void CorePython::MonolithicModeBaEnvConfigure() {
       "contains_python_dist",
         g_buildconfig.contains_python_dist() ? Py_True : Py_False));
   // clang-format on
+
   auto result = objs()
                     .Get(ObjID::kBaEnvConfigureCall)
                     .Call(objs().Get(ObjID::kEmptyTuple), kwargs);
   if (!result.Exists()) {
-    FatalError(
-        "Environment setup failed.\n"
-        "This usually means you are running the app from the wrong location.\n"
-        "See log for details.");
+    FatalError("Environment setup failed (no error info available).");
+  }
+  if (result.ValueIsString()) {
+    FatalError("Environment setup failed:\n" + result.ValueAsString());
   }
   g_core->LifecycleLog("baenv.configure() end");
 }

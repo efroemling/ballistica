@@ -2339,12 +2339,11 @@ void RendererGL::SetDrawAtEqualDepth(bool enable) {
   }
 }
 
-// FIXME FIXME FIXME FIXME
-// turning off GL_DEPTH_TEST also disables
-// depth writing which we may not want.
-// It sounds like the proper thing
-// to do in that case is leave GL_DEPTH_TEST on
-// and set glDepthFunc(GL_ALWAYS)
+// FIXME FIXME FIXME FIXME:
+//
+// Turning off GL_DEPTH_TEST also disables depth writing which we may not
+// want. It sounds like the proper thing to do in that case is leave
+// GL_DEPTH_TEST on and set glDepthFunc(GL_ALWAYS).
 
 void RendererGL::SetDepthTesting(bool enable) {
   if (enable != depth_testing_enabled_) {

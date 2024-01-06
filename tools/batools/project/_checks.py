@@ -19,6 +19,11 @@ if TYPE_CHECKING:
 
 def _get_legal_notice_private() -> str:
     """Return the one line legal notice we expect private files to have."""
+    return 'Copyright (c) 2011-2024 Eric Froemling'
+
+
+def _get_legal_notice_private_prev() -> str:
+    """Allows us to auto-update."""
     return 'Copyright (c) 2011-2023 Eric Froemling'
 
 
@@ -210,6 +215,7 @@ def _check_c_license(
     # Look for public license line (public or private repo) or private
     # license line (private repo only)
     line_private = '// ' + _get_legal_notice_private()
+    line_private_prev = '// ' + _get_legal_notice_private_prev()
     line_public = get_public_license('c++')
     lnum = 0
 
@@ -229,7 +235,7 @@ def _check_c_license(
                 fname,
                 line_number=lnum,
                 expected=line_private,
-                can_auto_update=False,
+                can_auto_update=(lines[lnum] == line_private_prev),
             )
 
 
@@ -463,6 +469,7 @@ def _check_python_file_license(
     if self.license_line_checks:
         public_license = get_public_license('python')
         private_license = '# ' + _get_legal_notice_private()
+        private_license_prev = '# ' + _get_legal_notice_private_prev()
         lnum = copyrightline
         if len(lines) < lnum + 1:
             raise RuntimeError('Not enough lines in file:', fname)
@@ -486,17 +493,27 @@ def _check_python_file_license(
                     f'{disable_note}'
                 )
         else:
-            if lines[lnum] != public_license and lines[lnum] != private_license:
-                raise CleanError(
-                    f'License text not found'
-                    f" at '{fname}' line {lnum+1};"
-                    f' please correct.\n'
-                    f'Expected text (for public files):'
-                    f' {public_license}\n'
-                    f'Expected text (for private files):'
-                    f' {private_license}\n'
-                    f'{disable_note}'
-                )
+            if lines[lnum] not in [public_license, private_license]:
+                # Special case: if we find last year's private license
+                # we can update to this year's.
+                if lines[lnum] == private_license_prev:
+                    self.add_line_correction(
+                        fname,
+                        line_number=lnum,
+                        expected=private_license,
+                        can_auto_update=(lines[lnum] == private_license_prev),
+                    )
+                else:
+                    raise CleanError(
+                        f'License text not found'
+                        f" at '{fname}' line {lnum+1};"
+                        f' please correct.\n'
+                        f'Expected text (for public files):'
+                        f' {public_license}\n'
+                        f'Expected text (for private files):'
+                        f' {private_license}\n'
+                        f'{disable_note}'
+                    )
 
 
 def _calc_python_file_copyright_line(

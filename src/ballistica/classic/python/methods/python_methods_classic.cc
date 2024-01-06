@@ -4,6 +4,7 @@
 
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/classic/support/stress_test.h"
 #include "ballistica/scene_v1/support/scene_v1_app_mode.h"
@@ -154,11 +155,13 @@ static auto PySetStressTesting(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   int enable;
   int player_count;
-  if (!PyArg_ParseTuple(args, "pi", &enable, &player_count)) {
+  int attract_mode;
+  if (!PyArg_ParseTuple(args, "pip", &enable, &player_count, &attract_mode)) {
     return nullptr;
   }
-  g_base->logic->event_loop()->PushCall([enable, player_count] {
-    g_classic->stress_test()->Set(enable, player_count);
+  g_base->logic->event_loop()->PushCall([enable, player_count, attract_mode] {
+    g_classic->stress_test()->Set(enable, player_count, attract_mode);
+    g_base->input->set_attract_mode(enable && attract_mode);
   });
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -169,7 +172,9 @@ static PyMethodDef PySetStressTestingDef = {
     PySetStressTesting,    // method
     METH_VARARGS,          // flags
 
-    "set_stress_testing(testing: bool, player_count: int) -> None\n"
+    "set_stress_testing(testing: bool,\n"
+    "                        player_count: int,\n"
+    "                        attract_mode: bool) -> None\n"
     "\n"
     "(internal)",
 };

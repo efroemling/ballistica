@@ -9,7 +9,8 @@
 
 namespace ballistica::base {
 
-// A dynamically defined mesh (unlike a mesh asset which is completely static).
+/// A dynamically defined mesh (unlike a mesh asset which is completely
+/// static).
 class Mesh : public Object {
  public:
   auto type() const -> MeshDataType { return type_; }
@@ -17,7 +18,7 @@ class Mesh : public Object {
     return mesh_data_client_handle_;
   }
 
-  // Return whether it is safe to attempt drawing with present data.
+  /// Return whether it is safe to attempt drawing with present data.
   virtual auto IsValid() const -> bool = 0;
   auto last_frame_def_num() const -> int64_t { return last_frame_def_num_; }
   void set_last_frame_def_num(int64_t f) { last_frame_def_num_ = f; }
@@ -31,14 +32,14 @@ class Mesh : public Object {
   }
 
  private:
-  int64_t last_frame_def_num_{};
   MeshDataType type_{};
-
-  // Renderer data for this mesh. We keep this as a shared pointer
-  // so that frame_defs or other things using this mesh can keep it alive
-  // even if we go away.
-  Object::Ref<MeshDataClientHandle> mesh_data_client_handle_;
   bool valid_{};
+  int64_t last_frame_def_num_{};
+
+  /// Renderer data for this mesh. We keep this as a shared pointer so that
+  /// frame_defs or other things using this mesh can keep it alive even if
+  /// we go away.
+  Object::Ref<MeshDataClientHandle> mesh_data_client_handle_;
 };
 
 }  // namespace ballistica::base

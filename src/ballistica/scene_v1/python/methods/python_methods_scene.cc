@@ -1500,6 +1500,74 @@ static PyMethodDef PySetReplaySpeedExponentDef = {
     "Set replay speed. Actual displayed speed is pow(2, speed).",
 };
 
+// -------------------------- is_replay_paused ---------------------------------
+
+static auto PyIsReplayPaused(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  if (appmode->is_replay_paused()) {
+    Py_RETURN_TRUE;
+  } else {
+    Py_RETURN_FALSE;
+  }
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyIsReplayPausedDef = {
+    "is_replay_paused",  // name
+    PyIsReplayPaused,    // method
+    METH_VARARGS,        // flags
+
+    "is_replay_paused() -> bool\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Returns if Replay is paused or not.",
+};
+// ------------------------ pause_replay ---------------------------------------
+
+static auto PyPauseReplay(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  appmode->PauseReplay();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyPauseReplayDef = {
+    "pause_replay",  // name
+    PyPauseReplay,   // method
+    METH_VARARGS,    // flags
+
+    "pause_replay() -> None\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Pauses replay.",
+};
+
+// ------------------------ resume_replay --------------------------------------
+
+static auto PyResumeReplay(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  appmode->ResumeReplay();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyResumeReplayDef = {
+    "resume_replay",  // name
+    PyResumeReplay,   // method
+    METH_VARARGS,     // flags
+
+    "resume_replay() -> None\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Resumes replay.",
+};
+
 // ----------------------- reset_random_player_names ---------------------------
 
 static auto PyResetRandomPlayerNames(PyObject* self, PyObject* args,
@@ -1777,6 +1845,9 @@ auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
       PyResetRandomPlayerNamesDef,
       PySetReplaySpeedExponentDef,
       PyGetReplaySpeedExponentDef,
+      PyIsReplayPausedDef,
+      PyPauseReplayDef,
+      PyResumeReplayDef,
       PySetDebugSpeedExponentDef,
       PyGetGameRosterDef,
       PyGetForegroundHostActivityDef,

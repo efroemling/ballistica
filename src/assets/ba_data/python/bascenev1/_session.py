@@ -266,7 +266,7 @@ class Session:
         # Limit player counts *unless* we're in a stress test.
         if (
             babase.app.classic is not None
-            and babase.app.classic.stress_test_reset_timer is None
+            and babase.app.classic.stress_test_update_timer is None
         ):
             if len(self.sessionplayers) >= self.max_players >= 0:
                 # Print a rejection message *only* to the client trying to

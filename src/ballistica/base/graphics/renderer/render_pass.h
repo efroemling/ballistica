@@ -15,8 +15,8 @@ namespace ballistica::base {
 // shadow pass, a window, etc.
 class RenderPass {
  public:
-  enum class ReflectionSubPass { kRegular, kMirrored };
-  enum class Type {
+  enum class ReflectionSubPass : uint8_t { kRegular, kMirrored };
+  enum class Type : uint8_t {
     // A pass whose results are projected onto the scene for lighting and
     // shadow effects. Values lighter than kShadowNeutral will show up as
     // light and darker than neutral will show up as shadowing. This version
@@ -152,40 +152,43 @@ class RenderPass {
  private:
   void SetFrustum(float near_val, float far_val);
 
+  bool cam_use_fov_tangents_{};
+  bool floor_reflection_{};
+  Type type_{};
+
+  float cam_near_clip_{};
+  float cam_far_clip_{};
+  float cam_fov_x_{};
+  float cam_fov_y_{};
+  float physical_width_{};
+  float physical_height_{};
+  float virtual_width_{};
+  float virtual_height_{};
+
+  // We can now alternately supply left, right, top, bottom frustum tangents.
+  float cam_fov_l_tan_{1.0f};
+  float cam_fov_r_tan_{1.0f};
+  float cam_fov_t_tan_{1.0f};
+  float cam_fov_b_tan_{1.0f};
+
+  Vector3f cam_pos_{0.0f, 0.0f, 0.0f};
+  Vector3f cam_target_{0.0f, 0.0f, 0.0f};
+  Vector3f cam_up_{0.0f, 0.0f, 0.0f};
+
+  Matrix44f tex_project_matrix_{kMatrix44fIdentity};
+  Matrix44f projection_matrix_{kMatrix44fIdentity};
+  Matrix44f model_view_matrix_{kMatrix44fIdentity};
+  Matrix44f model_view_projection_matrix_{kMatrix44fIdentity};
+  FrameDef* frame_def_{};
+
+  std::vector<Vector3f> cam_area_of_interest_points_;
+
   // Our pass holds sets of draw-commands bucketed by section and
   // component-type.
   std::unique_ptr<RenderCommandBuffer>
       commands_[static_cast<int>(ShadingType::kCount)];
   std::unique_ptr<RenderCommandBuffer> commands_flat_;
   std::unique_ptr<RenderCommandBuffer> commands_flat_transparent_;
-  Vector3f cam_pos_{0.0f, 0.0f, 0.0f};
-  Vector3f cam_target_{0.0f, 0.0f, 0.0f};
-  Vector3f cam_up_{0.0f, 0.0f, 0.0f};
-  float cam_near_clip_{};
-  float cam_far_clip_{};
-  float cam_fov_x_{};
-  float cam_fov_y_{};
-
-  // We can now alternately supply left, right, top, bottom frustum tangents.
-  bool cam_use_fov_tangents_{};
-  float cam_fov_l_tan_{1.0f};
-  float cam_fov_r_tan_{1.0f};
-  float cam_fov_t_tan_{1.0f};
-  float cam_fov_b_tan_{1.0f};
-  std::vector<Vector3f> cam_area_of_interest_points_;
-  Type type_{};
-
-  // For lights/shadows.
-  Matrix44f tex_project_matrix_{kMatrix44fIdentity};
-  Matrix44f projection_matrix_{kMatrix44fIdentity};
-  Matrix44f model_view_matrix_{kMatrix44fIdentity};
-  Matrix44f model_view_projection_matrix_{kMatrix44fIdentity};
-  bool floor_reflection_{};
-  FrameDef* frame_def_{};
-  float physical_width_{};
-  float physical_height_{};
-  float virtual_width_{};
-  float virtual_height_{};
 };
 
 }  // namespace ballistica::base

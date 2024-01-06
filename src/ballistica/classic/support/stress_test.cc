@@ -5,22 +5,21 @@
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/input/device/test_input.h"
-#include "ballistica/base/input/input.h"
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/classic/classic.h"
 
 namespace ballistica::classic {
 
-void StressTest::Set(bool enable, int player_count) {
+void StressTest::Set(bool enable, int player_count, bool attract_mode) {
   assert(g_base->InLogicThread());
   bool was_stress_testing = stress_testing_;
   stress_testing_ = enable;
   stress_test_player_count_ = player_count;
+  attract_mode_ = attract_mode;
 
   // If we're turning on, reset our intervals and things.
   if (!was_stress_testing && stress_testing_) {
     // So our first sample is 1 interval from now.
-    // last_stress_test_update_time_ = g_core->GetAppTimeMillisecs();
 
     // Reset our frames-rendered tally.
     if (g_base && g_base->graphics_server
@@ -71,9 +70,11 @@ void StressTest::ProcessInputs(int player_count) {
     test_inputs_.push_back(new base::TestInput());
   }
 
-  // Every so often lets kill the oldest one off.
+  // Every so often lets kill the oldest one off (less often in attract-mode
+  // though).
+  int odds = attract_mode_ ? 10000 : 2000;
   if (explicit_bool(true)) {
-    if (test_inputs_.size() > 0 && (rand() % 2000 < 3)) {  // NOLINT
+    if (test_inputs_.size() > 0 && (rand() % odds < 3)) {  // NOLINT
       stress_test_last_leave_time_ = time;
 
       // Usually do oldest; sometimes newest.
