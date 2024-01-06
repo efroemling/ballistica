@@ -8,7 +8,6 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/shared/foundation/macros.h"
 
 namespace ballistica::base {
 

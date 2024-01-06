@@ -70,7 +70,6 @@ class MainMenuWindow(bui.Window):
         self._how_to_play_button: bui.Widget | None = None
         self._credits_button: bui.Widget | None = None
         self._settings_button: bui.Widget | None = None
-        self._pause_and_resume_image: bui.Widget | None = None
         self._next_refresh_allow_time = 0.0
 
         self._store_char_tex = self._get_store_char_tex()
@@ -527,16 +526,6 @@ class MainMenuWindow(bui.Window):
                 autoselect=True,
                 on_activate_call=bui.Call(self._pause_or_resume_replay),
             )
-            # self._pause_and_resume_image = bui.imagewidget(
-            #     parent=self._root_widget,
-            #     size=(b_size, b_size),
-            #     draw_controller=btn,
-            #     position=(h - b_size * 0.47,
-            # v - b_size - b_buffer_2 + v_offs),
-            #     texture=bui.gettexture(
-            #         'pauseIcon' if bs.is_replay_paused() else 'resumeIcon'
-            #     ),
-            # )
 
     def _refresh_not_in_game(
         self, positions: list[tuple[float, float, float]]

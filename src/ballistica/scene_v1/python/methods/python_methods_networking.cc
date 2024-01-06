@@ -8,14 +8,12 @@
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
-#include "ballistica/scene_v1/connection/connection_to_host.h"
 #include "ballistica/scene_v1/connection/connection_to_host_udp.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/shared/math/vector3f.h"
 #include "ballistica/shared/networking/sockaddr.h"
 #include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_ref.h"
 #include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::scene_v1 {

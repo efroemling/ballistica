@@ -14,8 +14,6 @@
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/foundation/macros.h"
-#include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {

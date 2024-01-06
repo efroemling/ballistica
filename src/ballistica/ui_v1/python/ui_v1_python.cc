@@ -17,7 +17,6 @@
 #include "ballistica/ui_v1/python/class/python_class_ui_texture.h"
 #include "ballistica/ui_v1/python/class/python_class_widget.h"
 #include "ballistica/ui_v1/python/methods/python_methods_ui_v1.h"
-#include "ballistica/ui_v1/widget/text_widget.h"
 
 namespace ballistica::ui_v1 {
 

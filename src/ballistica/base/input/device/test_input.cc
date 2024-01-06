@@ -5,7 +5,6 @@
 #include "ballistica/base/input/device/joystick_input.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/core/platform/support/min_sdl.h"
 #include "ballistica/shared/math/random.h"
 
 namespace ballistica::base {

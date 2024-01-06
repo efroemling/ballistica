@@ -2,7 +2,6 @@
 
 #include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 
-#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/base/graphics/graphics.h"

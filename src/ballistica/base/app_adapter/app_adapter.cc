@@ -4,12 +4,8 @@
 
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/input/input.h"
-#include "ballistica/base/networking/network_reader.h"
-#include "ballistica/base/networking/networking.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
-#include "ballistica/base/ui/ui.h"
-#include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
 

@@ -3,7 +3,6 @@
 #include "ballistica/base/input/device/keyboard_input.h"
 
 #include "ballistica/base/app_adapter/app_adapter.h"
-#include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/base/support/repeater.h"
 #include "ballistica/base/ui/ui.h"
