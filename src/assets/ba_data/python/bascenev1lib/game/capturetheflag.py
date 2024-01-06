@@ -522,12 +522,13 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
     def _handle_death_flag_capture(self, player: Player) -> None:
         """Handles flag values when a player dies or leaves the game."""
         # Don't do anything if the player hasn't touched the flag at all.
-        if not player.touching_own_flag: return
-        
+        if not player.touching_own_flag:
+            return
+
         team = player.team
         # For each "point" our player has touched the flag (Could be multiple),
         # deduct one from both our player and the flag's return touches variable.
-        for _ in range(player.touching_own_flag): 
+        for _ in range(player.touching_own_flag):
             # Deduct
             player.touching_own_flag -= 1
             team.flag_return_touches -= 1
