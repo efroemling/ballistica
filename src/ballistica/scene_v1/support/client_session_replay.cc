@@ -134,8 +134,10 @@ void ClientSessionReplay::FetchMessages() {
 
   // If we have no messages left, read from the file until we get some.
   while (commands().empty()) {
-    {
-      // Before we read next message, let's save our current state.
+    // Before we read next message, let's save our current state
+    // if we didn't that for too long.
+    unsaved_messages_count_ += 1;
+    if (unsaved_messages_count_ > 50) {
       SessionStream out(nullptr, false);
       DumpFullState(&out);
 
@@ -280,7 +282,10 @@ void ClientSessionReplay::OnReset(bool rewind) {
   }
 }
 
-void ClientSessionReplay::SaveState() { states_.push_back(current_state_); }
+void ClientSessionReplay::SaveState() {
+  unsaved_messages_count_ = 0;
+  states_.push_back(current_state_);
+}
 
 void ClientSessionReplay::RestoreState(millisecs_t to_base_time) {
   ScreenMessage("was: " + std::to_string(base_time()) + "ms");

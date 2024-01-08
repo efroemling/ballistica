@@ -49,6 +49,8 @@ class ClientSessionReplay : public ClientSession,
   std::vector<IntermediateState> states_;
   IntermediateState current_state_;
 
+  int unsaved_messages_count_{};
+
   uint32_t message_fetch_num_{};
   bool have_sent_client_message_{};
   std::vector<ConnectionToClient*> connections_to_clients_;
