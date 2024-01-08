@@ -139,6 +139,9 @@ void ClientSessionReplay::FetchMessages() {
       SessionStream out(nullptr, false);
       DumpFullState(&out);
 
+      current_state_.correction_messages_.clear();
+      GetCorrectionMessages(false, &current_state_.correction_messages_);
+
       fflush(file_);
       current_state_.file_position_ = ftell(file_);
       current_state_.message_ = out.GetOutMessage();
@@ -301,6 +304,9 @@ void ClientSessionReplay::RestoreFromCurrentState() {
   Reset(true);
   fseek(file_, current_state_.file_position_, SEEK_SET);
   HandleSessionMessage(current_state_.message_);
+  for (const auto& msg : current_state_.correction_messages_) {
+    HandleSessionMessage(msg);
+  }
 }
 
 }  // namespace ballistica::scene_v1

@@ -35,6 +35,7 @@ class ClientSessionReplay : public ClientSession,
   struct IntermediateState {
     // Message containing full scene state at the moment.
     std::vector<uint8_t> message_;
+    std::vector<std::vector<uint8_t>> correction_messages_;
 
     // A position in replay file where we should continue from.
     long file_position_;
