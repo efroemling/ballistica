@@ -50,3 +50,11 @@
 
 ### Rikko
 - Created the original "reject_recently_left_players" plugin
+
+### SoK
+- Modder
+- BSE Heartbeat mechanic port
+
+### Temp
+- Modder
+- CTF Flag Bug Fix
