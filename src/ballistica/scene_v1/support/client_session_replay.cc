@@ -134,6 +134,17 @@ void ClientSessionReplay::FetchMessages() {
 
   // If we have no messages left, read from the file until we get some.
   while (commands().empty()) {
+    {
+      // Before we read next message, let's save our current state.
+      SessionStream out(nullptr, false);
+      DumpFullState(&out);
+
+      fflush(file_);
+      current_state_.file_position_ = ftell(file_);
+      current_state_.message_ = out.GetOutMessage();
+      SaveState();
+    }
+
     std::vector<uint8_t> buffer;
     uint8_t len8;
     uint32_t len32;
@@ -263,6 +274,33 @@ void ClientSessionReplay::OnReset(bool rewind) {
       return;
     }
   }
+}
+
+void ClientSessionReplay::SaveState() { states_.push_back(current_state_); }
+
+void ClientSessionReplay::RestoreState() {
+  ScreenMessage("restoring state " + std::to_string(states_.size()));
+  const int N = 500;
+
+  if (states_.size() <= N) {
+    states_.clear();
+    Reset(true);
+    return;
+  }
+
+  for (int i = 0; i < N; ++i) {
+    states_.pop_back();
+  }
+
+  current_state_ = states_.back();
+  RestoreFromCurrentState();
+}
+
+void ClientSessionReplay::RestoreFromCurrentState() {
+  // what to do with messages_fetch_num_? is it used somewhere at all?
+  Reset(true);
+  fseek(file_, current_state_.file_position_, SEEK_SET);
+  HandleSessionMessage(current_state_.message_);
 }
 
 }  // namespace ballistica::scene_v1

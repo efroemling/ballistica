@@ -28,8 +28,24 @@ class ClientSessionReplay : public ClientSession,
 
   void Error(const std::string& description) override;
   void FetchMessages() override;
+  void SaveState();
+  void RestoreState();
 
  private:
+  struct IntermediateState {
+    // Message containing full scene state at the moment.
+    std::vector<uint8_t> message_;
+
+    // A position in replay file where we should continue from.
+    long file_position_;
+  };
+
+  void RestoreFromCurrentState();
+
+  // List of passed states which we can rewind to.
+  std::vector<IntermediateState> states_;
+  IntermediateState current_state_;
+
   uint32_t message_fetch_num_{};
   bool have_sent_client_message_{};
   std::vector<ConnectionToClient*> connections_to_clients_;
