@@ -1579,7 +1579,7 @@ static auto PyRewindReplay(PyObject* self, PyObject* args) -> PyObject* {
     throw Exception(
         "Attempting to rewind a replay not in replay session context.");
   }
-  session->RestoreState();
+  session->RestoreState(session->base_time() - 2'000);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

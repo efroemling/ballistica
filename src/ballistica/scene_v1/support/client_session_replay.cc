@@ -18,7 +18,7 @@ auto ClientSessionReplay::GetActualTimeAdvanceMillisecs(
     double base_advance_millisecs) -> double {
   auto* appmode = SceneV1AppMode::GetActiveOrFatal();
   if (appmode->is_replay_paused()) {
-    return 0.0;
+    return 0.001;
   }
   return base_advance_millisecs * pow(2.0f, appmode->replay_speed_exponent());
 }
@@ -139,6 +139,7 @@ void ClientSessionReplay::FetchMessages() {
       SessionStream out(nullptr, false);
       DumpFullState(&out);
 
+      current_state_.base_time_ = base_time();
       current_state_.correction_messages_.clear();
       GetCorrectionMessages(false, &current_state_.correction_messages_);
 
@@ -281,28 +282,28 @@ void ClientSessionReplay::OnReset(bool rewind) {
 
 void ClientSessionReplay::SaveState() { states_.push_back(current_state_); }
 
-void ClientSessionReplay::RestoreState() {
-  ScreenMessage("restoring state " + std::to_string(states_.size()));
-  const int N = 500;
+void ClientSessionReplay::RestoreState(millisecs_t to_base_time) {
+  ScreenMessage("was: " + std::to_string(base_time()) + "ms");
+  ScreenMessage("want: " + std::to_string(to_base_time) + "ms");
 
-  if (states_.size() <= N) {
-    states_.clear();
-    Reset(true);
-    return;
-  }
-
-  for (int i = 0; i < N; ++i) {
+  while (!states_.empty() && states_.back().base_time_ > to_base_time) {
     states_.pop_back();
   }
 
-  current_state_ = states_.back();
-  RestoreFromCurrentState();
+  if (states_.empty()) {
+    Reset(true);
+  } else {
+    current_state_ = states_.back();
+    RestoreFromCurrentState();
+  }
 }
 
 void ClientSessionReplay::RestoreFromCurrentState() {
   // what to do with messages_fetch_num_? is it used somewhere at all?
   Reset(true);
   fseek(file_, current_state_.file_position_, SEEK_SET);
+
+  SetBaseTime(current_state_.base_time_);
   HandleSessionMessage(current_state_.message_);
   for (const auto& msg : current_state_.correction_messages_) {
     HandleSessionMessage(msg);

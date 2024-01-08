@@ -29,7 +29,7 @@ class ClientSessionReplay : public ClientSession,
   void Error(const std::string& description) override;
   void FetchMessages() override;
   void SaveState();
-  void RestoreState();
+  void RestoreState(millisecs_t to_base_time);
 
  private:
   struct IntermediateState {
@@ -39,6 +39,8 @@ class ClientSessionReplay : public ClientSession,
 
     // A position in replay file where we should continue from.
     long file_position_;
+
+    millisecs_t base_time_;
   };
 
   void RestoreFromCurrentState();
