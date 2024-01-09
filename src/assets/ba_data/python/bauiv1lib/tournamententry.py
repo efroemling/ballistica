@@ -618,7 +618,7 @@ class TournamentEntryWindow(PopupWindow):
                 if bui.app.classic is not None
                 else None,
             )
-            bui.apptimer(0 if practice else 0.7, self._transition_out)
+            bui.apptimer(0 if practice else 1.25, self._transition_out)
 
     def _on_pay_with_tickets_press(self) -> None:
         from bauiv1lib import getcurrency
