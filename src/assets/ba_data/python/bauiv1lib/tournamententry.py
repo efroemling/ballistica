@@ -88,13 +88,13 @@ class TournamentEntryWindow(PopupWindow):
         # Show the practice button as long as we're not
         # restarting while on a paid tournament run.
         from bascenev1lib.activity.coopscore import CoopScoreScreen
-        self._do_practice = (
-            self._tournament_activity is None or
-            isinstance(self._tournament_activity, CoopScoreScreen)
+
+        self._do_practice = self._tournament_activity is None or isinstance(
+            self._tournament_activity, CoopScoreScreen
         )
-        
+
         off_p = 0 if not self._do_practice else 48
-        self._height += (off_p*0.933)
+        self._height += off_p * 0.933
 
         # Creates our root_widget.
         super().__init__(
@@ -260,10 +260,7 @@ class TournamentEntryWindow(PopupWindow):
             self._pay_with_ad_btn = None
 
         btn_size = (150, 45)
-        btn_pos = (
-            self._width / 2 - btn_size[0]/2,
-            self._width / 2 - 110
-        )
+        btn_pos = (self._width / 2 - btn_size[0] / 2, self._width / 2 - 110)
         if self._do_practice:
             self._practice_button = bui.buttonwidget(
                 parent=self.root_widget,
@@ -553,7 +550,7 @@ class TournamentEntryWindow(PopupWindow):
                 text=bui.charstr(bui.SpecialChar.TICKET) + t_str,
             )
 
-    def _launch(self, practice = False) -> None:
+    def _launch(self, practice=False) -> None:
         assert bui.app.classic is not None
         if self._launched:
             return
@@ -563,22 +560,22 @@ class TournamentEntryWindow(PopupWindow):
         # If they gave us an existing, non-consistent
         # practice activity, just restart it.
         if (
-            self._tournament_activity is not None and
-            not practice == self._tournament_activity.session._submit_score
+            self._tournament_activity is not None
+            and not practice == self._tournament_activity.session._submit_score
         ):
             try:
                 if not practice:
                     bui.apptimer(0.1, bui.getsound('cashRegister').play)
                     bui.screenmessage(
                         bui.Lstr(
-                            translate=('serverResponses', 'Entering tournament...')
+                            translate=(
+                                'serverResponses',
+                                'Entering tournament...',
+                            )
                         ),
                         color=(0, 1, 0),
                     )
-                bui.apptimer(
-                    0 if practice else 0.3,
-                    self._transition_out
-                )
+                bui.apptimer(0 if practice else 0.3, self._transition_out)
                 launched = True
                 with self._tournament_activity.context:
                     self._tournament_activity.end(
@@ -714,7 +711,7 @@ class TournamentEntryWindow(PopupWindow):
                 'tournament_entry',
                 on_completion_call=bui.WeakCall(self._on_ad_complete),
             )
-            
+
     def on_practice_press(self) -> None:
         plus = bui.app.plus
         assert plus is not None
@@ -722,7 +719,7 @@ class TournamentEntryWindow(PopupWindow):
         # If we're already entering, ignore.
         if self._entering:
             return
-        
+
         # Deny if it looks like the tourney has ended.
         if self._seconds_remaining == 0:
             bui.screenmessage(

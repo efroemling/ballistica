@@ -64,7 +64,7 @@ class CoopSession(Session):
             submit_score = classic.coop_session_args['submit_score']
         else:
             submit_score = True
-            
+
         # print('FIXME: COOP SESSION WOULD CALC DEPS.')
         depsets: Sequence[bascenev1.DependencySet] = []
 
@@ -347,8 +347,8 @@ class CoopSession(Session):
 
                 if not (env.demo or env.arcade):
                     if (
-                        self.tournament_id is not None and
-                        activity.session._submit_score
+                        self.tournament_id is not None
+                        and activity.session._submit_score
                     ):
                         self._custom_menu_ui = [
                             {
