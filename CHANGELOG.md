@@ -11,6 +11,8 @@
 - Players now get points for killing bots with their own bombs by catching it
   and throwing it back at them. This is actually old logic but was disabled due
   to a logic flaw, but should be fixed now. (Thanks VinniTR!)
+- Added a 'Practice' button in tournaments, letting you play them free of
+  charge while not submitting scores. (Thanks Temp!)
   
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
