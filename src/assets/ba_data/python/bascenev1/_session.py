@@ -91,6 +91,7 @@ class Session:
         team_colors: Sequence[Sequence[float]] | None = None,
         min_players: int = 1,
         max_players: int = 8,
+        submit_score: bool = True,
     ):
         """Instantiate a session.
 
@@ -162,6 +163,7 @@ class Session:
         self.sessionplayers = []
         self.min_players = min_players
         self.max_players = max_players
+        self._submit_score = submit_score
 
         self.customdata = {}
         self._in_set_activity = False
