@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 def get_input_device_mapped_value(
-    devicename: str, unique_id: str, name: str
+    devicename: str, unique_id: str, name: str, default: bool = False,
 ) -> Any:
     """Returns a mapped value for an input device.
 
@@ -30,8 +30,9 @@ def get_input_device_mapped_value(
     subplatform = app.classic.subplatform
     appconfig = babase.app.config
 
-    # If there's an entry in our config for this controller, use it.
-    if 'Controllers' in appconfig:
+    # If there's an entry in our config for this controller and
+    # we're not looking for our default mappings, use it.
+    if 'Controllers' in appconfig and not default:
         ccfgs = appconfig['Controllers']
         if devicename in ccfgs:
             mapping = None

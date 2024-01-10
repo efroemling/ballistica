@@ -27,9 +27,10 @@ class ConfigKeyboardWindow(bui.Window):
         self._displayname = bui.Lstr(translate=('inputDeviceNames', dname_raw))
         self._width = 700
         if self._unique_id != '#1':
-            self._height = 480
+            self._height = 490
         else:
             self._height = 375
+        self._height += 45
         self._spacing = 40
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
@@ -47,17 +48,13 @@ class ConfigKeyboardWindow(bui.Window):
                 transition=transition,
             )
         )
-
+        
+        self._settings: dict[str, int] = {}
+        self._get_config_mapping()
+        
         self._rebuild_ui()
 
-    def _rebuild_ui(self) -> None:
-        assert bui.app.classic is not None
-
-        for widget in self._root_widget.get_children():
-            widget.delete()
-
-        # Fill our temp config with present values.
-        self._settings: dict[str, int] = {}
+    def _get_config_mapping(self, default: bool = False):
         for button in [
             'buttonJump',
             'buttonPunch',
@@ -73,22 +70,43 @@ class ConfigKeyboardWindow(bui.Window):
             self._settings[
                 button
             ] = bui.app.classic.get_input_device_mapped_value(
-                self._input, button
+                self._input, button, default
             )
 
+    def _rebuild_ui(self, reset: bool = False) -> None:
+        assert bui.app.classic is not None
+
+        for widget in self._root_widget.get_children():
+            widget.delete()
+
+        b_off = 0 if self._unique_id != '#1' else 9
         cancel_button = bui.buttonwidget(
             parent=self._root_widget,
             autoselect=True,
-            position=(38, self._height - 85),
+            position=(38, self._height - 115 - b_off),
             size=(170, 60),
             label=bui.Lstr(resource='cancelText'),
             scale=0.9,
             on_activate_call=self._cancel,
         )
+        reset_button = bui.buttonwidget(
+            parent=self._root_widget,
+            autoselect=True,
+            position=((self._width / 2) - 80, self._height - 115 - b_off),
+            size=(180, 60),
+            label=bui.Lstr(resource='settingsWindowAdvanced.resetText'),
+            scale=0.9,
+            text_scale=0.9,
+            color=(0.4, 0.4, 0.9),
+            textcolor=(1.0, 1.0, 1.0),
+            on_activate_call=self._reset,
+        )
+        if reset:
+            bui.containerwidget(edit=self._root_widget, selected_child=reset_button)
         save_button = bui.buttonwidget(
             parent=self._root_widget,
             autoselect=True,
-            position=(self._width - 190, self._height - 85),
+            position=(self._width - 190, self._height - 115 - b_off),
             size=(180, 60),
             label=bui.Lstr(resource='saveText'),
             scale=0.9,
@@ -101,13 +119,15 @@ class ConfigKeyboardWindow(bui.Window):
             start_button=save_button,
         )
 
-        bui.widget(edit=cancel_button, right_widget=save_button)
-        bui.widget(edit=save_button, left_widget=cancel_button)
+        bui.widget(edit=cancel_button, right_widget=reset_button)
+        bui.widget(edit=reset_button, left_widget=cancel_button, right_widget=save_button)
+        bui.widget(edit=save_button, left_widget=reset_button)
 
         v = self._height - 74.0
+        t_off = 0 if self._unique_id != '#1' else -10
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, v + 15),
+            position=(self._width * 0.5, v + 41 + t_off),
             size=(0, 0),
             text=bui.Lstr(
                 resource=self._r + '.configuringText',
@@ -117,12 +137,12 @@ class ConfigKeyboardWindow(bui.Window):
             h_align='center',
             v_align='center',
             maxwidth=270,
-            scale=0.83,
+            scale=0.99,
         )
         v -= 20
 
         if self._unique_id != '#1':
-            v -= 20
+            v -= 60
             v -= self._spacing
             bui.textwidget(
                 parent=self._root_widget,
@@ -140,9 +160,9 @@ class ConfigKeyboardWindow(bui.Window):
         v -= 10
         v -= self._spacing * 2.2
         v += 25
-        v -= 42
+        v -= 45 if self._unique_id != '#1' else 86
         h_offs = 160
-        dist = 70
+        dist = 68
         d_color = (0.4, 0.4, 0.8)
         self._capture_button(
             pos=(h_offs, v + 0.95 * dist),
@@ -281,6 +301,25 @@ class ConfigKeyboardWindow(bui.Window):
             ControlsSettingsWindow(transition='in_left').get_root_widget(),
             from_window=self._root_widget,
         )
+
+    def _reset(self) -> None:
+        from bauiv1lib.confirm import ConfirmWindow
+
+        assert bui.app.classic is not None
+        ConfirmWindow(
+            # TODO: Implement a translation string for this!
+            'Are you sure you want to reset your button mapping?',
+            self._do_reset,
+            width=480,
+            height=95,
+        )
+        
+    def _do_reset(self) -> None:
+        """Resets the input's mapping settings."""
+        self._settings: dict[str, int] = {}
+        self._get_config_mapping(default=True)
+        self._rebuild_ui(reset=True)
+        bui.getsound('gunCocking').play()
 
     def _save(self) -> None:
         from bauiv1lib.settings.controls import ControlsSettingsWindow

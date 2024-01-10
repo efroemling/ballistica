@@ -43,7 +43,7 @@ class GamepadSettingsWindow(bui.Window):
         self._is_main_menu = is_main_menu
         self._displayname = self._name
         self._width = 700 if self._is_secondary else 730
-        self._height = 440 if self._is_secondary else 450
+        self._height = 440 if self._is_secondary else 490
         self._spacing = 40
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
@@ -64,10 +64,79 @@ class GamepadSettingsWindow(bui.Window):
             )
         )
 
+        self._settings: dict[str, int] = {}
+        if not self._is_secondary:
+            self._get_config_mapping()
         # Don't ask to config joysticks while we're in here.
         self._rebuild_ui()
 
-    def _rebuild_ui(self) -> None:
+    def _get_config_mapping(self, default: bool = False) -> None:
+        for button in [
+            'buttonJump',
+            'buttonJump_B',
+            'buttonPunch',
+            'buttonPunch_B',
+            'buttonBomb',
+            'buttonBomb_B',
+            'buttonPickUp',
+            'buttonPickUp_B',
+            'buttonStart',
+            'buttonStart_B',
+            'buttonStart2',
+            'buttonStart2_B',
+            'buttonUp',
+            'buttonUp_B',
+            'buttonDown',
+            'buttonDown_B',
+            'buttonLeft',
+            'buttonLeft_B',
+            'buttonRight',
+            'buttonRight_B',
+            'buttonRun1',
+            'buttonRun1_B',
+            'buttonRun2',
+            'buttonRun2_B',
+            'triggerRun1',
+            'triggerRun1_B',
+            'triggerRun2',
+            'triggerRun2_B',
+            'buttonIgnored',
+            'buttonIgnored_B',
+            'buttonIgnored2',
+            'buttonIgnored2_B',
+            'buttonIgnored3',
+            'buttonIgnored3_B',
+            'buttonIgnored4',
+            'buttonIgnored4_B',
+            'buttonVRReorient',
+            'buttonVRReorient_B',
+            'analogStickDeadZone',
+            'analogStickDeadZone_B',
+            'dpad',
+            'dpad_B',
+            'unassignedButtonsRun',
+            'unassignedButtonsRun_B',
+            'startButtonActivatesDefaultWidget',
+            'startButtonActivatesDefaultWidget_B',
+            'uiOnly',
+            'uiOnly_B',
+            'ignoreCompletely',
+            'ignoreCompletely_B',
+            'autoRecalibrateAnalogStick',
+            'autoRecalibrateAnalogStick_B',
+            'analogStickLR',
+            'analogStickLR_B',
+            'analogStickUD',
+            'analogStickUD_B',
+            'enableSecondary',
+        ]:
+            val = bui.app.classic.get_input_device_mapped_value(
+                self._input, button, default
+            )
+            if val != -1:
+                self._settings[button] = val
+
+    def _rebuild_ui(self, reset: bool = False) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
 
@@ -78,77 +147,6 @@ class GamepadSettingsWindow(bui.Window):
             widget.delete()
 
         self._textwidgets: dict[str, bui.Widget] = {}
-
-        # If we were supplied with settings, we're a secondary joystick and
-        # just operate on that. in the other (normal) case we make our own.
-        if not self._is_secondary:
-            # Fill our temp config with present values (for our primary and
-            # secondary controls).
-            self._settings = {}
-            for skey in [
-                'buttonJump',
-                'buttonJump_B',
-                'buttonPunch',
-                'buttonPunch_B',
-                'buttonBomb',
-                'buttonBomb_B',
-                'buttonPickUp',
-                'buttonPickUp_B',
-                'buttonStart',
-                'buttonStart_B',
-                'buttonStart2',
-                'buttonStart2_B',
-                'buttonUp',
-                'buttonUp_B',
-                'buttonDown',
-                'buttonDown_B',
-                'buttonLeft',
-                'buttonLeft_B',
-                'buttonRight',
-                'buttonRight_B',
-                'buttonRun1',
-                'buttonRun1_B',
-                'buttonRun2',
-                'buttonRun2_B',
-                'triggerRun1',
-                'triggerRun1_B',
-                'triggerRun2',
-                'triggerRun2_B',
-                'buttonIgnored',
-                'buttonIgnored_B',
-                'buttonIgnored2',
-                'buttonIgnored2_B',
-                'buttonIgnored3',
-                'buttonIgnored3_B',
-                'buttonIgnored4',
-                'buttonIgnored4_B',
-                'buttonVRReorient',
-                'buttonVRReorient_B',
-                'analogStickDeadZone',
-                'analogStickDeadZone_B',
-                'dpad',
-                'dpad_B',
-                'unassignedButtonsRun',
-                'unassignedButtonsRun_B',
-                'startButtonActivatesDefaultWidget',
-                'startButtonActivatesDefaultWidget_B',
-                'uiOnly',
-                'uiOnly_B',
-                'ignoreCompletely',
-                'ignoreCompletely_B',
-                'autoRecalibrateAnalogStick',
-                'autoRecalibrateAnalogStick_B',
-                'analogStickLR',
-                'analogStickLR_B',
-                'analogStickUD',
-                'analogStickUD_B',
-                'enableSecondary',
-            ]:
-                val = bui.app.classic.get_input_device_mapped_value(
-                    self._input, skey
-                )
-                if val != -1:
-                    self._settings[skey] = val
 
         back_button: bui.Widget | None
 
@@ -171,7 +169,7 @@ class GamepadSettingsWindow(bui.Window):
         else:
             cancel_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(51, self._height - 65),
+                position=(51, self._height - 115),
                 autoselect=True,
                 size=(160, 60),
                 label=bui.Lstr(resource='cancelText'),
@@ -181,12 +179,27 @@ class GamepadSettingsWindow(bui.Window):
             bui.containerwidget(
                 edit=self._root_widget, cancel_button=cancel_button
             )
-
+        reset_button: bui.Widget | None
+        if not self._is_secondary:
+            reset_button = bui.buttonwidget(
+                parent=self._root_widget,
+                autoselect=True,
+                position=((self._width / 2) - 80, self._height - 115),
+                size=(180, 60),
+                label=bui.Lstr(resource='settingsWindowAdvanced.resetText'),
+                scale=0.9,
+                text_scale=0.9,
+                color=(0.4, 0.4, 0.9),
+                textcolor=(1.0, 1.0, 1.0),
+                on_activate_call=self._reset,
+            )
+            if reset:
+                bui.containerwidget(edit=self._root_widget, selected_child=reset_button)
         save_button: bui.Widget | None
         if not self._is_secondary:
             save_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(self._width - 195, self._height - 65),
+                position=(self._width - 195, self._height - 115),
                 size=(180, 60),
                 autoselect=True,
                 label=bui.Lstr(resource='saveText'),
@@ -203,7 +216,7 @@ class GamepadSettingsWindow(bui.Window):
             v = self._height - 59
             bui.textwidget(
                 parent=self._root_widget,
-                position=(0, v + 5),
+                position=(0, v + 10),
                 size=(self._width, 25),
                 text=bui.Lstr(resource=self._r + '.titleText'),
                 color=bui.app.ui_v1.title_color,
@@ -211,11 +224,11 @@ class GamepadSettingsWindow(bui.Window):
                 h_align='center',
                 v_align='center',
             )
-            v -= 48
+            v -= 95
 
             bui.textwidget(
                 parent=self._root_widget,
-                position=(0, v + 3),
+                position=(0, v - 5),
                 size=(self._width, 25),
                 text=self._name,
                 color=bui.app.ui_v1.infotextcolor,
@@ -227,7 +240,7 @@ class GamepadSettingsWindow(bui.Window):
 
             bui.textwidget(
                 parent=self._root_widget,
-                position=(50, v + 10),
+                position=(50, v + 5),
                 size=(self._width - 100, 30),
                 text=bui.Lstr(resource=self._r + '.appliesToAllText'),
                 maxwidth=330,
@@ -382,9 +395,19 @@ class GamepadSettingsWindow(bui.Window):
         )
 
         try:
-            if cancel_button is not None and save_button is not None:
-                bui.widget(edit=cancel_button, right_widget=save_button)
-                bui.widget(edit=save_button, left_widget=cancel_button)
+            bui.widget(
+                edit=cancel_button,
+                right_widget=reset_button if reset_button else save_button if save_button else None
+                )
+            bui.widget(
+                edit=reset_button,
+                left_widget=cancel_button if cancel_button else None,
+                right_widget=save_button if save_button else None,
+            )
+            bui.widget(
+                edit=save_button,
+                left_widget=reset_button if reset_button else cancel_button if cancel_button else None
+            )
         except Exception:
             logging.exception('Error wiring up gamepad config window.')
 
@@ -808,6 +831,27 @@ class GamepadSettingsWindow(bui.Window):
                 ControlsSettingsWindow(transition='in_left').get_root_widget(),
                 from_window=self._root_widget,
             )
+            
+    def _reset(self) -> None:
+        from bauiv1lib.confirm import ConfirmWindow
+
+        assert bui.app.classic is not None
+        ConfirmWindow(
+            # TODO: Implement a translation string for this!
+            'Are you sure you want to reset your button mapping?\n'
+            '(This will include your advanced settings)',
+            self._do_reset,
+            width=480,
+            height=110,
+        )
+        
+    def _do_reset(self) -> None:
+        """Resets the input's mapping settings."""
+        self._settings: dict[str, int] = {}
+        self._get_config_mapping(default=True)
+        self._rebuild_ui(reset=True)
+        bui.getsound('gunCocking').play()
+
 
     def _save(self) -> None:
         classic = bui.app.classic
