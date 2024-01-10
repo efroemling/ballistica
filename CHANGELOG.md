@@ -1,4 +1,4 @@
-### 1.7.33 (build 21756, api 8, 2024-01-05)
+### 1.7.33 (build 21757, api 8, 2024-01-06)
 - Exposed an override for `bascenev1.Session`'s max players on servers (by EraOSBeta)
 - Added UI for customizing teams and FFA series length (by EraOSBeta, idea by 3alTemp)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
