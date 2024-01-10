@@ -13,7 +13,10 @@ if TYPE_CHECKING:
 
 
 def get_input_device_mapped_value(
-    devicename: str, unique_id: str, name: str, default: bool = False,
+    devicename: str,
+    unique_id: str,
+    name: str,
+    default: bool = False,
 ) -> Any:
     """Returns a mapped value for an input device.
 

@@ -570,7 +570,10 @@ class ClassicSubsystem(babase.AppSubsystem):
         )
 
     def get_input_device_mapped_value(
-        self, device: bascenev1.InputDevice, name: str, default: bool = False,
+        self,
+        device: bascenev1.InputDevice,
+        name: str,
+        default: bool = False,
     ) -> Any:
         """Returns a mapped value for an input device.
 

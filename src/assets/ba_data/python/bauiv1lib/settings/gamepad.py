@@ -194,7 +194,9 @@ class GamepadSettingsWindow(bui.Window):
                 on_activate_call=self._reset,
             )
             if reset:
-                bui.containerwidget(edit=self._root_widget, selected_child=reset_button)
+                bui.containerwidget(
+                    edit=self._root_widget, selected_child=reset_button
+                )
         save_button: bui.Widget | None
         if not self._is_secondary:
             save_button = bui.buttonwidget(
@@ -397,8 +399,12 @@ class GamepadSettingsWindow(bui.Window):
         try:
             bui.widget(
                 edit=cancel_button,
-                right_widget=reset_button if reset_button else save_button if save_button else None
-                )
+                right_widget=reset_button
+                if reset_button
+                else save_button
+                if save_button
+                else None,
+            )
             bui.widget(
                 edit=reset_button,
                 left_widget=cancel_button if cancel_button else None,
@@ -406,7 +412,11 @@ class GamepadSettingsWindow(bui.Window):
             )
             bui.widget(
                 edit=save_button,
-                left_widget=reset_button if reset_button else cancel_button if cancel_button else None
+                left_widget=reset_button
+                if reset_button
+                else cancel_button
+                if cancel_button
+                else None,
             )
         except Exception:
             logging.exception('Error wiring up gamepad config window.')
@@ -831,7 +841,7 @@ class GamepadSettingsWindow(bui.Window):
                 ControlsSettingsWindow(transition='in_left').get_root_widget(),
                 from_window=self._root_widget,
             )
-            
+
     def _reset(self) -> None:
         from bauiv1lib.confirm import ConfirmWindow
 
@@ -844,14 +854,13 @@ class GamepadSettingsWindow(bui.Window):
             width=480,
             height=110,
         )
-        
+
     def _do_reset(self) -> None:
         """Resets the input's mapping settings."""
         self._settings: dict[str, int] = {}
         self._get_config_mapping(default=True)
         self._rebuild_ui(reset=True)
         bui.getsound('gunCocking').play()
-
 
     def _save(self) -> None:
         classic = bui.app.classic
