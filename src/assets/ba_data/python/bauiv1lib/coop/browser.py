@@ -290,6 +290,7 @@ class CoopBrowserWindow(bui.Window):
 
         self._refresh()
         self._restore_state()
+        self._set_campaign_difficulty(self._campaign_difficulty, False)
 
         # Even though we might display cached tournament data immediately, we
         # don't consider it valid until we've pinged.
@@ -497,7 +498,11 @@ class CoopBrowserWindow(bui.Window):
         self._doing_tournament_query = False
         self._update_for_data(tournament_data)
 
-    def _set_campaign_difficulty(self, difficulty: str) -> None:
+    def _set_campaign_difficulty(
+        self,
+        difficulty: str,
+        check: bool | True
+    ) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.purchase import PurchaseWindow
 
@@ -505,13 +510,17 @@ class CoopBrowserWindow(bui.Window):
         assert plus is not None
 
         assert bui.app.classic is not None
-        if difficulty != self._campaign_difficulty:
+        #if difficulty != self._campaign_difficulty 
+        if True:
             if (
                 difficulty == 'hard'
                 and not bui.app.classic.accounts.have_pro_options()
             ):
-                PurchaseWindow(items=['pro'])
-                return
+                if check:
+                    PurchaseWindow(items=['pro'])
+                    return
+                else:
+                    difficulty = 'easy'
             bui.getsound('gunCocking').play()
             if difficulty not in ('easy', 'hard'):
                 print('ERROR: invalid campaign difficulty:', difficulty)
@@ -557,7 +566,9 @@ class CoopBrowserWindow(bui.Window):
             button_type='square',
             autoselect=True,
             enable_sound=False,
-            on_activate_call=bui.Call(self._set_campaign_difficulty, 'easy'),
+            on_activate_call=bui.Call(
+                self._set_campaign_difficulty, 'easy', True
+            ),
             on_select_call=bui.Call(self.sel_change, 'campaign', 'easyButton'),
             color=sel_color
             if self._campaign_difficulty == 'easy'
@@ -583,7 +594,9 @@ class CoopBrowserWindow(bui.Window):
             button_type='square',
             autoselect=True,
             enable_sound=False,
-            on_activate_call=bui.Call(self._set_campaign_difficulty, 'hard'),
+            on_activate_call=bui.Call(
+                self._set_campaign_difficulty, 'hard', True
+            ),
             on_select_call=bui.Call(self.sel_change, 'campaign', 'hardButton'),
             color=sel_color_hard
             if self._campaign_difficulty == 'hard'
