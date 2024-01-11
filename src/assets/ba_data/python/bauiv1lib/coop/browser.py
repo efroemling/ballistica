@@ -510,7 +510,7 @@ class CoopBrowserWindow(bui.Window):
         assert plus is not None
 
         assert bui.app.classic is not None
-        #if difficulty != self._campaign_difficulty 
+        #if difficulty != self._campaign_difficulty
         if True:
             if (
                 difficulty == 'hard'
