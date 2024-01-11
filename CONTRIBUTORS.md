@@ -50,3 +50,6 @@
 
 ### Rikko
 - Created the original "reject_recently_left_players" plugin
+
+### Temp (3alTemp)
+- Modder & Bug Fixer
