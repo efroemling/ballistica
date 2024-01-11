@@ -501,7 +501,7 @@ class CoopBrowserWindow(bui.Window):
     def _set_campaign_difficulty(
         self,
         difficulty: str,
-        check: bool | True
+        check: bool
     ) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.purchase import PurchaseWindow
@@ -519,8 +519,7 @@ class CoopBrowserWindow(bui.Window):
                 if check:
                     PurchaseWindow(items=['pro'])
                     return
-                else:
-                    difficulty = 'easy'
+                difficulty = 'easy'
             bui.getsound('gunCocking').play()
             if difficulty not in ('easy', 'hard'):
                 print('ERROR: invalid campaign difficulty:', difficulty)
