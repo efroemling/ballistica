@@ -92,7 +92,7 @@ class RespawnIcon:
         assert self._name.node
         bs.animate(self._name.node, 'scale', {0: 0, 0.1: 0.5})
 
-        tpos = (-60 - h_offs if on_right else 60 + h_offs, -192 + offs)
+        tpos = (-60 - h_offs if on_right else 60 + h_offs, -193 + offs)
         self._text: bs.NodeActor | None = bs.NodeActor(
             bs.newnode(
                 'text',
@@ -109,9 +109,27 @@ class RespawnIcon:
                 },
             )
         )
+        dpos = [ipos[0] + (7 if on_right else -7), ipos[1] - 16]
+        self._dec_text: bs.NodeActor | None = bs.NodeActor(
+            bs.newnode(
+                'text',
+                attrs={
+                    'position': dpos,
+                    'h_attach': 'right' if on_right else 'left',
+                    'h_align': 'right' if on_right else 'left',
+                    'scale': 0.65,
+                    'shadow': 0.5,
+                    'flatness': 0.5,
+                    'v_attach': 'top',
+                    'color': bs.safecolor(icon['tint_color']),
+                    'text': '...',
+                },
+            )
+        )
 
         assert self._text.node
         bs.animate(self._text.node, 'scale', {0: 0, 0.1: 0.9})
+        bs.animate(self._dec_text.node, 'scale', {0: 0, 0.1: 0.65})
 
         self._respawn_time = bs.time() + respawn_time
         self._update()
@@ -155,10 +173,20 @@ class RespawnIcon:
 
     def _update(self) -> None:
         remaining = int(round(self._respawn_time - bs.time()))
+
+        def dec_step():
+            self._dec_text.node.text = self._dec_text.node.text[:-1]
+
         if remaining > 0:
             assert self._text is not None
             if self._text.node:
                 self._text.node.text = str(remaining)
+                self._dec_text.node.text = '...'
+                bs.timer(0.25, dec_step)
+                bs.timer(0.5, dec_step)
+                bs.timer(0.75, dec_step)
         else:
             self._visible = False
-            self._image = self._text = self._timer = self._name = None
+            self._image = (
+                self._text
+            ) = self._dec_text = self._timer = self._name = None
