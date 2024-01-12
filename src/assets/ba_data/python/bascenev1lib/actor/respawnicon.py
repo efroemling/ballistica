@@ -23,6 +23,7 @@ class RespawnIcon:
     def __init__(self, player: bs.Player, respawn_time: float):
         """Instantiate with a Player and respawn_time (in seconds)."""
         self._visible = True
+        self._dots_epic_only = False
 
         on_right, offs_extra, respawn_icons = self._get_context(player)
 
@@ -110,26 +111,33 @@ class RespawnIcon:
             )
         )
         dpos = [ipos[0] + (7 if on_right else -7), ipos[1] - 16]
-        self._dec_text: bs.NodeActor | None = bs.NodeActor(
-            bs.newnode(
-                'text',
-                attrs={
-                    'position': dpos,
-                    'h_attach': 'right' if on_right else 'left',
-                    'h_align': 'right' if on_right else 'left',
-                    'scale': 0.65,
-                    'shadow': 0.5,
-                    'flatness': 0.5,
-                    'v_attach': 'top',
-                    'color': bs.safecolor(icon['tint_color']),
-                    'text': '...',
-                },
+        self._dec_text: bs.NodeActor | None = None
+        if (
+            self._dots_epic_only
+            and bs.getactivity().globalsnode.slow_motion
+            or not self._dots_epic_only
+        ):
+            self._dec_text = bs.NodeActor(
+                bs.newnode(
+                    'text',
+                    attrs={
+                        'position': dpos,
+                        'h_attach': 'right' if on_right else 'left',
+                        'h_align': 'right' if on_right else 'left',
+                        'scale': 0.65,
+                        'shadow': 0.5,
+                        'flatness': 0.5,
+                        'v_attach': 'top',
+                        'color': bs.safecolor(icon['tint_color']),
+                        'text': '',
+                    },
+                )
             )
-        )
 
         assert self._text.node
         bs.animate(self._text.node, 'scale', {0: 0, 0.1: 0.9})
-        bs.animate(self._dec_text.node, 'scale', {0: 0, 0.1: 0.65})
+        if self._dec_text:
+            bs.animate(self._dec_text.node, 'scale', {0: 0, 0.1: 0.65})
 
         self._respawn_time = bs.time() + respawn_time
         self._update()
@@ -146,7 +154,7 @@ class RespawnIcon:
         """Return info on where we should be shown and stored."""
         activity = bs.getactivity()
 
-        if isinstance(bs.getsession(), bs.DualTeamSession):
+        if isinstance(activity.session, bs.DualTeamSession):
             on_right = player.team.id % 2 == 1
 
             # Store a list of icons in the team.
@@ -181,10 +189,11 @@ class RespawnIcon:
             assert self._text is not None
             if self._text.node:
                 self._text.node.text = str(remaining)
-                self._dec_text.node.text = '...'
-                bs.timer(0.25, dec_step)
-                bs.timer(0.5, dec_step)
-                bs.timer(0.75, dec_step)
+                if self._dec_text:
+                    self._dec_text.node.text = '...'
+                    bs.timer(0.25, dec_step)
+                    bs.timer(0.5, dec_step)
+                    bs.timer(0.75, dec_step)
         else:
             self._visible = False
             self._image = (
