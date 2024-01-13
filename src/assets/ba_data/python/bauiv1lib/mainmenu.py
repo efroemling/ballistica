@@ -526,6 +526,56 @@ class MainMenuWindow(bui.Window):
                 autoselect=True,
                 on_activate_call=bui.Call(self._pause_or_resume_replay),
             )
+            btn = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(
+                    h - b_size * 1.5 - b_buffer_1 * 2,
+                    v - b_size - b_buffer_2 + v_offs,
+                ),
+                button_type='square',
+                size=(b_size, b_size),
+                label='',
+                autoselect=True,
+                on_activate_call=bui.Call(self._change_replay_speed, -1),
+            )
+            bui.textwidget(
+                parent=self._root_widget,
+                draw_controller=btn,
+                text='<<',
+                position=(
+                    h - b_size - b_buffer_1 * 2,
+                    v - b_size * 0.5 - b_buffer_2 + 5 * t_scale + v_offs,
+                ),
+                h_align='center',
+                v_align='center',
+                size=(0, 0),
+                scale=2.0 * t_scale,
+            )
+            btn = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(
+                    h + b_size * 0.5 + b_buffer_1 * 2,
+                    v - b_size - b_buffer_2 + v_offs,
+                ),
+                button_type='square',
+                size=(b_size, b_size),
+                label='',
+                autoselect=True,
+                on_activate_call=bui.Call(bs.forward_replay),
+            )
+            bui.textwidget(
+                parent=self._root_widget,
+                draw_controller=btn,
+                text='>>',
+                position=(
+                    h + b_size + b_buffer_1 * 2,
+                    v - b_size * 0.5 - b_buffer_2 + 5 * t_scale + v_offs,
+                ),
+                h_align='center',
+                v_align='center',
+                size=(0, 0),
+                scale=2.0 * t_scale,
+            )
 
     def _refresh_not_in_game(
         self, positions: list[tuple[float, float, float]]
