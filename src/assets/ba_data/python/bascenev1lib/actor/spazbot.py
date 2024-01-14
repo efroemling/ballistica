@@ -600,7 +600,6 @@ class BomberBotLite(BomberBot):
     punchiness = 0.2
     throw_rate = 0.7
     throwiness = 0.1
-    charge_speed_min = 0.6
     charge_speed_max = 0.6
 
 
@@ -772,7 +771,6 @@ class ChargerBotPro(ChargerBot):
 
     color = PRO_BOT_COLOR
     highlight = PRO_BOT_HIGHLIGHT
-    default_shields = True
     default_boxing_gloves = True
     points_mult = 3
 
