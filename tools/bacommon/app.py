@@ -26,7 +26,7 @@ class AppInterfaceIdiom(Enum):
     DESKTOP = 'desktop'
     TV = 'tv'
     XR = 'xr'
-    VITA = 'VITA'
+    VITA = 'vita'
 
 
 class AppExperience(Enum):
