@@ -26,6 +26,7 @@ class AppInterfaceIdiom(Enum):
     DESKTOP = 'desktop'
     TV = 'tv'
     XR = 'xr'
+    VITA = 'VITA'
 
 
 class AppExperience(Enum):
@@ -65,7 +66,7 @@ class AppExperience(Enum):
 class AppArchitecture(Enum):
     """Processor architecture the App is running on."""
 
-    ARM = 'arm'
+    ARM = 'arm' """Vita's architecture"""
     ARM64 = 'arm64'
     X86 = 'x86'
     X86_64 = 'x86_64'
@@ -86,6 +87,7 @@ class AppPlatform(Enum):
     ANDROID = 'android'
     IOS = 'ios'
     TVOS = 'tvos'
+    VITA = 'vita'
 
 
 class AppVariant(Enum):
