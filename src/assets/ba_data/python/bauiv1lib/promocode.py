@@ -5,8 +5,12 @@
 from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 
 import bauiv1 as bui
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 class PromoCodeWindow(bui.Window):
@@ -167,9 +171,6 @@ class PromoCodeWindow(bui.Window):
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
-        plus = bui.app.plus
-        assert plus is not None
-
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
         )
@@ -179,11 +180,22 @@ class PromoCodeWindow(bui.Window):
                 AdvancedSettingsWindow(transition='in_left').get_root_widget(),
                 from_window=self._root_widget,
             )
-        plus.add_v1_account_transaction(
-            {
-                'type': 'PROMO_CODE',
-                'expire_time': time.time() + 5,
-                'code': bui.textwidget(query=self._text_field),
-            }
-        )
-        plus.run_v1_account_transactions()
+
+        code: Any = bui.textwidget(query=self._text_field)
+        assert isinstance(code, str)
+
+        bui.app.create_async_task(_run_code(code))
+
+
+async def _run_code(code: str) -> None:
+    plus = bui.app.plus
+    assert plus is not None
+
+    plus.add_v1_account_transaction(
+        {
+            'type': 'PROMO_CODE',
+            'expire_time': time.time() + 5,
+            'code': code,
+        }
+    )
+    plus.run_v1_account_transactions()
