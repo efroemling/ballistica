@@ -56,18 +56,10 @@ play some games. Or make them. Maybe both.
 ### Frequently Asked Questions
 
 * **Q: What's with this name? Is it BombSquad or Ballistica?**
-  * A: BombSquad is the game. Ballistica is the engine.
+  * A: BombSquad is the reason why I made this repository. Ballistica is the engine.
 
-* **Q: Does this mean BombSquad is open source?**
-  * A: Yes and no. All code contained in this repo is MIT licensed and free for
-  use anywhere. This includes game scripts, pipeline tools, and most of the
-  binary engine sources. Anything not directly contained in this repository,
-  however, even if automatically downloaded by build scripts, is still
-  proprietary and cannot be redistributed without explicit consent. This
-  includes assets and prebuilt libraries/binaries. So in a nutshell: create and
-  share mods or use any of this code in your own projects, but please don't
-  distribute your own complete copies of BombSquad without permission. Please
-  email support@froemling.net if you have any questions about this.
+* **Q: Does this mean Ballistica Vita is open source?**
+  * A: Yes. But I should ask Eric about spreading it.
 
 * **Q: When are you adding more maps/characters/minigames/etc.  to
   BombSquad!?!?**
