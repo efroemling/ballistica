@@ -76,14 +76,6 @@ play some games. Or make them. Maybe both.
   of what's planned for when. And for the record, the answer to that particular
   question is basically '1.8'.
 
-* **Q: When will BombSquad be released on iOS / Steam / Switch / Xbox /
-PlayStation / My toaster??**
-  * A: The 2.0 update will be the big 'relaunch' release and the plan is to
-  launch on at least iOS and Steam at that time. I'm trying to get there as fast
-  as I can. As far as consoles, I'd love to and hope to at some point but have
-  nothing to announce just yet. See the
-  * Check out [Ballistica Roadmap](https://github.com/efroemling/ballistica/wiki/Roadmap)
-  for more details or the [Ballistica
-  Downloads](https://ballistica.net/downloads) page for early test builds on
-  some platforms.
+* **Q: When will BombSquad be released on PS Vita?**
+* I cant even start working on this because I have some skill issue  :joy_cat:  :joy_cat:  :joy_cat:  :joy_cat: 
 
