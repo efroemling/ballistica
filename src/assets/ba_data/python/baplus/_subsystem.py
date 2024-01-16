@@ -11,7 +11,8 @@ from babase import AppSubsystem
 if TYPE_CHECKING:
     from typing import Callable, Any
 
-    from babase import CloudSubsystem, AccountV2Subsystem
+    from baplus._cloud import CloudSubsystem
+    from babase import AccountV2Subsystem
 
 
 class PlusSubsystem(AppSubsystem):

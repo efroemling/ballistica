@@ -7,8 +7,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, overload
 
-import _babase
-from babase._appsubsystem import AppSubsystem
+import babase
 
 if TYPE_CHECKING:
     from typing import Callable, Any
@@ -23,7 +22,7 @@ DEBUG_LOG = False
 # internal protocols.
 
 
-class CloudSubsystem(AppSubsystem):
+class CloudSubsystem(babase.AppSubsystem):
     """Manages communication with cloud components."""
 
     @property
@@ -44,7 +43,7 @@ class CloudSubsystem(AppSubsystem):
         if DEBUG_LOG:
             logging.debug('CloudSubsystem: Connectivity is now %s.', connected)
 
-        plus = _babase.app.plus
+        plus = babase.app.plus
         assert plus is not None
 
         # Inform things that use this.
@@ -117,12 +116,11 @@ class CloudSubsystem(AppSubsystem):
         The provided on_response call will be run in the logic thread
         and passed either the response or the error that occurred.
         """
-        from babase._general import Call
 
         del msg  # Unused.
 
-        _babase.pushcall(
-            Call(
+        babase.pushcall(
+            babase.Call(
                 on_response,
                 RuntimeError('Cloud functionality is not available.'),
             )
@@ -188,7 +186,7 @@ def cloud_console_exec(code: str) -> None:
     except Exception:
         import traceback
 
-        apptime = _babase.apptime()
+        apptime = babase.apptime()
         print(f'Exec error at time {apptime:.2f}.', file=sys.stderr)
         traceback.print_exc()
 

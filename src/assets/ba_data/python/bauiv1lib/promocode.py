@@ -191,6 +191,10 @@ async def _run_code(code: str) -> None:
     plus = bui.app.plus
     assert plus is not None
 
+    # If we're signed in with a V2 account, ship this to V2 server.
+    # if plus.accounts.primary is not None:
+    #     plus.cloud.send_message
+
     plus.add_v1_account_transaction(
         {
             'type': 'PROMO_CODE',
