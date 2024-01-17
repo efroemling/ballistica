@@ -151,6 +151,25 @@ class CloudSubsystem(babase.AppSubsystem):
         """
         raise RuntimeError('Cloud functionality is not available.')
 
+    @overload
+    async def send_message_async(
+        self, msg: bacommon.cloud.PromoCodeMessage
+    ) -> bacommon.cloud.PromoCodeResponse:
+        ...
+
+    @overload
+    async def send_message_async(
+        self, msg: bacommon.cloud.TestMessage
+    ) -> bacommon.cloud.TestResponse:
+        ...
+
+    async def send_message_async(self, msg: Message) -> Response | None:
+        """Synchronously send a message to the cloud.
+
+        Must be called from the logic thread.
+        """
+        raise RuntimeError('Cloud functionality is not available.')
+
 
 def cloud_console_exec(code: str) -> None:
     """Called by the cloud console to run code in the logic thread."""

@@ -118,6 +118,27 @@ class TestResponse(Response):
 
 @ioprepped
 @dataclass
+class PromoCodeMessage(Message):
+    """User is entering a promo code"""
+
+    code: Annotated[str, IOAttrs('c')]
+
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [PromoCodeResponse]
+
+
+@ioprepped
+@dataclass
+class PromoCodeResponse(Response):
+    """Applied that promo code for ya, boss."""
+
+    valid: Annotated[bool, IOAttrs('v')]
+    message: Annotated[str | None, IOAttrs('m', store_default=False)] = None
+
+
+@ioprepped
+@dataclass
 class WorkspaceFetchState:
     """Common state data for a workspace fetch."""
 

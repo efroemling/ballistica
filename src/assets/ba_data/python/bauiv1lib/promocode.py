@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import time
+import logging
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
@@ -188,18 +189,35 @@ class PromoCodeWindow(bui.Window):
 
 
 async def _run_code(code: str) -> None:
+    from bacommon.cloud import PromoCodeMessage
+
     plus = bui.app.plus
     assert plus is not None
 
-    # If we're signed in with a V2 account, ship this to V2 server.
-    # if plus.accounts.primary is not None:
-    #     plus.cloud.send_message
+    try:
+        # If we're signed in with a V2 account, ship this to V2 server.
+        if plus.accounts.primary is not None:
+            with plus.accounts.primary:
+                response = await plus.cloud.send_message_async(
+                    PromoCodeMessage(code)
+                )
+                # If V2 handled it, we're done.
+                if response.valid:
+                    # Support simple message printing from v2 server.
+                    if response.message is not None:
+                        bui.screenmessage(response.message, color=(0, 1, 0))
+                    return
 
-    plus.add_v1_account_transaction(
-        {
-            'type': 'PROMO_CODE',
-            'expire_time': time.time() + 5,
-            'code': code,
-        }
-    )
-    plus.run_v1_account_transactions()
+        # If V2 didn't accept it (or isn't signed in) kick it over to V1.
+        plus.add_v1_account_transaction(
+            {
+                'type': 'PROMO_CODE',
+                'expire_time': time.time() + 5,
+                'code': code,
+            }
+        )
+        plus.run_v1_account_transactions()
+    except Exception:
+        logging.exception('Error sending promo code.')
+        bui.screenmessage('Error sending code (see log).', color=(1, 0, 0))
+        bui.getsound('error').play()
