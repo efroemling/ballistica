@@ -624,7 +624,8 @@ class Spaz(bs.Actor):
                     1000.0 * (tval + self.curse_time)
                 )
                 self._curse_timer = bs.Timer(
-                    self.curse_time, bs.WeakCall(self.handlemessage, CurseExplodeMessage())
+                    self.curse_time,
+                    bs.WeakCall(self.handlemessage, CurseExplodeMessage()),
                 )
 
     def equip_boxing_gloves(self) -> None:
