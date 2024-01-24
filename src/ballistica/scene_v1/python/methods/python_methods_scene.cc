@@ -1568,32 +1568,37 @@ static PyMethodDef PyResumeReplayDef = {
     "Resumes replay.",
 };
 
-// ------------------------ rewind_replay --------------------------------------
+// -------------------------- seek_replay --------------------------------------
 
-static auto PyRewindReplay(PyObject* self, PyObject* args) -> PyObject* {
+static auto PySeekReplay(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   auto* appmode = SceneV1AppMode::GetActiveOrThrow();
   auto* session =
       dynamic_cast<ClientSessionReplay*>(appmode->GetForegroundSession());
   if (session == nullptr) {
     throw Exception(
-        "Attempting to rewind a replay not in replay session context.");
+        "Attempting to seek a replay not in replay session context.");
   }
-  session->RestoreState(session->base_time() - 2'000);
+  float delta;
+  if (!PyArg_ParseTuple(args, "f", &delta)) {
+    return nullptr;
+  }
+  session->SeekTo(session->base_time()
+                  + static_cast<millisecs_t>(delta * 1'000));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyRewindReplayDef = {
-    "rewind_replay",  // name
-    PyRewindReplay,   // method
-    METH_VARARGS,     // flags
+static PyMethodDef PySeekReplayDef = {
+    "seek_replay",  // name
+    PySeekReplay,   // method
+    METH_VARARGS,   // flags
 
-    "rewind_replay() -> None\n"
+    "seek_replay(delta: float) -> None\n"
     "\n"
     "(internal)\n"
     "\n"
-    "Rewinds replay.",
+    "Rewind or fast-forward replay.",
 };
 
 // ----------------------- reset_random_player_names ---------------------------
@@ -1874,7 +1879,7 @@ auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
       PySetReplaySpeedExponentDef,
       PyGetReplaySpeedExponentDef,
       PyIsReplayPausedDef,
-      PyRewindReplayDef,
+      PySeekReplayDef,
       PyPauseReplayDef,
       PyResumeReplayDef,
       PySetDebugSpeedExponentDef,
