@@ -11,6 +11,7 @@ import asyncio
 from typing import TYPE_CHECKING, overload, assert_type
 from dataclasses import dataclass
 
+from typing_extensions import override
 import pytest
 from efro.error import CleanError, RemoteError, CommunicationError
 from efro.dataclassio import ioprepped
@@ -39,6 +40,7 @@ class _TMsg1(Message):
 
     ival: int
 
+    @override
     @classmethod
     def get_response_types(cls) -> list[type[Response] | None]:
         return [_TResp1]
@@ -51,6 +53,7 @@ class _TMsg2(Message):
 
     sval: str
 
+    @override
     @classmethod
     def get_response_types(cls) -> list[type[Response] | None]:
         return [_TResp1, _TResp2]

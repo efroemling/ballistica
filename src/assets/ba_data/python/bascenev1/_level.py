@@ -7,6 +7,7 @@ import copy
 import weakref
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 import babase
 
 if TYPE_CHECKING:
@@ -38,6 +39,7 @@ class Level:
         self._index: int | None = None
         self._score_version_string: str | None = None
 
+    @override
     def __repr__(self) -> str:
         cls = type(self)
         return f"<{cls.__module__}.{cls.__name__} '{self._name}'>"

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 import babase
 
 import _bascenev1
@@ -34,11 +35,13 @@ class EndSessionActivity(Activity[EmptyPlayer, EmptyTeam]):
         self.inherits_vr_camera_offset = True
         self.inherits_vr_overlay_center = True
 
+    @override
     def on_transition_in(self) -> None:
         super().on_transition_in()
         babase.fade_screen(False)
         babase.lock_all_input()
 
+    @override
     def on_begin(self) -> None:
         # pylint: disable=cyclic-import
 
@@ -77,6 +80,7 @@ class JoinActivity(Activity[EmptyPlayer, EmptyTeam]):
         self._tips_text: bascenev1.Actor | None = None
         self._join_info: JoinInfo | None = None
 
+    @override
     def on_transition_in(self) -> None:
         # pylint: disable=cyclic-import
         from bascenev1lib.actor.tipstext import TipsText
@@ -110,6 +114,7 @@ class TransitionActivity(Activity[EmptyPlayer, EmptyTeam]):
         super().__init__(settings)
         self._background: bascenev1.Actor | None = None
 
+    @override
     def on_transition_in(self) -> None:
         # pylint: disable=cyclic-import
         from bascenev1lib.actor.background import Background
@@ -119,6 +124,7 @@ class TransitionActivity(Activity[EmptyPlayer, EmptyTeam]):
             fade_time=0.5, start_faded=False, show_logo=False
         )
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
 
@@ -152,6 +158,7 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         self._custom_continue_message: babase.Lstr | None = None
         self._server_transitioning: bool | None = None
 
+    @override
     def on_player_join(self, player: EmptyPlayer) -> None:
         super().on_player_join(player)
         time_till_assign = max(
@@ -164,6 +171,7 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
             time_till_assign, babase.WeakCall(self._safe_assign, player)
         )
 
+    @override
     def on_transition_in(self) -> None:
         from bascenev1lib.actor.tipstext import TipsText
         from bascenev1lib.actor.background import Background
@@ -176,6 +184,7 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
             self._tips_text = TipsText()
         setmusic(self.default_music)
 
+    @override
     def on_begin(self) -> None:
         # pylint: disable=cyclic-import
         from bascenev1lib.actor.text import Text

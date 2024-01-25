@@ -8,7 +8,9 @@ import random
 import logging
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 import babase
+
 import _bascenev1
 from bascenev1._session import Session
 
@@ -160,6 +162,7 @@ class MultiTeamSession(Session):
         """Returns which game in the series is currently being played."""
         return self._game_number
 
+    @override
     def on_team_join(self, team: bascenev1.SessionTeam) -> None:
         team.customdata['previous_score'] = team.customdata['score'] = 0
 
@@ -178,6 +181,7 @@ class MultiTeamSession(Session):
             self._next_game_spec['settings'],
         )
 
+    @override
     def on_activity_end(
         self, activity: bascenev1.Activity, results: Any
     ) -> None:

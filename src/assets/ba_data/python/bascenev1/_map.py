@@ -6,6 +6,7 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 import babase
 
 import _bascenev1
@@ -353,9 +354,11 @@ class Map(Actor):
             return self.flag_points_default[:3]
         return self.flag_points[team_index % len(self.flag_points)][:3]
 
+    @override
     def exists(self) -> bool:
         return bool(self.node)
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         from bascenev1 import _messages
 

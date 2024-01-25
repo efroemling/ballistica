@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+
 from bauiv1lib.gather import GatherTab
 import bauiv1 as bui
 
@@ -16,6 +18,7 @@ if TYPE_CHECKING:
 class AboutGatherTab(GatherTab):
     """The about tab in the gather UI"""
 
+    @override
     def on_activate(
         self,
         parent_widget: bui.Widget,

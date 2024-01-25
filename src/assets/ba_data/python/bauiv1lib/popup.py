@@ -7,6 +7,8 @@ from __future__ import annotations
 import weakref
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+
 import bauiv1 as bui
 
 if TYPE_CHECKING:
@@ -275,6 +277,7 @@ class PopupMenuWindow(PopupWindow):
                 delegate.popup_menu_closing(self)
             bui.containerwidget(edit=self.root_widget, transition='out_scale')
 
+    @override
     def on_popup_cancel(self) -> None:
         if not self._transitioning_out:
             bui.getsound('swish').play()
