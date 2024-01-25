@@ -188,6 +188,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         self._lives_text: bs.NodeActor | None = None
         self._flawless = True
         self._time_bonus_timer: bs.Timer | None = None
+        self._lives_hbtime: bs.Timer | None = None
         self._time_bonus_text: bs.NodeActor | None = None
         self._time_bonus_mult: float | None = None
         self._wave_text: bs.NodeActor | None = None
