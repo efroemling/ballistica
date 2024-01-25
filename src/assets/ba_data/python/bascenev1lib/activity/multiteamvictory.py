@@ -4,7 +4,9 @@
 
 from __future__ import annotations
 
+from typing_extensions import override
 import bascenev1 as bs
+
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 
 
@@ -22,6 +24,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         self._tips_text = None
         self._default_show_tips = False
 
+    @override
     def on_begin(self) -> None:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals

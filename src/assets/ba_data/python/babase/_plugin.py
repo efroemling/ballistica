@@ -8,6 +8,8 @@ import logging
 import importlib.util
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+
 import _babase
 from babase._appsubsystem import AppSubsystem
 
@@ -158,6 +160,7 @@ class PluginSubsystem(AppSubsystem):
         if config_changed:
             _babase.app.config.commit()
 
+    @override
     def on_app_running(self) -> None:
         # Load up our plugins and go ahead and call their on_app_running
         # calls.
@@ -170,6 +173,7 @@ class PluginSubsystem(AppSubsystem):
 
                 _error.print_exception('Error in plugin on_app_running()')
 
+    @override
     def on_app_suspend(self) -> None:
         for plugin in self.active_plugins:
             try:
@@ -179,6 +183,7 @@ class PluginSubsystem(AppSubsystem):
 
                 _error.print_exception('Error in plugin on_app_suspend()')
 
+    @override
     def on_app_unsuspend(self) -> None:
         for plugin in self.active_plugins:
             try:
@@ -188,6 +193,7 @@ class PluginSubsystem(AppSubsystem):
 
                 _error.print_exception('Error in plugin on_app_unsuspend()')
 
+    @override
     def on_app_shutdown(self) -> None:
         for plugin in self.active_plugins:
             try:
@@ -197,6 +203,7 @@ class PluginSubsystem(AppSubsystem):
 
                 _error.print_exception('Error in plugin on_app_shutdown()')
 
+    @override
     def on_app_shutdown_complete(self) -> None:
         for plugin in self.active_plugins:
             try:

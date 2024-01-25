@@ -8,6 +8,7 @@ import random
 import logging
 import weakref
 
+from typing_extensions import override
 from efro.dataclassio import dataclass_from_dict
 import babase
 import bauiv1
@@ -149,6 +150,7 @@ class ClassicSubsystem(babase.AppSubsystem):
         assert isinstance(self._env['legacy_user_agent_string'], str)
         return self._env['legacy_user_agent_string']
 
+    @override
     def on_app_loading(self) -> None:
         from bascenev1lib.actor import spazappearance
         from bascenev1lib import maps as stdmaps
@@ -230,13 +232,16 @@ class ClassicSubsystem(babase.AppSubsystem):
 
         self.accounts.on_app_loading()
 
+    @override
     def on_app_suspend(self) -> None:
         self.accounts.on_app_suspend()
 
+    @override
     def on_app_unsuspend(self) -> None:
         self.accounts.on_app_unsuspend()
         self.music.on_app_unsuspend()
 
+    @override
     def on_app_shutdown(self) -> None:
         self.music.on_app_shutdown()
 

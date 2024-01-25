@@ -19,6 +19,7 @@ import logging
 from collections import deque
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.actor.spaz import Spaz
@@ -234,11 +235,13 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self._read_entries_timer: bs.Timer | None = None
         self._entry_timer: bs.Timer | None = None
 
+    @override
     def on_transition_in(self) -> None:
         super().on_transition_in()
         bs.setmusic(bs.MusicType.CHAR_SELECT, continuous=True)
         self.map = self._map_type()
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
 
@@ -2513,6 +2516,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self._skip_text.color = (1, 1, 1)
         self._issued_warning = False
 
+    @override
     def on_player_join(self, player: Player) -> None:
         super().on_player_join(player)
 
@@ -2527,6 +2531,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
             bs.Call(self._player_pressed_button, player),
         )
 
+    @override
     def on_player_leave(self, player: Player) -> None:
         if not all(self.players):
             logging.error(

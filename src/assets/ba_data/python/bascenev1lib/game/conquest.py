@@ -10,12 +10,14 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+import bascenev1 as bs
+
 from bascenev1lib.actor.flag import Flag
 from bascenev1lib.actor.scoreboard import Scoreboard
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.gameutils import SharedObjects
 from bascenev1lib.actor.respawnicon import RespawnIcon
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -108,10 +110,12 @@ class ConquestGame(bs.TeamGameActivity[Player, Team]):
         bs.BoolSetting('Epic Mode', default=False),
     ]
 
+    @override
     @classmethod
     def supports_session_type(cls, sessiontype: type[bs.Session]) -> bool:
         return issubclass(sessiontype, bs.DualTeamSession)
 
+    @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
         assert bs.app.classic is not None
@@ -143,16 +147,20 @@ class ConquestGame(bs.TeamGameActivity[Player, Team]):
             ),
         )
 
+    @override
     def get_instance_description(self) -> str | Sequence:
         return 'Secure all ${ARG1} flags.', len(self.map.flag_points)
 
+    @override
     def get_instance_description_short(self) -> str | Sequence:
         return 'secure all ${ARG1} flags', len(self.map.flag_points)
 
+    @override
     def on_team_join(self, team: Team) -> None:
         if self.has_begun():
             self._update_scores()
 
+    @override
     def on_player_join(self, player: Player) -> None:
         player.respawn_timer = None
 
@@ -160,6 +168,7 @@ class ConquestGame(bs.TeamGameActivity[Player, Team]):
         if player.team.flags_held > 0:
             self.spawn_player(player)
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
         self.setup_standard_time_limit(self._time_limit)
@@ -221,6 +230,7 @@ class ConquestGame(bs.TeamGameActivity[Player, Team]):
                 team, team.flags_held, len(self._flags)
             )
 
+    @override
     def end_game(self) -> None:
         results = bs.GameResults()
         for team in self.teams:
@@ -272,6 +282,7 @@ class ConquestGame(bs.TeamGameActivity[Player, Team]):
                 ):
                     self.spawn_player(otherplayer)
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.PlayerDiedMessage):
             # Augment standard behavior.
@@ -287,6 +298,7 @@ class ConquestGame(bs.TeamGameActivity[Player, Team]):
         else:
             super().handlemessage(msg)
 
+    @override
     def spawn_player(self, player: Player) -> bs.Actor:
         # We spawn players at different places based on what flags are held.
         return self.spawn_player_spaz(

@@ -3,8 +3,10 @@
 """Provides functionality for displaying QR codes."""
 from __future__ import annotations
 
-from bauiv1lib.popup import PopupWindow
+from typing_extensions import override
 import bauiv1 as bui
+
+from bauiv1lib.popup import PopupWindow
 
 
 class QRCodeWindow(PopupWindow):
@@ -58,6 +60,7 @@ class QRCodeWindow(PopupWindow):
             self._transitioning_out = True
             bui.containerwidget(edit=self.root_widget, transition='out_scale')
 
+    @override
     def on_popup_cancel(self) -> None:
         bui.getsound('swish').play()
         self._transition_out()

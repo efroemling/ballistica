@@ -70,6 +70,13 @@ class IOExtendedData:
         Can be overridden to migrate old data formats to new, etc.
         """
 
+    def did_input(self) -> None:
+        """Called on a class instance after created from data.
+
+        Can be useful to correct values from the db, etc. in the
+        type-safe form.
+        """
+
 
 def _is_valid_for_codec(obj: Any, codec: Codec) -> bool:
     """Return whether a value consists solely of json-supported types.
