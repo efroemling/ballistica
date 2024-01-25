@@ -6,6 +6,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, TypeVar
 
+from typing_extensions import override
 import babase
 
 import _bascenev1
@@ -31,6 +32,7 @@ class CoopGameActivity(GameActivity[PlayerT, TeamT]):
     # We can assume our session is a CoopSession.
     session: bascenev1.CoopSession
 
+    @override
     @classmethod
     def supports_session_type(
         cls, sessiontype: type[bascenev1.Session]
@@ -49,6 +51,7 @@ class CoopGameActivity(GameActivity[PlayerT, TeamT]):
         self._life_warning_beep_timer: bascenev1.Timer | None = None
         self._warn_beeps_sound = _bascenev1.getsound('warnBeeps')
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
 
@@ -139,6 +142,7 @@ class CoopGameActivity(GameActivity[PlayerT, TeamT]):
                 )
                 vval -= 55
 
+    @override
     def spawn_player_spaz(
         self,
         player: PlayerT,

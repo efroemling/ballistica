@@ -16,9 +16,11 @@ from __future__ import annotations
 
 import logging
 
+from baplus._cloud import CloudSubsystem
 from baplus._subsystem import PlusSubsystem
 
 __all__ = [
+    'CloudSubsystem',
     'PlusSubsystem',
 ]
 

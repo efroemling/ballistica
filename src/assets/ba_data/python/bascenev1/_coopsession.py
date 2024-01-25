@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 import babase
 
 import _bascenev1
@@ -97,6 +98,7 @@ class CoopSession(Session):
         """Get the game instance currently being played."""
         return self._current_game_instance
 
+    @override
     def should_allow_mid_activity_joins(
         self, activity: bascenev1.Activity
     ) -> bool:
@@ -174,9 +176,11 @@ class CoopSession(Session):
 
             self._tutorial_activity = _bascenev1.newactivity(TutorialActivity)
 
+    @override
     def get_custom_menu_entries(self) -> list[dict[str, Any]]:
         return self._custom_menu_ui
 
+    @override
     def on_player_leave(self, sessionplayer: bascenev1.SessionPlayer) -> None:
         super().on_player_leave(sessionplayer)
 
@@ -256,6 +260,7 @@ class CoopSession(Session):
                 activity.end(results={'outcome': 'restart'}, force=True)
 
     # noinspection PyUnresolvedReferences
+    @override
     def on_activity_end(
         self, activity: bascenev1.Activity, results: Any
     ) -> None:

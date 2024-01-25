@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import logging
 
+from typing_extensions import override
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -93,6 +94,7 @@ class OnScreenTimer(bs.Actor):
         """Shortcut for start time in seconds."""
         return self.getstarttime()
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         # if we're asked to die, just kill our node/timer
         if isinstance(msg, bs.DieMessage):

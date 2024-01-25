@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Annotated
 from threading import Thread, current_thread, Lock
 
+from typing_extensions import override
 from efro.util import utc_now
 from efro.call import tpartial
 from efro.terminal import Clr
@@ -306,6 +307,7 @@ class LogHandler(logging.Handler):
         """Submit a call to be run in the logging background thread."""
         self._event_loop.call_soon_threadsafe(call)
 
+    @override
     def emit(self, record: logging.LogRecord) -> None:
         # pylint: disable=too-many-branches
         if __debug__:

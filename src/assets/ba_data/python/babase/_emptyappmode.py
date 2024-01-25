@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 from bacommon.app import AppExperience
 
 import _babase
@@ -18,15 +19,18 @@ if TYPE_CHECKING:
 class EmptyAppMode(AppMode):
     """An empty app mode that can be used as a fallback/etc."""
 
+    @override
     @classmethod
     def get_app_experience(cls) -> AppExperience:
         return AppExperience.EMPTY
 
+    @override
     @classmethod
     def _supports_intent(cls, intent: AppIntent) -> bool:
         # We support default and exec intents currently.
         return isinstance(intent, AppIntentExec | AppIntentDefault)
 
+    @override
     def handle_intent(self, intent: AppIntent) -> None:
         if isinstance(intent, AppIntentExec):
             _babase.empty_app_mode_handle_intent_exec(intent.code)
@@ -34,10 +38,12 @@ class EmptyAppMode(AppMode):
         assert isinstance(intent, AppIntentDefault)
         _babase.empty_app_mode_handle_intent_default()
 
+    @override
     def on_activate(self) -> None:
         # Let the native layer do its thing.
         _babase.on_empty_app_mode_activate()
 
+    @override
     def on_deactivate(self) -> None:
         # Let the native layer do its thing.
         _babase.on_empty_app_mode_deactivate()

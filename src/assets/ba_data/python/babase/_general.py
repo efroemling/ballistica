@@ -10,6 +10,7 @@ import logging
 import inspect
 from typing import TYPE_CHECKING, TypeVar, Protocol, NewType
 
+from typing_extensions import override
 from efro.terminal import Clr
 
 import _babase
@@ -178,6 +179,7 @@ class _WeakCall:
     def __call__(self, *args_extra: Any) -> Any:
         return self._call(*self._args + args_extra, **self._keywds)
 
+    @override
     def __str__(self) -> str:
         return (
             '<ba.WeakCall object; _call='
@@ -224,6 +226,7 @@ class _Call:
     def __call__(self, *args_extra: Any) -> Any:
         return self._call(*self._args + args_extra, **self._keywds)
 
+    @override
     def __str__(self) -> str:
         return (
             '<ba.Call object; _call='
@@ -268,6 +271,7 @@ class WeakMethod:
             return None
         return self._func(*((obj,) + args), **keywds)
 
+    @override
     def __str__(self) -> str:
         return '<ba.WeakMethod object; call=' + str(self._func) + '>'
 

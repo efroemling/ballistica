@@ -40,16 +40,16 @@ class AppSubsystem:
         """Called when the app reaches the running state."""
 
     def on_app_suspend(self) -> None:
-        """Called when the app enters the paused state."""
+        """Called when the app enters the suspended state."""
 
     def on_app_unsuspend(self) -> None:
-        """Called when the app exits the paused state."""
+        """Called when the app exits the suspended state."""
 
     def on_app_shutdown(self) -> None:
-        """Called when the app is shutting down."""
+        """Called when the app begins shutting down."""
 
     def on_app_shutdown_complete(self) -> None:
-        """Called when the app is done shutting down."""
+        """Called when the app completes shutting down."""
 
     def do_apply_app_config(self) -> None:
         """Called when the app config should be applied."""

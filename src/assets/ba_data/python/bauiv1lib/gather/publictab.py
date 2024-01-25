@@ -13,6 +13,7 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
+from typing_extensions import override
 from bauiv1lib.gather import GatherTab
 import bauiv1 as bui
 import bascenev1 as bs
@@ -247,6 +248,7 @@ class AddrFetchThread(Thread):
         super().__init__()
         self._call = call
 
+    @override
     def run(self) -> None:
         sock: socket.socket | None = None
         try:
@@ -284,6 +286,7 @@ class PingThread(Thread):
         self._port = port
         self._call = call
 
+    @override
     def run(self) -> None:
         assert bui.app.classic is not None
         bui.app.classic.ping_thread_count += 1
@@ -392,6 +395,7 @@ class PublicGatherTab(GatherTab):
         self._pending_party_infos: list[dict[str, Any]] = []
         self._last_sub_scroll_height = 0.0
 
+    @override
     def on_activate(
         self,
         parent_widget: bui.Widget,
@@ -478,9 +482,11 @@ class PublicGatherTab(GatherTab):
         )
         return self._container
 
+    @override
     def on_deactivate(self) -> None:
         self._update_timer = None
 
+    @override
     def save_state(self) -> None:
         # Save off a small number of parties with the lowest ping; we'll
         # display these immediately when our UI comes back up which should
@@ -496,6 +502,7 @@ class PublicGatherTab(GatherTab):
             have_valid_server_list=self._have_valid_server_list,
         )
 
+    @override
     def restore_state(self) -> None:
         assert bui.app.classic is not None
         state = bui.app.ui_v1.window_states.get(type(self))

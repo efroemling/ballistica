@@ -10,6 +10,7 @@ import datetime
 from dataclasses import field, dataclass
 from typing import TYPE_CHECKING, Any, Sequence, Annotated
 
+from typing_extensions import override
 import pytest
 
 from efro.util import utc_now
@@ -855,10 +856,12 @@ def test_extended_data() -> None:
     class _TestClass2(IOExtendedData):
         vals: tuple[int, int]
 
+        @override
         @classmethod
         def will_input(cls, data: dict) -> None:
             data['vals'] = data['vals'][:2]
 
+        @override
         def will_output(self) -> None:
             self.vals = (0, 0)
 

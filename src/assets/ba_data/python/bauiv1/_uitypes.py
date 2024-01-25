@@ -9,6 +9,7 @@ import weakref
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 import babase
 
 import _bauiv1
@@ -264,12 +265,14 @@ class TextWidgetStringEditAdapter(babase.StringEditAdapter):
             description, initial_text, max_length, screen_space_center
         )
 
+    @override
     def _do_apply(self, new_text: str) -> None:
         if self.widget:
             _bauiv1.textwidget(
                 edit=self.widget, text=new_text, adapter_finished=True
             )
 
+    @override
     def _do_cancel(self) -> None:
         if self.widget:
             _bauiv1.textwidget(edit=self.widget, adapter_finished=True)
