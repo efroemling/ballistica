@@ -171,7 +171,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_apputils.py \
   $(BUILD_DIR)/ba_data/python/babase/_assetmanager.py \
   $(BUILD_DIR)/ba_data/python/babase/_asyncio.py \
-  $(BUILD_DIR)/ba_data/python/babase/_cloud.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsole.py \
   $(BUILD_DIR)/ba_data/python/babase/_emptyappmode.py \
   $(BUILD_DIR)/ba_data/python/babase/_env.py \
@@ -210,6 +209,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/osmusic.py \
   $(BUILD_DIR)/ba_data/python/baenv.py \
   $(BUILD_DIR)/ba_data/python/baplus/__init__.py \
+  $(BUILD_DIR)/ba_data/python/baplus/_cloud.py \
   $(BUILD_DIR)/ba_data/python/baplus/_hooks.py \
   $(BUILD_DIR)/ba_data/python/baplus/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/__init__.py \
@@ -446,7 +446,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_apputils.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_assetmanager.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_asyncio.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_cloud.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_devconsole.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_emptyappmode.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_env.cpython-311.opt-1.pyc \
@@ -485,6 +484,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/osmusic.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/__pycache__/baenv.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baplus/__pycache__/__init__.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_cloud.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_hooks.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_subsystem.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/__init__.cpython-311.opt-1.pyc \

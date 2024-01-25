@@ -9,6 +9,7 @@ import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, final
 
+from typing_extensions import override
 from bacommon.login import LoginType
 
 import _babase
@@ -353,6 +354,7 @@ class LoginAdapterNative(LoginAdapter):
         self._sign_in_attempt_num = 123
         self._sign_in_attempts: dict[int, Callable[[str | None], None]] = {}
 
+    @override
     def get_sign_in_token(
         self, completion_cb: Callable[[str | None], None]
     ) -> None:
@@ -363,6 +365,7 @@ class LoginAdapterNative(LoginAdapter):
             self.login_type.value, attempt_id
         )
 
+    @override
     def on_back_end_active_change(self, active: bool) -> None:
         _babase.login_adapter_back_end_active_change(
             self.login_type.value, active

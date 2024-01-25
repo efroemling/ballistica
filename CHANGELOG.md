@@ -1,4 +1,4 @@
-### 1.7.33 (build 21757, api 8, 2024-01-06)
+### 1.7.33 (build 21762, api 8, 2024-01-24)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).
 - Added a 'Show Demos When Idle' option in advanced settings. If enabled, the
@@ -11,6 +11,15 @@
 - Players now get points for killing bots with their own bombs by catching it
   and throwing it back at them. This is actually old logic but was disabled due
   to a logic flaw, but should be fixed now. (Thanks VinniTR!)
+- Updated the 'Settings->Advanced->Enter Code' functionality to talk to the V2
+  master server (V1 is still used as a fallback).
+- Adopted the `@override` decorator in all Python code and set up Mypy to
+  enforce its usage. Currently `override` comes from `typing_extensions` module
+  but when we upgrade to Python 3.12 soon it will come from the standard
+  `typing` module. This decorator should be familiar to users of other
+  languages; I feel it helps keep logic more understandable and should help us
+  catch problems where a base class changes or removes a method and child
+  classes forget to adapt to the change.
 - Added a 'Practice' button in tournaments, letting you play them free of
   charge while not submitting scores. (Thanks Temp!)
   

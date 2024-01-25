@@ -3,7 +3,9 @@
 """Functionality related to teams mode score screen."""
 from __future__ import annotations
 
+from typing_extensions import override
 import bascenev1 as bs
+
 from bascenev1lib.actor.text import Text
 from bascenev1lib.actor.image import Image
 
@@ -18,6 +20,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
 
         self._show_up_next: bool = True
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
         session = self.session

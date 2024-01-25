@@ -7,9 +7,11 @@ from __future__ import annotations
 import weakref
 from typing import TYPE_CHECKING
 
-from bauiv1lib.gather import GatherTab
+from typing_extensions import override
 import bauiv1 as bui
 import bascenev1 as bs
+
+from bauiv1lib.gather import GatherTab
 
 if TYPE_CHECKING:
     from typing import Any
@@ -104,6 +106,7 @@ class NearbyGatherTab(GatherTab):
         self._net_scanner: NetScanner | None = None
         self._container: bui.Widget | None = None
 
+    @override
     def on_activate(
         self,
         parent_widget: bui.Widget,
@@ -156,5 +159,6 @@ class NearbyGatherTab(GatherTab):
         bui.widget(edit=scrollw, autoselect=True, up_widget=tab_button)
         return self._container
 
+    @override
     def on_deactivate(self) -> None:
         self._net_scanner = None
