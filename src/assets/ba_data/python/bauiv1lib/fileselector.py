@@ -10,6 +10,8 @@ import logging
 from threading import Thread
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+
 import bauiv1 as bui
 
 if TYPE_CHECKING:
@@ -204,6 +206,7 @@ class FileSelectorWindow(bui.Window):
             self._callback = callback
             self._path = path
 
+        @override
         def run(self) -> None:
             try:
                 starttime = time.time()

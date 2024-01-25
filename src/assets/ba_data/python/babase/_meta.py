@@ -26,7 +26,7 @@ EXPORT_CLASS_NAME_SHORTCUTS: dict[str, str] = {
     'plugin': 'babase.Plugin',
     # DEPRECATED as of 12/2023. Currently am warning if finding these
     # but should take this out eventually.
-    'keyboard': 'babase.Keyboard',
+    'keyboard': 'bauiv1.Keyboard',
 }
 
 T = TypeVar('T')

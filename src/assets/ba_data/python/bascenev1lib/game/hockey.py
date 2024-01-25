@@ -9,11 +9,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+import bascenev1 as bs
+
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.scoreboard import Scoreboard
 from bascenev1lib.actor.powerupbox import PowerupBoxFactory
 from bascenev1lib.gameutils import SharedObjects
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -58,6 +60,7 @@ class Puck(bs.Actor):
         )
         bs.animate(self.node, 'mesh_scale', {0: 0, 0.2: 1.3, 0.26: 1})
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.DieMessage):
             if self.node:
@@ -152,10 +155,12 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
         bs.BoolSetting('Epic Mode', default=False),
     ]
 
+    @override
     @classmethod
     def supports_session_type(cls, sessiontype: type[bs.Session]) -> bool:
         return issubclass(sessiontype, bs.DualTeamSession)
 
+    @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
         assert bs.app.classic is not None
@@ -231,16 +236,19 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
             bs.MusicType.EPIC if self._epic_mode else bs.MusicType.HOCKEY
         )
 
+    @override
     def get_instance_description(self) -> str | Sequence:
         if self._score_to_win == 1:
             return 'Score a goal.'
         return 'Score ${ARG1} goals.', self._score_to_win
 
+    @override
     def get_instance_description_short(self) -> str | Sequence:
         if self._score_to_win == 1:
             return 'score a goal'
         return 'score ${ARG1} goals', self._score_to_win
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
 
@@ -281,6 +289,7 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
         self._update_scoreboard()
         self._chant_sound.play()
 
+    @override
     def on_team_join(self, team: Team) -> None:
         self._update_scoreboard()
 
@@ -364,6 +373,7 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
         bs.cameraflash(duration=10.0)
         self._update_scoreboard()
 
+    @override
     def end_game(self) -> None:
         results = bs.GameResults()
         for team in self.teams:
@@ -375,6 +385,7 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
         for team in self.teams:
             self._scoreboard.set_team_value(team, team.score, winscore)
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         # Respawn dead players if they're still in the game.
         if isinstance(msg, bs.PlayerDiedMessage):

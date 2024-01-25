@@ -64,11 +64,23 @@ class _Inputter(Generic[T]):
 
         # For special extended data types, call their 'will_output' callback.
         tcls = self._cls
+
         if issubclass(tcls, IOExtendedData):
+            is_ext = True
             tcls.will_input(values)
+        else:
+            is_ext = False
 
         out = self._dataclass_from_input(self._cls, '', values)
         assert isinstance(out, self._cls)
+
+        if is_ext:
+            # mypy complains that we're no longer returning a T
+            # if we operate on out directly.
+            out2 = out
+            assert isinstance(out2, IOExtendedData)
+            out2.did_input()
+
         return out
 
     def _value_from_input(

@@ -6,6 +6,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import errno
 
+from typing_extensions import override
+
 if TYPE_CHECKING:
     from typing import Any
 
@@ -82,6 +84,7 @@ class RemoteError(Exception):
         super().__init__(msg)
         self._peer_desc = peer_desc
 
+    @override
     def __str__(self) -> str:
         s = ''.join(str(arg) for arg in self.args)
         # Indent so we can more easily tell what is the remote part when

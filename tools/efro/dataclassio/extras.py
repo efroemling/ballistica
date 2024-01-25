@@ -7,6 +7,8 @@ from __future__ import annotations
 import dataclasses
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+
 if TYPE_CHECKING:
     from typing import Any
 
@@ -32,6 +34,7 @@ class DataclassDiff:
         self._obj1 = obj1
         self._obj2 = obj2
 
+    @override
     def __repr__(self) -> str:
         return dataclass_diff(self._obj1, self._obj2)
 
