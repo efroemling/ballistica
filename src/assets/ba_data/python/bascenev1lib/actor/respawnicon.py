@@ -19,11 +19,12 @@ class RespawnIcon:
 
     _MASKTEXSTORENAME = bs.storagename('masktex')
     _ICONSSTORENAME = bs.storagename('icons')
+    
+    steps_epic_only: bool = False
 
     def __init__(self, player: bs.Player, respawn_time: float):
         """Instantiate with a Player and respawn_time (in seconds)."""
         self._visible = True
-        self._dots_epic_only = False
 
         on_right, offs_extra, respawn_icons = self._get_context(player)
 
@@ -113,9 +114,9 @@ class RespawnIcon:
         dpos = [ipos[0] + (7 if on_right else -7), ipos[1] - 16]
         self._dec_text: bs.NodeActor | None = None
         if (
-            self._dots_epic_only
+            self.steps_epic_only
             and bs.getactivity().globalsnode.slow_motion
-            or not self._dots_epic_only
+            or not self.steps_epic_only
         ):
             self._dec_text = bs.NodeActor(
                 bs.newnode(
