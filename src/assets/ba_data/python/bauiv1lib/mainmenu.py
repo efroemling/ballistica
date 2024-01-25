@@ -536,7 +536,7 @@ class MainMenuWindow(bui.Window):
                 size=(b_size, b_size),
                 label='',
                 autoselect=True,
-                on_activate_call=bui.Call(self._change_replay_speed, -1),
+                on_activate_call=bui.WeakCall(self._rewind_replay),
             )
             bui.textwidget(
                 parent=self._root_widget,
@@ -561,7 +561,7 @@ class MainMenuWindow(bui.Window):
                 size=(b_size, b_size),
                 label='',
                 autoselect=True,
-                on_activate_call=bui.Call(bs.forward_replay),
+                on_activate_call=bui.WeakCall(self._forward_replay),
             )
             bui.textwidget(
                 parent=self._root_widget,
@@ -576,6 +576,12 @@ class MainMenuWindow(bui.Window):
                 size=(0, 0),
                 scale=2.0 * t_scale,
             )
+
+    def _rewind_replay(self) -> None:
+        bs.seek_replay(-2 * pow(2, bs.get_replay_speed_exponent()))
+
+    def _forward_replay(self) -> None:
+        bs.seek_replay(2 * pow(2, bs.get_replay_speed_exponent()))
 
     def _refresh_not_in_game(
         self, positions: list[tuple[float, float, float]]

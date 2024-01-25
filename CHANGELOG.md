@@ -20,6 +20,7 @@
   languages; I feel it helps keep logic more understandable and should help us
   catch problems where a base class changes or removes a method and child
   classes forget to adapt to the change.
+- Replays now have rewind/fast-forward buttons!! (Thanks Dliwk, vishal332008!)
   
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
