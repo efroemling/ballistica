@@ -155,8 +155,9 @@ class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
 
     def _check_end_game(self) -> None:
         # We don't want to end this activity more than once.
-        if self._ended: return
-        
+        if self._ended:
+            return
+
         living_team_count = 0
         for team in self.teams:
             for player in team.players:
