@@ -24,7 +24,7 @@ from bascenev1lib.actor.flag import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from typing import Any, Sequence, override
 
 
 class CTFFlag(Flag):
@@ -643,6 +643,7 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
         else:
             super().handlemessage(msg)
 
+    @override
     def on_player_leave(self, player: Player) -> None:
         """Prevents leaving players from capturing their flag."""
         self._handle_death_flag_capture(player)
