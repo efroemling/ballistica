@@ -185,6 +185,12 @@ def data_size_str(bytecount: int, compact: bool = False) -> str:
     sane file sizes.
     """
     # pylint: disable=too-many-return-statements
+
+    # Special case: handle negatives.
+    if bytecount < 0:
+        val = data_size_str(-bytecount, compact=compact)
+        return f'-{val}'
+
     if bytecount <= 999:
         suffix = 'B' if compact else 'bytes'
         return f'{bytecount} {suffix}'
@@ -200,7 +206,7 @@ def data_size_str(bytecount: int, compact: bool = False) -> str:
         return f'{mbytecount:.0f} MB'
     gbytecount = bytecount / (1024 * 1024 * 1024)
     if round(gbytecount, 1) < 10.0:
-        return f'{mbytecount:.1f} GB'
+        return f'{gbytecount:.1f} GB'
     return f'{gbytecount:.0f} GB'
 
 

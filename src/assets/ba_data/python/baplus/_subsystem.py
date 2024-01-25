@@ -5,14 +5,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _baplus
+from typing_extensions import override
 from babase import AppSubsystem
+
+import _baplus
 
 if TYPE_CHECKING:
     from typing import Callable, Any
 
-    from baplus._cloud import CloudSubsystem
     from babase import AccountV2Subsystem
+
+    from baplus._cloud import CloudSubsystem
 
 
 class PlusSubsystem(AppSubsystem):
@@ -33,6 +36,7 @@ class PlusSubsystem(AppSubsystem):
     accounts: AccountV2Subsystem
     cloud: CloudSubsystem
 
+    @override
     def on_app_loading(self) -> None:
         _baplus.on_app_loading()
         self.accounts.on_app_loading()

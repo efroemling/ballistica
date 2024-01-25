@@ -4,7 +4,9 @@
 
 from __future__ import annotations
 
+from typing_extensions import override
 import bascenev1 as bs
+
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 from bascenev1lib.actor.zoomtext import ZoomText
 
@@ -17,6 +19,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         self._winner: bs.SessionTeam = settings['winner']
         assert isinstance(self._winner, bs.SessionTeam)
 
+    @override
     def on_begin(self) -> None:
         bs.set_analytics_screen('Teams Score Screen')
         super().on_begin()

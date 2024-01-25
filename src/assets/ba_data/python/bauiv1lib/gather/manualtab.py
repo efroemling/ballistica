@@ -6,13 +6,13 @@
 from __future__ import annotations
 
 import logging
-from threading import Thread
-from typing import TYPE_CHECKING, cast
-
 from enum import Enum
+from threading import Thread
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, cast
 from bauiv1lib.gather import GatherTab
 
+from typing_extensions import override
 import bauiv1 as bui
 import bascenev1 as bs
 
@@ -42,6 +42,7 @@ class _HostLookupThread(Thread):
         self._port = port
         self._call = call
 
+    @override
     def run(self) -> None:
         result: str | None
         try:
@@ -101,6 +102,7 @@ class ManualGatherTab(GatherTab):
         self._party_edit_port_text: bui.Widget | None = None
         self._no_parties_added_text: bui.Widget | None = None
 
+    @override
     def on_activate(
         self,
         parent_widget: bui.Widget,
@@ -180,10 +182,12 @@ class ManualGatherTab(GatherTab):
 
         return self._container
 
+    @override
     def save_state(self) -> None:
         assert bui.app.classic is not None
         bui.app.ui_v1.window_states[type(self)] = State(sub_tab=self._sub_tab)
 
+    @override
     def restore_state(self) -> None:
         assert bui.app.classic is not None
         state = bui.app.ui_v1.window_states.get(type(self))
@@ -771,6 +775,7 @@ class ManualGatherTab(GatherTab):
                 text=bui.Lstr(resource='gatherWindow.noPartiesAddedText'),
             )
 
+    @override
     def on_deactivate(self) -> None:
         self._access_check_timer = None
 

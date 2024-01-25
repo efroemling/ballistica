@@ -8,6 +8,7 @@ import threading
 from collections import deque
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 import babase
 
 from baclassic._music import MusicPlayer
@@ -27,6 +28,7 @@ class MacMusicAppMusicPlayer(MusicPlayer):
         self._thread = _MacMusicAppThread()
         self._thread.start()
 
+    @override
     def on_select_entry(
         self,
         callback: Callable[[Any], None],
@@ -40,6 +42,7 @@ class MacMusicAppMusicPlayer(MusicPlayer):
             callback, current_entry, selection_target_name
         )
 
+    @override
     def on_set_volume(self, volume: float) -> None:
         self._thread.set_volume(volume)
 
@@ -47,6 +50,7 @@ class MacMusicAppMusicPlayer(MusicPlayer):
         """Asynchronously fetch the list of available iTunes playlists."""
         self._thread.get_playlists(callback)
 
+    @override
     def on_play(self, entry: Any) -> None:
         assert babase.app.classic is not None
         music = babase.app.classic.music
@@ -59,9 +63,11 @@ class MacMusicAppMusicPlayer(MusicPlayer):
                 entry_type,
             )
 
+    @override
     def on_stop(self) -> None:
         self._thread.play_playlist(None)
 
+    @override
     def on_app_shutdown(self) -> None:
         self._thread.shutdown()
 
@@ -77,6 +83,7 @@ class _MacMusicAppThread(threading.Thread):
         self._current_playlist: str | None = None
         self._orig_volume: int | None = None
 
+    @override
     def run(self) -> None:
         """Run the Music.app thread."""
         babase.set_thread_name('BA_MacMusicAppThread')

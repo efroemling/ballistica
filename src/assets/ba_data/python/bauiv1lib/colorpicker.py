@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
 
@@ -170,6 +172,7 @@ class ColorPicker(PopupWindow):
                 self._delegate.color_picker_closing(self)
             bui.containerwidget(edit=self.root_widget, transition='out_scale')
 
+    @override
     def on_popup_cancel(self) -> None:
         if not self._transitioning_out:
             bui.getsound('swish').play()
@@ -338,6 +341,7 @@ class ColorPickerExact(PopupWindow):
                 self._delegate.color_picker_closing(self)
             bui.containerwidget(edit=self.root_widget, transition='out_scale')
 
+    @override
     def on_popup_cancel(self) -> None:
         if not self._transitioning_out:
             bui.getsound('swish').play()

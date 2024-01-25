@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, TypeVar
 from concurrent.futures import ThreadPoolExecutor
 from functools import cached_property
 
+from typing_extensions import override
 from efro.call import tpartial
 
 import _babase
@@ -127,6 +128,7 @@ class App:
         statically in a spinoff project.
         """
 
+        @override
         def app_mode_for_intent(
             self, intent: AppIntent
         ) -> type[AppMode] | None:

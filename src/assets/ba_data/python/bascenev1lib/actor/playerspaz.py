@@ -6,7 +6,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar, overload
 
+from typing_extensions import override
 import bascenev1 as bs
+
 from bascenev1lib.actor.spaz import Spaz
 
 if TYPE_CHECKING:
@@ -183,6 +185,7 @@ class PlayerSpaz(Spaz):
                 ' non-connected player'
             )
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         # FIXME: Tidy this up.
         # pylint: disable=too-many-branches
