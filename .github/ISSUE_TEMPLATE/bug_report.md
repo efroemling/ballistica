@@ -5,10 +5,10 @@ title: Bug
 labels: bug
 assignees: ''
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Thanks for taking the time to fill out this bug! If you need real-time help, join us on Discord.
+- type: markdown
+  attributes:
+    value: |
+      Thanks for taking the time to fill out this bug! If you need real-time help, join us on Discord.
 
 ---
 
