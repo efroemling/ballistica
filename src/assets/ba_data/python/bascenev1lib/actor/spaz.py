@@ -1227,7 +1227,7 @@ class Spaz(bs.Actor):
                 return None
             node = bs.getcollision().opposingnode
             if node.getdelegate(PowerupBox):
-                return
+                return None
 
             # Only allow one hit per node per punch.
             if node and (node not in self._punched_nodes):
