@@ -61,41 +61,41 @@ class IOExtendedData:
         """
 
 
-KeyT = TypeVar('KeyT', bound=Enum)
+EnumT = TypeVar('EnumT', bound=Enum)
 
 
-class IOMultiType(Generic[KeyT]):
+class IOMultiType(Generic[EnumT]):
     """A base class for types that can map to multiple dataclass types.
 
-    This allows construction of high level base classes (for example
-    a 'Message' type). These types can then be used as annotations in
-    dataclasses, and dataclassio will serialize/deserialize instances
-    based on their subtype plus simple embedded type-id values.
+    This enables usage of high level base classes (for example
+    a 'Message' type) in dataclasses, with dataclassio automatically
+    serializing/deserializing subclass instances using provided
+    per-class type-ids.
 
     See tests/test_efro/test_dataclassio.py for an example of this.
     """
 
-    # Serialized data will store individual object ids to this key. If
-    # this value is ever problematic, it should be possible to override
-    # it in a subclass.
+    # Dataclasses inheriting from an IOMultiType will store a type-id
+    # with this key in their serialized data. This value can be
+    # overridden in IOMultiType subclasses in case of conflicts.
     ID_STORAGE_NAME = '_iotype'
 
     @classmethod
-    def get_key_type(cls) -> type[Enum]:
-        """Return the enum type we use as a key."""
-        out: type[Enum] = cls.__orig_bases__[0].__args__[0]  # type: ignore
+    def get_type(cls, type_id: EnumT) -> type[Self]:
+        """Return a specific subclass given a type-id."""
+        raise NotImplementedError()
+
+    @classmethod
+    def get_type_id(cls) -> EnumT:
+        """Return the type-id for this subclass."""
+        raise NotImplementedError()
+
+    @classmethod
+    def get_type_id_type(cls) -> type[EnumT]:
+        """Return the Enum type this class uses as its type-id."""
+        out: type[EnumT] = cls.__orig_bases__[0].__args__[0]  # type: ignore
         assert issubclass(out, Enum)
         return out
-
-    @classmethod
-    def get_type_id(cls) -> KeyT:
-        """Return the type id for this subclass."""
-        raise NotImplementedError()
-
-    @classmethod
-    def get_type(cls, type_id: KeyT) -> type[Self]:
-        """Return a specific subclass given an id."""
-        raise NotImplementedError()
 
 
 class IOAttrs:
@@ -332,6 +332,6 @@ def _get_multitype_type(
         raise ValueError(
             f"Expected a '{storename}'" f" value for object at '{fieldpath}'."
         )
-    id_enum_type = cls.get_key_type()
+    id_enum_type = cls.get_type_id_type()
     id_enum = id_enum_type(id_val)
     return cls.get_type(id_enum)

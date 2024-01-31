@@ -73,7 +73,7 @@ class _Inputter:
                     f'No type id value present for multi-type object:'
                     f' {values}.'
                 )
-            type_id_enum = self._cls.get_key_type()
+            type_id_enum = self._cls.get_type_id_type()
             enum_val = type_id_enum(type_id_val)
             outcls = self._cls.get_type(enum_val)
         else:

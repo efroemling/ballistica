@@ -1093,7 +1093,8 @@ class MTTestBase(IOMultiType[MTTestTypeID]):
     that know about all of their child classes and how to serialize
     & deserialize them using explicit type ids. We can then use the
     parent class in annotations and dataclassio will do the right thing.
-    Useful for stuff like Message classes.
+    Useful for stuff like Message classes where we may want to store a
+    bunch of different types of them into one place.
     """
 
     @override
