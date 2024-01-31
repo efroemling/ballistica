@@ -5,10 +5,17 @@
 
 from __future__ import annotations
 
-from enum import Enum
 import datetime
+from enum import Enum
 from dataclasses import field, dataclass
-from typing import TYPE_CHECKING, Any, Sequence, Annotated
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Sequence,
+    Annotated,
+    assert_type,
+    assert_never,
+)
 
 from typing_extensions import override
 import pytest
@@ -24,10 +31,11 @@ from efro.dataclassio import (
     Codec,
     DataclassFieldLookup,
     IOExtendedData,
+    IOMultiType,
 )
 
 if TYPE_CHECKING:
-    pass
+    from typing import Self
 
 
 class _EnumTest(Enum):
@@ -1069,3 +1077,178 @@ def test_soft_default() -> None:
     todict = dataclass_to_dict(orig)
     assert todict == {'ival': 2}
     assert dataclass_from_dict(_TestClassE8, todict) == orig
+
+
+class MTTestTypeID(Enum):
+    """IDs for our multi-type class."""
+
+    CLASS_1 = 'm1'
+    CLASS_2 = 'm2'
+
+
+class MTTestBase(IOMultiType[MTTestTypeID]):
+    """Our multi-type class.
+
+    These top level multi-type classes are special parent classes
+    that know about all of their child classes and how to serialize
+    & deserialize them using explicit type ids. We can then use the
+    parent class in annotations and dataclassio will do the right thing.
+    Useful for stuff like Message classes.
+    """
+
+    @override
+    @classmethod
+    def get_type(cls, type_id: MTTestTypeID) -> type[MTTestBase]:
+        """Return the subclass for each of our type-ids."""
+
+        # This uses assert_never() to ensure we cover all cases in the
+        # enum. Though this is less efficient than looking up by dict
+        # would be. If we had lots of values we could also support lazy
+        # loading by importing classes only when their value is being
+        # requested.
+        val: type[MTTestBase]
+        if type_id is MTTestTypeID.CLASS_1:
+            val = MTTestClass1
+        elif type_id is MTTestTypeID.CLASS_2:
+            val = MTTestClass2
+        else:
+            assert_never(type_id)
+        return val
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestTypeID:
+        """Provide the type-id for this subclass."""
+        # If we wanted, we could just maintain a static mapping
+        # of types-to-ids here, but there are benefits to letting
+        # each child class speak for itself. Namely that we can
+        # do lazy-loading and don't need to have all types present
+        # here.
+
+        # So we'll let all our child classes override this.
+        raise NotImplementedError()
+
+
+@ioprepped
+@dataclass(frozen=True)  # Frozen so we can test in set()
+class MTTestClass1(MTTestBase):
+    """A test child-class for use with our multi-type class."""
+
+    ival: int
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestTypeID:
+        return MTTestTypeID.CLASS_1
+
+
+@ioprepped
+@dataclass(frozen=True)  # Frozen so we can test in set()
+class MTTestClass2(MTTestBase):
+    """Another test child-class for use with our multi-type class."""
+
+    sval: str
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestTypeID:
+        return MTTestTypeID.CLASS_2
+
+
+def test_multi_type() -> None:
+    """Test IOMultiType stuff."""
+    # pylint: disable=too-many-locals
+
+    # Test converting single instances back and forth.
+    val1: MTTestBase = MTTestClass1(ival=123)
+    tpname = MTTestBase.ID_STORAGE_NAME
+    outdict = dataclass_to_dict(val1)
+    assert outdict == {'ival': 123, tpname: 'm1'}
+    val2: MTTestBase = MTTestClass2(sval='whee')
+    outdict2 = dataclass_to_dict(val2)
+    assert outdict2 == {'sval': 'whee', tpname: 'm2'}
+
+    # Make sure types and values work for both concrete types and the
+    # multi-type.
+    assert_type(dataclass_from_dict(MTTestClass1, outdict), MTTestClass1)
+    assert_type(dataclass_from_dict(MTTestBase, outdict), MTTestBase)
+
+    assert dataclass_from_dict(MTTestClass1, outdict) == val1
+    assert dataclass_from_dict(MTTestClass2, outdict2) == val2
+    assert dataclass_from_dict(MTTestBase, outdict) == val1
+    assert dataclass_from_dict(MTTestBase, outdict2) == val2
+
+    # Now test our multi-type embedded in other classes. We should be
+    # able to throw a mix of things in there and have them deserialize
+    # back the types we started with.
+
+    # Individual values:
+
+    @ioprepped
+    @dataclass
+    class _TestContainerClass1:
+        obj_a: MTTestBase
+        obj_b: MTTestBase
+
+    container1 = _TestContainerClass1(
+        obj_a=MTTestClass1(234), obj_b=MTTestClass2('987')
+    )
+    outdict = dataclass_to_dict(container1)
+    container1b = dataclass_from_dict(_TestContainerClass1, outdict)
+    assert container1 == container1b
+
+    # Lists:
+
+    @ioprepped
+    @dataclass
+    class _TestContainerClass2:
+        objs: list[MTTestBase]
+
+    container2 = _TestContainerClass2(
+        objs=[MTTestClass1(111), MTTestClass2('bbb')]
+    )
+    outdict = dataclass_to_dict(container2)
+    container2b = dataclass_from_dict(_TestContainerClass2, outdict)
+    assert container2 == container2b
+
+    # Dict values:
+
+    @ioprepped
+    @dataclass
+    class _TestContainerClass3:
+        objs: dict[int, MTTestBase]
+
+    container3 = _TestContainerClass3(
+        objs={1: MTTestClass1(456), 2: MTTestClass2('gronk')}
+    )
+    outdict = dataclass_to_dict(container3)
+    container3b = dataclass_from_dict(_TestContainerClass3, outdict)
+    assert container3 == container3b
+
+    # Tuples:
+
+    @ioprepped
+    @dataclass
+    class _TestContainerClass4:
+        objs: tuple[MTTestBase, MTTestBase]
+
+    container4 = _TestContainerClass4(
+        objs=(MTTestClass1(932), MTTestClass2('potato'))
+    )
+    outdict = dataclass_to_dict(container4)
+    container4b = dataclass_from_dict(_TestContainerClass4, outdict)
+    assert container4 == container4b
+
+    # Sets (note: dataclasses must be frozen for this to work):
+
+    @ioprepped
+    @dataclass
+    class _TestContainerClass5:
+        objs: set[MTTestBase]
+
+    container5 = _TestContainerClass5(
+        objs={MTTestClass1(424), MTTestClass2('goo')}
+    )
+    outdict = dataclass_to_dict(container5)
+    container5b = dataclass_from_dict(_TestContainerClass5, outdict)
+    assert container5 == container5b

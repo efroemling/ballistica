@@ -25,6 +25,7 @@ from efro.dataclassio._base import (
     SIMPLE_TYPES,
     _raise_type_error,
     IOExtendedData,
+    IOMultiType,
 )
 from efro.dataclassio._prep import PrepSession
 
@@ -49,6 +50,8 @@ class _Outputter:
         assert dataclasses.is_dataclass(self._obj)
 
         # For special extended data types, call their 'will_output' callback.
+        # FIXME - should probably move this into _process_dataclass so it
+        # can work on nested values.
         if isinstance(self._obj, IOExtendedData):
             self._obj.will_output()
 
@@ -139,6 +142,17 @@ class _Outputter:
             if self._create:
                 assert out is not None
                 out.update(extra_attrs)
+
+        # If this obj inherits from multi-type, store its type id.
+        if isinstance(obj, IOMultiType):
+            type_id = obj.get_type_id()
+            # Sanity checks; make sure looking up this id gets us this type.
+            assert isinstance(type_id.value, str)
+            assert obj.get_type(type_id) is type(obj)
+            if self._create:
+                assert out is not None
+                out[obj.ID_STORAGE_NAME] = type_id.value
+
         return out
 
     def _process_value(
@@ -231,6 +245,7 @@ class _Outputter:
                     f'Expected a list for {fieldpath};'
                     f' found a {type(value)}'
                 )
+
             childanntypes = typing.get_args(anntype)
 
             # 'Any' type children; make sure they are valid values for
@@ -246,8 +261,37 @@ class _Outputter:
                 # Hmm; should we do a copy here?
                 return value if self._create else None
 
-            # We contain elements of some specified type.
+            # We contain elements of some single specified type.
             assert len(childanntypes) == 1
+            childanntype = childanntypes[0]
+
+            # If that type is a multi-type, we determine our type per-object.
+            if issubclass(childanntype, IOMultiType):
+                # In the multi-type case, we use each object's own type
+                # to do its conversion, but lets at least make sure each
+                # of those types inherits from the annotated multi-type
+                # class.
+                for x in value:
+                    if not isinstance(x, childanntype):
+                        raise ValueError(
+                            f"Found a {type(x)} value under '{fieldpath}'."
+                            f' Everything must inherit from'
+                            f' {childanntype}.'
+                        )
+
+                if self._create:
+                    out: list[Any] = []
+                    for x in value:
+                        # We know these are dataclasses so no need to do
+                        # the generic _process_value.
+                        out.append(self._process_dataclass(cls, x, fieldpath))
+                    return out
+                for x in value:
+                    # We know these are dataclasses so no need to do
+                    # the generic _process_value.
+                    self._process_dataclass(cls, x, fieldpath)
+
+            # Normal non-multitype case; everything's got the same type.
             if self._create:
                 return [
                     self._process_value(
@@ -305,6 +349,21 @@ class _Outputter:
                     f'Expected a {origin} for {fieldpath};'
                     f' found a {type(value)}.'
                 )
+            return self._process_dataclass(cls, value, fieldpath)
+
+        # ONLY consider something as a multi-type when it's not a
+        # dataclass (all dataclasses inheriting from the multi-type should
+        # just be processed as dataclasses).
+        if issubclass(origin, IOMultiType):
+            # In the multi-type case, we use each object's own type to
+            # do its conversion, but lets at least make sure each of
+            # those types inherits from the annotated multi-type class.
+            if not isinstance(value, origin):
+                raise ValueError(
+                    f"Found a {type(value)} value at '{fieldpath}'."
+                    f' It is expected to inherit from {origin}.'
+                )
+
             return self._process_dataclass(cls, value, fieldpath)
 
         if issubclass(origin, Enum):

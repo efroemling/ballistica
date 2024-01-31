@@ -27,7 +27,7 @@ class JsonStyle(Enum):
     """Different style types for json."""
 
     # Single line, no spaces, no sorting. Not deterministic.
-    # Use this for most storage purposes.
+    # Use this where speed is more important than determinism.
     FAST = 'fast'
 
     # Single line, no spaces, sorted keys. Deterministic.
@@ -40,7 +40,9 @@ class JsonStyle(Enum):
 
 
 def dataclass_to_dict(
-    obj: Any, codec: Codec = Codec.JSON, coerce_to_float: bool = True
+    obj: Any,
+    codec: Codec = Codec.JSON,
+    coerce_to_float: bool = True,
 ) -> dict:
     """Given a dataclass object, return a json-friendly dict.
 
@@ -89,6 +91,28 @@ def dataclass_to_json(
     return json.dumps(jdict, separators=(',', ':'), sort_keys=sort_keys)
 
 
+# @overload
+# def dataclass_from_dict(
+#     cls: type[T],
+#     values: dict,
+#     codec: Codec = Codec.JSON,
+#     coerce_to_float: bool = True,
+#     allow_unknown_attrs: bool = True,
+#     discard_unknown_attrs: bool = False,
+# ) -> T: ...
+
+
+# @overload
+# def dataclass_from_dict(
+#     cls: IOTypeMap,
+#     values: dict,
+#     codec: Codec = Codec.JSON,
+#     coerce_to_float: bool = True,
+#     allow_unknown_attrs: bool = True,
+#     discard_unknown_attrs: bool = False,
+# ) -> Any: ...
+
+
 def dataclass_from_dict(
     cls: type[T],
     values: dict,
@@ -120,13 +144,15 @@ def dataclass_from_dict(
     exported back to a dict, unless discard_unknown_attrs is True, in which
     case they will simply be discarded.
     """
-    return _Inputter(
+    val = _Inputter(
         cls,
         codec=codec,
         coerce_to_float=coerce_to_float,
         allow_unknown_attrs=allow_unknown_attrs,
         discard_unknown_attrs=discard_unknown_attrs,
     ).run(values)
+    assert isinstance(val, cls)
+    return val
 
 
 def dataclass_from_json(

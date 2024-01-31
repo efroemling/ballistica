@@ -1,4 +1,4 @@
-### 1.7.33 (build 21762, api 8, 2024-01-24)
+### 1.7.33 (build 21763, api 8, 2024-01-31)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).
 - Added a 'Show Demos When Idle' option in advanced settings. If enabled, the
@@ -20,6 +20,8 @@
   languages; I feel it helps keep logic more understandable and should help us
   catch problems where a base class changes or removes a method and child
   classes forget to adapt to the change.
+- Implemented `efro.dataclassio.IOMultiType` which will make my life a lot
+  easier.
   
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)

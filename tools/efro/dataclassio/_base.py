@@ -8,13 +8,13 @@ import dataclasses
 import typing
 import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, get_args
+from typing import TYPE_CHECKING, get_args, TypeVar, Generic
 
 # noinspection PyProtectedMember
 from typing import _AnnotatedAlias  # type: ignore
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
+    from typing import Any, Callable, Literal, ClassVar, Self
 
 # Types which we can pass through as-is.
 SIMPLE_TYPES = {int, bool, str, float, type(None)}
@@ -22,23 +22,6 @@ SIMPLE_TYPES = {int, bool, str, float, type(None)}
 # Attr name for dict of extra attributes included on dataclass instances.
 # Note that this is only added if extra attributes are present.
 EXTRA_ATTRS_ATTR = '_DCIOEXATTRS'
-
-
-def _raise_type_error(
-    fieldpath: str, valuetype: type, expected: tuple[type, ...]
-) -> None:
-    """Raise an error when a field value's type does not match expected."""
-    assert isinstance(expected, tuple)
-    assert all(isinstance(e, type) for e in expected)
-    if len(expected) == 1:
-        expected_str = expected[0].__name__
-    else:
-        expected_str = ' | '.join(t.__name__ for t in expected)
-    raise TypeError(
-        f'Invalid value type for "{fieldpath}";'
-        f' expected "{expected_str}", got'
-        f' "{valuetype.__name__}".'
-    )
 
 
 class Codec(Enum):
@@ -78,32 +61,41 @@ class IOExtendedData:
         """
 
 
-def _is_valid_for_codec(obj: Any, codec: Codec) -> bool:
-    """Return whether a value consists solely of json-supported types.
+KeyT = TypeVar('KeyT', bound=Enum)
 
-    Note that this does not include things like tuples which are
-    implicitly translated to lists by python's json module.
+
+class IOMultiType(Generic[KeyT]):
+    """A base class for types that can map to multiple dataclass types.
+
+    This allows construction of high level base classes (for example
+    a 'Message' type). These types can then be used as annotations in
+    dataclasses, and dataclassio will serialize/deserialize instances
+    based on their subtype plus simple embedded type-id values.
+
+    See tests/test_efro/test_dataclassio.py for an example of this.
     """
-    if obj is None:
-        return True
 
-    objtype = type(obj)
-    if objtype in (int, float, str, bool):
-        return True
-    if objtype is dict:
-        # JSON 'objects' supports only string dict keys, but all value types.
-        return all(
-            isinstance(k, str) and _is_valid_for_codec(v, codec)
-            for k, v in obj.items()
-        )
-    if objtype is list:
-        return all(_is_valid_for_codec(elem, codec) for elem in obj)
+    # Serialized data will store individual object ids to this key. If
+    # this value is ever problematic, it should be possible to override
+    # it in a subclass.
+    ID_STORAGE_NAME = '_iotype'
 
-    # A few things are valid in firestore but not json.
-    if issubclass(objtype, datetime.datetime) or objtype is bytes:
-        return codec is Codec.FIRESTORE
+    @classmethod
+    def get_key_type(cls) -> type[Enum]:
+        """Return the enum type we use as a key."""
+        out: type[Enum] = cls.__orig_bases__[0].__args__[0]  # type: ignore
+        assert issubclass(out, Enum)
+        return out
 
-    return False
+    @classmethod
+    def get_type_id(cls) -> KeyT:
+        """Return the type id for this subclass."""
+        raise NotImplementedError()
+
+    @classmethod
+    def get_type(cls, type_id: KeyT) -> type[Self]:
+        """Return a specific subclass given an id."""
+        raise NotImplementedError()
 
 
 class IOAttrs:
@@ -192,7 +184,7 @@ class IOAttrs:
         """Ensure the IOAttrs instance is ok to use with the provided field."""
 
         # Turning off store_default requires the field to have either
-        # a default or a a default_factory or for us to have soft equivalents.
+        # a default or a default_factory or for us to have soft equivalents.
 
         if not self.store_default:
             field_default_factory: Any = field.default_factory
@@ -241,6 +233,52 @@ class IOAttrs:
                 )
 
 
+def _raise_type_error(
+    fieldpath: str, valuetype: type, expected: tuple[type, ...]
+) -> None:
+    """Raise an error when a field value's type does not match expected."""
+    assert isinstance(expected, tuple)
+    assert all(isinstance(e, type) for e in expected)
+    if len(expected) == 1:
+        expected_str = expected[0].__name__
+    else:
+        expected_str = ' | '.join(t.__name__ for t in expected)
+    raise TypeError(
+        f'Invalid value type for "{fieldpath}";'
+        f' expected "{expected_str}", got'
+        f' "{valuetype.__name__}".'
+    )
+
+
+def _is_valid_for_codec(obj: Any, codec: Codec) -> bool:
+    """Return whether a value consists solely of json-supported types.
+
+    Note that this does not include things like tuples which are
+    implicitly translated to lists by python's json module.
+    """
+    if obj is None:
+        return True
+
+    objtype = type(obj)
+    if objtype in (int, float, str, bool):
+        return True
+    if objtype is dict:
+        # JSON 'objects' supports only string dict keys, but all value
+        # types.
+        return all(
+            isinstance(k, str) and _is_valid_for_codec(v, codec)
+            for k, v in obj.items()
+        )
+    if objtype is list:
+        return all(_is_valid_for_codec(elem, codec) for elem in obj)
+
+    # A few things are valid in firestore but not json.
+    if issubclass(objtype, datetime.datetime) or objtype is bytes:
+        return codec is Codec.FIRESTORE
+
+    return False
+
+
 def _get_origin(anntype: Any) -> Any:
     """Given a type annotation, return its origin or itself if there is none.
 
@@ -255,9 +293,9 @@ def _get_origin(anntype: Any) -> Any:
 
 def _parse_annotated(anntype: Any) -> tuple[Any, IOAttrs | None]:
     """Parse Annotated() constructs, returning annotated type & IOAttrs."""
-    # If we get an Annotated[foo, bar, eep] we take
-    # foo as the actual type, and we look for IOAttrs instances in
-    # bar/eep to affect our behavior.
+    # If we get an Annotated[foo, bar, eep] we take foo as the actual
+    # type, and we look for IOAttrs instances in bar/eep to affect our
+    # behavior.
     ioattrs: IOAttrs | None = None
     if isinstance(anntype, _AnnotatedAlias):
         annargs = get_args(anntype)
@@ -270,8 +308,8 @@ def _parse_annotated(anntype: Any) -> tuple[Any, IOAttrs | None]:
                     )
                 ioattrs = annarg
 
-            # I occasionally just throw a 'x' down when I mean IOAttrs('x');
-            # catch these mistakes.
+            # I occasionally just throw a 'x' down when I mean
+            # IOAttrs('x'); catch these mistakes.
             elif isinstance(annarg, (str, int, float, bool)):
                 raise RuntimeError(
                     f'Raw {type(annarg)} found in Annotated[] entry:'
@@ -279,3 +317,21 @@ def _parse_annotated(anntype: Any) -> tuple[Any, IOAttrs | None]:
                 )
         anntype = annargs[0]
     return anntype, ioattrs
+
+
+def _get_multitype_type(
+    cls: type[IOMultiType], fieldpath: str, val: Any
+) -> type[Any]:
+    if not isinstance(val, dict):
+        raise ValueError(
+            f"Found a {type(val)} at '{fieldpath}'; expected a dict."
+        )
+    storename = cls.ID_STORAGE_NAME
+    id_val = val.get(storename)
+    if id_val is None:
+        raise ValueError(
+            f"Expected a '{storename}'" f" value for object at '{fieldpath}'."
+        )
+    id_enum_type = cls.get_key_type()
+    id_enum = id_enum_type(id_val)
+    return cls.get_type(id_enum)

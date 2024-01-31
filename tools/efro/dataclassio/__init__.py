@@ -11,7 +11,7 @@ data formats in a nondestructive manner.
 from __future__ import annotations
 
 from efro.util import set_canonical_module_names
-from efro.dataclassio._base import Codec, IOAttrs, IOExtendedData
+from efro.dataclassio._base import Codec, IOAttrs, IOExtendedData, IOMultiType
 from efro.dataclassio._prep import (
     ioprep,
     ioprepped,
@@ -33,6 +33,7 @@ __all__ = [
     'Codec',
     'IOAttrs',
     'IOExtendedData',
+    'IOMultiType',
     'ioprep',
     'ioprepped',
     'will_ioprep',
