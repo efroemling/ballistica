@@ -69,16 +69,21 @@ class IOMultiType(Generic[EnumT]):
 
     This enables usage of high level base classes (for example
     a 'Message' type) in dataclasses, with dataclassio automatically
-    serializing/deserializing subclass instances using provided
-    per-class type-ids.
+    serializing & deserializing subclass instances based on their
+    type.
 
-    See tests/test_efro/test_dataclassio.py for an example of this.
+    Standard usage involves creating a class which inherits from this
+    one that acts as a 'registry', and then creating dataclass classes
+    inheriting from that registry class. Dataclassio will then do the
+    right thing when that registry class is used in type annotations.
+
+    See tests/test_efro/test_dataclassio.py for examples.
     """
 
     # Dataclasses inheriting from an IOMultiType will store a type-id
     # with this key in their serialized data. This value can be
     # overridden in IOMultiType subclasses in case of conflicts.
-    ID_STORAGE_NAME = '_iotype'
+    ID_STORAGE_NAME = '_dciotype'
 
     @classmethod
     def get_type(cls, type_id: EnumT) -> type[Self]:

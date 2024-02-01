@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import copy
 import datetime
 from enum import Enum
 from dataclasses import field, dataclass
@@ -1159,6 +1160,7 @@ class MTTestClass2(MTTestBase):
 def test_multi_type() -> None:
     """Test IOMultiType stuff."""
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
 
     # Test converting single instances back and forth.
     val1: MTTestBase = MTTestClass1(ival=123)
@@ -1178,6 +1180,17 @@ def test_multi_type() -> None:
     assert dataclass_from_dict(MTTestClass2, outdict2) == val2
     assert dataclass_from_dict(MTTestBase, outdict) == val1
     assert dataclass_from_dict(MTTestBase, outdict2) == val2
+
+    # Trying to load as a multi-type should fail if there is no type
+    # value present.
+    outdictmod = copy.deepcopy(outdict)
+    del outdictmod[tpname]
+    with pytest.raises(ValueError):
+        dataclass_from_dict(MTTestBase, outdictmod)
+
+    # However it should work when loading an exact type. This can be
+    # necessary to gracefully upgrade old data to multi-type form.
+    dataclass_from_dict(MTTestClass1, outdictmod)
 
     # Now test our multi-type embedded in other classes. We should be
     # able to throw a mix of things in there and have them deserialize
@@ -1253,3 +1266,33 @@ def test_multi_type() -> None:
     outdict = dataclass_to_dict(container5)
     container5b = dataclass_from_dict(_TestContainerClass5, outdict)
     assert container5 == container5b
+
+    # Optionals.
+
+    @ioprepped
+    @dataclass
+    class _TestContainerClass6:
+        obj: MTTestBase | None
+
+    container6 = _TestContainerClass6(obj=None)
+    outdict = dataclass_to_dict(container6)
+    container6b = dataclass_from_dict(_TestContainerClass6, outdict)
+    assert container6 == container6b
+
+    container6 = _TestContainerClass6(obj=MTTestClass2('fwr'))
+    outdict = dataclass_to_dict(container6)
+    container6b = dataclass_from_dict(_TestContainerClass6, outdict)
+    assert container6 == container6b
+
+    @ioprepped
+    @dataclass
+    class _TestContainerClass7:
+        obj: Annotated[
+            MTTestBase | None,
+            IOAttrs('o', soft_default=None),
+        ]
+
+    container7 = _TestContainerClass7(obj=None)
+    outdict = dataclass_to_dict(container7)
+    container7b = dataclass_from_dict(_TestContainerClass7, {})
+    assert container7 == container7b

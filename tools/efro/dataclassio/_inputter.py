@@ -64,9 +64,15 @@ class _Inputter:
 
         outcls: type[Any]
 
-        # If we're dealing with a multi-type class, figure out the
-        # top level type we're going to.
-        if issubclass(self._cls, IOMultiType):
+        # If we're dealing with a multi-type subclass which is NOT a
+        # dataclass, we must rely on its stored type to figure out
+        # what type of dataclass we're going to. If we are a dataclass
+        # then we already know what type we're going to so we can
+        # survive without this, which is often necessary when reading
+        # old data that doesn't have a type id attr yet.
+        if issubclass(self._cls, IOMultiType) and not dataclasses.is_dataclass(
+            self._cls
+        ):
             type_id_val = values.get(self._cls.ID_STORAGE_NAME)
             if type_id_val is None:
                 raise ValueError(
@@ -265,7 +271,7 @@ class _Inputter:
         args: dict[str, Any] = {}
         for rawkey, value in values.items():
 
-            # Ignore _iotype or whatnot.
+            # Ignore _dciotype or whatnot.
             if type_id_store_name is not None and rawkey == type_id_store_name:
                 continue
 
