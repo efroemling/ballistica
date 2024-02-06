@@ -11,7 +11,13 @@ data formats in a nondestructive manner.
 from __future__ import annotations
 
 from efro.util import set_canonical_module_names
-from efro.dataclassio._base import Codec, IOAttrs, IOExtendedData, IOMultiType
+from efro.dataclassio._base import (
+    Codec,
+    IOAttrs,
+    IOExtendedData,
+    IOMultiType,
+    EXTRA_ATTRS_ATTR,
+)
 from efro.dataclassio._prep import (
     ioprep,
     ioprepped,
@@ -29,21 +35,22 @@ from efro.dataclassio._api import (
 )
 
 __all__ = [
-    'JsonStyle',
     'Codec',
+    'DataclassFieldLookup',
+    'EXTRA_ATTRS_ATTR',
     'IOAttrs',
     'IOExtendedData',
     'IOMultiType',
-    'ioprep',
-    'ioprepped',
-    'will_ioprep',
-    'is_ioprepped_dataclass',
-    'DataclassFieldLookup',
-    'dataclass_to_dict',
-    'dataclass_to_json',
+    'JsonStyle',
     'dataclass_from_dict',
     'dataclass_from_json',
+    'dataclass_to_dict',
+    'dataclass_to_json',
     'dataclass_validate',
+    'ioprep',
+    'ioprepped',
+    'is_ioprepped_dataclass',
+    'will_ioprep',
 ]
 
 # Have these things present themselves cleanly as 'thismodule.SomeClass'

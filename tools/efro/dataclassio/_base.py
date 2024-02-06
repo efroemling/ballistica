@@ -19,8 +19,9 @@ if TYPE_CHECKING:
 # Types which we can pass through as-is.
 SIMPLE_TYPES = {int, bool, str, float, type(None)}
 
-# Attr name for dict of extra attributes included on dataclass instances.
-# Note that this is only added if extra attributes are present.
+# Attr name for dict of extra attributes included on dataclass
+# instances. Note that this is only added if extra attributes are
+# present.
 EXTRA_ATTRS_ATTR = '_DCIOEXATTRS'
 
 
@@ -68,12 +69,12 @@ class IOMultiType(Generic[EnumT]):
     """A base class for types that can map to multiple dataclass types.
 
     This enables usage of high level base classes (for example
-    a 'Message' type) in dataclasses, with dataclassio automatically
-    serializing & deserializing subclass instances based on their
-    type.
+    a 'Message' type) in annotations, with dataclassio automatically
+    serializing & deserializing dataclass subclasses based on their
+    type ('MessagePing', 'MessageChat', etc.)
 
     Standard usage involves creating a class which inherits from this
-    one that acts as a 'registry', and then creating dataclass classes
+    one which acts as a 'registry', and then creating dataclass classes
     inheriting from that registry class. Dataclassio will then do the
     right thing when that registry class is used in type annotations.
 
@@ -82,7 +83,7 @@ class IOMultiType(Generic[EnumT]):
 
     # Dataclasses inheriting from an IOMultiType will store a type-id
     # with this key in their serialized data. This value can be
-    # overridden in IOMultiType subclasses in case of conflicts.
+    # overridden in IOMultiType subclasses as desired.
     ID_STORAGE_NAME = '_dciotype'
 
     @classmethod

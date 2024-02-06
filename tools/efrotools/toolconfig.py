@@ -47,7 +47,6 @@ def install_tool_config(projroot: Path, src: Path, dst: Path) -> None:
         comment = ';;'
     elif dst.name in [
         '.mypy.ini',
-        '.pycheckers',
         '.pylintrc',
         '.style.yapf',
         '.clang-format',

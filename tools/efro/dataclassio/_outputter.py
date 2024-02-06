@@ -72,6 +72,7 @@ class _Outputter:
     def _process_dataclass(self, cls: type, obj: Any, fieldpath: str) -> Any:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
         prep = PrepSession(explicit=False).prep_dataclass(
             type(obj), recursion_level=0
         )
@@ -146,8 +147,16 @@ class _Outputter:
         # If this obj inherits from multi-type, store its type id.
         if isinstance(obj, IOMultiType):
             type_id = obj.get_type_id()
-            # Sanity checks; make sure looking up this id gets us this type.
+
+            # Sanity checks; make sure looking up this id gets us this
+            # type.
             assert isinstance(type_id.value, str)
+            if obj.get_type(type_id) is not type(obj):
+                raise RuntimeError(
+                    f'dataclassio: object of type {type(obj)}'
+                    f' gives type-id {type_id} but that id gives type'
+                    f' {obj.get_type(type_id)}. Something is out of sync.'
+                )
             assert obj.get_type(type_id) is type(obj)
             if self._create:
                 assert out is not None
