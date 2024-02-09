@@ -27,7 +27,7 @@ class JsonStyle(Enum):
     """Different style types for json."""
 
     # Single line, no spaces, no sorting. Not deterministic.
-    # Use this for most storage purposes.
+    # Use this where speed is more important than determinism.
     FAST = 'fast'
 
     # Single line, no spaces, sorted keys. Deterministic.
@@ -40,7 +40,9 @@ class JsonStyle(Enum):
 
 
 def dataclass_to_dict(
-    obj: Any, codec: Codec = Codec.JSON, coerce_to_float: bool = True
+    obj: Any,
+    codec: Codec = Codec.JSON,
+    coerce_to_float: bool = True,
 ) -> dict:
     """Given a dataclass object, return a json-friendly dict.
 
@@ -101,32 +103,36 @@ def dataclass_from_dict(
 
     The dict must be formatted to match the specified codec (generally
     json-friendly object types). This means that sequence values such as
-    tuples or sets should be passed as lists, enums should be passed as their
-    associated values, nested dataclasses should be passed as dicts, etc.
+    tuples or sets should be passed as lists, enums should be passed as
+    their associated values, nested dataclasses should be passed as dicts,
+    etc.
 
     All values are checked to ensure their types/values are valid.
 
     Data for attributes of type Any will be checked to ensure they match
     types supported directly by json. This does not include types such
     as tuples which are implicitly translated by Python's json module
-    (as this would break the ability to do a lossless round-trip with data).
+    (as this would break the ability to do a lossless round-trip with
+    data).
 
     If coerce_to_float is True, int values passed for float typed fields
     will be converted to float values. Otherwise, a TypeError is raised.
 
-    If allow_unknown_attrs is False, AttributeErrors will be raised for
-    attributes present in the dict but not on the data class. Otherwise, they
-    will be preserved as part of the instance and included if it is
-    exported back to a dict, unless discard_unknown_attrs is True, in which
-    case they will simply be discarded.
+    If `allow_unknown_attrs` is False, AttributeErrors will be raised for
+    attributes present in the dict but not on the data class. Otherwise,
+    they will be preserved as part of the instance and included if it is
+    exported back to a dict, unless `discard_unknown_attrs` is True, in
+    which case they will simply be discarded.
     """
-    return _Inputter(
+    val = _Inputter(
         cls,
         codec=codec,
         coerce_to_float=coerce_to_float,
         allow_unknown_attrs=allow_unknown_attrs,
         discard_unknown_attrs=discard_unknown_attrs,
     ).run(values)
+    assert isinstance(val, cls)
+    return val
 
 
 def dataclass_from_json(

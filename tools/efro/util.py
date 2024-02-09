@@ -459,8 +459,7 @@ if TYPE_CHECKING:
     class ValueDispatcherMethod(Generic[ValT, RetT]):
         """Used by the valuedispatchmethod decorator."""
 
-        def __call__(self, value: ValT) -> RetT:
-            ...
+        def __call__(self, value: ValT) -> RetT: ...
 
         def register(
             self, value: ValT
