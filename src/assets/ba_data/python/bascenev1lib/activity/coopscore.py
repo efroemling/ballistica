@@ -9,6 +9,7 @@ import random
 import logging
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 from bacommon.login import LoginType
 import bascenev1 as bs
 import bauiv1 as bui
@@ -186,6 +187,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
         self._victory: bool = settings['outcome'] == 'victory'
 
+    @override
     def __del__(self) -> None:
         super().__del__()
 
@@ -194,6 +196,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             with bui.ContextRef.empty():
                 bui.containerwidget(edit=self._root_ui, transition='out_left')
 
+    @override
     def on_transition_in(self) -> None:
         from bascenev1lib.actor import background  # FIXME NO BSSTD
 
@@ -574,6 +577,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 self._player_press,
             )
 
+    @override
     def on_player_join(self, player: bs.Player) -> None:
         super().on_player_join(player)
 
@@ -585,6 +589,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
             bs.timer(time_till_assign, bs.WeakCall(self._safe_assign, player))
 
+    @override
     def on_begin(self) -> None:
         # FIXME: Clean this up.
         # pylint: disable=too-many-statements

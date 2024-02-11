@@ -138,9 +138,9 @@ class ServerConfig:
     team_names: tuple[str, str] | None = None
 
     # Team colors (teams mode only).
-    team_colors: tuple[
-        tuple[float, float, float], tuple[float, float, float]
-    ] | None = None
+    team_colors: (
+        tuple[tuple[float, float, float], tuple[float, float, float]] | None
+    ) = None
 
     # Whether to enable the queue where players can line up before entering
     # your server. Disabling this can be used as a workaround to deal with

@@ -12,11 +12,13 @@ import logging
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
+from typing_extensions import override
+import bascenev1 as bs
+
 from bascenev1lib.actor.bomb import Bomb
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.scoreboard import Scoreboard
 from bascenev1lib.gameutils import SharedObjects
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -84,6 +86,7 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
         label='Time', lower_is_better=True, scoretype=bs.ScoreType.MILLISECONDS
     )
 
+    @override
     @classmethod
     def get_available_settings(
         cls, sessiontype: type[bs.Session]
@@ -133,10 +136,12 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
             )
         return settings
 
+    @override
     @classmethod
     def supports_session_type(cls, sessiontype: type[bs.Session]) -> bool:
         return issubclass(sessiontype, bs.MultiTeamSession)
 
+    @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
         assert bs.app.classic is not None
@@ -179,6 +184,7 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
             bs.MusicType.EPIC_RACE if self._epic_mode else bs.MusicType.RACE
         )
 
+    @override
     def get_instance_description(self) -> str | Sequence:
         if (
             isinstance(self.session, bs.DualTeamSession)
@@ -192,11 +198,13 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
             return 'Run ${ARG1} laps.' + t_str, self._laps
         return 'Run 1 lap.' + t_str
 
+    @override
     def get_instance_description_short(self) -> str | Sequence:
         if self._laps > 1:
             return 'run ${ARG1} laps', self._laps
         return 'run 1 lap'
 
+    @override
     def on_transition_in(self) -> None:
         super().on_transition_in()
         shared = SharedObjects.get()
@@ -379,9 +387,11 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
                         except Exception:
                             logging.exception('Error printing lap.')
 
+    @override
     def on_team_join(self, team: Team) -> None:
         self._update_scoreboard()
 
+    @override
     def on_player_leave(self, player: Player) -> None:
         super().on_player_leave(player)
 
@@ -442,6 +452,7 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
                 show_value=False,
             )
 
+    @override
     def on_begin(self) -> None:
         from bascenev1lib.actor.onscreentimer import OnScreenTimer
 
@@ -670,6 +681,7 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
             self._flash_mine(m_index)
             bs.timer(0.95, bs.Call(self._make_mine, m_index))
 
+    @override
     def spawn_player(self, player: Player) -> bs.Actor:
         if player.team.finished:
             # FIXME: This is not type-safe!
@@ -758,6 +770,7 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
                     self.end_game()
                     return
 
+    @override
     def end_game(self) -> None:
         # Stop updating our time text, and set it to show the exact last
         # finish time if we have one. (so users don't get upset if their
@@ -787,6 +800,7 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
             announce_winning_team=isinstance(self.session, bs.DualTeamSession),
         )
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.PlayerDiedMessage):
             # Augment default behavior.

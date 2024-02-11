@@ -1,6 +1,4 @@
-### 1.7.33 (build 21757, api 8, 2024-01-06)
-- Exposed an override for `bascenev1.Session`'s max players on servers (by EraOSBeta)
-- Added UI for customizing teams and FFA series length (by EraOSBeta, idea by 3alTemp)
+### 1.7.33 (build 21766, api 8, 2024-02-01)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).
 - Added a 'Show Demos When Idle' option in advanced settings. If enabled, the
@@ -13,7 +11,17 @@
 - Players now get points for killing bots with their own bombs by catching it
   and throwing it back at them. This is actually old logic but was disabled due
   to a logic flaw, but should be fixed now. (Thanks VinniTR!)
-
+- Updated the 'Settings->Advanced->Enter Code' functionality to talk to the V2
+  master server (V1 is still used as a fallback).
+- Adopted the `@override` decorator in all Python code and set up Mypy to
+  enforce its usage. Currently `override` comes from `typing_extensions` module
+  but when we upgrade to Python 3.12 soon it will come from the standard
+  `typing` module. This decorator should be familiar to users of other
+  languages; I feel it helps keep logic more understandable and should help us
+  catch problems where a base class changes or removes a method and child
+  classes forget to adapt to the change.
+- Implemented `efro.dataclassio.IOMultiType` which will make my life a lot
+  easier.
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
 - Plugins window now displays 'No Plugins Installed' when no plugins are present (Thanks vishal332008!)

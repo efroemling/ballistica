@@ -49,9 +49,6 @@
       <file path="$PROJECT_DIR$/../src/external/python-android-debug" />
       <file path="$PROJECT_DIR$/../src/external/python-apple" />
       <file path="$PROJECT_DIR$/../src/external/python-apple-debug" />
-      <file path="$PROJECT_DIR$/../src/external/sdl-1.2.14_ef" />
-      <file path="$PROJECT_DIR$/../src/external/sdl2-ef_android" />
-      <file path="$PROJECT_DIR$/../src/external/sdl2-ef_ios" />
       <file path="$PROJECT_DIR$/../src/external/tremor" />
       <file path="$PROJECT_DIR$/../src/external/windows" />
       <file path="$PROJECT_DIR$/../src/meta" />

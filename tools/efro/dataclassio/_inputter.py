@@ -13,7 +13,7 @@ import dataclasses
 import typing
 import types
 import datetime
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING
 
 from efro.util import enum_by_value, check_utc
 from efro.dataclassio._base import (
@@ -25,6 +25,8 @@ from efro.dataclassio._base import (
     SIMPLE_TYPES,
     _raise_type_error,
     IOExtendedData,
+    _get_multitype_type,
+    IOMultiType,
 )
 from efro.dataclassio._prep import PrepSession
 
@@ -34,13 +36,11 @@ if TYPE_CHECKING:
     from efro.dataclassio._base import IOAttrs
     from efro.dataclassio._outputter import _Outputter
 
-T = TypeVar('T')
 
-
-class _Inputter(Generic[T]):
+class _Inputter:
     def __init__(
         self,
-        cls: type[T],
+        cls: type[Any],
         codec: Codec,
         coerce_to_float: bool,
         allow_unknown_attrs: bool = True,
@@ -59,16 +59,46 @@ class _Inputter(Generic[T]):
                 ' when allow_unknown_attrs is False.'
             )
 
-    def run(self, values: dict) -> T:
+    def run(self, values: dict) -> Any:
         """Do the thing."""
 
-        # For special extended data types, call their 'will_output' callback.
-        tcls = self._cls
-        if issubclass(tcls, IOExtendedData):
-            tcls.will_input(values)
+        outcls: type[Any]
 
-        out = self._dataclass_from_input(self._cls, '', values)
-        assert isinstance(out, self._cls)
+        # If we're dealing with a multi-type subclass which is NOT a
+        # dataclass, we must rely on its stored type to figure out
+        # what type of dataclass we're going to. If we are a dataclass
+        # then we already know what type we're going to so we can
+        # survive without this, which is often necessary when reading
+        # old data that doesn't have a type id attr yet.
+        if issubclass(self._cls, IOMultiType) and not dataclasses.is_dataclass(
+            self._cls
+        ):
+            type_id_val = values.get(self._cls.ID_STORAGE_NAME)
+            if type_id_val is None:
+                raise ValueError(
+                    f'No type id value present for multi-type object:'
+                    f' {values}.'
+                )
+            type_id_enum = self._cls.get_type_id_type()
+            enum_val = type_id_enum(type_id_val)
+            outcls = self._cls.get_type(enum_val)
+        else:
+            outcls = self._cls
+
+        # FIXME - should probably move this into _dataclass_from_input
+        # so it can work on nested values.
+        if issubclass(outcls, IOExtendedData):
+            is_ext = True
+            outcls.will_input(values)
+        else:
+            is_ext = False
+
+        out = self._dataclass_from_input(outcls, '', values)
+        assert isinstance(out, outcls)
+
+        if is_ext:
+            out.did_input()
+
         return out
 
     def _value_from_input(
@@ -99,8 +129,8 @@ class _Inputter(Generic[T]):
         # noinspection PyPep8
         if origin is typing.Union or origin is types.UnionType:
             # Currently, the only unions we support are None/Value
-            # (translated from Optional), which we verified on prep.
-            # So let's treat this as a simple optional case.
+            # (translated from Optional), which we verified on prep. So
+            # let's treat this as a simple optional case.
             if value is None:
                 return None
             childanntypes_l = [
@@ -111,13 +141,15 @@ class _Inputter(Generic[T]):
                 cls, fieldpath, childanntypes_l[0], value, ioattrs
             )
 
-        # Everything below this point assumes the annotation type resolves
-        # to a concrete type. (This should have been verified at prep time).
+        # Everything below this point assumes the annotation type
+        # resolves to a concrete type. (This should have been verified
+        # at prep time).
         assert isinstance(origin, type)
 
         if origin in SIMPLE_TYPES:
             if type(value) is not origin:
-                # Special case: if they want to coerce ints to floats, do so.
+                # Special case: if they want to coerce ints to floats,
+                # do so.
                 if (
                     self._coerce_to_float
                     and origin is float
@@ -144,6 +176,16 @@ class _Inputter(Generic[T]):
 
         if dataclasses.is_dataclass(origin):
             return self._dataclass_from_input(origin, fieldpath, value)
+
+        # ONLY consider something as a multi-type when it's not a
+        # dataclass (all dataclasses inheriting from the multi-type
+        # should just be processed as dataclasses).
+        if issubclass(origin, IOMultiType):
+            return self._dataclass_from_input(
+                _get_multitype_type(anntype, fieldpath, value),
+                fieldpath,
+                value,
+            )
 
         if issubclass(origin, Enum):
             return enum_by_value(origin, value)
@@ -216,10 +258,23 @@ class _Inputter(Generic[T]):
             f.name: _parse_annotated(prep.annotations[f.name]) for f in fields
         }
 
+        # Special case: if this is a multi-type class it probably has a
+        # type attr. Ignore that while parsing since we already have a
+        # definite type and it will just pollute extra-attrs otherwise.
+        if issubclass(cls, IOMultiType):
+            type_id_store_name = cls.ID_STORAGE_NAME
+        else:
+            type_id_store_name = None
+
         # Go through all data in the input, converting it to either dataclass
         # args or extra data.
         args: dict[str, Any] = {}
         for rawkey, value in values.items():
+
+            # Ignore _dciotype or whatnot.
+            if type_id_store_name is not None and rawkey == type_id_store_name:
+                continue
+
             key = prep.storage_names_to_attr_names.get(rawkey, rawkey)
             field = fields_by_name.get(key)
 
@@ -461,6 +516,19 @@ class _Inputter(Generic[T]):
         # We contain elements of some specified type.
         assert len(childanntypes) == 1
         childanntype = childanntypes[0]
+
+        # If our annotation type inherits from IOMultiType, use type-id
+        # values to determine which type to load for each element.
+        if issubclass(childanntype, IOMultiType):
+            return seqtype(
+                self._dataclass_from_input(
+                    _get_multitype_type(childanntype, fieldpath, i),
+                    fieldpath,
+                    i,
+                )
+                for i in value
+            )
+
         return seqtype(
             self._value_from_input(cls, fieldpath, childanntype, i, ioattrs)
             for i in value

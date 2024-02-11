@@ -26,7 +26,7 @@ EXPORT_CLASS_NAME_SHORTCUTS: dict[str, str] = {
     'plugin': 'babase.Plugin',
     # DEPRECATED as of 12/2023. Currently am warning if finding these
     # but should take this out eventually.
-    'keyboard': 'babase.Keyboard',
+    'keyboard': 'bauiv1.Keyboard',
 }
 
 T = TypeVar('T')
@@ -288,14 +288,12 @@ class DirectoryScan:
     ) -> None:
         """Scan provided path and add module entries to provided list."""
         try:
-            # Special case: let's save some time and skip the whole 'babase'
-            # package since we know it doesn't contain any meta tags.
             fullpath = Path(path, subpath)
+            # Note: skipping hidden dirs (starting with '.').
             entries = [
                 (path, Path(subpath, name))
                 for name in os.listdir(fullpath)
-                # Actually scratch that for now; trying to avoid special cases.
-                # if name != 'babase'
+                if not name.startswith('.')
             ]
         except PermissionError:
             # Expected sometimes.

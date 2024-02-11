@@ -18,10 +18,10 @@ if TYPE_CHECKING:
 @ioprepped
 @dataclass
 class DirectoryManifestFile:
-    """Describes metadata and hashes for a file in a manifest."""
+    """Describes a file in a manifest."""
 
-    filehash: Annotated[str, IOAttrs('h')]
-    filesize: Annotated[int, IOAttrs('s')]
+    hash_sha256: Annotated[str, IOAttrs('h')]
+    size: Annotated[int, IOAttrs('s')]
 
 
 @ioprepped
@@ -31,7 +31,7 @@ class DirectoryManifest:
 
     files: Annotated[dict[str, DirectoryManifestFile], IOAttrs('f')]
 
-    _empty_hash: str | None = None
+    # _empty_hash: str | None = None
 
     @classmethod
     def create_from_disk(cls, path: Path) -> DirectoryManifest:
@@ -67,7 +67,7 @@ class DirectoryManifest:
             return (
                 filepath,
                 DirectoryManifestFile(
-                    filehash=sha.hexdigest(), filesize=filesize
+                    hash_sha256=sha.hexdigest(), size=filesize
                 ),
             )
 
@@ -92,12 +92,12 @@ class DirectoryManifest:
                 )
                 break  # 1 error is enough for now.
 
-    @classmethod
-    def get_empty_hash(cls) -> str:
-        """Return the hash for an empty file."""
-        if cls._empty_hash is None:
-            import hashlib
+    # @classmethod
+    # def get_empty_hash(cls) -> str:
+    #     """Return the hash for an empty file."""
+    #     if cls._empty_hash is None:
+    #         import hashlib
 
-            sha = hashlib.sha256()
-            cls._empty_hash = sha.hexdigest()
-        return cls._empty_hash
+    #         sha = hashlib.sha256()
+    #         cls._empty_hash = sha.hexdigest()
+    #     return cls._empty_hash

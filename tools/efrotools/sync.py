@@ -39,7 +39,6 @@ def _valid_filename(fname: str) -> bool:
         'requirements.txt',
         'pylintrc',
         'clang-format',
-        'pycheckers',
         'style.yapf',
         'test_task_bin',
         '.editorconfig',

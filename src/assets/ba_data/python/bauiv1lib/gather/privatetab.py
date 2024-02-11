@@ -13,6 +13,7 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
+from typing_extensions import override
 from efro.dataclassio import dataclass_from_dict, dataclass_to_dict
 from bacommon.net import (
     PrivateHostingState,
@@ -81,6 +82,7 @@ class PrivateGatherTab(GatherTab):
             logging.exception('Error building hosting config.')
             self._hostingconfig = PrivateHostingConfig()
 
+    @override
     def on_activate(
         self,
         parent_widget: bui.Widget,
@@ -253,6 +255,7 @@ class PrivateGatherTab(GatherTab):
 
         return hcfg
 
+    @override
     def on_deactivate(self) -> None:
         self._update_timer = None
 
@@ -995,10 +998,12 @@ class PrivateGatherTab(GatherTab):
             self._debug_server_comm('got connect response error')
             bui.getsound('error').play()
 
+    @override
     def save_state(self) -> None:
         assert bui.app.classic is not None
         bui.app.ui_v1.window_states[type(self)] = copy.deepcopy(self._state)
 
+    @override
     def restore_state(self) -> None:
         assert bui.app.classic is not None
         state = bui.app.ui_v1.window_states.get(type(self))

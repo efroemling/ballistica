@@ -10,13 +10,15 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+import bascenev1 as bs
+
 from bascenev1lib.actor.spazbot import (
     SpazBotSet,
     ChargerBot,
     SpazBotDiedMessage,
 )
 from bascenev1lib.actor.onscreentimer import OnScreenTimer
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any
@@ -44,6 +46,7 @@ class NinjaFightGame(bs.TeamGameActivity[Player, Team]):
     )
     default_music = bs.MusicType.TO_THE_DEATH
 
+    @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
         # For now we're hard-coding spawn positions and whatnot
@@ -51,6 +54,7 @@ class NinjaFightGame(bs.TeamGameActivity[Player, Team]):
         # a specific map.
         return ['Courtyard']
 
+    @override
     @classmethod
     def supports_session_type(cls, sessiontype: type[bs.Session]) -> bool:
         # We currently support Co-Op only.
@@ -67,6 +71,7 @@ class NinjaFightGame(bs.TeamGameActivity[Player, Team]):
         self._preset = str(settings['preset'])
 
     # Called when our game actually begins.
+    @override
     def on_begin(self) -> None:
         super().on_begin()
         is_pro = self._preset == 'pro'
@@ -123,6 +128,7 @@ class NinjaFightGame(bs.TeamGameActivity[Player, Team]):
             )
 
     # Called for each spawning player.
+    @override
     def spawn_player(self, player: Player) -> bs.Actor:
         # Let's spawn close to the center.
         spawn_center = (0, 3, -2)
@@ -144,6 +150,7 @@ class NinjaFightGame(bs.TeamGameActivity[Player, Team]):
             self.end_game()
 
     # Called for miscellaneous messages.
+    @override
     def handlemessage(self, msg: Any) -> Any:
         # A player has died.
         if isinstance(msg, bs.PlayerDiedMessage):
@@ -166,6 +173,7 @@ class NinjaFightGame(bs.TeamGameActivity[Player, Team]):
     # When this is called, we should fill out results and end the game
     # *regardless* of whether is has been won. (this may be called due
     # to a tournament ending or other external reason).
+    @override
     def end_game(self) -> None:
         # Stop our on-screen timer so players can see what they got.
         assert self._timer is not None

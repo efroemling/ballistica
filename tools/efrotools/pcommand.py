@@ -120,9 +120,11 @@ def clientprint(
         assert _g_thread_local_storage is not None
         print(
             *args,
-            file=_g_thread_local_storage.stderr
-            if stderr
-            else _g_thread_local_storage.stdout,
+            file=(
+                _g_thread_local_storage.stderr
+                if stderr
+                else _g_thread_local_storage.stdout
+            ),
             end=end,
         )
     else:

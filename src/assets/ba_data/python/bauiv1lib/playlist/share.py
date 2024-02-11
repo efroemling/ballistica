@@ -7,6 +7,8 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+
 from bauiv1lib.promocode import PromoCodeWindow
 import bauiv1 as bui
 
@@ -55,6 +57,7 @@ class SharePlaylistImportWindow(PromoCodeWindow):
             edit=self._root_widget, transition=self._transition_out
         )
 
+    @override
     def _do_enter(self) -> None:
         plus = bui.app.plus
         assert plus is not None
