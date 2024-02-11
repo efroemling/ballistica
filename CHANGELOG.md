@@ -22,6 +22,7 @@
   classes forget to adapt to the change.
 - Implemented `efro.dataclassio.IOMultiType` which will make my life a lot
   easier.
+
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
 - Plugins window now displays 'No Plugins Installed' when no plugins are present (Thanks vishal332008!)
