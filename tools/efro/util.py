@@ -174,17 +174,26 @@ def empty_weakref(objtype: type[T]) -> weakref.ref[T]:
     # Just create an object and let it die. Is there a cleaner way to do this?
     # return weakref.ref(_EmptyObj())  # type: ignore
 
+    # Sharing a single ones seems at least a bit better.
     return _g_empty_weak_ref  # type: ignore
 
 
-def data_size_str(bytecount: int) -> str:
+def data_size_str(bytecount: int, compact: bool = False) -> str:
     """Given a size in bytes, returns a short human readable string.
 
-    This should be 6 or fewer chars for most all sane file sizes.
+    In compact mode this should be 6 or fewer chars for most all
+    sane file sizes.
     """
     # pylint: disable=too-many-return-statements
+
+    # Special case: handle negatives.
+    if bytecount < 0:
+        val = data_size_str(-bytecount, compact=compact)
+        return f'-{val}'
+
     if bytecount <= 999:
-        return f'{bytecount} B'
+        suffix = 'B' if compact else 'bytes'
+        return f'{bytecount} {suffix}'
     kbytecount = bytecount / 1024
     if round(kbytecount, 1) < 10.0:
         return f'{kbytecount:.1f} KB'
@@ -197,7 +206,7 @@ def data_size_str(bytecount: int) -> str:
         return f'{mbytecount:.0f} MB'
     gbytecount = bytecount / (1024 * 1024 * 1024)
     if round(gbytecount, 1) < 10.0:
-        return f'{mbytecount:.1f} GB'
+        return f'{gbytecount:.1f} GB'
     return f'{gbytecount:.0f} GB'
 
 
@@ -450,8 +459,7 @@ if TYPE_CHECKING:
     class ValueDispatcherMethod(Generic[ValT, RetT]):
         """Used by the valuedispatchmethod decorator."""
 
-        def __call__(self, value: ValT) -> RetT:
-            ...
+        def __call__(self, value: ValT) -> RetT: ...
 
         def register(
             self, value: ValT
@@ -623,7 +631,7 @@ def check_non_optional(obj: T | None) -> T:
     Use assert_non_optional for a more efficient (but less safe) equivalent.
     """
     if obj is None:
-        raise TypeError('Got None value in check_non_optional.')
+        raise ValueError('Got None value in check_non_optional.')
     return obj
 
 

@@ -105,13 +105,11 @@ def extract_flag(args: list[str], name: str) -> bool:
 @overload
 def extract_arg(
     args: list[str], name: str, required: Literal[False] = False
-) -> str | None:
-    ...
+) -> str | None: ...
 
 
 @overload
-def extract_arg(args: list[str], name: str, required: Literal[True]) -> str:
-    ...
+def extract_arg(args: list[str], name: str, required: Literal[True]) -> str: ...
 
 
 def extract_arg(

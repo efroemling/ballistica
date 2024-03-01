@@ -7,6 +7,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
 
@@ -749,6 +751,7 @@ class TournamentEntryWindow(PopupWindow):
             if self._on_close_call is not None:
                 self._on_close_call()
 
+    @override
     def on_popup_cancel(self) -> None:
         bui.getsound('swish').play()
         self._on_cancel()

@@ -8,7 +8,9 @@ import logging
 import inspect
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 import babase
+
 import _bauiv1
 
 if TYPE_CHECKING:
@@ -82,6 +84,7 @@ class UIV1Subsystem(babase.AppSubsystem):
         """Current ui scale for the app."""
         return self._uiscale
 
+    @override
     def on_app_loading(self) -> None:
         from bauiv1._uitypes import UIController, ui_upkeep
 

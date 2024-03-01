@@ -16,6 +16,9 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+import bascenev1 as bs
+
 from bascenev1lib.actor.popuptext import PopupText
 from bascenev1lib.actor.bomb import TNTSpawner
 from bascenev1lib.actor.scoreboard import Scoreboard
@@ -40,7 +43,6 @@ from bascenev1lib.actor.spazbot import (
     BomberBotPro,
     BrawlerBotPro,
 )
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -194,6 +196,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         self._flawless_bonus: int | None = None
         self._wave_update_timer: bs.Timer | None = None
 
+    @override
     def on_transition_in(self) -> None:
         super().on_transition_in()
         self._scoreboard = Scoreboard(
@@ -211,6 +214,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             )
         )
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
         player_count = len(self.players)
@@ -571,6 +575,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                 ),
             )
 
+    @override
     def on_continue(self) -> None:
         self._lives = 3
         assert self._lives_text is not None
@@ -578,6 +583,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         self._lives_text.node.text = str(self._lives)
         self._bots.start_moving()
 
+    @override
     def spawn_player(self, player: Player) -> bs.Actor:
         pos = (
             self._spawn_center[0] + random.uniform(-1.5, 1.5),
@@ -654,6 +660,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                 ),
             ).autoretain()
 
+    @override
     def end_game(self) -> None:
         bs.pushcall(bs.Call(self.do_end, 'defeat'))
         bs.setmusic(None)
@@ -1286,6 +1293,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         # Revert to normal bot behavior otherwise..
         return False
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.PlayerScoredMessage):
             self._score += msg.score
