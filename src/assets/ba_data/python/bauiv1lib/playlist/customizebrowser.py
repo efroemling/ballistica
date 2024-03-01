@@ -536,12 +536,10 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
 
         # (we don't use len()-1 here because the default list adds one)
         assert self._selected_playlist_index is not None
-        if self._selected_playlist_index > len(
-            bui.app.config[self._pvars.config_name + ' Playlists']
-        ):
-            self._selected_playlist_index = len(
-                bui.app.config[self._pvars.config_name + ' Playlists']
-            )
+        self._selected_playlist_index = min(
+            self._selected_playlist_index,
+            len(bui.app.config[self._pvars.config_name + ' Playlists'])
+        )
         self._refresh()
 
     def _import_playlist(self) -> None:
