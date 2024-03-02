@@ -316,7 +316,7 @@ class ConfigKeyboardWindow(bui.Window):
 
     def _do_reset(self) -> None:
         """Resets the input's mapping settings."""
-        self._settings: dict[str, int] = {}
+        self._settings = {}
         self._get_config_mapping(default=True)
         self._rebuild_ui(is_reset=True)
         bui.getsound('gunCocking').play()

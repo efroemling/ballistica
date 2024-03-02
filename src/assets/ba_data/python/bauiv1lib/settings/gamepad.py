@@ -832,7 +832,7 @@ class GamepadSettingsWindow(bui.Window):
     def _do_reset(self) -> None:
         """Resets the input's mapping settings."""
         from babase import InputDeviceNotFoundError
-        self._settings: dict[str, int] = {}
+        self._settings = {}
         # Unplugging the controller while performing a
         # mapping reset makes things go bonkers a little.
         try:
