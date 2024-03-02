@@ -17,7 +17,12 @@ import datetime
 from typing import TYPE_CHECKING, TypeVar, get_type_hints
 
 # noinspection PyProtectedMember
-from efro.dataclassio._base import _parse_annotated, _get_origin, SIMPLE_TYPES
+from efro.dataclassio._base import (
+    _parse_annotated,
+    _get_origin,
+    SIMPLE_TYPES,
+    IOMultiType,
+)
 
 if TYPE_CHECKING:
     from typing import Any
@@ -259,6 +264,13 @@ class PrepSession:
             raise RuntimeError('Max recursion exceeded.')
 
         origin = _get_origin(anntype)
+
+        # If we inherit from IOMultiType, we use its type map to
+        # determine which type we're going to instead of the annotation.
+        # And we can't really check those types because they are
+        # lazy-loaded. So I guess we're done here.
+        if issubclass(origin, IOMultiType):
+            return
 
         # noinspection PyPep8
         if origin is typing.Union or origin is types.UnionType:

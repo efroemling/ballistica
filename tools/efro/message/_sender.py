@@ -41,18 +41,18 @@ class MessageSender:
     def __init__(self, protocol: MessageProtocol) -> None:
         self.protocol = protocol
         self._send_raw_message_call: Callable[[Any, str], str] | None = None
-        self._send_async_raw_message_call: Callable[
-            [Any, str], Awaitable[str]
-        ] | None = None
-        self._send_async_raw_message_ex_call: Callable[
-            [Any, str, Message], Awaitable[str]
-        ] | None = None
-        self._encode_filter_call: Callable[
-            [Any, Message, dict], None
-        ] | None = None
-        self._decode_filter_call: Callable[
-            [Any, Message, dict, Response | SysResponse], None
-        ] | None = None
+        self._send_async_raw_message_call: (
+            Callable[[Any, str], Awaitable[str]] | None
+        ) = None
+        self._send_async_raw_message_ex_call: (
+            Callable[[Any, str, Message], Awaitable[str]] | None
+        ) = None
+        self._encode_filter_call: (
+            Callable[[Any, Message, dict], None] | None
+        ) = None
+        self._decode_filter_call: (
+            Callable[[Any, Message, dict, Response | SysResponse], None] | None
+        ) = None
         self._peer_desc_call: Callable[[Any], str] | None = None
 
     def send_method(

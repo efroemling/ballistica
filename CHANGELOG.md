@@ -1,4 +1,4 @@
-### 1.7.33 (build 21762, api 8, 2024-01-24)
+### 1.7.33 (build 21770, api 8, 2024-03-01)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).
 - Added a 'Show Demos When Idle' option in advanced settings. If enabled, the
@@ -20,6 +20,11 @@
   languages; I feel it helps keep logic more understandable and should help us
   catch problems where a base class changes or removes a method and child
   classes forget to adapt to the change.
+- Implemented `efro.dataclassio.IOMultiType` which will make my life a lot
+  easier.
+- Punches no longer physically affect powerup boxes which should make it easier
+  to grab the powerup (Thanks VinniTR!).
+- The 'Manual' party tab now supports entering IPv6 addresses (Thanks brostosjoined!).
 - Added a 'Practice' button in tournaments, letting you play them free of
   charge while not submitting scores. (Thanks Temp!)
   
