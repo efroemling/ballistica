@@ -24,7 +24,10 @@
   easier.
 - Punches no longer physically affect powerup boxes which should make it easier
   to grab the powerup (Thanks VinniTR!).
-- The 'Manual' party tab now supports entering IPv6 addresses (Thanks brostosjoined!).
+- The 'Manual' party tab now supports entering IPv6 addresses (Thanks
+  brostos!).
+- Fixes a bug where Meteor Shower could make the game-end bell sound twice
+  (Thanks 3alTemp!).
   
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
