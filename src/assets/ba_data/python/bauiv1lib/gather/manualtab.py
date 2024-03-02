@@ -48,7 +48,7 @@ class _HostLookupThread(Thread):
         try:
             import socket
 
-            result = socket.gethostbyname(self._name)
+            result = [item[-1][0] for item in socket.getaddrinfo(self.name, self._port)][0]
         except Exception:
             result = None
         bui.pushcall(
