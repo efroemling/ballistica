@@ -288,14 +288,12 @@ class DirectoryScan:
     ) -> None:
         """Scan provided path and add module entries to provided list."""
         try:
-            # Special case: let's save some time and skip the whole 'babase'
-            # package since we know it doesn't contain any meta tags.
             fullpath = Path(path, subpath)
+            # Note: skipping hidden dirs (starting with '.').
             entries = [
                 (path, Path(subpath, name))
                 for name in os.listdir(fullpath)
-                # Actually scratch that for now; trying to avoid special cases.
-                # if name != 'babase'
+                if not name.startswith('.')
             ]
         except PermissionError:
             # Expected sometimes.

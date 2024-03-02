@@ -278,9 +278,7 @@ def _desc(obj: Any) -> str:
         tpss = (
             f', contains [{tpsj}, ...]'
             if len(obj) > 3
-            else f', contains [{tpsj}]'
-            if tps
-            else ''
+            else f', contains [{tpsj}]' if tps else ''
         )
         extra = f' (len {len(obj)}{tpss})'
     elif isinstance(obj, dict):
@@ -299,9 +297,7 @@ def _desc(obj: Any) -> str:
             pairss = (
                 f', contains {{{pairsj}, ...}}'
                 if len(obj) > 3
-                else f', contains {{{pairsj}}}'
-                if pairs
-                else ''
+                else f', contains {{{pairsj}}}' if pairs else ''
             )
             extra = f' (len {len(obj)}{pairss})'
     if extra is None:

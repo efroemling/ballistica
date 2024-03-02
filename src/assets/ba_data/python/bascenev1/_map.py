@@ -256,9 +256,7 @@ class Map(Actor):
         return (
             None
             if val is None
-            else babase.vec3validate(val)
-            if __debug__
-            else val
+            else babase.vec3validate(val) if __debug__ else val
         )
 
     def get_def_points(self, name: str) -> list[Sequence[float]]:
@@ -334,8 +332,7 @@ class Map(Actor):
             closest_player_dist = 9999.0
             for ppt in player_pts:
                 dist = (ppt - testpt).length()
-                if dist < closest_player_dist:
-                    closest_player_dist = dist
+                closest_player_dist = min(dist, closest_player_dist)
             if closest_player_dist > farthestpt_dist:
                 farthestpt_dist = closest_player_dist
                 farthestpt = testpt

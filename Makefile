@@ -49,7 +49,7 @@ endif
 # Prereq targets that should be safe to run anytime; even if project-files
 # are out of date.
 PREREQS_SAFE = .cache/checkenv $(PCOMMANDBATCHBIN) .dir-locals.el .mypy.ini	\
- .pyrightconfig.json .pycheckers .pylintrc .style.yapf .clang-format				\
+ .pyrightconfig.json .pylintrc .style.yapf .clang-format				\
  ballisticakit-cmake/.clang-format .editorconfig
 
 # Prereq targets that may break if the project needs updating should go here.
@@ -1214,9 +1214,6 @@ ENV_SRC = $(PCOMMAND) tools/batools/build.py
 	@$(TOOL_CFG_INST) $< $@
 
 .pyrightconfig.json: config/toolconfigsrc/pyrightconfig.yaml $(TOOL_CFG_SRC)
-	@$(TOOL_CFG_INST) $< $@
-
-.pycheckers: config/toolconfigsrc/pycheckers $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
 # Set this to 1 to skip environment checks.

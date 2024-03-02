@@ -149,16 +149,13 @@ class _BoundTestMessageSenderSync(BoundMessageSender):
     """Protocol-specific bound sender."""
 
     @overload
-    def send(self, message: _TMsg1) -> _TResp1:
-        ...
+    def send(self, message: _TMsg1) -> _TResp1: ...
 
     @overload
-    def send(self, message: _TMsg2) -> _TResp1 | _TResp2:
-        ...
+    def send(self, message: _TMsg2) -> _TResp1 | _TResp2: ...
 
     @overload
-    def send(self, message: _TMsg3) -> None:
-        ...
+    def send(self, message: _TMsg3) -> None: ...
 
     def send(self, message: Message) -> Response | None:
         """Send a message synchronously."""
@@ -188,16 +185,13 @@ class _BoundTestMessageSenderAsync(BoundMessageSender):
     """Protocol-specific bound sender."""
 
     @overload
-    async def send_async(self, message: _TMsg1) -> _TResp1:
-        ...
+    async def send_async(self, message: _TMsg1) -> _TResp1: ...
 
     @overload
-    async def send_async(self, message: _TMsg2) -> _TResp1 | _TResp2:
-        ...
+    async def send_async(self, message: _TMsg2) -> _TResp1 | _TResp2: ...
 
     @overload
-    async def send_async(self, message: _TMsg3) -> None:
-        ...
+    async def send_async(self, message: _TMsg3) -> None: ...
 
     def send_async(self, message: Message) -> Awaitable[Response | None]:
         """Send a message asynchronously."""
@@ -227,40 +221,32 @@ class _BoundTestMessageSenderBBoth(BoundMessageSender):
     """Protocol-specific bound sender."""
 
     @overload
-    def send(self, message: _TMsg1) -> _TResp1:
-        ...
+    def send(self, message: _TMsg1) -> _TResp1: ...
 
     @overload
-    def send(self, message: _TMsg2) -> _TResp1 | _TResp2:
-        ...
+    def send(self, message: _TMsg2) -> _TResp1 | _TResp2: ...
 
     @overload
-    def send(self, message: _TMsg3) -> None:
-        ...
+    def send(self, message: _TMsg3) -> None: ...
 
     @overload
-    def send(self, message: _TMsg4) -> None:
-        ...
+    def send(self, message: _TMsg4) -> None: ...
 
     def send(self, message: Message) -> Response | None:
         """Send a message synchronously."""
         return self._sender.send(self._obj, message)
 
     @overload
-    async def send_async(self, message: _TMsg1) -> _TResp1:
-        ...
+    async def send_async(self, message: _TMsg1) -> _TResp1: ...
 
     @overload
-    async def send_async(self, message: _TMsg2) -> _TResp1 | _TResp2:
-        ...
+    async def send_async(self, message: _TMsg2) -> _TResp1 | _TResp2: ...
 
     @overload
-    async def send_async(self, message: _TMsg3) -> None:
-        ...
+    async def send_async(self, message: _TMsg3) -> None: ...
 
     @overload
-    async def send_async(self, message: _TMsg4) -> None:
-        ...
+    async def send_async(self, message: _TMsg4) -> None: ...
 
     def send_async(self, message: Message) -> Awaitable[Response | None]:
         """Send a message asynchronously."""
@@ -338,22 +324,19 @@ class _TestSyncMessageReceiver(MessageReceiver):
     def handler(
         self,
         call: Callable[[Any, _TMsg1], _TResp1],
-    ) -> Callable[[Any, _TMsg1], _TResp1]:
-        ...
+    ) -> Callable[[Any, _TMsg1], _TResp1]: ...
 
     @overload
     def handler(
         self,
         call: Callable[[Any, _TMsg2], _TResp1 | _TResp2],
-    ) -> Callable[[Any, _TMsg2], _TResp1 | _TResp2]:
-        ...
+    ) -> Callable[[Any, _TMsg2], _TResp1 | _TResp2]: ...
 
     @overload
     def handler(
         self,
         call: Callable[[Any, _TMsg3], None],
-    ) -> Callable[[Any, _TMsg3], None]:
-        ...
+    ) -> Callable[[Any, _TMsg3], None]: ...
 
     def handler(self, call: Callable) -> Callable:
         """Decorator to register message handlers."""
@@ -399,22 +382,19 @@ class _TestAsyncMessageReceiver(MessageReceiver):
     def handler(
         self,
         call: Callable[[Any, _TMsg1], Awaitable[_TResp1]],
-    ) -> Callable[[Any, _TMsg1], Awaitable[_TResp1]]:
-        ...
+    ) -> Callable[[Any, _TMsg1], Awaitable[_TResp1]]: ...
 
     @overload
     def handler(
         self,
         call: Callable[[Any, _TMsg2], Awaitable[_TResp1 | _TResp2]],
-    ) -> Callable[[Any, _TMsg2], Awaitable[_TResp1 | _TResp2]]:
-        ...
+    ) -> Callable[[Any, _TMsg2], Awaitable[_TResp1 | _TResp2]]: ...
 
     @overload
     def handler(
         self,
         call: Callable[[Any, _TMsg3], Awaitable[None]],
-    ) -> Callable[[Any, _TMsg3], Awaitable[None]]:
-        ...
+    ) -> Callable[[Any, _TMsg3], Awaitable[None]]: ...
 
     def handler(self, call: Callable) -> Callable:
         """Decorator to register message handlers."""
