@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """UI functionality for advanced settings."""
+# pylint: disable=too-many-lines
 
 from __future__ import annotations
 
@@ -585,7 +586,7 @@ class AdvancedSettingsWindow(bui.Window):
             position=(self._sub_width / 2 - this_button_width / 2, v - 10),
             size=(this_button_width, 60),
             autoselect=True,
-            label=bui.Lstr(value='Modding Tools'),
+            label=bui.Lstr(resource=f'{self._r}.moddingToolsText'),
             text_scale=1.0,
             on_activate_call=self._on_modding_tools_button_press,
         )
@@ -779,6 +780,7 @@ class AdvancedSettingsWindow(bui.Window):
         )
 
     def _on_modding_tools_button_press(self) -> None:
+        # pylint: disable=cyclic-import
         from bauiv1lib.settings.moddingtools import ModdingToolsWindow
 
         # no-op if our underlying widget is dead or on its way out.
@@ -789,7 +791,9 @@ class AdvancedSettingsWindow(bui.Window):
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            ModdingToolsWindow(origin_widget=self._modding_tools_button).get_root_widget(),
+            ModdingToolsWindow(
+                origin_widget=self._modding_tools_button
+            ).get_root_widget(),
             from_window=self._root_widget,
         )
 
@@ -836,6 +840,7 @@ class AdvancedSettingsWindow(bui.Window):
 
     def _save_state(self) -> None:
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
         try:
             sel = self._root_widget.get_selected_child()
             if sel == self._scrollwidget:
