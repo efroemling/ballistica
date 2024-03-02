@@ -52,7 +52,7 @@ PY_REQUIREMENTS = [
     PyRequirement(pipname='requests', minversion=[2, 31, 0]),
     PyRequirement(pipname='pdoc', minversion=[14, 4, 0]),
     PyRequirement(pipname='PyYAML', minversion=[6, 0, 1]),
-    PyRequirement(pipname='black', minversion=[23, 12, 1]),
+    PyRequirement(pipname='black', minversion=[24, 1, 1]),
     PyRequirement(pipname='typing_extensions', minversion=[4, 9, 0]),
     PyRequirement(pipname='types-filelock', minversion=[3, 2, 7]),
     PyRequirement(pipname='types-requests', minversion=[2, 31, 0, 20240106]),
@@ -614,7 +614,7 @@ def _get_server_config_template_yaml(projroot: str) -> str:
             # Ignore indented lines (our few multi-line special cases).
             continue
 
-        if line.startswith(']'):
+        if line.startswith(']') or line.startswith(')'):
             # Ignore closing lines (our few multi-line special cases).
             continue
 
@@ -643,7 +643,7 @@ def _get_server_config_template_yaml(projroot: str) -> str:
             before_equal_sign = before_equal_sign.strip()
             vval_raw = vval_raw.strip()
             vname = before_equal_sign.split()[0]
-            assert vname.endswith(':')
+            assert vname.endswith(':'), f"'{vname}' does not end with ':'"
             vname = vname[:-1]
             vval: Any
             if vval_raw == 'field(default_factory=list)':

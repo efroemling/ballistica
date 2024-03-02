@@ -499,8 +499,7 @@ class MessageProtocol:
                             f'    @overload\n'
                             f'    {pfx}def send{sfx}(self,'
                             f' message: {msgtypevar})'
-                            f' -> {rtypevar}:\n'
-                            f'        ...\n'
+                            f' -> {rtypevar}: ...\n'
                         )
                     rtypevar = 'Response | None'
                     if async_pass:
@@ -607,8 +606,7 @@ class MessageProtocol:
                         f'        call: Callable[[Any, {msgtypevar}], '
                         f'{rtypevar}],\n'
                         f'    )'
-                        f' -> Callable[[Any, {msgtypevar}], {rtypevar}]:\n'
-                        f'        ...\n'
+                        f' -> Callable[[Any, {msgtypevar}], {rtypevar}]: ...\n'
                     )
                 out += (
                     '\n'

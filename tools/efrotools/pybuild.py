@@ -37,8 +37,8 @@ VERSION_MIN_TVOS = '9.0'
 # why-is-lldb-generating-exc-bad-instruction-with-user-compiled-library-on-macos
 #
 # For now will try to ride out this 3.0 LTS version as long as possible.
-OPENSSL_VER_APPLE = '3.0.12'
-OPENSSL_VER_ANDROID = '3.0.12'
+OPENSSL_VER_APPLE = '3.0.13'
+OPENSSL_VER_ANDROID = '3.0.13'
 
 LIBFFI_VER_APPLE = '3.4.4'
 BZIP2_VER_APPLE = '1.0.8'
