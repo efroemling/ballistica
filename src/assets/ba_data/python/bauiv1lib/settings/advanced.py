@@ -112,6 +112,7 @@ class AdvancedSettingsWindow(bui.Window):
         if self._do_net_test_button:
             self._sub_height += self._extra_button_spacing
         self._sub_height += self._spacing * 2.0  # plugins
+        self._sub_height += self._spacing * 2.0  # modding tools
 
         self._r = 'settingsWindowAdvanced'
 
@@ -196,6 +197,7 @@ class AdvancedSettingsWindow(bui.Window):
         from bauiv1lib import promocode as _unused7
         from bauiv1lib import debug as _unused8
         from bauiv1lib.settings import plugins as _unused9
+        from bauiv1lib.settings import moddingtools as _unused10
 
     def _update_lang_status(self) -> None:
         if self._complete_langs_list is not None:
@@ -575,6 +577,19 @@ class AdvancedSettingsWindow(bui.Window):
                 bui.open_url, 'https://ballistica.net/wiki/modding-guide'
             ),
         )
+
+        v -= self._spacing * 2.0
+
+        self._modding_tools_button = bui.buttonwidget(
+            parent=self._subcontainer,
+            position=(self._sub_width / 2 - this_button_width / 2, v - 10),
+            size=(this_button_width, 60),
+            autoselect=True,
+            label=bui.Lstr(value='Modding Tools'),
+            text_scale=1.0,
+            on_activate_call=self._on_modding_tools_button_press,
+        )
+
         if self._show_always_use_internal_keyboard:
             assert self._always_use_internal_keyboard_check_box is not None
             bui.widget(
@@ -763,6 +778,21 @@ class AdvancedSettingsWindow(bui.Window):
             from_window=self._root_widget,
         )
 
+    def _on_modding_tools_button_press(self) -> None:
+        from bauiv1lib.settings.moddingtools import ModdingToolsWindow
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
+        self._save_state()
+        bui.containerwidget(edit=self._root_widget, transition='out_left')
+        assert bui.app.classic is not None
+        bui.app.ui_v1.set_main_menu_window(
+            ModdingToolsWindow(origin_widget=self._modding_tools_button).get_root_widget(),
+            from_window=self._root_widget,
+        )
+
     def _on_promo_code_press(self) -> None:
         from bauiv1lib.promocode import PromoCodeWindow
         from bauiv1lib.account import show_sign_in_prompt
@@ -848,6 +878,8 @@ class AdvancedSettingsWindow(bui.Window):
                     sel_name = 'ShowUserMods'
                 elif sel == self._plugins_button:
                     sel_name = 'Plugins'
+                elif sel == self._modding_tools_button:
+                    sel_name = 'ModdingTools'
                 elif sel == self._modding_guide_button:
                     sel_name = 'ModdingGuide'
                 elif sel == self._language_inform_checkbox:
@@ -915,6 +947,8 @@ class AdvancedSettingsWindow(bui.Window):
                     sel = self._show_user_mods_button
                 elif sel_name == 'Plugins':
                     sel = self._plugins_button
+                elif sel_name == 'ModdingTools':
+                    sel = self._modding_tools_button
                 elif sel_name == 'ModdingGuide':
                     sel = self._modding_guide_button
                 elif sel_name == 'LangInform':
