@@ -236,7 +236,7 @@ class DirtyBit:
         auto_dirty_seconds: float | None = None,
         min_update_interval: float | None = None,
     ):
-        curtime = time.time()
+        curtime = time.monotonic()
         self._retry_interval = retry_interval
         self._auto_dirty_seconds = auto_dirty_seconds
         self._min_update_interval = min_update_interval
@@ -268,11 +268,13 @@ class DirtyBit:
         # If we're freshly clean, set our next auto-dirty time (if we have
         # one).
         if self._dirty and not value and self._auto_dirty_seconds is not None:
-            self._next_auto_dirty_time = time.time() + self._auto_dirty_seconds
+            self._next_auto_dirty_time = (
+                time.monotonic() + self._auto_dirty_seconds
+            )
 
         # If we're freshly dirty, schedule an immediate update.
         if not self._dirty and value:
-            self._next_update_time = time.time()
+            self._next_update_time = time.monotonic()
 
             # If they want to enforce a minimum update interval,
             # push out the next update time if it hasn't been long enough.
@@ -295,7 +297,7 @@ class DirtyBit:
         Takes into account the amount of time passed since the target
         was marked dirty or since should_update last returned True.
         """
-        curtime = time.time()
+        curtime = time.monotonic()
 
         # Auto-dirty ourself if we're into that.
         if (
@@ -871,3 +873,11 @@ def ago_str(
         timedelta_str(now - timeval, maxparts=maxparts, decimals=decimals)
         + ' ago'
     )
+
+
+def split_list(input_list: list[T], max_length: int) -> list[list[T]]:
+    """Split a single list into smaller lists."""
+    return [
+        input_list[i : i + max_length]
+        for i in range(0, len(input_list), max_length)
+    ]

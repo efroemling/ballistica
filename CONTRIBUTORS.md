@@ -51,5 +51,9 @@
 ### Rikko
 - Created the original "reject_recently_left_players" plugin
 
-### 3alTemp
+### Temp (3alTemp)
 - Original idea for customizable series length on GUI builds
+- Modder & Bug Fixer
+
+### brostos
+- Added support for joining using ipv6 address

@@ -136,7 +136,9 @@ def create_user_system_scripts() -> None:
     path = f'{env.python_directory_user}/sys/{env.version}'
     pathtmp = path + '_tmp'
     if os.path.exists(path):
-        shutil.rmtree(path)
+        print('Delete Existing User Scripts and try again.')
+        _babase.screenmessage('Delete Existing User Scripts and try again.')
+        return
     if os.path.exists(pathtmp):
         shutil.rmtree(pathtmp)
 
@@ -159,6 +161,7 @@ def create_user_system_scripts() -> None:
         f"'\nRestart {_babase.appname()} to use them."
         f' (use babase.quit() to exit the game)'
     )
+    _babase.screenmessage('Created User System Scripts')
     if app.classic is not None and app.classic.platform == 'android':
         print(
             'Note: the new files may not be visible via '
@@ -183,6 +186,7 @@ def delete_user_system_scripts() -> None:
             f'Restart {_babase.appname()} to use internal'
             f' scripts. (use babase.quit() to exit the game)'
         )
+        _babase.screenmessage('Deleted User System Scripts')
     else:
         print(f"User system scripts not found at '{path}'.")
 
