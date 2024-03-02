@@ -136,15 +136,10 @@ def create_user_system_scripts() -> None:
     path = f'{env.python_directory_user}/sys/{env.version}'
     pathtmp = path + '_tmp'
     if os.path.exists(path):
-        print('Delete Existing User Scripts,'
-               f'Restart {_babase.appname()} and try again.')
+        print('Delete Existing User Scripts first!')
         _babase.screenmessage(
-            'Delete Existing User Scripts,',
-            color=(1, 0, 0)
-        )
-        _babase.screenmessage(
-            f'Restart {_babase.appname()} and try again.',
-            color=(1, 0, 0)
+            'Delete Existing User Scripts first!',
+            color=(1, 0, 0),
         )
         return
     if os.path.exists(pathtmp):
@@ -195,6 +190,10 @@ def delete_user_system_scripts() -> None:
             f' scripts. (use babase.quit() to exit the game)'
         )
         _babase.screenmessage('Deleted User System Scripts', color=(0, 1, 0))
+        _babase.screenmessage(
+            f'Restart {_babase.appname()} to take effect.',
+            color=(0, 1, 0),
+        )
     else:
         print(f"User system scripts not found at '{path}'.")
         _babase.screenmessage('User Scripts Not Found', color=(1, 0, 0))
