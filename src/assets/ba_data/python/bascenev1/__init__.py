@@ -232,7 +232,9 @@ from bascenev1._settings import (
     Setting,
 )
 from bascenev1._session import (
-    Session, set_player_rejoin_cooldown, set_max_players_override
+    Session,
+    set_player_rejoin_cooldown,
+    set_max_players_override,
 )
 from bascenev1._stats import PlayerScoredMessage, PlayerRecord, Stats
 from bascenev1._team import SessionTeam, Team, EmptyTeam

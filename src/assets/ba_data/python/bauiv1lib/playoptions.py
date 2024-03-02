@@ -146,9 +146,7 @@ class PlayOptionsWindow(PopupWindow):
         scale = (
             1.69
             if uiscale is bui.UIScale.SMALL
-            else 1.1
-            if uiscale is bui.UIScale.MEDIUM
-            else 0.85
+            else 1.1 if uiscale is bui.UIScale.MEDIUM else 0.85
         )
         # Creates our _root_widget.
         super().__init__(
@@ -285,9 +283,11 @@ class PlayOptionsWindow(PopupWindow):
             position=(100, 200 + y_offs + y_offs2),
             configkey=(
                 'FFA' if self._sessiontype is bs.FreeForAllSession else 'Teams'
-            ) + ' Series Length',
+            )
+            + ' Series Length',
             displayname=bui.Lstr(
-                resource=self._r + (
+                resource=self._r
+                + (
                     '.pointsToWinText'
                     if self._sessiontype is bs.FreeForAllSession
                     else '.seriesLengthText'
@@ -329,9 +329,9 @@ class PlayOptionsWindow(PopupWindow):
         def _cb_callback(val: bool) -> None:
             self._do_randomize_val = val
             cfg = bui.app.config
-            cfg[
-                self._pvars.config_name + ' Playlist Randomize'
-            ] = self._do_randomize_val
+            cfg[self._pvars.config_name + ' Playlist Randomize'] = (
+                self._do_randomize_val
+            )
             cfg.commit()
 
         if show_shuffle_check_box:

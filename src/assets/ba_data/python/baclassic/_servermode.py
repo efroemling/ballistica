@@ -310,9 +310,7 @@ class ServerController:
         typename = (
             'teams'
             if result['playlistType'] == 'Team Tournament'
-            else 'ffa'
-            if result['playlistType'] == 'Free-for-All'
-            else '??'
+            else 'ffa' if result['playlistType'] == 'Free-for-All' else '??'
         )
         plistname = result['playlistName']
         print(f'{Clr.SBLU}Got playlist: "{plistname}" ({typename}).{Clr.RST}')
@@ -390,14 +388,14 @@ class ServerController:
 
         if sessiontype is bascenev1.FreeForAllSession:
             appcfg['Free-for-All Playlist Selection'] = self._playlist_name
-            appcfg[
-                'Free-for-All Playlist Randomize'
-            ] = self._config.playlist_shuffle
+            appcfg['Free-for-All Playlist Randomize'] = (
+                self._config.playlist_shuffle
+            )
         elif sessiontype is bascenev1.DualTeamSession:
             appcfg['Team Tournament Playlist Selection'] = self._playlist_name
-            appcfg[
-                'Team Tournament Playlist Randomize'
-            ] = self._config.playlist_shuffle
+            appcfg['Team Tournament Playlist Randomize'] = (
+                self._config.playlist_shuffle
+            )
         elif sessiontype is bascenev1.CoopSession:
             classic.coop_session_args = {
                 'campaign': self._config.coop_campaign,
