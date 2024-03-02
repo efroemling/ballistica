@@ -104,6 +104,19 @@ class CoopBrowserWindow(bui.Window):
             'campaignDifficulty', 'easy'
         )
 
+        if (
+            self._campaign_difficulty == 'hard'
+            and not app.classic.accounts.have_pro_options()
+        ):
+            plus.add_v1_account_transaction(
+                {
+                    'type': 'SET_MISC_VAL',
+                    'name': 'campaignDifficulty',
+                    'value': 'easy',
+                }
+            )
+            self._campaign_difficulty = 'easy'
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
