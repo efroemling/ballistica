@@ -94,6 +94,8 @@ class ConfigNumberEdit:
         changesound: bool = True,
         textscale: float = 1.0,
         as_percent: bool = False,
+        fallback_value: float = 0.0,
+        f: int = 1,
     ):
         if displayname is None:
             displayname = configkey
@@ -103,8 +105,12 @@ class ConfigNumberEdit:
         self._maxval = maxval
         self._increment = increment
         self._callback = callback
-        self._value = bui.app.config.resolve(configkey)
+        try:
+            self._value = bui.app.config.resolve(configkey)
+        except ValueError:
+            self._value = bui.app.config.get(configkey, fallback_value)
         self._as_percent = as_percent
+        self._f = f
 
         self.nametext = bui.textwidget(
             parent=parent,
@@ -171,5 +177,5 @@ class ConfigNumberEdit:
         if self._as_percent:
             val = f'{round(self._value*100.0)}%'
         else:
-            val = f'{self._value:.1f}'
+            val = f'{self._value:.{self._f}f}'
         bui.textwidget(edit=self.valuetext, text=val)

@@ -406,6 +406,10 @@ class ServerController:
         else:
             raise RuntimeError(f'Unknown session type {sessiontype}')
 
+        appcfg['Teams Series Length'] = self._config.teams_series_length
+        appcfg['FFA Series Length'] = self._config.ffa_series_length
+
+        # deprecated, left here in order to not break mods
         classic.teams_series_length = self._config.teams_series_length
         classic.ffa_series_length = self._config.ffa_series_length
 
@@ -425,6 +429,10 @@ class ServerController:
 
         bascenev1.set_player_rejoin_cooldown(
             self._config.player_rejoin_cooldown
+        )
+
+        bascenev1.set_max_players_override(
+            self._config.session_max_players_override
         )
 
         # And here.. we.. go.

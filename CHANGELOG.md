@@ -31,7 +31,7 @@
   (Thanks 3alTemp!).
 - Leaving the game or dying while touching your team's flag will no longer recover
   & return it indefinitely in a teams game of Capture the Flag. (Thanks 3alTemp!)
-  
+
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
 - Plugins window now displays 'No Plugins Installed' when no plugins are present (Thanks vishal332008!)
@@ -74,7 +74,7 @@
   intended. Now, however, such commands get scheduled to a current
   'ui-operation' and then run *almost* immediately, which should prevent such
   situations. Please holler if you run into any UI weirdness at this point.
-  
+
 ### 1.7.30 (build 21697, api 8, 2023-12-08)
 - Continued work on the big 1.7.28 update.
 - Got the Android version back up and running. There's been lots of cleanup and
@@ -351,7 +351,7 @@
 - Added a 'glow_type' arg to `bauiv1.textwidget()` to adjust the glow used when
   the text is selected. The default is 'gradient' but there is now a 'uniform'
   option which may look better in some circumstances.
-  
+
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 
 - Fixed a rare crash that could occur if the app shuts down while a background
@@ -472,7 +472,7 @@
   Visual Studio Code (and potentially other editors), so am seeing if it is
   worth officially supporting in addition to or as a replacement for Mypy. See
   `tools/pcommand pyright`
-  
+
 ### 1.7.24 (build 21199, api 8, 2023-07-27)
 
 - Fixed an issue where respawn icons could disappear in epic mode (Thanks for
@@ -527,7 +527,7 @@
   can be useful for core engine code to directly and clearly point out problems
   that cannot be recovered from (Exceptions in such cases can tend to be
   'handled' which leads to a broken or crashing app).
-  
+
 ### 1.7.23 (build 21178, api 8, 2023-07-19)
 
 - Network security improvements. (Thanks Dliwk!)
