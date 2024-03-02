@@ -37,12 +37,12 @@
 - Added feature
 
 ### Vishal332008
-- Bug Fixer
+- QoL and Bug Fixer
 - Modder
 
 ### Era0S
 - Community Suggestions Implementer
-- Bug Fixer
+- QoL and Bug Fixer
 - Modder
 
 ### VinniTR
@@ -50,3 +50,10 @@
 
 ### Rikko
 - Created the original "reject_recently_left_players" plugin
+
+### Temp (3alTemp)
+- Original idea for customizable series length on GUI builds
+- Modder & Bug Fixer
+
+### brostos
+- Added support for joining using ipv6 address
