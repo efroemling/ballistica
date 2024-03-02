@@ -29,6 +29,8 @@
   brostos!).
 - Fixes a bug where Meteor Shower could make the game-end bell sound twice
   (Thanks 3alTemp!).
+- Leaving the game or dying while touching your team's flag will no longer recover
+  & return it indefinitely in a teams game of Capture the Flag. (Thanks 3alTemp!)
   
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
