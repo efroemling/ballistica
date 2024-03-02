@@ -50,3 +50,6 @@
 
 ### Rikko
 - Created the original "reject_recently_left_players" plugin
+
+### brostos
+- Added support for joining using ipv6 address
