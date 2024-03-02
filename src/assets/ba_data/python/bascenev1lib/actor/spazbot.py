@@ -600,6 +600,7 @@ class BomberBotLite(BomberBot):
     punchiness = 0.2
     throw_rate = 0.7
     throwiness = 0.1
+    charge_speed_min = 0.6
     charge_speed_max = 0.6
 
 
