@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from bauiv1lib.popup import PopupMenuWindow
 import bascenev1 as bs
 import bauiv1 as bui
 
@@ -15,10 +16,10 @@ if TYPE_CHECKING:
     from typing import Any, Callable
     from bauiv1lib.popup import PopupWindow
 
-from bauiv1lib.popup import PopupMenuWindow
 
 class GamepadSettingsWindow(bui.Window):
     """Window for configuring a gamepad."""
+    # pylint: disable=too-many-public-methods
 
     def __init__(
         self,
@@ -141,7 +142,6 @@ class GamepadSettingsWindow(bui.Window):
 
     def _rebuild_ui(self, is_reset: bool = False) -> None:
         # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
 
         assert bui.app.classic is not None
 

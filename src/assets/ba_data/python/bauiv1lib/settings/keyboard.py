@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from bauiv1lib.popup import PopupMenuWindow
 import bauiv1 as bui
 import bascenev1 as bs
 
@@ -13,7 +14,6 @@ if TYPE_CHECKING:
     from typing import Any
     from bauiv1lib.popup import PopupWindow
 
-from bauiv1lib.popup import PopupMenuWindow
 
 class ConfigKeyboardWindow(bui.Window):
     """Window for configuring keyboards."""
@@ -80,7 +80,7 @@ class ConfigKeyboardWindow(bui.Window):
         for widget in self._root_widget.get_children():
             widget.delete()
 
-        b_off = 0 if self._unique_id != '#1' else 9
+        #b_off = 0 if self._unique_id != '#1' else 9
         cancel_button = bui.buttonwidget(
             parent=self._root_widget,
             autoselect=True,
