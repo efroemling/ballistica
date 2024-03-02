@@ -317,8 +317,6 @@ _envval = os.environ.get('EFRO_TERMCOLORS')
 color_enabled: bool = (
     True
     if _envval == '1'
-    else False
-    if _envval == '0'
-    else _default_color_enabled()
+    else False if _envval == '0' else _default_color_enabled()
 )
 Clr: type[ClrBase] = ClrAlways if color_enabled else ClrNever

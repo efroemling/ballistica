@@ -18,10 +18,10 @@ if TYPE_CHECKING:
 @ioprepped
 @dataclass
 class DirectoryManifestFile:
-    """Describes metadata and hashes for a file in a manifest."""
+    """Describes a file in a manifest."""
 
-    filehash: Annotated[str, IOAttrs('h')]
-    filesize: Annotated[int, IOAttrs('s')]
+    hash_sha256: Annotated[str, IOAttrs('h')]
+    size: Annotated[int, IOAttrs('s')]
 
 
 @ioprepped
@@ -67,7 +67,7 @@ class DirectoryManifest:
             return (
                 filepath,
                 DirectoryManifestFile(
-                    filehash=sha.hexdigest(), filesize=filesize
+                    hash_sha256=sha.hexdigest(), size=filesize
                 ),
             )
 
