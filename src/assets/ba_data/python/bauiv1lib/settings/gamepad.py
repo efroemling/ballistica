@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """Settings UI functionality related to gamepads."""
 
 from __future__ import annotations
@@ -12,7 +13,9 @@ import bauiv1 as bui
 
 if TYPE_CHECKING:
     from typing import Any, Callable
+    from bauiv1lib.popup import PopupWindow
 
+from bauiv1lib.popup import PopupMenuWindow
 
 class GamepadSettingsWindow(bui.Window):
     """Window for configuring a gamepad."""
@@ -43,7 +46,7 @@ class GamepadSettingsWindow(bui.Window):
         self._is_main_menu = is_main_menu
         self._displayname = self._name
         self._width = 700 if self._is_secondary else 730
-        self._height = 440 if self._is_secondary else 490
+        self._height = 440 if self._is_secondary else 450
         self._spacing = 40
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
@@ -136,7 +139,7 @@ class GamepadSettingsWindow(bui.Window):
             if val != -1:
                 self._settings[button] = val
 
-    def _rebuild_ui(self, reset: bool = False) -> None:
+    def _rebuild_ui(self, is_reset: bool = False) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
 
@@ -169,7 +172,7 @@ class GamepadSettingsWindow(bui.Window):
         else:
             cancel_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(51, self._height - 115),
+                position=(51, self._height - 65),
                 autoselect=True,
                 size=(160, 60),
                 label=bui.Lstr(resource='cancelText'),
@@ -179,29 +182,12 @@ class GamepadSettingsWindow(bui.Window):
             bui.containerwidget(
                 edit=self._root_widget, cancel_button=cancel_button
             )
-        reset_button: bui.Widget | None
-        if not self._is_secondary:
-            reset_button = bui.buttonwidget(
-                parent=self._root_widget,
-                autoselect=True,
-                position=((self._width / 2) - 80, self._height - 115),
-                size=(180, 60),
-                label=bui.Lstr(resource='settingsWindowAdvanced.resetText'),
-                scale=0.9,
-                text_scale=0.9,
-                color=(0.4, 0.4, 0.9),
-                textcolor=(1.0, 1.0, 1.0),
-                on_activate_call=self._reset,
-            )
-            if reset:
-                bui.containerwidget(
-                    edit=self._root_widget, selected_child=reset_button
-                )
+
         save_button: bui.Widget | None
         if not self._is_secondary:
             save_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(self._width - 195, self._height - 115),
+                position=(self._width - 195, self._height - 65),
                 size=(180, 60),
                 autoselect=True,
                 label=bui.Lstr(resource='saveText'),
@@ -218,7 +204,7 @@ class GamepadSettingsWindow(bui.Window):
             v = self._height - 59
             bui.textwidget(
                 parent=self._root_widget,
-                position=(0, v + 10),
+                position=(0, v + 5),
                 size=(self._width, 25),
                 text=bui.Lstr(resource=self._r + '.titleText'),
                 color=bui.app.ui_v1.title_color,
@@ -226,11 +212,11 @@ class GamepadSettingsWindow(bui.Window):
                 h_align='center',
                 v_align='center',
             )
-            v -= 95
+            v -= 48
 
             bui.textwidget(
                 parent=self._root_widget,
-                position=(0, v - 5),
+                position=(0, v + 3),
                 size=(self._width, 25),
                 text=self._name,
                 color=bui.app.ui_v1.infotextcolor,
@@ -242,7 +228,7 @@ class GamepadSettingsWindow(bui.Window):
 
             bui.textwidget(
                 parent=self._root_widget,
-                position=(50, v + 5),
+                position=(50, v + 10),
                 size=(self._width - 100, 30),
                 text=bui.Lstr(resource=self._r + '.appliesToAllText'),
                 maxwidth=330,
@@ -384,40 +370,27 @@ class GamepadSettingsWindow(bui.Window):
             scale=1.0,
         )
 
-        self._advanced_button = bui.buttonwidget(
+        self._more_button = bui.buttonwidget(
             parent=self._root_widget,
             autoselect=True,
-            label=bui.Lstr(resource=self._r + '.advancedText'),
+            label='...',
             text_scale=0.9,
             color=(0.45, 0.4, 0.5),
             textcolor=(0.65, 0.6, 0.7),
             position=(self._width - 300, 30),
             size=(130, 40),
-            on_activate_call=self._do_advanced,
+            on_activate_call=self._do_more,
         )
 
         try:
-            bui.widget(
-                edit=cancel_button,
-                right_widget=reset_button
-                if reset_button
-                else save_button
-                if save_button
-                else None,
-            )
-            bui.widget(
-                edit=reset_button,
-                left_widget=cancel_button if cancel_button else None,
-                right_widget=save_button if save_button else None,
-            )
-            bui.widget(
-                edit=save_button,
-                left_widget=reset_button
-                if reset_button
-                else cancel_button
-                if cancel_button
-                else None,
-            )
+            if cancel_button is not None and save_button is not None:
+                bui.widget(edit=cancel_button, right_widget=save_button)
+                bui.widget(edit=save_button, left_widget=cancel_button)
+                if is_reset:
+                    bui.containerwidget(
+                        edit=self._root_widget,
+                        selected_child=self._more_button,
+                    )
         except Exception:
             logging.exception('Error wiring up gamepad config window.')
 
@@ -427,7 +400,7 @@ class GamepadSettingsWindow(bui.Window):
 
     def get_advanced_button(self) -> bui.Widget:
         """(internal)"""
-        return self._advanced_button
+        return self._more_button
 
     def get_is_secondary(self) -> bool:
         """(internal)"""
@@ -849,18 +822,70 @@ class GamepadSettingsWindow(bui.Window):
         ConfirmWindow(
             # TODO: Implement a translation string for this!
             'Are you sure you want to reset your button mapping?\n'
-            '(This will include your advanced settings)',
+            'This will also reset your advanced mappings\n'
+            'and secondary controller button mappings.',
             self._do_reset,
-            width=480,
-            height=110,
+            width=490,
+            height=150,
         )
 
     def _do_reset(self) -> None:
         """Resets the input's mapping settings."""
+        from babase import InputDeviceNotFoundError
         self._settings: dict[str, int] = {}
-        self._get_config_mapping(default=True)
-        self._rebuild_ui(reset=True)
+        # Unplugging the controller while performing a
+        # mapping reset makes things go bonkers a little.
+        try:
+            self._get_config_mapping(default=True)
+        except InputDeviceNotFoundError:
+            pass
+
+        self._rebuild_ui(is_reset=True)
         bui.getsound('gunCocking').play()
+
+    def _do_more(self) -> None:
+        """Show a burger menu with extra settings."""
+        # pylint: disable=cyclic-import
+        choices: list[str] = [
+           'advanced',
+           'reset',
+        ]
+        choices_display: list[bui.Lstr] = [
+            bui.Lstr(resource=self._r + '.advancedText'),
+            bui.Lstr(resource='settingsWindowAdvanced.resetText'),
+        ]
+
+        uiscale = bui.app.ui_v1.uiscale
+        PopupMenuWindow(
+            position=self._more_button.get_screen_space_center(),
+            scale=(
+                2.3
+                if uiscale is bui.UIScale.SMALL
+                else 1.65
+                if uiscale is bui.UIScale.MEDIUM
+                else 1.23
+            ),
+            width=150,
+            choices=choices,
+            choices_display=choices_display,
+            current_choice='advanced',
+            delegate=self,
+        )
+
+    def popup_menu_selected_choice(
+        self, popup_window: PopupMenuWindow, choice: str
+    ) -> None:
+        """Called when a choice is selected in the popup."""
+        del popup_window  # unused
+        if choice == 'reset':
+            self._reset()
+        elif choice == 'advanced':
+            self._do_advanced()
+        else:
+            print(f'invalid choice: {choice}')
+
+    def popup_menu_closing(self, popup_window: PopupWindow) -> None:
+        """Called when the popup is closing."""
 
     def _save(self) -> None:
         classic = bui.app.classic

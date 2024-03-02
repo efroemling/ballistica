@@ -11,7 +11,9 @@ import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any
+    from bauiv1lib.popup import PopupWindow
 
+from bauiv1lib.popup import PopupMenuWindow
 
 class ConfigKeyboardWindow(bui.Window):
     """Window for configuring keyboards."""
@@ -27,10 +29,9 @@ class ConfigKeyboardWindow(bui.Window):
         self._displayname = bui.Lstr(translate=('inputDeviceNames', dname_raw))
         self._width = 700
         if self._unique_id != '#1':
-            self._height = 490
+            self._height = 480
         else:
             self._height = 375
-        self._height += 45
         self._spacing = 40
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
@@ -73,7 +74,7 @@ class ConfigKeyboardWindow(bui.Window):
                 self._input, button, default
             )
 
-    def _rebuild_ui(self, reset: bool = False) -> None:
+    def _rebuild_ui(self, is_reset: bool = False) -> None:
         assert bui.app.classic is not None
 
         for widget in self._root_widget.get_children():
@@ -83,32 +84,16 @@ class ConfigKeyboardWindow(bui.Window):
         cancel_button = bui.buttonwidget(
             parent=self._root_widget,
             autoselect=True,
-            position=(38, self._height - 115 - b_off),
+            position=(38, self._height - 85),
             size=(170, 60),
             label=bui.Lstr(resource='cancelText'),
             scale=0.9,
             on_activate_call=self._cancel,
         )
-        reset_button = bui.buttonwidget(
-            parent=self._root_widget,
-            autoselect=True,
-            position=((self._width / 2) - 80, self._height - 115 - b_off),
-            size=(180, 60),
-            label=bui.Lstr(resource='settingsWindowAdvanced.resetText'),
-            scale=0.9,
-            text_scale=0.9,
-            color=(0.4, 0.4, 0.9),
-            textcolor=(1.0, 1.0, 1.0),
-            on_activate_call=self._reset,
-        )
-        if reset:
-            bui.containerwidget(
-                edit=self._root_widget, selected_child=reset_button
-            )
         save_button = bui.buttonwidget(
             parent=self._root_widget,
             autoselect=True,
-            position=(self._width - 190, self._height - 115 - b_off),
+            position=(self._width - 190, self._height - 85),
             size=(180, 60),
             label=bui.Lstr(resource='saveText'),
             scale=0.9,
@@ -121,19 +106,10 @@ class ConfigKeyboardWindow(bui.Window):
             start_button=save_button,
         )
 
-        bui.widget(edit=cancel_button, right_widget=reset_button)
-        bui.widget(
-            edit=reset_button,
-            left_widget=cancel_button,
-            right_widget=save_button,
-        )
-        bui.widget(edit=save_button, left_widget=reset_button)
-
         v = self._height - 74.0
-        t_off = 0 if self._unique_id != '#1' else -10
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, v + 41 + t_off),
+            position=(self._width * 0.5, v + 15),
             size=(0, 0),
             text=bui.Lstr(
                 resource=self._r + '.configuringText',
@@ -143,12 +119,12 @@ class ConfigKeyboardWindow(bui.Window):
             h_align='center',
             v_align='center',
             maxwidth=270,
-            scale=0.99,
+            scale=0.83,
         )
         v -= 20
 
         if self._unique_id != '#1':
-            v -= 60
+            v -= 20
             v -= self._spacing
             bui.textwidget(
                 parent=self._root_widget,
@@ -166,9 +142,9 @@ class ConfigKeyboardWindow(bui.Window):
         v -= 10
         v -= self._spacing * 2.2
         v += 25
-        v -= 45 if self._unique_id != '#1' else 86
+        v -= 42
         h_offs = 160
-        dist = 68
+        dist = 70
         d_color = (0.4, 0.4, 0.8)
         self._capture_button(
             pos=(h_offs, v + 0.95 * dist),
@@ -238,6 +214,24 @@ class ConfigKeyboardWindow(bui.Window):
             texture=bui.gettexture('buttonJump'),
             scale=1.0,
         )
+
+        self._more_button = bui.buttonwidget(
+            parent=self._root_widget,
+            autoselect=True,
+            label='...',
+            text_scale=0.9,
+            color=(0.45, 0.4, 0.5),
+            textcolor=(0.65, 0.6, 0.7),
+            position=(self._width * 0.5 - 65, 30),
+            size=(130, 40),
+            on_activate_call=self._do_more,
+        )
+
+        if is_reset:
+            bui.containerwidget(
+                edit=self._root_widget,
+                selected_child=self._more_button,
+            )
 
     def _pretty_button_name(self, button_name: str) -> bui.Lstr:
         button_id = self._settings[button_name]
@@ -324,8 +318,48 @@ class ConfigKeyboardWindow(bui.Window):
         """Resets the input's mapping settings."""
         self._settings: dict[str, int] = {}
         self._get_config_mapping(default=True)
-        self._rebuild_ui(reset=True)
+        self._rebuild_ui(is_reset=True)
         bui.getsound('gunCocking').play()
+
+    def _do_more(self) -> None:
+        """Show a burger menu with extra settings."""
+        # pylint: disable=cyclic-import
+        choices: list[str] = [
+           'reset',
+        ]
+        choices_display: list[bui.Lstr] = [
+            bui.Lstr(resource='settingsWindowAdvanced.resetText'),
+        ]
+
+        uiscale = bui.app.ui_v1.uiscale
+        PopupMenuWindow(
+            position=self._more_button.get_screen_space_center(),
+            scale=(
+                2.3
+                if uiscale is bui.UIScale.SMALL
+                else 1.65
+                if uiscale is bui.UIScale.MEDIUM
+                else 1.23
+            ),
+            width=150,
+            choices=choices,
+            choices_display=choices_display,
+            current_choice='reset',
+            delegate=self,
+        )
+
+    def popup_menu_selected_choice(
+        self, popup_window: PopupMenuWindow, choice: str
+    ) -> None:
+        """Called when a choice is selected in the popup."""
+        del popup_window  # unused
+        if choice == 'reset':
+            self._reset()
+        else:
+            print(f'invalid choice: {choice}')
+
+    def popup_menu_closing(self, popup_window: PopupWindow) -> None:
+        """Called when the popup is closing."""
 
     def _save(self) -> None:
         from bauiv1lib.settings.controls import ControlsSettingsWindow
