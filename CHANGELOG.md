@@ -1,4 +1,4 @@
-### 1.7.33 (build 21771, api 8, 2024-03-01)
+### 1.7.33 (build 21772, api 8, 2024-03-02)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).
 - Added a 'Show Demos When Idle' option in advanced settings. If enabled, the
