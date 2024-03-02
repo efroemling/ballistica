@@ -14,7 +14,7 @@ Mac:
   (brew install python3).
 
 Linux (x86_64):
-- Server binaries are currently compiled against Ubuntu 20 LTS. 
+- Server binaries are currently compiled against Ubuntu 22 LTS. 
 
 Raspberry Pi:
 - The server binary was compiled on a Raspberry Pi 4 running Raspbian Buster.

@@ -13,7 +13,7 @@ from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.actor.bomb import Bomb, Blast
-from bascenev1lib.actor.powerupbox import PowerupBoxFactory
+from bascenev1lib.actor.powerupbox import PowerupBoxFactory, PowerupBox
 from bascenev1lib.actor.spazfactory import SpazFactory
 from bascenev1lib.gameutils import SharedObjects
 
@@ -629,7 +629,8 @@ class Spaz(bs.Actor):
                     1000.0 * (tval + self.curse_time)
                 )
                 self._curse_timer = bs.Timer(
-                    5.0, bs.WeakCall(self.handlemessage, CurseExplodeMessage())
+                    self.curse_time,
+                    bs.WeakCall(self.handlemessage, CurseExplodeMessage()),
                 )
 
     def equip_boxing_gloves(self) -> None:
@@ -1226,6 +1227,10 @@ class Spaz(bs.Actor):
             if not self.node:
                 return None
             node = bs.getcollision().opposingnode
+
+            # Don't want to physically affect powerups.
+            if node.getdelegate(PowerupBox):
+                return None
 
             # Only allow one hit per node per punch.
             if node and (node not in self._punched_nodes):
