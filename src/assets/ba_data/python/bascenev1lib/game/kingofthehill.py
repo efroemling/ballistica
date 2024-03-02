@@ -11,11 +11,13 @@ import weakref
 from enum import Enum
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+import bascenev1 as bs
+
 from bascenev1lib.actor.flag import Flag
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.scoreboard import Scoreboard
 from bascenev1lib.gameutils import SharedObjects
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -84,10 +86,12 @@ class KingOfTheHillGame(bs.TeamGameActivity[Player, Team]):
     ]
     scoreconfig = bs.ScoreConfig(label='Time Held')
 
+    @override
     @classmethod
     def supports_session_type(cls, sessiontype: type[bs.Session]) -> bool:
         return issubclass(sessiontype, bs.MultiTeamSession)
 
+    @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
         assert bs.app.classic is not None
@@ -144,15 +148,19 @@ class KingOfTheHillGame(bs.TeamGameActivity[Player, Team]):
             bs.MusicType.EPIC if self._epic_mode else bs.MusicType.SCARY
         )
 
+    @override
     def get_instance_description(self) -> str | Sequence:
         return 'Secure the flag for ${ARG1} seconds.', self._hold_time
 
+    @override
     def get_instance_description_short(self) -> str | Sequence:
         return 'secure the flag for ${ARG1} seconds', self._hold_time
 
+    @override
     def create_team(self, sessionteam: bs.SessionTeam) -> Team:
         return Team(time_remaining=self._hold_time)
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
         shared = SharedObjects.get()
@@ -223,6 +231,7 @@ class KingOfTheHillGame(bs.TeamGameActivity[Player, Team]):
             if scoring_team.time_remaining <= 0:
                 self.end_game()
 
+    @override
     def end_game(self) -> None:
         results = bs.GameResults()
         for team in self.teams:
@@ -283,6 +292,7 @@ class KingOfTheHillGame(bs.TeamGameActivity[Player, Team]):
                 team, team.time_remaining, self._hold_time, countdown=True
             )
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.PlayerDiedMessage):
             super().handlemessage(msg)  # Augment default.

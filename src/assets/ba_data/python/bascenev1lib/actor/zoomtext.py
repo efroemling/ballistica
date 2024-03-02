@@ -8,6 +8,7 @@ import random
 import logging
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -158,6 +159,7 @@ class ZoomText(bs.Actor):
         if lifespan is not None:
             bs.timer(lifespan, bs.WeakCall(self.handlemessage, bs.DieMessage()))
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         assert not self.expired
         if isinstance(msg, bs.DieMessage):

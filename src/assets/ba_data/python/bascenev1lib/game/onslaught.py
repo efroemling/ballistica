@@ -17,6 +17,9 @@ from enum import Enum, unique
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+import bascenev1 as bs
+
 from bascenev1lib.actor.popuptext import PopupText
 from bascenev1lib.actor.bomb import TNTSpawner
 from bascenev1lib.actor.playerspaz import PlayerSpazHurtMessage
@@ -45,7 +48,6 @@ from bascenev1lib.actor.spazbot import (
     BrawlerBotPro,
     BomberBotProShielded,
 )
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -222,6 +224,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         self._land_mine_kills = 0
         self._tnt_kills = 0
 
+    @override
     def on_transition_in(self) -> None:
         super().on_transition_in()
         customdata = bs.getsession().customdata
@@ -286,6 +289,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
             label=bs.Lstr(resource='scoreText'), score_split=0.5
         )
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
         player_count = len(self.players)
@@ -825,6 +829,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                         break
                     entry_count += 1
 
+    @override
     def spawn_player(self, player: Player) -> bs.Actor:
         # We keep track of who got hurt each wave for score purposes.
         player.has_been_hurt = False
@@ -1414,6 +1419,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         assert self._scoreboard is not None
         self._scoreboard.set_team_value(self.teams[0], score, max_score=None)
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, PlayerSpazHurtMessage):
             msg.spaz.getplayer(Player, True).has_been_hurt = True
@@ -1526,6 +1532,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
     def _set_can_end_wave(self) -> None:
         self._can_end_wave = True
 
+    @override
     def end_game(self) -> None:
         # Tell our bots to celebrate just to rub it in.
         assert self._bots is not None
@@ -1534,6 +1541,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         self.do_end('defeat', delay=2.0)
         bs.setmusic(None)
 
+    @override
     def on_continue(self) -> None:
         for player in self.players:
             if not player.is_alive():

@@ -53,3 +53,6 @@
 
 ### Temp (3alTemp)
 - Modder & Bug Fixer
+
+### brostos
+- Added support for joining using ipv6 address

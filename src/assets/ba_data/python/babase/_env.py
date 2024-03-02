@@ -9,6 +9,7 @@ import logging
 import warnings
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 from efro.log import LogLevel
 
 if TYPE_CHECKING:
@@ -216,6 +217,7 @@ def _feed_logs_to_babase(log_handler: LogHandler) -> None:
 class _CustomHelper:
     """Replacement 'help' that behaves better for our setup."""
 
+    @override
     def __repr__(self) -> str:
         return 'Type help(object) for help about object.'
 

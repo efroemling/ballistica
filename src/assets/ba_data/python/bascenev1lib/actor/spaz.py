@@ -9,11 +9,13 @@ import random
 import logging
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+import bascenev1 as bs
+
 from bascenev1lib.actor.bomb import Bomb, Blast
-from bascenev1lib.actor.powerupbox import PowerupBoxFactory
+from bascenev1lib.actor.powerupbox import PowerupBoxFactory, PowerupBox
 from bascenev1lib.actor.spazfactory import SpazFactory
 from bascenev1lib.gameutils import SharedObjects
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence, Callable
@@ -228,9 +230,11 @@ class Spaz(bs.Actor):
         self.punch_callback: Callable[[Spaz], Any] | None = None
         self.pick_up_powerup_callback: Callable[[Spaz], Any] | None = None
 
+    @override
     def exists(self) -> bool:
         return bool(self.node)
 
+    @override
     def on_expire(self) -> None:
         super().on_expire()
 
@@ -249,6 +253,7 @@ class Spaz(bs.Actor):
         assert not self.expired
         self._dropped_bomb_callbacks.append(call)
 
+    @override
     def is_alive(self) -> bool:
         """
         Method override; returns whether ol' spaz is still kickin'.
@@ -694,6 +699,7 @@ class Spaz(bs.Actor):
         else:
             self.shield_decay_timer = None
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-statements
@@ -1220,6 +1226,10 @@ class Spaz(bs.Actor):
             if not self.node:
                 return None
             node = bs.getcollision().opposingnode
+
+            # Don't want to physically affect powerups.
+            if node.getdelegate(PowerupBox):
+                return None
 
             # Only allow one hit per node per punch.
             if node and (node not in self._punched_nodes):

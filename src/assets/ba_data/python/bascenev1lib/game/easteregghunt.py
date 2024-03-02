@@ -10,6 +10,9 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+import bascenev1 as bs
+
 from bascenev1lib.actor.bomb import Bomb
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.spazbot import SpazBotSet, BouncyBot, SpazBotDiedMessage
@@ -17,7 +20,6 @@ from bascenev1lib.actor.onscreencountdown import OnScreenCountdown
 from bascenev1lib.actor.scoreboard import Scoreboard
 from bascenev1lib.actor.respawnicon import RespawnIcon
 from bascenev1lib.gameutils import SharedObjects
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any
@@ -51,11 +53,13 @@ class EasterEggHuntGame(bs.TeamGameActivity[Player, Team]):
     scoreconfig = bs.ScoreConfig(label='Score', scoretype=bs.ScoreType.POINTS)
 
     # We're currently hard-coded for one map.
+    @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
         return ['Tower D']
 
     # We support teams, free-for-all, and co-op sessions.
+    @override
     @classmethod
     def supports_session_type(cls, sessiontype: type[bs.Session]) -> bool:
         return (
@@ -93,11 +97,13 @@ class EasterEggHuntGame(bs.TeamGameActivity[Player, Team]):
             bs.MusicType.EPIC if self._epic_mode else bs.MusicType.FORWARD_MARCH
         )
 
+    @override
     def on_team_join(self, team: Team) -> None:
         if self.has_begun():
             self._update_scoreboard()
 
     # Called when our game actually starts.
+    @override
     def on_begin(self) -> None:
         from bascenev1lib.maps import TowerD
 
@@ -118,6 +124,7 @@ class EasterEggHuntGame(bs.TeamGameActivity[Player, Team]):
             self._spawn_evil_bunny()
 
     # Overriding the default character spawning.
+    @override
     def spawn_player(self, player: Player) -> bs.Actor:
         spaz = self.spawn_player_spaz(player)
         spaz.connect_controls_to_player()
@@ -191,6 +198,7 @@ class EasterEggHuntGame(bs.TeamGameActivity[Player, Team]):
                 self._eggs.append(Egg(position=(xpos, ypos, zpos)))
 
     # Various high-level game events come through this method.
+    @override
     def handlemessage(self, msg: Any) -> Any:
         # Respawn dead players.
         if isinstance(msg, bs.PlayerDiedMessage):
@@ -231,6 +239,7 @@ class EasterEggHuntGame(bs.TeamGameActivity[Player, Team]):
         for team in self.teams:
             self._scoreboard.set_team_value(team, team.score)
 
+    @override
     def end_game(self) -> None:
         results = bs.GameResults()
         for team in self.teams:
@@ -271,9 +280,11 @@ class Egg(bs.Actor):
             },
         )
 
+    @override
     def exists(self) -> bool:
         return bool(self.node)
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.DieMessage):
             if self.node:

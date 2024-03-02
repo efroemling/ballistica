@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -72,6 +73,7 @@ class OnScreenCountdown(bs.Actor):
         )
         self._timer = bs.Timer(1.0, self._update, repeat=True)
 
+    @override
     def on_expire(self) -> None:
         super().on_expire()
 

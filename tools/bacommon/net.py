@@ -63,9 +63,9 @@ class PrivateHostingConfig:
     randomize: bool = False
     tutorial: bool = False
     custom_team_names: tuple[str, str] | None = None
-    custom_team_colors: tuple[
-        tuple[float, float, float], tuple[float, float, float]
-    ] | None = None
+    custom_team_colors: (
+        tuple[tuple[float, float, float], tuple[float, float, float]] | None
+    ) = None
     playlist: list[dict[str, Any]] | None = None
     exit_minutes: float = 120.0
     exit_minutes_unclean: float = 180.0

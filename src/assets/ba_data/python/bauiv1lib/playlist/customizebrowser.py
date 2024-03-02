@@ -52,9 +52,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         self._height = (
             380.0
             if uiscale is bui.UIScale.SMALL
-            else 420.0
-            if uiscale is bui.UIScale.MEDIUM
-            else 500.0
+            else 420.0 if uiscale is bui.UIScale.MEDIUM else 500.0
         )
         top_extra = 20.0 if uiscale is bui.UIScale.SMALL else 0.0
 
@@ -66,13 +64,11 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
                 scale=(
                     2.05
                     if uiscale is bui.UIScale.SMALL
-                    else 1.5
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -10)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -10) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
 
@@ -118,9 +114,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         scl = (
             1.1
             if uiscale is bui.UIScale.SMALL
-            else 1.27
-            if uiscale is bui.UIScale.MEDIUM
-            else 1.57
+            else 1.27 if uiscale is bui.UIScale.MEDIUM else 1.57
         )
         scl *= 0.63
         v -= 65.0 * scl
@@ -285,9 +279,11 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         bui.widget(
             edit=scrollwidget,
             left_widget=new_button,
-            right_widget=bui.get_special_widget('party_button')
-            if bui.app.ui_v1.use_toolbars
-            else None,
+            right_widget=(
+                bui.get_special_widget('party_button')
+                if bui.app.ui_v1.use_toolbars
+                else None
+            ),
         )
 
         # make sure config exists
@@ -329,9 +325,9 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
 
         if self._selected_playlist_name is not None:
             cfg = bui.app.config
-            cfg[
-                self._pvars.config_name + ' Playlist Selection'
-            ] = self._selected_playlist_name
+            cfg[self._pvars.config_name + ' Playlist Selection'] = (
+                self._selected_playlist_name
+            )
             cfg.commit()
 
         bui.containerwidget(
@@ -408,9 +404,11 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
                 text=self._get_playlist_display_name(pname),
                 h_align='left',
                 v_align='center',
-                color=(0.6, 0.6, 0.7, 1.0)
-                if pname == '__default__'
-                else (0.85, 0.85, 0.85, 1),
+                color=(
+                    (0.6, 0.6, 0.7, 1.0)
+                    if pname == '__default__'
+                    else (0.85, 0.85, 0.85, 1)
+                ),
                 always_highlight=True,
                 on_select_call=bui.Call(self._select, pname, index),
                 on_activate_call=bui.Call(self._edit_button.activate),
@@ -458,12 +456,12 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         # if we want and also lets us pass it to the game (since we reset
         # the whole python environment that's not actually easy).
         cfg = bui.app.config
-        cfg[
-            self._pvars.config_name + ' Playlist Selection'
-        ] = self._selected_playlist_name
-        cfg[
-            self._pvars.config_name + ' Playlist Randomize'
-        ] = self._do_randomize_val
+        cfg[self._pvars.config_name + ' Playlist Selection'] = (
+            self._selected_playlist_name
+        )
+        cfg[self._pvars.config_name + ' Playlist Randomize'] = (
+            self._do_randomize_val
+        )
         cfg.commit()
 
     def _new_playlist(self) -> None:
@@ -536,12 +534,10 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
 
         # (we don't use len()-1 here because the default list adds one)
         assert self._selected_playlist_index is not None
-        if self._selected_playlist_index > len(
-            bui.app.config[self._pvars.config_name + ' Playlists']
-        ):
-            self._selected_playlist_index = len(
-                bui.app.config[self._pvars.config_name + ' Playlists']
-            )
+        self._selected_playlist_index = min(
+            self._selected_playlist_index,
+            len(bui.app.config[self._pvars.config_name + ' Playlists']),
+        )
         self._refresh()
 
     def _import_playlist(self) -> None:

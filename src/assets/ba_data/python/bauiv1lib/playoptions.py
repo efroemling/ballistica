@@ -7,6 +7,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 import bascenev1 as bs
 import bauiv1 as bui
 
@@ -440,6 +441,7 @@ class PlayOptionsWindow(PopupWindow):
             self._transitioning_out = True
             bui.containerwidget(edit=self.root_widget, transition=transition)
 
+    @override
     def on_popup_cancel(self) -> None:
         bui.getsound('swish').play()
         self._transition_out()
