@@ -1,4 +1,4 @@
-### 1.7.33 (build 21767, api 8, 2024-03-01)
+### 1.7.33 (build 21769, api 8, 2024-03-01)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).
 - Added a 'Show Demos When Idle' option in advanced settings. If enabled, the
@@ -22,6 +22,8 @@
   classes forget to adapt to the change.
 - Implemented `efro.dataclassio.IOMultiType` which will make my life a lot
   easier.
+- Punches no longer physically affect powerup boxes which should make it easier
+  to grab the powerup (Thanks VinniTR!).
   
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
