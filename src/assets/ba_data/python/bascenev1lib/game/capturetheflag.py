@@ -24,7 +24,7 @@ from bascenev1lib.actor.flag import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, override
+    from typing import Any, Sequence
 
 
 class CTFFlag(Flag):
