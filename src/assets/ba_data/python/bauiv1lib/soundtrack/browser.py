@@ -287,8 +287,7 @@ class SoundtrackBrowserWindow(bui.Window):
         assert self._selected_soundtrack_index is not None
         assert self._soundtracks is not None
         self._selected_soundtrack_index = min(
-            self._selected_soundtrack_index,
-            len(self._soundtracks)
+            self._selected_soundtrack_index, len(self._soundtracks)
         )
         self._refresh()
 

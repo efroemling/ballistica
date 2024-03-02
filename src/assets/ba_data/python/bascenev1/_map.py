@@ -334,7 +334,7 @@ class Map(Actor):
             closest_player_dist = 9999.0
             for ppt in player_pts:
                 dist = (ppt - testpt).length()
-                closest_player_dist = min(closest_player_dist, dist)
+                closest_player_dist = min(dist, closest_player_dist)
             if closest_player_dist > farthestpt_dist:
                 farthestpt_dist = closest_player_dist
                 farthestpt = testpt

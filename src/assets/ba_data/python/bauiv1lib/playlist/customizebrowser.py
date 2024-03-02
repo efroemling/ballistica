@@ -538,7 +538,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         assert self._selected_playlist_index is not None
         self._selected_playlist_index = min(
             self._selected_playlist_index,
-            len(bui.app.config[self._pvars.config_name + ' Playlists'])
+            len(bui.app.config[self._pvars.config_name + ' Playlists']),
         )
         self._refresh()
 
