@@ -20,6 +20,7 @@
   languages; I feel it helps keep logic more understandable and should help us
   catch problems where a base class changes or removes a method and child
   classes forget to adapt to the change.
+- Custom spaz "curse_time" values now work properly. (Thanks Temp!)
 - Implemented `efro.dataclassio.IOMultiType` which will make my life a lot
   easier.
 - Punches no longer physically affect powerup boxes which should make it easier
