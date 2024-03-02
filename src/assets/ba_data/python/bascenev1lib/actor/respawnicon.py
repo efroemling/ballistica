@@ -181,7 +181,7 @@ class RespawnIcon:
                 offs_extra = -20
         return on_right, offs_extra, icons
 
-    def _dec_step(self):
+    def _dec_step(self) -> None:
         self._dec_text.node.text = self._dec_text.node.text[:-1]
         # Kill our timer if the string is nothing.
         if self._dec_text.node.text == '':
