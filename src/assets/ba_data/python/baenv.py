@@ -52,7 +52,7 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 21762
+TARGET_BALLISTICA_BUILD = 21772
 TARGET_BALLISTICA_VERSION = '1.7.33'
 
 
@@ -287,9 +287,9 @@ def _setup_certs(contains_python_dist: bool) -> None:
         import certifi
 
         # Let both OpenSSL and requests (if present) know to use this.
-        os.environ['SSL_CERT_FILE'] = os.environ[
-            'REQUESTS_CA_BUNDLE'
-        ] = certifi.where()
+        os.environ['SSL_CERT_FILE'] = os.environ['REQUESTS_CA_BUNDLE'] = (
+            certifi.where()
+        )
 
 
 def _setup_paths(
