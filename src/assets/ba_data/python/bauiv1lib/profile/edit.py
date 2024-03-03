@@ -803,6 +803,20 @@ class EditProfileWindow(bui.Window):
             bui.getsound('error').play()
             return False
 
+        # Make sure we're not renaming to another existing profile.
+        profiles: dict = bui.app.config.get('Player Profiles', {})
+        if (
+            self._existing_profile != new_name
+            and new_name in profiles.keys()
+        ):
+            # NOTE: Implement a new LSTR!
+            bui.screenmessage(bui.Lstr(
+                resource='nameDuplicateText',
+                fallback_value='Cannot rename to existing profile!'
+                ))
+            bui.getsound('error').play()
+            return False
+
         if transition_out:
             bui.getsound('gunCocking').play()
 
