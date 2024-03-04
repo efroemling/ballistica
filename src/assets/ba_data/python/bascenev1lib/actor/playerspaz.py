@@ -225,9 +225,22 @@ class PlayerSpaz(Spaz):
         elif isinstance(msg, bs.DieMessage):
             # Report player deaths to the game.
             if not self._dead:
+                # Was this player killed while being held?
+                was_held = (
+                    self.held_count > 0
+                    and self.last_player_held_by
+                )
+                # Was this player attacked before death?
+                was_attacked_recently = (
+                    self.last_player_attacked_by
+                    and bs.time() - self.last_attacked_time < 4.0
+                )
                 # Immediate-mode or left-game deaths don't count as 'kills'.
                 killed = (
-                    not msg.immediate and msg.how is not bs.DeathType.LEFT_GAME
+                    not msg.immediate
+                    and msg.how is not bs.DeathType.LEFT_GAME
+                    or was_held
+                    or was_attacked_recently
                 )
 
                 activity = self._activity()
@@ -238,7 +251,7 @@ class PlayerSpaz(Spaz):
                 else:
                     # If this player was being held at the time of death,
                     # the holder is the killer.
-                    if self.held_count > 0 and self.last_player_held_by:
+                    if was_held:
                         killerplayer = self.last_player_held_by
                     else:
                         # Otherwise, if they were attacked by someone in the
@@ -248,10 +261,7 @@ class PlayerSpaz(Spaz):
                         #  all bot kills would register as suicides; need to
                         #  change this from last_player_attacked_by to
                         #  something like last_actor_attacked_by to fix that.
-                        if (
-                            self.last_player_attacked_by
-                            and bs.time() - self.last_attacked_time < 4.0
-                        ):
+                        if was_attacked_recently:
                             killerplayer = self.last_player_attacked_by
                         else:
                             # ok, call it a suicide unless we're in co-op
