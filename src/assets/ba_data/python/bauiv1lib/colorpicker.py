@@ -319,7 +319,11 @@ class ColorPickerExact(PopupWindow):
         if hextext != self._hex_prev_text:
             try:
                 hexcolor = hex_to_color(hextext)
-                r, g, b, _ = hexcolor
+                if len(hexcolor) == 4:
+                    r, g, b, a = hexcolor
+                    del a # unused
+                else:
+                    r, g, b = hexcolor
                 # Replace the color!
                 for i, ch in enumerate((r, g, b)):
                     self._color[i] = max(0.0, min(1.0, ch))
@@ -422,11 +426,9 @@ def hex_to_color(hex_color: str) -> tuple:
         (int.from_bytes(bytes.fromhex(hex_color[0:2]))),
         (int.from_bytes(bytes.fromhex(hex_color[2:4]))),
         (int.from_bytes(bytes.fromhex(hex_color[4:6]))),
-        (
-            int.from_bytes(bytes.fromhex(hex_color[6:8]))
-            if hexlength == 8
-            else 255
-        ),
+        (int.from_bytes(bytes.fromhex(hex_color[6:8])))
+        if hexlength == 8
+        else None,
     )
     # Divide all numbers by 255 and return.
     nr, ng, nb, na = (x / 255 if x is not None else None for x in (ar, ag, ab, aa))
