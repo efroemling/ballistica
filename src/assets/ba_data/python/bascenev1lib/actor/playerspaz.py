@@ -79,14 +79,12 @@ class PlayerSpaz(Spaz):
     @overload
     def getplayer(
         self, playertype: type[PlayerT], doraise: Literal[False] = False
-    ) -> PlayerT | None:
-        ...
+    ) -> PlayerT | None: ...
 
     @overload
     def getplayer(
         self, playertype: type[PlayerT], doraise: Literal[True]
-    ) -> PlayerT:
-        ...
+    ) -> PlayerT: ...
 
     def getplayer(
         self, playertype: type[PlayerT], doraise: bool = False
@@ -226,10 +224,7 @@ class PlayerSpaz(Spaz):
             # Report player deaths to the game.
             if not self._dead:
                 # Was this player killed while being held?
-                was_held = (
-                    self.held_count > 0
-                    and self.last_player_held_by
-                )
+                was_held = self.held_count > 0 and self.last_player_held_by
                 # Was this player attacked before death?
                 was_attacked_recently = (
                     self.last_player_attacked_by
