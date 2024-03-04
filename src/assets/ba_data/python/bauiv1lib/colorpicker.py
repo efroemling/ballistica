@@ -313,7 +313,7 @@ class ColorPickerExact(PopupWindow):
         from typing import cast
 
         hextext = cast(str, bui.textwidget(query=self._hex_textbox))
-        hexcolor: tuple[float, float, float, float]
+        hexcolor: tuple
         # Check if our current hex text doesn't match with our old one.
         # Convert our current hex text into a color if possible.
         if hextext != self._hex_prev_text:
@@ -431,7 +431,10 @@ def hex_to_color(hex_color: str) -> tuple:
         else None,
     )
     # Divide all numbers by 255 and return.
-    nr, ng, nb, na = (x / 255 if x is not None else None for x in (ar, ag, ab, aa))
+    nr, ng, nb, na = (
+        x / 255 if x is not None
+        else None for x in (ar, ag, ab, aa)
+    )
     return (nr, ng, nb, na) if aa is not None else (nr, ng, nb)
 
 
