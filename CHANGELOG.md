@@ -36,6 +36,7 @@
   EraOSBeta!)
 - Added a UI for customizing Series Length in Teams and Points-to-Win in FFA
   (Thanks EraOSBeta!)
+- Implemented HEX code support to the advanced color picker (Thanks 3alTemp!)
 
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
