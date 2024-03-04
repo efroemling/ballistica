@@ -236,7 +236,11 @@ class PlayerSpaz(Spaz):
                     and bs.time() - self.last_attacked_time < 4.0
                 )
                 # Immediate-mode or left-game deaths don't count as 'kills'.
+<<<<<<< HEAD
                 killed = bool(
+=======
+                killed = (
+>>>>>>> 1a42c50052a4f63e119d13e5bdd05d3b71498bf3
                     not msg.immediate
                     and msg.how is not bs.DeathType.LEFT_GAME
                     or was_held
