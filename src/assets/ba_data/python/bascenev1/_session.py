@@ -23,11 +23,20 @@ if TYPE_CHECKING:
 # such as skipping respawn waits.
 _g_player_rejoin_cooldown: float = 0.0
 
+# overrides the session's decision of max_players
+_max_players_override: int | None = None
+
 
 def set_player_rejoin_cooldown(cooldown: float) -> None:
     """Set the cooldown for individual players rejoining after leaving."""
     global _g_player_rejoin_cooldown  # pylint: disable=global-statement
     _g_player_rejoin_cooldown = max(0.0, cooldown)
+
+
+def set_max_players_override(max_players: int | None) -> None:
+    """Set the override for how many players can join a session"""
+    global _max_players_override  # pylint: disable=global-statement
+    _max_players_override = max_players
 
 
 class Session:
@@ -162,7 +171,11 @@ class Session:
         self.sessionteams = []
         self.sessionplayers = []
         self.min_players = min_players
-        self.max_players = max_players
+        self.max_players = (
+            max_players
+            if _max_players_override is None
+            else _max_players_override
+        )
         self._submit_score = submit_score
 
         self.customdata = {}
@@ -257,7 +270,7 @@ class Session:
             babase.app.classic is not None
             and babase.app.classic.stress_test_update_timer is None
         ):
-            if len(self.sessionplayers) >= self.max_players:
+            if len(self.sessionplayers) >= self.max_players >= 0:
                 # Print a rejection message *only* to the client trying to
                 # join (prevents spamming everyone else in the game).
                 _bascenev1.getsound('error').play()

@@ -1,4 +1,4 @@
-### 1.7.33 (build 21770, api 8, 2024-03-01)
+### 1.7.33 (build 21772, api 8, 2024-03-02)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).
 - Added a 'Show Demos When Idle' option in advanced settings. If enabled, the
@@ -20,14 +20,25 @@
   languages; I feel it helps keep logic more understandable and should help us
   catch problems where a base class changes or removes a method and child
   classes forget to adapt to the change.
+- Custom spaz "curse_time" values now work properly. (Thanks Temp!)
 - Implemented `efro.dataclassio.IOMultiType` which will make my life a lot
   easier.
 - Punches no longer physically affect powerup boxes which should make it easier
   to grab the powerup (Thanks VinniTR!).
-- The 'Manual' party tab now supports entering IPv6 addresses (Thanks brostosjoined!).
+- The 'Manual' party tab now supports entering IPv6 addresses (Thanks
+  brostos!).
+- Fixes a bug where Meteor Shower could make the game-end bell sound twice
+  (Thanks 3alTemp!).
+- Leaving the game or dying while touching your team's flag will no longer
+  recover & return it indefinitely in a teams game of Capture the Flag. (Thanks
+  3alTemp!)
+- Added a server config setting for max players (not max clients) (Thanks
+  EraOSBeta!)
+- Added a UI for customizing Series Length in Teams and Points-to-Win in FFA
+  (Thanks EraOSBeta!)
 - Added a 'Practice' button in tournaments, letting you play them free of
   charge while not submitting scores. (Thanks Temp!)
-  
+
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
 - Plugins window now displays 'No Plugins Installed' when no plugins are present (Thanks vishal332008!)
@@ -70,7 +81,7 @@
   intended. Now, however, such commands get scheduled to a current
   'ui-operation' and then run *almost* immediately, which should prevent such
   situations. Please holler if you run into any UI weirdness at this point.
-  
+
 ### 1.7.30 (build 21697, api 8, 2023-12-08)
 - Continued work on the big 1.7.28 update.
 - Got the Android version back up and running. There's been lots of cleanup and
@@ -347,7 +358,7 @@
 - Added a 'glow_type' arg to `bauiv1.textwidget()` to adjust the glow used when
   the text is selected. The default is 'gradient' but there is now a 'uniform'
   option which may look better in some circumstances.
-  
+
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 
 - Fixed a rare crash that could occur if the app shuts down while a background
@@ -468,7 +479,7 @@
   Visual Studio Code (and potentially other editors), so am seeing if it is
   worth officially supporting in addition to or as a replacement for Mypy. See
   `tools/pcommand pyright`
-  
+
 ### 1.7.24 (build 21199, api 8, 2023-07-27)
 
 - Fixed an issue where respawn icons could disappear in epic mode (Thanks for
@@ -523,7 +534,7 @@
   can be useful for core engine code to directly and clearly point out problems
   that cannot be recovered from (Exceptions in such cases can tend to be
   'handled' which leads to a broken or crashing app).
-  
+
 ### 1.7.23 (build 21178, api 8, 2023-07-19)
 
 - Network security improvements. (Thanks Dliwk!)

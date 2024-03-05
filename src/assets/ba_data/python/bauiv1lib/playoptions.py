@@ -33,6 +33,7 @@ class PlayOptionsWindow(PopupWindow):
         # pylint: disable=too-many-locals
         from bascenev1 import filter_playlist, get_map_class
         from bauiv1lib.playlist import PlaylistTypeVars
+        from bauiv1lib.config import ConfigNumberEdit
 
         self._r = 'gameListWindow'
         self._delegate = delegate
@@ -52,7 +53,7 @@ class PlayOptionsWindow(PopupWindow):
         self._playlist = playlist
 
         self._width = 500.0
-        self._height = 330.0 - 50.0
+        self._height = 370.0 - 50.0
 
         # In teams games, show the custom names/colors button.
         if self._sessiontype is bs.DualTeamSession:
@@ -145,9 +146,7 @@ class PlayOptionsWindow(PopupWindow):
         scale = (
             1.69
             if uiscale is bui.UIScale.SMALL
-            else 1.1
-            if uiscale is bui.UIScale.MEDIUM
-            else 0.85
+            else 1.1 if uiscale is bui.UIScale.MEDIUM else 0.85
         )
         # Creates our _root_widget.
         super().__init__(
@@ -275,13 +274,39 @@ class PlayOptionsWindow(PopupWindow):
                             texture=bui.gettexture('lock'),
                         )
 
+        y_offs = 50 if show_shuffle_check_box else 0
+
+        # Series Length
+        y_offs2 = 40 if self._sessiontype is bs.DualTeamSession else 0
+        self._series_length_numedit = ConfigNumberEdit(
+            parent=self.root_widget,
+            position=(100, 200 + y_offs + y_offs2),
+            configkey=(
+                'FFA' if self._sessiontype is bs.FreeForAllSession else 'Teams'
+            )
+            + ' Series Length',
+            displayname=bui.Lstr(
+                resource=self._r
+                + (
+                    '.pointsToWinText'
+                    if self._sessiontype is bs.FreeForAllSession
+                    else '.seriesLengthText'
+                )
+            ),
+            minval=1.0,
+            increment=1.0 if self._sessiontype is bs.FreeForAllSession else 2.0,
+            fallback_value=(
+                24 if self._sessiontype is bs.FreeForAllSession else 7
+            ),
+            f=0,
+        )
+
         # Team names/colors.
         self._custom_colors_names_button: bui.Widget | None
         if self._sessiontype is bs.DualTeamSession:
-            y_offs = 50 if show_shuffle_check_box else 0
             self._custom_colors_names_button = bui.buttonwidget(
                 parent=self.root_widget,
-                position=(100, 200 + y_offs),
+                position=(100, 195 + y_offs),
                 size=(290, 35),
                 on_activate_call=bui.WeakCall(self._custom_colors_names_press),
                 autoselect=True,
@@ -304,9 +329,9 @@ class PlayOptionsWindow(PopupWindow):
         def _cb_callback(val: bool) -> None:
             self._do_randomize_val = val
             cfg = bui.app.config
-            cfg[
-                self._pvars.config_name + ' Playlist Randomize'
-            ] = self._do_randomize_val
+            cfg[self._pvars.config_name + ' Playlist Randomize'] = (
+                self._do_randomize_val
+            )
             cfg.commit()
 
         if show_shuffle_check_box:
