@@ -198,7 +198,7 @@ class RespawnIcon:
         if iterate >= len(display):
             self._dec_timer = None
             return
-        self._dec_text.node.text = display[iter]
+        self._dec_text.node.text = display[iterate]
 
     def _update(self) -> None:
         remaining = int(round(self._respawn_time - bs.time()))
