@@ -212,3 +212,47 @@ def _run_pdoc() -> None:
 
     duration = time.monotonic() - starttime
     print(f'{Clr.GRN}Generated pdoc documentation in {duration:.1f}s.{Clr.RST}')
+
+def generate_sphinxdoc():
+    _run_sphinx()
+
+def _run_sphinx() -> None:
+    """Do the actual docs generation with sphinx."""
+    import time
+    import shutil
+
+    from batools.version import get_current_version
+    version, buildnum = get_current_version()
+
+    sphinx_src = 'src/assets/sphinx/'
+    build_dir = 'build/docs_sphinx_html'
+    sphinx_apidoc_out = sphinx_src + 'apidoc/'
+    template_dir = Path(sphinx_src+'template/')
+    assets_dir = 'src/assets/ba_data/python/'
+    dummy_modules_dir = 'build/dummymodules/'
+    os.makedirs(build_dir, exist_ok=True)
+    os.makedirs(sphinx_apidoc_out, exist_ok=True)
+    assert template_dir.is_dir()
+
+    shutil.copytree(template_dir, sphinx_apidoc_out, dirs_exist_ok= True)
+    
+    os.environ['BALLISTICA_ROOT'] = os.getcwd()
+    
+    starttime = time.monotonic()
+
+    subprocess.run(['sphinx-apidoc', 
+                    '-f', # Force overwriting of any existing generated files.
+                    '-H', 'Bombsquad', # project
+                    '-A','Efroemling', # author
+                    '-V', str(version), # version
+                    '-R', str(buildnum), # release
+                    # '--templatedir', template_dir, 
+                    '-o', sphinx_apidoc_out, 
+                    assets_dir, ],
+                    # dummy_modules_dir],  # dummy modules doesn't get included like this
+                   check=True) 
+    
+    
+    subprocess.run( ['make', 'html'], check = True, cwd= sphinx_apidoc_out)
+    duration = time.monotonic() - starttime
+    print(f'Generated sphinx documentation in {duration:.1f}s.')

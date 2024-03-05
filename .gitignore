@@ -30,6 +30,7 @@ local.properties
 PUBSYNC_IN_PROGRESS
 _fulltest_buildfile_*
 ballistica_files/
+src/assets/sphinx/apidoc
 **/.#*
 
 # Environment files
