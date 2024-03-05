@@ -24,6 +24,7 @@
 #                                                                              #
 ################################################################################
 
+SPHINX_DIR = sphinx
 # List targets in this Makefile and basic descriptions for them.
 help:
 	@$(PCOMMAND) makefile_target_list Makefile
@@ -182,6 +183,10 @@ docs:
 
 docs-pdoc:
 	@$(PCOMMAND) gen_docs_pdoc
+
+docs-sphinx:
+	$(MAKE) dummymodules
+	@$(PCOMMAND) gen_docs_sphinx
 
 pcommandbatch_speed_test: prereqs
 	@$(PCOMMAND) pcommandbatch_speed_test $(PCOMMANDBATCH)
