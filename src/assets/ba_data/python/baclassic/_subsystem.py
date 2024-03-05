@@ -580,7 +580,7 @@ class ClassicSubsystem(babase.AppSubsystem):
         name: str,
         default: bool = False,
     ) -> Any:
-        """Returns a mapped value for an input device.
+        """Return a mapped value for an input device.
 
         This checks the user config and falls back to default values
         where available.

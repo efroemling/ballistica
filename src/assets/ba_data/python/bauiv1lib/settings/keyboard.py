@@ -68,6 +68,7 @@ class ConfigKeyboardWindow(bui.Window):
             'buttonLeft',
             'buttonRight',
         ]:
+            assert bui.app.classic is not None
             self._settings[
                 button
             ] = bui.app.classic.get_input_device_mapped_value(

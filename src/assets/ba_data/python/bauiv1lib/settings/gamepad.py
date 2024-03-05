@@ -133,6 +133,7 @@ class GamepadSettingsWindow(bui.Window):
             'analogStickUD_B',
             'enableSecondary',
         ]:
+            assert bui.app.classic is not None
             val = bui.app.classic.get_input_device_mapped_value(
                 self._input, button, default
             )
