@@ -186,16 +186,16 @@ class RespawnIcon:
             self._dec_timer = None
             return
         old_text: str = self._dec_text.node.text
-        iter: int
+        iterate: int
         # Get the following display text using our current one.
         try:
-            iter = display.index(old_text) + 1
+            iterate = display.index(old_text) + 1
         # If we don't match any in the display list, we
         # can assume we've just started iterating.
         except ValueError:
-            iter = 0
+            iterate = 0
         # Kill the timer if we're at the last iteration.
-        if iter >= len(display):
+        if iterate >= len(display):
             self._dec_timer = None
             return
         self._dec_text.node.text = display[iter]
