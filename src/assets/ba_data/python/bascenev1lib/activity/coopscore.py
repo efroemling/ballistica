@@ -125,7 +125,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         self._tournament_time_remaining: float | None = None
         self._tournament_time_remaining_text: Text | None = None
         self._tournament_time_remaining_text_timer: bs.BaseTimer | None = None
-        self._submit_score = self.session._submit_score
+        self._submit_score = self.session.submit_score
 
         # Stuff for activity skip by pressing button
         self._birth_time = bs.time()

@@ -14,7 +14,6 @@ import bauiv1 as bui
 
 if TYPE_CHECKING:
     from typing import Any, Callable
-    from bascenev1lib.activity.coopscore import CoopScoreScreen
     import bascenev1 as bs
 
 
@@ -90,9 +89,7 @@ class TournamentEntryWindow(PopupWindow):
 
         # Show the practice button as long as we're not
         # restarting while on a paid tournament run.
-        self._do_practice = self._tournament_activity is None or isinstance(
-            self._tournament_activity, CoopScoreScreen
-        )
+        self._do_practice = self._tournament_activity is None
 
         off_p = 0 if not self._do_practice else 48
         self._height += off_p * 0.933
