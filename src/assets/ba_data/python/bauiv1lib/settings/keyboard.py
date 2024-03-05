@@ -55,7 +55,7 @@ class ConfigKeyboardWindow(bui.Window):
 
         self._rebuild_ui()
 
-    def _get_config_mapping(self, default: bool = False):
+    def _get_config_mapping(self, default: bool = False) -> None:
         for button in [
             'buttonJump',
             'buttonPunch',

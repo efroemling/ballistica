@@ -38,7 +38,6 @@ class GamepadSettingsWindow(bui.Window):
         self._name = self._input.name
 
         self._r = 'configGamepadWindow'
-        self._settings = settings
         self._transition_out = transition_out
 
         # We're a secondary gamepad if supplied with settings.
