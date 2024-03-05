@@ -353,7 +353,7 @@ class CoopSession(Session):
                 if not (env.demo or env.arcade):
                     if (
                         self.tournament_id is not None
-                        and activity.session._submit_score
+                        and classic.coop_session_args['submit_score']
                     ):
                         self._custom_menu_ui = [
                             {

@@ -14,7 +14,7 @@ import bauiv1 as bui
 
 if TYPE_CHECKING:
     from typing import Any, Callable
-
+    from bascenev1lib.activity.coopscore import CoopScoreScreen
     import bascenev1 as bs
 
 
@@ -32,6 +32,7 @@ class TournamentEntryWindow(PopupWindow):
         on_close_call: Callable[[], Any] | None = None,
     ):
         # Needs some tidying.
+        # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
 
@@ -82,15 +83,13 @@ class TournamentEntryWindow(PopupWindow):
 
         self._tournament_activity = tournament_activity
 
-        self._width = 340
-        self._height = 225
+        self._width: float = 340.0
+        self._height: float = 225.0
 
         bg_color = (0.5, 0.4, 0.6)
 
         # Show the practice button as long as we're not
         # restarting while on a paid tournament run.
-        from bascenev1lib.activity.coopscore import CoopScoreScreen
-
         self._do_practice = self._tournament_activity is None or isinstance(
             self._tournament_activity, CoopScoreScreen
         )
@@ -270,7 +269,7 @@ class TournamentEntryWindow(PopupWindow):
                 autoselect=True,
                 size=btn_size,
                 label=bui.Lstr(resource='practiceText'),
-                on_activate_call=self.on_practice_press,
+                on_activate_call=self._on_practice_press,
             )
 
         self._get_tickets_button: bui.Widget | None = None
@@ -552,7 +551,7 @@ class TournamentEntryWindow(PopupWindow):
                 text=bui.charstr(bui.SpecialChar.TICKET) + t_str,
             )
 
-    def _launch(self, practice=False) -> None:
+    def _launch(self, practice: bool = False) -> None:
         assert bui.app.classic is not None
         if self._launched:
             return
@@ -563,7 +562,7 @@ class TournamentEntryWindow(PopupWindow):
         # practice activity, just restart it.
         if (
             self._tournament_activity is not None
-            and not practice == self._tournament_activity.session._submit_score
+            and not practice == self._tournament_activity.session.submit_score
         ):
             try:
                 if not practice:
@@ -714,7 +713,7 @@ class TournamentEntryWindow(PopupWindow):
                 on_completion_call=bui.WeakCall(self._on_ad_complete),
             )
 
-    def on_practice_press(self) -> None:
+    def _on_practice_press(self) -> None:
         plus = bui.app.plus
         assert plus is not None
 

@@ -176,7 +176,7 @@ class Session:
             if _max_players_override is None
             else _max_players_override
         )
-        self._submit_score = submit_score
+        self.submit_score = submit_score
 
         self.customdata = {}
         self._in_set_activity = False
