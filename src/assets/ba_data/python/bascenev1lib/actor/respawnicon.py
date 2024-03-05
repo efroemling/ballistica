@@ -181,11 +181,24 @@ class RespawnIcon:
                 offs_extra = -20
         return on_right, offs_extra, icons
 
-    def _dec_step(self) -> None:
-        self._dec_text.node.text = self._dec_text.node.text[:-1]
-        # Kill our timer if the string is nothing.
-        if self._dec_text.node.text == '':
+    def _dec_step(self, display: list) -> None:
+        if not self._dec_text:
             self._dec_timer = None
+            return
+        old_text: str = self._dec_text.node.text
+        iter: int
+        # Get the following display text using our current one.
+        try:
+            iter = display.index(old_text) + 1
+        # If we don't match any in the display list, we
+        # can assume we've just started iterating.
+        except ValueError:
+            iter = 0
+        # Kill the timer if we're at the last iteration.
+        if iter >= len(display):
+            self._dec_timer = None
+            return
+        self._dec_text.node.text = display[iter]
 
     def _update(self) -> None:
         remaining = int(round(self._respawn_time - bs.time()))
@@ -195,10 +208,16 @@ class RespawnIcon:
             if self._text.node:
                 self._text.node.text = str(remaining)
                 if self._dec_text:
+                    # Display our decimal dots.
                     self._dec_text.node.text = '...'
-                    # Start our decimals timer
+                    # Start the timer to tick down.
                     self._dec_timer = bs.Timer(
-                        0.25, bs.WeakCall(self._dec_step), repeat=True
+                        0.25,
+                        bs.WeakCall(
+                            self._dec_step,
+                            ['..','.','']
+                        ),
+                        repeat=True
                     )
         else:
             self._visible = False
