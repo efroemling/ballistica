@@ -185,7 +185,7 @@ class RespawnIcon:
         if not self._dec_text:
             self._dec_timer = None
             return
-        old_text: str = self._dec_text.node.text
+        old_text: bs.Lstr | str = self._dec_text.node.text
         iterate: int
         # Get the following display text using our current one.
         try:
