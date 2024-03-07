@@ -12,8 +12,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath(os.getenv('BALLISTICA_ROOT')+'/src/assets/ba_data/python/'))
-sys.path.insert(0, os.path.abspath(os.getenv('BALLISTICA_ROOT')+'/tools/efro/'))
+sys.path.insert(0, os.path.abspath(os.getenv('BALLISTICA_ROOT')+'/src/assets/sphinx/.modules/'))
 
 # -- Options for HTML output -------------------------------------------------
 
