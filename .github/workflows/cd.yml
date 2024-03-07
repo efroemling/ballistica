@@ -228,4 +228,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: sphinx_html_docs
-        path: build/docs_sphinx_html
+        path: build/sphinx
