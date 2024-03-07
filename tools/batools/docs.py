@@ -226,24 +226,20 @@ def _run_sphinx() -> None:
 
     assets_dirs : dict = {'ba_data':'src/assets/ba_data/python/', 
                           'dummy_modules':'build/dummymodules/', 
-                          'efro_package':'tools/efro/',
-                          'bacommon_package':'tools/bacommon/'}
+                          'efro_tools':'tools/', # for efro and bacommon package
+                          }
     
     sphinx_src = 'src/assets/sphinx/'
-    build_dir = 'build/docs_sphinx_html'
-    os.makedirs(build_dir, exist_ok=True)
     template_dir = Path(sphinx_src+'template/')
-    temp_modules_dir = sphinx_src + '.modules/'
-    sphinx_apidoc_out = temp_modules_dir + 'apidoc/'
+    assert template_dir.is_dir()
+    build_dir = 'build/sphinx/'
+    os.makedirs(build_dir, exist_ok=True)
+    sphinx_apidoc_out = build_dir + 'apidoc/'
     os.makedirs(sphinx_apidoc_out, exist_ok=True)
 
-    assert template_dir.is_dir()
-    os.makedirs(temp_modules_dir, exist_ok=True)
-    shutil.copytree(assets_dirs['ba_data'], temp_modules_dir, dirs_exist_ok=True)
-    shutil.copytree(assets_dirs['dummy_modules'], temp_modules_dir, dirs_exist_ok=True)
-    shutil.copytree(assets_dirs['efro_package'], temp_modules_dir + 'efro/', dirs_exist_ok=True)
-    shutil.copytree(assets_dirs['bacommon_package'], temp_modules_dir + 'bacommon/', dirs_exist_ok=True)
-
+    
+    os.environ['BALLISTICA_ROOT'] = os.getcwd()
+    
     shutil.copytree(template_dir, sphinx_apidoc_out, dirs_exist_ok= True)
         
     starttime = time.monotonic()
@@ -256,12 +252,12 @@ def _run_sphinx() -> None:
                     '-R', str(buildnum), # release
                     # '--templatedir', template_dir, 
                     '-o', sphinx_apidoc_out, 
-                    temp_modules_dir, ],
+                    assets_dirs['ba_data'], ],
                    check=True) 
     
     
     subprocess.run( ['make', 'html'], check = True, cwd= sphinx_apidoc_out)
-    shutil.copytree(sphinx_apidoc_out + '_build/html/', build_dir, dirs_exist_ok=True)
+    shutil.copytree(sphinx_apidoc_out + '_build/html/', build_dir+'html/', dirs_exist_ok=True)
     # shutil.rmtree(temp_modules_dir)
     duration = time.monotonic() - starttime
     print(f'Generated sphinx documentation in {duration:.1f}s.')

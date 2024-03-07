@@ -13,7 +13,15 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('..'))
+ba_root = os.getenv('BALLISTICA_ROOT') + '/'
+assets_dirs : dict = {'ba_data':'src/assets/ba_data/python/', 
+                          'dummy_modules':'build/dummymodules/', 
+                          'efro_tools':'tools/', # for efro and bacommon package
+                          }
+    
+sys.path.append(os.path.abspath(ba_root+assets_dirs['ba_data']))
+sys.path.append(os.path.abspath(ba_root+assets_dirs['dummy_modules']))
+sys.path.append(os.path.abspath(ba_root+assets_dirs['efro_tools']))
 
 # -- Options for HTML output -------------------------------------------------
 
