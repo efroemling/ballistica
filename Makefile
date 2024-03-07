@@ -185,7 +185,7 @@ docs-pdoc:
 	@$(PCOMMAND) gen_docs_pdoc
 
 docs-sphinx:
-	$(MAKE) dummymodules
+#	$(MAKE) dummymodules
 	@$(PCOMMAND) gen_docs_sphinx
 
 pcommandbatch_speed_test: prereqs

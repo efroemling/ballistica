@@ -213,7 +213,7 @@ def _run_pdoc() -> None:
     duration = time.monotonic() - starttime
     print(f'{Clr.GRN}Generated pdoc documentation in {duration:.1f}s.{Clr.RST}')
 
-def generate_sphinxdoc():
+def generate_sphinxdoc() -> None: 
     _run_sphinx()
 
 def _run_sphinx() -> None:
@@ -245,9 +245,7 @@ def _run_sphinx() -> None:
     shutil.copytree(assets_dirs['bacommon_package'], temp_modules_dir + 'bacommon/', dirs_exist_ok=True)
 
     shutil.copytree(template_dir, sphinx_apidoc_out, dirs_exist_ok= True)
-    
-    os.environ['BALLISTICA_ROOT'] = os.getcwd()
-    
+        
     starttime = time.monotonic()
 
     subprocess.run(['sphinx-apidoc', 
@@ -264,6 +262,6 @@ def _run_sphinx() -> None:
     
     subprocess.run( ['make', 'html'], check = True, cwd= sphinx_apidoc_out)
     shutil.copytree(sphinx_apidoc_out + '_build/html/', build_dir, dirs_exist_ok=True)
-    shutil.rmtree(temp_modules_dir)
+    # shutil.rmtree(temp_modules_dir)
     duration = time.monotonic() - starttime
     print(f'Generated sphinx documentation in {duration:.1f}s.')

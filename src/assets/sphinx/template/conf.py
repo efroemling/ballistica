@@ -12,7 +12,8 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath(os.getenv('BALLISTICA_ROOT')+'/src/assets/sphinx/.modules/'))
+
+sys.path.insert(0, os.path.abspath('..'))
 
 # -- Options for HTML output -------------------------------------------------
 
