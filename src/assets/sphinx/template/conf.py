@@ -5,30 +5,23 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 # -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
 import os
 import sys
 
-ba_root = os.getenv('BALLISTICA_ROOT') + '/'
+ballistica_root = os.getenv('BALLISTICA_ROOT') + '/'
 assets_dirs : dict = {'ba_data':'src/assets/ba_data/python/', 
                           'dummy_modules':'build/dummymodules/', 
                           'efro_tools':'tools/', # for efro and bacommon package
                           }
     
-sys.path.append(os.path.abspath(ba_root+assets_dirs['ba_data']))
-sys.path.append(os.path.abspath(ba_root+assets_dirs['dummy_modules']))
-sys.path.append(os.path.abspath(ba_root+assets_dirs['efro_tools']))
+sys.path.append(os.path.abspath(ballistica_root+assets_dirs['ba_data']))
+sys.path.append(os.path.abspath(ballistica_root+assets_dirs['dummy_modules']))
+sys.path.append(os.path.abspath(ballistica_root+assets_dirs['efro_tools']))
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = 'sphinx_rtd_theme' #'python_docs_theme' #"groundwork"
+html_theme = 'furo' # python_docs_theme, groundwork, furo
+# html_logo = ballistica_root + 'build/assets/ba_data/textures/logo_preview.png' # need a smaller img
 
 
 # -- Project information -----------------------------------------------------
@@ -43,7 +36,6 @@ author = 'Efroemling'
 # TODO: make this update from some variable
 version = '1.7.33'
 release = '43241'
-
 
 # -- General configuration ---------------------------------------------------
 
