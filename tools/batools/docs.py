@@ -243,18 +243,19 @@ def _run_sphinx() -> None:
     shutil.copytree(template_dir, sphinx_apidoc_out, dirs_exist_ok= True)
         
     starttime = time.monotonic()
-
-    subprocess.run(['sphinx-apidoc', 
+    
+    apidoc_cmd = ['sphinx-apidoc', 
                     '-f', # Force overwriting of any existing generated files.
                     '-H', 'Bombsquad', # project
                     '-A','Efroemling', # author
                     '-V', str(version), # version
                     '-R', str(buildnum), # release
                     # '--templatedir', template_dir, 
-                    '-o', sphinx_apidoc_out, 
-                    assets_dirs['ba_data'], ],
-                   check=True) 
-    
+                    '-o', sphinx_apidoc_out,
+                ]
+    subprocess.run(apidoc_cmd + [assets_dirs['ba_data']] , check=True) 
+    subprocess.run(apidoc_cmd + [assets_dirs['dummy_modules']], check=True) 
+    subprocess.run(apidoc_cmd + [assets_dirs['efro_tools']], check=True)
     
     subprocess.run( ['make', 'html'], check = True, cwd= sphinx_apidoc_out)
     shutil.copytree(sphinx_apidoc_out + '_build/html/', build_dir, dirs_exist_ok=True)

@@ -20,7 +20,8 @@ sys.path.append(os.path.abspath(ballistica_root+assets_dirs['efro_tools']))
 
 # -- Options for HTML output -------------------------------------------------
 
-html_theme = 'furo' # python_docs_theme, groundwork, furo
+# for more themes visit https://sphinx-themes.org/
+html_theme = 'furo' # python_docs_theme, groundwork, furo 
 # html_logo = ballistica_root + 'build/assets/ba_data/textures/logo_preview.png' # need a smaller img
 
 
