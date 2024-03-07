@@ -234,7 +234,7 @@ def _run_sphinx() -> None:
     assert template_dir.is_dir()
     build_dir = 'build/sphinx/'
     os.makedirs(build_dir, exist_ok=True)
-    sphinx_apidoc_out = build_dir + 'apidoc/'
+    sphinx_apidoc_out = '.cache/sphinx/' # might want to use .cache dir
     os.makedirs(sphinx_apidoc_out, exist_ok=True)
 
     
@@ -257,7 +257,7 @@ def _run_sphinx() -> None:
     
     
     subprocess.run( ['make', 'html'], check = True, cwd= sphinx_apidoc_out)
-    shutil.copytree(sphinx_apidoc_out + '_build/html/', build_dir+'html/', dirs_exist_ok=True)
+    shutil.copytree(sphinx_apidoc_out + '_build/html/', build_dir, dirs_exist_ok=True)
     # shutil.rmtree(temp_modules_dir)
     duration = time.monotonic() - starttime
     print(f'Generated sphinx documentation in {duration:.1f}s.')

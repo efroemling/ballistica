@@ -188,6 +188,9 @@ docs-sphinx:
 	$(MAKE) dummymodules
 	@$(PCOMMAND) gen_docs_sphinx
 
+docs-sphinx-clean:
+	rm -rf .cache/sphinx
+
 pcommandbatch_speed_test: prereqs
 	@$(PCOMMAND) pcommandbatch_speed_test $(PCOMMANDBATCH)
 
