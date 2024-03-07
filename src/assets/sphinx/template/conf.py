@@ -33,6 +33,7 @@ html_theme = 'sphinx_rtd_theme' #'python_docs_theme' #"groundwork"
 
 # -- Project information -----------------------------------------------------
 
+keep_warnings = True # Supressing warnings
 project = 'ballistica-bombsquad'
 
 copyright = '2024, Efroemling'
@@ -40,7 +41,8 @@ author = 'Efroemling'
 
 # The full version, including alpha/beta/rc tags
 # TODO: make this update from some variable
-release = '1.7.33'
+version = '1.7.33'
+release = '43241'
 
 
 # -- General configuration ---------------------------------------------------
