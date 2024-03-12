@@ -52,9 +52,7 @@ def parse_docs_attrs(attrs: list[AttributeInfo], docs: str) -> str:
             # A line with a single alphanumeric word preceding a colon
             # is a new attr.
             splits = line.split(' ', maxsplit=1)
-            if splits[0].replace('_', '').isalnum() and splits[-1].endswith(
-                ':'
-            ):
+            if splits[0].replace('_', '').isalnum() and splits[-1].endswith(':'):
                 if cur_attr is not None:
                     attrs.append(cur_attr)
                 cur_attr = AttributeInfo(name=splits[0])
@@ -144,9 +142,7 @@ def _run_pdoc_with_dummy_modules() -> None:
     # whatnot here so let's make sure we only do this once.
     global _g_genned_pdoc_with_dummy_modules  # pylint: disable=global-statement
     if _g_genned_pdoc_with_dummy_modules:
-        raise RuntimeError(
-            'Can only run this once; it mucks with the environment.'
-        )
+        raise RuntimeError('Can only run this once; it mucks with the environment.')
     _g_genned_pdoc_with_dummy_modules = True
 
     # Make sure dummy-modules are up to date and make them discoverable
@@ -213,8 +209,10 @@ def _run_pdoc() -> None:
     duration = time.monotonic() - starttime
     print(f'{Clr.GRN}Generated pdoc documentation in {duration:.1f}s.{Clr.RST}')
 
+
 def generate_sphinxdoc() -> None:
     _run_sphinx()
+
 
 def _run_sphinx() -> None:
     """Do the actual docs generation with sphinx."""
@@ -222,42 +220,49 @@ def _run_sphinx() -> None:
     import shutil
 
     from batools.version import get_current_version
+
     version, buildnum = get_current_version()
 
-    assets_dirs : dict = {'ba_data':'src/assets/ba_data/python/',
-                          'dummy_modules':'build/dummymodules/',
-                          'efro_tools':'tools/', # for efro and bacommon package
-                          }
+    assets_dirs: dict = {
+        'ba_data': 'src/assets/ba_data/python/',
+        'dummy_modules': 'build/dummymodules/',
+        'efro_tools': 'tools/',  # for efro and bacommon package
+    }
 
     sphinx_src = 'src/assets/sphinx/'
-    template_dir = Path(sphinx_src+'template/')
+    template_dir = Path(sphinx_src + 'template/')
     assert template_dir.is_dir()
     build_dir = 'build/sphinx/'
     os.makedirs(build_dir, exist_ok=True)
-    sphinx_apidoc_out = '.cache/sphinx/' # might want to use .cache dir
+    sphinx_apidoc_out = '.cache/sphinx/'  # might want to use .cache dir
     os.makedirs(sphinx_apidoc_out, exist_ok=True)
 
-
-    os.environ['BALLISTICA_ROOT'] = os.getcwd() # used in sphinx conf.py
+    os.environ['BALLISTICA_ROOT'] = os.getcwd()  # used in sphinx conf.py
     os.environ['BA_RUNNING_WITH_DUMMY_MODULES'] = '1'
 
-    shutil.copytree(template_dir, sphinx_apidoc_out, dirs_exist_ok= True)
+    shutil.copytree(template_dir, sphinx_apidoc_out, dirs_exist_ok=True)
 
     starttime = time.monotonic()
-    apidoc_cmd = ['sphinx-apidoc',
-                    '-f', # Force overwriting of any existing generated files.
-                    '-H', 'Bombsquad', # project
-                    '-A','Efroemling', # author
-                    '-V', str(version), # version
-                    '-R', str(buildnum), # release
-                    # '--templatedir', template_dir,
-                    '-o', sphinx_apidoc_out,
-                ]
-    subprocess.run(apidoc_cmd + [assets_dirs['ba_data']] , check=True)
+    apidoc_cmd = [
+        'sphinx-apidoc',
+        '-f',  # Force overwriting of any existing generated files.
+        '-H',
+        'Bombsquad',  # project
+        '-A',
+        'Efroemling',  # author
+        '-V',
+        str(version),  # version
+        '-R',
+        str(buildnum),  # release
+        # '--templatedir', template_dir,
+        '-o',
+        sphinx_apidoc_out,
+    ]
+    subprocess.run(apidoc_cmd + [assets_dirs['ba_data']], check=True)
     subprocess.run(apidoc_cmd + [assets_dirs['dummy_modules']], check=True)
     subprocess.run(apidoc_cmd + [assets_dirs['efro_tools']], check=True)
 
-    subprocess.run( ['make', 'html'], check = True, cwd= sphinx_apidoc_out)
+    subprocess.run(['make', 'html'], check=True, cwd=sphinx_apidoc_out)
     shutil.copytree(sphinx_apidoc_out + '_build/html/', build_dir, dirs_exist_ok=True)
     # shutil.rmtree(temp_modules_dir)
     duration = time.monotonic() - starttime
