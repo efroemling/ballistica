@@ -238,7 +238,8 @@ def _run_sphinx() -> None:
     os.makedirs(sphinx_apidoc_out, exist_ok=True)
 
 
-    os.environ['BALLISTICA_ROOT'] = os.getcwd()
+    os.environ['BALLISTICA_ROOT'] = os.getcwd() # used in sphinx conf.py
+    os.environ['BA_RUNNING_WITH_DUMMY_MODULES'] = '1'
 
     shutil.copytree(template_dir, sphinx_apidoc_out, dirs_exist_ok= True)
 
