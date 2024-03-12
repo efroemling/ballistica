@@ -24,7 +24,6 @@
 #                                                                              #
 ################################################################################
 
-SPHINX_DIR = sphinx
 # List targets in this Makefile and basic descriptions for them.
 help:
 	@$(PCOMMAND) makefile_target_list Makefile

@@ -584,12 +584,12 @@ def install_pip_reqs() -> None:
     pcommand.disallow_in_batch()
 
     # Make sure pip itself is up to date first.
-#    subprocess.run(
-#        [PYTHON_BIN, '-m', 'pip', 'install', '--upgrade', 'pip'], check=True
-#    )
+    subprocess.run(
+        [PYTHON_BIN, '-m', 'pip', 'install', '--upgrade', 'pip'], check=True
+    )
 
     subprocess.run(
-        [PYTHON_BIN, '-m', 'pip', 'install', '--upgrade', '--break-system-packages'] + get_pip_reqs(),
+        [PYTHON_BIN, '-m', 'pip', 'install', '--upgrade'] + get_pip_reqs(),
         check=True,
     )
     print(f'{Clr.GRN}All pip requirements installed!{Clr.RST}')

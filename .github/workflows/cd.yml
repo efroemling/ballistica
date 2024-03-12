@@ -4,7 +4,6 @@ on:
   # Run on pushes and pull-requests
   push:
   pull_request:
-  
 
 jobs:
   make_linux_x86_64_gui_debug_build:
