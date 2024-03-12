@@ -561,9 +561,12 @@ def gen_docs_pdoc() -> None:
     print(f'{Clr.BLU}Generating documentation...{Clr.RST}')
     batools.docs.generate_pdoc(projroot=str(pcommand.PROJROOT))
 
-def gen_docs_sphinx():
+
+def gen_docs_sphinx() -> None:
     import batools.docs
+
     batools.docs.generate_sphinxdoc()
+
 
 def list_pip_reqs() -> None:
     """List Python Pip packages needed for this project."""
