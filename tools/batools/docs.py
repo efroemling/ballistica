@@ -212,3 +212,65 @@ def _run_pdoc() -> None:
 
     duration = time.monotonic() - starttime
     print(f'{Clr.GRN}Generated pdoc documentation in {duration:.1f}s.{Clr.RST}')
+
+
+def generate_sphinxdoc() -> None:
+    """Generate a set of pdoc documentation."""
+    _run_sphinx()
+
+
+def _run_sphinx() -> None:
+    """Do the actual docs generation with sphinx."""
+    import time
+    import shutil
+
+    from batools.version import get_current_version
+
+    version, buildnum = get_current_version()
+
+    assets_dirs: dict = {
+        'ba_data': 'src/assets/ba_data/python/',
+        'dummy_modules': 'build/dummymodules/',
+        'efro_tools': 'tools/',  # for efro and bacommon package
+    }
+
+    sphinx_src = 'src/assets/sphinx/'
+    template_dir = Path(sphinx_src + 'template/')
+    assert template_dir.is_dir()
+    build_dir = 'build/sphinx/'
+    os.makedirs(build_dir, exist_ok=True)
+    sphinx_apidoc_out = '.cache/sphinx/'  # might want to use .cache dir
+    os.makedirs(sphinx_apidoc_out, exist_ok=True)
+
+    os.environ['BALLISTICA_ROOT'] = os.getcwd()  # used in sphinx conf.py
+    os.environ['BA_RUNNING_WITH_DUMMY_MODULES'] = '1'
+
+    shutil.copytree(template_dir, sphinx_apidoc_out, dirs_exist_ok=True)
+
+    starttime = time.monotonic()
+    apidoc_cmd = [
+        'sphinx-apidoc',
+        '-f',  # Force overwriting of any existing generated files.
+        '-H',
+        'Bombsquad',  # project
+        '-A',
+        'Efroemling',  # author
+        '-V',
+        str(version),  # version
+        '-R',
+        str(buildnum),  # release
+        # '--templatedir', template_dir,
+        '-o',
+        sphinx_apidoc_out,
+    ]
+    subprocess.run(apidoc_cmd + [assets_dirs['ba_data']], check=True)
+    subprocess.run(apidoc_cmd + [assets_dirs['dummy_modules']], check=True)
+    subprocess.run(apidoc_cmd + [assets_dirs['efro_tools']], check=True)
+
+    subprocess.run(['make', 'html'], check=True, cwd=sphinx_apidoc_out)
+    shutil.copytree(
+        sphinx_apidoc_out + '_build/html/', build_dir, dirs_exist_ok=True
+    )
+    # shutil.rmtree(temp_modules_dir)
+    duration = time.monotonic() - starttime
+    print(f'Generated sphinx documentation in {duration:.1f}s.')
