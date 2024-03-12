@@ -223,12 +223,14 @@ class PopupMenuWindow(PopupWindow):
                 size=(self._width - 40, 28),
                 on_select_call=bui.Call(self._select, index),
                 click_activate=True,
-                color=(0.5, 0.5, 0.5, 0.5)
-                if inactive
-                else (
-                    (0.5, 1, 0.5, 1)
-                    if choice == self._current_choice
-                    else (0.8, 0.8, 0.8, 1.0)
+                color=(
+                    (0.5, 0.5, 0.5, 0.5)
+                    if inactive
+                    else (
+                        (0.5, 1, 0.5, 1)
+                        if choice == self._current_choice
+                        else (0.8, 0.8, 0.8, 1.0)
+                    )
                 ),
                 padding=0,
                 maxwidth=maxwidth,
@@ -318,9 +320,7 @@ class PopupMenu:
             scale = (
                 2.3
                 if uiscale is bui.UIScale.SMALL
-                else 1.65
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.23
+                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
             )
         if current_choice not in choices:
             current_choice = None

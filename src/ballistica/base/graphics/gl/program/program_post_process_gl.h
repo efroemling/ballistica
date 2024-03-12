@@ -23,9 +23,9 @@ class RendererGL::ProgramPostProcessGL : public RendererGL::ProgramGL {
 
   ProgramPostProcessGL(RendererGL* renderer, int flags)
       : RendererGL::ProgramGL(
-          renderer, Object::New<VertexShaderGL>(GetVertexCode(flags)),
-          Object::New<FragmentShaderGL>(GetFragmentCode(flags)), GetName(flags),
-          GetPFlags(flags)),
+            renderer, Object::New<VertexShaderGL>(GetVertexCode(flags)),
+            Object::New<FragmentShaderGL>(GetFragmentCode(flags)),
+            GetName(flags), GetPFlags(flags)),
         flags_(flags),
         dof_near_min_(0),
         dof_near_max_(0),

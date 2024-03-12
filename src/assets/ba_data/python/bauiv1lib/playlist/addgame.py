@@ -30,9 +30,7 @@ class PlaylistAddGameWindow(bui.Window):
         self._height = (
             346
             if uiscale is bui.UIScale.SMALL
-            else 380
-            if uiscale is bui.UIScale.MEDIUM
-            else 440
+            else 380 if uiscale is bui.UIScale.MEDIUM else 440
         )
         top_extra = 30 if uiscale is bui.UIScale.SMALL else 20
         self._scroll_width = 210
@@ -44,9 +42,7 @@ class PlaylistAddGameWindow(bui.Window):
                 scale=(
                     2.17
                     if uiscale is bui.UIScale.SMALL
-                    else 1.5
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(0, 1) if uiscale is bui.UIScale.SMALL else (0, 0),
             )

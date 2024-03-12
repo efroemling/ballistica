@@ -472,9 +472,9 @@ class KioskWindow(bui.Window):
                             'type': 'bs_hockey.HockeyGame',
                         }
                     ]
-                    appconfig[
-                        'Team Tournament Playlist Selection'
-                    ] = 'Just Hockey'
+                    appconfig['Team Tournament Playlist Selection'] = (
+                        'Just Hockey'
+                    )
                 bui.fade_screen(
                     False,
                     endcall=bui.Call(
@@ -488,9 +488,11 @@ class KioskWindow(bui.Window):
         game = (
             'Easy:Onslaught Training'
             if mode == 'easy'
-            else 'Easy:Rookie Football'
-            if mode == 'medium'
-            else 'Easy:Uber Onslaught'
+            else (
+                'Easy:Rookie Football'
+                if mode == 'medium'
+                else 'Easy:Uber Onslaught'
+            )
         )
         cfg = bui.app.config
         cfg['Selected Coop Game'] = game

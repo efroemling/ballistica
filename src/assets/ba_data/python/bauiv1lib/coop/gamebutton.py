@@ -148,9 +148,11 @@ class GameButton:
                 draw_controller=btn,
                 position=(xach, yach),
                 size=(a_scale, a_scale),
-                color=tuple(ach.get_icon_color(a_complete)[:3])
-                if a_complete
-                else (1.2, 1.2, 1.2),
+                color=(
+                    tuple(ach.get_icon_color(a_complete)[:3])
+                    if a_complete
+                    else (1.2, 1.2, 1.2)
+                ),
                 texture=ach.get_icon_ui_texture(a_complete),
             )
             imw2 = bui.imagewidget(
@@ -307,8 +309,6 @@ class GameButton:
                 opacity=(
                     1.0
                     if (a_complete and unlocked)
-                    else 0.2
-                    if a_complete
-                    else 0.0
+                    else 0.2 if a_complete else 0.0
                 ),
             )

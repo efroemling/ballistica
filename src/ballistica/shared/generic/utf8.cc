@@ -400,8 +400,7 @@ auto u8_is_locale_utf8(const char* locale) -> int {
   for (; *cp != '\0' && *cp != '@' && *cp != '+' && *cp != ','; cp++) {
     if (*cp == '.') {
       const char* encoding = ++cp;
-      for (; *cp != '\0' && *cp != '@' && *cp != '+' && *cp != ','; cp++)
-        ;
+      for (; *cp != '\0' && *cp != '@' && *cp != '+' && *cp != ','; cp++);
       if ((cp - encoding == 5 && !strncmp(encoding, "UTF-8", 5))
           || (cp - encoding == 4 && !strncmp(encoding, "utf8", 4)))
         return 1; /* it's UTF-8 */

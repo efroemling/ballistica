@@ -23,9 +23,7 @@ class CoopLevelLockedWindow(bui.Window):
                 scale=(
                     1.7
                     if uiscale is bui.UIScale.SMALL
-                    else 1.3
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
             )
         )

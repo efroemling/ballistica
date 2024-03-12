@@ -24,8 +24,8 @@ class PythonClassSceneSound : public PythonClass {
  private:
   static auto Play(PythonClassSceneSound* self, PyObject* args,
                    PyObject* keywds) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
-      -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args,
+                     PyObject* kwds) -> PyObject*;
   static void tp_dealloc(PythonClassSceneSound* self);
   static PyMethodDef tp_methods[];
   static bool s_create_empty_;

@@ -1953,9 +1953,9 @@ class SpinoffContext:
         else:
             dst_type = self._dst_entities[dst_path].entity_type
             if dst_type is not EntityType.SYMLINK:
-                self._src_error_entities[
-                    src_path
-                ] = f'expected symlink; found {dst_type}'
+                self._src_error_entities[src_path] = (
+                    f'expected symlink; found {dst_type}'
+                )
             else:
                 # Ok; looks like there's a symlink already there.
                 self._dst_entities_claimed.add(dst_path)
@@ -1997,9 +1997,9 @@ class SpinoffContext:
         else:
             dst_type = self._dst_entities[dst_path].entity_type
             if dst_type is not EntityType.FILE:
-                self._src_error_entities[
-                    src_path
-                ] = f'expected file; found {dst_type}'
+                self._src_error_entities[src_path] = (
+                    f'expected file; found {dst_type}'
+                )
             else:
                 dst_exists = os.path.isfile(dst_path_full)
 

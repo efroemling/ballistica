@@ -25,9 +25,7 @@ class DebugWindow(bui.Window):
         self._height = height = (
             350
             if uiscale is bui.UIScale.SMALL
-            else 420
-            if uiscale is bui.UIScale.MEDIUM
-            else 520
+            else 420 if uiscale is bui.UIScale.MEDIUM else 520
         )
 
         self._scroll_width = self._width - 100
@@ -50,13 +48,11 @@ class DebugWindow(bui.Window):
                 scale=(
                     2.35
                     if uiscale is bui.UIScale.SMALL
-                    else 1.55
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.55 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -30)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -30) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
 

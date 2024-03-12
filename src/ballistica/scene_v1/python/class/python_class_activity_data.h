@@ -24,8 +24,8 @@ class PythonClassActivityData : public PythonClass {
   static PyMethodDef tp_methods[];
   static PyNumberMethods as_number_;
   static auto tp_repr(PythonClassActivityData* self) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
-      -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args,
+                     PyObject* keywds) -> PyObject*;
   static void tp_dealloc(PythonClassActivityData* self);
   static auto nb_bool(PythonClassActivityData* self) -> int;
 
