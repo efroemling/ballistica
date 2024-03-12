@@ -79,14 +79,12 @@ class PlayerSpaz(Spaz):
     @overload
     def getplayer(
         self, playertype: type[PlayerT], doraise: Literal[False] = False
-    ) -> PlayerT | None:
-        ...
+    ) -> PlayerT | None: ...
 
     @overload
     def getplayer(
         self, playertype: type[PlayerT], doraise: Literal[True]
-    ) -> PlayerT:
-        ...
+    ) -> PlayerT: ...
 
     def getplayer(
         self, playertype: type[PlayerT], doraise: bool = False

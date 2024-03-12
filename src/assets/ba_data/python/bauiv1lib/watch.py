@@ -60,9 +60,7 @@ class WatchWindow(bui.Window):
         self._height = (
             578
             if uiscale is bui.UIScale.SMALL
-            else 670
-            if uiscale is bui.UIScale.MEDIUM
-            else 800
+            else 670 if uiscale is bui.UIScale.MEDIUM else 800
         )
         self._current_tab: WatchWindow.TabID | None = None
         extra_top = 20 if uiscale is bui.UIScale.SMALL else 0
@@ -76,15 +74,13 @@ class WatchWindow(bui.Window):
                 scale=(
                     1.3
                     if uiscale is bui.UIScale.SMALL
-                    else 0.97
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 0.8
+                    else 0.97 if uiscale is bui.UIScale.MEDIUM else 0.8
                 ),
-                stack_offset=(0, -10)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 15)
-                if uiscale is bui.UIScale.MEDIUM
-                else (0, 0),
+                stack_offset=(
+                    (0, -10)
+                    if uiscale is bui.UIScale.SMALL
+                    else (0, 15) if uiscale is bui.UIScale.MEDIUM else (0, 0)
+                ),
             )
         )
 
@@ -249,16 +245,12 @@ class WatchWindow(bui.Window):
             b_height = (
                 107
                 if uiscale is bui.UIScale.SMALL
-                else 142
-                if uiscale is bui.UIScale.MEDIUM
-                else 190
+                else 142 if uiscale is bui.UIScale.MEDIUM else 190
             )
             b_space_extra = (
                 0
                 if uiscale is bui.UIScale.SMALL
-                else -2
-                if uiscale is bui.UIScale.MEDIUM
-                else -5
+                else -2 if uiscale is bui.UIScale.MEDIUM else -5
             )
 
             b_color = (0.6, 0.53, 0.63)
@@ -268,9 +260,7 @@ class WatchWindow(bui.Window):
                 - (
                     48
                     if uiscale is bui.UIScale.SMALL
-                    else 45
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 40
+                    else 45 if uiscale is bui.UIScale.MEDIUM else 40
                 )
                 - b_height
             )
@@ -393,9 +383,7 @@ class WatchWindow(bui.Window):
             scale=(
                 1.8
                 if uiscale is bui.UIScale.SMALL
-                else 1.55
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.0
+                else 1.55 if uiscale is bui.UIScale.MEDIUM else 1.0
             ),
             size=(c_width, c_height),
             transition='in_scale',
@@ -581,9 +569,9 @@ class WatchWindow(bui.Window):
                 parent=self._columnwidget,
                 size=(self._my_replays_scroll_width / t_scale, 30),
                 selectable=True,
-                color=(1.0, 1, 0.4)
-                if name == '__lastReplay.brp'
-                else (1, 1, 1),
+                color=(
+                    (1.0, 1, 0.4) if name == '__lastReplay.brp' else (1, 1, 1)
+                ),
                 always_highlight=True,
                 on_select_call=bui.Call(self._on_my_replay_select, name),
                 on_activate_call=self._my_replays_watch_replay_button.activate,

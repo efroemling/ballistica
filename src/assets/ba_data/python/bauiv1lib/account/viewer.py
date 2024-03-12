@@ -43,9 +43,7 @@ class AccountViewerWindow(PopupWindow):
             scale = (
                 2.6
                 if uiscale is bui.UIScale.SMALL
-                else 1.8
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.4
+                else 1.8 if uiscale is bui.UIScale.MEDIUM else 1.4
             )
         self._transitioning_out = False
 
@@ -53,9 +51,7 @@ class AccountViewerWindow(PopupWindow):
         self._height = (
             300
             if uiscale is bui.UIScale.SMALL
-            else 400
-            if uiscale is bui.UIScale.MEDIUM
-            else 450
+            else 400 if uiscale is bui.UIScale.MEDIUM else 450
         )
         self._subcontainer: bui.Widget | None = None
 
@@ -186,9 +182,7 @@ class AccountViewerWindow(PopupWindow):
             scale=(
                 2.3
                 if uiscale is bui.UIScale.SMALL
-                else 1.65
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.23
+                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
             ),
             choices=choices,
             choices_display=choices_display,

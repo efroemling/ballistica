@@ -17,9 +17,9 @@ class RendererGL::ProgramSmokeGL : public RendererGL::ProgramGL {
 
   ProgramSmokeGL(RendererGL* renderer, int flags)
       : RendererGL::ProgramGL(
-          renderer, Object::New<VertexShaderGL>(GetVertexCode(flags)),
-          Object::New<FragmentShaderGL>(GetFragmentCode(flags)), GetName(flags),
-          GetPFlags(flags)),
+            renderer, Object::New<VertexShaderGL>(GetVertexCode(flags)),
+            Object::New<FragmentShaderGL>(GetFragmentCode(flags)),
+            GetName(flags), GetPFlags(flags)),
         flags_(flags),
         r_(0),
         g_(0),

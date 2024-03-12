@@ -41,15 +41,13 @@ class OnScreenKeyboardWindow(Window):
                 scale=(
                     2.0
                     if uiscale is babase.UIScale.SMALL
-                    else 1.5
-                    if uiscale is babase.UIScale.MEDIUM
-                    else 1.0
+                    else 1.5 if uiscale is babase.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, 0)
-                if uiscale is babase.UIScale.SMALL
-                else (0, 0)
-                if uiscale is babase.UIScale.MEDIUM
-                else (0, 0),
+                stack_offset=(
+                    (0, 0)
+                    if uiscale is babase.UIScale.SMALL
+                    else (0, 0) if uiscale is babase.UIScale.MEDIUM else (0, 0)
+                ),
             )
         )
         self._cancel_button = _bauiv1.buttonwidget(
@@ -300,9 +298,11 @@ class OnScreenKeyboardWindow(Window):
                 chars = [c.upper() for c in chars]
             _bauiv1.buttonwidget(
                 edit=self._shift_button,
-                color=self._key_color_lit
-                if self._mode == 'caps'
-                else self._key_color_dark,
+                color=(
+                    self._key_color_lit
+                    if self._mode == 'caps'
+                    else self._key_color_dark
+                ),
                 label=babase.charstr(babase.SpecialChar.SHIFT),
                 on_activate_call=self._shift,
             )

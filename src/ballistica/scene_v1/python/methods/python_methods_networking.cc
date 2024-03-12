@@ -245,8 +245,8 @@ static PyMethodDef PySetAuthenticateClientsDef = {
 
 // ------------------------------- set_admins ----------------------------------
 
-static auto PySetAdmins(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PySetAdmins(PyObject* self, PyObject* args,
+                        PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* admins_obj;
   static const char* kwlist[] = {"admins", nullptr};
@@ -310,8 +310,8 @@ static PyMethodDef PySetEnableDefaultKickVotingDef = {
 
 // --------------------------- connect_to_party --------------------------------
 
-static auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyConnectToParty(PyObject* self, PyObject* args,
+                             PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   std::string address;
   PyObject* address_obj;
@@ -522,8 +522,8 @@ static PyMethodDef PyDisconnectFromHostDef = {
 
 // --------------------------- disconnect_client -------------------------------
 
-static auto PyDisconnectClient(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyDisconnectClient(PyObject* self, PyObject* args,
+                               PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   int client_id;
   int ban_time = 300;  // Old default before we exposed this.
@@ -633,8 +633,8 @@ static PyMethodDef PyGetGamePortDef = {
 
 // ------------------------ set_master_server_source ---------------------------
 
-static auto PySetMasterServerSource(PyObject* self, PyObject* args)
-    -> PyObject* {
+static auto PySetMasterServerSource(PyObject* self,
+                                    PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   int source;
   if (!PyArg_ParseTuple(args, "i", &source)) return nullptr;
@@ -660,8 +660,8 @@ static PyMethodDef PySetMasterServerSourceDef = {
 
 // ----------------------------- host_scan_cycle -------------------------------
 
-static auto PyHostScanCycle(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyHostScanCycle(PyObject* self, PyObject* args,
+                            PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   auto* appmode = SceneV1AppMode::GetActiveOrThrow();
   appmode->HostScanCycle();
@@ -689,8 +689,8 @@ static PyMethodDef PyHostScanCycleDef = {
 
 // ---------------------------- end_host_scanning ------------------------------
 
-static auto PyEndHostScanning(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyEndHostScanning(PyObject* self, PyObject* args,
+                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   auto* appmode = SceneV1AppMode::GetActiveOrThrow();
   appmode->EndHostScanning();
@@ -737,8 +737,8 @@ static PyMethodDef PyHaveConnectedClientsDef = {
 
 // ------------------------------ chatmessage ----------------------------------
 
-static auto PyChatMessage(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyChatMessage(PyObject* self, PyObject* args,
+                          PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   std::string message;
   PyObject* message_obj;
@@ -789,8 +789,8 @@ static PyMethodDef PyChatMessageDef = {
 
 // --------------------------- get_chat_messages -------------------------------
 
-static auto PyGetChatMessages(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyGetChatMessages(PyObject* self, PyObject* args,
+                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());

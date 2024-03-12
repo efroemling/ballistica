@@ -51,9 +51,7 @@ class ServerDialogWindow(bui.Window):
                 scale=(
                     1.8
                     if uiscale is bui.UIScale.SMALL
-                    else 1.35
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
             )
         )
@@ -114,9 +112,11 @@ class ServerDialogWindow(bui.Window):
         self._ok_button = bui.buttonwidget(
             parent=self._root_widget,
             position=(
-                (self._width - 182)
-                if (data.show_cancel or show_copy)
-                else (self._width * 0.5 - 80),
+                (
+                    (self._width - 182)
+                    if (data.show_cancel or show_copy)
+                    else (self._width * 0.5 - 80)
+                ),
                 30,
             ),
             size=(160, 60),

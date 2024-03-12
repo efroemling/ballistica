@@ -52,9 +52,7 @@ class AdvancedSettingsWindow(bui.Window):
         self._height = (
             390.0
             if uiscale is bui.UIScale.SMALL
-            else 450.0
-            if uiscale is bui.UIScale.MEDIUM
-            else 520.0
+            else 450.0 if uiscale is bui.UIScale.MEDIUM else 520.0
         )
         self._lang_status_text: bui.Widget | None = None
 
@@ -71,13 +69,11 @@ class AdvancedSettingsWindow(bui.Window):
                 scale=(
                     2.06
                     if uiscale is bui.UIScale.SMALL
-                    else 1.4
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -25)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -25) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
 
@@ -202,30 +198,38 @@ class AdvancedSettingsWindow(bui.Window):
             up_to_date = bui.app.lang.language in self._complete_langs_list
             bui.textwidget(
                 edit=self._lang_status_text,
-                text=''
-                if bui.app.lang.language == 'Test'
-                else bui.Lstr(
-                    resource=f'{self._r}.translationNoUpdateNeededText'
-                )
-                if up_to_date
-                else bui.Lstr(
-                    resource=f'{self._r}.translationUpdateNeededText'
+                text=(
+                    ''
+                    if bui.app.lang.language == 'Test'
+                    else (
+                        bui.Lstr(
+                            resource=f'{self._r}.translationNoUpdateNeededText'
+                        )
+                        if up_to_date
+                        else bui.Lstr(
+                            resource=f'{self._r}.translationUpdateNeededText'
+                        )
+                    )
                 ),
-                color=(0.2, 1.0, 0.2, 0.8)
-                if up_to_date
-                else (1.0, 0.2, 0.2, 0.8),
+                color=(
+                    (0.2, 1.0, 0.2, 0.8) if up_to_date else (1.0, 0.2, 0.2, 0.8)
+                ),
             )
         else:
             bui.textwidget(
                 edit=self._lang_status_text,
-                text=bui.Lstr(resource=f'{self._r}.translationFetchErrorText')
-                if self._complete_langs_error
-                else bui.Lstr(
-                    resource=f'{self._r}.translationFetchingStatusText'
+                text=(
+                    bui.Lstr(resource=f'{self._r}.translationFetchErrorText')
+                    if self._complete_langs_error
+                    else bui.Lstr(
+                        resource=f'{self._r}.translationFetchingStatusText'
+                    )
                 ),
-                color=(1.0, 0.5, 0.2)
-                if self._complete_langs_error
-                else (0.7, 0.7, 0.7),
+                color=(
+                    (1.0, 0.5, 0.2)
+                    if self._complete_langs_error
+                    else (0.7, 0.7, 0.7)
+                ),
             )
 
     def _rebuild(self) -> None:

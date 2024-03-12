@@ -72,13 +72,11 @@ class GetCurrencyWindow(bui.Window):
                 scale=(
                     1.63
                     if uiscale is bui.UIScale.SMALL
-                    else 1.2
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.2 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -3)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -3) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
 
@@ -605,11 +603,11 @@ class GetCurrencyWindow(bui.Window):
             self._smooth_increase_speed = (
                 diff / 100.0
                 if diff >= 5000
-                else diff / 50.0
-                if diff >= 1500
-                else diff / 30.0
-                if diff >= 500
-                else diff / 15.0
+                else (
+                    diff / 50.0
+                    if diff >= 1500
+                    else diff / 30.0 if diff >= 500 else diff / 15.0
+                )
             )
 
     def _disabled_press(self) -> None:

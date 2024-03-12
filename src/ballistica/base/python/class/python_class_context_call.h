@@ -23,8 +23,8 @@ class PythonClassContextCall : public PythonClass {
   static auto tp_call(PythonClassContextCall* self, PyObject* args,
                       PyObject* keywds) -> PyObject*;
   static auto tp_repr(PythonClassContextCall* self) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
-      -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args,
+                     PyObject* keywds) -> PyObject*;
   static void tp_dealloc(PythonClassContextCall* self);
   Object::Ref<PythonContextCall>* context_call_{};
 };
