@@ -563,6 +563,7 @@ def gen_docs_pdoc() -> None:
 
 
 def gen_docs_sphinx() -> None:
+    """Generate sphinx documentation."""
     import batools.docs
 
     batools.docs.generate_sphinxdoc()

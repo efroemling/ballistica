@@ -52,7 +52,9 @@ def parse_docs_attrs(attrs: list[AttributeInfo], docs: str) -> str:
             # A line with a single alphanumeric word preceding a colon
             # is a new attr.
             splits = line.split(' ', maxsplit=1)
-            if splits[0].replace('_', '').isalnum() and splits[-1].endswith(':'):
+            if splits[0].replace('_', '').isalnum() and splits[-1].endswith(
+                ':'
+            ):
                 if cur_attr is not None:
                     attrs.append(cur_attr)
                 cur_attr = AttributeInfo(name=splits[0])
@@ -142,7 +144,9 @@ def _run_pdoc_with_dummy_modules() -> None:
     # whatnot here so let's make sure we only do this once.
     global _g_genned_pdoc_with_dummy_modules  # pylint: disable=global-statement
     if _g_genned_pdoc_with_dummy_modules:
-        raise RuntimeError('Can only run this once; it mucks with the environment.')
+        raise RuntimeError(
+            'Can only run this once; it mucks with the environment.'
+        )
     _g_genned_pdoc_with_dummy_modules = True
 
     # Make sure dummy-modules are up to date and make them discoverable
@@ -263,7 +267,9 @@ def _run_sphinx() -> None:
     subprocess.run(apidoc_cmd + [assets_dirs['efro_tools']], check=True)
 
     subprocess.run(['make', 'html'], check=True, cwd=sphinx_apidoc_out)
-    shutil.copytree(sphinx_apidoc_out + '_build/html/', build_dir, dirs_exist_ok=True)
+    shutil.copytree(
+        sphinx_apidoc_out + '_build/html/', build_dir, dirs_exist_ok=True
+    )
     # shutil.rmtree(temp_modules_dir)
     duration = time.monotonic() - starttime
     print(f'Generated sphinx documentation in {duration:.1f}s.')
