@@ -57,3 +57,7 @@
 
 ### brostos
 - Added support for joining using ipv6 address
+
+### Loup Garou
+- Added sphinx documentation generation
+
