@@ -243,7 +243,7 @@ def _run_sphinx() -> None:
     shutil.copytree(template_dir, sphinx_apidoc_out, dirs_exist_ok= True)
         
     starttime = time.monotonic()
-    
+    os.environ['BA_RUNNING_WITH_DUMMY_MODULES'] = '1'
     apidoc_cmd = ['sphinx-apidoc', 
                     '-f', # Force overwriting of any existing generated files.
                     '-H', 'Bombsquad', # project
