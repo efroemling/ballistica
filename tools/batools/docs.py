@@ -215,6 +215,7 @@ def _run_pdoc() -> None:
 
 
 def generate_sphinxdoc() -> None:
+    """Generate a set of pdoc documentation."""
     _run_sphinx()
 
 
