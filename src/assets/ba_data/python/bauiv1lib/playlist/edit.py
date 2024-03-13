@@ -36,9 +36,7 @@ class PlaylistEditWindow(bui.Window):
         self._height = (
             400
             if uiscale is bui.UIScale.SMALL
-            else 470
-            if uiscale is bui.UIScale.MEDIUM
-            else 540
+            else 470 if uiscale is bui.UIScale.MEDIUM else 540
         )
 
         top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
@@ -49,13 +47,11 @@ class PlaylistEditWindow(bui.Window):
                 scale=(
                     2.0
                     if uiscale is bui.UIScale.SMALL
-                    else 1.3
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -16)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -16) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
         cancel_button = bui.buttonwidget(
@@ -149,9 +145,7 @@ class PlaylistEditWindow(bui.Window):
         scl = (
             1.03
             if uiscale is bui.UIScale.SMALL
-            else 1.36
-            if uiscale is bui.UIScale.MEDIUM
-            else 1.74
+            else 1.36 if uiscale is bui.UIScale.MEDIUM else 1.74
         )
         v -= 63.0 * scl
 

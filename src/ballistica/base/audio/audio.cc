@@ -124,8 +124,8 @@ auto Audio::IsSoundPlaying(uint32_t play_id) -> bool {
   return result;
 }
 
-auto Audio::SourceBeginExisting(uint32_t play_id, int debug_id)
-    -> AudioSource* {
+auto Audio::SourceBeginExisting(uint32_t play_id,
+                                int debug_id) -> AudioSource* {
   BA_DEBUG_FUNCTION_TIMER_BEGIN();
   uint32_t source_id = AudioServer::SourceIdFromPlayId(play_id);
 
@@ -186,8 +186,8 @@ auto Audio::SafePlaySysSound(SysSoundID sound_id) -> std::optional<uint32_t> {
   return PlaySound(g_base->assets->SysSound(sound_id));
 }
 
-auto Audio::PlaySound(SoundAsset* sound, float volume)
-    -> std::optional<uint32_t> {
+auto Audio::PlaySound(SoundAsset* sound,
+                      float volume) -> std::optional<uint32_t> {
   assert(g_core);
   assert(g_base->InLogicThread());
   BA_DEBUG_FUNCTION_TIMER_BEGIN();

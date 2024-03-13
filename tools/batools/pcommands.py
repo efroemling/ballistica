@@ -562,6 +562,13 @@ def gen_docs_pdoc() -> None:
     batools.docs.generate_pdoc(projroot=str(pcommand.PROJROOT))
 
 
+def gen_docs_sphinx() -> None:
+    """Generate sphinx documentation."""
+    import batools.docs
+
+    batools.docs.generate_sphinxdoc()
+
+
 def list_pip_reqs() -> None:
     """List Python Pip packages needed for this project."""
     from batools.build import get_pip_reqs

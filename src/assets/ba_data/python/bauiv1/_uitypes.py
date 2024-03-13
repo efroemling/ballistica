@@ -164,9 +164,7 @@ class UIController:
         entrynew = (
             self._dialog_stack[-1]
             if self._dialog_stack
-            else self._main_stack[-1]
-            if self._main_stack
-            else None
+            else self._main_stack[-1] if self._main_stack else None
         )
         if entrynew is not None:
             entrynew.create()

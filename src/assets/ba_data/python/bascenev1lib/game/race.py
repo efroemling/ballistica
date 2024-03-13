@@ -778,9 +778,11 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
         assert self._timer is not None
         if self._timer.has_started():
             self._timer.stop(
-                endtime=None
-                if self._last_team_time is None
-                else (self._timer.getstarttime() + self._last_team_time)
+                endtime=(
+                    None
+                    if self._last_team_time is None
+                    else (self._timer.getstarttime() + self._last_team_time)
+                )
             )
 
         results = bs.GameResults()

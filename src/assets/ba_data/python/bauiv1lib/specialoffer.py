@@ -86,13 +86,11 @@ class SpecialOfferWindow(bui.Window):
                 scale=(
                     1.2
                     if uiscale is bui.UIScale.SMALL
-                    else 1.15
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.15 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -15)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -15) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
         self._is_bundle_sale = False
@@ -310,9 +308,11 @@ class SpecialOfferWindow(bui.Window):
 
         self._cancel_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(50, 40)
-            if self._is_bundle_sale
-            else (self._width * 0.5 - 75, 40),
+            position=(
+                (50, 40)
+                if self._is_bundle_sale
+                else (self._width * 0.5 - 75, 40)
+            ),
             size=(150, 60),
             scale=1.0,
             on_activate_call=self._cancel,
@@ -322,9 +322,11 @@ class SpecialOfferWindow(bui.Window):
         self._cancel_countdown_text = bui.textwidget(
             parent=self._root_widget,
             text='',
-            position=(50 + 150 + 20, 40 + 27)
-            if self._is_bundle_sale
-            else (self._width * 0.5 - 75 + 150 + 20, 40 + 27),
+            position=(
+                (50 + 150 + 20, 40 + 27)
+                if self._is_bundle_sale
+                else (self._width * 0.5 - 75 + 150 + 20, 40 + 27)
+            ),
             scale=1.1,
             size=(0, 0),
             h_align='left',
@@ -349,12 +351,14 @@ class SpecialOfferWindow(bui.Window):
         bui.containerwidget(
             edit=self._root_widget,
             cancel_button=self._cancel_button,
-            start_button=self._purchase_button
-            if self._is_bundle_sale
-            else None,
-            selected_child=self._purchase_button
-            if self._is_bundle_sale
-            else display['button'],
+            start_button=(
+                self._purchase_button if self._is_bundle_sale else None
+            ),
+            selected_child=(
+                self._purchase_button
+                if self._is_bundle_sale
+                else display['button']
+            ),
         )
 
     def _stop_flashing(self) -> None:
@@ -373,12 +377,12 @@ class SpecialOfferWindow(bui.Window):
     def _update_cancel_button_graphics(self) -> None:
         bui.buttonwidget(
             edit=self._cancel_button,
-            color=(0.5, 0.5, 0.5)
-            if self._cancel_delay > 0
-            else (0.7, 0.4, 0.34),
-            textcolor=(0.5, 0.5, 0.5)
-            if self._cancel_delay > 0
-            else (0.9, 0.9, 1.0),
+            color=(
+                (0.5, 0.5, 0.5) if self._cancel_delay > 0 else (0.7, 0.4, 0.34)
+            ),
+            textcolor=(
+                (0.5, 0.5, 0.5) if self._cancel_delay > 0 else (0.9, 0.9, 1.0)
+            ),
         )
         bui.textwidget(
             edit=self._cancel_countdown_text,

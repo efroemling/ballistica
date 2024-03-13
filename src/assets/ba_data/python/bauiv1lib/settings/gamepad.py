@@ -53,13 +53,11 @@ class GamepadSettingsWindow(bui.Window):
                 scale=(
                     1.63
                     if uiscale is bui.UIScale.SMALL
-                    else 1.35
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(-20, -16)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (-20, -16) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
                 transition=transition,
             )
         )
@@ -543,16 +541,12 @@ class GamepadSettingsWindow(bui.Window):
             sval1 = (
                 self._settings['analogStickLR' + self._ext]
                 if 'analogStickLR' + self._ext in self._settings
-                else 5
-                if self._is_secondary
-                else None
+                else 5 if self._is_secondary else None
             )
             sval2 = (
                 self._settings['analogStickUD' + self._ext]
                 if 'analogStickUD' + self._ext in self._settings
-                else 6
-                if self._is_secondary
-                else None
+                else 6 if self._is_secondary else None
             )
             assert isinstance(sval1, (int, type(None)))
             assert isinstance(sval2, (int, type(None)))
@@ -595,9 +589,7 @@ class GamepadSettingsWindow(bui.Window):
             dpadnum = (
                 self._settings['dpad' + self._ext]
                 if 'dpad' + self._ext in self._settings
-                else 2
-                if self._is_secondary
-                else None
+                else 2 if self._is_secondary else None
             )
             assert isinstance(dpadnum, (int, type(None)))
             if dpadnum is not None:
@@ -893,9 +885,7 @@ class AwaitGamepadInputWindow(bui.Window):
                 scale=(
                     2.0
                     if uiscale is bui.UIScale.SMALL
-                    else 1.9
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.9 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 size=(width, height),
                 transition='in_scale',

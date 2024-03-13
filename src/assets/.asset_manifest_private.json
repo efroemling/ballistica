@@ -4487,6 +4487,8 @@
  "pylib-apple/zoneinfo/_common.py",
  "pylib-apple/zoneinfo/_tzpath.py",
  "pylib-apple/zoneinfo/_zoneinfo.py",
+ "sphinx/template/__pycache__/conf.cpython-311.opt-1.pyc",
+ "sphinx/template/conf.py",
  "windows/Win32/DLLs/_asyncio.pyd",
  "windows/Win32/DLLs/_asyncio_d.pyd",
  "windows/Win32/DLLs/_bz2.pyd",

@@ -57,13 +57,11 @@ class FileSelectorWindow(bui.Window):
                 scale=(
                     2.23
                     if uiscale is bui.UIScale.SMALL
-                    else 1.4
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -35)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -35) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
         bui.textwidget(
@@ -73,11 +71,15 @@ class FileSelectorWindow(bui.Window):
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
-            text=bui.Lstr(resource=self._r + '.titleFolderText')
-            if (allow_folders and not valid_file_extensions)
-            else bui.Lstr(resource=self._r + '.titleFileText')
-            if not allow_folders
-            else bui.Lstr(resource=self._r + '.titleFileFolderText'),
+            text=(
+                bui.Lstr(resource=self._r + '.titleFolderText')
+                if (allow_folders and not valid_file_extensions)
+                else (
+                    bui.Lstr(resource=self._r + '.titleFileText')
+                    if not allow_folders
+                    else bui.Lstr(resource=self._r + '.titleFileFolderText')
+                )
+            ),
             maxwidth=210,
         )
 
@@ -444,9 +446,11 @@ class FileSelectorWindow(bui.Window):
                     position=(10 + folder_icon_size * 1.05, entry_height * 0.5),
                     size=(0, 0),
                     maxwidth=self._scroll_width * 0.93 - 50,
-                    color=(1, 1, 1, 1)
-                    if (is_valid_file_path or is_dir)
-                    else (0.5, 0.5, 0.5, 1),
+                    color=(
+                        (1, 1, 1, 1)
+                        if (is_valid_file_path or is_dir)
+                        else (0.5, 0.5, 0.5, 1)
+                    ),
                 )
                 v -= entry_height
 

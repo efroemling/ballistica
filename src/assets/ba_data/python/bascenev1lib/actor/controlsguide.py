@@ -456,9 +456,11 @@ class ControlsGuide(bs.Actor):
                 (
                     '${B}',
                     bs.Lstr(
-                        resource='holdAnyKeyText'
-                        if all_keyboards
-                        else 'holdAnyButtonText'
+                        resource=(
+                            'holdAnyKeyText'
+                            if all_keyboards
+                            else 'holdAnyButtonText'
+                        )
                     ),
                 ),
             ],

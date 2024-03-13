@@ -183,6 +183,14 @@ docs:
 docs-pdoc:
 	@$(PCOMMAND) gen_docs_pdoc
 
+docs-sphinx:
+	$(MAKE) dummymodules
+	@$(PCOMMAND) gen_docs_sphinx
+
+docs-sphinx-clean:
+	rm -rf .cache/sphinx
+	rm -rf build/sphinx
+
 pcommandbatch_speed_test: prereqs
 	@$(PCOMMAND) pcommandbatch_speed_test $(PCOMMANDBATCH)
 

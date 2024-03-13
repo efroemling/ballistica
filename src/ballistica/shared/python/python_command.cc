@@ -97,8 +97,8 @@ auto PythonCommand::CanEval() -> bool {
   return true;
 }
 
-auto PythonCommand::Exec(bool print_errors, PyObject* globals, PyObject* locals)
-    -> bool {
+auto PythonCommand::Exec(bool print_errors, PyObject* globals,
+                         PyObject* locals) -> bool {
   assert(Python::HaveGIL());
 
   // If we're being used before core is up, we need both global and
@@ -163,8 +163,8 @@ auto PythonCommand::Exec(bool print_errors, PyObject* globals, PyObject* locals)
   return false;
 }
 
-auto PythonCommand::Eval(bool print_errors, PyObject* globals, PyObject* locals)
-    -> PythonRef {
+auto PythonCommand::Eval(bool print_errors, PyObject* globals,
+                         PyObject* locals) -> PythonRef {
   assert(Python::HaveGIL());
   assert(!dead_);
 

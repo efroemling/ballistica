@@ -198,12 +198,14 @@ class Actor:
     # Overloads to convey our exact return type depending on 'doraise' value.
 
     @overload
-    def getactivity(self, doraise: Literal[True] = True) -> bascenev1.Activity:
-        ...
+    def getactivity(
+        self, doraise: Literal[True] = True
+    ) -> bascenev1.Activity: ...
 
     @overload
-    def getactivity(self, doraise: Literal[False]) -> bascenev1.Activity | None:
-        ...
+    def getactivity(
+        self, doraise: Literal[False]
+    ) -> bascenev1.Activity | None: ...
 
     def getactivity(self, doraise: bool = True) -> bascenev1.Activity | None:
         """Return the bascenev1.Activity this Actor is associated with.
