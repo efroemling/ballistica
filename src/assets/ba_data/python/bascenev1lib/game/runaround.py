@@ -1413,10 +1413,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                    time: float = 1.22) -> None:
         """ Makes the UI heart beat at low health. """
         assert self._lives_bg is not None
-        if (
-            self._lives_bg is None
-            or self._lives_bg.node.exists()
-        ):
+        if self._lives_bg.node.exists():
             return
         heart = self._lives_bg.node
 
@@ -1434,7 +1431,8 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
         # Neutralize heartbeat (Done did when dead.)
         else:
+            defscale: Sequence[float] = heart.scale
             bs.animate_array(heart, 'scale', 2, {
-                0.0: heart.scale,
+                0.0: defscale,
                 time: (90,90),
             })
