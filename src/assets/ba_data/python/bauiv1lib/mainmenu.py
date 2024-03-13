@@ -454,7 +454,7 @@ class MainMenuWindow(bui.Window):
                     resource='watchWindow.playbackSpeedText',
                     subs=[('${SPEED}', str(1.23))],
                 ),
-                position=(h, v + v_offs + 7 * t_scale),
+                position=(h, v + v_offs + 15 * t_scale),
                 h_align='center',
                 v_align='center',
                 size=(0, 0),
@@ -543,7 +543,8 @@ class MainMenuWindow(bui.Window):
             bui.textwidget(
                 parent=self._root_widget,
                 draw_controller=btn,
-                text='<<',
+                # text='<<',
+                text=bui.charstr(bui.SpecialChar.REWIND_BUTTON),
                 position=(
                     h - b_size - b_buffer_1 * 2,
                     v - b_size * 0.5 - b_buffer_2 + 5 * t_scale + v_offs,
@@ -568,7 +569,8 @@ class MainMenuWindow(bui.Window):
             bui.textwidget(
                 parent=self._root_widget,
                 draw_controller=btn,
-                text='>>',
+                # text='>>',
+                text=bui.charstr(bui.SpecialChar.FAST_FORWARD_BUTTON),
                 position=(
                     h + b_size + b_buffer_1 * 2,
                     v - b_size * 0.5 - b_buffer_2 + 5 * t_scale + v_offs,
@@ -1454,8 +1456,9 @@ class MainMenuWindow(bui.Window):
     def _resume(self) -> None:
         assert bui.app.classic is not None
         bui.app.classic.resume()
-        if self._root_widget:
-            bui.containerwidget(edit=self._root_widget, transition='out_right')
+        # if self._root_widget:
+        #     bui.containerwidget(edit=self._root_widget,
+        # transition='out_right')
         bui.app.ui_v1.clear_main_menu_window(transition='out_right')
 
         # If there's callbacks waiting for this window to go away, call them.
