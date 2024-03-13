@@ -1431,8 +1431,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
         # Neutralize heartbeat (Done did when dead.)
         else:
-            defscale: Sequence[float] = heart.scale
             bs.animate_array(heart, 'scale', 2, {
-                0.0: defscale,
+                0.0: list(heart.scale),
                 time: (90,90),
             })
