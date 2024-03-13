@@ -39,9 +39,7 @@ class ProfileUpgradeWindow(bui.Window):
         self._base_scale = (
             2.05
             if uiscale is bui.UIScale.SMALL
-            else 1.5
-            if uiscale is bui.UIScale.MEDIUM
-            else 1.2
+            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.2
         )
         self._upgrade_start_time: float | None = None
         self._name = edit_profile_window.getname()
@@ -54,9 +52,9 @@ class ProfileUpgradeWindow(bui.Window):
                 toolbar_visibility='menu_currency',
                 transition=transition,
                 scale=self._base_scale,
-                stack_offset=(0, 15)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, 15) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
         cancel_button = bui.buttonwidget(

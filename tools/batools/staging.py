@@ -645,9 +645,11 @@ class AssetStager:
             'ballisticakit_server.py',
             outfilename=os.path.join(
                 self.serverdst,
-                'ballisticakit_server.py'
-                if self.win_type is not None
-                else 'ballisticakit_server',
+                (
+                    'ballisticakit_server.py'
+                    if self.win_type is not None
+                    else 'ballisticakit_server'
+                ),
             ),
         )
         _stage_server_file(

@@ -103,14 +103,14 @@ def format_project_cpp_files(projroot: Path, full: bool) -> None:
     dirtyfiles = cache.get_dirty_files()
 
     def format_file(filename: str) -> dict[str, Any]:
-        start_time = time.time()
+        start_time = time.monotonic()
 
         # Note: seems os.system does not unlock the gil;
         # make sure to use subprocess.
         result = subprocess.call(['clang-format', '-i', filename])
         if result != 0:
             raise RuntimeError(f'Formatting failed for {filename}')
-        duration = time.time() - start_time
+        duration = time.monotonic() - start_time
         print(f'Formatted {filename} in {duration:.2f} seconds.')
         sys.stdout.flush()
         return {'f': filename, 't': duration}
@@ -514,7 +514,7 @@ def _run_pylint(
     from pylint import lint
     from efro.terminal import Clr
 
-    start_time = time.time()
+    start_time = time.monotonic()
     args = ['--rcfile', str(pylintrc), '--output-format=colorized']
 
     args += dirtyfiles
@@ -540,7 +540,7 @@ def _run_pylint(
         if run.linter.msg_status != 0:
             raise CleanError('Pylint failed.')
 
-    duration = time.time() - start_time
+    duration = time.monotonic() - start_time
     print(
         f'{Clr.GRN}Pylint passed for {name}'
         f' in {duration:.1f} seconds.{Clr.RST}'
@@ -796,12 +796,12 @@ def mypy(projroot: Path, full: bool) -> None:
     filenames = get_script_filenames(projroot)
     desc = '(full)' if full else '(incremental)'
     print(f'{Clr.BLU}Running Mypy {desc}...{Clr.RST}', flush=True)
-    starttime = time.time()
+    starttime = time.monotonic()
     try:
         mypy_files(projroot, filenames, full)
     except Exception as exc:
         raise CleanError('Mypy failed.') from exc
-    duration = time.time() - starttime
+    duration = time.monotonic() - starttime
     print(
         f'{Clr.GRN}Mypy passed in {duration:.1f} seconds.{Clr.RST}', flush=True
     )
@@ -819,7 +819,7 @@ def dmypy(projroot: Path) -> None:
         return
 
     print('Running Mypy (daemon)...', flush=True)
-    starttime = time.time()
+    starttime = time.monotonic()
     try:
         args = [
             'dmypy',
@@ -834,7 +834,7 @@ def dmypy(projroot: Path) -> None:
         subprocess.run(args, check=True)
     except Exception as exc:
         raise CleanError('Mypy daemon: fail.') from exc
-    duration = time.time() - starttime
+    duration = time.monotonic() - starttime
     print(
         f'{Clr.GRN}Mypy daemon passed in {duration:.1f} seconds.{Clr.RST}',
         flush=True,
@@ -893,7 +893,7 @@ def _run_idea_inspections(
 
     from efro.terminal import Clr
 
-    start_time = time.time()
+    start_time = time.monotonic()
     print(
         f'{Clr.BLU}{displayname} checking'
         f' {len(scripts)} file(s)...{Clr.RST}',
@@ -944,7 +944,7 @@ def _run_idea_inspections(
             f'{Clr.SRED}{displayname} inspection'
             f' found {total_errors} error(s).{Clr.RST}'
         )
-    duration = time.time() - start_time
+    duration = time.monotonic() - start_time
     print(
         f'{Clr.GRN}{displayname} passed for {len(scripts)} files'
         f' in {duration:.1f} seconds.{Clr.RST}',

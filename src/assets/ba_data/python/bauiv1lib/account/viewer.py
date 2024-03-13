@@ -7,8 +7,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import logging
 
-from bauiv1lib.popup import PopupWindow, PopupMenuWindow
+from typing_extensions import override
 import bauiv1 as bui
+
+from bauiv1lib.popup import PopupWindow, PopupMenuWindow
 
 if TYPE_CHECKING:
     from typing import Any
@@ -41,9 +43,7 @@ class AccountViewerWindow(PopupWindow):
             scale = (
                 2.6
                 if uiscale is bui.UIScale.SMALL
-                else 1.8
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.4
+                else 1.8 if uiscale is bui.UIScale.MEDIUM else 1.4
             )
         self._transitioning_out = False
 
@@ -51,9 +51,7 @@ class AccountViewerWindow(PopupWindow):
         self._height = (
             300
             if uiscale is bui.UIScale.SMALL
-            else 400
-            if uiscale is bui.UIScale.MEDIUM
-            else 450
+            else 400 if uiscale is bui.UIScale.MEDIUM else 450
         )
         self._subcontainer: bui.Widget | None = None
 
@@ -184,9 +182,7 @@ class AccountViewerWindow(PopupWindow):
             scale=(
                 2.3
                 if uiscale is bui.UIScale.SMALL
-                else 1.65
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.23
+                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
             ),
             choices=choices,
             choices_display=choices_display,
@@ -596,6 +592,7 @@ class AccountViewerWindow(PopupWindow):
             self._transitioning_out = True
             bui.containerwidget(edit=self.root_widget, transition='out_scale')
 
+    @override
     def on_popup_cancel(self) -> None:
         bui.getsound('swish').play()
         self._transition_out()

@@ -58,9 +58,7 @@ class PluginWindow(bui.Window):
         self._height = (
             390.0
             if uiscale is bui.UIScale.SMALL
-            else 450.0
-            if uiscale is bui.UIScale.MEDIUM
-            else 520.0
+            else 450.0 if uiscale is bui.UIScale.MEDIUM else 520.0
         )
         top_extra = 10 if uiscale is bui.UIScale.SMALL else 0
         super().__init__(
@@ -72,13 +70,11 @@ class PluginWindow(bui.Window):
                 scale=(
                     2.06
                     if uiscale is bui.UIScale.SMALL
-                    else 1.4
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -25)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -25) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
 
@@ -252,9 +248,7 @@ class PluginWindow(bui.Window):
             scale=(
                 2.3
                 if uiscale is bui.UIScale.SMALL
-                else 1.65
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.23
+                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
             ),
             choices=[c.value for c in Category],
             choices_display=[bui.Lstr(resource=c.resource) for c in Category],
@@ -365,9 +359,11 @@ class PluginWindow(bui.Window):
                 textcolor=(
                     (0.8, 0.3, 0.3)
                     if (plugspec.attempted_load and plugspec.plugin is None)
-                    else (0.6, 0.6, 0.6)
-                    if plugspec.plugin is None
-                    else (0, 1, 0)
+                    else (
+                        (0.6, 0.6, 0.6)
+                        if plugspec.plugin is None
+                        else (0, 1, 0)
+                    )
                 ),
             )
             # noinspection PyUnresolvedReferences

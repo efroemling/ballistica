@@ -7,6 +7,8 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+
 if TYPE_CHECKING:
     from typing import Any
 
@@ -30,6 +32,7 @@ class NoIndentEncoder(json.JSONEncoder):
         del self.kwargs['indent']
         self._replacement_map: dict = {}
 
+    @override
     def default(self, o: Any) -> Any:
         import uuid
 
@@ -40,6 +43,7 @@ class NoIndentEncoder(json.JSONEncoder):
             return '@@%s@@' % (key,)
         return super().default(o)
 
+    @override
     def encode(self, o: Any) -> Any:
         result = super().encode(o)
         for k, v in self._replacement_map.items():

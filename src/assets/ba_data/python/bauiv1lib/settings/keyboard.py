@@ -39,9 +39,7 @@ class ConfigKeyboardWindow(bui.Window):
                 scale=(
                     1.6
                     if uiscale is bui.UIScale.SMALL
-                    else 1.3
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(0, 5) if uiscale is bui.UIScale.SMALL else (0, 0),
                 transition=transition,
@@ -70,10 +68,10 @@ class ConfigKeyboardWindow(bui.Window):
             'buttonLeft',
             'buttonRight',
         ]:
-            self._settings[
-                button
-            ] = bui.app.classic.get_input_device_mapped_value(
-                self._input, button
+            self._settings[button] = (
+                bui.app.classic.get_input_device_mapped_value(
+                    self._input, button
+                )
             )
 
         cancel_button = bui.buttonwidget(
@@ -347,9 +345,7 @@ class AwaitKeyboardInputWindow(bui.Window):
                 scale=(
                     2.0
                     if uiscale is bui.UIScale.SMALL
-                    else 1.5
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
             )
         )

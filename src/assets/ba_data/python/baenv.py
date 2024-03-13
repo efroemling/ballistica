@@ -52,7 +52,7 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 21757
+TARGET_BALLISTICA_BUILD = 21775
 TARGET_BALLISTICA_VERSION = '1.7.33'
 
 
@@ -264,6 +264,10 @@ def _calc_data_dir(data_dir: str | None) -> str:
 def _setup_logging() -> LogHandler:
     from efro.log import setup_logging, LogLevel
 
+    # TODO: should set this up with individual loggers under a top level
+    # 'ba' logger, and at that point we can kill off the
+    # suppress_non_root_debug option since we'll only ever need to set
+    # 'ba' to DEBUG at most.
     log_handler = setup_logging(
         log_path=None,
         level=LogLevel.DEBUG,
@@ -287,9 +291,9 @@ def _setup_certs(contains_python_dist: bool) -> None:
         import certifi
 
         # Let both OpenSSL and requests (if present) know to use this.
-        os.environ['SSL_CERT_FILE'] = os.environ[
-            'REQUESTS_CA_BUNDLE'
-        ] = certifi.where()
+        os.environ['SSL_CERT_FILE'] = os.environ['REQUESTS_CA_BUNDLE'] = (
+            certifi.where()
+        )
 
 
 def _setup_paths(

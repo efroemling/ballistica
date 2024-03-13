@@ -171,7 +171,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_apputils.py \
   $(BUILD_DIR)/ba_data/python/babase/_assetmanager.py \
   $(BUILD_DIR)/ba_data/python/babase/_asyncio.py \
-  $(BUILD_DIR)/ba_data/python/babase/_cloud.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsole.py \
   $(BUILD_DIR)/ba_data/python/babase/_emptyappmode.py \
   $(BUILD_DIR)/ba_data/python/babase/_env.py \
@@ -210,6 +209,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/osmusic.py \
   $(BUILD_DIR)/ba_data/python/baenv.py \
   $(BUILD_DIR)/ba_data/python/baplus/__init__.py \
+  $(BUILD_DIR)/ba_data/python/baplus/_cloud.py \
   $(BUILD_DIR)/ba_data/python/baplus/_hooks.py \
   $(BUILD_DIR)/ba_data/python/baplus/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/__init__.py \
@@ -446,7 +446,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_apputils.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_assetmanager.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_asyncio.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_cloud.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_devconsole.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_emptyappmode.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_env.cpython-311.opt-1.pyc \
@@ -485,6 +484,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/osmusic.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/__pycache__/baenv.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baplus/__pycache__/__init__.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_cloud.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_hooks.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_subsystem.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/__init__.cpython-311.opt-1.pyc \
@@ -2742,7 +2742,8 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/resolver.py \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/scanner.py \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/serializer.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/tokens.py
+  $(BUILD_DIR)/ba_data/python-site-packages/yaml/tokens.py \
+  $(BUILD_DIR)/sphinx/template/conf.py
 
 SCRIPT_TARGETS_PYC_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/_yaml/__pycache__/__init__.cpython-311.opt-1.pyc \
@@ -2766,7 +2767,8 @@ SCRIPT_TARGETS_PYC_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/resolver.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/scanner.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/serializer.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/tokens.cpython-311.opt-1.pyc
+  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/tokens.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/sphinx/template/__pycache__/conf.cpython-311.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)

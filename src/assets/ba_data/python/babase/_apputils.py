@@ -10,9 +10,11 @@ from threading import Thread
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 from efro.call import tpartial
 from efro.log import LogLevel
 from efro.dataclassio import ioprepped, dataclass_to_json, dataclass_from_json
+
 import _babase
 from babase._appsubsystem import AppSubsystem
 
@@ -386,6 +388,7 @@ class AppHealthMonitor(AppSubsystem):
         self._response = False
         self._first_check = True
 
+    @override
     def on_app_loading(self) -> None:
         # If any traceback dumps happened last run, log and clear them.
         log_dumped_app_state(from_previous_run=True)
@@ -449,10 +452,12 @@ class AppHealthMonitor(AppSubsystem):
 
             self._first_check = False
 
+    @override
     def on_app_suspend(self) -> None:
         assert _babase.in_logic_thread()
         self._running = False
 
+    @override
     def on_app_unsuspend(self) -> None:
         assert _babase.in_logic_thread()
         self._running = True

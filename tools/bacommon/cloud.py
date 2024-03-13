@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Annotated
 from enum import Enum
 
+from typing_extensions import override
 from efro.message import Message, Response
 from efro.dataclassio import ioprepped, IOAttrs
 from bacommon.transfer import DirectoryManifest
@@ -21,6 +22,7 @@ if TYPE_CHECKING:
 class LoginProxyRequestMessage(Message):
     """Request send to the cloud to ask for a login-proxy."""
 
+    @override
     @classmethod
     def get_response_types(cls) -> list[type[Response] | None]:
         return [LoginProxyRequestResponse]
@@ -49,6 +51,7 @@ class LoginProxyStateQueryMessage(Message):
     proxyid: Annotated[str, IOAttrs('p')]
     proxykey: Annotated[str, IOAttrs('k')]
 
+    @override
     @classmethod
     def get_response_types(cls) -> list[type[Response] | None]:
         return [LoginProxyStateQueryResponse]
@@ -85,6 +88,7 @@ class LoginProxyCompleteMessage(Message):
 class PingMessage(Message):
     """Standard ping."""
 
+    @override
     @classmethod
     def get_response_types(cls) -> list[type[Response] | None]:
         return [PingResponse]
@@ -103,6 +107,7 @@ class TestMessage(Message):
 
     testfoo: Annotated[int, IOAttrs('f')]
 
+    @override
     @classmethod
     def get_response_types(cls) -> list[type[Response] | None]:
         return [TestResponse]
@@ -114,6 +119,28 @@ class TestResponse(Response):
     """Here's that workspace you asked for, boss."""
 
     testfoo: Annotated[int, IOAttrs('f')]
+
+
+@ioprepped
+@dataclass
+class PromoCodeMessage(Message):
+    """User is entering a promo code"""
+
+    code: Annotated[str, IOAttrs('c')]
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [PromoCodeResponse]
+
+
+@ioprepped
+@dataclass
+class PromoCodeResponse(Response):
+    """Applied that promo code for ya, boss."""
+
+    valid: Annotated[bool, IOAttrs('v')]
+    message: Annotated[str | None, IOAttrs('m', store_default=False)] = None
 
 
 @ioprepped
@@ -136,6 +163,7 @@ class WorkspaceFetchMessage(Message):
     workspaceid: Annotated[str, IOAttrs('w')]
     state: Annotated[WorkspaceFetchState, IOAttrs('s')]
 
+    @override
     @classmethod
     def get_response_types(cls) -> list[type[Response] | None]:
         return [WorkspaceFetchResponse]
@@ -162,6 +190,7 @@ class WorkspaceFetchResponse(Response):
 class MerchAvailabilityMessage(Message):
     """Can we show merch link?"""
 
+    @override
     @classmethod
     def get_response_types(cls) -> list[type[Response] | None]:
         return [MerchAvailabilityResponse]
@@ -187,6 +216,7 @@ class SignInMessage(Message):
     description: Annotated[str, IOAttrs('d', soft_default='-')]
     apptime: Annotated[float, IOAttrs('at', soft_default=-1.0)]
 
+    @override
     @classmethod
     def get_response_types(cls) -> list[type[Response] | None]:
         return [SignInResponse]
@@ -205,6 +235,7 @@ class SignInResponse(Response):
 class ManageAccountMessage(Message):
     """Message asking for a manage-account url."""
 
+    @override
     @classmethod
     def get_response_types(cls) -> list[type[Response] | None]:
         return [ManageAccountResponse]

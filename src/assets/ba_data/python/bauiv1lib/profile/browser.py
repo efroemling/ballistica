@@ -38,9 +38,7 @@ class ProfileBrowserWindow(bui.Window):
         self._height = (
             360.0
             if uiscale is bui.UIScale.SMALL
-            else 385.0
-            if uiscale is bui.UIScale.MEDIUM
-            else 410.0
+            else 385.0 if uiscale is bui.UIScale.MEDIUM else 410.0
         )
 
         # If we're being called up standalone, handle pause/resume ourself.
@@ -74,13 +72,11 @@ class ProfileBrowserWindow(bui.Window):
                 scale=(
                     2.2
                     if uiscale is bui.UIScale.SMALL
-                    else 1.6
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.6 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -14)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -14) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
 
@@ -125,9 +121,7 @@ class ProfileBrowserWindow(bui.Window):
         scl = (
             1.055
             if uiscale is bui.UIScale.SMALL
-            else 1.18
-            if uiscale is bui.UIScale.MEDIUM
-            else 1.3
+            else 1.18 if uiscale is bui.UIScale.MEDIUM else 1.3
         )
         v -= 70.0 * scl
         self._new_button = bui.buttonwidget(

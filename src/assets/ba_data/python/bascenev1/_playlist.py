@@ -89,18 +89,18 @@ def filter_playlist(
                 'bs_king_of_the_hill.KingOfTheHillGame',
                 'bastd.game.kingofthehill.KingOfTheHillGame',
             ):
-                entry[
-                    'type'
-                ] = 'bascenev1lib.game.kingofthehill.KingOfTheHillGame'
+                entry['type'] = (
+                    'bascenev1lib.game.kingofthehill.KingOfTheHillGame'
+                )
             if entry['type'] in (
                 'Capture_the_Flag.CTFGame',
                 'bsCaptureTheFlag.CTFGame',
                 'bs_capture_the_flag.CTFGame',
                 'bastd.game.capturetheflag.CaptureTheFlagGame',
             ):
-                entry[
-                    'type'
-                ] = 'bascenev1lib.game.capturetheflag.CaptureTheFlagGame'
+                entry['type'] = (
+                    'bascenev1lib.game.capturetheflag.CaptureTheFlagGame'
+                )
             if entry['type'] in (
                 'Death_Match.DeathMatchGame',
                 'bsDeathMatch.DeathMatchGame',
@@ -163,25 +163,25 @@ def filter_playlist(
                 'bs_easter_egg_hunt.EasterEggHuntGame',
                 'bastd.game.easteregghunt.EasterEggHuntGame',
             ):
-                entry[
-                    'type'
-                ] = 'bascenev1lib.game.easteregghunt.EasterEggHuntGame'
+                entry['type'] = (
+                    'bascenev1lib.game.easteregghunt.EasterEggHuntGame'
+                )
             if entry['type'] in (
                 'bsMeteorShower.MeteorShowerGame',
                 'bs_meteor_shower.MeteorShowerGame',
                 'bastd.game.meteorshower.MeteorShowerGame',
             ):
-                entry[
-                    'type'
-                ] = 'bascenev1lib.game.meteorshower.MeteorShowerGame'
+                entry['type'] = (
+                    'bascenev1lib.game.meteorshower.MeteorShowerGame'
+                )
             if entry['type'] in (
                 'bsTargetPractice.TargetPracticeGame',
                 'bs_target_practice.TargetPracticeGame',
                 'bastd.game.targetpractice.TargetPracticeGame',
             ):
-                entry[
-                    'type'
-                ] = 'bascenev1lib.game.targetpractice.TargetPracticeGame'
+                entry['type'] = (
+                    'bascenev1lib.game.targetpractice.TargetPracticeGame'
+                )
 
             gameclass = babase.getclass(entry['type'], GameActivity)
 

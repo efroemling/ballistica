@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from typing_extensions import override
+
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
 
@@ -21,18 +23,14 @@ class AchievementsWindow(PopupWindow):
             scale = (
                 2.3
                 if uiscale is bui.UIScale.SMALL
-                else 1.65
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.23
+                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
             )
         self._transitioning_out = False
         self._width = 450
         self._height = (
             300
             if uiscale is bui.UIScale.SMALL
-            else 370
-            if uiscale is bui.UIScale.MEDIUM
-            else 450
+            else 370 if uiscale is bui.UIScale.MEDIUM else 450
         )
         bg_color = (0.5, 0.4, 0.6)
 
@@ -124,9 +122,11 @@ class AchievementsWindow(PopupWindow):
 
             bui.imagewidget(
                 parent=self._subcontainer,
-                position=(sub_width * 0.10 + 1, sub_height - 20 - incr * i - 9)
-                if complete
-                else (sub_width * 0.10 - 4, sub_height - 20 - incr * i - 14),
+                position=(
+                    (sub_width * 0.10 + 1, sub_height - 20 - incr * i - 9)
+                    if complete
+                    else (sub_width * 0.10 - 4, sub_height - 20 - incr * i - 14)
+                ),
                 size=(18, 18) if complete else (27, 27),
                 opacity=1.0 if complete else 0.3,
                 color=ach.get_icon_color(complete)[:3],
@@ -165,9 +165,11 @@ class AchievementsWindow(PopupWindow):
                 flatness=1.0,
                 shadow=0.0,
                 color=(0.83, 0.8, 0.85) if complete else (0.8, 0.8, 0.8, 0.2),
-                text=ach.description_full_complete
-                if complete
-                else ach.description_full,
+                text=(
+                    ach.description_full_complete
+                    if complete
+                    else ach.description_full
+                ),
                 size=(0, 0),
                 h_align='left',
                 v_align='center',
@@ -229,6 +231,7 @@ class AchievementsWindow(PopupWindow):
             self._transitioning_out = True
             bui.containerwidget(edit=self.root_widget, transition='out_scale')
 
+    @override
     def on_popup_cancel(self) -> None:
         bui.getsound('swish').play()
         self._transition_out()

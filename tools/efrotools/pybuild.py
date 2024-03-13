@@ -37,8 +37,8 @@ VERSION_MIN_TVOS = '9.0'
 # why-is-lldb-generating-exc-bad-instruction-with-user-compiled-library-on-macos
 #
 # For now will try to ride out this 3.0 LTS version as long as possible.
-OPENSSL_VER_APPLE = '3.0.12'
-OPENSSL_VER_ANDROID = '3.0.12'
+OPENSSL_VER_APPLE = '3.0.13'
+OPENSSL_VER_ANDROID = '3.0.13'
 
 LIBFFI_VER_APPLE = '3.4.4'
 BZIP2_VER_APPLE = '1.0.8'
@@ -46,7 +46,7 @@ XZ_VER_APPLE = '5.4.4'
 
 # Android repo doesn't seem to be getting updated much so manually
 # bumping various versions to keep things up to date.
-ZLIB_VER_ANDROID = '1.3'
+ZLIB_VER_ANDROID = '1.3.1'
 XZ_VER_ANDROID = '5.4.5'
 BZIP2_VER_ANDROID = '1.0.8'
 GDBM_VER_ANDROID = '1.23'

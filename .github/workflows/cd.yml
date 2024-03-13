@@ -14,6 +14,9 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
+    # Remove this once we upgrade to 3.12.
+    - name: Install typing_extensions (temp)
+      run: python3.11 -m pip install typing_extensions
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -31,6 +34,9 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
+    # Remove this once we upgrade to 3.12.
+    - name: Install typing_extensions (temp)
+      run: python3.11 -m pip install typing_extensions
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -48,6 +54,9 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
+    # Remove this once we upgrade to 3.12.
+    - name: Install typing_extensions (temp)
+      run: python3.11 -m pip install typing_extensions
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -65,6 +74,9 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
+    # Remove this once we upgrade to 3.12.
+    - name: Install typing_extensions (temp)
+      run: python3.11 -m pip install typing_extensions
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -82,6 +94,9 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
+    # Remove this once we upgrade to 3.12.
+    - name: Install typing_extensions (temp)
+      run: python3.11 -m pip install typing_extensions
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -99,6 +114,9 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
+    # Remove this once we upgrade to 3.12.
+    - name: Install typing_extensions (temp)
+      run: python3.11 -m pip install typing_extensions
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -116,6 +134,9 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
+    # Remove this once we upgrade to 3.12.
+    - name: Install typing_extensions (temp)
+      run: python3.11 -m pip install typing_extensions
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -133,6 +154,9 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
+    # Remove this once we upgrade to 3.12.
+    - name: Install typing_extensions (temp)
+      run: python3.11 -m pip install typing_extensions
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -150,6 +174,9 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
+    # Remove this once we upgrade to 3.12.
+    - name: Install typing_extensions (temp)
+      run: python3.11 -m pip install typing_extensions
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -167,6 +194,9 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
+    # Remove this once we upgrade to 3.12.
+    - name: Install typing_extensions (temp)
+      run: python3.11 -m pip install typing_extensions
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -176,3 +206,25 @@ jobs:
       with:
         name: windows_x86_server_(debug)
         path: build/prefab/full/windows_x86_server
+  make_sphinx_docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    # Remove this once we upgrade to 3.12.
+    - name: Install typing_extensions (temp)
+      run: python3.11 -m pip install typing_extensions
+    - name: Install sphinx
+      run: python3.11 -m pip install sphinx furo
+    - name: Install pip requirements
+      run: tools/pcommand install_pip_reqs
+    - name: Make the build
+      run: make docs-sphinx
+    - name: Upload the build
+      uses: actions/upload-artifact@v3
+      with:
+        name: sphinx_html_docs
+        path: build/sphinx

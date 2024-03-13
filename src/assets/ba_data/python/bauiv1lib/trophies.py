@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+
 from bauiv1lib import popup
 import bauiv1 as bui
 
@@ -29,9 +31,7 @@ class TrophiesWindow(popup.PopupWindow):
             scale = (
                 2.3
                 if uiscale is bui.UIScale.SMALL
-                else 1.65
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.23
+                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
             )
         self._transitioning_out = False
         self._width = 300
@@ -177,9 +177,9 @@ class TrophiesWindow(popup.PopupWindow):
                 scale=0.4,
                 flatness=1.0,
                 shadow=0.0,
-                color=(0.63, 0.6, 0.75)
-                if (t_count > 0)
-                else (0.6, 0.6, 0.6, 0.4),
+                color=(
+                    (0.63, 0.6, 0.75) if (t_count > 0) else (0.6, 0.6, 0.6, 0.4)
+                ),
                 text=txt,
                 size=(0, 0),
                 h_align='center',
@@ -191,9 +191,9 @@ class TrophiesWindow(popup.PopupWindow):
                 parent=self._subcontainer,
                 position=(sub_width * 0.88, sub_height - 20 - incr * i),
                 maxwidth=sub_width * 0.3,
-                color=(0.7, 0.8, 1.0)
-                if (t_count > 0)
-                else (0.9, 0.9, 1.0, 0.3),
+                color=(
+                    (0.7, 0.8, 1.0) if (t_count > 0) else (0.9, 0.9, 1.0, 0.3)
+                ),
                 flatness=1.0,
                 shadow=0.0,
                 scale=0.5,
@@ -213,6 +213,7 @@ class TrophiesWindow(popup.PopupWindow):
             self._transitioning_out = True
             bui.containerwidget(edit=self.root_widget, transition='out_scale')
 
+    @override
     def on_popup_cancel(self) -> None:
         bui.getsound('swish').play()
         self._transition_out()

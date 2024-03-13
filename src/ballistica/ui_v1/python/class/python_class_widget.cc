@@ -90,8 +90,8 @@ auto PythonClassWidget::GetWidget() const -> Widget* {
   return w;
 }
 
-auto PythonClassWidget::tp_getattro(PythonClassWidget* self, PyObject* attr)
-    -> PyObject* {
+auto PythonClassWidget::tp_getattro(PythonClassWidget* self,
+                                    PyObject* attr) -> PyObject* {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());
@@ -312,8 +312,8 @@ auto PythonClassWidget::Delete(PythonClassWidget* self, PyObject* args,
 }
 
 auto PythonClassWidget::AddDeleteCallback(PythonClassWidget* self,
-                                          PyObject* args, PyObject* keywds)
-    -> PyObject* {
+                                          PyObject* args,
+                                          PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* call_obj;
   static const char* kwlist[] = {"call", nullptr};

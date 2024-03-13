@@ -10,6 +10,9 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+import bascenev1 as bs
+
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.scoreboard import Scoreboard
 from bascenev1lib.actor.flag import (
@@ -19,7 +22,6 @@ from bascenev1lib.actor.flag import (
     FlagDroppedMessage,
     FlagDiedMessage,
 )
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -141,10 +143,12 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
         bs.BoolSetting('Epic Mode', default=False),
     ]
 
+    @override
     @classmethod
     def supports_session_type(cls, sessiontype: type[bs.Session]) -> bool:
         return issubclass(sessiontype, bs.DualTeamSession)
 
+    @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
         assert bs.app.classic is not None
@@ -173,16 +177,19 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
             bs.MusicType.EPIC if self._epic_mode else bs.MusicType.FLAG_CATCHER
         )
 
+    @override
     def get_instance_description(self) -> str | Sequence:
         if self._score_to_win == 1:
             return 'Steal the enemy flag.'
         return 'Steal the enemy flag ${ARG1} times.', self._score_to_win
 
+    @override
     def get_instance_description_short(self) -> str | Sequence:
         if self._score_to_win == 1:
             return 'return 1 flag'
         return 'return ${ARG1} flags', self._score_to_win
 
+    @override
     def create_team(self, sessionteam: bs.SessionTeam) -> Team:
         # Create our team instance and its initial values.
 
@@ -272,12 +279,14 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
 
         return team
 
+    @override
     def on_team_join(self, team: Team) -> None:
         # Can't do this in create_team because the team's color/etc. have
         # not been wired up yet at that point.
         self._spawn_flag_for_team(team)
         self._update_scoreboard()
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
         self.setup_standard_time_limit(self._time_limit)
@@ -406,6 +415,7 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
         if team.score >= self._score_to_win:
             self.end_game()
 
+    @override
     def end_game(self) -> None:
         results = bs.GameResults()
         for team in self.teams:
@@ -519,6 +529,30 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
             if team.flag_return_touches < 0:
                 logging.exception('CTF flag_return_touches < 0')
 
+    def _handle_death_flag_capture(self, player: Player) -> None:
+        """Handles flag values when a player dies or leaves the game."""
+        # Don't do anything if the player hasn't touched the flag at all.
+        if not player.touching_own_flag:
+            return
+
+        team = player.team
+        # For each "point" our player has touched theflag (Could be multiple),
+        # deduct one from both our player and
+        # the flag's return touches variable.
+        for _ in range(player.touching_own_flag):
+            # Deduct
+            player.touching_own_flag -= 1
+            team.flag_return_touches -= 1
+            # Update our flag's timer accordingly
+            # (Prevents immediate resets in case
+            # there might be more people touching it).
+            if team.flag_return_touches == 0:
+                team.touch_return_timer = None
+                team.touch_return_timer_ticking = None
+            # Safety check, just to be sure!
+            if team.flag_return_touches < 0:
+                logging.exception('CTF flag_return_touches < 0')
+
     def _flash_base(self, team: Team, length: float = 2.0) -> None:
         light = bs.newnode(
             'light',
@@ -532,6 +566,7 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
         bs.animate(light, 'intensity', {0.0: 0, 0.25: 2.0, 0.5: 0}, loop=True)
         bs.timer(length, light.delete)
 
+    @override
     def spawn_player_spaz(
         self,
         player: Player,
@@ -576,9 +611,11 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
                 team, team.score, self._score_to_win
             )
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.PlayerDiedMessage):
             super().handlemessage(msg)  # Augment standard behavior.
+            self._handle_death_flag_capture(msg.getplayer(Player))
             self.respawn_player(msg.getplayer(Player))
 
         elif isinstance(msg, FlagDiedMessage):
@@ -605,3 +642,8 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
 
         else:
             super().handlemessage(msg)
+
+    @override
+    def on_player_leave(self, player: Player) -> None:
+        """Prevents leaving players from capturing their flag."""
+        self._handle_death_flag_capture(player)

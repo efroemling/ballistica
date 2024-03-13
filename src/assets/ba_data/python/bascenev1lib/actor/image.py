@@ -7,6 +7,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -165,6 +166,7 @@ class Image(bs.Actor):
                 bs.WeakCall(self.handlemessage, bs.DieMessage()),
             )
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         assert not self.expired
         if isinstance(msg, bs.DieMessage):

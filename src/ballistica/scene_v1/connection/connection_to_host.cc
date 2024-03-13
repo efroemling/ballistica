@@ -24,7 +24,7 @@ const int kPingSendInterval = 2000;
 
 ConnectionToHost::ConnectionToHost()
     : protocol_version_{
-        SceneV1AppMode::GetSingleton()->host_protocol_version()} {}
+          SceneV1AppMode::GetSingleton()->host_protocol_version()} {}
 
 auto ConnectionToHost::GetAsUDP() -> ConnectionToHostUDP* { return nullptr; }
 
