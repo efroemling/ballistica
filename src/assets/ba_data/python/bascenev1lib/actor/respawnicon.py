@@ -213,14 +213,11 @@ class RespawnIcon:
                     # Start the timer to tick down.
                     self._dec_timer = bs.Timer(
                         0.25,
-                        bs.WeakCall(
-                            self._dec_step,
-                            ['..','.','']
-                        ),
-                        repeat=True
+                        bs.WeakCall(self._dec_step, ['..', '.', '']),
+                        repeat=True,
                     )
         else:
             self._visible = False
-            self._image = (
-                self._text
-            ) = self._dec_text = self._timer = self._name = None
+            self._image = self._text = self._dec_text = self._timer = (
+                self._name
+            ) = None
