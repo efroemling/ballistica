@@ -522,18 +522,20 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             if self._lives == 0:
                 self._bots.stop_moving()
                 self.continue_or_end_game()
-            
+
             # Heartbeat behavior
             if self._lives < 5:
                 hbtime = 0.39 + (0.21 * self._lives)
-                self._lives_hbtime = bs.Timer(hbtime,
-                                              lambda: self.heart_dyin(True, hbtime),
-                                              repeat=True)
+                self._lives_hbtime = bs.Timer(
+                    hbtime,
+                    lambda: self.heart_dyin(True, hbtime),
+                    repeat=True
+                )
                 self.heart_dyin(True)
             else:
                 self._lives_hbtime = None
                 self.heart_dyin(False)
-                
+
             assert self._lives_text is not None
             assert self._lives_text.node
             self._lives_text.node.text = str(self._lives)
@@ -1371,16 +1373,19 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
     def _set_can_end_wave(self) -> None:
         self._can_end_wave = True
-    
+
     def heart_dyin(self,
                    status: bool,
                    time: float = 1.22) -> None:
         """ Makes the UI heart beat at low health. """
-        if not (self._lives_bg or
-                self._lives_bg.node.exists()): return
-        
+        assert self._lives_bg is not None
+        if (
+            self._lives_bg is None
+            or self._lives_bg.node.exists()
+        ):
+            return
         heart = self._lives_bg.node
-        
+
         # Make the heart beat intensely!
         if status:
             bs.animate_array(heart, 'scale', 2, {
@@ -1396,6 +1401,6 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         # Neutralize heartbeat (Done did when dead.)
         else:
             bs.animate_array(heart, 'scale', 2, {
-                0:heart.scale,
-                time:(90,90),
+                0.0: heart.scale,
+                time: (90,90),
             })
