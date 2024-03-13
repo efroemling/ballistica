@@ -219,8 +219,16 @@ def generate_sphinxdoc() -> None:
     _run_sphinx()
 
 
-def _run_sphinx() -> None:
+def _run_sphinx(
+    project_name: str = 'ballistica',
+    project_author: str = 'Efroemling',
+    copyright_text: str = '2024, Efroemling',
+    generate_dummymodules_doc: bool = True,
+    generate_tools_doc: bool = True,
+) -> None:
     """Do the actual docs generation with sphinx."""
+    # pylint: disable=too-many-locals
+
     import time
     import shutil
 
@@ -243,6 +251,15 @@ def _run_sphinx() -> None:
     os.makedirs(sphinx_apidoc_out, exist_ok=True)
 
     os.environ['BALLISTICA_ROOT'] = os.getcwd()  # used in sphinx conf.py
+    os.environ['SPHINX_SETTINGS'] = str(
+        {
+            'project_name': project_name,
+            'project_author': project_author,
+            'copyright': copyright_text,
+            'version': version,
+            'buildnum': buildnum,
+        }
+    )
     os.environ['BA_RUNNING_WITH_DUMMY_MODULES'] = '1'
 
     shutil.copytree(template_dir, sphinx_apidoc_out, dirs_exist_ok=True)
@@ -252,9 +269,9 @@ def _run_sphinx() -> None:
         'sphinx-apidoc',
         '-f',  # Force overwriting of any existing generated files.
         '-H',
-        'Bombsquad',  # project
+        project_name,
         '-A',
-        'Efroemling',  # author
+        project_author,
         '-V',
         str(version),  # version
         '-R',
@@ -263,9 +280,14 @@ def _run_sphinx() -> None:
         '-o',
         sphinx_apidoc_out,
     ]
+    if generate_dummymodules_doc:
+        subprocess.run(
+            apidoc_cmd + [assets_dirs['dummy_modules']] + ['--private'],
+            check=True,
+        )
+    if generate_tools_doc:
+        subprocess.run(apidoc_cmd + [assets_dirs['efro_tools']], check=True)
     subprocess.run(apidoc_cmd + [assets_dirs['ba_data']], check=True)
-    subprocess.run(apidoc_cmd + [assets_dirs['dummy_modules']], check=True)
-    subprocess.run(apidoc_cmd + [assets_dirs['efro_tools']], check=True)
 
     subprocess.run(['make', 'html'], check=True, cwd=sphinx_apidoc_out)
     shutil.copytree(
