@@ -1,4 +1,4 @@
-### 1.7.33 (build 21776, api 8, 2024-03-13)
+### 1.7.33 (build 21777, api 8, 2024-03-13)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).
 - Added a 'Show Demos When Idle' option in advanced settings. If enabled, the
@@ -36,6 +36,8 @@
   EraOSBeta!)
 - Added a UI for customizing Series Length in Teams and Points-to-Win in FFA
   (Thanks EraOSBeta!)
+- Sphinx based Python documentation generation is now wired up (Thanks
+  Loup-Garou911XD!)
 - Renaming & overwriting existing profiles is no longer possible (Thanks Temp!)
 
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
