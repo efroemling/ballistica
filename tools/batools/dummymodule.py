@@ -408,13 +408,16 @@ def _special_class_cases(classname: str) -> str:
             '        return self\n'
             '\n'
             '    # (for index access)\n'
+            '    @override\n'
             '    def __getitem__(self, typeargs: Any) -> Any:\n'
             '        return 0.0\n'
             '\n'
+            '    @override\n'
             '    def __len__(self) -> int:\n'
             '        return 3\n'
             '\n'
             '    # (for iterator access)\n'
+            '    @override\n'
             '    def __iter__(self) -> Any:\n'
             '        return self\n'
             '\n'
@@ -812,18 +815,24 @@ class Generator:
         typing_imports = (
             'TYPE_CHECKING, overload, Sequence, TypeVar'
             if self.mname == '_babase'
-            else 'TYPE_CHECKING, overload, TypeVar'
-            if self.mname == '_bascenev1'
-            else 'TYPE_CHECKING, TypeVar'
+            else (
+                'TYPE_CHECKING, overload, TypeVar'
+                if self.mname == '_bascenev1'
+                else 'TYPE_CHECKING, TypeVar'
+            )
         )
         typing_imports_tc = (
             'Any, Callable'
             if self.mname == '_babase'
-            else 'Any, Callable, Literal, Sequence'
-            if self.mname == '_bascenev1'
-            else 'Any, Callable, Literal, Sequence'
-            if self.mname == '_bauiv1'
-            else 'Any, Callable'
+            else (
+                'Any, Callable, Literal, Sequence'
+                if self.mname == '_bascenev1'
+                else (
+                    'Any, Callable, Literal, Sequence'
+                    if self.mname == '_bauiv1'
+                    else 'Any, Callable'
+                )
+            )
         )
         tc_import_lines_extra = ''
         if self.mname == '_babase':
@@ -839,9 +848,7 @@ class Generator:
             ''
             if self.mname == '_babase'
             # else 'from babase._mgen.enums import TimeFormat, TimeType\n\n'
-            else ''
-            if self.mname == '_bascenev1'
-            else ''
+            else '' if self.mname == '_bascenev1' else ''
         )
         out = (
             get_public_license('python') + '\n'
@@ -885,6 +892,8 @@ class Generator:
             'from __future__ import annotations\n'
             '\n'
             f'from typing import {typing_imports}\n'
+            '\n'
+            f'from typing_extensions import override\n'
             '\n'
             f'{enum_import_lines}'
             'if TYPE_CHECKING:\n'

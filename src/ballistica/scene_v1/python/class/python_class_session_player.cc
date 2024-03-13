@@ -324,8 +324,8 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
 }
 
 auto PythonClassSessionPlayer::tp_setattro(PythonClassSessionPlayer* self,
-                                           PyObject* attr, PyObject* val)
-    -> int {
+                                           PyObject* attr,
+                                           PyObject* val) -> int {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());
@@ -351,8 +351,8 @@ auto PythonClassSessionPlayer::tp_setattro(PythonClassSessionPlayer* self,
 }
 
 auto PythonClassSessionPlayer::GetName(PythonClassSessionPlayer* self,
-                                       PyObject* args, PyObject* keywds)
-    -> PyObject* {
+                                       PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   int full = false;
@@ -383,8 +383,8 @@ auto PythonClassSessionPlayer::Exists(PythonClassSessionPlayer* self)
 }
 
 auto PythonClassSessionPlayer::SetName(PythonClassSessionPlayer* self,
-                                       PyObject* args, PyObject* keywds)
-    -> PyObject* {
+                                       PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   PyObject* name_obj;
@@ -425,8 +425,8 @@ auto PythonClassSessionPlayer::ResetInput(PythonClassSessionPlayer* self)
 }
 
 auto PythonClassSessionPlayer::AssignInputCall(PythonClassSessionPlayer* self,
-                                               PyObject* args, PyObject* keywds)
-    -> PyObject* {
+                                               PyObject* args,
+                                               PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   PyObject* input_type_obj;
@@ -518,8 +518,8 @@ auto PythonClassSessionPlayer::GetV1AccountID(PythonClassSessionPlayer* self)
 }
 
 auto PythonClassSessionPlayer::SetData(PythonClassSessionPlayer* self,
-                                       PyObject* args, PyObject* keywds)
-    -> PyObject* {
+                                       PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   PyObject* team_obj;
@@ -564,8 +564,8 @@ auto PythonClassSessionPlayer::GetIconInfo(PythonClassSessionPlayer* self)
 }
 
 auto PythonClassSessionPlayer::SetIconInfo(PythonClassSessionPlayer* self,
-                                           PyObject* args, PyObject* keywds)
-    -> PyObject* {
+                                           PyObject* args,
+                                           PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   PyObject* texture_name_obj;
@@ -599,8 +599,8 @@ auto PythonClassSessionPlayer::SetIconInfo(PythonClassSessionPlayer* self,
 }
 
 auto PythonClassSessionPlayer::SetActivity(PythonClassSessionPlayer* self,
-                                           PyObject* args, PyObject* keywds)
-    -> PyObject* {
+                                           PyObject* args,
+                                           PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   PyObject* activity_obj;
@@ -625,8 +625,8 @@ auto PythonClassSessionPlayer::SetActivity(PythonClassSessionPlayer* self,
 }
 
 auto PythonClassSessionPlayer::SetNode(PythonClassSessionPlayer* self,
-                                       PyObject* args, PyObject* keywds)
-    -> PyObject* {
+                                       PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   PyObject* node_obj;

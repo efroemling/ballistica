@@ -32,6 +32,7 @@ class HostConfig:
     user: str = 'ubuntu'
     port: int = 22
     mosh_port: int | None = None
+    mosh_port_2: int | None = None
     mosh_server_path: str | None = None
     mosh_shell: str = 'sh'
     workspaces_root: str = '/home/${USER}/cloudshell_workspaces'

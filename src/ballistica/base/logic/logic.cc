@@ -634,8 +634,8 @@ void Logic::NotifyOfPendingAssetLoads() {
   UpdatePendingWorkTimer_();
 }
 
-auto Logic::NewAppTimer(microsecs_t length, bool repeat, Runnable* runnable)
-    -> int {
+auto Logic::NewAppTimer(microsecs_t length, bool repeat,
+                        Runnable* runnable) -> int {
   // App-Timers simply get injected into our loop and run alongside our own
   // stuff.
   assert(g_base->InLogicThread());
@@ -659,8 +659,8 @@ void Logic::SetAppTimerLength(int timer_id, microsecs_t length) {
   }
 }
 
-auto Logic::NewDisplayTimer(microsecs_t length, bool repeat, Runnable* runnable)
-    -> int {
+auto Logic::NewDisplayTimer(microsecs_t length, bool repeat,
+                            Runnable* runnable) -> int {
   // Display-Timers go into a timer-list that we exec explicitly when we
   // step display-time.
   assert(g_base->InLogicThread());

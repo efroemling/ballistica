@@ -90,9 +90,7 @@ class CoopBrowserWindow(bui.Window):
         self._height = (
             657
             if uiscale is bui.UIScale.SMALL
-            else 730
-            if uiscale is bui.UIScale.MEDIUM
-            else 800
+            else 730 if uiscale is bui.UIScale.MEDIUM else 800
         )
         app.ui_v1.set_main_menu_location('Coop Select')
         self._r = 'coopSelectWindow'
@@ -104,6 +102,19 @@ class CoopBrowserWindow(bui.Window):
             'campaignDifficulty', 'easy'
         )
 
+        if (
+            self._campaign_difficulty == 'hard'
+            and not app.classic.accounts.have_pro_options()
+        ):
+            plus.add_v1_account_transaction(
+                {
+                    'type': 'SET_MISC_VAL',
+                    'name': 'campaignDifficulty',
+                    'value': 'easy',
+                }
+            )
+            self._campaign_difficulty = 'easy'
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
@@ -112,17 +123,13 @@ class CoopBrowserWindow(bui.Window):
                 stack_offset=(
                     (0, -15)
                     if uiscale is bui.UIScale.SMALL
-                    else (0, 0)
-                    if uiscale is bui.UIScale.MEDIUM
-                    else (0, 0)
+                    else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
                 ),
                 transition=transition,
                 scale=(
                     1.2
                     if uiscale is bui.UIScale.SMALL
-                    else 0.8
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 0.75
+                    else 0.8 if uiscale is bui.UIScale.MEDIUM else 0.75
                 ),
             )
         )
@@ -271,9 +278,11 @@ class CoopBrowserWindow(bui.Window):
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=False,
-            position=(65 + x_inset, 120)
-            if uiscale is bui.UIScale.SMALL and app.ui_v1.use_toolbars
-            else (65 + x_inset, 70),
+            position=(
+                (65 + x_inset, 120)
+                if uiscale is bui.UIScale.SMALL and app.ui_v1.use_toolbars
+                else (65 + x_inset, 70)
+            ),
             size=(self._scroll_width, self._scroll_height),
             simple_culling_v=10.0,
             claims_left_right=True,
@@ -421,12 +430,14 @@ class CoopBrowserWindow(bui.Window):
             if tbtn.time_remaining_value_text is not None:
                 bui.textwidget(
                     edit=tbtn.time_remaining_value_text,
-                    text=bui.timestring(tbtn.time_remaining, centi=False)
-                    if (
-                        tbtn.has_time_remaining
-                        and self._tourney_data_up_to_date
-                    )
-                    else '-',
+                    text=(
+                        bui.timestring(tbtn.time_remaining, centi=False)
+                        if (
+                            tbtn.has_time_remaining
+                            and self._tourney_data_up_to_date
+                        )
+                        else '-'
+                    ),
                 )
 
             # Also adjust the ad icon visibility.
@@ -447,9 +458,9 @@ class CoopBrowserWindow(bui.Window):
         try:
             bui.imagewidget(
                 edit=self._hard_button_lock_image,
-                opacity=0.0
-                if bui.app.classic.accounts.have_pro_options()
-                else 1.0,
+                opacity=(
+                    0.0 if bui.app.classic.accounts.have_pro_options() else 1.0
+                ),
             )
         except Exception:
             logging.exception('Error updating campaign lock.')
@@ -559,12 +570,16 @@ class CoopBrowserWindow(bui.Window):
             enable_sound=False,
             on_activate_call=bui.Call(self._set_campaign_difficulty, 'easy'),
             on_select_call=bui.Call(self.sel_change, 'campaign', 'easyButton'),
-            color=sel_color
-            if self._campaign_difficulty == 'easy'
-            else un_sel_color,
-            textcolor=sel_textcolor
-            if self._campaign_difficulty == 'easy'
-            else un_sel_textcolor,
+            color=(
+                sel_color
+                if self._campaign_difficulty == 'easy'
+                else un_sel_color
+            ),
+            textcolor=(
+                sel_textcolor
+                if self._campaign_difficulty == 'easy'
+                else un_sel_textcolor
+            ),
         )
         bui.widget(edit=self._easy_button, show_buffer_left=100)
         if self._selected_campaign_level == 'easyButton':
@@ -585,12 +600,16 @@ class CoopBrowserWindow(bui.Window):
             enable_sound=False,
             on_activate_call=bui.Call(self._set_campaign_difficulty, 'hard'),
             on_select_call=bui.Call(self.sel_change, 'campaign', 'hardButton'),
-            color=sel_color_hard
-            if self._campaign_difficulty == 'hard'
-            else un_sel_color,
-            textcolor=sel_textcolor
-            if self._campaign_difficulty == 'hard'
-            else un_sel_textcolor,
+            color=(
+                sel_color_hard
+                if self._campaign_difficulty == 'hard'
+                else un_sel_color
+            ),
+            textcolor=(
+                sel_textcolor
+                if self._campaign_difficulty == 'hard'
+                else un_sel_textcolor
+            ),
         )
         self._hard_button_lock_image = bui.imagewidget(
             parent=parent_widget,
@@ -960,35 +979,43 @@ class CoopBrowserWindow(bui.Window):
         for i, tbutton in enumerate(self._tournament_buttons):
             bui.widget(
                 edit=tbutton.button,
-                up_widget=self._tournament_info_button
-                if i == 0
-                else self._tournament_buttons[i - 1].button,
-                down_widget=self._tournament_buttons[(i + 1)].button
-                if i + 1 < len(self._tournament_buttons)
-                else custom_h_scroll,
+                up_widget=(
+                    self._tournament_info_button
+                    if i == 0
+                    else self._tournament_buttons[i - 1].button
+                ),
+                down_widget=(
+                    self._tournament_buttons[(i + 1)].button
+                    if i + 1 < len(self._tournament_buttons)
+                    else custom_h_scroll
+                ),
             )
             bui.widget(
                 edit=tbutton.more_scores_button,
-                down_widget=self._tournament_buttons[
-                    (i + 1)
-                ].current_leader_name_text
-                if i + 1 < len(self._tournament_buttons)
-                else custom_h_scroll,
+                down_widget=(
+                    self._tournament_buttons[(i + 1)].current_leader_name_text
+                    if i + 1 < len(self._tournament_buttons)
+                    else custom_h_scroll
+                ),
             )
             bui.widget(
                 edit=tbutton.current_leader_name_text,
-                up_widget=self._tournament_info_button
-                if i == 0
-                else self._tournament_buttons[i - 1].more_scores_button,
+                up_widget=(
+                    self._tournament_info_button
+                    if i == 0
+                    else self._tournament_buttons[i - 1].more_scores_button
+                ),
             )
 
         for btn in self._custom_buttons:
             try:
                 bui.widget(
                     edit=btn.get_button(),
-                    up_widget=tournament_h_scroll
-                    if self._tournament_buttons
-                    else self._tournament_info_button,
+                    up_widget=(
+                        tournament_h_scroll
+                        if self._tournament_buttons
+                        else self._tournament_info_button
+                    ),
                 )
             except Exception:
                 logging.exception('Error wiring up custom buttons.')
@@ -1042,8 +1069,9 @@ class CoopBrowserWindow(bui.Window):
 
     def _switch_to_score(
         self,
-        show_tab: StoreBrowserWindow.TabID
-        | None = StoreBrowserWindow.TabID.EXTRAS,
+        show_tab: (
+            StoreBrowserWindow.TabID | None
+        ) = StoreBrowserWindow.TabID.EXTRAS,
     ) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.account import show_sign_in_prompt

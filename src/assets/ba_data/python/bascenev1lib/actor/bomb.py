@@ -10,7 +10,9 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING, TypeVar
 
+from typing_extensions import override
 import bascenev1 as bs
+
 from bascenev1lib.gameutils import SharedObjects
 
 if TYPE_CHECKING:
@@ -661,6 +663,7 @@ class Blast(bs.Actor):
 
             bs.timer(0.4, _extra_debris_sound)
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         assert not self.expired
 
@@ -935,6 +938,7 @@ class Bomb(bs.Actor):
             else None
         )
 
+    @override
     def on_expire(self) -> None:
         super().on_expire()
 
@@ -1140,6 +1144,7 @@ class Bomb(bs.Actor):
         if msg.srcnode:
             pass
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, ExplodeMessage):
             self.explode()

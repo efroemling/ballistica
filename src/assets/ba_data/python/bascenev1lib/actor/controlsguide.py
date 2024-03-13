@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -455,9 +456,11 @@ class ControlsGuide(bs.Actor):
                 (
                     '${B}',
                     bs.Lstr(
-                        resource='holdAnyKeyText'
-                        if all_keyboards
-                        else 'holdAnyButtonText'
+                        resource=(
+                            'holdAnyKeyText'
+                            if all_keyboards
+                            else 'holdAnyButtonText'
+                        )
                     ),
                 ),
             ],
@@ -547,9 +550,11 @@ class ControlsGuide(bs.Actor):
         self._update_timer = None
         self._dead = True
 
+    @override
     def exists(self) -> bool:
         return not self._dead
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         assert not self.expired
         if isinstance(msg, bs.DieMessage):

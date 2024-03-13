@@ -70,15 +70,13 @@ auto ClassicFeatureSet::Import() -> ClassicFeatureSet* {
   return ImportThroughPythonModule<ClassicFeatureSet>("_baclassic");
 }
 
-auto ClassicFeatureSet::GetControllerValue(base::InputDevice* device,
-                                           const std::string& value_name)
-    -> int {
+auto ClassicFeatureSet::GetControllerValue(
+    base::InputDevice* device, const std::string& value_name) -> int {
   return python->GetControllerValue(device, value_name);
 }
 
-auto ClassicFeatureSet::GetControllerFloatValue(base::InputDevice* device,
-                                                const std::string& value_name)
-    -> float {
+auto ClassicFeatureSet::GetControllerFloatValue(
+    base::InputDevice* device, const std::string& value_name) -> float {
   return python->GetControllerFloatValue(device, value_name);
 }
 

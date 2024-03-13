@@ -7,6 +7,8 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+
 from bauiv1lib.promocode import PromoCodeWindow
 import bauiv1 as bui
 
@@ -55,6 +57,7 @@ class SharePlaylistImportWindow(PromoCodeWindow):
             edit=self._root_widget, transition=self._transition_out
         )
 
+    @override
     def _do_enter(self) -> None:
         plus = bui.app.plus
         assert plus is not None
@@ -90,9 +93,7 @@ class SharePlaylistResultsWindow(bui.Window):
                 scale=(
                     1.8
                     if uiscale is bui.UIScale.SMALL
-                    else 1.35
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
             )
         )

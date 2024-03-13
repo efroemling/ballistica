@@ -4,7 +4,9 @@
 
 from __future__ import annotations
 
+from typing_extensions import override
 import bascenev1 as bs
+
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 from bascenev1lib.actor.zoomtext import ZoomText
 
@@ -14,6 +16,7 @@ class DrawScoreScreenActivity(MultiTeamScoreScreenActivity):
 
     default_music = None  # Awkward silence...
 
+    @override
     def on_begin(self) -> None:
         bs.set_analytics_screen('Draw Score Screen')
         super().on_begin()

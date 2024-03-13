@@ -4,7 +4,9 @@
 
 from __future__ import annotations
 
+from typing_extensions import override
 import bascenev1 as bs
+
 from bascenev1lib.actor.text import Text
 
 
@@ -15,6 +17,7 @@ class MultiTeamJoinActivity(bs.JoinActivity):
         super().__init__(settings)
         self._next_up_text: Text | None = None
 
+    @override
     def on_transition_in(self) -> None:
         from bascenev1lib.actor.controlsguide import ControlsGuide
 

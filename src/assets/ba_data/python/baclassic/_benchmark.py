@@ -7,6 +7,7 @@ import random
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
 import babase
 import bascenev1
 import _baclassic
@@ -43,6 +44,7 @@ def run_cpu_benchmark() -> None:
             cfg['Graphics Quality'] = self._old_quality
             cfg.apply()
 
+        @override
         def on_player_request(self, player: bascenev1.SessionPlayer) -> bool:
             return False
 

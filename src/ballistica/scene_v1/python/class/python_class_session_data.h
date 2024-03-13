@@ -24,8 +24,8 @@ class PythonClassSessionData : public PythonClass {
   static PyMethodDef tp_methods[];
   static PyNumberMethods as_number_;
   static auto tp_repr(PythonClassSessionData* self) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
-      -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args,
+                     PyObject* keywds) -> PyObject*;
   static void tp_dealloc(PythonClassSessionData* self);
 
   static auto Exists(PythonClassSessionData* self) -> PyObject*;

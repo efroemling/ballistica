@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
+from typing_extensions import override
+
 from bauiv1lib.popup import PopupWindow
 from bauiv1lib.colorpicker import ColorPicker
 import bauiv1 as bui
@@ -31,9 +33,7 @@ class TeamNamesColorsWindow(PopupWindow):
         scale = (
             1.69
             if uiscale is bui.UIScale.SMALL
-            else 1.1
-            if uiscale is bui.UIScale.MEDIUM
-            else 0.85
+            else 1.1 if uiscale is bui.UIScale.MEDIUM else 0.85
         )
         super().__init__(
             position=scale_origin, size=(self._width, self._height), scale=scale
@@ -217,6 +217,7 @@ class TeamNamesColorsWindow(PopupWindow):
             self._transitioning_out = True
             bui.containerwidget(edit=self.root_widget, transition=transition)
 
+    @override
     def on_popup_cancel(self) -> None:
         bui.getsound('swish').play()
         self._transition_out()

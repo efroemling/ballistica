@@ -37,12 +37,12 @@
 - Added feature
 
 ### Vishal332008
-- Bug Fixer
+- QoL and Bug Fixer
 - Modder
 
 ### Era0S
 - Community Suggestions Implementer
-- Bug Fixer
+- QoL and Bug Fixer
 - Modder
 
 ### VinniTR
@@ -55,6 +55,12 @@
 - Modder
 - BSE Heartbeat mechanic port
 
-### Temp
-- Modder
-- CTF Flag Bug Fix
+### Temp (3alTemp)
+- Original idea for customizable series length on GUI builds
+- Modder & Bug Fixer
+
+### brostos
+- Added support for joining using ipv6 address
+
+### Loup Garou
+- Added sphinx documentation generation

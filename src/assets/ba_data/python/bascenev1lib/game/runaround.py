@@ -16,6 +16,9 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+import bascenev1 as bs
+
 from bascenev1lib.actor.popuptext import PopupText
 from bascenev1lib.actor.bomb import TNTSpawner
 from bascenev1lib.actor.scoreboard import Scoreboard
@@ -40,7 +43,6 @@ from bascenev1lib.actor.spazbot import (
     BomberBotPro,
     BrawlerBotPro,
 )
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -195,6 +197,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         self._flawless_bonus: int | None = None
         self._wave_update_timer: bs.Timer | None = None
 
+    @override
     def on_transition_in(self) -> None:
         super().on_transition_in()
         self._scoreboard = Scoreboard(
@@ -212,6 +215,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             )
         )
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
         player_count = len(self.players)
@@ -276,9 +280,11 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                         Spacing(duration=1.0),
                         Spawn(TriggerBot, path=3),
                         Spacing(duration=1.0),
-                        Spawn(TriggerBot, path=1)
-                        if (player_count > 1 and hard)
-                        else None,
+                        (
+                            Spawn(TriggerBot, path=1)
+                            if (player_count > 1 and hard)
+                            else None
+                        ),
                         Spacing(duration=1.0),
                         Spawn(TriggerBot, path=2) if player_count > 2 else None,
                         Spacing(duration=1.0),
@@ -317,17 +323,23 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                         Spacing(duration=1.5),
                         Spawn(BomberBotProShielded, path=1) if hard else None,
                         Spacing(duration=1.5) if hard else None,
-                        Spawn(BomberBotProShielded, path=3)
-                        if player_count > 1
-                        else None,
+                        (
+                            Spawn(BomberBotProShielded, path=3)
+                            if player_count > 1
+                            else None
+                        ),
                         Spacing(duration=1.5),
-                        Spawn(BomberBotProShielded, path=2)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(BomberBotProShielded, path=2)
+                            if player_count > 2
+                            else None
+                        ),
                         Spacing(duration=1.5),
-                        Spawn(BomberBotProShielded, path=1)
-                        if player_count > 3
-                        else None,
+                        (
+                            Spawn(BomberBotProShielded, path=1)
+                            if player_count > 3
+                            else None
+                        ),
                     ]
                 ),
             ]
@@ -349,9 +361,11 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                             BrawlerBotPro if hard else BrawlerBot,
                             point=Point.BOTTOM_LEFT,
                         ),
-                        Spawn(BrawlerBotPro, point=Point.BOTTOM_RIGHT)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(BrawlerBotPro, point=Point.BOTTOM_RIGHT)
+                            if player_count > 2
+                            else None
+                        ),
                     ]
                 ),
                 Wave(
@@ -372,9 +386,11 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                         Spawn(BomberBotProShielded, path=3),
                         Spawn(BomberBotProShielded, path=3),
                         Spawn(ChargerBot, point=Point.BOTTOM_RIGHT),
-                        Spawn(ChargerBot, point=Point.BOTTOM_LEFT)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(ChargerBot, point=Point.BOTTOM_LEFT)
+                            if player_count > 2
+                            else None
+                        ),
                     ]
                 ),
                 Wave(
@@ -385,12 +401,16 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                         Spawn(TriggerBotPro, path=1 if hard else 2),
                         Spawn(TriggerBotPro, path=1 if hard else 2),
                         Spawn(TriggerBotPro, path=1 if hard else 2),
-                        Spawn(TriggerBotPro, path=1 if hard else 2)
-                        if player_count > 1
-                        else None,
-                        Spawn(TriggerBotPro, path=1 if hard else 2)
-                        if player_count > 3
-                        else None,
+                        (
+                            Spawn(TriggerBotPro, path=1 if hard else 2)
+                            if player_count > 1
+                            else None
+                        ),
+                        (
+                            Spawn(TriggerBotPro, path=1 if hard else 2)
+                            if player_count > 3
+                            else None
+                        ),
                     ]
                 ),
                 Wave(
@@ -399,12 +419,20 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                             TriggerBotProShielded if hard else TriggerBotPro,
                             point=Point.BOTTOM_LEFT,
                         ),
-                        Spawn(TriggerBotProShielded, point=Point.BOTTOM_RIGHT)
-                        if hard
-                        else None,
-                        Spawn(TriggerBotProShielded, point=Point.BOTTOM_RIGHT)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(
+                                TriggerBotProShielded, point=Point.BOTTOM_RIGHT
+                            )
+                            if hard
+                            else None
+                        ),
+                        (
+                            Spawn(
+                                TriggerBotProShielded, point=Point.BOTTOM_RIGHT
+                            )
+                            if player_count > 2
+                            else None
+                        ),
                         Spawn(BomberBot, path=3),
                         Spawn(BomberBot, path=3),
                         Spacing(duration=5.0),
@@ -422,15 +450,19 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                         Spawn(StickyBot, point=Point.BOTTOM_RIGHT),
                         Spawn(BomberBotProShielded, path=2),
                         Spawn(BomberBotProShielded, path=2),
-                        Spawn(StickyBot, point=Point.BOTTOM_RIGHT)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(StickyBot, point=Point.BOTTOM_RIGHT)
+                            if player_count > 2
+                            else None
+                        ),
                         Spawn(BomberBotProShielded, path=2),
                         Spawn(ExplodeyBot, point=Point.BOTTOM_LEFT),
                         Spawn(BomberBotProShielded, path=2),
-                        Spawn(BomberBotProShielded, path=2)
-                        if player_count > 1
-                        else None,
+                        (
+                            Spawn(BomberBotProShielded, path=2)
+                            if player_count > 1
+                            else None
+                        ),
                         Spacing(duration=5.0),
                         Spawn(StickyBot, point=Point.BOTTOM_LEFT),
                         Spacing(duration=2.0),
@@ -458,9 +490,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         l_offs = (
             -80
             if uiscale is bs.UIScale.SMALL
-            else -40
-            if uiscale is bs.UIScale.MEDIUM
-            else 0
+            else -40 if uiscale is bs.UIScale.MEDIUM else 0
         )
 
         self._lives_bg = bs.NodeActor(
@@ -584,6 +614,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                 ),
             )
 
+    @override
     def on_continue(self) -> None:
         self._lives = 3
         assert self._lives_text is not None
@@ -591,6 +622,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         self._lives_text.node.text = str(self._lives)
         self._bots.start_moving()
 
+    @override
     def spawn_player(self, player: Player) -> bs.Actor:
         pos = (
             self._spawn_center[0] + random.uniform(-1.5, 1.5),
@@ -667,6 +699,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                 ),
             ).autoretain()
 
+    @override
     def end_game(self) -> None:
         bs.pushcall(bs.Call(self.do_end, 'defeat'))
         bs.setmusic(None)
@@ -1299,6 +1332,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         # Revert to normal bot behavior otherwise..
         return False
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.PlayerScoredMessage):
             self._score += msg.score

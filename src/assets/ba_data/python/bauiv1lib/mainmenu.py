@@ -43,9 +43,11 @@ class MainMenuWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 transition=transition,
-                toolbar_visibility='menu_minimal_no_back'
-                if self._in_game
-                else 'menu_minimal_no_back',
+                toolbar_visibility=(
+                    'menu_minimal_no_back'
+                    if self._in_game
+                    else 'menu_minimal_no_back'
+                ),
             )
         )
 
@@ -142,9 +144,11 @@ class MainMenuWindow(bui.Window):
         return (
             'storeCharacterXmas'
             if plus.get_v1_account_misc_read_val('xmas', False)
-            else 'storeCharacterEaster'
-            if plus.get_v1_account_misc_read_val('easter', False)
-            else 'storeCharacter'
+            else (
+                'storeCharacterEaster'
+                if plus.get_v1_account_misc_read_val('easter', False)
+                else 'storeCharacter'
+            )
         )
 
     def _check_refresh(self) -> None:
@@ -344,9 +348,7 @@ class MainMenuWindow(bui.Window):
             icon_size = (
                 55
                 if uiscale is bui.UIScale.SMALL
-                else 55
-                if uiscale is bui.UIScale.MEDIUM
-                else 70
+                else 55 if uiscale is bui.UIScale.MEDIUM else 70
             )
             bui.imagewidget(
                 parent=self._root_widget,
@@ -646,9 +648,11 @@ class MainMenuWindow(bui.Window):
                 color=(0.45, 0.55, 0.45),
                 textcolor=(0.7, 0.8, 0.7),
                 label=bui.Lstr(
-                    resource='modeArcadeText'
-                    if bui.app.env.arcade
-                    else 'modeDemoText'
+                    resource=(
+                        'modeArcadeText'
+                        if bui.app.env.arcade
+                        else 'modeDemoText'
+                    )
                 ),
                 transition_delay=demo_menu_delay,
                 on_activate_call=self._demo_menu_press,
@@ -659,9 +663,7 @@ class MainMenuWindow(bui.Window):
         foof = (
             -1
             if uiscale is bui.UIScale.SMALL
-            else 1
-            if uiscale is bui.UIScale.MEDIUM
-            else 3
+            else 1 if uiscale is bui.UIScale.MEDIUM else 3
         )
         h, v, scale = positions[self._p_index]
         v = v + foof
@@ -906,9 +908,7 @@ class MainMenuWindow(bui.Window):
             scale=(
                 2.15
                 if uiscale is bui.UIScale.SMALL
-                else 1.6
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.0
+                else 1.6 if uiscale is bui.UIScale.MEDIUM else 1.0
             ),
         )
         h = 125.0

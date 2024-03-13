@@ -51,13 +51,11 @@ class CreditsListWindow(bui.Window):
                 scale=(
                     2.0
                     if uiscale is bui.UIScale.SMALL
-                    else 1.3
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -8)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -8) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
 

@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
 
@@ -46,9 +48,7 @@ class TournamentScoresWindow(PopupWindow):
             scale = (
                 2.3
                 if uiscale is bui.UIScale.SMALL
-                else 1.65
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.23
+                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
             )
         self._transitioning_out = False
 
@@ -56,9 +56,7 @@ class TournamentScoresWindow(PopupWindow):
         self._height = (
             300
             if uiscale is bui.UIScale.SMALL
-            else 370
-            if uiscale is bui.UIScale.MEDIUM
-            else 450
+            else 370 if uiscale is bui.UIScale.MEDIUM else 450
         )
 
         bg_color = (0.5, 0.4, 0.6)
@@ -244,6 +242,7 @@ class TournamentScoresWindow(PopupWindow):
             if self._on_close_call is not None:
                 self._on_close_call()
 
+    @override
     def on_popup_cancel(self) -> None:
         bui.getsound('swish').play()
         self._transition_out()

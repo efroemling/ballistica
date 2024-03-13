@@ -61,9 +61,7 @@ class ConfirmWindow:
             scale=(
                 2.1
                 if uiscale is bui.UIScale.SMALL
-                else 1.5
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.0
+                else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
             ),
             scale_origin_stack_offset=scale_origin,
         )
@@ -187,8 +185,10 @@ class QuitWindow:
                 resource=quit_resource,
                 subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
             ),
-            lambda: bui.quit(confirm=False, quit_type=self._quit_type)
-            if self._quit_type is not None
-            else bui.quit(confirm=False),
+            lambda: (
+                bui.quit(confirm=False, quit_type=self._quit_type)
+                if self._quit_type is not None
+                else bui.quit(confirm=False)
+            ),
             origin_widget=origin_widget,
         ).root_widget
