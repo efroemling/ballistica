@@ -22,7 +22,9 @@ class RespawnIcon:
 
     def __init__(self, player: bs.Player, respawn_time: float):
         """Instantiate with a Player and respawn_time (in seconds)."""
+        # pylint: disable=too-many-locals
         self._visible = True
+        self._dots_epic_only = False
 
         on_right, offs_extra, respawn_icons = self._get_context(player)
 
@@ -92,7 +94,7 @@ class RespawnIcon:
         assert self._name.node
         bs.animate(self._name.node, 'scale', {0: 0, 0.1: 0.5})
 
-        tpos = (-60 - h_offs if on_right else 60 + h_offs, -192 + offs)
+        tpos = (-60 - h_offs if on_right else 60 + h_offs, -193 + offs)
         self._text: bs.NodeActor | None = bs.NodeActor(
             bs.newnode(
                 'text',
@@ -109,11 +111,37 @@ class RespawnIcon:
                 },
             )
         )
+        dpos = [ipos[0] + (7 if on_right else -7), ipos[1] - 16]
+        self._dec_text: bs.NodeActor | None = None
+        if (
+            self._dots_epic_only
+            and bs.getactivity().globalsnode.slow_motion
+            or not self._dots_epic_only
+        ):
+            self._dec_text = bs.NodeActor(
+                bs.newnode(
+                    'text',
+                    attrs={
+                        'position': dpos,
+                        'h_attach': 'right' if on_right else 'left',
+                        'h_align': 'right' if on_right else 'left',
+                        'scale': 0.65,
+                        'shadow': 0.5,
+                        'flatness': 0.5,
+                        'v_attach': 'top',
+                        'color': bs.safecolor(icon['tint_color']),
+                        'text': '',
+                    },
+                )
+            )
 
         assert self._text.node
         bs.animate(self._text.node, 'scale', {0: 0, 0.1: 0.9})
+        if self._dec_text:
+            bs.animate(self._dec_text.node, 'scale', {0: 0, 0.1: 0.65})
 
         self._respawn_time = bs.time() + respawn_time
+        self._dec_timer: bs.Timer | None = None
         self._update()
         self._timer: bs.Timer | None = bs.Timer(
             1.0, bs.WeakCall(self._update), repeat=True
@@ -128,7 +156,7 @@ class RespawnIcon:
         """Return info on where we should be shown and stored."""
         activity = bs.getactivity()
 
-        if isinstance(bs.getsession(), bs.DualTeamSession):
+        if isinstance(activity.session, bs.DualTeamSession):
             on_right = player.team.id % 2 == 1
 
             # Store a list of icons in the team.
@@ -153,12 +181,46 @@ class RespawnIcon:
                 offs_extra = -20
         return on_right, offs_extra, icons
 
+    def _dec_step(self, display: list) -> None:
+        if not self._dec_text:
+            self._dec_timer = None
+            return
+        old_text: bs.Lstr | str = self._dec_text.node.text
+        iterate: int
+        # Get the following display text using our current one.
+        try:
+            iterate = display.index(old_text) + 1
+        # If we don't match any in the display list, we
+        # can assume we've just started iterating.
+        except ValueError:
+            iterate = 0
+        # Kill the timer if we're at the last iteration.
+        if iterate >= len(display):
+            self._dec_timer = None
+            return
+        self._dec_text.node.text = display[iterate]
+
     def _update(self) -> None:
         remaining = int(round(self._respawn_time - bs.time()))
+
         if remaining > 0:
             assert self._text is not None
             if self._text.node:
                 self._text.node.text = str(remaining)
+                if self._dec_text:
+                    # Display our decimal dots.
+                    self._dec_text.node.text = '...'
+                    # Start the timer to tick down.
+                    self._dec_timer = bs.Timer(
+                        0.25,
+                        bs.WeakCall(
+                            self._dec_step,
+                            ['..','.','']
+                        ),
+                        repeat=True
+                    )
         else:
             self._visible = False
-            self._image = self._text = self._timer = self._name = None
+            self._image = (
+                self._text
+            ) = self._dec_text = self._timer = self._name = None
