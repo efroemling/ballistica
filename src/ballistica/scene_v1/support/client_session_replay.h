@@ -29,8 +29,29 @@ class ClientSessionReplay : public ClientSession,
   void Error(const std::string& description) override;
   void FetchMessages() override;
 
+  void SeekTo(millisecs_t to_base_time);
+
  private:
-  uint32_t message_fetch_num_{};
+  struct IntermediateState {
+    // Message containing full scene state at the moment.
+    std::vector<uint8_t> message_;
+    std::vector<std::vector<uint8_t>> correction_messages_;
+
+    // A position in replay file where we should continue from.
+    int64_t file_position_;
+
+    millisecs_t base_time_;
+  };
+
+  void RestoreFromCurrentState();
+
+  // List of passed states which we can rewind to.
+  std::vector<IntermediateState> states_;
+  IntermediateState current_state_;
+
+  bool is_fast_forwarding_{};
+  millisecs_t fast_forward_base_time_{};
+
   bool have_sent_client_message_{};
   std::vector<ConnectionToClient*> connections_to_clients_;
   std::vector<ConnectionToClient*> connections_to_clients_ignored_;
