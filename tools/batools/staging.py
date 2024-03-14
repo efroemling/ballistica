@@ -11,6 +11,7 @@ import subprocess
 from functools import partial
 from typing import TYPE_CHECKING
 
+from efro.terminal import Clr
 from efrotools import PYVER, extract_arg, extract_flag
 
 if TYPE_CHECKING:
@@ -39,6 +40,7 @@ class AssetStager:
 
     def __init__(self, projroot: str) -> None:
         self.projroot = projroot
+        self.desc = 'unknown'
         # We always calc src relative to this script.
         self.src = f'{self.projroot}/build/assets'
         self.dst: str | None = None
@@ -70,6 +72,12 @@ class AssetStager:
     def run(self, args: list[str]) -> None:
         """Do the thing."""
         self._parse_args(args)
+
+        print(
+            f'{Clr.BLU}Staging {Clr.MAG}{Clr.BLD}{self.desc}{Clr.RST}'
+            f'{Clr.BLU} build in {Clr.MAG}{Clr.BLD}{self.dst}'
+            f'{Clr.RST}{Clr.BLU}...{Clr.RST}'
+        )
 
         # Ok, now for every top level dir in src, come up with a nice single
         # command to sync the needed subset of it to dst.
@@ -140,22 +148,27 @@ class AssetStager:
             )
 
         if platform_arg == '-android':
+            self.desc = 'android'
             self._parse_android_args(args)
         elif platform_arg.startswith('-win'):
+            self.desc = 'windows'
             self._parse_win_args(platform_arg, args)
         elif platform_arg == '-cmake':
+            self.desc = 'cmake'
             self.dst = args[-1]
             self.tex_suffix = '.dds'
             # Link/copy in a binary *if* builddir is provided.
             self.include_binary_executable = self.builddir is not None
             self.executable_name = 'ballisticakit'
         elif platform_arg == '-cmakemodular':
+            self.desc = 'cmake modular'
             self.dst = args[-1]
             self.tex_suffix = '.dds'
             self.include_python_dylib = True
             self.include_shell_executable = True
             self.executable_name = 'ballisticakit'
         elif platform_arg == '-cmakeserver':
+            self.desc = 'cmake server'
             self.dst = os.path.join(args[-1], 'dist')
             self.serverdst = args[-1]
             self.include_textures = False
@@ -165,6 +178,7 @@ class AssetStager:
             self.include_binary_executable = self.builddir is not None
             self.executable_name = 'ballisticakit_headless'
         elif platform_arg == '-cmakemodularserver':
+            self.desc = 'cmake modular server'
             self.dst = os.path.join(args[-1], 'dist')
             self.serverdst = args[-1]
             self.include_textures = False
@@ -175,6 +189,7 @@ class AssetStager:
             self.executable_name = 'ballisticakit_headless'
 
         elif platform_arg == '-xcode-mac':
+            self.desc = 'xcode mac'
             self.src = os.environ['SOURCE_ROOT'] + '/../build/assets'
             self.dst = (
                 os.environ['TARGET_BUILD_DIR']
@@ -184,17 +199,8 @@ class AssetStager:
             self.include_pylib = True
             self.pylib_src_name = 'pylib-apple'
             self.tex_suffix = '.dds'
-        elif platform_arg == '-xcode-mac-old':
-            self.src = os.environ['SOURCE_ROOT'] + '/build/assets'
-            self.dst = (
-                os.environ['TARGET_BUILD_DIR']
-                + '/'
-                + os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH']
-            )
-            self.include_pylib = True
-            self.pylib_src_name = 'pylib-apple'
-            self.tex_suffix = '.dds'
         elif platform_arg == '-xcode-ios':
+            self.desc = 'xcode ios'
             self.src = os.environ['SOURCE_ROOT'] + '/build/assets'
             self.dst = (
                 os.environ['TARGET_BUILD_DIR']
