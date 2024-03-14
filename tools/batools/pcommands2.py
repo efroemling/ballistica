@@ -482,7 +482,7 @@ def wsl_build_check_win_drive() -> None:
                     'Note that WSL2 filesystem performance'
                     ' is poor when accessing'
                     ' native Windows drives, so if Visual Studio builds are not'
-                    ' needed it may be best to keep things'
+                    ' needed it may be best to keep things here'
                     ' on the Linux filesystem.'
                     ' This behavior may differ under WSL1 (untested).'
                 ),
