@@ -165,11 +165,14 @@ int get_running_server_port_(const struct Context_* ctx,
 
   cJSON* state_dict = cJSON_Parse(buf);
   if (!state_dict) {
+    // An un-parseable state file is not a recoverable error; go down hard.
     fprintf(stderr,
-            "Error: pcommandbatch client %s_%d (pid %d): failed to parse state "
-            "value.\n",
-            ctx->instance_prefix, ctx->instance_num, ctx->pid);
-    return -1;
+            "Fatal Error: pcommandbatch client %s_%d (pid %d):"
+            " failed to parse state file value of size %zu.\n",
+            ctx->instance_prefix, ctx->instance_num, ctx->pid, amt);
+    fflush(stderr);
+    abort();
+    // return -1;
   }
 
   // If results included output, print it.
