@@ -245,7 +245,8 @@ class ColorPickerExact(PopupWindow):
             size=(75, 30),
             v_align='center',
             editable=True,
-            maxwidth=40,
+            maxwidth=70,
+            allow_clear_button=False,
             force_internal_editing=True,
         )
 
