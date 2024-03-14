@@ -14,7 +14,7 @@ import random
 import logging
 from enum import Enum
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast, Sequence
 
 from typing_extensions import override
 import bascenev1 as bs
@@ -45,7 +45,7 @@ from bascenev1lib.actor.spazbot import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from typing import Any
 
 
 class Preset(Enum):
@@ -190,6 +190,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         self._lives_text: bs.NodeActor | None = None
         self._flawless = True
         self._time_bonus_timer: bs.Timer | None = None
+        self._lives_hbtime: bs.Timer | None = None
         self._time_bonus_text: bs.NodeActor | None = None
         self._time_bonus_mult: float | None = None
         self._wave_text: bs.NodeActor | None = None
@@ -279,9 +280,11 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                         Spacing(duration=1.0),
                         Spawn(TriggerBot, path=3),
                         Spacing(duration=1.0),
-                        Spawn(TriggerBot, path=1)
-                        if (player_count > 1 and hard)
-                        else None,
+                        (
+                            Spawn(TriggerBot, path=1)
+                            if (player_count > 1 and hard)
+                            else None
+                        ),
                         Spacing(duration=1.0),
                         Spawn(TriggerBot, path=2) if player_count > 2 else None,
                         Spacing(duration=1.0),
@@ -320,17 +323,23 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                         Spacing(duration=1.5),
                         Spawn(BomberBotProShielded, path=1) if hard else None,
                         Spacing(duration=1.5) if hard else None,
-                        Spawn(BomberBotProShielded, path=3)
-                        if player_count > 1
-                        else None,
+                        (
+                            Spawn(BomberBotProShielded, path=3)
+                            if player_count > 1
+                            else None
+                        ),
                         Spacing(duration=1.5),
-                        Spawn(BomberBotProShielded, path=2)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(BomberBotProShielded, path=2)
+                            if player_count > 2
+                            else None
+                        ),
                         Spacing(duration=1.5),
-                        Spawn(BomberBotProShielded, path=1)
-                        if player_count > 3
-                        else None,
+                        (
+                            Spawn(BomberBotProShielded, path=1)
+                            if player_count > 3
+                            else None
+                        ),
                     ]
                 ),
             ]
@@ -352,9 +361,11 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                             BrawlerBotPro if hard else BrawlerBot,
                             point=Point.BOTTOM_LEFT,
                         ),
-                        Spawn(BrawlerBotPro, point=Point.BOTTOM_RIGHT)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(BrawlerBotPro, point=Point.BOTTOM_RIGHT)
+                            if player_count > 2
+                            else None
+                        ),
                     ]
                 ),
                 Wave(
@@ -375,9 +386,11 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                         Spawn(BomberBotProShielded, path=3),
                         Spawn(BomberBotProShielded, path=3),
                         Spawn(ChargerBot, point=Point.BOTTOM_RIGHT),
-                        Spawn(ChargerBot, point=Point.BOTTOM_LEFT)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(ChargerBot, point=Point.BOTTOM_LEFT)
+                            if player_count > 2
+                            else None
+                        ),
                     ]
                 ),
                 Wave(
@@ -388,12 +401,16 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                         Spawn(TriggerBotPro, path=1 if hard else 2),
                         Spawn(TriggerBotPro, path=1 if hard else 2),
                         Spawn(TriggerBotPro, path=1 if hard else 2),
-                        Spawn(TriggerBotPro, path=1 if hard else 2)
-                        if player_count > 1
-                        else None,
-                        Spawn(TriggerBotPro, path=1 if hard else 2)
-                        if player_count > 3
-                        else None,
+                        (
+                            Spawn(TriggerBotPro, path=1 if hard else 2)
+                            if player_count > 1
+                            else None
+                        ),
+                        (
+                            Spawn(TriggerBotPro, path=1 if hard else 2)
+                            if player_count > 3
+                            else None
+                        ),
                     ]
                 ),
                 Wave(
@@ -402,12 +419,20 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                             TriggerBotProShielded if hard else TriggerBotPro,
                             point=Point.BOTTOM_LEFT,
                         ),
-                        Spawn(TriggerBotProShielded, point=Point.BOTTOM_RIGHT)
-                        if hard
-                        else None,
-                        Spawn(TriggerBotProShielded, point=Point.BOTTOM_RIGHT)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(
+                                TriggerBotProShielded, point=Point.BOTTOM_RIGHT
+                            )
+                            if hard
+                            else None
+                        ),
+                        (
+                            Spawn(
+                                TriggerBotProShielded, point=Point.BOTTOM_RIGHT
+                            )
+                            if player_count > 2
+                            else None
+                        ),
                         Spawn(BomberBot, path=3),
                         Spawn(BomberBot, path=3),
                         Spacing(duration=5.0),
@@ -425,15 +450,19 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                         Spawn(StickyBot, point=Point.BOTTOM_RIGHT),
                         Spawn(BomberBotProShielded, path=2),
                         Spawn(BomberBotProShielded, path=2),
-                        Spawn(StickyBot, point=Point.BOTTOM_RIGHT)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(StickyBot, point=Point.BOTTOM_RIGHT)
+                            if player_count > 2
+                            else None
+                        ),
                         Spawn(BomberBotProShielded, path=2),
                         Spawn(ExplodeyBot, point=Point.BOTTOM_LEFT),
                         Spawn(BomberBotProShielded, path=2),
-                        Spawn(BomberBotProShielded, path=2)
-                        if player_count > 1
-                        else None,
+                        (
+                            Spawn(BomberBotProShielded, path=2)
+                            if player_count > 1
+                            else None
+                        ),
                         Spacing(duration=5.0),
                         Spawn(StickyBot, point=Point.BOTTOM_LEFT),
                         Spacing(duration=2.0),
@@ -461,9 +490,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         l_offs = (
             -80
             if uiscale is bs.UIScale.SMALL
-            else -40
-            if uiscale is bs.UIScale.MEDIUM
-            else 0
+            else -40 if uiscale is bs.UIScale.MEDIUM else 0
         )
 
         self._lives_bg = bs.NodeActor(
@@ -525,6 +552,18 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             if self._lives == 0:
                 self._bots.stop_moving()
                 self.continue_or_end_game()
+
+            # Heartbeat behavior
+            if self._lives < 5:
+                hbtime = 0.39 + (0.21 * self._lives)
+                self._lives_hbtime = bs.Timer(
+                    hbtime, lambda: self.heart_dyin(True, hbtime), repeat=True
+                )
+                self.heart_dyin(True)
+            else:
+                self._lives_hbtime = None
+                self.heart_dyin(False)
+
             assert self._lives_text is not None
             assert self._lives_text.node
             self._lives_text.node.text = str(self._lives)
@@ -1366,3 +1405,43 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
     def _set_can_end_wave(self) -> None:
         self._can_end_wave = True
+
+    def heart_dyin(self, status: bool, time: float = 1.22) -> None:
+        """Makes the UI heart beat at low health."""
+        assert self._lives_bg is not None
+        if self._lives_bg.node.exists():
+            return
+        heart = self._lives_bg.node
+
+        # Make the heart beat intensely!
+        if status:
+            bs.animate_array(
+                heart,
+                'scale',
+                2,
+                {
+                    0: (90, 90),
+                    time * 0.1: (105, 105),
+                    time * 0.21: (88, 88),
+                    time * 0.42: (90, 90),
+                    time * 0.52: (105, 105),
+                    time * 0.63: (88, 88),
+                    time: (90, 90),
+                },
+            )
+
+        # Neutralize heartbeat (Done did when dead.)
+        else:
+            # Ew; janky old scenev1 has a single 'Node' Python type so
+            # it thinks heart.scale could be a few different things
+            # (float, Sequence[float], etc.). So we have to force the
+            # issue with a cast(). This should go away with scenev2/etc.
+            bs.animate_array(
+                heart,
+                'scale',
+                2,
+                {
+                    0.0: cast(Sequence[float], heart.scale),
+                    time: (90, 90),
+                },
+            )

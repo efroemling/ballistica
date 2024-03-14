@@ -41,9 +41,7 @@ class HelpWindow(bui.Window):
         height = (
             460
             if uiscale is bui.UIScale.SMALL
-            else 530
-            if uiscale is bui.UIScale.MEDIUM
-            else 600
+            else 530 if uiscale is bui.UIScale.MEDIUM else 600
         )
 
         super().__init__(
@@ -55,15 +53,13 @@ class HelpWindow(bui.Window):
                 scale=(
                     1.77
                     if uiscale is bui.UIScale.SMALL
-                    else 1.25
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.25 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -30)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 15)
-                if uiscale is bui.UIScale.MEDIUM
-                else (0, 0),
+                stack_offset=(
+                    (0, -30)
+                    if uiscale is bui.UIScale.SMALL
+                    else (0, 15) if uiscale is bui.UIScale.MEDIUM else (0, 0)
+                ),
             )
         )
 
@@ -119,9 +115,11 @@ class HelpWindow(bui.Window):
                 ),
                 size=(140, 60),
                 scale=0.7 if uiscale is bui.UIScale.SMALL else 0.8,
-                label=bui.Lstr(resource='backText')
-                if self._main_menu
-                else 'Close',
+                label=(
+                    bui.Lstr(resource='backText')
+                    if self._main_menu
+                    else 'Close'
+                ),
                 button_type='back' if self._main_menu else None,
                 extra_touch_border_scale=2.0,
                 autoselect=True,

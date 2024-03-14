@@ -74,9 +74,7 @@ class AccountSettingsWindow(bui.Window):
         self._height = (
             390
             if uiscale is bui.UIScale.SMALL
-            else 430
-            if uiscale is bui.UIScale.MEDIUM
-            else 490
+            else 430 if uiscale is bui.UIScale.MEDIUM else 490
         )
 
         self._sign_in_button = None
@@ -112,13 +110,11 @@ class AccountSettingsWindow(bui.Window):
                 scale=(
                     2.09
                     if uiscale is bui.UIScale.SMALL
-                    else 1.4
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -19)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -19) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
         if uiscale is bui.UIScale.SMALL and app.ui_v1.use_toolbars:
@@ -928,9 +924,9 @@ class AccountSettingsWindow(bui.Window):
                     if gpgs_active
                     else 'achievementsIcon'
                 ),
-                icon_color=(0.8, 0.95, 0.7)
-                if gpgs_active
-                else (0.85, 0.8, 0.9),
+                icon_color=(
+                    (0.8, 0.95, 0.7) if gpgs_active else (0.85, 0.8, 0.9)
+                ),
                 on_activate_call=(
                     self._on_custom_achievements_press
                     if gpgs_active

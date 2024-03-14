@@ -41,9 +41,7 @@ class CharacterPicker(PopupWindow):
             scale = (
                 1.85
                 if uiscale is bui.UIScale.SMALL
-                else 1.65
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.23
+                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
             )
 
         self._delegate = delegate

@@ -44,9 +44,7 @@ class AboutGatherTab(GatherTab):
         message_height = (
             210
             if uiscale is bui.UIScale.SMALL
-            else 305
-            if uiscale is bui.UIScale.MEDIUM
-            else 370
+            else 305 if uiscale is bui.UIScale.MEDIUM else 370
         )
         # Let's not talk about sharing in vr-mode; its tricky to fit more
         # than one head in a VR-headset.

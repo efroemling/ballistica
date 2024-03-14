@@ -417,9 +417,7 @@ class TournamentButton:
         prize_y_offs = (
             34
             if 'prizeRange3' in entry
-            else 20
-            if 'prizeRange2' in entry
-            else 12
+            else 20 if 'prizeRange2' in entry else 12
         )
         x_offs = 90
 
@@ -460,9 +458,11 @@ class TournamentButton:
         bui.textwidget(
             edit=self.prize_value_1_text,
             text='-' if pv1 == '' else pv1,
-            scale=prize_value_scale_large
-            if ticket_char not in pv1
-            else prize_value_scale_small,
+            scale=(
+                prize_value_scale_large
+                if ticket_char not in pv1
+                else prize_value_scale_small
+            ),
             position=(
                 self.button_x + 380 + x_offs,
                 self.button_y + self.button_scale_y - 93 + prize_y_offs,
@@ -480,9 +480,11 @@ class TournamentButton:
         bui.textwidget(
             edit=self.prize_value_2_text,
             text=pv2,
-            scale=prize_value_scale_large
-            if ticket_char not in pv2
-            else prize_value_scale_small,
+            scale=(
+                prize_value_scale_large
+                if ticket_char not in pv2
+                else prize_value_scale_small
+            ),
             position=(
                 self.button_x + 380 + x_offs,
                 self.button_y + self.button_scale_y - 93 - 45 + prize_y_offs,
@@ -500,9 +502,11 @@ class TournamentButton:
         bui.textwidget(
             edit=self.prize_value_3_text,
             text=pv3,
-            scale=prize_value_scale_large
-            if ticket_char not in pv3
-            else prize_value_scale_small,
+            scale=(
+                prize_value_scale_large
+                if ticket_char not in pv3
+                else prize_value_scale_small
+            ),
             position=(
                 self.button_x + 380 + x_offs,
                 self.button_y + self.button_scale_y - 93 - 90 + prize_y_offs,
@@ -667,9 +671,11 @@ class TournamentButton:
                     self.button_x + 360,
                     self.button_y + self.button_scale_y - 146,
                 ),
-                text=''
-                if ad_tries_remaining in [None, 0]
-                else ('' + str(ad_tries_remaining)),
+                text=(
+                    ''
+                    if ad_tries_remaining in [None, 0]
+                    else ('' + str(ad_tries_remaining))
+                ),
                 color=(0.6, 0.6, 0.6, 1 if ads_enabled else 0.2),
             )
         else:

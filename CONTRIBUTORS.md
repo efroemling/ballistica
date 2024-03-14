@@ -51,9 +51,16 @@
 ### Rikko
 - Created the original "reject_recently_left_players" plugin
 
+### SoK
+- Modder
+- BSE Heartbeat mechanic port
+
 ### Temp (3alTemp)
 - Original idea for customizable series length on GUI builds
 - Modder & Bug Fixer
 
 ### brostos
 - Added support for joining using ipv6 address
+
+### Loup Garou
+- Added sphinx documentation generation

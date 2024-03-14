@@ -63,9 +63,7 @@ class LeagueRankWindow(bui.Window):
         self._height = (
             657
             if uiscale is bui.UIScale.SMALL
-            else 710
-            if uiscale is bui.UIScale.MEDIUM
-            else 800
+            else 710 if uiscale is bui.UIScale.MEDIUM else 800
         )
         self._r = 'coopSelectWindow'
         self._rdict = bui.app.lang.get_resource(self._r)
@@ -79,19 +77,17 @@ class LeagueRankWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
-                stack_offset=(0, -15)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 10)
-                if uiscale is bui.UIScale.MEDIUM
-                else (0, 0),
+                stack_offset=(
+                    (0, -15)
+                    if uiscale is bui.UIScale.SMALL
+                    else (0, 10) if uiscale is bui.UIScale.MEDIUM else (0, 0)
+                ),
                 transition=transition,
                 scale_origin_stack_offset=scale_origin,
                 scale=(
                     1.2
                     if uiscale is bui.UIScale.SMALL
-                    else 0.93
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 0.8
+                    else 0.93 if uiscale is bui.UIScale.MEDIUM else 0.8
                 ),
             )
         )
@@ -210,9 +206,11 @@ class LeagueRankWindow(bui.Window):
         assert plus is not None
 
         txt = bui.Lstr(
-            resource='coopSelectWindow.activenessAllTimeInfoText'
-            if self._season == 'a'
-            else 'coopSelectWindow.activenessInfoText',
+            resource=(
+                'coopSelectWindow.activenessAllTimeInfoText'
+                if self._season == 'a'
+                else 'coopSelectWindow.activenessInfoText'
+            ),
             subs=[
                 (
                     '${MAX}',
@@ -853,9 +851,11 @@ class LeagueRankWindow(bui.Window):
 
         bui.textwidget(
             edit=self._league_title_text,
-            text=''
-            if self._season == 'a'
-            else bui.Lstr(resource='league.leagueText'),
+            text=(
+                ''
+                if self._season == 'a'
+                else bui.Lstr(resource='league.leagueText')
+            ),
         )
 
         if data is None:
@@ -910,9 +910,11 @@ class LeagueRankWindow(bui.Window):
         bui.textwidget(edit=self._season_ends_text, text=to_end_string)
         bui.textwidget(
             edit=self._trophy_counts_reset_text,
-            text=bui.Lstr(resource='league.trophyCountsResetText')
-            if self._is_current_season and show_season_end
-            else '',
+            text=(
+                bui.Lstr(resource='league.trophyCountsResetText')
+                if self._is_current_season and show_season_end
+                else ''
+            ),
         )
 
         bui.textwidget(edit=self._league_text, text=lname, color=lcolor)
@@ -932,21 +934,25 @@ class LeagueRankWindow(bui.Window):
         )
         bui.textwidget(
             edit=self._to_ranked_text,
-            text=bui.Lstr(resource='coopSelectWindow.toRankedText').evaluate()
-            + ''
-            + extra_text
-            if do_percent
-            else '',
+            text=(
+                bui.Lstr(resource='coopSelectWindow.toRankedText').evaluate()
+                + ''
+                + extra_text
+                if do_percent
+                else ''
+            ),
         )
 
         bui.textwidget(
             edit=self._your_power_ranking_text,
-            text=bui.Lstr(
-                resource='rankText',
-                fallback_resource='coopSelectWindow.yourPowerRankingText',
-            )
-            if (not do_percent)
-            else '',
+            text=(
+                bui.Lstr(
+                    resource='rankText',
+                    fallback_resource='coopSelectWindow.yourPowerRankingText',
+                )
+                if (not do_percent)
+                else ''
+            ),
         )
 
         bui.textwidget(
@@ -954,11 +960,11 @@ class LeagueRankWindow(bui.Window):
             position=(473, v - 70 - (170 if do_percent else 220)),
             text=status_text,
             big=(in_top or do_percent),
-            scale=3.0
-            if (in_top or do_percent)
-            else 0.7
-            if finished_season_unranked
-            else 1.0,
+            scale=(
+                3.0
+                if (in_top or do_percent)
+                else 0.7 if finished_season_unranked else 1.0
+            ),
         )
 
         if self._activity_mult_button is not None:
@@ -992,9 +998,11 @@ class LeagueRankWindow(bui.Window):
         # pylint: disable=consider-using-f-string
         bui.textwidget(
             edit=self._pro_mult_text,
-            text='     -'
-            if (data is None or not have_pro)
-            else 'x ' + ('%.2f' % pro_mult),
+            text=(
+                '     -'
+                if (data is None or not have_pro)
+                else 'x ' + ('%.2f' % pro_mult)
+            ),
         )
         bui.buttonwidget(
             edit=self._pro_mult_button,
@@ -1019,9 +1027,11 @@ class LeagueRankWindow(bui.Window):
 
         bui.textwidget(
             edit=self._power_ranking_achievement_total_text,
-            text='-'
-            if data is None
-            else ('+ ' + pts_txt.replace('${NUMBER}', str(total_ach_value))),
+            text=(
+                '-'
+                if data is None
+                else ('+ ' + pts_txt.replace('${NUMBER}', str(total_ach_value)))
+            ),
         )
 
         total_trophies_count = accounts.get_league_rank_points(
@@ -1035,19 +1045,24 @@ class LeagueRankWindow(bui.Window):
         )
         bui.textwidget(
             edit=self._power_ranking_trophies_total_text,
-            text='-'
-            if data is None
-            else (
-                '+ ' + pts_txt.replace('${NUMBER}', str(total_trophies_value))
+            text=(
+                '-'
+                if data is None
+                else (
+                    '+ '
+                    + pts_txt.replace('${NUMBER}', str(total_trophies_value))
+                )
             ),
         )
 
         bui.textwidget(
             edit=self._power_ranking_total_text,
-            text='-'
-            if data is None
-            else eq_text.replace(
-                '${NUMBER}', str(accounts.get_league_rank_points(data))
+            text=(
+                '-'
+                if data is None
+                else eq_text.replace(
+                    '${NUMBER}', str(accounts.get_league_rank_points(data))
+                )
             ),
         )
         for widget in self._power_ranking_score_widgets:

@@ -699,8 +699,8 @@ auto Assets::GetPendingLoadCount() -> int {
 
 template <typename T>
 auto Assets::GetAssetPendingLoadCount(
-    std::unordered_map<std::string, Object::Ref<T> >* t_list, AssetType type)
-    -> int {
+    std::unordered_map<std::string, Object::Ref<T> >* t_list,
+    AssetType type) -> int {
   assert(g_base->InLogicThread());
   assert(asset_lists_locked_);
 
@@ -1056,8 +1056,8 @@ void Assets::Prune(int level) {
   }
 }
 
-auto Assets::FindAssetFile(FileType type, const std::string& name)
-    -> std::string {
+auto Assets::FindAssetFile(FileType type,
+                           const std::string& name) -> std::string {
   std::string file_out;
 
   // We don't protect package-path access so make sure its always from here.

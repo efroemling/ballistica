@@ -73,9 +73,7 @@ class TournamentEntryWindow(PopupWindow):
             scale = (
                 2.3
                 if uiscale is bui.UIScale.SMALL
-                else 1.65
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.23
+                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
             )
         self._delegate = delegate
         self._transitioning_out = False
@@ -210,9 +208,11 @@ class TournamentEntryWindow(PopupWindow):
             self._ad_text = bui.textwidget(
                 parent=self.root_widget,
                 draw_controller=btn,
-                position=self._ad_text_position_remaining
-                if have_ad_tries_remaining
-                else self._ad_text_position,
+                position=(
+                    self._ad_text_position_remaining
+                    if have_ad_tries_remaining
+                    else self._ad_text_position
+                ),
                 size=(0, 0),
                 h_align='center',
                 v_align='center',
@@ -430,9 +430,11 @@ class TournamentEntryWindow(PopupWindow):
         ):
             plus.tournament_query(
                 args={
-                    'source': 'entry window'
-                    if self._tournament_activity is None
-                    else 'retry entry window'
+                    'source': (
+                        'entry window'
+                        if self._tournament_activity is None
+                        else 'retry entry window'
+                    )
                 },
                 callback=bui.WeakCall(self._on_tournament_query_response),
             )
@@ -471,35 +473,43 @@ class TournamentEntryWindow(PopupWindow):
                     subs=[
                         (
                             '${COUNT}',
-                            str(self._purchase_price)
-                            if self._purchase_price is not None
-                            else '?',
+                            (
+                                str(self._purchase_price)
+                                if self._purchase_price is not None
+                                else '?'
+                            ),
                         )
                     ],
                 )
             ),
-            position=self._ticket_cost_text_position_free
-            if self._purchase_price == 0
-            else self._ticket_cost_text_position,
+            position=(
+                self._ticket_cost_text_position_free
+                if self._purchase_price == 0
+                else self._ticket_cost_text_position
+            ),
             scale=1.0 if self._purchase_price == 0 else 0.6,
         )
 
         bui.textwidget(
             edit=self._free_plays_remaining_text,
-            text=''
-            if (
-                self._tournament_info['freeTriesRemaining'] in [None, 0]
-                or self._purchase_price != 0
-            )
-            else '' + str(self._tournament_info['freeTriesRemaining']),
+            text=(
+                ''
+                if (
+                    self._tournament_info['freeTriesRemaining'] in [None, 0]
+                    or self._purchase_price != 0
+                )
+                else '' + str(self._tournament_info['freeTriesRemaining'])
+            ),
         )
 
         bui.imagewidget(
             edit=self._ticket_img,
             opacity=0.2 if self._purchase_price == 0 else 1.0,
-            position=self._ticket_img_pos_free
-            if self._purchase_price == 0
-            else self._ticket_img_pos,
+            position=(
+                self._ticket_img_pos_free
+                if self._purchase_price == 0
+                else self._ticket_img_pos
+            ),
         )
 
         if self._do_ad_btn:
@@ -510,9 +520,11 @@ class TournamentEntryWindow(PopupWindow):
             )
             bui.textwidget(
                 edit=self._ad_text,
-                position=self._ad_text_position_remaining
-                if have_ad_tries_remaining
-                else self._ad_text_position,
+                position=(
+                    self._ad_text_position_remaining
+                    if have_ad_tries_remaining
+                    else self._ad_text_position
+                ),
                 color=(0, 1, 0) if enabled else (0.5, 0.5, 0.5),
             )
             bui.imagewidget(
@@ -612,6 +624,19 @@ class TournamentEntryWindow(PopupWindow):
                 )
                 if bui.app.classic is not None
                 else None,
+                1.0,
+                lambda: (
+                    bui.app.classic.launch_coop_game(
+                        self._tournament_info['game'],
+                        args={
+                            'min_players': self._tournament_info['minPlayers'],
+                            'max_players': self._tournament_info['maxPlayers'],
+                            'tournament_id': self._tournament_id,
+                        },
+                    )
+                    if bui.app.classic is not None
+                    else None
+                ),
             )
             bui.apptimer(0 if practice else 1.25, self._transition_out)
 

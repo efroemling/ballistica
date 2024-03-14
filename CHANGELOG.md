@@ -1,4 +1,4 @@
-### 1.7.33 (build 21772, api 8, 2024-03-02)
+### 1.7.33 (build 21778, api 8, 2024-03-13)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).
 - Added a 'Show Demos When Idle' option in advanced settings. If enabled, the
@@ -20,6 +20,10 @@
   languages; I feel it helps keep logic more understandable and should help us
   catch problems where a base class changes or removes a method and child
   classes forget to adapt to the change.
+- Added a reset button in the input mapping menu. (Thanks Temp!)
+- Respawn icons now have dotted steps showing decimal progress to assist
+  players on calculating when they are gonna respawn. (Thanks 3alTemp!)
+- Replays now have rewind/fast-forward buttons!! (Thanks Dliwk, vishal332008!)
 - Custom spaz "curse_time" values now work properly. (Thanks Temp!)
 - Implemented `efro.dataclassio.IOMultiType` which will make my life a lot
   easier.
@@ -38,6 +42,9 @@
   (Thanks EraOSBeta!)
 - Added a 'Practice' button in tournaments, letting you play them free of
   charge while not submitting scores. (Thanks Temp!)
+- Sphinx based Python documentation generation is now wired up (Thanks
+  Loup-Garou911XD!)
+- Renaming & overwriting existing profiles is no longer possible (Thanks Temp!)
 
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)

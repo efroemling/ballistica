@@ -83,16 +83,20 @@ def instantiate_store_item_display(
         tint_color = (
             item_info['color']
             if 'color' in item_info
-            else character.default_color
-            if character.default_color is not None
-            else (1, 1, 1)
+            else (
+                character.default_color
+                if character.default_color is not None
+                else (1, 1, 1)
+            )
         )
         tint2_color = (
             item_info['highlight']
             if 'highlight' in item_info
-            else character.default_highlight
-            if character.default_highlight is not None
-            else (1, 1, 1)
+            else (
+                character.default_highlight
+                if character.default_highlight is not None
+                else (1, 1, 1)
+            )
         )
         icon_tex = character.icon_texture
         tint_tex = character.icon_mask_texture
