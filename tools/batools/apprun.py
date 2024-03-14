@@ -105,6 +105,9 @@ def acquire_binary(assets: bool, purpose: str) -> str:
     if os.environ.get('BA_APP_RUN_ENABLE_BUILDS') == '1':
         # Going the build-it-ourselves route.
 
+        # Don't need any env mods for this path.
+        env = None
+
         if os.environ.get('BA_APP_RUN_BUILD_HEADLESS') == '1':
             # User has opted for headless builds.
             if assets:
@@ -143,6 +146,11 @@ def acquire_binary(assets: bool, purpose: str) -> str:
     else:
         # Ok; going with a downloaded prefab headless build.
 
+        # By default, prefab build targets on WSL (Linux running on
+        # Windows) will give us Windows builds which won't work right
+        # here. Ask it for Linux builds instead.
+        env = dict(os.environ, BA_WSL_TARGETS_WINDOWS='0')
+
         # Let the user know how to use their own built binaries instead
         # if they prefer.
         note = '\n' + textwrap.fill(
@@ -152,6 +160,7 @@ def acquire_binary(assets: bool, purpose: str) -> str:
             f' you\'ve made to the C/C++ layer.',
             80,
         )
+
         if assets:
             print(
                 f'{Clr.SMAG}Fetching prefab binary & assets for'
@@ -161,6 +170,7 @@ def acquire_binary(assets: bool, purpose: str) -> str:
             binary_path = (
                 subprocess.run(
                     ['tools/pcommand', 'prefab_binary_path', 'server-release'],
+                    env=env,
                     check=True,
                     capture_output=True,
                 )
@@ -177,6 +187,7 @@ def acquire_binary(assets: bool, purpose: str) -> str:
             binary_path = (
                 subprocess.run(
                     ['tools/pcommand', 'prefab_binary_path', 'server-release'],
+                    env=env,
                     check=True,
                     capture_output=True,
                 )
@@ -185,7 +196,7 @@ def acquire_binary(assets: bool, purpose: str) -> str:
             )
             binary_build_command = ['make', binary_path]
 
-    subprocess.run(binary_build_command, check=True)
+    subprocess.run(binary_build_command, env=env, check=True)
     if not os.path.exists(binary_path):
         raise RuntimeError(
             f"Binary not found at expected path '{binary_path}'."
