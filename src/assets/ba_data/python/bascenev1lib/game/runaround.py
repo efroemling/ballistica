@@ -190,6 +190,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         self._lives_text: bs.NodeActor | None = None
         self._flawless = True
         self._time_bonus_timer: bs.Timer | None = None
+        self._lives_hbtime: bs.Timer | None = None
         self._time_bonus_text: bs.NodeActor | None = None
         self._time_bonus_mult: float | None = None
         self._wave_text: bs.NodeActor | None = None
@@ -551,6 +552,20 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             if self._lives == 0:
                 self._bots.stop_moving()
                 self.continue_or_end_game()
+
+            # Heartbeat behavior
+            if self._lives < 5:
+                hbtime = 0.39 + (0.21 * self._lives)
+                self._lives_hbtime = bs.Timer(
+                    hbtime,
+                    lambda: self.heart_dyin(True, hbtime),
+                    repeat=True
+                )
+                self.heart_dyin(True)
+            else:
+                self._lives_hbtime = None
+                self.heart_dyin(False)
+
             assert self._lives_text is not None
             assert self._lives_text.node
             self._lives_text.node.text = str(self._lives)
@@ -1392,3 +1407,31 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
     def _set_can_end_wave(self) -> None:
         self._can_end_wave = True
+
+    def heart_dyin(self,
+                   status: bool,
+                   time: float = 1.22) -> None:
+        """ Makes the UI heart beat at low health. """
+        assert self._lives_bg is not None
+        if self._lives_bg.node.exists():
+            return
+        heart = self._lives_bg.node
+
+        # Make the heart beat intensely!
+        if status:
+            bs.animate_array(heart, 'scale', 2, {
+                0:(90,90),
+                time*0.1:(105,105),
+                time*0.21:(88,88),
+                time*0.42:(90,90),
+                time*0.52:(105,105),
+                time*0.63:(88,88),
+                time:(90,90),
+            })
+
+        # Neutralize heartbeat (Done did when dead.)
+        else:
+            bs.animate_array(heart, 'scale', 2, {
+                0.0: list(heart.scale),
+                time: (90,90),
+            })
