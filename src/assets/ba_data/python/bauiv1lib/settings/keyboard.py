@@ -67,10 +67,10 @@ class ConfigKeyboardWindow(bui.Window):
             'buttonRight',
         ]:
             assert bui.app.classic is not None
-            self._settings[
-                button
-            ] = bui.app.classic.get_input_device_mapped_value(
-                self._input, button, default
+            self._settings[button] = (
+                bui.app.classic.get_input_device_mapped_value(
+                    self._input, button, default
+                )
             )
 
     def _rebuild_ui(self, is_reset: bool = False) -> None:
@@ -79,7 +79,7 @@ class ConfigKeyboardWindow(bui.Window):
         for widget in self._root_widget.get_children():
             widget.delete()
 
-        #b_off = 0 if self._unique_id != '#1' else 9
+        # b_off = 0 if self._unique_id != '#1' else 9
         cancel_button = bui.buttonwidget(
             parent=self._root_widget,
             autoselect=True,
@@ -324,7 +324,7 @@ class ConfigKeyboardWindow(bui.Window):
         """Show a burger menu with extra settings."""
         # pylint: disable=cyclic-import
         choices: list[str] = [
-           'reset',
+            'reset',
         ]
         choices_display: list[bui.Lstr] = [
             bui.Lstr(resource='settingsWindowAdvanced.resetText'),
@@ -336,9 +336,7 @@ class ConfigKeyboardWindow(bui.Window):
             scale=(
                 2.3
                 if uiscale is bui.UIScale.SMALL
-                else 1.65
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.23
+                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
             ),
             width=150,
             choices=choices,

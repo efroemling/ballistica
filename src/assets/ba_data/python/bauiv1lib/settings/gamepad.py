@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
 class GamepadSettingsWindow(bui.Window):
     """Window for configuring a gamepad."""
+
     # pylint: disable=too-many-public-methods
 
     def __init__(
@@ -824,6 +825,7 @@ class GamepadSettingsWindow(bui.Window):
     def _do_reset(self) -> None:
         """Resets the input's mapping settings."""
         from babase import InputDeviceNotFoundError
+
         self._settings = {}
         # Unplugging the controller while performing a
         # mapping reset makes things go bonkers a little.
@@ -839,8 +841,8 @@ class GamepadSettingsWindow(bui.Window):
         """Show a burger menu with extra settings."""
         # pylint: disable=cyclic-import
         choices: list[str] = [
-           'advanced',
-           'reset',
+            'advanced',
+            'reset',
         ]
         choices_display: list[bui.Lstr] = [
             bui.Lstr(resource=self._r + '.advancedText'),
@@ -853,9 +855,7 @@ class GamepadSettingsWindow(bui.Window):
             scale=(
                 2.3
                 if uiscale is bui.UIScale.SMALL
-                else 1.65
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.23
+                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
             ),
             width=150,
             choices=choices,
