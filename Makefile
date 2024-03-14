@@ -151,7 +151,7 @@ meta-clean:
 # few things such as localconfig.json).
 clean:
 	$(CHECK_CLEAN_SAFETY)
-	rm -rf build  # Kill build ourself; may confuse git if contains other repos.
+	rm -rf build  # Kill this ourself; can confuse git if contains other repos.
 	git clean -dfx $(ROOT_CLEAN_IGNORES)
 
 # Show what clean would delete without actually deleting it.
