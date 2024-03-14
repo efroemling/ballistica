@@ -43,6 +43,9 @@
 - Sphinx based Python documentation generation is now wired up (Thanks
   Loup-Garou911XD!)
 - Renaming & overwriting existing profiles is no longer possible (Thanks Temp!)
+- Cleaned up builds when running under WSL. Things like `make mypy` should now
+  work correctly there, and it should now be possible to build and run either
+  Linux or Windows builds there.
 
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)

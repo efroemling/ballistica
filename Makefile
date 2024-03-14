@@ -969,7 +969,7 @@ WINDOWS_CONFIGURATION ?= Debug
 
 # Stage assets and other files so a built binary will run.
 windows-staging: assets-windows resources meta
-	$(STAGE_BUILD) -win-$(WINPLT) -$(WINCFGLC) build/windows/$(WINCFG)_$(WINPLT)
+	@$(STAGE_BUILD) -win-$(WINPLT) -$(WINCFGLC) build/windows/$(WINCFG)_$(WINPLT)
 
 # Build and run a debug windows build (from WSL).
 windows-debug: windows-debug-build
@@ -1150,8 +1150,8 @@ cmake-modular-server-clean:
 
 # Stage assets for building/running within CLion.
 clion-staging: assets-cmake resources meta
-	$(STAGE_BUILD) -cmake -debug build/clion_debug
-	$(STAGE_BUILD) -cmake -release build/clion_release
+	@$(STAGE_BUILD) -cmake -debug build/clion_debug
+	@$(STAGE_BUILD) -cmake -release build/clion_release
 
 # Tell make which of these targets don't represent files.
 .PHONY: cmake cmake-build cmake-clean cmake-server cmake-server-build	\
