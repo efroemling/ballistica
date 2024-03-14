@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """Settings UI functionality related to gamepads."""
 
 from __future__ import annotations
@@ -7,15 +8,18 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from bauiv1lib.popup import PopupMenuWindow
 import bascenev1 as bs
 import bauiv1 as bui
 
 if TYPE_CHECKING:
     from typing import Any, Callable
+    from bauiv1lib.popup import PopupWindow
 
 
 class GamepadSettingsWindow(bui.Window):
     """Window for configuring a gamepad."""
+    # pylint: disable=too-many-public-methods
 
     def __init__(
         self,
@@ -34,7 +38,6 @@ class GamepadSettingsWindow(bui.Window):
         self._name = self._input.name
 
         self._r = 'configGamepadWindow'
-        self._settings = settings
         self._transition_out = transition_out
 
         # We're a secondary gamepad if supplied with settings.
@@ -62,12 +65,81 @@ class GamepadSettingsWindow(bui.Window):
             )
         )
 
+        self._settings: dict[str, int] = {}
+        if not self._is_secondary:
+            self._get_config_mapping()
         # Don't ask to config joysticks while we're in here.
         self._rebuild_ui()
 
-    def _rebuild_ui(self) -> None:
+    def _get_config_mapping(self, default: bool = False) -> None:
+        for button in [
+            'buttonJump',
+            'buttonJump_B',
+            'buttonPunch',
+            'buttonPunch_B',
+            'buttonBomb',
+            'buttonBomb_B',
+            'buttonPickUp',
+            'buttonPickUp_B',
+            'buttonStart',
+            'buttonStart_B',
+            'buttonStart2',
+            'buttonStart2_B',
+            'buttonUp',
+            'buttonUp_B',
+            'buttonDown',
+            'buttonDown_B',
+            'buttonLeft',
+            'buttonLeft_B',
+            'buttonRight',
+            'buttonRight_B',
+            'buttonRun1',
+            'buttonRun1_B',
+            'buttonRun2',
+            'buttonRun2_B',
+            'triggerRun1',
+            'triggerRun1_B',
+            'triggerRun2',
+            'triggerRun2_B',
+            'buttonIgnored',
+            'buttonIgnored_B',
+            'buttonIgnored2',
+            'buttonIgnored2_B',
+            'buttonIgnored3',
+            'buttonIgnored3_B',
+            'buttonIgnored4',
+            'buttonIgnored4_B',
+            'buttonVRReorient',
+            'buttonVRReorient_B',
+            'analogStickDeadZone',
+            'analogStickDeadZone_B',
+            'dpad',
+            'dpad_B',
+            'unassignedButtonsRun',
+            'unassignedButtonsRun_B',
+            'startButtonActivatesDefaultWidget',
+            'startButtonActivatesDefaultWidget_B',
+            'uiOnly',
+            'uiOnly_B',
+            'ignoreCompletely',
+            'ignoreCompletely_B',
+            'autoRecalibrateAnalogStick',
+            'autoRecalibrateAnalogStick_B',
+            'analogStickLR',
+            'analogStickLR_B',
+            'analogStickUD',
+            'analogStickUD_B',
+            'enableSecondary',
+        ]:
+            assert bui.app.classic is not None
+            val = bui.app.classic.get_input_device_mapped_value(
+                self._input, button, default
+            )
+            if val != -1:
+                self._settings[button] = val
+
+    def _rebuild_ui(self, is_reset: bool = False) -> None:
         # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
 
         assert bui.app.classic is not None
 
@@ -76,77 +148,6 @@ class GamepadSettingsWindow(bui.Window):
             widget.delete()
 
         self._textwidgets: dict[str, bui.Widget] = {}
-
-        # If we were supplied with settings, we're a secondary joystick and
-        # just operate on that. in the other (normal) case we make our own.
-        if not self._is_secondary:
-            # Fill our temp config with present values (for our primary and
-            # secondary controls).
-            self._settings = {}
-            for skey in [
-                'buttonJump',
-                'buttonJump_B',
-                'buttonPunch',
-                'buttonPunch_B',
-                'buttonBomb',
-                'buttonBomb_B',
-                'buttonPickUp',
-                'buttonPickUp_B',
-                'buttonStart',
-                'buttonStart_B',
-                'buttonStart2',
-                'buttonStart2_B',
-                'buttonUp',
-                'buttonUp_B',
-                'buttonDown',
-                'buttonDown_B',
-                'buttonLeft',
-                'buttonLeft_B',
-                'buttonRight',
-                'buttonRight_B',
-                'buttonRun1',
-                'buttonRun1_B',
-                'buttonRun2',
-                'buttonRun2_B',
-                'triggerRun1',
-                'triggerRun1_B',
-                'triggerRun2',
-                'triggerRun2_B',
-                'buttonIgnored',
-                'buttonIgnored_B',
-                'buttonIgnored2',
-                'buttonIgnored2_B',
-                'buttonIgnored3',
-                'buttonIgnored3_B',
-                'buttonIgnored4',
-                'buttonIgnored4_B',
-                'buttonVRReorient',
-                'buttonVRReorient_B',
-                'analogStickDeadZone',
-                'analogStickDeadZone_B',
-                'dpad',
-                'dpad_B',
-                'unassignedButtonsRun',
-                'unassignedButtonsRun_B',
-                'startButtonActivatesDefaultWidget',
-                'startButtonActivatesDefaultWidget_B',
-                'uiOnly',
-                'uiOnly_B',
-                'ignoreCompletely',
-                'ignoreCompletely_B',
-                'autoRecalibrateAnalogStick',
-                'autoRecalibrateAnalogStick_B',
-                'analogStickLR',
-                'analogStickLR_B',
-                'analogStickUD',
-                'analogStickUD_B',
-                'enableSecondary',
-            ]:
-                val = bui.app.classic.get_input_device_mapped_value(
-                    self._input, skey
-                )
-                if val != -1:
-                    self._settings[skey] = val
 
         back_button: bui.Widget | None
 
@@ -367,22 +368,27 @@ class GamepadSettingsWindow(bui.Window):
             scale=1.0,
         )
 
-        self._advanced_button = bui.buttonwidget(
+        self._more_button = bui.buttonwidget(
             parent=self._root_widget,
             autoselect=True,
-            label=bui.Lstr(resource=self._r + '.advancedText'),
+            label='...',
             text_scale=0.9,
             color=(0.45, 0.4, 0.5),
             textcolor=(0.65, 0.6, 0.7),
             position=(self._width - 300, 30),
             size=(130, 40),
-            on_activate_call=self._do_advanced,
+            on_activate_call=self._do_more,
         )
 
         try:
             if cancel_button is not None and save_button is not None:
                 bui.widget(edit=cancel_button, right_widget=save_button)
                 bui.widget(edit=save_button, left_widget=cancel_button)
+                if is_reset:
+                    bui.containerwidget(
+                        edit=self._root_widget,
+                        selected_child=self._more_button,
+                    )
         except Exception:
             logging.exception('Error wiring up gamepad config window.')
 
@@ -392,7 +398,7 @@ class GamepadSettingsWindow(bui.Window):
 
     def get_advanced_button(self) -> bui.Widget:
         """(internal)"""
-        return self._advanced_button
+        return self._more_button
 
     def get_is_secondary(self) -> bool:
         """(internal)"""
@@ -800,6 +806,78 @@ class GamepadSettingsWindow(bui.Window):
                 ControlsSettingsWindow(transition='in_left').get_root_widget(),
                 from_window=self._root_widget,
             )
+
+    def _reset(self) -> None:
+        from bauiv1lib.confirm import ConfirmWindow
+
+        assert bui.app.classic is not None
+        ConfirmWindow(
+            # TODO: Implement a translation string for this!
+            'Are you sure you want to reset your button mapping?\n'
+            'This will also reset your advanced mappings\n'
+            'and secondary controller button mappings.',
+            self._do_reset,
+            width=490,
+            height=150,
+        )
+
+    def _do_reset(self) -> None:
+        """Resets the input's mapping settings."""
+        from babase import InputDeviceNotFoundError
+        self._settings = {}
+        # Unplugging the controller while performing a
+        # mapping reset makes things go bonkers a little.
+        try:
+            self._get_config_mapping(default=True)
+        except InputDeviceNotFoundError:
+            pass
+
+        self._rebuild_ui(is_reset=True)
+        bui.getsound('gunCocking').play()
+
+    def _do_more(self) -> None:
+        """Show a burger menu with extra settings."""
+        # pylint: disable=cyclic-import
+        choices: list[str] = [
+           'advanced',
+           'reset',
+        ]
+        choices_display: list[bui.Lstr] = [
+            bui.Lstr(resource=self._r + '.advancedText'),
+            bui.Lstr(resource='settingsWindowAdvanced.resetText'),
+        ]
+
+        uiscale = bui.app.ui_v1.uiscale
+        PopupMenuWindow(
+            position=self._more_button.get_screen_space_center(),
+            scale=(
+                2.3
+                if uiscale is bui.UIScale.SMALL
+                else 1.65
+                if uiscale is bui.UIScale.MEDIUM
+                else 1.23
+            ),
+            width=150,
+            choices=choices,
+            choices_display=choices_display,
+            current_choice='advanced',
+            delegate=self,
+        )
+
+    def popup_menu_selected_choice(
+        self, popup_window: PopupMenuWindow, choice: str
+    ) -> None:
+        """Called when a choice is selected in the popup."""
+        del popup_window  # unused
+        if choice == 'reset':
+            self._reset()
+        elif choice == 'advanced':
+            self._do_advanced()
+        else:
+            print(f'invalid choice: {choice}')
+
+    def popup_menu_closing(self, popup_window: PopupWindow) -> None:
+        """Called when the popup is closing."""
 
     def _save(self) -> None:
         classic = bui.app.classic

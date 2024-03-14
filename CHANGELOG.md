@@ -20,6 +20,7 @@
   languages; I feel it helps keep logic more understandable and should help us
   catch problems where a base class changes or removes a method and child
   classes forget to adapt to the change.
+- Added a reset button in the input mapping menu. (Thanks Temp!)
 - Respawn icons now have dotted steps showing decimal progress to assist
   players on calculating when they are gonna respawn. (Thanks 3alTemp!)
 - Replays now have rewind/fast-forward buttons!! (Thanks Dliwk, vishal332008!)
