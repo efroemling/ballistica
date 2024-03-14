@@ -24,8 +24,8 @@ class PythonClassSceneDataAsset : public PythonClass {
  private:
   static PyMethodDef tp_methods[];
   static auto GetValue(PythonClassSceneDataAsset* self) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
-      -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args,
+                     PyObject* kwds) -> PyObject*;
   static void tp_dealloc(PythonClassSceneDataAsset* self);
   static bool s_create_empty_;
   Object::Ref<SceneDataAsset>* data_;

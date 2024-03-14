@@ -35,9 +35,11 @@ def get_tournament_prize_strings(entry: dict[str, Any]) -> list[str]:
         prval = (
             ''
             if rng is None
-            else ('#' + str(rng[0]))
-            if (rng[0] == rng[1])
-            else ('#' + str(rng[0]) + '-' + str(rng[1]))
+            else (
+                ('#' + str(rng[0]))
+                if (rng[0] == rng[1])
+                else ('#' + str(rng[0]) + '-' + str(rng[1]))
+            )
         )
         pvval = ''
         if trophy_type is not None:

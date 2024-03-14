@@ -481,8 +481,8 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
   screenmessages->DrawMiscOverlays(frame_def);
 }
 
-auto Graphics::GetDebugGraph(const std::string& name, bool smoothed)
-    -> NetGraph* {
+auto Graphics::GetDebugGraph(const std::string& name,
+                             bool smoothed) -> NetGraph* {
   auto out = debug_graphs_.find(name);
   if (out == debug_graphs_.end()) {
     debug_graphs_[name] = Object::New<NetGraph>();
@@ -1653,9 +1653,8 @@ auto Graphics::GraphicsQualityFromRequest(GraphicsQualityRequest request,
   }
 }
 
-auto Graphics::TextureQualityFromRequest(TextureQualityRequest request,
-                                         TextureQuality auto_val)
-    -> TextureQuality {
+auto Graphics::TextureQualityFromRequest(
+    TextureQualityRequest request, TextureQuality auto_val) -> TextureQuality {
   switch (request) {
     case TextureQualityRequest::kLow:
       return TextureQuality::kLow;

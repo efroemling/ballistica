@@ -333,8 +333,8 @@ auto BasePython::GetRawConfigValue(const char* name) -> PyObject* {
   return PyDict_GetItemString(objs().Get(ObjID::kConfig).Get(), name);
 }
 
-auto BasePython::GetRawConfigValue(const char* name, const char* default_value)
-    -> std::string {
+auto BasePython::GetRawConfigValue(const char* name,
+                                   const char* default_value) -> std::string {
   assert(g_base->InLogicThread());
   assert(objs().Exists(ObjID::kConfig));
   PyObject* value =
@@ -345,8 +345,8 @@ auto BasePython::GetRawConfigValue(const char* name, const char* default_value)
   return PyUnicode_AsUTF8(value);
 }
 
-auto BasePython::GetRawConfigValue(const char* name, float default_value)
-    -> float {
+auto BasePython::GetRawConfigValue(const char* name,
+                                   float default_value) -> float {
   assert(g_base->InLogicThread());
   assert(objs().Exists(ObjID::kConfig));
   PyObject* value =
@@ -402,8 +402,8 @@ auto BasePython::GetRawConfigValue(const char* name, int default_value) -> int {
   }
 }
 
-auto BasePython::GetRawConfigValue(const char* name, bool default_value)
-    -> bool {
+auto BasePython::GetRawConfigValue(const char* name,
+                                   bool default_value) -> bool {
   assert(g_base->InLogicThread());
   assert(objs().Exists(ObjID::kConfig));
   PyObject* value =
@@ -545,8 +545,8 @@ auto BasePython::GetResource(const char* key, const char* fallback_resource,
   return std::string("<res-err: ") + key + ">";
 }
 
-auto BasePython::GetTranslation(const char* category, const char* s)
-    -> std::string {
+auto BasePython::GetTranslation(const char* category,
+                                const char* s) -> std::string {
   assert(Python::HaveGIL());
   PythonRef results;
   PythonRef args(Py_BuildValue("(ss)", category, s), PythonRef::kSteal);

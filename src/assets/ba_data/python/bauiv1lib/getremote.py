@@ -20,9 +20,7 @@ class GetBSRemoteWindow(PopupWindow):
         scale = (
             2.3
             if uiscale is bui.UIScale.SMALL
-            else 1.65
-            if uiscale is bui.UIScale.MEDIUM
-            else 1.23
+            else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
         )
         self._transitioning_out = False
         self._width = 570

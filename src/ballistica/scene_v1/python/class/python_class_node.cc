@@ -141,8 +141,8 @@ auto PythonClassNode::tp_repr(PythonClassNode* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-auto PythonClassNode::tp_getattro(PythonClassNode* self, PyObject* attr)
-    -> PyObject* {
+auto PythonClassNode::tp_getattro(PythonClassNode* self,
+                                  PyObject* attr) -> PyObject* {
   BA_PYTHON_TRY;
 
   // Do we need to support other attr types?
@@ -259,8 +259,8 @@ auto PythonClassNode::Delete(PythonClassNode* self, PyObject* args,
   BA_PYTHON_CATCH;
 }
 
-auto PythonClassNode::HandleMessage(PythonClassNode* self, PyObject* args)
-    -> PyObject* {
+auto PythonClassNode::HandleMessage(PythonClassNode* self,
+                                    PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   Py_ssize_t tuple_size = PyTuple_GET_SIZE(args);
   if (tuple_size < 1) {
@@ -294,8 +294,8 @@ auto PythonClassNode::HandleMessage(PythonClassNode* self, PyObject* args)
   BA_PYTHON_CATCH;
 }
 
-auto PythonClassNode::AddDeathAction(PythonClassNode* self, PyObject* args)
-    -> PyObject* {
+auto PythonClassNode::AddDeathAction(PythonClassNode* self,
+                                     PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* call_obj;
   if (!PyArg_ParseTuple(args, "O", &call_obj)) {
@@ -317,8 +317,8 @@ auto PythonClassNode::AddDeathAction(PythonClassNode* self, PyObject* args)
   BA_PYTHON_CATCH;
 }
 
-auto PythonClassNode::ConnectAttr(PythonClassNode* self, PyObject* args)
-    -> PyObject* {
+auto PythonClassNode::ConnectAttr(PythonClassNode* self,
+                                  PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* dst_node_obj;
   Node* node = self->node_->Get();

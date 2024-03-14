@@ -14,11 +14,16 @@ from __future__ import annotations
 
 import gc
 import sys
+import time
 import types
+import weakref
+import threading
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Any, TextIO
+
+    from logging import Logger
 
 ABS_MAX_LEVEL = 10
 
@@ -344,3 +349,170 @@ def _printrefs(
                 expand_ids=expand_ids,
                 file=file,
             )
+
+
+class DeadlockDumper:
+    """Dumps thread states if still around after timeout seconds.
+
+    This uses low level Python functionality so should still fire
+    even in the case of deadlock.
+    """
+
+    # faulthandler has a single traceback-dump-later state, so only
+    # one of us can control it at a time.
+    lock = threading.Lock()
+    watch_in_progress = False
+
+    def __init__(self, timeout: float) -> None:
+        import faulthandler
+
+        cls = type(self)
+
+        with cls.lock:
+            if cls.watch_in_progress:
+                print(
+                    'Existing DeadlockDumper found; new one will be a no-op.',
+                    file=sys.stderr,
+                )
+                self.active = False
+                return
+
+            # Ok; no watch is in progress; we can be the active one.
+            cls.watch_in_progress = True
+            self.active = True
+            faulthandler.dump_traceback_later(timeout=timeout)
+
+    def __del__(self) -> None:
+        import faulthandler
+
+        cls = type(self)
+
+        # If we made it to here, call off the dump. But only if we are
+        # the active dump.
+        if self.active:
+            faulthandler.cancel_dump_traceback_later()
+            cls.watch_in_progress = False
+
+
+class DeadlockWatcher:
+    """Individual watcher for deadlock conditions.
+
+    Use the enable_deadlock_watchers() to enable this system.
+
+    Next, create these in contexts where they will be torn down after
+    some operation completes. If any is not torn down within the
+    timeout period, a traceback of all threads will be dumped.
+
+    Note that the checker thread runs a cycle every ~5 seconds, so
+    something stuck needs to remain stuck for 5 seconds or so to be
+    caught for sure.
+    """
+
+    watchers_lock: threading.Lock | None = None
+    watchers: list[weakref.ref[DeadlockWatcher]] | None = None
+
+    def __init__(
+        self,
+        timeout: float = 10.0,
+        logger: Logger | None = None,
+        logextra: dict | None = None,
+    ) -> None:
+        # pylint: disable=not-context-manager
+        cls = type(self)
+        if cls.watchers_lock is None or cls.watchers is None:
+            print(
+                'DeadlockWatcher created without watchers enabled.',
+                file=sys.stderr,
+            )
+            return
+
+        # All we do is record when we were made and how long till we
+        # expire.
+        self.create_time = time.monotonic()
+        self.timeout = timeout
+        self.noted_expire = False
+        self.logger = logger
+        self.logextra = logextra
+
+        with cls.watchers_lock:
+            cls.watchers.append(weakref.ref(self))
+
+    @classmethod
+    def enable_deadlock_watchers(cls) -> None:
+        """Spins up deadlock-watcher functionality.
+
+        Must be explicitly called before any DeadlockWatchers are
+        created.
+        """
+        assert cls.watchers_lock is None
+        cls.watchers_lock = threading.Lock()
+        assert cls.watchers is None
+        cls.watchers = []
+
+        threading.Thread(
+            target=cls._deadlock_watcher_thread_main, daemon=True
+        ).start()
+
+    @classmethod
+    def _deadlock_watcher_thread_main(cls) -> None:
+        # pylint: disable=not-context-manager
+        # pylint: disable=not-an-iterable
+        assert cls.watchers_lock is not None and cls.watchers is not None
+
+        # Spin in a loop checking our watchers periodically and dumping
+        # state if any have timed out. The trick here is that we don't
+        # explicitly dump state, but rather we set up a "dead man's
+        # switch" that does so after some amount of time if we don't
+        # explicitly cancel it. This way we'll hopefully get state dumps
+        # even for things like total GIL deadlocks.
+        while True:
+
+            # Set a dead man's switch for this pass.
+            dumper = DeadlockDumper(timeout=5.171)
+
+            # Sleep most of the way through it but give ourselves time
+            # to turn it off if we're still responsive.
+            time.sleep(4.129)
+            now = time.monotonic()
+
+            found_fresh_expired = False
+
+            # If any watcher is still alive but expired, sleep past the
+            # timeout to force the dumper to do its thing.
+            with cls.watchers_lock:
+
+                for wref in cls.watchers:
+                    w = wref()
+                    if (
+                        w is not None
+                        and now - w.create_time > w.timeout
+                        and not w.noted_expire
+                    ):
+                        # If they supplied a logger, let them know they
+                        # should check stderr for a dump.
+                        if w.logger is not None:
+                            w.logger.error(
+                                'DeadlockWatcher with time %.2f expired;'
+                                ' check stderr for stack traces.',
+                                w.timeout,
+                                extra=w.logextra,
+                            )
+                        found_fresh_expired = True
+                        w.noted_expire = True
+
+                    # Important to clear this ref; otherwise we can keep
+                    # a random watcher alive until our next time through.
+                    w = None
+
+                # Prune dead watchers and reset for the next pass.
+                cls.watchers = [w for w in cls.watchers if w() is not None]
+
+            if found_fresh_expired:
+                # Push us over the dumper time limit which give us a
+                # lovely dump. Technically we could just do an immediate
+                # dump here instead, but that would give us two paths to
+                # maintain instead of this single one.
+                time.sleep(2.0)
+
+            # Call off the dump if it hasn't happened yet.
+            del dumper

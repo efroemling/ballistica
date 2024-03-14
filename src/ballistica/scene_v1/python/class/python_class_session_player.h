@@ -24,11 +24,11 @@ class PythonClassSessionPlayer : public PythonClass {
   static bool s_create_empty_;
   static PyMethodDef tp_methods[];
   static auto tp_repr(PythonClassSessionPlayer* self) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
-      -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args,
+                     PyObject* keywds) -> PyObject*;
   static void tp_dealloc(PythonClassSessionPlayer* self);
-  static auto tp_getattro(PythonClassSessionPlayer* self, PyObject* attr)
-      -> PyObject*;
+  static auto tp_getattro(PythonClassSessionPlayer* self,
+                          PyObject* attr) -> PyObject*;
   static auto tp_setattro(PythonClassSessionPlayer* self, PyObject* attr,
                           PyObject* val) -> int;
   static auto GetName(PythonClassSessionPlayer* self, PyObject* args,

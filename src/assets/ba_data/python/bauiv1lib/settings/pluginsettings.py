@@ -22,9 +22,7 @@ class PluginSettingsWindow(bui.Window):
         height = (
             365.0
             if uiscale is bui.UIScale.SMALL
-            else 300.0
-            if uiscale is bui.UIScale.MEDIUM
-            else 370.0
+            else 300.0 if uiscale is bui.UIScale.MEDIUM else 370.0
         )
         top_extra = 10 if uiscale is bui.UIScale.SMALL else 0
 
@@ -37,13 +35,11 @@ class PluginSettingsWindow(bui.Window):
                 scale=(
                     2.06
                     if uiscale is bui.UIScale.SMALL
-                    else 1.4
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -25)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -25) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
 

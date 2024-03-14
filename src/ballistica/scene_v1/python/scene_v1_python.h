@@ -70,8 +70,8 @@ class SceneV1Python {
   /// Given an asset-package python object and a media name, verify
   /// that the asset-package is valid in the current context_ref and return
   /// its fully qualified name if so.  Throw an Exception if not.
-  auto ValidatedPackageAssetName(PyObject* package, const char* name)
-      -> std::string;
+  auto ValidatedPackageAssetName(PyObject* package,
+                                 const char* name) -> std::string;
 
   /// Specific Python objects we hold in objs_.
   enum class ObjID {
@@ -101,9 +101,8 @@ class SceneV1Python {
   const auto& objs() { return objs_; }
 
  private:
-  static auto HandleCapturedJoystickEventCall(const SDL_Event& event,
-                                              base::InputDevice* input_device)
-      -> bool;
+  static auto HandleCapturedJoystickEventCall(
+      const SDL_Event& event, base::InputDevice* input_device) -> bool;
   static auto HandleCapturedKeyPressCall(const SDL_Keysym& keysym) -> bool;
   static auto HandleCapturedKeyReleaseCall(const SDL_Keysym& keysym) -> bool;
   auto HandleCapturedJoystickEvent(const SDL_Event& event,

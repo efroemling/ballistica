@@ -837,9 +837,7 @@ class PrivateGatherTab(GatherTab):
             color=(
                 (0.6, 0.6, 0.6)
                 if disabled
-                else (0.5, 1.0, 0.5)
-                if waiting
-                else None
+                else (0.5, 1.0, 0.5) if waiting else None
             ),
             enable_sound=False,
             label=btnlabel,

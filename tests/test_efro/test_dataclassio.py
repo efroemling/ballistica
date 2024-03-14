@@ -644,6 +644,24 @@ def test_dict() -> None:
         dataclass_to_dict(obj4)
 
 
+def test_sets() -> None:
+    """Test bits related to sets."""
+
+    @ioprepped
+    @dataclass
+    class _TestClass:
+        sval: set[str]
+
+    obj1 = _TestClass({'a', 'b', 'c', 'd', 'e', 'f'})
+    obj2 = _TestClass({'c', 'd', 'a', 'e', 'f', 'b'})
+
+    # Sets get converted to lists; make sure they are getting sorted so
+    # that output is deterministic and it is meaningful to compare the
+    # output dicts from two sets for equality.
+    assert dataclass_to_dict(obj1) == {'sval': ['a', 'b', 'c', 'd', 'e', 'f']}
+    assert dataclass_to_dict(obj2) == {'sval': ['a', 'b', 'c', 'd', 'e', 'f']}
+
+
 def test_name_clashes() -> None:
     """Make sure we catch name clashes since we can remap attr names."""
 

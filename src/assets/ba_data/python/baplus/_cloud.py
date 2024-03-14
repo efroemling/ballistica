@@ -57,8 +57,7 @@ class CloudSubsystem(babase.AppSubsystem):
         on_response: Callable[
             [bacommon.cloud.LoginProxyRequestResponse | Exception], None
         ],
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def send_message_cb(
@@ -67,24 +66,21 @@ class CloudSubsystem(babase.AppSubsystem):
         on_response: Callable[
             [bacommon.cloud.LoginProxyStateQueryResponse | Exception], None
         ],
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def send_message_cb(
         self,
         msg: bacommon.cloud.LoginProxyCompleteMessage,
         on_response: Callable[[None | Exception], None],
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def send_message_cb(
         self,
         msg: bacommon.cloud.PingMessage,
         on_response: Callable[[bacommon.cloud.PingResponse | Exception], None],
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def send_message_cb(
@@ -93,8 +89,7 @@ class CloudSubsystem(babase.AppSubsystem):
         on_response: Callable[
             [bacommon.cloud.SignInResponse | Exception], None
         ],
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     def send_message_cb(
@@ -103,8 +98,7 @@ class CloudSubsystem(babase.AppSubsystem):
         on_response: Callable[
             [bacommon.cloud.ManageAccountResponse | Exception], None
         ],
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def send_message_cb(
         self,
@@ -129,20 +123,17 @@ class CloudSubsystem(babase.AppSubsystem):
     @overload
     def send_message(
         self, msg: bacommon.cloud.WorkspaceFetchMessage
-    ) -> bacommon.cloud.WorkspaceFetchResponse:
-        ...
+    ) -> bacommon.cloud.WorkspaceFetchResponse: ...
 
     @overload
     def send_message(
         self, msg: bacommon.cloud.MerchAvailabilityMessage
-    ) -> bacommon.cloud.MerchAvailabilityResponse:
-        ...
+    ) -> bacommon.cloud.MerchAvailabilityResponse: ...
 
     @overload
     def send_message(
         self, msg: bacommon.cloud.TestMessage
-    ) -> bacommon.cloud.TestResponse:
-        ...
+    ) -> bacommon.cloud.TestResponse: ...
 
     def send_message(self, msg: Message) -> Response | None:
         """Synchronously send a message to the cloud.
@@ -154,14 +145,12 @@ class CloudSubsystem(babase.AppSubsystem):
     @overload
     async def send_message_async(
         self, msg: bacommon.cloud.PromoCodeMessage
-    ) -> bacommon.cloud.PromoCodeResponse:
-        ...
+    ) -> bacommon.cloud.PromoCodeResponse: ...
 
     @overload
     async def send_message_async(
         self, msg: bacommon.cloud.TestMessage
-    ) -> bacommon.cloud.TestResponse:
-        ...
+    ) -> bacommon.cloud.TestResponse: ...
 
     async def send_message_async(self, msg: Message) -> Response | None:
         """Synchronously send a message to the cloud.
