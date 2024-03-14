@@ -63,6 +63,8 @@ PY_REQUIREMENTS = [
     PyRequirement(pipname='pbxproj', minversion=[4, 0, 0]),
     PyRequirement(pipname='filelock', minversion=[3, 13, 1]),
     PyRequirement(pipname='python-daemon', minversion=[3, 0, 1]),
+    PyRequirement(pipname='sphinx',minversion=[7, 2, 6]),
+    PyRequirement(pipname='furo', minversion=[2024, 0o1, 29])
 ]
 
 

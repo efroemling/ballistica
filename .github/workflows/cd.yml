@@ -217,8 +217,6 @@ jobs:
     # Remove this once we upgrade to 3.12.
     - name: Install typing_extensions (temp)
       run: python3.11 -m pip install typing_extensions
-    - name: Install sphinx
-      run: python3.11 -m pip install sphinx furo
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
