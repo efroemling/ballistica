@@ -40,6 +40,7 @@
   EraOSBeta!)
 - Added a UI for customizing Series Length in Teams and Points-to-Win in FFA
   (Thanks EraOSBeta!)
+- Implemented HEX code support to the advanced color picker (Thanks 3alTemp!)
 - Players leaving the game after getting hurt will now grant kills. (Thanks
   Temp!)
 - Sphinx based Python documentation generation is now wired up (Thanks
