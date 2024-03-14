@@ -232,9 +232,8 @@ class PlayerSpaz(Spaz):
                 )
                 # Leaving the game doesn't count as a kill *unless*
                 # someone does it intentionally while being attacked.
-                left_game_cleanly = (
-                    msg.how is bs.DeathType.LEFT_GAME
-                    and not (was_held or was_attacked_recently)
+                left_game_cleanly = msg.how is bs.DeathType.LEFT_GAME and not (
+                    was_held or was_attacked_recently
                 )
 
                 killed = not (msg.immediate or left_game_cleanly)
