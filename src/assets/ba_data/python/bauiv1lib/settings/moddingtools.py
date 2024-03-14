@@ -9,6 +9,7 @@ import bauiv1 as bui
 from bauiv1lib.popup import PopupMenu
 from bauiv1lib.confirm import ConfirmWindow
 
+
 class ModdingToolsWindow(bui.Window):
     """Window for accessing modding tools."""
 
@@ -37,9 +38,7 @@ class ModdingToolsWindow(bui.Window):
         self._height = (
             390.0
             if uiscale is bui.UIScale.SMALL
-            else 450.0
-            if uiscale is bui.UIScale.MEDIUM
-            else 520.0
+            else 450.0 if uiscale is bui.UIScale.MEDIUM else 520.0
         )
 
         self._spacing = 32
@@ -59,13 +58,11 @@ class ModdingToolsWindow(bui.Window):
                 scale=(
                     2.06
                     if uiscale is bui.UIScale.SMALL
-                    else 1.4
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -25)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -25) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
 
@@ -167,7 +164,12 @@ class ModdingToolsWindow(bui.Window):
             parent=self._subcontainer,
             position=(230, v - 20),
             button_size=(200.0, 60.0),
-            choices=['auto','small', 'medium', 'large',],
+            choices=[
+                'auto',
+                'small',
+                'medium',
+                'large',
+            ],
             choices_display=[
                 bui.Lstr(resource='autoText'),
                 bui.Lstr(resource='smallText'),
@@ -184,9 +186,7 @@ class ModdingToolsWindow(bui.Window):
         cfg.apply_and_commit()
         if bui.app.ui_v1.uiscale.name != val.upper():
             bui.screenmessage(
-                bui.Lstr(
-                    resource='settingsWindowAdvanced.mustRestartText'
-                ),
+                bui.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
                 color=(1.0, 0.5, 0.0),
             )
 
