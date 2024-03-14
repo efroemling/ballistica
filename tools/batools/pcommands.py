@@ -487,34 +487,6 @@ def efrocache_get() -> None:
         pcommand.clientprint(output)
 
 
-def get_modern_make() -> None:
-    """Print name of a modern make command."""
-    import platform
-    import subprocess
-
-    pcommand.disallow_in_batch()
-
-    # Mac gnu make is outdated (due to newer versions using GPL3 I believe).
-    # so let's return 'gmake' there which will point to homebrew make which
-    # should be up to date.
-    if platform.system() == 'Darwin':
-        if (
-            subprocess.run(
-                ['which', 'gmake'], check=False, capture_output=True
-            ).returncode
-            != 0
-        ):
-            print(
-                'WARNING: this requires gmake (mac system make is too old).'
-                " Install it with 'brew install make'",
-                file=sys.stderr,
-                flush=True,
-            )
-        print('gmake')
-    else:
-        print('make')
-
-
 def warm_start_asset_build() -> None:
     """Prep asset builds to run faster."""
     import os
@@ -608,6 +580,24 @@ def checkenv() -> None:
     batools.build.checkenv()
 
 
+def prefab_platform() -> None:
+    """Print the current prefab-platform value."""
+    from efro.error import CleanError
+
+    from batools.build import PrefabPlatform
+
+    # Platform determination uses env vars; won't work in batch.
+    pcommand.disallow_in_batch()
+
+    args = pcommand.get_args()
+    if len(args) != 0:
+        raise CleanError('No arguments expected.')
+
+    current = PrefabPlatform.get_current()
+
+    print(current.value, end='')
+
+
 def ensure_prefab_platform() -> None:
     """Ensure we are running on a particular prefab platform.
 
@@ -620,9 +610,15 @@ def ensure_prefab_platform() -> None:
 
     from batools.build import PrefabPlatform
 
+    # Platform determination uses env vars; won't work in batch.
+    pcommand.disallow_in_batch()
+
     args = pcommand.get_args()
     if len(args) != 1:
-        raise CleanError('Expected 1 platform name arg.')
+        options = ', '.join(t.value for t in PrefabPlatform)
+        raise CleanError(
+            f'Expected 1 PrefabPlatform arg. Options are {options}.'
+        )
     needed = PrefabPlatform(args[0])
     current = PrefabPlatform.get_current()
     if current is not needed:
@@ -635,6 +631,9 @@ def ensure_prefab_platform() -> None:
 def prefab_run_var() -> None:
     """Print the current platform prefab run target var."""
     from batools.build import PrefabPlatform
+
+    # Platform determination uses env vars; won't work in batch.
+    pcommand.disallow_in_batch()
 
     args = pcommand.get_args()
     if len(args) != 1:
@@ -652,6 +651,7 @@ def prefab_binary_path() -> None:
 
     from batools.build import PrefabPlatform, PrefabTarget
 
+    # Platform determination uses env vars; won't work in batch.
     pcommand.disallow_in_batch()
 
     if len(sys.argv) != 3:
@@ -699,6 +699,7 @@ def make_prefab() -> None:
     import subprocess
     from batools.build import PrefabPlatform, PrefabTarget
 
+    # Platform determination uses env vars; won't work in batch.
     pcommand.disallow_in_batch()
 
     if len(sys.argv) != 3:
@@ -727,6 +728,7 @@ def lazybuild() -> None:
     # This command is not a good candidate for batch since it can be
     # long running and prints various stuff throughout the process.
     pcommand.disallow_in_batch()
+
     args = pcommand.get_args()
 
     if len(args) < 3:

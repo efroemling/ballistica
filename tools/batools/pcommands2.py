@@ -544,3 +544,31 @@ def wsl_path_to_win() -> None:
     if escape:
         out = out.replace('\\', '\\\\')
     print(out, end='')
+
+
+def get_modern_make() -> None:
+    """Print name of a modern make command."""
+    import platform
+    import subprocess
+
+    pcommand.disallow_in_batch()
+
+    # Mac gnu make is outdated (due to newer versions using GPL3 I believe).
+    # so let's return 'gmake' there which will point to homebrew make which
+    # should be up to date.
+    if platform.system() == 'Darwin':
+        if (
+            subprocess.run(
+                ['which', 'gmake'], check=False, capture_output=True
+            ).returncode
+            != 0
+        ):
+            print(
+                'WARNING: this requires gmake (mac system make is too old).'
+                " Install it with 'brew install make'",
+                file=sys.stderr,
+                flush=True,
+            )
+        print('gmake')
+    else:
+        print('make')
