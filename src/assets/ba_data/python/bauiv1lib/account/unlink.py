@@ -39,9 +39,7 @@ class AccountUnlinkWindow(bui.Window):
         base_scale = (
             2.0
             if uiscale is bui.UIScale.SMALL
-            else 1.6
-            if uiscale is bui.UIScale.MEDIUM
-            else 1.1
+            else 1.6 if uiscale is bui.UIScale.MEDIUM else 1.1
         )
         super().__init__(
             root_widget=bui.containerwidget(
@@ -49,9 +47,9 @@ class AccountUnlinkWindow(bui.Window):
                 transition=transition,
                 scale=base_scale,
                 scale_origin_stack_offset=scale_origin,
-                stack_offset=(0, -10)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -10) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
         self._cancel_button = bui.buttonwidget(

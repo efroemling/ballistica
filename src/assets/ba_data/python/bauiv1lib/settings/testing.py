@@ -36,13 +36,11 @@ class TestingWindow(bui.Window):
                 scale=(
                     2.5
                     if uiscale is bui.UIScale.SMALL
-                    else 1.2
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.2 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -28)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -28) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
         self._back_button = btn = bui.buttonwidget(
@@ -114,9 +112,9 @@ class TestingWindow(bui.Window):
             # If we haven't yet, record the default value for this name so
             # we can reset if we want..
             if entry_name not in bui.app.classic.value_test_defaults:
-                bui.app.classic.value_test_defaults[
-                    entry_name
-                ] = bui.app.classic.value_test(entry_name)
+                bui.app.classic.value_test_defaults[entry_name] = (
+                    bui.app.classic.value_test(entry_name)
+                )
 
             bui.textwidget(
                 parent=self._subcontainer,

@@ -7,8 +7,8 @@
 
 namespace ballistica {
 
-auto base64_encode(const unsigned char*, unsigned int len, bool urlsafe = false)
-    -> std::string;
+auto base64_encode(const unsigned char*, unsigned int len,
+                   bool urlsafe = false) -> std::string;
 auto base64_decode(const std::string& s, bool urlsafe = false) -> std::string;
 
 }  // namespace ballistica

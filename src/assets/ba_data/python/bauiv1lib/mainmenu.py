@@ -43,9 +43,11 @@ class MainMenuWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 transition=transition,
-                toolbar_visibility='menu_minimal_no_back'
-                if self._in_game
-                else 'menu_minimal_no_back',
+                toolbar_visibility=(
+                    'menu_minimal_no_back'
+                    if self._in_game
+                    else 'menu_minimal_no_back'
+                ),
             )
         )
 
@@ -142,9 +144,11 @@ class MainMenuWindow(bui.Window):
         return (
             'storeCharacterXmas'
             if plus.get_v1_account_misc_read_val('xmas', False)
-            else 'storeCharacterEaster'
-            if plus.get_v1_account_misc_read_val('easter', False)
-            else 'storeCharacter'
+            else (
+                'storeCharacterEaster'
+                if plus.get_v1_account_misc_read_val('easter', False)
+                else 'storeCharacter'
+            )
         )
 
     def _check_refresh(self) -> None:
@@ -344,9 +348,7 @@ class MainMenuWindow(bui.Window):
             icon_size = (
                 55
                 if uiscale is bui.UIScale.SMALL
-                else 55
-                if uiscale is bui.UIScale.MEDIUM
-                else 70
+                else 55 if uiscale is bui.UIScale.MEDIUM else 70
             )
             bui.imagewidget(
                 parent=self._root_widget,
@@ -452,7 +454,7 @@ class MainMenuWindow(bui.Window):
                     resource='watchWindow.playbackSpeedText',
                     subs=[('${SPEED}', str(1.23))],
                 ),
-                position=(h, v + v_offs + 7 * t_scale),
+                position=(h, v + v_offs + 15 * t_scale),
                 h_align='center',
                 v_align='center',
                 size=(0, 0),
@@ -526,6 +528,64 @@ class MainMenuWindow(bui.Window):
                 autoselect=True,
                 on_activate_call=bui.Call(self._pause_or_resume_replay),
             )
+            btn = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(
+                    h - b_size * 1.5 - b_buffer_1 * 2,
+                    v - b_size - b_buffer_2 + v_offs,
+                ),
+                button_type='square',
+                size=(b_size, b_size),
+                label='',
+                autoselect=True,
+                on_activate_call=bui.WeakCall(self._rewind_replay),
+            )
+            bui.textwidget(
+                parent=self._root_widget,
+                draw_controller=btn,
+                # text='<<',
+                text=bui.charstr(bui.SpecialChar.REWIND_BUTTON),
+                position=(
+                    h - b_size - b_buffer_1 * 2,
+                    v - b_size * 0.5 - b_buffer_2 + 5 * t_scale + v_offs,
+                ),
+                h_align='center',
+                v_align='center',
+                size=(0, 0),
+                scale=2.0 * t_scale,
+            )
+            btn = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(
+                    h + b_size * 0.5 + b_buffer_1 * 2,
+                    v - b_size - b_buffer_2 + v_offs,
+                ),
+                button_type='square',
+                size=(b_size, b_size),
+                label='',
+                autoselect=True,
+                on_activate_call=bui.WeakCall(self._forward_replay),
+            )
+            bui.textwidget(
+                parent=self._root_widget,
+                draw_controller=btn,
+                # text='>>',
+                text=bui.charstr(bui.SpecialChar.FAST_FORWARD_BUTTON),
+                position=(
+                    h + b_size + b_buffer_1 * 2,
+                    v - b_size * 0.5 - b_buffer_2 + 5 * t_scale + v_offs,
+                ),
+                h_align='center',
+                v_align='center',
+                size=(0, 0),
+                scale=2.0 * t_scale,
+            )
+
+    def _rewind_replay(self) -> None:
+        bs.seek_replay(-2 * pow(2, bs.get_replay_speed_exponent()))
+
+    def _forward_replay(self) -> None:
+        bs.seek_replay(2 * pow(2, bs.get_replay_speed_exponent()))
 
     def _refresh_not_in_game(
         self, positions: list[tuple[float, float, float]]
@@ -646,9 +706,11 @@ class MainMenuWindow(bui.Window):
                 color=(0.45, 0.55, 0.45),
                 textcolor=(0.7, 0.8, 0.7),
                 label=bui.Lstr(
-                    resource='modeArcadeText'
-                    if bui.app.env.arcade
-                    else 'modeDemoText'
+                    resource=(
+                        'modeArcadeText'
+                        if bui.app.env.arcade
+                        else 'modeDemoText'
+                    )
                 ),
                 transition_delay=demo_menu_delay,
                 on_activate_call=self._demo_menu_press,
@@ -659,9 +721,7 @@ class MainMenuWindow(bui.Window):
         foof = (
             -1
             if uiscale is bui.UIScale.SMALL
-            else 1
-            if uiscale is bui.UIScale.MEDIUM
-            else 3
+            else 1 if uiscale is bui.UIScale.MEDIUM else 3
         )
         h, v, scale = positions[self._p_index]
         v = v + foof
@@ -906,9 +966,7 @@ class MainMenuWindow(bui.Window):
             scale=(
                 2.15
                 if uiscale is bui.UIScale.SMALL
-                else 1.6
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.0
+                else 1.6 if uiscale is bui.UIScale.MEDIUM else 1.0
             ),
         )
         h = 125.0
@@ -1398,8 +1456,9 @@ class MainMenuWindow(bui.Window):
     def _resume(self) -> None:
         assert bui.app.classic is not None
         bui.app.classic.resume()
-        if self._root_widget:
-            bui.containerwidget(edit=self._root_widget, transition='out_right')
+        # if self._root_widget:
+        #     bui.containerwidget(edit=self._root_widget,
+        # transition='out_right')
         bui.app.ui_v1.clear_main_menu_window(transition='out_right')
 
         # If there's callbacks waiting for this window to go away, call them.

@@ -2,6 +2,8 @@
 
 #include "ballistica/scene_v1/support/client_session_replay.h"
 
+#include <algorithm>
+
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/support/huffman.h"
@@ -14,11 +16,22 @@
 
 namespace ballistica::scene_v1 {
 
+static const millisecs_t kReplayStateDumpIntervalMillisecs = 500;
+
 auto ClientSessionReplay::GetActualTimeAdvanceMillisecs(
     double base_advance_millisecs) -> double {
+  if (is_fast_forwarding_) {
+    if (base_time() < fast_forward_base_time_) {
+      return std::min(
+          base_advance_millisecs * 8,
+          static_cast<double>(fast_forward_base_time_ - base_time()));
+    }
+    is_fast_forwarding_ = false;
+  }
   auto* appmode = SceneV1AppMode::GetActiveOrFatal();
   if (appmode->is_replay_paused()) {
-    return 0.0;
+    // FIXME: seeking a replay results in black screen here
+    return 0;
   }
   return base_advance_millisecs * pow(2.0f, appmode->replay_speed_exponent());
 }
@@ -134,6 +147,23 @@ void ClientSessionReplay::FetchMessages() {
 
   // If we have no messages left, read from the file until we get some.
   while (commands().empty()) {
+    // Before we read next message, let's save our current state
+    // if we didn't that for too long.
+    if (base_time() >= (states_.empty() ? 0 : states_.back().base_time_)
+                           + kReplayStateDumpIntervalMillisecs) {
+      SessionStream out(nullptr, false);
+      DumpFullState(&out);
+
+      current_state_.base_time_ = base_time();
+      current_state_.correction_messages_.clear();
+      GetCorrectionMessages(false, &current_state_.correction_messages_);
+
+      fflush(file_);
+      current_state_.file_position_ = ftell(file_);
+      current_state_.message_ = out.GetOutMessage();
+      states_.push_back(current_state_);
+    }
+
     std::vector<uint8_t> buffer;
     uint8_t len8;
     uint32_t len32;
@@ -201,7 +231,6 @@ void ClientSessionReplay::FetchMessages() {
     for (auto&& i : connections_to_clients_) {
       i->SendReliableMessage(data_decompressed);
     }
-    message_fetch_num_++;
   }
 }
 
@@ -220,6 +249,10 @@ void ClientSessionReplay::Error(const std::string& description) {
 void ClientSessionReplay::OnReset(bool rewind) {
   // Handles base resetting.
   ClientSession::OnReset(rewind);
+
+  // Hack or not, but let's reset our fast-forward flag here, in case we were
+  // asked to seek replay further than it's length.
+  is_fast_forwarding_ = false;
 
   // If we've got any clients attached to us, tell them to reset as well.
   for (auto&& i : connections_to_clients_) {
@@ -262,6 +295,54 @@ void ClientSessionReplay::OnReset(bool rewind) {
       End();
       return;
     }
+  }
+}
+
+void ClientSessionReplay::SeekTo(millisecs_t to_base_time) {
+  is_fast_forwarding_ = false;
+  if (to_base_time < base_time()) {
+    auto it = std::lower_bound(
+        states_.rbegin(), states_.rend(), to_base_time,
+        [&](const IntermediateState& state, millisecs_t time) -> bool {
+          return state.base_time_ > time;
+        });
+    if (it == states_.rend()) {
+      Reset(true);
+    } else {
+      current_state_ = *it;
+      RestoreFromCurrentState();
+    }
+  } else {
+    auto it = std::lower_bound(
+        states_.begin(), states_.end(), to_base_time,
+        [&](const IntermediateState& state, millisecs_t time) -> bool {
+          return state.base_time_ < time;
+        });
+    if (it == states_.end()) {
+      if (!states_.empty()) {
+        current_state_ = states_.back();
+        RestoreFromCurrentState();
+      }
+      // Let's speed up replay a bit
+      // (and we'll collect needed states along).
+      is_fast_forwarding_ = true;
+      fast_forward_base_time_ = to_base_time;
+    } else {
+      current_state_ = *it;
+      RestoreFromCurrentState();
+    }
+  }
+}
+
+void ClientSessionReplay::RestoreFromCurrentState() {
+  // FIXME: calling reset here causes background music to start over
+  Reset(true);
+  fseek(file_, current_state_.file_position_, SEEK_SET);
+
+  SetBaseTime(current_state_.base_time_);
+  HandleSessionMessage(current_state_.message_);
+  for (const auto& msg : current_state_.correction_messages_) {
+    HandleSessionMessage(msg);
   }
 }
 

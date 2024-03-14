@@ -75,9 +75,9 @@ class AchievementSubsystem:
 
     def __init__(self) -> None:
         self.achievements: list[Achievement] = []
-        self.achievements_to_display: (
-            list[tuple[baclassic.Achievement, bool]]
-        ) = []
+        self.achievements_to_display: list[
+            tuple[baclassic.Achievement, bool]
+        ] = []
         self.achievement_display_timer: bascenev1.BaseTimer | None = None
         self.last_achievement_display_time: float = 0.0
         self.achievement_completion_banner_slots: set[int] = set()

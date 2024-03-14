@@ -22,9 +22,9 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
 
   ProgramSimpleGL(RendererGL* renderer, int flags)
       : RendererGL::ProgramGL(
-          renderer, Object::New<VertexShaderGL>(GetVertexCode(flags)),
-          Object::New<FragmentShaderGL>(GetFragmentCode(flags)), GetName(flags),
-          GetPFlags(flags)),
+            renderer, Object::New<VertexShaderGL>(GetVertexCode(flags)),
+            Object::New<FragmentShaderGL>(GetFragmentCode(flags)),
+            GetName(flags), GetPFlags(flags)),
         flags_(flags) {
     if (flags & SHD_TEXTURE) {
       SetTextureUnit("colorTex", kColorTexUnit);

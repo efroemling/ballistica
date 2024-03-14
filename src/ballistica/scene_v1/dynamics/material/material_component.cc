@@ -28,8 +28,8 @@ MaterialComponent::~MaterialComponent() {}
 
 auto MaterialComponent::eval_conditions(
     const Object::Ref<MaterialConditionNode>& condition, const Material& c,
-    const Part* part, const Part* opposing_part, const MaterialContext& s)
-    -> bool {
+    const Part* part, const Part* opposing_part,
+    const MaterialContext& s) -> bool {
   // If there's no condition, succeed.
   if (!condition.Exists()) {
     return true;

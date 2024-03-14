@@ -12,6 +12,7 @@ from enum import Enum
 import dataclasses
 import typing
 import types
+import json
 import datetime
 from typing import TYPE_CHECKING, cast, Any
 
@@ -330,19 +331,54 @@ class _Outputter:
                             f' data type(s) not supported by the'
                             f' specified codec ({self._codec.name}).'
                         )
-                return list(value) if self._create else None
+                # We output json-friendly values so this becomes a list.
+                # We need to sort the list so our output is
+                # deterministic and can be meaningfully compared with
+                # others, across processes, etc.
+                #
+                # Since we don't know what types we've got here, we
+                # guarantee sortability by dumping each value to a json
+                # string (itself with keys sorted) and using that as the
+                # value's sorting key. Not efficient but it works. A
+                # good reason to avoid set[Any] though. Perhaps we
+                # should just disallow it altogether.
+                return (
+                    sorted(value, key=lambda v: json.dumps(v, sort_keys=True))
+                    if self._create
+                    else None
+                )
 
             # We contain elements of some specified type.
             assert len(childanntypes) == 1
             if self._create:
-                # Note: we output json-friendly values so this becomes
-                # a list.
-                return [
-                    self._process_value(
-                        cls, fieldpath, childanntypes[0], x, ioattrs
-                    )
-                    for x in value
-                ]
+                # We output json-friendly values so this becomes a list.
+                # We need to sort the list so our output is
+                # deterministic and can be meaningfully compared with
+                # others, across processes, etc.
+                #
+                # In this case we have a single concrete type, and for
+                # most incarnations of that (str, int, etc.) we can just
+                # sort our final output. For more complex cases,
+                # however, such as optional values or dataclasses, we
+                # need to convert everything to a json string (itself
+                # with keys sorted) and sort based on those strings.
+                # This is probably a good reason to avoid sets
+                # containing dataclasses or optional values. Perhaps we
+                # should just disallow those.
+                return sorted(
+                    (
+                        self._process_value(
+                            cls, fieldpath, childanntypes[0], x, ioattrs
+                        )
+                        for x in value
+                    ),
+                    key=(
+                        None
+                        if childanntypes[0] in [str, int, float, bool]
+                        else lambda v: json.dumps(v, sort_keys=True)
+                    ),
+                )
+
             for x in value:
                 self._process_value(
                     cls, fieldpath, childanntypes[0], x, ioattrs

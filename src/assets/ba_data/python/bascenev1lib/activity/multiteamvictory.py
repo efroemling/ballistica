@@ -374,9 +374,11 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             tdelay -= 4 * t_incr
             v_offs -= 40
             Text(
-                str(prec.team.customdata['score'])
-                if self._is_ffa
-                else str(prec.score),
+                (
+                    str(prec.team.customdata['score'])
+                    if self._is_ffa
+                    else str(prec.score)
+                ),
                 color=(0.5, 0.5, 0.5, 1.0),
                 position=(ts_h_offs + 230, ts_height / 2 + v_offs),
                 h_align=Text.HAlign.RIGHT,

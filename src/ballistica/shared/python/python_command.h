@@ -46,8 +46,8 @@ class PythonCommand {
   /// Run the command and return the result as a new Python reference.
   /// Only works for eval-able commands.
   /// Returns nullptr on errors, but Python error state will be cleared.
-  auto Eval(bool print_errors, PyObject* globals, PyObject* locals)
-      -> PythonRef;
+  auto Eval(bool print_errors, PyObject* globals,
+            PyObject* locals) -> PythonRef;
 
   void PrintContext();
 

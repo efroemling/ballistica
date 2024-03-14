@@ -23,8 +23,8 @@ class PythonClassSceneTexture : public PythonClass {
 
  private:
   static bool s_create_empty_;
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
-      -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args,
+                     PyObject* keywds) -> PyObject*;
   static void tp_dealloc(PythonClassSceneTexture* self);
   Object::Ref<SceneTexture>* texture_;
 };

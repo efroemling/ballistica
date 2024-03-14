@@ -99,6 +99,7 @@ from batools.pcommands import (
     get_modern_make,
     warm_start_asset_build,
     gen_docs_pdoc,
+    gen_docs_sphinx,
     list_pip_reqs,
     install_pip_reqs,
     checkenv,

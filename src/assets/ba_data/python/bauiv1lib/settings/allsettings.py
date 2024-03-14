@@ -56,13 +56,11 @@ class AllSettingsWindow(bui.Window):
                 scale=(
                     1.75
                     if uiscale is bui.UIScale.SMALL
-                    else 1.35
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -8)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -8) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
 

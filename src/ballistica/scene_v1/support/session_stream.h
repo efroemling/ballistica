@@ -121,8 +121,8 @@ class SessionStream : public Object, public ClientControllerInterface {
   template <typename T>
   auto GetPointerCount(const std::vector<T*>& vec) -> size_t;
   template <typename T>
-  auto GetFreeIndex(std::vector<T*>* vec, std::vector<size_t>* free_indices)
-      -> size_t;
+  auto GetFreeIndex(std::vector<T*>* vec,
+                    std::vector<size_t>* free_indices) -> size_t;
   template <typename T>
   void Add(T* val, std::vector<T*>* vec, std::vector<size_t>* free_indices);
   template <typename T>

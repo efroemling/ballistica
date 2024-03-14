@@ -45,9 +45,7 @@ def gamepad_configure_callback(event: dict[str, Any]) -> None:
             scale=(
                 1.7
                 if uiscale is bui.UIScale.SMALL
-                else 1.4
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.0
+                else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
             ),
             size=(width, height),
             transition='in_right',
@@ -122,9 +120,7 @@ class GamepadSelectWindow(bui.Window):
                 scale=(
                     2.3
                     if uiscale is bui.UIScale.SMALL
-                    else 1.5
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 size=(width, height),
                 transition='in_right',

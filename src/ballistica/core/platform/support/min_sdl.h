@@ -748,7 +748,7 @@ typedef struct SDL_MouseButtonEvent {
   int y;
 } SDL_MouseButtonEvent;
 
-#define SDL_BUTTON(X) (1 << ((X)-1))
+#define SDL_BUTTON(X) (1 << ((X) - 1))
 #define SDL_BUTTON_LEFT 1
 #define SDL_BUTTON_MIDDLE 2
 #define SDL_BUTTON_RIGHT 3
