@@ -228,12 +228,12 @@ prefab-gui-release: prefab-gui-release-build
 # Assemble a debug build for this platform.
 prefab-gui-debug-build:
 	BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) \
- @$(PCOMMAND) make_prefab gui-debug
+ $(PCOMMAND) make_prefab gui-debug
 
 # Assemble a release build for this platform.
 prefab-gui-release-build:
 	BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) \
- @$(PCOMMAND) make_prefab gui-release
+ $(PCOMMAND) make_prefab gui-release
 
 # Assemble & run a server debug build for this platform.
 prefab-server-debug: prefab-server-debug-build
@@ -248,12 +248,12 @@ prefab-server-release: prefab-server-release-build
 # Assemble a server debug build for this platform.
 prefab-server-debug-build:
 	BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) \
- @$(PCOMMAND) make_prefab server-debug
+ $(PCOMMAND) make_prefab server-debug
 
 # Assemble a server release build for this platform.
 prefab-server-release-build:
 	BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) \
- @$(PCOMMAND) make_prefab server-release
+ $(PCOMMAND) make_prefab server-release
 
 # Clean all prefab builds.
 prefab-clean:
