@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Utils for wrangling runs of the app.
+"""Utils for wrangling running the app as part of a build.
 
 Manages constructing or downloading it as well as running it.
 """
@@ -141,14 +141,15 @@ def acquire_binary(assets: bool, purpose: str) -> str:
                 binary_build_command = ['make', 'cmake-binary']
             binary_path = 'build/cmake/debug/staged/ballisticakit'
     else:
-        # Ok; going with prefab headless stuff.
+        # Ok; going with a downloaded prefab headless build.
 
-        # Let the user know how to use their own binaries instead.
+        # Let the user know how to use their own built binaries instead
+        # if they prefer.
         note = '\n' + textwrap.fill(
-            'NOTE: You can set env-var BA_APP_RUN_ENABLE_BUILDS=1'
-            f' to use locally-built binaries for {purpose}'
-            ' instead of prefab ones. This will properly reflect any changes'
-            ' you\'ve made to the C/C++ layer.',
+            f'NOTE: You can set env-var BA_APP_RUN_ENABLE_BUILDS=1'
+            f' to use locally-built binaries for {purpose} instead'
+            f' of prefab ones. This will properly reflect any changes'
+            f' you\'ve made to the C/C++ layer.',
             80,
         )
         if assets:
