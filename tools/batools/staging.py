@@ -74,8 +74,8 @@ class AssetStager:
         self._parse_args(args)
 
         print(
-            f'{Clr.BLU}Staging {Clr.MAG}{Clr.BLD}{self.desc}{Clr.RST}'
-            f'{Clr.BLU} build in {Clr.MAG}{Clr.BLD}{self.dst}'
+            f'{Clr.BLU}Staging for {Clr.MAG}{Clr.BLD}{self.desc}{Clr.RST}'
+            f'{Clr.BLU} at {Clr.MAG}{Clr.BLD}{self.dst}'
             f'{Clr.RST}{Clr.BLU}...{Clr.RST}'
         )
 
