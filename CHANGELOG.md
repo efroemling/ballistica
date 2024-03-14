@@ -40,6 +40,8 @@
   EraOSBeta!)
 - Added a UI for customizing Series Length in Teams and Points-to-Win in FFA
   (Thanks EraOSBeta!)
+- Players leaving the game after getting hurt will now grant kills. (Thanks
+  Temp!)
 - Sphinx based Python documentation generation is now wired up (Thanks
   Loup-Garou911XD!)
 - Renaming & overwriting existing profiles is no longer possible (Thanks Temp!)
