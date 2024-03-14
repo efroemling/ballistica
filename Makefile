@@ -218,41 +218,45 @@ BA_WSL_TARGETS_WINDOWS ?= 1
 # Assemble & run a gui debug build for this platform.
 prefab-gui-debug: prefab-gui-debug-build
 	export BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) && \
- $($(shell $(PCOMMAND) prefab_run_var gui-debug))
+ $($(shell BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) \
+ $(PCOMMAND) prefab_run_var gui-debug))
 
 # Assemble & run a gui release build for this platform.
 prefab-gui-release: prefab-gui-release-build
 	export BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) && \
- $($(shell $(PCOMMAND) prefab_run_var gui-release))
+ $($(shell BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) \
+ $(PCOMMAND) prefab_run_var gui-release))
 
 # Assemble a debug build for this platform.
 prefab-gui-debug-build:
-	export BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) && \
+	BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) \
  $(PCOMMAND) make_prefab gui-debug
 
 # Assemble a release build for this platform.
 prefab-gui-release-build:
-	export BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) && \
+	BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) \
  $(PCOMMAND) make_prefab gui-release
 
 # Assemble & run a server debug build for this platform.
 prefab-server-debug: prefab-server-debug-build
 	export BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) && \
- $($(shell $(PCOMMAND) prefab_run_var server-debug))
+ $($(shell BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) \
+ $(PCOMMAND) prefab_run_var server-debug))
 
 # Assemble & run a server release build for this platform.
 prefab-server-release: prefab-server-release-build
 	export BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) && \
- $($(shell $(PCOMMAND) prefab_run_var server-release))
+ $($(shell BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) \
+ $(PCOMMAND) prefab_run_var server-release))
 
 # Assemble a server debug build for this platform.
 prefab-server-debug-build:
-	export BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) && \
+	BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) \
  $(PCOMMAND) make_prefab server-debug
 
 # Assemble a server release build for this platform.
 prefab-server-release-build:
-	export BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) && \
+	BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS) \
  $(PCOMMAND) make_prefab server-release
 
 # Clean all prefab builds.
