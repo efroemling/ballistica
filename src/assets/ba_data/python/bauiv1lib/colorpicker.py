@@ -241,12 +241,11 @@ class ColorPickerExact(PopupWindow):
             position=(width * 0.5 - 37.5 + 3, height - 51),
             max_chars=9,
             text='#FFFFFF',
-            # on_return_press_call=self._done,
             autoselect=True,
             size=(75, 30),
             v_align='center',
             editable=True,
-            maxwidth=70,
+            maxwidth=40,
             force_internal_editing=True,
         )
 
