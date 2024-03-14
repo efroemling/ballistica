@@ -73,6 +73,7 @@ class TextWidget : public Widget {
   void set_flatness(float flatness) { flatness_ = flatness; }
   void set_shadow(float shadow) { shadow_ = shadow; }
   void set_res_scale(float res_scale);
+  void set_allow_clear_button(bool val) { allow_clear_button_ = val; }
   auto GetTextWidth() -> float;
   void OnLanguageChange() override;
   void AdapterFinished();
@@ -130,7 +131,8 @@ class TextWidget : public Widget {
   bool selectable_{};
   bool clear_pressed_{};
   bool clear_mouse_over_{};
-  bool do_clear_button_{true};
+  bool implicit_clear_button_{true};
+  bool allow_clear_button_{true};
   int carat_position_{9999};
   int max_chars_{99999};
   float res_scale_{1.0f};
