@@ -452,9 +452,12 @@ def wsl_build_check_win_drive() -> None:
         .strip()
     )
 
-    # If we're sitting under the linux filesystem, our path
-    # will start with \\wsl$; fail in that case and explain why.
-    if not path.startswith('\\\\wsl$'):
+    # If we're sitting under the linux filesystem, our path will start
+    # with '\\wsl$' or '\\wsl.localhost' or '\\wsl\'; fail in that case
+    # and explain why.
+    if not any(
+        path.startswith(x) for x in ['\\\\wsl$', '\\\\wsl.', '\\\\wsl\\']
+    ):
         return
 
     def _wrap(txt: str) -> str:

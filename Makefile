@@ -982,7 +982,7 @@ windows-release: windows-release-build
 	build/windows/Release_Win32/BallisticaKitGeneric.exe
 
 # Build a debug windows build (from WSL).
-windows-debug-build: \
+windows-debug-build: prereqs \
    build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.pdb
 	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
@@ -992,7 +992,7 @@ windows-debug-build: \
   $(MAKE) _windows-wsl-build
 
 # Rebuild a debug windows build (from WSL).
-windows-debug-rebuild: \
+windows-debug-rebuild: prereqs \
    build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.pdb
 	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
@@ -1002,7 +1002,7 @@ windows-debug-rebuild: \
   $(MAKE) _windows-wsl-rebuild
 
 # Build a release windows build (from WSL).
-windows-release-build: \
+windows-release-build: prereqs \
    build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.pdb
 	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
@@ -1012,7 +1012,7 @@ windows-release-build: \
   $(MAKE) _windows-wsl-build
 
 # Rebuild a release windows build (from WSL).
-windows-release-rebuild: \
+windows-release-rebuild: prereqs \
    build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.pdb
 	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
@@ -1022,13 +1022,13 @@ windows-release-rebuild: \
   $(MAKE) _windows-wsl-rebuild
 
 # Remove all non-git-managed files in windows subdir.
-windows-clean:
+windows-clean: prereqs
 	@$(CHECK_CLEAN_SAFETY)
 	git clean -dfx ballisticakit-windows
 	rm -rf build/windows $(LAZYBUILDDIR)
 
 # Show what would be cleaned.
-windows-clean-list:
+windows-clean-list: prereqs
 	@$(CHECK_CLEAN_SAFETY)
 	git clean -dnx ballisticakit-windows
 	echo would also remove build/windows $(LAZYBUILDDIR)
