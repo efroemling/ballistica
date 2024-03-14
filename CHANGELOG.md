@@ -1,4 +1,4 @@
-### 1.7.33 (build 21778, api 8, 2024-03-13)
+### 1.7.33 (build 21779, api 8, 2024-03-13)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).
 - Added a 'Show Demos When Idle' option in advanced settings. If enabled, the
@@ -70,6 +70,8 @@
   cleanly however (an `on_app_active_changed()` call in the `AppMode` class).
   This means that it also applies to other platforms when the app reaches the
   'inactive' state; for instance when minimizing the window on the SDL build.
+- Added an `allow_clear_button` arg to bauiv1.textwidget() which can be used to
+  disable the 'X' button that clears editable text widgets.
 
 ### 1.7.31 (build 21727, api 8, 2023-12-17)
 - Added `bascenev1.get_connection_to_host_info_2()` which is an improved
