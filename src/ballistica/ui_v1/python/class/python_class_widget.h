@@ -23,8 +23,8 @@ class PythonClassWidget : public PythonClass {
  private:
   static PyMethodDef tp_methods[];
   static auto tp_repr(PythonClassWidget* self) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
-      -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args,
+                     PyObject* keywds) -> PyObject*;
   static void tp_dealloc(PythonClassWidget* self);
   static auto tp_getattro(PythonClassWidget* self, PyObject* attr) -> PyObject*;
   static auto tp_setattro(PythonClassWidget* self, PyObject* attr,
@@ -35,8 +35,8 @@ class PythonClassWidget : public PythonClass {
   static auto GetChildren(PythonClassWidget* self) -> PyObject*;
   static auto GetSelectedChild(PythonClassWidget* self) -> PyObject*;
   static auto GetScreenSpaceCenter(PythonClassWidget* self) -> PyObject*;
-  static auto Delete(PythonClassWidget* self, PyObject* args, PyObject* keywds)
-      -> PyObject*;
+  static auto Delete(PythonClassWidget* self, PyObject* args,
+                     PyObject* keywds) -> PyObject*;
   static auto AddDeleteCallback(PythonClassWidget* self, PyObject* args,
                                 PyObject* keywds) -> PyObject*;
   Object::WeakRef<Widget>* widget_;

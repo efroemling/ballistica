@@ -204,11 +204,11 @@ class UIRow:
             bui.textwidget(
                 edit=self._ping_widget,
                 text=str(int(party.ping)),
-                color=(0, 1, 0)
-                if party.ping <= ping_good
-                else (1, 1, 0)
-                if party.ping <= ping_med
-                else (1, 0, 0),
+                color=(
+                    (0, 1, 0)
+                    if party.ping <= ping_good
+                    else (1, 1, 0) if party.ping <= ping_med else (1, 0, 0)
+                ),
             )
 
         party.clean_display_index = index
@@ -369,8 +369,8 @@ class PublicGatherTab(GatherTab):
         self._join_status_text: bui.Widget | None = None
         self._no_servers_found_text: bui.Widget | None = None
         self._host_max_party_size_value: bui.Widget | None = None
-        self._host_max_party_size_minus_button: (bui.Widget | None) = None
-        self._host_max_party_size_plus_button: (bui.Widget | None) = None
+        self._host_max_party_size_minus_button: bui.Widget | None = None
+        self._host_max_party_size_plus_button: bui.Widget | None = None
         self._host_status_text: bui.Widget | None = None
         self._signed_in = False
         self._ui_rows: list[UIRow] = []
@@ -800,9 +800,11 @@ class PublicGatherTab(GatherTab):
             parent=self._container,
             label=label,
             size=(400, 80),
-            on_activate_call=self._on_stop_advertising_press
-            if is_public_enabled
-            else self._on_start_advertizing_press,
+            on_activate_call=(
+                self._on_stop_advertising_press
+                if is_public_enabled
+                else self._on_start_advertizing_press
+            ),
             position=(c_width * 0.5 - 200, v),
             autoselect=True,
             up_widget=btn2,

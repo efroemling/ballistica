@@ -776,7 +776,6 @@ class ChargerBotPro(ChargerBot):
 
     color = PRO_BOT_COLOR
     highlight = PRO_BOT_HIGHLIGHT
-    default_shields = True
     default_boxing_gloves = True
     points_mult = 3
 

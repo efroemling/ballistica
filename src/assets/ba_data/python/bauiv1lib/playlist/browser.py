@@ -67,9 +67,7 @@ class PlaylistBrowserWindow(bui.Window):
         self._height = (
             480
             if uiscale is bui.UIScale.SMALL
-            else 510
-            if uiscale is bui.UIScale.MEDIUM
-            else 580
+            else 510 if uiscale is bui.UIScale.MEDIUM else 580
         )
 
         top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
@@ -83,13 +81,11 @@ class PlaylistBrowserWindow(bui.Window):
                 scale=(
                     1.69
                     if uiscale is bui.UIScale.SMALL
-                    else 1.05
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 0.9
+                    else 1.05 if uiscale is bui.UIScale.MEDIUM else 0.9
                 ),
-                stack_offset=(0, -26)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -26) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
 
@@ -714,9 +710,9 @@ class PlaylistBrowserWindow(bui.Window):
             )
             if self._selected_playlist != prev_sel:
                 cfg = bui.app.config
-                cfg[
-                    self._pvars.config_name + ' Playlist Selection'
-                ] = self._selected_playlist
+                cfg[self._pvars.config_name + ' Playlist Selection'] = (
+                    self._selected_playlist
+                )
                 cfg.commit()
 
         self._save_state()

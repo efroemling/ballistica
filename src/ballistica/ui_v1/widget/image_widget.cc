@@ -9,7 +9,7 @@ namespace ballistica::ui_v1 {
 
 ImageWidget::ImageWidget()
     : birth_time_millisecs_{
-        static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0)} {}
+          static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0)} {}
 
 ImageWidget::~ImageWidget() = default;
 

@@ -35,9 +35,7 @@ class TouchscreenSettingsWindow(bui.Window):
                 scale=(
                     1.9
                     if uiscale is bui.UIScale.SMALL
-                    else 1.55
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.2
+                    else 1.55 if uiscale is bui.UIScale.MEDIUM else 1.2
                 ),
             )
         )

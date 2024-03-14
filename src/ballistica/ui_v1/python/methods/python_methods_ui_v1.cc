@@ -29,8 +29,8 @@ namespace ballistica::ui_v1 {
 
 // ------------------------------ getsound -------------------------------------
 
-static auto PyGetSound(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyGetSound(PyObject* self, PyObject* args,
+                       PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
   static const char* kwlist[] = {"name", nullptr};
@@ -58,8 +58,8 @@ static PyMethodDef PyGetSoundDef = {
 
 // ----------------------------- gettexture ------------------------------------
 
-static auto PyGetTexture(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyGetTexture(PyObject* self, PyObject* args,
+                         PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
   static const char* kwlist[] = {"name", nullptr};
@@ -87,8 +87,8 @@ static PyMethodDef PyGetTextureDef = {
 
 // -------------------------- get_qrcode_texture -------------------------------
 
-static auto PyGetQRCodeTexture(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyGetQRCodeTexture(PyObject* self, PyObject* args,
+                               PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char* url;
   static const char* kwlist[] = {"url", nullptr};
@@ -117,8 +117,8 @@ static PyMethodDef PyGetQRCodeTextureDef = {
 
 // ------------------------------- getmesh -------------------------------------
 
-static auto PyGetMesh(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyGetMesh(PyObject* self, PyObject* args,
+                      PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
   static const char* kwlist[] = {"name", nullptr};
@@ -146,8 +146,8 @@ static PyMethodDef PyGetMeshDef = {
 
 // ----------------------------- buttonwidget ----------------------------------
 
-static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyButtonWidget(PyObject* self, PyObject* args,
+                           PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* size_obj = Py_None;
   PyObject* pos_obj = Py_None;
@@ -264,7 +264,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                            UIV1Python::GetPyWidget(parent_obj));
+                              UIV1Python::GetPyWidget(parent_obj));
     if (parent_widget == nullptr) {
       throw Exception("Parent widget nonexistent or not a container.",
                       PyExcType::kWidgetNotFound);
@@ -508,8 +508,8 @@ static PyMethodDef PyButtonWidgetDef = {
 
 // --------------------------- checkboxwidget ----------------------------------
 
-static auto PyCheckBoxWidget(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyCheckBoxWidget(PyObject* self, PyObject* args,
+                             PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* size_obj = Py_None;
   PyObject* pos_obj = Py_None;
@@ -573,7 +573,7 @@ static auto PyCheckBoxWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                            UIV1Python::GetPyWidget(parent_obj));
+                              UIV1Python::GetPyWidget(parent_obj));
     if (parent_widget == nullptr) {
       throw Exception("Parent widget nonexistent or not a container.",
                       PyExcType::kWidgetNotFound);
@@ -682,8 +682,8 @@ static PyMethodDef PyCheckBoxWidgetDef = {
 
 // ----------------------------- imagewidget -----------------------------------
 
-static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyImageWidget(PyObject* self, PyObject* args,
+                          PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* size_obj = Py_None;
   PyObject* pos_obj = Py_None;
@@ -752,7 +752,7 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                            UIV1Python::GetPyWidget(parent_obj));
+                              UIV1Python::GetPyWidget(parent_obj));
     if (parent_widget == nullptr) {
       throw Exception("Parent widget nonexistent or not a container.",
                       PyExcType::kWidgetNotFound);
@@ -880,8 +880,8 @@ static PyMethodDef PyImageWidgetDef = {
 
 // ----------------------------- columnwidget ----------------------------------
 
-static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyColumnWidget(PyObject* self, PyObject* args,
+                           PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   PyObject* size_obj{Py_None};
@@ -949,7 +949,7 @@ static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                            UIV1Python::GetPyWidget(parent_obj));
+                              UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
       throw Exception("Invalid or nonexistent parent widget.",
                       PyExcType::kWidgetNotFound);
@@ -1062,8 +1062,8 @@ static PyMethodDef PyColumnWidgetDef = {
 
 // ---------------------------- containerwidget --------------------------------
 
-static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyContainerWidget(PyObject* self, PyObject* args,
+                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* size_obj = Py_None;
   PyObject* pos_obj = Py_None;
@@ -1170,7 +1170,7 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                            UIV1Python::GetPyWidget(parent_obj));
+                              UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
       throw Exception("Invalid or nonexistent parent widget.",
                       PyExcType::kWidgetNotFound);
@@ -1393,8 +1393,8 @@ static PyMethodDef PyContainerWidgetDef = {
 
 // ------------------------------ rowwidget ------------------------------------
 
-static auto PyRowWidget(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyRowWidget(PyObject* self, PyObject* args,
+                        PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   PyObject* size_obj{Py_None};
@@ -1443,7 +1443,7 @@ static auto PyRowWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                            UIV1Python::GetPyWidget(parent_obj));
+                              UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
       throw Exception("invalid or nonexistent parent widget.",
                       PyExcType::kWidgetNotFound);
@@ -1522,8 +1522,8 @@ static PyMethodDef PyRowWidgetDef = {
 
 // ---------------------------- scrollwidget -----------------------------------
 
-static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyScrollWidget(PyObject* self, PyObject* args,
+                           PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* size_obj{Py_None};
   PyObject* pos_obj{Py_None};
@@ -1595,7 +1595,7 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                            UIV1Python::GetPyWidget(parent_obj));
+                              UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
       throw Exception("Invalid or nonexistent parent widget.",
                       PyExcType::kWidgetNotFound);
@@ -1710,8 +1710,8 @@ static PyMethodDef PyScrollWidgetDef = {
 
 // ---------------------------- hscrollwidget ----------------------------------
 
-static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyHScrollWidget(PyObject* self, PyObject* args,
+                            PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   PyObject* size_obj = Py_None;
@@ -1781,7 +1781,7 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                            UIV1Python::GetPyWidget(parent_obj));
+                              UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
       throw Exception("Invalid or nonexistent parent widget.",
                       PyExcType::kWidgetNotFound);
@@ -1889,8 +1889,8 @@ static PyMethodDef PyHScrollWidgetDef = {
 
 // ------------------------------ textwidget -----------------------------------
 
-static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyTextWidget(PyObject* self, PyObject* args,
+                         PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* size_obj = Py_None;
   PyObject* pos_obj = Py_None;
@@ -2039,7 +2039,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                            UIV1Python::GetPyWidget(parent_obj));
+                              UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
       throw Exception("Invalid or nonexistent parent widget.",
                       PyExcType::kWidgetNotFound);
@@ -2280,8 +2280,8 @@ static PyMethodDef PyTextWidgetDef = {
 
 // ------------------------------- widget --------------------------------------
 
-static auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyWidgetCall(PyObject* self, PyObject* args,
+                         PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   PyObject* edit_obj = Py_None;
@@ -2510,8 +2510,8 @@ static PyMethodDef PySetPartyWindowOpenDef = {
 
 // -------------------------- get_special_widget -------------------------------
 
-static auto PyGetSpecialWidget(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyGetSpecialWidget(PyObject* self, PyObject* args,
+                               PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   const char* name;
@@ -2545,8 +2545,8 @@ static PyMethodDef PyGetSpecialWidgetDef = {
 
 // ------------------------------ back_press -----------------------------------
 
-static auto PyBackPress(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyBackPress(PyObject* self, PyObject* args,
+                        PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   static const char* kwlist[] = {nullptr};
@@ -2571,8 +2571,8 @@ static PyMethodDef PyBackPressDef = {
 
 // ------------------------------- open_url ------------------------------------
 
-static auto PyOpenURL(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyOpenURL(PyObject* self, PyObject* args,
+                      PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char* address{};
   int force_internal{0};

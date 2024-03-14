@@ -203,9 +203,11 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
             sval = babase.Lstr(resource='pressAnyButtonText')
 
         Text(
-            self._custom_continue_message
-            if self._custom_continue_message is not None
-            else sval,
+            (
+                self._custom_continue_message
+                if self._custom_continue_message is not None
+                else sval
+            ),
             v_attach=Text.VAttach.BOTTOM,
             h_align=Text.HAlign.CENTER,
             flash=True,

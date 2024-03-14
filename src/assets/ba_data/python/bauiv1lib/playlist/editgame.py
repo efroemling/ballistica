@@ -108,9 +108,7 @@ class PlaylistEditGameWindow(bui.Window):
         height = (
             365
             if uiscale is bui.UIScale.SMALL
-            else 460
-            if uiscale is bui.UIScale.MEDIUM
-            else 550
+            else 460 if uiscale is bui.UIScale.MEDIUM else 550
         )
         spacing = 52
         y_extra = 15
@@ -129,13 +127,11 @@ class PlaylistEditGameWindow(bui.Window):
                 scale=(
                     2.19
                     if uiscale is bui.UIScale.SMALL
-                    else 1.35
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -17)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -17) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
 
@@ -143,9 +139,11 @@ class PlaylistEditGameWindow(bui.Window):
             parent=self._root_widget,
             position=(45 + x_inset, height - 82 + y_extra2),
             size=(180, 70) if is_add else (180, 65),
-            label=bui.Lstr(resource='backText')
-            if is_add
-            else bui.Lstr(resource='cancelText'),
+            label=(
+                bui.Lstr(resource='backText')
+                if is_add
+                else bui.Lstr(resource='cancelText')
+            ),
             button_type='back' if is_add else None,
             autoselect=True,
             scale=0.75,
@@ -160,9 +158,11 @@ class PlaylistEditGameWindow(bui.Window):
             size=(200, 65),
             scale=0.75,
             text_scale=1.3,
-            label=bui.Lstr(resource=self._r + '.addGameText')
-            if is_add
-            else bui.Lstr(resource='doneText'),
+            label=(
+                bui.Lstr(resource=self._r + '.addGameText')
+                if is_add
+                else bui.Lstr(resource='doneText')
+            ),
         )
 
         if bui.app.ui_v1.use_toolbars:
@@ -447,9 +447,11 @@ class PlaylistEditGameWindow(bui.Window):
                     parent=self._subcontainer,
                     position=(h + 509 - 95, v),
                     size=(0, 28),
-                    text=bui.Lstr(resource='onText')
-                    if value
-                    else bui.Lstr(resource='offText'),
+                    text=(
+                        bui.Lstr(resource='onText')
+                        if value
+                        else bui.Lstr(resource='offText')
+                    ),
                     editable=False,
                     color=(0.6, 1.0, 0.6, 1.0),
                     maxwidth=mw2,
@@ -566,9 +568,11 @@ class PlaylistEditGameWindow(bui.Window):
     ) -> None:
         bui.textwidget(
             edit=widget,
-            text=bui.Lstr(resource='onText')
-            if value
-            else bui.Lstr(resource='offText'),
+            text=(
+                bui.Lstr(resource='onText')
+                if value
+                else bui.Lstr(resource='offText')
+            ),
         )
         self._settings[setting_name] = value
 

@@ -344,8 +344,8 @@ auto PythonClassInputDevice::GetPlayerProfiles(PythonClassInputDevice* self)
 }
 
 auto PythonClassInputDevice::GetV1AccountName(PythonClassInputDevice* self,
-                                              PyObject* args, PyObject* keywds)
-    -> PyObject* {
+                                              PyObject* args,
+                                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   int full;
   static const char* kwlist[] = {"full", nullptr};
@@ -388,8 +388,8 @@ auto PythonClassInputDevice::Exists(PythonClassInputDevice* self) -> PyObject* {
 }
 
 auto PythonClassInputDevice::GetAxisName(PythonClassInputDevice* self,
-                                         PyObject* args, PyObject* keywds)
-    -> PyObject* {
+                                         PyObject* args,
+                                         PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   int id;
@@ -409,8 +409,8 @@ auto PythonClassInputDevice::GetAxisName(PythonClassInputDevice* self,
 }
 
 auto PythonClassInputDevice::GetButtonName(PythonClassInputDevice* self,
-                                           PyObject* args, PyObject* keywds)
-    -> PyObject* {
+                                           PyObject* args,
+                                           PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   int id{};
