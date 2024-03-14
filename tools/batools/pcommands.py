@@ -616,60 +616,80 @@ def ensure_prefab_platform() -> None:
     the prefab platform may be Windows; not Linux. Also, a 64-bit
     os may be targeting a 32-bit platform.
     """
-    import batools.build
     from efro.error import CleanError
+
+    from batools.build import PrefabPlatform
 
     args = pcommand.get_args()
     if len(args) != 1:
         raise CleanError('Expected 1 platform name arg.')
-    needed = args[0]
-    current = batools.build.get_current_prefab_platform()
-    if current != needed:
+    needed = PrefabPlatform(args[0])
+    current = PrefabPlatform.get_current()
+    if current is not needed:
         raise CleanError(
-            f'Incorrect platform: we are {current}, this requires {needed}.'
+            f'Incorrect platform: we are {current.value},'
+            f' this requires {needed.value}.'
         )
 
 
 def prefab_run_var() -> None:
     """Print the current platform prefab run target var."""
-    import batools.build
+    from batools.build import PrefabPlatform
 
     args = pcommand.get_args()
     if len(args) != 1:
         raise RuntimeError('Expected 1 arg.')
     base = args[0].replace('-', '_').upper()
-    platform = batools.build.get_current_prefab_platform().upper()
+    platform = PrefabPlatform.get_current().value.upper()
     pcommand.clientprint(f'RUN_PREFAB_{platform}_{base}', end='')
 
 
 def prefab_binary_path() -> None:
-    """Print the current platform prefab binary path."""
-    import batools.build
+    """Print the path to the current prefab binary."""
+    from typing import assert_never
+
+    from efro.error import CleanError
+
+    from batools.build import PrefabPlatform, PrefabTarget
 
     pcommand.disallow_in_batch()
 
     if len(sys.argv) != 3:
-        raise RuntimeError('Expected 1 arg.')
-    buildtype, buildmode = sys.argv[2].split('-')
-    platform = batools.build.get_current_prefab_platform()
+        options = ', '.join(t.value for t in PrefabTarget)
+        raise CleanError(f'Expected 1 PrefabTarget arg. Options are {options}.')
 
-    if platform.startswith('windows_'):
+    target = PrefabTarget(sys.argv[2])
+
+    buildtype = target.buildtype
+    buildmode = target.buildmode
+
+    platform = PrefabPlatform.get_current()
+
+    if platform is PrefabPlatform.WINDOWS_X86:
         if buildtype == 'gui':
             binpath = 'BallisticaKit.exe'
         elif buildtype == 'server':
             binpath = 'dist/BallisticaKitHeadless.exe'
         else:
             raise ValueError(f"Invalid buildtype '{buildtype}'.")
-    else:
+    elif (
+        platform is PrefabPlatform.MAC_ARM64
+        or platform is PrefabPlatform.MAC_X86_64
+        or platform is PrefabPlatform.LINUX_ARM64
+        or platform is PrefabPlatform.LINUX_X86_64
+    ):
         if buildtype == 'gui':
             binpath = 'ballisticakit'
         elif buildtype == 'server':
             binpath = 'dist/ballisticakit_headless'
         else:
             raise ValueError(f"Invalid buildtype '{buildtype}'.")
+    else:
+        # Make sure we're covering all options.
+        assert_never(platform)
 
     print(
-        f'build/prefab/full/{platform}_{buildtype}/{buildmode}/{binpath}',
+        f'build/prefab/full/{platform.value}_{buildtype}/{buildmode}/{binpath}',
         end='',
     )
 
@@ -677,20 +697,20 @@ def prefab_binary_path() -> None:
 def make_prefab() -> None:
     """Run prefab builds for the current platform."""
     import subprocess
-    import batools.build
+    from batools.build import PrefabPlatform, PrefabTarget
 
     pcommand.disallow_in_batch()
 
     if len(sys.argv) != 3:
         raise RuntimeError('Expected one argument')
-    target = batools.build.PrefabTarget(sys.argv[2])
-    platform = batools.build.get_current_prefab_platform()
+    targetstr = PrefabTarget(sys.argv[2]).value
+    platformstr = PrefabPlatform.get_current().value
 
     # We use dashes instead of underscores in target names.
-    platform = platform.replace('_', '-')
+    platformstr = platformstr.replace('_', '-')
     try:
         subprocess.run(
-            ['make', f'prefab-{platform}-{target.value}-build'], check=True
+            ['make', f'prefab-{platformstr}-{targetstr}-build'], check=True
         )
     except (Exception, KeyboardInterrupt) as exc:
         if str(exc):
