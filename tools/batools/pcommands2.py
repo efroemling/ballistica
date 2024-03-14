@@ -204,7 +204,7 @@ def win_ci_install_prereqs() -> None:
 
     # We'll need to pull a handful of things out of efrocache for the
     # build to succeed. Normally this would happen through our Makefile
-    # targets but we can't use them under raw window so we need to just
+    # targets but we can't use them under raw Windows so we need to just
     # hard-code whatever we need here.
     lib_dbg_win32 = 'build/prefab/lib/windows/Debug_Win32'
     needed_targets: set[str] = {
@@ -256,11 +256,11 @@ def win_ci_binary_build() -> None:
 
 
 def update_cmake_prefab_lib() -> None:
-    """Update prefab internal libs for builds."""
+    """Update prefab internal libs; run as part of a build."""
     import subprocess
     import os
     from efro.error import CleanError
-    import batools.build
+    from batools.build import PrefabPlatform
 
     pcommand.disallow_in_batch()
 
@@ -275,14 +275,18 @@ def update_cmake_prefab_lib() -> None:
         raise CleanError(f'Invalid buildtype: {buildtype}')
     if mode not in {'debug', 'release'}:
         raise CleanError(f'Invalid mode: {mode}')
-    platform = batools.build.get_current_prefab_platform(
-        wsl_gives_windows=False
-    )
-    suffix = '_server' if buildtype == 'server' else '_gui'
-    target = f'build/prefab/lib/{platform}{suffix}/{mode}/libballisticaplus.a'
 
-    # Build the target and then copy it to dst if it doesn't exist there yet
-    # or the existing one is older than our target.
+    # Our 'cmake' build targets use the Linux side of WSL; not native
+    # Windows.
+    platform = PrefabPlatform.get_current(wsl_targets_windows=False)
+
+    suffix = '_server' if buildtype == 'server' else '_gui'
+    target = (
+        f'build/prefab/lib/{platform.value}{suffix}/{mode}/libballisticaplus.a'
+    )
+
+    # Build the target and then copy it to dst if it doesn't exist there
+    # yet or the existing one is older than our target.
     subprocess.run(['make', target], check=True)
 
     libdir = os.path.join(builddir, 'prefablib')
@@ -431,7 +435,7 @@ def wsl_build_check_win_drive() -> None:
         != 0
     ):
         raise CleanError(
-            'wslpath not found; you must run this from a WSL environment'
+            "'wslpath' not found. This does not seem to be a WSL environment."
         )
 
     if os.environ.get('WSL_BUILD_CHECK_WIN_DRIVE_IGNORE') == '1':
@@ -448,9 +452,12 @@ def wsl_build_check_win_drive() -> None:
         .strip()
     )
 
-    # If we're sitting under the linux filesystem, our path
-    # will start with \\wsl$; fail in that case and explain why.
-    if not path.startswith('\\\\wsl$'):
+    # If we're sitting under the linux filesystem, our path will start
+    # with '\\wsl$' or '\\wsl.localhost' or '\\wsl\'; fail in that case
+    # and explain why.
+    if not any(
+        path.startswith(x) for x in ['\\\\wsl$', '\\\\wsl.', '\\\\wsl\\']
+    ):
         return
 
     def _wrap(txt: str) -> str:
@@ -475,7 +482,7 @@ def wsl_build_check_win_drive() -> None:
                     'Note that WSL2 filesystem performance'
                     ' is poor when accessing'
                     ' native Windows drives, so if Visual Studio builds are not'
-                    ' needed it may be best to keep things'
+                    ' needed it may be best to keep things here'
                     ' on the Linux filesystem.'
                     ' This behavior may differ under WSL1 (untested).'
                 ),
@@ -540,3 +547,31 @@ def wsl_path_to_win() -> None:
     if escape:
         out = out.replace('\\', '\\\\')
     print(out, end='')
+
+
+def get_modern_make() -> None:
+    """Print name of a modern make command."""
+    import platform
+    import subprocess
+
+    pcommand.disallow_in_batch()
+
+    # Mac gnu make is outdated (due to newer versions using GPL3 I believe).
+    # so let's return 'gmake' there which will point to homebrew make which
+    # should be up to date.
+    if platform.system() == 'Darwin':
+        if (
+            subprocess.run(
+                ['which', 'gmake'], check=False, capture_output=True
+            ).returncode
+            != 0
+        ):
+            print(
+                'WARNING: this requires gmake (mac system make is too old).'
+                " Install it with 'brew install make'",
+                file=sys.stderr,
+                flush=True,
+            )
+        print('gmake')
+    else:
+        print('make')

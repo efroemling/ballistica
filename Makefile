@@ -151,7 +151,7 @@ meta-clean:
 # few things such as localconfig.json).
 clean:
 	$(CHECK_CLEAN_SAFETY)
-	rm -rf build  # Handle this part ourself; can confuse git.
+	rm -rf build  # Kill build ourself; may confuse git if contains other repos.
 	git clean -dfx $(ROOT_CLEAN_IGNORES)
 
 # Show what clean would delete without actually deleting it.
@@ -210,37 +210,42 @@ pcommandbatch_speed_test: prereqs
 
 # Prebuilt binaries for various platforms.
 
+# WSL is Linux but running under Windows, so it can target either. By default
+# we want these top level targets (prefab-gui-debug, etc.) to yield native
+# Windows builds from WSL, but this env var can be set to override that.
+BA_WSL_TARGETS_WINDOWS ?= 1
+
 # Assemble & run a gui debug build for this platform.
 prefab-gui-debug: prefab-gui-debug-build
-	$($(shell $(PCOMMAND) prefab_run_var gui-debug))
+	$($(shell $(WSLU) $(PCOMMAND) prefab_run_var gui-debug))
 
 # Assemble & run a gui release build for this platform.
 prefab-gui-release: prefab-gui-release-build
-	$($(shell $(PCOMMAND) prefab_run_var gui-release))
+	$($(shell $(WSLU) $(PCOMMAND) prefab_run_var gui-release))
 
 # Assemble a debug build for this platform.
 prefab-gui-debug-build:
-	@$(PCOMMAND) make_prefab gui-debug
+	$(WSLU) $(PCOMMAND) make_prefab gui-debug
 
 # Assemble a release build for this platform.
 prefab-gui-release-build:
-	@$(PCOMMAND) make_prefab gui-release
+	$(WSLU) $(PCOMMAND) make_prefab gui-release
 
 # Assemble & run a server debug build for this platform.
 prefab-server-debug: prefab-server-debug-build
-	$($(shell $(PCOMMAND) prefab_run_var server-debug))
+	$($(shell $(WSLU) $(PCOMMAND) prefab_run_var server-debug))
 
 # Assemble & run a server release build for this platform.
 prefab-server-release: prefab-server-release-build
-	$($(shell $(PCOMMAND) prefab_run_var server-release))
+	$($(shell $(WSLU) $(PCOMMAND) prefab_run_var server-release))
 
 # Assemble a server debug build for this platform.
 prefab-server-debug-build:
-	@$(PCOMMAND) make_prefab server-debug
+	$(WSLU) $(PCOMMAND) make_prefab server-debug
 
 # Assemble a server release build for this platform.
 prefab-server-release-build:
-	@$(PCOMMAND) make_prefab server-release
+	$(WSLU) $(PCOMMAND) make_prefab server-release
 
 # Clean all prefab builds.
 prefab-clean:
@@ -261,11 +266,11 @@ RUN_PREFAB_MAC_ARM64_GUI_DEBUG = cd build/prefab/full/mac_arm64_gui/debug \
 
 prefab-mac-x86-64-gui-debug: prefab-mac-x86-64-gui-debug-build
 	@$(PCOMMAND) ensure_prefab_platform mac_x86_64
-	@$(RUN_PREFAB_MAC_X86_64_GUI_DEBUG)
+	$(RUN_PREFAB_MAC_X86_64_GUI_DEBUG)
 
 prefab-mac-arm64-gui-debug: prefab-mac-arm64-gui-debug-build
 	@$(PCOMMAND) ensure_prefab_platform mac_arm64
-	@$(RUN_PREFAB_MAC_ARM64_GUI_DEBUG)
+	$(RUN_PREFAB_MAC_ARM64_GUI_DEBUG)
 
 prefab-mac-x86-64-gui-debug-build: prereqs assets-cmake \
    build/prefab/full/mac_x86_64_gui/debug/ballisticakit
@@ -291,11 +296,11 @@ RUN_PREFAB_MAC_ARM64_GUI_RELEASE = cd build/prefab/full/mac_arm64_gui/release \
 
 prefab-mac-x86-64-gui-release: prefab-mac-x86-64-gui-release-build
 	@$(PCOMMAND) ensure_prefab_platform mac_x86_64
-	@$(RUN_PREFAB_MAC_X86_64_GUI_RELEASE)
+	$(RUN_PREFAB_MAC_X86_64_GUI_RELEASE)
 
 prefab-mac-arm64-gui-release: prefab-mac-arm64-gui_release-build
 	@$(PCOMMAND) ensure_prefab_platform mac_arm64
-	@$(RUN_PREFAB_MAC_ARM64_GUI_RELEASE)
+	$(RUN_PREFAB_MAC_ARM64_GUI_RELEASE)
 
 prefab-mac-x86-64-gui-release-build: prereqs assets-cmake \
    build/prefab/full/mac_x86_64_gui/release/ballisticakit
@@ -325,7 +330,7 @@ prefab-mac-x86-64-server-debug: prefab-mac-x86-64-server-debug-build
 
 prefab-mac-arm64-server-debug: prefab-mac-arm64-server-debug-build
 	@$(PCOMMAND) ensure_prefab_platform mac_arm64
-	@$(RUN_PREFAB_MAC_ARM64_SERVER_DEBUG)
+	$(RUN_PREFAB_MAC_ARM64_SERVER_DEBUG)
 
 prefab-mac-x86-64-server-debug-build: prereqs assets-server \
    build/prefab/full/mac_x86_64_server/debug/dist/ballisticakit_headless
@@ -351,11 +356,11 @@ RUN_PREFAB_MAC_ARM64_SERVER_RELEASE = cd \
 
 prefab-mac-x86-64-server-release: prefab-mac-x86-64-server-release-build
 	@$(PCOMMAND) ensure_prefab_platform mac_x86_64
-	@$(RUN_PREFAB_MAC_X86_64_SERVER_RELEASE)
+	$(RUN_PREFAB_MAC_X86_64_SERVER_RELEASE)
 
 prefab-mac-arm64-server-release: prefab-mac-arm64-server-release-build
 	@$(PCOMMAND) ensure_prefab_platform mac_arm64
-	@$(RUN_PREFAB_MAC_ARM64_SERVER_RELEASE)
+	$(RUN_PREFAB_MAC_ARM64_SERVER_RELEASE)
 
 prefab-mac-x86-64-server-release-build: prereqs assets-server \
    build/prefab/full/mac_x86_64_server/release/dist/ballisticakit_headless
@@ -382,12 +387,12 @@ RUN_PREFAB_LINUX_ARM64_GUI_DEBUG = cd \
   build/prefab/full/linux_arm64_gui/debug && ./ballisticakit
 
 prefab-linux-x86-64-gui-debug: prefab-linux-x86-64-gui-debug-build
-	@$(PCOMMAND) ensure_prefab_platform linux_x86_64
-	@$(RUN_PREFAB_LINUX_X86_64_GUI_DEBUG)
+	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_x86_64
+	$(RUN_PREFAB_LINUX_X86_64_GUI_DEBUG)
 
 prefab-linux-arm64-gui-debug: prefab-linux-arm64-gui-debug-build
-	@$(PCOMMAND) ensure_prefab_platform linux_arm64
-	@$(RUN_PREFAB_LINUX_ARM64_GUI_DEBUG)
+	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_arm64
+	$(RUN_PREFAB_LINUX_ARM64_GUI_DEBUG)
 
 prefab-linux-x86-64-gui-debug-build: prereqs assets-cmake \
    build/prefab/full/linux_x86_64_gui/debug/ballisticakit
@@ -412,12 +417,12 @@ RUN_PREFAB_LINUX_ARM64_GUI_RELEASE = cd \
   build/prefab/full/linux_arm64_gui/release && ./ballisticakit
 
 prefab-linux-x86-64-gui-release: prefab-linux-x86-64-gui-release-build
-	@$(PCOMMAND) ensure_prefab_platform linux_x86_64
-	@$(RUN_PREFAB_LINUX_X86_64_GUI_RELEASE)
+	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_x86_64
+	$(RUN_PREFAB_LINUX_X86_64_GUI_RELEASE)
 
 prefab-linux-arm64-gui-release: prefab-linux-arm64-gui-release-build
-	@$(PCOMMAND) ensure_prefab_platform linux_arm64
-	@$(RUN_PREFAB_LINUX_ARM64_GUI_RELEASE)
+	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_arm64
+	$(RUN_PREFAB_LINUX_ARM64_GUI_RELEASE)
 
 prefab-linux-x86-64-gui-release-build: prereqs assets-cmake \
    build/prefab/full/linux_x86_64_gui/release/ballisticakit
@@ -442,12 +447,12 @@ RUN_PREFAB_LINUX_ARM64_SERVER_DEBUG = cd \
    build/prefab/full/linux_arm64_server/debug && ./ballisticakit_server
 
 prefab-linux-x86-64-server-debug: prefab-linux-x86-64-server-debug-build
-	@$(PCOMMAND) ensure_prefab_platform linux_x86_64
-	@$(RUN_PREFAB_LINUX_X86_64_SERVER_DEBUG)
+	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_x86_64
+	$(RUN_PREFAB_LINUX_X86_64_SERVER_DEBUG)
 
 prefab-linux-arm64-server-debug: prefab-linux-arm64-server-debug-build
-	@$(PCOMMAND) ensure_prefab_platform linux_arm64
-	@$(RUN_PREFAB_LINUX_ARM64_SERVER_DEBUG)
+	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_arm64
+	$(RUN_PREFAB_LINUX_ARM64_SERVER_DEBUG)
 
 prefab-linux-x86-64-server-debug-build: prereqs assets-server \
    build/prefab/full/linux_x86_64_server/debug/dist/ballisticakit_headless
@@ -474,12 +479,12 @@ RUN_PREFAB_LINUX_ARM64_SERVER_RELEASE = cd \
    build/prefab/full/linux_arm64_server/release && ./ballisticakit_server
 
 prefab-linux-x86-64-server-release: prefab-linux-x86-64-server-release-build
-	@$(PCOMMAND) ensure_prefab_platform linux_x86_64
-	@$(RUN_PREFAB_LINUX_X86_64_SERVER_RELEASE)
+	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_x86_64
+	$(RUN_PREFAB_LINUX_X86_64_SERVER_RELEASE)
 
 prefab-linux-arm64-server-release: prefab-linux-arm64-server-release-build
-	@$(PCOMMAND) ensure_prefab_platform linux_arm64
-	@$(RUN_PREFAB_LINUX_ARM64_SERVER_RELEASE)
+	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_arm64
+	$(RUN_PREFAB_LINUX_ARM64_SERVER_RELEASE)
 
 prefab-linux-x86-64-server-release-build: prereqs assets-server \
    build/prefab/full/linux_x86_64_server/release/dist/ballisticakit_headless
@@ -503,8 +508,8 @@ RUN_PREFAB_WINDOWS_X86_GUI_DEBUG = cd build/prefab/full/windows_x86_gui/debug \
   && ./BallisticaKit.exe
 
 prefab-windows-x86-gui-debug: prefab-windows-x86-gui-debug-build
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
-	@$(RUN_PREFAB_WINDOWS_X86_GUI_DEBUG)
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
+	$(RUN_PREFAB_WINDOWS_X86_GUI_DEBUG)
 
 prefab-windows-x86-gui-debug-build: prereqs assets-windows-$(WINPLAT_X86) \
    build/prefab/full/windows_x86_gui/debug/BallisticaKit.exe
@@ -526,8 +531,8 @@ RUN_PREFAB_WINDOWS_X86_GUI_RELEASE = cd \
   build/prefab/full/windows_x86_gui/release && ./BallisticaKit.exe
 
 prefab-windows-x86-gui-release: prefab-windows-x86-gui-release-build
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
-	@$(RUN_PREFAB_WINDOWS_X86_GUI_RELEASE)
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
+	$(RUN_PREFAB_WINDOWS_X86_GUI_RELEASE)
 
 prefab-windows-x86-gui-release-build: prereqs \
    assets-windows-$(WINPLAT_X86) \
@@ -551,8 +556,8 @@ RUN_PREFAB_WINDOWS_X86_SERVER_DEBUG = cd \
    && dist/python_d.exe ballisticakit_server.py
 
 prefab-windows-x86-server-debug: prefab-windows-x86-server-debug-build
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
-	@$(RUN_PREFAB_WINDOWS_X86_SERVER_DEBUG)
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
+	$(RUN_PREFAB_WINDOWS_X86_SERVER_DEBUG)
 
 prefab-windows-x86-server-debug-build: prereqs \
    assets-windows-$(WINPLAT_X86) \
@@ -576,8 +581,8 @@ RUN_PREFAB_WINDOWS_X86_SERVER_RELEASE = cd \
    && dist/python.exe -O ballisticakit_server.py
 
 prefab-windows-x86-server-release: prefab-windows-x86-server-release-build
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
-	@$(RUN_PREFAB_WINDOWS_X86_SERVER_RELEASE)
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
+	$(RUN_PREFAB_WINDOWS_X86_SERVER_RELEASE)
 
 prefab-windows-x86-server-release-build: prereqs \
    assets-windows-$(WINPLAT_X86) \
@@ -964,66 +969,66 @@ WINDOWS_CONFIGURATION ?= Debug
 
 # Stage assets and other files so a built binary will run.
 windows-staging: assets-windows resources meta
-	$(STAGE_BUILD) -win-$(WINPLT) -$(WINCFGLC) build/windows/$(WINCFG)_$(WINPLT)
+	@$(STAGE_BUILD) -win-$(WINPLT) -$(WINCFGLC) build/windows/$(WINCFG)_$(WINPLT)
 
 # Build and run a debug windows build (from WSL).
 windows-debug: windows-debug-build
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
 	build/windows/Debug_Win32/BallisticaKitGeneric.exe
 
 # Build and run a release windows build (from WSL).
 windows-release: windows-release-build
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
 	build/windows/Release_Win32/BallisticaKitGeneric.exe
 
 # Build a debug windows build (from WSL).
-windows-debug-build: \
+windows-debug-build: prereqs \
    build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.pdb
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
 	@$(PCOMMAND) wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
   $(MAKE) _windows-wsl-build
 
 # Rebuild a debug windows build (from WSL).
-windows-debug-rebuild: \
+windows-debug-rebuild: prereqs \
    build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.pdb
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
 	@$(PCOMMAND) wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
   $(MAKE) _windows-wsl-rebuild
 
 # Build a release windows build (from WSL).
-windows-release-build: \
+windows-release-build: prereqs \
    build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.pdb
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
 	@$(PCOMMAND) wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 \
   $(MAKE) _windows-wsl-build
 
 # Rebuild a release windows build (from WSL).
-windows-release-rebuild: \
+windows-release-rebuild: prereqs \
    build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.pdb
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
 	@$(PCOMMAND) wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 \
   $(MAKE) _windows-wsl-rebuild
 
 # Remove all non-git-managed files in windows subdir.
-windows-clean:
+windows-clean: prereqs
 	@$(CHECK_CLEAN_SAFETY)
 	git clean -dfx ballisticakit-windows
 	rm -rf build/windows $(LAZYBUILDDIR)
 
 # Show what would be cleaned.
-windows-clean-list:
+windows-clean-list: prereqs
 	@$(CHECK_CLEAN_SAFETY)
 	git clean -dnx ballisticakit-windows
 	echo would also remove build/windows $(LAZYBUILDDIR)
@@ -1145,8 +1150,8 @@ cmake-modular-server-clean:
 
 # Stage assets for building/running within CLion.
 clion-staging: assets-cmake resources meta
-	$(STAGE_BUILD) -cmake -debug build/clion_debug
-	$(STAGE_BUILD) -cmake -release build/clion_release
+	@$(STAGE_BUILD) -cmake -debug build/clion_debug
+	@$(STAGE_BUILD) -cmake -release build/clion_release
 
 # Tell make which of these targets don't represent files.
 .PHONY: cmake cmake-build cmake-clean cmake-server cmake-server-build	\
@@ -1244,6 +1249,13 @@ _WMSBE_1 = \"C:\\Program Files\\Microsoft Visual Studio\\2022
 _WMSBE_2 = \\Community\\MSBuild\\Current\\Bin\\MSBuild.exe\"
 _WMSBE_1B = /mnt/c/Program Files/Microsoft Visual Studio/2022
 _WMSBE_2B = /Community/MSBuild/Current/Bin/MSBuild.exe
+
+# Sets WSL build type to the user's choice (defaults to Windows).
+WSLU=BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS)
+# Sets WSL build type to Linux.
+WSLL=BA_WSL_TARGETS_WINDOWS=0
+# Sets WSL build type to Windows.
+WSLW=BA_WSL_TARGETS_WINDOWS=1
 
 VISUAL_STUDIO_VERSION = -property:VisualStudioVersion=17
 WIN_MSBUILD_EXE = $(_WMSBE_1)$(_WMSBE_2)

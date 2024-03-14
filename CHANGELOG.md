@@ -1,4 +1,4 @@
-### 1.7.33 (build 21779, api 8, 2024-03-13)
+### 1.7.33 (build 21788, api 8, 2024-03-14)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).
 - Added a 'Show Demos When Idle' option in advanced settings. If enabled, the
@@ -41,9 +41,14 @@
 - Added a UI for customizing Series Length in Teams and Points-to-Win in FFA
   (Thanks EraOSBeta!)
 - Implemented HEX code support to the advanced color picker (Thanks 3alTemp!)
+- Players leaving the game after getting hurt will now grant kills. (Thanks
+  Temp!)
 - Sphinx based Python documentation generation is now wired up (Thanks
   Loup-Garou911XD!)
 - Renaming & overwriting existing profiles is no longer possible (Thanks Temp!)
+- Cleaned up builds when running under WSL. Things like `make mypy` should now
+  work correctly there, and it should now be possible to build and run either
+  Linux or Windows builds there.
 
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
