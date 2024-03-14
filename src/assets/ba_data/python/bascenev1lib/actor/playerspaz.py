@@ -230,13 +230,14 @@ class PlayerSpaz(Spaz):
                     self.last_player_attacked_by
                     and bs.time() - self.last_attacked_time < 4.0
                 )
-                # Immediate-mode or left-game deaths don't count as 'kills'.
-                killed = bool(
-                    not msg.immediate
-                    and msg.how is not bs.DeathType.LEFT_GAME
-                    or was_held
-                    or was_attacked_recently
+                # Leaving the game doesn't count as a kill *unless*
+                # someone does it intentionally while being attacked.
+                left_game_cleanly = (
+                    msg.how is bs.DeathType.LEFT_GAME
+                    and not (was_held or was_attacked_recently)
                 )
+
+                killed = not (msg.immediate or left_game_cleanly)
 
                 activity = self._activity()
 
