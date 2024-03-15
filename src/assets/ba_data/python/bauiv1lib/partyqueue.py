@@ -274,9 +274,7 @@ class PartyQueueWindow(bui.Window):
                 scale=(
                     1.4
                     if uiscale is bui.UIScale.SMALL
-                    else 1.2
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.2 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
             )
         )

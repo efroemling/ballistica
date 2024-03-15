@@ -99,9 +99,7 @@ class GatherWindow(bui.Window):
         self._height = (
             582
             if uiscale is bui.UIScale.SMALL
-            else 680
-            if uiscale is bui.UIScale.MEDIUM
-            else 800
+            else 680 if uiscale is bui.UIScale.MEDIUM else 800
         )
         self._current_tab: GatherWindow.TabID | None = None
         extra_top = 20 if uiscale is bui.UIScale.SMALL else 0
@@ -116,15 +114,13 @@ class GatherWindow(bui.Window):
                 scale=(
                     1.3
                     if uiscale is bui.UIScale.SMALL
-                    else 0.97
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 0.8
+                    else 0.97 if uiscale is bui.UIScale.MEDIUM else 0.8
                 ),
-                stack_offset=(0, -11)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0)
-                if uiscale is bui.UIScale.MEDIUM
-                else (0, 0),
+                stack_offset=(
+                    (0, -11)
+                    if uiscale is bui.UIScale.SMALL
+                    else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
+                ),
             )
         )
 
@@ -165,9 +161,7 @@ class GatherWindow(bui.Window):
             scale=(
                 1.5
                 if not condensed
-                else 1.0
-                if uiscale is bui.UIScale.MEDIUM
-                else 0.6
+                else 1.0 if uiscale is bui.UIScale.MEDIUM else 0.6
             ),
             h_align='center',
             v_align='center',

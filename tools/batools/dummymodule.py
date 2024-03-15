@@ -815,18 +815,24 @@ class Generator:
         typing_imports = (
             'TYPE_CHECKING, overload, Sequence, TypeVar'
             if self.mname == '_babase'
-            else 'TYPE_CHECKING, overload, TypeVar'
-            if self.mname == '_bascenev1'
-            else 'TYPE_CHECKING, TypeVar'
+            else (
+                'TYPE_CHECKING, overload, TypeVar'
+                if self.mname == '_bascenev1'
+                else 'TYPE_CHECKING, TypeVar'
+            )
         )
         typing_imports_tc = (
             'Any, Callable'
             if self.mname == '_babase'
-            else 'Any, Callable, Literal, Sequence'
-            if self.mname == '_bascenev1'
-            else 'Any, Callable, Literal, Sequence'
-            if self.mname == '_bauiv1'
-            else 'Any, Callable'
+            else (
+                'Any, Callable, Literal, Sequence'
+                if self.mname == '_bascenev1'
+                else (
+                    'Any, Callable, Literal, Sequence'
+                    if self.mname == '_bauiv1'
+                    else 'Any, Callable'
+                )
+            )
         )
         tc_import_lines_extra = ''
         if self.mname == '_babase':
@@ -842,9 +848,7 @@ class Generator:
             ''
             if self.mname == '_babase'
             # else 'from babase._mgen.enums import TimeFormat, TimeType\n\n'
-            else ''
-            if self.mname == '_bascenev1'
-            else ''
+            else '' if self.mname == '_bascenev1' else ''
         )
         out = (
             get_public_license('python') + '\n'

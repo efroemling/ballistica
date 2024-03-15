@@ -30,7 +30,7 @@ TextWidget::TextWidget() {
   // FIXME - should generalize this to any controller-only situation.
   if (g_buildconfig.ostype_android()) {
     if (g_base->input->touch_input() == nullptr) {
-      do_clear_button_ = false;
+      implicit_clear_button_ = false;
     }
   }
   birth_time_millisecs_ =
@@ -253,7 +253,8 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
     // Clear button.
     if (editable() && (IsHierarchySelected() || always_show_carat_)
-        && !text_raw_.empty() && do_clear_button_) {
+        && !text_raw_.empty() && implicit_clear_button_
+        && allow_clear_button_) {
       base::SimpleComponent c(pass);
       c.SetTransparent(true);
       if (clear_pressed_ && clear_mouse_over_) {
@@ -819,7 +820,8 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if (editable() && (IsHierarchySelected() || always_show_carat_)
           && !text_raw_.empty() && (x >= width_ - 35)
           && (x < width_ + kClearMargin) && (y > -kClearMargin)
-          && (y < height_ + kClearMargin) && do_clear_button_) {
+          && (y < height_ + kClearMargin) && implicit_clear_button_
+          && allow_clear_button_) {
         clear_pressed_ = clear_mouse_over_ = true;
         return true;
       }

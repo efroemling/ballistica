@@ -6,11 +6,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from bauiv1lib.popup import PopupMenuWindow
 import bauiv1 as bui
 import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any
+    from bauiv1lib.popup import PopupWindow
 
 
 class ConfigKeyboardWindow(bui.Window):
@@ -39,25 +41,19 @@ class ConfigKeyboardWindow(bui.Window):
                 scale=(
                     1.6
                     if uiscale is bui.UIScale.SMALL
-                    else 1.3
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(0, 5) if uiscale is bui.UIScale.SMALL else (0, 0),
                 transition=transition,
             )
         )
 
+        self._settings: dict[str, int] = {}
+        self._get_config_mapping()
+
         self._rebuild_ui()
 
-    def _rebuild_ui(self) -> None:
-        assert bui.app.classic is not None
-
-        for widget in self._root_widget.get_children():
-            widget.delete()
-
-        # Fill our temp config with present values.
-        self._settings: dict[str, int] = {}
+    def _get_config_mapping(self, default: bool = False) -> None:
         for button in [
             'buttonJump',
             'buttonPunch',
@@ -70,12 +66,20 @@ class ConfigKeyboardWindow(bui.Window):
             'buttonLeft',
             'buttonRight',
         ]:
-            self._settings[
-                button
-            ] = bui.app.classic.get_input_device_mapped_value(
-                self._input, button
+            assert bui.app.classic is not None
+            self._settings[button] = (
+                bui.app.classic.get_input_device_mapped_value(
+                    self._input, button, default
+                )
             )
 
+    def _rebuild_ui(self, is_reset: bool = False) -> None:
+        assert bui.app.classic is not None
+
+        for widget in self._root_widget.get_children():
+            widget.delete()
+
+        # b_off = 0 if self._unique_id != '#1' else 9
         cancel_button = bui.buttonwidget(
             parent=self._root_widget,
             autoselect=True,
@@ -100,9 +104,6 @@ class ConfigKeyboardWindow(bui.Window):
             cancel_button=cancel_button,
             start_button=save_button,
         )
-
-        bui.widget(edit=cancel_button, right_widget=save_button)
-        bui.widget(edit=save_button, left_widget=cancel_button)
 
         v = self._height - 74.0
         bui.textwidget(
@@ -213,6 +214,24 @@ class ConfigKeyboardWindow(bui.Window):
             scale=1.0,
         )
 
+        self._more_button = bui.buttonwidget(
+            parent=self._root_widget,
+            autoselect=True,
+            label='...',
+            text_scale=0.9,
+            color=(0.45, 0.4, 0.5),
+            textcolor=(0.65, 0.6, 0.7),
+            position=(self._width * 0.5 - 65, 30),
+            size=(130, 40),
+            on_activate_call=self._do_more,
+        )
+
+        if is_reset:
+            bui.containerwidget(
+                edit=self._root_widget,
+                selected_child=self._more_button,
+            )
+
     def _pretty_button_name(self, button_name: str) -> bui.Lstr:
         button_id = self._settings[button_name]
         if button_id == -1:
@@ -282,6 +301,63 @@ class ConfigKeyboardWindow(bui.Window):
             from_window=self._root_widget,
         )
 
+    def _reset(self) -> None:
+        from bauiv1lib.confirm import ConfirmWindow
+
+        assert bui.app.classic is not None
+        ConfirmWindow(
+            # TODO: Implement a translation string for this!
+            'Are you sure you want to reset your button mapping?',
+            self._do_reset,
+            width=480,
+            height=95,
+        )
+
+    def _do_reset(self) -> None:
+        """Resets the input's mapping settings."""
+        self._settings = {}
+        self._get_config_mapping(default=True)
+        self._rebuild_ui(is_reset=True)
+        bui.getsound('gunCocking').play()
+
+    def _do_more(self) -> None:
+        """Show a burger menu with extra settings."""
+        # pylint: disable=cyclic-import
+        choices: list[str] = [
+            'reset',
+        ]
+        choices_display: list[bui.Lstr] = [
+            bui.Lstr(resource='settingsWindowAdvanced.resetText'),
+        ]
+
+        uiscale = bui.app.ui_v1.uiscale
+        PopupMenuWindow(
+            position=self._more_button.get_screen_space_center(),
+            scale=(
+                2.3
+                if uiscale is bui.UIScale.SMALL
+                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
+            ),
+            width=150,
+            choices=choices,
+            choices_display=choices_display,
+            current_choice='reset',
+            delegate=self,
+        )
+
+    def popup_menu_selected_choice(
+        self, popup_window: PopupMenuWindow, choice: str
+    ) -> None:
+        """Called when a choice is selected in the popup."""
+        del popup_window  # unused
+        if choice == 'reset':
+            self._reset()
+        else:
+            print(f'invalid choice: {choice}')
+
+    def popup_menu_closing(self, popup_window: PopupWindow) -> None:
+        """Called when the popup is closing."""
+
     def _save(self) -> None:
         from bauiv1lib.settings.controls import ControlsSettingsWindow
 
@@ -347,9 +423,7 @@ class AwaitKeyboardInputWindow(bui.Window):
                 scale=(
                     2.0
                     if uiscale is bui.UIScale.SMALL
-                    else 1.5
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
             )
         )

@@ -534,42 +534,6 @@ class _Inputter:
             for i in value
         )
 
-    def _datetime_from_input(
-        self, cls: type, fieldpath: str, value: Any, ioattrs: IOAttrs | None
-    ) -> Any:
-        # For firestore we expect a datetime object.
-        if self._codec is Codec.FIRESTORE:
-            # Don't compare exact type here, as firestore can give us
-            # a subclass with extended precision.
-            if not isinstance(value, datetime.datetime):
-                raise TypeError(
-                    f'Invalid input value for "{fieldpath}" on'
-                    f' "{cls.__name__}";'
-                    f' expected a datetime, got a {type(value).__name__}'
-                )
-            check_utc(value)
-            return value
-
-        assert self._codec is Codec.JSON
-
-        # We expect a list of 7 ints.
-        if type(value) is not list:
-            raise TypeError(
-                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
-                f' expected a list, got a {type(value).__name__}'
-            )
-        if len(value) != 7 or not all(isinstance(x, int) for x in value):
-            raise ValueError(
-                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
-                f' expected a list of 7 ints, got {[type(v) for v in value]}.'
-            )
-        out = datetime.datetime(  # type: ignore
-            *value, tzinfo=datetime.timezone.utc
-        )
-        if ioattrs is not None:
-            ioattrs.validate_datetime(out, fieldpath)
-        return out
-
     def _tuple_from_input(
         self,
         cls: type,
@@ -620,3 +584,39 @@ class _Inputter:
 
         assert len(out) == len(childanntypes)
         return tuple(out)
+
+    def _datetime_from_input(
+        self, cls: type, fieldpath: str, value: Any, ioattrs: IOAttrs | None
+    ) -> Any:
+        # For firestore we expect a datetime object.
+        if self._codec is Codec.FIRESTORE:
+            # Don't compare exact type here, as firestore can give us
+            # a subclass with extended precision.
+            if not isinstance(value, datetime.datetime):
+                raise TypeError(
+                    f'Invalid input value for "{fieldpath}" on'
+                    f' "{cls.__name__}";'
+                    f' expected a datetime, got a {type(value).__name__}'
+                )
+            check_utc(value)
+            return value
+
+        assert self._codec is Codec.JSON
+
+        # We expect a list of 7 ints.
+        if type(value) is not list:
+            raise TypeError(
+                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
+                f' expected a list, got a {type(value).__name__}'
+            )
+        if len(value) != 7 or not all(isinstance(x, int) for x in value):
+            raise ValueError(
+                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
+                f' expected a list of 7 ints, got {[type(v) for v in value]}.'
+            )
+        out = datetime.datetime(  # type: ignore
+            *value, tzinfo=datetime.timezone.utc
+        )
+        if ioattrs is not None:
+            ioattrs.validate_datetime(out, fieldpath)
+        return out

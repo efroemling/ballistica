@@ -1,4 +1,4 @@
-### 1.7.33 (build 21772, api 8, 2024-03-02)
+### 1.7.33 (build 21790, api 8, 2024-03-14)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).
 - Added a 'Show Demos When Idle' option in advanced settings. If enabled, the
@@ -20,6 +20,10 @@
   languages; I feel it helps keep logic more understandable and should help us
   catch problems where a base class changes or removes a method and child
   classes forget to adapt to the change.
+- Added a reset button in the input mapping menu. (Thanks Temp!)
+- Respawn icons now have dotted steps showing decimal progress to assist
+  players on calculating when they are gonna respawn. (Thanks 3alTemp!)
+- Replays now have rewind/fast-forward buttons!! (Thanks Dliwk, vishal332008!)
 - Custom spaz "curse_time" values now work properly. (Thanks Temp!)
 - Implemented `efro.dataclassio.IOMultiType` which will make my life a lot
   easier.
@@ -36,6 +40,15 @@
   EraOSBeta!)
 - Added a UI for customizing Series Length in Teams and Points-to-Win in FFA
   (Thanks EraOSBeta!)
+- Implemented HEX code support to the advanced color picker (Thanks 3alTemp!)
+- Players leaving the game after getting hurt will now grant kills. (Thanks
+  Temp!)
+- Sphinx based Python documentation generation is now wired up (Thanks
+  Loup-Garou911XD!)
+- Renaming & overwriting existing profiles is no longer possible (Thanks Temp!)
+- Cleaned up builds when running under WSL. Things like `make mypy` should now
+  work correctly there, and it should now be possible to build and run either
+  Linux or Windows builds there.
 
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
@@ -62,6 +75,8 @@
   cleanly however (an `on_app_active_changed()` call in the `AppMode` class).
   This means that it also applies to other platforms when the app reaches the
   'inactive' state; for instance when minimizing the window on the SDL build.
+- Added an `allow_clear_button` arg to bauiv1.textwidget() which can be used to
+  disable the 'X' button that clears editable text widgets.
 
 ### 1.7.31 (build 21727, api 8, 2023-12-17)
 - Added `bascenev1.get_connection_to_host_info_2()` which is an improved

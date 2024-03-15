@@ -328,7 +328,6 @@ void EventLoop::BootstrapThread_() {
   assert(!bootstrapped_);
   assert(g_core);
   thread_id_ = std::this_thread::get_id();
-  const char* id_string;
 
   switch (identifier_) {
     case EventLoopID::kLogic:
@@ -576,8 +575,8 @@ auto EventLoop::AreEventLoopsSuspended() -> bool {
   return g_core->event_loops_suspended();
 }
 
-auto EventLoop::NewTimer(microsecs_t length, bool repeat, Runnable* runnable)
-    -> Timer* {
+auto EventLoop::NewTimer(microsecs_t length, bool repeat,
+                         Runnable* runnable) -> Timer* {
   assert(g_core);
   assert(ThreadIsCurrent());
   assert(Object::IsValidManagedObject(runnable));

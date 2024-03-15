@@ -152,9 +152,9 @@ class AccountV1Subsystem:
         """(internal)"""
 
         for entry in info:
-            cache_entry = self.tournament_info[
-                entry['tournamentID']
-            ] = copy.deepcopy(entry)
+            cache_entry = self.tournament_info[entry['tournamentID']] = (
+                copy.deepcopy(entry)
+            )
 
             # Also store the time we received this, so we can adjust
             # time-remaining values/etc.

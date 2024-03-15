@@ -45,9 +45,7 @@ class DiscordWindow(bui.Window):
                 scale=(
                     1.6
                     if uiscale is bui.UIScale.SMALL
-                    else 1.3
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(0, 5) if uiscale is bui.UIScale.SMALL else (0, 0),
             )

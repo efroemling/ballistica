@@ -57,9 +57,7 @@ class PlayWindow(bui.Window):
                 scale=(
                     1.6
                     if uiscale is bui.UIScale.SMALL
-                    else 0.9
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 0.8
+                    else 0.9 if uiscale is bui.UIScale.MEDIUM else 0.8
                 ),
                 stack_offset=(0, 0) if uiscale is bui.UIScale.SMALL else (0, 0),
             )
@@ -83,9 +81,11 @@ class PlayWindow(bui.Window):
             #           (101 if main_menu else 61)),
             size=(0, 0),
             text=bui.Lstr(
-                resource=(self._r + '.titleText')
-                if self._is_main_menu
-                else 'playlistsText'
+                resource=(
+                    (self._r + '.titleText')
+                    if self._is_main_menu
+                    else 'playlistsText'
+                )
             ),
             scale=1.7,
             res_scale=2.0,
@@ -494,18 +494,22 @@ class PlayWindow(bui.Window):
             bui.containerwidget(
                 edit=self._root_widget,
                 on_cancel_call=self._back,
-                selected_child=self._coop_button
-                if self._is_main_menu
-                else self._teams_button,
+                selected_child=(
+                    self._coop_button
+                    if self._is_main_menu
+                    else self._teams_button
+                ),
             )
         else:
             bui.buttonwidget(edit=back_button, on_activate_call=self._back)
             bui.containerwidget(
                 edit=self._root_widget,
                 cancel_button=back_button,
-                selected_child=self._coop_button
-                if self._is_main_menu
-                else self._teams_button,
+                selected_child=(
+                    self._coop_button
+                    if self._is_main_menu
+                    else self._teams_button
+                ),
             )
 
         self._restore_state()

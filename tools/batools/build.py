@@ -63,6 +63,8 @@ PY_REQUIREMENTS = [
     PyRequirement(pipname='pbxproj', minversion=[4, 0, 0]),
     PyRequirement(pipname='filelock', minversion=[3, 13, 1]),
     PyRequirement(pipname='python-daemon', minversion=[3, 0, 1]),
+    PyRequirement(pipname='Sphinx', minversion=[7, 2, 6]),
+    PyRequirement(pipname='furo', minversion=[2024, 0o1, 29]),
 ]
 
 
@@ -73,6 +75,87 @@ class PrefabTarget(Enum):
     SERVER_DEBUG = 'server-debug'
     GUI_RELEASE = 'gui-release'
     SERVER_RELEASE = 'server-release'
+
+    @property
+    def buildtype(self) -> str:
+        """Return the build type for this target."""
+        return self.value.split('-')[0]
+
+    @property
+    def buildmode(self) -> str:
+        """Return the build mode for this target."""
+        return self.value.split('-')[1]
+
+
+class PrefabPlatform(Enum):
+    """Distinct os/cpu-arch/etc. combos we support for prefab builds."""
+
+    MAC_X86_64 = 'mac_x86_64'
+    MAC_ARM64 = 'mac_arm64'
+    WINDOWS_X86 = 'windows_x86'
+    LINUX_X86_64 = 'linux_x86_64'
+    LINUX_ARM64 = 'linux_arm64'
+
+    @classmethod
+    def get_current(
+        cls, wsl_targets_windows: bool | None = None
+    ) -> PrefabPlatform:
+        """Get an identifier for the platform running this build.
+
+        Pass a bool `wsl_targets_windows` value to cause WSL to target
+        either native Windows (True) or Linux (False). If this value is
+        not passed, the env var BA_WSL_TARGETS_WINDOWS is used, and if that
+        is not set, the default is False (Linux builds).
+
+        Throws a RuntimeError on unsupported platforms.
+        """
+        import platform
+
+        if wsl_targets_windows is None:
+            wsl_targets_windows = (
+                os.environ.get('BA_WSL_TARGETS_WINDOWS', '0') == '1'
+            )
+
+        system = platform.system()
+        machine = platform.machine()
+
+        if system == 'Darwin':
+            if machine == 'x86_64':
+                return cls.MAC_X86_64
+            if machine == 'arm64':
+                return cls.MAC_ARM64
+            raise RuntimeError(
+                f'PrefabPlatform.get_current:'
+                f' unsupported mac machine type:'
+                f' {machine}.'
+            )
+        if system == 'Linux':
+            # If it looks like we're in Windows Subsystem for Linux, we may
+            # want to operate on Windows versions.
+            if wsl_targets_windows:
+                if 'microsoft' in platform.uname().release.lower():
+                    if machine == 'x86_64':
+                        # Currently always targeting 32 bit for prefab stuff.
+                        return cls.WINDOWS_X86
+                    # TODO: add support for arm windows
+                    raise RuntimeError(
+                        f'make_prefab: unsupported win machine type: {machine}.'
+                    )
+
+            if machine == 'x86_64':
+                return cls.LINUX_X86_64
+            if machine == 'aarch64':
+                return cls.LINUX_ARM64
+            raise RuntimeError(
+                f'PrefabPlatform.get_current:'
+                f' unsupported linux machine type:'
+                f' {machine}.'
+            )
+        raise RuntimeError(
+            f'PrefabPlatform.get_current:'
+            f' unrecognized platform:'
+            f' {platform.system()}.'
+        )
 
 
 class LazyBuildCategory(Enum):
@@ -292,49 +375,6 @@ def archive_old_builds(
         ssh_run(
             'mv "' + builds_dir + '/' + fname + '" "' + builds_dir + '/old/"'
         )
-
-
-def get_current_prefab_platform(wsl_gives_windows: bool = True) -> str:
-    """Get an identifier for the platform running this build.
-
-    Throws a RuntimeError on unsupported platforms.
-    """
-    import platform
-
-    system = platform.system()
-    machine = platform.machine()
-
-    if system == 'Darwin':
-        if machine == 'x86_64':
-            return 'mac_x86_64'
-        if machine == 'arm64':
-            return 'mac_arm64'
-        raise RuntimeError(
-            f'make_prefab: unsupported mac machine type:' f' {machine}.'
-        )
-    if system == 'Linux':
-        # If it looks like we're in Windows Subsystem for Linux,
-        # we may want to operate on Windows versions.
-        if wsl_gives_windows:
-            if 'microsoft' in platform.uname().release.lower():
-                if machine == 'x86_64':
-                    # Currently always targeting 32 bit for prefab stuff.
-                    return 'windows_x86'
-                # TODO: add support for arm windows
-                raise RuntimeError(
-                    f'make_prefab: unsupported win machine type: {machine}.'
-                )
-
-        if machine == 'x86_64':
-            return 'linux_x86_64'
-        if machine == 'aarch64':
-            return 'linux_arm64'
-        raise RuntimeError(
-            f'make_prefab: unsupported linux machine type:' f' {machine}.'
-        )
-    raise RuntimeError(
-        f'make_prefab: unrecognized platform:' f' {platform.system()}.'
-    )
 
 
 def _vstr(nums: Sequence[int]) -> str:

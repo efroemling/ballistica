@@ -18,8 +18,8 @@ class PythonClassDisplayTimer : public PythonClass {
   static PyTypeObject type_obj;
 
  private:
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
-      -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args,
+                     PyObject* keywds) -> PyObject*;
   static void tp_dealloc(PythonClassDisplayTimer* self);
   int timer_id_;
   bool have_timer_;

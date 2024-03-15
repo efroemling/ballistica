@@ -34,9 +34,7 @@ class V2ProxySignInWindow(bui.Window):
                 scale=(
                     1.25
                     if uiscale is bui.UIScale.SMALL
-                    else 1.05
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 0.9
+                    else 1.05 if uiscale is bui.UIScale.MEDIUM else 0.9
                 ),
             )
         )

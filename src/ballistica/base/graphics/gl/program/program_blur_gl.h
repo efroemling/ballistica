@@ -19,9 +19,9 @@ class RendererGL::ProgramBlurGL : public RendererGL::ProgramGL {
 
   ProgramBlurGL(RendererGL* renderer, int flags)
       : RendererGL::ProgramGL(
-          renderer, Object::New<VertexShaderGL>(GetVertexCode(flags)),
-          Object::New<FragmentShaderGL>(GetFragmentCode(flags)), GetName(flags),
-          GetPFlags(flags)),
+            renderer, Object::New<VertexShaderGL>(GetVertexCode(flags)),
+            Object::New<FragmentShaderGL>(GetFragmentCode(flags)),
+            GetName(flags), GetPFlags(flags)),
         flags_(flags),
         pixel_size_x_(0.0f),
         pixel_size_y_(0.0f) {

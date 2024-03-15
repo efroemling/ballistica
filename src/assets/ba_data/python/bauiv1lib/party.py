@@ -36,9 +36,7 @@ class PartyWindow(bui.Window):
         self._height = (
             365
             if uiscale is bui.UIScale.SMALL
-            else 480
-            if uiscale is bui.UIScale.MEDIUM
-            else 600
+            else 480 if uiscale is bui.UIScale.MEDIUM else 600
         )
         self._display_old_msgs = True
         super().__init__(
@@ -52,15 +50,15 @@ class PartyWindow(bui.Window):
                 scale=(
                     2.0
                     if uiscale is bui.UIScale.SMALL
-                    else 1.35
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -10)
-                if uiscale is bui.UIScale.SMALL
-                else (240, 0)
-                if uiscale is bui.UIScale.MEDIUM
-                else (330, 20),
+                stack_offset=(
+                    (0, -10)
+                    if uiscale is bui.UIScale.SMALL
+                    else (
+                        (240, 0) if uiscale is bui.UIScale.MEDIUM else (330, 20)
+                    )
+                ),
             )
         )
 
@@ -251,9 +249,7 @@ class PartyWindow(bui.Window):
             scale=(
                 2.3
                 if uiscale is bui.UIScale.SMALL
-                else 1.65
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.23
+                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
             ),
             choices=choices,
             choices_display=choices_display,
@@ -312,9 +308,7 @@ class PartyWindow(bui.Window):
                 columns = (
                     1
                     if len(self._roster) == 1
-                    else 2
-                    if len(self._roster) == 2
-                    else 3
+                    else 2 if len(self._roster) == 2 else 3
                 )
                 rows = int(math.ceil(float(len(self._roster)) / columns))
                 c_width = (self._width * 0.9) / max(3, columns)
@@ -572,9 +566,7 @@ class PartyWindow(bui.Window):
             scale=(
                 2.3
                 if uiscale is bui.UIScale.SMALL
-                else 1.65
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.23
+                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
             ),
             choices=['kick'],
             choices_display=[kick_str],

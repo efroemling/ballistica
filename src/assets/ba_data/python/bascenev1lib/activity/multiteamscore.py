@@ -199,9 +199,9 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
                     ts_v_offset + (voffs + 15) * scale,
                 ),
                 scale=scale,
-                color=(1.0, 0.9, 0.5, 1.0)
-                if highlight
-                else (0.5, 0.5, 0.6, 0.5),
+                color=(
+                    (1.0, 0.9, 0.5, 1.0) if highlight else (0.5, 0.5, 0.6, 0.5)
+                ),
                 h_align=Text.HAlign.RIGHT,
                 v_align=Text.VAlign.CENTER,
                 maxwidth=maxwidth,

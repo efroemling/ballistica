@@ -406,6 +406,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/gamepadselect.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/graphics.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/keyboard.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/moddingtools.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/nettesting.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/plugins.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/pluginsettings.py \
@@ -681,6 +682,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/gamepadselect.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/graphics.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/keyboard.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/moddingtools.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/nettesting.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/plugins.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/pluginsettings.cpython-311.opt-1.pyc \
@@ -2742,7 +2744,8 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/resolver.py \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/scanner.py \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/serializer.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/tokens.py
+  $(BUILD_DIR)/ba_data/python-site-packages/yaml/tokens.py \
+  $(BUILD_DIR)/sphinx/template/conf.py
 
 SCRIPT_TARGETS_PYC_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/_yaml/__pycache__/__init__.cpython-311.opt-1.pyc \
@@ -2766,7 +2769,8 @@ SCRIPT_TARGETS_PYC_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/resolver.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/scanner.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/serializer.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/tokens.cpython-311.opt-1.pyc
+  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/tokens.cpython-311.opt-1.pyc \
+  $(BUILD_DIR)/sphinx/template/__pycache__/conf.cpython-311.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
@@ -5693,6 +5697,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/circleOutlineNoAlpha.dds \
   $(BUILD_DIR)/ba_data/textures/circleShadow.dds \
   $(BUILD_DIR)/ba_data/textures/circleZigZag.dds \
+  $(BUILD_DIR)/ba_data/textures/clayStroke.dds \
   $(BUILD_DIR)/ba_data/textures/coin.dds \
   $(BUILD_DIR)/ba_data/textures/controllerIcon.dds \
   $(BUILD_DIR)/ba_data/textures/courtyardLevelColor.dds \
@@ -6097,6 +6102,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/circleOutlineNoAlpha.pvr \
   $(BUILD_DIR)/ba_data/textures/circleShadow.pvr \
   $(BUILD_DIR)/ba_data/textures/circleZigZag.pvr \
+  $(BUILD_DIR)/ba_data/textures/clayStroke.pvr \
   $(BUILD_DIR)/ba_data/textures/coin.pvr \
   $(BUILD_DIR)/ba_data/textures/controllerIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/courtyardLevelColor.pvr \
@@ -6501,6 +6507,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/circleOutlineNoAlpha.ktx \
   $(BUILD_DIR)/ba_data/textures/circleShadow.ktx \
   $(BUILD_DIR)/ba_data/textures/circleZigZag.ktx \
+  $(BUILD_DIR)/ba_data/textures/clayStroke.ktx \
   $(BUILD_DIR)/ba_data/textures/coin.ktx \
   $(BUILD_DIR)/ba_data/textures/controllerIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/courtyardLevelColor.ktx \
@@ -6905,6 +6912,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/circleShadow_preview.png \
   $(BUILD_DIR)/ba_data/textures/circleZigZag_preview.png \
   $(BUILD_DIR)/ba_data/textures/circle_preview.png \
+  $(BUILD_DIR)/ba_data/textures/clayStroke_preview.png \
   $(BUILD_DIR)/ba_data/textures/coin_preview.png \
   $(BUILD_DIR)/ba_data/textures/controllerIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/courtyardLevelColor_preview.png \
