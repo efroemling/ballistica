@@ -87,7 +87,10 @@ class TournamentEntryWindow(PopupWindow):
 
         # Show the practice button as long as we're not
         # restarting while on a paid tournament run.
-        self._do_practice = self._tournament_activity is None
+        self._do_practice = (
+            self._tournament_activity is None and
+            bui.app.config.get('tournament_practice_enabled', False)
+        )
 
         off_p = 0 if not self._do_practice else 48
         self._height += off_p * 0.933
@@ -259,6 +262,7 @@ class TournamentEntryWindow(PopupWindow):
 
         btn_size = (150, 45)
         btn_pos = (self._width / 2 - btn_size[0] / 2, self._width / 2 - 110)
+        self._practice_button = None
         if self._do_practice:
             self._practice_button = bui.buttonwidget(
                 parent=self.root_widget,
@@ -621,22 +625,8 @@ class TournamentEntryWindow(PopupWindow):
                         'tournament_id': self._tournament_id,
                         'submit_score': not practice,
                     },
-                )
-                if bui.app.classic is not None
-                else None,
-                1.0,
-                lambda: (
-                    bui.app.classic.launch_coop_game(
-                        self._tournament_info['game'],
-                        args={
-                            'min_players': self._tournament_info['minPlayers'],
-                            'max_players': self._tournament_info['maxPlayers'],
-                            'tournament_id': self._tournament_id,
-                        },
-                    )
-                    if bui.app.classic is not None
-                    else None
-                ),
+                ) if bui.app.classic is not None
+                else None
             )
             bui.apptimer(0 if practice else 1.25, self._transition_out)
 
