@@ -527,7 +527,7 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
                     team.touch_return_timer = None
                     team.touch_return_timer_ticking = None
             if team.flag_return_touches < 0:
-                logging.exception('CTF flag_return_touches < 0')
+                logging.error('CTF flag_return_touches < 0', stack_info=True)
 
     def _handle_death_flag_capture(self, player: Player) -> None:
         """Handles flag values when a player dies or leaves the game."""
@@ -536,22 +536,29 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
             return
 
         team = player.team
-        # For each "point" our player has touched theflag (Could be multiple),
-        # deduct one from both our player and
-        # the flag's return touches variable.
+
+        # For each "point" our player has touched theflag (Could be
+        # multiple), deduct one from both our player and the flag's
+        # return touches variable.
         for _ in range(player.touching_own_flag):
             # Deduct
             player.touching_own_flag -= 1
-            team.flag_return_touches -= 1
-            # Update our flag's timer accordingly
-            # (Prevents immediate resets in case
-            # there might be more people touching it).
-            if team.flag_return_touches == 0:
-                team.touch_return_timer = None
-                team.touch_return_timer_ticking = None
-            # Safety check, just to be sure!
-            if team.flag_return_touches < 0:
-                logging.exception('CTF flag_return_touches < 0')
+
+            # (This was only incremented if we have non-zero
+            # return-times).
+            if float(self.flag_touch_return_time) > 0.0:
+                team.flag_return_touches -= 1
+                # Update our flag's timer accordingly
+                # (Prevents immediate resets in case
+                # there might be more people touching it).
+                if team.flag_return_touches == 0:
+                    team.touch_return_timer = None
+                    team.touch_return_timer_ticking = None
+                # Safety check, just to be sure!
+                if team.flag_return_touches < 0:
+                    logging.error(
+                        'CTF flag_return_touches < 0', stack_info=True
+                    )
 
     def _flash_base(self, team: Team, length: float = 2.0) -> None:
         light = bs.newnode(
