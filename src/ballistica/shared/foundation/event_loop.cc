@@ -328,7 +328,6 @@ void EventLoop::BootstrapThread_() {
   assert(!bootstrapped_);
   assert(g_core);
   thread_id_ = std::this_thread::get_id();
-  const char* id_string;
 
   switch (identifier_) {
     case EventLoopID::kLogic:
