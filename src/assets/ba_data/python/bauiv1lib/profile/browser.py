@@ -417,24 +417,11 @@ class ProfileBrowserWindow(bui.Window):
                 char_index = spazzes.index('Spaz')
 
             assert isinstance(tval, str)
-            character = bui.buttonwidget(
-                parent=self._subcontainer,
-                position=(0, y_val),
-                size=(28, 28),
-                label='',
-                color=(1, 1, 1),
-                mask_texture=bui.gettexture('characterIconMask'),
-                tint_color=color,
-                tint2_color=_highlight,
-                texture=icon_textures[char_index],
-                tint_texture=icon_tint_textures[char_index],
-                selectable=False,
-            )
             txtw = bui.textwidget(
                 parent=self._subcontainer,
-                position=(35, y_val),
+                position=(5, y_val),
                 size=((self._width - 210) / scl, 28),
-                text=bui.Lstr(value=tval),
+                text=bui.Lstr(value=f'    {tval}'),
                 h_align='left',
                 v_align='center',
                 on_select_call=bui.WeakCall(self._select, p_name, index),
@@ -444,6 +431,17 @@ class ProfileBrowserWindow(bui.Window):
                 always_highlight=True,
                 on_activate_call=bui.Call(self._edit_button.activate),
                 selectable=True,
+            )
+            character = bui.imagewidget(
+                parent=self._subcontainer,
+                position=(0, y_val),
+                size=(30, 30),
+                color=(1, 1, 1),
+                mask_texture=bui.gettexture('characterIconMask'),
+                tint_color=color,
+                tint2_color=_highlight,
+                texture=icon_textures[char_index],
+                tint_texture=icon_tint_textures[char_index],
             )
             if index == 0:
                 bui.widget(edit=txtw, up_widget=self._back_button)
