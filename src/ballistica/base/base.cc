@@ -125,7 +125,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   // they happen.
   g_core->python->EnablePythonLoggingCalls();
 
-  // Marker we pop down at the very end so other modules can run sanity
+  // A marker we pop down at the very end so other modules can run sanity
   // checks to make sure we aren't importing them reciprocally when they
   // import us.
   Python::MarkReachedEndOfModule(module);
