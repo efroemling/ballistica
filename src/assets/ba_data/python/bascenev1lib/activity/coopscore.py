@@ -125,6 +125,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         self._tournament_time_remaining: float | None = None
         self._tournament_time_remaining_text: Text | None = None
         self._tournament_time_remaining_text_timer: bs.BaseTimer | None = None
+        self._submit_score = self.session.submit_score
 
         # Stuff for activity skip by pressing button
         self._birth_time = bs.time()
@@ -789,7 +790,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             transition_delay=2.0,
         )
 
-        if self._score is not None:
+        if self._score is not None and self._submit_score:
             bs.timer(0.4, bs.WeakCall(self._play_drumroll))
 
         # Add us to high scores, filter, and store.
@@ -1396,7 +1397,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         assert self._show_info is not None
         available = self._show_info['results'] is not None
 
-        if available:
+        if available and self._submit_score:
             error = (
                 self._show_info['results']['error']
                 if 'error' in self._show_info['results']
@@ -1529,7 +1530,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     maxwidth=400,
                     transition_delay=1.0,
                 ).autoretain()
-            else:
+            elif self._submit_score:
                 ZoomText(
                     (
                         ('#' + str(player_rank))
@@ -1752,9 +1753,10 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 transition_delay=0,
             ).autoretain()
 
-        bs.timer(0.35, self._score_display_sound.play)
-        if not error:
-            bs.timer(0.35, self.cymbal_sound.play)
+        if self._submit_score:
+            bs.timer(0.35, self._score_display_sound.play)
+            if not error:
+                bs.timer(0.35, self.cymbal_sound.play)
 
     def _show_fail(self) -> None:
         ZoomText(
