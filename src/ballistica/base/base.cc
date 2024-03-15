@@ -246,8 +246,8 @@ void BaseFeatureSet::StartApp() {
   app_started_ = true;
 
   // As the last step of this phase, tell the logic thread to apply the app
-  // config which will kick off screen creation and otherwise get the ball
-  // rolling.
+  // config which will kick off screen creation and otherwise to get the
+  // ball rolling.
   {
     Python::ScopedInterpreterLock gil;
     python->objs().Get(BasePython::ObjID::kAppPushApplyAppConfigCall).Call();
