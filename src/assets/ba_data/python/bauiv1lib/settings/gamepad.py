@@ -812,15 +812,22 @@ class GamepadSettingsWindow(bui.Window):
         from bauiv1lib.confirm import ConfirmWindow
 
         assert bui.app.classic is not None
-        ConfirmWindow(
-            # TODO: Implement a translation string for this!
-            'Are you sure you want to reset your button mapping?\n'
-            'This will also reset your advanced mappings\n'
-            'and secondary controller button mappings.',
-            self._do_reset,
-            width=490,
-            height=150,
-        )
+
+        # efro note: I think it's ok to reset without a confirm here
+        # because the user can see pretty clearly what changes and can
+        # cancel out of the settings window without saving if they want.
+        if bool(False):
+            ConfirmWindow(
+                # TODO: Implement a translation string for this!
+                'Are you sure you want to reset your button mapping?\n'
+                'This will also reset your advanced mappings\n'
+                'and secondary controller button mappings.',
+                self._do_reset,
+                width=490,
+                height=150,
+            )
+        else:
+            self._do_reset()
 
     def _do_reset(self) -> None:
         """Resets the input's mapping settings."""

@@ -129,8 +129,8 @@ class PopupMenuWindow(PopupWindow):
         if choices_display is None:
             choices_display = []
 
-        # FIXME: For the moment we base our width on these strings so
-        #  we need to flatten them.
+        # FIXME: For the moment we base our width on these strings so we
+        #  need to flatten them.
         choices_display_fin: list[str] = []
         for choice_display in choices_display:
             choices_display_fin.append(choice_display.evaluate())
@@ -154,9 +154,9 @@ class PopupMenuWindow(PopupWindow):
         else:
             self._height = 20 + len(choices) * 33
             self._use_scroll = False
-        self._delegate = None  # don't want this stuff called just yet..
+        self._delegate = None  # Don't want this stuff called just yet.
 
-        # extend width to fit our longest string (or our max-width)
+        # Extend width to fit our longest string (or our max-width).
         for index, choice in enumerate(choices):
             if len(choices_display_fin) == len(choices):
                 choice_display_name = choices_display_fin[index]
@@ -185,8 +185,8 @@ class PopupMenuWindow(PopupWindow):
                     + 60,
                 )
 
-        # init parent class - this will rescale and reposition things as
-        # needed and create our root widget
+        # Init parent class - this will rescale and reposition things as
+        # needed and create our root widget.
         super().__init__(
             position, size=(self._width, self._height), scale=self._scale
         )
@@ -205,7 +205,7 @@ class PopupMenuWindow(PopupWindow):
         else:
             self._offset_widget = bui.containerwidget(
                 parent=self.root_widget,
-                position=(30, 15),
+                position=(12, 12),
                 size=(self._width - 40, self._height),
                 background=False,
             )
@@ -238,6 +238,7 @@ class PopupMenuWindow(PopupWindow):
                 on_activate_call=self._activate,
                 v_align='center',
                 selectable=(not inactive),
+                glow_type='uniform',
             )
             if choice == self._current_choice:
                 bui.containerwidget(
