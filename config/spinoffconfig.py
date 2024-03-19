@@ -278,7 +278,7 @@ ctx.filter_file_extensions = {
     '.xcsettings',
     '.xcstrings',
     '.filters',
-    '.rst',
+    '.rst_t',
 }
 
 # ELSE files with these extensions will NOT be filtered.
