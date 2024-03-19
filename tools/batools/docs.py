@@ -231,8 +231,8 @@ def _run_sphinx(
 
     import time
     import shutil
-
     from batools.version import get_current_version
+    from jinja2 import Environment, FileSystemLoader
 
     version, buildnum = get_current_version()
 
@@ -242,15 +242,20 @@ def _run_sphinx(
         'efro_tools': 'tools/',  # for efro and bacommon package
     }
 
-    sphinx_src = 'src/assets/sphinx/'
-    template_dir = Path(sphinx_src + 'template/')
-    assert template_dir.is_dir()
-    build_dir = 'build/sphinx/'
-    os.makedirs(build_dir, exist_ok=True)
-    sphinx_apidoc_out = '.cache/sphinx/'  # might want to use .cache dir
-    os.makedirs(sphinx_apidoc_out, exist_ok=True)
+    paths = {'sphinx_src' :'src/assets/sphinx/',
+             'build_dir' : 'build/sphinx/',
+             'sphinx_apidoc_out' : '.cache/sphinx/',
+            }
+    paths.update({'template_dir' : paths['sphinx_src'] + 'template/',
+                  'static_dir' : paths['sphinx_src'] + 'static/'})
+    
+    assert Path(paths['template_dir']).is_dir()
+    
+    os.makedirs(paths['build_dir'], exist_ok=True)
+    os.makedirs(paths['sphinx_apidoc_out'], exist_ok=True)
 
     os.environ['BALLISTICA_ROOT'] = os.getcwd()  # used in sphinx conf.py
+    os.environ['BA_RUNNING_WITH_DUMMY_MODULES'] = '1'
     os.environ['SPHINX_SETTINGS'] = str(
         {
             'project_name': project_name,
@@ -260,14 +265,24 @@ def _run_sphinx(
             'buildnum': buildnum,
         }
     )
-    os.environ['BA_RUNNING_WITH_DUMMY_MODULES'] = '1'
+    
+    file_loader = FileSystemLoader(paths['template_dir'])
+    env = Environment(loader=file_loader)
+    index_template =  env.get_template('index.rst_t')
 
-    shutil.copytree(template_dir, sphinx_apidoc_out, dirs_exist_ok=True)
+    # maybe make it automatically render all files in templates dir in future
+    with open(paths['sphinx_apidoc_out']+'index.rst', 'w') as index_rst:
+        data = {'ballistica_image_url' : 'https://camo.githubusercontent.com/25021344ceaa7def6fa6523f79115f7ffada8d26b4768bb9a0cf65fc33304f45/68747470733a2f2f66696c65732e62616c6c6973746963612e6e65742f62616c6c6973746963615f6d656469612f62616c6c6973746963615f6c6f676f5f68616c662e706e67',
+            'version_no' : version,
+            'build_no' : str(buildnum)}
+        index_rst.write(index_template.render(data=data))
+
+    shutil.copytree(paths['sphinx_src']+'static/', paths['sphinx_apidoc_out'], dirs_exist_ok=True)
 
     starttime = time.monotonic()
     apidoc_cmd = [
         'sphinx-apidoc',
-        '-f',  # Force overwriting of any existing generated files.
+        # '-f',  # Force overwriting of any existing generated files.
         '-H',
         project_name,
         '-A',
@@ -278,7 +293,7 @@ def _run_sphinx(
         str(buildnum),  # release
         # '--templatedir', template_dir,
         '-o',
-        sphinx_apidoc_out,
+        paths['sphinx_apidoc_out'],
     ]
     if generate_dummymodules_doc:
         subprocess.run(
@@ -289,10 +304,10 @@ def _run_sphinx(
         subprocess.run(apidoc_cmd + [assets_dirs['efro_tools']], check=True)
     subprocess.run(apidoc_cmd + [assets_dirs['ba_data']], check=True)
 
-    subprocess.run(['make', 'html'], check=True, cwd=sphinx_apidoc_out)
-    shutil.copytree(
-        sphinx_apidoc_out + '_build/html/', build_dir, dirs_exist_ok=True
+    subprocess.run(['make', 'html'], check=True, cwd=paths['sphinx_apidoc_out'])
+    shutil.copytree( # copying html builds from sphinx_apidoc_out to the final build_dir
+        paths['sphinx_apidoc_out'] + '_build/html/', paths['build_dir'], dirs_exist_ok=True
     )
-    # shutil.rmtree(temp_modules_dir)
+
     duration = time.monotonic() - starttime
     print(f'Generated sphinx documentation in {duration:.1f}s.')
