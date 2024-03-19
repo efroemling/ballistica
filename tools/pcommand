@@ -96,13 +96,13 @@ from batools.pcommands import (
     upper,
     efrocache_update,
     efrocache_get,
-    get_modern_make,
     warm_start_asset_build,
     gen_docs_pdoc,
     gen_docs_sphinx,
     list_pip_reqs,
     install_pip_reqs,
     checkenv,
+    prefab_platform,
     ensure_prefab_platform,
     prefab_run_var,
     prefab_binary_path,
@@ -135,6 +135,7 @@ from batools.pcommands2 import (
     tests_warm_start,
     wsl_path_to_win,
     wsl_build_check_win_drive,
+    get_modern_make,
 )
 
 # pylint: enable=unused-import

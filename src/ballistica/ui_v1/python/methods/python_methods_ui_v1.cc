@@ -1932,6 +1932,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args,
   PyObject* query_description_obj = Py_None;
   PyObject* adapter_finished_obj = Py_None;
   PyObject* glow_type_obj = Py_None;
+  PyObject* allow_clear_button_obj = Py_None;
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -1972,9 +1973,10 @@ static auto PyTextWidget(PyObject* self, PyObject* args,
                                  "query_description",
                                  "adapter_finished",
                                  "glow_type",
+                                 "allow_clear_button",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &size_obj,
           &pos_obj, &text_obj, &v_align_obj, &h_align_obj, &editable_obj,
           &padding_obj, &on_return_press_call_obj, &on_activate_call_obj,
@@ -1985,7 +1987,8 @@ static auto PyTextWidget(PyObject* self, PyObject* args,
           &shadow_obj, &autoselect_obj, &rotate_obj, &enabled_obj,
           &force_internal_editing_obj, &always_show_carat_obj, &big_obj,
           &extra_touch_border_scale_obj, &res_scale_obj, &query_max_chars_obj,
-          &query_description_obj, &adapter_finished_obj, &glow_type_obj))
+          &query_description_obj, &adapter_finished_obj, &glow_type_obj,
+          &allow_clear_button_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2209,6 +2212,9 @@ static auto PyTextWidget(PyObject* self, PyObject* args,
     }
     widget->set_glow_type(glow_type);
   }
+  if (allow_clear_button_obj != Py_None) {
+    widget->set_allow_clear_button(Python::GetPyBool(allow_clear_button_obj));
+  }
 
   // If making a new widget, add it at the end.
   if (edit_obj == Py_None) {
@@ -2266,7 +2272,8 @@ static PyMethodDef PyTextWidgetDef = {
     "  query_max_chars: bauiv1.Widget | None = None,\n"
     "  query_description: bauiv1.Widget | None = None,\n"
     "  adapter_finished: bool | None = None,\n"
-    "  glow_type: str | None = None)\n"
+    "  glow_type: str | None = None,\n"
+    "  allow_clear_button: bool | None = None)\n"
     "  -> bauiv1.Widget\n"
     "\n"
     "Create or edit a text widget.\n"

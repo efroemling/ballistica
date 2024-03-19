@@ -100,6 +100,7 @@ class Session:
         team_colors: Sequence[Sequence[float]] | None = None,
         min_players: int = 1,
         max_players: int = 8,
+        submit_score: bool = True,
     ):
         """Instantiate a session.
 
@@ -175,6 +176,7 @@ class Session:
             if _max_players_override is None
             else _max_players_override
         )
+        self.submit_score = submit_score
 
         self.customdata = {}
         self._in_set_activity = False

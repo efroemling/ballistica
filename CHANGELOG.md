@@ -1,4 +1,4 @@
-### 1.7.33 (build 21778, api 8, 2024-03-13)
+### 1.7.33 (build 21794, api 8, 2024-03-15)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).
 - Added a 'Show Demos When Idle' option in advanced settings. If enabled, the
@@ -40,21 +40,36 @@
   EraOSBeta!)
 - Added a UI for customizing Series Length in Teams and Points-to-Win in FFA
   (Thanks EraOSBeta!)
+- Implemented HEX code support to the advanced color picker (Thanks 3alTemp!)
+- Players leaving the game after getting hurt will now grant kills. (Thanks
+  Temp!)
 - Sphinx based Python documentation generation is now wired up (Thanks
   Loup-Garou911XD!)
 - Renaming & overwriting existing profiles is no longer possible (Thanks Temp!)
+- Cleaned up builds when running under WSL. Things like `make mypy` should now
+  work correctly there, and it should now be possible to build and run either
+  Linux or Windows builds there.
+- Added an `allow_clear_button` arg to bauiv1.textwidget() which can be used to
+  disable the 'X' button that clears editable text widgets.
 
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
-- Plugins window now displays 'No Plugins Installed' when no plugins are present (Thanks vishal332008!)
-- Old messages are now displayed as soon as you press 'Unmute Chat' (Thanks vishal332008!)
+- Plugins window now displays 'No Plugins Installed' when no plugins are present
+  (Thanks vishal332008!)
+- Old messages are now displayed as soon as you press 'Unmute Chat' (Thanks
+  vishal332008!)
 - Added an 'Add to Favorites' entry to the party menu (Thanks vishal332008!)
-- Now displays 'No Parties Added' in favorites tab if no favorites are present (Thanks vishal332008!)
+- Now displays 'No Parties Added' in favorites tab if no favorites are present
+  (Thanks vishal332008!)
 - Now shows character icons in the profiles list window (Thanks vishal332008!)
-- Added a Random button for names in the Player Profiles window (Thanks vishal332008!)
-- Fixed a bug where no server is selected by default in the favorites tab (Thanks vishal332008!)
-- Fixed a bug where no replay is selected by default in the watch tab (Thanks vishal332008!)
-- Fixed a bug where no profile is selected by default in the profile tab (Thanks vishal332008!)
+- Added a Random button for names in the Player Profiles window (Thanks
+  vishal332008!)
+- Fixed a bug where no server is selected by default in the favorites tab
+  (Thanks vishal332008!)
+- Fixed a bug where no replay is selected by default in the watch tab (Thanks
+  vishal332008!)
+- Fixed a bug where no profile is selected by default in the profile tab (Thanks
+  vishal332008!)
 - Fixed a number of UI screens so that ugly window edges are no longer visible
   in corners on modern ultra wide phone displays.
 - Added a `player_rejoin_cooldown` server config option. This defaults to 10
