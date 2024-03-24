@@ -474,7 +474,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
                     points.append(
                         ((start_pos - player_pos).length(), start_pos)
                     )
-                # Hmm.. we need to sorting vectors too?
+                # Hmm.. we need to sort vectors too?
                 points.sort(key=lambda x: x[0])
                 return points[-1][1]
         return None
