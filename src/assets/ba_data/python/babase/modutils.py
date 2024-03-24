@@ -184,16 +184,9 @@ def delete_user_system_scripts() -> None:
     path = f'{env.python_directory_user}/sys/{env.version}'
     if os.path.exists(path):
         shutil.rmtree(path)
-        print(
-            f'User system scripts deleted.\n'
-            f'Restart {_babase.appname()} to use internal'
-            f' scripts. (use babase.quit() to exit the game)'
-        )
+        print('User system scripts deleted.')
         _babase.screenmessage('Deleted User System Scripts', color=(0, 1, 0))
-        _babase.screenmessage(
-            f'Restart {_babase.appname()} to take effect.',
-            color=(0, 1, 0),
-        )
+        _babase.quit()
     else:
         print(f"User system scripts not found at '{path}'.")
         _babase.screenmessage('User Scripts Not Found', color=(1, 0, 0))
