@@ -59,9 +59,6 @@ if html_theme == 'furo':
 
 
 # -- Project information -----------------------------------------------------
-
-keep_warnings = True  # Supressing warnings
-
 project = sphinx_settings['project_name']
 copyright = sphinx_settings['copyright']
 author = sphinx_settings['project_author']
