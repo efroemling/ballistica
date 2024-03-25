@@ -268,9 +268,9 @@ def _run_sphinx(
             'copyright': copyright_text,
             'version': version,
             'buildnum': buildnum,
+            'ballistica_logo': 'https://camo.githubusercontent.com/25021344ceaa7def6fa6523f79115f7ffada8d26b4768bb9a0cf65fc33304f45/68747470733a2f2f66696c65732e62616c6c6973746963612e6e65742f62616c6c6973746963615f6d656469612f62616c6c6973746963615f6c6f676f5f68616c662e706e67',  # pylint: disable=line-too-long
         }
     )
-
 
     file_loader = FileSystemLoader(paths['template_dir'])
     env = Environment(loader=file_loader)
@@ -316,7 +316,7 @@ def _run_sphinx(
     subprocess.run(
         [
             'sphinx-build',
-            '-c', # config file dir
+            '-c',  # config file dir
             paths['static_dir'],
             paths['sphinx_cache_dir'],  # input dir
             paths['build_dir'],  # output dir
@@ -329,7 +329,7 @@ def _run_sphinx(
 
     # slows down build process when rebuilding,
     # remove after sphinx 7.3.0 is available on PyPi(pip)
-    shutil.rmtree(paths['build_dir']+'.doctrees')
+    shutil.rmtree(paths['build_dir'] + '.doctrees')
 
     duration = time.monotonic() - starttime
     print(f'Generated sphinx documentation in {duration:.1f}s.')
