@@ -45,7 +45,8 @@
     "pbxproj.XcodeProject",
     "pbxproj.pbxextensions",
     "openstep_parser",
-    "daemon"
+    "daemon",
+    "jinja2"
   ],
   "python_paths": [
     "src/assets/ba_data/python",
