@@ -294,6 +294,7 @@ class PlayOptionsWindow(PopupWindow):
                 )
             ),
             minval=1.0,
+            maxval=100.0 if self._sessiontype is bs.FreeForAllSession else 99.0,
             increment=1.0 if self._sessiontype is bs.FreeForAllSession else 2.0,
             fallback_value=(
                 24 if self._sessiontype is bs.FreeForAllSession else 7
