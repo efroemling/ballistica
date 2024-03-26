@@ -71,15 +71,10 @@ release = str(sphinx_settings['buildnum'])
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-
-intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}   
 autosummary_generate = True
 extensions = [
     'sphinx.ext.napoleon',  # https://stackoverflow.com/questions/45880348/how-to-remove-the-cause-of-an-unexpected-indentation-warning-when-generating-cod
     'sphinx.ext.autodoc',
-    # might want to use this in future
-    # for linking with efro and bacommon packages
-    'sphinx.ext.intersphinx',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
