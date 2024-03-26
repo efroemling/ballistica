@@ -2,7 +2,6 @@
 Bin/
 build/
 build-server/
-docs/
 autom4te.cache
 local.properties
 .DS_Store
