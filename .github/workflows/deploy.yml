@@ -1,0 +1,33 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches:
+      - main  # Adjust to your default branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+
+      - name: Install typing extension
+        run: python3.11 -m pip install typing_extensions 
+
+      - name: Install dependencies
+        run: tools/pcommand install_pip_reqs
+
+      - name: Build documentation
+        run: make docs-sphinx
+
+      - name: Deploy documentation
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build/sphinx
