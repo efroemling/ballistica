@@ -1,0 +1,34 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+        # Remove this once we upgrade to 3.12.
+      
+      - name: Install typing_extensions (temp)
+        run: python3.11 -m pip install typing_extensions
+
+      - name: Install pip requirements
+        run: tools/pcommand install_pip_reqs
+
+      - name: Build documentation
+        run: make docs-sphinx
+
+      - name: Deploy documentation
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build/sphinx
