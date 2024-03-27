@@ -48,4 +48,5 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
+        artifact_name: sphinx_html_docs
         uses: actions/deploy-pages@v4 # or specific "vX.X.X" version tag for this action
