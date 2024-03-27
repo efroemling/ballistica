@@ -186,7 +186,8 @@ def delete_user_system_scripts() -> None:
         shutil.rmtree(path)
         print('User system scripts deleted.')
         _babase.screenmessage('Deleted User System Scripts', color=(0, 1, 0))
-        _babase.quit()
+        _babase.screenmessage(f'Closing {_babase.appname()} to make changes.', color=(0, 1, 0))
+        _babase.apptimer(2.0, _babase.quit)
     else:
         print(f"User system scripts not found at '{path}'.")
         _babase.screenmessage('User Scripts Not Found', color=(1, 0, 0))
