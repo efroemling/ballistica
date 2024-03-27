@@ -26,7 +26,12 @@ jobs:
 
       - name: Build documentation
         run: make docs-sphinx
-
+      
+      - name: No jekyll
+        run: touch build/sphinx/.nojekyll
+      # without this, github thinks we are using jekyll
+      # and doesn't let us access files and dirs with _
+      
       - name: Deploy documentation
         uses: peaceiris/actions-gh-pages@v3
         with:
