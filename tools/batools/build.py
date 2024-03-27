@@ -65,6 +65,7 @@ PY_REQUIREMENTS = [
     PyRequirement(pipname='python-daemon', minversion=[3, 0, 1]),
     PyRequirement(pipname='Sphinx', minversion=[7, 2, 6]),
     PyRequirement(pipname='furo', minversion=[2024, 0o1, 29]),
+    PyRequirement(pipname='Jinja2', minversion=[3, 1, 2]),
 ]
 
 

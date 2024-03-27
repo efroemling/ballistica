@@ -1563,11 +1563,7 @@ class SpinoffContext:
                 os.remove(delete_file_name)
 
     def _is_project_file(self, path: str) -> bool:
-        if (
-            path.startswith('tools/')
-            or path.startswith('src/external')
-            or path.startswith('src/assets/sphinx')
-        ):
+        if path.startswith('tools/') or path.startswith('src/external'):
             return False
         bname = os.path.basename(path)
         return (

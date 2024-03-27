@@ -22,11 +22,12 @@ sys.path.append(os.path.abspath(ballistica_root + assets_dirs['dummy_modules']))
 sys.path.append(os.path.abspath(ballistica_root + assets_dirs['efro_tools']))
 
 # -- Options for HTML output -------------------------------------------------
+# for more themes visit https://sphinx-themes.org/
 html_theme = 'furo'  # python_docs_theme, groundwork, furo, sphinx_rtd_theme 
 html_title = sphinx_settings['project_name'] + ' ' + str(sphinx_settings['version']) + ' documentation'
-# for more themes visit https://sphinx-themes.org/
 
-html_logo = 'https://camo.githubusercontent.com/25021344ceaa7def6fa6523f79115f7ffada8d26b4768bb9a0cf65fc33304f45/68747470733a2f2f66696c65732e62616c6c6973746963612e6e65742f62616c6c6973746963615f6d656469612f62616c6c6973746963615f6c6f676f5f68616c662e706e67'
+# do not remove, sets the logo on side panel
+html_logo = sphinx_settings['ballistica_logo']
 
 if html_theme == 'furo':
     html_theme_options = {
@@ -58,9 +59,6 @@ if html_theme == 'furo':
 
 
 # -- Project information -----------------------------------------------------
-
-keep_warnings = True  # Supressing warnings
-
 project = sphinx_settings['project_name']
 copyright = sphinx_settings['copyright']
 author = sphinx_settings['project_author']
@@ -73,10 +71,15 @@ release = str(sphinx_settings['buildnum'])
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
+
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}   
 autosummary_generate = True
 extensions = [
     'sphinx.ext.napoleon',  # https://stackoverflow.com/questions/45880348/how-to-remove-the-cause-of-an-unexpected-indentation-warning-when-generating-cod
     'sphinx.ext.autodoc',
+    # might want to use this in future
+    # for linking with efro and bacommon packages
+    'sphinx.ext.intersphinx',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
