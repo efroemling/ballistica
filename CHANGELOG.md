@@ -1,3 +1,5 @@
+### 1.7.34 (build 21797, api 8, 2024-03-27)
+
 ### 1.7.33 (build 21795, api 8, 2024-03-24)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).
