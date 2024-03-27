@@ -46,7 +46,8 @@
     "pbxproj.pbxextensions",
     "openstep_parser",
     "daemon",
-    "jinja2"
+    "jinja2",
+    "jinja2.Environment"
   ],
   "python_paths": [
     "src/assets/ba_data/python",

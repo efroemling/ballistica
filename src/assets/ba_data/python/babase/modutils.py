@@ -187,8 +187,7 @@ def delete_user_system_scripts() -> None:
         print('User system scripts deleted.')
         _babase.screenmessage('Deleted User System Scripts', color=(0, 1, 0))
         _babase.screenmessage(
-            f'Closing {_babase.appname()} to make changes.',
-            color=(0, 1, 0)
+            f'Closing {_babase.appname()} to make changes.', color=(0, 1, 0)
         )
         _babase.apptimer(2.0, _babase.quit)
     else:

@@ -2745,7 +2745,7 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/scanner.py \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/serializer.py \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/tokens.py \
-  $(BUILD_DIR)/sphinx/template/conf.py
+  $(BUILD_DIR)/sphinx/static/conf.py
 
 SCRIPT_TARGETS_PYC_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/_yaml/__pycache__/__init__.cpython-311.opt-1.pyc \
@@ -2770,7 +2770,7 @@ SCRIPT_TARGETS_PYC_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/scanner.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/serializer.cpython-311.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/tokens.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/sphinx/template/__pycache__/conf.cpython-311.opt-1.pyc
+  $(BUILD_DIR)/sphinx/static/__pycache__/conf.cpython-311.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
