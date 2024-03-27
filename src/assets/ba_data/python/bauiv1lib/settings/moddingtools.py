@@ -167,6 +167,7 @@ class ModdingToolsWindow(bui.Window):
             parent=self._subcontainer,
             position=(230, v - 20),
             button_size=(200.0, 60.0),
+            width=100.0,
             choices=[
                 'auto',
                 'small',
