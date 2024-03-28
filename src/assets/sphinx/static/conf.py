@@ -31,7 +31,7 @@ html_logo = sphinx_settings['ballistica_logo']
 
 if html_theme == 'furo':
     html_theme_options = {
-        'announcement': 'This is a placeholder announcement',
+        # 'announcement': 'This is a placeholder announcement',
         'light_css_variables': {
             'color-brand-primary': '#3cda0b',
             'color-brand-content': '#7C4DFF',

@@ -195,6 +195,7 @@ ctx.filter_file_names = {
     '.editorconfig',
     'ci.yml',
     'cd.yml',
+    'deploy_docs.yml',
     'LICENSE',
     'cloudtool',
     'bacloud',
