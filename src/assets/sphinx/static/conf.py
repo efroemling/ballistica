@@ -21,10 +21,20 @@ sys.path.append(os.path.abspath(ballistica_root + assets_dirs['ba_data']))
 sys.path.append(os.path.abspath(ballistica_root + assets_dirs['dummy_modules']))
 sys.path.append(os.path.abspath(ballistica_root + assets_dirs['efro_tools']))
 
+# -- Project information -----------------------------------------------------
+project = sphinx_settings['project_name']
+copyright = sphinx_settings['copyright']
+author = sphinx_settings['project_author']
+# The full version, including alpha/beta/rc tags
+version = str(sphinx_settings['version'])
+release = str(sphinx_settings['buildnum'])
+
+
 # -- Options for HTML output -------------------------------------------------
 # for more themes visit https://sphinx-themes.org/
 html_theme = 'furo'  # python_docs_theme, groundwork, furo, sphinx_rtd_theme 
-html_title = sphinx_settings['project_name'] + ' ' + str(sphinx_settings['version']) + ' documentation'
+html_title = project + ' ' + version + ' documentation'
+html_show_sphinx = False
 
 # do not remove, sets the logo on side panel
 html_logo = sphinx_settings['ballistica_logo']
@@ -55,23 +65,17 @@ if html_theme == 'furo':
         'navigation_with_keys': True,
     }
 
-    
-
-
-# -- Project information -----------------------------------------------------
-project = sphinx_settings['project_name']
-copyright = sphinx_settings['copyright']
-author = sphinx_settings['project_author']
-# The full version, including alpha/beta/rc tags
-version = str(sphinx_settings['version'])
-release = str(sphinx_settings['buildnum'])
-
 # -- General configuration ---------------------------------------------------
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
-
+# append to pages
+rst_epilog = """
+"""
+# prepend to pages
+rst_prolog = f"""
+.. image:: {html_logo}
+    :target: index.html
+    :alt: Ballistica Logo 
+"""
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}   
 autosummary_generate = True
 extensions = [
