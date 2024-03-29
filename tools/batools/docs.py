@@ -230,7 +230,6 @@ def _run_sphinx(
     # pylint: disable=too-many-locals
 
     import time
-    import shutil
     from batools.version import get_current_version
     from jinja2 import Environment, FileSystemLoader
 
@@ -320,16 +319,12 @@ def _run_sphinx(
             paths['static_dir'],
             paths['sphinx_cache_dir'],  # input dir
             paths['build_dir'],  # output dir
-            # enable after sphinx 7.3.0 is available on PyPi(pip)
-            # '--doctree-dir', paths['sphinx_cache_dir'],
+            '-d',
+            paths['sphinx_cache_dir'],
             # '-Q', #quiet now
         ],
         check=True,
     )
-
-    # slows down build process when rebuilding,
-    # remove after sphinx 7.3.0 is available on PyPi(pip)
-    shutil.rmtree(paths['build_dir'] + '.doctrees')
 
     duration = time.monotonic() - starttime
     print(f'Generated sphinx documentation in {duration:.1f}s.')
