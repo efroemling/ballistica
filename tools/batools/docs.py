@@ -230,7 +230,6 @@ def _run_sphinx(
     # pylint: disable=too-many-locals
 
     import time
-    import shutil
     from batools.version import get_current_version
     from jinja2 import Environment, FileSystemLoader
 
