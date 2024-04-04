@@ -31,7 +31,9 @@ class DirectoryManifest:
 
     files: Annotated[dict[str, DirectoryManifestFile], IOAttrs('f')]
 
-    # _empty_hash: str | None = None
+    # Soft-default added April 2024; can remove eventually once this
+    # attr is widespread in client.
+    exists: Annotated[bool, IOAttrs('e', soft_default=True)]
 
     @classmethod
     def create_from_disk(cls, path: Path) -> DirectoryManifest:
@@ -42,6 +44,8 @@ class DirectoryManifest:
         pathstr = str(path)
         paths: list[str] = []
 
+        exists = path.exists()
+
         if path.is_dir():
             # Build the full list of relative paths.
             for basename, _dirnames, filenames in os.walk(path):
@@ -51,7 +55,7 @@ class DirectoryManifest:
                     # Make sure we end up with forward slashes no matter
                     # what the os.* stuff above here was using.
                     paths.append(Path(fullname[len(pathstr) + 1 :]).as_posix())
-        elif path.exists():
+        elif exists:
             # Just return a single file entry if path is not a dir.
             paths.append(path.as_posix())
 
@@ -76,7 +80,9 @@ class DirectoryManifest:
         if cpus is None:
             cpus = 4
         with ThreadPoolExecutor(max_workers=cpus) as executor:
-            return cls(files=dict(executor.map(_get_file_info, paths)))
+            return cls(
+                files=dict(executor.map(_get_file_info, paths)), exists=exists
+            )
 
     def validate(self) -> None:
         """Log any odd data in the manifest; for debugging."""
