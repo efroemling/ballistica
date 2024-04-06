@@ -81,11 +81,6 @@ class IOMultiType(Generic[EnumT]):
     See tests/test_efro/test_dataclassio.py for examples.
     """
 
-    # Dataclasses inheriting from an IOMultiType will store a type-id
-    # with this key in their serialized data. This value can be
-    # overridden in IOMultiType subclasses as desired.
-    ID_STORAGE_NAME = '_dciotype'
-
     @classmethod
     def get_type(cls, type_id: EnumT) -> type[Self]:
         """Return a specific subclass given a type-id."""
@@ -102,6 +97,18 @@ class IOMultiType(Generic[EnumT]):
         out: type[EnumT] = cls.__orig_bases__[0].__args__[0]  # type: ignore
         assert issubclass(out, Enum)
         return out
+
+    @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        """Return the key used to store type id in serialized data.
+
+        The default is an obscure value so that it does not conflict
+        with members of individual type attrs, but in some cases one
+        might prefer to serialize it to something simpler like 'type'
+        by overriding this call. One just needs to make sure that no
+        encompassed types serialize anything to 'type' themself.
+        """
+        return '_dciotype'
 
 
 class IOAttrs:
@@ -332,7 +339,7 @@ def _get_multitype_type(
         raise ValueError(
             f"Found a {type(val)} at '{fieldpath}'; expected a dict."
         )
-    storename = cls.ID_STORAGE_NAME
+    storename = cls.get_type_id_storage_name()
     id_val = val.get(storename)
     if id_val is None:
         raise ValueError(

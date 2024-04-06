@@ -161,7 +161,15 @@ class _Outputter:
             assert obj.get_type(type_id) is type(obj)
             if self._create:
                 assert out is not None
-                out[obj.ID_STORAGE_NAME] = type_id.value
+                storagename = obj.get_type_id_storage_name()
+                if any(f.name == storagename for f in fields):
+                    raise RuntimeError(
+                        f'dataclassio: {type(obj)} contains a'
+                        f" '{storagename}' field which clashes with"
+                        f' the type-id-storage-name of the IOMulticlass'
+                        f' it inherits from.'
+                    )
+                out[storagename] = type_id.value
 
         return out
 

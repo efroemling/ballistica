@@ -1182,7 +1182,7 @@ def test_multi_type() -> None:
 
     # Test converting single instances back and forth.
     val1: MTTestBase = MTTestClass1(ival=123)
-    tpname = MTTestBase.ID_STORAGE_NAME
+    tpname = MTTestBase.get_type_id_storage_name()
     outdict = dataclass_to_dict(val1)
     assert outdict == {'ival': 123, tpname: 'm1'}
     val2: MTTestBase = MTTestClass2(sval='whee')
@@ -1314,3 +1314,117 @@ def test_multi_type() -> None:
     outdict = dataclass_to_dict(container7)
     container7b = dataclass_from_dict(_TestContainerClass7, {})
     assert container7 == container7b
+
+
+class MTTest2TypeID(Enum):
+    """IDs for our multi-type class."""
+
+    CLASS_1 = 'm1'
+    CLASS_2 = 'm2'
+    CLASS_3 = 'm3'
+
+
+class MTTest2Base(IOMultiType[MTTest2TypeID]):
+    """Another multi-type test.
+
+    This one tests overriding type-id-storage-name.
+    """
+
+    @override
+    @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        return 'type'
+
+    @override
+    @classmethod
+    def get_type(cls, type_id: MTTest2TypeID) -> type[MTTest2Base]:
+        val: type[MTTest2Base]
+        if type_id is MTTest2TypeID.CLASS_1:
+            val = MTTest2Class1
+        elif type_id is MTTest2TypeID.CLASS_2:
+            val = MTTest2Class2
+        elif type_id is MTTest2TypeID.CLASS_3:
+            val = MTTest2Class3
+        else:
+            assert_never(type_id)
+        return val
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTest2TypeID:
+        raise NotImplementedError()
+
+
+@ioprepped
+@dataclass
+class MTTest2Class1(MTTest2Base):
+    """A test child-class for use with our multi-type class."""
+
+    ival: int
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTest2TypeID:
+        return MTTest2TypeID.CLASS_1
+
+
+@ioprepped
+@dataclass
+class MTTest2Class2(MTTest2Base):
+    """Another test child-class for use with our multi-type class."""
+
+    sval: str
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTest2TypeID:
+        return MTTest2TypeID.CLASS_2
+
+
+@ioprepped
+@dataclass
+class MTTest2Class3(MTTest2Base):
+    """Another test child-class for use with our multi-type class."""
+
+    type: str = ''
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTest2TypeID:
+        return MTTest2TypeID.CLASS_3
+
+
+def test_multi_type_2() -> None:
+    """Test IOMultiType stuff."""
+
+    # Make sure this serializes correctly with 'test' as a type name.
+
+    val1: MTTest2Base = MTTest2Class1(ival=123)
+    outdict = dataclass_to_dict(val1)
+    assert outdict == {'ival': 123, 'type': 'm1'}
+
+    val1b = dataclass_from_dict(MTTest2Base, outdict)
+    assert val1 == val1b
+
+    val2: MTTest2Base = MTTest2Class2(sval='whee')
+    outdict2 = dataclass_to_dict(val2)
+    assert outdict2 == {'sval': 'whee', 'type': 'm2'}
+
+    val2b = dataclass_from_dict(MTTest2Base, outdict2)
+    assert val2 == val2b
+
+    # If a multi-type class uses 'type' itself, make sure we error
+    # instead of letting things break due to the name clash. In an ideal
+    # world this would error at prep time, but IOMultiType is built
+    # around lazy-loading so it can't actually examine all types at that
+    # time.
+
+    # Make sure we error on output...
+    val3: MTTest2Base = MTTest2Class3()
+    with pytest.raises(RuntimeError):
+        outdict = dataclass_to_dict(val3)
+
+    # And input.
+    indict3 = {'type': 'm3'}
+    with pytest.raises(RuntimeError):
+        val3 = dataclass_from_dict(MTTest2Base, indict3)

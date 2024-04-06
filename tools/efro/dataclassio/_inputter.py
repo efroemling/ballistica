@@ -73,7 +73,7 @@ class _Inputter:
         if issubclass(self._cls, IOMultiType) and not dataclasses.is_dataclass(
             self._cls
         ):
-            type_id_val = values.get(self._cls.ID_STORAGE_NAME)
+            type_id_val = values.get(self._cls.get_type_id_storage_name())
             if type_id_val is None:
                 raise ValueError(
                     f'No type id value present for multi-type object:'
@@ -234,6 +234,7 @@ class _Inputter:
         associated values, and nested dataclasses should be passed as dicts.
         """
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         if not isinstance(values, dict):
             raise TypeError(
@@ -252,8 +253,8 @@ class _Inputter:
         fields = dataclasses.fields(cls)
         fields_by_name = {f.name: f for f in fields}
 
-        # Preprocess all fields to convert Annotated[] to contained types
-        # and IOAttrs.
+        # Preprocess all fields to convert Annotated[] to contained
+        # types and IOAttrs.
         parsed_field_annotations = {
             f.name: _parse_annotated(prep.annotations[f.name]) for f in fields
         }
@@ -262,12 +263,25 @@ class _Inputter:
         # type attr. Ignore that while parsing since we already have a
         # definite type and it will just pollute extra-attrs otherwise.
         if issubclass(cls, IOMultiType):
-            type_id_store_name = cls.ID_STORAGE_NAME
+            type_id_store_name = cls.get_type_id_storage_name()
+
+            # However we do want to make sure the class we're loading
+            # doesn't itself use this same name, as this could lead to
+            # tricky breakage. We can't verify this for types at prep
+            # time because IOMultiTypes are lazy-loaded, so this is
+            # the best we can do.
+            if type_id_store_name in fields_by_name:
+                raise RuntimeError(
+                    f"{cls} contains a '{type_id_store_name}' field"
+                    ' which clashes with the type-id-storage-name of'
+                    ' the IOMultiType it inherits from.'
+                )
+
         else:
             type_id_store_name = None
 
-        # Go through all data in the input, converting it to either dataclass
-        # args or extra data.
+        # Go through all data in the input, converting it to either
+        # dataclass args or extra data.
         args: dict[str, Any] = {}
         for rawkey, value in values.items():
 
@@ -284,8 +298,8 @@ class _Inputter:
                     if self._discard_unknown_attrs:
                         continue
 
-                    # Treat this like 'Any' data; ensure that it is valid
-                    # raw json.
+                    # Treat this like 'Any' data; ensure that it is
+                    # valid raw json.
                     if not _is_valid_for_codec(value, self._codec):
                         raise TypeError(
                             f'Unknown attr \'{key}\''
