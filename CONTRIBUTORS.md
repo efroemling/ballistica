@@ -48,6 +48,9 @@
 ### VinniTR
 - Fixes
 
+### Zacker Tz
+- Fix penguinTorso.bob
+
 ### Rikko
 - Created the original "reject_recently_left_players" plugin
 
