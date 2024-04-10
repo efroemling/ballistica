@@ -1,5 +1,7 @@
-### 1.7.34 (build 21798, api 8, 2024-04-04)
-
+### 1.7.34 (build 21800, api 8, 2024-04-10)
+- `_bascenev1.protocol_version()` now properly throw an exception if called
+  while scene-v1 is not active.
+  
 ### 1.7.33 (build 21795, api 8, 2024-03-24)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).

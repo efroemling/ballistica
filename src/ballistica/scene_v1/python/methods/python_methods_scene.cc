@@ -1841,12 +1841,13 @@ static PyMethodDef PyHandleAppIntentExecDef = {
     "(internal)",
 };
 
-// ----------------------- handle_app_intent_default ---------------------------
+// ---------------------------- protocol_version -------------------------------
 
 static auto PyProtocolVersion(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
+
   return PyLong_FromLong(
-      SceneV1AppMode::GetSingleton()->host_protocol_version());
+      SceneV1AppMode::GetActiveOrThrow()->host_protocol_version());
   BA_PYTHON_CATCH;
 }
 
