@@ -13,14 +13,14 @@ from dataclasses import dataclass
 from efrotools import readfile, writefile, replace_exact
 
 # Python version we build here (not necessarily same as we use in repo).
-PY_VER_ANDROID = '3.11'
-PY_VER_EXACT_ANDROID = '3.11.6'
-PY_VER_APPLE = '3.11'
-PY_VER_EXACT_APPLE = '3.11.5'
+PY_VER_ANDROID = '3.12'
+PY_VER_EXACT_ANDROID = '3.12.3'
+PY_VER_APPLE = '3.12'
+PY_VER_EXACT_APPLE = '3.12.0'
 
 # Can bump these up to whatever the min we need is. Though perhaps
 # leaving them at what the repo uses would lead to fewer build issues.
-VERSION_MIN_MACOS = '10.15'
+VERSION_MIN_MACOS = '11.0'
 VERSION_MIN_IOS = '12.0'
 VERSION_MIN_TVOS = '9.0'
 
@@ -37,24 +37,24 @@ VERSION_MIN_TVOS = '9.0'
 # why-is-lldb-generating-exc-bad-instruction-with-user-compiled-library-on-macos
 #
 # For now will try to ride out this 3.0 LTS version as long as possible.
-OPENSSL_VER_APPLE = '3.0.13'
+OPENSSL_VER_APPLE = '3.0.12-1'
 OPENSSL_VER_ANDROID = '3.0.13'
 
-LIBFFI_VER_APPLE = '3.4.4'
-BZIP2_VER_APPLE = '1.0.8'
-XZ_VER_APPLE = '5.4.4'
+LIBFFI_VER_APPLE = '3.4.4-1'
+BZIP2_VER_APPLE = '1.0.8-1'
+XZ_VER_APPLE = '5.4.4-1'
 
 # Android repo doesn't seem to be getting updated much so manually
 # bumping various versions to keep things up to date.
 ZLIB_VER_ANDROID = '1.3.1'
-XZ_VER_ANDROID = '5.4.5'
+XZ_VER_ANDROID = '5.4.4'
 BZIP2_VER_ANDROID = '1.0.8'
 GDBM_VER_ANDROID = '1.23'
-LIBFFI_VER_ANDROID = '3.4.4'
-LIBUUID_VER_ANDROID = ('2.39', '2.39.2')
+LIBFFI_VER_ANDROID = '3.4.6'
+LIBUUID_VER_ANDROID = ('2.39', '2.39.3')
 NCURSES_VER_ANDROID = '6.4'
 READLINE_VER_ANDROID = '8.2'
-SQLITE_VER_ANDROID = ('2023', '3440000')
+SQLITE_VER_ANDROID = ('2024', '3450200')
 
 # Filenames we prune from Python lib dirs in source repo to cut down on
 # size.
@@ -136,7 +136,7 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # re-test things and probably make adjustments. Holding off for now.
     # Might just do this when I update everything to 3.12 which will be
     # a bit of work anyway.
-    if bool(True):
+    if bool(False):
         subprocess.run(
             ['git', 'checkout', 'a8c93fed2bdf0122fc2ca663faa1e46e5cf28d69'],
             check=True,
@@ -183,7 +183,7 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # Customize our minimum OS version requirements.
     txt = replace_exact(
         txt,
-        'VERSION_MIN-macOS=10.15\n',
+        'VERSION_MIN-macOS=11.0\n',
         f'VERSION_MIN-macOS={VERSION_MIN_MACOS}\n',
     )
     txt = replace_exact(
@@ -198,18 +198,17 @@ def build_apple(arch: str, debug: bool = False) -> None:
     )
     txt = replace_exact(
         txt,
-        'OPENSSL_VERSION=3.1.2\n',
+        'OPENSSL_VERSION=3.0.12-1\n',
         f'OPENSSL_VERSION={OPENSSL_VER_APPLE}\n',
     )
 
-    # Don't copy in lib-dynload; we don't make it so it errors if we try.
+    # Don't copy in lib-dynload; we don't build it so it errors if we try.
     txt = replace_exact(
         txt,
-        '\t$$(foreach sdk,$$(SDKS-$(os)),'
-        'cp $$(PYTHON_FATSTDLIB-$$(sdk))/lib-dynload/*',
+        '\t$$(foreach sdk,$$(SDKS-$(os)),cp $$(PYTHON_STDLIB-$$(sdk))/'
+        'lib-dynload/*',
         '\t# (ericf disabled) $$(foreach sdk,$$(SDKS-$(os)),'
-        'cp $$(PYTHON_FATSTDLIB-$$(sdk))/lib-dynload/*',
-        count=1,
+        'cp $$(PYTHON_STDLIB-$$(sdk))/lib-dynload/*',
     )
 
     assert '--with-pydebug' not in txt
@@ -237,10 +236,10 @@ def build_apple(arch: str, debug: bool = False) -> None:
             count=3,
         )
         txt = replace_exact(
-            txt, '/config-$(PYTHON_VER)-', '/config-$(PYTHON_VER)d-', count=3
+            txt, '/config-$(PYTHON_VER)-', '/config-$(PYTHON_VER)d-', count=2
         )
         txt = replace_exact(
-            txt, '/_sysconfigdata__', '/_sysconfigdata_d_', count=6
+            txt, '/_sysconfigdata__', '/_sysconfigdata_d_', count=3
         )
 
         # Rename the patch files corresponding to these as well.
@@ -289,9 +288,11 @@ def build_apple(arch: str, debug: bool = False) -> None:
         [
             'make',
             '-j1',
-            {'mac': 'Python-macOS', 'ios': 'Python-iOS', 'tvos': 'Python-tvOS'}[
-                arch
-            ],
+            {
+                'mac': 'macOS',
+                'ios': 'iOS',
+                'tvos': 'tvOS',
+            }[arch],
         ],
         check=True,
     )
@@ -334,8 +335,8 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # TEMP - hard coding old ndk for the moment; looks like libffi needs to
     # be fixed to build with it. I *think* this has already been done; we just
     # need to wait for the official update beyond 3.4.4.
-    print('TEMP TEMP TEMP HARD-CODING OLD NDK FOR LIBFFI BUG')
-    os.environ['ANDROID_NDK'] = '/home/ubuntu/AndroidSDK/ndk/25.2.9519653'
+    # print('TEMP TEMP TEMP HARD-CODING OLD NDK FOR LIBFFI BUG')
+    # os.environ['ANDROID_NDK'] = '/home/ubuntu/AndroidSDK/ndk/25.2.9519653'
 
     # Disable builds for dependencies we don't use.
     ftxt = readfile('Android/build_deps.py')
@@ -465,9 +466,11 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 
     # Ok; let 'er rip!
     exargs = ' --with-pydebug' if debug else ''
+    pyvershort = PY_VER_ANDROID.replace('.', '')
     subprocess.run(
         f'ARCH={arch} ANDROID_API=23 ./build.sh{exargs} --without-ensurepip'
-        f' --with-build-python=/home/ubuntu/.py311/bin/python3.11',
+        f' --with-build-python='
+        f'/home/ubuntu/.py{pyvershort}/bin/python{PY_VER_ANDROID}',
         shell=True,
         check=True,
     )
@@ -482,6 +485,7 @@ def apple_patch(python_dir: str) -> None:
 def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
     """Muck with the Setup.* files Python uses to build modules."""
     # pylint: disable=too-many-locals
+    del baseplatform  # Unused.
 
     assert ' ' not in python_dir
 
@@ -514,79 +518,78 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
     #
     # TODO(ericf): could automate a warning for at least the last part
     #  of that.
-    cmodules = {
-        '_asyncio',
-        '_bisect',
-        '_blake2',
-        '_codecs_cn',
-        '_codecs_hk',
-        '_codecs_iso2022',
-        '_codecs_jp',
-        '_codecs_kr',
-        '_codecs_tw',
-        '_contextvars',
-        '_crypt',
-        '_csv',
-        '_ctypes_test',
-        '_curses_panel',
-        '_curses',
-        '_datetime',
-        '_decimal',
-        '_gdbm',
-        '_dbm',
-        '_elementtree',
-        '_heapq',
-        '_json',
-        '_lsprof',
-        '_lzma',
-        '_md5',
-        '_multibytecodec',
-        '_multiprocessing',
-        '_opcode',
-        '_pickle',
-        '_posixsubprocess',
-        '_posixshmem',
-        '_queue',
-        '_random',
-        '_sha1',
-        '_sha3',
-        '_sha256',
-        '_sha512',
-        '_socket',
-        '_statistics',
-        '_struct',
-        '_testbuffer',
-        '_testcapi',
-        '_testimportmultiple',
-        '_testinternalcapi',
-        '_testmultiphase',
-        '_testclinic',
-        '_uuid',
-        '_xxsubinterpreters',
-        '_xxtestfuzz',
-        'spwd',
-        '_zoneinfo',
-        'array',
-        'audioop',
-        'binascii',
-        'cmath',
-        'fcntl',
-        'grp',
-        'math',
-        '_tkinter',
-        'mmap',
-        'ossaudiodev',
-        'pyexpat',
-        'resource',
-        'select',
-        'nis',
-        'syslog',
-        'termios',
-        'unicodedata',
-        'xxlimited',
-        'xxlimited_35',
-        'zlib',
-        'readline',
+    cmodules: set[tuple[str, int]] = {
+        ('_asyncio', 1),
+        ('_bisect', 1),
+        ('_blake2', 1),
+        ('_codecs_cn', 1),
+        ('_codecs_hk', 1),
+        ('_codecs_iso2022', 1),
+        ('_codecs_jp', 1),
+        ('_codecs_kr', 1),
+        ('_codecs_tw', 1),
+        ('_contextvars', 1),
+        ('_crypt', 1),
+        ('_csv', 1),
+        ('_ctypes_test', 1),
+        ('_curses_panel', 1),
+        ('_curses', 1),
+        ('_datetime', 1),
+        ('_decimal', 1),
+        ('_gdbm', 1),
+        ('_dbm', 1),
+        ('_elementtree', 1),
+        ('_heapq', 1),
+        ('_json', 1),
+        ('_lsprof', 1),
+        ('_lzma', 1),
+        ('_md5', 1),
+        ('_multibytecodec', 1),
+        ('_multiprocessing', 1),
+        ('_opcode', 1),
+        ('_pickle', 1),
+        ('_posixsubprocess', 1),
+        ('_posixshmem', 1),
+        ('_queue', 1),
+        ('_random', 1),
+        ('_sha1', 1),
+        ('_sha2', 1),
+        ('_sha3', 1),
+        ('_socket', 1),
+        ('_statistics', 1),
+        ('_struct', 1),
+        ('_testbuffer', 1),
+        ('_testcapi', 1),
+        ('_testimportmultiple', 1),
+        ('_testinternalcapi', 1),
+        ('_testmultiphase', 2),
+        ('_testclinic', 1),
+        ('_uuid', 1),
+        ('_xxsubinterpreters', 1),
+        ('_xxtestfuzz', 1),
+        ('spwd', 1),
+        ('_zoneinfo', 1),
+        ('array', 1),
+        ('audioop', 1),
+        ('binascii', 1),
+        ('cmath', 1),
+        ('fcntl', 1),
+        ('grp', 1),
+        ('math', 1),
+        ('_tkinter', 1),
+        ('mmap', 1),
+        ('ossaudiodev', 1),
+        ('pyexpat', 1),
+        ('resource', 1),
+        ('select', 1),
+        ('nis', 1),
+        ('syslog', 1),
+        ('termios', 1),
+        ('unicodedata', 1),
+        ('xxlimited', 1),
+        ('xxlimited_35', 1),
+        ('zlib', 1),
+        ('readline', 1),
     }
 
     # The set of modules we want statically compiled into our Python lib.
@@ -613,10 +616,6 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
         'mmap',
         '_csv',
         '_socket',
-        '_sha1',
-        '_sha3',
-        '_sha256',
-        '_sha512',
         '_blake2',
         '_lzma',
         'binascii',
@@ -629,140 +628,47 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
 
     disable_at_end = set[str]()
 
-    for cmodule in cmodules:
+    for cmodule, expected_instances in cmodules:
         linebegin = f'@MODULE_{cmodule.upper()}_TRUE@'
         indices = [i for i, val in enumerate(lines) if linebegin in val]
-        if len(indices) != 1:
+        if len(indices) != expected_instances:
             raise RuntimeError(
-                f'Expected to find exact 1 entry for {cmodule};'
+                f'Expected to find exactly {expected_instances}'
+                f' entry for {cmodule};'
                 f' found {len(indices)}.'
             )
-        line = lines[indices[0]]
+        for index in indices:
+            line = lines[index]
 
-        is_enabled = not line.startswith('#')
-        should_enable = cmodule in enables
+            is_enabled = not line.startswith('#')
+            should_enable = cmodule in enables
 
-        if not should_enable:
-            # If something is enabled but we don't want it, comment it
-            # out. Also stick all disabled stuff in a *disabled* section
-            # at the bottom so it won't get built even as shared.
-            if is_enabled:
-                lines[indices[0]] = f'#{line}'
-            disable_at_end.add(cmodule)
-        elif not is_enabled:
-            # Ok; its enabled and shouldn't be. What to do...
-            if bool(False):
-                # Uncomment the line to enable it.
-                #
-                # UPDATE: Seems this doesn't work; will have to figure
-                # out the right way to get things like _ctypes compiling
-                # statically.
-                lines[indices[0]] = replace_exact(
-                    line, f'#{linebegin}', linebegin, count=1
-                )
-            else:
-                # Don't support this currently.
-                raise RuntimeError(
-                    f'UNEXPECTED is_enabled=False'
-                    f' should_enable=True for {cmodule}'
-                )
+            if not should_enable:
+                # If something is enabled but we don't want it, comment it
+                # out. Also stick all disabled stuff in a *disabled* section
+                # at the bottom so it won't get built even as shared.
+                if is_enabled:
+                    lines[index] = f'#{line}'
+                disable_at_end.add(cmodule)
+            elif not is_enabled:
+                # Ok; its enabled and shouldn't be. What to do...
+                if bool(False):
+                    # Uncomment the line to enable it.
+                    #
+                    # UPDATE: Seems this doesn't work; will have to figure
+                    # out the right way to get things like _ctypes compiling
+                    # statically.
+                    lines[index] = replace_exact(
+                        line, f'#{linebegin}', linebegin, count=1
+                    )
+                else:
+                    # Don't support this currently.
+                    raise RuntimeError(
+                        f'UNEXPECTED is_enabled=False'
+                        f' should_enable=True for {cmodule}'
+                    )
 
     ftxt = '\n'.join(lines) + '\n'
-
-    # ftxt = replace_exact(
-    #     ftxt,
-    #     '# Some testing modules MUST be built as shared libraries.\n'
-    #     '*shared*\n',
-    #     '# Some testing modules MUST be built as shared libraries.\n'
-    #     '#*static*\n',
-    # )
-
-    # Now for the one remaining ULTRA-HACKY bit: getting _ctypes
-    # building statically.
-    #
-    # It seems that as of 3.11 it is not possible to do this through
-    # Setup.stdlib.in like we do with our other stuff, as the line is
-    # commented out and we get errors if we change that. Looks like its
-    # not commented out anymore in 3.12 so we'll have to revisit this
-    # next year, but for now... hacks!
-
-    # To get this working for now we can dump an exact set of build
-    # flags for _ctypes into the Setup.stdlib.in. We just need to
-    # provide those per-platform. So, to get those:
-    #
-    #  - Run 'vanilla' ios/android/etc Python builds which generate .so versions
-    #  - Look for the flags in the compiler command lines for those .c files
-    #  - Stuff those flags in here for the associated platform.
-    #
-    if baseplatform == 'android':
-        ftxt = replace_exact(
-            ftxt,
-            '#@MODULE__CTYPES_TRUE@_ctypes _ctypes/_ctypes.c'
-            ' _ctypes/callbacks.c'
-            ' _ctypes/callproc.c _ctypes/stgdict.c _ctypes/cfield.c\n',
-            '_ctypes _ctypes/_ctypes.c'
-            ' _ctypes/callbacks.c'
-            ' _ctypes/callproc.c _ctypes/stgdict.c _ctypes/cfield.c'
-            ' -I$(srcdir)/Android/sysroot/usr/include'
-            ' -L$(srcdir)/Android/sysroot/usr/lib'
-            ' -DHAVE_FFI_PREP_CIF_VAR=1 -DHAVE_FFI_PREP_CLOSURE_LOC=1'
-            ' -DHAVE_FFI_CLOSURE_ALLOC=1'
-            ' -lffi'
-            '\n',
-        )
-    elif baseplatform == 'apple' and python_dir.split('/')[-2] == 'macosx':
-        ftxt = replace_exact(
-            ftxt,
-            '#@MODULE__CTYPES_TRUE@_ctypes _ctypes/_ctypes.c'
-            ' _ctypes/callbacks.c'
-            ' _ctypes/callproc.c _ctypes/stgdict.c _ctypes/cfield.c\n',
-            '_ctypes _ctypes/_ctypes.c _ctypes/callbacks.c'
-            ' _ctypes/callproc.c _ctypes/stgdict.c _ctypes/cfield.c'
-            ' _ctypes/malloc_closure.c'
-            ' -I_ctypes/darwin -I/Applications/Xcode.app/Contents/Developer'
-            '/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/'
-            'usr/include/ffi'
-            ' -DUSING_MALLOC_CLOSURE_DOT_C=1 -DMACOSX'
-            ' -DUSING_APPLE_OS_LIBFFI=1 -DHAVE_FFI_PREP_CIF_VAR=1'
-            ' -DHAVE_FFI_PREP_CLOSURE_LOC=1 -DHAVE_FFI_CLOSURE_ALLOC=1'
-            ' -lffi'
-            '\n',
-        )
-    elif baseplatform == 'apple':
-        arch = python_dir.split('/')[-2]
-        if '.' not in arch or arch.split('.')[0] not in {
-            'iphoneos',
-            'iphonesimulator',
-            'appletvos',
-            'appletvsimulator',
-        }:
-            raise RuntimeError(
-                f'Unable to determine apple platform; got {arch}'
-            )
-        archbase = arch.split('.')[0]
-        archos = 'iOS' if 'iphone' in archbase else 'tvOS'
-
-        ftxt = replace_exact(
-            ftxt,
-            '#@MODULE__CTYPES_TRUE@_ctypes _ctypes/_ctypes.c'
-            ' _ctypes/callbacks.c'
-            ' _ctypes/callproc.c _ctypes/stgdict.c _ctypes/cfield.c\n',
-            '_ctypes _ctypes/_ctypes.c _ctypes/callbacks.c'
-            ' _ctypes/callproc.c _ctypes/stgdict.c _ctypes/cfield.c'
-            ' _ctypes/malloc_closure.c'
-            ' -I_ctypes/darwin'
-            f' -I$(srcdir)/../../../../merge/{archos}'
-            f'/{archbase}/libffi-{LIBFFI_VER_APPLE}/include'
-            f' -L$(srcdir)/../../../../merge/{archos}'
-            f'/{archbase}/libffi-{LIBFFI_VER_APPLE}/lib'
-            ' -DUSING_MALLOC_CLOSURE_DOT_C'
-            ' -DHAVE_FFI_PREP_CIF_VAR=1'
-            ' -DHAVE_FFI_PREP_CLOSURE_LOC=1 -DHAVE_FFI_CLOSURE_ALLOC=1'
-            ' -lffi'
-            '\n',
-        )
-    else:
-        raise RuntimeError(f'Invalid platform {baseplatform}')
 
     # There is one last hacky bit, which is a holdover from previous years.
     # Seems makesetup still has a bug where *any* line containing an equals
@@ -772,15 +678,15 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
     # To fix it we need to revert the *=* case to what it apparently used to
     # be: [A-Z]*=*. I wonder why this got changed and how has it not broken
     # tons of stuff? Maybe I'm missing something.
-    fname2 = os.path.join(python_dir, 'Modules', 'makesetup')
-    ftxt2 = readfile(fname2)
-    ftxt2 = replace_exact(
-        ftxt2,
-        '		*=*)	DEFS="$line$NL$DEFS"; continue;;',
-        '		[A-Z]*=*)	DEFS="$line$NL$DEFS"; continue;;',
-    )
-    assert ftxt2.count('[A-Z]*=*') == 1
-    writefile(fname2, ftxt2)
+    # fname2 = os.path.join(python_dir, 'Modules', 'makesetup')
+    # ftxt2 = readfile(fname2)
+    # ftxt2 = replace_exact(
+    #     ftxt2,
+    #     '		*=*)	DEFS="$line$NL$DEFS"; continue;;',
+    #     '		[A-Z]*=*)	DEFS="$line$NL$DEFS"; continue;;',
+    # )
+    # assert ftxt2.count('[A-Z]*=*') == 1
+    # writefile(fname2, ftxt2)
 
     # Explicitly mark the remaining ones as disabled
     # (so Python won't try to build them as dynamic libs).
