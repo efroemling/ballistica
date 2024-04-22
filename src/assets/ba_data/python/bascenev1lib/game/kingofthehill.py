@@ -9,9 +9,8 @@ from __future__ import annotations
 
 import weakref
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.actor.flag import Flag

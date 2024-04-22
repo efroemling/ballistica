@@ -6,9 +6,7 @@ from __future__ import annotations
 
 import logging
 import importlib.util
-from typing import TYPE_CHECKING
-
-from typing_extensions import override
+from typing import TYPE_CHECKING, override
 
 import _babase
 from babase._appsubsystem import AppSubsystem

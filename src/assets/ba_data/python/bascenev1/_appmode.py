@@ -3,9 +3,8 @@
 """Provides AppMode functionality."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 from bacommon.app import AppExperience
 from babase import (
     app,

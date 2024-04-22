@@ -271,7 +271,7 @@ def build_apple(arch: str, debug: bool = False) -> None:
                 '\t# Apply target Python patches\n'
                 f'\tcd $$(PYTHON_SRCDIR-$({tword})) && '
                 'patch -p1 < $(PROJECT_DIR)/patch/Python/Python.patch\n'
-                f'\t/opt/homebrew/opt/python@3.11/bin/python3.11'
+                f'\t/opt/homebrew/opt/python@3.12/bin/python3.12'
                 ' ../../tools/pcommand python_apple_patch'
                 f' $$(PYTHON_SRCDIR-$({tword}))\n'
             ),
@@ -957,6 +957,12 @@ def gather(do_android: bool, do_apple: bool) -> None:
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
 
+    # Currently need to avoid using nested identical quotes in fstrings
+    # because black chokes on them, even though pylint wants us to.
+    #
+    # https://github.com/psf/black/issues/3746
+    # pylint: disable=inconsistent-quotes
+
     class CompileArch(Enum):
         """The exhaustive set of single architectures we build for.
 
@@ -970,10 +976,10 @@ def gather(do_android: bool, do_apple: bool) -> None:
         ANDROID_X86_64 = 'android_x86_64'
         IOS_ARM64 = 'ios_arm64'
         IOS_SIM_ARM64 = 'ios_simulator_arm64'
-        IOS_SIM_X86_64 = 'ios_simulator_x86_64'
+        # IOS_SIM_X86_64 = 'ios_simulator_x86_64'
         TVOS_ARM64 = 'tvos_arm64'
         TVOS_SIM_ARM64 = 'tvos_simulator_arm64'
-        TVOS_SIM_X86_64 = 'tvos_simulator_x86_64'
+        # TVOS_SIM_X86_64 = 'tvos_simulator_x86_64'
         MAC_ARM64 = 'mac_arm64'
         MAC_X86_64 = 'mac_x86_64'
 
@@ -1035,15 +1041,29 @@ def gather(do_android: bool, do_apple: bool) -> None:
         }
 
         # Where some support libraries got built to.
+        # NOTE: Mac builds here are universal which covers x86_64 and arm64,
+        # but for ios/tvos/etc. we just go with arm64. The only thing that
+        # leaves out these days is x86_64 simulator, but we don't need to care
+        # about that so it's not worth the complicated lipo setup to merge
+        # things.
         bases2 = {
-            'mac': f'{bases["mac"]}/merge/macOS/macosx',
-            'ios': f'{bases["ios"]}/merge/iOS/iphoneos',
+            # 'mac': f'{bases["mac"]}/merge/macOS/macosx',
+            'mac': f'{bases["mac"]}/install/macOS/macosx',
+            # 'ios': f'{bases["ios"]}/merge/iOS/iphoneos',
+            'ios': f'{bases["ios"]}/install/iOS/iphoneos.arm64',
+            # 'ios_simulator': (
+            #     f'{bases["ios_simulator"]}/merge/iOS/iphonesimulator'
+            # ),
             'ios_simulator': (
-                f'{bases["ios_simulator"]}/merge/iOS/iphonesimulator'
+                f'{bases["ios_simulator"]}/install/iOS/iphonesimulator.arm64'
             ),
-            'tvos': f'{bases["tvos"]}/merge/tvOS/appletvos',
+            # 'tvos': f'{bases["tvos"]}/merge/tvOS/appletvos',
+            'tvos': f'{bases["tvos"]}/install/tvOS/appletvos.arm64',
+            # 'tvos_simulator': (
+            #     f'{bases["tvos_simulator"]}/merge/tvOS/appletvsimulator'
+            # ),
             'tvos_simulator': (
-                f'{bases["tvos_simulator"]}/merge/tvOS/appletvsimulator'
+                f'{bases["tvos_simulator"]}/install/tvOS/appletvsimulator.arm64'
             ),
             'android_arm': f'build/python_android_arm{bsuffix}/{apost2}',
             'android_arm64': f'build/python_android_arm64{bsuffix}/{apost2}',
@@ -1051,8 +1071,9 @@ def gather(do_android: bool, do_apple: bool) -> None:
             'android_x86_64': f'build/python_android_x86_64{bsuffix}/{apost2}',
         }
 
-        # Groups should point to base sets of headers and pylibs that are
-        # used by all builds in the group.
+        # Groups should point to base sets of headers and pylibs that
+        # are used by all builds in the group.
+        #
         # Note we point to a bunch of bases here but that is only for
         # sanity check purposes (to make sure they are all identical);
         # only the first actually gets used.
@@ -1128,7 +1149,8 @@ def gather(do_android: bool, do_apple: bool) -> None:
             out = [
                 (
                     f'{bases2[base]}/python-{PY_VER_EXACT_APPLE}'
-                    f'/libPython{PY_VER_APPLE}.a'
+                    # f'/libPython{PY_VER_APPLE}.a'
+                    f'/lib/libpython{PY_VER_APPLE}{debug_d}.a'
                 ),
                 f'{bases2[base]}/openssl-{OPENSSL_VER_APPLE}/lib/libssl.a',
                 f'{bases2[base]}/openssl-{OPENSSL_VER_APPLE}/lib/libcrypto.a',
@@ -1162,13 +1184,17 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 # that seems odd but I guess it's right?...
                 config_headers={
                     CompileArch.MAC_ARM64: bases2['mac']
-                    + f'/python-{PY_VER_EXACT_APPLE}/Headers/pyconfig.h',
+                    # + f'/python-{PY_VER_EXACT_APPLE}/Headers/pyconfig.h',
+                    + f'/python-{PY_VER_EXACT_APPLE}/'
+                    f'include/python{PY_VER_APPLE}{debug_d}/pyconfig.h',
                     CompileArch.MAC_X86_64: bases2['mac']
-                    + f'/python-{PY_VER_EXACT_APPLE}/Headers/pyconfig.h',
+                    # + f'/python-{PY_VER_EXACT_APPLE}/Headers/pyconfig.h',
+                    + f'/python-{PY_VER_EXACT_APPLE}/'
+                    f'include/python{PY_VER_APPLE}{debug_d}/pyconfig.h',
                 },
                 sys_config_scripts=[
                     bases2['mac']
-                    + f'/python-{PY_VER_EXACT_APPLE}/python-stdlib/'
+                    + f'/python-{PY_VER_EXACT_APPLE}/lib/python{PY_VER_APPLE}/'
                     f'_sysconfigdata_{debug_d}_darwin_darwin.py'
                 ],
                 libs=_apple_libs('mac'),
@@ -1178,15 +1204,19 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 group=groups['apple'],
                 config_headers={
                     CompileArch.IOS_ARM64: bases2['ios']
-                    + f'/python-{PY_VER_EXACT_APPLE}/Headers/pyconfig-arm64.h',
+                    # + f'/python-{PY_VER_EXACT_APPLE}/'
+                    # f'Headers/pyconfig-arm64.h',
+                    + f'/python-{PY_VER_EXACT_APPLE}/'
+                    f'include/python{PY_VER_APPLE}{debug_d}/pyconfig.h',
                 },
                 sys_config_scripts=[
-                    bases2['ios']
-                    + f'/python-{PY_VER_EXACT_APPLE}/python-stdlib/'
-                    f'_sysconfigdata_{debug_d}_ios_iphoneos.py',
-                    bases2['ios']
-                    + f'/python-{PY_VER_EXACT_APPLE}/python-stdlib/'
-                    f'_sysconfigdata_{debug_d}_ios_iphoneos_arm64.py',
+                    # bases2['ios']
+                    # + f'/python-{PY_VER_EXACT_APPLE}/'
+                    # f'lib/python{PY_VER_APPLE}/'
+                    # f'_sysconfigdata_{debug_d}_ios_iphoneos.py',
+                    bases2['ios'] + f'/python-{PY_VER_EXACT_APPLE}/'
+                    f'lib/python{PY_VER_APPLE}/'
+                    f'_sysconfigdata_{debug_d}_ios_iphoneos-arm64.py',
                 ],
                 libs=_apple_libs('ios'),
             ),
@@ -1195,20 +1225,24 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 group=groups['apple'],
                 config_headers={
                     CompileArch.IOS_SIM_ARM64: bases2['ios_simulator']
-                    + f'/python-{PY_VER_EXACT_APPLE}/Headers/pyconfig-arm64.h',
-                    CompileArch.IOS_SIM_X86_64: bases2['ios_simulator']
-                    + f'/python-{PY_VER_EXACT_APPLE}/Headers/pyconfig-x86_64.h',
+                    # + f'/python-{PY_VER_EXACT_APPLE}/'
+                    # 'Headers/pyconfig-arm64.h',
+                    + f'/python-{PY_VER_EXACT_APPLE}/'
+                    f'include/python{PY_VER_APPLE}{debug_d}/pyconfig.h',
+                    # CompileArch.IOS_SIM_X86_64: bases2['ios_simulator']
+                    # + f'/python-{PY_VER_EXACT_APPLE}/'
+                    # 'Headers/pyconfig-x86_64.h',
                 },
                 sys_config_scripts=[
-                    bases2['ios_simulator']
-                    + f'/python-{PY_VER_EXACT_APPLE}/python-stdlib/'
-                    f'_sysconfigdata_{debug_d}_ios_iphonesimulator.py',
-                    bases2['ios_simulator']
-                    + f'/python-{PY_VER_EXACT_APPLE}/python-stdlib/'
-                    f'_sysconfigdata_{debug_d}_ios_iphonesimulator_arm64.py',
-                    bases2['ios_simulator']
-                    + f'/python-{PY_VER_EXACT_APPLE}/python-stdlib/'
-                    f'_sysconfigdata_{debug_d}_ios_iphonesimulator_x86_64.py',
+                    # bases2['ios_simulator']
+                    # + f'/python-{PY_VER_EXACT_APPLE}/python-stdlib/'
+                    # f'_sysconfigdata_{debug_d}_ios_iphonesimulator.py',
+                    bases2['ios_simulator'] + f'/python-{PY_VER_EXACT_APPLE}/'
+                    f'lib/python{PY_VER_APPLE}/'
+                    f'_sysconfigdata_{debug_d}_ios_iphonesimulator-arm64.py',
+                    # bases2['ios_simulator']
+                    # + f'/python-{PY_VER_EXACT_APPLE}/python-stdlib/'
+                    # f'_sysconfigdata_{debug_d}_ios_iphonesimulator_x86_64.py',
                 ],
                 libs=_apple_libs('ios_simulator'),
             ),
@@ -1217,15 +1251,18 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 group=groups['apple'],
                 config_headers={
                     CompileArch.TVOS_ARM64: bases2['tvos']
-                    + f'/python-{PY_VER_EXACT_APPLE}/Headers/pyconfig-arm64.h',
+                    + f'/python-{PY_VER_EXACT_APPLE}/'
+                    f'include/python{PY_VER_APPLE}{debug_d}/pyconfig.h',
+                    # + f'/python-{PY_VER_EXACT_APPLE}/
+                    # Headers/pyconfig-arm64.h',
                 },
                 sys_config_scripts=[
-                    bases2['tvos']
-                    + f'/python-{PY_VER_EXACT_APPLE}/python-stdlib/'
-                    f'_sysconfigdata_{debug_d}_tvos_appletvos.py',
-                    bases2['tvos']
-                    + f'/python-{PY_VER_EXACT_APPLE}/python-stdlib/'
-                    f'_sysconfigdata_{debug_d}_tvos_appletvos_arm64.py',
+                    # bases2['tvos']
+                    # + f'/python-{PY_VER_EXACT_APPLE}/python-stdlib/'
+                    # f'_sysconfigdata_{debug_d}_tvos_appletvos.py',
+                    bases2['tvos'] + f'/python-{PY_VER_EXACT_APPLE}/'
+                    f'lib/python{PY_VER_APPLE}/'
+                    f'_sysconfigdata_{debug_d}_tvos_appletvos-arm64.py',
                 ],
                 libs=_apple_libs('tvos'),
             ),
@@ -1234,20 +1271,23 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 group=groups['apple'],
                 config_headers={
                     CompileArch.TVOS_SIM_ARM64: bases2['tvos_simulator']
-                    + f'/python-{PY_VER_EXACT_APPLE}/Headers/pyconfig-arm64.h',
-                    CompileArch.TVOS_SIM_X86_64: bases2['ios_simulator']
-                    + f'/python-{PY_VER_EXACT_APPLE}/Headers/pyconfig-x86_64.h',
+                    + f'/python-{PY_VER_EXACT_APPLE}/'
+                    f'include/python{PY_VER_APPLE}{debug_d}/pyconfig.h',
+                    # CompileArch.TVOS_SIM_X86_64: bases2['ios_simulator']
+                    # + f'/python-{PY_VER_EXACT_APPLE}/'
+                    # f'Headers/pyconfig-x86_64.h',
                 },
                 sys_config_scripts=[
-                    bases2['tvos_simulator']
-                    + f'/python-{PY_VER_EXACT_APPLE}/python-stdlib/'
-                    f'_sysconfigdata_{debug_d}_tvos_appletvsimulator.py',
-                    bases2['tvos_simulator']
-                    + f'/python-{PY_VER_EXACT_APPLE}/python-stdlib/'
-                    f'_sysconfigdata_{debug_d}_tvos_appletvsimulator_arm64.py',
-                    bases2['tvos_simulator']
-                    + f'/python-{PY_VER_EXACT_APPLE}/python-stdlib/'
-                    f'_sysconfigdata_{debug_d}_tvos_appletvsimulator_x86_64.py',
+                    # bases2['tvos_simulator']
+                    # + f'/python-{PY_VER_EXACT_APPLE}/python-stdlib/'
+                    # f'_sysconfigdata_{debug_d}_tvos_appletvsimulator.py',
+                    bases2['tvos_simulator'] + f'/python-{PY_VER_EXACT_APPLE}/'
+                    f'lib/python{PY_VER_APPLE}/'
+                    f'_sysconfigdata_{debug_d}_tvos_appletvsimulator-arm64.py',
+                    # bases2['tvos_simulator']
+                    # + f'/python-{PY_VER_EXACT_APPLE}/python-stdlib/'
+                    # f'_sysconfigdata_{debug_d}'
+                    # '_tvos_appletvsimulator_x86_64.py',
                 ],
                 libs=_apple_libs('tvos_simulator'),
             ),
@@ -1259,8 +1299,10 @@ def gather(do_android: bool, do_apple: bool) -> None:
                     + f'/usr/include/{alibname}/pyconfig.h'
                 },
                 sys_config_scripts=[
-                    bases['android_arm'] + f'/usr/lib/python{PY_VER_ANDROID}/'
-                    f'_sysconfigdata_{debug_d}_linux_arm-linux-androideabi.py'
+                    bases['android_arm']
+                    + f'/usr/lib/python{PY_VER_ANDROID}/'
+                    # f'_sysconfigdata_{debug_d}_linux_arm-linux-androideabi.py'
+                    f'_sysconfigdata_{debug_d}_linux_.py'
                 ],
                 libs=_android_libs('android_arm'),
                 libinst='android_armeabi-v7a',
@@ -1275,7 +1317,8 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 sys_config_scripts=[
                     bases['android_arm64'] + f'/usr/lib/python{PY_VER_ANDROID}/'
                     f'_sysconfigdata_{debug_d}'
-                    f'_linux_aarch64-linux-android.py'
+                    # f'_linux_aarch64-linux-android.py'
+                    f'_linux_.py'
                 ],
                 libs=_android_libs('android_arm64'),
                 libinst='android_arm64-v8a',
@@ -1290,7 +1333,8 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 sys_config_scripts=[
                     bases['android_x86'] + f'/usr/lib/python{PY_VER_ANDROID}/'
                     f'_sysconfigdata_{debug_d}'
-                    f'_linux_i686-linux-android.py'
+                    # f'_linux_i686-linux-android.py'
+                    f'_linux_.py'
                 ],
                 libs=_android_libs('android_x86'),
                 libinst='android_x86',
@@ -1306,12 +1350,28 @@ def gather(do_android: bool, do_apple: bool) -> None:
                     bases['android_x86_64']
                     + f'/usr/lib/python{PY_VER_ANDROID}/'
                     f'_sysconfigdata_{debug_d}'
-                    f'_linux_x86_64-linux-android.py'
+                    # f'_linux_x86_64-linux-android.py'
+                    f'_linux_.py'
                 ],
                 libs=_android_libs('android_x86_64'),
                 libinst='android_x86_64',
             ),
         ]
+
+        # if do_apple:
+        #     # The default apple builds spit out static libs which are
+        #     # then linked into shared libs that python loads
+        #     # dynamically. We, however, want to build everything
+        #     # statically, so we need to use lipo to combine some
+        #     # architectures such as x86_64/arm64 simulator builds. XCode
+        #     # allows specifying paths per architecture in some cases but
+        #     # not all, which is why we need this.
+        #     print('LIPO-ING STANDALONE LIBS')
+        #     subprocess.run(
+        #         ['rm', '-rf', bases2['mac'] + '/efromerge'], check=True
+        #     )
+        #     subprocess.run(['mkdir', bases2['mac']
+        # + '/efromerge'], check=True)
 
         # Assemble per-group stuff.
         for grpname, grp in groups.items():
@@ -1381,7 +1441,8 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 f'\n'
                 f'#elif BA_OSTYPE_IOS and defined(__x86_64__)\n'
                 f'#if TARGET_OS_SIMULATOR\n'
-                f'#include "pyconfig_{CompileArch.IOS_SIM_X86_64.value}.h"\n'
+                f'#error x86 simulator no longer supported here.\n'
+                # f'#include "pyconfig_{CompileArch.IOS_SIM_X86_64.value}.h"\n'
                 f'#else\n'
                 f'#error this platform combo should not be possible\n'
                 f'#endif  // TARGET_OS_SIMULATOR\n'
@@ -1395,7 +1456,8 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 f'\n'
                 f'#elif BA_OSTYPE_TVOS and defined(__x86_64__)\n'
                 f'#if TARGET_OS_SIMULATOR\n'
-                f'#include "pyconfig_{CompileArch.TVOS_SIM_X86_64.value}.h"\n'
+                f'#error x86 simulator no longer supported here.\n'
+                # f'#include "pyconfig_{CompileArch.TVOS_SIM_X86_64.value}.h"\n'
                 f'#else\n'
                 f'#error this platform combo should not be possible\n'
                 f'#endif  // TARGET_OS_SIMULATOR\n'
@@ -1500,10 +1562,14 @@ def gather(do_android: bool, do_apple: bool) -> None:
                             pylib_dst, os.path.basename(script)
                         )
                         if os.path.exists(scriptdst):
-                            raise RuntimeError(
-                                'Multiple sys-config-scripts trying to write'
-                                f" to '{scriptdst}'."
+                            print(
+                                'WARNING TEMPORARILY ALLOWING'
+                                ' REPEAT SYS CONFIG SCRIPTS'
                             )
+                            # raise RuntimeError(
+                            #     'Multiple sys-config-scripts trying to write'
+                            #     f" to '{scriptdst}'."
+                            # )
                         subprocess.run(['cp', script, pylib_dst], check=True)
 
                 # Copy in this build's libs.

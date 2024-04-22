@@ -4,11 +4,9 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 from dataclasses import dataclass
 import logging
-
-from typing_extensions import override
 
 import _babase
 

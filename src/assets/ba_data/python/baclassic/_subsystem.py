@@ -3,12 +3,11 @@
 """Provides classic app subsystem."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 import random
 import logging
 import weakref
 
-from typing_extensions import override
 from efro.dataclassio import dataclass_from_dict
 import babase
 import bauiv1

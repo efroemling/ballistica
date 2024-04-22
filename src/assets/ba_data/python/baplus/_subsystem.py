@@ -3,9 +3,8 @@
 """Provides plus app subsystem."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 from babase import AppSubsystem
 
 import _baplus

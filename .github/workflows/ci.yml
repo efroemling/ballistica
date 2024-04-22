@@ -20,12 +20,9 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    # Remove this once we upgrade to 3.12.
-    - name: Install typing_extensions (temp)
-      run: python3.11 -m pip install typing_extensions
+        python-version: '3.12'
     - name: Install dependencies
-      run: tools/pcommand install_pip_reqs
+      run: make prereqs
     - name: Run checks
       run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make check
 
@@ -37,12 +34,9 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    # Remove this once we upgrade to 3.12.
-    - name: Install typing_extensions (temp)
-      run: python3.11 -m pip install typing_extensions
+        python-version: '3.12'
     - name: Install dependencies
-      run: tools/pcommand install_pip_reqs
+      run: make prereqs
     - name: Assemble monolithic server build
       run: make cmake-server-build
     - name: Run tests
@@ -58,12 +52,9 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    # Remove this once we upgrade to 3.12.
-    - name: Install typing_extensions (temp)
-      run: python3.11 -m pip install typing_extensions
+        python-version: '3.12'
     - name: Install dependencies
-      run: tools/pcommand install_pip_reqs
+      run: make prereqs
     - name: Build spinoff project with only core featureset
       run: make spinoff-test-core
     - name: Build spinoff project with core and base featuresets
@@ -79,12 +70,9 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    # Remove this once we upgrade to 3.12.
-    - name: Install typing_extensions (temp)
-      run: python3.11 -m pip install typing_extensions
+        python-version: '3.12'
     - name: Install dependencies
-      run: tools/pcommand install_pip_reqs
+      run: make prereqs
     - name: Create poo feature-set
       run: tools/spinoff fset-copy template_fs poo
     - name: Add new feature-set to project
@@ -106,7 +94,9 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: '3.12'
+    - name: Install dependencies testing
+      run: make VENV_PYTHON=python prereqs
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip

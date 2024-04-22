@@ -12,21 +12,13 @@ live client or server code.
 from __future__ import annotations
 
 import os
-import sys
 import json
 from pathlib import Path
 from typing import TYPE_CHECKING, overload
 
+
 if TYPE_CHECKING:
     from typing import Sequence, Any, Literal
-
-# Python major version we're using for all this stuff.
-PYVER = '3.11'
-
-# Python binary assumed by these tools.
-# PYTHON_BIN = f 'python{PYVER}' if platform.system() != 'Windows' else 'python'
-# Update; just using the same executable used to launch us.
-PYTHON_BIN = sys.executable
 
 # Cache these since we may repeatedly fetch these in batch mode.
 _g_project_configs: dict[str, dict[str, Any]] = {}
@@ -171,26 +163,6 @@ def replace_section(
     if keep_markers:
         replace_text = f'{begin_marker}{replace_text}{end_marker}'
     return f'{before_begin}{replace_text}{after_end}'
-
-
-def get_public_license(style: str) -> str:
-    """Return the license notice as used for our public facing stuff.
-
-    'style' arg can be 'python', 'c++', or 'makefile, or 'raw'.
-    """
-    if style == 'raw':
-        return 'Released under the MIT License. See LICENSE for details.'
-    if style == 'python':
-        # Add a line at the bottom since our python-formatters tend to smush
-        # our code up against the license; this keeps things a bit more
-        # visually separated.
-        return '# Released under the MIT License. See LICENSE for details.'
-    if style == 'makefile':
-        # Basically same as python except without the last line.
-        return '# Released under the MIT License. See LICENSE for details.'
-    if style == 'c++':
-        return '// Released under the MIT License. See LICENSE for details.'
-    raise RuntimeError(f'Invalid style: {style}')
 
 
 def readfile(path: str | Path) -> str:

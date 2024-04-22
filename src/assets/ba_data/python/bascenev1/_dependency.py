@@ -5,9 +5,8 @@
 from __future__ import annotations
 
 import weakref
-from typing import Generic, TypeVar, TYPE_CHECKING
+from typing import Generic, TypeVar, TYPE_CHECKING, override
 
-from typing_extensions import override
 import babase
 
 import _bascenev1

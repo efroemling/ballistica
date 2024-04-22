@@ -7,9 +7,8 @@ from __future__ import annotations
 import time
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, final, override
 
-from typing_extensions import override
 from bacommon.login import LoginType
 
 import _babase

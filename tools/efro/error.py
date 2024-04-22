@@ -3,10 +3,8 @@
 """Common errors and related functionality."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 import errno
-
-from typing_extensions import override
 
 if TYPE_CHECKING:
     from typing import Any

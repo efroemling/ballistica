@@ -25,7 +25,7 @@
 ################################################################################
 
 # List targets in this Makefile and basic descriptions for them.
-help:
+help: prereqs
 	@$(PCOMMAND) makefile_target_list Makefile
 
 # Set env-var BA_ENABLE_COMPILE_COMMANDS_DB=1 to enable creating/updating a
@@ -49,8 +49,8 @@ endif
 # Prereq targets that should be safe to run anytime; even if project-files
 # are out of date.
 PREREQS_SAFE = .cache/checkenv $(PCOMMANDBATCHBIN) .dir-locals.el .mypy.ini	\
- .pyrightconfig.json .pylintrc .style.yapf .clang-format				\
- ballisticakit-cmake/.clang-format .editorconfig
+ .pyrightconfig.json .pylintrc .clang-format																\
+ ballisticakit-cmake/.clang-format .editorconfig tools/cloudshell
 
 # Prereq targets that may break if the project needs updating should go here.
 # An example is compile-command-databases; these might try to run cmake and
@@ -59,8 +59,8 @@ PREREQS_SAFE = .cache/checkenv $(PCOMMANDBATCHBIN) .dir-locals.el .mypy.ini	\
 # which would leave us stuck in a broken state.
 PREREQS_POST_UPDATE_ONLY = $(PREREQ_COMPILE_COMMANDS_DB)
 
-# Target that should be built before running most any other build.
-# This installs tool config files, runs environment checks, etc.
+# Target that should be built before building almost any other target. This
+# installs tool config files, sets up the Python virtual environment, etc.
 prereqs: $(PREREQS_SAFE) $(PREREQS_POST_UPDATE_ONLY)
 
 # Set of prereqs safe to run if the project state is dirty.
@@ -169,21 +169,32 @@ dummymodules: prereqs meta
 	@$(PCOMMAND) lazybuild dummymodules_src $(LAZYBUILDDIR)/$@ \
  rm -rf build/dummymodules \&\& $(PCOMMAND) gen_dummy_modules
 
-dummymodules-clean:
+dummymodules-clean: prereqs
 	rm -f $(LAZYBUILDDIR)/dummymodules
 	rm -rf build/dummymodules
+
+# Build the project's Python virtual environment. This should happen
+# automatically as a dependency of the prereqs target.
+venv: .venv/efro_venv_complete
+
+# Update pip requirements to latest versions.
+venv-upgrade: prereqs
+	$(PCOMMAND) pur -r config/requirements.txt
+
+venv-clean:
+	rm -rf .venv
 
 # Generate all docs.
 #
 # IMPORTANT: Docs generation targets may themselves run builds, so they should
 #  be run alone serially and never in parallel alongside other builds.
-docs:
+docs: prereqs
 	$(MAKE) docs-pdoc
 
-docs-pdoc:
+docs-pdoc: prereqs
 	@$(PCOMMAND) gen_docs_pdoc
 
-docs-sphinx:
+docs-sphinx: prereqs
 	$(MAKE) dummymodules
 	@$(PCOMMAND) gen_docs_sphinx
 
@@ -199,7 +210,7 @@ pcommandbatch_speed_test: prereqs
         assets-cmake-scripts assets-windows assets-windows-Win32							\
         assets-windows-x64 assets-mac assets-ios assets-android assets-clean	\
         resources resources-clean meta meta-clean clean clean-list						\
-        dummymodules docs docs-pdoc pcommandbatch_speed_test
+        dummymodules venv venv-clean docs docs-pdoc pcommandbatch_speed_test
 
 
 ################################################################################
@@ -224,11 +235,11 @@ prefab-gui-release: prefab-gui-release-build
 	$($(shell $(WSLU) $(PCOMMAND) prefab_run_var gui-release))
 
 # Assemble a debug build for this platform.
-prefab-gui-debug-build:
+prefab-gui-debug-build: prereqs
 	$(WSLU) $(PCOMMAND) make_prefab gui-debug
 
 # Assemble a release build for this platform.
-prefab-gui-release-build:
+prefab-gui-release-build: prereqs
 	$(WSLU) $(PCOMMAND) make_prefab gui-release
 
 # Assemble & run a server debug build for this platform.
@@ -240,11 +251,11 @@ prefab-server-release: prefab-server-release-build
 	$($(shell $(WSLU) $(PCOMMAND) prefab_run_var server-release))
 
 # Assemble a server debug build for this platform.
-prefab-server-debug-build:
+prefab-server-debug-build: prereqs
 	$(WSLU) $(PCOMMAND) make_prefab server-debug
 
 # Assemble a server release build for this platform.
-prefab-server-release-build:
+prefab-server-release-build: prereqs
 	$(WSLU) $(PCOMMAND) make_prefab server-release
 
 # Clean all prefab builds.
@@ -640,51 +651,51 @@ build/prefab/lib/windows/Release_%/BallisticaKitHeadlessPlus.pdb: .efrocachemap
 SPINOFF_TEST_TARGET ?= core
 
 # Run a given spinoff test.
-spinoff-test:
+spinoff-test: prereqs
 	$(PCOMMAND) spinoff_test $(SPINOFF_TEST_TARGET) $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check core feature set alone.
-spinoff-test-core:
+spinoff-test-core: prereqs
 	$(PCOMMAND) spinoff_test core $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check base feature set alone.
-spinoff-test-base:
+spinoff-test-base: prereqs
 	$(PCOMMAND) spinoff_test base $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check plus feature set alone.
-spinoff-test-plus:
+spinoff-test-plus: prereqs
 	$(PCOMMAND) spinoff_test plus $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check classic feature set alone.
-spinoff-test-classic:
+spinoff-test-classic: prereqs
 	$(PCOMMAND) spinoff_test classic $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check template_fs feature set alone.
-spinoff-test-template_fs:
+spinoff-test-template_fs: prereqs
 	$(PCOMMAND) spinoff_test template_fs $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check ui_v1 feature set alone.
-spinoff-test-ui_v1:
+spinoff-test-ui_v1: prereqs
 	$(PCOMMAND) spinoff_test ui_v1 $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check ui_v1_lib feature set alone.
-spinoff-test-ui_v1_lib:
+spinoff-test-ui_v1_lib: prereqs
 	$(PCOMMAND) spinoff_test ui_v1_lib $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check scene_v1 feature set alone.
-spinoff-test-scene_v1:
+spinoff-test-scene_v1: prereqs
 	$(PCOMMAND) spinoff_test scene_v1 $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check scene_v1_lib feature set alone.
-spinoff-test-scene_v1_lib:
+spinoff-test-scene_v1_lib: prereqs
 	$(PCOMMAND) spinoff_test scene_v1_lib $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Blow away all spinoff-test builds.
-spinoff-test-clean:
+spinoff-test-clean: prereqs
 	rm -rf build/spinofftest
 
 # Grab the current parent project and sync it into ourself.
-spinoff-update:
+spinoff-update: prereqs
 	@$(PCOMMAND) spinoff_check_submodule_parent
 	$(MAKE) update
 	@$(PCOMMANDBATCH) echo BLU Pulling current parent project...
@@ -695,7 +706,7 @@ spinoff-update:
 	@$(PCOMMANDBATCH) echo GRN Spinoff update successful!
 
 # Upgrade to latest parent project and sync it into ourself.
-spinoff-upgrade:
+spinoff-upgrade: prereqs
 	@$(PCOMMAND) spinoff_check_submodule_parent
 	$(MAKE) update
 	@$(PCOMMANDBATCH) echo BLU Pulling latest parent project...
@@ -1200,15 +1211,26 @@ CHECK_CLEAN_SAFETY = $(PCOMMAND) check_clean_safety
 TOOL_CFG_INST = $(PCOMMAND) tool_config_install
 
 # Anything that affects tool-config generation.
-TOOL_CFG_SRC = tools/efrotools/toolconfig.py config/projectconfig.json
+TOOL_CFG_SRC = tools/efrotools/toolconfig.py config/projectconfig.json \
+ .venv/efro_venv_complete tools/pcommand
 
 # Anything that should trigger an environment-check when changed.
-ENV_SRC = $(PCOMMAND) tools/batools/build.py
+ENV_SRC = tools/batools/build.py .venv/efro_venv_complete tools/pcommand
+
+# Generate a pcommand script hard-coded to use our virtual environment.
+# This is a prereq dependency so should not itself depend on prereqs.
+tools/pcommand: tools/efrotools/genwrapper.py tools/efrotools/pyver.py
+	@echo Generating tools/pcommand...
+	@PYTHONPATH=tools python3 -m efrotools.genwrapper pcommand tools/pcommand \
+  batools.pcommandmain
+
+# Generate a cloudshell script hard-coded to use our virtual environment.
+# This is a prereq dependency so should not itself depend on prereqs.
+tools/cloudshell: tools/efrotools/genwrapper.py tools/efrotools/pyver.py
+	@echo Generating tools/cloudshell...
+	@PYTHONPATH=tools python3 -m efrotools.genwrapper cloudshell tools/cloudshell
 
 .clang-format: config/toolconfigsrc/clang-format $(TOOL_CFG_SRC)
-	@$(TOOL_CFG_INST) $< $@
-
-.style.yapf: config/toolconfigsrc/style.yapf $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
 .pylintrc: config/toolconfigsrc/pylintrc $(TOOL_CFG_SRC)
@@ -1231,6 +1253,22 @@ ENV_SRC = $(PCOMMAND) tools/batools/build.py
 
 # Set this to 1 to skip environment checks.
 SKIP_ENV_CHECKS ?= 0
+
+VENV_PYTHON ?= python3.12
+
+# Rebuild our virtual environment whenever reqs or Python version changes.
+# This is a prereq dependency so should not itself depend on prereqs. Note
+# that we rely on pcommand but can't use it in here until the end when the
+# venv is up.
+.venv/efro_venv_complete: tools/pcommand config/requirements.txt \
+tools/efrotools/pyver.py
+	@echo Creating Project\'s Python Virtual Environment...
+	@rm -rf .venv
+	$(VENV_PYTHON) -m venv .venv
+	.venv/bin/pip install --upgrade pip
+	.venv/bin/pip install -r config/requirements.txt
+	touch .venv/efro_venv_complete # Done last to avoid partly-built venvs.
+	@$(PCOMMAND) echo GRN Python Virtual Environment Created.
 
 .cache/checkenv: $(ENV_SRC)
 	@if [ $(SKIP_ENV_CHECKS) -ne 1 ]; then \
@@ -1286,7 +1324,7 @@ ballisticakit-cmake/.clang-format: .clang-format
       && mv compile_commands.json .cache/compile_commands_db
 	@$(PCOMMANDBATCH) echo BLU Created compile commands db at $@
 
-_windows-wsl-build:
+_windows-wsl-build: prereqs
 	@$(PCOMMAND) wsl_build_check_win_drive
 	$(WIN_MSBUILD_EXE_B) \
    $(shell $(PCOMMAND) wsl_path_to_win --escape \
@@ -1297,7 +1335,7 @@ _windows-wsl-build:
    $(VISUAL_STUDIO_VERSION)
 	@$(PCOMMAND) echo BLU BLD Built build/windows/BallisticaKit$(WINPRJ).exe.
 
-_windows-wsl-rebuild:
+_windows-wsl-rebuild: prereqs
 	@$(PCOMMAND) wsl_build_check_win_drive
 	$(WIN_MSBUILD_EXE_B) \
    $(shell $(PCOMMAND) wsl_path_to_win --escape \

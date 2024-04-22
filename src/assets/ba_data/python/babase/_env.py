@@ -7,9 +7,8 @@ import sys
 import signal
 import logging
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 from efro.log import LogLevel
 
 if TYPE_CHECKING:

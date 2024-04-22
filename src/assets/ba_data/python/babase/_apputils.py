@@ -8,9 +8,8 @@ import os
 import logging
 from threading import Thread
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 from efro.call import tpartial
 from efro.log import LogLevel
 from efro.dataclassio import ioprepped, dataclass_to_json, dataclass_from_json

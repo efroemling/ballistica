@@ -7,9 +7,8 @@ import copy
 import weakref
 import threading
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import babase
 import bascenev1
 

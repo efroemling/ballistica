@@ -151,7 +151,6 @@ ctx.project_file_suffixes = {
 ctx.filter_dirs = {
     'ballisticakit-cmake',
     'ballisticakit-xcode/BallisticaKit.xcodeproj',
-    'ballisticakit-ios.xcodeproj',
     'config',
     'src/assets/pdoc',
 }

@@ -6,9 +6,8 @@ from __future__ import annotations
 
 import logging
 import inspect
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import babase
 
 import _bauiv1

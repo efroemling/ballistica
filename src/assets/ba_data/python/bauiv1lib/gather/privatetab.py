@@ -11,9 +11,8 @@ import time
 import logging
 from enum import Enum
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, override
 
-from typing_extensions import override
 from efro.dataclassio import dataclass_from_dict, dataclass_to_dict
 from bacommon.net import (
     PrivateHostingState,

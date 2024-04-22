@@ -137,7 +137,7 @@ def check_cpplint(projroot: Path, full: bool) -> None:
     from concurrent.futures import ThreadPoolExecutor
     from multiprocessing import cpu_count
 
-    from efrotools import getprojectconfig, PYVER
+    from efrotools import getprojectconfig
     from efro.terminal import Clr
 
     os.chdir(projroot)
@@ -183,7 +183,7 @@ def check_cpplint(projroot: Path, full: bool) -> None:
     def lint_file(filename: str) -> None:
         result = subprocess.call(
             [
-                f'python{PYVER}',
+                sys.executable,
                 # Currently (May 2023) seeing a bunch of warnings
                 # about 'sre_compile deprecated'. Ignoring them.
                 '-W',
@@ -250,16 +250,16 @@ def get_code_filenames(projroot: Path, include_generated: bool) -> list[str]:
     return out
 
 
-def black_base_args() -> list[str]:
+def black_base_args(projroot: Path) -> list[str]:
     """Build base args for running black Python formatting."""
-    from efrotools import PYVER
+    from efrotools.pyver import PYVER, get_project_python_executable
 
     pyver = 'py' + PYVER.replace('.', '')
     if len(pyver) != 5:
         raise RuntimeError('Py version filtering err.')
 
     return [
-        f'python{PYVER}',
+        get_project_python_executable(projroot),
         '-m',
         'black',
         '--target-version',
@@ -283,14 +283,14 @@ def format_project_python_files(projroot: Path, full: bool) -> None:
     filenames = get_script_filenames(projroot)
 
     # Calc a config hash so we redo formatting after it changes.
-    confighash = get_string_hash(' '.join(black_base_args()))
+    confighash = get_string_hash(' '.join(black_base_args(projroot)))
     cache.update(filenames, confighash)
 
     dirtyfiles = cache.get_dirty_files()
 
     if dirtyfiles:
         # Run a single black command to batch everything.
-        cmd = black_base_args() + list(dirtyfiles)
+        cmd = black_base_args(projroot) + list(dirtyfiles)
         if subprocess.run(cmd, check=False).returncode != 0:
             raise CleanError(
                 f'Black formatting failed for {len(dirtyfiles)} files.'
@@ -307,14 +307,20 @@ def format_project_python_files(projroot: Path, full: bool) -> None:
     )
 
 
-def format_python_str(code: str) -> str:
+def format_python_str(projroot: Path | str, code: str) -> str:
     """Run our Python formatting on the provided inline code."""
+    if isinstance(projroot, str):
+        projroot = Path(projroot)
 
-    return subprocess.run(
-        black_base_args() + ['--code', code],
-        capture_output=True,
-        check=True,
-    ).stdout.decode()
+    cmd = black_base_args(projroot) + ['--code', code]
+    results = subprocess.run(cmd, capture_output=True, check=False)
+    if results.returncode == 0:
+        return results.stdout.decode()
+
+    cmdprint = cmd[:-1] + ['<input text>']
+    raise RuntimeError(
+        f'Black command failed: {cmdprint}. stderr: {results.stderr.decode()}'
+    )
 
 
 def _should_include_script(fnamefull: str) -> bool:

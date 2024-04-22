@@ -1,5 +1,0 @@
-[DEFAULT]
-checkers= pylint, mypy3
-mypy_config_file=.mypy.ini
-mypy_use_daemon=true
-mypy_daemon_files_command=tools/pcommand scriptfiles -lines

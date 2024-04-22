@@ -4,7 +4,8 @@
 
 from __future__ import annotations
 
-from typing_extensions import override
+from typing import override
+
 import bascenev1 as bs
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity

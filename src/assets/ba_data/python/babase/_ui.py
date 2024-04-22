@@ -3,9 +3,7 @@
 """UI related bits of babase."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from typing_extensions import override
+from typing import TYPE_CHECKING, override
 
 from babase._stringedit import StringEditAdapter
 import _babase

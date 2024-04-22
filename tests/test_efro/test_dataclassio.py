@@ -16,11 +16,10 @@ from typing import (
     Annotated,
     assert_type,
     assert_never,
+    override,
 )
 
-from typing_extensions import override
 import pytest
-
 from efro.util import utc_now
 from efro.dataclassio import (
     dataclass_validate,
@@ -70,6 +69,8 @@ class _NestedClass:
     dval: dict[int, str] = field(default_factory=dict)
 
 
+# We use utc_now() for a test which is deprecated.
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_assign() -> None:
     """Testing various assignments."""
 

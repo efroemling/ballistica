@@ -8,11 +8,12 @@ import json
 import os
 from typing import TYPE_CHECKING
 
+from efrotools.pyver import PYVERNODOT
+
 if TYPE_CHECKING:
     pass
 
-# Note: code below needs updating when Python version changes (currently 3.11)
-PYC_SUFFIX = '.cpython-311.opt-1.pyc'
+PYC_SUFFIX = f'.cpython-{PYVERNODOT}.opt-1.pyc'
 
 ASSETS_SRC = 'src/assets'
 BUILD_DIR = 'build/assets'

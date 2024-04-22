@@ -12,7 +12,8 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from efro.terminal import Clr
-from efrotools import PYVER, extract_arg, extract_flag
+from efrotools import extract_arg, extract_flag
+from efrotools.pyver import PYVER
 
 if TYPE_CHECKING:
     pass
@@ -351,8 +352,8 @@ class AssetStager:
         # tidier.
         dbgsfx = '_d' if self.debug else ''
 
-        # Note: Needs updating when Python version changes (currently 3.11).
-        toplevelfiles: list[str] = [f'python311{dbgsfx}.dll']
+        # Note: Needs updating when Python version changes (currently 3.12).
+        toplevelfiles: list[str] = [f'python312{dbgsfx}.dll']
 
         if self.win_type == 'win':
             toplevelfiles += [
@@ -542,7 +543,7 @@ class AssetStager:
                 '# Basically this will do:\n'
                 '#   import baenv; baenv.configure();'
                 ' import babase; babase.app.run().\n'
-                'exec python3.11 ba_data/python/baenv.py "$@"\n'
+                'exec python3.12 ba_data/python/baenv.py "$@"\n'
             )
         subprocess.run(['chmod', '+x', path], check=True)
 
