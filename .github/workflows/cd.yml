@@ -13,10 +13,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    # Remove this once we upgrade to 3.12.
-    - name: Install typing_extensions (temp)
-      run: python3.11 -m pip install typing_extensions
+        python-version: '3.12'
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -33,10 +30,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    # Remove this once we upgrade to 3.12.
-    - name: Install typing_extensions (temp)
-      run: python3.11 -m pip install typing_extensions
+        python-version: '3.12'
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -53,10 +47,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    # Remove this once we upgrade to 3.12.
-    - name: Install typing_extensions (temp)
-      run: python3.11 -m pip install typing_extensions
+        python-version: '3.12'
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -73,10 +64,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    # Remove this once we upgrade to 3.12.
-    - name: Install typing_extensions (temp)
-      run: python3.11 -m pip install typing_extensions
+        python-version: '3.12'
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -93,10 +81,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    # Remove this once we upgrade to 3.12.
-    - name: Install typing_extensions (temp)
-      run: python3.11 -m pip install typing_extensions
+        python-version: '3.12'
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -113,10 +98,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    # Remove this once we upgrade to 3.12.
-    - name: Install typing_extensions (temp)
-      run: python3.11 -m pip install typing_extensions
+        python-version: '3.12'
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -133,10 +115,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    # Remove this once we upgrade to 3.12.
-    - name: Install typing_extensions (temp)
-      run: python3.11 -m pip install typing_extensions
+        python-version: '3.12'
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -153,10 +132,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    # Remove this once we upgrade to 3.12.
-    - name: Install typing_extensions (temp)
-      run: python3.11 -m pip install typing_extensions
+        python-version: '3.12'
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -173,10 +149,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    # Remove this once we upgrade to 3.12.
-    - name: Install typing_extensions (temp)
-      run: python3.11 -m pip install typing_extensions
+        python-version: '3.12'
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -193,10 +166,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    # Remove this once we upgrade to 3.12.
-    - name: Install typing_extensions (temp)
-      run: python3.11 -m pip install typing_extensions
+        python-version: '3.12'
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
@@ -213,10 +183,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    # Remove this once we upgrade to 3.12.
-    - name: Install typing_extensions (temp)
-      run: python3.11 -m pip install typing_extensions
+        python-version: '3.12'
     - name: Install pip requirements
       run: tools/pcommand install_pip_reqs
     - name: Make the build
