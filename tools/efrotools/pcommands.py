@@ -138,7 +138,7 @@ def xcoderun() -> None:
 
 def pyver() -> None:
     """Prints the Python version used by this project."""
-    from efrotools import PYVER
+    from efrotools.pyver import PYVER
 
     pcommand.disallow_in_batch()
 
@@ -625,7 +625,7 @@ def pytest() -> None:
     import os
     import platform
     import subprocess
-    from efrotools import getprojectconfig, PYTHON_BIN
+    from efrotools import getprojectconfig
     from efro.error import CleanError
 
     pcommand.disallow_in_batch()
@@ -648,7 +648,7 @@ def pytest() -> None:
 
     # Do the thing.
     results = subprocess.run(
-        [PYTHON_BIN, '-m', 'pytest'] + sys.argv[2:], check=False
+        [sys.executable, '-m', 'pytest'] + sys.argv[2:], check=False
     )
     if results.returncode != 0:
         sys.exit(results.returncode)

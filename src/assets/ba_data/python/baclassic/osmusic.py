@@ -7,9 +7,8 @@ import os
 import random
 import logging
 import threading
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import babase
 
 from baclassic._music import MusicPlayer

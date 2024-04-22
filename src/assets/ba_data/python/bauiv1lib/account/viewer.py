@@ -4,10 +4,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 import logging
 
-from typing_extensions import override
 import bauiv1 as bui
 
 from bauiv1lib.popup import PopupWindow, PopupMenuWindow

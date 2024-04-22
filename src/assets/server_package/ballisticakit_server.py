@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.11
+#!/usr/bin/env python3.12
 # Released under the MIT License. See LICENSE for details.
 #
 """BallisticaKit server manager."""
@@ -31,9 +31,13 @@ if TYPE_CHECKING:
     from types import FrameType
     from bacommon.servermanager import ServerCommand
 
-VERSION_STR = '1.3.1'
+VERSION_STR = '1.3.2'
 
 # Version history:
+#
+# 1.3.2
+#
+#  - Updated to use Python 3.12.
 #
 # 1.3.1
 #

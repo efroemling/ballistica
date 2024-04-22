@@ -5,9 +5,7 @@
 from __future__ import annotations
 
 import weakref
-from typing import TYPE_CHECKING
-
-from typing_extensions import override
+from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 

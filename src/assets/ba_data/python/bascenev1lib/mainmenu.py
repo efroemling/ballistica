@@ -8,9 +8,8 @@ from __future__ import annotations
 import time
 import random
 import weakref
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bascenev1 as bs
 import bauiv1 as bui
 

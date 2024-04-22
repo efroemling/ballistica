@@ -223,7 +223,9 @@ def _do_create(src_root: str | None, dst_root: str) -> None:
     template = replace_exact(
         template,
         '# __SRC_FEATURE_SETS__',
-        format_python_str(f'ctx.src_feature_sets = {featuresets!r}'),
+        format_python_str(
+            projroot=dst_root, code=f'ctx.src_feature_sets = {featuresets!r}'
+        ),
     )
 
     with open(

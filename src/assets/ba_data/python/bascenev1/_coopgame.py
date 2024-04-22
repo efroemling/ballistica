@@ -4,9 +4,8 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar, override
 
-from typing_extensions import override
 import babase
 
 import _bascenev1

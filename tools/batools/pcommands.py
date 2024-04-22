@@ -541,36 +541,6 @@ def gen_docs_sphinx() -> None:
     batools.docs.generate_sphinxdoc()
 
 
-def list_pip_reqs() -> None:
-    """List Python Pip packages needed for this project."""
-    from batools.build import get_pip_reqs
-
-    pcommand.disallow_in_batch()
-
-    print(' '.join(get_pip_reqs()))
-
-
-def install_pip_reqs() -> None:
-    """Install Python Pip packages needed for this project."""
-    import subprocess
-    from efrotools import PYTHON_BIN
-    from efro.terminal import Clr
-    from batools.build import get_pip_reqs
-
-    pcommand.disallow_in_batch()
-
-    # Make sure pip itself is up to date first.
-    subprocess.run(
-        [PYTHON_BIN, '-m', 'pip', 'install', '--upgrade', 'pip'], check=True
-    )
-
-    subprocess.run(
-        [PYTHON_BIN, '-m', 'pip', 'install', '--upgrade'] + get_pip_reqs(),
-        check=True,
-    )
-    print(f'{Clr.GRN}All pip requirements installed!{Clr.RST}')
-
-
 def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
     import batools.build

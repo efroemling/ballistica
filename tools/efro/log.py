@@ -12,10 +12,9 @@ import itertools
 from enum import Enum
 from collections import deque
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING, Annotated, override
 from threading import Thread, current_thread, Lock
 
-from typing_extensions import override
 from efro.util import utc_now
 from efro.call import tpartial
 from efro.terminal import Clr

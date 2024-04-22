@@ -8,9 +8,8 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.gameutils import SharedObjects

@@ -7,11 +7,10 @@ from __future__ import annotations
 import os
 import logging
 from enum import Enum
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar, override
 from concurrent.futures import ThreadPoolExecutor
 from functools import cached_property
 
-from typing_extensions import override
 from efro.call import tpartial
 
 import _babase
@@ -227,7 +226,9 @@ class App:
         must go here instead of __init__.
         """
 
-        # Hack for docs-generation: we can be imported with dummy modules
+        # Hack for docs-generation:
+        #
+        # We can be imported with dummy modules
         # instead of our actual binary ones, but we don't function.
         if os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') == '1':
             return
@@ -272,10 +273,7 @@ class App:
         return self._asyncio_loop
 
     def create_async_task(
-        self,
-        coro: Generator[Any, Any, T] | Coroutine[Any, Any, T],
-        *,
-        name: str | None = None,
+        self, coro: Coroutine[Any, Any, T], *, name: str | None = None
     ) -> None:
         """Create a fully managed async task.
 
@@ -285,6 +283,7 @@ class App:
         App.asyncio_loop.
         """
         assert _babase.in_logic_thread()
+
         # Hold a strong reference to the task until it is done.
         # Otherwise it is possible for it to be garbage collected and
         # disappear midway if the caller does not hold on to the
@@ -293,7 +292,6 @@ class App:
         task = self.asyncio_loop.create_task(coro, name=name)
         self._asyncio_tasks.add(task)
         task.add_done_callback(self._on_task_done)
-        # return task
 
     def _on_task_done(self, task: asyncio.Task) -> None:
         # Report any errors that occurred.
@@ -384,6 +382,7 @@ class App:
         # reached the 'running' state. This ensures that all subsystems
         # receive a consistent set of callbacks starting with
         # on_app_running().
+
         if self._subsystem_registration_ended:
             raise RuntimeError(
                 'Subsystems can no longer be registered at this point.'

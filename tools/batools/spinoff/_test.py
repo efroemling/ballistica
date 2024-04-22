@@ -47,6 +47,7 @@ def spinoff_test(args: list[str]) -> None:
     featuresets = {fs.name: fs for fs in FeatureSet.get_all_for_project('.')}
 
     testtype = args[0]
+    assert testtype
     if testtype in featuresets:
         path = f'build/spinofftest/{testtype}'
         print(

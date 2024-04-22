@@ -11,9 +11,8 @@ import logging
 from threading import Thread
 from enum import Enum
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, override
 
-from typing_extensions import override
 from bauiv1lib.gather import GatherTab
 import bauiv1 as bui
 import bascenev1 as bs

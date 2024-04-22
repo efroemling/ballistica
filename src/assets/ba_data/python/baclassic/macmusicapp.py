@@ -6,9 +6,8 @@ from __future__ import annotations
 import logging
 import threading
 from collections import deque
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import babase
 
 from baclassic._music import MusicPlayer

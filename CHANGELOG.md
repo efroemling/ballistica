@@ -1,5 +1,32 @@
-### 1.7.34 (build 21800, api 8, 2024-04-10)
-- `_bascenev1.protocol_version()` now properly throw an exception if called
+### 1.7.34 (build 21801, api 8, 2024-04-21)
+- Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
+  of the things this means is that we can use `typing.override` instead of the
+  `typing_extensions` version so the annoying workaround of installing
+  `typing_extensions` first thing when setting up the repo introduced a few
+  versions back is finally no longer needed.
+- The project now maintains its own Python virtual environment in `.venv` where
+  it automatically installs whatever Python packages it needs instead of asking
+  the user to do so in their own environment. This should greatly simplify
+  working with the project and keep tool versions more consistent for people.
+  There will likely be some bugs related to this needing to be shaken out, so
+  please holler if you run into any. Namely, most all Makefile targets will now
+  need to depend on the `prereqs` target which ensures the virtual env is set
+  up. A target that does not do so may error if run on a freshly cloned/cleaned
+  repo, so holler if you run into such a thing.
+- There is now a `config/requirements.txt` file which controls which pip
+  packages are made available in the project's internal virtual environment.
+  Note that this is only for tooling; the actual engine bundles a different
+  minimal set of pip packages.
+- Since `config/requirements.txt` now exists and pip stuff is handled
+  automatically, stripped out the old manual pip requirement management stuff.
+  This includes the `list_pip_reqs` and `get_pip_reqs` pcommands and the
+  requirements list in `batools.build`.
+- Some executable scripts such as `tools/pcommand` and `tools/bacloud` are now
+  generated dynamically so that they always use the shiny new internal Python
+  virtual-environment. This generation should happen automagically when you
+  build `make` targets, but please holler if you run into a situation where it
+  does not and you get errors.
+- `_bascenev1.protocol_version()` now properly throws an exception if called
   while scene-v1 is not active.
   
 ### 1.7.33 (build 21795, api 8, 2024-03-24)

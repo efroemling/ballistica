@@ -1,12 +1,45 @@
-#!/usr/bin/env python3.11
+#!/usr/bin/env python3.12
 # Released under the MIT License. See LICENSE for details.
 #
 """Command line wrapper for the spinoff system."""
 
 from __future__ import annotations
 
+import os
+import sys
+import subprocess
 
 if __name__ == '__main__':
     from batools.spinoff import spinoff_main
 
-    spinoff_main()
+    # Our initial invocation actually just sets up the env for our
+    # *real* invocation (so we can run under our desired venv/etc.)
+    if os.environ.get('BA_SPINOFF_HAVE_ENV') != '1':
+
+        # Our shebang line gives us a generic 'pythonX.Y' environment, but
+        # we actually want to run under the virtual-env of the source
+        # project so we have all the pip stuff we expect. So if we are
+        # getting invoked via a symlink we assume it points to the source
+        # project, and if not then we assume we are the source project.
+        if os.path.islink(sys.argv[0]):
+            src_spinoff_path = os.path.realpath(sys.argv[0])
+        else:
+            src_spinoff_path = sys.argv[0]
+
+        src_proj_root = os.path.abspath(
+            os.path.join(os.path.dirname(src_spinoff_path), '..')
+        )
+        src_proj_python = os.path.join(src_proj_root, '.venv/bin/python3.12')
+
+        cmd = [src_proj_python, sys.argv[0]] + sys.argv[1:]
+
+        # Make sure the src project is properly bootstrapped.
+        subprocess.run(['make', 'prereqs'], check=True, cwd=src_proj_root)
+
+        # Finally, run for realz.
+        subprocess.run(
+            cmd, check=True, env=dict(os.environ, BA_SPINOFF_HAVE_ENV='1')
+        )
+
+    else:
+        spinoff_main()

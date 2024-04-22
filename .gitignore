@@ -16,6 +16,7 @@ local.properties
 .gdb_history
 .dmypy.json
 .cache
+.venv
 .mypy_cache
 .pytest_cache
 .mypy.ini
@@ -30,6 +31,8 @@ local.properties
 PUBSYNC_IN_PROGRESS
 _fulltest_buildfile_*
 ballistica_files/
+tools/pcommand
+tools/cloudshell
 **/.#*
 
 # Environment files

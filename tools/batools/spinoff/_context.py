@@ -1052,7 +1052,7 @@ class SpinoffContext:
             src_path.endswith('.py') or src_path in {'tools/cloudshell'}
         ) and out != text:
             self._ensure_parent_repo_tool_configs_exist()
-            out = format_python_str(out)
+            out = format_python_str(projroot=self._src_root, code=out)
 
         # Ditto for .cc
         if src_path.endswith('.cc') and out != text:

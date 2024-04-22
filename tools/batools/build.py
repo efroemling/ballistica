@@ -19,56 +19,6 @@ if TYPE_CHECKING:
     from typing import Sequence, Any
 
 
-@dataclass
-class PyRequirement:
-    """A Python package/module required by our project."""
-
-    modulename: str | None = None
-    minversion: list[int] | None = None  # None implies no min version.
-    pipname: str | None = None  # None implies same as modulename.
-
-
-# Note: we look directly for modules when possible instead of just pip
-# entries; this accounts for manual installations or other nonstandard
-# setups.
-
-# Note 2: That is probably unnecessary. I'm certainly not using it. We
-# can probably just replace this with a simple requirements.txt file,
-# can't we? Feels like we're mostly reinventing the wheel here. We just
-# need a clean way to check/list missing stuff without necessarily
-# installing it. And as far as manually-installed bits, pip itself must
-# have some way to allow for that, right?...
-
-# Note 3: Have transitioned all these to pipname only; can at least
-# remove our custom module based stuff soon if nobody complains, which
-# would free us to theoretically move to a requirements.txt based setup.
-PY_REQUIREMENTS = [
-    PyRequirement(pipname='mypy', minversion=[1, 8, 0]),
-    PyRequirement(pipname='pylint', minversion=[3, 0, 3]),
-    PyRequirement(pipname='cpplint', minversion=[1, 6, 1]),
-    PyRequirement(pipname='pytest', minversion=[7, 4, 4]),
-    PyRequirement(pipname='pytz', minversion=[2023, 3]),
-    PyRequirement(pipname='ansiwrap', minversion=[0, 8, 4]),
-    PyRequirement(pipname='requests', minversion=[2, 31, 0]),
-    PyRequirement(pipname='pdoc', minversion=[14, 4, 0]),
-    PyRequirement(pipname='PyYAML', minversion=[6, 0, 1]),
-    PyRequirement(pipname='black', minversion=[24, 1, 1]),
-    PyRequirement(pipname='typing_extensions', minversion=[4, 9, 0]),
-    PyRequirement(pipname='types-filelock', minversion=[3, 2, 7]),
-    PyRequirement(pipname='types-requests', minversion=[2, 31, 0, 20240106]),
-    PyRequirement(pipname='types-pytz', minversion=[2023, 3, 1, 1]),
-    PyRequirement(pipname='types-PyYAML', minversion=[6, 0, 12, 12]),
-    PyRequirement(pipname='certifi', minversion=[2023, 11, 17]),
-    PyRequirement(pipname='types-certifi', minversion=[2021, 10, 8, 3]),
-    PyRequirement(pipname='pbxproj', minversion=[4, 0, 0]),
-    PyRequirement(pipname='filelock', minversion=[3, 13, 1]),
-    PyRequirement(pipname='python-daemon', minversion=[3, 0, 1]),
-    PyRequirement(pipname='Sphinx', minversion=[7, 2, 6]),
-    PyRequirement(pipname='furo', minversion=[2024, 0o1, 29]),
-    PyRequirement(pipname='Jinja2', minversion=[3, 1, 2]),
-]
-
-
 class PrefabTarget(Enum):
     """Types of prefab builds able to be run."""
 
@@ -384,11 +334,7 @@ def _vstr(nums: Sequence[int]) -> str:
 
 def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
-    # pylint: disable=too-many-locals
-
-    from efrotools import PYTHON_BIN
+    from efrotools.pyver import PYVER
 
     print(f'{Clr.BLD}Checking environment...{Clr.RST}', flush=True)
 
@@ -436,15 +382,13 @@ def checkenv() -> None:
             ' please install it via apt, brew, etc.'
         )
 
-    # Make sure they've got our target Python version.
-    if (
-        subprocess.run(
-            ['which', PYTHON_BIN], check=False, capture_output=True
-        ).returncode
-        != 0
-    ):
+    # Make sure we're running under the Python version the project
+    # expects.
+    cur_ver = f'{sys.version_info.major}.{sys.version_info.minor}'
+    if cur_ver != PYVER:
         raise CleanError(
-            f'{PYTHON_BIN} is required; please install it' 'via apt, brew, etc.'
+            f'We expect to be running under Python {PYVER},'
+            f' but found {cur_ver}.'
         )
 
     # Make sure they've got clang-format.
@@ -461,155 +405,17 @@ def checkenv() -> None:
     # Make sure they've got pip for that python version.
     if (
         subprocess.run(
-            [PYTHON_BIN, '-m', 'pip', '--version'],
+            [sys.executable, '-m', 'pip', '--version'],
             check=False,
             capture_output=True,
         ).returncode
         != 0
     ):
         raise CleanError(
-            f'pip (for {PYTHON_BIN}) is required; please install it.'
+            f'pip (for {sys.executable}) is required; please install it.'
         )
-
-    # Parse package names and versions from pip.
-    piplist = (
-        subprocess.run(
-            [PYTHON_BIN, '-m', 'pip', 'list'], check=True, capture_output=True
-        )
-        .stdout.decode()
-        .strip()
-        .splitlines()
-    )
-    assert 'Package' in piplist[0] and 'Version' in piplist[0]
-    assert '--------' in piplist[1]
-    piplist = piplist[2:]
-    pipvers: dict[str, list[int]] = {}
-    for i, line in enumerate(piplist):
-        try:
-            pname, pverraw = line.split()[:2]
-            pver = [int(x) if x.isdigit() else 0 for x in pverraw.split('.')]
-            pipvers[pname] = pver
-        except Exception as exc:
-            raise RuntimeError(
-                f'Error parsing version info from line {i} of:'
-                f'\nBEGIN\n{piplist}\nEND'
-            ) from exc
-
-    # Check for some required python modules.
-    #
-    # FIXME: since all of these come from pip now, we should just use
-    #  pip --list to check versions on everything instead of doing it
-    #  ad-hoc.
-    for req in PY_REQUIREMENTS:
-        try:
-            modname = req.modulename
-            minver = req.minversion
-            pipname = req.pipname
-            if modname is None:
-                assert pipname is not None
-                if pipname not in pipvers:
-                    raise CleanError(
-                        f'{pipname} (for {PYTHON_BIN}) is required.\n'
-                        f'To install it, try: "{PYTHON_BIN}'
-                        f' -m pip install {pipname}"\n'
-                        f'Alternately, "tools/pcommand install_pip_reqs"'
-                        f' will update all pip requirements.'
-                    )
-                if minver is not None:
-                    vnums = pipvers[pipname]
-                    # Seeing a decent number of version lengths fluctuating
-                    # (one day [a,b,c,d] and the next [a,b,c])
-                    # So let's pad with zeros to match lengths.
-                    while len(vnums) < len(minver):
-                        vnums.append(0)
-                    while len(minver) < len(vnums):
-                        minver.append(0)
-                    assert len(vnums) == len(
-                        minver
-                    ), f'unexpected version format for {pipname}: {vnums}'
-                    if vnums < minver:
-                        raise CleanError(
-                            f'{pipname} ver. {_vstr(minver)} or newer'
-                            f' is required; found {_vstr(vnums)}.\n'
-                            f'To upgrade it, try: "{PYTHON_BIN}'
-                            f' -m pip install --upgrade {pipname}".\n'
-                            'Alternately, "tools/pcommand install_pip_reqs"'
-                            ' will update all pip requirements.'
-                        )
-            else:
-                if pipname is None:
-                    pipname = modname
-                if minver is not None:
-                    results = subprocess.run(
-                        f'{PYTHON_BIN} -m {modname} --version',
-                        shell=True,
-                        check=False,
-                        capture_output=True,
-                    )
-                else:
-                    results = subprocess.run(
-                        f'{PYTHON_BIN} -c "import {modname}"',
-                        shell=True,
-                        check=False,
-                        capture_output=True,
-                    )
-                if results.returncode != 0:
-                    raise CleanError(
-                        f'{pipname} (for {PYTHON_BIN}) is required.\n'
-                        f'To install it, try: "{PYTHON_BIN}'
-                        f' -m pip install {pipname}"\n'
-                        f'Alternately, "tools/pcommand install_pip_reqs"'
-                        f' will update all pip requirements.'
-                    )
-                if minver is not None:
-                    # Note: some modules such as pytest print
-                    # their version to stderr, so grab both.
-                    verlines = (
-                        (results.stdout + results.stderr).decode().splitlines()
-                    )
-                    if verlines[0].startswith('Cpplint fork'):
-                        verlines = verlines[1:]
-                    ver_line = verlines[0]
-                    assert modname in ver_line
-
-                    # Choking on 'mypy 0.xx (compiled: yes)'
-                    if '(compiled: ' in ver_line:
-                        ver_line = ' '.join(ver_line.split()[:2])
-                    try:
-                        vnums = [
-                            int(x) for x in ver_line.split()[-1].split('.')
-                        ]
-                    except Exception:
-                        print(
-                            f'ERROR PARSING VER LINE for {req}:'
-                            f' \'{ver_line}\''
-                        )
-                        raise
-                    assert len(vnums) == len(minver)
-                    if vnums < minver:
-                        raise CleanError(
-                            f'{pipname} ver. {_vstr(minver)} or newer'
-                            f' is required; found {_vstr(vnums)}.\n'
-                            f'To upgrade it, try: "{PYTHON_BIN}'
-                            f' -m pip install --upgrade {pipname}".\n'
-                            'Alternately, "tools/pcommand install_pip_reqs"'
-                            ' will update all pip requirements.'
-                        )
-        except Exception:
-            print(f'ERROR CHECKING PIP REQ \'{req}\'')
-            raise
 
     print(f'{Clr.BLD}Environment ok.{Clr.RST}', flush=True)
-
-
-def get_pip_reqs() -> list[str]:
-    """Return the pip requirements needed to build/run stuff."""
-    out: list[str] = []
-    for req in PY_REQUIREMENTS:
-        name = req.modulename if req.pipname is None else req.pipname
-        assert isinstance(name, str)
-        out.append(name)
-    return out
 
 
 def _get_server_config_raw_contents(projroot: str) -> str:
@@ -737,7 +543,8 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     """
     # pylint: disable=too-many-locals
     import json
-    from efrotools import PYVER
+
+    from efrotools.pyver import PYVER
 
     @dataclass
     class Entry:

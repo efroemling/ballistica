@@ -8,9 +8,8 @@ import weakref
 import random
 import logging
 import inspect
-from typing import TYPE_CHECKING, TypeVar, Protocol, NewType
+from typing import TYPE_CHECKING, TypeVar, Protocol, NewType, override
 
-from typing_extensions import override
 from efro.terminal import Clr
 
 import _babase
