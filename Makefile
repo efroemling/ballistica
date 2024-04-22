@@ -1254,6 +1254,8 @@ tools/cloudshell: tools/efrotools/genwrapper.py tools/efrotools/pyver.py
 # Set this to 1 to skip environment checks.
 SKIP_ENV_CHECKS ?= 0
 
+VENV_PYTHON ?= python3.12
+
 # Rebuild our virtual environment whenever reqs or Python version changes.
 # This is a prereq dependency so should not itself depend on prereqs. Note
 # that we rely on pcommand but can't use it in here until the end when the
@@ -1262,7 +1264,7 @@ SKIP_ENV_CHECKS ?= 0
 tools/efrotools/pyver.py
 	@echo Creating Project\'s Python Virtual Environment...
 	@rm -rf .venv
-	python3.12 -m venv .venv
+	$(VENV_PYTHON) -m venv .venv
 	.venv/bin/pip install --upgrade pip
 	.venv/bin/pip install -r config/requirements.txt
 	touch .venv/efro_venv_complete # Done last to avoid partly-built venvs.
