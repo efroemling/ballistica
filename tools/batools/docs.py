@@ -286,6 +286,7 @@ def _run_sphinx(
         index_rst.write(index_template.render(data=data))
 
     starttime = time.monotonic()
+
     apidoc_cmd = [
         'sphinx-apidoc',
         # '-f',  # Force overwriting of any existing generated files.
@@ -302,14 +303,28 @@ def _run_sphinx(
         paths['sphinx_cache_dir'],
     ]
 
+    # Prevents Python from writing __pycache__ dirs in our source tree
+    # which leads to slight annoyances.
+    environ = dict(os.environ, PYTHONDONTWRITEBYTECODE='1')
+
     if generate_dummymodules_doc:
         subprocess.run(
             apidoc_cmd + [assets_dirs['dummy_modules']] + ['--private'],
             check=True,
+            env=environ,
         )
+
     if generate_tools_doc:
-        subprocess.run(apidoc_cmd + [assets_dirs['efro_tools']], check=True)
-    subprocess.run(apidoc_cmd + [assets_dirs['ba_data'], '-f'], check=True)
+        subprocess.run(
+            apidoc_cmd + [assets_dirs['efro_tools']],
+            check=True,
+            env=environ,
+        )
+    subprocess.run(
+        apidoc_cmd + [assets_dirs['ba_data'], '-f'],
+        check=True,
+        env=environ,
+    )
     # -f for regenerating index page so it contains the ba_data modules
 
     subprocess.run(
@@ -324,6 +339,7 @@ def _run_sphinx(
             # '-Q', #quiet now
         ],
         check=True,
+        env=environ,
     )
 
     duration = time.monotonic() - starttime
