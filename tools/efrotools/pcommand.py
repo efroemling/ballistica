@@ -65,30 +65,33 @@ def pcommand_main(globs: dict[str, Any]) -> None:
     # So let's go ahead and set up PATH here so tools/pcommand by itself
     # *does* do the right thing.
 
-    abs_exe_path = Path(sys.executable).absolute()
-    pathparts = abs_exe_path.parts
-    if (
-        len(pathparts) < 3
-        or pathparts[-3] != '.venv'
-        or pathparts[-2] != 'bin'
-        or not pathparts[-1].startswith('python')
-    ):
-        raise RuntimeError(
-            'Unexpected Python environment;'
-            ' we expect to be running using .venv/bin/pythonX.Y'
-        )
+    # Don't do this on Windows; we're not currently using virtual-envs
+    # there for the little bit of tools stuff we support.
+    if not sys.platform.startswith('win'):
+        abs_exe_path = Path(sys.executable).absolute()
+        pathparts = abs_exe_path.parts
+        if (
+            len(pathparts) < 3
+            or pathparts[-3] != '.venv'
+            or pathparts[-2] != 'bin'
+            or not pathparts[-1].startswith('python')
+        ):
+            raise RuntimeError(
+                'Unexpected Python environment;'
+                ' we expect to be running using .venv/bin/pythonX.Y'
+            )
 
-    cur_paths_str = os.environ.get('PATH')
-    if cur_paths_str is None:
-        raise RuntimeError("'PATH' is not currently set; unexpected.")
+        cur_paths_str = os.environ.get('PATH')
+        if cur_paths_str is None:
+            raise RuntimeError("'PATH' is not currently set; unexpected.")
 
-    venv_bin_dir = str(abs_exe_path.parent)
+        venv_bin_dir = str(abs_exe_path.parent)
 
-    # Only add our entry if it's not already there; don't want PATH to
-    # get out of control if we're doing recursive stuff.
-    cur_paths = cur_paths_str.split(':')
-    if venv_bin_dir not in cur_paths:
-        os.environ['PATH'] = ':'.join([venv_bin_dir] + cur_paths)
+        # Only add our entry if it's not already there; don't want PATH to
+        # get out of control if we're doing recursive stuff.
+        cur_paths = cur_paths_str.split(':')
+        if venv_bin_dir not in cur_paths:
+            os.environ['PATH'] = ':'.join([venv_bin_dir] + cur_paths)
 
     # Build our list of available command functions.
     _g_funcs = dict(
