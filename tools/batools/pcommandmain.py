@@ -55,7 +55,7 @@ from efrotools.pcommands import (
     tweak_empty_py_files,
     make_ensure,
     make_target_debug,
-    pur,
+    requirements_upgrade,
 )
 from efrotools.pcommands2 import (
     with_build_lock,

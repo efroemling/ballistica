@@ -45,13 +45,45 @@ def _spelling(words: list[str]) -> None:
     print(f'Modified {num_modded_dictionaries} dictionaries.')
 
 
-def pur() -> None:
-    """Run pur using project's Python version."""
+def requirements_upgrade() -> None:
+    """Upgrade project requirements."""
+    import os
+    import tempfile
     import subprocess
+
+    from efro.error import CleanError
 
     pcommand.disallow_in_batch()
 
-    subprocess.run([sys.executable, '-m', 'pur'] + sys.argv[2:], check=True)
+    args = pcommand.get_args()
+
+    if len(args) != 1:
+        raise CleanError('Expected a single arg.')
+    reqpath = args[0]
+
+    with open(reqpath, encoding='utf-8') as infile:
+        reqs = infile.read()
+
+    # Operate on a temp file and compare against our existing so we don't
+    # write unless it has changed.
+    with tempfile.TemporaryDirectory() as tempdir:
+        fname = os.path.join(tempdir, 'reqs')
+        with open(fname, 'w', encoding='utf-8') as outfile:
+            outfile.write(reqs)
+
+        subprocess.run([sys.executable, '-m', 'pur', '-r', fname], check=True)
+
+        # Sort lines.
+        with open(reqpath, encoding='utf-8') as infile:
+            reqs2 = infile.read().strip()
+        reqs_new = (
+            '\n'.join(sorted(reqs2.splitlines(), key=lambda l: l.lower()))
+            + '\n'
+        )
+
+        if reqs_new != reqs:
+            with open(reqpath, 'w', encoding='utf-8') as outfile:
+                outfile.write(reqs_new)
 
 
 def spelling_all() -> None:

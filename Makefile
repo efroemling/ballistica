@@ -179,7 +179,7 @@ venv: .venv/efro_venv_complete
 
 # Update pip requirements to latest versions.
 venv-upgrade: prereqs
-	$(PCOMMAND) pur -r config/requirements.txt
+	$(PCOMMAND) requirements_upgrade config/requirements.txt
 
 venv-clean:
 	rm -rf .venv
@@ -1225,14 +1225,15 @@ ENV_SRC = tools/batools/build.py .venv/efro_venv_complete tools/pcommand
 # This is a prereq dependency so should not itself depend on prereqs.
 tools/pcommand: tools/efrotools/genwrapper.py tools/efrotools/pyver.py
 	@echo Generating tools/pcommand...
-	@PYTHONPATH=tools python3 -m efrotools.genwrapper pcommand tools/pcommand \
-  batools.pcommandmain
+	@PYTHONPATH=tools python3 -m \
+ efrotools.genwrapper pcommand batools.pcommandmain tools/pcommand
 
 # Generate a cloudshell script hard-coded to use our virtual environment.
 # This is a prereq dependency so should not itself depend on prereqs.
 tools/cloudshell: tools/efrotools/genwrapper.py tools/efrotools/pyver.py
 	@echo Generating tools/cloudshell...
-	@PYTHONPATH=tools python3 -m efrotools.genwrapper cloudshell tools/cloudshell
+	@PYTHONPATH=tools python3 -m \
+ efrotools.genwrapper cloudshell efrotoolsinternal.cloudshell tools/cloudshell
 
 .clang-format: config/toolconfigsrc/clang-format $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
