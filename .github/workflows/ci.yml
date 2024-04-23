@@ -95,8 +95,10 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-    - name: Install dependencies testing
-      run: make VENV_PYTHON=python prereqs
+    - name: Create tools/pcommand
+      run: |
+        $env:PYTHONPATH = "tools"
+        python -m efrotools.genwrapper pcommand batools.pcommandmain tools/pcommand
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
