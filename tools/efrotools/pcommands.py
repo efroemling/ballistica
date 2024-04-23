@@ -477,7 +477,7 @@ def sync_all() -> None:
 
 def sync() -> None:
     """Runs standard syncs between this project and others."""
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
     from efrotools.sync import Mode, SyncItem, run_standard_syncs
 
     pcommand.disallow_in_batch()
@@ -625,7 +625,7 @@ def pytest() -> None:
     import os
     import platform
     import subprocess
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
     from efro.error import CleanError
 
     pcommand.disallow_in_batch()

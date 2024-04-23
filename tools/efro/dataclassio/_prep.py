@@ -420,6 +420,10 @@ class PrepSession:
         if issubclass(origin, datetime.datetime):
             return
 
+        # We support datetime.timedelta.
+        if issubclass(origin, datetime.timedelta):
+            return
+
         if dataclasses.is_dataclass(origin):
             self.prep_dataclass(origin, recursion_level=recursion_level + 1)
             return

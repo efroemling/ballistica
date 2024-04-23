@@ -33,7 +33,7 @@ def build_openal(arch: str, mode: str) -> None:
     """Do the thing."""
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-locals
-    from efrotools import replace_exact
+    from efrotools.util import replace_exact
 
     if arch not in ARCHS:
         raise CleanError(f"Invalid arch '{arch}'.")

@@ -587,7 +587,7 @@ def check_sync_states(self: ProjectUpdater) -> None:
 
 def check_misc(self: ProjectUpdater) -> None:
     """Check misc project stuff."""
-    from efrotools import readfile, replace_exact
+    from efrotools.util import readfile, replace_exact
 
     # Make sure we're set to prod master server. (but ONLY when
     # checking; still want to be able to run updates).

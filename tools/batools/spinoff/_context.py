@@ -15,7 +15,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, assert_never
 
 from efrotools.code import format_python_str, format_cpp_str
-from efrotools import getprojectconfig, replace_exact
+from efrotools.project import getprojectconfig
+from efrotools.util import replace_exact
 from efro.error import CleanError
 from efro.terminal import Clr
 from efro.util import timedelta_str
@@ -693,7 +694,7 @@ class SpinoffContext:
 
     def _generate_env_hash(self) -> None:
         # pylint: disable=cyclic-import
-        from efrotools import get_files_hash
+        from efrotools.util import get_files_hash
 
         # noinspection PyUnresolvedReferences
         import batools.spinoff

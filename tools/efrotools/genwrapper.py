@@ -15,8 +15,8 @@ if __name__ == '__main__':
     if len(sys.argv) not in (3, 4):
         raise RuntimeError('Expected 2 args')
 
-    from efrotools import getprojectconfig
     from efrotools.project import (
+        getprojectconfig,
         get_public_legal_notice,
         get_non_public_legal_notice,
     )

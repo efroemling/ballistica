@@ -12,7 +12,7 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from efro.terminal import Clr
-from efrotools import extract_arg, extract_flag
+from efrotools.util import extract_arg, extract_flag
 from efrotools.pyver import PYVER
 
 if TYPE_CHECKING:
@@ -750,7 +750,7 @@ def _stage_server_file(
 ) -> None:
     """Stage files for the server environment with some filtering."""
     import batools.build
-    from efrotools import replace_exact
+    from efrotools.util import replace_exact
 
     if mode not in ('debug', 'release'):
         raise RuntimeError(

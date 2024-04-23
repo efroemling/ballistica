@@ -68,7 +68,7 @@ def _filter_tool_config(projroot: Path, cfg: str) -> str:
     # pylint: disable=too-many-locals
     import textwrap
 
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
     from efrotools.pyver import PYVER
 
     # Emacs dir-locals defaults. Note that these contain other

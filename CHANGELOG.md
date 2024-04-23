@@ -1,9 +1,9 @@
-### 1.7.34 (build 21801, api 8, 2024-04-21)
+### 1.7.34 (build 21802, api 8, 2024-04-23)
 - Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
   of the things this means is that we can use `typing.override` instead of the
-  `typing_extensions` version so the annoying workaround of installing
+  `typing_extensions` version so the annoying requirement of installing
   `typing_extensions` first thing when setting up the repo introduced a few
-  versions back is finally no longer needed.
+  versions back is finally no longer a thing.
 - The project now maintains its own Python virtual environment in `.venv` where
   it automatically installs whatever Python packages it needs instead of asking
   the user to do so in their own environment. This should greatly simplify
@@ -28,6 +28,7 @@
   does not and you get errors.
 - `_bascenev1.protocol_version()` now properly throws an exception if called
   while scene-v1 is not active.
+- The `efro.dataclassio` system now supports `datetime.timedelta` values.
   
 ### 1.7.33 (build 21795, api 8, 2024-03-24)
 - Stress test input-devices are now a bit smarter; they won't press any buttons

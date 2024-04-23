@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
 from efro.error import CleanError
-from efrotools import getprojectconfig
+from efrotools.project import getprojectconfig
 
 if TYPE_CHECKING:
     pass
