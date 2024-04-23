@@ -20,7 +20,8 @@ def spinoff_test(args: list[str]) -> None:
     import subprocess
 
     from batools.featureset import FeatureSet
-    from efrotools import extract_flag, getprojectconfig
+    from efrotools.util import extract_flag
+    from efrotools.project import getprojectconfig
     from efro.terminal import Clr
     from efro.error import CleanError
 

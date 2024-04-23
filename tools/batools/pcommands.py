@@ -126,7 +126,7 @@ def lazy_increment_build() -> None:
     import subprocess
     from efro.terminal import Clr
     from efro.error import CleanError
-    from efrotools import get_files_hash
+    from efrotools.util import get_files_hash
     from efrotools.code import get_code_filenames
 
     pcommand.disallow_in_batch()
@@ -221,7 +221,7 @@ def androidaddr() -> None:
 def push_ipa() -> None:
     """Construct and push ios IPA for testing."""
 
-    from efrotools import extract_arg
+    from efrotools.util import extract_arg
     import efrotools.ios
 
     pcommand.disallow_in_batch()
@@ -493,7 +493,7 @@ def warm_start_asset_build() -> None:
     import subprocess
     from pathlib import Path
 
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
     from efro.error import CleanError
 
     pcommand.disallow_in_batch()

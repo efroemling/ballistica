@@ -10,7 +10,7 @@ import subprocess
 from enum import Enum
 from dataclasses import dataclass
 
-from efrotools import readfile, writefile, replace_exact
+from efrotools.util import readfile, writefile, replace_exact
 
 # Python version we build here (not necessarily same as we use in repo).
 PY_VER_ANDROID = '3.12'

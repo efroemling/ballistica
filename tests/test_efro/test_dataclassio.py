@@ -101,6 +101,7 @@ def test_assign() -> None:
         dictval: dict[int, str] = field(default_factory=dict)
         tupleval: tuple[int, str, bool] = (1, 'foo', False)
         datetimeval: datetime.datetime | None = None
+        timedeltaval: datetime.timedelta | None = None
 
     class _TestClass2:
         pass
@@ -116,10 +117,10 @@ def test_assign() -> None:
         dataclass_from_dict(_TestClass, None)  # type: ignore
 
     now = utc_now()
+    tdelta = datetime.timedelta(days=123, seconds=456, microseconds=789)
 
-    # A dict containing *ALL* values should match what we
-    # get when creating a dataclass and then converting back
-    # to a dict.
+    # A dict containing *ALL* values should exactly match what we get
+    # when creating a dataclass and then converting back to a dict.
     dict1 = {
         'ival': 1,
         'sval': 'foo',
@@ -156,6 +157,7 @@ def test_assign() -> None:
             now.second,
             now.microsecond,
         ],
+        'timedeltaval': [tdelta.days, tdelta.seconds, tdelta.microseconds],
     }
     dc1 = dataclass_from_dict(_TestClass, dict1)
     assert dataclass_to_dict(dc1) == dict1

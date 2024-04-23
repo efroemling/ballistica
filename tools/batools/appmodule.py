@@ -24,7 +24,8 @@ def generate_app_module(
     # pylint: disable=too-many-statements
     import textwrap
 
-    from efrotools import replace_section, getprojectconfig
+    from efrotools.util import replace_section
+    from efrotools.project import getprojectconfig
 
     out = ''
 

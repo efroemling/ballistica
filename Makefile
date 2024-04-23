@@ -149,13 +149,13 @@ meta-clean:
 
 # Remove ALL files and directories that aren't managed by git (except for a
 # few things such as localconfig.json).
-clean:
+clean: prereqs
 	$(CHECK_CLEAN_SAFETY)
 	rm -rf build  # Kill this ourself; can confuse git if contains other repos.
 	git clean -dfx $(ROOT_CLEAN_IGNORES)
 
 # Show what clean would delete without actually deleting it.
-clean-list:
+clean-list: prereqs
 	$(CHECK_CLEAN_SAFETY)
 	@echo Would remove build  # Handle this part ourself; can confuse git.
 	git clean -dnx $(ROOT_CLEAN_IGNORES)
@@ -179,7 +179,7 @@ venv: .venv/efro_venv_complete
 
 # Update pip requirements to latest versions.
 venv-upgrade: prereqs
-	$(PCOMMAND) pur -r config/requirements.txt
+	$(PCOMMAND) requirements_upgrade config/requirements.txt
 
 venv-clean:
 	rm -rf .venv
@@ -752,12 +752,12 @@ update-check: prereqs-pre-update
 ################################################################################
 
 # Run formatting on all files in the project considered 'dirty'.
-format:
+format: prereqs
 	@$(MAKE) -j$(CPUS) format-code format-scripts format-makefile
 	@$(PCOMMANDBATCH) echo BLD Formatting complete for $(notdir $(CURDIR))!
 
 # Same but always formats; ignores dirty state.
-format-full:
+format-full: prereqs
 	@$(MAKE) -j$(CPUS) format-code-full format-scripts-full format-makefile
 	@$(PCOMMANDBATCH) echo BLD Formatting complete for $(notdir $(CURDIR))!
 
@@ -933,6 +933,7 @@ test-rpc:
 preflight:
 	@$(MAKE) format
 	@$(MAKE) update
+	@$(MAKE) -j$(CPUS) py_check_prereqs # Needs to be done explicitly first.
 	@$(MAKE) -j$(CPUS) cpplint pylint mypy test
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
@@ -940,6 +941,7 @@ preflight:
 preflight-full:
 	@$(MAKE) format-full
 	@$(MAKE) update
+	@$(MAKE) -j$(CPUS) py_check_prereqs # Needs to be done explicitly first.
 	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-full
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
@@ -947,6 +949,7 @@ preflight-full:
 preflight2:
 	@$(MAKE) format
 	@$(MAKE) update
+	@$(MAKE) -j$(CPUS) py_check_prereqs # Needs to be done explicitly first.
 	@$(MAKE) -j$(CPUS) cpplint pylint mypy test
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
@@ -954,6 +957,7 @@ preflight2:
 preflight2-full:
 	@$(MAKE) format-full
 	@$(MAKE) update
+	@$(MAKE) -j$(CPUS) py_check_prereqs # Needs to be done explicitly first.
 	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-full
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
@@ -1221,14 +1225,15 @@ ENV_SRC = tools/batools/build.py .venv/efro_venv_complete tools/pcommand
 # This is a prereq dependency so should not itself depend on prereqs.
 tools/pcommand: tools/efrotools/genwrapper.py tools/efrotools/pyver.py
 	@echo Generating tools/pcommand...
-	@PYTHONPATH=tools python3 -m efrotools.genwrapper pcommand tools/pcommand \
-  batools.pcommandmain
+	@PYTHONPATH=tools python3 -m \
+ efrotools.genwrapper pcommand batools.pcommandmain tools/pcommand
 
 # Generate a cloudshell script hard-coded to use our virtual environment.
 # This is a prereq dependency so should not itself depend on prereqs.
 tools/cloudshell: tools/efrotools/genwrapper.py tools/efrotools/pyver.py
 	@echo Generating tools/cloudshell...
-	@PYTHONPATH=tools python3 -m efrotools.genwrapper cloudshell tools/cloudshell
+	@PYTHONPATH=tools python3 -m \
+ efrotools.genwrapper cloudshell efrotoolsinternal.cloudshell tools/cloudshell
 
 .clang-format: config/toolconfigsrc/clang-format $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@

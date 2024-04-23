@@ -77,7 +77,7 @@ def format_project_cpp_files(projroot: Path, full: bool) -> None:
     import concurrent.futures
     from multiprocessing import cpu_count
 
-    from efrotools import get_files_hash
+    from efrotools.util import get_files_hash
 
     if os.path.abspath(projroot) != os.getcwd():
         raise RuntimeError('We expect to be running from project root.')
@@ -137,7 +137,7 @@ def check_cpplint(projroot: Path, full: bool) -> None:
     from concurrent.futures import ThreadPoolExecutor
     from multiprocessing import cpu_count
 
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
     from efro.terminal import Clr
 
     os.chdir(projroot)
@@ -221,7 +221,7 @@ def get_code_filenames(projroot: Path, include_generated: bool) -> list[str]:
     could cause dirty generated files to not get updated properly when
     their sources change).
     """
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
 
     exts = ('.h', '.c', '.cc', '.cpp', '.cxx', '.m', '.mm')
     places = getprojectconfig(projroot).get('code_source_dirs', None)
@@ -272,7 +272,7 @@ def black_base_args(projroot: Path) -> list[str]:
 
 def format_project_python_files(projroot: Path, full: bool) -> None:
     """Runs formatting on all of our Python code."""
-    from efrotools import get_string_hash
+    from efrotools.util import get_string_hash
 
     os.chdir(projroot)
     cachepath = Path(projroot, '.cache/format_project_python_files')
@@ -344,7 +344,7 @@ def _should_include_script(fnamefull: str) -> bool:
 
 def get_script_filenames(projroot: Path) -> list[str]:
     """Return the Python filenames to lint-check or auto-format."""
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
 
     proot = f'{projroot}/'
 
@@ -392,7 +392,7 @@ def runpylint(projroot: Path, filenames: list[str]) -> None:
 
 def pylint(projroot: Path, full: bool, fast: bool) -> None:
     """Run Pylint on all scripts in our project (with smart dep tracking)."""
-    from efrotools import get_files_hash
+    from efrotools.util import get_files_hash
     from efro.terminal import Clr
 
     pylintrc = Path(projroot, '.pylintrc')
@@ -568,7 +568,7 @@ def _apply_pylint_run_to_cache(
 
     from astroid import modutils
 
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
 
     # First off, build a map of dirtyfiles to module names
     # (and the corresponding reverse map).

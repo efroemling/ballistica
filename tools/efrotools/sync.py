@@ -71,7 +71,7 @@ def run_standard_syncs(
     a src subpath, and optionally a dst subpath (src will be used by default).
     """
     # pylint: disable=too-many-locals
-    from efrotools import getlocalconfig
+    from efrotools.project import getlocalconfig
 
     localconfig = getlocalconfig(projectroot)
     total_count = 0
