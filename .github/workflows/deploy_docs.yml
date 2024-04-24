@@ -15,8 +15,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install pip requirements
-        run: make prereqs
+      - name: Setup project environment
+        run: make env
       - name: Build documentation
         run: make docs-sphinx 
       - name: Upload the build
