@@ -40,10 +40,10 @@ endif
 # which.
 PCOMMAND = tools/pcommand
 PCOMMANDBATCHBIN = .cache/pcommandbatch/pcommandbatch
-ifeq ($(BA_PCOMMANDBATCH_DISABLE),1)
- PCOMMANDBATCH = $(PCOMMAND)
-else
+ifeq ($(BA_PCOMMANDBATCH_ENABLE),0)
  PCOMMANDBATCH = $(PCOMMANDBATCHBIN)
+else
+ PCOMMANDBATCH = $(PCOMMAND)
 endif
 
 # Prereq targets that should be safe to run anytime; even if project-files
@@ -203,7 +203,7 @@ docs-sphinx-clean:
 	rm -rf build/sphinx
 
 pcommandbatch_speed_test: prereqs
-	@$(PCOMMAND) pcommandbatch_speed_test $(PCOMMANDBATCH)
+	@$(PCOMMAND) pcommandbatch_speed_test $(PCOMMANDBATCHBIN)
 
 # Tell make which of these targets don't represent files.
 .PHONY: help prereqs prereqs-pre-update prereqs-clean assets assets-cmake			\

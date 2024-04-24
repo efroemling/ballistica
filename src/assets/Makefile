@@ -28,12 +28,12 @@ PCOMMAND = $(TOOLS_DIR)/pcommand
 # pcommand. See tools/efrotools/pcommandbatch.py for more info on when to use
 # which.
 PCOMMANDBATCHBIN = $(PROJ_DIR)/.cache/pcommandbatch/pcommandbatch
-ifeq ($(BA_PCOMMANDBATCH_DISABLE),1)
- PCOMMANDBATCH = $(TOOLS_DIR)/pcommand
- PCOMMANDBATCHFROMROOT = tools/pcommand
-else
+ifeq ($(BA_PCOMMANDBATCH_ENABLE),0)
  PCOMMANDBATCH = $(PCOMMANDBATCHBIN)
  PCOMMANDBATCHFROMROOT = .cache/pcommandbatch/pcommandbatch
+else
+ PCOMMANDBATCH = $(TOOLS_DIR)/pcommand
+ PCOMMANDBATCHFROMROOT = tools/pcommand
 endif
 
 # High level targets: generally these are what should be used here.

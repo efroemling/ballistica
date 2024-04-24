@@ -1,4 +1,4 @@
-### 1.7.34 (build 21804, api 8, 2024-04-23)
+### 1.7.34 (build 21806, api 8, 2024-04-23)
 - Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
   of the things this means is that we can use `typing.override` instead of the
   `typing_extensions` version so the annoying requirement of installing
@@ -29,6 +29,15 @@
 - `_bascenev1.protocol_version()` now properly throws an exception if called
   while scene-v1 is not active.
 - The `efro.dataclassio` system now supports `datetime.timedelta` values.
+- Usage of `pcommandbatch` is now disabled by default. To enable it, set the env
+  var `BA_PCOMMANDBATCH_ENABLE=1`. This is primarily due to rare sporadic
+  failures I have observed or have been informed of, possibly involving socket
+  exhaustion or other hard-to-debug OS conditions. For now I am still
+  considering `pcommandbatch` supported and may continue to use it myself, but
+  its speed gains may not be worth its added complexity indefinitely. As core
+  counts keep increasing in the future, the time expense of spinning up a new
+  Python process per pcommand decreases, making pcommandbatch less of a win.
+  Please holler if you have any thoughts on this.
   
 ### 1.7.33 (build 21795, api 8, 2024-03-24)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
