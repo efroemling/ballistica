@@ -1,4 +1,3 @@
-
 # Released under the MIT License. See LICENSE for details.
 #
 """Defines some standard message objects for use with handlemessage() calls."""
