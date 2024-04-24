@@ -50,7 +50,8 @@ endif
 # are out of date.
 PREREQS_SAFE = .cache/checkenv $(PCOMMANDBATCHBIN) .dir-locals.el .mypy.ini	\
  .pyrightconfig.json .pylintrc .clang-format																\
- ballisticakit-cmake/.clang-format .editorconfig tools/cloudshell
+ ballisticakit-cmake/.clang-format .editorconfig tools/cloudshell						\
+ tools/bacloud
 
 # Prereq targets that may break if the project needs updating should go here.
 # An example is compile-command-databases; these might try to run cmake and
@@ -1234,6 +1235,13 @@ tools/cloudshell: tools/efrotools/genwrapper.py tools/efrotools/pyver.py
 	@echo Generating tools/cloudshell...
 	@PYTHONPATH=tools python3 -m \
  efrotools.genwrapper cloudshell efrotoolsinternal.cloudshell tools/cloudshell
+
+# Generate a bacloud script hard-coded to use our virtual environment.
+# This is a prereq dependency so should not itself depend on prereqs.
+tools/bacloud: tools/efrotools/genwrapper.py tools/efrotools/pyver.py
+	@echo Generating tools/bacloud...
+	@PYTHONPATH=tools python3 -m \
+ efrotools.genwrapper bacloud batools.bacloud tools/bacloud
 
 .clang-format: config/toolconfigsrc/clang-format $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@

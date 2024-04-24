@@ -33,6 +33,7 @@ _fulltest_buildfile_*
 ballistica_files/
 tools/pcommand
 tools/cloudshell
+tools/bacloud
 **/.#*
 
 # Environment files

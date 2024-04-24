@@ -57,6 +57,19 @@ def get_tz_offset_seconds() -> float:
     return utc_offset
 
 
+def run_bacloud_main() -> None:
+    """Do the thing."""
+    try:
+        App().run()
+    except KeyboardInterrupt:
+        # Let's do a clean fail on keyboard interrupt.
+        # Can make this optional if a backtrace is ever useful.
+        sys.exit(1)
+    except CleanError as clean_exc:
+        clean_exc.pretty_print()
+        sys.exit(1)
+
+
 class App:
     """Context for a run of the tool."""
 
