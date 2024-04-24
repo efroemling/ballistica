@@ -74,7 +74,7 @@ def requirements_upgrade() -> None:
         subprocess.run([sys.executable, '-m', 'pur', '-r', fname], check=True)
 
         # Sort lines.
-        with open(reqpath, encoding='utf-8') as infile:
+        with open(fname, encoding='utf-8') as infile:
             reqs2 = infile.read().strip()
         reqs_new = (
             '\n'.join(sorted(reqs2.splitlines(), key=lambda l: l.lower()))

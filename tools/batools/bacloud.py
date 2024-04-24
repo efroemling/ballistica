@@ -89,17 +89,17 @@ class App:
         ):
             raise CleanError('Unable to locate project directory.')
 
-        # Also run project prereqs checks so we can hopefully inform the user
+        # Also run project env checks so we can hopefully inform the user
         # of missing Python modules/etc. instead of just failing cryptically.
         try:
             subprocess.run(
-                ['make', '--quiet', 'prereqs'],
+                ['make', '--quiet', 'env'],
                 check=True,
                 cwd=self._project_root,
             )
         except subprocess.CalledProcessError as exc:
             raise CleanError(
-                '"make prereqs" check failed. '
+                '"make env" check failed. '
                 'Install missing requirements and try again.'
             ) from exc
 

@@ -48,7 +48,7 @@ def format_cpp_str(
     if not os.path.isfile(cfconfig):
         raise CleanError(
             f".clang-format file not found in '{projroot}';"
-            " do 'make prereqs' to generate it."
+            " do 'make env' to generate it."
         )
 
     with tempfile.TemporaryDirectory() as tempdir:
@@ -91,7 +91,7 @@ def format_project_cpp_files(projroot: Path, full: bool) -> None:
     if not os.path.isfile(cfconfig):
         raise CleanError(
             f".clang-format file not found in '{os.getcwd()}';"
-            " do 'make prereqs' to generate it."
+            " do 'make env' to generate it."
         )
 
     # Exclude generated files or else we could mess up dependencies

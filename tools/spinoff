@@ -46,7 +46,7 @@ if __name__ == '__main__':
             env['BA_SPINOFF_DST_ROOT'] = dst_proj_root
 
         # Make sure the src project is properly bootstrapped.
-        subprocess.run(['make', 'prereqs'], check=True, cwd=src_proj_root)
+        subprocess.run(['make', 'env'], check=True, cwd=src_proj_root)
 
         # Finally, run for realz (from src proj dir).
         result = subprocess.run(cmd, check=False, env=env, cwd=src_proj_root)

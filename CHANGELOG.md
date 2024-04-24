@@ -1,4 +1,4 @@
-### 1.7.34 (build 21808, api 8, 2024-04-23)
+### 1.7.34 (build 21810, api 8, 2024-04-23)
 - Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
   of the things this means is that we can use `typing.override` instead of the
   `typing_extensions` version so the annoying requirement of installing
@@ -38,6 +38,9 @@
   counts keep increasing in the future, the time expense of spinning up a new
   Python process per pcommand decreases, making pcommandbatch less of a win.
   Please holler if you have any thoughts on this.
+- Renamed the `prereqs` Makefile target to `env`. This is easier to type and
+  feels more accurate now that the target sets up things like the Python virtual
+  environment and generally gets the project environment ready to use.
   
 ### 1.7.33 (build 21795, api 8, 2024-03-24)
 - Stress test input-devices are now a bit smarter; they won't press any buttons

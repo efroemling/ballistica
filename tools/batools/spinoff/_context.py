@@ -1072,7 +1072,7 @@ class SpinoffContext:
             # Interestingly, seems we need to use shell command cd here
             # instead of just passing cwd arg.
             subprocess.run(
-                f'cd {self._src_root} && make prereqs',
+                f'cd {self._src_root} && make env',
                 shell=True,
                 check=True,
                 capture_output=True,
