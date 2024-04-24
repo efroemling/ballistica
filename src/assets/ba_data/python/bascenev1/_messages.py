@@ -1,3 +1,4 @@
+
 # Released under the MIT License. See LICENSE for details.
 #
 """Defines some standard message objects for use with handlemessage() calls."""
@@ -281,7 +282,7 @@ class HitMessage:
         # We should not be delivering invalid refs.
         # (we could translate to None here but technically we are changing
         # the message delivered which seems wrong)
-        assert player is None or player.exists()
+        assert player is not None or player.exists()
 
         # Return the player *only* if they're the type given.
         return player if isinstance(player, playertype) else None
