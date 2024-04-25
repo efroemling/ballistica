@@ -1,8 +1,9 @@
 ansiwrap==0.8.4
 cpplint==1.6.1
+dmgbuild==1.6.1
 filelock==3.13.4
 furo==2024.1.29
-mypy==1.9.0
+mypy==1.10.0
 pbxproj==4.1.0
 pdoc==14.4.0
 pur==7.3.1

@@ -1197,11 +1197,15 @@ DMAKE = $(MAKE) MAKEFLAGS= MKFLAGS= MAKELEVEL=
 # if using this on other platforms.
 CPUS = $(shell getconf _NPROCESSORS_ONLN || echo 8)
 PROJ_DIR = $(abspath $(CURDIR))
+
+# IMPORTANT: Make sure anything using these values has built env first (so
+#            that pcommand exists).
 VERSION = $(shell $(PCOMMAND) version version)
 BUILD_NUMBER = $(shell $(PCOMMAND) version build)
+STAGE_BUILD = $(PROJ_DIR)/$(PCOMMAND) stage_build
+
 BUILD_DIR = $(PROJ_DIR)/build
 LAZYBUILDDIR = .cache/lazybuild
-STAGE_BUILD = $(PROJ_DIR)/$(PCOMMAND) stage_build
 
 # Things to ignore when doing root level cleans. Note that we exclude build
 # and just blow that away manually; it might contain git repos or other things
@@ -1288,8 +1292,9 @@ tools/efrotools/pyver.py
       $(PCOMMAND) checkenv && mkdir -p .cache && touch .cache/checkenv; \
   fi
 
-$(PCOMMANDBATCHBIN): src/tools/pcommandbatch/pcommandbatch.c \
+$(PCOMMANDBATCHBIN): src/tools/pcommandbatch/pcommandbatch.c	\
                      src/tools/pcommandbatch/cJSON.c
+	@$(MAKE) tools/pcommand
 	@$(PCOMMAND) build_pcommandbatch $^ $@
 
 # CMake build-type lowercase

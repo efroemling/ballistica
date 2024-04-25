@@ -271,8 +271,7 @@ def build_apple(arch: str, debug: bool = False) -> None:
                 '\t# Apply target Python patches\n'
                 f'\tcd $$(PYTHON_SRCDIR-$({tword})) && '
                 'patch -p1 < $(PROJECT_DIR)/patch/Python/Python.patch\n'
-                f'\t/opt/homebrew/opt/python@3.12/bin/python3.12'
-                ' ../../tools/pcommand python_apple_patch'
+                f'\t../../tools/pcommand python_apple_patch'
                 f' $$(PYTHON_SRCDIR-$({tword}))\n'
             ),
             count=1,
