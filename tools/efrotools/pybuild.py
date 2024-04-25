@@ -1291,22 +1291,6 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 libs=_apple_libs('tvos_simulator'),
             ),
             BuildDef(
-                name='android_arm',
-                group=groups['android'],
-                config_headers={
-                    CompileArch.ANDROID_ARM: bases['android_arm']
-                    + f'/usr/include/{alibname}/pyconfig.h'
-                },
-                sys_config_scripts=[
-                    bases['android_arm']
-                    + f'/usr/lib/python{PY_VER_ANDROID}/'
-                    # f'_sysconfigdata_{debug_d}_linux_arm-linux-androideabi.py'
-                    f'_sysconfigdata_{debug_d}_linux_.py'
-                ],
-                libs=_android_libs('android_arm'),
-                libinst='android_armeabi-v7a',
-            ),
-            BuildDef(
                 name='android_arm64',
                 group=groups['android'],
                 config_headers={
@@ -1323,20 +1307,20 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 libinst='android_arm64-v8a',
             ),
             BuildDef(
-                name='android_x86',
+                name='android_arm',
                 group=groups['android'],
                 config_headers={
-                    CompileArch.ANDROID_X86: bases['android_x86']
+                    CompileArch.ANDROID_ARM: bases['android_arm']
                     + f'/usr/include/{alibname}/pyconfig.h'
                 },
                 sys_config_scripts=[
-                    bases['android_x86'] + f'/usr/lib/python{PY_VER_ANDROID}/'
-                    f'_sysconfigdata_{debug_d}'
-                    # f'_linux_i686-linux-android.py'
-                    f'_linux_.py'
+                    bases['android_arm']
+                    + f'/usr/lib/python{PY_VER_ANDROID}/'
+                    # f'_sysconfigdata_{debug_d}_linux_arm-linux-androideabi.py'
+                    f'_sysconfigdata_{debug_d}_linux_.py'
                 ],
-                libs=_android_libs('android_x86'),
-                libinst='android_x86',
+                libs=_android_libs('android_arm'),
+                libinst='android_armeabi-v7a',
             ),
             BuildDef(
                 name='android_x86_64',
@@ -1354,6 +1338,22 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 ],
                 libs=_android_libs('android_x86_64'),
                 libinst='android_x86_64',
+            ),
+            BuildDef(
+                name='android_x86',
+                group=groups['android'],
+                config_headers={
+                    CompileArch.ANDROID_X86: bases['android_x86']
+                    + f'/usr/include/{alibname}/pyconfig.h'
+                },
+                sys_config_scripts=[
+                    bases['android_x86'] + f'/usr/lib/python{PY_VER_ANDROID}/'
+                    f'_sysconfigdata_{debug_d}'
+                    # f'_linux_i686-linux-android.py'
+                    f'_linux_.py'
+                ],
+                libs=_android_libs('android_x86'),
+                libinst='android_x86',
             ),
         ]
 
@@ -1560,9 +1560,20 @@ def gather(do_android: bool, do_apple: bool) -> None:
                         scriptdst = os.path.join(
                             pylib_dst, os.path.basename(script)
                         )
+                        # Note to self: Python 3.12 seemed to change
+                        # something where the sys_config_scripts for
+                        # each of the architectures has the same name
+                        # whereas it did not before. We could patch this
+                        # by hand to split them out again, but for now
+                        # just going to hope it gets fixed in 3.13 (when
+                        # Android Python becomes an officially supported
+                        # target; yay!). Hopefully nobody is using stuff
+                        # from sysconfig anyway. But if they are, I
+                        # rearranged the order so x86 is the actual one
+                        # which will hopefully make errors obvious.
                         if os.path.exists(scriptdst):
                             print(
-                                'WARNING TEMPORARILY ALLOWING'
+                                'WARNING: TEMPORARILY ALLOWING'
                                 ' REPEAT SYS CONFIG SCRIPTS'
                             )
                             # raise RuntimeError(

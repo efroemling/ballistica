@@ -1,4 +1,4 @@
-### 1.7.34 (build 21817, api 8, 2024-04-24)
+### 1.7.34 (build 21820, api 8, 2024-04-25)
 - Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
   of the things this means is that we can use `typing.override` instead of the
   `typing_extensions` version so the annoying requirement of installing

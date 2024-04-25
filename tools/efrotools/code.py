@@ -34,15 +34,6 @@ def format_cpp_str(
     Note that some cpp formatting keys off the filename, so a fake one can
     be optionally provided.
     """
-
-    # Note: previously was explicitly passing the config path from
-    # toolconfigsrc so we didn't require running from the project root
-    # dir, but this doesn't work on older clang-format versions. So now
-    # just parsing and passing the values itself which should do the
-    # same thing. Once most people have newer clang-format we can go
-    # back to just passing the path.
-    use_built_config = True
-
     cfconfig = os.path.join(projroot, '.clang-format')
 
     if not os.path.isfile(cfconfig):
@@ -52,23 +43,22 @@ def format_cpp_str(
         )
 
     with tempfile.TemporaryDirectory() as tempdir:
-        filename = os.path.join(tempdir, filename)
-        with open(filename, 'w', encoding='utf-8') as outfile:
+        tfilename = os.path.join(tempdir, filename)
+        with open(tfilename, 'w', encoding='utf-8') as outfile:
             outfile.write(text)
-        if use_built_config:
-            import yaml
-            import json
 
-            # clang-format uses yaml but seems passing our raw yaml
-            # config contents doesn't work; converting to json seems to
-            # work though.
-            with open(cfconfig, encoding='utf-8') as infile:
-                cfconfigdata = json.dumps(yaml.safe_load(infile.read()))
-            style_arg = f'--style={cfconfigdata}'
-        else:
-            style_arg = f'--style=file:{cfconfig}'
-        subprocess.run(['clang-format', style_arg, '-i', filename], check=True)
-        with open(filename, encoding='utf-8') as infile:
+        # Note: clang-format allows '--style=file:<path>' in version 14
+        # or newer, but older versions are still common, so the easiest
+        # way to work everywhere is to just copy our config file into
+        # the temp dir.
+        with open(cfconfig, 'rb') as infileb:
+            with open(os.path.join(tempdir, '.clang-format'), 'wb') as outfileb:
+                outfileb.write(infileb.read())
+
+        subprocess.run(
+            ['clang-format', '--style=file', '-i', tfilename], check=True
+        )
+        with open(tfilename, encoding='utf-8') as infile:
             return infile.read()
 
 
@@ -105,8 +95,6 @@ def format_project_cpp_files(projroot: Path, full: bool) -> None:
     def format_file(filename: str) -> dict[str, Any]:
         start_time = time.monotonic()
 
-        # Note: seems os.system does not unlock the gil;
-        # make sure to use subprocess.
         result = subprocess.call(['clang-format', '-i', filename])
         if result != 0:
             raise RuntimeError(f'Formatting failed for {filename}')
