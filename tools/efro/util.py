@@ -109,19 +109,28 @@ def check_utc(value: datetime.datetime) -> None:
 
 
 def utc_now() -> datetime.datetime:
-    """Get offset-aware current utc time.
+    """Get timezone-aware current utc time.
 
-    This should be used for all datetimes getting sent over the network,
-    used with the entity system, etc.
-    (datetime.utcnow() gives a utc time value, but it is not timezone-aware
-    which makes it less safe to use)
+    Just a shortcut for datetime.datetime.now(datetime.UTC).
+    Avoid datetime.datetime.utcnow() which is deprecated and gives naive
+    times.
     """
-    return datetime.datetime.now(datetime.timezone.utc)
+    return datetime.datetime.now(datetime.UTC)
+
+
+def utc_now_naive() -> datetime.datetime:
+    """Get naive utc time.
+
+    This can be used to replace datetime.utcnow(), which is now deprecated.
+    Most all code should migrate to use timezone-aware times instead of
+    this.
+    """
+    return datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
 
 
 def utc_today() -> datetime.datetime:
     """Get offset-aware midnight in the utc time zone."""
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     return datetime.datetime(
         year=now.year, month=now.month, day=now.day, tzinfo=now.tzinfo
     )
@@ -129,7 +138,7 @@ def utc_today() -> datetime.datetime:
 
 def utc_this_hour() -> datetime.datetime:
     """Get offset-aware beginning of the current hour in the utc time zone."""
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     return datetime.datetime(
         year=now.year,
         month=now.month,
@@ -141,7 +150,7 @@ def utc_this_hour() -> datetime.datetime:
 
 def utc_this_minute() -> datetime.datetime:
     """Get offset-aware beginning of current minute in the utc time zone."""
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     return datetime.datetime(
         year=now.year,
         month=now.month,

@@ -50,10 +50,15 @@ class StateData:
 def get_tz_offset_seconds() -> float:
     """Return the offset between utc and local time in seconds."""
     tval = time.time()
+
+    # Compare naive current and utc times to get our offset from utc.
     utc_offset = (
         datetime.datetime.fromtimestamp(tval)
-        - datetime.datetime.utcfromtimestamp(tval)
+        - datetime.datetime.fromtimestamp(tval, datetime.UTC).replace(
+            tzinfo=None
+        )
     ).total_seconds()
+
     return utc_offset
 
 

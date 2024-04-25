@@ -6,6 +6,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from efro.util import utc_now
+
 import bauiv1 as bui
 
 if TYPE_CHECKING:
@@ -278,8 +280,10 @@ class StoreButton:
                 for sale_item, sale_info in list(sales_raw.items()):
                     if not plus.get_purchased(sale_item):
                         to_end = (
-                            datetime.datetime.utcfromtimestamp(sale_info['e'])
-                            - datetime.datetime.utcnow()
+                            datetime.datetime.fromtimestamp(
+                                sale_info['e'], datetime.UTC
+                            )
+                            - utc_now()
                         ).total_seconds()
                         if to_end > 0:
                             sale_times.append(to_end)

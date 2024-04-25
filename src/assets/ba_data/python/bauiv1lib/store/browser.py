@@ -15,6 +15,7 @@ from enum import Enum
 from threading import Thread
 from typing import TYPE_CHECKING
 
+from efro.util import utc_now
 from efro.error import CommunicationError
 import bacommon.cloud
 import bauiv1 as bui
@@ -681,8 +682,10 @@ class StoreBrowserWindow(bui.Window):
             # Look at the current set of sales; filter any with time remaining.
             for sale_item, sale_info in list(sales_raw.items()):
                 to_end = (
-                    datetime.datetime.utcfromtimestamp(sale_info['e'])
-                    - datetime.datetime.utcnow()
+                    datetime.datetime.fromtimestamp(
+                        sale_info['e'], datetime.UTC
+                    )
+                    - utc_now()
                 ).total_seconds()
                 if to_end > 0:
                     sales[sale_item] = {
