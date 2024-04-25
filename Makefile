@@ -1274,18 +1274,23 @@ SKIP_ENV_CHECKS ?= 0
 VENV_PYTHON ?= python3.12
 
 # Rebuild our virtual environment whenever reqs or Python version changes.
-# This is a prereq dependency so should not itself depend on env. Note
-# that we rely on pcommand but can't use it in here until the end when the
-# venv is up.
+# This is a prereq dependency so should not itself depend on env. Note that we
+# rely on pcommand but can't use it in here until the end when the venv is up.
+# Also note that we try to update existing venvs when possible, but when
+# Python version changes we blow it away and start over to be safe.
 .venv/efro_venv_complete: tools/pcommand config/requirements.txt \
 tools/efrotools/pyver.py
-	@echo Creating Project\'s Python Virtual Environment...
-	@rm -rf .venv
+	@[ -f .venv/bin/$(VENV_PYTHON) ] \
+ && echo Updating existing $(VENV_PYTHON) virtual environment in \'.venv\'... \
+ || (echo Creating new $(VENV_PYTHON) virtual environment in \'.venv\'... \
+ && rm -rf .venv)
 	$(VENV_PYTHON) -m venv .venv
 	.venv/bin/pip install --upgrade pip
 	.venv/bin/pip install -r config/requirements.txt
-	touch .venv/efro_venv_complete # Done last to avoid partly-built venvs.
-	@$(PCOMMAND) echo GRN Python Virtual Environment Created.
+	touch .venv/efro_venv_complete # Done last to enforce fully-built venvs.
+	@$(PCOMMAND) echo \
+ GRN Project virtual environment for BLD $(VENV_PYTHON) RST GRN \
+ at BLD .venv RST GRN is ready to use.
 
 .cache/checkenv: $(ENV_SRC)
 	@if [ $(SKIP_ENV_CHECKS) -ne 1 ]; then \
