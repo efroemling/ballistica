@@ -93,6 +93,7 @@ def generate_app_module(
                 # so we need to be consistent.
                 if fset.allow_as_soft_requirement:
                     contents += (
+                        f'\n'
                         f'@property\n'
                         f'def {fset.name}(self) -> {classname} | None:\n'
                         f'    """Our {fset.name} subsystem (if available)."""\n'
@@ -118,6 +119,7 @@ def generate_app_module(
                     )
                 else:
                     contents += (
+                        f'\n'
                         '@property\n'
                         f'def {fset.name}(self) -> {classname}:\n'
                         f'    """Our {fset.name} subsystem'
