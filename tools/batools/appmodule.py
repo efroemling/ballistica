@@ -69,11 +69,10 @@ def generate_app_module(
     contents = ''
 
     for fsetname in sorted(all_fset_names):
-        # for _fsname, fset in sorted(fsets.items()):
         if fsetname in missing_soft_fset_names:
             contents += (
                 f'\n'
-                f'@cached_property\n'
+                f'@property\n'
                 f'def {fsetname}(self) -> Any | None:\n'
                 f'    """Our {fsetname} subsystem (not available'
                 f' in this project)."""\n'
@@ -94,10 +93,6 @@ def generate_app_module(
                 # so we need to be consistent.
                 if fset.allow_as_soft_requirement:
                     contents += (
-                        # f'\n'
-                        # f'_{fset.name}_init_lock = Lock()\n'
-                        f'\n'
-                        # f'@cached_property\n'
                         f'@property\n'
                         f'def {fset.name}(self) -> {classname} | None:\n'
                         f'    """Our {fset.name} subsystem (if available)."""\n'
@@ -110,12 +105,6 @@ def generate_app_module(
                         f'def _create_{fset.name}_subsystem()'
                         f' -> {classname} | None:\n'
                         f'    # pylint: disable=cyclic-import\n'
-                        f'\n'
-                        # f'    # cached_property is not thread safe as of'
-                        # f' Python 3.12, so we\n'
-                        # f'    # need to wrangle that ourself'
-                        # f' to avoid multiple instantiations.\n'
-                        # f'\n'
                         f'    try:\n'
                         f'        from {modname} import {classname}\n'
                         f'\n'
@@ -129,8 +118,6 @@ def generate_app_module(
                     )
                 else:
                     contents += (
-                        f'\n'
-                        # f'@cached_property\n'
                         '@property\n'
                         f'def {fset.name}(self) -> {classname}:\n'
                         f'    """Our {fset.name} subsystem'
