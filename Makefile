@@ -176,7 +176,7 @@ dummymodules-clean: env
 
 # Build the project's Python virtual environment. This should happen
 # automatically as a dependency of the env target.
-venv: .venv/efro_venv_complete
+venv: .venv/.efro_venv_complete
 
 # Update pip requirements to latest versions.
 venv-upgrade: env
@@ -1221,10 +1221,10 @@ TOOL_CFG_INST = $(PCOMMAND) tool_config_install
 
 # Anything that affects tool-config generation.
 TOOL_CFG_SRC = tools/efrotools/toolconfig.py config/projectconfig.json \
- .venv/efro_venv_complete tools/pcommand
+ .venv/.efro_venv_complete tools/pcommand
 
 # Anything that should trigger an environment-check when changed.
-ENV_SRC = tools/batools/build.py .venv/efro_venv_complete tools/pcommand
+ENV_SRC = tools/batools/build.py .venv/.efro_venv_complete tools/pcommand
 
 # Generate a pcommand script hard-coded to use our virtual environment.
 # This is a prereq dependency so should not itself depend on env.
@@ -1273,21 +1273,28 @@ SKIP_ENV_CHECKS ?= 0
 
 VENV_PYTHON ?= python3.12
 
-# Rebuild our virtual environment whenever reqs or Python version changes.
-# This is a prereq dependency so should not itself depend on env. Note that we
-# rely on pcommand but can't use it in here until the end when the venv is up.
-# Also note that we try to update existing venvs when possible, but when
-# Python version changes we blow it away and start over to be safe.
-.venv/efro_venv_complete: tools/pcommand config/requirements.txt \
+# Increment this to force all downstream venvs to fully rebuild. Useful after
+# removing requirements since upgrading in place will never uninstall stuff.
+VENV_STATE = 0
+
+# Rebuild our virtual environment whenever reqs, Python version, or explicit
+# state number changes. This is a dependency of env so it should not itself
+# depend on env. Note that we list pcommand as a requirement but can't use it
+# in here until the end when the venv is up. Also note that we try to update
+# venvs in place when possible, but when Python version or venv-state changes
+# we blow it away and start over to be safe.
+.venv/.efro_venv_complete: tools/pcommand config/requirements.txt \
 tools/efrotools/pyver.py
 	@[ -f .venv/bin/$(VENV_PYTHON) ] \
+ && [ -f .venv/.efro_venv_state_$(VENV_STATE) ] \
  && echo Updating existing $(VENV_PYTHON) virtual environment in \'.venv\'... \
  || (echo Creating new $(VENV_PYTHON) virtual environment in \'.venv\'... \
  && rm -rf .venv)
 	$(VENV_PYTHON) -m venv .venv
 	.venv/bin/pip install --upgrade pip
 	.venv/bin/pip install -r config/requirements.txt
-	touch .venv/efro_venv_complete # Done last to enforce fully-built venvs.
+	touch .venv/.efro_venv_state_$(VENV_STATE) \
+ .venv/.efro_venv_complete # Done last to enforce fully-built venvs.
 	@$(PCOMMAND) echo \
  GRN Project virtual environment for BLD $(VENV_PYTHON) RST GRN \
  at BLD .venv RST GRN is ready to use.

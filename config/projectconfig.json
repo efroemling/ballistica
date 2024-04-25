@@ -31,7 +31,6 @@
     "astroid",
     "pylint.lint",
     "pytest",
-    "pytz",
     "yaml",
     "requests",
     "typing_extensions",

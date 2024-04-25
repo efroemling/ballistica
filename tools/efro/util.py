@@ -12,16 +12,6 @@ import functools
 from enum import Enum
 from typing import TYPE_CHECKING, cast, TypeVar, Generic
 
-_pytz_utc: Any
-
-# We don't *require* pytz, but we want to support it for tzinfos if available.
-try:
-    import pytz
-
-    _pytz_utc = pytz.utc
-except ModuleNotFoundError:
-    _pytz_utc = None  # pylint: disable=invalid-name
-
 if TYPE_CHECKING:
     import asyncio
     from efro.call import Call as Call  # 'as Call' so we re-export.
@@ -112,12 +102,9 @@ def enum_by_value(cls: type[EnumT], value: Any) -> EnumT:
 
 def check_utc(value: datetime.datetime) -> None:
     """Ensure a datetime value is timezone-aware utc."""
-    if value.tzinfo is not datetime.timezone.utc and (
-        _pytz_utc is None or value.tzinfo is not _pytz_utc
-    ):
+    if value.tzinfo is not datetime.UTC:
         raise ValueError(
-            'datetime value does not have timezone set as'
-            ' datetime.timezone.utc'
+            'datetime value does not have timezone set as datetime.UTC'
         )
 
 
