@@ -679,7 +679,6 @@
       <w>cval</w>
       <w>cwdg</w>
       <w>cxxabi</w>
-      <w>cyaml</w>
       <w>cycledelay</w>
       <w>cygwinccompiler</w>
       <w>dandroid</w>
@@ -2019,7 +2018,6 @@
       <w>objset</w>
       <w>objsizes</w>
       <w>objt</w>
-      <w>objtoyaml</w>
       <w>objtype</w>
       <w>objtypes</w>
       <w>obval</w>
