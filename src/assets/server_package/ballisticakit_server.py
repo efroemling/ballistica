@@ -1,15 +1,17 @@
 #!/usr/bin/env python3.12
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """BallisticaKit server manager."""
 from __future__ import annotations
 
-import json
 import os
-import signal
-import subprocess
 import sys
 import time
+import json
+import signal
+import tomllib
+import subprocess
 from pathlib import Path
 from threading import Lock, Thread, current_thread
 from typing import TYPE_CHECKING
@@ -40,6 +42,10 @@ VERSION_STR = '1.3.2'
 #  - Updated to use Python 3.12.
 #
 #  - Server config file is now in toml format instead of yaml.
+#
+#  - Server config can now be set to a .json file OR a .toml file.
+#    By default it will look for 'config.json' and then 'config.toml'
+#    in the same dir as this script.
 #
 # 1.3.1
 #
@@ -103,8 +109,7 @@ class ServerManagerApp:
     IMMEDIATE_SHUTDOWN_TIME_LIMIT = 5.0
 
     def __init__(self) -> None:
-        self._config_path = 'config.toml'
-        self._user_provided_config_path = False
+        self._user_provided_config_path: str | None = None
         self._config = ServerConfig()
         self._ba_root_path = os.path.abspath('dist/ba_root')
         self._interactive = sys.stdin.isatty()
@@ -127,13 +132,14 @@ class ServerManagerApp:
         self._subprocess_sent_unclean_exit = False
         self._subprocess_thread: Thread | None = None
         self._subprocess_exited_cleanly: bool | None = None
+        self._did_multi_config_warning = False
 
         # This may override the above defaults.
         self._parse_command_line_args()
 
         # Do an initial config-load. If the config is invalid at this
-        # point we can cleanly die (we're more lenient later on
-        # reloads).
+        # point we can cleanly die; we're more resilient later on reload
+        # attempts.
         self.load_config(strict=True, print_confirmation=False)
 
     @property
@@ -409,8 +415,7 @@ class ServerManagerApp:
                     raise CleanError(f"Supplied path does not exist: '{path}'.")
                 # We need an abs path because we may be in a different
                 # cwd currently than we will be during the run.
-                self._config_path = os.path.abspath(path)
-                self._user_provided_config_path = True
+                self._user_provided_config_path = os.path.abspath(path)
                 i += 2
             elif arg == '--root':
                 if i + 1 >= argc:
@@ -478,9 +483,9 @@ class ServerManagerApp:
             + cls._par(
                 'Set the config file read by the server script. The config'
                 ' file contains most options for what kind of game to host.'
-                ' It should be in toml format. If not specified, the script'
-                ' will look for a file named \'config.toml\' in the same'
-                ' directory as the script.'
+                ' It should be in toml or json format. If not specified,'
+                ' the script will look for a file named \'config.toml\' or'
+                ' \'config.json\' in the same directory as the script.'
             )
             + '\n'
             f'{Clr.BLD}--root [path]{Clr.RST}\n'
@@ -570,21 +575,51 @@ class ServerManagerApp:
                         return
                     time.sleep(1)
 
+    def _get_config_path(self) -> str:
+
+        if self._user_provided_config_path is not None:
+            return self._user_provided_config_path
+
+        # Otherwise look for config.toml or config.json in the same dir
+        # as our script. Need to work in abs paths since we may chdir when
+        # we start running.
+        toml_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), 'config.toml')
+        )
+        toml_exists = os.path.exists(toml_path)
+        json_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), 'config.json')
+        )
+        json_exists = os.path.exists(json_path)
+
+        # Warn if both configs are present.
+        if toml_exists and json_exists and not self._did_multi_config_warning:
+            self._did_multi_config_warning = True
+            print(
+                f'{Clr.YLW}Both config.toml and config.json'
+                f' found; will use json.{Clr.RST}',
+                flush=True,
+            )
+        if json_exists:
+            return json_path
+        return toml_path
+
     def _load_config_from_file(self, print_confirmation: bool) -> ServerConfig:
         out: ServerConfig | None = None
 
-        if not os.path.exists(self._config_path):
+        config_path = self._get_config_path()
+
+        if not os.path.exists(config_path):
             # Special case:
             #
-            # If the user didn't specify a particular config file, allow
-            # gracefully falling back to defaults if the default one is
-            # missing.
+            # If the user didn't provide a config path AND the default
+            # config path does not exist, fall back to defaults.
             if not self._user_provided_config_path:
                 if print_confirmation:
                     print(
                         f'{Clr.YLW}Default config file not found'
-                        f' (\'{self._config_path}\'); using default'
-                        f' settings.{Clr.RST}',
+                        f' (\'{config_path}\'); using default'
+                        f' config.{Clr.RST}',
                         flush=True,
                     )
                 self._config_mtime = None
@@ -592,17 +627,23 @@ class ServerManagerApp:
                 return ServerConfig()
 
             # Don't be so lenient if the user pointed us at one though.
-            raise RuntimeError(f"Config file not found: '{self._config_path}'.")
+            raise RuntimeError(f"Config file not found: '{config_path}'.")
 
-        import tomllib
-
-        with open(self._config_path, encoding='utf-8') as infile:
-            user_config_raw = tomllib.loads(infile.read())
+        with open(config_path, encoding='utf-8') as infile:
+            if config_path.endswith('.toml'):
+                user_config_raw = tomllib.loads(infile.read())
+            elif config_path.endswith('.json'):
+                user_config_raw = json.loads(infile.read())
+            else:
+                raise CleanError(
+                    f"Invalid config file path '{config_path}';"
+                    f" path must end with '.toml' or '.json'."
+                )
 
         out = dataclass_from_dict(ServerConfig, user_config_raw)
 
         # Update our known mod-time since we know it exists.
-        self._config_mtime = Path(self._config_path).stat().st_mtime
+        self._config_mtime = Path(config_path).stat().st_mtime
         self._last_config_mtime_check_time = time.time()
 
         if print_confirmation:
@@ -879,8 +920,9 @@ class ServerManagerApp:
             ):
                 self._last_config_mtime_check_time = now
                 mtime: float | None
-                if os.path.isfile(self._config_path):
-                    mtime = Path(self._config_path).stat().st_mtime
+                config_path = self._get_config_path()
+                if os.path.isfile(config_path):
+                    mtime = Path(config_path).stat().st_mtime
                 else:
                     mtime = None
                 if mtime != self._config_mtime:

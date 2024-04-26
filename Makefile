@@ -1275,7 +1275,7 @@ VENV_PYTHON ?= python3.12
 
 # Increment this to force all downstream venvs to fully rebuild. Useful after
 # removing requirements since upgrading in place will never uninstall stuff.
-VENV_STATE = 0
+VENV_STATE = 1
 
 # Rebuild our virtual environment whenever reqs, Python version, or explicit
 # state number changes. This is a dependency of env so it should not itself
