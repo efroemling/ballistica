@@ -39,6 +39,8 @@ VERSION_STR = '1.3.2'
 #
 #  - Updated to use Python 3.12.
 #
+#  - Server config file is now in toml format instead of yaml.
+#
 # 1.3.1
 #
 #  - Windows binary is now named 'BallisticaKitHeadless.exe'.
@@ -101,7 +103,7 @@ class ServerManagerApp:
     IMMEDIATE_SHUTDOWN_TIME_LIMIT = 5.0
 
     def __init__(self) -> None:
-        self._config_path = 'config.yaml'
+        self._config_path = 'config.toml'
         self._user_provided_config_path = False
         self._config = ServerConfig()
         self._ba_root_path = os.path.abspath('dist/ba_root')
@@ -476,11 +478,9 @@ class ServerManagerApp:
             + cls._par(
                 'Set the config file read by the server script. The config'
                 ' file contains most options for what kind of game to host.'
-                ' It should be in yaml format. Note that yaml is backwards'
-                ' compatible with json so you can just write json if you'
-                ' want to. If not specified, the script will look for a'
-                ' file named \'config.yaml\' in the same directory as the'
-                ' script.'
+                ' It should be in toml format. If not specified, the script'
+                ' will look for a file named \'config.toml\' in the same'
+                ' directory as the script.'
             )
             + '\n'
             f'{Clr.BLD}--root [path]{Clr.RST}\n'
@@ -594,22 +594,16 @@ class ServerManagerApp:
             # Don't be so lenient if the user pointed us at one though.
             raise RuntimeError(f"Config file not found: '{self._config_path}'.")
 
-        import yaml
+        import tomllib
 
         with open(self._config_path, encoding='utf-8') as infile:
-            user_config_raw = yaml.safe_load(infile.read())
+            user_config_raw = tomllib.loads(infile.read())
 
-        # An empty config file will yield None, and that's ok.
-        if user_config_raw is not None:
-            out = dataclass_from_dict(ServerConfig, user_config_raw)
+        out = dataclass_from_dict(ServerConfig, user_config_raw)
 
         # Update our known mod-time since we know it exists.
         self._config_mtime = Path(self._config_path).stat().st_mtime
         self._last_config_mtime_check_time = time.time()
-
-        # Go with defaults if we weren't able to load anything.
-        if out is None:
-            out = ServerConfig()
 
         if print_confirmation:
             print(

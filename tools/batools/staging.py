@@ -669,8 +669,8 @@ class AssetStager:
             projroot=self.projroot,
             mode=modeval,
             infilename=f'{self.projroot}/src/assets/server_package/'
-            'config_template.yaml',
-            outfilename=os.path.join(self.serverdst, 'config_template.yaml'),
+            'config_template.toml',
+            outfilename=os.path.join(self.serverdst, 'config_template.toml'),
         )
         if self.win_type is not None:
             fname = 'launch_ballisticakit_server.bat'
@@ -763,11 +763,11 @@ def _stage_server_file(
     os.makedirs(os.path.dirname(outfilename), exist_ok=True)
 
     basename = os.path.basename(infilename)
-    if basename == 'config_template.yaml':
+    if basename == 'config_template.toml':
         # Inject all available config values into the config file.
         _write_if_changed(
             outfilename,
-            batools.build.filter_server_config(str(projroot), infilename),
+            batools.build.filter_server_config_toml(str(projroot), infilename),
         )
 
     elif basename == 'ballisticakit_server.py':

@@ -1,4 +1,4 @@
-# Pyright's actual config is a json file but we're using yaml here so we
+# Pyright's actual config is a json file but we're using toml here so we
 # can include lovely comments (yaml is a superset of json) and then we
 # bake it down into a json file.
 

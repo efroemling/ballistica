@@ -198,7 +198,7 @@ ctx.filter_file_names = {
     'LICENSE',
     'cloudtool',
     'bacloud',
-    'config_template.yaml',
+    'config_template.toml',
     '.efrocachemap',
 }
 

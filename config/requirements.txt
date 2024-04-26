@@ -12,11 +12,10 @@ pytest==8.1.1
 python-daemon==3.0.1
 python-lsp-black==2.0.0
 python-lsp-server==1.11.0
-PyYAML==6.0.1
 requests==2.31.0
 Sphinx==7.3.7
+tomlkit==0.12.4
 types-certifi==2021.10.8.3
 types-filelock==3.2.7
-types-PyYAML==6.0.12.20240311
 types-requests==2.31.0.20240406
 typing_extensions==4.11.0

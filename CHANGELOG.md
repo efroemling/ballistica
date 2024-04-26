@@ -601,6 +601,11 @@
   can be useful for core engine code to directly and clearly point out problems
   that cannot be recovered from (Exceptions in such cases can tend to be
   'handled' which leads to a broken or crashing app).
+- The server config file is now in `toml` format instead of `yaml`. Python has
+  built in support for reading `toml` as of 3.11 which means we don't have to
+  bundle extra packages, and `toml` has more of a clean minimal design that
+  works well for config files. Also I plan to use it for AssetPackage
+  configuration stuff so this keeps things consistent.
 
 ### 1.7.23 (build 21178, api 8, 2023-07-19)
 

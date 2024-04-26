@@ -446,92 +446,85 @@ def _get_server_config_raw_contents(projroot: str) -> str:
     return textwrap.dedent('\n'.join(lines[firstline : lastline + 1]))
 
 
-def _get_server_config_template_yaml(projroot: str) -> str:
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
-    import yaml
+def _get_server_config_template_toml(projroot: str) -> str:
+    from tomlkit import document, dumps
+    from bacommon.servermanager import ServerConfig
+
+    cfg = ServerConfig()
+
+    # Override some defaults with values we want to display commented
+    # out instead.
+    cfg.playlist_code = 12345
+    cfg.stats_url = 'https://mystatssite.com/showstats?player=${ACCOUNT}'
+    cfg.clean_exit_minutes = 60
+    cfg.unclean_exit_minutes = 90
+    cfg.idle_exit_minutes = 20
+    cfg.admins = ['pb-yOuRAccOuNtIdHErE', 'pb-aNdMayBeAnotherHeRE']
+    cfg.protocol_version = 35
+    cfg.session_max_players_override = 8
+    cfg.playlist_inline = []
+    cfg.team_names = ('Red', 'Blue')
+    cfg.team_colors = ((0.1, 0.25, 1.0), (1.0, 0.25, 0.2))
 
     lines_in = _get_server_config_raw_contents(projroot).splitlines()
+
+    # Convert to double quotes only (we'll convert back at the end).
+    assert all(('"' not in l) for l in lines_in)
+    lines_in = [l.replace("'", '"') for l in lines_in]
+
     lines_out: list[str] = []
     ignore_vars = {'stress_test_players'}
     for line in lines_in:
-        if any(line.startswith(f'{var}:') for var in ignore_vars):
-            continue
-        if line.startswith(' '):
-            # Ignore indented lines (our few multi-line special cases).
-            continue
 
-        if line.startswith(']') or line.startswith(')'):
-            # Ignore closing lines (our few multi-line special cases).
-            continue
+        # Replace attr declarations with commented out toml values.
+        if line != '' and not line.startswith('#') and ':' in line:
+            before_colon, _after_colon = line.split(':', 1)
+            vname = before_colon.strip()
+            if vname in ignore_vars:
+                continue
+            vval: Any = getattr(cfg, vname)
 
-        if line.startswith('team_names:'):
-            lines_out += [
-                '#team_names:',
-                '#- Blue',
-                '#- Red',
-            ]
-            continue
+            doc = document()
+            # Toml doesn't support None/null
+            if vval is None:
+                raise RuntimeError(
+                    f"ServerManager value '{vname}' has value None."
+                    f' This is not allowed in toml;'
+                    f' please provide a dummy value.'
+                )
+            assert vval is not None
+            doc[vname] = vval
+            lines_out += ['#' + l for l in dumps(doc).strip().splitlines()]
 
-        if line.startswith('team_colors:'):
-            lines_out += [
-                '#team_colors:',
-                '#- [0.1, 0.25, 1.0]',
-                '#- [1.0, 0.25, 0.2]',
-            ]
-            continue
+        # Preserve blank lines, but only one in a row.
+        elif line == '':
+            if not lines_out or lines_out[-1] != '':
+                lines_out.append(line)
 
-        if line.startswith('playlist_inline:'):
-            lines_out += ['#playlist_inline: []']
-            continue
-
-        if line != '' and not line.startswith('#'):
-            before_equal_sign, vval_raw = line.split('=', 1)
-            before_equal_sign = before_equal_sign.strip()
-            vval_raw = vval_raw.strip()
-            vname = before_equal_sign.split()[0]
-            assert vname.endswith(':'), f"'{vname}' does not end with ':'"
-            vname = vname[:-1]
-            vval: Any
-            if vval_raw == 'field(default_factory=list)':
-                vval = []
-            else:
-                vval = eval(vval_raw)  # pylint: disable=eval-used
-
-            # Filter/override a few things.
-            if vname == 'playlist_code':
-                # User wouldn't want to pass the default of None here.
-                vval = 12345
-            elif vname == 'clean_exit_minutes':
-                vval = 60
-            elif vname == 'unclean_exit_minutes':
-                vval = 90
-            elif vname == 'idle_exit_minutes':
-                vval = 20
-            elif vname == 'stats_url':
-                vval = 'https://mystatssite.com/showstats?player=${ACCOUNT}'
-            elif vname == 'admins':
-                vval = ['pb-yOuRAccOuNtIdHErE', 'pb-aNdMayBeAnotherHeRE']
-            elif vname == 'protocol_version':
-                vval = 35
-            lines_out += [
-                '#' + l for l in yaml.dump({vname: vval}).strip().splitlines()
-            ]
-        else:
-            # Convert comments referring to python bools to yaml bools.
+        # Preserve comment lines.
+        elif line.startswith('#'):
+            # Convert comments referring to python bools to toml bools.
             line = line.replace('True', 'true').replace('False', 'false')
+
             if '(internal)' not in line:
                 lines_out.append(line)
-    return '\n'.join(lines_out)
+
+    out = '\n'.join(lines_out)
+
+    # Convert back to single quotes only.
+    assert "'" not in out
+    out = out.replace('"', "'")
+
+    return out
 
 
-def filter_server_config(projroot: str, infilepath: str) -> str:
+def filter_server_config_toml(projroot: str, infilepath: str) -> str:
     """Add commented-out config options to a server config."""
     with open(infilepath, encoding='utf-8') as infile:
         cfg = infile.read()
     return cfg.replace(
         '# __CONFIG_TEMPLATE_VALUES__',
-        _get_server_config_template_yaml(projroot),
+        _get_server_config_template_toml(projroot),
     )
 
 

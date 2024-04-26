@@ -23,7 +23,7 @@ def install_tool_config(projroot: Path, src: Path, dst: Path) -> None:
     """Install a config."""
     print(f'Creating tool config: {Clr.BLD}{dst}{Clr.RST}')
 
-    # Special case: if we've got a src .yaml and a dst .json, convert.
+    # Special case: if we've got a src .toml and a dst .json, convert.
     # This can be handy to add annotations/etc. in the src which isn't
     # possible with json.
     if src.suffix == '.toml' and dst.suffix == '.json':

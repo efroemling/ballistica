@@ -31,7 +31,6 @@
     "astroid",
     "pylint.lint",
     "pytest",
-    "yaml",
     "requests",
     "typing_extensions",
     "cpplint",
@@ -46,7 +45,8 @@
     "openstep_parser",
     "daemon",
     "jinja2",
-    "jinja2.Environment"
+    "jinja2.Environment",
+    "tomlkit"
   ],
   "python_paths": [
     "src/assets/ba_data/python",
