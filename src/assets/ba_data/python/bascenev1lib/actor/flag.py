@@ -5,10 +5,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
+
+import bascenev1 as bs
 
 from bascenev1lib.gameutils import SharedObjects
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -328,6 +329,7 @@ class Flag(bs.Actor):
             1.0, bs.WeakCall(self._hide_score_text)
         )
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         assert not self.expired
         if isinstance(msg, bs.DieMessage):

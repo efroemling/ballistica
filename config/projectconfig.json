@@ -31,8 +31,6 @@
     "astroid",
     "pylint.lint",
     "pytest",
-    "pytz",
-    "yaml",
     "requests",
     "typing_extensions",
     "cpplint",
@@ -45,7 +43,10 @@
     "pbxproj.XcodeProject",
     "pbxproj.pbxextensions",
     "openstep_parser",
-    "daemon"
+    "daemon",
+    "jinja2",
+    "jinja2.Environment",
+    "tomlkit"
   ],
   "python_paths": [
     "src/assets/ba_data/python",

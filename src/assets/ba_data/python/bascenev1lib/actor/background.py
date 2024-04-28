@@ -7,7 +7,7 @@ from __future__ import annotations
 import random
 import weakref
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 
@@ -104,6 +104,7 @@ class Background(bs.Actor):
                         timeval += random.random() * 0.1
                     bs.animate(cmb, 'input1', keys, loop=True)
 
+    @override
     def __del__(self) -> None:
         # Normal actors don't get sent DieMessages when their
         # activity is shutting down, but we still need to do so
@@ -138,6 +139,7 @@ class Background(bs.Actor):
                         )
                         bs.timer(self.fade_time + 0.1, self.node.delete)
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         assert not self.expired
         if isinstance(msg, bs.DieMessage):

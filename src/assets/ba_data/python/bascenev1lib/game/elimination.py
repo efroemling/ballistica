@@ -8,11 +8,12 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
+
+import bascenev1 as bs
 
 from bascenev1lib.actor.spazfactory import SpazFactory
 from bascenev1lib.actor.scoreboard import Scoreboard
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -157,6 +158,7 @@ class Icon(bs.Actor):
             if lives == 0:
                 bs.timer(0.6, self.update_for_lives)
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.DieMessage):
             self.node.delete()
@@ -194,6 +196,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
 
     allow_mid_activity_joins = False
 
+    @override
     @classmethod
     def get_available_settings(
         cls, sessiontype: type[bs.Session]
@@ -238,12 +241,14 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
             )
         return settings
 
+    @override
     @classmethod
     def supports_session_type(cls, sessiontype: type[bs.Session]) -> bool:
         return issubclass(sessiontype, bs.DualTeamSession) or issubclass(
             sessiontype, bs.FreeForAllSession
         )
 
+    @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
         assert bs.app.classic is not None
@@ -269,6 +274,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
             bs.MusicType.EPIC if self._epic_mode else bs.MusicType.SURVIVAL
         )
 
+    @override
     def get_instance_description(self) -> str | Sequence:
         return (
             'Last team standing wins.'
@@ -276,6 +282,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
             else 'Last one standing wins.'
         )
 
+    @override
     def get_instance_description_short(self) -> str | Sequence:
         return (
             'last team standing wins'
@@ -283,6 +290,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
             else 'last one standing wins'
         )
 
+    @override
     def on_player_join(self, player: Player) -> None:
         player.lives = self._lives_per_player
 
@@ -299,6 +307,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
         if self.has_begun():
             self._update_icons()
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
         self._start_time = bs.time()
@@ -464,11 +473,12 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
                     points.append(
                         ((start_pos - player_pos).length(), start_pos)
                     )
-                # Hmm.. we need to sorting vectors too?
+                # Hmm.. we need to sort vectors too?
                 points.sort(key=lambda x: x[0])
                 return points[-1][1]
         return None
 
+    @override
     def spawn_player(self, player: Player) -> bs.Actor:
         actor = self.spawn_player_spaz(player, self._get_spawn_point(player))
         if not self._solo_mode:
@@ -495,6 +505,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
             position=player.node.position,
         ).autoretain()
 
+    @override
     def on_player_leave(self, player: Player) -> None:
         super().on_player_leave(player)
         player.icons = []
@@ -518,6 +529,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
     def _get_total_team_lives(self, team: Team) -> int:
         return sum(player.lives for player in team.players)
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.PlayerDiedMessage):
             # Augment standard behavior.
@@ -588,6 +600,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
             and any(player.lives > 0 for player in team.players)
         ]
 
+    @override
     def end_game(self) -> None:
         if self.has_ended():
             return

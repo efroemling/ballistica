@@ -65,17 +65,13 @@ class EditProfileWindow(bui.Window):
         self._height = height = (
             350.0
             if uiscale is bui.UIScale.SMALL
-            else 400.0
-            if uiscale is bui.UIScale.MEDIUM
-            else 450.0
+            else 400.0 if uiscale is bui.UIScale.MEDIUM else 450.0
         )
         spacing = 40
         self._base_scale = (
             2.05
             if uiscale is bui.UIScale.SMALL
-            else 1.5
-            if uiscale is bui.UIScale.MEDIUM
-            else 1.0
+            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
         top_extra = 15 if uiscale is bui.UIScale.SMALL else 15
         super().__init__(
@@ -83,9 +79,9 @@ class EditProfileWindow(bui.Window):
                 size=(width, height + top_extra),
                 transition=transition,
                 scale=self._base_scale,
-                stack_offset=(0, 15)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, 15) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
         cancel_button = btn = bui.buttonwidget(
@@ -475,9 +471,11 @@ class EditProfileWindow(bui.Window):
             parent=self._root_widget,
             autoselect=True,
             position=(self._width * 0.5 + b_offs - b_size * 0.5, v - 50),
-            up_widget=self._upgrade_button
-            if self._upgrade_button is not None
-            else self._account_type_info_button,
+            up_widget=(
+                self._upgrade_button
+                if self._upgrade_button is not None
+                else self._account_type_info_button
+            ),
             size=(b_size, b_size),
             color=self._highlight,
             label='',
@@ -800,6 +798,15 @@ class EditProfileWindow(bui.Window):
 
         if not new_name:
             bui.screenmessage(bui.Lstr(resource='nameNotEmptyText'))
+            bui.getsound('error').play()
+            return False
+
+        # Make sure we're not renaming to another existing profile.
+        profiles: dict = bui.app.config.get('Player Profiles', {})
+        if self._existing_profile != new_name and new_name in profiles.keys():
+            bui.screenmessage(
+                bui.Lstr(resource='editProfileWindow.profileAlreadyExistsText')
+            )
             bui.getsound('error').play()
             return False
 

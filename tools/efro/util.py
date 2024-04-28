@@ -12,16 +12,6 @@ import functools
 from enum import Enum
 from typing import TYPE_CHECKING, cast, TypeVar, Generic
 
-_pytz_utc: Any
-
-# We don't *require* pytz, but we want to support it for tzinfos if available.
-try:
-    import pytz
-
-    _pytz_utc = pytz.utc
-except ModuleNotFoundError:
-    _pytz_utc = None  # pylint: disable=invalid-name
-
 if TYPE_CHECKING:
     import asyncio
     from efro.call import Call as Call  # 'as Call' so we re-export.
@@ -112,29 +102,35 @@ def enum_by_value(cls: type[EnumT], value: Any) -> EnumT:
 
 def check_utc(value: datetime.datetime) -> None:
     """Ensure a datetime value is timezone-aware utc."""
-    if value.tzinfo is not datetime.timezone.utc and (
-        _pytz_utc is None or value.tzinfo is not _pytz_utc
-    ):
+    if value.tzinfo is not datetime.UTC:
         raise ValueError(
-            'datetime value does not have timezone set as'
-            ' datetime.timezone.utc'
+            'datetime value does not have timezone set as datetime.UTC'
         )
 
 
 def utc_now() -> datetime.datetime:
-    """Get offset-aware current utc time.
+    """Get timezone-aware current utc time.
 
-    This should be used for all datetimes getting sent over the network,
-    used with the entity system, etc.
-    (datetime.utcnow() gives a utc time value, but it is not timezone-aware
-    which makes it less safe to use)
+    Just a shortcut for datetime.datetime.now(datetime.UTC).
+    Avoid datetime.datetime.utcnow() which is deprecated and gives naive
+    times.
     """
-    return datetime.datetime.now(datetime.timezone.utc)
+    return datetime.datetime.now(datetime.UTC)
+
+
+def utc_now_naive() -> datetime.datetime:
+    """Get naive utc time.
+
+    This can be used to replace datetime.utcnow(), which is now deprecated.
+    Most all code should migrate to use timezone-aware times instead of
+    this.
+    """
+    return datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
 
 
 def utc_today() -> datetime.datetime:
     """Get offset-aware midnight in the utc time zone."""
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     return datetime.datetime(
         year=now.year, month=now.month, day=now.day, tzinfo=now.tzinfo
     )
@@ -142,7 +138,7 @@ def utc_today() -> datetime.datetime:
 
 def utc_this_hour() -> datetime.datetime:
     """Get offset-aware beginning of the current hour in the utc time zone."""
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     return datetime.datetime(
         year=now.year,
         month=now.month,
@@ -154,7 +150,7 @@ def utc_this_hour() -> datetime.datetime:
 
 def utc_this_minute() -> datetime.datetime:
     """Get offset-aware beginning of current minute in the utc time zone."""
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     return datetime.datetime(
         year=now.year,
         month=now.month,
@@ -174,17 +170,26 @@ def empty_weakref(objtype: type[T]) -> weakref.ref[T]:
     # Just create an object and let it die. Is there a cleaner way to do this?
     # return weakref.ref(_EmptyObj())  # type: ignore
 
+    # Sharing a single ones seems at least a bit better.
     return _g_empty_weak_ref  # type: ignore
 
 
-def data_size_str(bytecount: int) -> str:
+def data_size_str(bytecount: int, compact: bool = False) -> str:
     """Given a size in bytes, returns a short human readable string.
 
-    This should be 6 or fewer chars for most all sane file sizes.
+    In compact mode this should be 6 or fewer chars for most all
+    sane file sizes.
     """
     # pylint: disable=too-many-return-statements
+
+    # Special case: handle negatives.
+    if bytecount < 0:
+        val = data_size_str(-bytecount, compact=compact)
+        return f'-{val}'
+
     if bytecount <= 999:
-        return f'{bytecount} B'
+        suffix = 'B' if compact else 'bytes'
+        return f'{bytecount} {suffix}'
     kbytecount = bytecount / 1024
     if round(kbytecount, 1) < 10.0:
         return f'{kbytecount:.1f} KB'
@@ -197,7 +202,7 @@ def data_size_str(bytecount: int) -> str:
         return f'{mbytecount:.0f} MB'
     gbytecount = bytecount / (1024 * 1024 * 1024)
     if round(gbytecount, 1) < 10.0:
-        return f'{mbytecount:.1f} GB'
+        return f'{gbytecount:.1f} GB'
     return f'{gbytecount:.0f} GB'
 
 
@@ -227,7 +232,7 @@ class DirtyBit:
         auto_dirty_seconds: float | None = None,
         min_update_interval: float | None = None,
     ):
-        curtime = time.time()
+        curtime = time.monotonic()
         self._retry_interval = retry_interval
         self._auto_dirty_seconds = auto_dirty_seconds
         self._min_update_interval = min_update_interval
@@ -259,11 +264,13 @@ class DirtyBit:
         # If we're freshly clean, set our next auto-dirty time (if we have
         # one).
         if self._dirty and not value and self._auto_dirty_seconds is not None:
-            self._next_auto_dirty_time = time.time() + self._auto_dirty_seconds
+            self._next_auto_dirty_time = (
+                time.monotonic() + self._auto_dirty_seconds
+            )
 
         # If we're freshly dirty, schedule an immediate update.
         if not self._dirty and value:
-            self._next_update_time = time.time()
+            self._next_update_time = time.monotonic()
 
             # If they want to enforce a minimum update interval,
             # push out the next update time if it hasn't been long enough.
@@ -286,7 +293,7 @@ class DirtyBit:
         Takes into account the amount of time passed since the target
         was marked dirty or since should_update last returned True.
         """
-        curtime = time.time()
+        curtime = time.monotonic()
 
         # Auto-dirty ourself if we're into that.
         if (
@@ -450,8 +457,7 @@ if TYPE_CHECKING:
     class ValueDispatcherMethod(Generic[ValT, RetT]):
         """Used by the valuedispatchmethod decorator."""
 
-        def __call__(self, value: ValT) -> RetT:
-            ...
+        def __call__(self, value: ValT) -> RetT: ...
 
         def register(
             self, value: ValT
@@ -623,7 +629,7 @@ def check_non_optional(obj: T | None) -> T:
     Use assert_non_optional for a more efficient (but less safe) equivalent.
     """
     if obj is None:
-        raise TypeError('Got None value in check_non_optional.')
+        raise ValueError('Got None value in check_non_optional.')
     return obj
 
 
@@ -863,3 +869,11 @@ def ago_str(
         timedelta_str(now - timeval, maxparts=maxparts, decimals=decimals)
         + ' ago'
     )
+
+
+def split_list(input_list: list[T], max_length: int) -> list[list[T]]:
+    """Split a single list into smaller lists."""
+    return [
+        input_list[i : i + max_length]
+        for i in range(0, len(input_list), max_length)
+    ]

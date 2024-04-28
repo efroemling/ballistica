@@ -75,9 +75,7 @@ class GraphicsSettingsWindow(bui.Window):
         base_scale = (
             2.0
             if uiscale is bui.UIScale.SMALL
-            else 1.5
-            if uiscale is bui.UIScale.MEDIUM
-            else 1.0
+            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
         popup_menu_scale = base_scale * 1.2
         v = height - 50
@@ -88,9 +86,9 @@ class GraphicsSettingsWindow(bui.Window):
                 transition=transition,
                 scale_origin_stack_offset=scale_origin,
                 scale=base_scale,
-                stack_offset=(0, -30)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -30) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
 
@@ -174,9 +172,11 @@ class GraphicsSettingsWindow(bui.Window):
             width=150,
             scale=popup_menu_scale,
             choices=['Auto', 'Higher', 'High', 'Medium', 'Low'],
-            choices_disabled=['Higher', 'High']
-            if bui.get_max_graphics_quality() == 'Medium'
-            else [],
+            choices_disabled=(
+                ['Higher', 'High']
+                if bui.get_max_graphics_quality() == 'Medium'
+                else []
+            ),
             choices_display=[
                 bui.Lstr(resource='autoText'),
                 bui.Lstr(resource=self._r + '.higherText'),

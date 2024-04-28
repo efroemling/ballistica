@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import weakref
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 
@@ -127,8 +127,8 @@ class PopupMenuWindow(PopupWindow):
         if choices_display is None:
             choices_display = []
 
-        # FIXME: For the moment we base our width on these strings so
-        #  we need to flatten them.
+        # FIXME: For the moment we base our width on these strings so we
+        #  need to flatten them.
         choices_display_fin: list[str] = []
         for choice_display in choices_display:
             choices_display_fin.append(choice_display.evaluate())
@@ -152,9 +152,9 @@ class PopupMenuWindow(PopupWindow):
         else:
             self._height = 20 + len(choices) * 33
             self._use_scroll = False
-        self._delegate = None  # don't want this stuff called just yet..
+        self._delegate = None  # Don't want this stuff called just yet.
 
-        # extend width to fit our longest string (or our max-width)
+        # Extend width to fit our longest string (or our max-width).
         for index, choice in enumerate(choices):
             if len(choices_display_fin) == len(choices):
                 choice_display_name = choices_display_fin[index]
@@ -183,8 +183,8 @@ class PopupMenuWindow(PopupWindow):
                     + 60,
                 )
 
-        # init parent class - this will rescale and reposition things as
-        # needed and create our root widget
+        # Init parent class - this will rescale and reposition things as
+        # needed and create our root widget.
         super().__init__(
             position, size=(self._width, self._height), scale=self._scale
         )
@@ -203,7 +203,7 @@ class PopupMenuWindow(PopupWindow):
         else:
             self._offset_widget = bui.containerwidget(
                 parent=self.root_widget,
-                position=(30, 15),
+                position=(12, 12),
                 size=(self._width - 40, self._height),
                 background=False,
             )
@@ -221,12 +221,14 @@ class PopupMenuWindow(PopupWindow):
                 size=(self._width - 40, 28),
                 on_select_call=bui.Call(self._select, index),
                 click_activate=True,
-                color=(0.5, 0.5, 0.5, 0.5)
-                if inactive
-                else (
-                    (0.5, 1, 0.5, 1)
-                    if choice == self._current_choice
-                    else (0.8, 0.8, 0.8, 1.0)
+                color=(
+                    (0.5, 0.5, 0.5, 0.5)
+                    if inactive
+                    else (
+                        (0.5, 1, 0.5, 1)
+                        if choice == self._current_choice
+                        else (0.8, 0.8, 0.8, 1.0)
+                    )
                 ),
                 padding=0,
                 maxwidth=maxwidth,
@@ -234,6 +236,7 @@ class PopupMenuWindow(PopupWindow):
                 on_activate_call=self._activate,
                 v_align='center',
                 selectable=(not inactive),
+                glow_type='uniform',
             )
             if choice == self._current_choice:
                 bui.containerwidget(
@@ -275,6 +278,7 @@ class PopupMenuWindow(PopupWindow):
                 delegate.popup_menu_closing(self)
             bui.containerwidget(edit=self.root_widget, transition='out_scale')
 
+    @override
     def on_popup_cancel(self) -> None:
         if not self._transitioning_out:
             bui.getsound('swish').play()
@@ -315,9 +319,7 @@ class PopupMenu:
             scale = (
                 2.3
                 if uiscale is bui.UIScale.SMALL
-                else 1.65
-                if uiscale is bui.UIScale.MEDIUM
-                else 1.23
+                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
             )
         if current_choice not in choices:
             current_choice = None

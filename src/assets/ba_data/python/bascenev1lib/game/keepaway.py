@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import logging
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
+
+import bascenev1 as bs
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.scoreboard import Scoreboard
@@ -19,7 +21,6 @@ from bascenev1lib.actor.flag import (
     FlagDiedMessage,
     FlagPickedUpMessage,
 )
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -86,12 +87,14 @@ class KeepAwayGame(bs.TeamGameActivity[Player, Team]):
     ]
     scoreconfig = bs.ScoreConfig(label='Time Held')
 
+    @override
     @classmethod
     def supports_session_type(cls, sessiontype: type[bs.Session]) -> bool:
         return issubclass(sessiontype, bs.DualTeamSession) or issubclass(
             sessiontype, bs.FreeForAllSession
         )
 
+    @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
         assert bs.app.classic is not None
@@ -129,18 +132,23 @@ class KeepAwayGame(bs.TeamGameActivity[Player, Team]):
             bs.MusicType.EPIC if self._epic_mode else bs.MusicType.KEEP_AWAY
         )
 
+    @override
     def get_instance_description(self) -> str | Sequence:
         return 'Carry the flag for ${ARG1} seconds.', self._hold_time
 
+    @override
     def get_instance_description_short(self) -> str | Sequence:
         return 'carry the flag for ${ARG1} seconds', self._hold_time
 
+    @override
     def create_team(self, sessionteam: bs.SessionTeam) -> Team:
         return Team(timeremaining=self._hold_time)
 
+    @override
     def on_team_join(self, team: Team) -> None:
         self._update_scoreboard()
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
         self.setup_standard_time_limit(self._time_limit)
@@ -181,6 +189,7 @@ class KeepAwayGame(bs.TeamGameActivity[Player, Team]):
             if scoreteam.timeremaining <= 0:
                 self.end_game()
 
+    @override
     def end_game(self) -> None:
         results = bs.GameResults()
         for team in self.teams:
@@ -268,6 +277,7 @@ class KeepAwayGame(bs.TeamGameActivity[Player, Team]):
                 team, team.timeremaining, self._hold_time, countdown=True
             )
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.PlayerDiedMessage):
             # Augment standard behavior.

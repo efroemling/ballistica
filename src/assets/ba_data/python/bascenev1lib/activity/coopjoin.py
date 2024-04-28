@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from typing import override
+
 import bascenev1 as bs
 
 
@@ -18,6 +20,7 @@ class CoopJoinActivity(bs.JoinActivity):
         session = self.session
         assert isinstance(session, bs.CoopSession)
 
+    @override
     def on_transition_in(self) -> None:
         from bascenev1lib.actor.controlsguide import ControlsGuide
         from bascenev1lib.actor.text import Text

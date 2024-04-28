@@ -12,7 +12,7 @@ import itertools
 from enum import Enum
 from collections import deque
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING, Annotated, override
 from threading import Thread, current_thread, Lock
 
 from efro.util import utc_now
@@ -91,9 +91,9 @@ class LogEntry:
     # incorporated into custom log processing. To populate this, our
     # LogHandler class looks for a 'labels' dict passed in the optional
     # 'extra' dict arg to standard Python log calls.
-    labels: Annotated[
-        dict[str, str], IOAttrs('la', store_default=False)
-    ] = field(default_factory=dict)
+    labels: Annotated[dict[str, str], IOAttrs('la', store_default=False)] = (
+        field(default_factory=dict)
+    )
 
 
 @ioprepped
@@ -306,6 +306,7 @@ class LogHandler(logging.Handler):
         """Submit a call to be run in the logging background thread."""
         self._event_loop.call_soon_threadsafe(call)
 
+    @override
     def emit(self, record: logging.LogRecord) -> None:
         # pylint: disable=too-many-branches
         if __debug__:
@@ -481,11 +482,11 @@ class LogHandler(logging.Handler):
                 # after a short bit if we never get a newline.
                 ship_task = self._file_chunk_ship_task[name]
                 if ship_task is None:
-                    self._file_chunk_ship_task[
-                        name
-                    ] = self._event_loop.create_task(
-                        self._ship_chunks_task(name),
-                        name='log ship file chunks',
+                    self._file_chunk_ship_task[name] = (
+                        self._event_loop.create_task(
+                            self._ship_chunks_task(name),
+                            name='log ship file chunks',
+                        )
                     )
 
         except Exception:

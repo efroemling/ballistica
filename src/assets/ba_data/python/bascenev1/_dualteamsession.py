@@ -3,7 +3,7 @@
 """Functionality related to teams sessions."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import babase
 
@@ -32,6 +32,7 @@ class DualTeamSession(MultiTeamSession):
         babase.increment_analytics_count('Teams session start')
         super().__init__()
 
+    @override
     def _switch_to_score_screen(self, results: bascenev1.GameResults) -> None:
         # pylint: disable=cyclic-import
         from bascenev1lib.activity.multiteamvictory import (

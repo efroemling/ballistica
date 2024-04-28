@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
 
 def standard_message_sender_gen_pcommand(
+    projroot: Path,
     basename: str,
     source_module: str,
     enable_sync_sends: bool,
@@ -72,7 +73,7 @@ def standard_message_sender_gen_pcommand(
         enable_sync_sends=enable_sync_sends,
         enable_async_sends=enable_async_sends,
     )
-    out = format_python_str(out)
+    out = format_python_str(projroot, out)
 
     print(f'Meta-building {Clr.BLD}{dst}{Clr.RST}')
     Path(dst).parent.mkdir(parents=True, exist_ok=True)
@@ -81,6 +82,7 @@ def standard_message_sender_gen_pcommand(
 
 
 def standard_message_receiver_gen_pcommand(
+    projroot: Path,
     basename: str,
     source_module: str,
     is_async: bool,
@@ -88,6 +90,7 @@ def standard_message_receiver_gen_pcommand(
     embedded: bool = False,
 ) -> None:
     """Used by pcommands generating efro.message receiver modules."""
+    # pylint: disable=too-many-locals
 
     import efro.message
     from efro.terminal import Clr
@@ -137,7 +140,7 @@ def standard_message_receiver_gen_pcommand(
         build_time_protocol_create_code=build_time_protocol_create_code,
         is_async=is_async,
     )
-    out = format_python_str(out)
+    out = format_python_str(projroot, out)
 
     print(f'Meta-building {Clr.BLD}{dst}{Clr.RST}')
     Path(dst).parent.mkdir(parents=True, exist_ok=True)

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import random
 import logging
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar, override
 
 import babase
 
@@ -377,6 +377,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
         """
         return ''
 
+    @override
     def on_transition_in(self) -> None:
         super().on_transition_in()
 
@@ -488,6 +489,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
 
         self.end_game()
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
 
@@ -536,12 +538,14 @@ class GameActivity(Activity[PlayerT, TeamT]):
                 max(5, data_t[0]['timeRemaining'])
             )
 
+    @override
     def on_player_join(self, player: PlayerT) -> None:
         super().on_player_join(player)
 
         # By default, just spawn a dude.
         self.spawn_player(player)
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, PlayerDiedMessage):
             # pylint: disable=cyclic-import
@@ -835,6 +839,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
             animate(combine, 'input3', {0: 0, 1.0: 1, 4.0: 1, 5.0: 0})
             _bascenev1.timer(5.0, tnode.delete)
 
+    @override
     def end(
         self, results: Any = None, delay: float = 0.0, force: bool = False
     ) -> None:

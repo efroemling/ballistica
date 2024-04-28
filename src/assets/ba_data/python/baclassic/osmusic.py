@@ -7,7 +7,7 @@ import os
 import random
 import logging
 import threading
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import babase
 
@@ -33,6 +33,7 @@ class OSMusicPlayer(MusicPlayer):
         # FIXME: should ask the C++ layer for these; just hard-coding for now.
         return ['mp3', 'ogg', 'm4a', 'wav', 'flac', 'mid']
 
+    @override
     def on_select_entry(
         self,
         callback: Callable[[Any], None],
@@ -48,9 +49,11 @@ class OSMusicPlayer(MusicPlayer):
             callback, current_entry, selection_target_name
         )
 
+    @override
     def on_set_volume(self, volume: float) -> None:
         babase.music_player_set_volume(volume)
 
+    @override
     def on_play(self, entry: Any) -> None:
         assert babase.app.classic is not None
         music = babase.app.classic.music
@@ -99,11 +102,13 @@ class OSMusicPlayer(MusicPlayer):
             self._actually_playing = True
             babase.music_player_play(result)
 
+    @override
     def on_stop(self) -> None:
         self._want_to_play = False
         self._actually_playing = False
         babase.music_player_stop()
 
+    @override
     def on_app_shutdown(self) -> None:
         babase.music_player_shutdown()
 
@@ -120,6 +125,7 @@ class _PickFolderSongThread(threading.Thread):
         self._callback = callback
         self._path = path
 
+    @override
     def run(self) -> None:
         do_log_error = True
         try:

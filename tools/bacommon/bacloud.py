@@ -75,9 +75,9 @@ class ResponseData:
     delay_seconds: Annotated[float, IOAttrs('d', store_default=False)] = 0.0
     login: Annotated[str | None, IOAttrs('l', store_default=False)] = None
     logout: Annotated[bool, IOAttrs('lo', store_default=False)] = False
-    dir_manifest: Annotated[
-        str | None, IOAttrs('man', store_default=False)
-    ] = None
+    dir_manifest: Annotated[str | None, IOAttrs('man', store_default=False)] = (
+        None
+    )
     uploads: Annotated[
         tuple[list[str], str, dict] | None, IOAttrs('u', store_default=False)
     ] = None
@@ -97,9 +97,9 @@ class ResponseData:
     input_prompt: Annotated[
         tuple[str, bool] | None, IOAttrs('inp', store_default=False)
     ] = None
-    end_message: Annotated[
-        str | None, IOAttrs('em', store_default=False)
-    ] = None
+    end_message: Annotated[str | None, IOAttrs('em', store_default=False)] = (
+        None
+    )
     end_message_end: Annotated[str, IOAttrs('eme', store_default=False)] = '\n'
     end_command: Annotated[
         tuple[str, dict] | None, IOAttrs('ec', store_default=False)

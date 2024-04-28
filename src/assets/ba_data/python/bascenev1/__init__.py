@@ -120,6 +120,7 @@ from _bascenev1 import (
     release_keyboard_input,
     reset_random_player_names,
     resume_replay,
+    seek_replay,
     broadcastmessage,
     SessionData,
     SessionPlayer,
@@ -231,7 +232,11 @@ from bascenev1._settings import (
     IntSetting,
     Setting,
 )
-from bascenev1._session import Session, set_player_rejoin_cooldown
+from bascenev1._session import (
+    Session,
+    set_player_rejoin_cooldown,
+    set_max_players_override,
+)
 from bascenev1._stats import PlayerScoredMessage, PlayerRecord, Stats
 from bascenev1._team import SessionTeam, Team, EmptyTeam
 from bascenev1._teamgame import TeamGameActivity
@@ -400,6 +405,7 @@ __all__ = [
     'release_keyboard_input',
     'reset_random_player_names',
     'resume_replay',
+    'seek_replay',
     'safecolor',
     'screenmessage',
     'SceneV1AppMode',
@@ -426,6 +432,7 @@ __all__ = [
     'set_public_party_queue_enabled',
     'set_public_party_stats_url',
     'set_player_rejoin_cooldown',
+    'set_max_players_override',
     'set_replay_speed_exponent',
     'set_touchscreen_editing',
     'setmusic',

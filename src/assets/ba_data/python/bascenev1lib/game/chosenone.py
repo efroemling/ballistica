@@ -8,13 +8,14 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
+
+import bascenev1 as bs
 
 from bascenev1lib.actor.flag import Flag
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.scoreboard import Scoreboard
 from bascenev1lib.gameutils import SharedObjects
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -83,6 +84,7 @@ class ChosenOneGame(bs.TeamGameActivity[Player, Team]):
     ]
     scoreconfig = bs.ScoreConfig(label='Time Held')
 
+    @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
         assert bs.app.classic is not None
@@ -121,20 +123,25 @@ class ChosenOneGame(bs.TeamGameActivity[Player, Team]):
             bs.MusicType.EPIC if self._epic_mode else bs.MusicType.CHOSEN_ONE
         )
 
+    @override
     def get_instance_description(self) -> str | Sequence:
         return 'There can be only one.'
 
+    @override
     def create_team(self, sessionteam: bs.SessionTeam) -> Team:
         return Team(time_remaining=self._chosen_one_time)
 
+    @override
     def on_team_join(self, team: Team) -> None:
         self._update_scoreboard()
 
+    @override
     def on_player_leave(self, player: Player) -> None:
         super().on_player_leave(player)
         if self._get_chosen_one_player() is player:
             self._set_chosen_one_player(None)
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
         shared = SharedObjects.get()
@@ -251,6 +258,7 @@ class ChosenOneGame(bs.TeamGameActivity[Player, Team]):
                 logging.error('got nonexistent player as chosen one in _tick')
                 self._set_chosen_one_player(None)
 
+    @override
     def end_game(self) -> None:
         results = bs.GameResults()
         for team in self.teams:
@@ -335,6 +343,7 @@ class ChosenOneGame(bs.TeamGameActivity[Player, Team]):
                     'position', light.node, 'position'
                 )
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.PlayerDiedMessage):
             # Augment standard behavior.

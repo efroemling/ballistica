@@ -151,7 +151,6 @@ ctx.project_file_suffixes = {
 ctx.filter_dirs = {
     'ballisticakit-cmake',
     'ballisticakit-xcode/BallisticaKit.xcodeproj',
-    'ballisticakit-ios.xcodeproj',
     'config',
     'src/assets/pdoc',
 }
@@ -195,10 +194,11 @@ ctx.filter_file_names = {
     '.editorconfig',
     'ci.yml',
     'cd.yml',
+    'deploy_docs.yml',
     'LICENSE',
     'cloudtool',
     'bacloud',
-    'config_template.yaml',
+    'config_template.toml',
     '.efrocachemap',
 }
 
@@ -278,6 +278,7 @@ ctx.filter_file_extensions = {
     '.xcsettings',
     '.xcstrings',
     '.filters',
+    '.rst_t',
 }
 
 # ELSE files with these extensions will NOT be filtered.

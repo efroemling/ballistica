@@ -1,0 +1,26 @@
+.. Bombsquad documentation master file, created by
+   sphinx-quickstart on Sat Mar  2 18:31:19 2024.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+   
+   see https://pradyunsg.me/furo/reference/ and https://en.wikipedia.org/wiki/ReStructuredText for formatting help
+.. image:: {{data.ballistica_image_url}}
+
+Welcome to ballistica-bombsquad's documentation!
+================================================
+*Last updated for Ballistica* **{{data.version_no}}** *(build {{data.build_no}})*
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   modules
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+
+.. note:: For customization of this page see https://github.com/efroemling/ballistica/blob/master/src/assets/sphinx/template/index.rst_t

@@ -11,7 +11,9 @@ import subprocess
 from functools import partial
 from typing import TYPE_CHECKING
 
-from efrotools import PYVER, extract_arg, extract_flag
+from efro.terminal import Clr
+from efrotools.util import extract_arg, extract_flag
+from efrotools.pyver import PYVER
 
 if TYPE_CHECKING:
     pass
@@ -39,6 +41,7 @@ class AssetStager:
 
     def __init__(self, projroot: str) -> None:
         self.projroot = projroot
+        self.desc = 'unknown'
         # We always calc src relative to this script.
         self.src = f'{self.projroot}/build/assets'
         self.dst: str | None = None
@@ -70,6 +73,12 @@ class AssetStager:
     def run(self, args: list[str]) -> None:
         """Do the thing."""
         self._parse_args(args)
+
+        print(
+            f'{Clr.BLU}Staging for {Clr.MAG}{Clr.BLD}{self.desc}{Clr.RST}'
+            f'{Clr.BLU} at {Clr.MAG}{Clr.BLD}{self.dst}'
+            f'{Clr.RST}{Clr.BLU}...{Clr.RST}'
+        )
 
         # Ok, now for every top level dir in src, come up with a nice single
         # command to sync the needed subset of it to dst.
@@ -140,22 +149,27 @@ class AssetStager:
             )
 
         if platform_arg == '-android':
+            self.desc = 'android'
             self._parse_android_args(args)
         elif platform_arg.startswith('-win'):
+            self.desc = 'windows'
             self._parse_win_args(platform_arg, args)
         elif platform_arg == '-cmake':
+            self.desc = 'cmake'
             self.dst = args[-1]
             self.tex_suffix = '.dds'
             # Link/copy in a binary *if* builddir is provided.
             self.include_binary_executable = self.builddir is not None
             self.executable_name = 'ballisticakit'
         elif platform_arg == '-cmakemodular':
+            self.desc = 'cmake modular'
             self.dst = args[-1]
             self.tex_suffix = '.dds'
             self.include_python_dylib = True
             self.include_shell_executable = True
             self.executable_name = 'ballisticakit'
         elif platform_arg == '-cmakeserver':
+            self.desc = 'cmake server'
             self.dst = os.path.join(args[-1], 'dist')
             self.serverdst = args[-1]
             self.include_textures = False
@@ -165,6 +179,7 @@ class AssetStager:
             self.include_binary_executable = self.builddir is not None
             self.executable_name = 'ballisticakit_headless'
         elif platform_arg == '-cmakemodularserver':
+            self.desc = 'cmake modular server'
             self.dst = os.path.join(args[-1], 'dist')
             self.serverdst = args[-1]
             self.include_textures = False
@@ -175,6 +190,7 @@ class AssetStager:
             self.executable_name = 'ballisticakit_headless'
 
         elif platform_arg == '-xcode-mac':
+            self.desc = 'xcode mac'
             self.src = os.environ['SOURCE_ROOT'] + '/../build/assets'
             self.dst = (
                 os.environ['TARGET_BUILD_DIR']
@@ -184,17 +200,8 @@ class AssetStager:
             self.include_pylib = True
             self.pylib_src_name = 'pylib-apple'
             self.tex_suffix = '.dds'
-        elif platform_arg == '-xcode-mac-old':
-            self.src = os.environ['SOURCE_ROOT'] + '/build/assets'
-            self.dst = (
-                os.environ['TARGET_BUILD_DIR']
-                + '/'
-                + os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH']
-            )
-            self.include_pylib = True
-            self.pylib_src_name = 'pylib-apple'
-            self.tex_suffix = '.dds'
         elif platform_arg == '-xcode-ios':
+            self.desc = 'xcode ios'
             self.src = os.environ['SOURCE_ROOT'] + '/build/assets'
             self.dst = (
                 os.environ['TARGET_BUILD_DIR']
@@ -345,8 +352,8 @@ class AssetStager:
         # tidier.
         dbgsfx = '_d' if self.debug else ''
 
-        # Note: Needs updating when Python version changes (currently 3.11).
-        toplevelfiles: list[str] = [f'python311{dbgsfx}.dll']
+        # Note: Needs updating when Python version changes (currently 3.12).
+        toplevelfiles: list[str] = [f'python312{dbgsfx}.dll']
 
         if self.win_type == 'win':
             toplevelfiles += [
@@ -536,7 +543,7 @@ class AssetStager:
                 '# Basically this will do:\n'
                 '#   import baenv; baenv.configure();'
                 ' import babase; babase.app.run().\n'
-                'exec python3.11 ba_data/python/baenv.py "$@"\n'
+                'exec python3.12 ba_data/python/baenv.py "$@"\n'
             )
         subprocess.run(['chmod', '+x', path], check=True)
 
@@ -645,9 +652,11 @@ class AssetStager:
             'ballisticakit_server.py',
             outfilename=os.path.join(
                 self.serverdst,
-                'ballisticakit_server.py'
-                if self.win_type is not None
-                else 'ballisticakit_server',
+                (
+                    'ballisticakit_server.py'
+                    if self.win_type is not None
+                    else 'ballisticakit_server'
+                ),
             ),
         )
         _stage_server_file(
@@ -660,8 +669,8 @@ class AssetStager:
             projroot=self.projroot,
             mode=modeval,
             infilename=f'{self.projroot}/src/assets/server_package/'
-            'config_template.yaml',
-            outfilename=os.path.join(self.serverdst, 'config_template.yaml'),
+            'config_template.toml',
+            outfilename=os.path.join(self.serverdst, 'config_template.toml'),
         )
         if self.win_type is not None:
             fname = 'launch_ballisticakit_server.bat'
@@ -741,7 +750,7 @@ def _stage_server_file(
 ) -> None:
     """Stage files for the server environment with some filtering."""
     import batools.build
-    from efrotools import replace_exact
+    from efrotools.util import replace_exact
 
     if mode not in ('debug', 'release'):
         raise RuntimeError(
@@ -754,11 +763,11 @@ def _stage_server_file(
     os.makedirs(os.path.dirname(outfilename), exist_ok=True)
 
     basename = os.path.basename(infilename)
-    if basename == 'config_template.yaml':
+    if basename == 'config_template.toml':
         # Inject all available config values into the config file.
         _write_if_changed(
             outfilename,
-            batools.build.filter_server_config(str(projroot), infilename),
+            batools.build.filter_server_config_toml(str(projroot), infilename),
         )
 
     elif basename == 'ballisticakit_server.py':

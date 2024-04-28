@@ -19,9 +19,9 @@ class RendererGL::ProgramShieldGL : public RendererGL::ProgramGL {
 
   ProgramShieldGL(RendererGL* renderer, int flags)
       : RendererGL::ProgramGL(
-          renderer, Object::New<VertexShaderGL>(GetVertexCode(flags)),
-          Object::New<FragmentShaderGL>(GetFragmentCode(flags)), GetName(flags),
-          GetPFlags(flags)),
+            renderer, Object::New<VertexShaderGL>(GetVertexCode(flags)),
+            Object::New<FragmentShaderGL>(GetFragmentCode(flags)),
+            GetName(flags), GetPFlags(flags)),
         flags_(flags) {
     SetTextureUnit("depthTex", kDepthTexUnit);
   }

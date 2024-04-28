@@ -42,9 +42,9 @@ class GameResults:
         self._scores: dict[
             int, tuple[weakref.ref[bascenev1.SessionTeam], int | None]
         ] = {}
-        self._sessionteams: list[
-            weakref.ref[bascenev1.SessionTeam]
-        ] | None = None
+        self._sessionteams: list[weakref.ref[bascenev1.SessionTeam]] | None = (
+            None
+        )
         self._playerinfos: list[bascenev1.PlayerInfo] | None = None
         self._lower_is_better: bool | None = None
         self._score_label: str | None = None

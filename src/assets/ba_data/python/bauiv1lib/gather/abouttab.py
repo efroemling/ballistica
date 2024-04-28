@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from bauiv1lib.gather import GatherTab
 import bauiv1 as bui
@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 class AboutGatherTab(GatherTab):
     """The about tab in the gather UI"""
 
+    @override
     def on_activate(
         self,
         parent_widget: bui.Widget,
@@ -41,9 +42,7 @@ class AboutGatherTab(GatherTab):
         message_height = (
             210
             if uiscale is bui.UIScale.SMALL
-            else 305
-            if uiscale is bui.UIScale.MEDIUM
-            else 370
+            else 305 if uiscale is bui.UIScale.MEDIUM else 370
         )
         # Let's not talk about sharing in vr-mode; its tricky to fit more
         # than one head in a VR-headset.

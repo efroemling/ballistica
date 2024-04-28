@@ -96,6 +96,12 @@ class ClientSession : public Session {
     target_base_time_millisecs_ = base_time_millisecs_;
   }
 
+ protected:
+  void SetBaseTime(millisecs_t time) {
+    base_time_millisecs_ = time;
+    ResetTargetBaseTime();
+  }
+
  private:
   void ClearSessionObjs();
   void AddCommand(const std::vector<uint8_t>& command);

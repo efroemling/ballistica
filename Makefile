@@ -25,7 +25,7 @@
 ################################################################################
 
 # List targets in this Makefile and basic descriptions for them.
-help:
+help: env
 	@$(PCOMMAND) makefile_target_list Makefile
 
 # Set env-var BA_ENABLE_COMPILE_COMMANDS_DB=1 to enable creating/updating a
@@ -40,82 +40,83 @@ endif
 # which.
 PCOMMAND = tools/pcommand
 PCOMMANDBATCHBIN = .cache/pcommandbatch/pcommandbatch
-ifeq ($(BA_PCOMMANDBATCH_DISABLE),1)
- PCOMMANDBATCH = $(PCOMMAND)
-else
+ifeq ($(BA_PCOMMANDBATCH_ENABLE),0)
  PCOMMANDBATCH = $(PCOMMANDBATCHBIN)
+else
+ PCOMMANDBATCH = $(PCOMMAND)
 endif
 
 # Prereq targets that should be safe to run anytime; even if project-files
 # are out of date.
-PREREQS_SAFE = .cache/checkenv $(PCOMMANDBATCHBIN) .dir-locals.el .mypy.ini	\
- .pyrightconfig.json .pycheckers .pylintrc .style.yapf .clang-format				\
- ballisticakit-cmake/.clang-format .editorconfig
+ENV_REQS_SAFE = .cache/checkenv $(PCOMMANDBATCHBIN) .dir-locals.el .mypy.ini	\
+ .pyrightconfig.json .pylintrc .clang-format																\
+ ballisticakit-cmake/.clang-format .editorconfig tools/cloudshell						\
+ tools/bacloud
 
 # Prereq targets that may break if the project needs updating should go here.
 # An example is compile-command-databases; these might try to run cmake and
 # fail if the CMakeList files don't match what's on disk. If such a target was
-# included in PREREQS_SAFE it would try to build *before* project updates
+# included in ENV_REQS_SAFE it would try to build *before* project updates
 # which would leave us stuck in a broken state.
-PREREQS_POST_UPDATE_ONLY = $(PREREQ_COMPILE_COMMANDS_DB)
+ENV_REQS_POST_UPDATE_ONLY = $(PREREQ_COMPILE_COMMANDS_DB)
 
-# Target that should be built before running most any other build.
-# This installs tool config files, runs environment checks, etc.
-prereqs: $(PREREQS_SAFE) $(PREREQS_POST_UPDATE_ONLY)
+# Target that should be built before building almost any other target. This
+# installs tool config files, sets up the Python virtual environment, etc.
+env: $(ENV_REQS_SAFE) $(ENV_REQS_POST_UPDATE_ONLY)
 
 # Set of prereqs safe to run if the project state is dirty.
-prereqs-pre-update: $(PREREQS_SAFE)
+env-pre-update: $(ENV_REQS_SAFE)
 
-prereqs-clean:
-	rm -rf $(PREREQS_SAFE) $(PREREQS_POST_UPDATE_ONLY)
+env-clean:
+	rm -rf $(ENV_REQS_SAFE) $(ENV_REQS_POST_UPDATE_ONLY)
 
 # Build all assets for all platforms.
-assets: prereqs meta
+assets: env meta
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS)
 
 # Build assets required for cmake builds (linux, mac).
-assets-cmake: prereqs meta
+assets-cmake: env meta
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) cmake
 
 # Build only script assets for cmake builds (linux, mac).
-assets-cmake-scripts: prereqs meta
+assets-cmake-scripts: env meta
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) scripts-cmake
 
 # Build assets required for server builds.
-assets-server: prereqs meta
+assets-server: env meta
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) server
 
 # Build assets required for WINDOWS_PLATFORM windows builds.
-assets-windows: prereqs meta
+assets-windows: env meta
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) win-$(WINDOWS_PLATFORM)
 
 # Build assets required for Win32 windows builds.
-assets-windows-Win32: prereqs meta
+assets-windows-Win32: env meta
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) win-Win32
 
 # Build assets required for x64 windows builds.
-assets-windows-x64: prereqs meta
+assets-windows-x64: env meta
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) win-x64
 
 # Build assets required for mac xcode builds
-assets-mac: prereqs meta
+assets-mac: env meta
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) mac
 
 # Build assets required for ios.
-assets-ios: prereqs meta
+assets-ios: env meta
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) ios
 
 # Build assets required for android.
-assets-android: prereqs meta
+assets-android: env meta
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) android
 
@@ -125,7 +126,7 @@ assets-clean:
 	cd src/assets && $(MAKE) clean
 
 # Build resources.
-resources: prereqs meta
+resources: env meta
 	@$(PCOMMAND) lazybuild resources_src $(LAZYBUILDDIR)/$@ \
  cd src/resources \&\& $(MAKE) -j$(CPUS)
 
@@ -138,7 +139,7 @@ resources-clean:
 #
 # Meta builds can affect sources used by asset builds, resource builds, and
 # compiles, so it should be listed as a dependency of any of those.
-meta: prereqs
+meta: env
 	@$(PCOMMAND) lazybuild meta_src $(LAZYBUILDDIR)/$@ \
  cd src/meta \&\& $(MAKE) -j$(CPUS)
 
@@ -149,13 +150,13 @@ meta-clean:
 
 # Remove ALL files and directories that aren't managed by git (except for a
 # few things such as localconfig.json).
-clean:
+clean: env
 	$(CHECK_CLEAN_SAFETY)
-	rm -rf build  # Handle this part ourself; can confuse git.
+	rm -rf build  # Kill this ourself; can confuse git if contains other repos.
 	git clean -dfx $(ROOT_CLEAN_IGNORES)
 
 # Show what clean would delete without actually deleting it.
-clean-list:
+clean-list: env
 	$(CHECK_CLEAN_SAFETY)
 	@echo Would remove build  # Handle this part ourself; can confuse git.
 	git clean -dnx $(ROOT_CLEAN_IGNORES)
@@ -163,35 +164,54 @@ clean-list:
 # Build/update dummy python modules.
 #
 # IMPORTANT - building this target can kick off full builds/cleans and so it
-# should not be built in parallel with other targets. See py_check_prereqs
+# should not be built in parallel with other targets. See py_check_prepass
 # target for more info.
-dummymodules: prereqs meta
+dummymodules: env meta
 	@$(PCOMMAND) lazybuild dummymodules_src $(LAZYBUILDDIR)/$@ \
  rm -rf build/dummymodules \&\& $(PCOMMAND) gen_dummy_modules
 
-dummymodules-clean:
+dummymodules-clean: env
 	rm -f $(LAZYBUILDDIR)/dummymodules
 	rm -rf build/dummymodules
+
+# Build the project's Python virtual environment. This should happen
+# automatically as a dependency of the env target.
+venv: .venv/.efro_venv_complete
+
+# Update pip requirements to latest versions.
+venv-upgrade: env
+	$(PCOMMAND) requirements_upgrade config/requirements.txt
+
+venv-clean:
+	rm -rf .venv
 
 # Generate all docs.
 #
 # IMPORTANT: Docs generation targets may themselves run builds, so they should
 #  be run alone serially and never in parallel alongside other builds.
-docs:
+docs: env
 	$(MAKE) docs-pdoc
 
-docs-pdoc:
+docs-pdoc: env
 	@$(PCOMMAND) gen_docs_pdoc
 
-pcommandbatch_speed_test: prereqs
-	@$(PCOMMAND) pcommandbatch_speed_test $(PCOMMANDBATCH)
+docs-sphinx: env
+	$(MAKE) dummymodules
+	@$(PCOMMAND) gen_docs_sphinx
+
+docs-sphinx-clean:
+	rm -rf .cache/sphinx
+	rm -rf build/sphinx
+
+pcommandbatch_speed_test: env
+	@$(PCOMMAND) pcommandbatch_speed_test $(PCOMMANDBATCHBIN)
 
 # Tell make which of these targets don't represent files.
-.PHONY: help prereqs prereqs-pre-update prereqs-clean assets assets-cmake			\
+.PHONY: help env env-pre-update env-clean assets assets-cmake			\
         assets-cmake-scripts assets-windows assets-windows-Win32							\
         assets-windows-x64 assets-mac assets-ios assets-android assets-clean	\
         resources resources-clean meta meta-clean clean clean-list						\
-        dummymodules docs docs-pdoc pcommandbatch_speed_test
+        dummymodules venv venv-clean docs docs-pdoc pcommandbatch_speed_test
 
 
 ################################################################################
@@ -202,37 +222,42 @@ pcommandbatch_speed_test: prereqs
 
 # Prebuilt binaries for various platforms.
 
+# WSL is Linux but running under Windows, so it can target either. By default
+# we want these top level targets (prefab-gui-debug, etc.) to yield native
+# Windows builds from WSL, but this env var can be set to override that.
+BA_WSL_TARGETS_WINDOWS ?= 1
+
 # Assemble & run a gui debug build for this platform.
 prefab-gui-debug: prefab-gui-debug-build
-	$($(shell $(PCOMMAND) prefab_run_var gui-debug))
+	$($(shell $(WSLU) $(PCOMMAND) prefab_run_var gui-debug))
 
 # Assemble & run a gui release build for this platform.
 prefab-gui-release: prefab-gui-release-build
-	$($(shell $(PCOMMAND) prefab_run_var gui-release))
+	$($(shell $(WSLU) $(PCOMMAND) prefab_run_var gui-release))
 
 # Assemble a debug build for this platform.
-prefab-gui-debug-build:
-	@$(PCOMMAND) make_prefab gui-debug
+prefab-gui-debug-build: env
+	$(WSLU) $(PCOMMAND) make_prefab gui-debug
 
 # Assemble a release build for this platform.
-prefab-gui-release-build:
-	@$(PCOMMAND) make_prefab gui-release
+prefab-gui-release-build: env
+	$(WSLU) $(PCOMMAND) make_prefab gui-release
 
 # Assemble & run a server debug build for this platform.
 prefab-server-debug: prefab-server-debug-build
-	$($(shell $(PCOMMAND) prefab_run_var server-debug))
+	$($(shell $(WSLU) $(PCOMMAND) prefab_run_var server-debug))
 
 # Assemble & run a server release build for this platform.
 prefab-server-release: prefab-server-release-build
-	$($(shell $(PCOMMAND) prefab_run_var server-release))
+	$($(shell $(WSLU) $(PCOMMAND) prefab_run_var server-release))
 
 # Assemble a server debug build for this platform.
-prefab-server-debug-build:
-	@$(PCOMMAND) make_prefab server-debug
+prefab-server-debug-build: env
+	$(WSLU) $(PCOMMAND) make_prefab server-debug
 
 # Assemble a server release build for this platform.
-prefab-server-release-build:
-	@$(PCOMMAND) make_prefab server-release
+prefab-server-release-build: env
+	$(WSLU) $(PCOMMAND) make_prefab server-release
 
 # Clean all prefab builds.
 prefab-clean:
@@ -253,17 +278,17 @@ RUN_PREFAB_MAC_ARM64_GUI_DEBUG = cd build/prefab/full/mac_arm64_gui/debug \
 
 prefab-mac-x86-64-gui-debug: prefab-mac-x86-64-gui-debug-build
 	@$(PCOMMAND) ensure_prefab_platform mac_x86_64
-	@$(RUN_PREFAB_MAC_X86_64_GUI_DEBUG)
+	$(RUN_PREFAB_MAC_X86_64_GUI_DEBUG)
 
 prefab-mac-arm64-gui-debug: prefab-mac-arm64-gui-debug-build
 	@$(PCOMMAND) ensure_prefab_platform mac_arm64
-	@$(RUN_PREFAB_MAC_ARM64_GUI_DEBUG)
+	$(RUN_PREFAB_MAC_ARM64_GUI_DEBUG)
 
-prefab-mac-x86-64-gui-debug-build: prereqs assets-cmake \
+prefab-mac-x86-64-gui-debug-build: env assets-cmake \
    build/prefab/full/mac_x86_64_gui/debug/ballisticakit
 	@$(STAGE_BUILD) -cmake -debug build/prefab/full/mac_x86_64_gui/debug
 
-prefab-mac-arm64-gui-debug-build: prereqs assets-cmake \
+prefab-mac-arm64-gui-debug-build: env assets-cmake \
    build/prefab/full/mac_arm64_gui/debug/ballisticakit
 	@$(STAGE_BUILD) -cmake -debug build/prefab/full/mac_arm64_gui/debug
 
@@ -283,17 +308,17 @@ RUN_PREFAB_MAC_ARM64_GUI_RELEASE = cd build/prefab/full/mac_arm64_gui/release \
 
 prefab-mac-x86-64-gui-release: prefab-mac-x86-64-gui-release-build
 	@$(PCOMMAND) ensure_prefab_platform mac_x86_64
-	@$(RUN_PREFAB_MAC_X86_64_GUI_RELEASE)
+	$(RUN_PREFAB_MAC_X86_64_GUI_RELEASE)
 
 prefab-mac-arm64-gui-release: prefab-mac-arm64-gui_release-build
 	@$(PCOMMAND) ensure_prefab_platform mac_arm64
-	@$(RUN_PREFAB_MAC_ARM64_GUI_RELEASE)
+	$(RUN_PREFAB_MAC_ARM64_GUI_RELEASE)
 
-prefab-mac-x86-64-gui-release-build: prereqs assets-cmake \
+prefab-mac-x86-64-gui-release-build: env assets-cmake \
    build/prefab/full/mac_x86_64_gui/release/ballisticakit
 	@$(STAGE_BUILD) -cmake -release build/prefab/full/mac_x86_64_gui/release
 
-prefab-mac-arm64-gui-release-build: prereqs assets-cmake \
+prefab-mac-arm64-gui-release-build: env assets-cmake \
    build/prefab/full/mac_arm64_gui/release/ballisticakit
 	@$(STAGE_BUILD) -cmake -release build/prefab/full/mac_arm64_gui/release
 
@@ -317,13 +342,13 @@ prefab-mac-x86-64-server-debug: prefab-mac-x86-64-server-debug-build
 
 prefab-mac-arm64-server-debug: prefab-mac-arm64-server-debug-build
 	@$(PCOMMAND) ensure_prefab_platform mac_arm64
-	@$(RUN_PREFAB_MAC_ARM64_SERVER_DEBUG)
+	$(RUN_PREFAB_MAC_ARM64_SERVER_DEBUG)
 
-prefab-mac-x86-64-server-debug-build: prereqs assets-server \
+prefab-mac-x86-64-server-debug-build: env assets-server \
    build/prefab/full/mac_x86_64_server/debug/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -debug build/prefab/full/mac_x86_64_server/debug
 
-prefab-mac-arm64-server-debug-build: prereqs assets-server \
+prefab-mac-arm64-server-debug-build: env assets-server \
    build/prefab/full/mac_arm64_server/debug/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -debug build/prefab/full/mac_arm64_server/debug
 
@@ -343,18 +368,18 @@ RUN_PREFAB_MAC_ARM64_SERVER_RELEASE = cd \
 
 prefab-mac-x86-64-server-release: prefab-mac-x86-64-server-release-build
 	@$(PCOMMAND) ensure_prefab_platform mac_x86_64
-	@$(RUN_PREFAB_MAC_X86_64_SERVER_RELEASE)
+	$(RUN_PREFAB_MAC_X86_64_SERVER_RELEASE)
 
 prefab-mac-arm64-server-release: prefab-mac-arm64-server-release-build
 	@$(PCOMMAND) ensure_prefab_platform mac_arm64
-	@$(RUN_PREFAB_MAC_ARM64_SERVER_RELEASE)
+	$(RUN_PREFAB_MAC_ARM64_SERVER_RELEASE)
 
-prefab-mac-x86-64-server-release-build: prereqs assets-server \
+prefab-mac-x86-64-server-release-build: env assets-server \
    build/prefab/full/mac_x86_64_server/release/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/mac_x86_64_server/release
 
-prefab-mac-arm64-server-release-build: prereqs assets-server \
+prefab-mac-arm64-server-release-build: env assets-server \
    build/prefab/full/mac_arm64_server/release/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/mac_arm64_server/release
@@ -374,18 +399,18 @@ RUN_PREFAB_LINUX_ARM64_GUI_DEBUG = cd \
   build/prefab/full/linux_arm64_gui/debug && ./ballisticakit
 
 prefab-linux-x86-64-gui-debug: prefab-linux-x86-64-gui-debug-build
-	@$(PCOMMAND) ensure_prefab_platform linux_x86_64
-	@$(RUN_PREFAB_LINUX_X86_64_GUI_DEBUG)
+	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_x86_64
+	$(RUN_PREFAB_LINUX_X86_64_GUI_DEBUG)
 
 prefab-linux-arm64-gui-debug: prefab-linux-arm64-gui-debug-build
-	@$(PCOMMAND) ensure_prefab_platform linux_arm64
-	@$(RUN_PREFAB_LINUX_ARM64_GUI_DEBUG)
+	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_arm64
+	$(RUN_PREFAB_LINUX_ARM64_GUI_DEBUG)
 
-prefab-linux-x86-64-gui-debug-build: prereqs assets-cmake \
+prefab-linux-x86-64-gui-debug-build: env assets-cmake \
    build/prefab/full/linux_x86_64_gui/debug/ballisticakit
 	@$(STAGE_BUILD) -cmake -debug build/prefab/full/linux_x86_64_gui/debug
 
-prefab-linux-arm64-gui-debug-build: prereqs assets-cmake \
+prefab-linux-arm64-gui-debug-build: env assets-cmake \
    build/prefab/full/linux_arm64_gui/debug/ballisticakit
 	@$(STAGE_BUILD) -cmake -debug build/prefab/full/linux_arm64_gui/debug
 
@@ -404,18 +429,18 @@ RUN_PREFAB_LINUX_ARM64_GUI_RELEASE = cd \
   build/prefab/full/linux_arm64_gui/release && ./ballisticakit
 
 prefab-linux-x86-64-gui-release: prefab-linux-x86-64-gui-release-build
-	@$(PCOMMAND) ensure_prefab_platform linux_x86_64
-	@$(RUN_PREFAB_LINUX_X86_64_GUI_RELEASE)
+	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_x86_64
+	$(RUN_PREFAB_LINUX_X86_64_GUI_RELEASE)
 
 prefab-linux-arm64-gui-release: prefab-linux-arm64-gui-release-build
-	@$(PCOMMAND) ensure_prefab_platform linux_arm64
-	@$(RUN_PREFAB_LINUX_ARM64_GUI_RELEASE)
+	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_arm64
+	$(RUN_PREFAB_LINUX_ARM64_GUI_RELEASE)
 
-prefab-linux-x86-64-gui-release-build: prereqs assets-cmake \
+prefab-linux-x86-64-gui-release-build: env assets-cmake \
    build/prefab/full/linux_x86_64_gui/release/ballisticakit
 	@$(STAGE_BUILD) -cmake -release build/prefab/full/linux_x86_64_gui/release
 
-prefab-linux-arm64-gui-release-build: prereqs assets-cmake \
+prefab-linux-arm64-gui-release-build: env assets-cmake \
    build/prefab/full/linux_arm64_gui/release/ballisticakit
 	@$(STAGE_BUILD) -cmake -release build/prefab/full/linux_arm64_gui/release
 
@@ -434,19 +459,19 @@ RUN_PREFAB_LINUX_ARM64_SERVER_DEBUG = cd \
    build/prefab/full/linux_arm64_server/debug && ./ballisticakit_server
 
 prefab-linux-x86-64-server-debug: prefab-linux-x86-64-server-debug-build
-	@$(PCOMMAND) ensure_prefab_platform linux_x86_64
-	@$(RUN_PREFAB_LINUX_X86_64_SERVER_DEBUG)
+	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_x86_64
+	$(RUN_PREFAB_LINUX_X86_64_SERVER_DEBUG)
 
 prefab-linux-arm64-server-debug: prefab-linux-arm64-server-debug-build
-	@$(PCOMMAND) ensure_prefab_platform linux_arm64
-	@$(RUN_PREFAB_LINUX_ARM64_SERVER_DEBUG)
+	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_arm64
+	$(RUN_PREFAB_LINUX_ARM64_SERVER_DEBUG)
 
-prefab-linux-x86-64-server-debug-build: prereqs assets-server \
+prefab-linux-x86-64-server-debug-build: env assets-server \
    build/prefab/full/linux_x86_64_server/debug/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -debug \
       build/prefab/full/linux_x86_64_server/debug
 
-prefab-linux-arm64-server-debug-build: prereqs assets-server \
+prefab-linux-arm64-server-debug-build: env assets-server \
    build/prefab/full/linux_arm64_server/debug/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -debug \
       build/prefab/full/linux_arm64_server/debug
@@ -466,19 +491,19 @@ RUN_PREFAB_LINUX_ARM64_SERVER_RELEASE = cd \
    build/prefab/full/linux_arm64_server/release && ./ballisticakit_server
 
 prefab-linux-x86-64-server-release: prefab-linux-x86-64-server-release-build
-	@$(PCOMMAND) ensure_prefab_platform linux_x86_64
-	@$(RUN_PREFAB_LINUX_X86_64_SERVER_RELEASE)
+	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_x86_64
+	$(RUN_PREFAB_LINUX_X86_64_SERVER_RELEASE)
 
 prefab-linux-arm64-server-release: prefab-linux-arm64-server-release-build
-	@$(PCOMMAND) ensure_prefab_platform linux_arm64
-	@$(RUN_PREFAB_LINUX_ARM64_SERVER_RELEASE)
+	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_arm64
+	$(RUN_PREFAB_LINUX_ARM64_SERVER_RELEASE)
 
-prefab-linux-x86-64-server-release-build: prereqs assets-server \
+prefab-linux-x86-64-server-release-build: env assets-server \
    build/prefab/full/linux_x86_64_server/release/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/linux_x86_64_server/release
 
-prefab-linux-arm64-server-release-build: prereqs assets-server \
+prefab-linux-arm64-server-release-build: env assets-server \
    build/prefab/full/linux_arm64_server/release/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/linux_arm64_server/release
@@ -495,10 +520,10 @@ RUN_PREFAB_WINDOWS_X86_GUI_DEBUG = cd build/prefab/full/windows_x86_gui/debug \
   && ./BallisticaKit.exe
 
 prefab-windows-x86-gui-debug: prefab-windows-x86-gui-debug-build
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
-	@$(RUN_PREFAB_WINDOWS_X86_GUI_DEBUG)
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
+	$(RUN_PREFAB_WINDOWS_X86_GUI_DEBUG)
 
-prefab-windows-x86-gui-debug-build: prereqs assets-windows-$(WINPLAT_X86) \
+prefab-windows-x86-gui-debug-build: env assets-windows-$(WINPLAT_X86) \
    build/prefab/full/windows_x86_gui/debug/BallisticaKit.exe
 	@$(STAGE_BUILD) -win-$(WINPLAT_X86) -debug \
       build/prefab/full/windows_x86_gui/debug
@@ -518,10 +543,10 @@ RUN_PREFAB_WINDOWS_X86_GUI_RELEASE = cd \
   build/prefab/full/windows_x86_gui/release && ./BallisticaKit.exe
 
 prefab-windows-x86-gui-release: prefab-windows-x86-gui-release-build
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
-	@$(RUN_PREFAB_WINDOWS_X86_GUI_RELEASE)
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
+	$(RUN_PREFAB_WINDOWS_X86_GUI_RELEASE)
 
-prefab-windows-x86-gui-release-build: prereqs \
+prefab-windows-x86-gui-release-build: env \
    assets-windows-$(WINPLAT_X86) \
    build/prefab/full/windows_x86_gui/release/BallisticaKit.exe
 	@$(STAGE_BUILD) -win-$(WINPLAT_X86) -release \
@@ -543,10 +568,10 @@ RUN_PREFAB_WINDOWS_X86_SERVER_DEBUG = cd \
    && dist/python_d.exe ballisticakit_server.py
 
 prefab-windows-x86-server-debug: prefab-windows-x86-server-debug-build
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
-	@$(RUN_PREFAB_WINDOWS_X86_SERVER_DEBUG)
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
+	$(RUN_PREFAB_WINDOWS_X86_SERVER_DEBUG)
 
-prefab-windows-x86-server-debug-build: prereqs \
+prefab-windows-x86-server-debug-build: env \
    assets-windows-$(WINPLAT_X86) \
    build/prefab/full/windows_x86_server/debug/dist/BallisticaKitHeadless.exe
 	@$(STAGE_BUILD) -winserver-$(WINPLAT_X86) -debug \
@@ -568,10 +593,10 @@ RUN_PREFAB_WINDOWS_X86_SERVER_RELEASE = cd \
    && dist/python.exe -O ballisticakit_server.py
 
 prefab-windows-x86-server-release: prefab-windows-x86-server-release-build
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
-	@$(RUN_PREFAB_WINDOWS_X86_SERVER_RELEASE)
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
+	$(RUN_PREFAB_WINDOWS_X86_SERVER_RELEASE)
 
-prefab-windows-x86-server-release-build: prereqs \
+prefab-windows-x86-server-release-build: env \
    assets-windows-$(WINPLAT_X86) \
    build/prefab/full/windows_x86_server/release/dist/BallisticaKitHeadless.exe
 	@$(STAGE_BUILD) -winserver-$(WINPLAT_X86) -release \
@@ -627,51 +652,51 @@ build/prefab/lib/windows/Release_%/BallisticaKitHeadlessPlus.pdb: .efrocachemap
 SPINOFF_TEST_TARGET ?= core
 
 # Run a given spinoff test.
-spinoff-test:
+spinoff-test: env
 	$(PCOMMAND) spinoff_test $(SPINOFF_TEST_TARGET) $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check core feature set alone.
-spinoff-test-core:
+spinoff-test-core: env
 	$(PCOMMAND) spinoff_test core $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check base feature set alone.
-spinoff-test-base:
+spinoff-test-base: env
 	$(PCOMMAND) spinoff_test base $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check plus feature set alone.
-spinoff-test-plus:
+spinoff-test-plus: env
 	$(PCOMMAND) spinoff_test plus $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check classic feature set alone.
-spinoff-test-classic:
+spinoff-test-classic: env
 	$(PCOMMAND) spinoff_test classic $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check template_fs feature set alone.
-spinoff-test-template_fs:
+spinoff-test-template_fs: env
 	$(PCOMMAND) spinoff_test template_fs $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check ui_v1 feature set alone.
-spinoff-test-ui_v1:
+spinoff-test-ui_v1: env
 	$(PCOMMAND) spinoff_test ui_v1 $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check ui_v1_lib feature set alone.
-spinoff-test-ui_v1_lib:
+spinoff-test-ui_v1_lib: env
 	$(PCOMMAND) spinoff_test ui_v1_lib $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check scene_v1 feature set alone.
-spinoff-test-scene_v1:
+spinoff-test-scene_v1: env
 	$(PCOMMAND) spinoff_test scene_v1 $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Build and check scene_v1_lib feature set alone.
-spinoff-test-scene_v1_lib:
+spinoff-test-scene_v1_lib: env
 	$(PCOMMAND) spinoff_test scene_v1_lib $(SPINOFF_TEST_EXTRA_ARGS)
 
 # Blow away all spinoff-test builds.
-spinoff-test-clean:
+spinoff-test-clean: env
 	rm -rf build/spinofftest
 
 # Grab the current parent project and sync it into ourself.
-spinoff-update:
+spinoff-update: env
 	@$(PCOMMAND) spinoff_check_submodule_parent
 	$(MAKE) update
 	@$(PCOMMANDBATCH) echo BLU Pulling current parent project...
@@ -682,7 +707,7 @@ spinoff-update:
 	@$(PCOMMANDBATCH) echo GRN Spinoff update successful!
 
 # Upgrade to latest parent project and sync it into ourself.
-spinoff-upgrade:
+spinoff-upgrade: env
 	@$(PCOMMAND) spinoff_check_submodule_parent
 	$(MAKE) update
 	@$(PCOMMANDBATCH) echo BLU Pulling latest parent project...
@@ -705,15 +730,15 @@ spinoff-upgrade:
 ################################################################################
 
 # Update any project files that need it (does NOT build projects).
-update: prereqs-pre-update
+update: env-pre-update
 	@$(PCOMMAND) update_project
 # Though not technically necessary, let's keep things like tool-configs
 # immediately updated so our editors/etc. better reflect the current state.
-	@$(MAKE) -j$(CPUS) prereqs
+	@$(MAKE) -j$(CPUS) env
 	@$(PCOMMANDBATCH) echo GRN Update-Project: SUCCESS!
 
 # Don't update but fail if anything needs it.
-update-check: prereqs-pre-update
+update-check: env-pre-update
 	@$(PCOMMAND) update_project --check
 	@$(PCOMMANDBATCH) echo GRN Check-Project: Everything up to date.
 
@@ -728,33 +753,33 @@ update-check: prereqs-pre-update
 ################################################################################
 
 # Run formatting on all files in the project considered 'dirty'.
-format:
+format: env
 	@$(MAKE) -j$(CPUS) format-code format-scripts format-makefile
 	@$(PCOMMANDBATCH) echo BLD Formatting complete for $(notdir $(CURDIR))!
 
 # Same but always formats; ignores dirty state.
-format-full:
+format-full: env
 	@$(MAKE) -j$(CPUS) format-code-full format-scripts-full format-makefile
 	@$(PCOMMANDBATCH) echo BLD Formatting complete for $(notdir $(CURDIR))!
 
 # Run formatting for compiled code sources (.cc, .h, etc.).
-format-code: prereqs
+format-code: env
 	@$(PCOMMAND) formatcode
 
 # Same but always formats; ignores dirty state.
-format-code-full: prereqs
+format-code-full: env
 	@$(PCOMMAND) formatcode -full
 
 # Runs formatting for scripts (.py, etc).
-format-scripts: prereqs
+format-scripts: env
 	@$(PCOMMAND) formatscripts
 
 # Same but always formats; ignores dirty state.
-format-scripts-full: prereqs
+format-scripts-full: env
 	@$(PCOMMAND) formatscripts -full
 
 # Runs formatting on the project Makefile.
-format-makefile: prereqs
+format-makefile: env
 	@$(PCOMMAND) formatmakefile
 
 .PHONY: format format-full format-code format-code-full format-scripts	\
@@ -768,67 +793,67 @@ format-makefile: prereqs
 ################################################################################
 
 # Run all project checks. (static analysis)
-check: py_check_prereqs
+check: py_check_prepass
 	@$(DMAKE) -j$(CPUS) update-check cpplint pylint mypy
 	@$(PCOMMANDBATCH) echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as check but no caching (all files are checked).
-check-full: py_check_prereqs
+check-full: py_check_prepass
 	@$(DMAKE) -j$(CPUS) update-check cpplint-full pylint-full mypy-full
 	@$(PCOMMANDBATCH) echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as 'check' plus optional/slow extra checks.
-check2: py_check_prereqs
+check2: py_check_prepass
 	@$(DMAKE) -j$(CPUS) update-check cpplint pylint mypy
 	@$(PCOMMANDBATCH) echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as check2 but no caching (all files are checked).
-check2-full: py_check_prereqs
+check2-full: py_check_prepass
 	@$(DMAKE) -j$(CPUS) update-check cpplint-full pylint-full mypy-full
 	@$(PCOMMANDBATCH) echo SGRN BLD ALL CHECKS PASSED!
 
 # Run Cpplint checks on all C/C++ code.
-cpplint: prereqs meta
+cpplint: env meta
 	@$(PCOMMAND) cpplint
 
 # Run Cpplint checks without caching (all files are checked).
-cpplint-full: prereqs meta
+cpplint-full: env meta
 	@$(PCOMMAND) cpplint -full
 
 # Run Pylint checks on all Python Code.
-pylint: py_check_prereqs
+pylint: py_check_prepass
 	@$(PCOMMAND) pylint
 
 # Run Pylint checks without caching (all files are checked).
-pylint-full: py_check_prereqs
+pylint-full: py_check_prepass
 	@$(PCOMMAND) pylint -full
 
 # Run Mypy checks on all Python code.
-mypy: py_check_prereqs
+mypy: py_check_prepass
 	@$(PCOMMAND) mypy
 
 # Run Mypy checks without caching (all files are checked).
-mypy-full: py_check_prereqs
+mypy-full: py_check_prepass
 	@$(PCOMMAND) mypy -full
 
 # Run Mypy checks on all Python code using daemon mode.
-dmypy: py_check_prereqs
+dmypy: py_check_prepass
 	@$(PCOMMAND) dmypy
 
 # Stop the mypy daemon
-dmypy-stop: py_check_prereqs
+dmypy-stop: py_check_prepass
 	@$(PCOMMAND) dmypy -stop
 
 # Run Pyright checks on all Python code.
-pyright: py_check_prereqs
+pyright: py_check_prepass
 	@$(PCOMMAND) pyright
 
 # Run PyCharm checks on all Python code.
-pycharm: py_check_prereqs
+pycharm: py_check_prepass
 	@$(PCOMMAND) pycharm
 
 # Run PyCharm checks without caching (all files are checked).
-pycharm-full: py_check_prereqs
+pycharm-full: py_check_prepass
 	@$(PCOMMAND) pycharm -full
 
 # Build prerequisites needed for python checks.
@@ -843,12 +868,12 @@ pycharm-full: py_check_prereqs
 # others (such as by the 'check-full' target) the parent target should
 # explicitly built this beforehand to ensure it does not happen during the
 # parallel part.
-py_check_prereqs: dummymodules
+py_check_prepass: dummymodules
 
 # Tell make which of these targets don't represent files.
 .PHONY: check check-full check2 check2-full cpplint cpplint-full pylint		\
         pylint-full mypy mypy-full dmypy dmypy-stop pycharm pycharm-full	\
-        py_check_prereqs
+        py_check_prepass
 
 
 ################################################################################
@@ -866,12 +891,12 @@ py_check_prereqs: dummymodules
 TEST_TARGET ?= tests
 
 # Run all tests. (live execution verification)
-test: py_check_prereqs
+test: py_check_prepass
 	@$(PCOMMANDBATCH) echo BLU Running all tests...
 	@$(PCOMMAND) tests_warm_start
 	@$(PCOMMAND) pytest -v $(TEST_TARGET)
 
-test-verbose: py_check_prereqs
+test-verbose: py_check_prepass
 	@$(PCOMMANDBATCH) echo BLU Running all tests...
 	@$(PCOMMAND) tests_warm_start
 	@$(PCOMMAND) pytest -o log_cli=true -o log_cli_level=debug \
@@ -909,6 +934,7 @@ test-rpc:
 preflight:
 	@$(MAKE) format
 	@$(MAKE) update
+	@$(MAKE) -j$(CPUS) py_check_prepass # Needs to be done explicitly first.
 	@$(MAKE) -j$(CPUS) cpplint pylint mypy test
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
@@ -916,6 +942,7 @@ preflight:
 preflight-full:
 	@$(MAKE) format-full
 	@$(MAKE) update
+	@$(MAKE) -j$(CPUS) py_check_prepass # Needs to be done explicitly first.
 	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-full
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
@@ -923,6 +950,7 @@ preflight-full:
 preflight2:
 	@$(MAKE) format
 	@$(MAKE) update
+	@$(MAKE) -j$(CPUS) py_check_prepass # Needs to be done explicitly first.
 	@$(MAKE) -j$(CPUS) cpplint pylint mypy test
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
@@ -930,6 +958,7 @@ preflight2:
 preflight2-full:
 	@$(MAKE) format-full
 	@$(MAKE) update
+	@$(MAKE) -j$(CPUS) py_check_prepass # Needs to be done explicitly first.
 	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-full
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
@@ -956,66 +985,66 @@ WINDOWS_CONFIGURATION ?= Debug
 
 # Stage assets and other files so a built binary will run.
 windows-staging: assets-windows resources meta
-	$(STAGE_BUILD) -win-$(WINPLT) -$(WINCFGLC) build/windows/$(WINCFG)_$(WINPLT)
+	@$(STAGE_BUILD) -win-$(WINPLT) -$(WINCFGLC) build/windows/$(WINCFG)_$(WINPLT)
 
 # Build and run a debug windows build (from WSL).
 windows-debug: windows-debug-build
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
 	build/windows/Debug_Win32/BallisticaKitGeneric.exe
 
 # Build and run a release windows build (from WSL).
 windows-release: windows-release-build
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
 	build/windows/Release_Win32/BallisticaKitGeneric.exe
 
 # Build a debug windows build (from WSL).
-windows-debug-build: \
+windows-debug-build: env \
    build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.pdb
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
 	@$(PCOMMAND) wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
   $(MAKE) _windows-wsl-build
 
 # Rebuild a debug windows build (from WSL).
-windows-debug-rebuild: \
+windows-debug-rebuild: env \
    build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.pdb
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
 	@$(PCOMMAND) wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
   $(MAKE) _windows-wsl-rebuild
 
 # Build a release windows build (from WSL).
-windows-release-build: \
+windows-release-build: env \
    build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.pdb
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
 	@$(PCOMMAND) wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 \
   $(MAKE) _windows-wsl-build
 
 # Rebuild a release windows build (from WSL).
-windows-release-rebuild: \
+windows-release-rebuild: env \
    build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.pdb
-	@$(PCOMMAND) ensure_prefab_platform windows_x86
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
 	@$(PCOMMAND) wsl_build_check_win_drive
 	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 \
   $(MAKE) _windows-wsl-rebuild
 
 # Remove all non-git-managed files in windows subdir.
-windows-clean:
+windows-clean: env
 	@$(CHECK_CLEAN_SAFETY)
 	git clean -dfx ballisticakit-windows
 	rm -rf build/windows $(LAZYBUILDDIR)
 
 # Show what would be cleaned.
-windows-clean-list:
+windows-clean-list: env
 	@$(CHECK_CLEAN_SAFETY)
 	git clean -dnx ballisticakit-windows
 	echo would also remove build/windows $(LAZYBUILDDIR)
@@ -1137,8 +1166,8 @@ cmake-modular-server-clean:
 
 # Stage assets for building/running within CLion.
 clion-staging: assets-cmake resources meta
-	$(STAGE_BUILD) -cmake -debug build/clion_debug
-	$(STAGE_BUILD) -cmake -release build/clion_release
+	@$(STAGE_BUILD) -cmake -debug build/clion_debug
+	@$(STAGE_BUILD) -cmake -release build/clion_release
 
 # Tell make which of these targets don't represent files.
 .PHONY: cmake cmake-build cmake-clean cmake-server cmake-server-build	\
@@ -1168,11 +1197,15 @@ DMAKE = $(MAKE) MAKEFLAGS= MKFLAGS= MAKELEVEL=
 # if using this on other platforms.
 CPUS = $(shell getconf _NPROCESSORS_ONLN || echo 8)
 PROJ_DIR = $(abspath $(CURDIR))
+
+# IMPORTANT: Make sure anything using these values has built env first (so
+#            that pcommand exists).
 VERSION = $(shell $(PCOMMAND) version version)
 BUILD_NUMBER = $(shell $(PCOMMAND) version build)
+STAGE_BUILD = $(PROJ_DIR)/$(PCOMMAND) stage_build
+
 BUILD_DIR = $(PROJ_DIR)/build
 LAZYBUILDDIR = .cache/lazybuild
-STAGE_BUILD = $(PROJ_DIR)/$(PCOMMAND) stage_build
 
 # Things to ignore when doing root level cleans. Note that we exclude build
 # and just blow that away manually; it might contain git repos or other things
@@ -1187,15 +1220,34 @@ CHECK_CLEAN_SAFETY = $(PCOMMAND) check_clean_safety
 TOOL_CFG_INST = $(PCOMMAND) tool_config_install
 
 # Anything that affects tool-config generation.
-TOOL_CFG_SRC = tools/efrotools/toolconfig.py config/projectconfig.json
+TOOL_CFG_SRC = tools/efrotools/toolconfig.py config/projectconfig.json \
+ .venv/.efro_venv_complete tools/pcommand
 
 # Anything that should trigger an environment-check when changed.
-ENV_SRC = $(PCOMMAND) tools/batools/build.py
+ENV_SRC = tools/batools/build.py .venv/.efro_venv_complete tools/pcommand
+
+# Generate a pcommand script hard-coded to use our virtual environment.
+# This is a prereq dependency so should not itself depend on env.
+tools/pcommand: tools/efrotools/genwrapper.py tools/efrotools/pyver.py
+	@echo Generating tools/pcommand...
+	@PYTHONPATH=tools python3 -m \
+ efrotools.genwrapper pcommand batools.pcommandmain tools/pcommand
+
+# Generate a cloudshell script hard-coded to use our virtual environment.
+# This is a prereq dependency so should not itself depend on env.
+tools/cloudshell: tools/efrotools/genwrapper.py tools/efrotools/pyver.py
+	@echo Generating tools/cloudshell...
+	@PYTHONPATH=tools python3 -m \
+ efrotools.genwrapper cloudshell efrotoolsinternal.cloudshell tools/cloudshell
+
+# Generate a bacloud script hard-coded to use our virtual environment.
+# This is a prereq dependency so should not itself depend on env.
+tools/bacloud: tools/efrotools/genwrapper.py tools/efrotools/pyver.py
+	@echo Generating tools/bacloud...
+	@PYTHONPATH=tools python3 -m \
+ efrotools.genwrapper bacloud batools.bacloud tools/bacloud
 
 .clang-format: config/toolconfigsrc/clang-format $(TOOL_CFG_SRC)
-	@$(TOOL_CFG_INST) $< $@
-
-.style.yapf: config/toolconfigsrc/style.yapf $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
 .pylintrc: config/toolconfigsrc/pylintrc $(TOOL_CFG_SRC)
@@ -1213,22 +1265,48 @@ ENV_SRC = $(PCOMMAND) tools/batools/build.py
 .mypy.ini: config/toolconfigsrc/mypy.ini $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
-.pyrightconfig.json: config/toolconfigsrc/pyrightconfig.yaml $(TOOL_CFG_SRC)
-	@$(TOOL_CFG_INST) $< $@
-
-.pycheckers: config/toolconfigsrc/pycheckers $(TOOL_CFG_SRC)
+.pyrightconfig.json: config/toolconfigsrc/pyrightconfig.toml $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
 # Set this to 1 to skip environment checks.
 SKIP_ENV_CHECKS ?= 0
+
+VENV_PYTHON ?= python3.12
+
+# Increment this to force all downstream venvs to fully rebuild. Useful after
+# removing requirements since upgrading in place will never uninstall stuff.
+VENV_STATE = 1
+
+# Rebuild our virtual environment whenever reqs, Python version, or explicit
+# state number changes. This is a dependency of env so it should not itself
+# depend on env. Note that we list pcommand as a requirement but can't use it
+# in here until the end when the venv is up. Also note that we try to update
+# venvs in place when possible, but when Python version or venv-state changes
+# we blow it away and start over to be safe.
+.venv/.efro_venv_complete: tools/pcommand config/requirements.txt \
+tools/efrotools/pyver.py
+	@[ -f .venv/bin/$(VENV_PYTHON) ] \
+ && [ -f .venv/.efro_venv_state_$(VENV_STATE) ] \
+ && echo Updating existing $(VENV_PYTHON) virtual environment in \'.venv\'... \
+ || (echo Creating new $(VENV_PYTHON) virtual environment in \'.venv\'... \
+ && rm -rf .venv)
+	$(VENV_PYTHON) -m venv .venv
+	.venv/bin/pip install --upgrade pip
+	.venv/bin/pip install -r config/requirements.txt
+	touch .venv/.efro_venv_state_$(VENV_STATE) \
+ .venv/.efro_venv_complete # Done last to enforce fully-built venvs.
+	@$(PCOMMAND) echo \
+ GRN Project virtual environment for BLD $(VENV_PYTHON) RST GRN \
+ at BLD .venv RST GRN is ready to use.
 
 .cache/checkenv: $(ENV_SRC)
 	@if [ $(SKIP_ENV_CHECKS) -ne 1 ]; then \
       $(PCOMMAND) checkenv && mkdir -p .cache && touch .cache/checkenv; \
   fi
 
-$(PCOMMANDBATCHBIN): src/tools/pcommandbatch/pcommandbatch.c \
+$(PCOMMANDBATCHBIN): src/tools/pcommandbatch/pcommandbatch.c	\
                      src/tools/pcommandbatch/cJSON.c
+	@$(MAKE) tools/pcommand
 	@$(PCOMMAND) build_pcommandbatch $^ $@
 
 # CMake build-type lowercase
@@ -1239,6 +1317,13 @@ _WMSBE_1 = \"C:\\Program Files\\Microsoft Visual Studio\\2022
 _WMSBE_2 = \\Community\\MSBuild\\Current\\Bin\\MSBuild.exe\"
 _WMSBE_1B = /mnt/c/Program Files/Microsoft Visual Studio/2022
 _WMSBE_2B = /Community/MSBuild/Current/Bin/MSBuild.exe
+
+# Sets WSL build type to the user's choice (defaults to Windows).
+WSLU=BA_WSL_TARGETS_WINDOWS=$(BA_WSL_TARGETS_WINDOWS)
+# Sets WSL build type to Linux.
+WSLL=BA_WSL_TARGETS_WINDOWS=0
+# Sets WSL build type to Windows.
+WSLW=BA_WSL_TARGETS_WINDOWS=1
 
 VISUAL_STUDIO_VERSION = -property:VisualStudioVersion=17
 WIN_MSBUILD_EXE = $(_WMSBE_1)$(_WMSBE_2)
@@ -1269,7 +1354,7 @@ ballisticakit-cmake/.clang-format: .clang-format
       && mv compile_commands.json .cache/compile_commands_db
 	@$(PCOMMANDBATCH) echo BLU Created compile commands db at $@
 
-_windows-wsl-build:
+_windows-wsl-build: env
 	@$(PCOMMAND) wsl_build_check_win_drive
 	$(WIN_MSBUILD_EXE_B) \
    $(shell $(PCOMMAND) wsl_path_to_win --escape \
@@ -1280,7 +1365,7 @@ _windows-wsl-build:
    $(VISUAL_STUDIO_VERSION)
 	@$(PCOMMAND) echo BLU BLD Built build/windows/BallisticaKit$(WINPRJ).exe.
 
-_windows-wsl-rebuild:
+_windows-wsl-rebuild: env
 	@$(PCOMMAND) wsl_build_check_win_drive
 	$(WIN_MSBUILD_EXE_B) \
    $(shell $(PCOMMAND) wsl_path_to_win --escape \

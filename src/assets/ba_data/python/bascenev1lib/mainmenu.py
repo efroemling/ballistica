@@ -8,7 +8,7 @@ from __future__ import annotations
 import time
 import random
 import weakref
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 import bauiv1 as bui
@@ -44,6 +44,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         self._news: NewsDisplay | None = None
         self._attract_mode_timer: bs.Timer | None = None
 
+    @override
     def on_transition_in(self) -> None:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
@@ -1139,6 +1140,7 @@ class MainMenuSession(bs.Session):
         self._locked = False
         self.setactivity(bs.newactivity(MainMenuActivity))
 
+    @override
     def on_activity_end(self, activity: bs.Activity, results: Any) -> None:
         if self._locked:
             bui.unlock_all_input()
@@ -1146,6 +1148,7 @@ class MainMenuSession(bs.Session):
         # Any ending activity leads us into the main menu one.
         self.setactivity(bs.newactivity(MainMenuActivity))
 
+    @override
     def on_player_request(self, player: bs.SessionPlayer) -> bool:
         # Reject all player requests.
         return False

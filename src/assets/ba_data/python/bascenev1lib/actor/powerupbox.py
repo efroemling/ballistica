@@ -5,9 +5,10 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+
 from bascenev1lib.gameutils import SharedObjects
 
 if TYPE_CHECKING:
@@ -278,6 +279,7 @@ class PowerupBox(bs.Actor):
         if self.node:
             self.node.flashing = True
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         assert not self.expired
 

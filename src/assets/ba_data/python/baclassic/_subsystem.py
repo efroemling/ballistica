@@ -3,7 +3,7 @@
 """Provides classic app subsystem."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 import random
 import logging
 import weakref
@@ -102,8 +102,8 @@ class ClassicSubsystem(babase.AppSubsystem):
         self.maps: dict[str, type[bascenev1.Map]] = {}
 
         # Gameplay.
-        self.teams_series_length = 7
-        self.ffa_series_length = 24
+        self.teams_series_length = 7  # deprecated, left for old mods
+        self.ffa_series_length = 24  # deprecated, left for old mods
         self.coop_session_args: dict = {}
 
         # UI.
@@ -149,6 +149,7 @@ class ClassicSubsystem(babase.AppSubsystem):
         assert isinstance(self._env['legacy_user_agent_string'], str)
         return self._env['legacy_user_agent_string']
 
+    @override
     def on_app_loading(self) -> None:
         from bascenev1lib.actor import spazappearance
         from bascenev1lib import maps as stdmaps
@@ -230,13 +231,16 @@ class ClassicSubsystem(babase.AppSubsystem):
 
         self.accounts.on_app_loading()
 
+    @override
     def on_app_suspend(self) -> None:
         self.accounts.on_app_suspend()
 
+    @override
     def on_app_unsuspend(self) -> None:
         self.accounts.on_app_unsuspend()
         self.music.on_app_unsuspend()
 
+    @override
     def on_app_shutdown(self) -> None:
         self.music.on_app_shutdown()
 
@@ -570,15 +574,18 @@ class ClassicSubsystem(babase.AppSubsystem):
         )
 
     def get_input_device_mapped_value(
-        self, device: bascenev1.InputDevice, name: str
+        self,
+        device: bascenev1.InputDevice,
+        name: str,
+        default: bool = False,
     ) -> Any:
-        """Returns a mapped value for an input device.
+        """Return a mapped value for an input device.
 
         This checks the user config and falls back to default values
         where available.
         """
         return _input.get_input_device_mapped_value(
-            device.name, device.unique_identifier, name
+            device.name, device.unique_identifier, name, default
         )
 
     def get_input_device_map_hash(

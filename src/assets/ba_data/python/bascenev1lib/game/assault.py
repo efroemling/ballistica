@@ -8,13 +8,14 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
+
+import bascenev1 as bs
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.flag import Flag
 from bascenev1lib.actor.scoreboard import Scoreboard
 from bascenev1lib.gameutils import SharedObjects
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -71,10 +72,12 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
         bs.BoolSetting('Epic Mode', default=False),
     ]
 
+    @override
     @classmethod
     def supports_session_type(cls, sessiontype: type[bs.Session]) -> bool:
         return issubclass(sessiontype, bs.DualTeamSession)
 
+    @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
         assert bs.app.classic is not None
@@ -96,16 +99,19 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
             bs.MusicType.EPIC if self._epic_mode else bs.MusicType.FORWARD_MARCH
         )
 
+    @override
     def get_instance_description(self) -> str | Sequence:
         if self._score_to_win == 1:
             return 'Touch the enemy flag.'
         return 'Touch the enemy flag ${ARG1} times.', self._score_to_win
 
+    @override
     def get_instance_description_short(self) -> str | Sequence:
         if self._score_to_win == 1:
             return 'touch 1 flag'
         return 'touch ${ARG1} flags', self._score_to_win
 
+    @override
     def create_team(self, sessionteam: bs.SessionTeam) -> Team:
         shared = SharedObjects.get()
         base_pos = self.map.get_flag_position(sessionteam.id)
@@ -151,16 +157,19 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
 
         return team
 
+    @override
     def on_team_join(self, team: Team) -> None:
         # Can't do this in create_team because the team's color/etc. have
         # not been wired up yet at that point.
         self._update_scoreboard()
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
         self.setup_standard_time_limit(self._time_limit)
         self.setup_standard_powerup_drops()
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.PlayerDiedMessage):
             super().handlemessage(msg)  # Augment standard.
@@ -249,6 +258,7 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
                 if player_team.score >= self._score_to_win:
                     self.end_game()
 
+    @override
     def end_game(self) -> None:
         results = bs.GameResults()
         for team in self.teams:

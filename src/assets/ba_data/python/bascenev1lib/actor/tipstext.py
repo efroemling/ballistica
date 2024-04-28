@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 
@@ -72,9 +72,11 @@ class TipsText(bs.Actor):
         next_tip = bs.Lstr(
             translate=(
                 'tips',
-                bs.app.classic.get_next_tip()
-                if bs.app.classic is not None
-                else '',
+                (
+                    bs.app.classic.get_next_tip()
+                    if bs.app.classic is not None
+                    else ''
+                ),
             ),
             subs=[('${REMOTE_APP_NAME}', get_remote_app_name())],
         )
@@ -95,6 +97,7 @@ class TipsText(bs.Actor):
         )
         self.node.text = next_tip
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         assert not self.expired
         if isinstance(msg, bs.DieMessage):

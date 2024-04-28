@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from bascenev1._messages import DieMessage
 from bascenev1._actor import Actor
@@ -28,6 +28,7 @@ class NodeActor(Actor):
         super().__init__()
         self.node = node
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, DieMessage):
             if self.node:
@@ -35,5 +36,6 @@ class NodeActor(Actor):
                 return None
         return super().handlemessage(msg)
 
+    @override
     def exists(self) -> bool:
         return bool(self.node)

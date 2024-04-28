@@ -38,9 +38,7 @@ class ProfileBrowserWindow(bui.Window):
         self._height = (
             360.0
             if uiscale is bui.UIScale.SMALL
-            else 385.0
-            if uiscale is bui.UIScale.MEDIUM
-            else 410.0
+            else 385.0 if uiscale is bui.UIScale.MEDIUM else 410.0
         )
 
         # If we're being called up standalone, handle pause/resume ourself.
@@ -74,13 +72,11 @@ class ProfileBrowserWindow(bui.Window):
                 scale=(
                     2.2
                     if uiscale is bui.UIScale.SMALL
-                    else 1.6
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.6 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -14)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -14) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
 
@@ -125,9 +121,7 @@ class ProfileBrowserWindow(bui.Window):
         scl = (
             1.055
             if uiscale is bui.UIScale.SMALL
-            else 1.18
-            if uiscale is bui.UIScale.MEDIUM
-            else 1.3
+            else 1.18 if uiscale is bui.UIScale.MEDIUM else 1.3
         )
         v -= 70.0 * scl
         self._new_button = bui.buttonwidget(
@@ -417,24 +411,11 @@ class ProfileBrowserWindow(bui.Window):
                 char_index = spazzes.index('Spaz')
 
             assert isinstance(tval, str)
-            character = bui.buttonwidget(
-                parent=self._subcontainer,
-                position=(0, y_val),
-                size=(28, 28),
-                label='',
-                color=(1, 1, 1),
-                mask_texture=bui.gettexture('characterIconMask'),
-                tint_color=color,
-                tint2_color=_highlight,
-                texture=icon_textures[char_index],
-                tint_texture=icon_tint_textures[char_index],
-                selectable=False,
-            )
             txtw = bui.textwidget(
                 parent=self._subcontainer,
-                position=(35, y_val),
+                position=(5, y_val),
                 size=((self._width - 210) / scl, 28),
-                text=bui.Lstr(value=tval),
+                text=bui.Lstr(value=f'    {tval}'),
                 h_align='left',
                 v_align='center',
                 on_select_call=bui.WeakCall(self._select, p_name, index),
@@ -444,6 +425,17 @@ class ProfileBrowserWindow(bui.Window):
                 always_highlight=True,
                 on_activate_call=bui.Call(self._edit_button.activate),
                 selectable=True,
+            )
+            character = bui.imagewidget(
+                parent=self._subcontainer,
+                position=(0, y_val),
+                size=(30, 30),
+                color=(1, 1, 1),
+                mask_texture=bui.gettexture('characterIconMask'),
+                tint_color=color,
+                tint2_color=_highlight,
+                texture=icon_textures[char_index],
+                tint_texture=icon_tint_textures[char_index],
             )
             if index == 0:
                 bui.widget(edit=txtw, up_widget=self._back_button)

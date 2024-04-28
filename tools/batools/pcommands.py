@@ -126,7 +126,7 @@ def lazy_increment_build() -> None:
     import subprocess
     from efro.terminal import Clr
     from efro.error import CleanError
-    from efrotools import get_files_hash
+    from efrotools.util import get_files_hash
     from efrotools.code import get_code_filenames
 
     pcommand.disallow_in_batch()
@@ -221,7 +221,7 @@ def androidaddr() -> None:
 def push_ipa() -> None:
     """Construct and push ios IPA for testing."""
 
-    from efrotools import extract_arg
+    from efrotools.util import extract_arg
     import efrotools.ios
 
     pcommand.disallow_in_batch()
@@ -487,41 +487,13 @@ def efrocache_get() -> None:
         pcommand.clientprint(output)
 
 
-def get_modern_make() -> None:
-    """Print name of a modern make command."""
-    import platform
-    import subprocess
-
-    pcommand.disallow_in_batch()
-
-    # Mac gnu make is outdated (due to newer versions using GPL3 I believe).
-    # so let's return 'gmake' there which will point to homebrew make which
-    # should be up to date.
-    if platform.system() == 'Darwin':
-        if (
-            subprocess.run(
-                ['which', 'gmake'], check=False, capture_output=True
-            ).returncode
-            != 0
-        ):
-            print(
-                'WARNING: this requires gmake (mac system make is too old).'
-                " Install it with 'brew install make'",
-                file=sys.stderr,
-                flush=True,
-            )
-        print('gmake')
-    else:
-        print('make')
-
-
 def warm_start_asset_build() -> None:
     """Prep asset builds to run faster."""
     import os
     import subprocess
     from pathlib import Path
 
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
     from efro.error import CleanError
 
     pcommand.disallow_in_batch()
@@ -562,34 +534,11 @@ def gen_docs_pdoc() -> None:
     batools.docs.generate_pdoc(projroot=str(pcommand.PROJROOT))
 
 
-def list_pip_reqs() -> None:
-    """List Python Pip packages needed for this project."""
-    from batools.build import get_pip_reqs
+def gen_docs_sphinx() -> None:
+    """Generate sphinx documentation."""
+    import batools.docs
 
-    pcommand.disallow_in_batch()
-
-    print(' '.join(get_pip_reqs()))
-
-
-def install_pip_reqs() -> None:
-    """Install Python Pip packages needed for this project."""
-    import subprocess
-    from efrotools import PYTHON_BIN
-    from efro.terminal import Clr
-    from batools.build import get_pip_reqs
-
-    pcommand.disallow_in_batch()
-
-    # Make sure pip itself is up to date first.
-    subprocess.run(
-        [PYTHON_BIN, '-m', 'pip', 'install', '--upgrade', 'pip'], check=True
-    )
-
-    subprocess.run(
-        [PYTHON_BIN, '-m', 'pip', 'install', '--upgrade'] + get_pip_reqs(),
-        check=True,
-    )
-    print(f'{Clr.GRN}All pip requirements installed!{Clr.RST}')
+    batools.docs.generate_sphinxdoc()
 
 
 def checkenv() -> None:
@@ -601,6 +550,24 @@ def checkenv() -> None:
     batools.build.checkenv()
 
 
+def prefab_platform() -> None:
+    """Print the current prefab-platform value."""
+    from efro.error import CleanError
+
+    from batools.build import PrefabPlatform
+
+    # Platform determination uses env vars; won't work in batch.
+    pcommand.disallow_in_batch()
+
+    args = pcommand.get_args()
+    if len(args) != 0:
+        raise CleanError('No arguments expected.')
+
+    current = PrefabPlatform.get_current()
+
+    print(current.value, end='')
+
+
 def ensure_prefab_platform() -> None:
     """Ensure we are running on a particular prefab platform.
 
@@ -609,50 +576,90 @@ def ensure_prefab_platform() -> None:
     the prefab platform may be Windows; not Linux. Also, a 64-bit
     os may be targeting a 32-bit platform.
     """
-    import batools.build
     from efro.error import CleanError
+
+    from batools.build import PrefabPlatform
+
+    # Platform determination uses env vars; won't work in batch.
+    pcommand.disallow_in_batch()
 
     args = pcommand.get_args()
     if len(args) != 1:
-        raise CleanError('Expected 1 platform name arg.')
-    needed = args[0]
-    current = batools.build.get_current_prefab_platform()
-    if current != needed:
+        options = ', '.join(t.value for t in PrefabPlatform)
         raise CleanError(
-            f'Incorrect platform: we are {current}, this requires {needed}.'
+            f'Expected 1 PrefabPlatform arg. Options are {options}.'
+        )
+    needed = PrefabPlatform(args[0])
+    current = PrefabPlatform.get_current()
+    if current is not needed:
+        raise CleanError(
+            f'Incorrect platform: we are {current.value},'
+            f' this requires {needed.value}.'
         )
 
 
 def prefab_run_var() -> None:
     """Print the current platform prefab run target var."""
-    import batools.build
+    from batools.build import PrefabPlatform
+
+    # Platform determination uses env vars; won't work in batch.
+    pcommand.disallow_in_batch()
 
     args = pcommand.get_args()
     if len(args) != 1:
         raise RuntimeError('Expected 1 arg.')
     base = args[0].replace('-', '_').upper()
-    platform = batools.build.get_current_prefab_platform().upper()
+    platform = PrefabPlatform.get_current().value.upper()
     pcommand.clientprint(f'RUN_PREFAB_{platform}_{base}', end='')
 
 
 def prefab_binary_path() -> None:
-    """Print the current platform prefab binary path."""
-    import batools.build
+    """Print the path to the current prefab binary."""
+    from typing import assert_never
 
+    from efro.error import CleanError
+
+    from batools.build import PrefabPlatform, PrefabTarget
+
+    # Platform determination uses env vars; won't work in batch.
     pcommand.disallow_in_batch()
 
     if len(sys.argv) != 3:
-        raise RuntimeError('Expected 1 arg.')
-    buildtype, buildmode = sys.argv[2].split('-')
-    platform = batools.build.get_current_prefab_platform()
-    if buildtype == 'gui':
-        binpath = 'ballisticakit'
-    elif buildtype == 'server':
-        binpath = 'dist/ballisticakit_headless'
+        options = ', '.join(t.value for t in PrefabTarget)
+        raise CleanError(f'Expected 1 PrefabTarget arg. Options are {options}.')
+
+    target = PrefabTarget(sys.argv[2])
+
+    buildtype = target.buildtype
+    buildmode = target.buildmode
+
+    platform = PrefabPlatform.get_current()
+
+    if platform is PrefabPlatform.WINDOWS_X86:
+        if buildtype == 'gui':
+            binpath = 'BallisticaKit.exe'
+        elif buildtype == 'server':
+            binpath = 'dist/BallisticaKitHeadless.exe'
+        else:
+            raise ValueError(f"Invalid buildtype '{buildtype}'.")
+    elif (
+        platform is PrefabPlatform.MAC_ARM64
+        or platform is PrefabPlatform.MAC_X86_64
+        or platform is PrefabPlatform.LINUX_ARM64
+        or platform is PrefabPlatform.LINUX_X86_64
+    ):
+        if buildtype == 'gui':
+            binpath = 'ballisticakit'
+        elif buildtype == 'server':
+            binpath = 'dist/ballisticakit_headless'
+        else:
+            raise ValueError(f"Invalid buildtype '{buildtype}'.")
     else:
-        raise ValueError(f"Invalid buildtype '{buildtype}'.")
+        # Make sure we're covering all options.
+        assert_never(platform)
+
     print(
-        f'build/prefab/full/{platform}_{buildtype}/{buildmode}/{binpath}',
+        f'build/prefab/full/{platform.value}_{buildtype}/{buildmode}/{binpath}',
         end='',
     )
 
@@ -660,20 +667,21 @@ def prefab_binary_path() -> None:
 def make_prefab() -> None:
     """Run prefab builds for the current platform."""
     import subprocess
-    import batools.build
+    from batools.build import PrefabPlatform, PrefabTarget
 
+    # Platform determination uses env vars; won't work in batch.
     pcommand.disallow_in_batch()
 
     if len(sys.argv) != 3:
         raise RuntimeError('Expected one argument')
-    target = batools.build.PrefabTarget(sys.argv[2])
-    platform = batools.build.get_current_prefab_platform()
+    targetstr = PrefabTarget(sys.argv[2]).value
+    platformstr = PrefabPlatform.get_current().value
 
     # We use dashes instead of underscores in target names.
-    platform = platform.replace('_', '-')
+    platformstr = platformstr.replace('_', '-')
     try:
         subprocess.run(
-            ['make', f'prefab-{platform}-{target.value}-build'], check=True
+            ['make', f'prefab-{platformstr}-{targetstr}-build'], check=True
         )
     except (Exception, KeyboardInterrupt) as exc:
         if str(exc):
@@ -690,6 +698,7 @@ def lazybuild() -> None:
     # This command is not a good candidate for batch since it can be
     # long running and prints various stuff throughout the process.
     pcommand.disallow_in_batch()
+
     args = pcommand.get_args()
 
     if len(args) < 3:

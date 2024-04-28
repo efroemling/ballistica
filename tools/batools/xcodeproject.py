@@ -36,37 +36,17 @@ def update_xcode_project(
 ) -> str:
     """Given an xcode project, update it for the current set of files."""
 
-    pbasename = os.path.basename(path)
-    if pbasename.endswith('-mac.xcodeproj') or pbasename.endswith(
-        '-ios.xcodeproj'
-    ):
-        suffixes = ['.cc', '.h', '.m', '.mm']
-        updater = Updater(
-            projroot,
-            path,
-            existing_data,
-            sorted(
-                p
-                for p in all_source_files
-                if os.path.splitext(p)[1] in suffixes
-            ),
-            # has_app_delegate_mm=True,
-            projname=projname,
-        )
-    else:
-        suffixes = ['.cc', '.h', '.m', '.mm', '.swift']
-        updater = Updater(
-            projroot,
-            path,
-            existing_data,
-            sorted(
-                p
-                for p in all_source_files
-                if os.path.splitext(p)[1] in suffixes
-            ),
-            # has_app_delegate_mm=True,
-            projname=projname,
-        )
+    suffixes = ['.cc', '.h', '.m', '.mm', '.swift']
+    updater = Updater(
+        projroot,
+        path,
+        existing_data,
+        sorted(
+            p for p in all_source_files if os.path.splitext(p)[1] in suffixes
+        ),
+        # has_app_delegate_mm=True,
+        projname=projname,
+    )
 
     return updater.run(force=force)
 

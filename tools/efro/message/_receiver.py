@@ -55,12 +55,13 @@ class MessageReceiver:
     def __init__(self, protocol: MessageProtocol) -> None:
         self.protocol = protocol
         self._handlers: dict[type[Message], Callable] = {}
-        self._decode_filter_call: Callable[
-            [Any, dict, Message], None
-        ] | None = None
-        self._encode_filter_call: Callable[
-            [Any, Message | None, Response | SysResponse, dict], None
-        ] | None = None
+        self._decode_filter_call: (
+            Callable[[Any, dict, Message], None] | None
+        ) = None
+        self._encode_filter_call: (
+            Callable[[Any, Message | None, Response | SysResponse, dict], None]
+            | None
+        ) = None
 
     # noinspection PyProtectedMember
     def register_handler(

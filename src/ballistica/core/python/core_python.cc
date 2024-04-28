@@ -224,8 +224,8 @@ void CorePython::SoftImportBase() {
 void CorePython::VerifyPythonEnvironment() {
   // Make sure we're running the Python version we require.
   const char* ver = Py_GetVersion();
-  if (strncmp(ver, "3.11", 4) != 0) {
-    FatalError("We require Python 3.11.x; instead found " + std::string(ver));
+  if (strncmp(ver, "3.12", 4) != 0) {
+    FatalError("We require Python 3.12.x; instead found " + std::string(ver));
   }
 }
 

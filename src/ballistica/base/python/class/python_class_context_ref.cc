@@ -151,8 +151,8 @@ auto PythonClassContextRef::Enter(PythonClassContextRef* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-auto PythonClassContextRef::Exit(PythonClassContextRef* self, PyObject* args)
-    -> PyObject* {
+auto PythonClassContextRef::Exit(PythonClassContextRef* self,
+                                 PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   g_base->SetCurrentContext(*self->context_ref_prev_);
   Py_RETURN_NONE;

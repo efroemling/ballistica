@@ -15,6 +15,7 @@ from enum import Enum
 from threading import Thread
 from typing import TYPE_CHECKING
 
+from efro.util import utc_now
 from efro.error import CommunicationError
 import bacommon.cloud
 import bauiv1 as bui
@@ -81,9 +82,7 @@ class StoreBrowserWindow(bui.Window):
         self._height = (
             578
             if uiscale is bui.UIScale.SMALL
-            else 645
-            if uiscale is bui.UIScale.MEDIUM
-            else 800
+            else 645 if uiscale is bui.UIScale.MEDIUM else 800
         )
         self._current_tab: StoreBrowserWindow.TabID | None = None
         extra_top = 30 if uiscale is bui.UIScale.SMALL else 0
@@ -100,17 +99,13 @@ class StoreBrowserWindow(bui.Window):
                 scale=(
                     1.3
                     if uiscale is bui.UIScale.SMALL
-                    else 0.9
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 0.8
+                    else 0.9 if uiscale is bui.UIScale.MEDIUM else 0.8
                 ),
                 scale_origin_stack_offset=scale_origin,
                 stack_offset=(
                     (0, -5)
                     if uiscale is bui.UIScale.SMALL
-                    else (0, 0)
-                    if uiscale is bui.UIScale.MEDIUM
-                    else (0, 0)
+                    else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
                 ),
             )
         )
@@ -687,8 +682,10 @@ class StoreBrowserWindow(bui.Window):
             # Look at the current set of sales; filter any with time remaining.
             for sale_item, sale_info in list(sales_raw.items()):
                 to_end = (
-                    datetime.datetime.utcfromtimestamp(sale_info['e'])
-                    - datetime.datetime.utcnow()
+                    datetime.datetime.fromtimestamp(
+                        sale_info['e'], datetime.UTC
+                    )
+                    - utc_now()
                 ).total_seconds()
                 if to_end > 0:
                     sales[sale_item] = {
@@ -905,27 +902,23 @@ class StoreBrowserWindow(bui.Window):
                             dummy_name = 'icons.foo'
                         else:
                             dummy_name = ''
-                        section[
-                            'button_size'
-                        ] = cstore.get_store_item_display_size(dummy_name)
+                        section['button_size'] = (
+                            cstore.get_store_item_display_size(dummy_name)
+                        )
                         section['v_spacing'] = (
                             -25
                             if (
                                 self._tab == 'extras'
                                 and uiscale is bui.UIScale.SMALL
                             )
-                            else -17
-                            if self._tab == 'characters'
-                            else 0
+                            else -17 if self._tab == 'characters' else 0
                         )
                         if 'title' not in section:
                             section['title'] = ''
                         section['x_offs'] = (
                             130
                             if self._tab == 'extras'
-                            else 270
-                            if self._tab == 'maps'
-                            else 0
+                            else 270 if self._tab == 'maps' else 0
                         )
                         section['y_offs'] = (
                             20
@@ -934,14 +927,14 @@ class StoreBrowserWindow(bui.Window):
                                 and uiscale is bui.UIScale.SMALL
                                 and bui.app.config.get('Merch Link')
                             )
-                            else 55
-                            if (
-                                self._tab == 'extras'
-                                and uiscale is bui.UIScale.SMALL
+                            else (
+                                55
+                                if (
+                                    self._tab == 'extras'
+                                    and uiscale is bui.UIScale.SMALL
+                                )
+                                else -20 if self._tab == 'icons' else 0
                             )
-                            else -20
-                            if self._tab == 'icons'
-                            else 0
                         )
 
                 def instantiate(

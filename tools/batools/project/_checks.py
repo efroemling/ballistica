@@ -11,20 +11,15 @@ import os
 
 from efro.error import CleanError
 from efro.terminal import Clr
-from efrotools import get_public_license, PYVER
+from efrotools.project import (
+    get_public_legal_notice,
+    get_non_public_legal_notice,
+    get_non_public_legal_notice_prev,
+)
+from efrotools.pyver import PYVER, PYVERNODOT
 
 if TYPE_CHECKING:
     from batools.project._updater import ProjectUpdater
-
-
-def _get_legal_notice_private() -> str:
-    """Return the one line legal notice we expect private files to have."""
-    return 'Copyright (c) 2011-2024 Eric Froemling'
-
-
-def _get_legal_notice_private_prev() -> str:
-    """Allows us to auto-update."""
-    return 'Copyright (c) 2011-2023 Eric Froemling'
 
 
 def check_source_files(self: ProjectUpdater) -> None:
@@ -214,9 +209,9 @@ def _check_c_license(
 ) -> None:
     # Look for public license line (public or private repo) or private
     # license line (private repo only)
-    line_private = '// ' + _get_legal_notice_private()
-    line_private_prev = '// ' + _get_legal_notice_private_prev()
-    line_public = get_public_license('c++')
+    line_private = '// ' + get_non_public_legal_notice()
+    line_private_prev = '// ' + get_non_public_legal_notice_prev()
+    line_public = get_public_legal_notice('c++')
     lnum = 0
 
     if self.public:
@@ -266,14 +261,14 @@ def check_makefiles(self: ProjectUpdater) -> None:
 
         # Make sure public repo is public-license only.
         if self.public:
-            public_license = get_public_license('makefile')
+            public_license = get_public_legal_notice('makefile')
             if public_license not in makefile:
                 raise CleanError(f'Pub license not found in {fpath}.')
         # Allow both public and private license in private repo.
         else:
             if (
-                _get_legal_notice_private() not in makefile
-                and get_public_license('makefile') not in makefile
+                get_non_public_legal_notice() not in makefile
+                and get_public_legal_notice('makefile') not in makefile
             ):
                 raise CleanError(f'Priv or pub legal not found in {fpath}.')
 
@@ -467,9 +462,9 @@ def _check_python_file_license(
     # In all cases, look for our one-line legal notice.
     # In the public case, look for the rest of our public license too.
     if self.license_line_checks:
-        public_license = get_public_license('python')
-        private_license = '# ' + _get_legal_notice_private()
-        private_license_prev = '# ' + _get_legal_notice_private_prev()
+        public_license = get_public_legal_notice('python')
+        private_license = '# ' + get_non_public_legal_notice()
+        private_license_prev = '# ' + get_non_public_legal_notice_prev()
         lnum = copyrightline
         if len(lines) < lnum + 1:
             raise RuntimeError('Not enough lines in file:', fname)
@@ -592,6 +587,7 @@ def check_sync_states(self: ProjectUpdater) -> None:
 
 def check_misc(self: ProjectUpdater) -> None:
     """Check misc project stuff."""
+    from efrotools.util import readfile, replace_exact
 
     # Make sure we're set to prod master server. (but ONLY when
     # checking; still want to be able to run updates).
@@ -612,3 +608,54 @@ def check_misc(self: ProjectUpdater) -> None:
                     != '1'
                 ):
                     raise CleanError('Not using prod v2 master server.')
+
+    # Make sure we've got the right Python version in a few files.
+    if not self.public:
+
+        # Make sure android cmake stuff links against current python version.
+        fpath = (
+            'ballisticakit-android/BallisticaKit/src/main/cpp/CMakeLists.txt'
+        )
+        contents = readfile(os.path.join(self.projroot, fpath))
+        _ = replace_exact(contents, f'libpython{PYVER}d.a', 'DUMMYVAL')
+        _ = replace_exact(contents, f'libpython{PYVER}.a', 'DUMMYVAL')
+
+    # Make sure assets Makefile is compiling pyc files for current
+    # Python version.
+    contents = readfile(os.path.join(self.projroot, 'src/assets/Makefile'))
+    _ = replace_exact(
+        contents,
+        f'$1: $$(subst /__pycache__,,$$(subst .cpython-{PYVERNODOT}'
+        f'.opt-1.pyc,.py,$1))',
+        'DUMMYVAL',
+    )
+
+    # Make sure staged wrapper script is invoking current Python version
+    # on modular builds.
+    contents = readfile(os.path.join(self.projroot, 'tools/batools/staging.py'))
+    _ = replace_exact(
+        contents,
+        f'exec python{PYVER} ba_data/python/baenv.py "$@"\\n',
+        'DUMMYVAL',
+    )
+
+    # Our XCode project should refer to the current Python lib serveral times.
+    if not self.public:
+        contents = readfile(
+            os.path.join(
+                self.projroot,
+                'ballisticakit-xcode/BallisticaKit.xcodeproj/project.pbxproj',
+            )
+        )
+        _ = replace_exact(
+            contents,
+            '"-lpython3.12d",',
+            'DUMMYVAL',
+            count=7,
+        )
+        _ = replace_exact(
+            contents,
+            '"-lpython3.12",',
+            'DUMMYVAL',
+            count=7,
+        )

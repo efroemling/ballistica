@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import weakref
-from typing import Generic, TypeVar, TYPE_CHECKING
+from typing import Generic, TypeVar, TYPE_CHECKING, override
 
 import babase
 
@@ -313,6 +313,7 @@ class AssetPackage(DependencyComponent):
         self.package_id = entry.config
         print(f'LOADING ASSET PACKAGE {self.package_id}')
 
+    @override
     @classmethod
     def dep_is_present(cls, config: Any = None) -> bool:
         assert isinstance(config, str)

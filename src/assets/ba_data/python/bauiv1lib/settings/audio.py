@@ -63,9 +63,7 @@ class AudioSettingsWindow(bui.Window):
         base_scale = (
             2.05
             if uiscale is bui.UIScale.SMALL
-            else 1.6
-            if uiscale is bui.UIScale.MEDIUM
-            else 1.0
+            else 1.6 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
         popup_menu_scale = base_scale * 1.2
 
@@ -75,9 +73,9 @@ class AudioSettingsWindow(bui.Window):
                 transition=transition,
                 scale=base_scale,
                 scale_origin_stack_offset=scale_origin,
-                stack_offset=(0, -20)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -20) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
 

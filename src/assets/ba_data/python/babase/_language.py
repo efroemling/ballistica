@@ -6,7 +6,7 @@ from __future__ import annotations
 import os
 import json
 import logging
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, overload, override
 
 import _babase
 from babase._appsubsystem import AppSubsystem
@@ -217,6 +217,7 @@ class LanguageSubsystem(AppSubsystem):
                 color=(0, 1, 0),
             )
 
+    @override
     def do_apply_app_config(self) -> None:
         assert _babase.in_logic_thread()
         assert isinstance(_babase.app.config, dict)
@@ -598,9 +599,11 @@ class Lstr:
             _error.print_exception('_get_json failed for', self.args)
             return 'JSON_ERR'
 
+    @override
     def __str__(self) -> str:
         return '<ba.Lstr: ' + self._get_json() + '>'
 
+    @override
     def __repr__(self) -> str:
         return '<ba.Lstr: ' + self._get_json() + '>'
 
@@ -648,5 +651,6 @@ class AttrDict(dict):
         assert not isinstance(val, bytes)
         return val
 
+    @override
     def __setattr__(self, attr: str, value: Any) -> None:
         raise AttributeError()

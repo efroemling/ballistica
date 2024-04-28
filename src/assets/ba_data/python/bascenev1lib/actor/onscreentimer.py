@@ -3,7 +3,7 @@
 """Defines Actor(s)."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 import logging
 
 import bascenev1 as bs
@@ -93,6 +93,7 @@ class OnScreenTimer(bs.Actor):
         """Shortcut for start time in seconds."""
         return self.getstarttime()
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         # if we're asked to die, just kill our node/timer
         if isinstance(msg, bs.DieMessage):

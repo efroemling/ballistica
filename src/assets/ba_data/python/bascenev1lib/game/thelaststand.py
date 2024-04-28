@@ -7,7 +7,9 @@ from __future__ import annotations
 import random
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
+
+import bascenev1 as bs
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.bomb import TNTSpawner
@@ -29,7 +31,6 @@ from bascenev1lib.actor.spazbot import (
     StickyBot,
     ExplodeyBot,
 )
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -109,6 +110,7 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
             ExplodeyBot: SpawnInfo(0.05, 0.02, 0.002),
         }
 
+    @override
     def on_transition_in(self) -> None:
         super().on_transition_in()
         bs.timer(1.3, self._new_wave_sound.play)
@@ -116,6 +118,7 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
             label=bs.Lstr(resource='scoreText'), score_split=0.5
         )
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
 
@@ -129,6 +132,7 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
             position=self._tntspawnpos, respawn_time=10.0
         )
 
+    @override
     def spawn_player(self, player: Player) -> bs.Actor:
         pos = (
             self._spawn_center[0] + random.uniform(-1.5, 1.5),
@@ -290,6 +294,7 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
         assert self._scoreboard is not None
         self._scoreboard.set_team_value(self.teams[0], score, max_score=None)
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.PlayerDiedMessage):
             player = msg.getplayer(Player)
@@ -327,6 +332,7 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
         else:
             super().handlemessage(msg)
 
+    @override
     def end_game(self) -> None:
         # Tell our bots to celebrate just to rub it in.
         self._bots.final_celebrate()

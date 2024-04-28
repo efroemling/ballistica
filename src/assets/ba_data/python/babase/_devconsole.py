@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 from dataclasses import dataclass
 import logging
 
@@ -96,6 +96,7 @@ class DevConsoleTab:
 class DevConsoleTabPython(DevConsoleTab):
     """The Python dev-console tab."""
 
+    @override
     def refresh(self) -> None:
         self.python_terminal()
 
@@ -103,6 +104,7 @@ class DevConsoleTabPython(DevConsoleTab):
 class DevConsoleTabTest(DevConsoleTab):
     """Test dev-console tab."""
 
+    @override
     def refresh(self) -> None:
         import random
 

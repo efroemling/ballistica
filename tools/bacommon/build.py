@@ -21,7 +21,7 @@ class BuildInfoSet:
 
     @dataclass
     class Entry:
-        """Info about a particular build."""
+        """Info about a particular app build."""
 
         filename: Annotated[str, IOAttrs('fname')]
         size: Annotated[int, IOAttrs('size')]

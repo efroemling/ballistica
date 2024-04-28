@@ -28,9 +28,7 @@ class V2UpgradeWindow(bui.Window):
                 scale=(
                     1.25
                     if uiscale is bui.UIScale.SMALL
-                    else 1.25
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.25
+                    else 1.25 if uiscale is bui.UIScale.MEDIUM else 1.25
                 ),
             )
         )

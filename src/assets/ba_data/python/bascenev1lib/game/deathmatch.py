@@ -7,11 +7,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
+
+import bascenev1 as bs
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.scoreboard import Scoreboard
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -38,6 +39,7 @@ class DeathMatchGame(bs.TeamGameActivity[Player, Team]):
     # Print messages when players die since it matters here.
     announce_player_deaths = True
 
+    @override
     @classmethod
     def get_available_settings(
         cls, sessiontype: type[bs.Session]
@@ -87,12 +89,14 @@ class DeathMatchGame(bs.TeamGameActivity[Player, Team]):
 
         return settings
 
+    @override
     @classmethod
     def supports_session_type(cls, sessiontype: type[bs.Session]) -> bool:
         return issubclass(sessiontype, bs.DualTeamSession) or issubclass(
             sessiontype, bs.FreeForAllSession
         )
 
+    @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
         assert bs.app.classic is not None
@@ -116,16 +120,20 @@ class DeathMatchGame(bs.TeamGameActivity[Player, Team]):
             bs.MusicType.EPIC if self._epic_mode else bs.MusicType.TO_THE_DEATH
         )
 
+    @override
     def get_instance_description(self) -> str | Sequence:
         return 'Crush ${ARG1} of your enemies.', self._score_to_win
 
+    @override
     def get_instance_description_short(self) -> str | Sequence:
         return 'kill ${ARG1} enemies', self._score_to_win
 
+    @override
     def on_team_join(self, team: Team) -> None:
         if self.has_begun():
             self._update_scoreboard()
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
         self.setup_standard_time_limit(self._time_limit)
@@ -137,6 +145,7 @@ class DeathMatchGame(bs.TeamGameActivity[Player, Team]):
         )
         self._update_scoreboard()
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.PlayerDiedMessage):
             # Augment standard behavior.
@@ -197,6 +206,7 @@ class DeathMatchGame(bs.TeamGameActivity[Player, Team]):
                 team, team.score, self._score_to_win
             )
 
+    @override
     def end_game(self) -> None:
         results = bs.GameResults()
         for team in self.teams:

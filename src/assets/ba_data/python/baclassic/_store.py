@@ -7,6 +7,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from efro.util import utc_now
+
 import babase
 import bascenev1
 
@@ -522,10 +524,10 @@ class StoreSubsystem:
                     if item in sales_raw:
                         if not plus.get_purchased(item):
                             to_end = (
-                                datetime.datetime.utcfromtimestamp(
-                                    sales_raw[item]['e']
+                                datetime.datetime.fromtimestamp(
+                                    sales_raw[item]['e'], datetime.UTC
                                 )
-                                - datetime.datetime.utcnow()
+                                - utc_now()
                             ).total_seconds()
                             if to_end > 0:
                                 sale_times.append(int(to_end * 1000))

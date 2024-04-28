@@ -7,7 +7,7 @@ import copy
 import weakref
 import threading
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import babase
 import bascenev1
@@ -68,6 +68,7 @@ class MasterServerV1CallThread(threading.Thread):
         with self._context:
             self._callback(arg)
 
+    @override
     def run(self) -> None:
         # pylint: disable=consider-using-with
         # pylint: disable=too-many-branches

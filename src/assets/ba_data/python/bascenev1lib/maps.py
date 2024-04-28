@@ -5,9 +5,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+
 from bascenev1lib.gameutils import SharedObjects
 
 if TYPE_CHECKING:
@@ -22,15 +23,18 @@ class HockeyStadium(bs.Map):
 
     name = 'Hockey Stadium'
 
+    @override
     @classmethod
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'hockey', 'team_flag', 'keep_away']
 
+    @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
         return 'hockeyStadiumPreview'
 
+    @override
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
@@ -114,15 +118,18 @@ class FootballStadium(bs.Map):
 
     name = 'Football Stadium'
 
+    @override
     @classmethod
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'football', 'team_flag', 'keep_away']
 
+    @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
         return 'footballStadiumPreview'
 
+    @override
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
@@ -164,6 +171,7 @@ class FootballStadium(bs.Map):
         gnode.vr_camera_offset = (0, -0.8, -1.1)
         gnode.vr_near_clip = 0.5
 
+    @override
     def is_point_near_edge(self, point: bs.Vec3, running: bool = False) -> bool:
         box_position = self.defs.boxes['edge_box'][0:3]
         box_scale = self.defs.boxes['edge_box'][6:9]
@@ -181,16 +189,19 @@ class Bridgit(bs.Map):
     name = 'Bridgit'
     dataname = 'bridgit'
 
+    @override
     @classmethod
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         # print('getting playtypes', cls._getdata()['play_types'])
         return ['melee', 'team_flag', 'keep_away']
 
+    @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
         return 'bridgitPreview'
 
+    @override
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
@@ -286,6 +297,7 @@ class BigG(bs.Map):
 
     name = 'Big G'
 
+    @override
     @classmethod
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
@@ -298,10 +310,12 @@ class BigG(bs.Map):
             'conquest',
         ]
 
+    @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
         return 'bigGPreview'
 
+    @override
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
@@ -397,15 +411,18 @@ class Roundabout(bs.Map):
 
     name = 'Roundabout'
 
+    @override
     @classmethod
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag']
 
+    @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
         return 'roundaboutPreview'
 
+    @override
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
@@ -502,15 +519,18 @@ class MonkeyFace(bs.Map):
 
     name = 'Monkey Face'
 
+    @override
     @classmethod
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag']
 
+    @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
         return 'monkeyFacePreview'
 
+    @override
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
@@ -607,6 +627,7 @@ class ZigZag(bs.Map):
 
     name = 'Zigzag'
 
+    @override
     @classmethod
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
@@ -618,10 +639,12 @@ class ZigZag(bs.Map):
             'king_of_the_hill',
         ]
 
+    @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
         return 'zigzagPreview'
 
+    @override
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
@@ -715,15 +738,18 @@ class ThePad(bs.Map):
 
     name = 'The Pad'
 
+    @override
     @classmethod
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag', 'king_of_the_hill']
 
+    @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
         return 'thePadPreview'
 
+    @override
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
@@ -804,15 +830,18 @@ class DoomShroom(bs.Map):
 
     name = 'Doom Shroom'
 
+    @override
     @classmethod
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag']
 
+    @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
         return 'doomShroomPreview'
 
+    @override
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
@@ -881,6 +910,7 @@ class DoomShroom(bs.Map):
         gnode.vignette_outer = (0.76, 0.76, 0.76)
         gnode.vignette_inner = (0.95, 0.95, 0.99)
 
+    @override
     def is_point_near_edge(self, point: bs.Vec3, running: bool = False) -> bool:
         xpos = point.x
         zpos = point.z
@@ -900,15 +930,18 @@ class LakeFrigid(bs.Map):
 
     name = 'Lake Frigid'
 
+    @override
     @classmethod
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag', 'race']
 
+    @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
         return 'lakeFrigidPreview'
 
+    @override
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
@@ -987,15 +1020,18 @@ class TipTop(bs.Map):
 
     name = 'Tip Top'
 
+    @override
     @classmethod
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag', 'king_of_the_hill']
 
+    @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
         return 'tipTopPreview'
 
+    @override
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
@@ -1065,15 +1101,18 @@ class CragCastle(bs.Map):
 
     name = 'Crag Castle'
 
+    @override
     @classmethod
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag', 'conquest']
 
+    @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
         return 'cragCastlePreview'
 
+    @override
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
@@ -1158,15 +1197,18 @@ class TowerD(bs.Map):
 
     name = 'Tower D'
 
+    @override
     @classmethod
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return []
 
+    @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
         return 'towerDPreview'
 
+    @override
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
@@ -1256,6 +1298,7 @@ class TowerD(bs.Map):
         gnode.vignette_outer = (0.7, 0.73, 0.7)
         gnode.vignette_inner = (0.95, 0.95, 0.95)
 
+    @override
     def is_point_near_edge(self, point: bs.Vec3, running: bool = False) -> bool:
         # see if we're within edge_box
         boxes = self.defs.boxes
@@ -1281,6 +1324,7 @@ class HappyThoughts(bs.Map):
 
     name = 'Happy Thoughts'
 
+    @override
     @classmethod
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
@@ -1292,10 +1336,12 @@ class HappyThoughts(bs.Map):
             'king_of_the_hill',
         ]
 
+    @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
         return 'alwaysLandPreview'
 
+    @override
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
@@ -1310,6 +1356,7 @@ class HappyThoughts(bs.Map):
         }
         return data
 
+    @override
     @classmethod
     def get_music_type(cls) -> bs.MusicType:
         return bs.MusicType.FLYING
@@ -1397,15 +1444,18 @@ class StepRightUp(bs.Map):
 
     name = 'Step Right Up'
 
+    @override
     @classmethod
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag', 'conquest']
 
+    @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
         return 'stepRightUpPreview'
 
+    @override
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
@@ -1477,15 +1527,18 @@ class Courtyard(bs.Map):
 
     name = 'Courtyard'
 
+    @override
     @classmethod
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag']
 
+    @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
         return 'courtyardPreview'
 
+    @override
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
@@ -1576,6 +1629,7 @@ class Courtyard(bs.Map):
         gnode.vignette_outer = (0.6, 0.6, 0.64)
         gnode.vignette_inner = (0.95, 0.95, 0.93)
 
+    @override
     def is_point_near_edge(self, point: bs.Vec3, running: bool = False) -> bool:
         # count anything off our ground level as safe (for our platforms)
         # see if we're within edge_box
@@ -1593,15 +1647,18 @@ class Rampage(bs.Map):
 
     name = 'Rampage'
 
+    @override
     @classmethod
     def get_play_types(cls) -> list[str]:
         """Return valid play types for this map."""
         return ['melee', 'keep_away', 'team_flag']
 
+    @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
         return 'rampagePreview'
 
+    @override
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
@@ -1681,6 +1738,7 @@ class Rampage(bs.Map):
         gnode.vignette_outer = (0.62, 0.64, 0.69)
         gnode.vignette_inner = (0.97, 0.95, 0.93)
 
+    @override
     def is_point_near_edge(self, point: bs.Vec3, running: bool = False) -> bool:
         box_position = self.defs.boxes['edge_box'][0:3]
         box_scale = self.defs.boxes['edge_box'][6:9]

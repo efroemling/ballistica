@@ -21,8 +21,8 @@ namespace ballistica::classic {
 
 // -------------------------------- value_test ---------------------------------
 
-static auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyValueTest(PyObject* self, PyObject* args,
+                        PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char* arg;
   double change = 0.0f;

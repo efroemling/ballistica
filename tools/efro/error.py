@@ -3,7 +3,7 @@
 """Common errors and related functionality."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 import errno
 
 if TYPE_CHECKING:
@@ -82,6 +82,7 @@ class RemoteError(Exception):
         super().__init__(msg)
         self._peer_desc = peer_desc
 
+    @override
     def __str__(self) -> str:
         s = ''.join(str(arg) for arg in self.args)
         # Indent so we can more easily tell what is the remote part when

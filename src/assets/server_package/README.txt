@@ -2,8 +2,8 @@ To run this, simply cd into this directory and run ./ballisticakit_server
 (on mac or linux) or launch_ballisticakit_server.bat (on windows).
 You'll need to open a UDP port (43210 by default) so that the world can
 communicate with your server.
-You can configure your server by editing the config.yaml file.
-(if you only see config_template.yaml, you can copy/rename that to config.yaml)
+You can configure your server by editing the config.toml file.
+(if you only see config_template.toml, you can copy/rename that to config.toml)
 
 Platform-Specific Notes:
 
@@ -14,7 +14,7 @@ Mac:
   (brew install python3).
 
 Linux (x86_64):
-- Server binaries are currently compiled against Ubuntu 20 LTS. 
+- Server binaries are currently compiled against Ubuntu 22 LTS. 
 
 Raspberry Pi:
 - The server binary was compiled on a Raspberry Pi 4 running Raspbian Buster.

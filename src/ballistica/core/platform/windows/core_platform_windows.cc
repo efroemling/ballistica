@@ -23,9 +23,9 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "iphlpapi.lib")
 #if BA_DEBUG_BUILD
-#pragma comment(lib, "python311_d.lib")
+#pragma comment(lib, "python312_d.lib")
 #else
-#pragma comment(lib, "python311.lib")
+#pragma comment(lib, "python312.lib")
 #endif
 #pragma comment(lib, "DbgHelp.lib")
 
@@ -342,13 +342,13 @@ auto CorePlatformWindows::Remove(const char* path) -> int {
   return _wremove(UTF8Decode(path).c_str());
 }
 
-auto CorePlatformWindows::Stat(const char* path, struct BA_STAT* buffer)
-    -> int {
+auto CorePlatformWindows::Stat(const char* path,
+                               struct BA_STAT* buffer) -> int {
   return _wstat(UTF8Decode(path).c_str(), buffer);
 }
 
-auto CorePlatformWindows::Rename(const char* oldname, const char* newname)
-    -> int {
+auto CorePlatformWindows::Rename(const char* oldname,
+                                 const char* newname) -> int {
   // Unlike other platforms, windows will error if the target file already
   // exists instead of simply overwriting it. So let's attempt to blow away
   // anything there first.

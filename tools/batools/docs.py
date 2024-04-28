@@ -212,3 +212,135 @@ def _run_pdoc() -> None:
 
     duration = time.monotonic() - starttime
     print(f'{Clr.GRN}Generated pdoc documentation in {duration:.1f}s.{Clr.RST}')
+
+
+def generate_sphinxdoc() -> None:
+    """Generate a set of pdoc documentation."""
+    _run_sphinx()
+
+
+def _run_sphinx(
+    project_name: str = 'ballistica',
+    project_author: str = 'Efroemling',
+    copyright_text: str = '2024, Efroemling',
+    generate_dummymodules_doc: bool = True,
+    generate_tools_doc: bool = True,
+) -> None:
+    """Do the actual docs generation with sphinx."""
+    # pylint: disable=too-many-locals
+
+    import time
+    from batools.version import get_current_version
+    from jinja2 import Environment, FileSystemLoader
+
+    version, buildnum = get_current_version()
+
+    assets_dirs: dict = {
+        'ba_data': 'src/assets/ba_data/python/',
+        'dummy_modules': 'build/dummymodules/',
+        'efro_tools': 'tools/',  # for efro and bacommon package
+    }
+    paths: dict = {
+        'sphinx_src': 'src/assets/sphinx/',
+        'build_dir': 'build/sphinx/',
+        'sphinx_cache_dir': '.cache/sphinx/',
+    }
+    paths.update(
+        {
+            'template_dir': paths['sphinx_src'] + 'template/',
+            'static_dir': paths['sphinx_src'] + 'static/',
+        }
+    )
+
+    assert Path(paths['template_dir']).is_dir()
+    assert Path(paths['static_dir']).is_dir()
+
+    os.makedirs(paths['build_dir'], exist_ok=True)
+    os.makedirs(paths['sphinx_cache_dir'], exist_ok=True)
+
+    os.environ['BALLISTICA_ROOT'] = os.getcwd()  # used in sphinx conf.py
+    os.environ['BA_RUNNING_WITH_DUMMY_MODULES'] = '1'
+    os.environ['SPHINX_SETTINGS'] = str(
+        {
+            'project_name': project_name,
+            'project_author': project_author,
+            'copyright': copyright_text,
+            'version': version,
+            'buildnum': buildnum,
+            'ballistica_logo': 'https://camo.githubusercontent.com/25021344ceaa7def6fa6523f79115f7ffada8d26b4768bb9a0cf65fc33304f45/68747470733a2f2f66696c65732e62616c6c6973746963612e6e65742f62616c6c6973746963615f6d656469612f62616c6c6973746963615f6c6f676f5f68616c662e706e67',  # pylint: disable=line-too-long
+        }
+    )
+
+    file_loader = FileSystemLoader(paths['template_dir'])
+    env = Environment(loader=file_loader)
+    index_template = env.get_template('index.rst_t')
+    # maybe make it automatically render all files in templates dir in future
+    with open(
+        paths['sphinx_cache_dir'] + 'index.rst', 'w', encoding='utf-8'
+    ) as index_rst:
+        data = {
+            'ballistica_image_url': 'https://camo.githubusercontent.com/25021344ceaa7def6fa6523f79115f7ffada8d26b4768bb9a0cf65fc33304f45/68747470733a2f2f66696c65732e62616c6c6973746963612e6e65742f62616c6c6973746963615f6d656469612f62616c6c6973746963615f6c6f676f5f68616c662e706e67',  # pylint: disable=line-too-long
+            'version_no': version,
+            'build_no': str(buildnum),
+        }
+        index_rst.write(index_template.render(data=data))
+
+    starttime = time.monotonic()
+
+    apidoc_cmd = [
+        'sphinx-apidoc',
+        # '-f',  # Force overwriting of any existing generated files.
+        '-H',
+        project_name,
+        '-A',
+        project_author,
+        '-V',
+        str(version),  # version
+        '-R',
+        str(buildnum),  # release
+        # '--templatedir', template_dir,
+        '-o',
+        paths['sphinx_cache_dir'],
+    ]
+
+    # Prevents Python from writing __pycache__ dirs in our source tree
+    # which leads to slight annoyances.
+    environ = dict(os.environ, PYTHONDONTWRITEBYTECODE='1')
+
+    if generate_dummymodules_doc:
+        subprocess.run(
+            apidoc_cmd + [assets_dirs['dummy_modules']] + ['--private'],
+            check=True,
+            env=environ,
+        )
+
+    if generate_tools_doc:
+        subprocess.run(
+            apidoc_cmd + [assets_dirs['efro_tools']],
+            check=True,
+            env=environ,
+        )
+    subprocess.run(
+        apidoc_cmd + [assets_dirs['ba_data'], '-f'],
+        check=True,
+        env=environ,
+    )
+    # -f for regenerating index page so it contains the ba_data modules
+
+    subprocess.run(
+        [
+            'sphinx-build',
+            '-c',  # config file dir
+            paths['static_dir'],
+            paths['sphinx_cache_dir'],  # input dir
+            paths['build_dir'],  # output dir
+            '-d',
+            paths['sphinx_cache_dir'],
+            # '-Q', #quiet now
+        ],
+        check=True,
+        env=environ,
+    )
+
+    duration = time.monotonic() - starttime
+    print(f'Generated sphinx documentation in {duration:.1f}s.')

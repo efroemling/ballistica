@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import copy
 import weakref
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import babase
 
@@ -38,6 +38,7 @@ class Level:
         self._index: int | None = None
         self._score_version_string: str | None = None
 
+    @override
     def __repr__(self) -> str:
         cls = type(self)
         return f"<{cls.__module__}.{cls.__name__} '{self._name}'>"
@@ -71,9 +72,11 @@ class Level:
         return babase.Lstr(
             translate=(
                 'coopLevelNames',
-                self._displayname
-                if self._displayname is not None
-                else self._name,
+                (
+                    self._displayname
+                    if self._displayname is not None
+                    else self._name
+                ),
             ),
             subs=[
                 ('${GAME}', self._gametype.get_display_string(self._settings))

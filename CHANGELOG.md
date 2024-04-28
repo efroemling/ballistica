@@ -1,4 +1,63 @@
-### 1.7.33 (build 21757, api 8, 2024-01-06)
+### 1.7.35 (build 21824, api 8, 2024-04-26)
+
+### 1.7.34 (build 21823, api 8, 2024-04-26)
+- Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
+  of the things this means is that we can use `typing.override` instead of the
+  `typing_extensions.override` version so the annoying requirement of installing
+  `typing_extensions` first thing when setting up the repo introduced a few
+  versions back is finally no longer a thing. I'll try to be careful to avoid
+  falling back into that situation in the future.
+- The project now maintains its own Python virtual environment in `.venv` where
+  it automatically installs whatever Python packages it needs instead of asking
+  the user to do so in their own environment. This should greatly simplify
+  working with the project and keep tool versions more consistent for people.
+  There will likely be some bugs related to this needing to be shaken out, so
+  please holler if you run into any. Namely, most all Makefile targets will now
+  need to depend on the `prereqs` target which ensures the virtual env is set
+  up. A target that does not do so may error if run on a freshly cloned/cleaned
+  repo, so holler if you run into such a thing.
+- There is now a `config/requirements.txt` file which controls which pip
+  packages are made available in the project's internal virtual environment.
+  Note that this is only for tooling; the actual engine bundles a different
+  minimal set of pip packages.
+- Since `config/requirements.txt` now exists and pip stuff is handled
+  automatically, stripped out the old manual pip requirement management stuff.
+  This includes the `list_pip_reqs` and `get_pip_reqs` pcommands and the
+  requirements list in `batools.build`.
+- Some executable scripts such as `tools/pcommand` and `tools/bacloud` are now
+  generated dynamically so that they always use the shiny new internal Python
+  virtual-environment. This generation should happen automagically when you
+  build `make` targets, but please holler if you run into a situation where it
+  does not and you get errors.
+- `_bascenev1.protocol_version()` now properly throws an exception if called
+  while scene-v1 is not active.
+- The `efro.dataclassio` system now supports `datetime.timedelta` values.
+- Usage of `pcommandbatch` is now disabled by default. To enable it, set the env
+  var `BA_PCOMMANDBATCH_ENABLE=1`. This is primarily due to rare sporadic
+  failures I have observed or have been informed of, possibly involving socket
+  exhaustion or other hard-to-debug OS conditions. For now I am still
+  considering `pcommandbatch` supported and may continue to use it myself, but
+  its speed gains may not be worth its added complexity indefinitely. As core
+  counts keep increasing in the future, the time expense of spinning up a new
+  Python process per pcommand decreases, making pcommandbatch less of a win.
+  Please holler if you have any thoughts on this.
+- Renamed the `prereqs` Makefile target to `env`. This is more concise and feels
+  more accurate now that the target sets up things such as the Python virtual
+  environment and generally gets the project environment ready to use.
+- (build 21810) Fixed an issue where AppSubsystems could get inited multiple
+  times (due to functools.cached_property no longer being thread-safe in Python
+  3.12).
+- The server config file is now in `toml` format instead of `yaml`. Python has
+  built in support for reading `toml` as of 3.11 which means we don't have to
+  bundle extra packages, and `toml` has more of a clean minimal design that
+  works well for config files. Also I plan to use it for AssetPackage
+  configuration stuff so this keeps things consistent.
+- The server config can now be set to a `.json` file as an alternative to the
+  default `.toml`. This can be handy when procedurally generating server
+  configs. If no `--config` path is explicitly passed, it will look for
+  `config.json` and `config.toml` in the same dir as the script in that order.
+  
+### 1.7.33 (build 21795, api 8, 2024-03-24)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).
 - Added a 'Show Demos When Idle' option in advanced settings. If enabled, the
@@ -11,18 +70,65 @@
 - Players now get points for killing bots with their own bombs by catching it
   and throwing it back at them. This is actually old logic but was disabled due
   to a logic flaw, but should be fixed now. (Thanks VinniTR!)
-  
+- Updated the 'Settings->Advanced->Enter Code' functionality to talk to the V2
+  master server (V1 is still used as a fallback).
+- Adopted the `@override` decorator in all Python code and set up Mypy to
+  enforce its usage. Currently `override` comes from `typing_extensions` module
+  but when we upgrade to Python 3.12 soon it will come from the standard
+  `typing` module. This decorator should be familiar to users of other
+  languages; I feel it helps keep logic more understandable and should help us
+  catch problems where a base class changes or removes a method and child
+  classes forget to adapt to the change.
+- Added a reset button in the input mapping menu. (Thanks Temp!)
+- Respawn icons now have dotted steps showing decimal progress to assist
+  players on calculating when they are gonna respawn. (Thanks 3alTemp!)
+- Replays now have rewind/fast-forward buttons!! (Thanks Dliwk, vishal332008!)
+- Custom spaz "curse_time" values now work properly. (Thanks Temp!)
+- Implemented `efro.dataclassio.IOMultiType` which will make my life a lot
+  easier.
+- Punches no longer physically affect powerup boxes which should make it easier
+  to grab the powerup (Thanks VinniTR!).
+- The 'Manual' party tab now supports entering IPv6 addresses (Thanks
+  brostos!).
+- Fixes a bug where Meteor Shower could make the game-end bell sound twice
+  (Thanks 3alTemp!).
+- Leaving the game or dying while touching your team's flag will no longer
+  recover & return it indefinitely in a teams game of Capture the Flag. (Thanks
+  3alTemp!)
+- Added a server config setting for max players (not max clients) (Thanks
+  EraOSBeta!)
+- Added a UI for customizing Series Length in Teams and Points-to-Win in FFA
+  (Thanks EraOSBeta!)
+- Implemented HEX code support to the advanced color picker (Thanks 3alTemp!)
+- Players leaving the game after getting hurt will now grant kills. (Thanks
+  Temp!)
+- Sphinx based Python documentation generation is now wired up (Thanks
+  Loup-Garou911XD!)
+- Renaming & overwriting existing profiles is no longer possible (Thanks Temp!)
+- Cleaned up builds when running under WSL. Things like `make mypy` should now
+  work correctly there, and it should now be possible to build and run either
+  Linux or Windows builds there.
+- Added an `allow_clear_button` arg to bauiv1.textwidget() which can be used to
+  disable the 'X' button that clears editable text widgets.
+
 ### 1.7.32 (build 21741, api 8, 2023-12-20)
 - Fixed a screen message that no one will ever see (Thanks vishal332008?...)
-- Plugins window now displays 'No Plugins Installed' when no plugins are present (Thanks vishal332008!)
-- Old messages are now displayed as soon as you press 'Unmute Chat' (Thanks vishal332008!)
+- Plugins window now displays 'No Plugins Installed' when no plugins are present
+  (Thanks vishal332008!)
+- Old messages are now displayed as soon as you press 'Unmute Chat' (Thanks
+  vishal332008!)
 - Added an 'Add to Favorites' entry to the party menu (Thanks vishal332008!)
-- Now displays 'No Parties Added' in favorites tab if no favorites are present (Thanks vishal332008!)
+- Now displays 'No Parties Added' in favorites tab if no favorites are present
+  (Thanks vishal332008!)
 - Now shows character icons in the profiles list window (Thanks vishal332008!)
-- Added a Random button for names in the Player Profiles window (Thanks vishal332008!)
-- Fixed a bug where no server is selected by default in the favorites tab (Thanks vishal332008!)
-- Fixed a bug where no replay is selected by default in the watch tab (Thanks vishal332008!)
-- Fixed a bug where no profile is selected by default in the profile tab (Thanks vishal332008!)
+- Added a Random button for names in the Player Profiles window (Thanks
+  vishal332008!)
+- Fixed a bug where no server is selected by default in the favorites tab
+  (Thanks vishal332008!)
+- Fixed a bug where no replay is selected by default in the watch tab (Thanks
+  vishal332008!)
+- Fixed a bug where no profile is selected by default in the profile tab (Thanks
+  vishal332008!)
 - Fixed a number of UI screens so that ugly window edges are no longer visible
   in corners on modern ultra wide phone displays.
 - Added a `player_rejoin_cooldown` server config option. This defaults to 10
@@ -54,7 +160,7 @@
   intended. Now, however, such commands get scheduled to a current
   'ui-operation' and then run *almost* immediately, which should prevent such
   situations. Please holler if you run into any UI weirdness at this point.
-  
+
 ### 1.7.30 (build 21697, api 8, 2023-12-08)
 - Continued work on the big 1.7.28 update.
 - Got the Android version back up and running. There's been lots of cleanup and
@@ -331,7 +437,7 @@
 - Added a 'glow_type' arg to `bauiv1.textwidget()` to adjust the glow used when
   the text is selected. The default is 'gradient' but there is now a 'uniform'
   option which may look better in some circumstances.
-  
+
 ### 1.7.27 (build 21282, api 8, 2023-08-30)
 
 - Fixed a rare crash that could occur if the app shuts down while a background
@@ -452,7 +558,7 @@
   Visual Studio Code (and potentially other editors), so am seeing if it is
   worth officially supporting in addition to or as a replacement for Mypy. See
   `tools/pcommand pyright`
-  
+
 ### 1.7.24 (build 21199, api 8, 2023-07-27)
 
 - Fixed an issue where respawn icons could disappear in epic mode (Thanks for
@@ -507,7 +613,7 @@
   can be useful for core engine code to directly and clearly point out problems
   that cannot be recovered from (Exceptions in such cases can tend to be
   'handled' which leads to a broken or crashing app).
-  
+
 ### 1.7.23 (build 21178, api 8, 2023-07-19)
 
 - Network security improvements. (Thanks Dliwk!)

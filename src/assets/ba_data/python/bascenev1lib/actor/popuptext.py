@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 
@@ -118,6 +118,7 @@ class PopupText(bs.Actor):
             lifespan, bs.WeakCall(self.handlemessage, bs.DieMessage())
         )
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         assert not self.expired
         if isinstance(msg, bs.DieMessage):

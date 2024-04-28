@@ -12,6 +12,7 @@ from enum import Enum
 import dataclasses
 import typing
 import types
+import json
 import datetime
 from typing import TYPE_CHECKING, cast, Any
 
@@ -25,6 +26,7 @@ from efro.dataclassio._base import (
     SIMPLE_TYPES,
     _raise_type_error,
     IOExtendedData,
+    IOMultiType,
 )
 from efro.dataclassio._prep import PrepSession
 
@@ -49,6 +51,8 @@ class _Outputter:
         assert dataclasses.is_dataclass(self._obj)
 
         # For special extended data types, call their 'will_output' callback.
+        # FIXME - should probably move this into _process_dataclass so it
+        # can work on nested values.
         if isinstance(self._obj, IOExtendedData):
             self._obj.will_output()
 
@@ -69,6 +73,7 @@ class _Outputter:
     def _process_dataclass(self, cls: type, obj: Any, fieldpath: str) -> Any:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
         prep = PrepSession(explicit=False).prep_dataclass(
             type(obj), recursion_level=0
         )
@@ -139,6 +144,33 @@ class _Outputter:
             if self._create:
                 assert out is not None
                 out.update(extra_attrs)
+
+        # If this obj inherits from multi-type, store its type id.
+        if isinstance(obj, IOMultiType):
+            type_id = obj.get_type_id()
+
+            # Sanity checks; make sure looking up this id gets us this
+            # type.
+            assert isinstance(type_id.value, str)
+            if obj.get_type(type_id) is not type(obj):
+                raise RuntimeError(
+                    f'dataclassio: object of type {type(obj)}'
+                    f' gives type-id {type_id} but that id gives type'
+                    f' {obj.get_type(type_id)}. Something is out of sync.'
+                )
+            assert obj.get_type(type_id) is type(obj)
+            if self._create:
+                assert out is not None
+                storagename = obj.get_type_id_storage_name()
+                if any(f.name == storagename for f in fields):
+                    raise RuntimeError(
+                        f'dataclassio: {type(obj)} contains a'
+                        f" '{storagename}' field which clashes with"
+                        f' the type-id-storage-name of the IOMulticlass'
+                        f' it inherits from.'
+                    )
+                out[storagename] = type_id.value
+
         return out
 
     def _process_value(
@@ -231,6 +263,7 @@ class _Outputter:
                     f'Expected a list for {fieldpath};'
                     f' found a {type(value)}'
                 )
+
             childanntypes = typing.get_args(anntype)
 
             # 'Any' type children; make sure they are valid values for
@@ -246,8 +279,37 @@ class _Outputter:
                 # Hmm; should we do a copy here?
                 return value if self._create else None
 
-            # We contain elements of some specified type.
+            # We contain elements of some single specified type.
             assert len(childanntypes) == 1
+            childanntype = childanntypes[0]
+
+            # If that type is a multi-type, we determine our type per-object.
+            if issubclass(childanntype, IOMultiType):
+                # In the multi-type case, we use each object's own type
+                # to do its conversion, but lets at least make sure each
+                # of those types inherits from the annotated multi-type
+                # class.
+                for x in value:
+                    if not isinstance(x, childanntype):
+                        raise ValueError(
+                            f"Found a {type(x)} value under '{fieldpath}'."
+                            f' Everything must inherit from'
+                            f' {childanntype}.'
+                        )
+
+                if self._create:
+                    out: list[Any] = []
+                    for x in value:
+                        # We know these are dataclasses so no need to do
+                        # the generic _process_value.
+                        out.append(self._process_dataclass(cls, x, fieldpath))
+                    return out
+                for x in value:
+                    # We know these are dataclasses so no need to do
+                    # the generic _process_value.
+                    self._process_dataclass(cls, x, fieldpath)
+
+            # Normal non-multitype case; everything's got the same type.
             if self._create:
                 return [
                     self._process_value(
@@ -277,19 +339,54 @@ class _Outputter:
                             f' data type(s) not supported by the'
                             f' specified codec ({self._codec.name}).'
                         )
-                return list(value) if self._create else None
+                # We output json-friendly values so this becomes a list.
+                # We need to sort the list so our output is
+                # deterministic and can be meaningfully compared with
+                # others, across processes, etc.
+                #
+                # Since we don't know what types we've got here, we
+                # guarantee sortability by dumping each value to a json
+                # string (itself with keys sorted) and using that as the
+                # value's sorting key. Not efficient but it works. A
+                # good reason to avoid set[Any] though. Perhaps we
+                # should just disallow it altogether.
+                return (
+                    sorted(value, key=lambda v: json.dumps(v, sort_keys=True))
+                    if self._create
+                    else None
+                )
 
             # We contain elements of some specified type.
             assert len(childanntypes) == 1
             if self._create:
-                # Note: we output json-friendly values so this becomes
-                # a list.
-                return [
-                    self._process_value(
-                        cls, fieldpath, childanntypes[0], x, ioattrs
-                    )
-                    for x in value
-                ]
+                # We output json-friendly values so this becomes a list.
+                # We need to sort the list so our output is
+                # deterministic and can be meaningfully compared with
+                # others, across processes, etc.
+                #
+                # In this case we have a single concrete type, and for
+                # most incarnations of that (str, int, etc.) we can just
+                # sort our final output. For more complex cases,
+                # however, such as optional values or dataclasses, we
+                # need to convert everything to a json string (itself
+                # with keys sorted) and sort based on those strings.
+                # This is probably a good reason to avoid sets
+                # containing dataclasses or optional values. Perhaps we
+                # should just disallow those.
+                return sorted(
+                    (
+                        self._process_value(
+                            cls, fieldpath, childanntypes[0], x, ioattrs
+                        )
+                        for x in value
+                    ),
+                    key=(
+                        None
+                        if childanntypes[0] in [str, int, float, bool]
+                        else lambda v: json.dumps(v, sort_keys=True)
+                    ),
+                )
+
             for x in value:
                 self._process_value(
                     cls, fieldpath, childanntypes[0], x, ioattrs
@@ -305,6 +402,21 @@ class _Outputter:
                     f'Expected a {origin} for {fieldpath};'
                     f' found a {type(value)}.'
                 )
+            return self._process_dataclass(cls, value, fieldpath)
+
+        # ONLY consider something as a multi-type when it's not a
+        # dataclass (all dataclasses inheriting from the multi-type should
+        # just be processed as dataclasses).
+        if issubclass(origin, IOMultiType):
+            # In the multi-type case, we use each object's own type to
+            # do its conversion, but lets at least make sure each of
+            # those types inherits from the annotated multi-type class.
+            if not isinstance(value, origin):
+                raise ValueError(
+                    f"Found a {type(value)} value at '{fieldpath}'."
+                    f' It is expected to inherit from {origin}.'
+                )
+
             return self._process_dataclass(cls, value, fieldpath)
 
         if issubclass(origin, Enum):
@@ -339,6 +451,17 @@ class _Outputter:
                     value.second,
                     value.microsecond,
                 ]
+                if self._create
+                else None
+            )
+        if issubclass(origin, datetime.timedelta):
+            if not isinstance(value, origin):
+                raise TypeError(
+                    f'Expected a {origin} for {fieldpath};'
+                    f' found a {type(value)}.'
+                )
+            return (
+                [value.days, value.seconds, value.microseconds]
                 if self._create
                 else None
             )

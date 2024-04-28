@@ -24,13 +24,11 @@ class RemoteAppSettingsWindow(bui.Window):
                 scale=(
                     1.85
                     if uiscale is bui.UIScale.SMALL
-                    else 1.3
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(-10, 0)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (-10, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
         btn = bui.buttonwidget(

@@ -8,7 +8,7 @@ from __future__ import annotations
 import random
 import weakref
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 from bascenev1lib.actor.spaz import Spaz
@@ -489,6 +489,7 @@ class SpazBot(Spaz):
                     self.on_punch_press()
                     self.on_punch_release()
 
+    @override
     def on_punched(self, damage: int) -> None:
         """
         Method override; sends bs.SpazBotPunchedMessage
@@ -496,6 +497,7 @@ class SpazBot(Spaz):
         """
         bs.getactivity().handlemessage(SpazBotPunchedMessage(self, damage))
 
+    @override
     def on_expire(self) -> None:
         super().on_expire()
 
@@ -503,6 +505,7 @@ class SpazBot(Spaz):
         # no chance of them keeping activities or other things alive.
         self.update_callback = None
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         # pylint: disable=too-many-branches
         assert not self.expired
@@ -772,7 +775,6 @@ class ChargerBotPro(ChargerBot):
 
     color = PRO_BOT_COLOR
     highlight = PRO_BOT_HIGHLIGHT
-    default_shields = True
     default_boxing_gloves = True
     points_mult = 3
 

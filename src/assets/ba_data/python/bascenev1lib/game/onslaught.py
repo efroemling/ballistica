@@ -15,7 +15,9 @@ import random
 import logging
 from enum import Enum, unique
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
+
+import bascenev1 as bs
 
 from bascenev1lib.actor.popuptext import PopupText
 from bascenev1lib.actor.bomb import TNTSpawner
@@ -45,7 +47,6 @@ from bascenev1lib.actor.spazbot import (
     BrawlerBotPro,
     BomberBotProShielded,
 )
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -222,6 +223,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         self._land_mine_kills = 0
         self._tnt_kills = 0
 
+    @override
     def on_transition_in(self) -> None:
         super().on_transition_in()
         customdata = bs.getsession().customdata
@@ -286,6 +288,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
             label=bs.Lstr(resource='scoreText'), score_split=0.5
         )
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
         player_count = len(self.players)
@@ -330,29 +333,37 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                 Wave(
                     base_angle=130,
                     entries=[
-                        Spawn(BrawlerBotLite, spacing=5)
-                        if player_count > 1
-                        else None,
+                        (
+                            Spawn(BrawlerBotLite, spacing=5)
+                            if player_count > 1
+                            else None
+                        ),
                         Spawn(BrawlerBotLite, spacing=5),
                         Spacing(30),
-                        Spawn(BomberBotLite, spacing=5)
-                        if player_count > 3
-                        else None,
+                        (
+                            Spawn(BomberBotLite, spacing=5)
+                            if player_count > 3
+                            else None
+                        ),
                         Spawn(BomberBotLite, spacing=5),
                         Spacing(30),
                         Spawn(BrawlerBotLite, spacing=5),
-                        Spawn(BrawlerBotLite, spacing=5)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(BrawlerBotLite, spacing=5)
+                            if player_count > 2
+                            else None
+                        ),
                     ],
                 ),
                 Wave(
                     base_angle=195,
                     entries=[
                         Spawn(TriggerBot, spacing=90),
-                        Spawn(TriggerBot, spacing=90)
-                        if player_count > 1
-                        else None,
+                        (
+                            Spawn(TriggerBot, spacing=90)
+                            if player_count > 1
+                            else None
+                        ),
                     ],
                 ),
             ]
@@ -363,9 +374,11 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
             self._waves = [
                 Wave(
                     entries=[
-                        Spawn(ChargerBot, Point.LEFT_UPPER_MORE)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(ChargerBot, Point.LEFT_UPPER_MORE)
+                            if player_count > 2
+                            else None
+                        ),
                         Spawn(ChargerBot, Point.LEFT_UPPER),
                     ]
                 ),
@@ -373,36 +386,50 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                     entries=[
                         Spawn(BomberBotStaticLite, Point.TURRET_TOP_RIGHT),
                         Spawn(BrawlerBotLite, Point.RIGHT_UPPER),
-                        Spawn(BrawlerBotLite, Point.RIGHT_LOWER)
-                        if player_count > 1
-                        else None,
-                        Spawn(BomberBotStaticLite, Point.TURRET_BOTTOM_RIGHT)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(BrawlerBotLite, Point.RIGHT_LOWER)
+                            if player_count > 1
+                            else None
+                        ),
+                        (
+                            Spawn(
+                                BomberBotStaticLite, Point.TURRET_BOTTOM_RIGHT
+                            )
+                            if player_count > 2
+                            else None
+                        ),
                     ]
                 ),
                 Wave(
                     entries=[
                         Spawn(BomberBotStaticLite, Point.TURRET_BOTTOM_LEFT),
                         Spawn(TriggerBot, Point.LEFT),
-                        Spawn(TriggerBot, Point.LEFT_LOWER)
-                        if player_count > 1
-                        else None,
-                        Spawn(TriggerBot, Point.LEFT_UPPER)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(TriggerBot, Point.LEFT_LOWER)
+                            if player_count > 1
+                            else None
+                        ),
+                        (
+                            Spawn(TriggerBot, Point.LEFT_UPPER)
+                            if player_count > 2
+                            else None
+                        ),
                     ]
                 ),
                 Wave(
                     entries=[
                         Spawn(BrawlerBotLite, Point.TOP_RIGHT),
-                        Spawn(BrawlerBot, Point.TOP_HALF_RIGHT)
-                        if player_count > 1
-                        else None,
+                        (
+                            Spawn(BrawlerBot, Point.TOP_HALF_RIGHT)
+                            if player_count > 1
+                            else None
+                        ),
                         Spawn(BrawlerBotLite, Point.TOP_LEFT),
-                        Spawn(BrawlerBotLite, Point.TOP_HALF_LEFT)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(BrawlerBotLite, Point.TOP_HALF_LEFT)
+                            if player_count > 2
+                            else None
+                        ),
                         Spawn(BrawlerBot, Point.TOP),
                         Spawn(BomberBotStaticLite, Point.TURRET_TOP_MIDDLE),
                     ]
@@ -412,12 +439,16 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                         Spawn(TriggerBotStatic, Point.TURRET_BOTTOM_LEFT),
                         Spawn(TriggerBotStatic, Point.TURRET_BOTTOM_RIGHT),
                         Spawn(TriggerBot, Point.BOTTOM),
-                        Spawn(TriggerBot, Point.BOTTOM_HALF_RIGHT)
-                        if player_count > 1
-                        else None,
-                        Spawn(TriggerBot, Point.BOTTOM_HALF_LEFT)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(TriggerBot, Point.BOTTOM_HALF_RIGHT)
+                            if player_count > 1
+                            else None
+                        ),
+                        (
+                            Spawn(TriggerBot, Point.BOTTOM_HALF_LEFT)
+                            if player_count > 2
+                            else None
+                        ),
                     ]
                 ),
                 Wave(
@@ -425,12 +456,16 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                         Spawn(BomberBotStaticLite, Point.TURRET_TOP_LEFT),
                         Spawn(BomberBotStaticLite, Point.TURRET_TOP_RIGHT),
                         Spawn(ChargerBot, Point.BOTTOM),
-                        Spawn(ChargerBot, Point.BOTTOM_HALF_LEFT)
-                        if player_count > 1
-                        else None,
-                        Spawn(ChargerBot, Point.BOTTOM_HALF_RIGHT)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(ChargerBot, Point.BOTTOM_HALF_LEFT)
+                            if player_count > 1
+                            else None
+                        ),
+                        (
+                            Spawn(ChargerBot, Point.BOTTOM_HALF_RIGHT)
+                            if player_count > 2
+                            else None
+                        ),
                     ]
                 ),
             ]
@@ -442,44 +477,62 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                 Wave(
                     base_angle=-50,
                     entries=[
-                        Spawn(BrawlerBot, spacing=12)
-                        if player_count > 3
-                        else None,
+                        (
+                            Spawn(BrawlerBot, spacing=12)
+                            if player_count > 3
+                            else None
+                        ),
                         Spawn(BrawlerBot, spacing=12),
                         Spawn(BomberBot, spacing=6),
-                        Spawn(BomberBot, spacing=6)
-                        if self._preset is Preset.PRO
-                        else None,
-                        Spawn(BomberBot, spacing=6)
-                        if player_count > 1
-                        else None,
+                        (
+                            Spawn(BomberBot, spacing=6)
+                            if self._preset is Preset.PRO
+                            else None
+                        ),
+                        (
+                            Spawn(BomberBot, spacing=6)
+                            if player_count > 1
+                            else None
+                        ),
                         Spawn(BrawlerBot, spacing=12),
-                        Spawn(BrawlerBot, spacing=12)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(BrawlerBot, spacing=12)
+                            if player_count > 2
+                            else None
+                        ),
                     ],
                 ),
                 Wave(
                     base_angle=180,
                     entries=[
-                        Spawn(BrawlerBot, spacing=6)
-                        if player_count > 3
-                        else None,
-                        Spawn(BrawlerBot, spacing=6)
-                        if self._preset is Preset.PRO
-                        else None,
+                        (
+                            Spawn(BrawlerBot, spacing=6)
+                            if player_count > 3
+                            else None
+                        ),
+                        (
+                            Spawn(BrawlerBot, spacing=6)
+                            if self._preset is Preset.PRO
+                            else None
+                        ),
                         Spawn(BrawlerBot, spacing=6),
                         Spawn(ChargerBot, spacing=45),
-                        Spawn(ChargerBot, spacing=45)
-                        if player_count > 1
-                        else None,
+                        (
+                            Spawn(ChargerBot, spacing=45)
+                            if player_count > 1
+                            else None
+                        ),
                         Spawn(BrawlerBot, spacing=6),
-                        Spawn(BrawlerBot, spacing=6)
-                        if self._preset is Preset.PRO
-                        else None,
-                        Spawn(BrawlerBot, spacing=6)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(BrawlerBot, spacing=6)
+                            if self._preset is Preset.PRO
+                            else None
+                        ),
+                        (
+                            Spawn(BrawlerBot, spacing=6)
+                            if player_count > 2
+                            else None
+                        ),
                     ],
                 ),
                 Wave(
@@ -488,15 +541,21 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                         Spawn(ChargerBot, spacing=30),
                         Spawn(TriggerBot, spacing=30),
                         Spawn(TriggerBot, spacing=30),
-                        Spawn(TriggerBot, spacing=30)
-                        if self._preset is Preset.PRO
-                        else None,
-                        Spawn(TriggerBot, spacing=30)
-                        if player_count > 1
-                        else None,
-                        Spawn(TriggerBot, spacing=30)
-                        if player_count > 3
-                        else None,
+                        (
+                            Spawn(TriggerBot, spacing=30)
+                            if self._preset is Preset.PRO
+                            else None
+                        ),
+                        (
+                            Spawn(TriggerBot, spacing=30)
+                            if player_count > 1
+                            else None
+                        ),
+                        (
+                            Spawn(TriggerBot, spacing=30)
+                            if player_count > 3
+                            else None
+                        ),
                         Spawn(ChargerBot, spacing=30),
                     ],
                 ),
@@ -504,16 +563,22 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                     base_angle=90,
                     entries=[
                         Spawn(StickyBot, spacing=50),
-                        Spawn(StickyBot, spacing=50)
-                        if self._preset is Preset.PRO
-                        else None,
+                        (
+                            Spawn(StickyBot, spacing=50)
+                            if self._preset is Preset.PRO
+                            else None
+                        ),
                         Spawn(StickyBot, spacing=50),
-                        Spawn(StickyBot, spacing=50)
-                        if player_count > 1
-                        else None,
-                        Spawn(StickyBot, spacing=50)
-                        if player_count > 3
-                        else None,
+                        (
+                            Spawn(StickyBot, spacing=50)
+                            if player_count > 1
+                            else None
+                        ),
+                        (
+                            Spawn(StickyBot, spacing=50)
+                            if player_count > 3
+                            else None
+                        ),
                     ],
                 ),
                 Wave(
@@ -521,14 +586,18 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                     entries=[
                         Spawn(TriggerBot, spacing=72),
                         Spawn(TriggerBot, spacing=72),
-                        Spawn(TriggerBot, spacing=72)
-                        if self._preset is Preset.PRO
-                        else None,
+                        (
+                            Spawn(TriggerBot, spacing=72)
+                            if self._preset is Preset.PRO
+                            else None
+                        ),
                         Spawn(TriggerBot, spacing=72),
                         Spawn(TriggerBot, spacing=72),
-                        Spawn(TriggerBot, spacing=36)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(TriggerBot, spacing=36)
+                            if player_count > 2
+                            else None
+                        ),
                     ],
                 ),
                 Wave(
@@ -536,15 +605,21 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                     entries=[
                         Spawn(ChargerBotProShielded, spacing=50),
                         Spawn(ChargerBotProShielded, spacing=50),
-                        Spawn(ChargerBotProShielded, spacing=50)
-                        if self._preset is Preset.PRO
-                        else None,
-                        Spawn(ChargerBotProShielded, spacing=50)
-                        if player_count > 1
-                        else None,
-                        Spawn(ChargerBotProShielded, spacing=50)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(ChargerBotProShielded, spacing=50)
+                            if self._preset is Preset.PRO
+                            else None
+                        ),
+                        (
+                            Spawn(ChargerBotProShielded, spacing=50)
+                            if player_count > 1
+                            else None
+                        ),
+                        (
+                            Spawn(ChargerBotProShielded, spacing=50)
+                            if player_count > 2
+                            else None
+                        ),
                     ],
                 ),
             ]
@@ -562,15 +637,21 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
             self._waves = [
                 Wave(
                     entries=[
-                        Spawn(BomberBotProStatic, Point.TURRET_TOP_MIDDLE_LEFT)
-                        if hard
-                        else None,
+                        (
+                            Spawn(
+                                BomberBotProStatic, Point.TURRET_TOP_MIDDLE_LEFT
+                            )
+                            if hard
+                            else None
+                        ),
                         Spawn(
                             BomberBotProStatic, Point.TURRET_TOP_MIDDLE_RIGHT
                         ),
-                        Spawn(BomberBotProStatic, Point.TURRET_TOP_LEFT)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(BomberBotProStatic, Point.TURRET_TOP_LEFT)
+                            if player_count > 2
+                            else None
+                        ),
                         Spawn(ExplodeyBot, Point.TOP_RIGHT),
                         Delay(4.0),
                         Spawn(ExplodeyBot, Point.TOP_LEFT),
@@ -580,9 +661,11 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                     entries=[
                         Spawn(ChargerBot, Point.LEFT),
                         Spawn(ChargerBot, Point.RIGHT),
-                        Spawn(ChargerBot, Point.RIGHT_UPPER_MORE)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(ChargerBot, Point.RIGHT_UPPER_MORE)
+                            if player_count > 2
+                            else None
+                        ),
                         Spawn(BomberBotProStatic, Point.TURRET_TOP_LEFT),
                         Spawn(BomberBotProStatic, Point.TURRET_TOP_RIGHT),
                     ]
@@ -590,29 +673,39 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                 Wave(
                     entries=[
                         Spawn(TriggerBotPro, Point.TOP_RIGHT),
-                        Spawn(TriggerBotPro, Point.RIGHT_UPPER_MORE)
-                        if player_count > 1
-                        else None,
+                        (
+                            Spawn(TriggerBotPro, Point.RIGHT_UPPER_MORE)
+                            if player_count > 1
+                            else None
+                        ),
                         Spawn(TriggerBotPro, Point.RIGHT_UPPER),
-                        Spawn(TriggerBotPro, Point.RIGHT_LOWER)
-                        if hard
-                        else None,
-                        Spawn(TriggerBotPro, Point.RIGHT_LOWER_MORE)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(TriggerBotPro, Point.RIGHT_LOWER)
+                            if hard
+                            else None
+                        ),
+                        (
+                            Spawn(TriggerBotPro, Point.RIGHT_LOWER_MORE)
+                            if player_count > 2
+                            else None
+                        ),
                         Spawn(TriggerBotPro, Point.BOTTOM_RIGHT),
                     ]
                 ),
                 Wave(
                     entries=[
                         Spawn(ChargerBotProShielded, Point.BOTTOM_RIGHT),
-                        Spawn(ChargerBotProShielded, Point.BOTTOM)
-                        if player_count > 2
-                        else None,
+                        (
+                            Spawn(ChargerBotProShielded, Point.BOTTOM)
+                            if player_count > 2
+                            else None
+                        ),
                         Spawn(ChargerBotProShielded, Point.BOTTOM_LEFT),
-                        Spawn(ChargerBotProShielded, Point.TOP)
-                        if hard
-                        else None,
+                        (
+                            Spawn(ChargerBotProShielded, Point.TOP)
+                            if hard
+                            else None
+                        ),
                         Spawn(BomberBotProStatic, Point.TURRET_TOP_MIDDLE),
                     ]
                 ),
@@ -639,12 +732,21 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                         Spawn(BomberBotProStatic, Point.TURRET_TOP_RIGHT),
                         Spawn(BomberBotProStatic, Point.TURRET_BOTTOM_LEFT),
                         Spawn(BomberBotProStatic, Point.TURRET_BOTTOM_RIGHT),
-                        Spawn(BomberBotProStatic, Point.TURRET_TOP_MIDDLE_LEFT)
-                        if hard
-                        else None,
-                        Spawn(BomberBotProStatic, Point.TURRET_TOP_MIDDLE_RIGHT)
-                        if hard
-                        else None,
+                        (
+                            Spawn(
+                                BomberBotProStatic, Point.TURRET_TOP_MIDDLE_LEFT
+                            )
+                            if hard
+                            else None
+                        ),
+                        (
+                            Spawn(
+                                BomberBotProStatic,
+                                Point.TURRET_TOP_MIDDLE_RIGHT,
+                            )
+                            if hard
+                            else None
+                        ),
                     ]
                 ),
             ]
@@ -663,12 +765,14 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         # Spit out a few powerups and start dropping more shortly.
         self._drop_powerups(
             standard_points=True,
-            poweruptype='curse'
-            if self._preset in [Preset.UBER, Preset.UBER_EASY]
-            else (
-                'land_mines'
-                if self._preset in [Preset.ROOKIE, Preset.ROOKIE_EASY]
-                else None
+            poweruptype=(
+                'curse'
+                if self._preset in [Preset.UBER, Preset.UBER_EASY]
+                else (
+                    'land_mines'
+                    if self._preset in [Preset.ROOKIE, Preset.ROOKIE_EASY]
+                    else None
+                )
             ),
         )
         bs.timer(4.0, self._start_powerup_drops)
@@ -825,6 +929,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                         break
                     entry_count += 1
 
+    @override
     def spawn_player(self, player: Player) -> bs.Actor:
         # We keep track of who got hurt each wave for score purposes.
         player.has_been_hurt = False
@@ -1414,6 +1519,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         assert self._scoreboard is not None
         self._scoreboard.set_team_value(self.teams[0], score, max_score=None)
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, PlayerSpazHurtMessage):
             msg.spaz.getplayer(Player, True).has_been_hurt = True
@@ -1526,6 +1632,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
     def _set_can_end_wave(self) -> None:
         self._can_end_wave = True
 
+    @override
     def end_game(self) -> None:
         # Tell our bots to celebrate just to rub it in.
         assert self._bots is not None
@@ -1534,6 +1641,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         self.do_end('defeat', delay=2.0)
         bs.setmusic(None)
 
+    @override
     def on_continue(self) -> None:
         for player in self.players:
             if not player.is_alive():

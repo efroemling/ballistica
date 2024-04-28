@@ -22,7 +22,7 @@ from filelock import FileLock
 from efro.terminal import Clr
 from efro.error import CleanError
 from efro.dataclassio import ioprepped, dataclass_from_dict
-from efrotools import getlocalconfig  # pylint: disable=wrong-import-order
+from efrotools.project import getlocalconfig  # pylint: disable=C0411
 
 if TYPE_CHECKING:
     from typing import Any

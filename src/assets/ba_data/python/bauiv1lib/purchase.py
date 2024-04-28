@@ -48,13 +48,11 @@ class PurchaseWindow(bui.Window):
                 scale=(
                     1.2
                     if uiscale is bui.UIScale.SMALL
-                    else 1.1
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.1 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -15)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -15) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
         self._is_double = False

@@ -49,9 +49,7 @@ class PlaylistMapSelectWindow(bui.Window):
         height = (
             400
             if uiscale is bui.UIScale.SMALL
-            else 480
-            if uiscale is bui.UIScale.MEDIUM
-            else 600
+            else 480 if uiscale is bui.UIScale.MEDIUM else 600
         )
 
         top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
@@ -62,13 +60,11 @@ class PlaylistMapSelectWindow(bui.Window):
                 scale=(
                     2.17
                     if uiscale is bui.UIScale.SMALL
-                    else 1.3
-                    if uiscale is bui.UIScale.MEDIUM
-                    else 1.0
+                    else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(0, -27)
-                if uiscale is bui.UIScale.SMALL
-                else (0, 0),
+                stack_offset=(
+                    (0, -27) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             )
         )
 

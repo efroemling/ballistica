@@ -1,14 +1,16 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """Functionality related to the high level state of the app."""
 from __future__ import annotations
 
 import os
 import logging
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar, override
 from concurrent.futures import ThreadPoolExecutor
-from functools import cached_property
+from threading import RLock
+
 
 from efro.call import tpartial
 
@@ -26,7 +28,7 @@ from babase._devconsole import DevConsoleSubsystem
 
 if TYPE_CHECKING:
     import asyncio
-    from typing import Any, Callable, Coroutine
+    from typing import Any, Callable, Coroutine, Generator, Awaitable
     from concurrent.futures import Future
 
     import babase
@@ -41,6 +43,10 @@ if TYPE_CHECKING:
     from bauiv1 import UIV1Subsystem
 
     # __FEATURESET_APP_SUBSYSTEM_IMPORTS_END__
+
+T = TypeVar('T')
+
+Tsub = TypeVar('Tsub', bound='AppSubsystem')
 
 
 class App:
@@ -124,6 +130,7 @@ class App:
         statically in a spinoff project.
         """
 
+        @override
         def app_mode_for_intent(
             self, intent: AppIntent
         ) -> type[AppMode] | None:
@@ -199,7 +206,8 @@ class App:
         self._called_on_running = False
         self._subsystem_registration_ended = False
         self._pending_apply_app_config = False
-        self._aioloop: asyncio.AbstractEventLoop | None = None
+        self._asyncio_loop: asyncio.AbstractEventLoop | None = None
+        self._asyncio_tasks: set[asyncio.Task] = set()
         self._asyncio_timer: babase.AppTimer | None = None
         self._config: babase.AppConfig | None = None
         self._pending_intent: AppIntent | None = None
@@ -214,6 +222,13 @@ class App:
         ]
         self._pool_thread_count = 0
 
+        # We hold a lock while lazy-loading our subsystem properties so
+        # we don't spin up any subsystem more than once, but the lock is
+        # recursive so that the subsystems can instantiate other
+        # subsystems.
+        self._subsystem_property_lock = RLock()
+        self._subsystem_property_data: dict[str, AppSubsystem | bool] = {}
+
     def postinit(self) -> None:
         """Called after we've been inited and assigned to babase.app.
 
@@ -221,7 +236,9 @@ class App:
         must go here instead of __init__.
         """
 
-        # Hack for docs-generation: we can be imported with dummy modules
+        # Hack for docs-generation:
+        #
+        # We can be imported with dummy modules
         # instead of our actual binary ones, but we don't function.
         if os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') == '1':
             return
@@ -239,18 +256,65 @@ class App:
         return _babase.app_is_active()
 
     @property
-    def aioloop(self) -> asyncio.AbstractEventLoop:
+    def asyncio_loop(self) -> asyncio.AbstractEventLoop:
         """The logic thread's asyncio event loop.
 
         This allow async tasks to be run in the logic thread.
+
+        Generally you should call App.create_async_task() to schedule
+        async code to run instead of using this directly. That will
+        handle retaining the task and logging errors automatically.
+        Only schedule tasks onto asyncio_loop yourself when you intend
+        to hold on to the returned task and await its results. Releasing
+        the task reference can lead to subtle bugs such as unreported
+        errors and garbage-collected tasks disappearing before their
+        work is done.
+
         Note that, at this time, the asyncio loop is encapsulated
         and explicitly stepped by the engine's logic thread loop and
-        thus things like asyncio.get_running_loop() will not return this
-        loop from most places in the logic thread; only from within a
-        task explicitly created in this loop.
+        thus things like asyncio.get_running_loop() will unintuitively
+        *not* return this loop from most places in the logic thread;
+        only from within a task explicitly created in this loop.
+        Hopefully this situation will be improved in the future with a
+        unified event loop.
         """
-        assert self._aioloop is not None
-        return self._aioloop
+        assert _babase.in_logic_thread()
+        assert self._asyncio_loop is not None
+        return self._asyncio_loop
+
+    def create_async_task(
+        self, coro: Coroutine[Any, Any, T], *, name: str | None = None
+    ) -> None:
+        """Create a fully managed async task.
+
+        This will automatically retain and release a reference to the task
+        and log any exceptions that occur in it. If you need to await a task
+        or otherwise need more control, schedule a task directly using
+        App.asyncio_loop.
+        """
+        assert _babase.in_logic_thread()
+
+        # Hold a strong reference to the task until it is done.
+        # Otherwise it is possible for it to be garbage collected and
+        # disappear midway if the caller does not hold on to the
+        # returned task, which seems like a great way to introduce
+        # hard-to-track bugs.
+        task = self.asyncio_loop.create_task(coro, name=name)
+        self._asyncio_tasks.add(task)
+        task.add_done_callback(self._on_task_done)
+
+    def _on_task_done(self, task: asyncio.Task) -> None:
+        # Report any errors that occurred.
+        try:
+            exc = task.exception()
+            if exc is not None:
+                logging.error(
+                    "Error in async task '%s'.", task.get_name(), exc_info=exc
+                )
+        except Exception:
+            logging.exception('Error reporting async task error.')
+
+        self._asyncio_tasks.remove(task)
 
     @property
     def config(self) -> babase.AppConfig:
@@ -277,14 +341,64 @@ class App:
     def mode_selector(self, selector: babase.AppModeSelector) -> None:
         self._mode_selector = selector
 
+    def _get_subsystem_property(
+        self, ssname: str, create_call: Callable[[], AppSubsystem | None]
+    ) -> AppSubsystem | None:
+
+        # Quick-out: if a subsystem object is present, just return it;
+        # no locking necessary.
+        val = self._subsystem_property_data.get(ssname)
+        if val is not None:
+            if val is False:
+                # False means subsystem is confirmed as not present.
+                return None
+            if val is not True:
+                # A subsystem has been set. Return it.
+                return val
+
+        # Anything else (no val present or val True) requires locking.
+        with self._subsystem_property_lock:
+            val = self._subsystem_property_data.get(ssname)
+            if val is not None:
+                if val is False:
+                    # False means confirmed as not present.
+                    return None
+                if val is True:
+                    # True means this property is already being loaded;
+                    # not good.
+                    raise RuntimeError(
+                        f'Recursive subsystem load detected for {ssname}'
+                    )
+                # Must be an instantiated subsystem. Noice.
+                return val
+
+            # Ok, there's nothing here for it. Instantiate and set it
+            # while we hold the lock. Set a placeholder value of True
+            # first so we know if something tries to recursively
+            # instantiate us while we're instantiating.
+            self._subsystem_property_data[ssname] = True
+
+            # Do our one attempt to create the singleton.
+            val = create_call()
+            self._subsystem_property_data[ssname] = (
+                False if val is None else val
+            )
+
+        return val
+
     # __FEATURESET_APP_SUBSYSTEM_PROPERTIES_BEGIN__
     # This section generated by batools.appmodule; do not edit.
 
-    @cached_property
+    @property
     def classic(self) -> ClassicSubsystem | None:
         """Our classic subsystem (if available)."""
-        # pylint: disable=cyclic-import
+        return self._get_subsystem_property(
+            'classic', self._create_classic_subsystem
+        )  # type: ignore
 
+    @staticmethod
+    def _create_classic_subsystem() -> ClassicSubsystem | None:
+        # pylint: disable=cyclic-import
         try:
             from baclassic import ClassicSubsystem
 
@@ -295,11 +409,16 @@ class App:
             logging.exception('Error importing baclassic.')
             return None
 
-    @cached_property
+    @property
     def plus(self) -> PlusSubsystem | None:
         """Our plus subsystem (if available)."""
-        # pylint: disable=cyclic-import
+        return self._get_subsystem_property(
+            'plus', self._create_plus_subsystem
+        )  # type: ignore
 
+    @staticmethod
+    def _create_plus_subsystem() -> PlusSubsystem | None:
+        # pylint: disable=cyclic-import
         try:
             from baplus import PlusSubsystem
 
@@ -310,9 +429,15 @@ class App:
             logging.exception('Error importing baplus.')
             return None
 
-    @cached_property
+    @property
     def ui_v1(self) -> UIV1Subsystem:
         """Our ui_v1 subsystem (always available)."""
+        return self._get_subsystem_property(
+            'ui_v1', self._create_ui_v1_subsystem
+        )  # type: ignore
+
+    @staticmethod
+    def _create_ui_v1_subsystem() -> UIV1Subsystem:
         # pylint: disable=cyclic-import
 
         from bauiv1 import UIV1Subsystem
@@ -328,6 +453,7 @@ class App:
         # reached the 'running' state. This ensures that all subsystems
         # receive a consistent set of callbacks starting with
         # on_app_running().
+
         if self._subsystem_registration_ended:
             raise RuntimeError(
                 'Subsystems can no longer be registered at this point.'
@@ -594,7 +720,7 @@ class App:
 
         _env.on_app_state_initing()
 
-        self._aioloop = _asyncio.setup_asyncio()
+        self._asyncio_loop = _asyncio.setup_asyncio()
         self.health_monitor = AppHealthMonitor()
 
         # __FEATURESET_APP_SUBSYSTEM_CREATE_BEGIN__
@@ -874,8 +1000,8 @@ class App:
                 )
 
         # Now kick off any async shutdown task(s).
-        assert self._aioloop is not None
-        self._shutdown_task = self._aioloop.create_task(self._shutdown())
+        assert self._asyncio_loop is not None
+        self._shutdown_task = self._asyncio_loop.create_task(self._shutdown())
 
     def _on_shutdown_complete(self) -> None:
         """(internal)"""

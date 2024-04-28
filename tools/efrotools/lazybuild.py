@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 # pylint: disable=wrong-import-order
 from efro.terminal import Clr
 from efrotools.buildlock import BuildLock
-from efrotools import get_string_hash
+from efrotools.util import get_string_hash
 
 # pylint: enable=wrong-import-order
 # pylint: enable=useless-suppression

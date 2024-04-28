@@ -4,10 +4,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
+
+import bascenev1 as bs
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any
@@ -23,6 +24,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         self.transition_time = 0.5
         self._cymbal_sound = bs.getsound('cymbal')
 
+    @override
     def on_begin(self) -> None:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements

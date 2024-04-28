@@ -118,7 +118,6 @@ from babase._apputils import (
     get_remote_app_name,
     AppHealthMonitor,
 )
-from babase._cloud import CloudSubsystem
 from babase._devconsole import (
     DevConsoleTab,
     DevConsoleTabEntry,
@@ -213,7 +212,6 @@ __all__ = [
     'clipboard_has_text',
     'clipboard_is_supported',
     'clipboard_set_text',
-    'CloudSubsystem',
     'commit_app_config',
     'ContextCall',
     'ContextError',

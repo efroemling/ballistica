@@ -3,7 +3,7 @@
 """Functionality related to coop-mode sessions."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import babase
 
@@ -60,6 +60,10 @@ class CoopSession(Session):
             max_players = classic.coop_session_args['max_players']
         else:
             max_players = app.config.get('Coop Game Max Players', 4)
+        if 'submit_score' in classic.coop_session_args:
+            submit_score = classic.coop_session_args['submit_score']
+        else:
+            submit_score = True
 
         # print('FIXME: COOP SESSION WOULD CALC DEPS.')
         depsets: Sequence[bascenev1.DependencySet] = []
@@ -70,6 +74,7 @@ class CoopSession(Session):
             team_colors=TEAM_COLORS,
             min_players=min_players,
             max_players=max_players,
+            submit_score=submit_score,
         )
 
         # Tournament-ID if we correspond to a co-op tournament (otherwise None)
@@ -97,6 +102,7 @@ class CoopSession(Session):
         """Get the game instance currently being played."""
         return self._current_game_instance
 
+    @override
     def should_allow_mid_activity_joins(
         self, activity: bascenev1.Activity
     ) -> bool:
@@ -174,9 +180,11 @@ class CoopSession(Session):
 
             self._tutorial_activity = _bascenev1.newactivity(TutorialActivity)
 
+    @override
     def get_custom_menu_entries(self) -> list[dict[str, Any]]:
         return self._custom_menu_ui
 
+    @override
     def on_player_leave(self, sessionplayer: bascenev1.SessionPlayer) -> None:
         super().on_player_leave(sessionplayer)
 
@@ -256,6 +264,7 @@ class CoopSession(Session):
                 activity.end(results={'outcome': 'restart'}, force=True)
 
     # noinspection PyUnresolvedReferences
+    @override
     def on_activity_end(
         self, activity: bascenev1.Activity, results: Any
     ) -> None:
@@ -341,7 +350,10 @@ class CoopSession(Session):
                 self.setactivity(next_game)
 
                 if not (env.demo or env.arcade):
-                    if self.tournament_id is not None:
+                    if (
+                        self.tournament_id is not None
+                        and classic.coop_session_args['submit_score']
+                    ):
                         self._custom_menu_ui = [
                             {
                                 'label': babase.Lstr(resource='restartText'),

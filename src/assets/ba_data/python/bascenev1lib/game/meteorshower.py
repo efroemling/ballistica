@@ -8,11 +8,12 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
+
+import bascenev1 as bs
 
 from bascenev1lib.actor.bomb import Bomb
 from bascenev1lib.actor.onscreentimer import OnScreenTimer
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -49,11 +50,13 @@ class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
     allow_mid_activity_joins = False
 
     # We're currently hard-coded for one map.
+    @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
         return ['Rampage']
 
     # We support teams, free-for-all, and co-op sessions.
+    @override
     @classmethod
     def supports_session_type(cls, sessiontype: type[bs.Session]) -> bool:
         return (
@@ -69,6 +72,7 @@ class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
         self._last_player_death_time: float | None = None
         self._meteor_time = 2.0
         self._timer: OnScreenTimer | None = None
+        self._ended: bool = False
 
         # Some base class overrides:
         self.default_music = (
@@ -77,6 +81,7 @@ class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
         if self._epic_mode:
             self.slow_motion = True
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
 
@@ -100,6 +105,7 @@ class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
         # Check for immediate end (if we've only got 1 player, etc).
         bs.timer(5.0, self._check_end_game)
 
+    @override
     def on_player_leave(self, player: Player) -> None:
         # Augment default behavior.
         super().on_player_leave(player)
@@ -108,6 +114,7 @@ class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
         self._check_end_game()
 
     # overriding the default character spawning..
+    @override
     def spawn_player(self, player: Player) -> bs.Actor:
         spaz = self.spawn_player_spaz(player)
 
@@ -122,6 +129,7 @@ class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
         return spaz
 
     # Various high-level game events come through this method.
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.PlayerDiedMessage):
             # Augment standard behavior.
@@ -153,6 +161,10 @@ class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
         return None
 
     def _check_end_game(self) -> None:
+        # We don't want to end this activity more than once.
+        if self._ended:
+            return
+
         living_team_count = 0
         for team in self.teams:
             for player in team.players:
@@ -213,6 +225,7 @@ class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
     def _decrement_meteor_time(self) -> None:
         self._meteor_time = max(0.01, self._meteor_time * 0.9)
 
+    @override
     def end_game(self) -> None:
         cur_time = bs.time()
         assert self._timer is not None
@@ -261,4 +274,5 @@ class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
             # Submit the score value in milliseconds.
             results.set_team_score(team, int(1000.0 * longest_life))
 
+        self._ended = True
         self.end(results=results)

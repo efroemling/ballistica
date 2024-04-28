@@ -229,9 +229,7 @@ class AdsSubsystem:
                         await asyncio.sleep(1.0)
                     payload.run(fallback=True)
 
-                _fallback_task = babase.app.aioloop.create_task(
-                    add_fallback_task()
-                )
+                babase.app.create_async_task(add_fallback_task())
             self.show_ad('between_game', on_completion_call=payload.run)
         else:
             babase.pushcall(call)  # Just run the callback without the ad.

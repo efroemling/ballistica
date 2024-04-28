@@ -1,4 +1,3 @@
-#!/usr/bin/env python3.11
 # Released under the MIT License. See LICENSE for details.
 #
 """A collection of commands for use with this project.
@@ -56,6 +55,7 @@ from efrotools.pcommands import (
     tweak_empty_py_files,
     make_ensure,
     make_target_debug,
+    requirements_upgrade,
 )
 from efrotools.pcommands2 import (
     with_build_lock,
@@ -96,12 +96,11 @@ from batools.pcommands import (
     upper,
     efrocache_update,
     efrocache_get,
-    get_modern_make,
     warm_start_asset_build,
     gen_docs_pdoc,
-    list_pip_reqs,
-    install_pip_reqs,
+    gen_docs_sphinx,
     checkenv,
+    prefab_platform,
     ensure_prefab_platform,
     prefab_run_var,
     prefab_binary_path,
@@ -134,10 +133,12 @@ from batools.pcommands2 import (
     tests_warm_start,
     wsl_path_to_win,
     wsl_build_check_win_drive,
+    get_modern_make,
 )
 
 # pylint: enable=unused-import
 
 
-if __name__ == '__main__':
+def run_pcommand_main() -> None:
+    """Do the thing."""
     pcommand.pcommand_main(globals())

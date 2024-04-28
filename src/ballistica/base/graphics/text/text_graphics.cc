@@ -47,6 +47,12 @@ TextGraphics::TextGraphics() {
           g.pen_offset_y -= 0.1f;
         }
 
+        // Bring Fast Forward & Rewind down and to the left a bit.
+        if (index == 13 || index == 15) {
+          g.pen_offset_y -= 0.055;
+          g.pen_offset_x -= 0.01;
+        }
+
         // Shrink account logos and move them up a bit.
         if (index == 29 || index == 32 || index == 33 || index == 38
             || index == 40 || index == 48 || index == 49) {

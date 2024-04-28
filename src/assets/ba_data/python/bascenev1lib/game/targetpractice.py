@@ -8,13 +8,14 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
+
+import bascenev1 as bs
 
 from bascenev1lib.actor.scoreboard import Scoreboard
 from bascenev1lib.actor.onscreencountdown import OnScreenCountdown
 from bascenev1lib.actor.bomb import Bomb
 from bascenev1lib.actor.popuptext import PopupText
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -49,10 +50,12 @@ class TargetPracticeGame(bs.TeamGameActivity[Player, Team]):
     ]
     default_music = bs.MusicType.FORWARD_MARCH
 
+    @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
         return ['Doom Shroom']
 
+    @override
     @classmethod
     def supports_session_type(cls, sessiontype: type[bs.Session]) -> bool:
         # We support any teams or versus sessions.
@@ -70,10 +73,12 @@ class TargetPracticeGame(bs.TeamGameActivity[Player, Team]):
         self._enable_impact_bombs = bool(settings['Enable Impact Bombs'])
         self._enable_triple_bombs = bool(settings['Enable Triple Bombs'])
 
+    @override
     def on_team_join(self, team: Team) -> None:
         if self.has_begun():
             self.update_scoreboard()
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
         self.update_scoreboard()
@@ -86,6 +91,7 @@ class TargetPracticeGame(bs.TeamGameActivity[Player, Team]):
         self._countdown = OnScreenCountdown(60, endcall=self.end_game)
         bs.timer(4.0, self._countdown.start)
 
+    @override
     def spawn_player(self, player: Player) -> bs.Actor:
         spawn_center = (0, 3, -5)
         pos = (
@@ -169,6 +175,7 @@ class TargetPracticeGame(bs.TeamGameActivity[Player, Team]):
         # Clear out targets that have died.
         self._targets = [t for t in self._targets if t]
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         # When players die, respawn them.
         if isinstance(msg, bs.PlayerDiedMessage):
@@ -188,6 +195,7 @@ class TargetPracticeGame(bs.TeamGameActivity[Player, Team]):
         for team in self.teams:
             self._scoreboard.set_team_value(team, team.score)
 
+    @override
     def end_game(self) -> None:
         results = bs.GameResults()
         for team in self.teams:
@@ -252,9 +260,11 @@ class Target(bs.Actor):
         bs.animate_array(loc3, 'size', 1, {0.1: [0.0], 0.3: [self._r3 * 2.0]})
         bs.getsound('laserReverse').play()
 
+    @override
     def exists(self) -> bool:
         return bool(self._nodes)
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, bs.DieMessage):
             for node in self._nodes:
@@ -310,11 +320,15 @@ class Target(bs.Actor):
                     bs.getsound(
                         'orchestraHit4'
                         if streak > 3
-                        else 'orchestraHit3'
-                        if streak > 2
-                        else 'orchestraHit2'
-                        if streak > 1
-                        else 'orchestraHit'
+                        else (
+                            'orchestraHit3'
+                            if streak > 2
+                            else (
+                                'orchestraHit2'
+                                if streak > 1
+                                else 'orchestraHit'
+                            )
+                        )
                     ).play()
             elif dist <= self._r2 + self._rfudge:
                 self._nodes[0].color = cdull

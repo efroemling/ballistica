@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """Implements football games (both co-op and teams varieties)."""
 
 # ba_meta require api 8
@@ -10,7 +11,9 @@ from __future__ import annotations
 import math
 import random
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
+
+import bascenev1 as bs
 
 from bascenev1lib.actor.bomb import TNTSpawner
 from bascenev1lib.actor.playerspaz import PlayerSpaz
@@ -39,7 +42,6 @@ from bascenev1lib.actor.spazbot import (
     StickyBot,
     ExplodeyBot,
 )
-import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -128,11 +130,13 @@ class FootballTeamGame(bs.TeamGameActivity[Player, Team]):
         bs.BoolSetting('Epic Mode', default=False),
     ]
 
+    @override
     @classmethod
     def supports_session_type(cls, sessiontype: type[bs.Session]) -> bool:
         # We only support two-team play.
         return issubclass(sessiontype, bs.DualTeamSession)
 
+    @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
         assert bs.app.classic is not None
@@ -170,6 +174,7 @@ class FootballTeamGame(bs.TeamGameActivity[Player, Team]):
             bs.MusicType.EPIC if self._epic_mode else bs.MusicType.FOOTBALL
         )
 
+    @override
     def get_instance_description(self) -> str | Sequence:
         touchdowns = self._score_to_win / 7
 
@@ -181,6 +186,7 @@ class FootballTeamGame(bs.TeamGameActivity[Player, Team]):
             return 'Score ${ARG1} touchdowns.', touchdowns
         return 'Score a touchdown.'
 
+    @override
     def get_instance_description_short(self) -> str | Sequence:
         touchdowns = self._score_to_win / 7
         touchdowns = math.ceil(touchdowns)
@@ -188,6 +194,7 @@ class FootballTeamGame(bs.TeamGameActivity[Player, Team]):
             return 'score ${ARG1} touchdowns', touchdowns
         return 'score a touchdown'
 
+    @override
     def on_begin(self) -> None:
         super().on_begin()
         self.setup_standard_time_limit(self._time_limit)
@@ -224,6 +231,7 @@ class FootballTeamGame(bs.TeamGameActivity[Player, Team]):
         self._update_scoreboard()
         self._chant_sound.play()
 
+    @override
     def on_team_join(self, team: Team) -> None:
         self._update_scoreboard()
 
@@ -285,6 +293,7 @@ class FootballTeamGame(bs.TeamGameActivity[Player, Team]):
         bs.cameraflash(duration=10.0)
         self._update_scoreboard()
 
+    @override
     def end_game(self) -> None:
         results = bs.GameResults()
         for team in self.teams:
@@ -298,6 +307,7 @@ class FootballTeamGame(bs.TeamGameActivity[Player, Team]):
                 team, team.score, self._score_to_win
             )
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, FlagPickedUpMessage):
             assert isinstance(msg.flag, FootballFlag)
@@ -379,9 +389,11 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
     default_music = bs.MusicType.FOOTBALL
 
     # FIXME: Need to update co-op games to use getscoreconfig.
+    @override
     def get_score_type(self) -> str:
         return 'time'
 
+    @override
     def get_instance_description(self) -> str | Sequence:
         touchdowns = self._score_to_win / 7
         touchdowns = math.ceil(touchdowns)
@@ -389,6 +401,7 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
             return 'Score ${ARG1} touchdowns.', touchdowns
         return 'Score a touchdown.'
 
+    @override
     def get_instance_description_short(self) -> str | Sequence:
         touchdowns = self._score_to_win / 7
         touchdowns = math.ceil(touchdowns)
@@ -444,6 +457,7 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
         self._flag_respawn_light: bs.Actor | None = None
         self._flag: FootballFlag | None = None
 
+    @override
     def on_transition_in(self) -> None:
         super().on_transition_in()
         self._scoreboard = Scoreboard()
@@ -480,6 +494,7 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
         )
         self._chant_sound.play()
 
+    @override
     def on_begin(self) -> None:
         # FIXME: Split this up a bit.
         # pylint: disable=too-many-statements
@@ -795,11 +810,13 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
         if i == 0:
             bs.cameraflash(duration=10.0)
 
+    @override
     def end_game(self) -> None:
         bs.setmusic(None)
         self._bots.final_celebrate()
         bs.timer(0.001, bs.Call(self.do_end, 'defeat'))
 
+    @override
     def on_continue(self) -> None:
         # Subtract one touchdown from the bots and get them moving again.
         assert self._bot_team is not None
@@ -897,6 +914,7 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
             },
         )
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         """handle high-level game messages"""
         if isinstance(msg, bs.PlayerDiedMessage):
@@ -959,6 +977,7 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
         del player  # Unused.
         self._player_has_punched = True
 
+    @override
     def spawn_player(self, player: Player) -> bs.Actor:
         spaz = self.spawn_player_spaz(
             player, position=self.map.get_start_position(player.team.id)
