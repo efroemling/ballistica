@@ -76,11 +76,12 @@ rst_prolog = f"""
     :target: index.html
     :alt: Ballistica Logo 
 """
-intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}   
+# intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}   
 autosummary_generate = True
 extensions = [
-    'sphinx.ext.napoleon',  # https://stackoverflow.com/questions/45880348/how-to-remove-the-cause-of-an-unexpected-indentation-warning-when-generating-cod
+    'sphinx.ext.napoleon',
     'sphinx.ext.autodoc',
+    'sphinx.ext.viewcode',
     # might want to use this in future
     # for linking with efro and bacommon packages
     'sphinx.ext.intersphinx',
