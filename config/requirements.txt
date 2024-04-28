@@ -1,8 +1,8 @@
-ansiwrap==0.8.4
 cpplint==1.6.1
+dmgbuild==1.6.1
 filelock==3.13.4
 furo==2024.1.29
-mypy==1.9.0
+mypy==1.10.0
 pbxproj==4.1.0
 pdoc==14.4.0
 pur==7.3.1
@@ -12,13 +12,10 @@ pytest==8.1.1
 python-daemon==3.0.1
 python-lsp-black==2.0.0
 python-lsp-server==1.11.0
-pytz==2024.1
-PyYAML==6.0.1
 requests==2.31.0
 Sphinx==7.3.7
+tomlkit==0.12.4
 types-certifi==2021.10.8.3
 types-filelock==3.2.7
-types-pytz==2024.1.0.20240417
-types-PyYAML==6.0.12.20240311
 types-requests==2.31.0.20240406
 typing_extensions==4.11.0

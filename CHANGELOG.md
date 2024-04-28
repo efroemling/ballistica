@@ -1,9 +1,12 @@
-### 1.7.34 (build 21804, api 8, 2024-04-23)
+### 1.7.35 (build 21824, api 8, 2024-04-26)
+
+### 1.7.34 (build 21823, api 8, 2024-04-26)
 - Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
   of the things this means is that we can use `typing.override` instead of the
-  `typing_extensions` version so the annoying requirement of installing
+  `typing_extensions.override` version so the annoying requirement of installing
   `typing_extensions` first thing when setting up the repo introduced a few
-  versions back is finally no longer a thing.
+  versions back is finally no longer a thing. I'll try to be careful to avoid
+  falling back into that situation in the future.
 - The project now maintains its own Python virtual environment in `.venv` where
   it automatically installs whatever Python packages it needs instead of asking
   the user to do so in their own environment. This should greatly simplify
@@ -29,6 +32,30 @@
 - `_bascenev1.protocol_version()` now properly throws an exception if called
   while scene-v1 is not active.
 - The `efro.dataclassio` system now supports `datetime.timedelta` values.
+- Usage of `pcommandbatch` is now disabled by default. To enable it, set the env
+  var `BA_PCOMMANDBATCH_ENABLE=1`. This is primarily due to rare sporadic
+  failures I have observed or have been informed of, possibly involving socket
+  exhaustion or other hard-to-debug OS conditions. For now I am still
+  considering `pcommandbatch` supported and may continue to use it myself, but
+  its speed gains may not be worth its added complexity indefinitely. As core
+  counts keep increasing in the future, the time expense of spinning up a new
+  Python process per pcommand decreases, making pcommandbatch less of a win.
+  Please holler if you have any thoughts on this.
+- Renamed the `prereqs` Makefile target to `env`. This is more concise and feels
+  more accurate now that the target sets up things such as the Python virtual
+  environment and generally gets the project environment ready to use.
+- (build 21810) Fixed an issue where AppSubsystems could get inited multiple
+  times (due to functools.cached_property no longer being thread-safe in Python
+  3.12).
+- The server config file is now in `toml` format instead of `yaml`. Python has
+  built in support for reading `toml` as of 3.11 which means we don't have to
+  bundle extra packages, and `toml` has more of a clean minimal design that
+  works well for config files. Also I plan to use it for AssetPackage
+  configuration stuff so this keeps things consistent.
+- The server config can now be set to a `.json` file as an alternative to the
+  default `.toml`. This can be handy when procedurally generating server
+  configs. If no `--config` path is explicitly passed, it will look for
+  `config.json` and `config.toml` in the same dir as the script in that order.
   
 ### 1.7.33 (build 21795, api 8, 2024-03-24)
 - Stress test input-devices are now a bit smarter; they won't press any buttons

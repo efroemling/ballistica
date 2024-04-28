@@ -20,7 +20,7 @@ from typing import (
 )
 
 import pytest
-from efro.util import utc_now
+from efro.util import utc_now, utc_now_naive
 from efro.dataclassio import (
     dataclass_validate,
     dataclass_from_dict,
@@ -69,8 +69,6 @@ class _NestedClass:
     dval: dict[int, str] = field(default_factory=dict)
 
 
-# We use utc_now() for a test which is deprecated.
-@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_assign() -> None:
     """Testing various assignments."""
 
@@ -292,8 +290,8 @@ def test_assign() -> None:
     with pytest.raises(ValueError):
         dataclass_to_dict(_TestClass(datetimeval=datetime.datetime.now()))
     with pytest.raises(ValueError):
-        # This doesn't actually set timezone on the datetime obj.
-        dataclass_to_dict(_TestClass(datetimeval=datetime.datetime.utcnow()))
+        # This doesn't have a timezone on the datetime obj.
+        dataclass_to_dict(_TestClass(datetimeval=utc_now_naive()))
 
 
 def test_coerce() -> None:

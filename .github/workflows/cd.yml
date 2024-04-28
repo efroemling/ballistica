@@ -14,8 +14,8 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-    - name: Install pip requirements
-      run: make prereqs
+    - name: Setup project environment
+      run: make env
     - name: Make the build
       run: make prefab-gui-debug-build
     - name: Upload the build
@@ -31,8 +31,8 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-    - name: Install pip requirements
-      run: make prereqs
+    - name: Setup project environment
+      run: make env
     - name: Make the build
       run: make prefab-server-debug-build
     - name: Upload the build
@@ -48,8 +48,8 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-    - name: Install pip requirements
-      run: make prereqs
+    - name: Setup project environment
+      run: make env
     - name: Make the build
       run: make prefab-linux-arm64-gui-debug-build
     - name: Upload the build
@@ -65,8 +65,8 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-    - name: Install pip requirements
-      run: make prereqs
+    - name: Setup project environment
+      run: make env
     - name: Make the build
       run: make prefab-linux-arm64-server-debug-build
     - name: Upload the build
@@ -82,8 +82,8 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-    - name: Install pip requirements
-      run: make prereqs
+    - name: Setup project environment
+      run: make env
     - name: Make the build
       run: make prefab-mac-x86-64-gui-debug-build
     - name: Upload the build
@@ -99,8 +99,8 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-    - name: Install pip requirements
-      run: make prereqs
+    - name: Setup project environment
+      run: make env
     - name: Make the build
       run: make prefab-mac-x86-64-server-debug-build
     - name: Upload the build
@@ -116,8 +116,8 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-    - name: Install pip requirements
-      run: make prereqs
+    - name: Setup project environment
+      run: make env
     - name: Make the build
       run: make prefab-mac-arm64-gui-debug-build
     - name: Upload the build
@@ -133,8 +133,8 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-    - name: Install pip requirements
-      run: make prereqs
+    - name: Setup project environment
+      run: make env
     - name: Make the build
       run: make prefab-mac-arm64-server-debug-build
     - name: Upload the build
@@ -150,8 +150,8 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-    - name: Install pip requirements
-      run: make prereqs
+    - name: Setup project environment
+      run: make env
     - name: Make the build
       run: make prefab-windows-x86-gui-debug-build
     - name: Upload the build
@@ -167,8 +167,8 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-    - name: Install pip requirements
-      run: make prereqs
+    - name: Setup project environment
+      run: make env
     - name: Make the build
       run: make prefab-windows-x86-server-debug-build
     - name: Upload the build
@@ -184,8 +184,8 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-    - name: Install pip requirements
-      run: make prereqs
+    - name: Setup project environment
+      run: make env
     - name: Make the build
       run: make docs-sphinx
     - name: Upload the build

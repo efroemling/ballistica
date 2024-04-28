@@ -28,12 +28,12 @@ PCOMMAND = $(TOOLS_DIR)/pcommand
 # pcommand. See tools/efrotools/pcommandbatch.py for more info on when to use
 # which.
 PCOMMANDBATCHBIN = $(PROJ_DIR)/.cache/pcommandbatch/pcommandbatch
-ifeq ($(BA_PCOMMANDBATCH_DISABLE),1)
- PCOMMANDBATCH = $(TOOLS_DIR)/pcommand
- PCOMMANDBATCHFROMROOT = tools/pcommand
-else
+ifeq ($(BA_PCOMMANDBATCH_ENABLE),0)
  PCOMMANDBATCH = $(PCOMMANDBATCHBIN)
  PCOMMANDBATCHFROMROOT = .cache/pcommandbatch/pcommandbatch
+else
+ PCOMMANDBATCH = $(TOOLS_DIR)/pcommand
+ PCOMMANDBATCHFROMROOT = tools/pcommand
 endif
 
 # High level targets: generally these are what should be used here.
@@ -2691,53 +2691,17 @@ $(foreach element,$(SCRIPT_TARGETS_PYC_PRIVATE_ANDROID),\
 $(eval $(call make-opt-pyc-target,$(element))))
 
 SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
-  $(BUILD_DIR)/ba_data/python-site-packages/_yaml/__init__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__init__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__main__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/core.py \
   $(BUILD_DIR)/ba_data/python-site-packages/typing_extensions.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__init__.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/composer.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/constructor.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/cyaml.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/dumper.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/emitter.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/error.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/events.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/loader.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/nodes.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/parser.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/reader.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/representer.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/resolver.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/scanner.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/serializer.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/tokens.py \
   $(BUILD_DIR)/sphinx/static/conf.py
 
 SCRIPT_TARGETS_PYC_PRIVATE_COMMON = \
-  $(BUILD_DIR)/ba_data/python-site-packages/_yaml/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__pycache__/__main__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__pycache__/core.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/__pycache__/typing_extensions.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/__init__.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/composer.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/constructor.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/cyaml.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/dumper.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/emitter.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/error.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/events.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/loader.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/nodes.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/parser.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/reader.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/representer.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/resolver.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/scanner.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/serializer.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/tokens.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/sphinx/static/__pycache__/conf.cpython-312.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.

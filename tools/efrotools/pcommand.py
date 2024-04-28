@@ -78,7 +78,8 @@ def pcommand_main(globs: dict[str, Any]) -> None:
         ):
             raise RuntimeError(
                 'Unexpected Python environment;'
-                ' we expect to be running using .venv/bin/pythonX.Y'
+                f' we expect to be running under something like'
+                f" .venv/bin/pythonX.Y; found '{abs_exe_path}'."
             )
 
         cur_paths_str = os.environ.get('PATH')

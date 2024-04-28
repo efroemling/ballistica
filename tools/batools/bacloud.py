@@ -50,11 +50,29 @@ class StateData:
 def get_tz_offset_seconds() -> float:
     """Return the offset between utc and local time in seconds."""
     tval = time.time()
+
+    # Compare naive current and utc times to get our offset from utc.
     utc_offset = (
         datetime.datetime.fromtimestamp(tval)
-        - datetime.datetime.utcfromtimestamp(tval)
+        - datetime.datetime.fromtimestamp(tval, datetime.UTC).replace(
+            tzinfo=None
+        )
     ).total_seconds()
+
     return utc_offset
+
+
+def run_bacloud_main() -> None:
+    """Do the thing."""
+    try:
+        App().run()
+    except KeyboardInterrupt:
+        # Let's do a clean fail on keyboard interrupt.
+        # Can make this optional if a backtrace is ever useful.
+        sys.exit(1)
+    except CleanError as clean_exc:
+        clean_exc.pretty_print()
+        sys.exit(1)
 
 
 class App:
@@ -76,17 +94,17 @@ class App:
         ):
             raise CleanError('Unable to locate project directory.')
 
-        # Also run project prereqs checks so we can hopefully inform the user
+        # Also run project env checks so we can hopefully inform the user
         # of missing Python modules/etc. instead of just failing cryptically.
         try:
             subprocess.run(
-                ['make', '--quiet', 'prereqs'],
+                ['make', '--quiet', 'env'],
                 check=True,
                 cwd=self._project_root,
             )
         except subprocess.CalledProcessError as exc:
             raise CleanError(
-                '"make prereqs" check failed. '
+                '"make env" check failed. '
                 'Install missing requirements and try again.'
             ) from exc
 

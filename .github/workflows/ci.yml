@@ -22,7 +22,7 @@ jobs:
       with:
         python-version: '3.12'
     - name: Install dependencies
-      run: make prereqs
+      run: make env
     - name: Run checks
       run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make check
 
@@ -36,7 +36,7 @@ jobs:
       with:
         python-version: '3.12'
     - name: Install dependencies
-      run: make prereqs
+      run: make env
     - name: Assemble monolithic server build
       run: make cmake-server-build
     - name: Run tests
@@ -54,7 +54,7 @@ jobs:
       with:
         python-version: '3.12'
     - name: Install dependencies
-      run: make prereqs
+      run: make env
     - name: Build spinoff project with only core featureset
       run: make spinoff-test-core
     - name: Build spinoff project with core and base featuresets
@@ -72,7 +72,7 @@ jobs:
       with:
         python-version: '3.12'
     - name: Install dependencies
-      run: make prereqs
+      run: make env
     - name: Create poo feature-set
       run: tools/spinoff fset-copy template_fs poo
     - name: Add new feature-set to project

@@ -1050,7 +1050,8 @@ class SpinoffContext:
         # The proper way might be to ask the parent repo for its full list of
         # script files but that would add more expense.
         if (
-            src_path.endswith('.py') or src_path in {'tools/cloudshell'}
+            src_path.endswith('.py')
+            # or src_path in {'tools/cloudshell'}
         ) and out != text:
             self._ensure_parent_repo_tool_configs_exist()
             out = format_python_str(projroot=self._src_root, code=out)
@@ -1071,7 +1072,7 @@ class SpinoffContext:
             # Interestingly, seems we need to use shell command cd here
             # instead of just passing cwd arg.
             subprocess.run(
-                f'cd {self._src_root} && make prereqs',
+                f'cd {self._src_root} && make env',
                 shell=True,
                 check=True,
                 capture_output=True,
