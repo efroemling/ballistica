@@ -67,6 +67,7 @@ class Spaz(bs.Actor):
     default_bomb_type = 'normal'
     default_boxing_gloves = False
     default_shields = False
+    default_hitpoints = 1000
 
     def __init__(
         self,
@@ -173,8 +174,8 @@ class Spaz(bs.Actor):
                     setattr(node, attr, val)
 
             bs.timer(1.0, bs.Call(_safesetattr, self.node, 'invincible', False))
-        self.hitpoints = 1000
-        self.hitpoints_max = 1000
+        self.hitpoints = self.default_hitpoints
+        self.hitpoints_max = self.default_hitpoints
         self.shield_hitpoints: int | None = None
         self.shield_hitpoints_max = 650
         self.shield_decay_rate = 0
