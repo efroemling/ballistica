@@ -46,8 +46,6 @@ if TYPE_CHECKING:
 
 T = TypeVar('T')
 
-Tsub = TypeVar('Tsub', bound='AppSubsystem')
-
 
 class App:
     """A class for high level app functionality and state.
@@ -236,10 +234,9 @@ class App:
         must go here instead of __init__.
         """
 
-        # Hack for docs-generation:
-        #
-        # We can be imported with dummy modules
-        # instead of our actual binary ones, but we don't function.
+        # Hack for docs-generation: We can be imported with dummy
+        # modules instead of our actual binary ones, but we don't
+        # function.
         if os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') == '1':
             return
 
@@ -345,12 +342,12 @@ class App:
         self, ssname: str, create_call: Callable[[], AppSubsystem | None]
     ) -> AppSubsystem | None:
 
-        # Quick-out: if a subsystem object is present, just return it;
-        # no locking necessary.
+        # Quick-out: if a subsystem is present, just return it; no
+        # locking necessary.
         val = self._subsystem_property_data.get(ssname)
         if val is not None:
             if val is False:
-                # False means subsystem is confirmed as not present.
+                # False means subsystem is confirmed as unavailable.
                 return None
             if val is not True:
                 # A subsystem has been set. Return it.
@@ -364,18 +361,20 @@ class App:
                     # False means confirmed as not present.
                     return None
                 if val is True:
-                    # True means this property is already being loaded;
-                    # not good.
+                    # True means this property is already being loaded,
+                    # and the fact that we're holding the lock means
+                    # we're doing the loading, so this is a dependency
+                    # loop. Not good.
                     raise RuntimeError(
-                        f'Recursive subsystem load detected for {ssname}'
+                        f'Subsystem dependency loop detected for {ssname}'
                     )
                 # Must be an instantiated subsystem. Noice.
                 return val
 
             # Ok, there's nothing here for it. Instantiate and set it
             # while we hold the lock. Set a placeholder value of True
-            # first so we know if something tries to recursively
-            # instantiate us while we're instantiating.
+            # while we load so we can error if something we're loading
+            # tries to recursively load us.
             self._subsystem_property_data[ssname] = True
 
             # Do our one attempt to create the singleton.

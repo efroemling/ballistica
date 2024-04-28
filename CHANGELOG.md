@@ -1,4 +1,4 @@
-### 1.7.35 (build 21824, api 8, 2024-04-26)
+### 1.7.35 (build 21826, api 8, 2024-04-28)
 
 ### 1.7.34 (build 21823, api 8, 2024-04-26)
 - Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
