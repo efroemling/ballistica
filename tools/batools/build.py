@@ -469,8 +469,10 @@ def _get_server_config_template_toml(projroot: str) -> str:
     lines_in = _get_server_config_raw_contents(projroot).splitlines()
 
     # Convert to double quotes only (we'll convert back at the end).
-    assert all(('"' not in l) for l in lines_in)
-    lines_in = [l.replace("'", '"') for l in lines_in]
+    # UPDATE: No longer doing this. Turns out single quotes in toml have
+    # special meaning (no escapes applied). So we'll stick with doubles.
+    # assert all(('"' not in l) for l in lines_in)
+    # lines_in = [l.replace("'", '"') for l in lines_in]
 
     lines_out: list[str] = []
     ignore_vars = {'stress_test_players'}
@@ -512,8 +514,9 @@ def _get_server_config_template_toml(projroot: str) -> str:
     out = '\n'.join(lines_out)
 
     # Convert back to single quotes only.
-    assert "'" not in out
-    out = out.replace('"', "'")
+    # UPDATE: Not doing this. See above note.
+    # assert "'" not in out
+    # out = out.replace('"', "'")
 
     return out
 
