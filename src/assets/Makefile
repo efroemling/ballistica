@@ -401,12 +401,12 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/allsettings.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/audio.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/controls.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/devtools.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/gamepad.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/gamepadadvanced.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/gamepadselect.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/graphics.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/keyboard.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/moddingtools.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/nettesting.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/plugins.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/pluginsettings.py \
@@ -677,12 +677,12 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/allsettings.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/audio.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/controls.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/devtools.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/gamepad.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/gamepadadvanced.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/gamepadselect.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/graphics.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/keyboard.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/moddingtools.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/nettesting.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/plugins.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/pluginsettings.cpython-312.opt-1.pyc \

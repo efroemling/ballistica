@@ -130,7 +130,9 @@ class V2ProxySignInWindow(bui.Window):
     def _get_server_address(self) -> str:
         plus = bui.app.plus
         assert plus is not None
-        return plus.get_master_server_address(version=2)
+        out = plus.get_master_server_address(version=2)
+        assert isinstance(out, str)
+        return out
 
     def _set_error_state(self, error_location: str) -> None:
         msaddress = self._get_server_address()
