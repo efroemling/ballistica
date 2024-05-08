@@ -1,6 +1,5 @@
 # Released under the MIT License. See LICENSE for details.
 #
-# pylint: disable=too-many-lines
 """UI functionality for advanced settings."""
 
 from __future__ import annotations
@@ -91,7 +90,7 @@ class AdvancedSettingsWindow(bui.Window):
         self._scroll_width = self._width - (100 + 2 * x_inset)
         self._scroll_height = self._height - 115.0
         self._sub_width = self._scroll_width * 0.95
-        self._sub_height = 912.0
+        self._sub_height = 870.0
 
         if self._show_always_use_internal_keyboard:
             self._sub_height += 62
@@ -462,19 +461,6 @@ class AdvancedSettingsWindow(bui.Window):
             size=(self._sub_width - 100, 30),
             configkey='Show Ping',
             displayname=bui.Lstr(resource=f'{self._r}.showInGamePingText'),
-            scale=1.0,
-            maxwidth=430,
-        )
-
-        v -= 42
-        self._show_dev_console_button_check_box = ConfigCheckBox(
-            parent=self._subcontainer,
-            position=(50, v),
-            size=(self._sub_width - 100, 30),
-            configkey='Show Dev Console Button',
-            displayname=bui.Lstr(
-                resource=f'{self._r}.showDevConsoleButtonText'
-            ),
             scale=1.0,
             maxwidth=430,
         )
@@ -888,8 +874,6 @@ class AdvancedSettingsWindow(bui.Window):
                     sel_name = 'ModdingGuide'
                 elif sel == self._language_inform_checkbox:
                     sel_name = 'LangInform'
-                elif sel == self._show_dev_console_button_check_box.widget:
-                    sel_name = 'ShowDevConsole'
                 else:
                     raise ValueError(f'unrecognized selection \'{sel}\'')
             elif sel == self._back_button:
@@ -904,7 +888,6 @@ class AdvancedSettingsWindow(bui.Window):
 
     def _restore_state(self) -> None:
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         try:
             assert bui.app.classic is not None
             sel_name = bui.app.ui_v1.window_states.get(type(self), {}).get(
@@ -960,8 +943,6 @@ class AdvancedSettingsWindow(bui.Window):
                     sel = self._modding_guide_button
                 elif sel_name == 'LangInform':
                     sel = self._language_inform_checkbox
-                elif sel_name == 'ShowDevConsole':
-                    sel = self._show_dev_console_button_check_box.widget
                 else:
                     sel = None
                 if sel is not None:
