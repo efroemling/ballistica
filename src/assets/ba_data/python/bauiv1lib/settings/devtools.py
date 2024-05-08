@@ -91,12 +91,13 @@ class DevToolsWindow(bui.Window):
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
-            position=(0, self._height - 52),
-            size=(self._width, 25),
+            position=(self._width * 0.5, self._height - 48),
+            size=(0, 25),
+            maxwidth=self._width - 200,
             text=bui.Lstr(resource='settingsWindowAdvanced.devToolsText'),
             color=app.ui_v1.title_color,
             h_align='center',
-            v_align='top',
+            v_align='center',
         )
 
         if self._back_button is not None:
@@ -125,6 +126,24 @@ class DevToolsWindow(bui.Window):
 
         v = self._sub_height - 35
         this_button_width = 410
+
+        v -= self._spacing * 2.5
+        self._show_dev_console_button_check_box = ConfigCheckBox(
+            parent=self._subcontainer,
+            position=(90, v + 40),
+            size=(self._sub_width - 100, 30),
+            configkey='Show Dev Console Button',
+            displayname=bui.Lstr(
+                resource='settingsWindowAdvanced.showDevConsoleButtonText'
+            ),
+            scale=1.0,
+            maxwidth=400,
+        )
+        if self._back_button is not None:
+            bui.widget(
+                edit=self._show_dev_console_button_check_box.widget,
+                up_widget=self._back_button,
+            )
 
         v -= self._spacing * 1.2
         self._create_user_system_scripts_button = bui.buttonwidget(
@@ -155,10 +174,7 @@ class DevToolsWindow(bui.Window):
             parent=self._subcontainer,
             position=(170, v + 10),
             size=(0, 0),
-            text=bui.Lstr(
-                value='$(S) :',
-                subs=[('$(S)', bui.Lstr(resource='uiScaleText'))],
-            ),
+            text=bui.Lstr(resource='uiScaleText'),
             color=app.ui_v1.title_color,
             h_align='center',
             v_align='center',
@@ -183,19 +199,6 @@ class DevToolsWindow(bui.Window):
             ],
             current_choice=app.config.get('UI Scale', 'auto'),
             on_value_change_call=self._set_uiscale,
-        )
-
-        v -= self._spacing * 2.5
-        self._show_dev_console_button_check_box = ConfigCheckBox(
-            parent=self._subcontainer,
-            position=(50, v),
-            size=(self._sub_width - 100, 30),
-            configkey='Show Dev Console Button',
-            displayname=bui.Lstr(
-                resource='settingsWindowAdvanced.showDevConsoleButtonText'
-            ),
-            scale=1.0,
-            maxwidth=430,
         )
 
     def _set_uiscale(self, val: str) -> None:
