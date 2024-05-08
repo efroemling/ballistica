@@ -8,9 +8,10 @@ import babase
 import bauiv1 as bui
 from bauiv1lib.popup import PopupMenu
 from bauiv1lib.confirm import ConfirmWindow
+from bauiv1lib.config import ConfigCheckBox
 
 
-class ModdingToolsWindow(bui.Window):
+class DevToolsWindow(bui.Window):
     """Window for accessing modding tools."""
 
     def __init__(
@@ -47,7 +48,7 @@ class ModdingToolsWindow(bui.Window):
         self._scroll_width = self._width - (100 + 2 * x_inset)
         self._scroll_height = self._height - 115.0
         self._sub_width = self._scroll_width * 0.95
-        self._sub_height = 100.0
+        self._sub_height = 350.0
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -66,7 +67,7 @@ class ModdingToolsWindow(bui.Window):
             )
         )
 
-        self._r = 'settingsModdingTools'
+        self._r = 'settingsDevTools'
 
         if app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
@@ -92,7 +93,7 @@ class ModdingToolsWindow(bui.Window):
             parent=self._root_widget,
             position=(0, self._height - 52),
             size=(self._width, 25),
-            text=bui.Lstr(resource='settingsWindowAdvanced.moddingToolsText'),
+            text=bui.Lstr(resource='settingsWindowAdvanced.devToolsText'),
             color=app.ui_v1.title_color,
             h_align='center',
             v_align='top',
@@ -182,6 +183,19 @@ class ModdingToolsWindow(bui.Window):
             ],
             current_choice=app.config.get('UI Scale', 'auto'),
             on_value_change_call=self._set_uiscale,
+        )
+
+        v -= self._spacing * 2.5
+        self._show_dev_console_button_check_box = ConfigCheckBox(
+            parent=self._subcontainer,
+            position=(50, v),
+            size=(self._sub_width - 100, 30),
+            configkey='Show Dev Console Button',
+            displayname=bui.Lstr(
+                resource='settingsWindowAdvanced.showDevConsoleButtonText'
+            ),
+            scale=1.0,
+            maxwidth=430,
         )
 
     def _set_uiscale(self, val: str) -> None:
