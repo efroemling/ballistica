@@ -14,12 +14,17 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-class PromoCodeWindow(bui.Window):
-    """Window for entering promo codes."""
+class SendInfoWindow(bui.Window):
+    """Window for sending info to the developer."""
 
     def __init__(
-        self, modal: bool = False, origin_widget: bui.Widget | None = None
+        self,
+        modal: bool = False,
+        legacy_code_mode: bool = False,
+        origin_widget: bui.Widget | None = None,
     ):
+        self._legacy_code_mode = legacy_code_mode
+
         scale_origin: tuple[float, float] | None
         if origin_widget is not None:
             self._transition_out = 'out_scale'
@@ -30,8 +35,8 @@ class PromoCodeWindow(bui.Window):
             scale_origin = None
             transition = 'in_right'
 
-        width = 450
-        height = 330
+        width = 450 if legacy_code_mode else 600
+        height = 200 if legacy_code_mode else 300
 
         self._modal = modal
         self._r = 'promoCodeWindow'
@@ -66,56 +71,73 @@ class PromoCodeWindow(bui.Window):
         )
 
         v = height - 74
-        bui.textwidget(
-            parent=self._root_widget,
-            text=bui.Lstr(resource='codesExplainText'),
-            maxwidth=width * 0.9,
-            position=(width * 0.5, v),
-            color=(0.7, 0.7, 0.7, 1.0),
-            size=(0, 0),
-            scale=0.8,
-            h_align='center',
-            v_align='center',
-        )
-        v -= 60
+
+        if legacy_code_mode:
+            v -= 20
+        else:
+            v -= 20
+            bui.textwidget(
+                parent=self._root_widget,
+                text=bui.Lstr(resource='sendInfoDescriptionText'),
+                maxwidth=width * 0.9,
+                position=(width * 0.5, v),
+                color=(0.7, 0.7, 0.7, 1.0),
+                size=(0, 0),
+                scale=0.8,
+                h_align='center',
+                v_align='center',
+            )
+            v -= 20
+
+            # bui.textwidget(
+            #     parent=self._root_widget,
+            #     text=bui.Lstr(
+            #         resource='supportEmailText',
+            #         subs=[('${EMAIL}', 'support@froemling.net')],
+            #     ),
+            #     maxwidth=width * 0.9,
+            #     position=(width * 0.5, v),
+            #     color=(0.7, 0.7, 0.7, 1.0),
+            #     size=(0, 0),
+            #     scale=0.65,
+            #     h_align='center',
+            #     v_align='center',
+            # )
+            v -= 80
 
         bui.textwidget(
             parent=self._root_widget,
             text=bui.Lstr(
-                resource='supportEmailText',
-                subs=[('${EMAIL}', 'support@froemling.net')],
+                resource=(
+                    self._r + '.codeText'
+                    if legacy_code_mode
+                    else 'descriptionText'
+                )
             ),
-            maxwidth=width * 0.9,
-            position=(width * 0.5, v),
-            color=(0.7, 0.7, 0.7, 1.0),
-            size=(0, 0),
-            scale=0.65,
-            h_align='center',
-            v_align='center',
-        )
-
-        v -= 80
-
-        bui.textwidget(
-            parent=self._root_widget,
-            text=bui.Lstr(resource=self._r + '.codeText'),
             position=(22, v),
             color=(0.8, 0.8, 0.8, 1.0),
             size=(90, 30),
             h_align='right',
+            maxwidth=100,
         )
         v -= 8
 
         self._text_field = bui.textwidget(
             parent=self._root_widget,
             position=(125, v),
-            size=(280, 46),
+            size=(280 if legacy_code_mode else 380, 46),
             text='',
             h_align='left',
             v_align='center',
             max_chars=64,
             color=(0.9, 0.9, 0.9, 1.0),
-            description=bui.Lstr(resource=self._r + '.codeText'),
+            description=bui.Lstr(
+                resource=(
+                    self._r + '.codeText'
+                    if legacy_code_mode
+                    else 'descriptionText'
+                )
+            ),
             editable=True,
             padding=4,
             on_return_press_call=self._activate_enter_button,
@@ -166,6 +188,9 @@ class PromoCodeWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.advanced import AdvancedSettingsWindow
 
+        plus = bui.app.plus
+        assert plus is not None
+
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
             return
@@ -180,38 +205,84 @@ class PromoCodeWindow(bui.Window):
                 from_window=self._root_widget,
             )
 
-        code: Any = bui.textwidget(query=self._text_field)
-        assert isinstance(code, str)
+        description: Any = bui.textwidget(query=self._text_field)
+        assert isinstance(description, str)
 
-        bui.app.create_async_task(_run_code(code))
+        # Used for things like unlocking shared playlists or linking
+        # accounts: talk directly to V1 server via transactions.
+        if self._legacy_code_mode:
+            if plus.get_v1_account_state() != 'signed_in':
+                bui.screenmessage(
+                    bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
+                )
+                bui.getsound('error').play()
+            else:
+                plus.add_v1_account_transaction(
+                    {
+                        'type': 'PROMO_CODE',
+                        'expire_time': time.time() + 5,
+                        'code': description,
+                    }
+                )
+                plus.run_v1_account_transactions()
+        else:
+            bui.app.create_async_task(_send_info(description))
 
 
-async def _run_code(code: str) -> None:
-    from bacommon.cloud import PromoCodeMessage
+async def _send_info(description: str) -> None:
+    from bacommon.cloud import SendInfoMessage
 
     plus = bui.app.plus
     assert plus is not None
 
     try:
-        # If we're signed in with a V2 account, ship this to V2 server.
+        # Don't allow *anything* if our V2 transport connection isn't up.
+        if not plus.cloud.connected:
+            bui.screenmessage(
+                bui.Lstr(resource='internal.unavailableNoConnectionText'),
+                color=(1, 0, 0),
+            )
+            bui.getsound('error').play()
+            return
+
+        # Ship to V2 server, with or without account info.
         if plus.accounts.primary is not None:
             with plus.accounts.primary:
                 response = await plus.cloud.send_message_async(
-                    PromoCodeMessage(code)
+                    SendInfoMessage(description)
                 )
-                # If V2 handled it, we're done.
-                if response.valid:
-                    # Support simple message printing from v2 server.
-                    if response.message is not None:
-                        bui.screenmessage(response.message, color=(0, 1, 0))
-                    return
+        else:
+            response = await plus.cloud.send_message_async(
+                SendInfoMessage(description)
+            )
 
-        # If V2 didn't accept it (or isn't signed in) kick it over to V1.
+        # Support simple message printing from v2 server.
+        if response.message is not None:
+            bui.screenmessage(response.message, color=(0, 1, 0))
+
+        # If V2 handled it, we're done.
+        if response.handled:
+            return
+
+        # Ok; V2 didn't handle it. Try V1 if we're signed in there.
+        if plus.get_v1_account_state() != 'signed_in':
+            bui.screenmessage(
+                bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
+            )
+            bui.getsound('error').play()
+            return
+
+        # Push it along to v1 as an old style code. Allow v2 response to
+        # sub in its own code.
         plus.add_v1_account_transaction(
             {
                 'type': 'PROMO_CODE',
                 'expire_time': time.time() + 5,
-                'code': code,
+                'code': (
+                    description
+                    if response.legacy_code is None
+                    else response.legacy_code
+                ),
             }
         )
         plus.run_v1_account_transactions()

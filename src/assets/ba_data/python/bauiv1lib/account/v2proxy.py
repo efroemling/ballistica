@@ -39,17 +39,39 @@ class V2ProxySignInWindow(bui.Window):
             )
         )
 
-        self._loading_text = bui.textwidget(
+        self._state_text = bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height * 0.5),
+            position=(self._width * 0.5, self._height * 0.6),
             h_align='center',
             v_align='center',
             size=(0, 0),
+            scale=1.4,
             maxwidth=0.9 * self._width,
             text=bui.Lstr(
                 value='${A}...',
                 subs=[('${A}', bui.Lstr(resource='loadingText'))],
             ),
+            color=(1, 1, 1),
+        )
+        self._sub_state_text = bui.textwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, self._height * 0.55),
+            h_align='center',
+            v_align='top',
+            scale=0.85,
+            size=(0, 0),
+            maxwidth=0.9 * self._width,
+            text='',
+        )
+        self._sub_state_text2 = bui.textwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.1, self._height * 0.3),
+            h_align='left',
+            v_align='top',
+            scale=0.7,
+            size=(0, 0),
+            maxwidth=0.9 * self._width,
+            text='',
         )
 
         self._cancel_button = bui.buttonwidget(
@@ -66,13 +88,78 @@ class V2ProxySignInWindow(bui.Window):
             edit=self._root_widget, cancel_button=self._cancel_button
         )
 
-        self._update_timer: bui.AppTimer | None = None
+        self._message_in_flight = False
+        self._complete = False
+        # self._delay_ticks = 0
+        self._connection_wait = 5
+
+        # self._update_timer: bui.AppTimer | None = None
+        self._update_timer = bui.AppTimer(
+            1.23, bui.WeakCall(self._update), repeat=True
+        )
+        bui.pushcall(bui.WeakCall(self._update))
 
         # Ask the cloud for a proxy login id.
-        assert bui.app.plus is not None
-        bui.app.plus.cloud.send_message_cb(
+        # assert bui.app.plus is not None
+        # bui.app.plus.cloud.send_message_cb(
+        #     bacommon.cloud.LoginProxyRequestMessage(),
+        #     on_response=bui.WeakCall(self._on_proxy_request_response),
+        # )
+
+    def _update(self) -> None:
+        # print('hello from update', time.monotonic())
+
+        if self._message_in_flight or self._complete:
+            return
+
+        plus = bui.app.plus
+        assert plus is not None
+
+        # Spin for a moment if it looks like we have no server
+        # connection; it might still be getting on its feed.
+        if not plus.cloud.connected and self._connection_wait > 0:
+            self._connection_wait -= 1
+            return
+
+        plus.cloud.send_message_cb(
             bacommon.cloud.LoginProxyRequestMessage(),
             on_response=bui.WeakCall(self._on_proxy_request_response),
+        )
+        self._message_in_flight = True
+
+    def _get_server_address(self) -> str:
+        plus = bui.app.plus
+        assert plus is not None
+        return plus.get_master_server_address(version=2)
+
+    def _set_error_state(self, error_location: str) -> None:
+        msaddress = self._get_server_address()
+        addr = msaddress.removeprefix('https://')
+        bui.textwidget(
+            edit=self._state_text,
+            text=f'Unable to connect to {addr}.',
+            color=(1, 0, 0),
+        )
+        support_email = 'support@froemling.net'
+        bui.textwidget(
+            edit=self._sub_state_text,
+            text=(
+                f'Usually this means your internet is down.\n'
+                f'Please contact {support_email} if this is not the case.'
+            ),
+            color=(1, 0, 0),
+        )
+        bui.textwidget(
+            edit=self._sub_state_text2,
+            text=(
+                f'debug-info:\n'
+                f'  error-location: {error_location}\n'
+                f'  connectivity: {bui.app.net.connectivity_state}\n'
+                f'  transport: {bui.app.net.transport_state}'
+            ),
+            color=(0.8, 0.2, 0.3),
+            flatness=1.0,
+            shadow=0.0,
         )
 
     def _on_proxy_request_response(
@@ -81,17 +168,51 @@ class V2ProxySignInWindow(bui.Window):
         plus = bui.app.plus
         assert plus is not None
 
-        # Something went wrong. Show an error message and that's it.
-        if isinstance(response, Exception):
-            bui.textwidget(
-                edit=self._loading_text,
-                text=bui.Lstr(resource='internal.unavailableNoConnectionText'),
-                color=(1, 0, 0),
+        if not self._message_in_flight:
+            logging.warning(
+                'v2proxy got _on_proxy_request_response'
+                ' without _message_in_flight set; unexpected.'
             )
+        self._message_in_flight = False
+
+        # if bool(True) and random.random() < 1.0:
+        #     response = Exception('dummy')
+
+        msaddress = self._get_server_address()
+
+        # Something went wrong. Show an error message and schedule retry.
+        if isinstance(response, Exception):
+            # addr = msaddress.removeprefix('https://')
+            # bui.textwidget(
+            #     edit=self._state_text,
+            #     text=f'Unable to connect to {addr}.',
+            #     color=(1, 0, 0),
+            # )
+            # bui.textwidget(
+            #     edit=self._sub_state_text,
+            #     text='Will retry in a moment...',
+            #     color=(1, 0, 0),
+            # )
+            # self._delay_ticks = 3
+            self._set_error_state(f'response exc ({type(response).__name__})')
+            self._complete = True
+
+            # bui.textwidget(
+            #     edit=self._state_text,
+            #     text=bui.Lstr(
+            # resource='internal.unavailableNoConnectionText'),
+            #     color=(1, 0, 0),
+            # )
             return
 
+        self._complete = True
+
+        self._state_text.delete()
+        self._sub_state_text.delete()
+        self._sub_state_text2.delete()
+
         # Show link(s) the user can use to sign in.
-        address = plus.get_master_server_address(version=2) + response.url
+        address = msaddress + response.url
         address_pretty = address.removeprefix('https://')
 
         assert bui.app.classic is not None
@@ -172,12 +293,11 @@ class V2ProxySignInWindow(bui.Window):
     def _got_status(
         self, response: bacommon.cloud.LoginProxyStateQueryResponse | Exception
     ) -> None:
-        # For now, if anything goes wrong on the server-side, just abort
-        # with a vague error message. Can be more verbose later if need be.
         if (
             isinstance(response, bacommon.cloud.LoginProxyStateQueryResponse)
             and response.state is response.State.FAIL
         ):
+            logging.info('LoginProxy failed.')
             bui.getsound('error').play()
             bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
             self._done()

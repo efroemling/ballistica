@@ -32,6 +32,7 @@ from efro.dataclassio._api import (
     dataclass_from_dict,
     dataclass_from_json,
     dataclass_validate,
+    dataclass_hash,
 )
 
 __all__ = [
@@ -47,6 +48,7 @@ __all__ = [
     'dataclass_to_dict',
     'dataclass_to_json',
     'dataclass_validate',
+    'dataclass_hash',
     'ioprep',
     'ioprepped',
     'is_ioprepped_dataclass',

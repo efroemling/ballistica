@@ -92,15 +92,35 @@ auto ClassicPython::GetControllerFloatValue(
 
 auto ClassicPython::BuildPublicPartyStateVal() -> PyObject* {
   auto* appmode = scene_v1::SceneV1AppMode::GetActiveOrThrow();
+
+  auto&& public_ipv4 = appmode->public_party_public_address_ipv4();
+  PyObject* ipv4obj;
+  if (public_ipv4.has_value()) {
+    ipv4obj = PyUnicode_FromString(public_ipv4->c_str());
+  } else {
+    ipv4obj = Py_None;
+    Py_INCREF(ipv4obj);
+  }
+
+  auto&& public_ipv6 = appmode->public_party_public_address_ipv6();
+  PyObject* ipv6obj;
+  if (public_ipv6.has_value()) {
+    ipv6obj = PyUnicode_FromString(public_ipv6->c_str());
+  } else {
+    ipv6obj = Py_None;
+    Py_INCREF(ipv6obj);
+  }
+
   return Py_BuildValue(
-      "(iiiiisssi)", static_cast<int>(appmode->public_party_enabled()),
+      "(iiiiisssiOO)", static_cast<int>(appmode->public_party_enabled()),
       appmode->public_party_size(), appmode->public_party_max_size(),
       appmode->public_party_player_count(),
       appmode->public_party_max_player_count(),
       appmode->public_party_name().c_str(),
       appmode->public_party_min_league().c_str(),
       appmode->public_party_stats_url().c_str(),
-      static_cast<int>(appmode->public_party_queue_enabled()));
+      static_cast<int>(appmode->public_party_queue_enabled()), ipv4obj,
+      ipv6obj);
 }
 
 }  // namespace ballistica::classic

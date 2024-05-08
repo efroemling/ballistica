@@ -989,8 +989,8 @@ class PrivateGatherTab(GatherTab):
                 bui.getsound('error').play()
                 return
             self._debug_server_comm('got valid connect response')
-            assert cresult.addr is not None and cresult.port is not None
-            bs.connect_to_party(cresult.addr, port=cresult.port)
+            assert cresult.address4 is not None and cresult.port is not None
+            bs.connect_to_party(cresult.address4, port=cresult.port)
         except Exception:
             self._debug_server_comm('got connect response error')
             bui.getsound('error').play()

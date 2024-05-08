@@ -4,6 +4,11 @@
 
 #include <csignal>
 
+#if !BA_OSTYPE_WINDOWS
+#include <fcntl.h>
+#include <poll.h>
+#endif
+
 #include "ballistica/base/base.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
@@ -227,6 +232,103 @@ void BasePlatform::OpenDirExternally(const std::string& path) {
 
 void BasePlatform::OpenFileExternally(const std::string& path) {
   Log(LogLevel::kError, "OpenFileExternally() unimplemented");
+}
+
+void BasePlatform::SafeStdinFGetSInit() {
+#if BA_OSTYPE_WINDOWS
+  // Do nothing on Windows. We seem to be ok with blocking reads there.
+#else
+
+  // Actually should not be necessary now that we're using poll().
+
+  // Set stdin up for non-blocking reads.
+  // int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+  // fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+#endif  // BA_OSTYPE_WINDOWS
+}
+
+auto BasePlatform::SafeStdinFGetS(char* s, int n, FILE* iop) -> char* {
+#if BA_OSTYPE_WINDOWS
+  // Use plain old vanilla fgets on Windows since blocking stdin reads
+  // don't seem to prevent the app from exiting there.
+  return fgets(s, n, iop);
+
+#else
+
+  // On unixy platforms, plug in a vanilla fgets() implementation (see
+  // https://stackoverflow.com/questions/16397832/fgets-implementation-kr)
+  // but replace the getc() with a custom version of our own that uses
+  // poll() to periodically check if we should bail while waiting for input.
+  int c{};
+  char* cs{};
+  cs = s;
+
+  while (--n > 0 && (c = SmartGetC_(iop)) != EOF) {
+    if ((*cs++ = c) == '\n') {
+      break;
+    }
+  }
+
+  *cs = '\0';
+  return (c == EOF && cs == s) ? NULL : s;
+#endif  // BA_OSTYPE_WINDOWS
+}
+
+int BasePlatform::SmartGetC_(FILE* stream) {
+#if BA_OSTYPE_WINDOWS
+  return -1;
+#else
+  // Refill our buffer if needed.
+  while (stdin_buffer_.empty()) {
+    struct pollfd fds[1];
+
+    // Initialize the pollfd structure for stdin
+    fds[0].fd = STDIN_FILENO;
+    fds[0].events = POLLIN;
+
+    // Let's break approximately 4 times per second to see if we should
+    // bail.
+    int ret = poll(fds, 1, 287);
+
+    if (ret == 0) {
+      // Poll timed out. Check whether we should bail and then do it again.
+
+      // If the app is working on gracefully shutting down OR the engine has
+      // died (from a fatal error or whatever else), fake an EOF.
+      if (g_base->logic->shutting_down() || g_core->engine_done()) {
+        return EOF;
+      }
+
+      continue;
+    }
+    if (ret == -1) {
+      // Error in poll
+      perror("poll");
+      return EOF;
+    }
+
+    if (fds[0].revents & POLLIN) {
+      // stdin is ready for reading.
+      char buffer[256];
+
+      // Read characters from stdin
+      ssize_t bytes_read = read(STDIN_FILENO, buffer, sizeof(buffer));
+
+      if (bytes_read == -1) {
+        // Error reading from stdin
+        perror("read");
+        return EOF;
+      }
+
+      for (int i = 0; i < bytes_read; ++i) {
+        stdin_buffer_.push_back(buffer[i]);
+      }
+    }
+  }
+  auto out = stdin_buffer_.front();
+  stdin_buffer_.pop_front();
+  return out;
+#endif  // BA_OSTYPE_WINDOWS
 }
 
 }  // namespace ballistica::base

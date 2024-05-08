@@ -1,7 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """UI functionality for advanced settings."""
-# pylint: disable=too-many-lines
 
 from __future__ import annotations
 
@@ -91,7 +90,7 @@ class AdvancedSettingsWindow(bui.Window):
         self._scroll_width = self._width - (100 + 2 * x_inset)
         self._scroll_height = self._height - 115.0
         self._sub_width = self._scroll_width * 0.95
-        self._sub_height = 808.0
+        self._sub_height = 870.0
 
         if self._show_always_use_internal_keyboard:
             self._sub_height += 62
@@ -191,7 +190,7 @@ class AdvancedSettingsWindow(bui.Window):
         from bauiv1lib.settings import nettesting as _unused4
         from bauiv1lib import appinvite as _unused5
         from bauiv1lib import account as _unused6
-        from bauiv1lib import promocode as _unused7
+        from bauiv1lib import sendinfo as _unused7
         from bauiv1lib import debug as _unused8
         from bauiv1lib.settings import plugins as _unused9
         from bauiv1lib.settings import moddingtools as _unused10
@@ -289,33 +288,16 @@ class AdvancedSettingsWindow(bui.Window):
 
         this_button_width = 410
 
-        self._promo_code_button = bui.buttonwidget(
-            parent=self._subcontainer,
-            position=(self._sub_width / 2 - this_button_width / 2, v - 14),
-            size=(this_button_width, 60),
-            autoselect=True,
-            label=bui.Lstr(resource=f'{self._r}.enterPromoCodeText'),
-            text_scale=1.0,
-            on_activate_call=self._on_promo_code_press,
-        )
-        if self._back_button is not None:
-            bui.widget(
-                edit=self._promo_code_button,
-                up_widget=self._back_button,
-                left_widget=self._back_button,
-            )
-        v -= self._extra_button_spacing * 0.8
-
         assert bui.app.classic is not None
         bui.textwidget(
             parent=self._subcontainer,
-            position=(200, v + 10),
+            position=(70, v + 10),
             size=(0, 0),
             text=bui.Lstr(resource=f'{self._r}.languageText'),
             maxwidth=150,
-            scale=0.95,
+            scale=1.2,
             color=bui.app.ui_v1.title_color,
-            h_align='right',
+            h_align='left',
             v_align='center',
         )
 
@@ -394,7 +376,7 @@ class AdvancedSettingsWindow(bui.Window):
 
         bui.textwidget(
             parent=self._subcontainer,
-            position=(self._sub_width * 0.5, v + 10),
+            position=(90, v + 10),
             size=(0, 0),
             text=bui.Lstr(
                 resource=f'{self._r}.helpTranslateText',
@@ -405,7 +387,7 @@ class AdvancedSettingsWindow(bui.Window):
             flatness=1.0,
             scale=0.65,
             color=(0.4, 0.9, 0.4, 0.8),
-            h_align='center',
+            h_align='left',
             v_align='center',
         )
         v -= self._spacing * 1.9
@@ -436,7 +418,7 @@ class AdvancedSettingsWindow(bui.Window):
             maxwidth=400.0,
         )
         self._update_lang_status()
-        v -= 40
+        v -= 50
 
         lang_inform = plus.get_v1_account_misc_val('langInform', False)
 
@@ -688,6 +670,17 @@ class AdvancedSettingsWindow(bui.Window):
             on_activate_call=self._on_benchmark_press,
         )
 
+        v -= 100
+        self._send_info_button = bui.buttonwidget(
+            parent=self._subcontainer,
+            position=(self._sub_width / 2 - this_button_width / 2, v - 14),
+            size=(this_button_width, 60),
+            autoselect=True,
+            label=bui.Lstr(resource=f'{self._r}.sendInfoText'),
+            text_scale=1.0,
+            on_activate_call=self._on_send_info_press,
+        )
+
         for child in self._subcontainer.get_children():
             bui.widget(edit=child, show_buffer_bottom=30, show_buffer_top=20)
 
@@ -738,14 +731,6 @@ class AdvancedSettingsWindow(bui.Window):
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        # Net-testing requires a signed in v1 account.
-        if plus.get_v1_account_state() != 'signed_in':
-            bui.screenmessage(
-                bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
-            )
-            bui.getsound('error').play()
             return
 
         self._save_state()
@@ -801,9 +786,8 @@ class AdvancedSettingsWindow(bui.Window):
             from_window=self._root_widget,
         )
 
-    def _on_promo_code_press(self) -> None:
-        from bauiv1lib.promocode import PromoCodeWindow
-        from bauiv1lib.account import show_sign_in_prompt
+    def _on_send_info_press(self) -> None:
+        from bauiv1lib.sendinfo import SendInfoWindow
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -812,17 +796,12 @@ class AdvancedSettingsWindow(bui.Window):
         plus = bui.app.plus
         assert plus is not None
 
-        # We have to be logged in for promo-codes to work.
-        if plus.get_v1_account_state() != 'signed_in':
-            show_sign_in_prompt()
-            return
-
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            PromoCodeWindow(
-                origin_widget=self._promo_code_button
+            SendInfoWindow(
+                origin_widget=self._send_info_button
             ).get_root_widget(),
             from_window=self._root_widget,
         )
@@ -853,8 +832,8 @@ class AdvancedSettingsWindow(bui.Window):
                     sel_name = 'VRTest'
                 elif sel == self._net_test_button:
                     sel_name = 'NetTest'
-                elif sel == self._promo_code_button:
-                    sel_name = 'PromoCode'
+                elif sel == self._send_info_button:
+                    sel_name = 'SendInfo'
                 elif sel == self._benchmarks_button:
                     sel_name = 'Benchmarks'
                 elif sel == self._kick_idle_players_check_box.widget:
@@ -924,8 +903,8 @@ class AdvancedSettingsWindow(bui.Window):
                     sel = self._vr_test_button
                 elif sel_name == 'NetTest':
                     sel = self._net_test_button
-                elif sel_name == 'PromoCode':
-                    sel = self._promo_code_button
+                elif sel_name == 'SendInfo':
+                    sel = self._send_info_button
                 elif sel_name == 'Benchmarks':
                     sel = self._benchmarks_button
                 elif sel_name == 'KickIdlePlayers':

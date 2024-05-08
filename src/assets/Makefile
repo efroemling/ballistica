@@ -389,12 +389,12 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/browser.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/edit.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/upgrade.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/promocode.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/purchase.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/qrcode.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/radiogroup.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/report.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/resourcetypeinfo.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/sendinfo.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/serverdialog.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/advanced.py \
@@ -665,12 +665,12 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/__pycache__/browser.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/__pycache__/edit.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/__pycache__/upgrade.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/promocode.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/purchase.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/qrcode.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/radiogroup.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/report.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/resourcetypeinfo.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/sendinfo.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/serverdialog.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/advanced.cpython-312.opt-1.pyc \

@@ -205,6 +205,13 @@ auto FatalError::HandleFatalError(bool exit_cleanly,
   if (!in_top_level_exception_handler) {
     if (exit_cleanly) {
       Logging::EmitLog("root", LogLevel::kCritical, "Calling exit(1)...");
+
+      // Inform anyone who cares that the engine is going down NOW.
+      // This value can be polled by threads that may otherwise block us
+      // from exiting cleanly. As an example, I've seen recent linux builds
+      // hang on exit because a bg thread is blocked in a read of stdin.
+      g_core->set_engine_done();
+
       exit(1);
     } else {
       Logging::EmitLog("root", LogLevel::kCritical, "Calling abort()...");

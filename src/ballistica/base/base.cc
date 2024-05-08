@@ -414,9 +414,8 @@ void BaseFeatureSet::OnAppShutdownComplete() {
   assert(g_core);
   assert(g_base);
 
-  g_core->LifecycleLog("app exiting (main thread)");
-
   // Flag our own event loop to exit (or ask the OS to if they're managing).
+  g_core->LifecycleLog("app exiting (main thread)");
   if (app_adapter->ManagesMainThreadEventLoop()) {
     app_adapter->DoExitMainThreadEventLoop();
   } else {

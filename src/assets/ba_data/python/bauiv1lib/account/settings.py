@@ -609,7 +609,7 @@ class AccountSettingsWindow(bui.Window):
                 autoselect=True,
                 size=(button_width, 60),
                 label=bui.Lstr(
-                    value='${A}${B}',
+                    value='${A} ${B}',
                     subs=[
                         (
                             '${A}',
@@ -654,7 +654,7 @@ class AccountSettingsWindow(bui.Window):
                 # in all languages. Can revisit if not true.
                 # https://developer.apple.com/forums/thread/725779
                 label=bui.Lstr(
-                    value='${A}${B}',
+                    value='${A} ${B}',
                     subs=[
                         (
                             '${A}',
@@ -695,39 +695,58 @@ class AccountSettingsWindow(bui.Window):
                 label='',
                 on_activate_call=self._v2_proxy_sign_in_press,
             )
+
+            # TODO: Add translation strings for these.
+            v2labeltext: bui.Lstr | str = (
+                'Sign in with an email/password'
+                if show_game_center_sign_in_button
+                # else bui.Lstr(resource=self._r + '.signInWithV2Text')
+                else bui.Lstr(resource=self._r + '.signInText')
+            )
+            v2infotext: bui.Lstr | str | None = None
+            # (
+            #     None
+            #     if show_game_center_sign_in_button
+            #     else bui.Lstr(resource=self._r + '.signInWithV2InfoText')
+            # )
+
             bui.textwidget(
                 parent=self._subcontainer,
                 draw_controller=btn,
                 h_align='center',
                 v_align='center',
                 size=(0, 0),
-                position=(self._sub_width * 0.5, v + 17),
+                position=(
+                    self._sub_width * 0.5,
+                    v + (17 if v2infotext is not None else 10),
+                ),
                 text=bui.Lstr(
-                    value='${A}${B}',
+                    value='${A} ${B}',
                     subs=[
                         ('${A}', bui.charstr(bui.SpecialChar.V2_LOGO)),
                         (
                             '${B}',
-                            bui.Lstr(resource=self._r + '.signInWithV2Text'),
+                            v2labeltext,
                         ),
                     ],
                 ),
                 maxwidth=button_width * 0.8,
                 color=(0.75, 1.0, 0.7),
             )
-            bui.textwidget(
-                parent=self._subcontainer,
-                draw_controller=btn,
-                h_align='center',
-                v_align='center',
-                size=(0, 0),
-                position=(self._sub_width * 0.5, v - 4),
-                text=bui.Lstr(resource=self._r + '.signInWithV2InfoText'),
-                flatness=1.0,
-                scale=0.57,
-                maxwidth=button_width * 0.9,
-                color=(0.55, 0.8, 0.5),
-            )
+            if v2infotext is not None:
+                bui.textwidget(
+                    parent=self._subcontainer,
+                    draw_controller=btn,
+                    h_align='center',
+                    v_align='center',
+                    size=(0, 0),
+                    position=(self._sub_width * 0.5, v - 4),
+                    text=v2infotext,
+                    flatness=1.0,
+                    scale=0.57,
+                    maxwidth=button_width * 0.9,
+                    color=(0.55, 0.8, 0.5),
+                )
             if first_selectable is None:
                 first_selectable = btn
             if bui.app.ui_v1.use_toolbars:
@@ -770,7 +789,7 @@ class AccountSettingsWindow(bui.Window):
                 size=(0, 0),
                 position=(self._sub_width * 0.5, v + 17),
                 text=bui.Lstr(
-                    value='${A}${B}',
+                    value='${A} ${B}',
                     subs=[
                         ('${A}', bui.charstr(bui.SpecialChar.LOCAL_ACCOUNT)),
                         (

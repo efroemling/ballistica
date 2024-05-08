@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_BASE_PLATFORM_BASE_PLATFORM_H_
 #define BALLISTICA_BASE_PLATFORM_BASE_PLATFORM_H_
 
+#include <deque>
+
 #include "ballistica/base/base.h"
 #include "ballistica/shared/python/python_ref.h"
 
@@ -33,14 +35,20 @@ class BasePlatform {
   virtual void OnScreenSizeChange();
   virtual void DoApplyAppConfig();
 
+  /// Prepares stdin reading that won't block process exit.
+  virtual void SafeStdinFGetSInit();
+
+  /// Equivalent of fgets() but modified to not block process exit.
+  auto SafeStdinFGetS(char* s, int n, FILE* iop) -> char*;
+
 #pragma mark IN APP PURCHASES --------------------------------------------------
 
   void Purchase(const std::string& item);
 
-  // Restore purchases (currently only relevant on Apple platforms).
+  /// Restore purchases (currently only relevant on Apple platforms).
   virtual void RestorePurchases();
 
-  // Purchase was ack'ed by the master-server (so can consume).
+  /// Purchase was ack'ed by the master-server (so can consume).
   virtual void PurchaseAck(const std::string& purchase,
                            const std::string& order_id);
 
@@ -119,9 +127,12 @@ class BasePlatform {
   virtual ~BasePlatform();
 
  private:
+  int SmartGetC_(FILE* stream);
+
   bool ran_base_post_init_{};
   PythonRef string_edit_adapter_{};
   std::string public_device_uuid_;
+  std::deque<char> stdin_buffer_;
 };
 
 }  // namespace ballistica::base

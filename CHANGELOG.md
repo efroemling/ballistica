@@ -1,4 +1,44 @@
-### 1.7.35 (build 21827, api 8, 2024-04-30)
+### 1.7.35 (build 21848, api 8, 2024-05-08)
+- Fixed an issue where the engine would block at exit on some version of Linux
+  until Ctrl-D was pressed in the calling terminal.
+- Reworked the 'Enter Code' dialog into a 'Send Info' dialog. The `sendinfo`
+  command is 99% of the reason for 'Enter Code' existing, so this simplifies
+  things for that use case and hopefully clarifies its purpose so I can spend
+  less time responding to app reviewers and more time improving the game.
+- The `Network Testing` panel no longer requires being signed in (it just skips
+  one test if not signed in).
+- Took a pass through the engine and its servers to make things more ipv6
+  friendly and prep for an eventual ipv6-only world (though ipv4 won't be going
+  anywhere for a long time). The existing half-hearted state of ipv6 support was
+  starting to cause problems when testing in certain ipv6-only environments, so
+  it was time to clean it up.
+- The engine will now establish its persistent v2-transport connections to
+  regional servers using ipv6 when that is the fastest option based on ping
+  tests.
+- Improved the efficiency of the `connectivity` system which determines which
+  regional ballistica server to establish a connection to (All V2 server
+  communication goes through this connection). It now takes geography into
+  account, so if it gets a low ping to a server in South America it won't try
+  pinging Warsaw, etc. Set the env var `BA_DEBUG_LOG_CONNECTIVITY=1` if you want
+  to watch it do it's thing and holler if you see any bad results.
+- Servers can now provide their public ipv4 and ipv6 addresses in their configs.
+  Previously, a server's address was always determined automatically based on
+  how it connected to the master server, but this would only provide one of the
+  two forms. Now it is possible to provide both.
+- (WORK IN PROGRESS) As of this version, servers are *required* to be accessible
+  via ipv4 to appear in the public listing. So they may need to provide an ipv4
+  address in their config if the automatically detected one is ipv6. This should
+  reduce the confusion of ipv6-only servers appearing greyed out for lots of
+  ipv4-only people. Pretty much everyone can connect to ipv4.
+- (WORK IN PROGRESS) There is now more personalized error feedback for the
+  connectivity checks when poking `Make My Party Public` or when launching the
+  command line server. Hopefully this will help navigate the new dual ipv4/ipv6
+  situation.
+- (WORK IN PROGRESS) The low level `ConnectionToHostUDP` class can now accept
+  multiple `SockAddr`s; it will attempt to contact the host on all of them and
+  use whichever responds first. This allows us to pass both ipv4 and ipv6
+  addresses when available and transparently use whichever is more performant.
+  
 
 ### 1.7.34 (build 21823, api 8, 2024-04-26)
 - Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
