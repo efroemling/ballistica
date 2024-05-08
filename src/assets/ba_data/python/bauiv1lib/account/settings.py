@@ -96,9 +96,10 @@ class AccountSettingsWindow(bui.Window):
         # Always want to show our web-based v2 login option.
         self._show_sign_in_buttons.append('V2Proxy')
 
-        # Legacy v1 device accounts are currently always available
-        # (though we need to start phasing them out at some point).
-        self._show_sign_in_buttons.append('Device')
+        # Legacy v1 device accounts available only if the user
+        # has explicitly enabled deprecated login types.
+        if bui.app.config.resolve('Show Deprecated Login Types'):
+            self._show_sign_in_buttons.append('Device')
 
         top_extra = 15 if uiscale is bui.UIScale.SMALL else 0
         super().__init__(
@@ -207,8 +208,8 @@ class AccountSettingsWindow(bui.Window):
         self._refresh_tickets_text()
         self._refresh_account_name_text()
 
-    def _get_sign_in_text(self) -> bui.Lstr:
-        return bui.Lstr(resource=self._r + '.signInText')
+    # def _get_sign_in_text(self) -> bui.Lstr:
+    #     return bui.Lstr(resource=self._r + '.signInText')
 
     def _refresh(self) -> None:
         # pylint: disable=too-many-statements
@@ -698,8 +699,10 @@ class AccountSettingsWindow(bui.Window):
 
             # TODO: Add translation strings for these.
             v2labeltext: bui.Lstr | str = (
-                'Sign in with an email/password'
+                'Sign in with an email address'
                 if show_game_center_sign_in_button
+                or show_google_play_sign_in_button
+                or show_device_sign_in_button
                 # else bui.Lstr(resource=self._r + '.signInWithV2Text')
                 else bui.Lstr(resource=self._r + '.signInText')
             )

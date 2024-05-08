@@ -75,6 +75,7 @@ class AppConfig {
     kDisableCameraShake,
     kDisableCameraGyro,
     kShowDemosWhenIdle,
+    kShowDeprecatedLoginTypes,
     kLast  // Sentinel.
   };
 

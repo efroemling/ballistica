@@ -1,6 +1,15 @@
-### 1.7.35 (build 21848, api 8, 2024-05-08)
+### 1.7.35 (build 21849, api 8, 2024-05-08)
 - Fixed an issue where the engine would block at exit on some version of Linux
   until Ctrl-D was pressed in the calling terminal.
+- V2 accounts have been around for a while now, so the old V1 device login
+  button is no longer visible in the account panel. It is currently possible to
+  bring it back by checking 'Show Deprecated Login Types' in advanced settings,
+  but please consider this a warning to upgrade/migrate your account to V2 if
+  you have not done so yet.
+- The 'Sign in with a BombSquad account' option is now simply 'Sign In' on many
+  builds cases since it is the one and only option. So tidy! When other options
+  such as Google Play or Game Center are available it is instead called 'Sign in
+  with an email address'.
 - Reworked the 'Enter Code' dialog into a 'Send Info' dialog. The `sendinfo`
   command is 99% of the reason for 'Enter Code' existing, so this simplifies
   things for that use case and hopefully clarifies its purpose so I can spend
