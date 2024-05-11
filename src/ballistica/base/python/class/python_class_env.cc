@@ -58,14 +58,14 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
   envs["android"] = BoolEntry_(g_buildconfig.ostype_android(),
                                "Is this build targeting an Android based OS?");
 
-  envs["build_number"] = IntEntry_(
+  envs["engine_build_number"] = IntEntry_(
       kEngineBuildNumber,
       "Integer build number for the engine.\n"
       "\n"
       "This value increases by at least 1 with each release of the engine.\n"
       "It is independent of the human readable `version` string.");
 
-  envs["version"] = StrEntry_(
+  envs["engine_version"] = StrEntry_(
       kEngineVersion,
       "Human-readable version string for the engine; something like '1.3.24'.\n"
       "\n"

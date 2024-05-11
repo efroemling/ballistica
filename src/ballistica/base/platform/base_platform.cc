@@ -110,21 +110,42 @@ void BasePlatform::PurchaseAck(const std::string& purchase,
 }
 
 void BasePlatform::OpenURL(const std::string& url) {
-  // Can't open URLs in VR - just tell the Python layer to show the url in the
-  // gui.
-  if (g_core->vr_mode()) {
-    g_base->ui->ShowURL(url);
-    return;
-  }
-
-  // Otherwise fall back to our platform-specific handler.
-  g_base->platform->DoOpenURL(url);
+  // DoOpenURL expects to be run in the logic thread.
+  g_base->logic->event_loop()->PushCall(
+      [url] { g_base->platform->DoOpenURL(url); });
 }
 
 void BasePlatform::DoOpenURL(const std::string& url) {
-  // Kick this over to logic thread so we're safe to call from anywhere.
+  // As a default, use Python's webbrowser module functionality.
+  g_base->python->OpenURLWithWebBrowserModule(url);
+}
+
+auto BasePlatform::HaveOverlayWebBrowser() -> bool { return false; }
+
+void BasePlatform::OpenURLInOverlayWebBrowser(const std::string& url) {
+  BA_PRECONDITION(HaveOverlayWebBrowser());
+
+  // DoOpenURLInOverlayBrowser expects to be run in the logic thread.
   g_base->logic->event_loop()->PushCall(
-      [url] { g_base->python->OpenURLWithWebBrowserModule(url); });
+      [url] { g_base->platform->DoOpenURLInOverlayBrowser(url); });
+}
+
+void BasePlatform::CloseOverlayWebBrowser() {
+  BA_PRECONDITION(HaveOverlayWebBrowser());
+
+  // DoCloseOverlayBrowser expects to be run in the logic thread.
+  g_base->logic->event_loop()->PushCall(
+      [] { g_base->platform->DoCloseOverlayBrowser(); });
+}
+
+void BasePlatform::DoOpenURLInOverlayBrowser(const std::string& url) {
+  // As a default, use Python's webbrowser module functionality.
+  Log(LogLevel::kError, "DoOpenURLInOverlayBrowser unimplemented");
+}
+
+void BasePlatform::DoCloseOverlayBrowser() {
+  // As a default, use Python's webbrowser module functionality.
+  Log(LogLevel::kError, "DoCloseOverlayBrowser unimplemented");
 }
 
 #if !BA_OSTYPE_WINDOWS

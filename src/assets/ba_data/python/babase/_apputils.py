@@ -106,8 +106,8 @@ def handle_v1_cloud_log() -> None:
 
             info = {
                 'log': _babase.get_v1_cloud_log(),
-                'version': app.env.version,
-                'build': app.env.build_number,
+                'version': app.env.engine_version,
+                'build': app.env.engine_build_number,
                 'userAgentString': classic.legacy_user_agent_string,
                 'session': sessionname,
                 'activity': activityname,

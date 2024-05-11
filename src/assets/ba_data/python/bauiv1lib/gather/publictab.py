@@ -1366,7 +1366,7 @@ class PublicGatherTab(GatherTab):
         )
         bui.app.classic.master_server_v1_get(
             'bsAccessCheck',
-            {'b': bui.app.env.build_number},
+            {'b': bui.app.env.engine_build_number},
             callback=bui.WeakCall(self._on_public_party_accessible_response),
         )
 

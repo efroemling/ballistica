@@ -1,4 +1,4 @@
-### 1.7.35 (build 21851, api 8, 2024-05-08)
+### 1.7.35 (build 21852, api 8, 2024-05-10)
 - Fixed an issue where the engine would block at exit on some version of Linux
   until Ctrl-D was pressed in the calling terminal.
 - V2 accounts have been around for a while now, so the old V1 device login
@@ -6,10 +6,17 @@
   bring it back by checking 'Show Deprecated Login Types' in advanced settings,
   but please consider this a warning to upgrade/migrate your account to V2 if
   you have not done so yet.
-- The 'Sign in with a BombSquad account' option is now simply 'Sign In' on many
-  builds cases since it is the one and only option. So tidy! When other options
-  such as Google Play or Game Center are available it is instead called 'Sign in
-  with an email address'.
+- The 'Sign in with a BombSquad account' option is now simply 'Sign In' when
+  that is the only option. So nice and tidy! When other options such as Google
+  Play or Game Center are available it is now called 'Sign in with an email
+  address'.
+- The `ba*.app.env.version` `and ba*.app.env.build_number` values are now
+  `ba*.app.env.engine_version` and `ba*.app.env.engine_build_number`. At this
+  point any functionality that cares about versions should be looking at engine
+  version anyway. In the future we can add separate `app_version` and
+  `app_build_number` values for spinoff apps, but in the case of `BombSquad` the
+  app version/build is currently the same as the engine's so we don't need that
+  just yet.
 - Reworked the 'Enter Code' dialog into a 'Send Info' dialog. The `sendinfo`
   command is 99% of the reason for 'Enter Code' existing, so this simplifies
   things for that use case and hopefully clarifies its purpose so I can spend

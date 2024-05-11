@@ -176,7 +176,7 @@ class AdvancedSettingsWindow(bui.Window):
         # Fetch the list of completed languages.
         bui.app.classic.master_server_v1_get(
             'bsLangGetCompleted',
-            {'b': app.env.build_number},
+            {'b': app.env.engine_build_number},
             callback=bui.WeakCall(self._completed_langs_cb),
         )
 
