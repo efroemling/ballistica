@@ -10,7 +10,7 @@
   that is the only option. So nice and tidy! When other options such as Google
   Play or Game Center are available it is now called 'Sign in with an email
   address'.
-- The `ba*.app.env.version` `and ba*.app.env.build_number` values are now
+- The `ba*.app.env.version` and `ba*.app.env.build_number` values are now
   `ba*.app.env.engine_version` and `ba*.app.env.engine_build_number`. At this
   point any functionality that cares about versions should be looking at engine
   version anyway. In the future we can add separate `app_version` and
