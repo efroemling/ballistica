@@ -317,7 +317,9 @@ class AccountSettingsWindow(bui.Window):
         show_game_service_button = game_center_active
         game_service_button_space = 60.0
 
-        show_what_is_v2 = self._v1_signed_in and v1_account_type == 'V2'
+        # Phasing this out.
+        show_what_is_v2 = False
+        # show_what_is_v2 = self._v1_signed_in and v1_account_type == 'V2'
 
         show_linked_accounts_text = self._v1_signed_in
         linked_accounts_text_space = 60.0

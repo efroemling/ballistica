@@ -124,8 +124,9 @@ class AppInstanceInfo:
     """General info about an individual running app."""
 
     name = Annotated[str, IOAttrs('n')]
-    version = Annotated[str, IOAttrs('v')]
-    build = Annotated[int, IOAttrs('b')]
+
+    engine_version = Annotated[str, IOAttrs('ev')]
+    engine_build = Annotated[int, IOAttrs('eb')]
 
     platform = Annotated[AppPlatform, IOAttrs('p')]
     variant = Annotated[AppVariant, IOAttrs('va')]

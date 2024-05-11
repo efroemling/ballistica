@@ -77,7 +77,24 @@ class BasePlatform {
   virtual void LoginAdapterBackEndActiveChange(const std::string& login_type,
                                                bool active);
 
-#pragma mark MISC --------------------------------------------------------------
+#pragma mark WEB BROWSER -------------------------------------------------------
+
+  /// Open the provided URL in a browser.
+  void OpenURL(const std::string& url);
+
+  /// Do we provide a browser window that can show up over content?
+  /// This can be used for simple tasks such as signing into accounts
+  /// without leaving the app. It is assumed that only one overlay browser
+  /// can exist at a time.
+  virtual auto HaveOverlayWebBrowser() -> bool;
+
+  /// Open the provided URL in an overlay web browser.
+  void OpenURLInOverlayWebBrowser(const std::string& url);
+
+  /// Close any open overlay web browser.
+  void CloseOverlayWebBrowser();
+
+#pragma mark STRING EDITOR -----------------------------------------------------
 
   /// Do we define a platform-specific string editor? This is something like
   /// a text view popup which allows the use of default OS input methods
@@ -89,9 +106,6 @@ class BasePlatform {
   /// being the globally active one. Must be called from the logic thread.
   void InvokeStringEditor(PyObject* string_edit_adapter);
 
-  /// Open the provided URL in a browser or whatnot.
-  void OpenURL(const std::string& url);
-
   /// Should be called by platform StringEditor to apply a value.
   /// Must be called in the logic thread.
   void StringEditorApply(const std::string& val);
@@ -99,6 +113,8 @@ class BasePlatform {
   /// Should be called by platform StringEditor to signify a cancel.
   /// Must be called in the logic thread.
   void StringEditorCancel();
+
+#pragma mark MISC --------------------------------------------------------------
 
   auto ran_base_post_init() const { return ran_base_post_init_; }
 
@@ -118,8 +134,17 @@ class BasePlatform {
                                     const std::string& value,
                                     std::optional<int> max_chars);
 
-  /// Open the provided URL in a browser or whatnot.
+  /// Open the provided URL in a browser. This will always be called in the
+  /// logic thread.
   virtual void DoOpenURL(const std::string& url);
+
+  /// Open the provided URL in the overlay browser. This will always be called
+  /// in the logic thread.
+  virtual void DoOpenURLInOverlayBrowser(const std::string& url);
+
+  /// Should close any existing overlay web browser. This will always be called
+  /// in the logic thread.
+  virtual void DoCloseOverlayBrowser();
 
   /// Make a purchase.
   virtual void DoPurchase(const std::string& item);

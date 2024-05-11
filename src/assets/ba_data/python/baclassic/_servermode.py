@@ -216,7 +216,7 @@ class ServerController:
             'bsAccessCheck',
             {
                 'port': bascenev1.get_game_port(),
-                'b': babase.app.env.build_number,
+                'b': babase.app.env.engine_build_number,
             },
             callback=self._access_check_response,
         )
@@ -381,8 +381,9 @@ class ServerController:
         if self._first_run:
             curtimestr = time.strftime('%c')
             startupmsg = (
-                f'{Clr.BLD}{Clr.BLU}{babase.appnameupper()} {app.env.version}'
-                f' ({app.env.build_number})'
+                f'{Clr.BLD}{Clr.BLU}{babase.appnameupper()}'
+                f' {app.env.engine_version}'
+                f' ({app.env.engine_build_number})'
                 f' entering server-mode {curtimestr}{Clr.RST}'
             )
             logging.info(startupmsg)

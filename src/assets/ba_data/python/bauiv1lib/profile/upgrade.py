@@ -153,7 +153,7 @@ class ProfileUpgradeWindow(bui.Window):
 
         bui.app.classic.master_server_v1_get(
             'bsGlobalProfileCheck',
-            {'name': self._name, 'b': bui.app.env.build_number},
+            {'name': self._name, 'b': bui.app.env.engine_build_number},
             callback=bui.WeakCall(self._profile_check_result),
         )
         self._cost = plus.get_v1_account_misc_read_val(

@@ -83,10 +83,11 @@ void UI::OperationContext::Finish() {
   assert(!ran_finish_);
   ran_finish_ = true;
 
-  // Run pent up runnaables. It's possible that the payload of something
+  // Run pent up runnables. It's possible that the payload of something
   // scheduled here will itself schedule something here, so we need to do
   // this in a loop (and watch for infinite ones).
   int cycle_count{};
+  auto initial_runnable_count(runnables_.size());
   while (!runnables_.empty()) {
     std::vector<Runnable*> runnables;
     runnables.swap(runnables_);
@@ -97,10 +98,14 @@ void UI::OperationContext::Finish() {
       delete runnable;
     }
     cycle_count += 1;
-    if (cycle_count >= 10) {
+    auto max_count = 10;
+    if (cycle_count >= max_count) {
+      auto current_runnable_count(runnables_.size());
       BA_LOG_ERROR_NATIVE_TRACE(
-          "UIOperationCount cycle-count hit max; you probably have an infinite "
-          "loop.");
+          "UIOperationCount cycle-count hit max " + std::to_string(max_count)
+          + " (initial " + std::to_string(initial_runnable_count) + ", current "
+          + std::to_string(current_runnable_count) + ");"
+          + " you probably have an infinite loop.");
       break;
     }
   }
