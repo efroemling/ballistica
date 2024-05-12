@@ -33,8 +33,6 @@ void StdioConsole::StartInMainThread_() {
   event_loop()->PushCall([this] {
     bool stdin_is_terminal = g_core->platform->is_stdin_a_terminal();
 
-    g_base->platform->SafeStdinFGetSInit();
-
     while (true) {
       // Print a prompt if we're a tty. We send this to the logic thread so
       // it happens AFTER the results of the last script-command message we

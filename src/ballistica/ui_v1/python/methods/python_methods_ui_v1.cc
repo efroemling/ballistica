@@ -1789,7 +1789,7 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args,
     widget = Object::New<HScrollWidget>();
   }
 
-  // set applicable values ----------------------------
+  // Set applicable values.
   if (size_obj != Py_None) {
     Point2D p = Python::GetPyPoint2D(size_obj);
     widget->SetWidth(p.x);
@@ -2050,7 +2050,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args,
     widget = Object::New<TextWidget>();
   }
 
-  // Set applicable values ----------------------------
+  // Set applicable values.
   if (max_chars_obj != Py_None) {
     widget->set_max_chars(
         static_cast_check_fit<int>(Python::GetPyInt64(max_chars_obj)));
@@ -2071,7 +2071,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args,
     widget->set_auto_select(Python::GetPyBool(autoselect_obj));
   }
   if (transition_delay_obj != Py_None) {
-    // we accept this as seconds; widget takes milliseconds
+    // We accept this as seconds; widget takes milliseconds.
     widget->set_transition_delay(1000.0f
                                  * Python::GetPyFloat(transition_delay_obj));
   }
@@ -2576,49 +2576,6 @@ static PyMethodDef PyBackPressDef = {
     "(internal)",
 };
 
-// ------------------------------- open_url ------------------------------------
-
-static auto PyOpenURL(PyObject* self, PyObject* args,
-                      PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  const char* address{};
-  int force_internal{0};
-  static const char* kwlist[] = {"address", "force_internal", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|p",
-                                   const_cast<char**>(kwlist), &address,
-                                   &force_internal)) {
-    return nullptr;
-  }
-  // Need to pass a self-contained string to a lambda; not a char*.
-  std::string address_s{address};
-
-  assert(g_base->app_adapter);
-  if (force_internal) {
-    g_base->ui->ShowURL(address);
-  } else {
-    g_base->app_adapter->PushMainThreadCall(
-        [address_s] { g_base->platform->OpenURL(address_s); });
-  }
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyOpenURLDef = {
-    "open_url",                    // name
-    (PyCFunction)PyOpenURL,        // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "open_url(address: str, force_internal: bool = False) -> None\n"
-    "\n"
-    "Open a provided URL.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
-    "Open the provided url in a web-browser, or display the URL\n"
-    "string in a window if that isn't possible (or if force_internal\n"
-    "is True).",
-};
-
 // ------------------------ is_party_icon_visible ------------------------------
 
 static auto PyIsPartyIconVisible(PyObject* self) -> PyObject* {
@@ -2697,7 +2654,6 @@ static PyMethodDef PyIsAvailableDef = {
 auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
   return {
       PyIsPartyIconVisibleDef,
-      PyOpenURLDef,
       PyBackPressDef,
       PyGetSpecialWidgetDef,
       PySetPartyWindowOpenDef,

@@ -11,9 +11,9 @@
 #include "ballistica/base/python/class/python_class_feature_set_data.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
 #include "ballistica/base/python/class/python_class_vec3.h"
-#include "ballistica/base/python/methods/python_methods_app.h"
-#include "ballistica/base/python/methods/python_methods_graphics.h"
-#include "ballistica/base/python/methods/python_methods_misc.h"
+#include "ballistica/base/python/methods/python_methods_base_1.h"
+#include "ballistica/base/python/methods/python_methods_base_2.h"
+#include "ballistica/base/python/methods/python_methods_base_3.h"
 #include "ballistica/shared/python/python_command.h"
 #include "ballistica/shared/python/python_module_builder.h"
 
@@ -26,9 +26,9 @@ extern "C" auto PyInit__babase() -> PyObject* {
   auto* builder =
       new PythonModuleBuilder("_babase",
                               {
-                                  PythonMethodsApp::GetMethods(),
-                                  PythonMethodsMisc::GetMethods(),
-                                  PythonMethodsGraphics::GetMethods(),
+                                  PythonMethodsBase1::GetMethods(),
+                                  PythonMoethodsBase3::GetMethods(),
+                                  PythonMethodsBase2::GetMethods(),
                               },
                               [](PyObject* module) -> int {
                                 BA_PYTHON_TRY;
@@ -463,17 +463,17 @@ auto BasePython::GetPyEnum_SpecialChar(PyObject* obj) -> SpecialChar {
   return GetPyEnum<SpecialChar>(BasePython::ObjID::kSpecialCharClass, obj);
 }
 
-auto BasePython::GetPyEnum_TimeType(PyObject* obj) -> TimeType {
-  return GetPyEnum<TimeType>(BasePython::ObjID::kTimeTypeClass, obj);
-}
+// auto BasePython::GetPyEnum_TimeType(PyObject* obj) -> TimeType {
+//   return GetPyEnum<TimeType>(BasePython::ObjID::kTimeTypeClass, obj);
+// }
 
 auto BasePython::GetPyEnum_QuitType(PyObject* obj) -> QuitType {
   return GetPyEnum<QuitType>(BasePython::ObjID::kQuitTypeClass, obj);
 }
 
-auto BasePython::GetPyEnum_TimeFormat(PyObject* obj) -> TimeFormat {
-  return GetPyEnum<TimeFormat>(BasePython::ObjID::kTimeFormatClass, obj);
-}
+// auto BasePython::GetPyEnum_TimeFormat(PyObject* obj) -> TimeFormat {
+//   return GetPyEnum<TimeFormat>(BasePython::ObjID::kTimeFormatClass, obj);
+// }
 
 auto BasePython::IsPyEnum_InputType(PyObject* obj) -> bool {
   return IsPyEnum<InputType>(BasePython::ObjID::kInputTypeClass, obj);

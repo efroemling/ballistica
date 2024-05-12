@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import time
 import logging
 
 from efro.error import CommunicationError
@@ -21,6 +22,7 @@ class V2ProxySignInWindow(bui.Window):
         self._height = 550
         self._proxyid: str | None = None
         self._proxykey: str | None = None
+        self._overlay_web_browser_open = False
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
@@ -90,35 +92,37 @@ class V2ProxySignInWindow(bui.Window):
 
         self._message_in_flight = False
         self._complete = False
-        # self._delay_ticks = 0
-        self._connection_wait = 5
+        self._connection_wait_timeout_time = time.monotonic() + 10.0
 
-        # self._update_timer: bui.AppTimer | None = None
         self._update_timer = bui.AppTimer(
-            1.23, bui.WeakCall(self._update), repeat=True
+            0.371, bui.WeakCall(self._update), repeat=True
         )
         bui.pushcall(bui.WeakCall(self._update))
 
-        # Ask the cloud for a proxy login id.
-        # assert bui.app.plus is not None
-        # bui.app.plus.cloud.send_message_cb(
-        #     bacommon.cloud.LoginProxyRequestMessage(),
-        #     on_response=bui.WeakCall(self._on_proxy_request_response),
-        # )
-
     def _update(self) -> None:
-        # print('hello from update', time.monotonic())
-
-        if self._message_in_flight or self._complete:
-            return
 
         plus = bui.app.plus
         assert plus is not None
 
+        # If we've opened an overlay web browser, all we do is kill
+        # ourselves when it closes.
+        if self._overlay_web_browser_open:
+            if not bui.overlay_web_browser_is_open():
+                self._overlay_web_browser_open = False
+                self._done()
+            return
+
+        if self._message_in_flight or self._complete:
+            return
+
+        now = time.monotonic()
+
         # Spin for a moment if it looks like we have no server
-        # connection; it might still be getting on its feed.
-        if not plus.cloud.connected and self._connection_wait > 0:
-            self._connection_wait -= 1
+        # connection; it might still be getting on its feet.
+        if (
+            not plus.cloud.connected
+            and now < self._connection_wait_timeout_time
+        ):
             return
 
         plus.cloud.send_message_cb(
@@ -177,41 +181,50 @@ class V2ProxySignInWindow(bui.Window):
             )
         self._message_in_flight = False
 
-        # if bool(True) and random.random() < 1.0:
-        #     response = Exception('dummy')
-
-        msaddress = self._get_server_address()
-
         # Something went wrong. Show an error message and schedule retry.
         if isinstance(response, Exception):
-            # addr = msaddress.removeprefix('https://')
-            # bui.textwidget(
-            #     edit=self._state_text,
-            #     text=f'Unable to connect to {addr}.',
-            #     color=(1, 0, 0),
-            # )
-            # bui.textwidget(
-            #     edit=self._sub_state_text,
-            #     text='Will retry in a moment...',
-            #     color=(1, 0, 0),
-            # )
-            # self._delay_ticks = 3
             self._set_error_state(f'response exc ({type(response).__name__})')
             self._complete = True
-
-            # bui.textwidget(
-            #     edit=self._state_text,
-            #     text=bui.Lstr(
-            # resource='internal.unavailableNoConnectionText'),
-            #     color=(1, 0, 0),
-            # )
             return
 
         self._complete = True
 
-        self._state_text.delete()
+        # Clear out stuff we use to show progress/errors.
         self._sub_state_text.delete()
         self._sub_state_text2.delete()
+
+        # If we have overlay-web-browser functionality, bring up
+        # an inline sign-in dialog.
+        if bui.overlay_web_browser_is_supported():
+            bui.textwidget(
+                edit=self._state_text,
+                text=bui.Lstr(resource='pleaseWaitText'),
+            )
+            self._show_overlay_sign_in_ui(response)
+            self._overlay_web_browser_open = True
+        else:
+            # Otherwise just show link-button/qr-code for the sign-in.
+            self._state_text.delete()
+            self._show_standard_sign_in_ui(response)
+
+        # In either case, start querying for results now.
+        self._proxyid = response.proxyid
+        self._proxykey = response.proxykey
+        bui.apptimer(
+            STATUS_CHECK_INTERVAL_SECONDS, bui.WeakCall(self._ask_for_status)
+        )
+
+    def _show_overlay_sign_in_ui(
+        self, response: bacommon.cloud.LoginProxyRequestResponse
+    ) -> None:
+        msaddress = self._get_server_address()
+        address = msaddress + response.url_overlay
+        bui.overlay_web_browser_open_url(address)
+
+    def _show_standard_sign_in_ui(
+        self, response: bacommon.cloud.LoginProxyRequestResponse
+    ) -> None:
+        msaddress = self._get_server_address()
 
         # Show link(s) the user can use to sign in.
         address = msaddress + response.url
@@ -272,13 +285,6 @@ class V2ProxySignInWindow(bui.Window):
             ),
             size=(qr_size, qr_size),
             texture=bui.get_qrcode_texture(address),
-        )
-
-        # Start querying for results.
-        self._proxyid = response.proxyid
-        self._proxykey = response.proxykey
-        bui.apptimer(
-            STATUS_CHECK_INTERVAL_SECONDS, bui.WeakCall(self._ask_for_status)
         )
 
     def _ask_for_status(self) -> None:
@@ -362,4 +368,9 @@ class V2ProxySignInWindow(bui.Window):
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
             return
+
+        # If we've got an inline browser up, tell it to close.
+        if self._overlay_web_browser_open:
+            bui.overlay_web_browser_close()
+
         bui.containerwidget(edit=self._root_widget, transition='out_scale')

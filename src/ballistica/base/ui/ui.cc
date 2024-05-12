@@ -567,7 +567,10 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
 
 void UI::ShowURL(const std::string& url) {
   if (auto* ui_delegate = g_base->ui->delegate()) {
-    ui_delegate->DoShowURL(url);
+    // We can be called from any thread but DoShowURL expects to be run in
+    // the logic thread.
+    g_base->logic->event_loop()->PushCall(
+        [ui_delegate, url] { ui_delegate->DoShowURL(url); });
   } else {
     Log(LogLevel::kWarning, "UI::ShowURL called without ui_delegate present.");
   }

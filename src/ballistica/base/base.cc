@@ -954,13 +954,13 @@ auto BaseFeatureSet::ClipboardGetText() -> std::string {
 void BaseFeatureSet::SetAppActive(bool active) {
   assert(InMainThread());
 
-  // Note: in some cases I'm seeing repeat active/inactive sets; for example
+  // Note: in some cases I'm seeing repeat active/inactive sets. For example
   // on Mac SDL if I hide the app and then click on it in the dock I get a
   // 'inactive' for the hide followed by a 'active', 'inactive', 'active' on
   // the dock click. So our strategy here to filter that out is just to tell
-  // the logic thread that it has changed but have them directly read the
-  // shared atomic value, so they should generally skip over flip-flops like
-  // that and will just read the final value a few times in a row.
+  // the logic thread that the value has changed but have them directly read
+  // the shared atomic value, so they should generally skip over flip-flops
+  // like that and instead just read the final value a few times in a row.
 
   g_core->platform->LowLevelDebugLog(
       "SetAppActive(" + std::to_string(active) + ")@"

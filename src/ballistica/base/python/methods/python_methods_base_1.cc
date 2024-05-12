@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/base/python/methods/python_methods_app.h"
+#include "ballistica/base/python/methods/python_methods_base_1.h"
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode_empty.h"
@@ -1697,7 +1697,7 @@ static PyMethodDef PyInvokeMainMenuDef = {
 };
 // -----------------------------------------------------------------------------
 
-auto PythonMethodsApp::GetMethods() -> std::vector<PyMethodDef> {
+auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
   return {
       PyAppNameDef,
       PyAppIsActiveDef,

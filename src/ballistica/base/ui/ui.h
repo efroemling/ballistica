@@ -54,11 +54,6 @@ class UI {
   /// browser). Can be called from any thread.
   void ShowURL(const std::string& url);
 
-  /// High level call to request a quit; ideally with a confirmation ui.
-  /// When a UI can't be shown, triggers an immediate shutdown. This can be
-  /// called from any thread.
-  // void ConfirmQuit();
-
   /// Return whether there is UI present in either the main or overlay
   /// stacks. Generally this implies the focus should be on the UI.
   auto MainMenuVisible() const -> bool;

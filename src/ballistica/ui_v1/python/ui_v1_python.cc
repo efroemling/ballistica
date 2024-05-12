@@ -71,16 +71,15 @@ auto UIV1Python::GetPyWidget(PyObject* o) -> Widget* {
 }
 
 void UIV1Python::ShowURL(const std::string& url) {
-  g_base->logic->event_loop()->PushCall([this, url] {
-    assert(g_base->InLogicThread());
-    if (objs().Exists(ObjID::kShowURLWindowCall)) {
-      base::ScopedSetContext ssc(nullptr);
-      PythonRef args(Py_BuildValue("(s)", url.c_str()), PythonRef::kSteal);
-      objs().Get(ObjID::kShowURLWindowCall).Call(args);
-    } else {
-      Log(LogLevel::kError, "ShowURLWindowCall nonexistent.");
-    }
-  });
+  assert(g_base->InLogicThread());
+
+  if (objs().Exists(ObjID::kShowURLWindowCall)) {
+    base::ScopedSetContext ssc(nullptr);
+    PythonRef args(Py_BuildValue("(s)", url.c_str()), PythonRef::kSteal);
+    objs().Get(ObjID::kShowURLWindowCall).Call(args);
+  } else {
+    Log(LogLevel::kError, "ShowURLWindowCall nonexistent.");
+  }
 }
 
 void UIV1Python::HandleDeviceMenuPress(base::InputDevice* device) {

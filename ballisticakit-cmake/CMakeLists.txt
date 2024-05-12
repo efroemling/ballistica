@@ -426,12 +426,12 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_simple_sound.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_vec3.cc
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_vec3.h
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_app.cc
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_app.h
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_graphics.cc
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_graphics.h
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_misc.cc
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_misc.h
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_1.cc
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_1.h
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_2.cc
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_2.h
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_3.cc
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_3.h
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call.cc
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call.h
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call_runnable.h

@@ -249,8 +249,8 @@ class CorePlatform {
 
 #pragma mark MUSIC PLAYBACK ----------------------------------------------------
 
-  // FIXME: currently these are wired up on Android; need to generalize
-  //  to support mac/itunes or other music player types.
+  // FIXME: currently these are wired up on Android; need to generalize to
+  //  support mac/itunes or other music player types.
   virtual void MusicPlayerPlay(PyObject* target);
   virtual void MusicPlayerStop();
   virtual void MusicPlayerShutdown();
@@ -263,8 +263,8 @@ class CorePlatform {
   // Return whether we have the ability to show *any* ads.
   virtual auto GetHasAds() -> bool;
 
-  // Return whether we have the ability to show longer-form video ads (suitable
-  // for rewards).
+  // Return whether we have the ability to show longer-form video ads
+  // (suitable for rewards).
   virtual auto GetHasVideoAds() -> bool;
 
 #pragma mark GAME SERVICES -----------------------------------------------------
@@ -294,10 +294,10 @@ class CorePlatform {
 
 #pragma mark ERRORS & DEBUGGING ------------------------------------------------
 
-  /// Should return a subclass of NativeStackTrace allocated via new. It
-  /// is up to the caller to call delete on the returned trace when done
-  /// with it. Platforms with no meaningful stack trace functionality can
-  /// return nullptr.
+  /// Should return a subclass of NativeStackTrace allocated via new. It is
+  /// up to the caller to call delete on the returned trace when done with
+  /// it. Platforms with no meaningful stack trace functionality can return
+  /// nullptr.
   virtual auto GetNativeStackTrace() -> NativeStackTrace*;
 
   /// Optionally override fatal error reporting. If true is returned, default
@@ -333,9 +333,10 @@ class CorePlatform {
 
   /// Print a log message to be included in crash logs or other debug
   /// mechanisms (example: Crashlytics). V1-cloud-log messages get forwarded
-  /// to here as well. It can be useful to call this directly to report extra
-  /// details that may help in debugging, as these calls are not considered
-  /// 'noteworthy' or presented to the user as standard Log() calls are.
+  /// to here as well. It can be useful to call this directly to report
+  /// extra details that may help in debugging, as these calls are not
+  /// considered 'noteworthy' or presented to the user as standard Log()
+  /// calls are.
   void LowLevelDebugLog(const std::string& msg);
 
 #pragma mark MISC --------------------------------------------------------------
@@ -468,7 +469,7 @@ class CorePlatform {
   std::string volatile_data_dir_;
   std::string replays_dir_;
 
-  // temp.
+  // Temp; should be able to remove this once Swift 5.10 is out.
   std::list<std::string> mac_music_app_playlists_;
 };
 

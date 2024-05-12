@@ -321,7 +321,10 @@ class AccountSettingsWindow(bui.Window):
         show_what_is_v2 = False
         # show_what_is_v2 = self._v1_signed_in and v1_account_type == 'V2'
 
-        show_linked_accounts_text = self._v1_signed_in
+        # Phasing this out (for V2 accounts at least).
+        show_linked_accounts_text = (
+            self._v1_signed_in and v1_account_type != 'V2'
+        )
         linked_accounts_text_space = 60.0
 
         # Always show achievements except in the game-center case where
@@ -364,7 +367,10 @@ class AccountSettingsWindow(bui.Window):
         show_unlink_accounts_button = show_link_accounts_button
         unlink_accounts_button_space = 90.0
 
-        show_v2_link_info = self._v1_signed_in and not show_link_accounts_button
+        # Phasing this out.
+        # show_v2_link_info = self._v1_signed_in
+        # and not show_link_accounts_button
+        show_v2_link_info = False
         v2_link_info_space = 70.0
 
         legacy_unlink_button_space = 120.0
@@ -373,7 +379,7 @@ class AccountSettingsWindow(bui.Window):
             'Local',
             'V2',
         ]
-        sign_out_button_space = 70.0
+        sign_out_button_space = 80.0
 
         # We can show cancel if we're either waiting on an adapter to
         # provide us with v2 credentials or waiting for those credentials

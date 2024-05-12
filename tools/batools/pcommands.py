@@ -916,7 +916,7 @@ def android_sdk_utils() -> None:
 
 def gen_python_enums_module() -> None:
     """Update our procedurally generated python enums."""
-    from batools.pythonenumsmodule import generate
+    from batools.enumspython import generate
 
     pcommand.disallow_in_batch()
 

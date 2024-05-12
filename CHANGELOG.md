@@ -1,4 +1,4 @@
-### 1.7.35 (build 21852, api 8, 2024-05-10)
+### 1.7.35 (build 21863, api 8, 2024-05-12)
 - Fixed an issue where the engine would block at exit on some version of Linux
   until Ctrl-D was pressed in the calling terminal.
 - V2 accounts have been around for a while now, so the old V1 device login
@@ -10,6 +10,10 @@
   that is the only option. So nice and tidy! When other options such as Google
   Play or Game Center are available it is now called 'Sign in with an email
   address'.
+- The engine now supports signing in or creating email/password accounts in a
+  pop-up web dialog to avoid taking users out of the app. This currently works
+  on the native (not cmake) Mac build but will probably expand to others in the
+  future.
 - The `ba*.app.env.version` `and ba*.app.env.build_number` values are now
   `ba*.app.env.engine_version` and `ba*.app.env.engine_build_number`. At this
   point any functionality that cares about versions should be looking at engine
@@ -1284,7 +1288,7 @@
   before to determine if a browser was available but this seemed to be flaky.
   Holler if this is not working well on your device/situation.
 - The internal 'fallback' `ba.open_url()` window which shows a url string when a
-  system browser is not available now has a qrcode and a copy button (where
+  web browser is not available now has a qrcode and a copy button (where
   copy/paste is supported).
 - Added a 'force_internal' arg to `ba.open_url()` if you would like to always
   use the internal window instead of attempting to open a browser. Now that we

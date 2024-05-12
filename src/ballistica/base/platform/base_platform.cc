@@ -9,6 +9,7 @@
 #include <poll.h>
 #endif
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/base.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
@@ -110,42 +111,73 @@ void BasePlatform::PurchaseAck(const std::string& purchase,
 }
 
 void BasePlatform::OpenURL(const std::string& url) {
-  // DoOpenURL expects to be run in the logic thread.
-  g_base->logic->event_loop()->PushCall(
+  // We can be called from any thread, but DoOpenURL expects to be run in
+  // the main thread.
+  g_base->app_adapter->PushMainThreadCall(
       [url] { g_base->platform->DoOpenURL(url); });
 }
 
 void BasePlatform::DoOpenURL(const std::string& url) {
   // As a default, use Python's webbrowser module functionality.
-  g_base->python->OpenURLWithWebBrowserModule(url);
-}
-
-auto BasePlatform::HaveOverlayWebBrowser() -> bool { return false; }
-
-void BasePlatform::OpenURLInOverlayWebBrowser(const std::string& url) {
-  BA_PRECONDITION(HaveOverlayWebBrowser());
-
-  // DoOpenURLInOverlayBrowser expects to be run in the logic thread.
+  // It expects to be run in the logic thread though so we need
+  // to push it over that way.
   g_base->logic->event_loop()->PushCall(
-      [url] { g_base->platform->DoOpenURLInOverlayBrowser(url); });
+      [url] { g_base->python->OpenURLWithWebBrowserModule(url); });
 }
 
-void BasePlatform::CloseOverlayWebBrowser() {
-  BA_PRECONDITION(HaveOverlayWebBrowser());
+auto BasePlatform::OverlayWebBrowserIsSupported() -> bool { return false; }
 
-  // DoCloseOverlayBrowser expects to be run in the logic thread.
-  g_base->logic->event_loop()->PushCall(
-      [] { g_base->platform->DoCloseOverlayBrowser(); });
+void BasePlatform::OverlayWebBrowserOpenURL(const std::string& url) {
+  BA_PRECONDITION(OverlayWebBrowserIsSupported());
+
+  std::scoped_lock lock(web_overlay_mutex_);
+  if (web_overlay_open_) {
+    Log(LogLevel::kError,
+        "OverlayWebBrowserOnClose called with already existing overlay.");
+    return;
+  }
+  web_overlay_open_ = true;
+
+  // We can be called from any thread, but DoOpenURL expects to be called
+  // from the main thread.
+  g_base->app_adapter->PushMainThreadCall(
+      [url] { g_base->platform->DoOverlayWebBrowserOpenURL(url); });
 }
 
-void BasePlatform::DoOpenURLInOverlayBrowser(const std::string& url) {
-  // As a default, use Python's webbrowser module functionality.
+auto BasePlatform::OverlayWebBrowserIsOpen() -> bool {
+  BA_PRECONDITION(OverlayWebBrowserIsSupported());
+  // No reason to lock the mutex here I think.
+  return web_overlay_open_;
+}
+
+void BasePlatform::OverlayWebBrowserOnClose() {
+  std::scoped_lock lock(web_overlay_mutex_);
+  if (!web_overlay_open_) {
+    Log(LogLevel::kError,
+        "OverlayWebBrowserOnClose called with no known overlay.");
+  }
+  web_overlay_open_ = false;
+}
+
+void BasePlatform::OverlayWebBrowserClose() {
+  BA_PRECONDITION(OverlayWebBrowserIsSupported());
+
+  // I don't think theres any point to looking at the opened-state, is
+  // there? This call needs to gracefully handle any state.
+
+  // We can be called from any thread, but DoOverlayWebBrowserClose expects
+  // to be called from the main thread.
+  g_base->app_adapter->PushMainThreadCall(
+      [] { g_base->platform->DoOverlayWebBrowserClose(); });
+}
+
+void BasePlatform::DoOverlayWebBrowserOpenURL(const std::string& url) {
   Log(LogLevel::kError, "DoOpenURLInOverlayBrowser unimplemented");
 }
 
-void BasePlatform::DoCloseOverlayBrowser() {
+void BasePlatform::DoOverlayWebBrowserClose() {
   // As a default, use Python's webbrowser module functionality.
-  Log(LogLevel::kError, "DoCloseOverlayBrowser unimplemented");
+  Log(LogLevel::kError, "DoOverlayWebBrowserClose unimplemented");
 }
 
 #if !BA_OSTYPE_WINDOWS
@@ -253,19 +285,6 @@ void BasePlatform::OpenDirExternally(const std::string& path) {
 
 void BasePlatform::OpenFileExternally(const std::string& path) {
   Log(LogLevel::kError, "OpenFileExternally() unimplemented");
-}
-
-void BasePlatform::SafeStdinFGetSInit() {
-#if BA_OSTYPE_WINDOWS
-  // Do nothing on Windows. We seem to be ok with blocking reads there.
-#else
-
-  // Actually should not be necessary now that we're using poll().
-
-  // Set stdin up for non-blocking reads.
-  // int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
-  // fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
-#endif  // BA_OSTYPE_WINDOWS
 }
 
 auto BasePlatform::SafeStdinFGetS(char* s, int n, FILE* iop) -> char* {

@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/base/python/methods/python_methods_misc.h"
+#include "ballistica/base/python/methods/python_methods_base_3.h"
 
 #include <list>
 #include <unordered_map>
@@ -409,8 +409,9 @@ static PyMethodDef PyGetThreadNameDef = {
 
 // --------------------------------- ehv ---------------------------------------
 
-// returns an extra hash value that can be incorporated into security checks;
-// this contains things like whether console commands have been run, etc.
+// Returns an extra hash value that can be incorporated into security
+// checks; this contains things like whether console commands have been run,
+// etc.
 auto PyExtraHashValue(PyObject* self, PyObject* args,
                       PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
@@ -523,9 +524,9 @@ static PyMethodDef PyContainsPythonDistDef = {
 
 static auto PyDebugPrintPyErr(PyObject* self, PyObject* args) -> PyObject* {
   if (PyErr_Occurred()) {
-    // we pass zero here to avoid grabbing references to this exception
-    // which can cause objects to stick around and trip up our deletion checks
-    // (nodes, actors existing after their games have ended)
+    // We pass zero here to avoid grabbing references to this exception
+    // which can cause objects to stick around and trip up our deletion
+    // checks (nodes, actors existing after their games have ended).
     PyErr_PrintEx(0);
     PyErr_Clear();
   }
@@ -1827,7 +1828,7 @@ static PyMethodDef PyGetInputIdleTimeDef = {
 };
 // -----------------------------------------------------------------------------
 
-auto PythonMethodsMisc::GetMethods() -> std::vector<PyMethodDef> {
+auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
   return {
       PyClipboardIsSupportedDef,
       PyClipboardHasTextDef,

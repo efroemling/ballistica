@@ -2423,7 +2423,7 @@
       <w>pythondevmode</w>
       <w>pythondirs</w>
       <w>pythondontwritebytecode</w>
-      <w>pythonenumsmodule</w>
+      <w>enumspython</w>
       <w>pythonhashseed</w>
       <w>pythonoptimize</w>
       <w>pythonpath</w>

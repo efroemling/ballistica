@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/base/python/methods/python_methods_graphics.h"
+#include "ballistica/base/python/methods/python_methods_base_2.h"
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/assets.h"
@@ -9,8 +9,10 @@
 #include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/macros.h"
@@ -24,6 +26,147 @@ namespace ballistica::base {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 
+// ------------------------------- open_url ------------------------------------
+
+static auto PyOpenURL(PyObject* self, PyObject* args,
+                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* address{};
+  int force_fallback{};
+  static const char* kwlist[] = {"address", "force_fallback", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|p",
+                                   const_cast<char**>(kwlist), &address,
+                                   &force_fallback)) {
+    return nullptr;
+  }
+  if (force_fallback) {
+    g_base->ui->ShowURL(address);
+  } else {
+    g_base->platform->OpenURL(address);
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyOpenURLDef = {
+    "open_url",                    // name
+    (PyCFunction)PyOpenURL,        // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "open_url(address: str, force_fallback: bool = False) -> None\n"
+    "\n"
+    "Open the provided URL.\n"
+    "\n"
+    "Category: **General Utility Functions**\n"
+    "\n"
+    "Attempts to open the provided url in a web-browser. If that is not\n"
+    "possible (or force_fallback is True), instead displays the url as\n"
+    "a string and/or qrcode."};
+
+// --------------------- overlay_web_browser_is_supported ----------------------
+
+static auto PyOverlayWebBrowserIsSupported(PyObject* self, PyObject* args,
+                                           PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_base->platform->OverlayWebBrowserIsSupported()) {
+    Py_RETURN_TRUE;
+  } else {
+    Py_RETURN_FALSE;
+  }
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyOverlayWebBrowserIsSupportedDef = {
+    "overlay_web_browser_is_supported",           // name
+    (PyCFunction)PyOverlayWebBrowserIsSupported,  // method
+    METH_NOARGS,                                  // flags
+
+    "overlay_web_browser_is_supported() -> bool\n"
+    "\n"
+    "Return whether an overlay web browser is supported here.\n"
+    "\n"
+    "Category: **General Utility Functions**\n"
+    "\n"
+    "An overlay web browser is a small dialog that pops up over the top\n"
+    "of the main engine window. It can be used for performing simple\n"
+    "tasks such as sign-ins."};
+
+// --------------------- overlay_web_browser_open_url --------------------------
+
+static auto PyOverlayWebBrowserOpenURL(PyObject* self, PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* address{};
+  static const char* kwlist[] = {"address", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &address)) {
+    return nullptr;
+  }
+  g_base->platform->OverlayWebBrowserOpenURL(address);
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyOverlayWebBrowserOpenURLDef = {
+    "overlay_web_browser_open_url",           // name
+    (PyCFunction)PyOverlayWebBrowserOpenURL,  // method
+    METH_VARARGS | METH_KEYWORDS,             // flags
+
+    "overlay_web_browser_open_url(address: str) -> None\n"
+    "\n"
+    "Open the provided URL in an overlayw web browser.\n"
+    "\n"
+    "Category: **General Utility Functions**\n"
+    "\n"
+    "An overlay web browser is a small dialog that pops up over the top\n"
+    "of the main engine window. It can be used for performing simple\n"
+    "tasks such as sign-ins."};
+
+// --------------------- overlay_web_browser_is_open ----------------------
+
+static auto PyOverlayWebBrowserIsOpen(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_base->platform->OverlayWebBrowserIsOpen()) {
+    Py_RETURN_TRUE;
+  } else {
+    Py_RETURN_FALSE;
+  }
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyOverlayWebBrowserIsOpenDef = {
+    "overlay_web_browser_is_open",           // name
+    (PyCFunction)PyOverlayWebBrowserIsOpen,  // method
+    METH_NOARGS,                             // flags
+
+    "overlay_web_browser_is_open() -> bool\n"
+    "\n"
+    "Return whether an overlay web browser is open currently.\n"
+    "\n"
+    "Category: **General Utility Functions**"};
+
+// ------------------------ overlay_web_browser_close --------------------------
+
+static auto PyOverlayWebBrowserClose(PyObject* self, PyObject* args,
+                                     PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  g_base->platform->OverlayWebBrowserClose();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyOverlayWebBrowserCloseDef = {
+    "overlay_web_browser_close",            // name
+    (PyCFunction)PyOverlayWebBrowserClose,  // method
+    METH_NOARGS,                            // flags
+
+    "overlay_web_browser_close() -> bool\n"
+    "\n"
+    "Close any open overlay web browser.\n"
+    "\n"
+    "Category: **General Utility Functions**\n"};
 // ---------------------------- screenmessage ----------------------------------
 
 static auto PyScreenMessage(PyObject* self, PyObject* args,
@@ -788,8 +931,13 @@ static PyMethodDef PyShowProgressBarDef = {
 
 // -----------------------------------------------------------------------------
 
-auto PythonMethodsGraphics::GetMethods() -> std::vector<PyMethodDef> {
+auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
   return {
+      PyOpenURLDef,
+      PyOverlayWebBrowserIsSupportedDef,
+      PyOverlayWebBrowserOpenURLDef,
+      PyOverlayWebBrowserIsOpenDef,
+      PyOverlayWebBrowserCloseDef,
       PyGetDisplayResolutionDef,
       PyGetCameraPositionDef,
       PyGetCameraTargetDef,

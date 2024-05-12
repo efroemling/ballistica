@@ -32,8 +32,11 @@ class LoginProxyRequestMessage(Message):
 class LoginProxyRequestResponse(Response):
     """Response to a request for a login proxy."""
 
-    # URL to direct the user to for login.
+    # URL to direct the user to for sign in.
     url: Annotated[str, IOAttrs('u')]
+
+    # URL to use for overlay-web-browser sign ins.
+    url_overlay: Annotated[str, IOAttrs('uo')]
 
     # Proxy-Login id for querying results.
     proxyid: Annotated[str, IOAttrs('p')]

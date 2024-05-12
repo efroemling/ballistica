@@ -16,6 +16,9 @@ class BasePlatformApple : public BasePlatform {
   void PurchaseAck(const std::string& purchase,
                    const std::string& order_id) override;
   void DoOpenURL(const std::string& url) override;
+  auto OverlayWebBrowserIsSupported() -> bool override;
+  void DoOverlayWebBrowserOpenURL(const std::string& url) override;
+  void DoOverlayWebBrowserClose() override;
   void LoginAdapterGetSignInToken(const std::string& login_type,
                                   int attempt_id) override;
   void LoginAdapterBackEndActiveChange(const std::string& login_type,
