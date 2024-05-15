@@ -85,7 +85,7 @@ void BasePlatformApple::DoOverlayWebBrowserOpenURL(const std::string& url) {
   BallisticaKit::CocoaFromCpp::openURLInOverlayWebBrowser(url);
 #else
   // TODO(ericf): Implement for uikit.
-  BasePlatform::DoOpenURLInOverlayBrowser(url);
+  BasePlatform::DoOverlayWebBrowserOpenURL(url);
 #endif  // BA_OSTYPE_MACOS
 
 #else

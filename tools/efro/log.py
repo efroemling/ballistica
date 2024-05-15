@@ -407,6 +407,7 @@ class LogHandler(logging.Handler):
             )
 
         if __debug__:
+            # pylint: disable=used-before-assignment
             # Make noise if we're taking a significant amount of time here.
             # Limit the noise to once every so often though; otherwise we
             # could get a feedback loop where every log emit results in a

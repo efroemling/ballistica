@@ -387,7 +387,7 @@ class GetCurrencyWindow(bui.Window):
         else:
             v -= 20
 
-        if True:  # pylint: disable=using-constant-test
+        if bool(True):
             h_offs = 35
             b_size_3 = (150, 120)
             cdb = _add_button(
@@ -432,6 +432,8 @@ class GetCurrencyWindow(bui.Window):
                 v_align='center',
                 scale=1.0,
             )
+            tc_y_offs = 0
+        else:
             tc_y_offs = 0
 
         h = self._width - (185 + x_inset)

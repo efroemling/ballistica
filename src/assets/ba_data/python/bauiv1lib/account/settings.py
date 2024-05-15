@@ -208,9 +208,6 @@ class AccountSettingsWindow(bui.Window):
         self._refresh_tickets_text()
         self._refresh_account_name_text()
 
-    # def _get_sign_in_text(self) -> bui.Lstr:
-    #     return bui.Lstr(resource=self._r + '.signInText')
-
     def _refresh(self) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
@@ -711,15 +708,9 @@ class AccountSettingsWindow(bui.Window):
                 if show_game_center_sign_in_button
                 or show_google_play_sign_in_button
                 or show_device_sign_in_button
-                # else bui.Lstr(resource=self._r + '.signInWithV2Text')
                 else bui.Lstr(resource=self._r + '.signInText')
             )
             v2infotext: bui.Lstr | str | None = None
-            # (
-            #     None
-            #     if show_game_center_sign_in_button
-            #     else bui.Lstr(resource=self._r + '.signInWithV2InfoText')
-            # )
 
             bui.textwidget(
                 parent=self._subcontainer,
@@ -1592,6 +1583,14 @@ class AccountSettingsWindow(bui.Window):
         bui.apptimer(0.1, bui.WeakCall(self._update))
 
     def _sign_in_press(self, login_type: str | LoginType) -> None:
+        from bauiv1lib.connectivity import wait_for_connectivity
+
+        # If we're still waiting for our master-server connection,
+        # keep the user informed of this instead of rushing in and
+        # failing immediately.
+        wait_for_connectivity(on_connected=lambda: self._sign_in(login_type))
+
+    def _sign_in(self, login_type: str | LoginType) -> None:
         plus = bui.app.plus
         assert plus is not None
 
@@ -1679,6 +1678,15 @@ class AccountSettingsWindow(bui.Window):
         bui.apptimer(0.1, bui.WeakCall(self._update))
 
     def _v2_proxy_sign_in_press(self) -> None:
+        # pylint: disable=cyclic-import
+        from bauiv1lib.connectivity import wait_for_connectivity
+
+        # If we're still waiting for our master-server connection,
+        # keep the user informed of this instead of rushing in and
+        # failing immediately.
+        wait_for_connectivity(on_connected=self._v2_proxy_sign_in)
+
+    def _v2_proxy_sign_in(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.account.v2proxy import V2ProxySignInWindow
 
