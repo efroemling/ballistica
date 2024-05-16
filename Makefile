@@ -222,6 +222,10 @@ pcommandbatch_speed_test: env
 
 # Prebuilt binaries for various platforms.
 
+docker-linux-x86-64-server-release-build:
+	$(PCOMMAND) build_docker
+
+
 # WSL is Linux but running under Windows, so it can target either. By default
 # we want these top level targets (prefab-gui-debug, etc.) to yield native
 # Windows builds from WSL, but this env var can be set to override that.

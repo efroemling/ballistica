@@ -644,3 +644,20 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     else:
         if verbose:
             print(f'{Clr.BLD}{title}:{Clr.RST} Keeping existing build dir.')
+
+def _docker_build(image_name,
+                  dockerfile_dir,
+                  bombsquad_version,
+                  source_dir) -> None:
+    
+    build_cmd = ['docker','image','build',
+                 '-t',image_name,
+                 dockerfile_dir, 
+                 '--build-arg', f'BOMBSQUAD_VERSION={bombsquad_version}',
+                 '--build-arg', f'SOURCE_DIR={source_dir}']
+    
+    subprocess.run(build_cmd,check=True)
+    
+# add option to toggle between prefab and cmake
+def docker_build() -> None:
+    _docker_build('bsquad','src/assets/docker/','1.7.69','build/prefab/full/linux_x86_64_server/release')
