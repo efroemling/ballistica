@@ -1,13 +1,10 @@
-FROM ubuntu:24.04
+# Start with the base image
+FROM ubuntu:24.04 AS builder
 
 ENV LANG en_US.utf8
-
 ENV LANGUAGE=en_US
 
-COPY ./ /home/ubuntu/ballistica
-
-WORKDIR /home/ubuntu/ballistica
-
+# Install build dependencies
 RUN DEBIAN_FRONTEND=noninteractive \
     apt-get update -y && \
     apt-get install -y \
@@ -25,20 +22,47 @@ RUN DEBIAN_FRONTEND=noninteractive \
         cmake \
         libvorbis-dev
 
-ARG BOMBSQUAD_VERSION=N/A
+# Copy source code
+COPY ./ /home/ubuntu/ballistica
 
+WORKDIR /home/ubuntu/ballistica
+
+# Compile the application
+RUN ./do_stuff 
+
+# Optionally, clean up the build dependencies and any temporary files to reduce image size
+# This step depends on how './do_stuff compile' works and if it generates any temporary files
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/*
+
+# Create a new stage for the runtime environment
+FROM ubuntu:24.04
+
+ENV LANG en_US.utf8
+ENV LANGUAGE=en_US
+
+WORKDIR /home/ubuntu/ballistica
+
+# Install runtime dependencies
+RUN DEBIAN_FRONTEND=noninteractive \
+    apt-get update -y && \
+    apt-get install -y \
+        python3.12-venv \
+        python3-pip \
+        libsdl2-dev \
+        libvorbisfile3 \
+        freeglut3-dev \
+        libopenal1 \
+        curl
+
+# Copy the compiled application from the builder stage
+COPY --from=builder /home/ubuntu/ballistica/build/cmake/server-debug/staged/ /home/ubuntu/ballistica
+
+ARG BOMBSQUAD_VERSION=N/A
 LABEL bombsquad_version=${BOMBSQUAD_VERSION}
 
-CMD [ "./do_stuff" ]
-
-# ENTRYPOINT ["./do_stuff"]
-
-# CMD [ "make" ]
-
-# this does not port forward locally
-# its just a hint for user which port to forward
+# Expose the necessary port
 EXPOSE 43210/udp
 
-# Clean up
-# RUN apt-get clean && \
-#     rm -rf /var/lib/apt/lists/* /tmp/*
+# Set the default command to run the application
+CMD [ "./ballisticakit_server" ]
