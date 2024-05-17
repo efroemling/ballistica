@@ -4,6 +4,10 @@ ENV LANG en_US.utf8
 
 ENV LANGUAGE=en_US
 
+COPY ./ ./ballistica
+
+WORKDIR /ballistica
+
 RUN DEBIAN_FRONTEND=noninteractive \
     apt-get update -y && \
     apt-get install -y \
@@ -14,17 +18,14 @@ RUN DEBIAN_FRONTEND=noninteractive \
         libvorbisfile3 \
         freeglut3-dev \
         libopenal-dev \
-        make
+        make \
+        curl \
+        rsync \
+        clang-format \
+        cmake \
+        libvorbis-dev
 
-RUN apt-get install -y curl rsync
-RUN apt-get install -y clang-format
 ARG BOMBSQUAD_VERSION=N/A
-
-# WORKDIR /home/ubuntu/
-
-COPY ./ ./ballistica
-
-WORKDIR /ballistica
 
 LABEL bombsquad_version=${BOMBSQUAD_VERSION}
 
