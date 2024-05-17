@@ -1,8 +1,16 @@
+ARG cmake_build_type=Release
+ARG base_image=ubuntu:24.04
+
 # Start with the base image
-FROM ubuntu:24.04 AS builder
+FROM ${base_image} AS builder
 
 ENV LANG en_US.utf8
 ENV LANGUAGE=en_US
+
+# Renew the arg
+ARG cmake_build_type
+
+ENV CMAKE_BUILD_TYPE=${cmake_build_type}
 
 # Install build dependencies
 RUN DEBIAN_FRONTEND=noninteractive \
@@ -28,25 +36,26 @@ COPY ./ /home/ubuntu/ballistica
 WORKDIR /home/ubuntu/ballistica
 
 # Compile the application
-RUN ./do_stuff 
+RUN rm -rf .venv tools/pcommand
+RUN make cmake-server-build
 
 # Create a new stage for the runtime environment
-FROM ubuntu:24.04
+FROM ${base_image}
+
+# Renew the arg
+ARG cmake_build_type
 
 ENV LANG en_US.utf8
 ENV LANGUAGE=en_US
 
 WORKDIR /home/ubuntu/ballistica
 
-ARG BOMBSQUAD_VERSION=N/A
-LABEL bombsquad_version=${BOMBSQUAD_VERSION}
-
-# Copy apt cache from builder to avoid redownloading 
-COPY --from=builder /var/cache/apt/ /var/cache/apt/
-COPY --from=builder /var/lib/apt/lists/ /var/lib/apt/lists/
+ARG bombsquad_version=N/A
+LABEL BOMBSQUAD_VERSION=${bombsquad_version}
 
 # Install runtime dependencies
 RUN DEBIAN_FRONTEND=noninteractive \
+    apt-get update -y && \
     apt-get install -y  \
         python3.12-venv \
         python3-pip \
