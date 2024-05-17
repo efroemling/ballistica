@@ -9,12 +9,15 @@ RUN DEBIAN_FRONTEND=noninteractive \
     apt-get install -y \
         python3.12-dev \
         python3.12-venv \
+        python3-pip \
         libsdl2-dev \
         libvorbisfile3 \
         freeglut3-dev \
         libopenal-dev \
         make
 
+RUN apt-get install -y curl rsync
+RUN apt-get install -y clang-format
 ARG BOMBSQUAD_VERSION=N/A
 
 # WORKDIR /home/ubuntu/

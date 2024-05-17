@@ -4,4 +4,6 @@ echo
 ls
 echo
 rm tools/pcommand
+rm -rf .venv
 make env
+make cmake
