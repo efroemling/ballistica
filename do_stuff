@@ -1,0 +1,7 @@
+#!/bin/bash
+pwd
+echo
+ls
+echo
+rm tools/pcommand
+make env
