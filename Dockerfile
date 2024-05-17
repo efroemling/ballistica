@@ -4,9 +4,9 @@ ENV LANG en_US.utf8
 
 ENV LANGUAGE=en_US
 
-COPY ./ ./ballistica
+COPY ./ /home/ubuntu/ballistica
 
-WORKDIR /ballistica
+WORKDIR /home/ubuntu/ballistica
 
 RUN DEBIAN_FRONTEND=noninteractive \
     apt-get update -y && \
