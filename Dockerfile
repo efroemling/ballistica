@@ -30,11 +30,6 @@ WORKDIR /home/ubuntu/ballistica
 # Compile the application
 RUN ./do_stuff 
 
-# Optionally, clean up the build dependencies and any temporary files to reduce image size
-# This step depends on how './do_stuff compile' works and if it generates any temporary files
-RUN apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/*
-
 # Create a new stage for the runtime environment
 FROM ubuntu:24.04
 
@@ -43,10 +38,16 @@ ENV LANGUAGE=en_US
 
 WORKDIR /home/ubuntu/ballistica
 
+ARG BOMBSQUAD_VERSION=N/A
+LABEL bombsquad_version=${BOMBSQUAD_VERSION}
+
+# Copy apt cache from builder to avoid redownloading 
+COPY --from=builder /var/cache/apt/ /var/cache/apt/
+COPY --from=builder /var/lib/apt/lists/ /var/lib/apt/lists/
+
 # Install runtime dependencies
 RUN DEBIAN_FRONTEND=noninteractive \
-    apt-get update -y && \
-    apt-get install -y \
+    apt-get install -y  \
         python3.12-venv \
         python3-pip \
         libsdl2-dev \
@@ -57,9 +58,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
 
 # Copy the compiled application from the builder stage
 COPY --from=builder /home/ubuntu/ballistica/build/cmake/server-debug/staged/ /home/ubuntu/ballistica
-
-ARG BOMBSQUAD_VERSION=N/A
-LABEL bombsquad_version=${BOMBSQUAD_VERSION}
+COPY --from=builder /home/ubuntu/ballistica/build/cmake/server-debug/ballisticakit_headless /home/ubuntu/ballistica/dist
 
 # Expose the necessary port
 EXPOSE 43210/udp
