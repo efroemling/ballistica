@@ -680,10 +680,11 @@ def _docker_build(
     subprocess.run(build_cmd, check=True)
 
 
-# todo: add option to toggle between prefab and cmake
 def docker_build() -> None:
+    """Build docker image."""
     import shutil
 
+    # todo: add option to toggle between prefab and cmake
     shutil.copy('src/assets/docker/Dockerfile', '.')
     from batools import version
 
