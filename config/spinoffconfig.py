@@ -169,6 +169,7 @@ ctx.no_filter_dirs = {
 ctx.filter_file_names = {
     'Makefile',
     '.gitignore',
+    '.dockerignore',
     '.gitattributes',
     'README',
     'README.md',

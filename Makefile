@@ -226,7 +226,7 @@ docker-build:
 	$(PCOMMAND) build_docker
 
 docker-run:
-	docker run -P -it bsquad
+	docker run -it bombsquad_server
 
 # WSL is Linux but running under Windows, so it can target either. By default
 # we want these top level targets (prefab-gui-debug, etc.) to yield native
