@@ -689,10 +689,16 @@ def docker_build() -> None:
     from batools import version
 
     version_num, build_num = version.get_current_version()
-    _docker_build(
-        'bombsquad_server',
-        '.',
-        version_num,
-        build_num,
-    )
-    os.remove('Dockerfile')
+    image_name = 'bombsquad_server'
+    try:
+        print(f'Building docker image {image_name} version {version_num}:{build_num}')
+        _docker_build(
+            image_name,
+            '.',
+            version_num,
+            build_num,
+        )
+    except KeyboardInterrupt:
+        print('Stopping docker image build.')
+    finally:
+        os.remove('Dockerfile')
