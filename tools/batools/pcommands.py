@@ -667,8 +667,6 @@ def prefab_binary_path() -> None:
     )
 
 def build_docker() -> None:
-    pass
-    import subprocess
     import batools.build
     batools.build.docker_build()
     

@@ -645,27 +645,33 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
         if verbose:
             print(f'{Clr.BLD}{title}:{Clr.RST} Keeping existing build dir.')
 
-def _docker_build(image_name,
-                  dockerfile_dir,
-                  bombsquad_version = None,
-                  project_root = None) -> None:
+def _docker_build(image_name : str,
+                  dockerfile_dir : str,
+                  bombsquad_version : str|None = None,
+                  bombsquad_build : str|int|None = None,
+                  cmake_build_type : str|None = None) -> None:
     
     build_cmd = ['docker','image','build',
                  '-t',image_name,
                  dockerfile_dir, 
                  ]
     if bombsquad_version is not None:
-        build_cmd = build_cmd+['--build-arg', f'BOMBSQUAD_VERSION={bombsquad_version}']
-    # if project_root is not None:
-    #     print(project_root)
-    #     build_cmd = build_cmd+['--build-arg', f'PROJ_ROOT={project_root}']
-    
+        build_cmd = build_cmd+['--build-arg', f'bombsquad_version={bombsquad_version}']
+    if bombsquad_build is not None:
+        build_cmd = build_cmd+['--build-arg', f'bombsquad_build={str(bombsquad_build)}']
+    if cmake_build_type is not None:
+        build_cmd = build_cmd+['--build-arg', f'cmake_build_type={cmake_build_type}']
     subprocess.run(build_cmd,check=True)
     
-# add option to toggle between prefab and cmake
+# todo: add option to toggle between prefab and cmake
 def docker_build() -> None:
+    import shutil
+    shutil.copy("src/assets/docker/Dockerfile",".")
+    from batools import version
+    version_num,build_num =version.get_current_version()
     _docker_build('bsquad',
                   '.',
-                  '1.7.69',
-                  os.getcwd(),
+                  version_num,
+                  build_num,
                 )
+    os.remove("Dockerfile")

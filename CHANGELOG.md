@@ -58,6 +58,7 @@
   multiple `SockAddr`s; it will attempt to contact the host on all of them and
   use whichever responds first. This allows us to pass both ipv4 and ipv6
   addresses when available and transparently use whichever is more performant.
+- Added `docker-build` and `docker-run` targets to Makefile
   
 
 ### 1.7.34 (build 21823, api 8, 2024-04-26)
