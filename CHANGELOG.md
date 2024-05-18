@@ -10,6 +10,10 @@
   that is the only option. So nice and tidy! When other options such as Google
   Play or Game Center are available it is now called 'Sign in with an email
   address'.
+- The engine now supports signing in or creating email/password accounts in a
+  pop-up web dialog to avoid taking users out of the app. This currently works
+  on the native (not cmake) Mac build but will probably expand to others in the
+  future.
 - The `ba*.app.env.version` and `ba*.app.env.build_number` values are now
   `ba*.app.env.engine_version` and `ba*.app.env.engine_build_number`. At this
   point any functionality that cares about versions should be looking at engine
