@@ -45,6 +45,8 @@
   Previously, a server's address was always determined automatically based on
   how it connected to the master server, but this would only provide one of the
   two forms. Now it is possible to provide both.
+- Spaz classes now have a `default_hitpoints` which makes customizing that
+  easier (Thanks rabbitboom!)
 - (WORK IN PROGRESS) As of this version, servers are *required* to be accessible
   via ipv4 to appear in the public listing. So they may need to provide an ipv4
   address in their config if the automatically detected one is ipv6. This should
