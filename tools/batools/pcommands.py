@@ -667,6 +667,13 @@ def prefab_binary_path() -> None:
     )
 
 
+def build_docker() -> None:
+    """Build the docker image with bombsquad cmake server."""
+    import batools.build
+
+    batools.build.docker_build()
+
+
 def make_prefab() -> None:
     """Run prefab builds for the current platform."""
     import subprocess
