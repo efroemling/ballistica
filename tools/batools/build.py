@@ -691,7 +691,9 @@ def docker_build() -> None:
     version_num, build_num = version.get_current_version()
     image_name = 'bombsquad_server'
     try:
-        print(f'Building docker image {image_name} version {version_num}:{build_num}')
+        print(
+            f'Building docker image {image_name} version {version_num}:{build_num}'
+        )
         _docker_build(
             image_name,
             '.',
