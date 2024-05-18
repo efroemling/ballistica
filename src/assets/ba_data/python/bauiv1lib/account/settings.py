@@ -702,9 +702,8 @@ class AccountSettingsWindow(bui.Window):
                 on_activate_call=self._v2_proxy_sign_in_press,
             )
 
-            # TODO: Add translation strings for these.
             v2labeltext: bui.Lstr | str = (
-                'Sign in with an email address'
+                bui.Lstr(resource=self._r + '.signInWithAnEmailAddressText')
                 if show_game_center_sign_in_button
                 or show_google_play_sign_in_button
                 or show_device_sign_in_button

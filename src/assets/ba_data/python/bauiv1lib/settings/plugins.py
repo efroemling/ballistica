@@ -339,9 +339,8 @@ class PluginWindow(bui.Window):
                 show = not enabled
             else:
                 assert_never(self._category)
-                # show = False
 
-            if not show:  # pylint: disable=possibly-used-before-assignment
+            if not show:
                 continue
 
             item_y = sub_height - (num_shown + 1) * plug_line_height

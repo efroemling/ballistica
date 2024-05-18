@@ -1,4 +1,4 @@
-### 1.7.35 (build 21876, api 8, 2024-05-15)
+### 1.7.35 (build 21879, api 8, 2024-05-16)
 - Fixed an issue where the engine would block at exit on some version of Linux
   until Ctrl-D was pressed in the calling terminal.
 - V2 accounts have been around for a while now, so the old V1 device login
@@ -45,6 +45,8 @@
   Previously, a server's address was always determined automatically based on
   how it connected to the master server, but this would only provide one of the
   two forms. Now it is possible to provide both.
+- Spaz classes now have a `default_hitpoints` which makes customizing that
+  easier (Thanks rabbitboom!)
 - (WORK IN PROGRESS) As of this version, servers are *required* to be accessible
   via ipv4 to appear in the public listing. So they may need to provide an ipv4
   address in their config if the automatically detected one is ipv6. This should
