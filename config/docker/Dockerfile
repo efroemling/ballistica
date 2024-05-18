@@ -85,6 +85,7 @@ WORKDIR /home/ubuntu/ballistica
 
 # Expose the necessary port
 EXPOSE 43210/udp
+EXPOSE 43210/tcp
 
 # Set the default command to run the application
 CMD [ "./ballisticakit_server" ]

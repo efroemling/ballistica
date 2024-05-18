@@ -685,7 +685,7 @@ def docker_build() -> None:
     import shutil
 
     # todo: add option to toggle between prefab and cmake
-    shutil.copy('src/assets/docker/Dockerfile', '.')
+    shutil.copy('config/docker/Dockerfile', '.')
     from batools import version
 
     version_num, build_num = version.get_current_version()
