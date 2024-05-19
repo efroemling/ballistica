@@ -696,7 +696,7 @@ def docker_build() -> None:
     )
     _docker_build(
         image_name,
-        os.getcwd() + '/config/docker/Dockerfile',
+        'config/docker/Dockerfile',
         version_num,
         build_num,
     )
