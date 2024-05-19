@@ -1176,9 +1176,10 @@ clion-staging: assets-cmake resources meta
         cmake-modular-server-build cmake-modular-server-binary				\
         cmake-modular-server-clean clion-staging
 
+
 ################################################################################
 #                                                                              #
-#                                  Docker                                      #
+#                                    Docker                                    #
 #                                                                              #
 ################################################################################
 
@@ -1196,6 +1197,7 @@ docker-clean:
 	rm build/docker/bombsquad_server_docker.tar
 	docker rmi bombsquad_server --force
 	docker system prune
+
 
 ################################################################################
 #                                                                              #
