@@ -222,7 +222,7 @@ pcommandbatch_speed_test: env
 
 # Prebuilt binaries for various platforms.
 
-docker-build:
+docker-build: assets-cmake
 	$(PCOMMAND) build_docker
 
 docker-run:

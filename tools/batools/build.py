@@ -660,7 +660,9 @@ def _docker_build(
         'build',
         '-t',
         image_name,
+        '-f',
         dockerfile_dir,
+        '.'
     ]
     if bombsquad_version is not None:
         build_cmd = build_cmd + [
@@ -685,22 +687,19 @@ def docker_build() -> None:
     import shutil
 
     # todo: add option to toggle between prefab and cmake
-    shutil.copy('config/docker/Dockerfile', '.')
     from batools import version
 
     version_num, build_num = version.get_current_version()
     image_name = 'bombsquad_server'
-    try:
-        print(
-            f'Building docker image {image_name} version {version_num}:{build_num}'
-        )
-        _docker_build(
-            image_name,
-            '.',
-            version_num,
-            build_num,
-        )
-    except KeyboardInterrupt:
-        print('Stopping docker image build.')
-    finally:
-        os.remove('Dockerfile')
+    
+    print(
+        f'Building docker image {image_name}' +
+        'version {version_num}:{build_num}'
+    )
+    _docker_build(
+        image_name,
+        os.getcwd()+'/config/docker/Dockerfile',
+        version_num,
+        build_num,
+    )
+
