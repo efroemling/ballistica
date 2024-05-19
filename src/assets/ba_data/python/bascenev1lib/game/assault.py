@@ -248,9 +248,7 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
                             # A simple hack to work around the chaos caused by
                             # any sticky bomb's sticky material, if present and
                             # is sticking to the players.
-                            player.actor.handlemessage(
-                                bs.StandMessage(new_pos, random_num)
-                            )
+                            self._teleport(player, new_pos, random_num)
                             bs.timer(0.01, bs.Call(
                                 self._teleport,
                                 player,
