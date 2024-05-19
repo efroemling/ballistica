@@ -40,9 +40,9 @@ COPY ./ /home/ubuntu/ballistica
 WORKDIR /home/ubuntu/ballistica
 
 # Compile the application
-RUN make cmake-server-build
-RUN mkdir ./../ballistica_cmake_server
-RUN mv build/cmake/* ./../ballistica_cmake_server
+RUN make cmake-server-build \
+    && mkdir ./../ballistica_cmake_server \
+    && mv build/cmake/* ./../ballistica_cmake_server
 
 #-------------------------------RUNNER--------------------------------
 # Create a new stage for the runtime environment
@@ -65,14 +65,9 @@ LABEL BOMBSQUAD_VERSION=${bombsquad_version}
 # Install runtime dependencies
 RUN apt-get update -y && \
     apt-get install -y  \
-        python3.12-venv \
-        python3-pip \
-        libsdl2-dev \
-        libvorbisfile3 \
-        freeglut3-dev \
-        libopenal1 \
-        curl \
-    && rm -rf /var/lib/apt/lists/*
+        python3.12-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && python3.12 -c "import uuid;print(uuid.uuid4())">/etc/machine-id
 
 # Copy the compiled application from the builder stage
 COPY --from=builder /home/ubuntu/ballistica_cmake_server/*/staged \
@@ -85,7 +80,6 @@ WORKDIR /home/ubuntu/ballistica
 
 # Expose the necessary port
 EXPOSE 43210/udp
-EXPOSE 43210/tcp
 
 # Set the default command to run the application
 CMD [ "./ballisticakit_server" ]
