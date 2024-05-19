@@ -252,7 +252,7 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
                                 bs.StandMessage(new_pos, random_num)
                             )
                             bs.timer(0.01, bs.Call(
-                                self.teleport,
+                                self._teleport,
                                 player,
                                 new_pos,
                                 random_num
@@ -268,7 +268,7 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
                 if player_team.score >= self._score_to_win:
                     self.end_game()
 
-    def teleport(
+    def _teleport(
         self,
         client: Player,
         pos: Sequence[float],
