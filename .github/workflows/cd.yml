@@ -23,6 +23,7 @@ jobs:
       with:
         name: linux_x86_64_gui_(debug)
         path: build/prefab/full/linux_x86_64_gui
+
   make_linux_x86_64_server_debug_build:
     runs-on: ubuntu-latest
     steps:
@@ -40,6 +41,7 @@ jobs:
       with:
         name: linux_x86_64_server_(debug)
         path: build/prefab/full/linux_x86_64_server
+
   make_linux_arm64_gui_debug_build:
     runs-on: ubuntu-latest
     steps:
@@ -57,6 +59,7 @@ jobs:
       with:
         name: linux_arm64_gui_(debug)
         path: build/prefab/full/linux_arm64_gui
+
   make_linux_arm64_server_debug_build:
     runs-on: ubuntu-latest
     steps:
@@ -74,6 +77,7 @@ jobs:
       with:
         name: linux_arm64_server_(debug)
         path: build/prefab/full/linux_arm64_server
+
   make_mac_x86_64_gui_debug_build:
     runs-on: ubuntu-latest
     steps:
@@ -91,6 +95,7 @@ jobs:
       with:
         name: mac_x86_64_gui_(debug)
         path: build/prefab/full/mac_x86_64_gui
+
   make_mac_x86_64_server_debug_build:
     runs-on: ubuntu-latest
     steps:
@@ -108,6 +113,7 @@ jobs:
       with:
         name: mac_x86_64_server_(debug)
         path: build/prefab/full/mac_x86_64_server
+
   make_mac_arm64_gui_debug_build:
     runs-on: ubuntu-latest
     steps:
@@ -125,6 +131,7 @@ jobs:
       with:
         name: mac_arm64_gui_(debug)
         path: build/prefab/full/mac_arm64_gui
+
   make_mac_arm64_server_debug_build:
     runs-on: ubuntu-latest
     steps:
@@ -142,6 +149,7 @@ jobs:
       with:
         name: mac_arm64_server_(debug)
         path: build/prefab/full/mac_arm64_server
+
   make_windows_x86_gui_debug_build:
     runs-on: ubuntu-latest
     steps:
@@ -159,6 +167,7 @@ jobs:
       with:
         name: windows_x86_gui_(debug)
         path: build/prefab/full/windows_x86_gui
+
   make_windows_x86_server_debug_build:
     runs-on: ubuntu-latest
     steps:
@@ -176,6 +185,7 @@ jobs:
       with:
         name: windows_x86_server_(debug)
         path: build/prefab/full/windows_x86_server
+
   make_sphinx_docs:
     runs-on: ubuntu-latest
     steps:
@@ -193,3 +203,21 @@ jobs:
       with:
         name: sphinx_html_docs
         path: build/sphinx
+  
+  make_docker_image:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make docker-save
+    - name: Upload the build
+      uses: actions/upload-artifact@v4
+      with:
+        name: docker_server(release)
+        path: build/docker/bombsquad_server_docker.tar

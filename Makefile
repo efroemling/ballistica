@@ -222,12 +222,6 @@ pcommandbatch_speed_test: env
 
 # Prebuilt binaries for various platforms.
 
-docker-build:
-	$(PCOMMAND) build_docker
-
-docker-run:
-	docker run -it bombsquad_server
-
 # WSL is Linux but running under Windows, so it can target either. By default
 # we want these top level targets (prefab-gui-debug, etc.) to yield native
 # Windows builds from WSL, but this env var can be set to override that.
@@ -1181,6 +1175,28 @@ clion-staging: assets-cmake resources meta
         cmake-modular-binary cmake-modular-clean cmake-modular-server	\
         cmake-modular-server-build cmake-modular-server-binary				\
         cmake-modular-server-clean clion-staging
+
+
+################################################################################
+#                                                                              #
+#                                    Docker                                    #
+#                                                                              #
+################################################################################
+
+docker-build: assets-cmake
+	$(PCOMMAND) build_docker
+
+docker-run:
+	docker run -it bombsquad_server
+
+docker-save: docker-build
+	mkdir -p build/docker/
+	docker save bombsquad_server -o build/docker/bombsquad_server_docker.tar
+
+docker-clean:
+	rm build/docker/bombsquad_server_docker.tar
+	docker rmi bombsquad_server --force
+	docker system prune
 
 
 ################################################################################
