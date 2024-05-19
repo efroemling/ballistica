@@ -244,9 +244,17 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
                         bs.timer(0.5, light.delete)
                         bs.animate(light, 'intensity', {0: 0, 0.1: 1.0, 0.5: 0})
                         if player.actor:
-                            player.actor.handlemessage(
-                                bs.StandMessage(new_pos, random.uniform(0, 360))
-                            )
+                            random_num = random.uniform(0, 360)
+                            # A simple hack to work around the chaos caused by
+                            # any sticky bomb's sticky material, if present and
+                            # is sticking to the players.
+                            self._teleport(player, new_pos, random_num)
+                            bs.timer(0.01, bs.Call(
+                                self._teleport,
+                                player,
+                                new_pos,
+                                random_num
+                            ))
 
                 # Have teammates celebrate.
                 for player in player_team.players:
@@ -257,6 +265,15 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
                 self._update_scoreboard()
                 if player_team.score >= self._score_to_win:
                     self.end_game()
+
+    def _teleport(
+        self,
+        client: Player,
+        pos: Sequence[float],
+        num: float
+    ) -> None:
+        if client.actor:
+            client.actor.handlemessage(bs.StandMessage(pos,num))
 
     @override
     def end_game(self) -> None:

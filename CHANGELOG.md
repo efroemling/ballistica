@@ -14,7 +14,7 @@
   pop-up web dialog to avoid taking users out of the app. This currently works
   on the native (not cmake) Mac build but will probably expand to others in the
   future.
-- The `ba*.app.env.version` `and ba*.app.env.build_number` values are now
+- The `ba*.app.env.version` and `ba*.app.env.build_number` values are now
   `ba*.app.env.engine_version` and `ba*.app.env.engine_build_number`. At this
   point any functionality that cares about versions should be looking at engine
   version anyway. In the future we can add separate `app_version` and
@@ -60,7 +60,9 @@
   multiple `SockAddr`s; it will attempt to contact the host on all of them and
   use whichever responds first. This allows us to pass both ipv4 and ipv6
   addresses when available and transparently use whichever is more performant.
-- Added `docker-build` and `docker-run` targets to Makefile
+- Added `docker-build`, `docker-run`, `docker-clean` and `docker-save` targets
+  to Makefile.
+- Finally fixed the very old sticky bomb chaos bug in Assault game.
   
 
 ### 1.7.34 (build 21823, api 8, 2024-04-26)
