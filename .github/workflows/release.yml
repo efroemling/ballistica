@@ -26,7 +26,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
             allowUpdates: true
-            artifacts: build/prefab/full/linux_x86_64_gui/*
+            artifacts: linux_x86_64_gui(debug).tar
 
       - name: Make the build
         run: make prefab-server-debug-build
