@@ -990,12 +990,12 @@ windows-staging: assets-windows resources meta
 # Build and run a debug windows build (from WSL).
 windows-debug: windows-debug-build
 	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
-	build/windows/Debug_Win32/BallisticaKitGeneric.exe
+	cd build/windows/Debug_Win32 && ./BallisticaKitGeneric.exe
 
 # Build and run a release windows build (from WSL).
 windows-release: windows-release-build
 	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
-	build/windows/Release_Win32/BallisticaKitGeneric.exe
+	cd build/windows/Release_Win32 && ./BallisticaKitGeneric.exe
 
 # Build a debug windows build (from WSL).
 windows-debug-build: env \

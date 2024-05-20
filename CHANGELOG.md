@@ -1,4 +1,4 @@
-### 1.7.35 (build 21879, api 8, 2024-05-16)
+### 1.7.35 (build 21880, api 8, 2024-05-19)
 - Fixed an issue where the engine would block at exit on some version of Linux
   until Ctrl-D was pressed in the calling terminal.
 - V2 accounts have been around for a while now, so the old V1 device login
@@ -62,9 +62,13 @@
   addresses when available and transparently use whichever is more performant.
 - Added `docker-build`, `docker-run`, `docker-clean` and `docker-save` targets
   to Makefile.
-- Finally fixed the very old sticky bomb chaos bug in Assault game.
+- Fixed an issue in Assault where being teleported back to base with a sticky
+  bomb stuck to you would do some crazy rubber-band-launching thing (Thanks
+  vishal332008!)
+- The `windows-debug` and `windows-release` Makefile targets should properly run
+  the game again (these build the Windows version of the game from a WSL
+  environment).
   
-
 ### 1.7.34 (build 21823, api 8, 2024-04-26)
 - Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
   of the things this means is that we can use `typing.override` instead of the
