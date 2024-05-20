@@ -6,7 +6,7 @@ on:
     - 'v*'
         
 jobs:
-  build:
+  release_linux_x86_64_gui_debug_build: 
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -17,7 +17,6 @@ jobs:
           python-version: '3.12'
       - name: Setup project environment
         run: make env
-
       - name: Make the build
         run: make prefab-gui-debug-build
       - name: Compress the build
@@ -28,12 +27,221 @@ jobs:
             allowUpdates: true
             artifacts: linux_x86_64_gui(debug).tar
 
-      - name: Make the build
-        run: make prefab-server-debug-build
-      - name: Compress the build
-        run: tar -cf "linux_x86_64_server(debug).tar" build/prefab/full/linux_x86_64_server/
-      - name: Upload the build
-        uses: ncipollo/release-action@v1
-        with:
+  release_linux_x86_64_server_debug_build: 
+    runs-on: ubuntu-latest
+    steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+        - name: Setup Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.12'
+        - name: Setup project environment
+          run: make env
+        - name: Make the build
+          run: make prefab-server-debug-build
+        - name: Compress the build
+          run: tar -cf "linux_x86_64_server(debug).tar" build/prefab/full/linux_x86_64_server/
+        - name: Upload the build
+          uses: ncipollo/release-action@v1
+          with:
             allowUpdates: true
             artifacts: linux_x86_64_server(debug).tar
+    
+  release_linux_arm64_gui_debug_build: 
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make prefab-linux-arm64-gui-debug-build
+    - name: Compress the build
+      run: tar -cf "linux_arm64_gui_(debug).tar" build/prefab/full/linux_arm64_gui/
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        artifacts: linux_arm64_gui_(debug).tar
+        
+  release_linux_arm64_server_debug_build: 
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make prefab-linux-arm64-server-debug-build
+    - name: Compress the build
+      run: tar -cf "linux_arm64_server_(debug).tar" build/prefab/full/linux_arm64_server/
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        artifacts: linux_arm64_server_(debug).tar
+
+  release_mac_x86_64_gui_debug_build: 
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make prefab-mac-x86-64-gui-debug-build
+    - name: Compress the build
+      run: tar -cf "mac_x86_64_gui_(debug).tar" build/prefab/full/mac_x86_64_gui/
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        artifacts: mac_x86_64_gui_(debug).tar
+
+  release_mac_x86_64_server_debug_build: 
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make prefab-mac-x86-64-server-debug-build
+    - name: Compress the build
+      run: tar -cf "mac_x86_64_server_(debug).tar" build/prefab/full/mac_x86_64_server/
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        artifacts: mac_x86_64_server_(debug).tar
+    
+  release_mac_arm64_gui_debug_build: 
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make prefab-mac-arm64-gui-debug-build
+    - name: Compress the build
+      run: tar -cf "mac_arm64_gui_(debug).tar" build/prefab/full/mac_arm64_gui/
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        artifacts: mac_arm64_gui_(debug).tar
+  
+  release_mac_arm64_server_debug_build: 
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make prefab-mac-arm64-server-debug-build
+    - name: Compress the build
+      run: tar -cf "mac_arm64_server_(debug).tar" build/prefab/full/mac_arm64_server/
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        artifacts: mac_arm64_server_(debug).tar
+
+  release_windows_x86_gui_debug_build: 
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make prefab-windows-x86-gui-debug-build
+    - name: Compress the build
+      run: tar -cf "windows_x86_gui_(debug).tar" build/prefab/full/windows_x86_gui/
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        artifacts: windows_x86_gui_(debug).tar
+
+  release_windows_x86_server_debug_build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make prefab-windows-x86-server-debug-build
+    - name: Compress the build
+      run: tar -cf "windows_x86_server_(debug).tar" build/prefab/full/windows_x86_server/
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        artifacts: windows_x86_server_(debug).tar
+    
+  release_docker_image:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make docker-save
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        artifacts: build/docker/bombsquad_server_docker.tar
+
+  release_sphinx_docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make docs-sphinx
+    - name: Compress the build
+      run: tar -cf "sphinx_html_docs.tar" build/sphinx/
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        artifacts: sphinx_html_docs.tar
