@@ -14,9 +14,8 @@ import random
 import logging
 from enum import Enum
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast, Sequence
+from typing import TYPE_CHECKING, cast, Sequence, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.actor.popuptext import PopupText

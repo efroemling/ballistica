@@ -23,9 +23,9 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "iphlpapi.lib")
 #if BA_DEBUG_BUILD
-#pragma comment(lib, "python311_d.lib")
+#pragma comment(lib, "python312_d.lib")
 #else
-#pragma comment(lib, "python311.lib")
+#pragma comment(lib, "python312.lib")
 #endif
 #pragma comment(lib, "DbgHelp.lib")
 

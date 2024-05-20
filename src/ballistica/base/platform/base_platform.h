@@ -3,10 +3,19 @@
 #ifndef BALLISTICA_BASE_PLATFORM_BASE_PLATFORM_H_
 #define BALLISTICA_BASE_PLATFORM_BASE_PLATFORM_H_
 
+#include <deque>
+#include <mutex>
+
 #include "ballistica/base/base.h"
 #include "ballistica/shared/python/python_ref.h"
 
 namespace ballistica::base {
+
+/// EFRO NOTE: I think everything here should be migrated to app_adapter,
+///            which can then be renamed to app_platform. Having both
+///            base_platform and app_adapter feels redundant. If there is
+///            functionality shared by multiple app_platforms, it can be
+///            implemented as a common base class.
 
 /// Most general platform-specific functionality is contained here, to be
 /// implemented by platform-specific subclasses. Exceptions to this rule are
@@ -33,14 +42,17 @@ class BasePlatform {
   virtual void OnScreenSizeChange();
   virtual void DoApplyAppConfig();
 
+  /// Equivalent of fgets() but modified to not block process exit.
+  auto SafeStdinFGetS(char* s, int n, FILE* iop) -> char*;
+
 #pragma mark IN APP PURCHASES --------------------------------------------------
 
   void Purchase(const std::string& item);
 
-  // Restore purchases (currently only relevant on Apple platforms).
+  /// Restore purchases (currently only relevant on Apple platforms).
   virtual void RestorePurchases();
 
-  // Purchase was ack'ed by the master-server (so can consume).
+  /// Purchase was ack'ed by the master-server (so can consume).
   virtual void PurchaseAck(const std::string& purchase,
                            const std::string& order_id);
 
@@ -69,7 +81,31 @@ class BasePlatform {
   virtual void LoginAdapterBackEndActiveChange(const std::string& login_type,
                                                bool active);
 
-#pragma mark MISC --------------------------------------------------------------
+#pragma mark WEB BROWSER -------------------------------------------------------
+
+  /// Open the provided URL in a browser. Can be called from any thread.
+  void OpenURL(const std::string& url);
+
+  /// Do we provide a browser window that can show up over content?
+  /// This can be used for simple tasks such as signing into accounts
+  /// without leaving the app. It is assumed that only one overlay browser
+  /// can exist at a time.
+  virtual auto OverlayWebBrowserIsSupported() -> bool;
+
+  /// Open the provided URL in an overlay web browser. Can be called from
+  /// any thread.
+  void OverlayWebBrowserOpenURL(const std::string& url);
+
+  auto OverlayWebBrowserIsOpen() -> bool;
+
+  /// Overlay web browser implementations should call this when they
+  /// close, or if they fail to open. Can be called from any thread.
+  void OverlayWebBrowserOnClose();
+
+  /// Close any open overlay web browser. Can be called from any thread.
+  void OverlayWebBrowserClose();
+
+#pragma mark STRING EDITOR -----------------------------------------------------
 
   /// Do we define a platform-specific string editor? This is something like
   /// a text view popup which allows the use of default OS input methods
@@ -81,9 +117,6 @@ class BasePlatform {
   /// being the globally active one. Must be called from the logic thread.
   void InvokeStringEditor(PyObject* string_edit_adapter);
 
-  /// Open the provided URL in a browser or whatnot.
-  void OpenURL(const std::string& url);
-
   /// Should be called by platform StringEditor to apply a value.
   /// Must be called in the logic thread.
   void StringEditorApply(const std::string& val);
@@ -91,6 +124,8 @@ class BasePlatform {
   /// Should be called by platform StringEditor to signify a cancel.
   /// Must be called in the logic thread.
   void StringEditorCancel();
+
+#pragma mark MISC --------------------------------------------------------------
 
   auto ran_base_post_init() const { return ran_base_post_init_; }
 
@@ -110,8 +145,17 @@ class BasePlatform {
                                     const std::string& value,
                                     std::optional<int> max_chars);
 
-  /// Open the provided URL in a browser or whatnot.
+  /// Open the provided URL in a browser. This will always be called in the
+  /// main thread.
   virtual void DoOpenURL(const std::string& url);
+
+  /// Open the provided URL in the overlay browser. This will always be called
+  /// in the main thread.
+  virtual void DoOverlayWebBrowserOpenURL(const std::string& url);
+
+  /// Should close any existing overlay web browser. This will always be called
+  /// in the main thread.
+  virtual void DoOverlayWebBrowserClose();
 
   /// Make a purchase.
   virtual void DoPurchase(const std::string& item);
@@ -119,9 +163,14 @@ class BasePlatform {
   virtual ~BasePlatform();
 
  private:
+  int SmartGetC_(FILE* stream);
+
   bool ran_base_post_init_{};
+  bool web_overlay_open_{};
   PythonRef string_edit_adapter_{};
   std::string public_device_uuid_;
+  std::deque<char> stdin_buffer_;
+  std::mutex web_overlay_mutex_;
 };
 
 }  // namespace ballistica::base

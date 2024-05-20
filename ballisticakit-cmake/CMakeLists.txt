@@ -27,12 +27,12 @@ if (APPLE)
   # to load a 3.X library from within it which doesn't exist. So we need
   # to be a bit more explicit telling it where to look. Note: this was last
   # tested with 3.7; should revisit sometime to make sure still applies.
-  execute_process(COMMAND "python3.11-config" "--prefix"
+  execute_process(COMMAND "python3.12-config" "--prefix"
     OUTPUT_VARIABLE Python_ROOT_DIR
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 endif ()
-find_package (Python 3.11 REQUIRED EXACT COMPONENTS Development)
+find_package (Python 3.12 REQUIRED EXACT COMPONENTS Development)
   
 
 if (HEADLESS)
@@ -426,12 +426,12 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_simple_sound.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_vec3.cc
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_vec3.h
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_app.cc
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_app.h
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_graphics.cc
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_graphics.h
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_misc.cc
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_misc.h
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_1.cc
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_1.h
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_2.cc
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_2.h
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_3.cc
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_3.h
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call.cc
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call.h
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call_runnable.h

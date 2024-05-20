@@ -7,9 +7,8 @@ from __future__ import annotations
 
 import random
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 from bacommon.login import LoginType
 import bascenev1 as bs
 import bauiv1 as bui

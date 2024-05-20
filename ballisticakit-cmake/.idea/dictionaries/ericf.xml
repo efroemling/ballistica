@@ -1205,7 +1205,6 @@
       <w>objpath</w>
       <w>objset</w>
       <w>objsizes</w>
-      <w>objtoyaml</w>
       <w>objtypes</w>
       <w>obstack</w>
       <w>obvs</w>
@@ -1430,7 +1429,7 @@
       <w>pyrightconfig</w>
       <w>pysitedir</w>
       <w>pythondevmode</w>
-      <w>pythonenumsmodule</w>
+      <w>enumspython</w>
       <w>pythonoptimize</w>
       <w>pythonutf</w>
       <w>pytype</w>

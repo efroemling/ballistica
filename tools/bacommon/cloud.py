@@ -4,10 +4,9 @@
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING, Annotated, override
 from enum import Enum
 
-from typing_extensions import override
 from efro.message import Message, Response
 from efro.dataclassio import ioprepped, IOAttrs
 from bacommon.transfer import DirectoryManifest
@@ -33,8 +32,11 @@ class LoginProxyRequestMessage(Message):
 class LoginProxyRequestResponse(Response):
     """Response to a request for a login proxy."""
 
-    # URL to direct the user to for login.
+    # URL to direct the user to for sign in.
     url: Annotated[str, IOAttrs('u')]
+
+    # URL to use for overlay-web-browser sign ins.
+    url_overlay: Annotated[str, IOAttrs('uo')]
 
     # Proxy-Login id for querying results.
     proxyid: Annotated[str, IOAttrs('p')]
@@ -123,24 +125,25 @@ class TestResponse(Response):
 
 @ioprepped
 @dataclass
-class PromoCodeMessage(Message):
-    """User is entering a promo code"""
+class SendInfoMessage(Message):
+    """User is using the send-info function"""
 
-    code: Annotated[str, IOAttrs('c')]
+    description: Annotated[str, IOAttrs('c')]
 
     @override
     @classmethod
     def get_response_types(cls) -> list[type[Response] | None]:
-        return [PromoCodeResponse]
+        return [SendInfoResponse]
 
 
 @ioprepped
 @dataclass
-class PromoCodeResponse(Response):
-    """Applied that promo code for ya, boss."""
+class SendInfoResponse(Response):
+    """Response to sending into the server."""
 
-    valid: Annotated[bool, IOAttrs('v')]
+    handled: Annotated[bool, IOAttrs('v')]
     message: Annotated[str | None, IOAttrs('m', store_default=False)] = None
+    legacy_code: Annotated[str | None, IOAttrs('l', store_default=False)] = None
 
 
 @ioprepped

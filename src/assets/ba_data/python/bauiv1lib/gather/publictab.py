@@ -11,9 +11,8 @@ import logging
 from threading import Thread
 from enum import Enum
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, override
 
-from typing_extensions import override
 from bauiv1lib.gather import GatherTab
 import bauiv1 as bui
 import bascenev1 as bs
@@ -1367,7 +1366,7 @@ class PublicGatherTab(GatherTab):
         )
         bui.app.classic.master_server_v1_get(
             'bsAccessCheck',
-            {'b': bui.app.env.build_number},
+            {'b': bui.app.env.engine_build_number},
             callback=bui.WeakCall(self._on_public_party_accessible_response),
         )
 

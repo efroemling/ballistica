@@ -4,7 +4,6 @@
    contain the root `toctree` directive.
    
    see https://pradyunsg.me/furo/reference/ and https://en.wikipedia.org/wiki/ReStructuredText for formatting help
-.. image:: {{data.ballistica_image_url}}
 
 Welcome to ballistica-bombsquad's documentation!
 ================================================

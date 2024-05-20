@@ -8,9 +8,8 @@ from __future__ import annotations
 import time
 import random
 import weakref
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bascenev1 as bs
 import bauiv1 as bui
 
@@ -134,8 +133,8 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     text = bs.Lstr(
                         value='${V} (${B}) (${D})',
                         subs=[
-                            ('${V}', app.env.version),
-                            ('${B}', str(app.env.build_number)),
+                            ('${V}', app.env.engine_version),
+                            ('${B}', str(app.env.engine_build_number)),
                             ('${D}', bs.Lstr(resource='debugText')),
                         ],
                     )
@@ -143,12 +142,14 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     text = bs.Lstr(
                         value='${V} (${B})',
                         subs=[
-                            ('${V}', app.env.version),
-                            ('${B}', str(app.env.build_number)),
+                            ('${V}', app.env.engine_version),
+                            ('${B}', str(app.env.engine_build_number)),
                         ],
                     )
             else:
-                text = bs.Lstr(value='${V}', subs=[('${V}', app.env.version)])
+                text = bs.Lstr(
+                    value='${V}', subs=[('${V}', app.env.engine_version)]
+                )
             scale = 0.9 if (uiscale is bs.UIScale.SMALL or vr_mode) else 0.7
             color = (1, 1, 1, 1) if vr_mode else (0.5, 0.6, 0.5, 0.7)
             self.version = bs.NodeActor(

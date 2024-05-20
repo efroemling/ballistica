@@ -193,6 +193,9 @@ class _Inputter:
         if issubclass(origin, datetime.datetime):
             return self._datetime_from_input(cls, fieldpath, value, ioattrs)
 
+        if issubclass(origin, datetime.timedelta):
+            return self._timedelta_from_input(cls, fieldpath, value, ioattrs)
+
         if origin is bytes:
             return self._bytes_from_input(origin, fieldpath, value)
 
@@ -633,4 +636,24 @@ class _Inputter:
         )
         if ioattrs is not None:
             ioattrs.validate_datetime(out, fieldpath)
+        return out
+
+    def _timedelta_from_input(
+        self, cls: type, fieldpath: str, value: Any, ioattrs: IOAttrs | None
+    ) -> Any:
+        del ioattrs  # Unused.
+        # We expect a list of 3 ints.
+        if type(value) is not list:
+            raise TypeError(
+                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
+                f' expected a list, got a {type(value).__name__}'
+            )
+        if len(value) != 3 or not all(isinstance(x, int) for x in value):
+            raise ValueError(
+                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
+                f' expected a list of 3 ints, got {[type(v) for v in value]}.'
+            )
+        out = datetime.timedelta(
+            days=value[0], seconds=value[1], microseconds=value[2]
+        )
         return out

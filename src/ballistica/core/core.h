@@ -150,6 +150,13 @@ class CoreFeatureSet {
   /// Should be called by a thread before it exits.
   void UnregisterThread();
 
+  /// A bool set just before returning from main or calling exit() or
+  /// whatever is intended to be the last gasp of life for the binary. This
+  /// can be polled periodically by background threads that may otherwise
+  /// keep the process from exiting.
+  auto engine_done() const { return engine_done_; }
+  void set_engine_done() { engine_done_ = true; }
+
   // Subsystems.
   CorePython* const python;
   CorePlatform* const platform;
@@ -195,6 +202,7 @@ class CoreFeatureSet {
   bool have_ba_env_vals_{};
   bool vr_mode_{};
   bool using_custom_app_python_dir_{};
+  bool engine_done_{};
 
   std::thread::id main_thread_id_{};
   CoreConfig core_config_;

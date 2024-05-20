@@ -389,7 +389,7 @@ class SoundtrackBrowserWindow(bui.Window):
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import
-        from bauiv1lib.settings import audio
+        from bauiv1lib.settings.audio import AudioSettingsWindow
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -401,7 +401,7 @@ class SoundtrackBrowserWindow(bui.Window):
         )
         assert bui.app.classic is not None
         bui.app.ui_v1.set_main_menu_window(
-            audio.AudioSettingsWindow(transition='in_left').get_root_widget(),
+            AudioSettingsWindow(transition='in_left').get_root_widget(),
             from_window=self._root_widget,
         )
 
@@ -549,7 +549,10 @@ class SoundtrackBrowserWindow(bui.Window):
             return
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
-        SoundtrackEditWindow(existing_soundtrack=None)
+        bui.app.ui_v1.set_main_menu_window(
+            SoundtrackEditWindow(existing_soundtrack=None).get_root_widget(),
+            from_window=self._root_widget,
+        )
 
     def _create_done(self, new_soundtrack: str) -> None:
         if new_soundtrack is not None:

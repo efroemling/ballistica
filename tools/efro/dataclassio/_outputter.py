@@ -454,6 +454,17 @@ class _Outputter:
                 if self._create
                 else None
             )
+        if issubclass(origin, datetime.timedelta):
+            if not isinstance(value, origin):
+                raise TypeError(
+                    f'Expected a {origin} for {fieldpath};'
+                    f' found a {type(value)}.'
+                )
+            return (
+                [value.days, value.seconds, value.microseconds]
+                if self._create
+                else None
+            )
 
         if origin is bytes:
             return self._process_bytes(cls, fieldpath, value)

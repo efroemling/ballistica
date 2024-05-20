@@ -67,3 +67,4 @@
 
 ### Loup Garou
 - Added sphinx documentation generation
+- Added docker build

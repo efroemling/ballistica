@@ -39,8 +39,8 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 21800;
-const char* kEngineVersion = "1.7.34";
+const int kEngineBuildNumber = 21879;
+const char* kEngineVersion = "1.7.35";
 const int kEngineApiVersion = 8;
 
 #if BA_MONOLITHIC_BUILD
@@ -79,6 +79,10 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
       bool success = PythonCommand(*l_core->core_config().call_command,
                                    "<ballistica app 'command' arg>")
                          .Exec(true, nullptr, nullptr);
+
+      // Let anyone interested know we're trying to go down NOW.
+      l_core->set_engine_done();
+
       exit(success ? 0 : 1);
     }
 
@@ -141,6 +145,8 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     if (l_base->AppManagesMainThreadEventLoop()) {
       // In environments where we control the event loop, do that.
       l_base->RunAppToCompletion();
+      // Let anyone interested know we're trying to go down NOW.
+      l_core->set_engine_done();
     } else {
       // If the environment is managing events, we now simply return and let
       // it feed us those events.
@@ -171,6 +177,10 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
 
     // If it's not been handled, take the app down ourself.
     if (!handled) {
+      // Let anyone interested know we're trying to go down NOW.
+      if (l_core) {
+        l_core->set_engine_done();
+      }
       if (try_to_exit_cleanly) {
         exit(1);
       } else {

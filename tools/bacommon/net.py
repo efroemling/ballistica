@@ -20,6 +20,11 @@ class ServerNodeEntry:
     """Information about a specific server."""
 
     zone: Annotated[str, IOAttrs('r')]
+
+    # TODO: Remove soft_default after all master-servers upgraded.
+    latlong: Annotated[
+        tuple[float, float] | None, IOAttrs('ll', soft_default=None)
+    ]
     address: Annotated[str, IOAttrs('a')]
     port: Annotated[int, IOAttrs('p')]
 
@@ -31,6 +36,16 @@ class ServerNodeQueryResponse:
 
     # The current utc time on the master server.
     time: Annotated[datetime.datetime, IOAttrs('t')]
+
+    # Where the master server sees the query as coming from.
+    latlong: Annotated[tuple[float, float] | None, IOAttrs('ll')]
+
+    ping_per_dist: Annotated[float, IOAttrs('ppd')]
+    max_dist: Annotated[float, IOAttrs('md')]
+
+    debug_log_seconds: Annotated[
+        float | None, IOAttrs('d', store_default=False)
+    ] = None
 
     # If present, something went wrong, and this describes it.
     error: Annotated[str | None, IOAttrs('e', store_default=False)] = None
@@ -78,6 +93,7 @@ class PrivatePartyConnectResult:
     """Info about a server we get back when connecting."""
 
     error: str | None = None
-    addr: str | None = None
+    address4: Annotated[str | None, IOAttrs('addr')] = None
+    address6: Annotated[str | None, IOAttrs('addr6')] = None
     port: int | None = None
     password: str | None = None

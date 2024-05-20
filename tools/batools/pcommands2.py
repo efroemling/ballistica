@@ -124,7 +124,7 @@ def py_examine() -> None:
     """Run a python examination at a given point in a given file."""
     import os
     from pathlib import Path
-    import efrotools
+    import efrotools.emacs
 
     pcommand.disallow_in_batch()
 
@@ -153,7 +153,7 @@ def py_examine() -> None:
         sys.path.append(scriptsdir)
     if toolsdir not in sys.path:
         sys.path.append(toolsdir)
-    efrotools.py_examine(
+    efrotools.emacs.py_examine(
         pcommand.PROJROOT, filename, line, column, selection, operation
     )
 

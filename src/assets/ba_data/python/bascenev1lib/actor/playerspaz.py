@@ -4,9 +4,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar, overload
+from typing import TYPE_CHECKING, TypeVar, overload, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.actor.spaz import Spaz

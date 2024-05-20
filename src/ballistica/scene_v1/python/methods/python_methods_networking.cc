@@ -216,6 +216,74 @@ static PyMethodDef PySetPublicPartyQueueEnabledDef = {
     "(internal)",
 };
 
+// ----------------- set_public_party_public_address_ipv4 ----------------------
+
+static auto PySetPublicPartyPublicAddressIPV4(PyObject* self, PyObject* args,
+                                              PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* address_obj;
+  static const char* kwlist[] = {"address", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &address_obj)) {
+    return nullptr;
+  }
+  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+
+  // The call expects an empty string for the no-url option.
+
+  std::optional<std::string> address{};
+  if (address_obj != Py_None) {
+    address = Python::GetPyString(address_obj);
+  }
+  appmode->set_public_party_public_address_ipv4(address);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetPublicPartyPublicAddressIPV4Def = {
+    "set_public_party_public_address_ipv4",          // name
+    (PyCFunction)PySetPublicPartyPublicAddressIPV4,  // method
+    METH_VARARGS | METH_KEYWORDS,                    // flags
+
+    "set_public_party_public_address_ipv4(address: str | None) -> None\n"
+    "\n"
+    "(internal)",
+};
+
+// ----------------- set_public_party_public_address_ipv6 ----------------------
+
+static auto PySetPublicPartyPublicAddressIPV6(PyObject* self, PyObject* args,
+                                              PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* address_obj;
+  static const char* kwlist[] = {"address", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &address_obj)) {
+    return nullptr;
+  }
+  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+
+  // The call expects an empty string for the no-url option.
+
+  std::optional<std::string> address{};
+  if (address_obj != Py_None) {
+    address = Python::GetPyString(address_obj);
+  }
+  appmode->set_public_party_public_address_ipv6(address);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetPublicPartyPublicAddressIPV6Def = {
+    "set_public_party_public_address_ipv6",          // name
+    (PyCFunction)PySetPublicPartyPublicAddressIPV6,  // method
+    METH_VARARGS | METH_KEYWORDS,                    // flags
+
+    "set_public_party_public_address_ipv6(address: str | None) -> None\n"
+    "\n"
+    "(internal)",
+};
+
 // ------------------------ set_authenticate_clients ---------------------------
 
 static auto PySetAuthenticateClients(PyObject* self, PyObject* args,
@@ -834,6 +902,8 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
       PyGetConnectionToHostInfo2Def,
       PyClientInfoQueryResponseDef,
       PyConnectToPartyDef,
+      PySetPublicPartyPublicAddressIPV4Def,
+      PySetPublicPartyPublicAddressIPV6Def,
       PySetAuthenticateClientsDef,
       PySetAdminsDef,
       PySetEnableDefaultKickVotingDef,

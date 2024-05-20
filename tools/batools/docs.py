@@ -279,13 +279,14 @@ def _run_sphinx(
         paths['sphinx_cache_dir'] + 'index.rst', 'w', encoding='utf-8'
     ) as index_rst:
         data = {
-            'ballistica_image_url': 'https://camo.githubusercontent.com/25021344ceaa7def6fa6523f79115f7ffada8d26b4768bb9a0cf65fc33304f45/68747470733a2f2f66696c65732e62616c6c6973746963612e6e65742f62616c6c6973746963615f6d656469612f62616c6c6973746963615f6c6f676f5f68616c662e706e67',  # pylint: disable=line-too-long
+            # 'ballistica_image_url': 'https://camo.githubusercontent.com/25021344ceaa7def6fa6523f79115f7ffada8d26b4768bb9a0cf65fc33304f45/68747470733a2f2f66696c65732e62616c6c6973746963612e6e65742f62616c6c6973746963615f6d656469612f62616c6c6973746963615f6c6f676f5f68616c662e706e67',  # pylint: disable=line-too-long
             'version_no': version,
             'build_no': str(buildnum),
         }
         index_rst.write(index_template.render(data=data))
 
     starttime = time.monotonic()
+
     apidoc_cmd = [
         'sphinx-apidoc',
         # '-f',  # Force overwriting of any existing generated files.
@@ -302,14 +303,28 @@ def _run_sphinx(
         paths['sphinx_cache_dir'],
     ]
 
+    # Prevents Python from writing __pycache__ dirs in our source tree
+    # which leads to slight annoyances.
+    environ = dict(os.environ, PYTHONDONTWRITEBYTECODE='1')
+
     if generate_dummymodules_doc:
         subprocess.run(
             apidoc_cmd + [assets_dirs['dummy_modules']] + ['--private'],
             check=True,
+            env=environ,
         )
+
     if generate_tools_doc:
-        subprocess.run(apidoc_cmd + [assets_dirs['efro_tools']], check=True)
-    subprocess.run(apidoc_cmd + [assets_dirs['ba_data'], '-f'], check=True)
+        subprocess.run(
+            apidoc_cmd + [assets_dirs['efro_tools']],
+            check=True,
+            env=environ,
+        )
+    subprocess.run(
+        apidoc_cmd + [assets_dirs['ba_data'], '-f'],
+        check=True,
+        env=environ,
+    )
     # -f for regenerating index page so it contains the ba_data modules
 
     subprocess.run(
@@ -324,6 +339,7 @@ def _run_sphinx(
             # '-Q', #quiet now
         ],
         check=True,
+        env=environ,
     )
 
     duration = time.monotonic() - starttime

@@ -386,7 +386,6 @@ class MessageProtocol:
             f'\n'
             f'from typing import TYPE_CHECKING{ovld}{ovld2}\n'
             f'\n'
-            # f'from typing_extensions import override\n'
             f'{import_lines}'
             f'\n'
             f'if TYPE_CHECKING:\n'

@@ -74,10 +74,9 @@ def get_local_cache_dir() -> str:
 
 def get_repository_base_url() -> str:
     """Return the base repository url (assumes cwd is project root)."""
-    # from efrotools import getprojectconfig
-    import efrotools
+    from efrotools.project import getprojectconfig
 
-    pconfig = efrotools.getprojectconfig('.')
+    pconfig = getprojectconfig('.')
     name = 'efrocache_repository_url'
     val = pconfig.get(name)
     if not isinstance(val, str):

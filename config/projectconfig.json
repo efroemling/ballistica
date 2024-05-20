@@ -9,7 +9,6 @@
     "src/ballistica/base/graphics/texture/dds.h",
     "src/ballistica/base/graphics/texture/ktx.cc",
     "src/ballistica/core/platform/android/android_gl3.h",
-    "src/ballistica/base/platform/apple/app_delegate.h",
     "src/ballistica/base/platform/apple/MacMusicApp.h",
     "src/ballistica/base/platform/apple/MacMusicAppScriptingBridge.h",
     "src/ballistica/core/platform/android/utf8/checked.h",
@@ -31,8 +30,6 @@
     "astroid",
     "pylint.lint",
     "pytest",
-    "pytz",
-    "yaml",
     "requests",
     "typing_extensions",
     "cpplint",
@@ -47,7 +44,8 @@
     "openstep_parser",
     "daemon",
     "jinja2",
-    "jinja2.Environment"
+    "jinja2.Environment",
+    "tomlkit"
   ],
   "python_paths": [
     "src/assets/ba_data/python",

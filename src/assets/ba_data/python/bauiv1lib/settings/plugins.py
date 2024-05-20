@@ -339,7 +339,6 @@ class PluginWindow(bui.Window):
                 show = not enabled
             else:
                 assert_never(self._category)
-                # show = False
 
             if not show:
                 continue
@@ -389,7 +388,9 @@ class PluginWindow(bui.Window):
                     edit=check,
                     up_widget=self._back_button,
                     left_widget=self._back_button,
-                    right_widget=self._settings_button,
+                    right_widget=(
+                        self._settings_button if button is None else button
+                    ),
                 )
                 if button is not None:
                     bui.widget(edit=button, up_widget=self._back_button)

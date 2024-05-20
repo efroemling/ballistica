@@ -4,6 +4,12 @@
 
 #include <csignal>
 
+#if !BA_OSTYPE_WINDOWS
+#include <fcntl.h>
+#include <poll.h>
+#endif
+
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/base.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
@@ -105,21 +111,73 @@ void BasePlatform::PurchaseAck(const std::string& purchase,
 }
 
 void BasePlatform::OpenURL(const std::string& url) {
-  // Can't open URLs in VR - just tell the Python layer to show the url in the
-  // gui.
-  if (g_core->vr_mode()) {
-    g_base->ui->ShowURL(url);
-    return;
-  }
-
-  // Otherwise fall back to our platform-specific handler.
-  g_base->platform->DoOpenURL(url);
+  // We can be called from any thread, but DoOpenURL expects to be run in
+  // the main thread.
+  g_base->app_adapter->PushMainThreadCall(
+      [url] { g_base->platform->DoOpenURL(url); });
 }
 
 void BasePlatform::DoOpenURL(const std::string& url) {
-  // Kick this over to logic thread so we're safe to call from anywhere.
+  // As a default, use Python's webbrowser module functionality.
+  // It expects to be run in the logic thread though so we need
+  // to push it over that way.
   g_base->logic->event_loop()->PushCall(
       [url] { g_base->python->OpenURLWithWebBrowserModule(url); });
+}
+
+auto BasePlatform::OverlayWebBrowserIsSupported() -> bool { return false; }
+
+void BasePlatform::OverlayWebBrowserOpenURL(const std::string& url) {
+  BA_PRECONDITION(OverlayWebBrowserIsSupported());
+
+  std::scoped_lock lock(web_overlay_mutex_);
+  if (web_overlay_open_) {
+    Log(LogLevel::kError,
+        "OverlayWebBrowserOnClose called with already existing overlay.");
+    return;
+  }
+  web_overlay_open_ = true;
+
+  // We can be called from any thread, but DoOpenURL expects to be called
+  // from the main thread.
+  g_base->app_adapter->PushMainThreadCall(
+      [url] { g_base->platform->DoOverlayWebBrowserOpenURL(url); });
+}
+
+auto BasePlatform::OverlayWebBrowserIsOpen() -> bool {
+  BA_PRECONDITION(OverlayWebBrowserIsSupported());
+  // No reason to lock the mutex here I think.
+  return web_overlay_open_;
+}
+
+void BasePlatform::OverlayWebBrowserOnClose() {
+  std::scoped_lock lock(web_overlay_mutex_);
+  if (!web_overlay_open_) {
+    Log(LogLevel::kError,
+        "OverlayWebBrowserOnClose called with no known overlay.");
+  }
+  web_overlay_open_ = false;
+}
+
+void BasePlatform::OverlayWebBrowserClose() {
+  BA_PRECONDITION(OverlayWebBrowserIsSupported());
+
+  // I don't think theres any point to looking at the opened-state, is
+  // there? This call needs to gracefully handle any state.
+
+  // We can be called from any thread, but DoOverlayWebBrowserClose expects
+  // to be called from the main thread.
+  g_base->app_adapter->PushMainThreadCall(
+      [] { g_base->platform->DoOverlayWebBrowserClose(); });
+}
+
+void BasePlatform::DoOverlayWebBrowserOpenURL(const std::string& url) {
+  Log(LogLevel::kError, "DoOpenURLInOverlayBrowser unimplemented");
+}
+
+void BasePlatform::DoOverlayWebBrowserClose() {
+  // As a default, use Python's webbrowser module functionality.
+  Log(LogLevel::kError, "DoOverlayWebBrowserClose unimplemented");
 }
 
 #if !BA_OSTYPE_WINDOWS
@@ -227,6 +285,90 @@ void BasePlatform::OpenDirExternally(const std::string& path) {
 
 void BasePlatform::OpenFileExternally(const std::string& path) {
   Log(LogLevel::kError, "OpenFileExternally() unimplemented");
+}
+
+auto BasePlatform::SafeStdinFGetS(char* s, int n, FILE* iop) -> char* {
+#if BA_OSTYPE_WINDOWS
+  // Use plain old vanilla fgets on Windows since blocking stdin reads
+  // don't seem to prevent the app from exiting there.
+  return fgets(s, n, iop);
+
+#else
+
+  // On unixy platforms, plug in a vanilla fgets() implementation (see
+  // https://stackoverflow.com/questions/16397832/fgets-implementation-kr)
+  // but replace the getc() with a custom version of our own that uses
+  // poll() to periodically check if we should bail while waiting for input.
+  int c{};
+  char* cs{};
+  cs = s;
+
+  while (--n > 0 && (c = SmartGetC_(iop)) != EOF) {
+    if ((*cs++ = c) == '\n') {
+      break;
+    }
+  }
+
+  *cs = '\0';
+  return (c == EOF && cs == s) ? NULL : s;
+#endif  // BA_OSTYPE_WINDOWS
+}
+
+int BasePlatform::SmartGetC_(FILE* stream) {
+#if BA_OSTYPE_WINDOWS
+  return -1;
+#else
+  // Refill our buffer if needed.
+  while (stdin_buffer_.empty()) {
+    struct pollfd fds[1];
+
+    // Initialize the pollfd structure for stdin
+    fds[0].fd = STDIN_FILENO;
+    fds[0].events = POLLIN;
+
+    // Let's break approximately 4 times per second to see if we should
+    // bail.
+    int ret = poll(fds, 1, 287);
+
+    if (ret == 0) {
+      // Poll timed out. Check whether we should bail and then do it again.
+
+      // If the app is working on gracefully shutting down OR the engine has
+      // died (from a fatal error or whatever else), fake an EOF.
+      if (g_base->logic->shutting_down() || g_core->engine_done()) {
+        return EOF;
+      }
+
+      continue;
+    }
+    if (ret == -1) {
+      // Error in poll
+      perror("poll");
+      return EOF;
+    }
+
+    if (fds[0].revents & POLLIN) {
+      // stdin is ready for reading.
+      char buffer[256];
+
+      // Read characters from stdin
+      ssize_t bytes_read = read(STDIN_FILENO, buffer, sizeof(buffer));
+
+      if (bytes_read == -1) {
+        // Error reading from stdin
+        perror("read");
+        return EOF;
+      }
+
+      for (int i = 0; i < bytes_read; ++i) {
+        stdin_buffer_.push_back(buffer[i]);
+      }
+    }
+  }
+  auto out = stdin_buffer_.front();
+  stdin_buffer_.pop_front();
+  return out;
+#endif  // BA_OSTYPE_WINDOWS
 }
 
 }  // namespace ballistica::base

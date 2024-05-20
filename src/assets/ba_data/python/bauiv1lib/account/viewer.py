@@ -4,10 +4,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 import logging
 
-from typing_extensions import override
 import bauiv1 as bui
 
 from bauiv1lib.popup import PopupWindow, PopupMenuWindow
@@ -139,7 +138,7 @@ class AccountViewerWindow(PopupWindow):
         bui.app.classic.master_server_v1_get(
             'bsAccountInfo',
             {
-                'buildNumber': bui.app.env.build_number,
+                'buildNumber': bui.app.env.engine_build_number,
                 'accountID': self._account_id,
                 'profileID': self._profile_id,
             },

@@ -9,7 +9,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 
-from efrotools import getprojectconfig, getlocalconfig
+from efrotools.project import getprojectconfig, getlocalconfig
 
 MODES = {
     'debug': {'configuration': 'Debug'},

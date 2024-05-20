@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from efro.util import utc_now
+
 import bauiv1 as bui
 
 if TYPE_CHECKING:
@@ -385,7 +387,7 @@ class GetCurrencyWindow(bui.Window):
         else:
             v -= 20
 
-        if True:  # pylint: disable=using-constant-test
+        if bool(True):
             h_offs = 35
             b_size_3 = (150, 120)
             cdb = _add_button(
@@ -430,6 +432,8 @@ class GetCurrencyWindow(bui.Window):
                 v_align='center',
                 scale=1.0,
             )
+            tc_y_offs = 0
+        else:
             tc_y_offs = 0
 
         h = self._width - (185 + x_inset)
@@ -541,24 +545,24 @@ class GetCurrencyWindow(bui.Window):
         plus = bui.app.plus
         assert plus is not None
 
-        # if we somehow get signed out, just die..
+        # If we somehow get signed out, just die.
         if plus.get_v1_account_state() != 'signed_in':
             self._back()
             return
 
         self._ticket_count = plus.get_v1_account_ticket_count()
 
-        # update our incentivized ad button depending on whether ads are
-        # available
+        # Update our incentivized ad button depending on whether ads are
+        # available.
         if self._ad_button is not None:
             next_reward_ad_time = plus.get_v1_account_misc_read_val_2(
                 'nextRewardAdTime', None
             )
             if next_reward_ad_time is not None:
-                next_reward_ad_time = datetime.datetime.utcfromtimestamp(
-                    next_reward_ad_time
+                next_reward_ad_time = datetime.datetime.fromtimestamp(
+                    next_reward_ad_time, datetime.UTC
                 )
-            now = datetime.datetime.utcnow()
+            now = utc_now()
             if plus.have_incentivized_ad() and (
                 next_reward_ad_time is None or next_reward_ad_time <= now
             ):
@@ -586,8 +590,8 @@ class GetCurrencyWindow(bui.Window):
                     sval = ''
                 bui.textwidget(edit=self._ad_time_text, text=sval)
 
-        # if this is our first update, assign immediately; otherwise kick
-        # off a smooth transition if the value has changed
+        # If this is our first update, assign immediately; otherwise kick
+        # off a smooth transition if the value has changed.
         if self._smooth_ticket_count is None:
             self._smooth_ticket_count = float(self._ticket_count)
             self._smooth_update()  # will set the text widget
@@ -614,8 +618,8 @@ class GetCurrencyWindow(bui.Window):
         plus = bui.app.plus
         assert plus is not None
 
-        # if we're on a platform without purchases, inform the user they
-        # can link their accounts and buy stuff elsewhere
+        # If we're on a platform without purchases, inform the user they
+        # can link their accounts and buy stuff elsewhere.
         app = bui.app
         assert app.classic is not None
         if (
@@ -652,8 +656,10 @@ class GetCurrencyWindow(bui.Window):
                 return
             appinvite.handle_app_invites_press()
             return
-        # here we ping the server to ask if it's valid for us to
-        # purchase this.. (better to fail now than after we've paid locally)
+
+        # Here we ping the server to ask if it's valid for us to
+        # purchase this.. (better to fail now than after we've paid
+        # locally).
         app = bui.app
         assert app.classic is not None
         bui.app.classic.master_server_v1_get(
@@ -662,8 +668,8 @@ class GetCurrencyWindow(bui.Window):
                 'item': item,
                 'platform': app.classic.platform,
                 'subplatform': app.classic.subplatform,
-                'version': app.env.version,
-                'buildNumber': app.env.build_number,
+                'version': app.env.engine_version,
+                'buildNumber': app.env.engine_build_number,
             },
             callback=bui.WeakCall(self._purchase_check_result, item),
         )
@@ -694,7 +700,7 @@ class GetCurrencyWindow(bui.Window):
                         color=(1, 0, 0),
                     )
 
-    # actually start the purchase locally..
+    # Actually start the purchase locally.
     def _do_purchase(self, item: str) -> None:
         plus = bui.app.plus
         assert plus is not None
@@ -702,15 +708,15 @@ class GetCurrencyWindow(bui.Window):
         if item == 'ad':
             import datetime
 
-            # if ads are disabled until some time, error..
+            # If ads are disabled until some time, error.
             next_reward_ad_time = plus.get_v1_account_misc_read_val_2(
                 'nextRewardAdTime', None
             )
             if next_reward_ad_time is not None:
-                next_reward_ad_time = datetime.datetime.utcfromtimestamp(
-                    next_reward_ad_time
+                next_reward_ad_time = datetime.datetime.fromtimestamp(
+                    next_reward_ad_time, datetime.UTC
                 )
-            now = datetime.datetime.utcnow()
+            now = utc_now()
             if (
                 next_reward_ad_time is not None and next_reward_ad_time > now
             ) or self._ad_button_greyed:
@@ -730,7 +736,7 @@ class GetCurrencyWindow(bui.Window):
     def _back(self) -> None:
         from bauiv1lib.store import browser
 
-        # no-op if our underlying widget is dead or on its way out.
+        # No-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 

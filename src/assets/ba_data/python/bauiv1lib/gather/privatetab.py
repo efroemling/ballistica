@@ -11,9 +11,8 @@ import time
 import logging
 from enum import Enum
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, override
 
-from typing_extensions import override
 from efro.dataclassio import dataclass_from_dict, dataclass_to_dict
 from bacommon.net import (
     PrivateHostingState,
@@ -990,8 +989,8 @@ class PrivateGatherTab(GatherTab):
                 bui.getsound('error').play()
                 return
             self._debug_server_comm('got valid connect response')
-            assert cresult.addr is not None and cresult.port is not None
-            bs.connect_to_party(cresult.addr, port=cresult.port)
+            assert cresult.address4 is not None and cresult.port is not None
+            bs.connect_to_party(cresult.address4, port=cresult.port)
         except Exception:
             self._debug_server_comm('got connect response error')
             bui.getsound('error').play()

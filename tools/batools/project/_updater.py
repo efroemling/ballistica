@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
-from efrotools import getprojectconfig, getlocalconfig
+from efrotools.project import getprojectconfig, getlocalconfig
 from efro.error import CleanError
 from efro.terminal import Clr
 
@@ -426,8 +426,7 @@ class ProjectUpdater:
         # from batools.xcode import update_xcode_project
 
         for projpath in [
-            # 'ballisticakit-ios.xcodeproj/project.pbxproj',
-            'ballisticakit-xcode/BallisticaKit.xcodeproj/project.pbxproj',
+            'ballisticakit-xcode/BallisticaKit.xcodeproj/project.pbxproj'
         ]:
             # These currently aren't bundled in public.
             if self.public:

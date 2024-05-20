@@ -20,7 +20,8 @@ def spinoff_test(args: list[str]) -> None:
     import subprocess
 
     from batools.featureset import FeatureSet
-    from efrotools import extract_flag, getprojectconfig
+    from efrotools.util import extract_flag
+    from efrotools.project import getprojectconfig
     from efro.terminal import Clr
     from efro.error import CleanError
 
@@ -47,6 +48,7 @@ def spinoff_test(args: list[str]) -> None:
     featuresets = {fs.name: fs for fs in FeatureSet.get_all_for_project('.')}
 
     testtype = args[0]
+    assert testtype
     if testtype in featuresets:
         path = f'build/spinofftest/{testtype}'
         print(

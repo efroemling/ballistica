@@ -237,6 +237,8 @@ void AppConfig::SetupEntries() {
       BoolEntry("Disable Camera Gyro", false);
   bool_entries_[BoolID::kShowDemosWhenIdle] =
       BoolEntry("Show Demos When Idle", false);
+  bool_entries_[BoolID::kShowDeprecatedLoginTypes] =
+      BoolEntry("Show Deprecated Login Types", false);
 
   // Now add everything to our name map and make sure all is kosher.
   CompleteMap(float_entries_);

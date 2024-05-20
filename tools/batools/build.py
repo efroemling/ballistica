@@ -19,56 +19,6 @@ if TYPE_CHECKING:
     from typing import Sequence, Any
 
 
-@dataclass
-class PyRequirement:
-    """A Python package/module required by our project."""
-
-    modulename: str | None = None
-    minversion: list[int] | None = None  # None implies no min version.
-    pipname: str | None = None  # None implies same as modulename.
-
-
-# Note: we look directly for modules when possible instead of just pip
-# entries; this accounts for manual installations or other nonstandard
-# setups.
-
-# Note 2: That is probably unnecessary. I'm certainly not using it. We
-# can probably just replace this with a simple requirements.txt file,
-# can't we? Feels like we're mostly reinventing the wheel here. We just
-# need a clean way to check/list missing stuff without necessarily
-# installing it. And as far as manually-installed bits, pip itself must
-# have some way to allow for that, right?...
-
-# Note 3: Have transitioned all these to pipname only; can at least
-# remove our custom module based stuff soon if nobody complains, which
-# would free us to theoretically move to a requirements.txt based setup.
-PY_REQUIREMENTS = [
-    PyRequirement(pipname='mypy', minversion=[1, 8, 0]),
-    PyRequirement(pipname='pylint', minversion=[3, 0, 3]),
-    PyRequirement(pipname='cpplint', minversion=[1, 6, 1]),
-    PyRequirement(pipname='pytest', minversion=[7, 4, 4]),
-    PyRequirement(pipname='pytz', minversion=[2023, 3]),
-    PyRequirement(pipname='ansiwrap', minversion=[0, 8, 4]),
-    PyRequirement(pipname='requests', minversion=[2, 31, 0]),
-    PyRequirement(pipname='pdoc', minversion=[14, 4, 0]),
-    PyRequirement(pipname='PyYAML', minversion=[6, 0, 1]),
-    PyRequirement(pipname='black', minversion=[24, 1, 1]),
-    PyRequirement(pipname='typing_extensions', minversion=[4, 9, 0]),
-    PyRequirement(pipname='types-filelock', minversion=[3, 2, 7]),
-    PyRequirement(pipname='types-requests', minversion=[2, 31, 0, 20240106]),
-    PyRequirement(pipname='types-pytz', minversion=[2023, 3, 1, 1]),
-    PyRequirement(pipname='types-PyYAML', minversion=[6, 0, 12, 12]),
-    PyRequirement(pipname='certifi', minversion=[2023, 11, 17]),
-    PyRequirement(pipname='types-certifi', minversion=[2021, 10, 8, 3]),
-    PyRequirement(pipname='pbxproj', minversion=[4, 0, 0]),
-    PyRequirement(pipname='filelock', minversion=[3, 13, 1]),
-    PyRequirement(pipname='python-daemon', minversion=[3, 0, 1]),
-    PyRequirement(pipname='Sphinx', minversion=[7, 2, 6]),
-    PyRequirement(pipname='furo', minversion=[2024, 0o1, 29]),
-    PyRequirement(pipname='Jinja2', minversion=[3, 1, 2]),
-]
-
-
 class PrefabTarget(Enum):
     """Types of prefab builds able to be run."""
 
@@ -384,11 +334,7 @@ def _vstr(nums: Sequence[int]) -> str:
 
 def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
-    # pylint: disable=too-many-locals
-
-    from efrotools import PYTHON_BIN
+    from efrotools.pyver import PYVER
 
     print(f'{Clr.BLD}Checking environment...{Clr.RST}', flush=True)
 
@@ -436,15 +382,13 @@ def checkenv() -> None:
             ' please install it via apt, brew, etc.'
         )
 
-    # Make sure they've got our target Python version.
-    if (
-        subprocess.run(
-            ['which', PYTHON_BIN], check=False, capture_output=True
-        ).returncode
-        != 0
-    ):
+    # Make sure we're running under the Python version the project
+    # expects.
+    cur_ver = f'{sys.version_info.major}.{sys.version_info.minor}'
+    if cur_ver != PYVER:
         raise CleanError(
-            f'{PYTHON_BIN} is required; please install it' 'via apt, brew, etc.'
+            f'We expect to be running under Python {PYVER},'
+            f' but found {cur_ver}.'
         )
 
     # Make sure they've got clang-format.
@@ -461,155 +405,17 @@ def checkenv() -> None:
     # Make sure they've got pip for that python version.
     if (
         subprocess.run(
-            [PYTHON_BIN, '-m', 'pip', '--version'],
+            [sys.executable, '-m', 'pip', '--version'],
             check=False,
             capture_output=True,
         ).returncode
         != 0
     ):
         raise CleanError(
-            f'pip (for {PYTHON_BIN}) is required; please install it.'
+            f'pip (for {sys.executable}) is required; please install it.'
         )
-
-    # Parse package names and versions from pip.
-    piplist = (
-        subprocess.run(
-            [PYTHON_BIN, '-m', 'pip', 'list'], check=True, capture_output=True
-        )
-        .stdout.decode()
-        .strip()
-        .splitlines()
-    )
-    assert 'Package' in piplist[0] and 'Version' in piplist[0]
-    assert '--------' in piplist[1]
-    piplist = piplist[2:]
-    pipvers: dict[str, list[int]] = {}
-    for i, line in enumerate(piplist):
-        try:
-            pname, pverraw = line.split()[:2]
-            pver = [int(x) if x.isdigit() else 0 for x in pverraw.split('.')]
-            pipvers[pname] = pver
-        except Exception as exc:
-            raise RuntimeError(
-                f'Error parsing version info from line {i} of:'
-                f'\nBEGIN\n{piplist}\nEND'
-            ) from exc
-
-    # Check for some required python modules.
-    #
-    # FIXME: since all of these come from pip now, we should just use
-    #  pip --list to check versions on everything instead of doing it
-    #  ad-hoc.
-    for req in PY_REQUIREMENTS:
-        try:
-            modname = req.modulename
-            minver = req.minversion
-            pipname = req.pipname
-            if modname is None:
-                assert pipname is not None
-                if pipname not in pipvers:
-                    raise CleanError(
-                        f'{pipname} (for {PYTHON_BIN}) is required.\n'
-                        f'To install it, try: "{PYTHON_BIN}'
-                        f' -m pip install {pipname}"\n'
-                        f'Alternately, "tools/pcommand install_pip_reqs"'
-                        f' will update all pip requirements.'
-                    )
-                if minver is not None:
-                    vnums = pipvers[pipname]
-                    # Seeing a decent number of version lengths fluctuating
-                    # (one day [a,b,c,d] and the next [a,b,c])
-                    # So let's pad with zeros to match lengths.
-                    while len(vnums) < len(minver):
-                        vnums.append(0)
-                    while len(minver) < len(vnums):
-                        minver.append(0)
-                    assert len(vnums) == len(
-                        minver
-                    ), f'unexpected version format for {pipname}: {vnums}'
-                    if vnums < minver:
-                        raise CleanError(
-                            f'{pipname} ver. {_vstr(minver)} or newer'
-                            f' is required; found {_vstr(vnums)}.\n'
-                            f'To upgrade it, try: "{PYTHON_BIN}'
-                            f' -m pip install --upgrade {pipname}".\n'
-                            'Alternately, "tools/pcommand install_pip_reqs"'
-                            ' will update all pip requirements.'
-                        )
-            else:
-                if pipname is None:
-                    pipname = modname
-                if minver is not None:
-                    results = subprocess.run(
-                        f'{PYTHON_BIN} -m {modname} --version',
-                        shell=True,
-                        check=False,
-                        capture_output=True,
-                    )
-                else:
-                    results = subprocess.run(
-                        f'{PYTHON_BIN} -c "import {modname}"',
-                        shell=True,
-                        check=False,
-                        capture_output=True,
-                    )
-                if results.returncode != 0:
-                    raise CleanError(
-                        f'{pipname} (for {PYTHON_BIN}) is required.\n'
-                        f'To install it, try: "{PYTHON_BIN}'
-                        f' -m pip install {pipname}"\n'
-                        f'Alternately, "tools/pcommand install_pip_reqs"'
-                        f' will update all pip requirements.'
-                    )
-                if minver is not None:
-                    # Note: some modules such as pytest print
-                    # their version to stderr, so grab both.
-                    verlines = (
-                        (results.stdout + results.stderr).decode().splitlines()
-                    )
-                    if verlines[0].startswith('Cpplint fork'):
-                        verlines = verlines[1:]
-                    ver_line = verlines[0]
-                    assert modname in ver_line
-
-                    # Choking on 'mypy 0.xx (compiled: yes)'
-                    if '(compiled: ' in ver_line:
-                        ver_line = ' '.join(ver_line.split()[:2])
-                    try:
-                        vnums = [
-                            int(x) for x in ver_line.split()[-1].split('.')
-                        ]
-                    except Exception:
-                        print(
-                            f'ERROR PARSING VER LINE for {req}:'
-                            f' \'{ver_line}\''
-                        )
-                        raise
-                    assert len(vnums) == len(minver)
-                    if vnums < minver:
-                        raise CleanError(
-                            f'{pipname} ver. {_vstr(minver)} or newer'
-                            f' is required; found {_vstr(vnums)}.\n'
-                            f'To upgrade it, try: "{PYTHON_BIN}'
-                            f' -m pip install --upgrade {pipname}".\n'
-                            'Alternately, "tools/pcommand install_pip_reqs"'
-                            ' will update all pip requirements.'
-                        )
-        except Exception:
-            print(f'ERROR CHECKING PIP REQ \'{req}\'')
-            raise
 
     print(f'{Clr.BLD}Environment ok.{Clr.RST}', flush=True)
-
-
-def get_pip_reqs() -> list[str]:
-    """Return the pip requirements needed to build/run stuff."""
-    out: list[str] = []
-    for req in PY_REQUIREMENTS:
-        name = req.modulename if req.pipname is None else req.pipname
-        assert isinstance(name, str)
-        out.append(name)
-    return out
 
 
 def _get_server_config_raw_contents(projroot: str) -> str:
@@ -640,92 +446,90 @@ def _get_server_config_raw_contents(projroot: str) -> str:
     return textwrap.dedent('\n'.join(lines[firstline : lastline + 1]))
 
 
-def _get_server_config_template_yaml(projroot: str) -> str:
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
-    import yaml
+def _get_server_config_template_toml(projroot: str) -> str:
+    from tomlkit import document, dumps
+    from bacommon.servermanager import ServerConfig
+
+    cfg = ServerConfig()
+
+    # Override some defaults with values we want to display commented
+    # out instead.
+    cfg.playlist_code = 12345
+    cfg.stats_url = 'https://mystatssite.com/showstats?player=${ACCOUNT}'
+    cfg.clean_exit_minutes = 60
+    cfg.unclean_exit_minutes = 90
+    cfg.idle_exit_minutes = 20
+    cfg.admins = ['pb-yOuRAccOuNtIdHErE', 'pb-aNdMayBeAnotherHeRE']
+    cfg.protocol_version = 35
+    cfg.session_max_players_override = 8
+    cfg.playlist_inline = []
+    cfg.team_names = ('Red', 'Blue')
+    cfg.team_colors = ((0.1, 0.25, 1.0), (1.0, 0.25, 0.2))
+    cfg.public_ipv4_address = '123.123.123.123'
+    cfg.public_ipv6_address = '123A::A123:23A1:A312:12A3:A213:2A13'
 
     lines_in = _get_server_config_raw_contents(projroot).splitlines()
+
+    # Convert to double quotes only (we'll convert back at the end).
+    # UPDATE: No longer doing this. Turns out single quotes in toml have
+    # special meaning (no escapes applied). So we'll stick with doubles.
+    # assert all(('"' not in l) for l in lines_in)
+    # lines_in = [l.replace("'", '"') for l in lines_in]
+
     lines_out: list[str] = []
     ignore_vars = {'stress_test_players'}
     for line in lines_in:
-        if any(line.startswith(f'{var}:') for var in ignore_vars):
-            continue
-        if line.startswith(' '):
-            # Ignore indented lines (our few multi-line special cases).
-            continue
 
-        if line.startswith(']') or line.startswith(')'):
-            # Ignore closing lines (our few multi-line special cases).
-            continue
+        # Replace attr declarations with commented out toml values.
+        if line != '' and not line.startswith('#') and ':' in line:
+            before_colon, _after_colon = line.split(':', 1)
+            vname = before_colon.strip()
+            if vname in ignore_vars:
+                continue
+            vval: Any = getattr(cfg, vname)
 
-        if line.startswith('team_names:'):
-            lines_out += [
-                '#team_names:',
-                '#- Blue',
-                '#- Red',
-            ]
-            continue
+            doc = document()
+            # Toml doesn't support None/null
+            if vval is None:
+                raise RuntimeError(
+                    f"ServerManager value '{vname}' has value None."
+                    f' This is not allowed in toml;'
+                    f' please provide a dummy value.'
+                )
+            assert vval is not None
+            doc[vname] = vval
+            lines_out += ['#' + l for l in dumps(doc).strip().splitlines()]
 
-        if line.startswith('team_colors:'):
-            lines_out += [
-                '#team_colors:',
-                '#- [0.1, 0.25, 1.0]',
-                '#- [1.0, 0.25, 0.2]',
-            ]
-            continue
+        # Preserve blank lines, but only one in a row.
+        elif line == '':
+            if not lines_out or lines_out[-1] != '':
+                lines_out.append(line)
 
-        if line.startswith('playlist_inline:'):
-            lines_out += ['#playlist_inline: []']
-            continue
-
-        if line != '' and not line.startswith('#'):
-            before_equal_sign, vval_raw = line.split('=', 1)
-            before_equal_sign = before_equal_sign.strip()
-            vval_raw = vval_raw.strip()
-            vname = before_equal_sign.split()[0]
-            assert vname.endswith(':'), f"'{vname}' does not end with ':'"
-            vname = vname[:-1]
-            vval: Any
-            if vval_raw == 'field(default_factory=list)':
-                vval = []
-            else:
-                vval = eval(vval_raw)  # pylint: disable=eval-used
-
-            # Filter/override a few things.
-            if vname == 'playlist_code':
-                # User wouldn't want to pass the default of None here.
-                vval = 12345
-            elif vname == 'clean_exit_minutes':
-                vval = 60
-            elif vname == 'unclean_exit_minutes':
-                vval = 90
-            elif vname == 'idle_exit_minutes':
-                vval = 20
-            elif vname == 'stats_url':
-                vval = 'https://mystatssite.com/showstats?player=${ACCOUNT}'
-            elif vname == 'admins':
-                vval = ['pb-yOuRAccOuNtIdHErE', 'pb-aNdMayBeAnotherHeRE']
-            elif vname == 'protocol_version':
-                vval = 35
-            lines_out += [
-                '#' + l for l in yaml.dump({vname: vval}).strip().splitlines()
-            ]
-        else:
-            # Convert comments referring to python bools to yaml bools.
+        # Preserve comment lines.
+        elif line.startswith('#'):
+            # Convert comments referring to python bools to toml bools.
             line = line.replace('True', 'true').replace('False', 'false')
+
             if '(internal)' not in line:
                 lines_out.append(line)
-    return '\n'.join(lines_out)
+
+    out = '\n'.join(lines_out)
+
+    # Convert back to single quotes only.
+    # UPDATE: Not doing this. See above note.
+    # assert "'" not in out
+    # out = out.replace('"', "'")
+
+    return out
 
 
-def filter_server_config(projroot: str, infilepath: str) -> str:
+def filter_server_config_toml(projroot: str, infilepath: str) -> str:
     """Add commented-out config options to a server config."""
     with open(infilepath, encoding='utf-8') as infile:
         cfg = infile.read()
     return cfg.replace(
         '# __CONFIG_TEMPLATE_VALUES__',
-        _get_server_config_template_yaml(projroot),
+        _get_server_config_template_toml(projroot),
     )
 
 
@@ -737,7 +541,8 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     """
     # pylint: disable=too-many-locals
     import json
-    from efrotools import PYVER
+
+    from efrotools.pyver import PYVER
 
     @dataclass
     class Entry:
@@ -839,3 +644,59 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     else:
         if verbose:
             print(f'{Clr.BLD}{title}:{Clr.RST} Keeping existing build dir.')
+
+
+def _docker_build(
+    image_name: str,
+    dockerfile_dir: str,
+    bombsquad_version: str | None = None,
+    bombsquad_build: str | int | None = None,
+    cmake_build_type: str | None = None,
+) -> None:
+
+    build_cmd = [
+        'docker',
+        'image',
+        'build',
+        '-t',
+        image_name,
+        '-f',
+        dockerfile_dir,
+        '.',
+    ]
+    if bombsquad_version is not None:
+        build_cmd = build_cmd + [
+            '--build-arg',
+            f'bombsquad_version={bombsquad_version}',
+        ]
+    if bombsquad_build is not None:
+        build_cmd = build_cmd + [
+            '--build-arg',
+            f'bombsquad_build={str(bombsquad_build)}',
+        ]
+    if cmake_build_type is not None:
+        build_cmd = build_cmd + [
+            '--build-arg',
+            f'cmake_build_type={cmake_build_type}',
+        ]
+    subprocess.run(build_cmd, check=True)
+
+
+def docker_build() -> None:
+    """Build docker image."""
+    # todo: add option to toggle between prefab and cmake
+    from batools import version
+
+    version_num, build_num = version.get_current_version()
+    image_name = 'bombsquad_server'
+
+    print(
+        f'Building docker image {image_name}'
+        + 'version {version_num}:{build_num}'
+    )
+    _docker_build(
+        image_name,
+        'config/docker/Dockerfile',
+        version_num,
+        build_num,
+    )

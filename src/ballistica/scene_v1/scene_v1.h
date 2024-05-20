@@ -141,6 +141,26 @@ class SceneSound;
 class SceneTexture;
 typedef Node* NodeCreateFunc(Scene* sg);
 
+/// Specifies the type of time for various operations to target/use.
+///
+/// 'sim' time is the local simulation time for an activity or session.
+///    It can proceed at different rates depending on game speed, stops
+///    for pauses, etc.
+///
+/// 'base' is the baseline time for an activity or session.  It proceeds
+///    consistently regardless of game speed or pausing, but may stop during
+///    occurrences such as network outages.
+///
+/// 'real' time is mostly based on clock time, with a few exceptions.  It may
+///    not advance while the app is backgrounded for instance.  (the engine
+///    attempts to prevent single large time jumps from occurring)
+enum class TimeType : uint8_t {
+  kSim,
+  kBase,
+  kReal,
+  kLast  // Sentinel.
+};
+
 /// Standard messages to send to nodes.
 enum class NodeMessageType {
   /// Generic flash - no args.

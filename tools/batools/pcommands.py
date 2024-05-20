@@ -126,7 +126,7 @@ def lazy_increment_build() -> None:
     import subprocess
     from efro.terminal import Clr
     from efro.error import CleanError
-    from efrotools import get_files_hash
+    from efrotools.util import get_files_hash
     from efrotools.code import get_code_filenames
 
     pcommand.disallow_in_batch()
@@ -221,7 +221,7 @@ def androidaddr() -> None:
 def push_ipa() -> None:
     """Construct and push ios IPA for testing."""
 
-    from efrotools import extract_arg
+    from efrotools.util import extract_arg
     import efrotools.ios
 
     pcommand.disallow_in_batch()
@@ -493,7 +493,7 @@ def warm_start_asset_build() -> None:
     import subprocess
     from pathlib import Path
 
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
     from efro.error import CleanError
 
     pcommand.disallow_in_batch()
@@ -539,36 +539,6 @@ def gen_docs_sphinx() -> None:
     import batools.docs
 
     batools.docs.generate_sphinxdoc()
-
-
-def list_pip_reqs() -> None:
-    """List Python Pip packages needed for this project."""
-    from batools.build import get_pip_reqs
-
-    pcommand.disallow_in_batch()
-
-    print(' '.join(get_pip_reqs()))
-
-
-def install_pip_reqs() -> None:
-    """Install Python Pip packages needed for this project."""
-    import subprocess
-    from efrotools import PYTHON_BIN
-    from efro.terminal import Clr
-    from batools.build import get_pip_reqs
-
-    pcommand.disallow_in_batch()
-
-    # Make sure pip itself is up to date first.
-    subprocess.run(
-        [PYTHON_BIN, '-m', 'pip', 'install', '--upgrade', 'pip'], check=True
-    )
-
-    subprocess.run(
-        [PYTHON_BIN, '-m', 'pip', 'install', '--upgrade'] + get_pip_reqs(),
-        check=True,
-    )
-    print(f'{Clr.GRN}All pip requirements installed!{Clr.RST}')
 
 
 def checkenv() -> None:
@@ -665,6 +635,8 @@ def prefab_binary_path() -> None:
 
     platform = PrefabPlatform.get_current()
 
+    binpath = None
+
     if platform is PrefabPlatform.WINDOWS_X86:
         if buildtype == 'gui':
             binpath = 'BallisticaKit.exe'
@@ -688,10 +660,18 @@ def prefab_binary_path() -> None:
         # Make sure we're covering all options.
         assert_never(platform)
 
+    assert binpath is not None
     print(
         f'build/prefab/full/{platform.value}_{buildtype}/{buildmode}/{binpath}',
         end='',
     )
+
+
+def build_docker() -> None:
+    """Build the docker image with bombsquad cmake server."""
+    import batools.build
+
+    batools.build.docker_build()
 
 
 def make_prefab() -> None:
@@ -946,7 +926,7 @@ def android_sdk_utils() -> None:
 
 def gen_python_enums_module() -> None:
     """Update our procedurally generated python enums."""
-    from batools.pythonenumsmodule import generate
+    from batools.enumspython import generate
 
     pcommand.disallow_in_batch()
 

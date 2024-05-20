@@ -16,12 +16,11 @@ from typing import (
     Annotated,
     assert_type,
     assert_never,
+    override,
 )
 
-from typing_extensions import override
 import pytest
-
-from efro.util import utc_now
+from efro.util import utc_now, utc_now_naive
 from efro.dataclassio import (
     dataclass_validate,
     dataclass_from_dict,
@@ -100,6 +99,7 @@ def test_assign() -> None:
         dictval: dict[int, str] = field(default_factory=dict)
         tupleval: tuple[int, str, bool] = (1, 'foo', False)
         datetimeval: datetime.datetime | None = None
+        timedeltaval: datetime.timedelta | None = None
 
     class _TestClass2:
         pass
@@ -115,10 +115,10 @@ def test_assign() -> None:
         dataclass_from_dict(_TestClass, None)  # type: ignore
 
     now = utc_now()
+    tdelta = datetime.timedelta(days=123, seconds=456, microseconds=789)
 
-    # A dict containing *ALL* values should match what we
-    # get when creating a dataclass and then converting back
-    # to a dict.
+    # A dict containing *ALL* values should exactly match what we get
+    # when creating a dataclass and then converting back to a dict.
     dict1 = {
         'ival': 1,
         'sval': 'foo',
@@ -155,6 +155,7 @@ def test_assign() -> None:
             now.second,
             now.microsecond,
         ],
+        'timedeltaval': [tdelta.days, tdelta.seconds, tdelta.microseconds],
     }
     dc1 = dataclass_from_dict(_TestClass, dict1)
     assert dataclass_to_dict(dc1) == dict1
@@ -289,8 +290,8 @@ def test_assign() -> None:
     with pytest.raises(ValueError):
         dataclass_to_dict(_TestClass(datetimeval=datetime.datetime.now()))
     with pytest.raises(ValueError):
-        # This doesn't actually set timezone on the datetime obj.
-        dataclass_to_dict(_TestClass(datetimeval=datetime.datetime.utcnow()))
+        # This doesn't have a timezone on the datetime obj.
+        dataclass_to_dict(_TestClass(datetimeval=utc_now_naive()))
 
 
 def test_coerce() -> None:
