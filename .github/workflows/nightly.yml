@@ -1,3 +1,4 @@
+name: Nightly Build
 on:
     # Run everyday at 5:30 UTC
     schedule:
