@@ -21,7 +21,7 @@ jobs:
       - name: Make the build
         run: make prefab-gui-debug-build
       - name: Compress the build
-        run: tar -cf linux_x86_64_gui(debug).tar build/prefab/full/linux_x86_64_gui/
+        run: tar -cf "linux_x86_64_gui(debug).tar" build/prefab/full/linux_x86_64_gui/
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
@@ -30,7 +30,7 @@ jobs:
       - name: Make the build
         run: make prefab-server-debug-build
       - name: Compress the build
-        run: tar -cf linux_x86_64_server(debug).tar build/prefab/full/linux_x86_64_server/
+        run: tar -cf "linux_x86_64_server(debug).tar" build/prefab/full/linux_x86_64_server/
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
