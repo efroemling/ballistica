@@ -68,6 +68,10 @@
 - The `windows-debug` and `windows-release` Makefile targets should properly run
   the game again (these build the Windows version of the game from a WSL
   environment).
+- Added a workaround for WSL builds giving permission errors when staging asset
+  files that already exist. Please holler if you are building with WSL and still
+  running into any sort of errors, as I would love to make that path as reliable
+  as possible.
   
 ### 1.7.34 (build 21823, api 8, 2024-04-26)
 - Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
