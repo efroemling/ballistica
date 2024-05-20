@@ -35,4 +35,3 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
             artifacts: build/prefab/full/linux_x86_64_server/*
-a
