@@ -25,6 +25,7 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
+            allowUpdates: true
             artifacts: build/prefab/full/linux_x86_64_gui/*
 
       - name: Make the build
@@ -34,4 +35,5 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
+            allowUpdates: true
             artifacts: linux_x86_64_server(debug).tar
