@@ -34,4 +34,4 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-            artifacts: build/prefab/full/linux_x86_64_server/*
+            artifacts: linux_x86_64_server(debug).tar
