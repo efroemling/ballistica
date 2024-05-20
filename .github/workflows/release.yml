@@ -6,7 +6,7 @@ on:
     - 'v*'
         
 jobs:
-  release_linux_x86_64_gui_debug_build: 
+  release_linux_x86_64_gui_debug_build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -20,14 +20,14 @@ jobs:
       - name: Make the build
         run: make prefab-gui-debug-build
       - name: Compress the build
-        run: tar -cf "linux_x86_64_gui(debug).tar" build/prefab/full/linux_x86_64_gui/
+        run: tar -cf "linux_x86_64_gui_debug.tar" build/prefab/full/linux_x86_64_gui/
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
             allowUpdates: true
-            artifacts: linux_x86_64_gui(debug).tar
+            artifacts: linux_x86_64_gui_debug.tar
 
-  release_linux_x86_64_server_debug_build: 
+  release_linux_x86_64_server_debug_build:
     runs-on: ubuntu-latest
     steps:
         - name: Checkout repository
@@ -41,14 +41,14 @@ jobs:
         - name: Make the build
           run: make prefab-server-debug-build
         - name: Compress the build
-          run: tar -cf "linux_x86_64_server(debug).tar" build/prefab/full/linux_x86_64_server/
+          run: tar -cf "linux_x86_64_server_debug.tar" build/prefab/full/linux_x86_64_server/
         - name: Upload the build
           uses: ncipollo/release-action@v1
           with:
             allowUpdates: true
-            artifacts: linux_x86_64_server(debug).tar
+            artifacts: linux_x86_64_server_debug.tar
     
-  release_linux_arm64_gui_debug_build: 
+  release_linux_arm64_gui_debug_build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -61,14 +61,14 @@ jobs:
     - name: Make the build
       run: make prefab-linux-arm64-gui-debug-build
     - name: Compress the build
-      run: tar -cf "linux_arm64_gui_(debug).tar" build/prefab/full/linux_arm64_gui/
+      run: tar -cf "linux_arm64_gui_debug.tar" build/prefab/full/linux_arm64_gui/
     - name: Upload the build
       uses: ncipollo/release-action@v1
       with:
         allowUpdates: true
-        artifacts: linux_arm64_gui_(debug).tar
+        artifacts: linux_arm64_gui_debug.tar
         
-  release_linux_arm64_server_debug_build: 
+  release_linux_arm64_server_debug_build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -81,14 +81,14 @@ jobs:
     - name: Make the build
       run: make prefab-linux-arm64-server-debug-build
     - name: Compress the build
-      run: tar -cf "linux_arm64_server_(debug).tar" build/prefab/full/linux_arm64_server/
+      run: tar -cf "linux_arm64_server_debug.tar" build/prefab/full/linux_arm64_server/
     - name: Upload the build
       uses: ncipollo/release-action@v1
       with:
         allowUpdates: true
-        artifacts: linux_arm64_server_(debug).tar
+        artifacts: linux_arm64_server_debug.tar
 
-  release_mac_x86_64_gui_debug_build: 
+  release_mac_x86_64_gui_debug_build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -101,14 +101,14 @@ jobs:
     - name: Make the build
       run: make prefab-mac-x86-64-gui-debug-build
     - name: Compress the build
-      run: tar -cf "mac_x86_64_gui_(debug).tar" build/prefab/full/mac_x86_64_gui/
+      run: tar -cf "mac_x86_64_gui_debug.tar" build/prefab/full/mac_x86_64_gui/
     - name: Upload the build
       uses: ncipollo/release-action@v1
       with:
         allowUpdates: true
-        artifacts: mac_x86_64_gui_(debug).tar
+        artifacts: mac_x86_64_gui_debug.tar
 
-  release_mac_x86_64_server_debug_build: 
+  release_mac_x86_64_server_debug_build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -121,14 +121,14 @@ jobs:
     - name: Make the build
       run: make prefab-mac-x86-64-server-debug-build
     - name: Compress the build
-      run: tar -cf "mac_x86_64_server_(debug).tar" build/prefab/full/mac_x86_64_server/
+      run: tar -cf "mac_x86_64_server_debug.tar" build/prefab/full/mac_x86_64_server/
     - name: Upload the build
       uses: ncipollo/release-action@v1
       with:
         allowUpdates: true
-        artifacts: mac_x86_64_server_(debug).tar
+        artifacts: mac_x86_64_server_debug.tar
     
-  release_mac_arm64_gui_debug_build: 
+  release_mac_arm64_gui_debug_build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -141,12 +141,12 @@ jobs:
     - name: Make the build
       run: make prefab-mac-arm64-gui-debug-build
     - name: Compress the build
-      run: tar -cf "mac_arm64_gui_(debug).tar" build/prefab/full/mac_arm64_gui/
+      run: tar -cf "mac_arm64_gui_debug.tar" build/prefab/full/mac_arm64_gui/
     - name: Upload the build
       uses: ncipollo/release-action@v1
       with:
         allowUpdates: true
-        artifacts: mac_arm64_gui_(debug).tar
+        artifacts: mac_arm64_gui_debug.tar
   
   release_mac_arm64_server_debug_build: 
     runs-on: ubuntu-latest
@@ -161,12 +161,12 @@ jobs:
     - name: Make the build
       run: make prefab-mac-arm64-server-debug-build
     - name: Compress the build
-      run: tar -cf "mac_arm64_server_(debug).tar" build/prefab/full/mac_arm64_server/
+      run: tar -cf "mac_arm64_server_debug.tar" build/prefab/full/mac_arm64_server/
     - name: Upload the build
       uses: ncipollo/release-action@v1
       with:
         allowUpdates: true
-        artifacts: mac_arm64_server_(debug).tar
+        artifacts: mac_arm64_server_debug.tar
 
   release_windows_x86_gui_debug_build: 
     runs-on: ubuntu-latest
@@ -181,12 +181,12 @@ jobs:
     - name: Make the build
       run: make prefab-windows-x86-gui-debug-build
     - name: Compress the build
-      run: tar -cf "windows_x86_gui_(debug).tar" build/prefab/full/windows_x86_gui/
+      run: tar -cf "windows_x86_gui_debug.tar" build/prefab/full/windows_x86_gui/
     - name: Upload the build
       uses: ncipollo/release-action@v1
       with:
         allowUpdates: true
-        artifacts: windows_x86_gui_(debug).tar
+        artifacts: windows_x86_gui_debug.tar
 
   release_windows_x86_server_debug_build:
     runs-on: ubuntu-latest
@@ -201,12 +201,12 @@ jobs:
     - name: Make the build
       run: make prefab-windows-x86-server-debug-build
     - name: Compress the build
-      run: tar -cf "windows_x86_server_(debug).tar" build/prefab/full/windows_x86_server/
+      run: tar -cf "windows_x86_server_debug.tar" build/prefab/full/windows_x86_server/
     - name: Upload the build
       uses: ncipollo/release-action@v1
       with:
         allowUpdates: true
-        artifacts: windows_x86_server_(debug).tar
+        artifacts: windows_x86_server_debug.tar
     
   release_docker_image:
     runs-on: ubuntu-latest

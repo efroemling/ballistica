@@ -82,6 +82,8 @@
   efrocache when anything in the cache-map changed (which is the case for most
   commits). Please holler if you are still seeing lots more 'Extracting:' lines
   when running builds after pulling small updates from git.
+- Added github workflow for making docker image and sphinx docs nightly
+- Added github workflow for making build release on tag creation
   
 ### 1.7.34 (build 21823, api 8, 2024-04-26)
 - Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
