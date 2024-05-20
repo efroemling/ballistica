@@ -249,12 +249,12 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
                             # any sticky bomb's sticky material, if present and
                             # is sticking to the players.
                             self._teleport(player, new_pos, random_num)
-                            bs.timer(0.01, bs.Call(
-                                self._teleport,
-                                player,
-                                new_pos,
-                                random_num
-                            ))
+                            bs.timer(
+                                0.01,
+                                bs.Call(
+                                    self._teleport, player, new_pos, random_num
+                                ),
+                            )
 
                 # Have teammates celebrate.
                 for player in player_team.players:
@@ -267,13 +267,10 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
                     self.end_game()
 
     def _teleport(
-        self,
-        client: Player,
-        pos: Sequence[float],
-        num: float
+        self, client: Player, pos: Sequence[float], num: float
     ) -> None:
         if client.actor:
-            client.actor.handlemessage(bs.StandMessage(pos,num))
+            client.actor.handlemessage(bs.StandMessage(pos, num))
 
     @override
     def end_game(self) -> None:
