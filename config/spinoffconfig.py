@@ -197,6 +197,7 @@ ctx.filter_file_names = {
     'cd.yml',
     'deploy_docs.yml',
     'nightly.yml',
+    'release.yml',
     'LICENSE',
     'cloudtool',
     'bacloud',
