@@ -423,6 +423,10 @@ def wsl_build_check_win_drive() -> None:
     import subprocess
     import textwrap
     from efro.error import CleanError
+    from batools.build import (
+        is_wsl_windows_build_path,
+        wsl_windows_build_path_description,
+    )
 
     # We use env vars to influence our behavior and thus can't support
     # batch.
@@ -441,10 +445,12 @@ def wsl_build_check_win_drive() -> None:
     if os.environ.get('WSL_BUILD_CHECK_WIN_DRIVE_IGNORE') == '1':
         return
 
+    nativepath = os.getcwd()
+
     # Get a windows path to the current dir.
-    path = (
+    winpath = (
         subprocess.run(
-            ['wslpath', '-w', '-a', os.getcwd()],
+            ['wslpath', '-w', '-a', nativepath],
             capture_output=True,
             check=True,
         )
@@ -452,47 +458,68 @@ def wsl_build_check_win_drive() -> None:
         .strip()
     )
 
-    # If we're sitting under the linux filesystem, our path will start
-    # with '\\wsl$' or '\\wsl.localhost' or '\\wsl\'; fail in that case
-    # and explain why.
-    if not any(
-        path.startswith(x) for x in ['\\\\wsl$', '\\\\wsl.', '\\\\wsl\\']
-    ):
-        return
-
     def _wrap(txt: str) -> str:
         return textwrap.fill(txt, 76)
 
-    raise CleanError(
-        '\n\n'.join(
-            [
-                _wrap(
-                    'ERROR: This project appears to live'
-                    ' on the Linux filesystem.'
-                ),
-                _wrap(
-                    'Visual Studio compiles will error here for reasons related'
-                    ' to Linux filesystem case-sensitivity, and thus are'
-                    ' disallowed.'
-                    ' Clone the repo to a location that maps to a native'
-                    ' Windows drive such as \'/mnt/c/ballistica\''
-                    ' and try again.'
-                ),
-                _wrap(
-                    'Note that WSL2 filesystem performance'
-                    ' is poor when accessing'
-                    ' native Windows drives, so if Visual Studio builds are not'
-                    ' needed it may be best to keep things here'
-                    ' on the Linux filesystem.'
-                    ' This behavior may differ under WSL1 (untested).'
-                ),
-                _wrap(
-                    'Set env-var WSL_BUILD_CHECK_WIN_DRIVE_IGNORE=1 to skip'
-                    ' this check.'
-                ),
-            ]
+    # If we're sitting under the linux filesystem, our path will start
+    # with '\\wsl$' or '\\wsl.localhost' or '\\wsl\'; fail in that case
+    # and explain why.
+    if any(
+        winpath.startswith(x) for x in ['\\\\wsl$', '\\\\wsl.', '\\\\wsl\\']
+    ):
+        raise CleanError(
+            '\n\n'.join(
+                [
+                    _wrap(
+                        'ERROR: This project appears to live'
+                        ' on the Linux filesystem.'
+                    ),
+                    _wrap(
+                        'Visual Studio compiles will error here'
+                        ' for reasons related'
+                        ' to Linux filesystem case-sensitivity, and thus are'
+                        ' disallowed.'
+                        ' Clone the repo to a location that maps to a native'
+                        ' Windows drive such as \'/mnt/c/ballistica\''
+                        ' and try again.'
+                    ),
+                    _wrap(
+                        'Note that WSL2 filesystem performance'
+                        ' is poor when accessing'
+                        ' native Windows drives,'
+                        ' so if Visual Studio builds are not'
+                        ' needed it may be best to keep things here'
+                        ' on the Linux filesystem.'
+                        ' This behavior may differ under WSL1 (untested).'
+                    ),
+                    _wrap(
+                        'Set env-var WSL_BUILD_CHECK_WIN_DRIVE_IGNORE=1 to skip'
+                        ' this check.'
+                    ),
+                ]
+            )
         )
-    )
+
+    # We also now require this check to be true. We key off this same
+    # check in other places to introduce various workarounds to deal
+    # with funky permissions issues/etc.
+    #
+    # Note that we could rely on *only* this check, but it might be nice
+    # to leave the above one in as well to better explain the Linux
+    # filesystem situation.
+    if not is_wsl_windows_build_path(nativepath):
+        reqs = wsl_windows_build_path_description()
+        raise CleanError(
+            '\n\n'.join(
+                [
+                    _wrap(
+                        f'ERROR: This project\'s path ({nativepath})'
+                        f' is not valid for WSL Windows builds.'
+                        f' Path must be: {reqs}.'
+                    )
+                ]
+            )
+        )
 
 
 def wsl_path_to_win() -> None:

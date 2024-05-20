@@ -15,6 +15,8 @@ from efro.terminal import Clr
 from efrotools.util import extract_arg, extract_flag
 from efrotools.pyver import PYVER
 
+from batools.build import is_wsl_windows_build_path
+
 if TYPE_CHECKING:
     pass
 
@@ -232,7 +234,7 @@ class AssetStager:
         #
         # As a janky workaround, make everything in our dst dir writable
         # by us before we do our work.
-        if self.projroot.startswith('/mnt/c/'):
+        if is_wsl_windows_build_path(self.projroot):
             self.wsl_chmod_workaround = True
 
     def _parse_android_args(self, args: list[str]) -> None:

@@ -68,6 +68,12 @@
 - The `windows-debug` and `windows-release` Makefile targets should properly run
   the game again (these build the Windows version of the game from a WSL
   environment).
+- WSL Windows builds are now more strict about their locations. Currently this
+  means they must exist somewhere under /mnt/c/. It is turning out that a
+  significant number of behavior workarounds (for file permission quirks, etc.)
+  need to happen to keep these builds behaving, so I'd like to enforce as
+  limited a set of conditions as possible to give us the best chance at
+  succeeding there.
 - Added a workaround for WSL builds giving permission errors when staging asset
   files that already exist. Please holler if you are building with WSL and still
   running into any sort of errors, as I would love to make that path as reliable
