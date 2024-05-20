@@ -423,7 +423,7 @@ def wsl_build_check_win_drive() -> None:
     import subprocess
     import textwrap
     from efro.error import CleanError
-    from batools.build import (
+    from efrotools.util import (
         is_wsl_windows_build_path,
         wsl_windows_build_path_description,
     )

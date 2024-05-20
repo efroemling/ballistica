@@ -74,10 +74,14 @@
   need to happen to keep these builds behaving, so I'd like to enforce as
   limited a set of conditions as possible to give us the best chance at
   succeeding there.
-- Added a workaround for WSL builds giving permission errors when staging asset
+- Added a workaround for WSL Windows builds giving permission errors when staging asset
   files that already exist. Please holler if you are building with WSL and still
   running into any sort of errors, as I would love to make that path as reliable
   as possible.
+- Fixed an issue where WSL Windows builds would re-extract everything from
+  efrocache when anything in the cache-map changed (which is the case for most
+  commits). Please holler if you are still seeing lots more 'Extracting:' lines
+  when running builds after pulling small updates from git.
   
 ### 1.7.34 (build 21823, api 8, 2024-04-26)
 - Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
