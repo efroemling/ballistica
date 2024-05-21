@@ -16,6 +16,8 @@ import bauiv1 as bui
 if TYPE_CHECKING:
     from typing import Any
 
+SEND_UPDATE_MESSAGE = True
+
 
 class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
     """Activity showing the rotating main menu bg stuff."""
@@ -411,6 +413,13 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                             bui.apptimer(2.0, specialoffer.show_offer)
 
                     bui.apptimer(2.0, try_again)
+
+                if app.config.resolve('Automatically Check for Updates'):
+                    app.classic.master_server_v1_get(
+                        'bsLatestBuildNumber',
+                        {'debug': env.debug},
+                        callback=bs.WeakCall(self._on_update_check_response),
+                    )
 
         app.classic.main_menu_did_initial_transition = True
 
@@ -864,6 +873,25 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 round_duration=20,
                 attract_mode=True,
             )
+
+    def _on_update_check_response(self, data: dict[str, Any] | None) -> None:
+        global SEND_UPDATE_MESSAGE
+        if (
+            SEND_UPDATE_MESSAGE
+            and data
+            and data.get('build_number', 0) > bs.app.env.engine_build_number
+        ):
+            bs.screenmessage(
+                'A new update for ${APP_NAME} is available!', (0.0, 1.0, 0.0)
+            )
+            bs.screenmessage(
+                '(You can disable automatic update checks in'
+                ' Settings->Advanced)',
+                (1.0, 1.0, 0.0),
+            )
+            SEND_UPDATE_MESSAGE = False
+            with self.context:
+                bs.getsound('ding').play(host_only=True)
 
 
 class NewsDisplay:
