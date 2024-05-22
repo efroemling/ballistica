@@ -875,7 +875,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             )
 
     def _on_update_check_response(self, data: dict[str, Any] | None) -> None:
-        global SEND_UPDATE_MESSAGE
+        global SEND_UPDATE_MESSAGE  # pylint: disable=global-statement
         if (
             SEND_UPDATE_MESSAGE
             and data
