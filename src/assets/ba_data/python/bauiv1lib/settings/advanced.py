@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """UI functionality for advanced settings."""
 
 from __future__ import annotations
@@ -900,6 +901,7 @@ class AdvancedSettingsWindow(bui.Window):
 
     def _restore_state(self) -> None:
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
         try:
             assert bui.app.classic is not None
             sel_name = bui.app.ui_v1.window_states.get(type(self), {}).get(
