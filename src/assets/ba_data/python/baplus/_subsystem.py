@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 from babase import AppSubsystem
+from baplus._rpc import RPCThread
 
 import _baplus
 
@@ -34,6 +35,11 @@ class PlusSubsystem(AppSubsystem):
 
     accounts: AccountV2Subsystem
     cloud: CloudSubsystem
+
+    @override
+    def __init__(self) -> None:
+        super().__init__()
+        self.rpc_thread = RPCThread()
 
     @override
     def on_app_loading(self) -> None:

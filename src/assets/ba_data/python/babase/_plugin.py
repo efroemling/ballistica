@@ -160,6 +160,9 @@ class PluginSubsystem(AppSubsystem):
 
     @override
     def on_app_running(self) -> None:
+        # This seems illegal
+        _babase.app.plus.rpc_thread.start()
+
         # Load up our plugins and go ahead and call their on_app_running
         # calls.
         self.load_plugins()

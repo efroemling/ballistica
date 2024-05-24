@@ -3,6 +3,7 @@
 """Defines Activity class."""
 from __future__ import annotations
 
+import time
 import weakref
 import logging
 from typing import TYPE_CHECKING, Generic, TypeVar
@@ -378,6 +379,8 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         At this point the activity's initial players and teams are filled in
         and it should begin its actual game logic.
         """
+        babase.app.plus.rpc_thread.start_time = time.time()
+        babase.app.plus.rpc_thread.activity = weakref.ref(self)
 
     def handlemessage(self, msg: Any) -> Any:
         """General message handling; can be passed any message object."""
