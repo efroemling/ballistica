@@ -299,7 +299,8 @@ def check_python_files(self: ProjectUpdater) -> None:
             'mali_texture_compression_tool',
             'nvidia_texture_tools',
             'powervr_tools',
-        }
+        },
+        'src/assets/ba_data/python': {'baplus/pypresence'},
     }
     for dir_of_packages in dirs_of_packages:
         for name in os.listdir(os.path.join(self.projroot, dir_of_packages)):
