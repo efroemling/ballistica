@@ -16,7 +16,7 @@ import bauiv1 as bui
 if TYPE_CHECKING:
     from typing import Any
 
-_send_update_message = True
+SEND_UPDATE_MESSAGE = True
 
 
 class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
@@ -875,9 +875,9 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             )
 
     def _on_update_check_response(self, data: dict[str, Any] | None) -> None:
-        global _send_update_message  # pylint: disable=global-statement
+        global SEND_UPDATE_MESSAGE  # pylint: disable=global-statement
         if (
-            _send_update_message
+            SEND_UPDATE_MESSAGE
             and data
             and data.get('build_number', 0) > bs.app.env.engine_build_number
         ):
@@ -889,7 +889,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 ' Settings->Advanced)',
                 (1.0, 1.0, 0.0),
             )
-            _send_update_message = False
+            SEND_UPDATE_MESSAGE = False
             with self.context:
                 bs.getsound('ding').play(host_only=True)
 
