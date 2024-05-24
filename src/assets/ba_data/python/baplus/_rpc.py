@@ -1,25 +1,26 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=missing-function-docstring, missing-class-docstring
 """Setup for handling RPC (Discord)"""
 
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import json
 import uuid
 import threading
 import time
 
-from baplus.pypresence import Presence
+from baplus.pypresence.presence import Presence
 
 if TYPE_CHECKING:
     from typing import Any
 
 
 class RPCThread(threading.Thread):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.rpc: Presence | None = None
         self.start_time: float = 0.0
@@ -34,9 +35,10 @@ class RPCThread(threading.Thread):
         self.fb_state: str | None = None
         self.fb_details: str | None = None
         self.fb_party_join: str | None = None
-        self.activity = None
+        self.activity: Any = None
 
-    def run(self):
+    @override
+    def run(self) -> None:
         import bascenev1 as bs
 
         if bs.app.env.gui:
@@ -67,6 +69,8 @@ class RPCThread(threading.Thread):
                             time.sleep(5)
 
     def update_rpc(self) -> None:
+        assert self.rpc is not None
+
         try:
             import bascenev1 as bs
 
@@ -74,14 +78,21 @@ class RPCThread(threading.Thread):
                 bs.Call(
                     self.handle_rpc_event,
                     self.rpc.update(
-                        state=self.state or self.fb_state,
-                        details=self.details or self.fb_details,
-                        start=self.start_time if self.show_start_time else None,
+                        state=self.state or self.fb_state,  # type: ignore
+                        details=self.details or self.fb_details,  # type: ignore
+                        start=(
+                            self.start_time
+                            if self.show_start_time
+                            else None  # type: ignore
+                        ),
                         large_image='overclockedlogo4',
                         large_text='BombSquad',
-                        party_id=self.party_id,
-                        party_size=self.party_size,
-                        join=self.party_join or self.fb_party_join,
+                        party_id=self.party_id,  # type: ignore
+                        party_size=self.party_size,  # type: ignore
+                        join=(
+                            self.party_join
+                            or self.fb_party_join  # type: ignore
+                        ),
                     ),
                 ),
                 True,
@@ -90,7 +101,8 @@ class RPCThread(threading.Thread):
             self.connected = False
 
     def handle_rpc_event(self, data: Any) -> None:
-        # print(data)
+        assert self.rpc is not None
+
         try:
             import bascenev1 as bs
 
@@ -131,8 +143,11 @@ class RPCThread(threading.Thread):
             logging.warning('Error in RPC thread')
 
     def update_rpc_data(self) -> None:
+        # pylint: disable=too-many-branches
         try:
             import bascenev1 as bs
+
+            assert bs.app.classic is not None
 
             self.state = None
             self.details = None
@@ -163,7 +178,7 @@ class RPCThread(threading.Thread):
                     'bsAccessCheck',
                     {
                         'port': bs.get_game_port(),
-                        'b': bs.app.env.build_number,
+                        'b': bs.app.env.engine_build_number,
                     },
                     callback=bs.WeakCall(self.set_ip),
                 )
@@ -219,8 +234,8 @@ class RPCThread(threading.Thread):
             self.fb_party_join = None
 
     def connect_rpc(self) -> None:
-        self.rpc = Presence('1167093983579738112')
-        self.rpc.connect()
+        self.rpc = Presence('1167093983579738112')  # type: ignore
+        self.rpc.connect()  # type: ignore
         for event in ['ACTIVITY_JOIN', 'ACTIVITY_JOIN_REQUEST']:
             self.rpc.send_data(
                 1,
