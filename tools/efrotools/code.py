@@ -315,8 +315,6 @@ def _should_include_script(fnamefull: str) -> bool:
     fname = os.path.basename(fnamefull)
 
     if fname.endswith('.py'):
-        if '/baplus/pypresence/' in fname:
-            return False
         return True
 
     # Look for 'binary' scripts with no extensions too.
