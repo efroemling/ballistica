@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+# pylint: skip-file
 """Util functions that are needed but messy."""
 import asyncio
 import json
@@ -47,7 +49,7 @@ def get_ipc_path(pipe=None):
         paths = ['.']
     else:
         return
-    
+
     for path in paths:
         full_path = os.path.abspath(os.path.join(tempdir, path))
         if sys.platform == 'win32' or os.path.isdir(full_path):

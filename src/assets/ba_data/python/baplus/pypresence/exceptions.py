@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+# pylint: skip-file
 class PyPresenceException(Exception):
     def __init__(self, message: str = None):
         if message is None:

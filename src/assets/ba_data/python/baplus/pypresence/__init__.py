@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+# pylint: skip-file
 """
 Python RPC Client for Discord
 -----------------------------

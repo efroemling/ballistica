@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+# pylint: skip-file
 import asyncio
 import inspect
 import struct
@@ -52,7 +54,7 @@ class Client(BaseClient):
                 self.sock_reader._transport = None
             else:
                 self.sock_reader._paused = True
-        
+
         end = 0
         while end < len(data):
             # While chunks are available in data
@@ -134,7 +136,7 @@ class Client(BaseClient):
                                        small_text=small_text, party_id=party_id, party_size=party_size, join=join,
                                        spectate=spectate, match=match, buttons=buttons, instance=instance,
                                        activity=True)
-        
+
         self.send_data(1, payload)
         return self.loop.run_until_complete(self.read_output())
 
