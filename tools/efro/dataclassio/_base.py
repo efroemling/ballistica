@@ -61,6 +61,29 @@ class IOExtendedData:
         type-safe form.
         """
 
+    # pylint: disable=useless-return
+
+    @classmethod
+    def handle_input_error(cls, exc: Exception) -> Self | None:
+        """Called when an error occurs during input decoding.
+
+        This allows a type to optionally return substitute data
+        to be used in place of the failed decode. If it returns
+        None, the original exception is re-raised.
+
+        It is generally a bad idea to apply catch-alls such as this,
+        as it can lead to silent data loss. This should only be used
+        in specific cases such as user settings where an occasional
+        reset is harmless and is preferable to keeping all contained
+        enums and other values backward compatible indefinitely.
+        """
+        del exc  # Unused.
+
+        # By default we let things fail.
+        return None
+
+    # pylint: enable=useless-return
+
 
 EnumT = TypeVar('EnumT', bound=Enum)
 
