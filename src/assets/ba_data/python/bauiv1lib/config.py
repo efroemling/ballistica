@@ -109,6 +109,9 @@ class ConfigNumberEdit:
             self._value = bui.app.config.resolve(configkey)
         except ValueError:
             self._value = bui.app.config.get(configkey, fallback_value)
+        self._value = (self._minval if self._minval > self._value else
+                       self._maxval if self._maxval < self._value else
+                       self._value)
         self._as_percent = as_percent
         self._f = f
 
