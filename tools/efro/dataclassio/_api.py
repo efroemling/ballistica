@@ -44,6 +44,7 @@ def dataclass_to_dict(
     obj: Any,
     codec: Codec = Codec.JSON,
     coerce_to_float: bool = True,
+    discard_extra_attrs: bool = False,
 ) -> dict:
     """Given a dataclass object, return a json-friendly dict.
 
@@ -62,7 +63,11 @@ def dataclass_to_dict(
     """
 
     out = _Outputter(
-        obj, create=True, codec=codec, coerce_to_float=coerce_to_float
+        obj,
+        create=True,
+        codec=codec,
+        coerce_to_float=coerce_to_float,
+        discard_extra_attrs=discard_extra_attrs,
     ).run()
     assert isinstance(out, dict)
     return out
@@ -157,14 +162,21 @@ def dataclass_from_json(
 
 
 def dataclass_validate(
-    obj: Any, coerce_to_float: bool = True, codec: Codec = Codec.JSON
+    obj: Any,
+    coerce_to_float: bool = True,
+    codec: Codec = Codec.JSON,
+    discard_extra_attrs: bool = False,
 ) -> None:
     """Ensure that values in a dataclass instance are the correct types."""
 
     # Simply run an output pass but tell it not to generate data;
     # only run validation.
     _Outputter(
-        obj, create=False, codec=codec, coerce_to_float=coerce_to_float
+        obj,
+        create=False,
+        codec=codec,
+        coerce_to_float=coerce_to_float,
+        discard_extra_attrs=discard_extra_attrs,
     ).run()
 
 
