@@ -105,6 +105,8 @@ from batools.pcommands import (
     prefab_run_var,
     prefab_binary_path,
     build_docker,
+    build_docker_arm64,
+    build_docker_amd64,
     make_prefab,
     lazybuild,
     efro_gradle,

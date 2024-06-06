@@ -673,6 +673,17 @@ def build_docker() -> None:
 
     batools.build.docker_build()
 
+def build_docker_arm64() -> None:
+    """Build the docker image with bombsquad cmake arm64 server."""
+    import batools.build
+
+    batools.build.docker_build(platform='linux/arm64')
+
+def build_docker_amd64() -> None:
+    """Build the docker image with bombsquad cmake x86_64 server."""
+    import batools.build
+
+    batools.build.docker_build(platform='linux/amd64')
 
 def make_prefab() -> None:
     """Run prefab builds for the current platform."""

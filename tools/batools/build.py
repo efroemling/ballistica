@@ -649,9 +649,9 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
 def _docker_build(
     image_name: str,
     dockerfile_dir: str,
-    bombsquad_version: str | None = None,
-    bombsquad_build: str | int | None = None,
     cmake_build_type: str | None = None,
+    labels: dict[str, str] | None = None,
+    platform: str | None = None,
 ) -> None:
 
     build_cmd = [
@@ -664,25 +664,23 @@ def _docker_build(
         dockerfile_dir,
         '.',
     ]
-    if bombsquad_version is not None:
-        build_cmd = build_cmd + [
-            '--build-arg',
-            f'bombsquad_version={bombsquad_version}',
-        ]
-    if bombsquad_build is not None:
-        build_cmd = build_cmd + [
-            '--build-arg',
-            f'bombsquad_build={str(bombsquad_build)}',
-        ]
+
     if cmake_build_type is not None:
         build_cmd = build_cmd + [
             '--build-arg',
             f'cmake_build_type={cmake_build_type}',
         ]
+    if platform is not None:
+        build_cmd = build_cmd + [
+            '--platform',
+            platform,
+        ]
+    if labels is not None:
+        build_cmd = build_cmd + [ f'--label={i}={labels[i]}' for i in labels.keys() ]
     subprocess.run(build_cmd, check=True)
 
 
-def docker_build() -> None:
+def docker_build(platform : str | None = None) -> None:
     """Build docker image."""
     # todo: add option to toggle between prefab and cmake
     from batools import version
@@ -691,12 +689,13 @@ def docker_build() -> None:
     image_name = 'bombsquad_server'
 
     print(
-        f'Building docker image {image_name}'
-        + 'version {version_num}:{build_num}'
+        f'Building docker image {image_name} '
+        + f'version {version_num}:{build_num}'
     )
     _docker_build(
         image_name,
-        'config/docker/Dockerfile',
-        version_num,
-        build_num,
+        'config/docker/Dockerfile_test',
+        labels={'bombsquad_version':version_num,
+                'bombsquad_build':build_num},
+        platform=platform
     )

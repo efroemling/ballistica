@@ -24,7 +24,7 @@ RUN apt-get update -y && \
         python3.12-venv \
         python3-pip \
         libsdl2-dev \
-        libvorbisfile3 \
+        # libvorbisfile3 \
         freeglut3-dev \
         libopenal-dev \
         make \
@@ -54,13 +54,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Renew the arg
 ARG cmake_build_type
-LABEL BUILD_TYPE=${cmake_build_type}
-
-ARG bombsquad_build=N/A
-LABEL BOMBSQUAD_BUILD=${bombsquad_build}
-
-ARG bombsquad_version=N/A
-LABEL BOMBSQUAD_VERSION=${bombsquad_version}
+LABEL BOMBSQUAD_BUILD_TYPE=${cmake_build_type}
 
 # Install runtime dependencies
 RUN apt-get update -y && \

@@ -1,0 +1,23 @@
+name: TEST
+
+on:
+  push:
+
+jobs:
+    make_docker_image_arm64:
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v4
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.12'
+        - name: Setup project environment
+          run: make env
+        - name: Make the build
+          run: make docker-build-arm64 && make docker-save
+        - name: Upload the build
+          uses: actions/upload-artifact@v4
+          with:
+            name: docker_server(release)
+            path: build/docker/bombsquad_server_docker.tar
