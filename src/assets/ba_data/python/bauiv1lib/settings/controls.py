@@ -223,7 +223,7 @@ class ControlsSettingsWindow(bui.Window):
         if show_keyboard:
             self._keyboard_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=((width - button_width) / 2 + 5, v),
+                position=((width - button_width) / 2 - 5, v),
                 size=(button_width, 43),
                 autoselect=True,
                 label=bui.Lstr(resource=self._r + '.configureKeyboardText'),
