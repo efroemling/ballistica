@@ -656,7 +656,7 @@ def _docker_build(
 
     build_cmd = [
         'docker',
-        'image',
+        'buildx',
         'build',
         '-t',
         image_name,

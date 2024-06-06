@@ -5,11 +5,8 @@ ARG cmake_build_type=Release
 ARG base_image=ubuntu:24.04
 
 #-------------------------------BUILDER--------------------------------
-# Use QEMU for cross-compilation support
-FROM --platform=linux/amd64 multiarch/qemu-user-static as qemu
-
 # Start with the base image
-FROM ${base_image} AS builder
+FROM --platform=linux/arm64 ${base_image} AS builder
 
 # Renew the ARGs
 ARG cmake_build_type
@@ -19,9 +16,6 @@ ENV LANG en_US.utf8
 ENV LANGUAGE=en_US
 ENV DEBIAN_FRONTEND=noninteractive
 ENV CMAKE_BUILD_TYPE=${cmake_build_type}
-
-# Copy QEMU binary for ARM64 emulation
-COPY --from=qemu /usr/bin/qemu-aarch64-static /usr/bin/
 
 # Enable ARM64 architecture and update package lists
 RUN dpkg --add-architecture arm64 && apt-get update -y
@@ -37,18 +31,18 @@ RUN addgroup --system systemd-journal && \
 RUN mkdir -p /etc/systemd/system && \
     echo "exit 0" > /usr/sbin/policy-rc.d && chmod +x /usr/sbin/policy-rc.d && \
     apt-get install -y --no-install-recommends \
-    python3.12-dev:arm64 \
-    python3.12-venv:arm64 \
-    python3-pip:arm64 \
-    libsdl2-dev:arm64 \
-    freeglut3-dev:arm64 \
-    libopenal-dev:arm64 \
-    make:arm64 \
-    curl:arm64 \
-    rsync:arm64 \
-    clang-format:arm64 \
-    cmake:arm64 \
-    libvorbis-dev:arm64 && \
+    python3.12-dev \
+    python3.12-venv \
+    python3-pip \
+    libsdl2-dev \
+    freeglut3-dev \
+    libopenal-dev \
+    make \
+    curl \
+    rsync \
+    clang-format \
+    cmake \
+    libvorbis-dev && \
     rm /usr/sbin/policy-rc.d
 
 # Copy source code
