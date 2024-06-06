@@ -14,6 +14,8 @@ jobs:
             python-version: '3.12'
         - name: Setup project environment
           run: make env
+        - name: get binfmt image
+          run: docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
         - name: Make the build
           run: make docker-build-arm64 && make docker-save
         - name: Upload the build
