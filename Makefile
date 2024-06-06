@@ -1187,10 +1187,10 @@ clion-staging: assets-cmake resources meta
 docker-build: assets-cmake
 	$(PCOMMAND) build_docker
 
-docker-build-arm64:
+docker-build-arm64: assets-cmake
 	$(PCOMMAND) build_docker_arm64 
 
-docker-build-x86_64:
+docker-build-x86_64: assets-cmake
 	$(PCOMMAND) build_docker_amd64 
 
 # Run the bombsquad_server image
