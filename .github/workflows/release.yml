@@ -208,7 +208,7 @@ jobs:
         allowUpdates: true
         artifacts: windows_x86_server_debug.tar
     
-  release_docker_image:
+  release_docker_gui_image:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -219,12 +219,38 @@ jobs:
     - name: Setup project environment
       run: make env
     - name: Make the build
-      run: make docker-save
+      run: |
+        make docker-gui-release
+        make docker-save
+    - name: Rename the build
+      run: mv build/docker/bombsquad_gui_release_docker.tar build/docker/bombsquad_docker_gui.tar
     - name: Upload the build
       uses: ncipollo/release-action@v1
       with:
         allowUpdates: true
-        artifacts: build/docker/bombsquad_server_docker.tar
+        artifacts: build/docker/bombsquad_docker_gui.tar
+    
+  release_docker_server_image:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: |
+        make docker-server-release
+        make docker-save
+    - name: Rename the build
+      run: mv build/docker/bombsquad_server_release_docker.tar build/docker/bombsquad_docker_server.tar
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: true
+        artifacts: build/docker/bombsquad_docker_server.tar
 
   release_sphinx_docs:
     runs-on: ubuntu-latest

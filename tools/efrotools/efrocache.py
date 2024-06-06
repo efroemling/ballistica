@@ -28,8 +28,6 @@ from efro.dataclassio import (
 )
 from efro.terminal import Clr
 
-from efrotools.util import is_wsl_windows_build_path
-
 
 if TYPE_CHECKING:
     import efro.terminal
@@ -661,6 +659,8 @@ def _write_cache_file(staging_dir: str, fname: str) -> tuple[str, str, str]:
 
 def _cache_prefix_for_file(fname: str) -> bytes:
     # pylint: disable=global-statement
+    from efrotools.util import is_wsl_windows_build_path
+
     global g_cache_prefix_exec
     global g_cache_prefix_noexec
 
