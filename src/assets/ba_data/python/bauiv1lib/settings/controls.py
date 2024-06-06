@@ -257,7 +257,8 @@ class ControlsSettingsWindow(bui.Window):
             )
             v -= spacing
             bui.widget(
-                edit=self._keyboard_2_button, left_widget=self._keyboard_2_button
+                edit=self._keyboard_2_button,
+                left_widget=self._keyboard_2_button
             )
         if show_space_2:
             v -= space_height
