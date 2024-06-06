@@ -236,6 +236,28 @@ class _Inputter:
         sets should be passed as lists, enums should be passed as their
         associated values, and nested dataclasses should be passed as dicts.
         """
+        try:
+            return self._do_dataclass_from_input(cls, fieldpath, values)
+        except Exception as exc:
+            # Extended data types can choose to sub default data in case
+            # of failures (generally not a good idea but occasionally
+            # useful).
+            if issubclass(cls, IOExtendedData):
+                fallback = cls.handle_input_error(exc)
+                if fallback is None:
+                    raise
+                # Make sure fallback gave us the right type.
+                if not isinstance(fallback, cls):
+                    raise RuntimeError(
+                        f'handle_input_error() was expected to return a {cls}'
+                        f' but returned a {type(fallback)}.'
+                    ) from exc
+                return fallback
+            raise
+
+    def _do_dataclass_from_input(
+        self, cls: type, fieldpath: str, values: dict
+    ) -> Any:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
@@ -377,6 +399,7 @@ class _Inputter:
                 create=False,
                 codec=self._codec,
                 coerce_to_float=self._coerce_to_float,
+                discard_extra_attrs=False,
             )
         self._soft_default_validator.soft_default_check(
             value=value, anntype=anntype, fieldpath=fieldpath
