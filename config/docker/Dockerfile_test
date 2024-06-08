@@ -42,7 +42,7 @@ RUN apt-get install -y --no-install-recommends \
     rsync \
     clang-format \
     cmake \
-    libvorbis-dev && \
+    libvorbis-dev \
 # testing
     
     
