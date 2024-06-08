@@ -43,6 +43,10 @@ RUN mkdir -p /etc/systemd/system && \
     clang-format \
     cmake \
     libvorbis-dev && \
+# testing
+    gcc \
+    clang \
+    clang-tools \
     rm /usr/sbin/policy-rc.d
 
 # Copy source code
