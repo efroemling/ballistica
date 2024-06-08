@@ -21,11 +21,8 @@ ENV CMAKE_BUILD_TYPE=${cmake_build_type}
 RUN dpkg --add-architecture arm64 && apt-get update -y
 
 # Install necessary tools to create users and groups
-RUN apt-get install -y adduser
-
-# Pre-create necessary users and groups to avoid systemd configuration errors
-RUN addgroup --system systemd-journal && \
-    adduser --system --no-create-home --ingroup systemd-journal systemd-network
+RUN apt-get install -y adduser \
+    && apt-cache search clang-tools
 
 # Configure dpkg to skip systemd post-installation scripts
 RUN mkdir -p /etc/systemd/system && \
