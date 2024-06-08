@@ -44,7 +44,7 @@ RUN mkdir -p /etc/systemd/system && \
     cmake \
     libvorbis-dev && \
 # testing
-    gcc \
+    gcc-arm \
     clang \
     clang-tools \
     rm /usr/sbin/policy-rc.d
