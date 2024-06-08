@@ -31,7 +31,8 @@ RUN addgroup --system systemd-journal && \
 RUN mkdir -p /etc/systemd/system && \
     echo "exit 0" > /usr/sbin/policy-rc.d && chmod +x /usr/sbin/policy-rc.d && \
     apt-get install -y --no-install-recommends \
-    gcc-arm* 
+    gcc-arm* \
+    clang-arm*
 RUN apt-get install -y --no-install-recommends \
     python3.12-dev \
     python3.12-venv \
@@ -47,7 +48,7 @@ RUN apt-get install -y --no-install-recommends \
     libvorbis-dev && \
 # testing
     
-    clang \
+    
     clang-tools \
     rm /usr/sbin/policy-rc.d
 
