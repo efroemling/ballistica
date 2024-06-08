@@ -31,8 +31,7 @@ RUN addgroup --system systemd-journal && \
 RUN mkdir -p /etc/systemd/system && \
     echo "exit 0" > /usr/sbin/policy-rc.d && chmod +x /usr/sbin/policy-rc.d && \
     apt-get install -y --no-install-recommends \
-    gcc-arm* \
-    clang-arm*
+    gcc-arm*
 
 RUN apt-get install -y --no-install-recommends \
     python3.12-dev \
