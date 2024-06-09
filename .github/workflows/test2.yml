@@ -1,0 +1,25 @@
+name: TEST2
+
+on:
+  push:
+
+jobs:
+    make_docker_image_arm64:
+        runs-on: macos-latest
+        steps:
+        - uses: actions/checkout@v4
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.12'
+        - name: Setup project environment
+          run: make env
+        - name: get binfmt image
+          run: docker run --rm --privileged docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64
+        - name: Make the build
+          run: make docker-build-arm64 && make docker-save
+        - name: Upload the build
+          uses: actions/upload-artifact@v4
+          with:
+            name: docker_server(release)
+            path: build/docker/bombsquad_server_docker.tar
