@@ -26,6 +26,7 @@ jobs:
             fi
             export PATH="/opt/homebrew/bin:$PATH"
             docker buildx install
+            brew services start docker
         - name: Setup project environment
           run: make env
         - name: Make the build
