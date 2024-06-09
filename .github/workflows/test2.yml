@@ -20,9 +20,6 @@ jobs:
             echo "\"cliPluginsExtraDirs\": [\"$HOMEBREW_PREFIX/lib/docker/cli-plugins\"]" > ~/.docker/config.json
             echo $USER
             cat ~/.docker/config.json
-            export PATH="opt/homebrew/lib/docker/cli-plugins:$PATH"
-            docker buildx install
-            docker buildx version
         - name: Setup project environment
           run: make env
         - name: Make the build
