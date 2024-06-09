@@ -17,6 +17,7 @@ jobs:
             brew install rsync clang-format 
             brew install --cask docker
             brew install docker-buildx
+            export PATH="/opt/homebrew/bin:$PATH"
             docker buildx install
             docker buildx version
         - name: Setup project environment
