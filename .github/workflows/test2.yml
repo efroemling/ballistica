@@ -16,10 +16,16 @@ jobs:
           run: |
             brew install rsync clang-format 
             brew install --cask docker
-            brew install docker-buildx
-            echo "\"cliPluginsExtraDirs\": [\"$HOMEBREW_PREFIX/lib/docker/cli-plugins\"]" > ~/.docker/config.json
-            echo $USER
-            cat ~/.docker/config.json
+            brew install docker-buildx      
+            mkdir -p ~/.docker       
+            if [ ! -f ~/.docker/config.json ]; then
+              echo '{"cliPluginsExtraDirs":["/opt/homebrew/lib/docker/cli-plugins"]}' > ~/.docker/config.json
+            else
+              cat ~/.docker/config.json | jq '.cliPluginsExtraDirs |= .+ ["/opt/homebrew/lib/docker/cli-plugins"]' > ~/.docker/config_tmp.json
+              mv ~/.docker/config_tmp.json ~/.docker/config.json
+            fi
+            export PATH="/opt/homebrew/bin:$PATH"
+            docker buildx install
         - name: Setup project environment
           run: make env
         - name: Make the build
