@@ -16,6 +16,7 @@ jobs:
           run: |
             brew install rsync clang-format 
             brew install --cask docker
+            brew install docker-buildx
         - name: Setup project environment
           run: make env
         - name: Make the build
