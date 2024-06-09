@@ -658,9 +658,9 @@ def _docker_build(
         'docker',
         'buildx',
         'build',
-        '-t',
+        '--tag',
         image_name,
-        '-f',
+        '--file',
         dockerfile_dir,
         '.',
     ]
