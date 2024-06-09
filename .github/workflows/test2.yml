@@ -16,7 +16,6 @@ jobs:
           run: |
             brew install rsync clang-format 
             brew install --cask docker
-            docker ps
             brew install docker-buildx      
             mkdir -p ~/.docker       
             if [ ! -f ~/.docker/config.json ]; then
@@ -27,6 +26,9 @@ jobs:
             fi
             export PATH="/opt/homebrew/bin:$PATH"
             docker buildx install
+            docker buildx create --name mybuilder --use
+            docker buildx inspect --bootstrap
+            docker buildx version
             open /Applications/Docker.app || brew services start docker
         - name: Setup project environment
           run: make env
