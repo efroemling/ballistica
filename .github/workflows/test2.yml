@@ -13,7 +13,9 @@ jobs:
           with:
             python-version: '3.12'
         - name: setup dependencies
-          run: brew install rsync clang-format docker --cask
+          run: |
+            brew install rsync clang-format 
+            brew install --cask docker
         - name: Setup project environment
           run: make env
         - name: Make the build
