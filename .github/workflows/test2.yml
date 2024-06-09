@@ -16,7 +16,8 @@ jobs:
           run: |
             brew install rsync clang-format 
             brew install --cask docker
-            brew install docker-buildx      
+            brew install docker-buildx
+            dockerd
             mkdir -p ~/.docker       
             if [ ! -f ~/.docker/config.json ]; then
               echo '{"cliPluginsExtraDirs":["/opt/homebrew/lib/docker/cli-plugins"]}' > ~/.docker/config.json
