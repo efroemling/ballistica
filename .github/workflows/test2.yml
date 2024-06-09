@@ -13,7 +13,7 @@ jobs:
           with:
             python-version: '3.12'
         - name: setup dependencies
-          run: brew install rsync clang-format
+          run: brew install rsync clang-format docker
         - name: Setup project environment
           run: make env
         - name: get binfmt image
