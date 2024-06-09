@@ -17,6 +17,7 @@ jobs:
             brew install rsync clang-format 
             brew install --cask docker
             brew install docker-buildx
+            cat ~/.docker/config.json
             export PATH="opt/homebrew/lib/docker/cli-plugins:$PATH"
             docker buildx install
             docker buildx version
