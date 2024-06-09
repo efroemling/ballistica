@@ -18,6 +18,7 @@ jobs:
             brew install --cask docker
             brew install docker-buildx
             echo "\"cliPluginsExtraDirs\": [\"$HOMEBREW_PREFIX/lib/docker/cli-plugins\"]" > ~/.docker/config.json
+            echo $USER
             cat ~/.docker/config.json
             export PATH="opt/homebrew/lib/docker/cli-plugins:$PATH"
             docker buildx install
