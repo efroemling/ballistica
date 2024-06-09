@@ -13,7 +13,7 @@ jobs:
           with:
             python-version: '3.12'
         - name: setup dependencies
-          run: brew install rsync clang-format docker
+          run: brew install rsync clang-format colima && colima start
         - name: Setup project environment
           run: make env
         - name: get binfmt image
