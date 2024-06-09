@@ -13,7 +13,7 @@ jobs:
           with:
             python-version: '3.12'
         - name: setup dependencies
-          run: brew install rsync clang-format docker colima && colima start
+          run: brew install rsync clang-format docker --cask
         - name: Setup project environment
           run: make env
         - name: Make the build
