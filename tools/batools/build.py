@@ -691,14 +691,27 @@ def _docker_build(
     subprocess.run(build_cmd, check=True)
 
 
-def docker_build(platform : str | None = None) -> None:
-    """Build docker image."""
-    # todo: add option to toggle between prefab and cmake
+def docker_build(platform : str | None = 'linux/amd64',
+                 headless_build: bool | str | None = None,
+                 build_type: str | None = None) -> None:
+    """Build docker image.
+    platform == 'linux/arm64' or platform == 'linux/amd64'"""
     from batools import version
 
     version_num, build_num = version.get_current_version()
-    image_name = 'bombsquad_server'
-    config_file = 'config/docker/Dockerfile'
+    if headless_build is None:
+        headless_build = True
+    if build_type is None:
+        build_type = 'Release'
+
+    image_name = get_docker_image_name(headless_build=headless_build,
+                                       build_type=build_type)
+
+    if (platform is not None and 'arm64' in platform): 
+        config_file = 'config/docker/Dockerfile_arm64'
+    else:
+        config_file = 'config/docker/Dockerfile'
+
     print(
         f'Building docker image {image_name} '
         + f'version {version_num}:{build_num}'
@@ -710,5 +723,17 @@ def docker_build(platform : str | None = None) -> None:
         labels={'bombsquad_version':version_num,
                 'bombsquad_build':build_num},
         platform=platform,
-        headless_build=False
+        headless_build=headless_build,
+        cmake_build_type=build_type
     )
+
+def get_docker_image_name(headless_build: bool | str,
+                          build_type: str ) -> str:
+    name = 'bombsquad'
+    if headless_build:
+        name += '_server'
+    if 'release' in build_type.lower():
+        name += '_release'
+    else:
+        name += '_debug'
+    return name

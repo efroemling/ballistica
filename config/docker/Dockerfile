@@ -1,8 +1,8 @@
 # if provided it will make debug build
 ARG cmake_build_type=Release
-# wether to make gui or headless build(defaults to headless)
+# whether to make GUI or headless build (defaults to headless)
 ARG headless_build=1
-# system to start with  the build with
+# system to start with the build with
 # currently will break for other images
 ARG base_image=ubuntu:24.04
 
@@ -27,7 +27,6 @@ RUN apt-get update -y && \
         python3.12-venv \
         python3-pip \
         libsdl2-dev \
-        # libvorbisfile3 \
         libglut-dev \
         libopenal-dev \
         libvorbis-dev \
@@ -35,23 +34,23 @@ RUN apt-get update -y && \
         curl \
         rsync \
         clang-format \
-        cmake 
+        cmake
+
 # Copy source code
 COPY ./ /ballistica
 
 WORKDIR /ballistica
 
 # Compile the application
-RUN mkdir /ballistica_cmake \
-# ballisticakit_headless & ballisticakit in staged is a symlink
-    && if [$HEADLESS_BUILD!=0]; then \
-        make cmake-server-build \
-        && mv build/cmake/*/ballisticakit_headless build/cmake/*/staged/dist ;\
+RUN mkdir /ballistica_cmake && \
+    if [ "$HEADLESS_BUILD" != "0" ]; then \
+        make cmake-server-build && \
+        mv build/cmake/*/ballisticakit_headless build/cmake/*/staged/dist; \
     else \
-        make cmake-build \
-        && mv build/cmake/*/ballisticakit build/cmake/*/staged/ ;\
-    fi \
-    && mv build/cmake/*/staged/* /ballistica_cmake
+        make cmake-build && \
+        mv build/cmake/*/ballisticakit build/cmake/*/staged/; \
+    fi && \
+    mv build/cmake/*/staged/* /ballistica_cmake
 
 #-------------------------------RUNNER--------------------------------
 # Create a new stage for the runtime environment
@@ -64,7 +63,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Renew the arg
 ARG headless_build
 ENV HEADLESS_BUILD=${headless_build}
-ENV HEADLESS_BUILD=${headless_build}
 ARG cmake_build_type
 
 LABEL BOMBSQUAD_BUILD_TYPE=${cmake_build_type}
@@ -72,15 +70,16 @@ LABEL BOMBSQUAD_BUILD_TYPE=${cmake_build_type}
 # Install runtime dependencies
 RUN apt-get update -y && \
     apt-get install -y  \
-        python3.12-dev \
-    && if [$HEADLESS_BUILD!=0]; then \
+        python3.12-dev && \
+    if [ "$HEADLESS_BUILD" = "0" ]; then \
         apt-get install -y \
             libsdl2-dev \
             libvorbis-dev \
-            libglut-dev ;\
-    fi \
-    && rm -rf /var/lib/apt/lists/* \
-    && python3.12 -c "import uuid;print(uuid.uuid4())">/etc/machine-id
+            libglut-dev \
+            libopenal-dev; \
+    fi && \
+    rm -rf /var/lib/apt/lists/* && \
+    dbus-uuidgen > /etc/machine-id
 
 # Copy the compiled application from the builder stage
 COPY --from=builder /ballistica_cmake \

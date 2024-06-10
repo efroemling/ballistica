@@ -1183,20 +1183,27 @@ clion-staging: assets-cmake resources meta
 #                                                                              #
 ################################################################################
 
-# Build the docker image named bombsquad_server
-docker-build: assets-cmake
-	$(PCOMMAND) build_docker
+# Build the docker image
+docker-gui-release: assets-cmake
+	$(PCOMMAND) build_docker_gui_release
 
-docker-build-arm64: assets-cmake
+# Build the docker image 
+docker-gui-debug: assets-cmake
+	$(PCOMMAND) build_docker_gui_debug
+
+# Build the docker image
+docker-server-release: assets-cmake
+	$(PCOMMAND) build_docker_server_release,
+
+# Build the docker image
+docker-server-debug: assets-cmake
+	$(PCOMMAND) build_docker_server_debug
+
+# Build the docker image for arm64
+docker-arm64-gui-release: assets-cmake
 	$(PCOMMAND) build_docker_arm64 
 
-docker-build-x86_64: assets-cmake
-	$(PCOMMAND) build_docker_amd64 
-
-# Run the bombsquad_server image
-docker-run:
-	docker run -it bombsquad_server
-
+# TODO: FIX this
 # Save the bombsquad_server docker image to build/docker/bombsquad_server_docker.tar
 docker-save:
 	mkdir -p build/docker/
