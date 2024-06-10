@@ -652,6 +652,7 @@ def _docker_build(
     cmake_build_type: str | None = None,
     labels: dict[str, str] | None = None,
     platform: str | None = None,
+    headless_build: bool | None = None,
 ) -> None:
 
     build_cmd = [
@@ -662,6 +663,7 @@ def _docker_build(
         image_name,
         '--file',
         dockerfile_dir,
+        '--load',
         '.',
     ]
 
@@ -669,6 +671,15 @@ def _docker_build(
         build_cmd = build_cmd + [
             '--build-arg',
             f'cmake_build_type={cmake_build_type}',
+        ]
+    if headless_build is not None:
+        if headless_build:
+            headless_build = "1"
+        else:
+            headless_build = "0"
+        build_cmd = build_cmd + [
+            '--build-arg',
+            f'headless_build={headless_build}',
         ]
     if platform is not None:
         build_cmd = build_cmd + [
@@ -687,15 +698,17 @@ def docker_build(platform : str | None = None) -> None:
 
     version_num, build_num = version.get_current_version()
     image_name = 'bombsquad_server'
-
+    config_file = 'config/docker/Dockerfile'
     print(
         f'Building docker image {image_name} '
         + f'version {version_num}:{build_num}'
     )
+
     _docker_build(
         image_name,
-        'config/docker/Dockerfile_test',
+        config_file,
         labels={'bombsquad_version':version_num,
                 'bombsquad_build':build_num},
-        platform=platform
+        platform=platform,
+        headless_build=False
     )

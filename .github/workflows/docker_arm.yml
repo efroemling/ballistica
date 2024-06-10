@@ -1,4 +1,4 @@
-name: TEST
+name: Docker-arm
 
 on:
   push:
