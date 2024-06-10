@@ -91,4 +91,4 @@ WORKDIR /home/ubuntu/ballistica
 EXPOSE 43210/udp
 
 # Set the default command to run the application
-CMD [ "./ballisticakit_server" ]
+CMD [ "./ballisticakit*" ]

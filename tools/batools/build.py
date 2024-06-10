@@ -732,6 +732,8 @@ def get_docker_image_name(headless_build: bool | str,
     name = 'bombsquad'
     if headless_build:
         name += '_server'
+    else:
+        name += '_gui'
     if 'release' in build_type.lower():
         name += '_release'
     else:
