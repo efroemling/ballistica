@@ -87,10 +87,10 @@ COPY --from=builder /ballistica_cmake \
 
 WORKDIR /home/ubuntu/ballistica
 
-RUN ls -s ballisticakit* run
+RUN ln -s ballisticakit* run
 
 # Expose the necessary port
-EXPOSE 43210/udp
+EXPOSE 43210/udp    
 
 # Set the default command to run the application
 CMD [ "./run" ]
