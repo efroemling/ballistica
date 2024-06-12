@@ -1183,16 +1183,20 @@ clion-staging: assets-cmake resources meta
 #                                                                              #
 ################################################################################
 
+# Build the docker image named bombsquad_server
 docker-build: assets-cmake
 	$(PCOMMAND) build_docker
 
+# Run the bombsquad_server image
 docker-run:
 	docker run -it bombsquad_server
 
+# Save the bombsquad_server docker image to build/docker/bombsquad_server_docker.tar
 docker-save: docker-build
 	mkdir -p build/docker/
 	docker save bombsquad_server -o build/docker/bombsquad_server_docker.tar
 
+# Cleanup docker files
 docker-clean:
 	rm build/docker/bombsquad_server_docker.tar
 	docker rmi bombsquad_server --force
