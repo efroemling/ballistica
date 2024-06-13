@@ -60,7 +60,7 @@
   multiple `SockAddr`s; it will attempt to contact the host on all of them and
   use whichever responds first. This allows us to pass both ipv4 and ipv6
   addresses when available and transparently use whichever is more performant.
-- Added `docker-build`, `docker-run`, `docker-clean` and `docker-save` targets
+- Added `docker-gui-release`, `docker-gui-debug`, `docker-server-release`, `docker-server-debug`, `docker-clean` and `docker-save` targets
   to Makefile.
 - Fixed an issue in Assault where being teleported back to base with a sticky
   bomb stuck to you would do some crazy rubber-band-launching thing (Thanks

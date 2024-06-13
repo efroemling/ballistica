@@ -1193,7 +1193,7 @@ docker-gui-debug: assets-cmake
 
 # Build the docker image
 docker-server-release: assets-cmake
-	$(PCOMMAND) build_docker_server_release,
+	$(PCOMMAND) build_docker_server_release
 
 # Build the docker image
 docker-server-debug: assets-cmake
