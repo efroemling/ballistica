@@ -1,21 +1,24 @@
 # if provided it will make debug build
 ARG cmake_build_type=Release
-
-# system to start with  the build with
-# currently will break for non ubuntu system
-ARG base_image=ubuntu:24.04
+# whether to make GUI or headless build (defaults to headless)
+ARG headless_build=1
+# system to start with the build with
+# currently will break for other images
+ARG base_image=ubuntu:latest
 
 #-------------------------------BUILDER--------------------------------
 # Start with the base image
 FROM ${base_image} AS builder
 
 # Renew the arg
+ARG headless_build
 ARG cmake_build_type
 
 ENV LANG en_US.utf8
 ENV LANGUAGE=en_US
 ENV DEBIAN_FRONTEND=noninteractive
 ENV CMAKE_BUILD_TYPE=${cmake_build_type}
+ENV HEADLESS_BUILD=${headless_build}
 
 # Install build dependencies
 RUN apt-get update -y && \
@@ -24,25 +27,31 @@ RUN apt-get update -y && \
         python3.12-venv \
         python3-pip \
         libsdl2-dev \
-        libvorbisfile3 \
-        freeglut3-dev \
+        libglut-dev \
         libopenal-dev \
+        libvorbis-dev \
         make \
         curl \
         rsync \
         clang-format \
-        cmake \
-        libvorbis-dev
+        cmake
 
 # Copy source code
-COPY ./ /home/ubuntu/ballistica
+COPY ./ /ballistica
 
-WORKDIR /home/ubuntu/ballistica
+WORKDIR /ballistica
 
 # Compile the application
-RUN make cmake-server-build \
-    && mkdir ./../ballistica_cmake_server \
-    && mv build/cmake/* ./../ballistica_cmake_server
+RUN mkdir /ballistica_cmake && \
+    if [ "$HEADLESS_BUILD" != "0" ]; then \
+        make cmake-server-build && \
+        mv build/cmake/*/ballisticakit_headless build/cmake/*/staged/dist; \
+    else \
+        make cmake-build && \
+        mv build/cmake/*/ballisticakit build/cmake/*/staged/; \
+    fi && \
+    mv build/cmake/*/staged/* /ballistica_cmake
+
 
 #-------------------------------RUNNER--------------------------------
 # Create a new stage for the runtime environment
@@ -53,33 +62,36 @@ ENV LANGUAGE=en_US
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Renew the arg
+ARG headless_build
+ENV HEADLESS_BUILD=${headless_build}
 ARG cmake_build_type
-LABEL BUILD_TYPE=${cmake_build_type}
 
-ARG bombsquad_build=N/A
-LABEL BOMBSQUAD_BUILD=${bombsquad_build}
-
-ARG bombsquad_version=N/A
-LABEL BOMBSQUAD_VERSION=${bombsquad_version}
+LABEL BOMBSQUAD_BUILD_TYPE=${cmake_build_type}
 
 # Install runtime dependencies
 RUN apt-get update -y && \
     apt-get install -y  \
-        python3.12-dev \
-    && rm -rf /var/lib/apt/lists/* \
-    && python3.12 -c "import uuid;print(uuid.uuid4())">/etc/machine-id
+        python3.12-dev && \
+    if [ "$HEADLESS_BUILD" = "0" ]; then \
+        apt-get install -y \
+            libsdl2-dev \
+            libvorbis-dev \
+            libglut-dev \
+            libopenal-dev; \
+    fi && \
+    rm -rf /var/lib/apt/lists/* && \
+    dbus-uuidgen > /etc/machine-id
 
 # Copy the compiled application from the builder stage
-COPY --from=builder /home/ubuntu/ballistica_cmake_server/*/staged \
+COPY --from=builder /ballistica_cmake \
                     /home/ubuntu/ballistica
-# ballisticakit_headless in staged is a symlink
-COPY --from=builder /home/ubuntu/ballistica_cmake_server/*/ballisticakit_headless \
-                    /home/ubuntu/ballistica/dist
 
 WORKDIR /home/ubuntu/ballistica
 
+RUN ln -s ballisticakit* run
+
 # Expose the necessary port
-EXPOSE 43210/udp
+EXPOSE 43210/udp    
 
 # Set the default command to run the application
-CMD [ "./ballisticakit_server" ]
+CMD [ "./run" ]
