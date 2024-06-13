@@ -80,7 +80,7 @@ RUN apt-get update -y && \
             libopenal-dev; \
     fi && \
     rm -rf /var/lib/apt/lists/* && \
-    python3 -c 'import uuid; print(uuid.uuid4()) > /etc/machine-id'
+    python3 -c 'import uuid; print(uuid.uuid4())' > /etc/machine-id
 
 # Copy the compiled application from the builder stage
 COPY --from=builder /ballistica_cmake \
