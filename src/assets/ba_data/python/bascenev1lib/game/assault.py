@@ -244,8 +244,21 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
                         bs.timer(0.5, light.delete)
                         bs.animate(light, 'intensity', {0: 0, 0.1: 1.0, 0.5: 0})
                         if player.actor:
-                            player.actor.handlemessage(
-                                bs.StandMessage(new_pos, random.uniform(0, 360))
+                            random_num = random.uniform(0, 360)
+
+                            # Slightly hacky workaround: normally,
+                            # teleporting back to base with a sticky
+                            # bomb stuck to you gives a crazy whiplash
+                            # rubber-band effect. Running the teleport
+                            # twice in a row seems to suppress that
+                            # though. Would be better to fix this at a
+                            # lower level, but this works for now.
+                            self._teleport(player, new_pos, random_num)
+                            bs.timer(
+                                0.01,
+                                bs.Call(
+                                    self._teleport, player, new_pos, random_num
+                                ),
                             )
 
                 # Have teammates celebrate.
@@ -257,6 +270,12 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
                 self._update_scoreboard()
                 if player_team.score >= self._score_to_win:
                     self.end_game()
+
+    def _teleport(
+        self, client: Player, pos: Sequence[float], num: float
+    ) -> None:
+        if client.actor:
+            client.actor.handlemessage(bs.StandMessage(pos, num))
 
     @override
     def end_game(self) -> None:

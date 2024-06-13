@@ -68,6 +68,3 @@ play some games. Or make them. Maybe both.
   of what's planned for when. And for the record, the answer to that particular
   question is basically '1.8'.
 
-* **Q: When will BombSquad be released on PS Vita?**
-* I cant even start working on this because I have some skill issue  :joy_cat:  :joy_cat:  :joy_cat:  :joy_cat: 
-

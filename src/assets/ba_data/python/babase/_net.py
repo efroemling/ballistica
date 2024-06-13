@@ -32,6 +32,8 @@ class NetworkSubsystem:
         # For debugging.
         self.v1_test_log: str = ''
         self.v1_ctest_results: dict[int, str] = {}
+        self.connectivity_state = 'uninited'
+        self.transport_state = 'uninited'
         self.server_time_offset_hours: float | None = None
 
     @property

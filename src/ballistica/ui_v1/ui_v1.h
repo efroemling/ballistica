@@ -85,7 +85,6 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   static void OnModuleExec(PyObject* module);
   void DoHandleDeviceMenuPress(base::InputDevice* device) override;
   void DoShowURL(const std::string& url) override;
-  // void DoQuitWindow() override;
   auto MainMenuVisible() -> bool override;
   auto PartyIconVisible() -> bool override;
   void ActivatePartyIcon() override;

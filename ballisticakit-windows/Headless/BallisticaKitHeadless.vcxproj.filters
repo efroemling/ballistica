@@ -688,22 +688,22 @@
     <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_vec3.h">
       <Filter>ballistica\base\python\class</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_app.cc">
+    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_base_1.cc">
       <Filter>ballistica\base\python\methods</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_app.h">
+    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_base_1.h">
       <Filter>ballistica\base\python\methods</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_graphics.cc">
+    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_base_2.cc">
       <Filter>ballistica\base\python\methods</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_graphics.h">
+    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_base_2.h">
       <Filter>ballistica\base\python\methods</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_misc.cc">
+    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_base_3.cc">
       <Filter>ballistica\base\python\methods</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_misc.h">
+    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_base_3.h">
       <Filter>ballistica\base\python\methods</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\python\support\python_context_call.cc">

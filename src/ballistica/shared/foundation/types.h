@@ -149,39 +149,6 @@ enum class UIScale : uint8_t {
 };
 
 // BA_EXPORT_PYTHON_ENUM
-/// Specifies the type of time for various operations to target/use.
-///
-/// Category: Enums
-///
-/// 'sim' time is the local simulation time for an activity or session.
-///    It can proceed at different rates depending on game speed, stops
-///    for pauses, etc.
-///
-/// 'base' is the baseline time for an activity or session.  It proceeds
-///    consistently regardless of game speed or pausing, but may stop during
-///    occurrences such as network outages.
-///
-/// 'real' time is mostly based on clock time, with a few exceptions.  It may
-///    not advance while the app is backgrounded for instance.  (the engine
-///    attempts to prevent single large time jumps from occurring)
-enum class TimeType : uint8_t {
-  kSim,
-  kBase,
-  kReal,
-  kLast  // Sentinel.
-};
-
-// BA_EXPORT_PYTHON_ENUM
-/// Specifies the format time values are provided in.
-///
-/// Category: Enums
-enum class TimeFormat : uint8_t {
-  kSeconds,
-  kMilliseconds,
-  kLast  // Sentinel.
-};
-
-// BA_EXPORT_PYTHON_ENUM
 /// Permissions that can be requested from the OS.
 ///
 /// Category: Enums

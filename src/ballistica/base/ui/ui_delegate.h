@@ -27,8 +27,10 @@ class UIDelegateInterface {
   virtual void DoApplyAppConfig() = 0;
 
   virtual void DoHandleDeviceMenuPress(base::InputDevice* device) = 0;
+
+  /// Called by ShowURL(). Will always be called in the logic thread.
   virtual void DoShowURL(const std::string& url) = 0;
-  // virtual void DoQuitWindow() = 0;
+
   virtual auto MainMenuVisible() -> bool = 0;
   virtual auto PartyIconVisible() -> bool = 0;
   virtual void ActivatePartyIcon() = 0;

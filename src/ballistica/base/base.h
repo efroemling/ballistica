@@ -588,10 +588,12 @@ enum class SysMeshID : uint8_t {
 };
 
 // Our feature-set's globals.
-// Feature-sets should NEVER directly access globals in another feature-set's
-// namespace. All functionality we need from other feature-sets should be
-// imported into globals in our own namespace. Generally we do this when we
-// are initially imported (just as regular Python modules do).
+//
+// Feature-sets should NEVER directly access globals in another
+// feature-set's namespace. All functionality we need from other
+// feature-sets should be imported into globals in our own namespace.
+// Generally we do this when we are initially imported (just as regular
+// Python modules do).
 extern core::CoreFeatureSet* g_core;
 extern base::BaseFeatureSet* g_base;
 
@@ -653,8 +655,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// their own event loop).
   void RunAppToCompletion() override;
 
-  // void PrimeAppMainThreadEventPump() override;
-
   auto CurrentContext() -> const ContextRef& {
     assert(InLogicThread());  // Up to caller to ensure this.
     return *context_ref;
@@ -663,6 +663,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// Utility call to print 'Success!' with a happy sound.
   /// Safe to call from any thread.
   void SuccessScreenMessage();
+
   /// Utility call to print 'Error.' with a beep sound.
   /// Safe to call from any thread.
   void ErrorScreenMessage();

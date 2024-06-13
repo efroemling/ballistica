@@ -8,9 +8,10 @@ import babase
 import bauiv1 as bui
 from bauiv1lib.popup import PopupMenu
 from bauiv1lib.confirm import ConfirmWindow
+from bauiv1lib.config import ConfigCheckBox
 
 
-class ModdingToolsWindow(bui.Window):
+class DevToolsWindow(bui.Window):
     """Window for accessing modding tools."""
 
     def __init__(
@@ -47,7 +48,7 @@ class ModdingToolsWindow(bui.Window):
         self._scroll_width = self._width - (100 + 2 * x_inset)
         self._scroll_height = self._height - 115.0
         self._sub_width = self._scroll_width * 0.95
-        self._sub_height = 100.0
+        self._sub_height = 350.0
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -66,7 +67,7 @@ class ModdingToolsWindow(bui.Window):
             )
         )
 
-        self._r = 'settingsModdingTools'
+        self._r = 'settingsDevTools'
 
         if app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
@@ -90,12 +91,13 @@ class ModdingToolsWindow(bui.Window):
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
-            position=(0, self._height - 52),
-            size=(self._width, 25),
-            text=bui.Lstr(resource='settingsWindowAdvanced.moddingToolsText'),
+            position=(self._width * 0.5, self._height - 48),
+            size=(0, 25),
+            maxwidth=self._width - 200,
+            text=bui.Lstr(resource='settingsWindowAdvanced.devToolsText'),
             color=app.ui_v1.title_color,
             h_align='center',
-            v_align='top',
+            v_align='center',
         )
 
         if self._back_button is not None:
@@ -124,6 +126,24 @@ class ModdingToolsWindow(bui.Window):
 
         v = self._sub_height - 35
         this_button_width = 410
+
+        v -= self._spacing * 2.5
+        self._show_dev_console_button_check_box = ConfigCheckBox(
+            parent=self._subcontainer,
+            position=(90, v + 40),
+            size=(self._sub_width - 100, 30),
+            configkey='Show Dev Console Button',
+            displayname=bui.Lstr(
+                resource='settingsWindowAdvanced.showDevConsoleButtonText'
+            ),
+            scale=1.0,
+            maxwidth=400,
+        )
+        if self._back_button is not None:
+            bui.widget(
+                edit=self._show_dev_console_button_check_box.widget,
+                up_widget=self._back_button,
+            )
 
         v -= self._spacing * 1.2
         self._create_user_system_scripts_button = bui.buttonwidget(
@@ -154,10 +174,7 @@ class ModdingToolsWindow(bui.Window):
             parent=self._subcontainer,
             position=(170, v + 10),
             size=(0, 0),
-            text=bui.Lstr(
-                value='$(S) :',
-                subs=[('$(S)', bui.Lstr(resource='uiScaleText'))],
-            ),
+            text=bui.Lstr(resource='uiScaleText'),
             color=app.ui_v1.title_color,
             h_align='center',
             v_align='center',

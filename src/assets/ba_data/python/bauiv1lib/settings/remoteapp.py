@@ -85,9 +85,6 @@ class RemoteAppSettingsWindow(bui.Window):
         )
         v -= 90
 
-        # hmm the itms:// version doesnt bounce through safari but is kinda
-        # apple-specific-ish
-
         # Update: now we just show link to the remote webpage.
         bui.textwidget(
             parent=self._root_widget,

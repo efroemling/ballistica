@@ -635,6 +635,8 @@ def prefab_binary_path() -> None:
 
     platform = PrefabPlatform.get_current()
 
+    binpath = None
+
     if platform is PrefabPlatform.WINDOWS_X86:
         if buildtype == 'gui':
             binpath = 'BallisticaKit.exe'
@@ -658,10 +660,18 @@ def prefab_binary_path() -> None:
         # Make sure we're covering all options.
         assert_never(platform)
 
+    assert binpath is not None
     print(
         f'build/prefab/full/{platform.value}_{buildtype}/{buildmode}/{binpath}',
         end='',
     )
+
+
+def build_docker() -> None:
+    """Build the docker image with bombsquad cmake server."""
+    import batools.build
+
+    batools.build.docker_build()
 
 
 def make_prefab() -> None:
@@ -916,7 +926,7 @@ def android_sdk_utils() -> None:
 
 def gen_python_enums_module() -> None:
     """Update our procedurally generated python enums."""
-    from batools.pythonenumsmodule import generate
+    from batools.enumspython import generate
 
     pcommand.disallow_in_batch()
 

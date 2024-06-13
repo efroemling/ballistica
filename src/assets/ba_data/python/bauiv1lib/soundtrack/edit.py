@@ -423,7 +423,7 @@ class SoundtrackEditWindow(bui.Window):
         return None
 
     def _cancel(self) -> None:
-        from bauiv1lib.soundtrack import browser as stb
+        from bauiv1lib.soundtrack.browser import SoundtrackBrowserWindow
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -436,12 +436,12 @@ class SoundtrackEditWindow(bui.Window):
         music.set_music_play_mode(bui.app.classic.MusicPlayMode.REGULAR)
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         bui.app.ui_v1.set_main_menu_window(
-            stb.SoundtrackBrowserWindow(transition='in_left').get_root_widget(),
+            SoundtrackBrowserWindow(transition='in_left').get_root_widget(),
             from_window=self._root_widget,
         )
 
     def _do_it(self) -> None:
-        from bauiv1lib.soundtrack import browser as stb
+        from bauiv1lib.soundtrack.browser import SoundtrackBrowserWindow
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -495,7 +495,7 @@ class SoundtrackEditWindow(bui.Window):
         )
 
         bui.app.ui_v1.set_main_menu_window(
-            stb.SoundtrackBrowserWindow(transition='in_left').get_root_widget(),
+            SoundtrackBrowserWindow(transition='in_left').get_root_widget(),
             from_window=self._root_widget,
         )
 

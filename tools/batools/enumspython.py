@@ -1,9 +1,12 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Procedurally regenerates our python enums module.
+"""Generate a Python module containing Enum classes from C++ code.
 
-This scans core/types.h for tagged C++ enum types and generates corresponding
-python enums for them.
+Note that the general strategy moving forward is the opposite of
+this: to generate C++ code as needed from Python sources. That is
+generally a better direction to go since introspecting Python objects
+or source code ast is more foolproof than the text based parsing we
+are doing here.
 """
 from __future__ import annotations
 

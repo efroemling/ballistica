@@ -465,12 +465,16 @@ def _get_server_config_template_toml(projroot: str) -> str:
     cfg.playlist_inline = []
     cfg.team_names = ('Red', 'Blue')
     cfg.team_colors = ((0.1, 0.25, 1.0), (1.0, 0.25, 0.2))
+    cfg.public_ipv4_address = '123.123.123.123'
+    cfg.public_ipv6_address = '123A::A123:23A1:A312:12A3:A213:2A13'
 
     lines_in = _get_server_config_raw_contents(projroot).splitlines()
 
     # Convert to double quotes only (we'll convert back at the end).
-    assert all(('"' not in l) for l in lines_in)
-    lines_in = [l.replace("'", '"') for l in lines_in]
+    # UPDATE: No longer doing this. Turns out single quotes in toml have
+    # special meaning (no escapes applied). So we'll stick with doubles.
+    # assert all(('"' not in l) for l in lines_in)
+    # lines_in = [l.replace("'", '"') for l in lines_in]
 
     lines_out: list[str] = []
     ignore_vars = {'stress_test_players'}
@@ -512,8 +516,9 @@ def _get_server_config_template_toml(projroot: str) -> str:
     out = '\n'.join(lines_out)
 
     # Convert back to single quotes only.
-    assert "'" not in out
-    out = out.replace('"', "'")
+    # UPDATE: Not doing this. See above note.
+    # assert "'" not in out
+    # out = out.replace('"', "'")
 
     return out
 
@@ -639,3 +644,59 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     else:
         if verbose:
             print(f'{Clr.BLD}{title}:{Clr.RST} Keeping existing build dir.')
+
+
+def _docker_build(
+    image_name: str,
+    dockerfile_dir: str,
+    bombsquad_version: str | None = None,
+    bombsquad_build: str | int | None = None,
+    cmake_build_type: str | None = None,
+) -> None:
+
+    build_cmd = [
+        'docker',
+        'image',
+        'build',
+        '-t',
+        image_name,
+        '-f',
+        dockerfile_dir,
+        '.',
+    ]
+    if bombsquad_version is not None:
+        build_cmd = build_cmd + [
+            '--build-arg',
+            f'bombsquad_version={bombsquad_version}',
+        ]
+    if bombsquad_build is not None:
+        build_cmd = build_cmd + [
+            '--build-arg',
+            f'bombsquad_build={str(bombsquad_build)}',
+        ]
+    if cmake_build_type is not None:
+        build_cmd = build_cmd + [
+            '--build-arg',
+            f'cmake_build_type={cmake_build_type}',
+        ]
+    subprocess.run(build_cmd, check=True)
+
+
+def docker_build() -> None:
+    """Build docker image."""
+    # todo: add option to toggle between prefab and cmake
+    from batools import version
+
+    version_num, build_num = version.get_current_version()
+    image_name = 'bombsquad_server'
+
+    print(
+        f'Building docker image {image_name}'
+        + 'version {version_num}:{build_num}'
+    )
+    _docker_build(
+        image_name,
+        'config/docker/Dockerfile',
+        version_num,
+        build_num,
+    )

@@ -191,6 +191,22 @@ class SceneV1AppMode : public base::AppMode {
     return host_protocol_version_;
   }
 
+  auto public_party_public_address_ipv4() const {
+    return public_party_public_address_ipv4_;
+  }
+  void set_public_party_public_address_ipv4(
+      const std::optional<std::string>& val) {
+    public_party_public_address_ipv4_ = val;
+  }
+
+  auto public_party_public_address_ipv6() const {
+    return public_party_public_address_ipv6_;
+  }
+  void set_public_party_public_address_ipv6(
+      const std::optional<std::string>& val) {
+    public_party_public_address_ipv6_ = val;
+  }
+
  private:
   SceneV1AppMode();
   void PruneScanResults_();
@@ -264,6 +280,8 @@ class SceneV1AppMode : public base::AppMode {
   std::list<std::pair<millisecs_t, PlayerSpec> > banned_players_;
   std::optional<float> idle_exit_minutes_{};
   std::optional<uint32_t> internal_music_play_id_{};
+  std::optional<std::string> public_party_public_address_ipv4_{};
+  std::optional<std::string> public_party_public_address_ipv6_{};
 };
 
 }  // namespace ballistica::scene_v1

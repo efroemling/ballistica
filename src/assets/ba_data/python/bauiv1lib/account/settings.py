@@ -96,9 +96,10 @@ class AccountSettingsWindow(bui.Window):
         # Always want to show our web-based v2 login option.
         self._show_sign_in_buttons.append('V2Proxy')
 
-        # Legacy v1 device accounts are currently always available
-        # (though we need to start phasing them out at some point).
-        self._show_sign_in_buttons.append('Device')
+        # Legacy v1 device accounts available only if the user
+        # has explicitly enabled deprecated login types.
+        if bui.app.config.resolve('Show Deprecated Login Types'):
+            self._show_sign_in_buttons.append('Device')
 
         top_extra = 15 if uiscale is bui.UIScale.SMALL else 0
         super().__init__(
@@ -207,9 +208,6 @@ class AccountSettingsWindow(bui.Window):
         self._refresh_tickets_text()
         self._refresh_account_name_text()
 
-    def _get_sign_in_text(self) -> bui.Lstr:
-        return bui.Lstr(resource=self._r + '.signInText')
-
     def _refresh(self) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
@@ -316,9 +314,14 @@ class AccountSettingsWindow(bui.Window):
         show_game_service_button = game_center_active
         game_service_button_space = 60.0
 
-        show_what_is_v2 = self._v1_signed_in and v1_account_type == 'V2'
+        # Phasing this out.
+        show_what_is_v2 = False
+        # show_what_is_v2 = self._v1_signed_in and v1_account_type == 'V2'
 
-        show_linked_accounts_text = self._v1_signed_in
+        # Phasing this out (for V2 accounts at least).
+        show_linked_accounts_text = (
+            self._v1_signed_in and v1_account_type != 'V2'
+        )
         linked_accounts_text_space = 60.0
 
         # Always show achievements except in the game-center case where
@@ -361,7 +364,10 @@ class AccountSettingsWindow(bui.Window):
         show_unlink_accounts_button = show_link_accounts_button
         unlink_accounts_button_space = 90.0
 
-        show_v2_link_info = self._v1_signed_in and not show_link_accounts_button
+        # Phasing this out.
+        # show_v2_link_info = self._v1_signed_in
+        # and not show_link_accounts_button
+        show_v2_link_info = False
         v2_link_info_space = 70.0
 
         legacy_unlink_button_space = 120.0
@@ -370,7 +376,7 @@ class AccountSettingsWindow(bui.Window):
             'Local',
             'V2',
         ]
-        sign_out_button_space = 70.0
+        sign_out_button_space = 80.0
 
         # We can show cancel if we're either waiting on an adapter to
         # provide us with v2 credentials or waiting for those credentials
@@ -609,7 +615,7 @@ class AccountSettingsWindow(bui.Window):
                 autoselect=True,
                 size=(button_width, 60),
                 label=bui.Lstr(
-                    value='${A}${B}',
+                    value='${A} ${B}',
                     subs=[
                         (
                             '${A}',
@@ -654,7 +660,7 @@ class AccountSettingsWindow(bui.Window):
                 # in all languages. Can revisit if not true.
                 # https://developer.apple.com/forums/thread/725779
                 label=bui.Lstr(
-                    value='${A}${B}',
+                    value='${A} ${B}',
                     subs=[
                         (
                             '${A}',
@@ -695,39 +701,53 @@ class AccountSettingsWindow(bui.Window):
                 label='',
                 on_activate_call=self._v2_proxy_sign_in_press,
             )
+
+            v2labeltext: bui.Lstr | str = (
+                bui.Lstr(resource=self._r + '.signInWithAnEmailAddressText')
+                if show_game_center_sign_in_button
+                or show_google_play_sign_in_button
+                or show_device_sign_in_button
+                else bui.Lstr(resource=self._r + '.signInText')
+            )
+            v2infotext: bui.Lstr | str | None = None
+
             bui.textwidget(
                 parent=self._subcontainer,
                 draw_controller=btn,
                 h_align='center',
                 v_align='center',
                 size=(0, 0),
-                position=(self._sub_width * 0.5, v + 17),
+                position=(
+                    self._sub_width * 0.5,
+                    v + (17 if v2infotext is not None else 10),
+                ),
                 text=bui.Lstr(
-                    value='${A}${B}',
+                    value='${A} ${B}',
                     subs=[
                         ('${A}', bui.charstr(bui.SpecialChar.V2_LOGO)),
                         (
                             '${B}',
-                            bui.Lstr(resource=self._r + '.signInWithV2Text'),
+                            v2labeltext,
                         ),
                     ],
                 ),
                 maxwidth=button_width * 0.8,
                 color=(0.75, 1.0, 0.7),
             )
-            bui.textwidget(
-                parent=self._subcontainer,
-                draw_controller=btn,
-                h_align='center',
-                v_align='center',
-                size=(0, 0),
-                position=(self._sub_width * 0.5, v - 4),
-                text=bui.Lstr(resource=self._r + '.signInWithV2InfoText'),
-                flatness=1.0,
-                scale=0.57,
-                maxwidth=button_width * 0.9,
-                color=(0.55, 0.8, 0.5),
-            )
+            if v2infotext is not None:
+                bui.textwidget(
+                    parent=self._subcontainer,
+                    draw_controller=btn,
+                    h_align='center',
+                    v_align='center',
+                    size=(0, 0),
+                    position=(self._sub_width * 0.5, v - 4),
+                    text=v2infotext,
+                    flatness=1.0,
+                    scale=0.57,
+                    maxwidth=button_width * 0.9,
+                    color=(0.55, 0.8, 0.5),
+                )
             if first_selectable is None:
                 first_selectable = btn
             if bui.app.ui_v1.use_toolbars:
@@ -770,7 +790,7 @@ class AccountSettingsWindow(bui.Window):
                 size=(0, 0),
                 position=(self._sub_width * 0.5, v + 17),
                 text=bui.Lstr(
-                    value='${A}${B}',
+                    value='${A} ${B}',
                     subs=[
                         ('${A}', bui.charstr(bui.SpecialChar.LOCAL_ACCOUNT)),
                         (
@@ -1562,6 +1582,14 @@ class AccountSettingsWindow(bui.Window):
         bui.apptimer(0.1, bui.WeakCall(self._update))
 
     def _sign_in_press(self, login_type: str | LoginType) -> None:
+        from bauiv1lib.connectivity import wait_for_connectivity
+
+        # If we're still waiting for our master-server connection,
+        # keep the user informed of this instead of rushing in and
+        # failing immediately.
+        wait_for_connectivity(on_connected=lambda: self._sign_in(login_type))
+
+    def _sign_in(self, login_type: str | LoginType) -> None:
         plus = bui.app.plus
         assert plus is not None
 
@@ -1649,6 +1677,15 @@ class AccountSettingsWindow(bui.Window):
         bui.apptimer(0.1, bui.WeakCall(self._update))
 
     def _v2_proxy_sign_in_press(self) -> None:
+        # pylint: disable=cyclic-import
+        from bauiv1lib.connectivity import wait_for_connectivity
+
+        # If we're still waiting for our master-server connection,
+        # keep the user informed of this instead of rushing in and
+        # failing immediately.
+        wait_for_connectivity(on_connected=self._v2_proxy_sign_in)
+
+    def _v2_proxy_sign_in(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.account.v2proxy import V2ProxySignInWindow
 

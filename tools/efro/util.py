@@ -711,6 +711,27 @@ def compact_id(num: int) -> str:
     )
 
 
+def caller_source_location() -> str:
+    """Returns source file name and line of the code calling us.
+
+    Example: 'mymodule.py:23'
+    """
+    try:
+        import inspect
+
+        frame = inspect.currentframe()
+        for _i in range(2):
+            if frame is None:
+                raise RuntimeError()
+            frame = frame.f_back
+        if frame is None:
+            raise RuntimeError()
+        fname = os.path.basename(frame.f_code.co_filename)
+        return f'{fname}:{frame.f_lineno}'
+    except Exception:
+        return '<unknown source location>'
+
+
 def unchanging_hostname() -> str:
     """Return an unchanging name for the local device.
 

@@ -990,12 +990,12 @@ windows-staging: assets-windows resources meta
 # Build and run a debug windows build (from WSL).
 windows-debug: windows-debug-build
 	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
-	build/windows/Debug_Win32/BallisticaKitGeneric.exe
+	cd build/windows/Debug_Win32 && ./BallisticaKitGeneric.exe
 
 # Build and run a release windows build (from WSL).
 windows-release: windows-release-build
 	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
-	build/windows/Release_Win32/BallisticaKitGeneric.exe
+	cd build/windows/Release_Win32 && ./BallisticaKitGeneric.exe
 
 # Build a debug windows build (from WSL).
 windows-debug-build: env \
@@ -1175,6 +1175,32 @@ clion-staging: assets-cmake resources meta
         cmake-modular-binary cmake-modular-clean cmake-modular-server	\
         cmake-modular-server-build cmake-modular-server-binary				\
         cmake-modular-server-clean clion-staging
+
+
+################################################################################
+#                                                                              #
+#                                    Docker                                    #
+#                                                                              #
+################################################################################
+
+# Build the docker image named bombsquad_server
+docker-build: assets-cmake
+	$(PCOMMAND) build_docker
+
+# Run the bombsquad_server image
+docker-run:
+	docker run -it bombsquad_server
+
+# Save the bombsquad_server docker image to build/docker/bombsquad_server_docker.tar
+docker-save: docker-build
+	mkdir -p build/docker/
+	docker save bombsquad_server -o build/docker/bombsquad_server_docker.tar
+
+# Cleanup docker files
+docker-clean:
+	rm build/docker/bombsquad_server_docker.tar
+	docker rmi bombsquad_server --force
+	docker system prune
 
 
 ################################################################################

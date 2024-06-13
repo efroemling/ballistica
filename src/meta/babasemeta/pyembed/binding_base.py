@@ -72,8 +72,6 @@ values = [
     _error.WidgetNotFoundError,  # kWidgetNotFoundError
     _error.ActivityNotFoundError,  # kActivityNotFoundError
     _error.SessionNotFoundError,  # kSessionNotFoundError
-    enums.TimeFormat,  # kTimeFormatClass
-    enums.TimeType,  # kTimeTypeClass
     enums.QuitType,  # kQuitTypeClass
     enums.InputType,  # kInputTypeClass
     enums.Permission,  # kPermissionClass

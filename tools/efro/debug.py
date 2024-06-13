@@ -417,6 +417,8 @@ class DeadlockWatcher:
         logger: Logger | None = None,
         logextra: dict | None = None,
     ) -> None:
+        from efro.util import caller_source_location
+
         # pylint: disable=not-context-manager
         cls = type(self)
         if cls.watchers_lock is None or cls.watchers is None:
@@ -433,6 +435,13 @@ class DeadlockWatcher:
         self.noted_expire = False
         self.logger = logger
         self.logextra = logextra
+        self.caller_source_loc = caller_source_location()
+        curthread = threading.current_thread()
+        self.thread_id = (
+            '<unknown>'
+            if curthread.ident is None
+            else hex(curthread.ident).removeprefix('0x')
+        )
 
         with cls.watchers_lock:
             cls.watchers.append(weakref.ref(self))
@@ -492,8 +501,11 @@ class DeadlockWatcher:
                         # should check stderr for a dump.
                         if w.logger is not None:
                             w.logger.error(
-                                'DeadlockWatcher with time %.2f expired;'
+                                'DeadlockWatcher at %s in thread %s'
+                                ' with time %.2f expired;'
                                 ' check stderr for stack traces.',
+                                w.caller_source_loc,
+                                w.thread_id,
                                 w.timeout,
                                 extra=w.logextra,
                             )

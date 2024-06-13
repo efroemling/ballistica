@@ -189,3 +189,24 @@ def get_string_hash(
         return str(int.from_bytes(hashobj.digest(), byteorder='big'))
 
     return hashobj.hexdigest()
+
+
+def wsl_windows_build_path_description() -> str:
+    """Describe where wsl windows builds need to live."""
+    return 'anywhere under /mnt/c/'
+
+
+def is_wsl_windows_build_path(path: str) -> bool:
+    """Return whether a path is used for wsl windows builds.
+
+    Building Windows Visual Studio builds through WSL is currently only
+    supported in specific locations; namely anywhere under /mnt/c/. This
+    is enforced because building on the Linux filesystem errors due to
+    case-sensitivity issues, and also because a number of workarounds
+    need to be employed to deal with filesystem/permission quirks, so
+    we want to keep things as consistent as possible.
+
+    Note that said quirk workarounds  WILL be applied if this returns
+    true, so this check should be as specific as possible.
+    """
+    return path.startswith('/mnt/c/')

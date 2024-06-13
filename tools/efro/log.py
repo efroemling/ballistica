@@ -150,6 +150,7 @@ class LogHandler(logging.Handler):
         self._cache = deque[tuple[int, LogEntry]]()
         self._cache_index_offset = 0
         self._cache_lock = Lock()
+        # self._report_blocking_io_on_echo_error = False
         self._printed_callback_error = False
         self._thread_bootstrapped = False
         self._thread = Thread(target=self._log_thread_main, daemon=True)
@@ -364,13 +365,32 @@ class LogHandler(logging.Handler):
             # thread because the delay can throw off command line prompts or
             # make tight debugging harder.
             if self._echofile is not None:
+                # try:
+                # if self._report_blocking_io_on_echo_error:
+                #     premsg = (
+                #         'WARNING: BlockingIOError ON LOG ECHO OUTPUT;'
+                #         ' YOU ARE PROBABLY MISSING LOGS\n'
+                #     )
+                #     self._report_blocking_io_on_echo_error = False
+                # else:
+                #     premsg = ''
                 ends = LEVELNO_COLOR_CODES.get(record.levelno)
                 namepre = f'{Clr.WHT}{record.name}:{Clr.RST} '
                 if ends is not None:
-                    self._echofile.write(f'{namepre}{ends[0]}{msg}{ends[1]}\n')
+                    self._echofile.write(
+                        f'{namepre}{ends[0]}'
+                        f'{msg}{ends[1]}\n'
+                        # f'{namepre}{ends[0]}' f'{premsg}{msg}{ends[1]}\n'
+                    )
                 else:
                     self._echofile.write(f'{namepre}{msg}\n')
                 self._echofile.flush()
+                # except BlockingIOError:
+                #     # Ran into this when doing a bunch of logging; assuming
+                #     # this is asyncio's doing?.. For now trying to survive
+                #     # the error but telling the user something is probably
+                #     # missing in their output.
+                #     self._report_blocking_io_on_echo_error = True
 
             if __debug__:
                 echotime = time.monotonic()
@@ -387,6 +407,7 @@ class LogHandler(logging.Handler):
             )
 
         if __debug__:
+            # pylint: disable=used-before-assignment
             # Make noise if we're taking a significant amount of time here.
             # Limit the noise to once every so often though; otherwise we
             # could get a feedback loop where every log emit results in a
@@ -603,9 +624,23 @@ class FileLogEcho:
         self._name = name
         self._handler = handler
 
+        # Think this was a result of setting non-blocking stdin somehow;
+        # probably not needed.
+        # self._report_blocking_io_error = False
+
     def write(self, output: Any) -> None:
         """Override standard write call."""
+        # try:
+        # if self._report_blocking_io_error:
+        #     self._report_blocking_io_error = False
+        #     self._original.write(
+        #         'WARNING: BlockingIOError ENCOUNTERED;'
+        #         ' OUTPUT IS PROBABLY MISSING'
+        #     )
+
         self._original.write(output)
+        # except BlockingIOError:
+        #     self._report_blocking_io_error = True
         self._handler.file_write(self._name, output)
 
     def flush(self) -> None:

@@ -91,8 +91,6 @@ class BasePython {
     kWidgetNotFoundError,
     kActivityNotFoundError,
     kSessionNotFoundError,
-    kTimeFormatClass,
-    kTimeTypeClass,
     kQuitTypeClass,
     kInputTypeClass,
     kPermissionClass,
@@ -156,8 +154,8 @@ class BasePython {
 
   static auto GetPyEnum_Permission(PyObject* obj) -> Permission;
   static auto GetPyEnum_SpecialChar(PyObject* obj) -> SpecialChar;
-  static auto GetPyEnum_TimeType(PyObject* obj) -> TimeType;
-  static auto GetPyEnum_TimeFormat(PyObject* obj) -> TimeFormat;
+  // static auto GetPyEnum_TimeType(PyObject* obj) -> TimeType;
+  // static auto GetPyEnum_TimeFormat(PyObject* obj) -> TimeFormat;
   static auto IsPyEnum_InputType(PyObject* obj) -> bool;
   static auto GetPyEnum_InputType(PyObject* obj) -> InputType;
   static auto GetPyEnum_QuitType(PyObject* obj) -> QuitType;

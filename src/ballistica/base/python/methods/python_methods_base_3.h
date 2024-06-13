@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_BASE_PYTHON_METHODS_PYTHON_METHODS_MISC_H_
-#define BALLISTICA_BASE_PYTHON_METHODS_PYTHON_METHODS_MISC_H_
+#ifndef BALLISTICA_BASE_PYTHON_METHODS_PYTHON_METHODS_BASE_3_H_
+#define BALLISTICA_BASE_PYTHON_METHODS_PYTHON_METHODS_BASE_3_H_
 
 #include <vector>
 
@@ -10,11 +10,11 @@
 namespace ballistica::base {
 
 /// Methods that don't have a clear home. Should try to clear this out.
-class PythonMethodsMisc {
+class PythonMoethodsBase3 {
  public:
   static auto GetMethods() -> std::vector<PyMethodDef>;
 };
 
 }  // namespace ballistica::base
 
-#endif  // BALLISTICA_BASE_PYTHON_METHODS_PYTHON_METHODS_MISC_H_
+#endif  // BALLISTICA_BASE_PYTHON_METHODS_PYTHON_METHODS_BASE_3_H_

@@ -48,7 +48,9 @@ def standard_message_sender_gen_pcommand(
     if embedded:
         protocol_module_level_import_code = (
             'from efro.util import explicit_bool\n'
-            f'\n# Dummy import for type-checking purposes.\n'
+            f'\n'
+            f'# Dummy import for type-checking purposes.\n'
+            f'# pylint: disable=possibly-used-before-assignment\n'
             f'if explicit_bool(False):\n'
             f'    from {source_module} import {get_protocol_import}'
         )
@@ -116,7 +118,9 @@ def standard_message_receiver_gen_pcommand(
     if embedded:
         protocol_module_level_import_code = (
             'from efro.util import explicit_bool\n'
-            f'\n# Dummy import for type-checking purposes.\n'
+            f'\n'
+            f'# Dummy import for type-checking purposes.\n'
+            f'# pylint: disable=possibly-used-before-assignment\n'
             f'if explicit_bool(False):\n'
             f'    from {source_module} import {get_protocol_import}\n'
         )

@@ -10,6 +10,7 @@ data formats in a nondestructive manner.
 
 from __future__ import annotations
 
+import json
 from enum import Enum
 from typing import TYPE_CHECKING, TypeVar
 
@@ -43,6 +44,7 @@ def dataclass_to_dict(
     obj: Any,
     codec: Codec = Codec.JSON,
     coerce_to_float: bool = True,
+    discard_extra_attrs: bool = False,
 ) -> dict:
     """Given a dataclass object, return a json-friendly dict.
 
@@ -61,7 +63,11 @@ def dataclass_to_dict(
     """
 
     out = _Outputter(
-        obj, create=True, codec=codec, coerce_to_float=coerce_to_float
+        obj,
+        create=True,
+        codec=codec,
+        coerce_to_float=coerce_to_float,
+        discard_extra_attrs=discard_extra_attrs,
     ).run()
     assert isinstance(out, dict)
     return out
@@ -79,7 +85,6 @@ def dataclass_to_json(
     By default, keys are sorted for pretty output and not otherwise, but
     this can be overridden by supplying a value for the 'sort_keys' arg.
     """
-    import json
 
     jdict = dataclass_to_dict(
         obj=obj, coerce_to_float=coerce_to_float, codec=Codec.JSON
@@ -142,11 +147,10 @@ def dataclass_from_json(
     allow_unknown_attrs: bool = True,
     discard_unknown_attrs: bool = False,
 ) -> T:
-    """Utility function; return a dataclass instance given a json string.
+    """Return a dataclass instance given a json string.
 
     Basically dataclass_from_dict(json.loads(...))
     """
-    import json
 
     return dataclass_from_dict(
         cls=cls,
@@ -158,12 +162,43 @@ def dataclass_from_json(
 
 
 def dataclass_validate(
-    obj: Any, coerce_to_float: bool = True, codec: Codec = Codec.JSON
+    obj: Any,
+    coerce_to_float: bool = True,
+    codec: Codec = Codec.JSON,
+    discard_extra_attrs: bool = False,
 ) -> None:
     """Ensure that values in a dataclass instance are the correct types."""
 
     # Simply run an output pass but tell it not to generate data;
     # only run validation.
     _Outputter(
-        obj, create=False, codec=codec, coerce_to_float=coerce_to_float
+        obj,
+        create=False,
+        codec=codec,
+        coerce_to_float=coerce_to_float,
+        discard_extra_attrs=discard_extra_attrs,
     ).run()
+
+
+def dataclass_hash(obj: Any, coerce_to_float: bool = True) -> str:
+    """Calculate a hash for the provided dataclass.
+
+    Basically this emits json for the dataclass (with keys sorted
+    to keep things deterministic) and hashes the resulting string.
+    """
+    import hashlib
+    from base64 import urlsafe_b64encode
+
+    json_dict = dataclass_to_dict(
+        obj, codec=Codec.JSON, coerce_to_float=coerce_to_float
+    )
+
+    # Need to sort keys to keep things deterministic.
+    json_str = json.dumps(json_dict, separators=(',', ':'), sort_keys=True)
+
+    sha = hashlib.sha256()
+    sha.update(json_str.encode())
+
+    # Go with urlsafe base64 instead of the usual hex to save some
+    # space, and kill those ugly padding chars at the end.
+    return urlsafe_b64encode(sha.digest()).decode().strip('=')

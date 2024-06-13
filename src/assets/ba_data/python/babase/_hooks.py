@@ -85,6 +85,7 @@ def open_url_with_webbrowser_module(url: str) -> None:
     import webbrowser
     from babase._language import Lstr
 
+    assert _babase.in_logic_thread()
     try:
         webbrowser.open(url)
     except Exception:
@@ -384,7 +385,7 @@ def show_client_too_old_error() -> None:
     # a newer build.
     if (
         _babase.app.config.get('SuppressClientTooOldErrorForBuild')
-        == _babase.app.env.build_number
+        == _babase.app.env.engine_build_number
     ):
         return
 

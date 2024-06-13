@@ -1,5 +1,90 @@
-### 1.7.35 (build 21824, api 8, 2024-04-26)
-
+### 1.7.35 (build 21884, api 8, 2024-06-12)
+- Fixed an issue where the engine would block at exit on some version of Linux
+  until Ctrl-D was pressed in the calling terminal.
+- V2 accounts have been around for a while now, so the old V1 device login
+  button is no longer visible in the account panel. It is currently possible to
+  bring it back by checking 'Show Deprecated Login Types' in advanced settings,
+  but please consider this a warning to upgrade/migrate your account to V2 if
+  you have not done so yet.
+- The 'Sign in with a BombSquad account' option is now simply 'Sign In' when
+  that is the only option. So nice and tidy! When other options such as Google
+  Play or Game Center are available it is now called 'Sign in with an email
+  address'.
+- The engine now supports signing in or creating email/password accounts in a
+  pop-up web dialog to avoid taking users out of the app. This currently works
+  on the native (not cmake) Mac build but will probably expand to others in the
+  future.
+- The `ba*.app.env.version` and `ba*.app.env.build_number` values are now
+  `ba*.app.env.engine_version` and `ba*.app.env.engine_build_number`. At this
+  point any functionality that cares about versions should be looking at engine
+  version anyway. In the future we can add separate `app_version` and
+  `app_build_number` values for spinoff apps, but in the case of `BombSquad` the
+  app version/build is currently the same as the engine's so we don't need that
+  just yet.
+- Reworked the 'Enter Code' dialog into a 'Send Info' dialog. The `sendinfo`
+  command is 99% of the reason for 'Enter Code' existing, so this simplifies
+  things for that use case and hopefully clarifies its purpose so I can spend
+  less time responding to app reviewers and more time improving the game.
+- The `Network Testing` panel no longer requires being signed in (it just skips
+  one test if not signed in).
+- Took a pass through the engine and its servers to make things more ipv6
+  friendly and prep for an eventual ipv6-only world (though ipv4 won't be going
+  anywhere for a long time). The existing half-hearted state of ipv6 support was
+  starting to cause problems when testing in certain ipv6-only environments, so
+  it was time to clean it up.
+- The engine will now establish its persistent v2-transport connections to
+  regional servers using ipv6 when that is the fastest option based on ping
+  tests.
+- Improved the efficiency of the `connectivity` system which determines which
+  regional ballistica server to establish a connection to (All V2 server
+  communication goes through this connection). It now takes geography into
+  account, so if it gets a low ping to a server in South America it won't try
+  pinging Warsaw, etc. Set the env var `BA_DEBUG_LOG_CONNECTIVITY=1` if you want
+  to watch it do it's thing and holler if you see any bad results.
+- Servers can now provide their public ipv4 and ipv6 addresses in their configs.
+  Previously, a server's address was always determined automatically based on
+  how it connected to the master server, but this would only provide one of the
+  two forms. Now it is possible to provide both.
+- Spaz classes now have a `default_hitpoints` which makes customizing that
+  easier (Thanks rabbitboom!)
+- (WORK IN PROGRESS) As of this version, servers are *required* to be accessible
+  via ipv4 to appear in the public listing. So they may need to provide an ipv4
+  address in their config if the automatically detected one is ipv6. This should
+  reduce the confusion of ipv6-only servers appearing greyed out for lots of
+  ipv4-only people. Pretty much everyone can connect to ipv4.
+- (WORK IN PROGRESS) There is now more personalized error feedback for the
+  connectivity checks when poking `Make My Party Public` or when launching the
+  command line server. Hopefully this will help navigate the new dual ipv4/ipv6
+  situation.
+- (WORK IN PROGRESS) The low level `ConnectionToHostUDP` class can now accept
+  multiple `SockAddr`s; it will attempt to contact the host on all of them and
+  use whichever responds first. This allows us to pass both ipv4 and ipv6
+  addresses when available and transparently use whichever is more performant.
+- Added `docker-build`, `docker-run`, `docker-clean` and `docker-save` targets
+  to Makefile.
+- Fixed an issue in Assault where being teleported back to base with a sticky
+  bomb stuck to you would do some crazy rubber-band-launching thing (Thanks
+  vishal332008!)
+- The `windows-debug` and `windows-release` Makefile targets should properly run
+  the game again (these build the Windows version of the game from a WSL
+  environment).
+- WSL Windows builds are now more strict about their locations. Currently this
+  means they must exist somewhere under /mnt/c/. It is turning out that a
+  significant number of behavior workarounds (for file permission quirks, etc.)
+  need to happen to keep these builds behaving, so I'd like to enforce as
+  limited a set of conditions as possible to give us the best chance at
+  succeeding there.
+- Added a workaround for WSL Windows builds giving permission errors when staging asset
+  files that already exist. Please holler if you are building with WSL and still
+  running into any sort of errors, as I would love to make that path as reliable
+  as possible.
+- Fixed an issue where WSL Windows builds would re-extract everything from
+  efrocache when anything in the cache-map changed (which is the case for most
+  commits). Please holler if you are still seeing lots more 'Extracting:' lines
+  when running builds after pulling small updates from git.
+- Added github workflow for making docker image and sphinx docs nightly
+- Added github workflow for making build release on tag creation
+  
 ### 1.7.34 (build 21823, api 8, 2024-04-26)
 - Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
   of the things this means is that we can use `typing.override` instead of the
@@ -1228,7 +1313,7 @@
   before to determine if a browser was available but this seemed to be flaky.
   Holler if this is not working well on your device/situation.
 - The internal 'fallback' `ba.open_url()` window which shows a url string when a
-  system browser is not available now has a qrcode and a copy button (where
+  web browser is not available now has a qrcode and a copy button (where
   copy/paste is supported).
 - Added a 'force_internal' arg to `ba.open_url()` if you would like to always
   use the internal window instead of attempting to open a browser. Now that we
