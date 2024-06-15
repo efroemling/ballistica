@@ -14,8 +14,9 @@ FROM ${base_image} AS builder
 ARG headless_build
 ARG cmake_build_type
 
-ENV LANG en_US.utf8
+ENV LANG=en_US.utf8
 ENV LANGUAGE=en_US
+ENV LC_ALL=en_US.utf8
 ENV DEBIAN_FRONTEND=noninteractive
 ENV CMAKE_BUILD_TYPE=${cmake_build_type}
 ENV HEADLESS_BUILD=${headless_build}
