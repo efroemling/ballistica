@@ -60,6 +60,7 @@ FROM ${base_image}
 
 ENV LANG en_US.utf8
 ENV LANGUAGE=en_US
+ENV LC_ALL=en_US.utf8
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Renew the arg
