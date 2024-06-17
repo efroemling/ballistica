@@ -10,31 +10,19 @@ ARG base_image=ubuntu:latest
 # Start with the base image
 FROM --platform=linux/arm64 ${base_image} AS builder
 
-# Renew the ARGs
+# Renew the args
 ARG headless_build
 ARG cmake_build_type
 
 # Environment settings
-ENV LANG en_US.utf8
+ENV LANG=en_US.utf8
 ENV LANGUAGE=en_US
+ENV LC_ALL=en_US.utf8
 ENV DEBIAN_FRONTEND=noninteractive
 ENV CMAKE_BUILD_TYPE=${cmake_build_type}
 ENV HEADLESS_BUILD=${headless_build}
 
-# Enable ARM64 architecture and update package lists
-RUN dpkg --add-architecture arm64 && apt-get update -y
-
-# Install necessary tools to create users and groups
-RUN apt-get install -y adduser \
-    && apt-cache search clang-tools
-
-# Configure dpkg to skip systemd post-installation scripts
-RUN mkdir -p /etc/systemd/system && \
-    echo "exit 0" > /usr/sbin/policy-rc.d && chmod +x /usr/sbin/policy-rc.d && \
-    apt-get install -y --no-install-recommends \
-# testing
-    clang
-
+# Install build dependencies
 RUN apt-get install -y --no-install-recommends \
     python3.12-dev \
     python3.12-venv \
@@ -46,16 +34,16 @@ RUN apt-get install -y --no-install-recommends \
     curl \
     rsync \
     clang-format \
+    clang \
     cmake \
     libvorbis-dev \
-    build-essential \
-    && rm /usr/sbin/policy-rc.d
+    build-essential
 
 # Copy source code
-COPY ./ /home/ubuntu/ballistica
+COPY ./ /ballistica
 
 # Set the working directory
-WORKDIR /home/ubuntu/ballistica
+WORKDIR /ballistica
 
 # Compile the application
 RUN mkdir /ballistica_cmake && \
@@ -75,25 +63,17 @@ FROM --platform=linux/arm64 ${base_image}
 # Environment settings
 ENV LANG en_US.utf8
 ENV LANGUAGE=en_US
+ENV LC_ALL=en_US.utf8
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Renew the ARGs
+# Renew the args
 ARG headless_build
 ENV HEADLESS_BUILD=${headless_build}
 ARG cmake_build_type
 LABEL BOMBSQUAD_BUILD_TYPE=${cmake_build_type}
 
-# Install necessary tools to create users and groups
-RUN apt-get update -y && apt-get install -y adduser
-
-# Pre-create necessary users and groups to avoid systemd configuration errors
-RUN addgroup --system systemd-journal && \
-    adduser --system --no-create-home --ingroup systemd-journal systemd-network
-
-# Configure dpkg to skip systemd post-installation scripts
-RUN mkdir -p /etc/systemd/system && \
-    echo "exit 0" > /usr/sbin/policy-rc.d && chmod +x /usr/sbin/policy-rc.d && \
-    apt-get update -y && \
+# Install runtime dependencies
+RUN apt-get update -y && \
     apt-get install -y \
         python3.12-dev && \
     if [ "$HEADLESS_BUILD" = "0" ]; then \
@@ -104,14 +84,13 @@ RUN mkdir -p /etc/systemd/system && \
             libopenal-dev; \
     fi && \
     rm -rf /var/lib/apt/lists/* && \
-    python3.12 -c "import uuid;print(uuid.uuid4())" > /etc/machine-id && \
-    rm /usr/sbin/policy-rc.d
+    python3.12 -c "import uuid; print(uuid.uuid4())" > /etc/machine-id
 
 # Copy the compiled application from the builder stage
 COPY --from=builder /ballistica_cmake \
-    /home/ubuntu/ballistica
+                    /home/ubuntu/ballistica
 
-    # Set the working directory
+# Set the working directory
 WORKDIR /home/ubuntu/ballistica
 
 RUN ln -s ballisticakit* run

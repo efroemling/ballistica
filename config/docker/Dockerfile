@@ -10,10 +10,11 @@ ARG base_image=ubuntu:latest
 # Start with the base image
 FROM ${base_image} AS builder
 
-# Renew the arg
+# Renew the args
 ARG headless_build
 ARG cmake_build_type
 
+# Environment settings
 ENV LANG=en_US.utf8
 ENV LANGUAGE=en_US
 ENV LC_ALL=en_US.utf8
@@ -40,6 +41,7 @@ RUN apt-get update -y && \
 # Copy source code
 COPY ./ /ballistica
 
+# Set the working directory
 WORKDIR /ballistica
 
 # Compile the application
@@ -58,12 +60,13 @@ RUN mkdir /ballistica_cmake && \
 # Create a new stage for the runtime environment
 FROM ${base_image}
 
+# Environment settings
 ENV LANG en_US.utf8
 ENV LANGUAGE=en_US
 ENV LC_ALL=en_US.utf8
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Renew the arg
+# Renew the args
 ARG headless_build
 ENV HEADLESS_BUILD=${headless_build}
 ARG cmake_build_type
@@ -72,7 +75,7 @@ LABEL BOMBSQUAD_BUILD_TYPE=${cmake_build_type}
 
 # Install runtime dependencies
 RUN apt-get update -y && \
-    apt-get install -y  \
+    apt-get install -y \
         python3.12-dev && \
     if [ "$HEADLESS_BUILD" = "0" ]; then \
         apt-get install -y \
@@ -82,18 +85,19 @@ RUN apt-get update -y && \
             libopenal-dev; \
     fi && \
     rm -rf /var/lib/apt/lists/* && \
-    python3.12 -c 'import uuid; print(uuid.uuid4())' > /etc/machine-id
+    python3.12 -c "import uuid; print(uuid.uuid4())" > /etc/machine-id
 
 # Copy the compiled application from the builder stage
 COPY --from=builder /ballistica_cmake \
                     /home/ubuntu/ballistica
 
+# Set the working directory
 WORKDIR /home/ubuntu/ballistica
 
 RUN ln -s ballisticakit* run
 
 # Expose the necessary port
-EXPOSE 43210/udp    
+EXPOSE 43210/udp
 
 # Set the default command to run the application
 CMD [ "./run" ]
