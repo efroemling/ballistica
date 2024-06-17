@@ -31,7 +31,7 @@ help: env
 # Set env-var BA_ENABLE_COMPILE_COMMANDS_DB=1 to enable creating/updating a
 # cmake compile-commands database for use with things like clangd.
 ifeq ($(BA_ENABLE_COMPILE_COMMANDS_DB),1)
- PREREQ_COMPILE_COMMANDS_DB = .cache/compile_commands_db/compile_commands.json
+ ENV_COMPILE_COMMANDS_DB = .cache/compile_commands_db/compile_commands.json
 endif
 
 # pcommandbatch can be much faster when running hundreds or thousands of
@@ -46,19 +46,19 @@ else
  PCOMMANDBATCH = $(PCOMMAND)
 endif
 
-# Prereq targets that should be safe to run anytime; even if project-files
+# Env targets that should be safe to run anytime; even if project-files
 # are out of date.
 ENV_REQS_SAFE = .cache/checkenv $(PCOMMANDBATCHBIN) .dir-locals.el .mypy.ini	\
- .pyrightconfig.json .pylintrc .clang-format																\
- ballisticakit-cmake/.clang-format .editorconfig tools/cloudshell						\
- tools/bacloud
+ .pyrightconfig.json .pylintrc .clang-format																	\
+ ballisticakit-cmake/.clang-format .editorconfig tools/cloudshell							\
+ tools/bacloud tools/pcommand
 
-# Prereq targets that may break if the project needs updating should go here.
+# Env targets that may break if the project needs updating should go here.
 # An example is compile-command-databases; these might try to run cmake and
 # fail if the CMakeList files don't match what's on disk. If such a target was
 # included in ENV_REQS_SAFE it would try to build *before* project updates
 # which would leave us stuck in a broken state.
-ENV_REQS_POST_UPDATE_ONLY = $(PREREQ_COMPILE_COMMANDS_DB)
+ENV_REQS_POST_UPDATE_ONLY = $(ENV_COMPILE_COMMANDS_DB)
 
 # Target that should be built before building almost any other target. This
 # installs tool config files, sets up the Python virtual environment, etc.
@@ -1261,30 +1261,30 @@ CHECK_CLEAN_SAFETY = $(PCOMMAND) check_clean_safety
 # Some tool configs that need filtering (mainly injecting projroot path).
 TOOL_CFG_INST = $(PCOMMAND) tool_config_install
 
-# Anything that affects tool-config generation.
+# Anything required for tool-config generation.
 TOOL_CFG_SRC = tools/efrotools/toolconfig.py config/projectconfig.json \
- .venv/.efro_venv_complete tools/pcommand
+ tools/pcommand
 
 # Anything that should trigger an environment-check when changed.
-ENV_SRC = tools/batools/build.py .venv/.efro_venv_complete tools/pcommand
+ENV_SRC = tools/batools/build.py .venv/.efro_venv_complete
 
 # Generate a pcommand script hard-coded to use our virtual environment.
-# This is a prereq dependency so should not itself depend on env.
-tools/pcommand: tools/efrotools/genwrapper.py tools/efrotools/pyver.py
+# This is an env dependency so should not itself depend on env.
+tools/pcommand: tools/efrotools/genwrapper.py .venv/.efro_venv_complete
 	@echo Generating tools/pcommand...
 	@PYTHONPATH=tools python3 -m \
  efrotools.genwrapper pcommand batools.pcommandmain tools/pcommand
 
 # Generate a cloudshell script hard-coded to use our virtual environment.
-# This is a prereq dependency so should not itself depend on env.
-tools/cloudshell: tools/efrotools/genwrapper.py tools/efrotools/pyver.py
+# This is an env dependency so should not itself depend on env.
+tools/cloudshell: tools/efrotools/genwrapper.py .venv/.efro_venv_complete
 	@echo Generating tools/cloudshell...
 	@PYTHONPATH=tools python3 -m \
  efrotools.genwrapper cloudshell efrotoolsinternal.cloudshell tools/cloudshell
 
 # Generate a bacloud script hard-coded to use our virtual environment.
-# This is a prereq dependency so should not itself depend on env.
-tools/bacloud: tools/efrotools/genwrapper.py tools/efrotools/pyver.py
+# This is an env dependency so should not itself depend on env.
+tools/bacloud: tools/efrotools/genwrapper.py .venv/.efro_venv_complete
 	@echo Generating tools/bacloud...
 	@PYTHONPATH=tools python3 -m \
  efrotools.genwrapper bacloud batools.bacloud tools/bacloud
@@ -1316,40 +1316,54 @@ SKIP_ENV_CHECKS ?= 0
 VENV_PYTHON ?= python3.12
 
 # Increment this to force all downstream venvs to fully rebuild. Useful after
-# removing requirements since upgrading in place will never uninstall stuff.
+# removing requirements since upgrading venvs in place will never uninstall
+# stuff.
 VENV_STATE = 1
 
-# Rebuild our virtual environment whenever reqs, Python version, or explicit
-# state number changes. This is a dependency of env so it should not itself
-# depend on env. Note that we list pcommand as a requirement but can't use it
-# in here until the end when the venv is up. Also note that we try to update
-# venvs in place when possible, but when Python version or venv-state changes
-# we blow it away and start over to be safe.
-.venv/.efro_venv_complete: tools/pcommand config/requirements.txt \
-tools/efrotools/pyver.py
+# Update our virtual environment whenever reqs changes, Python version
+# changes, our venv's Python symlink breaks (can happen for minor Python
+# updates), or explicit state number changes. This is a dependency of env so
+# should not itself depend on env.
+.venv/.efro_venv_complete: \
+      config/requirements.txt \
+      tools/efrotools/pyver.py \
+      .venv/bin/$(VENV_PYTHON) \
+      .venv/.efro_venv_state_$(VENV_STATE)
+# Update venv in place when possible; otherwise create from scratch.
 	@[ -f .venv/bin/$(VENV_PYTHON) ] \
  && [ -f .venv/.efro_venv_state_$(VENV_STATE) ] \
  && echo Updating existing $(VENV_PYTHON) virtual environment in \'.venv\'... \
  || (echo Creating new $(VENV_PYTHON) virtual environment in \'.venv\'... \
- && rm -rf .venv)
-	$(VENV_PYTHON) -m venv .venv
+ && rm -rf .venv && $(VENV_PYTHON) -m venv .venv \
+ && touch .venv/.efro_venv_state_$(VENV_STATE))
 	.venv/bin/pip install --upgrade pip
 	.venv/bin/pip install -r config/requirements.txt
-	touch .venv/.efro_venv_state_$(VENV_STATE) \
- .venv/.efro_venv_complete # Done last to enforce fully-built venvs.
-	@$(PCOMMAND) echo \
- GRN Project virtual environment for BLD $(VENV_PYTHON) RST GRN \
- at BLD .venv RST GRN is ready to use.
+	@touch .venv/.efro_venv_complete # Done last to signal fully-built venv.
+	@echo Project virtual environment for $(VENV_PYTHON) at .venv is ready to use.
 
-.cache/checkenv: $(ENV_SRC)
+# We don't actually create anything with this target, but its existence allows
+# .efro_venv_complete to run when these bits don't exist, and that target
+# *does* recreate this stuff. Note to self: previously I tried splitting
+# things up more and recreating the venv in this target, but that led to
+# unintuitive dependency behavior. For example, a python update could cause
+# the .venv/bin/$(VENV_PYTHON) symlink to break, which would cause that target
+# to blow away and rebuild the venv, but then the reestablished symlink might
+# have an old modtime (since modtime is that of python itself) which could
+# cause .efro_venv_complete to think it was already up to date and not run,
+# leaving us with a half-built venv. So the way we do it now ensures the venv
+# update always happens in full and seems mostly foolproof.
+.venv/bin/$(VENV_PYTHON) .venv/.efro_venv_state_$(VENV_STATE):
+
+.cache/checkenv: $(ENV_SRC) $(PCOMMAND)
 	@if [ $(SKIP_ENV_CHECKS) -ne 1 ]; then \
       $(PCOMMAND) checkenv && mkdir -p .cache && touch .cache/checkenv; \
   fi
 
-$(PCOMMANDBATCHBIN): src/tools/pcommandbatch/pcommandbatch.c	\
+PCOMMANDBATCHSRC = src/tools/pcommandbatch/pcommandbatch.c	\
                      src/tools/pcommandbatch/cJSON.c
-	@$(MAKE) tools/pcommand
-	@$(PCOMMAND) build_pcommandbatch $^ $@
+
+$(PCOMMANDBATCHBIN): $(PCOMMANDBATCHSRC) $(PCOMMAND)
+	@$(PCOMMAND) build_pcommandbatch $(PCOMMANDBATCHSRC) $(PCOMMANDBATCHBIN)
 
 # CMake build-type lowercase
 CM_BT_LC = $(shell echo $(CMAKE_BUILD_TYPE) | tr A-Z a-z)
@@ -1384,6 +1398,7 @@ ballisticakit-cmake/.clang-format: .clang-format
 # compile commands for all files; lets try to keep it up to date
 # whenever CMakeLists changes.
 .cache/compile_commands_db/compile_commands.json: \
+      $(PCOMMANDBATCH) \
       ballisticakit-cmake/CMakeLists.txt
 	@$(PCOMMANDBATCH) echo BLU Updating compile commands db...
 	@mkdir -p .cache/compile_commands_db
