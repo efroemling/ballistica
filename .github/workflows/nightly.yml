@@ -5,7 +5,7 @@ on:
       - cron: '30 5 * * *'
   
 jobs:
-    make_docker_image:
+    make_docker_gui_debug_image:
         runs-on: ubuntu-latest
         steps:
         - uses: actions/checkout@v4
@@ -16,13 +16,35 @@ jobs:
         - name: Setup project environment
           run: make env
         - name: Make the build
-          run: make docker-save
+          run: |
+            make docker-gui-debug
+            make docker-save
         - name: Upload the build
           uses: actions/upload-artifact@v4
           with:
-            name: docker_server(release)
-            path: build/docker/bombsquad_server_docker.tar
+            name: docker_gui(debug)
+            path: build/docker/bombsquad_gui_debug_docker.tar
     
+    make_docker_server_debug_image:
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v4
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.12'
+        - name: Setup project environment
+          run: make env
+        - name: Make the build
+          run: |
+            make docker-server-debug
+            make docker-save
+        - name: Upload the build
+          uses: actions/upload-artifact@v4
+          with:
+            name: docker_server(debug)
+            path: build/docker/bombsquad_server_debug_docker.tar
+            
     make_sphinx_docs:
         runs-on: ubuntu-latest
         steps:

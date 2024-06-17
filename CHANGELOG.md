@@ -47,7 +47,7 @@
   two forms. Now it is possible to provide both.
 - Spaz classes now have a `default_hitpoints` which makes customizing that
   easier (Thanks rabbitboom!)
-- Added `docker-build`, `docker-run`, `docker-clean` and `docker-save` targets
+- Added `docker-gui-release`, `docker-gui-debug`, `docker-server-release`, `docker-server-debug`, `docker-clean` and `docker-save` targets
   to Makefile.
 - Fixed an issue in Assault where being teleported back to base with a sticky
   bomb stuck to you would do some crazy rubber-band-launching thing (Thanks
