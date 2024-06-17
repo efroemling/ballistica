@@ -11,6 +11,7 @@ from efrotools import pcommand
 
 # pylint: disable=too-many-lines
 
+
 def prune_includes() -> None:
     """Check for unnecessary includes in C++ files.
 
