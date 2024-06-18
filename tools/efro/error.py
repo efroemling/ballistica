@@ -73,9 +73,9 @@ class RemoteError(Exception):
     occurs remotely. The error string can consist of a remote stack
     trace or a simple message depending on the context.
 
-    Communication systems should raise more specific error types locally
-    when more introspection/control is needed; this is intended somewhat
-    as a catch-all.
+    Communication systems should aim to communicate specific errors
+    gracefully as standard message responses when specific details are
+    needed; this is intended more as a catch-all.
     """
 
     def __init__(self, msg: str, peer_desc: str):
