@@ -38,6 +38,7 @@ class MessageReceiver:
 
         # MyMessageReceiver fills out handler() overloads to ensure all
         # registered handlers have valid types/return-types.
+
         @receiver.handler
         def handle_some_message_type(self, message: SomeMsg) -> SomeResponse:
             # Deal with this message type here.
@@ -47,7 +48,7 @@ class MessageReceiver:
     obj.receiver.handle_raw_message(some_raw_data)
 
     Any unhandled Exception occurring during message handling will result in
-    an Exception being raised on the sending end.
+    an efro.error.RemoteError being raised on the sending end.
     """
 
     is_async = False

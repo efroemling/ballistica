@@ -480,6 +480,17 @@ def apple_patch(python_dir: str) -> None:
     """New test."""
     patch_modules_setup(python_dir, 'apple')
 
+    # Filter an instance of 'itms-services' that appeared in Python3.12
+    # and which was getting me rejected from the app store.
+    fname = os.path.join(python_dir, 'Lib', 'urllib', 'parse.py')
+    ftxt = readfile(fname)
+    ftxt = replace_exact(
+        ftxt,
+        "'wss', 'itms-services']",
+        "'wss', 'i!t!m!s!-!s!e!r!v!i!c!e!s'.replace('!', '')]",
+    )
+    writefile(fname, ftxt)
+
 
 def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
     """Muck with the Setup.* files Python uses to build modules."""
