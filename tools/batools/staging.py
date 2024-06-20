@@ -12,7 +12,7 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from efro.terminal import Clr
-from efrotools.util import extract_arg, extract_flag
+from efrotools.util import extract_arg, extract_flag, is_wsl_windows_build_path
 from efrotools.pyver import PYVER
 
 if TYPE_CHECKING:
@@ -69,6 +69,7 @@ class AssetStager:
         self.debug: bool | None = None
         self.builddir: str | None = None
         self.dist_mode: bool = False
+        self.wsl_chmod_workaround = False
 
     def run(self, args: list[str]) -> None:
         """Do the thing."""
@@ -79,6 +80,16 @@ class AssetStager:
             f'{Clr.BLU} at {Clr.MAG}{Clr.BLD}{self.dst}'
             f'{Clr.RST}{Clr.BLU}...{Clr.RST}'
         )
+
+        # Do our janky wsl permissions workaround if need be.
+        if self.wsl_chmod_workaround and self.dst is not None:
+            cmd = ['chmod', '-R', 'u+w', self.dst]
+            print(
+                f'{Clr.CYN}'
+                f'Running WSL permissions workaround: {cmd}'
+                f'{Clr.RST}...'
+            )
+            subprocess.run(cmd, check=True)
 
         # Ok, now for every top level dir in src, come up with a nice single
         # command to sync the needed subset of it to dst.
@@ -213,6 +224,16 @@ class AssetStager:
             self.tex_suffix = '.pvr'
         else:
             raise RuntimeError('No valid platform arg provided.')
+
+        # Special case: running rsync to a windows drive via WSL fails
+        # to overwrite non-writable files.
+        #
+        # See: https://github.com/microsoft/WSL/issues/5087
+        #
+        # As a janky workaround, make everything in our dst dir writable
+        # by us before we do our work.
+        if is_wsl_windows_build_path(self.projroot):
+            self.wsl_chmod_workaround = True
 
     def _parse_android_args(self, args: list[str]) -> None:
         # On Android we get nitpicky with exactly what we want to copy

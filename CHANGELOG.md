@@ -1,4 +1,4 @@
-### 1.7.35 (build 21879, api 8, 2024-05-16)
+### 1.7.35 (build 21888, api 8, 2024-06-16)
 - Fixed an issue where the engine would block at exit on some version of Linux
   until Ctrl-D was pressed in the calling terminal.
 - V2 accounts have been around for a while now, so the old V1 device login
@@ -47,24 +47,31 @@
   two forms. Now it is possible to provide both.
 - Spaz classes now have a `default_hitpoints` which makes customizing that
   easier (Thanks rabbitboom!)
-- (WORK IN PROGRESS) As of this version, servers are *required* to be accessible
-  via ipv4 to appear in the public listing. So they may need to provide an ipv4
-  address in their config if the automatically detected one is ipv6. This should
-  reduce the confusion of ipv6-only servers appearing greyed out for lots of
-  ipv4-only people. Pretty much everyone can connect to ipv4.
-- (WORK IN PROGRESS) There is now more personalized error feedback for the
-  connectivity checks when poking `Make My Party Public` or when launching the
-  command line server. Hopefully this will help navigate the new dual ipv4/ipv6
-  situation.
-- (WORK IN PROGRESS) The low level `ConnectionToHostUDP` class can now accept
-  multiple `SockAddr`s; it will attempt to contact the host on all of them and
-  use whichever responds first. This allows us to pass both ipv4 and ipv6
-  addresses when available and transparently use whichever is more performant.
-- Added `docker-build`, `docker-run`, `docker-clean` and `docker-save` targets
+- Added `docker-gui-release`, `docker-gui-debug`, `docker-server-release`, `docker-server-debug`, `docker-clean` and `docker-save` targets
   to Makefile.
-- Finally fixed the very old sticky bomb chaos bug in Assault game.
+- Fixed an issue in Assault where being teleported back to base with a sticky
+  bomb stuck to you would do some crazy rubber-band-launching thing (Thanks
+  vishal332008!)
+- The `windows-debug` and `windows-release` Makefile targets should properly run
+  the game again (these build the Windows version of the game from a WSL
+  environment).
+- WSL Windows builds are now more strict about their locations. Currently this
+  means they must exist somewhere under /mnt/c/. It is turning out that a
+  significant number of behavior workarounds (for file permission quirks, etc.)
+  need to happen to keep these builds behaving, so I'd like to enforce as
+  limited a set of conditions as possible to give us the best chance at
+  succeeding there.
+- Added a workaround for WSL Windows builds giving permission errors when staging asset
+  files that already exist. Please holler if you are building with WSL and still
+  running into any sort of errors, as I would love to make that path as reliable
+  as possible.
+- Fixed an issue where WSL Windows builds would re-extract everything from
+  efrocache when anything in the cache-map changed (which is the case for most
+  commits). Please holler if you are still seeing lots more 'Extracting:' lines
+  when running builds after pulling small updates from git.
+- Added github workflow for making docker image and sphinx docs nightly
+- Added github workflow for making build release on tag creation
   
-
 ### 1.7.34 (build 21823, api 8, 2024-04-26)
 - Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
   of the things this means is that we can use `typing.override` instead of the

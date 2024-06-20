@@ -45,7 +45,7 @@ class MessageProtocol:
         forward_communication_errors: bool = False,
         forward_clean_errors: bool = False,
         remote_errors_include_stack_traces: bool = False,
-        log_remote_errors: bool = True,
+        log_errors_on_receiver: bool = True,
     ) -> None:
         """Create a protocol with a given configuration.
 
@@ -62,8 +62,8 @@ class MessageProtocol:
 
         When an exception is not covered by the optional forwarding
         mechanisms above, it will come across as efro.error.RemoteError
-        and the exception will be logged on the receiver
-        end - at least by default (see details below).
+        and the exception will be logged on the receiver end - at least
+        by default (see details below).
 
         If 'remote_errors_include_stack_traces' is True, stringified
         stack traces will be returned with efro.error.RemoteError
@@ -77,8 +77,8 @@ class MessageProtocol:
         goal is usually to avoid returning opaque RemoteErrors and to
         instead return something meaningful as part of the expected
         response type (even if that value itself represents a logical
-        error state). If 'log_remote_errors' is False, however, such
-        exceptions will not be logged on the receiver. This can be
+        error state). If 'log_errors_on_receiver' is False, however, such
+        exceptions will *not* be logged on the receiver. This can be
         useful in combination with 'remote_errors_include_stack_traces'
         and 'forward_clean_errors' in situations where all error
         logging/management will be happening on the sender end. Be
@@ -168,7 +168,7 @@ class MessageProtocol:
         self.remote_errors_include_stack_traces = (
             remote_errors_include_stack_traces
         )
-        self.log_remote_errors = log_remote_errors
+        self.log_errors_on_receiver = log_errors_on_receiver
 
     @staticmethod
     def encode_dict(obj: dict) -> str:
@@ -219,7 +219,7 @@ class MessageProtocol:
                 ),
                 error_type=ErrorSysResponse.ErrorType.REMOTE,
             ),
-            self.log_remote_errors,
+            self.log_errors_on_receiver,
         )
 
     def _to_dict(

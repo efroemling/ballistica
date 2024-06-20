@@ -245,9 +245,14 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
                         bs.animate(light, 'intensity', {0: 0, 0.1: 1.0, 0.5: 0})
                         if player.actor:
                             random_num = random.uniform(0, 360)
-                            # A simple hack to work around the chaos caused by
-                            # any sticky bomb's sticky material, if present and
-                            # is sticking to the players.
+
+                            # Slightly hacky workaround: normally,
+                            # teleporting back to base with a sticky
+                            # bomb stuck to you gives a crazy whiplash
+                            # rubber-band effect. Running the teleport
+                            # twice in a row seems to suppress that
+                            # though. Would be better to fix this at a
+                            # lower level, but this works for now.
                             self._teleport(player, new_pos, random_num)
                             bs.timer(
                                 0.01,
