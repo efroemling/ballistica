@@ -116,7 +116,7 @@ def spinoff_test(args: list[str]) -> None:
                     flush=True,
                 )
                 subprocess.run(
-                    f'cd "{submpath}" && git checkout master && git pull',
+                    f'cd "{submpath}" && git checkout main && git pull',
                     shell=True,
                     check=True,
                 )
