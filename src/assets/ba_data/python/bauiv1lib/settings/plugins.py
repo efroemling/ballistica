@@ -349,7 +349,9 @@ class PluginWindow(bui.Window):
                 text=bui.Lstr(value=classpath),
                 autoselect=True,
                 value=enabled,
-                maxwidth=self._scroll_width - 200,
+                maxwidth=self._scroll_width - (
+                    200 if plugin is not None and plugin.has_settings_ui() else
+                    80),
                 position=(10, item_y),
                 size=(self._scroll_width - 40, 50),
                 on_value_change_call=bui.Call(

@@ -109,6 +109,9 @@ class ConfigNumberEdit:
             self._value = bui.app.config.resolve(configkey)
         except ValueError:
             self._value = bui.app.config.get(configkey, fallback_value)
+        self._value = (self._minval if self._minval > self._value else
+                       self._maxval if self._maxval < self._value else
+                       self._value)
         self._as_percent = as_percent
         self._f = f
 
@@ -117,7 +120,7 @@ class ConfigNumberEdit:
             position=position,
             size=(100, 30),
             text=displayname,
-            maxwidth=160 + xoffset,
+            #maxwidth=160 + xoffset,
             color=(0.8, 0.8, 0.8, 1.0),
             h_align='left',
             v_align='center',
@@ -125,7 +128,7 @@ class ConfigNumberEdit:
         )
         self.valuetext = bui.textwidget(
             parent=parent,
-            position=(246 + xoffset, position[1]),
+            position=(position[0] + 146 + xoffset, position[1]),
             size=(60, 28),
             editable=False,
             color=(0.3, 1.0, 0.3, 1.0),
@@ -136,7 +139,7 @@ class ConfigNumberEdit:
         )
         self.minusbutton = bui.buttonwidget(
             parent=parent,
-            position=(330 + xoffset, position[1]),
+            position=(position[0] + 230 + xoffset, position[1]),
             size=(28, 28),
             label='-',
             autoselect=True,
@@ -146,7 +149,7 @@ class ConfigNumberEdit:
         )
         self.plusbutton = bui.buttonwidget(
             parent=parent,
-            position=(380 + xoffset, position[1]),
+            position=(position[0] + 280 + xoffset, position[1]),
             size=(28, 28),
             label='+',
             autoselect=True,

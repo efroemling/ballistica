@@ -578,8 +578,10 @@ class PartyWindow(bui.Window):
         self._popup_party_member_is_host = is_host
 
     def _send_chat_message(self) -> None:
-        bs.chatmessage(cast(str, bui.textwidget(query=self._text_field)))
-        bui.textwidget(edit=self._text_field, text='')
+        text = cast(str, bui.textwidget(query=self._text_field)).strip()
+        if text != '':
+            bs.chatmessage(text)
+            bui.textwidget(edit=self._text_field, text='')
 
     def close(self) -> None:
         """Close the window."""
