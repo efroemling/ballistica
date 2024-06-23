@@ -43,6 +43,7 @@ tools/bacloud
 config/localconfig.json
 config/.*
 .dir-locals.el
+.rgignore
 .spinoffdata
 flycheck_*
 

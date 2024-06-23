@@ -8,6 +8,7 @@ import os
 import sys
 import subprocess
 from enum import Enum
+from pathlib import Path
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, assert_never
 
@@ -602,6 +603,13 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
         else ''
     )
     entries.append(Entry('mac_xcode_sdks', mac_xcode_sdks))
+
+    # ...or if homebrew SDL.h resolved path changes (happens for updates)
+    sdl_h_path = Path('/opt/homebrew/include/SDL2/SDL.h')
+    homebrew_sdl_h_resolved: str = (
+        str(sdl_h_path.resolve()) if sdl_h_path.is_symlink() else ''
+    )
+    entries.append(Entry('homebrew_sdl_h_resolved', homebrew_sdl_h_resolved))
 
     # Ok; do the thing.
     verfilename = os.path.join(dirname, '.ba_cmake_env')

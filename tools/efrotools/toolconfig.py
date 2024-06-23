@@ -52,6 +52,7 @@ def install_tool_config(projroot: Path, src: Path, dst: Path) -> None:
         '.style.yapf',
         '.clang-format',
         '.editorconfig',
+        '.rgignore',
     ]:
         comment = '#'
     if comment is not None:

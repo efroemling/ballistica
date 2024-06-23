@@ -536,6 +536,21 @@ def make_hash(obj: Any) -> int:
     return hash(tuple(frozenset(sorted(new_obj.items()))))
 
 
+def float_hash_from_string(s: str) -> float:
+    """Given a string value, returns a float between 0 and 1.
+
+    If consistent across processes. Can be useful for assigning db ids
+    shard values for efficient parallel processing.
+    """
+    import hashlib
+
+    hash_bytes = hashlib.md5(s.encode()).digest()
+
+    # Generate a random 64 bit int from hash digest bytes.
+    ival = int.from_bytes(hash_bytes[:8])
+    return ival / ((1 << 64) - 1)
+
+
 def asserttype(obj: Any, typ: type[T]) -> T:
     """Return an object typed as a given type.
 

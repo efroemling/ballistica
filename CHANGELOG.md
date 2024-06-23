@@ -1,4 +1,6 @@
-### 1.7.35 (build 21888, api 8, 2024-06-16)
+### 1.7.36 (build 21894, api 8, 2024-06-22)
+
+### 1.7.35 (build 21889, api 8, 2024-06-20)
 - Fixed an issue where the engine would block at exit on some version of Linux
   until Ctrl-D was pressed in the calling terminal.
 - V2 accounts have been around for a while now, so the old V1 device login

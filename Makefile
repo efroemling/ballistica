@@ -49,7 +49,7 @@ endif
 # Env targets that should be safe to run anytime; even if project-files
 # are out of date.
 ENV_REQS_SAFE = .cache/checkenv $(PCOMMANDBATCHBIN) .dir-locals.el .mypy.ini	\
- .pyrightconfig.json .pylintrc .clang-format																	\
+ .pyrightconfig.json .pylintrc .clang-format .rgignore												\
  ballisticakit-cmake/.clang-format .editorconfig tools/cloudshell							\
  tools/bacloud tools/pcommand
 
@@ -711,7 +711,7 @@ spinoff-upgrade: env
 	@$(PCOMMAND) spinoff_check_submodule_parent
 	$(MAKE) update
 	@$(PCOMMANDBATCH) echo BLU Pulling latest parent project...
-	cd submodules/ballistica && git checkout master && git pull
+	cd submodules/ballistica && git checkout main && git pull
 	@$(PCOMMANDBATCH) echo BLU Syncing parent into current project...
 	tools/spinoff update
 	@$(MAKE) update-check  # Make sure spinoff didn't break anything.
@@ -1288,6 +1288,9 @@ tools/bacloud: tools/efrotools/genwrapper.py .venv/.efro_venv_complete
 	@echo Generating tools/bacloud...
 	@PYTHONPATH=tools python3 -m \
  efrotools.genwrapper bacloud batools.bacloud tools/bacloud
+
+.rgignore: config/toolconfigsrc/rgignore $(TOOL_CFG_SRC)
+	@$(TOOL_CFG_INST) $< $@
 
 .clang-format: config/toolconfigsrc/clang-format $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
