@@ -258,7 +258,7 @@ class ControlsSettingsWindow(bui.Window):
             v -= spacing
             bui.widget(
                 edit=self._keyboard_2_button,
-                left_widget=self._keyboard_2_button
+                left_widget=self._keyboard_2_button,
             )
         if show_space_2:
             v -= space_height
@@ -323,7 +323,7 @@ class ControlsSettingsWindow(bui.Window):
             bui.widget(
                 edit=xinput_checkbox,
                 left_widget=xinput_checkbox,
-                right_widget=xinput_checkbox
+                right_widget=xinput_checkbox,
             )
             v -= spacing
 

@@ -109,9 +109,11 @@ class ConfigNumberEdit:
             self._value = bui.app.config.resolve(configkey)
         except ValueError:
             self._value = bui.app.config.get(configkey, fallback_value)
-        self._value = (self._minval if self._minval > self._value else
-                       self._maxval if self._maxval < self._value else
-                       self._value)
+        self._value = (
+            self._minval
+            if self._minval > self._value
+            else self._maxval if self._maxval < self._value else self._value
+        )
         self._as_percent = as_percent
         self._f = f
 
@@ -120,7 +122,7 @@ class ConfigNumberEdit:
             position=position,
             size=(100, 30),
             text=displayname,
-            #maxwidth=160 + xoffset,
+            # maxwidth=160 + xoffset,
             color=(0.8, 0.8, 0.8, 1.0),
             h_align='left',
             v_align='center',
