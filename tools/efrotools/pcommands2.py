@@ -31,7 +31,7 @@ def with_build_lock() -> None:
         raise CleanError(
             'Expected one lock-name arg and at least one command arg'
         )
-    with BuildLock(args[0]):
+    with BuildLock(args[0], projroot=str(pcommand.PROJROOT)):
         subprocess.run(' '.join(args[1:]), check=True, shell=True)
 
 

@@ -142,6 +142,8 @@ from batools.pcommands2 import (
     wsl_path_to_win,
     wsl_build_check_win_drive,
     get_modern_make,
+    asset_package_resolve,
+    asset_package_fetch,
 )
 
 # pylint: enable=unused-import

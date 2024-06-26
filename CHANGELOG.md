@@ -1,5 +1,8 @@
-### 1.7.36 (build 21895, api 8, 2024-06-26)
-
+### 1.7.36 (build 21896, api 8, 2024-06-26)
+- `bacloud workspace put` is now a bit smarter; you can now do things like 
+  `bacloud workspace put .` and it will work. Previously such cases required
+  explicitly passing the workspace name as a second argument.
+  
 ### 1.7.35 (build 21889, api 8, 2024-06-20)
 - Fixed an issue where the engine would block at exit on some version of Linux
   until Ctrl-D was pressed in the calling terminal.

@@ -7499,6 +7499,21 @@ assets: assets-cmake assets-win-Win32
 clean:
 	@rm -rf $(BUILD_DIR)
 
+# Modern AssetPackage bits.
+
+# Extract the asset-package version from project-config and stuff it into
+# a 'resolved' file. If we are using dev version, clear the file which
+# will force an explicit check each time through.
+$(PROJ_DIR)/.cache/asset_package_resolved: $(PROJ_DIR)/config/projectconfig.json
+	@$(PCOMMAND) asset_package_resolve $@
+
+$(PROJ_DIR)/.cache/assetmanifests/cmake-debug.manifest:	\
+      $(PROJ_DIR)/.cache/asset_package_resolved
+	@$(PCOMMAND) asset_package_fetch $(PROJ_DIR)/.cache/asset_package_resolved	\
+ cmake-debug $@
+
+foo: $(PROJ_DIR)/.cache/assetmanifests/cmake-debug.manifest
+
 # These targets don't correspond to actual files; make sure make knows that.
 .PHONY: cmake win mac ios android audio audio-clean fonts fonts-clean data	\
         data-clean meshes meshes-clean textures-clean scripts scripts-clean	\

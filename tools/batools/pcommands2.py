@@ -602,3 +602,75 @@ def get_modern_make() -> None:
         print('gmake')
     else:
         print('make')
+
+
+def asset_package_resolve() -> None:
+    """Resolve exact asset-package-version we'll use (if any)."""
+    import os
+
+    from efro.error import CleanError
+    from efrotools.project import getprojectconfig
+
+    pcommand.disallow_in_batch()
+    args = pcommand.get_args()
+    if len(args) != 1:
+        raise CleanError('Expected 1 arg.')
+
+    resolve_path = args[0]
+
+    apversion = getprojectconfig(pcommand.PROJROOT).get('assets')
+    if apversion is None:
+        raise CleanError("No 'assets' value found in projectconfig.")
+
+    splits = apversion.split('.')
+    if len(splits) != 3:
+        raise CleanError(
+            f"'{apversion}' is not a valid asset-package-version id."
+        )
+
+    # 'dev' versions are a special case; in that case we don't create
+    # a resolve file, which effectively causes our manifest fetch logic
+    # to run each time.
+    if splits[2] == 'dev':
+        if os.path.exists(resolve_path):
+            os.unlink(resolve_path)
+    else:
+        with open(resolve_path, 'w', encoding='utf-8') as outfile:
+            outfile.write(apversion)
+
+
+def asset_package_fetch() -> None:
+    """Build/fetch an asset-package-manifest."""
+    import os
+    from efro.error import CleanError
+
+    from efrotools.project import getprojectconfig
+
+    pcommand.disallow_in_batch()
+    args = pcommand.get_args()
+    if len(args) != 3:
+        raise CleanError('Expected 3 args.')
+
+    resolve_path, _buildtype, outpath = args
+
+    # If resolve path exists, it is the exact asset-package-version we
+    # should use.
+    apversion: str | None
+    if os.path.exists(resolve_path):
+        with open(resolve_path, encoding='utf-8') as infile:
+            apversion = infile.read()
+    else:
+        # If there's no resolve file, look up the value directly from
+        # project-config. Generally this means it's set to a dev
+        # version.
+        apversion = getprojectconfig(pcommand.PROJROOT).get('assets')
+    if not isinstance(apversion, str):
+        raise CleanError(
+            f'Expected a string asset-package-version; got {type(apversion)}.'
+        )
+
+    print('WOULD GO FORWARD WITH', apversion)
+
+    os.makedirs(os.path.dirname(outpath), exist_ok=True)
+    with open(outpath, 'w', encoding='utf-8') as outfile:
+        outfile.write('foo')

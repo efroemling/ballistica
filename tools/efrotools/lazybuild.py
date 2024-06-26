@@ -106,7 +106,7 @@ class LazyBuildContext:
             # sure that only one build for some given purpose is being run at
             # once.
             if self.buildlockname is not None:
-                with BuildLock(self.buildlockname):
+                with BuildLock(self.buildlockname, projroot='.'):
                     self._run_commands_and_update_target()
             else:
                 self._run_commands_and_update_target()

@@ -94,24 +94,10 @@ class App:
         ):
             raise CleanError('Unable to locate project directory.')
 
-        # Also run project env checks so we can hopefully inform the user
-        # of missing Python modules/etc. instead of just failing cryptically.
-        try:
-            subprocess.run(
-                ['make', '--quiet', 'env'],
-                check=True,
-                cwd=self._project_root,
-            )
-        except subprocess.CalledProcessError as exc:
-            raise CleanError(
-                '"make env" check failed. '
-                'Install missing requirements and try again.'
-            ) from exc
-
         self._load_state()
 
         # Simply pass all args to the server and let it do the thing.
-        self.run_interactive_command(sys.argv[1:])
+        self.run_interactive_command(cwd=os.getcwd(), args=sys.argv[1:])
 
         self._save_state()
 
@@ -287,8 +273,13 @@ class App:
                 os.makedirs(dirname, exist_ok=True)
             data_zipped = base64.b64decode(fdata)
             data = zlib.decompress(data_zipped)
-            with open(fname, 'wb') as outfile:
+
+            # Write to tmp files first and then move into place. This
+            # way crashes are less likely to lead to corrupt data.
+            fnametmp = f'{fname}.tmp'
+            with open(fnametmp, 'wb') as outfile:
                 outfile.write(data)
+            os.rename(fnametmp, fname)
 
     def _handle_dir_prune_empty(self, prunedir: str) -> None:
         """Handle pruning empty directories."""
@@ -334,11 +325,14 @@ class App:
                 print(prompt, end='', flush=True)
             self._end_command_args['input'] = input()
 
-    def run_interactive_command(self, args: list[str]) -> None:
+    def run_interactive_command(self, cwd: str, args: list[str]) -> None:
         """Run a single user command to completion."""
         # pylint: disable=too-many-branches
 
-        nextcall: tuple[str, dict] | None = ('_interactive', {'a': args})
+        nextcall: tuple[str, dict] | None = (
+            '_interactive',
+            {'c': cwd, 'a': args},
+        )
 
         # Now talk to the server in a loop until there's nothing left to do.
         while nextcall is not None:
