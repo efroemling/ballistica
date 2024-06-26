@@ -399,8 +399,8 @@ class DeadlockWatcher:
 
     Use the enable_deadlock_watchers() to enable this system.
 
-    Next, create these in contexts where they will be torn down after
-    some operation completes. If any is not torn down within the
+    Next, use these wrapped in a with statement around some operation
+    that may deadlock. If the with statement does not complete within the
     timeout period, a traceback of all threads will be dumped.
 
     Note that the checker thread runs a cycle every ~5 seconds, so
@@ -442,9 +442,38 @@ class DeadlockWatcher:
             if curthread.ident is None
             else hex(curthread.ident).removeprefix('0x')
         )
+        self.active = False
 
         with cls.watchers_lock:
             cls.watchers.append(weakref.ref(self))
+
+    # Support the with statement.
+    def __enter__(self) -> Any:
+        self.active = True
+        return self
+
+    def __exit__(self, exc_type: Any, exc_value: Any, exc_tb: Any) -> None:
+        self.active = False
+
+        # Print if we lived past our deadline. This is just an extra
+        # data point. The watcher thread should be doing the actual
+        # stack dumps/etc.
+        if self.logger is None or self.logextra is None:
+            return
+
+        duration = time.monotonic() - self.create_time
+        if duration > self.timeout:
+            self.logger.error(
+                'DeadlockWatcher %s at %s in thread %s lived %.2fs,'
+                ' past timeout %.2fs. This should have triggered'
+                ' a deadlock dump.',
+                id(self),
+                self.caller_source_loc,
+                self.thread_id,
+                duration,
+                self.timeout,
+                extra=self.logextra,
+            )
 
     @classmethod
     def enable_deadlock_watchers(cls) -> None:
@@ -486,7 +515,7 @@ class DeadlockWatcher:
 
             found_fresh_expired = False
 
-            # If any watcher is still alive but expired, sleep past the
+            # If any watcher is still active and expired, sleep past the
             # timeout to force the dumper to do its thing.
             with cls.watchers_lock:
 
@@ -496,14 +525,16 @@ class DeadlockWatcher:
                         w is not None
                         and now - w.create_time > w.timeout
                         and not w.noted_expire
+                        and w.active
                     ):
                         # If they supplied a logger, let them know they
                         # should check stderr for a dump.
                         if w.logger is not None:
                             w.logger.error(
-                                'DeadlockWatcher at %s in thread %s'
+                                'DeadlockWatcher %s at %s in thread %s'
                                 ' with time %.2f expired;'
                                 ' check stderr for stack traces.',
+                                id(w),
                                 w.caller_source_loc,
                                 w.thread_id,
                                 w.timeout,
