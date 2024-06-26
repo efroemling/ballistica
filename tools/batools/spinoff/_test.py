@@ -19,11 +19,11 @@ def spinoff_test(args: list[str]) -> None:
     import os
     import subprocess
 
-    from batools.featureset import FeatureSet
-    from efrotools.util import extract_flag
-    from efrotools.project import getprojectconfig
+    from efro.util import extract_flag
     from efro.terminal import Clr
     from efro.error import CleanError
+    from batools.featureset import FeatureSet
+    from efrotools.project import getprojectconfig
 
     submodule_parent = extract_flag(args, '--submodule-parent')
     shared_test_parent = extract_flag(args, '--shared-test-parent')

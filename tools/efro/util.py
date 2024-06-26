@@ -10,12 +10,13 @@ import weakref
 import datetime
 import functools
 from enum import Enum
-from typing import TYPE_CHECKING, cast, TypeVar, Generic
+from typing import TYPE_CHECKING, cast, TypeVar, Generic, overload
 
 if TYPE_CHECKING:
     import asyncio
+    from typing import Any, Callable, Literal
+
     from efro.call import Call as Call  # 'as Call' so we re-export.
-    from typing import Any, Callable
 
 T = TypeVar('T')
 ValT = TypeVar('ValT')
@@ -913,3 +914,58 @@ def split_list(input_list: list[T], max_length: int) -> list[list[T]]:
         input_list[i : i + max_length]
         for i in range(0, len(input_list), max_length)
     ]
+
+
+def extract_flag(args: list[str], name: str) -> bool:
+    """Given a list of args and a flag name, returns whether it is present.
+
+    The arg flag, if present, is removed from the arg list.
+    """
+    from efro.error import CleanError
+
+    count = args.count(name)
+    if count > 1:
+        raise CleanError(f'Flag {name} passed multiple times.')
+    if not count:
+        return False
+    args.remove(name)
+    return True
+
+
+@overload
+def extract_arg(
+    args: list[str], name: str, required: Literal[False] = False
+) -> str | None: ...
+
+
+@overload
+def extract_arg(args: list[str], name: str, required: Literal[True]) -> str: ...
+
+
+def extract_arg(
+    args: list[str], name: str, required: bool = False
+) -> str | None:
+    """Given a list of args and an arg name, returns a value.
+
+    The arg flag and value are removed from the arg list.
+    raises CleanErrors on any problems.
+    """
+    from efro.error import CleanError
+
+    count = args.count(name)
+    if not count:
+        if required:
+            raise CleanError(f'Required argument {name} not passed.')
+        return None
+
+    if count > 1:
+        raise CleanError(f'Arg {name} passed multiple times.')
+
+    argindex = args.index(name)
+    if argindex + 1 >= len(args):
+        raise CleanError(f'No value passed after {name} arg.')
+
+    val = args[argindex + 1]
+    del args[argindex : argindex + 2]
+
+    return val

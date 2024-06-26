@@ -253,10 +253,10 @@ class App:
 
     def _handle_downloads_inline(
         self,
-        downloads_inline: dict[str, str],
+        downloads_inline: dict[str, bytes],
     ) -> None:
         """Handle inline file data to be saved to the client."""
-        import base64
+        # import base64
 
         for fname, fdata in downloads_inline.items():
             # If there's a directory where we want our file to go, clear it
@@ -271,7 +271,8 @@ class App:
             dirname = os.path.dirname(fname)
             if dirname:
                 os.makedirs(dirname, exist_ok=True)
-            data_zipped = base64.b64decode(fdata)
+            # data_zipped = base64.b64decode(fdata)
+            data_zipped = fdata
             data = zlib.decompress(data_zipped)
 
             # Write to tmp files first and then move into place. This

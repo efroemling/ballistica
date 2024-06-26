@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 # Version is sent to the master-server with all commands. Can be incremented
 # if we need to change behavior server-side to go along with client changes.
-BACLOUD_VERSION = 9
+BACLOUD_VERSION = 11
 
 
 @ioprepped
@@ -49,11 +49,11 @@ class ResponseData:
         It should be added to end_command args as 'manifest'.
       uploads: If present, client should upload the requested files (arg1)
         individually to a server command (arg2) with provided args (arg3).
-      uploads_inline: If present, a list of pathnames that should be base64
-        gzipped and uploaded to an 'uploads_inline' dict in end_command args.
+      uploads_inline: If present, a list of pathnames that should be gzipped
+        and uploaded to an 'uploads_inline' bytes dict in end_command args.
         This should be limited to relatively small files.
       deletes: If present, file paths that should be deleted on the client.
-      downloads_inline: If present, pathnames mapped to base64 gzipped data to
+      downloads_inline: If present, pathnames mapped to gzipped data to
         be written to the client. This should only be used for relatively
         small files as they are all included inline as part of the response.
       dir_prune_empty: If present, all empty dirs under this one should be
@@ -88,7 +88,7 @@ class ResponseData:
         list[str] | None, IOAttrs('dlt', store_default=False)
     ] = None
     downloads_inline: Annotated[
-        dict[str, str] | None, IOAttrs('dinl', store_default=False)
+        dict[str, bytes] | None, IOAttrs('dinl', store_default=False)
     ] = None
     dir_prune_empty: Annotated[
         str | None, IOAttrs('dpe', store_default=False)

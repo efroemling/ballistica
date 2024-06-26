@@ -12,7 +12,8 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from efro.terminal import Clr
-from efrotools.util import extract_arg, extract_flag, is_wsl_windows_build_path
+from efro.util import extract_arg, extract_flag
+from efrotools.util import is_wsl_windows_build_path
 from efrotools.pyver import PYVER
 
 if TYPE_CHECKING:

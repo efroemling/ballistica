@@ -7,7 +7,7 @@ Ideally the stuff in here should migrate to more descriptive module names.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
@@ -18,61 +18,6 @@ if TYPE_CHECKING:
 def explicit_bool(value: bool) -> bool:
     """Simply return input value; can avoid unreachable-code type warnings."""
     return value
-
-
-def extract_flag(args: list[str], name: str) -> bool:
-    """Given a list of args and a flag name, returns whether it is present.
-
-    The arg flag, if present, is removed from the arg list.
-    """
-    from efro.error import CleanError
-
-    count = args.count(name)
-    if count > 1:
-        raise CleanError(f'Flag {name} passed multiple times.')
-    if not count:
-        return False
-    args.remove(name)
-    return True
-
-
-@overload
-def extract_arg(
-    args: list[str], name: str, required: Literal[False] = False
-) -> str | None: ...
-
-
-@overload
-def extract_arg(args: list[str], name: str, required: Literal[True]) -> str: ...
-
-
-def extract_arg(
-    args: list[str], name: str, required: bool = False
-) -> str | None:
-    """Given a list of args and an arg name, returns a value.
-
-    The arg flag and value are removed from the arg list.
-    raises CleanErrors on any problems.
-    """
-    from efro.error import CleanError
-
-    count = args.count(name)
-    if not count:
-        if required:
-            raise CleanError(f'Required argument {name} not passed.')
-        return None
-
-    if count > 1:
-        raise CleanError(f'Arg {name} passed multiple times.')
-
-    argindex = args.index(name)
-    if argindex + 1 >= len(args):
-        raise CleanError(f'No value passed after {name} arg.')
-
-    val = args[argindex + 1]
-    del args[argindex : argindex + 2]
-
-    return val
 
 
 def replace_section(

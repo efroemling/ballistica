@@ -121,8 +121,8 @@ def build_pcommandbatch() -> None:
 def batchserver() -> None:
     """Run a server for handling pcommands."""
     from efro.error import CleanError
+    from efro.util import extract_arg
 
-    from efrotools.util import extract_arg
     import efrotools.pcommandbatch as pcb
 
     pcommand.disallow_in_batch()

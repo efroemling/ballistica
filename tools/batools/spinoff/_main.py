@@ -107,7 +107,7 @@ def _main() -> None:
         assert_never(cmd)
 
     if single_run_mode is not None:
-        from efrotools.util import extract_flag
+        from efro.util import extract_flag
 
         args = sys.argv[2:]
         force = extract_flag(args, '--force')
@@ -146,7 +146,7 @@ def _main() -> None:
 
 def _do_create(src_root: str, dst_root: str | None) -> None:
     # pylint: disable=too-many-locals, cyclic-import
-    from efrotools.util import extract_arg, extract_flag
+    from efro.util import extract_arg, extract_flag
     from efrotools.code import format_python_str
     from efrotools.project import getprojectconfig
     import batools.spinoff
@@ -317,7 +317,7 @@ def _do_featureset_delete() -> None:
 
 def _do_featureset_copy() -> None:
     # pylint: disable=too-many-locals
-    from efrotools.util import extract_flag
+    from efro.util import extract_flag
 
     from batools.featureset import FeatureSet
 

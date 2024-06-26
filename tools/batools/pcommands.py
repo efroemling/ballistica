@@ -223,7 +223,7 @@ def androidaddr() -> None:
 def push_ipa() -> None:
     """Construct and push ios IPA for testing."""
 
-    from efrotools.util import extract_arg
+    from efro.util import extract_arg
     import efrotools.ios
 
     pcommand.disallow_in_batch()

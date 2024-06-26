@@ -1,7 +1,10 @@
-### 1.7.36 (build 21896, api 8, 2024-06-26)
-- `bacloud workspace put` is now a bit smarter; you can now do things like 
-  `bacloud workspace put .` and it will work. Previously such cases required
-  explicitly passing the workspace name as a second argument.
+### 1.7.36 (build 21897, api 8, 2024-06-26)
+- bacloud workspace commands are now a bit smarter; you can now do things like 
+  `bacloud workspace put .` or even just `bacloud workspace put` and it will
+  work. Previously such cases required explicitly passing the workspace name
+  as a second argument. Both `workspace get` and `workspace put` now also have
+  an optional `--workspace` arg if you want to sync with a workspace different
+  than the local directory name.
   
 ### 1.7.35 (build 21889, api 8, 2024-06-20)
 - Fixed an issue where the engine would block at exit on some version of Linux
