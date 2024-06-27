@@ -967,12 +967,6 @@ def gather(do_android: bool, do_apple: bool) -> None:
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
 
-    # Currently need to avoid using nested identical quotes in fstrings
-    # because black chokes on them, even though pylint wants us to.
-    #
-    # https://github.com/psf/black/issues/3746
-    # pylint: disable=inconsistent-quotes
-
     class CompileArch(Enum):
         """The exhaustive set of single architectures we build for.
 
@@ -1058,22 +1052,22 @@ def gather(do_android: bool, do_apple: bool) -> None:
         # things.
         bases2 = {
             # 'mac': f'{bases["mac"]}/merge/macOS/macosx',
-            'mac': f'{bases["mac"]}/install/macOS/macosx',
+            'mac': f'{bases['mac']}/install/macOS/macosx',
             # 'ios': f'{bases["ios"]}/merge/iOS/iphoneos',
-            'ios': f'{bases["ios"]}/install/iOS/iphoneos.arm64',
+            'ios': f'{bases['ios']}/install/iOS/iphoneos.arm64',
             # 'ios_simulator': (
             #     f'{bases["ios_simulator"]}/merge/iOS/iphonesimulator'
             # ),
             'ios_simulator': (
-                f'{bases["ios_simulator"]}/install/iOS/iphonesimulator.arm64'
+                f'{bases['ios_simulator']}/install/iOS/iphonesimulator.arm64'
             ),
             # 'tvos': f'{bases["tvos"]}/merge/tvOS/appletvos',
-            'tvos': f'{bases["tvos"]}/install/tvOS/appletvos.arm64',
+            'tvos': f'{bases['tvos']}/install/tvOS/appletvos.arm64',
             # 'tvos_simulator': (
             #     f'{bases["tvos_simulator"]}/merge/tvOS/appletvsimulator'
             # ),
             'tvos_simulator': (
-                f'{bases["tvos_simulator"]}/install/tvOS/appletvsimulator.arm64'
+                f'{bases['tvos_simulator']}/install/tvOS/appletvsimulator.arm64'
             ),
             'android_arm': f'build/python_android_arm{bsuffix}/{apost2}',
             'android_arm64': f'build/python_android_arm64{bsuffix}/{apost2}',
@@ -1090,42 +1084,42 @@ def gather(do_android: bool, do_apple: bool) -> None:
         groups: dict[str, GroupDef] = {
             'apple': GroupDef(
                 baseheaders=[
-                    f'{bases["mac"]}/build/macOS/macosx/'
+                    f'{bases['mac']}/build/macOS/macosx/'
                     f'python-{PY_VER_EXACT_APPLE}/Include',
-                    f'{bases["ios"]}/build/iOS/iphoneos.arm64/'
+                    f'{bases['ios']}/build/iOS/iphoneos.arm64/'
                     f'python-{PY_VER_EXACT_APPLE}/Include',
-                    f'{bases["ios_simulator"]}'
+                    f'{bases['ios_simulator']}'
                     f'/build/iOS/iphonesimulator.arm64/'
                     f'python-{PY_VER_EXACT_APPLE}/Include',
-                    f'{bases["ios_simulator"]}'
+                    f'{bases['ios_simulator']}'
                     f'/build/iOS/iphonesimulator.x86_64/'
                     f'python-{PY_VER_EXACT_APPLE}/Include',
-                    f'{bases["tvos"]}/build/tvOS/appletvos.arm64/'
+                    f'{bases['tvos']}/build/tvOS/appletvos.arm64/'
                     f'python-{PY_VER_EXACT_APPLE}/Include',
-                    f'{bases["tvos_simulator"]}'
+                    f'{bases['tvos_simulator']}'
                     f'/build/tvOS/appletvsimulator.arm64/'
                     f'python-{PY_VER_EXACT_APPLE}/Include',
-                    f'{bases["tvos_simulator"]}'
+                    f'{bases['tvos_simulator']}'
                     f'/build/tvOS/appletvsimulator.x86_64/'
                     f'python-{PY_VER_EXACT_APPLE}/Include',
                 ],
                 basepylib=[
-                    f'{bases["mac"]}/build/macOS/macosx/'
+                    f'{bases['mac']}/build/macOS/macosx/'
                     f'python-{PY_VER_EXACT_APPLE}/Lib',
-                    f'{bases["ios"]}/build/iOS/iphoneos.arm64/'
+                    f'{bases['ios']}/build/iOS/iphoneos.arm64/'
                     f'python-{PY_VER_EXACT_APPLE}/Lib',
-                    f'{bases["ios_simulator"]}'
+                    f'{bases['ios_simulator']}'
                     f'/build/iOS/iphonesimulator.arm64/'
                     f'python-{PY_VER_EXACT_APPLE}/Lib',
-                    f'{bases["ios_simulator"]}'
+                    f'{bases['ios_simulator']}'
                     f'/build/iOS/iphonesimulator.x86_64/'
                     f'python-{PY_VER_EXACT_APPLE}/Lib',
-                    f'{bases["tvos"]}/build/tvOS/appletvos.arm64/'
+                    f'{bases['tvos']}/build/tvOS/appletvos.arm64/'
                     f'python-{PY_VER_EXACT_APPLE}/Lib',
-                    f'{bases["tvos_simulator"]}'
+                    f'{bases['tvos_simulator']}'
                     f'/build/tvOS/appletvsimulator.arm64/'
                     f'python-{PY_VER_EXACT_APPLE}/Lib',
-                    f'{bases["tvos_simulator"]}'
+                    f'{bases['tvos_simulator']}'
                     f'/build/tvOS/appletvsimulator.x86_64/'
                     f'python-{PY_VER_EXACT_APPLE}/Lib',
                 ],

@@ -329,10 +329,10 @@ class App:
     def run_interactive_command(self, cwd: str, args: list[str]) -> None:
         """Run a single user command to completion."""
         # pylint: disable=too-many-branches
-
+        assert self._project_root is not None
         nextcall: tuple[str, dict] | None = (
             '_interactive',
-            {'c': cwd, 'a': args},
+            {'c': cwd, 'p': str(self._project_root), 'a': args},
         )
 
         # Now talk to the server in a loop until there's nothing left to do.
