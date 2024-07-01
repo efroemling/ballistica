@@ -1188,6 +1188,8 @@ class Spaz(bs.Actor):
             self.bomb_count += 1
 
         elif isinstance(msg, bs.DieMessage):
+            if self._dead:
+                return None
             wasdead = self._dead
             self._dead = True
             self.hitpoints = 0
