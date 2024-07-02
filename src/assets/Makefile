@@ -211,7 +211,15 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baplus/__init__.py \
   $(BUILD_DIR)/ba_data/python/baplus/_cloud.py \
   $(BUILD_DIR)/ba_data/python/baplus/_hooks.py \
+  $(BUILD_DIR)/ba_data/python/baplus/_rpc.py \
   $(BUILD_DIR)/ba_data/python/baplus/_subsystem.py \
+  $(BUILD_DIR)/ba_data/python/baplus/pypresence/__init__.py \
+  $(BUILD_DIR)/ba_data/python/baplus/pypresence/baseclient.py \
+  $(BUILD_DIR)/ba_data/python/baplus/pypresence/client.py \
+  $(BUILD_DIR)/ba_data/python/baplus/pypresence/exceptions.py \
+  $(BUILD_DIR)/ba_data/python/baplus/pypresence/payloads.py \
+  $(BUILD_DIR)/ba_data/python/baplus/pypresence/presence.py \
+  $(BUILD_DIR)/ba_data/python/baplus/pypresence/utils.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activity.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activitytypes.py \
@@ -488,7 +496,15 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baplus/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_cloud.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_hooks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_rpc.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_subsystem.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baplus/pypresence/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baplus/pypresence/__pycache__/baseclient.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baplus/pypresence/__pycache__/client.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baplus/pypresence/__pycache__/exceptions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baplus/pypresence/__pycache__/payloads.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baplus/pypresence/__pycache__/presence.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baplus/pypresence/__pycache__/utils.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_activity.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_activitytypes.cpython-312.opt-1.pyc \
