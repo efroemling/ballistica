@@ -90,20 +90,6 @@ class MessageReceiver:
                 f' got {sig.args}'
             )
 
-        # Make sure we are only given async methods if we are an async handler
-        # and sync ones otherwise.
-        # UPDATE - can't do this anymore since we now sometimes use
-        # regular functions which return awaitables instead of having
-        # the entire function be async.
-        # is_async = inspect.iscoroutinefunction(call)
-        # if self.is_async != is_async:
-        #     msg = (
-        #         'Expected a sync method; found an async one.'
-        #         if is_async
-        #         else 'Expected an async method; found a sync one.'
-        #     )
-        #     raise ValueError(msg)
-
         # Check annotation types to determine what message types we handle.
         # Return-type annotation can be a Union, but we probably don't
         # have it available at runtime. Explicitly pull it in.
@@ -162,7 +148,7 @@ class MessageReceiver:
 
         if msgtype in self._handlers:
             raise TypeError(
-                f'Message type {msgtype} already has a registered' f' handler.'
+                f'Message type {msgtype} already has a registered handler.'
             )
 
         # Make sure the responses exactly matches what the message expects.
@@ -285,7 +271,6 @@ class MessageReceiver:
         """
         assert not self.is_async, "can't call sync handler on async receiver"
         msg_decoded: Message | None = None
-        msgtype: type[Message] | None = None
         try:
             msg_decoded = self._decode_incoming_message(bound_obj, msg)
             msgtype = type(msg_decoded)
@@ -305,7 +290,8 @@ class MessageReceiver:
                 bound_obj, msg_decoded, exc
             )
             if dolog:
-                if msgtype is not None:
+                if msg_decoded is not None:
+                    msgtype = type(msg_decoded)
                     logging.exception(
                         'Error handling %s.%s message.',
                         msgtype.__module__,
@@ -313,7 +299,9 @@ class MessageReceiver:
                     )
                 else:
                     logging.exception(
-                        'Error handling raw efro.message. msg=%s', msg
+                        'Error handling raw efro.message'
+                        ' (likely a message format incompatibility): %s.',
+                        msg,
                     )
             return rstr
 
@@ -330,9 +318,8 @@ class MessageReceiver:
         # able to guarantee that messages handlers would be called in the
         # order the messages were received.
 
-        assert self.is_async, "can't call async handler on sync receiver"
+        assert self.is_async, "Can't call async handler on sync receiver."
         msg_decoded: Message | None = None
-        msgtype: type[Message] | None = None
         try:
             msg_decoded = self._decode_incoming_message(bound_obj, msg)
             msgtype = type(msg_decoded)
@@ -347,43 +334,51 @@ class MessageReceiver:
             ):
                 raise
             return self._handle_raw_message_async_error(
-                bound_obj, msg_decoded, msgtype, exc
+                bound_obj, msg, msg_decoded, exc
             )
 
         # Return an awaitable to handle the rest asynchronously.
         return self._handle_raw_message_async(
-            bound_obj, msg_decoded, msgtype, handler_awaitable
+            bound_obj, msg, msg_decoded, handler_awaitable
         )
 
     async def _handle_raw_message_async_error(
         self,
         bound_obj: Any,
+        msg_raw: str,
         msg_decoded: Message | None,
-        msgtype: type[Message] | None,
         exc: Exception,
     ) -> str:
         rstr, dolog = self.encode_error_response(bound_obj, msg_decoded, exc)
         if dolog:
-            if msgtype is not None:
+            if msg_decoded is not None:
+                msgtype = type(msg_decoded)
                 logging.exception(
                     'Error handling %s.%s message.',
                     msgtype.__module__,
                     msgtype.__qualname__,
+                    # We need to explicitly provide the exception here,
+                    # otherwise it shows up at None. I assume related to
+                    # the fact that we're an async function.
+                    exc_info=exc,
                 )
             else:
                 logging.exception(
-                    'Error handling raw async efro.message.'
-                    ' msgtype=%s msg_decoded=%s.',
-                    msgtype,
-                    msg_decoded,
+                    'Error handling raw async efro.message'
+                    ' (likely a message format incompatibility): %s.',
+                    msg_raw,
+                    # We need to explicitly provide the exception here,
+                    # otherwise it shows up at None. I assume related to
+                    # the fact that we're an async function.
+                    exc_info=exc,
                 )
         return rstr
 
     async def _handle_raw_message_async(
         self,
         bound_obj: Any,
+        msg_raw: str,
         msg_decoded: Message,
-        msgtype: type[Message] | None,
         handler_awaitable: Awaitable[Response | None],
     ) -> str:
         """Should be called when the receiver gets a message.
@@ -397,7 +392,7 @@ class MessageReceiver:
 
         except Exception as exc:
             return await self._handle_raw_message_async_error(
-                bound_obj, msg_decoded, msgtype, exc
+                bound_obj, msg_raw, msg_decoded, exc
             )
 
 

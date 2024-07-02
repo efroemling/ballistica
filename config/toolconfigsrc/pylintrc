@@ -1,6 +1,9 @@
 [MASTER]
 jobs=1
 
+# PIL seems to throw pylint for a loop (possibly related to our plugins?)
+ignored-modules=PIL
+
 load-plugins=efrotools.pylintplugins
 
 persistent=no

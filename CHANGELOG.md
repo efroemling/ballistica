@@ -1,4 +1,4 @@
-### 1.7.36 (build 21897, api 8, 2024-06-26)
+### 1.7.36 (build 21899, api 8, 2024-07-01)
 - bacloud workspace commands are now a bit smarter; you can now do things like 
   `bacloud workspace put .` or even just `bacloud workspace put` and it will
   work. Previously such cases required explicitly passing the workspace name

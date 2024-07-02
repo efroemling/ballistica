@@ -150,7 +150,6 @@ class LogHandler(logging.Handler):
         self._cache = deque[tuple[int, LogEntry]]()
         self._cache_index_offset = 0
         self._cache_lock = Lock()
-        # self._report_blocking_io_on_echo_error = False
         self._printed_callback_error = False
         self._thread_bootstrapped = False
         self._thread = Thread(target=self._log_thread_main, daemon=True)
@@ -514,6 +513,25 @@ class LogHandler(logging.Handler):
             import traceback
 
             traceback.print_exc(file=self._echofile)
+
+    def shutdown(self) -> None:
+        """Block until all pending logs/prints are done."""
+        done = False
+        self.file_flush('stdout')
+        self.file_flush('stderr')
+
+        def _set_done() -> None:
+            nonlocal done
+            done = True
+
+        self._event_loop.call_soon_threadsafe(_set_done)
+
+        starttime = time.monotonic()
+        while not done:
+            if time.monotonic() - starttime > 5.0:
+                print('LogHandler shutdown hung!!!', file=sys.stderr)
+                break
+            time.sleep(0.01)
 
     def file_flush(self, name: str) -> None:
         """Send raw stdout/stderr flush to the logger to be collated."""

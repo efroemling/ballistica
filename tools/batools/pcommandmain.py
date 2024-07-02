@@ -143,7 +143,7 @@ from batools.pcommands2 import (
     wsl_build_check_win_drive,
     get_modern_make,
     asset_package_resolve,
-    asset_package_fetch,
+    asset_package_assemble,
 )
 
 # pylint: enable=unused-import

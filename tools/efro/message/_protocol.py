@@ -213,7 +213,14 @@ class MessageProtocol:
         return (
             ErrorSysResponse(
                 error_message=(
-                    traceback.format_exc()
+                    # Note: need to format exception ourself here; it
+                    # might not be current so we can't use
+                    # traceback.format_exc().
+                    ''.join(
+                        traceback.format_exception(
+                            type(exc), exc, exc.__traceback__
+                        )
+                    )
                     if self.remote_errors_include_stack_traces
                     else 'An internal error has occurred.'
                 ),

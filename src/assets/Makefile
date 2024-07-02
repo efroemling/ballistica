@@ -7507,12 +7507,12 @@ clean:
 $(PROJ_DIR)/.cache/asset_package_resolved: $(PROJ_DIR)/config/projectconfig.json
 	@$(PCOMMAND) asset_package_resolve $@
 
-$(PROJ_DIR)/.cache/assetmanifests/cmake-debug.manifest:	\
+$(PROJ_DIR)/.cache/assetmanifests/gui_desktop_v1:	\
       $(PROJ_DIR)/.cache/asset_package_resolved
-	@$(PCOMMAND) asset_package_fetch $(PROJ_DIR)/.cache/asset_package_resolved	\
- cmake-debug $@
+	@$(PCOMMAND) asset_package_assemble \
+$(PROJ_DIR)/.cache/asset_package_resolved	gui_desktop_v1
 
-foo: $(PROJ_DIR)/.cache/assetmanifests/cmake-debug.manifest
+foo: $(PROJ_DIR)/.cache/assetmanifests/gui_desktop_v1
 
 # These targets don't correspond to actual files; make sure make knows that.
 .PHONY: cmake win mac ios android audio audio-clean fonts fonts-clean data	\

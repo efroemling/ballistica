@@ -639,19 +639,20 @@ def asset_package_resolve() -> None:
             outfile.write(apversion)
 
 
-def asset_package_fetch() -> None:
-    """Build/fetch an asset-package-manifest."""
+def asset_package_assemble() -> None:
+    """Assemble asset package data and its manifest."""
     import os
+    import subprocess
     from efro.error import CleanError
 
     from efrotools.project import getprojectconfig
 
     pcommand.disallow_in_batch()
     args = pcommand.get_args()
-    if len(args) != 3:
-        raise CleanError('Expected 3 args.')
+    if len(args) != 2:
+        raise CleanError('Expected 2 args.')
 
-    resolve_path, _buildtype, outpath = args
+    resolve_path, flavor = args
 
     # If resolve path exists, it is the exact asset-package-version we
     # should use.
@@ -669,8 +670,13 @@ def asset_package_fetch() -> None:
             f'Expected a string asset-package-version; got {type(apversion)}.'
         )
 
-    print('WOULD GO FORWARD WITH', apversion)
-
-    os.makedirs(os.path.dirname(outpath), exist_ok=True)
-    with open(outpath, 'w', encoding='utf-8') as outfile:
-        outfile.write('foo')
+    subprocess.run(
+        [
+            f'{pcommand.PROJROOT}/tools/bacloud',
+            'assetpackage',
+            '_assemble',
+            apversion,
+            flavor,
+        ],
+        check=True,
+    )

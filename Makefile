@@ -48,8 +48,8 @@ endif
 
 # Env targets that should be safe to run anytime; even if project-files
 # are out of date.
-ENV_REQS_SAFE = .cache/checkenv $(PCOMMANDBATCHBIN) .dir-locals.el .mypy.ini	\
- .pyrightconfig.json .pylintrc .clang-format .rgignore												\
+ENV_REQS_SAFE = .cache/checkenv $(PCOMMANDBATCHBIN) .dir-locals.el .rgignore	\
+ .mypy.ini .pyrightconfig.json .pylintrc .clang-format												\
  ballisticakit-cmake/.clang-format .editorconfig tools/cloudshell							\
  tools/bacloud tools/pcommand
 
@@ -1289,9 +1289,6 @@ tools/bacloud: tools/efrotools/genwrapper.py .venv/.efro_venv_complete
 	@PYTHONPATH=tools python3 -m \
  efrotools.genwrapper bacloud batools.bacloud tools/bacloud
 
-.rgignore: config/toolconfigsrc/rgignore $(TOOL_CFG_SRC)
-	@$(TOOL_CFG_INST) $< $@
-
 .clang-format: config/toolconfigsrc/clang-format $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
@@ -1305,6 +1302,9 @@ tools/bacloud: tools/efrotools/genwrapper.py .venv/.efro_venv_complete
 	@$(TOOL_CFG_INST) $< $@
 
 .dir-locals.el: config/toolconfigsrc/dir-locals.el $(TOOL_CFG_SRC)
+	@$(TOOL_CFG_INST) $< $@
+
+.rgignore: config/toolconfigsrc/rgignore $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
 .mypy.ini: config/toolconfigsrc/mypy.ini $(TOOL_CFG_SRC)
