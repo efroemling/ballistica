@@ -1190,7 +1190,6 @@ class Spaz(bs.Actor):
         elif isinstance(msg, bs.DieMessage):
             if self._dead:
                 return None
-            wasdead = self._dead
             self._dead = True
             self.hitpoints = 0
             if msg.immediate:
@@ -1198,7 +1197,7 @@ class Spaz(bs.Actor):
                     self.node.delete()
             elif self.node:
                 self.node.hurt = 1.0
-                if self.play_big_death_sound and not wasdead:
+                if self.play_big_death_sound:
                     SpazFactory.get().single_player_death_sound.play()
                 self.node.dead = True
                 bs.timer(2.0, self.node.delete)
