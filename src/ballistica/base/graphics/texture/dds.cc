@@ -34,7 +34,9 @@ void LoadDDS(const std::string& file_name, unsigned char** buffers, int* widths,
   (*base_level) = 0;
 
   FILE* f = g_core->platform->FOpen(file_name.c_str(), "rb");
-  if (!f) throw Exception("can't open file: \"" + file_name + "\"");
+  if (!f) {
+    throw Exception("can't open file: \"" + file_name + "\"");
+  }
 
   DDS_header hdr{};
 

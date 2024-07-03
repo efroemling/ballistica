@@ -1064,14 +1064,16 @@ auto Assets::FindAssetFile(FileType type,
   assert(g_base->InLogicThread());
 
   const char* ext = "";
-  const char* prefix = "";
+  const char* prefix1 = "";
+  const char* prefix2 = "";
 
   switch (type) {
     case FileType::kSound:
       if (g_core->HeadlessMode()) {
         return "headless_dummy_path.sound";
       }
-      prefix = "audio/";
+      prefix1 = "audio/";
+      prefix2 = "audio2/";
       ext = ".ogg";
       break;
 
@@ -1079,17 +1081,20 @@ auto Assets::FindAssetFile(FileType type,
       if (g_core->HeadlessMode()) {
         return "headless_dummy_path.mesh";
       }
-      prefix = "meshes/";
+      prefix1 = "meshes/";
+      prefix2 = "meshes2/";
       ext = ".bob";
       break;
 
     case FileType::kCollisionMesh:
-      prefix = "meshes/";
+      prefix1 = "meshes/";
+      prefix2 = "meshes2/";
       ext = ".cob";
       break;
 
     case FileType::kData:
-      prefix = "data/";
+      prefix1 = "data/";
+      prefix2 = "data2/";
       ext = ".json";
       break;
 
@@ -1109,7 +1114,8 @@ auto Assets::FindAssetFile(FileType type,
       //        g_base->graphics_server->texture_compression_types_are_set());
       // assert(g_base->graphics_server
       //        && g_base->graphics_server->texture_quality_set());
-      prefix = "textures/";
+      prefix1 = "textures/";
+      prefix2 = "textures2/";
 
 #if BA_OSTYPE_ANDROID && !BA_ANDROID_DDS_BUILD
       // On most android builds we go for .ktx, which contains etc2 and etc1.
@@ -1130,20 +1136,23 @@ auto Assets::FindAssetFile(FileType type,
   const std::vector<std::string>& asset_paths_used = asset_paths_;
 
   for (auto&& i : asset_paths_used) {
-    file_out = i + "/" + prefix + name + ext;  // NOLINT
-    bool exists;
+    // TEMP - try our '2' stuff first.
+    for (auto&& prefix : {prefix2, prefix1}) {
+      file_out = i + "/" + prefix + name + ext;  // NOLINT
+      bool exists;
 
-    // '#' denotes a cube map texture, which is actually 6 files.
-    if (strchr(file_out.c_str(), '#')) {
-      // Just look for one of them i guess.
-      std::string tmp_name = file_out;
-      tmp_name.replace(tmp_name.find('#'), 1, "_+x");
-      exists = g_core->platform->FilePathExists(tmp_name);
-    } else {
-      exists = g_core->platform->FilePathExists(file_out);
-    }
-    if (exists) {
-      return file_out;
+      // '#' denotes a cube map texture, which is actually 6 files.
+      if (strchr(file_out.c_str(), '#')) {
+        // Just look for one of them i guess.
+        std::string tmp_name = file_out;
+        tmp_name.replace(tmp_name.find('#'), 1, "_+x");
+        exists = g_core->platform->FilePathExists(tmp_name);
+      } else {
+        exists = g_core->platform->FilePathExists(file_out);
+      }
+      if (exists) {
+        return file_out;
+      }
     }
   }
 

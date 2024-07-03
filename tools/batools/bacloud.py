@@ -88,9 +88,10 @@ class App:
 
         # Make sure we can locate the project bacloud is being run from.
         self._project_root = Path(sys.argv[0]).parents[1]
+        # Look for a few things we expect to have in a project.
         if not all(
-            Path(self._project_root, name).is_dir()
-            for name in ('tools', 'config', 'tests')
+            Path(self._project_root, name).exists()
+            for name in ['config/projectconfig.json', 'tools/batools']
         ):
             raise CleanError('Unable to locate project directory.')
 

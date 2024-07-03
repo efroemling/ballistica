@@ -52,7 +52,7 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 21899
+TARGET_BALLISTICA_BUILD = 21902
 TARGET_BALLISTICA_VERSION = '1.7.36'
 
 

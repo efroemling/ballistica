@@ -149,6 +149,9 @@ endif
 ASSET_TARGETS_WIN_WIN32 += $(EXTRAS_TARGETS_WIN_WIN32)
 ASSET_TARGETS_WIN_X64 += $(EXTRAS_TARGETS_WIN_X64)
 
+# Asset Packages
+ASSET_TARGETS_CMAKE += $(PROJ_DIR)/.cache/assetmanifests/gui_desktop_v1
+
 # Note: Code below needs updating when Python version changes (currently 3.11)
 define make-opt-pyc-target
 $1: $$(subst /__pycache__,,$$(subst .cpython-312.opt-1.pyc,.py,$1))

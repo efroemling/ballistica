@@ -253,6 +253,14 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'tools',
                 'src/assets',
                 '.efrocachemap',
+                # Needed to rebuild on asset-package changes.
+                'config/projectconfig.json',
+            ],
+            # This file won't exist if we are using a dev asset-package,
+            # in which case we want to always run so we can ask the
+            # server for package updates each time.
+            srcpaths_exist=[
+                '.cache/asset_package_resolved',
             ],
             command=command,
             filefilter=_filefilter,

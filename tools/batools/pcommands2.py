@@ -670,13 +670,18 @@ def asset_package_assemble() -> None:
             f'Expected a string asset-package-version; got {type(apversion)}.'
         )
 
-    subprocess.run(
-        [
-            f'{pcommand.PROJROOT}/tools/bacloud',
-            'assetpackage',
-            '_assemble',
-            apversion,
-            flavor,
-        ],
-        check=True,
-    )
+    try:
+        subprocess.run(
+            [
+                f'{pcommand.PROJROOT}/tools/bacloud',
+                'assetpackage',
+                '_assemble',
+                apversion,
+                flavor,
+            ],
+            check=True,
+        )
+    except Exception as exc:
+        raise CleanError(
+            f'Failed to assemble {apversion}' f' ({flavor} flavor).'
+        ) from exc
