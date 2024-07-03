@@ -237,11 +237,11 @@ prefab-gui-release: prefab-gui-release-build
 
 # Assemble a debug build for this platform.
 prefab-gui-debug-build: env
-	$(WSLU) $(PCOMMAND) make_prefab gui-debug
+	@$(WSLU) $(PCOMMAND) make_prefab gui-debug
 
 # Assemble a release build for this platform.
 prefab-gui-release-build: env
-	$(WSLU) $(PCOMMAND) make_prefab gui-release
+	@$(WSLU) $(PCOMMAND) make_prefab gui-release
 
 # Assemble & run a server debug build for this platform.
 prefab-server-debug: prefab-server-debug-build
@@ -253,11 +253,11 @@ prefab-server-release: prefab-server-release-build
 
 # Assemble a server debug build for this platform.
 prefab-server-debug-build: env
-	$(WSLU) $(PCOMMAND) make_prefab server-debug
+	@$(WSLU) $(PCOMMAND) make_prefab server-debug
 
 # Assemble a server release build for this platform.
 prefab-server-release-build: env
-	$(WSLU) $(PCOMMAND) make_prefab server-release
+	@$(WSLU) $(PCOMMAND) make_prefab server-release
 
 # Clean all prefab builds.
 prefab-clean:
