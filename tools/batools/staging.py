@@ -556,7 +556,8 @@ class AssetStager:
         # Just going with raw json here instead of dataclassio to
         # maximize speed; we'll be going over lots of files here.
         with open(
-            f'.cache/assetmanifests/{self.asset_package_flavor}',
+            f'{self.projroot}/.cache/assetmanifests/'
+            f'{self.asset_package_flavor}',
             encoding='utf-8',
         ) as infile:
             manifest = json.loads(infile.read())
