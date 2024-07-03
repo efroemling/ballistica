@@ -661,7 +661,7 @@ class AssetStager:
                             executor.submit(
                                 _sync_path,
                                 src=(
-                                    f'.cache/assetdata/'
+                                    f'{self.projroot}/.cache/assetdata/'
                                     f'{asset_file_cache_path(hashval)}'
                                 ),
                                 dst=os.path.join(self.dst, path),
