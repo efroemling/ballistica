@@ -1,4 +1,4 @@
-### 1.7.36 (build 21909, api 8, 2024-07-03)
+### 1.7.36 (build 21911, api 8, 2024-07-05)
 - Wired up initial support for using asset-packages for bundled assets.
 - bacloud workspace commands are now a bit smarter; you can now do things like 
   `bacloud workspace put .` or even just `bacloud workspace put` and it will

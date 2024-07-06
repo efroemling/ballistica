@@ -184,7 +184,7 @@ class AssetStager:
             self.desc = 'cmake'
             self.dst = args[-1]
             self.tex_suffix = '.dds'
-            self.asset_package_flavor = 'gui_desktop_v1'
+            self.asset_package_flavor = 'gui_desktop_v2dev1'
             # Link/copy in a binary *if* builddir is provided.
             self.include_binary_executable = self.builddir is not None
             self.executable_name = 'ballisticakit'

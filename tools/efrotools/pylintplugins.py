@@ -187,6 +187,7 @@ def var_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
     # pylint: disable=too-many-nested-blocks
 
     if using_future_annotations(node):
+
         # Future behavior:
         # Annotated assigns under functions are not evaluated.
         # Class and module vars are normally not either. However we
@@ -197,7 +198,12 @@ def var_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
         fnode = node
         willeval = False
         while fnode is not None:
+            if isinstance(fnode, astroid.FunctionDef):
+                # Assigns within functions never eval.
+                break
             if isinstance(fnode, astroid.ClassDef):
+                # Ok; the assign seems to be at the class level.
+                # See if its an ioprepped dataclass.
                 if fnode.decorators is not None:
                     found_ioprepped = False
                     for dec in fnode.decorators.nodes:
@@ -226,6 +232,7 @@ def var_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
             fnode = fnode.parent
 
     else:
+
         # Legacy behavior:
         # Annotated assigns under functions are not evaluated,
         # but class or module vars are.
@@ -253,43 +260,43 @@ def var_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
 
 # Stripping subscripts on some generics seems to cause
 # more harm than good, so we leave some intact.
-ALLOWED_GENERICS = {'Sequence'}
+# ALLOWED_GENERICS = {'Sequence'}
 
 
-def _is_strippable_subscript(node: nc.NodeNG) -> bool:
-    if isinstance(node, astroid.Subscript):
-        # We can strip if its not in our allowed list.
-        if not (
-            isinstance(node.value, astroid.Name)
-            and node.value.name in ALLOWED_GENERICS
-        ):
-            return True
-    return False
+# def _is_strippable_subscript(node: nc.NodeNG) -> bool:
+#     if isinstance(node, astroid.Subscript):
+#         # We can strip if its not in our allowed list.
+#         if not (
+#             isinstance(node.value, astroid.Name)
+#             and node.value.name in ALLOWED_GENERICS
+#         ):
+#             return True
+#     return False
 
 
-def class_generics_filter(node: nc.NodeNG) -> nc.NodeNG:
-    """Filter generics subscripts out of class declarations."""
+# def class_generics_filter(node: nc.NodeNG) -> nc.NodeNG:
+#     """Filter generics subscripts out of class declarations."""
 
-    # First, quick-out if nothing here should be filtered.
-    found = False
-    for base in node.bases:
-        if _is_strippable_subscript(base):
-            found = True
+#     # First, quick-out if nothing here should be filtered.
+#     found = False
+#     for base in node.bases:
+#         if _is_strippable_subscript(base):
+#             found = True
 
-    if not found:
-        return node
+#     if not found:
+#         return node
 
-    # Now strip subscripts from base classes.
-    new_bases: list[nc.NodeNG] = []
-    for base in node.bases:
-        if _is_strippable_subscript(base):
-            new_bases.append(base.value)
-            base.value.parent = node
-        else:
-            new_bases.append(base)
-    node.bases = new_bases
+#     # Now strip subscripts from base classes.
+#     new_bases: list[nc.NodeNG] = []
+#     for base in node.bases:
+#         if _is_strippable_subscript(base):
+#             new_bases.append(base.value)
+#             base.value.parent = node
+#         else:
+#             new_bases.append(base)
+#     node.bases = new_bases
 
-    return node
+#     return node
 
 
 def register_plugins(manager: astroid.Manager) -> None:
@@ -328,7 +335,8 @@ def register_plugins(manager: astroid.Manager) -> None:
     # I've opened a github issue related to the problems I was hitting,
     # so we can revisit the need for this if that gets resolved.
     # https://github.com/PyCQA/pylint/issues/3605
-    manager.register_transform(astroid.ClassDef, class_generics_filter)
+    # UPDATE: As of July 2024 this seems to be no longer necessary; hooray!
+    # manager.register_transform(astroid.ClassDef, class_generics_filter)
 
 
 register_plugins(astroid.MANAGER)
