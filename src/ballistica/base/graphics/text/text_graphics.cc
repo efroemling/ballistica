@@ -54,8 +54,8 @@ TextGraphics::TextGraphics() {
         }
 
         // Shrink account logos and move them up a bit.
-        if (index == 29 || index == 32 || index == 33 || index == 38
-            || index == 40 || index == 48 || index == 49) {
+        if (index == 32 || index == 33 || index == 38 || index == 40
+            || index == 48 || index == 49) {
           g.pen_offset_y += 0.4f;
           extra_advance += 0.08f;
           g.x_size *= 0.55f;

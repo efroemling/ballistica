@@ -52,6 +52,9 @@ class MessageSender:
     def __init__(self, protocol: MessageProtocol) -> None:
         self.protocol = protocol
         self._send_raw_message_call: Callable[[Any, str], str] | None = None
+        self._send_raw_message_ex_call: (
+            Callable[[Any, str, Message], str] | None
+        ) = None
         self._send_async_raw_message_call: (
             Callable[[Any, str], Awaitable[str]] | None
         ) = None
@@ -78,6 +81,19 @@ class MessageSender:
         """
         assert self._send_raw_message_call is None
         self._send_raw_message_call = call
+        return call
+
+    def send_ex_method(
+        self, call: Callable[[Any, str, Message], str]
+    ) -> Callable[[Any, str, Message], str]:
+        """Function decorator for extended send method.
+
+        Version of send_method which is also is passed the original
+        unencoded message; can be useful for cases where metadata is sent
+        along with messages referring to their payloads/etc.
+        """
+        assert self._send_raw_message_ex_call is None
+        self._send_raw_message_ex_call = call
         return call
 
     def send_async_method(
@@ -200,14 +216,23 @@ class MessageSender:
         for when message sending and response handling need to happen
         in different contexts/threads.
         """
-        if self._send_raw_message_call is None:
+        if (
+            self._send_raw_message_call is None
+            and self._send_raw_message_ex_call is None
+        ):
             raise RuntimeError('send() is unimplemented for this type.')
 
         msg_encoded = self._encode_message(bound_obj, message)
         try:
-            response_encoded = self._send_raw_message_call(
-                bound_obj, msg_encoded
-            )
+            if self._send_raw_message_ex_call is not None:
+                response_encoded = self._send_raw_message_ex_call(
+                    bound_obj, msg_encoded, message
+                )
+            else:
+                assert self._send_raw_message_call is not None
+                response_encoded = self._send_raw_message_call(
+                    bound_obj, msg_encoded
+                )
         except Exception as exc:
             response = ErrorSysResponse(
                 error_message='Error in MessageSender @send_method.',

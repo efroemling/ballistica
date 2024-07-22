@@ -54,15 +54,19 @@ class _Outputter:
     def run(self) -> Any:
         """Do the thing."""
 
+        obj = self._obj
+
+        # mypy workaround - if we check 'obj' here it assumes the
+        # isinstance call below fails.
         assert dataclasses.is_dataclass(self._obj)
 
         # For special extended data types, call their 'will_output' callback.
         # FIXME - should probably move this into _process_dataclass so it
         # can work on nested values.
-        if isinstance(self._obj, IOExtendedData):
-            self._obj.will_output()
+        if isinstance(obj, IOExtendedData):
+            obj.will_output()
 
-        return self._process_dataclass(type(self._obj), self._obj, '')
+        return self._process_dataclass(type(obj), obj, '')
 
     def soft_default_check(
         self, value: Any, anntype: Any, fieldpath: str

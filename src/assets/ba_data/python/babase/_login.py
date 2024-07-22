@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import time
 import logging
+from functools import partial
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, final, override
 
@@ -162,8 +163,8 @@ class LoginAdapter:
         the adapter will attempt to sign in if possible. An exception will
         be returned if the sign-in attempt fails.
         """
+
         assert _babase.in_logic_thread()
-        from babase._general import Call
 
         # Have been seeing multiple sign-in attempts come through
         # nearly simultaneously which can be problematic server-side.
@@ -185,7 +186,7 @@ class LoginAdapter:
                     appnow,
                 )
                 _babase.pushcall(
-                    Call(
+                    partial(
                         result_cb,
                         self,
                         RuntimeError('sign_in called too soon after last.'),
@@ -215,7 +216,7 @@ class LoginAdapter:
                         self.login_type.name,
                     )
                 _babase.pushcall(
-                    Call(
+                    partial(
                         result_cb,
                         self,
                         RuntimeError('fetch-sign-in-token failed.'),
@@ -245,7 +246,7 @@ class LoginAdapter:
                             self.login_type.name,
                             response,
                         )
-                    _babase.pushcall(Call(result_cb, self, response))
+                    _babase.pushcall(partial(result_cb, self, response))
                 else:
                     # This means our credentials were explicitly rejected.
                     if response.credentials is None:
@@ -262,7 +263,7 @@ class LoginAdapter:
                         result2 = self.SignInResult(
                             credentials=response.credentials
                         )
-                    _babase.pushcall(Call(result_cb, self, result2))
+                    _babase.pushcall(partial(result_cb, self, result2))
 
             assert _babase.app.plus is not None
             _babase.app.plus.cloud.send_message_cb(
@@ -293,10 +294,9 @@ class LoginAdapter:
         as needed. The provided completion_cb should then be called with
         either a token or None if sign in failed or was cancelled.
         """
-        from babase._general import Call
 
         # Default implementation simply fails immediately.
-        _babase.pushcall(Call(completion_cb, None))
+        _babase.pushcall(partial(completion_cb, None))
 
     def _update_implicit_login_state(self) -> None:
         # If we've received an implicit login state, schedule it to be
@@ -304,7 +304,6 @@ class LoginAdapter:
         # called so that account-client-v2 has had a chance to load
         # any existing state so it can properly respond to this.
         if self._implicit_login_state_dirty and self._on_app_loading_called:
-            from babase._general import Call
 
             if DEBUG_LOG:
                 logging.debug(
@@ -315,7 +314,7 @@ class LoginAdapter:
 
             assert _babase.app.plus is not None
             _babase.pushcall(
-                Call(
+                partial(
                     _babase.app.plus.accounts.on_implicit_login_state_changed,
                     self.login_type,
                     self._implicit_login_state,

@@ -704,6 +704,7 @@ static auto PyImageWidget(PyObject* self, PyObject* args,
   PyObject* tilt_scale_obj = Py_None;
   PyObject* mask_texture_obj = Py_None;
   PyObject* radial_amount_obj = Py_None;
+  PyObject* draw_controller_mult_obj = Py_None;
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -723,14 +724,16 @@ static auto PyImageWidget(PyObject* self, PyObject* args,
                                  "tilt_scale",
                                  "mask_texture",
                                  "radial_amount",
+                                 "draw_controller_mult",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          args, keywds, "|OOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &size_obj, &pos_obj, &color_obj, &texture_obj,
           &opacity_obj, &mesh_transparent_obj, &mesh_opaque_obj,
           &has_alpha_channel_obj, &tint_texture_obj, &tint_color_obj,
           &transition_delay_obj, &draw_controller_obj, &tint2_color_obj,
-          &tilt_scale_obj, &mask_texture_obj, &radial_amount_obj))
+          &tilt_scale_obj, &mask_texture_obj, &radial_amount_obj,
+          &draw_controller_mult_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -831,6 +834,9 @@ static auto PyImageWidget(PyObject* self, PyObject* args,
   if (tilt_scale_obj != Py_None) {
     b->set_tilt_scale(Python::GetPyFloat(tilt_scale_obj));
   }
+  if (draw_controller_mult_obj != Py_None) {
+    b->set_draw_controller_mult(Python::GetPyFloat(draw_controller_mult_obj));
+  }
 
   // if making a new widget add it at the end
   if (edit_obj == Py_None) {
@@ -866,7 +872,8 @@ static PyMethodDef PyImageWidgetDef = {
     "  tint2_color: Sequence[float] | None = None,\n"
     "  tilt_scale: float | None = None,\n"
     "  mask_texture: bauiv1.Texture | None = None,\n"
-    "  radial_amount: float | None = None)\n"
+    "  radial_amount: float | None = None,\n"
+    "  draw_controller_mult: float | None = None)\n"
     "  -> bauiv1.Widget\n"
     "\n"
     "Create or edit an image widget.\n"
@@ -1816,7 +1823,7 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args,
     if (c.size() != 3) {
       throw Exception("Expected 3 floats for color.", PyExcType::kValue);
     }
-    widget->setColor(c[0], c[1], c[2]);
+    widget->SetColor(c[0], c[1], c[2]);
   }
   if (capture_arrows_obj != Py_None) {
     widget->set_capture_arrows(Python::GetPyBool(capture_arrows_obj));

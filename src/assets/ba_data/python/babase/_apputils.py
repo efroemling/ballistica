@@ -7,10 +7,10 @@ import gc
 import os
 import logging
 from threading import Thread
+from functools import partial
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
-from efro.call import tpartial
 from efro.log import LogLevel
 from efro.dataclassio import ioprepped, dataclass_to_json, dataclass_from_json
 
@@ -18,7 +18,7 @@ import _babase
 from babase._appsubsystem import AppSubsystem
 
 if TYPE_CHECKING:
-    from typing import Any, TextIO
+    from typing import Any, TextIO, Callable
 
     import babase
 
@@ -320,7 +320,7 @@ def dump_app_state(
     # We want this to work from any thread, so need to kick this part
     # over to the logic thread so timer works.
     _babase.pushcall(
-        tpartial(_babase.apptimer, delay + 1.0, log_dumped_app_state),
+        partial(_babase.apptimer, delay + 1.0, log_dumped_app_state),
         from_other_thread=True,
         suppress_other_thread_warning=True,
     )

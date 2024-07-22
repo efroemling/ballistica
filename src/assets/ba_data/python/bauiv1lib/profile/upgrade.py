@@ -210,7 +210,7 @@ class ProfileUpgradeWindow(bui.Window):
                 )
 
     def _on_upgrade_press(self) -> None:
-        from bauiv1lib import getcurrency
+        from bauiv1lib import gettickets
 
         if self._status is None:
             plus = bui.app.plus
@@ -220,7 +220,7 @@ class ProfileUpgradeWindow(bui.Window):
             tickets = plus.get_v1_account_ticket_count()
             if tickets < self._cost:
                 bui.getsound('error').play()
-                getcurrency.show_get_tickets_prompt()
+                gettickets.show_get_tickets_prompt()
                 return
             bui.screenmessage(
                 bui.Lstr(resource='purchasingText'), color=(0, 1, 0)

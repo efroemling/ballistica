@@ -119,10 +119,10 @@ class ConfigNumberEdit:
 
         self.nametext = bui.textwidget(
             parent=parent,
-            position=position,
-            size=(100, 30),
+            position=(position[0], position[1] + 12.0),
+            size=(0, 0),
             text=displayname,
-            # maxwidth=160 + xoffset,
+            maxwidth=150 + xoffset,
             color=(0.8, 0.8, 0.8, 1.0),
             h_align='left',
             v_align='center',
@@ -130,8 +130,8 @@ class ConfigNumberEdit:
         )
         self.valuetext = bui.textwidget(
             parent=parent,
-            position=(position[0] + 146 + xoffset, position[1]),
-            size=(60, 28),
+            position=(position[0] + 216 + xoffset, position[1] + 12.0),
+            size=(0, 0),
             editable=False,
             color=(0.3, 1.0, 0.3, 1.0),
             h_align='right',

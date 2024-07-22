@@ -20,7 +20,7 @@ from bacommon.net import (
     PrivatePartyConnectResult,
 )
 from bauiv1lib.gather import GatherTab
-from bauiv1lib.getcurrency import GetCurrencyWindow, show_get_tickets_prompt
+from bauiv1lib.gettickets import GetTicketsWindow, show_get_tickets_prompt
 import bascenev1 as bs
 import bauiv1 as bui
 
@@ -487,7 +487,7 @@ class PrivateGatherTab(GatherTab):
 
         # Bring up get-tickets window and then kill ourself (we're on the
         # overlay layer so we'd show up above it).
-        GetCurrencyWindow(modal=True, origin_widget=self._get_tickets_button)
+        GetTicketsWindow(modal=True, origin_widget=self._get_tickets_button)
 
     def _build_host_tab(self) -> None:
         # pylint: disable=too-many-branches

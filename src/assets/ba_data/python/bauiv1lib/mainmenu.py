@@ -39,7 +39,8 @@ class MainMenuWindow(bui.Window):
             bui.set_analytics_screen('Main Menu')
             self._show_remote_app_info_on_first_launch()
 
-        # Make a vanilla container; we'll modify it to our needs in refresh.
+        # Make a vanilla container; we'll modify it to our needs in
+        # refresh.
         super().__init__(
             root_widget=bui.containerwidget(
                 transition=transition,
@@ -91,7 +92,6 @@ class MainMenuWindow(bui.Window):
             0.27, bui.WeakCall(self._check_refresh), repeat=True
         )
 
-    # noinspection PyUnresolvedReferences
     @staticmethod
     def _preload_modules() -> None:
         """Preload modules we use; avoids hitches (called in bg thread)."""
@@ -162,8 +162,9 @@ class MainMenuWindow(bui.Window):
         if now < self._next_refresh_allow_time:
             return
 
-        # Don't refresh for the first few seconds the game is up so we don't
-        # interrupt the transition in.
+        # Don't refresh for the first few seconds the game is up so we
+        # don't interrupt the transition in.
+
         # bui.app.main_menu_window_refresh_check_count += 1
         # if bui.app.main_menu_window_refresh_check_count < 4:
         #     return
@@ -413,8 +414,8 @@ class MainMenuWindow(bui.Window):
         else:
             self._quit_button = None
 
-            # If we're not in-game, have no quit button, and this is android,
-            # we want back presses to quit our activity.
+            # If we're not in-game, have no quit button, and this is
+            # android, we want back presses to quit our activity.
             if (
                 not self._in_game
                 and not self._have_quit_button
@@ -428,9 +429,9 @@ class MainMenuWindow(bui.Window):
                     edit=self._root_widget, on_cancel_call=_do_quit
                 )
 
-        # Add speed-up/slow-down buttons for replays.
-        # (ideally this should be part of a fading-out playback bar like most
-        # media players but this works for now).
+        # Add speed-up/slow-down buttons for replays. Ideally this
+        # should be part of a fading-out playback bar like most media
+        # players but this works for now.
         if bs.is_in_replay():
             b_size = 50.0
             b_buffer_1 = 50.0
@@ -605,13 +606,13 @@ class MainMenuWindow(bui.Window):
             def _set_allow_time() -> None:
                 self._next_refresh_allow_time = bui.apptime() + 2.5
 
-            # Slight hack: widget transitions currently only progress when
-            # frames are being drawn, but this tends to get called before
-            # frame drawing even starts, meaning we don't know exactly how
-            # long we should wait before refreshing to avoid interrupting
-            # the transition. To make things a bit better, let's do a
-            # redundant set of the time in a deferred call which hopefully
-            # happens closer to actual frame draw times.
+            # Slight hack: widget transitions currently only progress
+            # when frames are being drawn, but this tends to get called
+            # before frame drawing even starts, meaning we don't know
+            # exactly how long we should wait before refreshing to avoid
+            # interrupting the transition. To make things a bit better,
+            # let's do a redundant set of the time in a deferred call
+            # which hopefully happens closer to actual frame draw times.
             _set_allow_time()
             bui.pushcall(_set_allow_time)
 

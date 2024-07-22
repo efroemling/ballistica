@@ -347,6 +347,14 @@ int BasePlatform::SmartGetC_(FILE* stream) {
       return EOF;
     }
 
+    // Need to catch these error cases and bail, oherwise we'll spin
+    // forever getting the same thing. (Noticed this happening on Mac build
+    // where we get an immediate POLLNVAL if there's no terminal attached
+    // to stdin.
+    if (fds[0].revents & (POLLERR | POLLNVAL | POLLHUP)) {
+      return EOF;
+    }
+
     if (fds[0].revents & POLLIN) {
       // stdin is ready for reading.
       char buffer[256];

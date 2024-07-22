@@ -214,7 +214,7 @@ class ContinuesWindow(bui.Window):
             self._on_cancel()
 
     def _on_continue_press(self) -> None:
-        from bauiv1lib import getcurrency
+        from bauiv1lib import gettickets
 
         plus = bui.app.plus
         assert plus is not None
@@ -238,7 +238,7 @@ class ContinuesWindow(bui.Window):
                 self._counting_down = False
                 bui.textwidget(edit=self._counter_text, text='')
                 bui.getsound('error').play()
-                getcurrency.show_get_tickets_prompt()
+                gettickets.show_get_tickets_prompt()
                 return
             if not self._transitioning_out:
                 bui.getsound('swish').play()

@@ -7,12 +7,12 @@ from __future__ import annotations
 import os
 import time
 import logging
-from threading import Thread
 from pathlib import Path
+from threading import Thread
+from functools import partial
 from typing import TYPE_CHECKING, TypeVar
 from dataclasses import dataclass, field
 
-from efro.call import tpartial
 import _babase
 
 if TYPE_CHECKING:
@@ -116,7 +116,7 @@ class MetadataSubsystem:
         loading work happens, pass completion_cb_in_bg_thread=True.
         """
         Thread(
-            target=tpartial(
+            target=partial(
                 self._load_exported_classes,
                 cls,
                 completion_cb,
@@ -145,7 +145,7 @@ class MetadataSubsystem:
         except Exception:
             logging.exception('Error loading exported classes.')
 
-        completion_call = tpartial(completion_cb, classes)
+        completion_call = partial(completion_cb, classes)
         if completion_cb_in_bg_thread:
             completion_call()
         else:

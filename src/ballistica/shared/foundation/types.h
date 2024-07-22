@@ -188,7 +188,7 @@ enum class SpecialChar : uint8_t {
   kOuyaButtonU,
   kOuyaButtonY,
   kOuyaButtonA,
-  kOuyaLogo,
+  kToken,
   kLogo,
   kTicket,
   kGooglePlayGamesLogo,

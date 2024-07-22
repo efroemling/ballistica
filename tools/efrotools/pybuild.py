@@ -14,7 +14,7 @@ from efrotools.util import readfile, writefile, replace_exact
 
 # Python version we build here (not necessarily same as we use in repo).
 PY_VER_ANDROID = '3.12'
-PY_VER_EXACT_ANDROID = '3.12.3'
+PY_VER_EXACT_ANDROID = '3.12.4'
 PY_VER_APPLE = '3.12'
 PY_VER_EXACT_APPLE = '3.12.0'
 
@@ -38,7 +38,7 @@ VERSION_MIN_TVOS = '9.0'
 #
 # For now will try to ride out this 3.0 LTS version as long as possible.
 OPENSSL_VER_APPLE = '3.0.12-1'
-OPENSSL_VER_ANDROID = '3.0.13'
+OPENSSL_VER_ANDROID = '3.0.14'
 
 LIBFFI_VER_APPLE = '3.4.4-1'
 BZIP2_VER_APPLE = '1.0.8-1'
@@ -46,15 +46,16 @@ XZ_VER_APPLE = '5.4.4-1'
 
 # Android repo doesn't seem to be getting updated much so manually
 # bumping various versions to keep things up to date.
+ANDROID_API_VER = 23
 ZLIB_VER_ANDROID = '1.3.1'
-XZ_VER_ANDROID = '5.4.4'
+XZ_VER_ANDROID = '5.6.2'
 BZIP2_VER_ANDROID = '1.0.8'
 GDBM_VER_ANDROID = '1.23'
 LIBFFI_VER_ANDROID = '3.4.6'
 LIBUUID_VER_ANDROID = ('2.39', '2.39.3')
 NCURSES_VER_ANDROID = '6.4'
 READLINE_VER_ANDROID = '8.2'
-SQLITE_VER_ANDROID = ('2024', '3450200')
+SQLITE_VER_ANDROID = ('2024', '3460000')
 
 # Filenames we prune from Python lib dirs in source repo to cut down on
 # size.
@@ -349,7 +350,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Set specific OpenSSL version.
     ftxt = replace_exact(
         ftxt,
-        "source = 'https://www.openssl.org/source/openssl-3.0.7.tar.gz'",
+        "source = 'https://www.openssl.org/source/openssl-3.0.12.tar.gz'",
         f"source = 'https://www.openssl.org/"
         f"source/openssl-{OPENSSL_VER_ANDROID}.tar.gz'",
         count=1,
@@ -358,7 +359,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Set specific ZLib version.
     ftxt = replace_exact(
         ftxt,
-        "source = 'https://www.zlib.net/zlib-1.2.13.tar.gz'",
+        "source = 'https://www.zlib.net/zlib-1.3.1.tar.gz'",
         f"source = 'https://www.zlib.net/zlib-{ZLIB_VER_ANDROID}.tar.gz'",
         count=1,
     )
@@ -366,7 +367,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Set specific XZ version.
     ftxt = replace_exact(
         ftxt,
-        "source = 'https://tukaani.org/xz/xz-5.2.7.tar.xz'",
+        "source = 'https://tukaani.org/xz/xz-5.6.2.tar.xz'",
         f"source = 'https://tukaani.org/xz/xz-{XZ_VER_ANDROID}.tar.xz'",
         count=1,
     )
@@ -402,7 +403,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     ftxt = replace_exact(
         ftxt,
         "source = 'https://mirrors.edge.kernel.org/pub/linux/utils/"
-        "util-linux/v2.38/util-linux-2.38.1.tar.xz'",
+        "util-linux/v2.39/util-linux-2.39.2.tar.xz'",
         "source = 'https://mirrors.edge.kernel.org/pub/linux/utils/"
         f'util-linux/v{LIBUUID_VER_ANDROID[0]}/'
         f"util-linux-{LIBUUID_VER_ANDROID[1]}.tar.xz'",
@@ -412,7 +413,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Set specific NCurses version.
     ftxt = replace_exact(
         ftxt,
-        "source = 'https://ftp.gnu.org/gnu/ncurses/ncurses-6.3.tar.gz'",
+        "source = 'https://ftp.gnu.org/gnu/ncurses/ncurses-6.4.tar.gz'",
         "source = 'https://ftp.gnu.org/gnu/ncurses/"
         f"ncurses-{NCURSES_VER_ANDROID}.tar.gz'",
         count=1,
@@ -430,7 +431,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Set specific SQLite version.
     ftxt = replace_exact(
         ftxt,
-        "source = 'https://sqlite.org/2022/sqlite-autoconf-3390400.tar.gz'",
+        "source = 'https://sqlite.org/2024/sqlite-autoconf-3460000.tar.gz'",
         "source = 'https://sqlite.org/"
         f'{SQLITE_VER_ANDROID[0]}/'
         f"sqlite-autoconf-{SQLITE_VER_ANDROID[1]}.tar.gz'",
@@ -449,12 +450,29 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 
     writefile('Android/build_deps.py', ftxt)
 
+    ftxt = readfile('Android/util.py')
+
+    ftxt = replace_exact(
+        ftxt,
+        "choices=range(30, 40), dest='android_api_level'",
+        "choices=range(23, 40), dest='android_api_level'",
+    )
+    writefile('Android/util.py', ftxt)
+
     # Tweak some things in the base build script; grab the right version
     # of Python and also inject some code to modify bits of python
     # after it is extracted.
     ftxt = readfile('build.sh')
 
-    ftxt = replace_exact(ftxt, 'PYVER=3.11.0', f'PYVER={PY_VER_EXACT_ANDROID}')
+    # Repo has gone 30+, but we currently want our own which is lower.
+    ftxt = replace_exact(
+        ftxt,
+        'COMMON_ARGS="--arch ${ARCH:-arm} --api ${ANDROID_API:-30}"',
+        'COMMON_ARGS="--arch ${ARCH:-arm} --api ${ANDROID_API:-'
+        + str(ANDROID_API_VER)
+        + '}"',
+    )
+    ftxt = replace_exact(ftxt, 'PYVER=3.12.4', f'PYVER={PY_VER_EXACT_ANDROID}')
     ftxt = replace_exact(
         ftxt,
         '    popd\n',

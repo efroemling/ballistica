@@ -1259,7 +1259,7 @@ void Assets::InitSpecialChars() {
   special_char_strings_[SpecialChar::kOuyaButtonU] = "\xee\x80\x9A";
   special_char_strings_[SpecialChar::kOuyaButtonY] = "\xee\x80\x9B";
   special_char_strings_[SpecialChar::kOuyaButtonA] = "\xee\x80\x9C";
-  special_char_strings_[SpecialChar::kOuyaLogo] = "\xee\x80\x9D";
+  special_char_strings_[SpecialChar::kToken] = "\xee\x80\x9D";
   special_char_strings_[SpecialChar::kLogo] = "\xee\x80\x9E";
   special_char_strings_[SpecialChar::kTicket] = "\xee\x80\x9F";
   special_char_strings_[SpecialChar::kGooglePlayGamesLogo] = "\xee\x80\xA0";

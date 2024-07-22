@@ -7,12 +7,10 @@ from __future__ import annotations
 import os
 import logging
 from enum import Enum
+from functools import partial
 from typing import TYPE_CHECKING, TypeVar, override
 from concurrent.futures import ThreadPoolExecutor
 from threading import RLock
-
-
-from efro.call import tpartial
 
 import _babase
 from babase._language import LanguageSubsystem
@@ -512,7 +510,7 @@ class App:
 
         # Do the actual work of calcing our app-mode/etc. in a bg thread
         # since it may block for a moment to load modules/etc.
-        self.threadpool_submit_no_wait(tpartial(self._set_intent, intent))
+        self.threadpool_submit_no_wait(partial(self._set_intent, intent))
 
     def push_apply_app_config(self) -> None:
         """Internal. Use app.config.apply() to apply app config changes."""
@@ -644,13 +642,13 @@ class App:
             # kick back to the logic thread to apply.
             mode = modetype()
             _babase.pushcall(
-                tpartial(self._apply_intent, intent, mode),
+                partial(self._apply_intent, intent, mode),
                 from_other_thread=True,
             )
         except Exception:
             logging.exception('Error setting app intent to %s.', intent)
             _babase.pushcall(
-                tpartial(self._display_set_intent_error, intent),
+                partial(self._display_set_intent_error, intent),
                 from_other_thread=True,
             )
 

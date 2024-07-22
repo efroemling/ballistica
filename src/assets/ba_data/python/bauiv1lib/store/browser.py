@@ -574,7 +574,7 @@ class StoreBrowserWindow(bui.Window):
         """Attempt to purchase the provided item."""
         from bauiv1lib import account
         from bauiv1lib.confirm import ConfirmWindow
-        from bauiv1lib import getcurrency
+        from bauiv1lib import gettickets
 
         assert bui.app.classic is not None
         store = bui.app.classic.store
@@ -620,7 +620,7 @@ class StoreBrowserWindow(bui.Window):
                     our_tickets = plus.get_v1_account_ticket_count()
                     if price is not None and our_tickets < price:
                         bui.getsound('error').play()
-                        getcurrency.show_get_tickets_prompt()
+                        gettickets.show_get_tickets_prompt()
                     else:
 
                         def do_it() -> None:
@@ -1320,7 +1320,7 @@ class StoreBrowserWindow(bui.Window):
     def _on_get_more_tickets_press(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.account import show_sign_in_prompt
-        from bauiv1lib.getcurrency import GetCurrencyWindow
+        from bauiv1lib.gettickets import GetTicketsWindow
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -1334,7 +1334,7 @@ class StoreBrowserWindow(bui.Window):
             return
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
-        window = GetCurrencyWindow(
+        window = GetTicketsWindow(
             from_modal_store=self._modal,
             store_back_location=self._back_location,
         ).get_root_widget()
@@ -1391,7 +1391,7 @@ def _check_merch_availability_in_bg_thread() -> None:
 
                 def _store_in_logic_thread() -> None:
                     cfg = bui.app.config
-                    current: str | None = cfg.get(MERCH_LINK_KEY)
+                    current = cfg.get(MERCH_LINK_KEY)
                     if not isinstance(current, str | None):
                         current = None
                     if current != response.url:
@@ -1414,6 +1414,9 @@ def _check_merch_availability_in_bg_thread() -> None:
 # Slight hack; start checking merch availability in the bg (but only if
 # it looks like we've been imported for use in a running app; don't want
 # to do this during docs generation/etc.)
+
+# TODO: Should wire this up explicitly to app bootstrapping; not good to
+# be kicking off work at module import time.
 if (
     os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') != '1'
     and bui.app.state is not bui.app.State.NOT_STARTED

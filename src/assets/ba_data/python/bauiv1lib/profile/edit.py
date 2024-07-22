@@ -545,8 +545,6 @@ class EditProfileWindow(bui.Window):
                 for n in [
                     bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO,
                     bui.SpecialChar.GAME_CENTER_LOGO,
-                    bui.SpecialChar.GAME_CIRCLE_LOGO,
-                    bui.SpecialChar.OUYA_LOGO,
                     bui.SpecialChar.LOCAL_ACCOUNT,
                     bui.SpecialChar.OCULUS_LOGO,
                     bui.SpecialChar.NVIDIA_LOGO,

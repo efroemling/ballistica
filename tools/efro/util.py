@@ -8,15 +8,12 @@ import os
 import time
 import weakref
 import datetime
-import functools
 from enum import Enum
 from typing import TYPE_CHECKING, cast, TypeVar, Generic, overload
 
 if TYPE_CHECKING:
     import asyncio
     from typing import Any, Callable, Literal
-
-    from efro.call import Call as Call  # 'as Call' so we re-export.
 
 T = TypeVar('T')
 ValT = TypeVar('ValT')
@@ -34,13 +31,6 @@ class _EmptyObj:
 # one and return it for all cases that need an empty weak-ref.
 _g_empty_weak_ref = weakref.ref(_EmptyObj())
 assert _g_empty_weak_ref() is None
-
-
-# TODO: kill this and just use efro.call.tpartial
-if TYPE_CHECKING:
-    Call = Call
-else:
-    Call = functools.partial
 
 
 def explicit_bool(val: bool) -> bool:

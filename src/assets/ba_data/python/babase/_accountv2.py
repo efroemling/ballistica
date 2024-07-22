@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import hashlib
 import logging
+from functools import partial
 from typing import TYPE_CHECKING, assert_never
 
-from efro.call import tpartial
 from efro.error import CommunicationError
 from bacommon.login import LoginType
 import _babase
@@ -223,7 +223,7 @@ class AccountV2Subsystem:
                 if service_str is not None:
                     _babase.apptimer(
                         2.0,
-                        tpartial(
+                        partial(
                             _babase.screenmessage,
                             Lstr(
                                 resource='notUsingAccountText',

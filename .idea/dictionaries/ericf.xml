@@ -1232,7 +1232,7 @@
       <w>getcollisionmesh</w>
       <w>getconf</w>
       <w>getconfig</w>
-      <w>getcurrency</w>
+      <w>gettickets</w>
       <w>getcwd</w>
       <w>getdata</w>
       <w>getenv</w>
@@ -3082,7 +3082,6 @@
       <w>tournamentbutton</w>
       <w>tournamententry</w>
       <w>tournamentscores</w>
-      <w>tpartial</w>
       <w>tpath</w>
       <w>tpathsegs</w>
       <w>tpexl</w>

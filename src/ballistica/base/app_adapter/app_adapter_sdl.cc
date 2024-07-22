@@ -408,6 +408,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
     }
 
     case SDL_KEYDOWN: {
+      // printf("KEYDOWN %d\n", static_cast<int>(event.key.keysym.sym));
       if (!event.key.repeat) {
         g_base->input->PushKeyPressEvent(event.key.keysym);
       }
@@ -415,6 +416,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
     }
 
     case SDL_KEYUP: {
+      // printf("KEYUP %d\n", static_cast<int>(event.key.keysym.sym));
       g_base->input->PushKeyReleaseEvent(event.key.keysym);
       break;
     }

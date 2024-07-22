@@ -564,7 +564,7 @@ class PartyQueueWindow(bui.Window):
     def on_boost_press(self) -> None:
         """Boost was pressed."""
         from bauiv1lib import account
-        from bauiv1lib import getcurrency
+        from bauiv1lib import gettickets
 
         plus = bui.app.plus
         assert plus is not None
@@ -575,7 +575,7 @@ class PartyQueueWindow(bui.Window):
 
         if plus.get_v1_account_ticket_count() < self._boost_tickets:
             bui.getsound('error').play()
-            getcurrency.show_get_tickets_prompt()
+            gettickets.show_get_tickets_prompt()
             return
 
         bui.getsound('laserReverse').play()

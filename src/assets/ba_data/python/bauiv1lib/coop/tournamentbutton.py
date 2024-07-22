@@ -290,6 +290,7 @@ class TournamentButton:
             text='-',
             v_align='center',
             maxwidth=170,
+            glow_type='uniform',
             scale=1.4,
             color=value_color,
             flatness=1.0,

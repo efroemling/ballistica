@@ -1,4 +1,4 @@
-### 1.7.36 (build 21911, api 8, 2024-07-05)
+### 1.7.36 (build 21919, api 8, 2024-07-21)
 - Wired up initial support for using asset-packages for bundled assets.
 - bacloud workspace commands are now a bit smarter; you can now do things like 
   `bacloud workspace put .` or even just `bacloud workspace put` and it will
@@ -6,6 +6,29 @@
   as a second argument. Both `workspace get` and `workspace put` now also have
   an optional `--workspace` arg if you want to sync with a workspace different
   than the local directory name.
+- Cleaned up look and feel on horizontal scrollbars, especially when and how
+  they fade in and out.
+- Fixed an issue where ConfigNumberEdit objects would draw incorrectly with
+  textscale set to non-1.0 values.
+- Fixed a nasty bug with the new stdin handling from 1.7.35 which could cause
+  the stdin thread to spin at 100% cpu usage in some cases (such as when
+  launching the Mac build from the Finder and not a terminal).
+- Added a `draw_controller_mult` arg to `bauiv1.imagewidget()` to control how
+  brightly the image pulses when its controller widget is selected (can prevent
+  brightly colored images from blowing out too much).
+- The Mac version is now correctly rendering to a sRGB colorspace instead of P3.
+  This was causing some bright colors to render extra-eye-destroying bright.
+- Fixed an issue with the Repeater() class which could cause key presses in UIs
+  to get lost if many were happening in short succession. An easy way to observe
+  this (at least on my machine) was to press left and right repeatedly in the
+  main menu - some presses would be lost and the selection would 'drift' one
+  direction.
+- Replaced all `efro.call.tpartial` calls with Python's built in
+  `functools.partial`. Mypy's 1.11 update added full type checking for
+  `functools.partial` so there's no benefit to maintaining our own special
+  version anymore. This also applies to `ba*.Call` which is redundant in the
+  same way. Both `efro.call.tpartial` and `ba*.Call` will probably be marked
+  deprecated and go away at some point.
   
 ### 1.7.35 (build 21889, api 8, 2024-06-20)
 - Fixed an issue where the engine would block at exit on some version of Linux

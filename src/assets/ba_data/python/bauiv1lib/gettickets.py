@@ -14,8 +14,8 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-class GetCurrencyWindow(bui.Window):
-    """Window for purchasing/acquiring currency."""
+class GetTicketsWindow(bui.Window):
+    """Window for purchasing/acquiring classic tickets."""
 
     def __init__(
         self,
@@ -97,14 +97,42 @@ class GetCurrencyWindow(bui.Window):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 55),
+            position=(self._width * 0.5 - 15, self._height - 47),
             size=(0, 0),
             color=bui.app.ui_v1.title_color,
             scale=1.2,
-            h_align='center',
+            h_align='right',
             v_align='center',
             text=bui.Lstr(resource=self._r + '.titleText'),
-            maxwidth=290,
+            # text='Testing really long text here blah blah',
+            maxwidth=260,
+        )
+
+        # Get Tokens button
+        bui.buttonwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, self._height - 72),
+            color=(0.65, 0.5, 0.7),
+            textcolor=bui.app.ui_v1.title_color,
+            size=(190, 50),
+            autoselect=True,
+            label='Get Tokens',
+            on_activate_call=self._get_tokens_press,
+        )
+
+        # 'New!' by tokens button
+        bui.textwidget(
+            parent=self._root_widget,
+            text='New!',
+            position=(self._width * 0.5 + 25, self._height - 32),
+            size=(0, 0),
+            color=(1, 1, 0, 1.0),
+            rotate=22,
+            shadow=1.0,
+            maxwidth=150,
+            h_align='center',
+            v_align='center',
+            scale=0.7,
         )
 
         if not modal:
@@ -437,7 +465,7 @@ class GetCurrencyWindow(bui.Window):
             tc_y_offs = 0
 
         h = self._width - (185 + x_inset)
-        v = self._height - 95 + tc_y_offs
+        v = self._height - 105 + tc_y_offs
 
         txt1 = (
             bui.Lstr(resource=self._r + '.youHaveText')
@@ -733,6 +761,41 @@ class GetCurrencyWindow(bui.Window):
         else:
             plus.purchase(item)
 
+    def _get_tokens_press(self) -> None:
+        from functools import partial
+
+        from bauiv1lib.gettokens import GetTokensWindow
+
+        # No-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
+        if self._transitioning_out:
+            return
+
+        bui.containerwidget(edit=self._root_widget, transition='out_left')
+
+        # Note: Make sure we don't pass anything here that would
+        # capture 'self'. (a lambda would implicitly do this by capturing
+        # the stack frame).
+        restorecall = partial(
+            _restore_get_tickets_window,
+            self._modal,
+            self._from_modal_store,
+            self._store_back_location,
+        )
+
+        window = GetTokensWindow(
+            transition='in_right',
+            restore_previous_call=restorecall,
+        ).get_root_widget()
+        if not self._modal and not self._from_modal_store:
+            assert bui.app.classic is not None
+            bui.app.ui_v1.set_main_menu_window(
+                window, from_window=self._root_widget
+            )
+        self._transitioning_out = True
+
     def _back(self) -> None:
         from bauiv1lib.store import browser
 
@@ -760,6 +823,27 @@ class GetCurrencyWindow(bui.Window):
         self._transitioning_out = True
 
 
+# A call we can bundle up and pass to windows we open; allows them to
+# get back to us without having to explicitly know about us.
+def _restore_get_tickets_window(
+    modal: bool,
+    from_modal_store: bool,
+    store_back_location: str | None,
+    from_window: bui.Widget,
+) -> None:
+    restored = GetTicketsWindow(
+        transition='in_left',
+        modal=modal,
+        from_modal_store=from_modal_store,
+        store_back_location=store_back_location,
+    )
+    if not modal and not from_modal_store:
+        assert bui.app.classic is not None
+        bui.app.ui_v1.set_main_menu_window(
+            restored.get_root_widget(), from_window=from_window
+        )
+
+
 def show_get_tickets_prompt() -> None:
     """Show a 'not enough tickets' prompt with an option to purchase more.
 
@@ -769,6 +853,7 @@ def show_get_tickets_prompt() -> None:
     from bauiv1lib.confirm import ConfirmWindow
 
     assert bui.app.classic is not None
+
     if bui.app.classic.allow_ticket_purchases:
         ConfirmWindow(
             bui.Lstr(
@@ -777,7 +862,7 @@ def show_get_tickets_prompt() -> None:
                     'You don\'t have enough tickets for this!',
                 )
             ),
-            lambda: GetCurrencyWindow(modal=True),
+            lambda: GetTicketsWindow(modal=True),
             ok_text=bui.Lstr(resource='getTicketsWindow.titleText'),
             width=460,
             height=130,

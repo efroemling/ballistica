@@ -14,17 +14,22 @@ namespace ballistica::base {
 /// Uses display-time so emphasizes visual smoothness over accuracy.
 class Repeater : public Object {
  public:
-  Repeater(seconds_t initial_delay, seconds_t repeat_delay, Runnable* runnable);
-  ~Repeater();
-
   template <typename F>
   static auto New(seconds_t initial_delay, seconds_t repeat_delay,
                   const F& lambda) {
-    return Object::New<Repeater>(initial_delay, repeat_delay,
-                                 NewLambdaRunnable<F>(lambda).Get());
+    auto&& rep = Object::New<Repeater>(initial_delay, repeat_delay,
+                                       NewLambdaRunnable<F>(lambda).Get());
+    // We need to run this bit *after* constructing our obj since it creates
+    // a strong ref.
+    rep->PostInit_();
+    return Object::Ref<Repeater>(rep);
   }
 
  private:
+  friend class Object;  // Allows our constructor to be private.
+  Repeater(seconds_t initial_delay, seconds_t repeat_delay, Runnable* runnable);
+  ~Repeater();
+  void PostInit_();
   seconds_t initial_delay_;
   seconds_t repeat_delay_;
   Object::Ref<DisplayTimer> timer_;

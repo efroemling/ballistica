@@ -30,6 +30,10 @@ class AssetsV1GlobalVals:
         str | None, IOAttrs('base_assets', store_default=False)
     ] = None
 
+    base_assets_filter: Annotated[
+        str, IOAttrs('base_assets_filter', store_default=False)
+    ] = ''
+
 
 class AssetsV1PathValsTypeID(Enum):
     """Types of vals we can store for paths."""

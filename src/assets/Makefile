@@ -364,8 +364,9 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/nearbytab.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/privatetab.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/publictab.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/getcurrency.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/getremote.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/gettickets.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/gettokens.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/helpui.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/iconpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/__init__.py \
@@ -641,8 +642,9 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/nearbytab.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/privatetab.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/publictab.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/getcurrency.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/getremote.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/gettickets.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/gettokens.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/helpui.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/iconpicker.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/__pycache__/__init__.cpython-312.opt-1.pyc \
@@ -5711,6 +5713,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/gladiatorIcon.dds \
   $(BUILD_DIR)/ba_data/textures/gladiatorIconColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/glow.dds \
+  $(BUILD_DIR)/ba_data/textures/goldPass.dds \
   $(BUILD_DIR)/ba_data/textures/googlePlayAchievementsIcon.dds \
   $(BUILD_DIR)/ba_data/textures/googlePlayGamesIcon.dds \
   $(BUILD_DIR)/ba_data/textures/googlePlayLeaderboardsIcon.dds \
@@ -5907,6 +5910,10 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/tipTopLevelColor.dds \
   $(BUILD_DIR)/ba_data/textures/tipTopPreview.dds \
   $(BUILD_DIR)/ba_data/textures/tnt.dds \
+  $(BUILD_DIR)/ba_data/textures/tokens1.dds \
+  $(BUILD_DIR)/ba_data/textures/tokens2.dds \
+  $(BUILD_DIR)/ba_data/textures/tokens3.dds \
+  $(BUILD_DIR)/ba_data/textures/tokens4.dds \
   $(BUILD_DIR)/ba_data/textures/touchArrows.dds \
   $(BUILD_DIR)/ba_data/textures/touchArrowsActions.dds \
   $(BUILD_DIR)/ba_data/textures/towerDLevelColor.dds \
@@ -5924,6 +5931,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/warriorIcon.dds \
   $(BUILD_DIR)/ba_data/textures/warriorIconColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/white.dds \
+  $(BUILD_DIR)/ba_data/textures/windowBottomCap.dds \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVMed.dds \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVSmall.dds \
   $(BUILD_DIR)/ba_data/textures/wings.dds \
@@ -6116,6 +6124,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/gladiatorIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/gladiatorIconColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/glow.pvr \
+  $(BUILD_DIR)/ba_data/textures/goldPass.pvr \
   $(BUILD_DIR)/ba_data/textures/googlePlayAchievementsIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/googlePlayGamesIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/googlePlayLeaderboardsIcon.pvr \
@@ -6312,6 +6321,10 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/tipTopLevelColor.pvr \
   $(BUILD_DIR)/ba_data/textures/tipTopPreview.pvr \
   $(BUILD_DIR)/ba_data/textures/tnt.pvr \
+  $(BUILD_DIR)/ba_data/textures/tokens1.pvr \
+  $(BUILD_DIR)/ba_data/textures/tokens2.pvr \
+  $(BUILD_DIR)/ba_data/textures/tokens3.pvr \
+  $(BUILD_DIR)/ba_data/textures/tokens4.pvr \
   $(BUILD_DIR)/ba_data/textures/touchArrows.pvr \
   $(BUILD_DIR)/ba_data/textures/touchArrowsActions.pvr \
   $(BUILD_DIR)/ba_data/textures/towerDLevelColor.pvr \
@@ -6329,6 +6342,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/warriorIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/warriorIconColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/white.pvr \
+  $(BUILD_DIR)/ba_data/textures/windowBottomCap.pvr \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVMed.pvr \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVSmall.pvr \
   $(BUILD_DIR)/ba_data/textures/wings.pvr \
@@ -6521,6 +6535,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/gladiatorIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/gladiatorIconColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/glow.ktx \
+  $(BUILD_DIR)/ba_data/textures/goldPass.ktx \
   $(BUILD_DIR)/ba_data/textures/googlePlayAchievementsIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/googlePlayGamesIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/googlePlayLeaderboardsIcon.ktx \
@@ -6717,6 +6732,10 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/tipTopLevelColor.ktx \
   $(BUILD_DIR)/ba_data/textures/tipTopPreview.ktx \
   $(BUILD_DIR)/ba_data/textures/tnt.ktx \
+  $(BUILD_DIR)/ba_data/textures/tokens1.ktx \
+  $(BUILD_DIR)/ba_data/textures/tokens2.ktx \
+  $(BUILD_DIR)/ba_data/textures/tokens3.ktx \
+  $(BUILD_DIR)/ba_data/textures/tokens4.ktx \
   $(BUILD_DIR)/ba_data/textures/touchArrows.ktx \
   $(BUILD_DIR)/ba_data/textures/touchArrowsActions.ktx \
   $(BUILD_DIR)/ba_data/textures/towerDLevelColor.ktx \
@@ -6734,6 +6753,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/warriorIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/warriorIconColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/white.ktx \
+  $(BUILD_DIR)/ba_data/textures/windowBottomCap.ktx \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVMed.ktx \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVSmall.ktx \
   $(BUILD_DIR)/ba_data/textures/wings.ktx \
@@ -6926,6 +6946,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/gladiatorIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/gladiatorIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/glow_preview.png \
+  $(BUILD_DIR)/ba_data/textures/goldPass_preview.png \
   $(BUILD_DIR)/ba_data/textures/googlePlayAchievementsIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/googlePlayGamesIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/googlePlayLeaderboardsIcon_preview.png \
@@ -7122,6 +7143,10 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/tipTopLevelColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/tipTopPreview_preview.png \
   $(BUILD_DIR)/ba_data/textures/tnt_preview.png \
+  $(BUILD_DIR)/ba_data/textures/tokens1_preview.png \
+  $(BUILD_DIR)/ba_data/textures/tokens2_preview.png \
+  $(BUILD_DIR)/ba_data/textures/tokens3_preview.png \
+  $(BUILD_DIR)/ba_data/textures/tokens4_preview.png \
   $(BUILD_DIR)/ba_data/textures/touchArrowsActions_preview.png \
   $(BUILD_DIR)/ba_data/textures/touchArrows_preview.png \
   $(BUILD_DIR)/ba_data/textures/towerDLevelColor_preview.png \
@@ -7139,6 +7164,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/warriorIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/warriorIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/white_preview.png \
+  $(BUILD_DIR)/ba_data/textures/windowBottomCap_preview.png \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVMed_preview.png \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVSmall_preview.png \
   $(BUILD_DIR)/ba_data/textures/wings_preview.png \

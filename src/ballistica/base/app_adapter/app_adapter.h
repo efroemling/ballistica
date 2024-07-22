@@ -222,6 +222,8 @@ class AppAdapter {
   virtual void DoClipboardSetText(const std::string& text);
   virtual auto DoClipboardGetText() -> std::string;
 
+  virtual auto SupportsPurchases() -> bool;
+
  protected:
   virtual ~AppAdapter();
 

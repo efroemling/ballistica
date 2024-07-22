@@ -615,7 +615,7 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     # ...or if homebrew SDL.h resolved path changes (happens for updates)
     sdl_h_path = Path('/opt/homebrew/include/SDL2/SDL.h')
     homebrew_sdl_h_resolved: str = (
-        str(sdl_h_path.resolve()) if sdl_h_path.is_symlink() else ''
+        str(sdl_h_path.resolve()) if sdl_h_path.exists() else ''
     )
     entries.append(Entry('homebrew_sdl_h_resolved', homebrew_sdl_h_resolved))
 

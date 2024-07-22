@@ -9,9 +9,9 @@ import sys
 import logging
 from pathlib import Path
 from threading import Thread
+from functools import partial
 from typing import TYPE_CHECKING
 
-from efro.call import tpartial
 from efro.error import CleanError
 import _babase
 import bacommon.cloud
@@ -118,7 +118,7 @@ class WorkspaceSubsystem:
                 state.iteration += 1
 
             _babase.pushcall(
-                tpartial(
+                partial(
                     self._successmsg,
                     Lstr(
                         resource='activatedText',
@@ -130,7 +130,7 @@ class WorkspaceSubsystem:
 
         except _SkipSyncError:
             _babase.pushcall(
-                tpartial(
+                partial(
                     self._errmsg,
                     Lstr(
                         resource='workspaceSyncReuseText',
@@ -145,7 +145,7 @@ class WorkspaceSubsystem:
             # be in wonky state.
             set_path = False
             _babase.pushcall(
-                tpartial(self._errmsg, Lstr(value=str(exc))),
+                partial(self._errmsg, Lstr(value=str(exc))),
                 from_other_thread=True,
             )
         except Exception:
@@ -153,7 +153,7 @@ class WorkspaceSubsystem:
             set_path = False
             logging.exception("Error syncing workspace '%s'.", workspacename)
             _babase.pushcall(
-                tpartial(
+                partial(
                     self._errmsg,
                     Lstr(
                         resource='workspaceSyncErrorText',

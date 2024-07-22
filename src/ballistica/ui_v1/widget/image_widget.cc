@@ -87,7 +87,9 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       // Draw brightness.
       float db = 1.0f;
       if (Widget* draw_controller = draw_control_parent()) {
-        db *= draw_controller->GetDrawBrightness(current_time);
+        db *= (draw_controller_mult_
+               * draw_controller->GetDrawBrightness(current_time))
+              + (1.0f - draw_controller_mult_) * 1.0f;
       }
 
       // Opaque portion may get drawn transparent or opaque depending on our

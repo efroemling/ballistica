@@ -28,8 +28,10 @@ def wait_for_connectivity(
     assert plus is not None
 
     # Quick-out: if we're already connected, don't bother with the UI.
+    # We do, however, push this call instead of calling it immediately
+    # so as to be consistent with the waiting path.
     if plus.cloud.connected:
-        on_connected()
+        bui.pushcall(on_connected)
         return
 
     WaitForConnectivityWindow(on_connected=on_connected, on_cancel=on_cancel)

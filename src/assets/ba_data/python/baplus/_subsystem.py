@@ -255,6 +255,11 @@ class PlusSubsystem(AppSubsystem):
         return _baplus.tournament_query(callback, args)
 
     @staticmethod
+    def supports_purchases() -> bool:
+        """Does this platform support in-app-purchases?"""
+        return _baplus.supports_purchases()
+
+    @staticmethod
     def have_incentivized_ad() -> bool:
         """Is an incentivized ad available?"""
         return _baplus.have_incentivized_ad()

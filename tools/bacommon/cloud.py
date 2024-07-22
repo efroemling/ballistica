@@ -250,3 +250,39 @@ class ManageAccountResponse(Response):
     """Here's that sign-in result you asked for, boss."""
 
     url: Annotated[str | None, IOAttrs('u')]
+
+
+@ioprepped
+@dataclass
+class StoreQueryMessage(Message):
+    """Message asking about purchasable stuff and store related state."""
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [StoreQueryResponse]
+
+
+@ioprepped
+@dataclass
+class StoreQueryResponse(Response):
+    """Here's that store info you asked for, boss."""
+
+    class Result(Enum):
+        """Our overall result."""
+
+        SUCCESS = 's'
+        ERROR = 'e'
+
+    @dataclass
+    class Purchase:
+        """Info about a purchasable thing."""
+
+        purchaseid: Annotated[str, IOAttrs('id')]
+
+    # Overall result; all data is undefined if not SUCCESS.
+    result: Annotated[Result, IOAttrs('r')]
+
+    tokens: Annotated[int, IOAttrs('t')]
+    available_purchases: Annotated[list[Purchase], IOAttrs('p')]
+    token_info_url: Annotated[str, IOAttrs('tiu')]

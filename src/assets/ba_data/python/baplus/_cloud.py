@@ -100,6 +100,15 @@ class CloudSubsystem(babase.AppSubsystem):
         ],
     ) -> None: ...
 
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.cloud.StoreQueryMessage,
+        on_response: Callable[
+            [bacommon.cloud.StoreQueryResponse | Exception], None
+        ],
+    ) -> None: ...
+
     def send_message_cb(
         self,
         msg: Message,
@@ -194,6 +203,10 @@ def cloud_console_exec(code: str) -> None:
     except Exception:
         import traceback
 
+        # Note to self: Seems like we should just use
+        # logging.exception() here. Except currently that winds up
+        # triggering our cloud logging stuff so we'd probably want a
+        # specific logger or whatnot to avoid that.
         apptime = babase.apptime()
         print(f'Exec error at time {apptime:.2f}.', file=sys.stderr)
         traceback.print_exc()

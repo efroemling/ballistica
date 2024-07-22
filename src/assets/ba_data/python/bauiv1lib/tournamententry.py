@@ -632,7 +632,7 @@ class TournamentEntryWindow(PopupWindow):
             bui.apptimer(0 if practice else 1.25, self._transition_out)
 
     def _on_pay_with_tickets_press(self) -> None:
-        from bauiv1lib import getcurrency
+        from bauiv1lib import gettickets
 
         plus = bui.app.plus
         assert plus is not None
@@ -675,7 +675,7 @@ class TournamentEntryWindow(PopupWindow):
             ticket_count = None
         ticket_cost = self._purchase_price
         if ticket_count is not None and ticket_count < ticket_cost:
-            getcurrency.show_get_tickets_prompt()
+            gettickets.show_get_tickets_prompt()
             bui.getsound('error').play()
             self._transition_out()
             return
@@ -781,7 +781,7 @@ class TournamentEntryWindow(PopupWindow):
         self._launch()
 
     def _on_get_tickets_press(self) -> None:
-        from bauiv1lib import getcurrency
+        from bauiv1lib import gettickets
 
         # If we're already entering, ignore presses.
         if self._entering:
@@ -789,7 +789,7 @@ class TournamentEntryWindow(PopupWindow):
 
         # Bring up get-tickets window and then kill ourself (we're on the
         # overlay layer so we'd show up above it).
-        getcurrency.GetCurrencyWindow(
+        gettickets.GetTicketsWindow(
             modal=True, origin_widget=self._get_tickets_button
         )
         self._transition_out()
