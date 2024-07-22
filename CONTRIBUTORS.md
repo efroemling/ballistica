@@ -48,6 +48,9 @@
 ### VinniTR
 - Fixes
 
+### Zacker Tz
+- Fix penguinTorso.bob
+
 ### Rikko
 - Created the original "reject_recently_left_players" plugin
 
@@ -64,5 +67,6 @@
 
 ### Loup Garou
 - Added sphinx documentation generation
+- Added docker build
 - Added docker build system
 - Various CI/CD improvements
