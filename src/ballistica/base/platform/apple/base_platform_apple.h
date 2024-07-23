@@ -13,8 +13,8 @@ class BasePlatformApple : public BasePlatform {
   BasePlatformApple();
   void DoPurchase(const std::string& item) override;
   void RestorePurchases() override;
-  void PurchaseAck(const std::string& purchase,
-                   const std::string& order_id) override;
+  void PurchaseAck(const std::string& purchase, const std::string& order_id,
+                   bool valid) override;
   void DoOpenURL(const std::string& url) override;
   auto OverlayWebBrowserIsSupported() -> bool override;
   void DoOverlayWebBrowserOpenURL(const std::string& url) override;

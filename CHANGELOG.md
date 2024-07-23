@@ -1,4 +1,8 @@
-### 1.7.36 (build 21919, api 8, 2024-07-21)
+### 1.7.36 (build 21928, api 8, 2024-07-22)
+- Wired up Tokens, BombSquad's new purchasable currency. The first thing these
+  can be used for is storage packs on ballistica.net, but this will expand to
+  other places in the game soon. For a full explanation on why these were added,
+  see https://ballistica.net/whataretokens
 - Wired up initial support for using asset-packages for bundled assets.
 - bacloud workspace commands are now a bit smarter; you can now do things like 
   `bacloud workspace put .` or even just `bacloud workspace put` and it will

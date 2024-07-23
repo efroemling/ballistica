@@ -4,16 +4,15 @@
 
 from __future__ import annotations
 
-import logging
+import time
 from enum import Enum
 from functools import partial
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, assert_never
 
 import bacommon.cloud
-
 import bauiv1 as bui
-from bauiv1lib.connectivity import wait_for_connectivity
+
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -58,8 +57,13 @@ class _TxtDef:
 class GetTokensWindow(bui.Window):
     """Window for purchasing/acquiring classic tickets."""
 
-    def __del__(self) -> None:
-        print('~GetTokensWindow()')
+    class State(Enum):
+        """What are we doing?"""
+
+        LOADING = 'loading'
+        NOT_SIGNED_IN = 'not_signed_in'
+        HAVE_GOLD_PASS = 'have_gold_pass'
+        SHOWING_STORE = 'showing_store'
 
     def __init__(
         self,
@@ -291,6 +295,12 @@ class GetTokensWindow(bui.Window):
         self._restore_previous_call = restore_previous_call
         self._textcolor = (0.92, 0.92, 2.0)
 
+        self._query_in_flight = False
+        self._last_query_time = -1.0
+        self._last_query_response: bacommon.cloud.StoreQueryResponse | None = (
+            None
+        )
+
         # If they provided an origin-widget, scale up from that.
         scale_origin: tuple[float, float] | None
         if origin_widget is not None:
@@ -350,7 +360,7 @@ class GetTokensWindow(bui.Window):
 
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
-        bui.textwidget(
+        self._title_text = bui.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 47),
             size=(0, 0),
@@ -366,6 +376,7 @@ class GetTokensWindow(bui.Window):
 
         self._status_text = bui.textwidget(
             parent=self._root_widget,
+            size=(0, 0),
             position=(self._width * 0.5, self._height * 0.5),
             h_align='center',
             v_align='center',
@@ -374,40 +385,117 @@ class GetTokensWindow(bui.Window):
             text='Loading...',
         )
 
+        self._core_widgets = [
+            self._back_button,
+            self._title_text,
+            self._status_text,
+        ]
+
+        self._token_count_widget: bui.Widget | None = None
+        self._smooth_update_timer: bui.AppTimer | None = None
+        self._smooth_token_count: float | None = None
+        self._token_count: int = 0
+        self._smooth_increase_speed = 1.0
+        self._ticking_sound: bui.Sound | None = None
+
         # Get all textures used by our buttons preloading so hopefully
         # they'll be in place by the time we show them.
         for bdef in self._buttondefs:
             for bimg in bdef.imgdefs:
                 bui.gettexture(bimg.tex)
 
-        # Wait for a master-server connection if need be. Otherwise we
-        # could error if called at the wrong time even with an internet
-        # connection, which is unintuitive.
-        wait_for_connectivity(
-            on_connected=bui.WeakCall(self._on_have_connectivity),
-            on_cancel=bui.WeakCall(self._back),
+        self._state = self.State.LOADING
+
+        self._update_timer = bui.AppTimer(
+            0.789, bui.WeakCall(self._update), repeat=True
         )
+        self._update()
 
-    def _on_have_connectivity(self) -> None:
-        plus = bui.app.plus
-        assert plus is not None
+    def __del__(self) -> None:
+        if self._ticking_sound is not None:
+            self._ticking_sound.stop()
+            self._ticking_sound = None
 
-        # Sanity check; we need to be signed in. (we should not be
-        # allowed to get here if we aren't, but it could happen for
-        # fluke-ish reasons.)
-        if plus.accounts.primary is None:
-            bui.screenmessage(
-                bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
-            )
-            bui.getsound('error').play()
-            self._back()
+    def _update(self) -> None:
+        # No-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
             return
 
-        with plus.accounts.primary:
-            plus.cloud.send_message_cb(
-                bacommon.cloud.StoreQueryMessage(),
-                on_response=bui.WeakCall(self._on_store_query_response),
+        plus = bui.app.plus
+
+        if plus is None or plus.accounts.primary is None:
+            self._update_state(self.State.NOT_SIGNED_IN)
+            return
+
+        # Poll for relevant changes to the store or our account.
+        now = time.monotonic()
+        if not self._query_in_flight and now - self._last_query_time > 2.0:
+            self._last_query_time = now
+            self._query_in_flight = True
+            with plus.accounts.primary:
+                plus.cloud.send_message_cb(
+                    bacommon.cloud.StoreQueryMessage(),
+                    on_response=bui.WeakCall(self._on_store_query_response),
+                )
+
+        # Can't do much until we get a store state.
+        if self._last_query_response is None:
+            return
+
+        # If we've got a gold-pass, just show that. No need to offer any
+        # other purchases.
+        if self._last_query_response.gold_pass:
+            self._update_state(self.State.HAVE_GOLD_PASS)
+            return
+
+        # Ok we seem to be signed in and have store stuff we can show.
+        # Do that.
+        self._update_state(self.State.SHOWING_STORE)
+
+    def _update_state(self, state: State) -> None:
+
+        # We don't do much when state is unchanged.
+        if state is self._state:
+            # Update a few things in store mode though, such as token
+            # count.
+            if state is self.State.SHOWING_STORE:
+                self._update_store_state()
+            return
+
+        # Ok, state is changing. Start by resetting to a blank slate.
+        self._token_count_widget = None
+        for widget in self._root_widget.get_children():
+            if widget not in self._core_widgets:
+                widget.delete()
+
+        # Build up new state.
+        if state is self.State.NOT_SIGNED_IN:
+            bui.textwidget(
+                edit=self._status_text,
+                color=(1, 0, 0),
+                text=bui.Lstr(resource='notSignedInErrorText'),
             )
+        elif state is self.State.LOADING:
+            raise RuntimeError('Should never return to loading state.')
+        elif state is self.State.HAVE_GOLD_PASS:
+            bui.textwidget(
+                edit=self._status_text,
+                color=(0, 1, 0),
+                text=(
+                    'You have a Gold Pass.\n'
+                    'All token purchases are free.\n'
+                    'Enjoy!'
+                ),
+            )
+        elif state is self.State.SHOWING_STORE:
+            assert self._last_query_response is not None
+            bui.textwidget(edit=self._status_text, text='')
+            self._build_store_for_response(self._last_query_response)
+        else:
+            # Make sure we handle all cases.
+            assert_never(state)
+
+        self._state = state
 
     def _on_load_error(self) -> None:
         bui.textwidget(
@@ -419,18 +507,17 @@ class GetTokensWindow(bui.Window):
     def _on_store_query_response(
         self, response: bacommon.cloud.StoreQueryResponse | Exception
     ) -> None:
+        self._query_in_flight = False
+        if isinstance(response, bacommon.cloud.StoreQueryResponse):
+            self._last_query_response = response
+            # Hurry along any effects of this response.
+            self._update()
+
+    def _build_store_for_response(
+        self, response: bacommon.cloud.StoreQueryResponse
+    ) -> None:
         # pylint: disable=too-many-locals
-
         plus = bui.app.plus
-
-        # If our message failed, just error and back out.
-        if isinstance(response, Exception):
-            logging.info('Store query failed.', exc_info=response)
-
-            bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
-            bui.getsound('error').play()
-            self._back()
-            return
 
         bui.textwidget(edit=self._status_text, text='')
 
@@ -559,7 +646,7 @@ class GetTokensWindow(bui.Window):
             v_align='center',
             text='BombSquad\'s shiny new currency.',
         )
-        _tnumtxt = bui.textwidget(
+        self._token_count_widget = bui.textwidget(
             parent=self._root_widget,
             position=(self._width - self._x_inset - 120.0, self._height - 48),
             color=(2.0, 0.7, 0.0),
@@ -568,8 +655,12 @@ class GetTokensWindow(bui.Window):
             size=(0, 0),
             h_align='left',
             v_align='center',
-            text=str(response.tokens),
+            text='',
         )
+        self._token_count = response.tokens
+        self._smooth_token_count = float(self._token_count)
+        self._smooth_update()  # will set the text widget.
+
         _tlabeltxt = bui.textwidget(
             parent=self._root_widget,
             position=(self._width - self._x_inset - 123.0, self._height - 48),
@@ -592,15 +683,83 @@ class GetTokensWindow(bui.Window):
                 # Looks like purchases will never work here.
                 errmsg = (
                     'Sorry, purchases are not available on this build.\n'
-                    'As a fallback, sign in to this account on another'
-                    ' platform and make purchases from there.'
+                    'Try signing into your account on another platform'
+                    ' and making purchases from there.'
                 )
 
             bui.screenmessage(errmsg, color=(1, 0.5, 0))
             bui.getsound('error').play()
             return
 
-        print(f'WOULD PURCHASE {itemid}')
+        assert plus is not None
+        plus.purchase(itemid)
+
+    def _update_store_state(self) -> None:
+        """Called to make minor updates to an already shown store."""
+        assert self._token_count_widget is not None
+        assert self._last_query_response is not None
+
+        self._token_count = self._last_query_response.tokens
+
+        # Kick off new smooth update if need be.
+        assert self._smooth_token_count is not None
+        if (
+            self._token_count != int(self._smooth_token_count)
+            and self._smooth_update_timer is None
+        ):
+            self._smooth_update_timer = bui.AppTimer(
+                0.05, bui.WeakCall(self._smooth_update), repeat=True
+            )
+            diff = abs(float(self._token_count) - self._smooth_token_count)
+            self._smooth_increase_speed = (
+                diff / 100.0
+                if diff >= 5000
+                else (
+                    diff / 50.0
+                    if diff >= 1500
+                    else diff / 30.0 if diff >= 500 else diff / 15.0
+                )
+            )
+
+    def _smooth_update(self) -> None:
+
+        # Stop if the count widget disappears.
+        if not self._token_count_widget:
+            self._smooth_update_timer = None
+            return
+
+        finished = False
+
+        # If we're going down, do it immediately.
+        assert self._smooth_token_count is not None
+        if int(self._smooth_token_count) >= self._token_count:
+            self._smooth_token_count = float(self._token_count)
+            finished = True
+        else:
+            # We're going up; start a sound if need be.
+            self._smooth_token_count = min(
+                self._smooth_token_count + 1.0 * self._smooth_increase_speed,
+                self._token_count,
+            )
+            if int(self._smooth_token_count) >= self._token_count:
+                finished = True
+                self._smooth_token_count = float(self._token_count)
+            elif self._ticking_sound is None:
+                self._ticking_sound = bui.getsound('scoreIncrease')
+                self._ticking_sound.play()
+
+        bui.textwidget(
+            edit=self._token_count_widget,
+            text=str(int(self._smooth_token_count)),
+        )
+
+        # If we've reached the target, kill the timer/sound/etc.
+        if finished:
+            self._smooth_update_timer = None
+            if self._ticking_sound is not None:
+                self._ticking_sound.stop()
+                self._ticking_sound = None
+                bui.getsound('cashRegister2').play()
 
     def _back(self) -> None:
 

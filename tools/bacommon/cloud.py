@@ -284,5 +284,7 @@ class StoreQueryResponse(Response):
     result: Annotated[Result, IOAttrs('r')]
 
     tokens: Annotated[int, IOAttrs('t')]
+    gold_pass: Annotated[bool, IOAttrs('g')]
+
     available_purchases: Annotated[list[Purchase], IOAttrs('p')]
     token_info_url: Annotated[str, IOAttrs('tiu')]

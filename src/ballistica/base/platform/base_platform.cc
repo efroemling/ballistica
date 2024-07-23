@@ -106,7 +106,7 @@ void BasePlatform::RestorePurchases() {
 }
 
 void BasePlatform::PurchaseAck(const std::string& purchase,
-                               const std::string& order_id) {
+                               const std::string& order_id, bool valid) {
   Log(LogLevel::kError, "PurchaseAck() unimplemented");
 }
 
