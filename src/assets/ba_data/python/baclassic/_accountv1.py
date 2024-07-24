@@ -271,7 +271,10 @@ class AccountV1Subsystem:
                 ),
                 color=(0, 1, 0),
             )
-            babase.getsimplesound('click01').play()
+            # Ick; this can get called early in the bootstrapping process
+            # before we're allowed to load assets. Guard against that.
+            if babase.asset_loads_allowed():
+                babase.getsimplesound('click01').play()
 
     def on_account_state_changed(self) -> None:
         """(internal)"""

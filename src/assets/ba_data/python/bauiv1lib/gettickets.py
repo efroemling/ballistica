@@ -116,14 +116,14 @@ class GetTicketsWindow(bui.Window):
             textcolor=bui.app.ui_v1.title_color,
             size=(190, 50),
             autoselect=True,
-            label='Get Tokens',
+            label=bui.Lstr(resource='tokens.getTokensText'),
             on_activate_call=self._get_tokens_press,
         )
 
         # 'New!' by tokens button
         bui.textwidget(
             parent=self._root_widget,
-            text='New!',
+            text=bui.Lstr(resource='newExclaimText'),
             position=(self._width * 0.5 + 25, self._height - 32),
             size=(0, 0),
             color=(1, 1, 0, 1.0),

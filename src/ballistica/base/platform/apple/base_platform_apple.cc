@@ -41,12 +41,11 @@ void BasePlatformApple::RestorePurchases() {
 }
 
 void BasePlatformApple::PurchaseAck(const std::string& purchase,
-                                    const std::string& order_id, bool valid) {
+                                    const std::string& order_id) {
 #if BA_USE_STORE_KIT
   BallisticaKit::StoreKitContext::purchaseAck(purchase, order_id);
-  // AppleUtils::PurchaseAck(purchase, order_id);
 #else
-  BasePlatform::PurchaseAck(purchase, order_id, valid);
+  BasePlatform::PurchaseAck(purchase, order_id);
 #endif
 }
 

@@ -46,7 +46,7 @@ class TextContents(Enum):
 
 @dataclass
 class _TxtDef:
-    text: str | TextContents
+    text: str | TextContents | bui.Lstr
     pos: tuple[float, float]
     maxwidth: float | None
     scale: float = 1.0
@@ -105,7 +105,10 @@ class GetTokensWindow(bui.Window):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        '50 Tokens',
+                        bui.Lstr(
+                            resource='tokens.numTokensText',
+                            subs=[('${COUNT}', '50')],
+                        ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
                         scale=titlescale,
@@ -142,7 +145,10 @@ class GetTokensWindow(bui.Window):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        '500 Tokens',
+                        bui.Lstr(
+                            resource='tokens.numTokensText',
+                            subs=[('${COUNT}', '500')],
+                        ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
                         scale=titlescale,
@@ -179,7 +185,10 @@ class GetTokensWindow(bui.Window):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        '1200 Tokens',
+                        bui.Lstr(
+                            resource='tokens.numTokensText',
+                            subs=[('${COUNT}', '1200')],
+                        ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
                         scale=titlescale,
@@ -216,7 +225,10 @@ class GetTokensWindow(bui.Window):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        '2600 Tokens',
+                        bui.Lstr(
+                            resource='tokens.numTokensText',
+                            subs=[('${COUNT}', '2600')],
+                        ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
                         scale=titlescale,
@@ -252,28 +264,28 @@ class GetTokensWindow(bui.Window):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        'Gold Pass',
+                        bui.Lstr(resource='goldPass.goldPassText'),
                         pos=(bwidthwide * 0.5, pos1 + 27),
                         color=(1.1, 1.05, 1.0),
                         scale=titlescale,
                         maxwidth=bwidthwide * 0.8,
                     ),
                     _TxtDef(
-                        'Infinite tokens.',
+                        bui.Lstr(resource='goldPass.desc1InfTokensText'),
                         pos=(bwidthwide * 0.5, pos1 + 6),
                         color=(1.1, 1.05, 1.0),
                         scale=0.4,
                         maxwidth=bwidthwide * 0.8,
                     ),
                     _TxtDef(
-                        'No ads.',
+                        bui.Lstr(resource='goldPass.desc2NoAdsText'),
                         pos=(bwidthwide * 0.5, pos1 + 6 - 13 * 1),
                         color=(1.1, 1.05, 1.0),
                         scale=0.4,
                         maxwidth=bwidthwide * 0.8,
                     ),
                     _TxtDef(
-                        'Forever.',
+                        bui.Lstr(resource='goldPass.desc3ForeverText'),
                         pos=(bwidthwide * 0.5, pos1 + 6 - 13 * 2),
                         color=(1.1, 1.05, 1.0),
                         scale=0.4,
@@ -370,7 +382,7 @@ class GetTokensWindow(bui.Window):
             scale=1.2,
             h_align='center',
             v_align='center',
-            text='Get Tokens',
+            text=bui.Lstr(resource='tokens.getTokensText'),
             maxwidth=260,
         )
 
@@ -382,7 +394,7 @@ class GetTokensWindow(bui.Window):
             v_align='center',
             color=(0.6, 0.6, 0.6),
             scale=0.75,
-            text='Loading...',
+            text=bui.Lstr(resource='store.loadingText'),
         )
 
         self._core_widgets = [
@@ -481,11 +493,7 @@ class GetTokensWindow(bui.Window):
             bui.textwidget(
                 edit=self._status_text,
                 color=(0, 1, 0),
-                text=(
-                    'You have a Gold Pass.\n'
-                    'All token purchases are free.\n'
-                    'Enjoy!'
-                ),
+                text=bui.Lstr(resource='tokens.youHaveGoldPassText'),
             )
         elif state is self.State.SHOWING_STORE:
             assert self._last_query_response is not None
@@ -552,7 +560,7 @@ class GetTokensWindow(bui.Window):
         tinfobtn = bui.buttonwidget(
             parent=self._root_widget,
             autoselect=True,
-            label='Learn More',
+            label=bui.Lstr(resource='learnMoreText'),
             position=(self._width * 0.5 - 75, self._height * 0.703),
             size=(180, 43),
             scale=0.8,
@@ -644,7 +652,7 @@ class GetTokensWindow(bui.Window):
             size=(0, 0),
             h_align='center',
             v_align='center',
-            text='BombSquad\'s shiny new currency.',
+            text=bui.Lstr(resource='tokens.shinyNewCurrencyText'),
         )
         self._token_count_widget = bui.textwidget(
             parent=self._root_widget,
@@ -678,14 +686,10 @@ class GetTokensWindow(bui.Window):
         if price is None:
             if plus is not None and plus.supports_purchases():
                 # Looks like internet is down or something temporary.
-                errmsg = 'This purchase is not available.'
+                errmsg = bui.Lstr(resource='purchaseNotAvailableText')
             else:
                 # Looks like purchases will never work here.
-                errmsg = (
-                    'Sorry, purchases are not available on this build.\n'
-                    'Try signing into your account on another platform'
-                    ' and making purchases from there.'
-                )
+                errmsg = bui.Lstr(resource='purchaseNeverAvailableText')
 
             bui.screenmessage(errmsg, color=(1, 0.5, 0))
             bui.getsound('error').play()

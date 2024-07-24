@@ -52,9 +52,10 @@ class BasePlatform {
   /// Restore purchases (currently only relevant on Apple platforms).
   virtual void RestorePurchases();
 
-  /// Purchase was ack'ed by the master-server (so can consume or cancel).
+  /// Purchase was processed by the master-server and should now be completed
+  /// locally.
   virtual void PurchaseAck(const std::string& purchase,
-                           const std::string& order_id, bool valid);
+                           const std::string& order_id);
 
 #pragma mark ENVIRONMENT -------------------------------------------------------
 
