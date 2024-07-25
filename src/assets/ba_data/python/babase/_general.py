@@ -3,6 +3,7 @@
 """Utility snippets applying to generic Python code."""
 from __future__ import annotations
 
+import sys
 import types
 import weakref
 import random
@@ -66,7 +67,10 @@ def existing(obj: ExistableT | None) -> ExistableT | None:
     return obj if obj is not None and obj.exists() else None
 
 
-def getclass(name: str, subclassof: type[T]) -> type[T]:
+def getclass(name: str,
+             subclassof: type[T],
+             check_sdlib_modulename_clash: bool = False
+    ) -> type[T]:
     """Given a full class name such as foo.bar.MyClass, return the class.
 
     Category: **General Utility Functions**
@@ -79,6 +83,8 @@ def getclass(name: str, subclassof: type[T]) -> type[T]:
     splits = name.split('.')
     modulename = '.'.join(splits[:-1])
     classname = splits[-1]
+    if modulename in sys.stdlib_module_names and check_sdlib_modulename_clash:
+        raise Exception(f'{modulename} is an inbuilt module.')
     module = importlib.import_module(modulename)
     cls: type = getattr(module, classname)
 

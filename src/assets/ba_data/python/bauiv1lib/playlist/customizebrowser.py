@@ -400,7 +400,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
             txtw = bui.textwidget(
                 parent=self._columnwidget,
                 size=(self._width - 40, 30),
-                maxwidth=self._width - 110,
+                maxwidth=440,
                 text=self._get_playlist_display_name(pname),
                 h_align='left',
                 v_align='center',

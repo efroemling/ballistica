@@ -122,6 +122,7 @@ class PlaylistEditWindow(bui.Window):
             h_align='left',
             v_align='center',
             max_chars=40,
+            maxwidth=380,
             autoselect=True,
             color=(0.9, 0.9, 0.9, 1.0),
             description=bui.Lstr(resource=f'{self._r}.listNameText'),
