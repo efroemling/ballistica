@@ -278,7 +278,7 @@ class PluginSpec:
         if not self.loadable:
             return None
         try:
-            cls = getclass(self.class_path, Plugin)
+            cls = getclass(self.class_path, Plugin, True)
         except Exception as exc:
             _babase.getsimplesound('error').play()
             _babase.screenmessage(
