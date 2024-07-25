@@ -133,7 +133,10 @@ def create_user_system_scripts() -> None:
     if env.python_directory_app is None:
         raise RuntimeError('app python dir unset')
 
-    path = f'{env.python_directory_user}/sys/{env.engine_version}'
+    path = (
+        f'{env.python_directory_user}/sys/'
+        f'{env.engine_version}_{env.engine_build_number}'
+    )
     pathtmp = path + '_tmp'
     if os.path.exists(path):
         print('Delete Existing User Scripts first!')
@@ -181,7 +184,10 @@ def delete_user_system_scripts() -> None:
     if env.python_directory_user is None:
         raise RuntimeError('user python dir unset')
 
-    path = f'{env.python_directory_user}/sys/{env.engine_version}'
+    path = (
+        f'{env.python_directory_user}/sys/'
+        f'{env.engine_version}_{env.engine_build_number}'
+    )
     if os.path.exists(path):
         shutil.rmtree(path)
         print('User system scripts deleted.')

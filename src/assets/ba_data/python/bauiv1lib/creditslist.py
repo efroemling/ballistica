@@ -95,7 +95,7 @@ class CreditsListWindow(bui.Window):
             position=(0, height - (59 if uiscale is bui.UIScale.SMALL else 54)),
             size=(width, 30),
             text=bui.Lstr(
-                resource=self._r + '.titleText',
+                resource=f'{self._r}.titleText',
                 subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
             ),
             h_align='center',
@@ -156,7 +156,7 @@ class CreditsListWindow(bui.Window):
             return sval
 
         sound_and_music = bui.Lstr(
-            resource=self._r + '.songCreditText'
+            resource=f'{self._r}.songCreditText'
         ).evaluate()
         sound_and_music = sound_and_music.replace(
             '${TITLE}', "'William Tell (Trumpet Entry)'"
@@ -232,41 +232,41 @@ class CreditsListWindow(bui.Window):
         # (or add mesh splitting under the hood)
         credits_text = (
             '  '
-            + bui.Lstr(resource=self._r + '.codingGraphicsAudioText')
+            + bui.Lstr(resource=f'{self._r}.codingGraphicsAudioText')
             .evaluate()
             .replace('${NAME}', 'Eric Froemling')
             + '\n'
             '\n'
             '  '
-            + bui.Lstr(resource=self._r + '.additionalAudioArtIdeasText')
+            + bui.Lstr(resource=f'{self._r}.additionalAudioArtIdeasText')
             .evaluate()
             .replace('${NAME}', 'Raphael Suter')
             + '\n'
             '\n'
             '  '
-            + bui.Lstr(resource=self._r + '.soundAndMusicText').evaluate()
+            + bui.Lstr(resource=f'{self._r}.soundAndMusicText').evaluate()
             + '\n'
             '\n' + sound_and_music + '\n'
             '\n'
             '     '
-            + bui.Lstr(resource=self._r + '.publicDomainMusicViaText')
+            + bui.Lstr(resource=f'{self._r}.publicDomainMusicViaText')
             .evaluate()
             .replace('${NAME}', 'Musopen.com')
             + '\n'
             '        '
-            + bui.Lstr(resource=self._r + '.thanksEspeciallyToText')
+            + bui.Lstr(resource=f'{self._r}.thanksEspeciallyToText')
             .evaluate()
             .replace('${NAME}', 'the US Army, Navy, and Marine Bands')
             + '\n'
             '\n'
             '     '
-            + bui.Lstr(resource=self._r + '.additionalMusicFromText')
+            + bui.Lstr(resource=f'{self._r}.additionalMusicFromText')
             .evaluate()
             .replace('${NAME}', 'The YouTube Audio Library')
             + '\n'
             '\n'
             '     '
-            + bui.Lstr(resource=self._r + '.soundsText')
+            + bui.Lstr(resource=f'{self._r}.soundsText')
             .evaluate()
             .replace('${SOURCE}', 'Freesound.org')
             + '\n'
@@ -274,7 +274,7 @@ class CreditsListWindow(bui.Window):
             '\n'
             '  '
             + bui.Lstr(
-                resource=self._r + '.languageTranslationsText'
+                resource=f'{self._r}.languageTranslationsText'
             ).evaluate()
             + '\n'
             '\n'
@@ -295,25 +295,25 @@ class CreditsListWindow(bui.Window):
             '  Holiday theme vector art designed by Freepik\n'
             '\n'
             '  '
-            + bui.Lstr(resource=self._r + '.specialThanksText').evaluate()
+            + bui.Lstr(resource=f'{self._r}.specialThanksText').evaluate()
             + '\n'
             '\n'
             '     Todd, Laura, and Robert Froemling\n'
             '     '
-            + bui.Lstr(resource=self._r + '.allMyFamilyText')
+            + bui.Lstr(resource=f'{self._r}.allMyFamilyText')
             .evaluate()
             .replace('\n', '\n     ')
             + '\n'
             '     '
             + bui.Lstr(
-                resource=self._r + '.whoeverInventedCoffeeText'
+                resource=f'{self._r}.whoeverInventedCoffeeText'
             ).evaluate()
             + '\n'
             '\n'
-            '  ' + bui.Lstr(resource=self._r + '.legalText').evaluate() + '\n'
+            '  ' + bui.Lstr(resource=f'{self._r}.legalText').evaluate() + '\n'
             '\n'
             '     '
-            + bui.Lstr(resource=self._r + '.softwareBasedOnText')
+            + bui.Lstr(resource=f'{self._r}.softwareBasedOnText')
             .evaluate()
             .replace('${NAME}', 'the Khronos Group')
             + '\n'

@@ -68,7 +68,7 @@ class HelpWindow(bui.Window):
             position=(0, height - (50 if uiscale is bui.UIScale.SMALL else 45)),
             size=(width, 25),
             text=bui.Lstr(
-                resource=self._r + '.titleText',
+                resource=f'{self._r}.titleText',
                 subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
             ),
             color=bui.app.ui_v1.title_color,
@@ -138,9 +138,9 @@ class HelpWindow(bui.Window):
         self._sub_width = 660
         self._sub_height = (
             1590
-            + bui.app.lang.get_resource(self._r + '.someDaysExtraSpace')
+            + bui.app.lang.get_resource(f'{self._r}.someDaysExtraSpace')
             + bui.app.lang.get_resource(
-                self._r + '.orPunchingSomethingExtraSpace'
+                f'{self._r}.orPunchingSomethingExtraSpace'
             )
         )
 
@@ -162,7 +162,7 @@ class HelpWindow(bui.Window):
         paragraph = (0.8, 0.8, 1.0, 1.0)
 
         txt = bui.Lstr(
-            resource=self._r + '.welcomeText',
+            resource=f'{self._r}.welcomeText',
             subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
         ).evaluate()
         txt_scale = 1.4
@@ -198,7 +198,7 @@ class HelpWindow(bui.Window):
         assert app.classic is not None
 
         v -= spacing * 50.0
-        txt = bui.Lstr(resource=self._r + '.someDaysText').evaluate()
+        txt = bui.Lstr(resource=f'{self._r}.someDaysText').evaluate()
         bui.textwidget(
             parent=self._subcontainer,
             position=(h, v),
@@ -211,9 +211,9 @@ class HelpWindow(bui.Window):
             v_align='center',
             flatness=1.0,
         )
-        v -= spacing * 25.0 + getres(self._r + '.someDaysExtraSpace')
+        v -= spacing * 25.0 + getres(f'{self._r}.someDaysExtraSpace')
         txt_scale = 0.66
-        txt = bui.Lstr(resource=self._r + '.orPunchingSomethingText').evaluate()
+        txt = bui.Lstr(resource=f'{self._r}.orPunchingSomethingText').evaluate()
         bui.textwidget(
             parent=self._subcontainer,
             position=(h, v),
@@ -226,10 +226,10 @@ class HelpWindow(bui.Window):
             v_align='center',
             flatness=1.0,
         )
-        v -= spacing * 27.0 + getres(self._r + '.orPunchingSomethingExtraSpace')
+        v -= spacing * 27.0 + getres(f'{self._r}.orPunchingSomethingExtraSpace')
         txt_scale = 1.0
         txt = bui.Lstr(
-            resource=self._r + '.canHelpText',
+            resource=f'{self._r}.canHelpText',
             subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
         ).evaluate()
         bui.textwidget(
@@ -246,7 +246,7 @@ class HelpWindow(bui.Window):
 
         v -= spacing * 70.0
         txt_scale = 1.0
-        txt = bui.Lstr(resource=self._r + '.toGetTheMostText').evaluate()
+        txt = bui.Lstr(resource=f'{self._r}.toGetTheMostText').evaluate()
         bui.textwidget(
             parent=self._subcontainer,
             position=(h, v),
@@ -262,7 +262,7 @@ class HelpWindow(bui.Window):
 
         v -= spacing * 40.0
         txt_scale = 0.74
-        txt = bui.Lstr(resource=self._r + '.friendsText').evaluate()
+        txt = bui.Lstr(resource=f'{self._r}.friendsText').evaluate()
         hval2 = h - 220
         bui.textwidget(
             parent=self._subcontainer,
@@ -278,7 +278,7 @@ class HelpWindow(bui.Window):
         )
 
         txt = bui.Lstr(
-            resource=self._r + '.friendsGoodText',
+            resource=f'{self._r}.friendsGoodText',
             subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
         ).evaluate()
         txt_scale = 0.7
@@ -298,9 +298,9 @@ class HelpWindow(bui.Window):
 
         v -= spacing * 45.0
         txt = (
-            bui.Lstr(resource=self._r + '.devicesText').evaluate()
+            bui.Lstr(resource=f'{self._r}.devicesText').evaluate()
             if app.env.vr
-            else bui.Lstr(resource=self._r + '.controllersText').evaluate()
+            else bui.Lstr(resource=f'{self._r}.controllersText').evaluate()
         )
         txt_scale = 0.74
         hval2 = h - 220
@@ -322,7 +322,7 @@ class HelpWindow(bui.Window):
             infotxt = '.controllersInfoText'
             txt = bui.Lstr(
                 resource=self._r + infotxt,
-                fallback_resource=self._r + '.controllersInfoText',
+                fallback_resource=f'{self._r}.controllersInfoText',
                 subs=[
                     ('${APP_NAME}', bui.Lstr(resource='titleText')),
                     ('${REMOTE_APP_NAME}', bui.get_remote_app_name()),
@@ -330,7 +330,7 @@ class HelpWindow(bui.Window):
             ).evaluate()
         else:
             txt = bui.Lstr(
-                resource=self._r + '.devicesInfoText',
+                resource=f'{self._r}.devicesInfoText',
                 subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
             ).evaluate()
 
@@ -349,7 +349,7 @@ class HelpWindow(bui.Window):
 
         v -= spacing * 150.0
 
-        txt = bui.Lstr(resource=self._r + '.controlsText').evaluate()
+        txt = bui.Lstr(resource=f'{self._r}.controlsText').evaluate()
         txt_scale = 1.4
         txt_maxwidth = 480
         bui.textwidget(
@@ -383,7 +383,7 @@ class HelpWindow(bui.Window):
 
         txt_scale = 0.7
         txt = bui.Lstr(
-            resource=self._r + '.controlsSubtitleText',
+            resource=f'{self._r}.controlsSubtitleText',
             subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
         ).evaluate()
         bui.textwidget(
@@ -413,8 +413,8 @@ class HelpWindow(bui.Window):
             color=(1, 0.7, 0.3),
         )
 
-        txt_scale = getres(self._r + '.punchInfoTextScale')
-        txt = bui.Lstr(resource=self._r + '.punchInfoText').evaluate()
+        txt_scale = getres(f'{self._r}.punchInfoTextScale')
+        txt = bui.Lstr(resource=f'{self._r}.punchInfoText').evaluate()
         bui.textwidget(
             parent=self._subcontainer,
             position=(h - sep - 185 + 70, v + 120),
@@ -437,8 +437,8 @@ class HelpWindow(bui.Window):
             color=(1, 0.3, 0.3),
         )
 
-        txt = bui.Lstr(resource=self._r + '.bombInfoText').evaluate()
-        txt_scale = getres(self._r + '.bombInfoTextScale')
+        txt = bui.Lstr(resource=f'{self._r}.bombInfoText').evaluate()
+        txt_scale = getres(f'{self._r}.bombInfoTextScale')
         bui.textwidget(
             parent=self._subcontainer,
             position=(h + sep + 50 + 60, v - 35),
@@ -462,8 +462,8 @@ class HelpWindow(bui.Window):
             color=(0.5, 0.5, 1),
         )
 
-        txtl = bui.Lstr(resource=self._r + '.pickUpInfoText')
-        txt_scale = getres(self._r + '.pickUpInfoTextScale')
+        txtl = bui.Lstr(resource=f'{self._r}.pickUpInfoText')
+        txt_scale = getres(f'{self._r}.pickUpInfoTextScale')
         bui.textwidget(
             parent=self._subcontainer,
             position=(h + 60 + 120, v + sep + 50),
@@ -486,8 +486,8 @@ class HelpWindow(bui.Window):
             color=(0.4, 1, 0.4),
         )
 
-        txt = bui.Lstr(resource=self._r + '.jumpInfoText').evaluate()
-        txt_scale = getres(self._r + '.jumpInfoTextScale')
+        txt = bui.Lstr(resource=f'{self._r}.jumpInfoText').evaluate()
+        txt_scale = getres(f'{self._r}.jumpInfoTextScale')
         bui.textwidget(
             parent=self._subcontainer,
             position=(h - 250 + 75, v - sep - 15 + 30),
@@ -500,8 +500,8 @@ class HelpWindow(bui.Window):
             v_align='top',
         )
 
-        txt = bui.Lstr(resource=self._r + '.runInfoText').evaluate()
-        txt_scale = getres(self._r + '.runInfoTextScale')
+        txt = bui.Lstr(resource=f'{self._r}.runInfoText').evaluate()
+        txt_scale = getres(f'{self._r}.runInfoTextScale')
         bui.textwidget(
             parent=self._subcontainer,
             position=(h, v - sep - 100),
@@ -517,7 +517,7 @@ class HelpWindow(bui.Window):
 
         v -= spacing * 280.0
 
-        txt = bui.Lstr(resource=self._r + '.powerupsText').evaluate()
+        txt = bui.Lstr(resource=f'{self._r}.powerupsText').evaluate()
         txt_scale = 1.4
         txt_maxwidth = 480
         bui.textwidget(
@@ -546,8 +546,8 @@ class HelpWindow(bui.Window):
         )
 
         v -= spacing * 50.0
-        txt_scale = getres(self._r + '.powerupsSubtitleTextScale')
-        txt = bui.Lstr(resource=self._r + '.powerupsSubtitleText').evaluate()
+        txt_scale = getres(f'{self._r}.powerupsSubtitleTextScale')
+        txt = bui.Lstr(resource=f'{self._r}.powerupsSubtitleText').evaluate()
         bui.textwidget(
             parent=self._subcontainer,
             position=(h, v),
@@ -586,8 +586,8 @@ class HelpWindow(bui.Window):
             'powerupLandMines',
             'powerupCurse',
         ]:
-            name = bui.Lstr(resource=self._r + '.' + tex + 'NameText')
-            desc = bui.Lstr(resource=self._r + '.' + tex + 'DescriptionText')
+            name = bui.Lstr(resource=f'{self._r}.' + tex + 'NameText')
+            desc = bui.Lstr(resource=f'{self._r}.' + tex + 'DescriptionText')
 
             v -= spacing * 60.0
 

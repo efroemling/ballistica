@@ -103,7 +103,7 @@ class GetTicketsWindow(bui.Window):
             scale=1.2,
             h_align='right',
             v_align='center',
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             # text='Testing really long text here blah blah',
             maxwidth=260,
         )
@@ -242,7 +242,7 @@ class GetTicketsWindow(bui.Window):
                 )
             return btn2
 
-        rsrc = self._r + '.ticketsText'
+        rsrc = f'{self._r}.ticketsText'
 
         c2txt = bui.Lstr(
             resource=rsrc,
@@ -374,7 +374,7 @@ class GetTicketsWindow(bui.Window):
                 position=(h + h_offs, v),
                 size=b_size_3,
                 label=bui.Lstr(
-                    resource=self._r + '.ticketsFromASponsorText',
+                    resource=f'{self._r}.ticketsFromASponsorText',
                     subs=[
                         (
                             '${COUNT}',
@@ -396,7 +396,7 @@ class GetTicketsWindow(bui.Window):
 
             self._ad_free_text = bui.textwidget(
                 parent=self._root_widget,
-                text=bui.Lstr(resource=self._r + '.freeText'),
+                text=bui.Lstr(resource=f'{self._r}.freeText'),
                 position=(
                     h + h_offs + b_size_3[0] * 0.5,
                     v + b_size_3[1] * 0.5 + 25,
@@ -445,7 +445,7 @@ class GetTicketsWindow(bui.Window):
 
             bui.textwidget(
                 parent=self._root_widget,
-                text=bui.Lstr(resource=self._r + '.freeText'),
+                text=bui.Lstr(resource=f'{self._r}.freeText'),
                 position=(
                     h + h_offs + b_size_3[0] * 0.5,
                     v + b_size_3[1] * 0.5 + 25,
@@ -468,13 +468,13 @@ class GetTicketsWindow(bui.Window):
         v = self._height - 105 + tc_y_offs
 
         txt1 = (
-            bui.Lstr(resource=self._r + '.youHaveText')
+            bui.Lstr(resource=f'{self._r}.youHaveText')
             .evaluate()
             .partition('${COUNT}')[0]
             .strip()
         )
         txt2 = (
-            bui.Lstr(resource=self._r + '.youHaveText')
+            bui.Lstr(resource=f'{self._r}.youHaveText')
             .evaluate()
             .rpartition('${COUNT}')[-1]
             .strip()
@@ -658,12 +658,12 @@ class GetTicketsWindow(bui.Window):
             )
         ) and plus.get_v1_account_misc_read_val('allowAccountLinking2', False):
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.unavailableLinkAccountText'),
+                bui.Lstr(resource=f'{self._r}.unavailableLinkAccountText'),
                 color=(1, 0.5, 0),
             )
         else:
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.unavailableText'),
+                bui.Lstr(resource=f'{self._r}.unavailableText'),
                 color=(1, 0.5, 0),
             )
         bui.getsound('error').play()

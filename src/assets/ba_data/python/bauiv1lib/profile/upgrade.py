@@ -87,7 +87,7 @@ class ProfileUpgradeWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 38),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.upgradeToGlobalProfileText'),
+            text=bui.Lstr(resource=f'{self._r}.upgradeToGlobalProfileText'),
             color=bui.app.ui_v1.title_color,
             maxwidth=self._width * 0.45,
             scale=1.0,
@@ -100,7 +100,7 @@ class ProfileUpgradeWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 100),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.upgradeProfileInfoText'),
+            text=bui.Lstr(resource=f'{self._r}.upgradeProfileInfoText'),
             color=bui.app.ui_v1.infotextcolor,
             maxwidth=self._width * 0.8,
             scale=0.7,
@@ -113,7 +113,7 @@ class ProfileUpgradeWindow(bui.Window):
             position=(self._width * 0.5, self._height - 160),
             size=(0, 0),
             text=bui.Lstr(
-                resource=self._r + '.checkingAvailabilityText',
+                resource=f'{self._r}.checkingAvailabilityText',
                 subs=[('${NAME}', self._name)],
             ),
             color=(0.8, 0.4, 0.0),
@@ -183,7 +183,7 @@ class ProfileUpgradeWindow(bui.Window):
                 bui.textwidget(
                     edit=self._status_text,
                     text=bui.Lstr(
-                        resource=self._r + '.availableText',
+                        resource=f'{self._r}.availableText',
                         subs=[('${NAME}', self._name)],
                     ),
                     color=(0, 1, 0),
@@ -197,7 +197,7 @@ class ProfileUpgradeWindow(bui.Window):
                 bui.textwidget(
                     edit=self._status_text,
                     text=bui.Lstr(
-                        resource=self._r + '.unavailableText',
+                        resource=f'{self._r}.unavailableText',
                         subs=[('${NAME}', self._name)],
                     ),
                     color=(1, 0, 0),

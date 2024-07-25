@@ -274,9 +274,9 @@ class TutorialActivity(bs.Activity[Player, Team]):
 
         # Need different versions of this: taps/buttons/keys.
         txt = (
-            bs.Lstr(resource=self._r + '.cpuBenchmarkText')
+            bs.Lstr(resource=f'{self._r}.cpuBenchmarkText')
             if self._benchmark_type == 'cpu'
-            else bs.Lstr(resource=self._r + '.toSkipPressAnythingText')
+            else bs.Lstr(resource=f'{self._r}.toSkipPressAnythingText')
         )
         t = self._skip_text = bs.newnode(
             'text',
@@ -852,13 +852,13 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     DelayOld(1000),
                     AnalyticsScreen('Tutorial Section 1'),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase01Text')
+                        bs.Lstr(resource=f'{self._r}.phrase01Text')
                     ),  # hi there
                     Celebrate('left'),
                     DelayOld(2000),
                     Text(
                         bs.Lstr(
-                            resource=self._r + '.phrase02Text',
+                            resource=f'{self._r}.phrase02Text',
                             subs=[
                                 ('${APP_NAME}', bs.Lstr(resource='titleText'))
                             ],
@@ -888,7 +888,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     MoveUD(0),
                     DelayOld(1500),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase03Text')
+                        bs.Lstr(resource=f'{self._r}.phrase03Text')
                     ),  # here's a few tips
                     DelayOld(1000),
                     ShowControls(),
@@ -900,7 +900,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     AnalyticsScreen('Tutorial Section 2'),
                     Text(
                         bs.Lstr(
-                            resource=self._r + '.phrase04Text',
+                            resource=f'{self._r}.phrase04Text',
                             subs=[
                                 ('${APP_NAME}', bs.Lstr(resource='titleText'))
                             ],
@@ -1261,7 +1261,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     Move(0, 0),
                     DelayOld(1000),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase05Text')
+                        bs.Lstr(resource=f'{self._r}.phrase05Text')
                     ),  # for example when you punch..
                     DelayOld(510),
                     Move(0, -0.01),
@@ -1279,7 +1279,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                         (-3.1, 4.3, -2.0),
                         make_current=False,
                         color=(1, 1, 0.4),
-                        name=bs.Lstr(resource=self._r + '.randomName1Text'),
+                        name=bs.Lstr(resource=f'{self._r}.randomName1Text'),
                     ),
                     Move(-1.0, 0),
                     DelayOld(1050),
@@ -1288,7 +1288,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     Move(0, 0),
                     DelayOld(1000),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase06Text')
+                        bs.Lstr(resource=f'{self._r}.phrase06Text')
                     ),  # your damage is based
                     DelayOld(1200),
                     Move(-0.05, 0),
@@ -1304,12 +1304,12 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     Move(0, 0),
                     Text(
                         bs.Lstr(
-                            resource=self._r + '.phrase07Text',
+                            resource=f'{self._r}.phrase07Text',
                             subs=[
                                 (
                                     '${NAME}',
                                     bs.Lstr(
-                                        resource=self._r + '.randomName1Text'
+                                        resource=f'{self._r}.randomName1Text'
                                     ),
                                 )
                             ],
@@ -1319,7 +1319,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     Celebrate('right', spaz_num=1),
                     DelayOld(1400),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase08Text')
+                        bs.Lstr(resource=f'{self._r}.phrase08Text')
                     ),  # lets jump and spin to get more speed
                     DelayOld(30),
                     MoveLR(0),
@@ -1520,12 +1520,12 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     Move(0, 0),
                     DelayOld(1000),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase09Text')
+                        bs.Lstr(resource=f'{self._r}.phrase09Text')
                     ),  # ah that's better
                     DelayOld(1900),
                     AnalyticsScreen('Tutorial Section 3'),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase10Text')
+                        bs.Lstr(resource=f'{self._r}.phrase10Text')
                     ),  # running also helps
                     DelayOld(100),
                     SpawnSpaz(
@@ -1536,11 +1536,11 @@ class TutorialActivity(bs.Activity[Player, Team]):
                         (3.3, 4.2, -5.8),
                         make_current=False,
                         color=(0.9, 0.5, 1.0),
-                        name=bs.Lstr(resource=self._r + '.randomName2Text'),
+                        name=bs.Lstr(resource=f'{self._r}.randomName2Text'),
                     ),
                     DelayOld(1800),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase11Text')
+                        bs.Lstr(resource=f'{self._r}.phrase11Text')
                     ),  # hold ANY button to run
                     DelayOld(300),
                     MoveUD(0),
@@ -1797,7 +1797,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     MoveUD(0),
                     AnalyticsScreen('Tutorial Section 4'),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase12Text')
+                        bs.Lstr(resource=f'{self._r}.phrase12Text')
                     ),  # for extra-awesome punches,...
                     DelayOld(200),
                     SpawnSpaz(
@@ -1816,7 +1816,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                         make_current=False,
                         color=(1.0, 0.7, 0.3),
                         # name=R.randomName3Text),
-                        name=bs.Lstr(resource=self._r + '.randomName3Text'),
+                        name=bs.Lstr(resource=f'{self._r}.randomName3Text'),
                     ),
                     DelayOld(100),
                     Powerup(1, (2.5, 0.0, 0), relative_to=0),
@@ -2015,12 +2015,12 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     MoveLR(0),
                     Text(
                         bs.Lstr(
-                            resource=self._r + '.phrase13Text',
+                            resource=f'{self._r}.phrase13Text',
                             subs=[
                                 (
                                     '${NAME}',
                                     bs.Lstr(
-                                        resource=self._r + '.randomName3Text'
+                                        resource=f'{self._r}.randomName3Text'
                                     ),
                                 )
                             ],
@@ -2031,12 +2031,12 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     AnalyticsScreen('Tutorial Section 5'),
                     Text(
                         bs.Lstr(
-                            resource=self._r + '.phrase14Text',
+                            resource=f'{self._r}.phrase14Text',
                             subs=[
                                 (
                                     '${NAME}',
                                     bs.Lstr(
-                                        resource=self._r + '.randomName4Text'
+                                        resource=f'{self._r}.randomName4Text'
                                     ),
                                 )
                             ],
@@ -2055,7 +2055,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                         relative_to=0,
                         make_current=False,
                         color=(0.4, 1.0, 0.7),
-                        name=bs.Lstr(resource=self._r + '.randomName4Text'),
+                        name=bs.Lstr(resource=f'{self._r}.randomName4Text'),
                     ),
                     DelayOld(1000),
                     Celebrate('left', 1, duration=1000),
@@ -2083,11 +2083,11 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     ),
                     AnalyticsScreen('Tutorial Section 6'),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase15Text')
+                        bs.Lstr(resource=f'{self._r}.phrase15Text')
                     ),  # lastly there's bombs
                     DelayOld(1900),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase16Text')
+                        bs.Lstr(resource=f'{self._r}.phrase16Text')
                     ),  # throwing bombs takes practice
                     DelayOld(2000),
                     Bomb(),
@@ -2099,11 +2099,11 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     Bomb(),
                     DelayOld(2000),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase17Text')
+                        bs.Lstr(resource=f'{self._r}.phrase17Text')
                     ),  # not a very good throw
                     DelayOld(3000),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase18Text')
+                        bs.Lstr(resource=f'{self._r}.phrase18Text')
                     ),  # moving helps you get distance
                     DelayOld(1000),
                     Bomb(),
@@ -2121,7 +2121,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     Move(0, 0),
                     DelayOld(2500),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase19Text')
+                        bs.Lstr(resource=f'{self._r}.phrase19Text')
                     ),  # jumping helps you get height
                     DelayOld(2000),
                     Bomb(),
@@ -2141,7 +2141,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     Move(0, 0),
                     DelayOld(2000),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase20Text')
+                        bs.Lstr(resource=f'{self._r}.phrase20Text')
                     ),  # whiplash your bombs
                     DelayOld(1000),
                     Bomb(release=False),
@@ -2303,7 +2303,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     DelayOld(2000),
                     AnalyticsScreen('Tutorial Section 7'),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase21Text')
+                        bs.Lstr(resource=f'{self._r}.phrase21Text')
                     ),  # timing your bombs can be tricky
                     Move(-1, 0),
                     DelayOld(1000),
@@ -2323,7 +2323,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                         relative_to=0,
                         make_current=False,
                         color=(0.3, 0.8, 1.0),
-                        name=bs.Lstr(resource=self._r + '.randomName5Text'),
+                        name=bs.Lstr(resource=f'{self._r}.randomName5Text'),
                     ),
                     DelayOld2(1000),
                     Move(-1, 0),
@@ -2341,12 +2341,12 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     DelayOld2(1000),
                     Move(0, 0),
                     DelayOld2(1500),
-                    Text(bs.Lstr(resource=self._r + '.phrase22Text')),  # dang
+                    Text(bs.Lstr(resource=f'{self._r}.phrase22Text')),  # dang
                     Delay(1500),
                     Text(''),
                     Delay(200),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase23Text')
+                        bs.Lstr(resource=f'{self._r}.phrase23Text')
                     ),  # try cooking off
                     Delay(1500),
                     Bomb(),
@@ -2362,7 +2362,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     Move(0, 0),
                     Delay(2000),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase24Text')
+                        bs.Lstr(resource=f'{self._r}.phrase24Text')
                     ),  # hooray nicely cooked
                     Celebrate(),
                     DelayOld(2000),
@@ -2376,23 +2376,23 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     DelayOld(1000),
                     AnalyticsScreen('Tutorial Section 8'),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase25Text')
+                        bs.Lstr(resource=f'{self._r}.phrase25Text')
                     ),  # well that's just about it
                     DelayOld(2000),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase26Text')
+                        bs.Lstr(resource=f'{self._r}.phrase26Text')
                     ),  # go get em tiger
                     DelayOld(2000),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase27Text')
+                        bs.Lstr(resource=f'{self._r}.phrase27Text')
                     ),  # remember you training
                     DelayOld(3000),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase28Text')
+                        bs.Lstr(resource=f'{self._r}.phrase28Text')
                     ),  # well maybe
                     DelayOld(1600),
                     Text(
-                        bs.Lstr(resource=self._r + '.phrase29Text')
+                        bs.Lstr(resource=f'{self._r}.phrase29Text')
                     ),  # good luck
                     Celebrate('right', duration=10000),
                     DelayOld(1000),
@@ -2440,7 +2440,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         assert self._skip_count_text
         self._skip_count_text.text = (
             bs.Lstr(
-                resource=self._r + '.skipVoteCountText',
+                resource=f'{self._r}.skipVoteCountText',
                 subs=[
                     ('${COUNT}', str(count)),
                     ('${TOTAL}', str(len(self.players))),
@@ -2460,7 +2460,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
             bs.getsound('swish').play()
             # self._skip_count_text.text = self._r.skippingText
             self._skip_count_text.text = bs.Lstr(
-                resource=self._r + '.skippingText'
+                resource=f'{self._r}.skippingText'
             )
             assert self._skip_text
             self._skip_text.text = ''
@@ -2474,7 +2474,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
             self._issued_warning = True
             assert self._skip_text
             self._skip_text.text = bs.Lstr(
-                resource=self._r + '.skipConfirmText'
+                resource=f'{self._r}.skipConfirmText'
             )
             self._skip_text.color = (1, 1, 1)
             self._skip_text.scale = 1.3
@@ -2510,7 +2510,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
     def _revert_confirm(self) -> None:
         assert self._skip_text
         self._skip_text.text = bs.Lstr(
-            resource=self._r + '.toSkipPressAnythingText'
+            resource=f'{self._r}.toSkipPressAnythingText'
         )
         self._skip_text.color = (1, 1, 1)
         self._issued_warning = False

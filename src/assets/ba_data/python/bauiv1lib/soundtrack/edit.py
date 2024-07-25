@@ -121,7 +121,7 @@ class SoundtrackEditWindow(bui.Window):
 
         bui.textwidget(
             parent=self._root_widget,
-            text=bui.Lstr(resource=self._r + '.nameText'),
+            text=bui.Lstr(resource=f'{self._r}.nameText'),
             maxwidth=80,
             scale=0.8,
             position=(105 + x_inset, v + 19),
@@ -135,7 +135,7 @@ class SoundtrackEditWindow(bui.Window):
         if existing_soundtrack is None:
             i = 1
             st_name_text = bui.Lstr(
-                resource=self._r + '.newSoundtrackNameText'
+                resource=f'{self._r}.newSoundtrackNameText'
             ).evaluate()
             if '${COUNT}' not in st_name_text:
                 # make sure we insert number *somewhere*
@@ -155,7 +155,7 @@ class SoundtrackEditWindow(bui.Window):
             v_align='center',
             max_chars=32,
             autoselect=True,
-            description=bui.Lstr(resource=self._r + '.nameText'),
+            description=bui.Lstr(resource=f'{self._r}.nameText'),
             editable=True,
             padding=4,
             on_return_press_call=self._do_it_with_sound,
@@ -305,7 +305,7 @@ class SoundtrackEditWindow(bui.Window):
             btn = bui.buttonwidget(
                 parent=row,
                 size=(50, 32),
-                label=bui.Lstr(resource=self._r + '.testText'),
+                label=bui.Lstr(resource=f'{self._r}.testText'),
                 text_scale=0.6,
                 on_activate_call=bui.Call(self._test, bs.MusicType(song_type)),
                 up_widget=(
@@ -389,7 +389,7 @@ class SoundtrackEditWindow(bui.Window):
         if bui.app.config.resolve('Music Volume') < 0.01:
             bui.getsound('error').play()
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.musicVolumeZeroWarning'),
+                bui.Lstr(resource=f'{self._r}.musicVolumeZeroWarning'),
                 color=(1, 0.5, 0),
             )
         music.set_music_play_mode(bui.app.classic.MusicPlayMode.TEST)
@@ -405,7 +405,7 @@ class SoundtrackEditWindow(bui.Window):
         etype = music.get_soundtrack_entry_type(entry)
         ename: str | bui.Lstr
         if etype == 'default':
-            ename = bui.Lstr(resource=self._r + '.defaultGameMusicText')
+            ename = bui.Lstr(resource=f'{self._r}.defaultGameMusicText')
         elif etype in ('musicFile', 'musicFolder'):
             ename = os.path.basename(music.get_soundtrack_entry_name(entry))
         else:
@@ -453,7 +453,7 @@ class SoundtrackEditWindow(bui.Window):
         new_name = cast(str, bui.textwidget(query=self._text_field))
         if new_name != self._soundtrack_name and new_name in cfg['Soundtracks']:
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.cantSaveAlreadyExistsText')
+                bui.Lstr(resource=f'{self._r}.cantSaveAlreadyExistsText')
             )
             bui.getsound('error').play()
             return
@@ -463,11 +463,11 @@ class SoundtrackEditWindow(bui.Window):
         if (
             new_name
             == bui.Lstr(
-                resource=self._r + '.defaultSoundtrackNameText'
+                resource=f'{self._r}.defaultSoundtrackNameText'
             ).evaluate()
         ):
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.cantOverwriteDefaultText')
+                bui.Lstr(resource=f'{self._r}.cantOverwriteDefaultText')
             )
             bui.getsound('error').play()
             return

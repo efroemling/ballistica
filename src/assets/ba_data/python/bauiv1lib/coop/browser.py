@@ -684,7 +684,7 @@ class CoopBrowserWindow(bui.Window):
             text=bui.Lstr(
                 value='${C} (${P})',
                 subs=[
-                    ('${C}', bui.Lstr(resource=self._r + '.campaignText')),
+                    ('${C}', bui.Lstr(resource=f'{self._r}.campaignText')),
                     ('${P}', p_str),
                 ],
             ),
@@ -694,7 +694,7 @@ class CoopBrowserWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.confirm import ConfirmWindow
 
-        txt = bui.Lstr(resource=self._r + '.tournamentInfoText')
+        txt = bui.Lstr(resource=f'{self._r}.tournamentInfoText')
         ConfirmWindow(
             txt,
             cancel_button=False,

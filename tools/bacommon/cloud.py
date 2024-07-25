@@ -16,6 +16,13 @@ if TYPE_CHECKING:
     pass
 
 
+class WebLocation(Enum):
+    """Set of places we can be directed on ballistica.net."""
+
+    ACCOUNT_EDITOR = 'e'
+    ACCOUNT_DELETE_SECTION = 'd'
+
+
 @ioprepped
 @dataclass
 class LoginProxyRequestMessage(Message):
@@ -237,6 +244,10 @@ class SignInResponse(Response):
 @dataclass
 class ManageAccountMessage(Message):
     """Message asking for a manage-account url."""
+
+    weblocation: Annotated[WebLocation, IOAttrs('l')] = (
+        WebLocation.ACCOUNT_EDITOR
+    )
 
     @override
     @classmethod

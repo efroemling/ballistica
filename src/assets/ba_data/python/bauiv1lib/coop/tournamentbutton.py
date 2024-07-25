@@ -102,7 +102,7 @@ class TournamentButton:
             position=(x + 360, y + scly - 20),
             size=(0, 0),
             h_align='center',
-            text=bui.Lstr(resource=self._r + '.entryFeeText'),
+            text=bui.Lstr(resource=f'{self._r}.entryFeeText'),
             v_align='center',
             maxwidth=100,
             scale=0.9,
@@ -167,7 +167,7 @@ class TournamentButton:
             position=(x + 447 + x_offs, y + scly - 20),
             size=(0, 0),
             h_align='center',
-            text=bui.Lstr(resource=self._r + '.prizesText'),
+            text=bui.Lstr(resource=f'{self._r}.prizesText'),
             v_align='center',
             maxwidth=130,
             scale=0.9,
@@ -267,7 +267,7 @@ class TournamentButton:
             position=(x + 620 + x_offs, y + scly - 20),
             size=(0, 0),
             h_align='center',
-            text=bui.Lstr(resource=self._r + '.currentBestText'),
+            text=bui.Lstr(resource=f'{self._r}.currentBestText'),
             v_align='center',
             maxwidth=180,
             scale=0.9,
@@ -332,7 +332,7 @@ class TournamentButton:
             position=(x + 820 + x_offs, y + scly - 20),
             size=(0, 0),
             h_align='center',
-            text=bui.Lstr(resource=self._r + '.timeRemainingText'),
+            text=bui.Lstr(resource=f'{self._r}.timeRemainingText'),
             v_align='center',
             maxwidth=180,
             scale=0.9,
@@ -533,13 +533,13 @@ class TournamentButton:
         bui.textwidget(edit=self.current_leader_score_text, text=leader_score)
         bui.buttonwidget(
             edit=self.more_scores_button,
-            label=bui.Lstr(resource=self._r + '.seeMoreText'),
+            label=bui.Lstr(resource=f'{self._r}.seeMoreText'),
         )
         out_of_time_text: str | bui.Lstr = (
             '-'
             if 'totalTime' not in entry
             else bui.Lstr(
-                resource=self._r + '.ofTotalTimeText',
+                resource=f'{self._r}.ofTotalTimeText',
                 subs=[
                     (
                         '${TOTAL}',

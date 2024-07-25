@@ -82,7 +82,7 @@ class PlayWindow(bui.Window):
             size=(0, 0),
             text=bui.Lstr(
                 resource=(
-                    (self._r + '.titleText')
+                    (f'{self._r}.titleText')
                     if self._is_main_menu
                     else 'playlistsText'
                 )
@@ -228,7 +228,7 @@ class PlayWindow(bui.Window):
                 draw_controller=btn,
                 position=(hoffs + scl * (-10), v + (scl * 54)),
                 size=(scl * button_width, scl * 30),
-                text=bui.Lstr(resource=self._r + '.oneToFourPlayersText'),
+                text=bui.Lstr(resource=f'{self._r}.oneToFourPlayersText'),
                 h_align='center',
                 v_align='center',
                 scale=0.83 * scl,
@@ -359,7 +359,7 @@ class PlayWindow(bui.Window):
             draw_controller=btn,
             position=(hoffs + scl * (-10), v + (scl * 54)),
             size=(scl * button_width, scl * 30),
-            text=bui.Lstr(resource=self._r + '.twoToEightPlayersText'),
+            text=bui.Lstr(resource=f'{self._r}.twoToEightPlayersText'),
             h_align='center',
             v_align='center',
             res_scale=1.5,
@@ -480,7 +480,7 @@ class PlayWindow(bui.Window):
             draw_controller=btn,
             position=(hoffs + scl * (-10), v + (scl * 54)),
             size=(scl * button_width, scl * 30),
-            text=bui.Lstr(resource=self._r + '.twoToEightPlayersText'),
+            text=bui.Lstr(resource=f'{self._r}.twoToEightPlayersText'),
             h_align='center',
             v_align='center',
             scale=0.9 * scl,

@@ -97,7 +97,7 @@ class AudioSettingsWindow(bui.Window):
             parent=self._root_widget,
             position=(width * 0.5, height - 32),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=bui.app.ui_v1.title_color,
             maxwidth=180,
             h_align='center',
@@ -116,7 +116,7 @@ class AudioSettingsWindow(bui.Window):
             position=(40, v),
             xoffset=10,
             configkey='Sound Volume',
-            displayname=bui.Lstr(resource=self._r + '.soundVolumeText'),
+            displayname=bui.Lstr(resource=f'{self._r}.soundVolumeText'),
             minval=0.0,
             maxval=1.0,
             increment=0.05,
@@ -133,7 +133,7 @@ class AudioSettingsWindow(bui.Window):
             position=(40, v),
             xoffset=10,
             configkey='Music Volume',
-            displayname=bui.Lstr(resource=self._r + '.musicVolumeText'),
+            displayname=bui.Lstr(resource=f'{self._r}.musicVolumeText'),
             minval=0.0,
             maxval=1.0,
             increment=0.05,
@@ -151,7 +151,7 @@ class AudioSettingsWindow(bui.Window):
                 parent=self._root_widget,
                 position=(40, v + 24),
                 size=(0, 0),
-                text=bui.Lstr(resource=self._r + '.headRelativeVRAudioText'),
+                text=bui.Lstr(resource=f'{self._r}.headRelativeVRAudioText'),
                 color=(0.8, 0.8, 0.8),
                 maxwidth=230,
                 h_align='left',
@@ -179,7 +179,7 @@ class AudioSettingsWindow(bui.Window):
                 position=(width * 0.5, v - 11),
                 size=(0, 0),
                 text=bui.Lstr(
-                    resource=self._r + '.headRelativeVRAudioInfoText'
+                    resource=f'{self._r}.headRelativeVRAudioInfoText'
                 ),
                 scale=0.5,
                 color=(0.7, 0.8, 0.7),
@@ -200,7 +200,7 @@ class AudioSettingsWindow(bui.Window):
                 position=((width - 310) / 2, v),
                 size=(310, 50),
                 autoselect=True,
-                label=bui.Lstr(resource=self._r + '.soundtrackButtonText'),
+                label=bui.Lstr(resource=f'{self._r}.soundtrackButtonText'),
                 on_activate_call=self._do_soundtracks,
             )
             v -= spacing * 0.5
@@ -208,7 +208,7 @@ class AudioSettingsWindow(bui.Window):
                 parent=self._root_widget,
                 position=(0, v),
                 size=(width, 20),
-                text=bui.Lstr(resource=self._r + '.soundtrackDescriptionText'),
+                text=bui.Lstr(resource=f'{self._r}.soundtrackDescriptionText'),
                 flatness=1.0,
                 h_align='center',
                 scale=0.5,

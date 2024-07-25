@@ -18,7 +18,7 @@ class ConfirmWindow:
 
     def __init__(
         self,
-        text: str | bui.Lstr = 'Are you sure?',
+        text: str | bui.Lstr | None = None,
         action: Callable[[], Any] | None = None,
         width: float = 360.0,
         height: float = 100.0,
@@ -31,6 +31,8 @@ class ConfirmWindow:
         origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=too-many-locals
+        if text is None:
+            text = bui.Lstr(resource='areYouSureText')
         if ok_text is None:
             ok_text = bui.Lstr(resource='okText')
         if cancel_text is None:

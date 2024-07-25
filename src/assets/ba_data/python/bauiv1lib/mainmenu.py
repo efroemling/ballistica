@@ -255,7 +255,7 @@ class MainMenuWindow(bui.Window):
                 size=(self._button_width, self._button_height),
                 scale=scale,
                 autoselect=self._use_autoselect,
-                label=bui.Lstr(resource=self._r + '.settingsText'),
+                label=bui.Lstr(resource=f'{self._r}.settingsText'),
                 transition_delay=self._tdelay,
                 on_activate_call=self._settings,
             )
@@ -324,7 +324,7 @@ class MainMenuWindow(bui.Window):
                     scale=scale,
                     size=(self._button_width, self._button_height),
                     autoselect=self._use_autoselect,
-                    label=bui.Lstr(resource=self._r + '.leavePartyText'),
+                    label=bui.Lstr(resource=f'{self._r}.leavePartyText'),
                     on_activate_call=self._confirm_leave_party,
                 )
 
@@ -881,7 +881,7 @@ class MainMenuWindow(bui.Window):
             scale=scale,
             autoselect=self._use_autoselect,
             size=(self._button_width, self._button_height),
-            label=bui.Lstr(resource=self._r + '.howToPlayText'),
+            label=bui.Lstr(resource=f'{self._r}.howToPlayText'),
             transition_delay=self._tdelay,
             on_activate_call=self._howtoplay,
         )
@@ -913,7 +913,7 @@ class MainMenuWindow(bui.Window):
             position=(h - self._button_width * 0.5 * scale, v),
             size=(self._button_width, self._button_height),
             autoselect=self._use_autoselect,
-            label=bui.Lstr(resource=self._r + '.creditsText'),
+            label=bui.Lstr(resource=f'{self._r}.creditsText'),
             scale=scale,
             transition_delay=self._tdelay,
             on_activate_call=self._credits,
@@ -1006,7 +1006,7 @@ class MainMenuWindow(bui.Window):
             position=(h - self._button_width / 2, v),
             size=(self._button_width, self._button_height),
             scale=scale,
-            label=bui.Lstr(resource=self._r + '.resumeText'),
+            label=bui.Lstr(resource=f'{self._r}.resumeText'),
             autoselect=self._use_autoselect,
             on_activate_call=self._resume,
         )
@@ -1057,7 +1057,7 @@ class MainMenuWindow(bui.Window):
                 and player_name[-1] != '>'
             ):
                 txt = bui.Lstr(
-                    resource=self._r + '.justPlayerText',
+                    resource=f'{self._r}.justPlayerText',
                     subs=[('${NAME}', player_name)],
                 )
             else:
@@ -1071,7 +1071,7 @@ class MainMenuWindow(bui.Window):
                     * (0.64 if player_name != '' else 0.5),
                 ),
                 size=(0, 0),
-                text=bui.Lstr(resource=self._r + '.leaveGameText'),
+                text=bui.Lstr(resource=f'{self._r}.leaveGameText'),
                 scale=(0.83 if player_name != '' else 1.0),
                 color=(0.75, 1.0, 0.7),
                 h_align='center',
@@ -1210,7 +1210,7 @@ class MainMenuWindow(bui.Window):
         # Select cancel by default; this occasionally gets called by accident
         # in a fit of button mashing and this will help reduce damage.
         ConfirmWindow(
-            bui.Lstr(resource=self._r + '.exitToMenuText'),
+            bui.Lstr(resource=f'{self._r}.exitToMenuText'),
             self._end_game,
             cancel_is_selected=True,
         )
@@ -1222,7 +1222,7 @@ class MainMenuWindow(bui.Window):
         # Select cancel by default; this occasionally gets called by accident
         # in a fit of button mashing and this will help reduce damage.
         ConfirmWindow(
-            bui.Lstr(resource=self._r + '.exitToMenuText'),
+            bui.Lstr(resource=f'{self._r}.exitToMenuText'),
             self._end_game,
             cancel_is_selected=True,
         )
@@ -1234,7 +1234,7 @@ class MainMenuWindow(bui.Window):
         # Select cancel by default; this occasionally gets called by accident
         # in a fit of button mashing and this will help reduce damage.
         ConfirmWindow(
-            bui.Lstr(resource=self._r + '.exitToMenuText'),
+            bui.Lstr(resource=f'{self._r}.exitToMenuText'),
             self._end_game,
             cancel_is_selected=True,
         )
@@ -1246,7 +1246,7 @@ class MainMenuWindow(bui.Window):
         # Select cancel by default; this occasionally gets called by accident
         # in a fit of button mashing and this will help reduce damage.
         ConfirmWindow(
-            bui.Lstr(resource=self._r + '.leavePartyConfirmText'),
+            bui.Lstr(resource=f'{self._r}.leavePartyConfirmText'),
             self._leave_party,
             cancel_is_selected=True,
         )

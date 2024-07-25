@@ -109,7 +109,7 @@ class SendInfoWindow(bui.Window):
             parent=self._root_widget,
             text=bui.Lstr(
                 resource=(
-                    self._r + '.codeText'
+                    f'{self._r}.codeText'
                     if legacy_code_mode
                     else 'descriptionText'
                 )
@@ -133,7 +133,7 @@ class SendInfoWindow(bui.Window):
             color=(0.9, 0.9, 0.9, 1.0),
             description=bui.Lstr(
                 resource=(
-                    self._r + '.codeText'
+                    f'{self._r}.codeText'
                     if legacy_code_mode
                     else 'descriptionText'
                 )
@@ -152,7 +152,7 @@ class SendInfoWindow(bui.Window):
             size=(b_width, 60),
             scale=1.0,
             label=bui.Lstr(
-                resource='submitText', fallback_resource=self._r + '.enterText'
+                resource='submitText', fallback_resource=f'{self._r}.enterText'
             ),
             on_activate_call=self._do_enter,
         )

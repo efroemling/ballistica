@@ -70,7 +70,7 @@ class DebugWindow(bui.Window):
             parent=self._root_widget,
             position=(0, height - 60),
             size=(width, 30),
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             h_align='center',
             color=bui.app.ui_v1.title_color,
             v_align='center',
@@ -98,7 +98,7 @@ class DebugWindow(bui.Window):
             position=((self._sub_width - button_width) * 0.5, v),
             size=(button_width, 60),
             autoselect=True,
-            label=bui.Lstr(resource=self._r + '.runCPUBenchmarkText'),
+            label=bui.Lstr(resource=f'{self._r}.runCPUBenchmarkText'),
             on_activate_call=self._run_cpu_benchmark_pressed,
         )
         bui.widget(
@@ -111,7 +111,7 @@ class DebugWindow(bui.Window):
             position=((self._sub_width - button_width) * 0.5, v),
             size=(button_width, 60),
             autoselect=True,
-            label=bui.Lstr(resource=self._r + '.runGPUBenchmarkText'),
+            label=bui.Lstr(resource=f'{self._r}.runGPUBenchmarkText'),
             on_activate_call=self._run_gpu_benchmark_pressed,
         )
         v -= 60
@@ -121,7 +121,7 @@ class DebugWindow(bui.Window):
             position=((self._sub_width - button_width) * 0.5, v),
             size=(button_width, 60),
             autoselect=True,
-            label=bui.Lstr(resource=self._r + '.runMediaReloadBenchmarkText'),
+            label=bui.Lstr(resource=f'{self._r}.runMediaReloadBenchmarkText'),
             on_activate_call=self._run_media_reload_benchmark_pressed,
         )
         v -= 60
@@ -130,7 +130,7 @@ class DebugWindow(bui.Window):
             parent=self._subcontainer,
             position=(self._sub_width * 0.5, v + 22),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.stressTestTitleText'),
+            text=bui.Lstr(resource=f'{self._r}.stressTestTitleText'),
             maxwidth=200,
             color=bui.app.ui_v1.heading_color,
             scale=0.85,
@@ -144,7 +144,7 @@ class DebugWindow(bui.Window):
             parent=self._subcontainer,
             position=(x_offs - 10, v + 22),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.stressTestPlaylistTypeText'),
+            text=bui.Lstr(resource=f'{self._r}.stressTestPlaylistTypeText'),
             maxwidth=130,
             color=bui.app.ui_v1.heading_color,
             scale=0.65,
@@ -174,7 +174,7 @@ class DebugWindow(bui.Window):
             parent=self._subcontainer,
             position=(x_offs - 10, v + 22),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.stressTestPlaylistNameText'),
+            text=bui.Lstr(resource=f'{self._r}.stressTestPlaylistNameText'),
             maxwidth=130,
             color=bui.app.ui_v1.heading_color,
             scale=0.65,
@@ -192,7 +192,7 @@ class DebugWindow(bui.Window):
             autoselect=True,
             color=(0.9, 0.9, 0.9, 1.0),
             description=bui.Lstr(
-                resource=self._r + '.stressTestPlaylistDescriptionText'
+                resource=f'{self._r}.stressTestPlaylistDescriptionText'
             ),
             editable=True,
             padding=4,
@@ -205,7 +205,7 @@ class DebugWindow(bui.Window):
             parent=self._subcontainer,
             position=(x_offs - 10, v),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.stressTestPlayerCountText'),
+            text=bui.Lstr(resource=f'{self._r}.stressTestPlayerCountText'),
             color=(0.8, 0.8, 0.8, 1.0),
             h_align='right',
             v_align='center',
@@ -250,7 +250,7 @@ class DebugWindow(bui.Window):
             parent=self._subcontainer,
             position=(x_offs - 10, v),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.stressTestRoundDurationText'),
+            text=bui.Lstr(resource=f'{self._r}.stressTestRoundDurationText'),
             color=(0.8, 0.8, 0.8, 1.0),
             h_align='right',
             v_align='center',
@@ -298,7 +298,7 @@ class DebugWindow(bui.Window):
             position=((self._sub_width - button_width) * 0.5, v),
             size=(button_width, 60),
             autoselect=True,
-            label=bui.Lstr(resource=self._r + '.runStressTestText'),
+            label=bui.Lstr(resource=f'{self._r}.runStressTestText'),
             on_activate_call=self._stress_test_pressed,
         )
         bui.widget(btn, show_buffer_bottom=50)

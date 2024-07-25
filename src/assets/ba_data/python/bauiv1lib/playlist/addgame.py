@@ -81,7 +81,7 @@ class PlaylistAddGameWindow(bui.Window):
             position=(self._width * 0.5, self._height - 28),
             size=(0, 0),
             scale=1.0,
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             h_align='center',
             color=bui.app.ui_v1.title_color,
             maxwidth=250,
@@ -211,7 +211,7 @@ class PlaylistAddGameWindow(bui.Window):
         self._get_more_games_button = bui.buttonwidget(
             parent=self._column,
             autoselect=True,
-            label=bui.Lstr(resource=self._r + '.getMoreGamesText'),
+            label=bui.Lstr(resource=f'{self._r}.getMoreGamesText'),
             color=(0.54, 0.52, 0.67),
             textcolor=(0.7, 0.65, 0.7),
             on_activate_call=self._on_get_more_games_press,

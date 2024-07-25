@@ -52,7 +52,7 @@ class MacMusicAppPlaylistSelectWindow(bui.Window):
             parent=self._root_widget,
             position=(20, self._height - 54),
             size=(self._width, 25),
-            text=bui.Lstr(resource=self._r + '.selectAPlaylistText'),
+            text=bui.Lstr(resource=f'{self._r}.selectAPlaylistText'),
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
@@ -75,7 +75,7 @@ class MacMusicAppPlaylistSelectWindow(bui.Window):
         bui.textwidget(
             parent=self._column,
             size=(self._width - 80, 22),
-            text=bui.Lstr(resource=self._r + '.fetchingITunesText'),
+            text=bui.Lstr(resource=f'{self._r}.fetchingITunesText'),
             color=(0.6, 0.9, 0.6, 1.0),
             scale=0.8,
         )

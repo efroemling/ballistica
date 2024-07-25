@@ -165,7 +165,7 @@ class GatherWindow(bui.Window):
             ),
             h_align='center',
             v_align='center',
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             maxwidth=550,
         )
 
@@ -174,23 +174,23 @@ class GatherWindow(bui.Window):
 
         # Build up the set of tabs we want.
         tabdefs: list[tuple[GatherWindow.TabID, bui.Lstr]] = [
-            (self.TabID.ABOUT, bui.Lstr(resource=self._r + '.aboutText'))
+            (self.TabID.ABOUT, bui.Lstr(resource=f'{self._r}.aboutText'))
         ]
         if plus.get_v1_account_misc_read_val('enablePublicParties', True):
             tabdefs.append(
                 (
                     self.TabID.INTERNET,
-                    bui.Lstr(resource=self._r + '.publicText'),
+                    bui.Lstr(resource=f'{self._r}.publicText'),
                 )
             )
         tabdefs.append(
-            (self.TabID.PRIVATE, bui.Lstr(resource=self._r + '.privateText'))
+            (self.TabID.PRIVATE, bui.Lstr(resource=f'{self._r}.privateText'))
         )
         tabdefs.append(
-            (self.TabID.NEARBY, bui.Lstr(resource=self._r + '.nearbyText'))
+            (self.TabID.NEARBY, bui.Lstr(resource=f'{self._r}.nearbyText'))
         )
         tabdefs.append(
-            (self.TabID.MANUAL, bui.Lstr(resource=self._r + '.manualText'))
+            (self.TabID.MANUAL, bui.Lstr(resource=f'{self._r}.manualText'))
         )
 
         # On small UI, push our tabs up closer to the top of the screen to
