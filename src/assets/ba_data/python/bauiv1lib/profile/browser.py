@@ -96,7 +96,7 @@ class ProfileBrowserWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 36),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             maxwidth=300,
             color=bui.app.ui_v1.title_color,
             scale=0.9,
@@ -134,7 +134,7 @@ class ProfileBrowserWindow(bui.Window):
             autoselect=True,
             textcolor=(0.75, 0.7, 0.8),
             text_scale=0.7,
-            label=bui.Lstr(resource=self._r + '.newButtonText'),
+            label=bui.Lstr(resource=f'{self._r}.newButtonText'),
         )
         v -= 70.0 * scl
         self._edit_button = bui.buttonwidget(
@@ -147,7 +147,7 @@ class ProfileBrowserWindow(bui.Window):
             autoselect=True,
             textcolor=(0.75, 0.7, 0.8),
             text_scale=0.7,
-            label=bui.Lstr(resource=self._r + '.editButtonText'),
+            label=bui.Lstr(resource=f'{self._r}.editButtonText'),
         )
         v -= 70.0 * scl
         self._delete_button = bui.buttonwidget(
@@ -160,7 +160,7 @@ class ProfileBrowserWindow(bui.Window):
             autoselect=True,
             textcolor=(0.75, 0.7, 0.8),
             text_scale=0.7,
-            label=bui.Lstr(resource=self._r + '.deleteButtonText'),
+            label=bui.Lstr(resource=f'{self._r}.deleteButtonText'),
         )
 
         v = self._height - 87
@@ -169,7 +169,7 @@ class ProfileBrowserWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 71),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.explanationText'),
+            text=bui.Lstr(resource=f'{self._r}.explanationText'),
             color=bui.app.ui_v1.infotextcolor,
             maxwidth=self._width * 0.83,
             scale=0.6,
@@ -269,13 +269,13 @@ class ProfileBrowserWindow(bui.Window):
         if self._selected_profile == '__account__':
             bui.getsound('error').play()
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.cantDeleteAccountProfileText'),
+                bui.Lstr(resource=f'{self._r}.cantDeleteAccountProfileText'),
                 color=(1, 0, 0),
             )
             return
         confirm.ConfirmWindow(
             bui.Lstr(
-                resource=self._r + '.deleteConfirmText',
+                resource=f'{self._r}.deleteConfirmText',
                 subs=[('${PROFILE}', self._selected_profile)],
             ),
             self._do_delete_profile,

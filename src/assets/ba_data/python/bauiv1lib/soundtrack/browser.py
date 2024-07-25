@@ -90,7 +90,7 @@ class SoundtrackBrowserWindow(bui.Window):
             position=(self._width * 0.5, self._height - 35),
             size=(0, 0),
             maxwidth=300,
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
@@ -119,7 +119,7 @@ class SoundtrackBrowserWindow(bui.Window):
             autoselect=True,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=bui.Lstr(resource=self._r + '.newText'),
+            label=bui.Lstr(resource=f'{self._r}.newText'),
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -148,7 +148,7 @@ class SoundtrackBrowserWindow(bui.Window):
             autoselect=True,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=bui.Lstr(resource=self._r + '.editText'),
+            label=bui.Lstr(resource=f'{self._r}.editText'),
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -176,7 +176,7 @@ class SoundtrackBrowserWindow(bui.Window):
             color=b_color,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=bui.Lstr(resource=self._r + '.duplicateText'),
+            label=bui.Lstr(resource=f'{self._r}.duplicateText'),
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -204,7 +204,7 @@ class SoundtrackBrowserWindow(bui.Window):
             autoselect=True,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=bui.Lstr(resource=self._r + '.deleteText'),
+            label=bui.Lstr(resource=f'{self._r}.deleteText'),
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -303,13 +303,13 @@ class SoundtrackBrowserWindow(bui.Window):
         if self._selected_soundtrack == '__default__':
             bui.getsound('error').play()
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.cantDeleteDefaultText'),
+                bui.Lstr(resource=f'{self._r}.cantDeleteDefaultText'),
                 color=(1, 0, 0),
             )
         else:
             ConfirmWindow(
                 bui.Lstr(
-                    resource=self._r + '.deleteConfirmText',
+                    resource=f'{self._r}.deleteConfirmText',
                     subs=[('${NAME}', self._selected_soundtrack)],
                 ),
                 self._do_delete_soundtrack,
@@ -438,7 +438,7 @@ class SoundtrackBrowserWindow(bui.Window):
         if self._selected_soundtrack == '__default__':
             bui.getsound('error').play()
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.cantEditDefaultText'),
+                bui.Lstr(resource=f'{self._r}.cantEditDefaultText'),
                 color=(1, 0, 0),
             )
             return
@@ -455,7 +455,7 @@ class SoundtrackBrowserWindow(bui.Window):
 
     def _get_soundtrack_display_name(self, soundtrack: str) -> bui.Lstr:
         if soundtrack == '__default__':
-            return bui.Lstr(resource=self._r + '.defaultSoundtrackNameText')
+            return bui.Lstr(resource=f'{self._r}.defaultSoundtrackNameText')
         return bui.Lstr(value=soundtrack)
 
     def _refresh(self, select_soundtrack: str | None = None) -> None:

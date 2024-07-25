@@ -48,7 +48,7 @@ class RemoteAppSettingsWindow(bui.Window):
             parent=self._root_widget,
             position=(width * 0.5, height - 42),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             maxwidth=370,
             color=bui.app.ui_v1.title_color,
             scale=0.8,
@@ -73,7 +73,7 @@ class RemoteAppSettingsWindow(bui.Window):
             color=(0.7, 0.9, 0.7, 1.0),
             scale=0.8,
             text=bui.Lstr(
-                resource=self._r + '.explanationText',
+                resource=f'{self._r}.explanationText',
                 subs=[
                     ('${APP_NAME}', bui.Lstr(resource='titleText')),
                     ('${REMOTE_APP_NAME}', bui.get_remote_app_name()),
@@ -106,7 +106,7 @@ class RemoteAppSettingsWindow(bui.Window):
             size=(0, 0),
             color=(0.7, 0.9, 0.7, 0.8),
             scale=0.65,
-            text=bui.Lstr(resource=self._r + '.bestResultsText'),
+            text=bui.Lstr(resource=f'{self._r}.bestResultsText'),
             maxwidth=width * 0.95,
             max_height=height * 0.19,
             h_align='center',

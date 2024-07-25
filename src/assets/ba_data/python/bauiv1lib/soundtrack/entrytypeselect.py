@@ -82,7 +82,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 32),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.selectASourceText'),
+            text=bui.Lstr(resource=f'{self._r}.selectASourceText'),
             color=bui.app.ui_v1.title_color,
             maxwidth=230,
             h_align='center',
@@ -110,7 +110,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
                 parent=self._root_widget,
                 size=(self._width - 100, 60),
                 position=(50, v),
-                label=bui.Lstr(resource=self._r + '.useDefaultGameMusicText'),
+                label=bui.Lstr(resource=f'{self._r}.useDefaultGameMusicText'),
                 on_activate_call=self._on_default_press,
             )
             if current_entry_type == 'default':
@@ -122,7 +122,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
                 parent=self._root_widget,
                 size=(self._width - 100, 60),
                 position=(50, v),
-                label=bui.Lstr(resource=self._r + '.useITunesPlaylistText'),
+                label=bui.Lstr(resource=f'{self._r}.useITunesPlaylistText'),
                 on_activate_call=self._on_mac_music_app_playlist_press,
                 icon=None,
             )
@@ -135,7 +135,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
                 parent=self._root_widget,
                 size=(self._width - 100, 60),
                 position=(50, v),
-                label=bui.Lstr(resource=self._r + '.useMusicFileText'),
+                label=bui.Lstr(resource=f'{self._r}.useMusicFileText'),
                 on_activate_call=self._on_music_file_press,
                 icon=bui.gettexture('file'),
             )
@@ -148,7 +148,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
                 parent=self._root_widget,
                 size=(self._width - 100, 60),
                 position=(50, v),
-                label=bui.Lstr(resource=self._r + '.useMusicFolderText'),
+                label=bui.Lstr(resource=f'{self._r}.useMusicFolderText'),
                 on_activate_call=self._on_music_folder_press,
                 icon=bui.gettexture('folder'),
                 icon_color=(1.1, 0.8, 0.2),

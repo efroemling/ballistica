@@ -96,7 +96,7 @@ class PartyWindow(bui.Window):
         if info is not None and info.name != '':
             title = bui.Lstr(value=info.name)
         else:
-            title = bui.Lstr(resource=self._r + '.titleText')
+            title = bui.Lstr(resource=f'{self._r}.titleText')
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
@@ -151,7 +151,7 @@ class PartyWindow(bui.Window):
             maxwidth=494,
             shadow=0.3,
             flatness=1.0,
-            description=bui.Lstr(resource=self._r + '.chatMessageText'),
+            description=bui.Lstr(resource=f'{self._r}.chatMessageText'),
             autoselect=True,
             v_align='center',
             corner_scale=0.7,
@@ -175,7 +175,7 @@ class PartyWindow(bui.Window):
         btn = bui.buttonwidget(
             parent=self._root_widget,
             size=(50, 35),
-            label=bui.Lstr(resource=self._r + '.sendText'),
+            label=bui.Lstr(resource=f'{self._r}.sendText'),
             button_type='square',
             autoselect=True,
             position=(self._width - 70, 35),
@@ -294,7 +294,7 @@ class PartyWindow(bui.Window):
                 top_section_height = 60
                 bui.textwidget(
                     edit=self._empty_str,
-                    text=bui.Lstr(resource=self._r + '.emptyText'),
+                    text=bui.Lstr(resource=f'{self._r}.emptyText'),
                 )
                 bui.scrollwidget(
                     edit=self._scrollwidget,
@@ -428,7 +428,7 @@ class PartyWindow(bui.Window):
                                         maxwidth=c_width * 0.96 - twd,
                                         color=(0.1, 1, 0.1, 0.5),
                                         text=bui.Lstr(
-                                            resource=self._r + '.hostText'
+                                            resource=f'{self._r}.hostText'
                                         ),
                                         scale=0.4,
                                         shadow=0.1,

@@ -159,7 +159,7 @@ class PlaylistEditGameWindow(bui.Window):
             scale=0.75,
             text_scale=1.3,
             label=(
-                bui.Lstr(resource=self._r + '.addGameText')
+                bui.Lstr(resource=f'{self._r}.addGameText')
                 if is_add
                 else bui.Lstr(resource='doneText')
             ),

@@ -205,7 +205,7 @@ class GamepadSettingsWindow(bui.Window):
                 parent=self._root_widget,
                 position=(0, v + 5),
                 size=(self._width, 25),
-                text=bui.Lstr(resource=self._r + '.titleText'),
+                text=bui.Lstr(resource=f'{self._r}.titleText'),
                 color=bui.app.ui_v1.title_color,
                 maxwidth=310,
                 h_align='center',
@@ -229,7 +229,7 @@ class GamepadSettingsWindow(bui.Window):
                 parent=self._root_widget,
                 position=(50, v + 10),
                 size=(self._width - 100, 30),
-                text=bui.Lstr(resource=self._r + '.appliesToAllText'),
+                text=bui.Lstr(resource=f'{self._r}.appliesToAllText'),
                 maxwidth=330,
                 scale=0.65,
                 color=(0.5, 0.6, 0.5, 1.0),
@@ -244,7 +244,7 @@ class GamepadSettingsWindow(bui.Window):
                 parent=self._root_widget,
                 position=(0, v + 5),
                 size=(self._width, 25),
-                text=bui.Lstr(resource=self._r + '.secondaryText'),
+                text=bui.Lstr(resource=f'{self._r}.secondaryText'),
                 color=bui.app.ui_v1.title_color,
                 maxwidth=300,
                 h_align='center',
@@ -256,7 +256,7 @@ class GamepadSettingsWindow(bui.Window):
                 parent=self._root_widget,
                 position=(50, v + 10),
                 size=(self._width - 100, 30),
-                text=bui.Lstr(resource=self._r + '.secondHalfText'),
+                text=bui.Lstr(resource=f'{self._r}.secondHalfText'),
                 maxwidth=300,
                 scale=0.65,
                 color=(0.6, 0.8, 0.6, 1.0),
@@ -269,7 +269,7 @@ class GamepadSettingsWindow(bui.Window):
                 autoselect=True,
                 on_value_change_call=self._enable_check_box_changed,
                 size=(200, 30),
-                text=bui.Lstr(resource=self._r + '.secondaryEnableText'),
+                text=bui.Lstr(resource=f'{self._r}.secondaryEnableText'),
                 scale=1.2,
             )
             v = self._height - 205
@@ -279,8 +279,8 @@ class GamepadSettingsWindow(bui.Window):
         d_color = (0.4, 0.4, 0.8)
         sclx = 1.2
         scly = 0.98
-        dpm = bui.Lstr(resource=self._r + '.pressAnyButtonOrDpadText')
-        dpm2 = bui.Lstr(resource=self._r + '.ifNothingHappensTryAnalogText')
+        dpm = bui.Lstr(resource=f'{self._r}.pressAnyButtonOrDpadText')
+        dpm2 = bui.Lstr(resource=f'{self._r}.ifNothingHappensTryAnalogText')
         self._capture_button(
             pos=(h_offs, v + scly * dist),
             color=d_color,
@@ -318,7 +318,7 @@ class GamepadSettingsWindow(bui.Window):
             message2=dpm2,
         )
 
-        dpm3 = bui.Lstr(resource=self._r + '.ifNothingHappensTryDpadText')
+        dpm3 = bui.Lstr(resource=f'{self._r}.ifNothingHappensTryDpadText')
         self._capture_button(
             pos=(h_offs + 130, v - 125),
             color=(0.4, 0.4, 0.6),
@@ -326,7 +326,7 @@ class GamepadSettingsWindow(bui.Window):
             maxwidth=140,
             texture=bui.gettexture('analogStick'),
             scale=1.2,
-            message=bui.Lstr(resource=self._r + '.pressLeftRightText'),
+            message=bui.Lstr(resource=f'{self._r}.pressLeftRightText'),
             message2=dpm3,
         )
 
@@ -563,13 +563,13 @@ class GamepadSettingsWindow(bui.Window):
                     + ' / '
                     + self._input.get_axis_name(sval2)
                 )
-            return bui.Lstr(resource=self._r + '.unsetText')
+            return bui.Lstr(resource=f'{self._r}.unsetText')
 
         # If they're looking for triggers.
         if control in ['triggerRun1' + self._ext, 'triggerRun2' + self._ext]:
             if control in self._settings:
                 return self._input.get_axis_name(self._settings[control])
-            return bui.Lstr(resource=self._r + '.unsetText')
+            return bui.Lstr(resource=f'{self._r}.unsetText')
 
         # Dead-zone.
         if control == 'analogStickDeadZone' + self._ext:
@@ -590,7 +590,7 @@ class GamepadSettingsWindow(bui.Window):
             if any(b in self._settings for b in dpad_buttons):
                 if control in self._settings:
                     return self._input.get_button_name(self._settings[control])
-                return bui.Lstr(resource=self._r + '.unsetText')
+                return bui.Lstr(resource=f'{self._r}.unsetText')
 
             # No dpad buttons - show the dpad number for all 4.
             dpadnum = (
@@ -603,19 +603,19 @@ class GamepadSettingsWindow(bui.Window):
                 return bui.Lstr(
                     value='${A} ${B}',
                     subs=[
-                        ('${A}', bui.Lstr(resource=self._r + '.dpadText')),
+                        ('${A}', bui.Lstr(resource=f'{self._r}.dpadText')),
                         (
                             '${B}',
                             str(dpadnum),
                         ),
                     ],
                 )
-            return bui.Lstr(resource=self._r + '.unsetText')
+            return bui.Lstr(resource=f'{self._r}.unsetText')
 
         # Other buttons.
         if control in self._settings:
             return self._input.get_button_name(self._settings[control])
-        return bui.Lstr(resource=self._r + '.unsetText')
+        return bui.Lstr(resource=f'{self._r}.unsetText')
 
     def _gamepad_event(
         self,
@@ -694,7 +694,7 @@ class GamepadSettingsWindow(bui.Window):
                         self._input,
                         'analogStickUD' + ext,
                         self._gamepad_event,
-                        bui.Lstr(resource=self._r + '.pressUpDownText'),
+                        bui.Lstr(resource=f'{self._r}.pressUpDownText'),
                     )
 
         elif control == 'analogStickUD' + ext:
@@ -745,7 +745,7 @@ class GamepadSettingsWindow(bui.Window):
         maxwidth: float = 80.0,
     ) -> bui.Widget:
         if message is None:
-            message = bui.Lstr(resource=self._r + '.pressAnyButtonText')
+            message = bui.Lstr(resource=f'{self._r}.pressAnyButtonText')
         base_size = 79
         btn = bui.buttonwidget(
             parent=self._root_widget,
@@ -852,7 +852,7 @@ class GamepadSettingsWindow(bui.Window):
             'reset',
         ]
         choices_display: list[bui.Lstr] = [
-            bui.Lstr(resource=self._r + '.advancedText'),
+            bui.Lstr(resource=f'{self._r}.advancedText'),
             bui.Lstr(resource='settingsWindowAdvanced.resetText'),
         ]
 

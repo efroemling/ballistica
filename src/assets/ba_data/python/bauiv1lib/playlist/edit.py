@@ -90,7 +90,7 @@ class PlaylistEditWindow(bui.Window):
             parent=self._root_widget,
             position=(-10, self._height - 50),
             size=(self._width, 25),
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=bui.app.ui_v1.title_color,
             scale=1.05,
             h_align='center',
@@ -104,7 +104,7 @@ class PlaylistEditWindow(bui.Window):
 
         bui.textwidget(
             parent=self._root_widget,
-            text=bui.Lstr(resource=self._r + '.listNameText'),
+            text=bui.Lstr(resource=f'{self._r}.listNameText'),
             position=(196 + x_inset, v + 31),
             maxwidth=150,
             color=(0.8, 0.8, 0.8, 0.5),
@@ -124,7 +124,7 @@ class PlaylistEditWindow(bui.Window):
             max_chars=40,
             autoselect=True,
             color=(0.9, 0.9, 0.9, 1.0),
-            description=bui.Lstr(resource=self._r + '.listNameText'),
+            description=bui.Lstr(resource=f'{self._r}.listNameText'),
             editable=True,
             padding=4,
             on_return_press_call=self._save_press_with_sound,
@@ -160,7 +160,7 @@ class PlaylistEditWindow(bui.Window):
             color=b_color,
             textcolor=b_textcolor,
             text_scale=0.8,
-            label=bui.Lstr(resource=self._r + '.addGameText'),
+            label=bui.Lstr(resource=f'{self._r}.addGameText'),
         )
         bui.widget(edit=add_game_button, up_widget=self._text_field)
         v -= 63.0 * scl
@@ -176,7 +176,7 @@ class PlaylistEditWindow(bui.Window):
             color=b_color,
             textcolor=b_textcolor,
             text_scale=0.8,
-            label=bui.Lstr(resource=self._r + '.editGameText'),
+            label=bui.Lstr(resource=f'{self._r}.editGameText'),
         )
         v -= 63.0 * scl
 
@@ -190,7 +190,7 @@ class PlaylistEditWindow(bui.Window):
             button_type='square',
             color=b_color,
             textcolor=b_textcolor,
-            label=bui.Lstr(resource=self._r + '.removeGameText'),
+            label=bui.Lstr(resource=f'{self._r}.removeGameText'),
         )
         v -= 40
         h += 9
@@ -330,7 +330,7 @@ class PlaylistEditWindow(bui.Window):
             ]
         ):
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.cantSaveAlreadyExistsText')
+                bui.Lstr(resource=f'{self._r}.cantSaveAlreadyExistsText')
             )
             bui.getsound('error').play()
             return
@@ -339,7 +339,7 @@ class PlaylistEditWindow(bui.Window):
             return
         if not self._editcontroller.get_playlist():
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.cantSaveEmptyListText')
+                bui.Lstr(resource=f'{self._r}.cantSaveEmptyListText')
             )
             bui.getsound('error').play()
             return
@@ -348,7 +348,7 @@ class PlaylistEditWindow(bui.Window):
         # using its exact name to avoid confusion.
         if new_name == self._editcontroller.get_default_list_name().evaluate():
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.cantOverwriteDefaultText')
+                bui.Lstr(resource=f'{self._r}.cantOverwriteDefaultText')
             )
             bui.getsound('error').play()
             return

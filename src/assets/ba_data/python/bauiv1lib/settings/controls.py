@@ -152,7 +152,7 @@ class ControlsSettingsWindow(bui.Window):
             parent=self._root_widget,
             position=(0, height - 49),
             size=(width, 25),
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='top',
@@ -173,7 +173,7 @@ class ControlsSettingsWindow(bui.Window):
                 position=((width - button_width) / 2, v),
                 size=(button_width, 43),
                 autoselect=True,
-                label=bui.Lstr(resource=self._r + '.configureTouchText'),
+                label=bui.Lstr(resource=f'{self._r}.configureTouchText'),
                 on_activate_call=self._do_touchscreen,
             )
             if bui.app.ui_v1.use_toolbars:
@@ -197,7 +197,7 @@ class ControlsSettingsWindow(bui.Window):
                 position=((width - button_width) / 2 - 7, v),
                 size=(button_width, 43),
                 autoselect=True,
-                label=bui.Lstr(resource=self._r + '.configureControllersText'),
+                label=bui.Lstr(resource=f'{self._r}.configureControllersText'),
                 on_activate_call=self._do_gamepads,
             )
             if bui.app.ui_v1.use_toolbars:
@@ -226,7 +226,7 @@ class ControlsSettingsWindow(bui.Window):
                 position=((width - button_width) / 2 - 5, v),
                 size=(button_width, 43),
                 autoselect=True,
-                label=bui.Lstr(resource=self._r + '.configureKeyboardText'),
+                label=bui.Lstr(resource=f'{self._r}.configureKeyboardText'),
                 on_activate_call=self._config_keyboard,
             )
             bui.widget(
@@ -252,7 +252,7 @@ class ControlsSettingsWindow(bui.Window):
                 position=((width - button_width) / 2 - 3, v),
                 size=(button_width, 43),
                 autoselect=True,
-                label=bui.Lstr(resource=self._r + '.configureKeyboard2Text'),
+                label=bui.Lstr(resource=f'{self._r}.configureKeyboard2Text'),
                 on_activate_call=self._config_keyboard2,
             )
             v -= spacing
@@ -268,7 +268,7 @@ class ControlsSettingsWindow(bui.Window):
                 position=((width - button_width) / 2 - 5, v),
                 size=(button_width, 43),
                 autoselect=True,
-                label=bui.Lstr(resource=self._r + '.configureMobileText'),
+                label=bui.Lstr(resource=f'{self._r}.configureMobileText'),
                 on_activate_call=self._do_mobile_devices,
             )
             bui.widget(

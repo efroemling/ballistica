@@ -116,14 +116,14 @@ class WatchWindow(bui.Window):
             scale=1.5,
             h_align='center',
             v_align='center',
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             maxwidth=400,
         )
 
         tabdefs = [
             (
                 self.TabID.MY_REPLAYS,
-                bui.Lstr(resource=self._r + '.myReplaysText'),
+                bui.Lstr(resource=f'{self._r}.myReplaysText'),
             ),
             # (self.TabID.TEST_TAB, bui.Lstr(value='Testing')),
         ]
@@ -276,7 +276,7 @@ class WatchWindow(bui.Window):
                 textcolor=b_textcolor,
                 on_activate_call=self._on_my_replay_play_press,
                 text_scale=tscl,
-                label=bui.Lstr(resource=self._r + '.watchReplayButtonText'),
+                label=bui.Lstr(resource=f'{self._r}.watchReplayButtonText'),
                 autoselect=True,
             )
             bui.widget(edit=btn1, up_widget=self._tab_row.tabs[tab_id].button)
@@ -296,7 +296,7 @@ class WatchWindow(bui.Window):
                 textcolor=b_textcolor,
                 on_activate_call=self._on_my_replay_rename_press,
                 text_scale=tscl,
-                label=bui.Lstr(resource=self._r + '.renameReplayButtonText'),
+                label=bui.Lstr(resource=f'{self._r}.renameReplayButtonText'),
                 autoselect=True,
             )
             btnv -= b_height + b_space_extra
@@ -309,7 +309,7 @@ class WatchWindow(bui.Window):
                 textcolor=b_textcolor,
                 on_activate_call=self._on_my_replay_delete_press,
                 text_scale=tscl,
-                label=bui.Lstr(resource=self._r + '.deleteReplayButtonText'),
+                label=bui.Lstr(resource=f'{self._r}.deleteReplayButtonText'),
                 autoselect=True,
             )
 
@@ -339,7 +339,7 @@ class WatchWindow(bui.Window):
 
     def _no_replay_selected_error(self) -> None:
         bui.screenmessage(
-            bui.Lstr(resource=self._r + '.noReplaySelectedErrorText'),
+            bui.Lstr(resource=f'{self._r}.noReplaySelectedErrorText'),
             color=(1, 0, 0),
         )
         bui.getsound('error').play()
@@ -395,7 +395,7 @@ class WatchWindow(bui.Window):
             h_align='center',
             v_align='center',
             text=bui.Lstr(
-                resource=self._r + '.renameReplayText',
+                resource=f'{self._r}.renameReplayText',
                 subs=[('${REPLAY}', dname)],
             ),
             maxwidth=c_width * 0.8,
@@ -408,7 +408,7 @@ class WatchWindow(bui.Window):
             v_align='center',
             text=dname,
             editable=True,
-            description=bui.Lstr(resource=self._r + '.replayNameText'),
+            description=bui.Lstr(resource=f'{self._r}.replayNameText'),
             position=(c_width * 0.1, c_height - 140),
             autoselect=True,
             maxwidth=c_width * 0.7,
@@ -427,7 +427,7 @@ class WatchWindow(bui.Window):
         )
         okb = bui.buttonwidget(
             parent=cnt,
-            label=bui.Lstr(resource=self._r + '.renameText'),
+            label=bui.Lstr(resource=f'{self._r}.renameText'),
             size=(180, 60),
             position=(c_width - 230, 30),
             on_activate_call=bui.Call(
@@ -477,7 +477,7 @@ class WatchWindow(bui.Window):
                     bui.getsound('error').play()
                     bui.screenmessage(
                         bui.Lstr(
-                            resource=self._r + '.replayRenameErrorInvalidName'
+                            resource=f'{self._r}.replayRenameErrorInvalidName'
                         ),
                         color=(1, 0, 0),
                     )
@@ -492,7 +492,7 @@ class WatchWindow(bui.Window):
             )
             bui.getsound('error').play()
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.replayRenameErrorText'),
+                bui.Lstr(resource=f'{self._r}.replayRenameErrorText'),
                 color=(1, 0, 0),
             )
 
@@ -508,7 +508,7 @@ class WatchWindow(bui.Window):
             return
         confirm.ConfirmWindow(
             bui.Lstr(
-                resource=self._r + '.deleteConfirmText',
+                resource=f'{self._r}.deleteConfirmText',
                 subs=[
                     (
                         '${REPLAY}',
@@ -540,7 +540,7 @@ class WatchWindow(bui.Window):
             logging.exception("Error deleting replay '%s'.", replay)
             bui.getsound('error').play()
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.replayDeleteErrorText'),
+                bui.Lstr(resource=f'{self._r}.replayDeleteErrorText'),
                 color=(1, 0, 0),
             )
 

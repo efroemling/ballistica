@@ -1,4 +1,4 @@
-### 1.7.36 (build 21939, api 8, 2024-07-24)
+### 1.7.36 (build 21942, api 8, 2024-07-25)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these
   can be used for is storage packs on ballistica.net, but this will expand to
   other places in the game soon. For a full explanation on why these were added,
@@ -33,7 +33,16 @@
   `functools.partial` so there's no benefit to maintaining our own special
   version anymore. This also applies to `ba*.Call` which is redundant in the
   same way. Both `efro.call.tpartial` and `ba*.Call` will probably be marked
-  deprecated and go away at some point.
+  deprecated and go away at some point (or more likely simply not included in
+  newer apis such as bauiv2).
+- Added a `Delete Account` button directly to the account section in-game.
+- The app now includes build number when looking for custom sys scripts in the
+  mods dir. Previously it would have looked for something like `sys/1.7.36` but
+  now it will look for something like `sys/1.7.36_21940`. I was seeing a lot of
+  crash reports from people creating sys scripts using early builds of some
+  version and then upgrading to later builds of the same version containing
+  incompatibilities with the older sys scripts. This should help with that
+  problem.
   
 ### 1.7.35 (build 21889, api 8, 2024-06-20)
 - Fixed an issue where the engine would block at exit on some version of Linux

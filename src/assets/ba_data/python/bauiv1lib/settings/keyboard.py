@@ -111,7 +111,7 @@ class ConfigKeyboardWindow(bui.Window):
             position=(self._width * 0.5, v + 15),
             size=(0, 0),
             text=bui.Lstr(
-                resource=self._r + '.configuringText',
+                resource=f'{self._r}.configuringText',
                 subs=[('${DEVICE}', self._displayname)],
             ),
             color=bui.app.ui_v1.title_color,
@@ -129,7 +129,7 @@ class ConfigKeyboardWindow(bui.Window):
                 parent=self._root_widget,
                 position=(0, v + 19),
                 size=(self._width, 50),
-                text=bui.Lstr(resource=self._r + '.keyboard2NoteText'),
+                text=bui.Lstr(resource=f'{self._r}.keyboard2NoteText'),
                 scale=0.7,
                 maxwidth=self._width * 0.75,
                 max_height=110,

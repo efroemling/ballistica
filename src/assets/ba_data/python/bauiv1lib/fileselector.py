@@ -70,12 +70,12 @@ class FileSelectorWindow(bui.Window):
             h_align='center',
             v_align='center',
             text=(
-                bui.Lstr(resource=self._r + '.titleFolderText')
+                bui.Lstr(resource=f'{self._r}.titleFolderText')
                 if (allow_folders and not valid_file_extensions)
                 else (
-                    bui.Lstr(resource=self._r + '.titleFileText')
+                    bui.Lstr(resource=f'{self._r}.titleFileText')
                     if not allow_folders
-                    else bui.Lstr(resource=self._r + '.titleFileFolderText')
+                    else bui.Lstr(resource=f'{self._r}.titleFileFolderText')
                 )
             ),
             maxwidth=210,
@@ -382,7 +382,7 @@ class FileSelectorWindow(bui.Window):
                     ),
                     size=(self._button_width, 50),
                     label=bui.Lstr(
-                        resource=self._r + '.useThisFolderButtonText'
+                        resource=f'{self._r}.useThisFolderButtonText'
                     ),
                     on_activate_call=self._on_folder_entry_activated,
                 )

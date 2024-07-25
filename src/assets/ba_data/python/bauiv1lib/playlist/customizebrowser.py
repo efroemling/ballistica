@@ -88,7 +88,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
             position=(0, self._height - 47),
             size=(self._width, 25),
             text=bui.Lstr(
-                resource=self._r + '.titleText',
+                resource=f'{self._r}.titleText',
                 subs=[('${TYPE}', self._pvars.window_title_name)],
             ),
             color=bui.app.ui_v1.heading_color,
@@ -129,7 +129,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
             textcolor=b_textcolor,
             text_scale=0.7,
             label=bui.Lstr(
-                resource='newText', fallback_resource=self._r + '.newText'
+                resource='newText', fallback_resource=f'{self._r}.newText'
             ),
         )
         self._lock_images.append(
@@ -154,7 +154,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
             button_type='square',
             text_scale=0.7,
             label=bui.Lstr(
-                resource='editText', fallback_resource=self._r + '.editText'
+                resource='editText', fallback_resource=f'{self._r}.editText'
             ),
         )
         self._lock_images.append(
@@ -180,7 +180,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
             text_scale=0.7,
             label=bui.Lstr(
                 resource='duplicateText',
-                fallback_resource=self._r + '.duplicateText',
+                fallback_resource=f'{self._r}.duplicateText',
             ),
         )
         self._lock_images.append(
@@ -205,7 +205,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
             button_type='square',
             text_scale=0.7,
             label=bui.Lstr(
-                resource='deleteText', fallback_resource=self._r + '.deleteText'
+                resource='deleteText', fallback_resource=f'{self._r}.deleteText'
             ),
         )
         self._lock_images.append(
@@ -509,7 +509,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         if self._selected_playlist_name == '__default__':
             bui.getsound('error').play()
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.cantEditDefaultText')
+                bui.Lstr(resource=f'{self._r}.cantEditDefaultText')
             )
             return
         self._save_playlist_selection()
@@ -598,7 +598,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         if self._selected_playlist_name == '__default__':
             bui.getsound('error').play()
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.cantShareDefaultText'),
+                bui.Lstr(resource=f'{self._r}.cantShareDefaultText'),
                 color=(1, 0, 0),
             )
             return
@@ -635,12 +635,12 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         if self._selected_playlist_name == '__default__':
             bui.getsound('error').play()
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.cantDeleteDefaultText')
+                bui.Lstr(resource=f'{self._r}.cantDeleteDefaultText')
             )
         else:
             ConfirmWindow(
                 bui.Lstr(
-                    resource=self._r + '.deleteConfirmText',
+                    resource=f'{self._r}.deleteConfirmText',
                     subs=[('${LIST}', self._selected_playlist_name)],
                 ),
                 self._do_delete_playlist,

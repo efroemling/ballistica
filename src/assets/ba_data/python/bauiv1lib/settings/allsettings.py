@@ -87,7 +87,7 @@ class AllSettingsWindow(bui.Window):
             parent=self._root_widget,
             position=(0, height - 44),
             size=(width, 25),
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
@@ -143,7 +143,7 @@ class AllSettingsWindow(bui.Window):
             bbtn = bui.get_special_widget('back_button')
             bui.widget(edit=ctb, left_widget=bbtn)
         _b_title(
-            x_offs2, v, ctb, bui.Lstr(resource=self._r + '.controllersText')
+            x_offs2, v, ctb, bui.Lstr(resource=f'{self._r}.controllersText')
         )
         imgw = imgh = 130
         bui.imagewidget(
@@ -166,7 +166,7 @@ class AllSettingsWindow(bui.Window):
         if bui.app.ui_v1.use_toolbars:
             pbtn = bui.get_special_widget('party_button')
             bui.widget(edit=gfxb, up_widget=pbtn, right_widget=pbtn)
-        _b_title(x_offs3, v, gfxb, bui.Lstr(resource=self._r + '.graphicsText'))
+        _b_title(x_offs3, v, gfxb, bui.Lstr(resource=f'{self._r}.graphicsText'))
         imgw = imgh = 110
         bui.imagewidget(
             parent=self._root_widget,
@@ -187,7 +187,7 @@ class AllSettingsWindow(bui.Window):
             label='',
             on_activate_call=self._do_audio,
         )
-        _b_title(x_offs4, v, abtn, bui.Lstr(resource=self._r + '.audioText'))
+        _b_title(x_offs4, v, abtn, bui.Lstr(resource=f'{self._r}.audioText'))
         imgw = imgh = 120
         bui.imagewidget(
             parent=self._root_widget,
@@ -207,7 +207,7 @@ class AllSettingsWindow(bui.Window):
             label='',
             on_activate_call=self._do_advanced,
         )
-        _b_title(x_offs5, v, avb, bui.Lstr(resource=self._r + '.advancedText'))
+        _b_title(x_offs5, v, avb, bui.Lstr(resource=f'{self._r}.advancedText'))
         imgw = imgh = 120
         bui.imagewidget(
             parent=self._root_widget,

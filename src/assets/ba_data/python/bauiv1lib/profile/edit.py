@@ -110,9 +110,9 @@ class EditProfileWindow(bui.Window):
             position=(self._width * 0.5, height - 38),
             size=(0, 0),
             text=(
-                bui.Lstr(resource=self._r + '.titleNewText')
+                bui.Lstr(resource=f'{self._r}.titleNewText')
                 if existing_profile is None
-                else bui.Lstr(resource=self._r + '.titleEditText')
+                else bui.Lstr(resource=f'{self._r}.titleEditText')
             ),
             color=bui.app.ui_v1.title_color,
             maxwidth=290,
@@ -200,7 +200,7 @@ class EditProfileWindow(bui.Window):
         if not self._is_account_profile and not self._global:
             bui.textwidget(
                 parent=self._root_widget,
-                text=bui.Lstr(resource=self._r + '.nameText'),
+                text=bui.Lstr(resource=f'{self._r}.nameText'),
                 position=(200 + x_inset, v - 6),
                 size=(0, 0),
                 h_align='right',
@@ -286,7 +286,7 @@ class EditProfileWindow(bui.Window):
                 position=(self._width * 0.5 - 160, v - 55 - 15),
                 size=(0, 0),
                 draw_controller=btn,
-                text=bui.Lstr(resource=self._r + '.iconText'),
+                text=bui.Lstr(resource=f'{self._r}.iconText'),
                 scale=0.7,
                 color=bui.app.ui_v1.title_color,
                 maxwidth=120,
@@ -343,7 +343,7 @@ class EditProfileWindow(bui.Window):
                 h_align='left',
                 v_align='center',
                 max_chars=16,
-                description=bui.Lstr(resource=self._r + '.nameDescriptionText'),
+                description=bui.Lstr(resource=f'{self._r}.nameDescriptionText'),
                 autoselect=True,
                 editable=True,
                 padding=4,
@@ -433,7 +433,7 @@ class EditProfileWindow(bui.Window):
             position=(self._width * 0.5 - b_offs, v - 65),
             size=(0, 0),
             draw_controller=btn,
-            text=bui.Lstr(resource=self._r + '.colorText'),
+            text=bui.Lstr(resource=f'{self._r}.colorText'),
             scale=0.7,
             color=bui.app.ui_v1.title_color,
             maxwidth=120,
@@ -461,7 +461,7 @@ class EditProfileWindow(bui.Window):
             position=(self._width * 0.5, v - 80),
             size=(0, 0),
             draw_controller=btn,
-            text=bui.Lstr(resource=self._r + '.characterText'),
+            text=bui.Lstr(resource=f'{self._r}.characterText'),
             scale=0.7,
             color=bui.app.ui_v1.title_color,
             maxwidth=130,
@@ -505,7 +505,7 @@ class EditProfileWindow(bui.Window):
             position=(self._width * 0.5 + b_offs, v - 65),
             size=(0, 0),
             draw_controller=btn,
-            text=bui.Lstr(resource=self._r + '.highlightText'),
+            text=bui.Lstr(resource=f'{self._r}.highlightText'),
             scale=0.7,
             color=bui.app.ui_v1.title_color,
             maxwidth=120,

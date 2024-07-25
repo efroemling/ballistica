@@ -8,9 +8,11 @@ from __future__ import annotations
 import time
 import logging
 
+from bacommon.cloud import WebLocation
 from bacommon.login import LoginType
 import bacommon.cloud
 import bauiv1 as bui
+
 
 # These days we're directing people to the web based account settings
 # for V2 account linking and trying to get them to disconnect remaining
@@ -150,7 +152,7 @@ class AccountSettingsWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 41),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=app.ui_v1.title_color,
             maxwidth=self._width - 340,
             h_align='center',
@@ -346,10 +348,11 @@ class AccountSettingsWindow(bui.Window):
         show_reset_progress_button = False
         reset_progress_button_space = 70.0
 
-        show_manage_v2_account_button = (
-            self._v1_signed_in and v1_account_type == 'V2'
-        )
+        show_manage_v2_account_button = primary_v2_account is not None
         manage_v2_account_button_space = 100.0
+
+        show_delete_account_button = primary_v2_account is not None
+        delete_account_button_space = 80.0
 
         show_player_profiles_button = self._v1_signed_in
         player_profiles_button_space = (
@@ -365,22 +368,19 @@ class AccountSettingsWindow(bui.Window):
         unlink_accounts_button_space = 90.0
 
         # Phasing this out.
-        # show_v2_link_info = self._v1_signed_in
-        # and not show_link_accounts_button
         show_v2_link_info = False
         v2_link_info_space = 70.0
 
         legacy_unlink_button_space = 120.0
 
-        show_sign_out_button = self._v1_signed_in and v1_account_type in [
-            'Local',
-            'V2',
-        ]
+        show_sign_out_button = primary_v2_account is not None or (
+            self._v1_signed_in and v1_account_type == 'Local'
+        )
         sign_out_button_space = 80.0
 
         # We can show cancel if we're either waiting on an adapter to
-        # provide us with v2 credentials or waiting for those credentials
-        # to be verified.
+        # provide us with v2 credentials or waiting for those
+        # credentials to be verified.
         show_cancel_sign_in_button = self._signing_in_adapter is not None or (
             plus.accounts.have_primary_credentials()
             and primary_v2_account is None
@@ -435,6 +435,8 @@ class AccountSettingsWindow(bui.Window):
             self._sub_height += legacy_unlink_button_space
         if show_sign_out_button:
             self._sub_height += sign_out_button_space
+        if show_delete_account_button:
+            self._sub_height += delete_account_button_space
         if show_cancel_sign_in_button:
             self._sub_height += cancel_sign_in_button_space
         self._subcontainer = bui.containerwidget(
@@ -579,7 +581,7 @@ class AccountSettingsWindow(bui.Window):
                     v + sign_in_benefits_space * 0.4,
                 ),
                 size=(0, 0),
-                text=bui.Lstr(resource=self._r + '.signInInfoText'),
+                text=bui.Lstr(resource=f'{self._r}.signInInfoText'),
                 max_height=sign_in_benefits_space * 0.9,
                 scale=0.9,
                 color=(0.75, 0.7, 0.8),
@@ -624,7 +626,7 @@ class AccountSettingsWindow(bui.Window):
                         (
                             '${B}',
                             bui.Lstr(
-                                resource=self._r + '.signInWithText',
+                                resource=f'{self._r}.signInWithText',
                                 subs=[
                                     (
                                         '${SERVICE}',
@@ -669,7 +671,7 @@ class AccountSettingsWindow(bui.Window):
                         (
                             '${B}',
                             bui.Lstr(
-                                resource=self._r + '.signInWithText',
+                                resource=f'{self._r}.signInWithText',
                                 subs=[('${SERVICE}', 'Game Center')],
                             ),
                         ),
@@ -703,11 +705,11 @@ class AccountSettingsWindow(bui.Window):
             )
 
             v2labeltext: bui.Lstr | str = (
-                bui.Lstr(resource=self._r + '.signInWithAnEmailAddressText')
+                bui.Lstr(resource=f'{self._r}.signInWithAnEmailAddressText')
                 if show_game_center_sign_in_button
                 or show_google_play_sign_in_button
                 or show_device_sign_in_button
-                else bui.Lstr(resource=self._r + '.signInText')
+                else bui.Lstr(resource=f'{self._r}.signInText')
             )
             v2infotext: bui.Lstr | str | None = None
 
@@ -796,7 +798,7 @@ class AccountSettingsWindow(bui.Window):
                         (
                             '${B}',
                             bui.Lstr(
-                                resource=self._r + '.signInWithDeviceText'
+                                resource=f'{self._r}.signInWithDeviceText'
                             ),
                         ),
                     ],
@@ -811,7 +813,7 @@ class AccountSettingsWindow(bui.Window):
                 v_align='center',
                 size=(0, 0),
                 position=(self._sub_width * 0.5, v - 4),
-                text=bui.Lstr(resource=self._r + '.signInWithDeviceInfoText'),
+                text=bui.Lstr(resource=f'{self._r}.signInWithDeviceInfoText'),
                 flatness=1.0,
                 scale=0.57,
                 maxwidth=button_width * 0.9,
@@ -1042,10 +1044,10 @@ class AccountSettingsWindow(bui.Window):
         button_width = 250
         if show_reset_progress_button:
             confirm_text = (
-                bui.Lstr(resource=self._r + '.resetProgressConfirmText')
+                bui.Lstr(resource=f'{self._r}.resetProgressConfirmText')
                 if self._can_reset_achievements
                 else bui.Lstr(
-                    resource=self._r + '.resetProgressConfirmNoAchievementsText'
+                    resource=f'{self._r}.resetProgressConfirmNoAchievementsText'
                 )
             )
             v -= reset_progress_button_space
@@ -1056,7 +1058,7 @@ class AccountSettingsWindow(bui.Window):
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
                 size=(button_width, 60),
-                label=bui.Lstr(resource=self._r + '.resetProgressText'),
+                label=bui.Lstr(resource=f'{self._r}.resetProgressText'),
                 on_activate_call=lambda: confirm.ConfirmWindow(
                     text=confirm_text,
                     width=500,
@@ -1083,7 +1085,7 @@ class AccountSettingsWindow(bui.Window):
                 scale=0.9,
                 color=(0.75, 0.7, 0.8),
                 maxwidth=self._sub_width * 0.95,
-                text=bui.Lstr(resource=self._r + '.linkedAccountsText'),
+                text=bui.Lstr(resource=f'{self._r}.linkedAccountsText'),
                 h_align='center',
                 v_align='center',
             )
@@ -1112,7 +1114,7 @@ class AccountSettingsWindow(bui.Window):
                 v_align='center',
                 size=(0, 0),
                 position=(self._sub_width * 0.5, v + 17 + 20),
-                text=bui.Lstr(resource=self._r + '.linkAccountsText'),
+                text=bui.Lstr(resource=f'{self._r}.linkAccountsText'),
                 maxwidth=button_width * 0.8,
                 color=(0.75, 0.7, 0.8),
             )
@@ -1123,7 +1125,7 @@ class AccountSettingsWindow(bui.Window):
                 v_align='center',
                 size=(0, 0),
                 position=(self._sub_width * 0.5, v - 4 + 20),
-                text=bui.Lstr(resource=self._r + '.linkAccountsInfoText'),
+                text=bui.Lstr(resource=f'{self._r}.linkAccountsInfoText'),
                 flatness=1.0,
                 scale=0.5,
                 maxwidth=button_width * 0.8,
@@ -1157,7 +1159,7 @@ class AccountSettingsWindow(bui.Window):
                 v_align='center',
                 size=(0, 0),
                 position=(self._sub_width * 0.5, v + 55),
-                text=bui.Lstr(resource=self._r + '.unlinkAccountsText'),
+                text=bui.Lstr(resource=f'{self._r}.unlinkAccountsText'),
                 maxwidth=button_width * 0.8,
                 color=(0.75, 0.7, 0.8),
             )
@@ -1212,7 +1214,7 @@ class AccountSettingsWindow(bui.Window):
                 autoselect=True,
                 size=(button_width_w, 60),
                 label=bui.Lstr(
-                    resource=self._r + '.unlinkLegacyV1AccountsText'
+                    resource=f'{self._r}.unlinkLegacyV1AccountsText'
                 ),
                 textcolor=(0.8, 0.4, 0),
                 color=(0.55, 0.5, 0.6),
@@ -1225,7 +1227,7 @@ class AccountSettingsWindow(bui.Window):
                 parent=self._subcontainer,
                 position=((self._sub_width - button_width) * 0.5, v),
                 size=(button_width, 60),
-                label=bui.Lstr(resource=self._r + '.signOutText'),
+                label=bui.Lstr(resource=f'{self._r}.signOutText'),
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
@@ -1251,6 +1253,27 @@ class AccountSettingsWindow(bui.Window):
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
                 on_activate_call=self._cancel_sign_in_press,
+            )
+            if first_selectable is None:
+                first_selectable = btn
+            if bui.app.ui_v1.use_toolbars:
+                bui.widget(
+                    edit=btn,
+                    right_widget=bui.get_special_widget('party_button'),
+                )
+            bui.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=15)
+
+        if show_delete_account_button:
+            v -= delete_account_button_space
+            self._delete_account_button = btn = bui.buttonwidget(
+                parent=self._subcontainer,
+                position=((self._sub_width - button_width) * 0.5, v),
+                size=(button_width, 60),
+                label=bui.Lstr(resource=f'{self._r}.deleteAccountText'),
+                color=(0.85, 0.5, 0.6),
+                textcolor=(0.9, 0.7, 0.8),
+                autoselect=True,
+                on_activate_call=self._on_delete_account_press,
             )
             if first_selectable is None:
                 first_selectable = btn
@@ -1303,6 +1326,12 @@ class AccountSettingsWindow(bui.Window):
         show_what_is_v2_page()
 
     def _on_manage_account_press(self) -> None:
+        self._do_manage_account_press(WebLocation.ACCOUNT_EDITOR)
+
+    def _on_delete_account_press(self) -> None:
+        self._do_manage_account_press(WebLocation.ACCOUNT_DELETE_SECTION)
+
+    def _do_manage_account_press(self, weblocation: WebLocation) -> None:
         plus = bui.app.plus
         assert plus is not None
 
@@ -1327,7 +1356,7 @@ class AccountSettingsWindow(bui.Window):
 
         with plus.accounts.primary:
             plus.cloud.send_message_cb(
-                bacommon.cloud.ManageAccountMessage(),
+                bacommon.cloud.ManageAccountMessage(weblocation=weblocation),
                 on_response=bui.WeakCall(self._on_manage_account_response),
             )
 
@@ -1414,7 +1443,7 @@ class AccountSettingsWindow(bui.Window):
                 subs=[
                     (
                         '${L}',
-                        bui.Lstr(resource=self._r + '.linkedAccountsText'),
+                        bui.Lstr(resource=f'{self._r}.linkedAccountsText'),
                     ),
                     ('${A}', accounts_str),
                 ],
@@ -1434,7 +1463,7 @@ class AccountSettingsWindow(bui.Window):
             # Last level cant be completed; hence the -1;
             progress = min(1.0, float(levels_complete) / (len(levels) - 1))
             p_str = bui.Lstr(
-                resource=self._r + '.campaignProgressText',
+                resource=f'{self._r}.campaignProgressText',
                 subs=[('${PROGRESS}', str(int(progress * 100.0)) + '%')],
             )
         except Exception:
@@ -1456,7 +1485,7 @@ class AccountSettingsWindow(bui.Window):
         bui.textwidget(
             edit=self._tickets_text,
             text=bui.Lstr(
-                resource=self._r + '.ticketsText', subs=[('${COUNT}', tc_str)]
+                resource=f'{self._r}.ticketsText', subs=[('${COUNT}', tc_str)]
             ),
         )
 
@@ -1496,7 +1525,7 @@ class AccountSettingsWindow(bui.Window):
         )
         total = len(bui.app.classic.ach.achievements)
         txt_final = bui.Lstr(
-            resource=self._r + '.achievementProgressText',
+            resource=f'{self._r}.achievementProgressText',
             subs=[('${COUNT}', str(complete)), ('${TOTAL}', str(total))],
         )
 
@@ -1575,7 +1604,7 @@ class AccountSettingsWindow(bui.Window):
         cfg.commit()
         bui.buttonwidget(
             edit=self._sign_out_button,
-            label=bui.Lstr(resource=self._r + '.signingOutText'),
+            label=bui.Lstr(resource=f'{self._r}.signingOutText'),
         )
 
         # Speed UI updates along.

@@ -205,17 +205,17 @@ class StoreBrowserWindow(bui.Window):
         tab_buffer_h = 250 + 2 * x_inset
 
         tabs_def = [
-            (self.TabID.EXTRAS, bui.Lstr(resource=self._r + '.extrasText')),
-            (self.TabID.MAPS, bui.Lstr(resource=self._r + '.mapsText')),
+            (self.TabID.EXTRAS, bui.Lstr(resource=f'{self._r}.extrasText')),
+            (self.TabID.MAPS, bui.Lstr(resource=f'{self._r}.mapsText')),
             (
                 self.TabID.MINIGAMES,
-                bui.Lstr(resource=self._r + '.miniGamesText'),
+                bui.Lstr(resource=f'{self._r}.miniGamesText'),
             ),
             (
                 self.TabID.CHARACTERS,
-                bui.Lstr(resource=self._r + '.charactersText'),
+                bui.Lstr(resource=f'{self._r}.charactersText'),
             ),
-            (self.TabID.ICONS, bui.Lstr(resource=self._r + '.iconsText')),
+            (self.TabID.ICONS, bui.Lstr(resource=f'{self._r}.iconsText')),
         ]
 
         self._tab_row = TabRow(
@@ -449,7 +449,7 @@ class StoreBrowserWindow(bui.Window):
             color=(1, 0.7, 1, 0.5),
             h_align='center',
             v_align='center',
-            text=bui.Lstr(resource=self._r + '.loadingText'),
+            text=bui.Lstr(resource=f'{self._r}.loadingText'),
             maxwidth=self._scroll_width * 0.9,
         )
 
@@ -653,7 +653,7 @@ class StoreBrowserWindow(bui.Window):
     def _print_already_own(self, charname: str) -> None:
         bui.screenmessage(
             bui.Lstr(
-                resource=self._r + '.alreadyOwnText',
+                resource=f'{self._r}.alreadyOwnText',
                 subs=[('${NAME}', charname)],
             ),
             color=(1, 0, 0),
@@ -868,7 +868,7 @@ class StoreBrowserWindow(bui.Window):
                 color=(1, 0.3, 0.3, 1.0),
                 h_align='center',
                 v_align='center',
-                text=bui.Lstr(resource=self._r + '.loadErrorText'),
+                text=bui.Lstr(resource=f'{self._r}.loadErrorText'),
                 maxwidth=self._scroll_width * 0.9,
             )
         else:
@@ -1238,7 +1238,7 @@ class StoreBrowserWindow(bui.Window):
                     color=(1, 1, 0.3, 1.0),
                     h_align='center',
                     v_align='center',
-                    text=bui.Lstr(resource=self._r + '.comingSoonText'),
+                    text=bui.Lstr(resource=f'{self._r}.comingSoonText'),
                     maxwidth=self._scroll_width * 0.9,
                 )
 
