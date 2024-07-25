@@ -80,6 +80,11 @@ TextGraphics::TextGraphics() {
             g.y_size *= 0.55f;
           }
         }
+        // Special handling of tokens icon.
+        if (index == 29) {
+          extra_advance += 0.12f;
+        }
+
         // Special case for v2 logo.
         if (index == 99) {
           g.pen_offset_y += 0.25f;

@@ -779,3 +779,31 @@ class GetTokensWindow(bui.Window):
 
     def _on_learn_more_press(self, url: str) -> None:
         bui.open_url(url)
+
+
+def show_get_tokens_prompt() -> None:
+    """Show a 'not enough tokens' prompt with an option to purchase more.
+
+    Note that the purchase option may not always be available
+    depending on the build of the game.
+    """
+    from bauiv1lib.confirm import ConfirmWindow
+
+    assert bui.app.classic is not None
+
+    # Currently always allowing token purchases.
+    if bool(True):
+        ConfirmWindow(
+            bui.Lstr(resource='tokens.notEnoughTokensText'),
+            GetTokensWindow,
+            ok_text=bui.Lstr(resource='tokens.getTokensText'),
+            width=460,
+            height=130,
+        )
+    else:
+        ConfirmWindow(
+            bui.Lstr(resource='tokens.notEnoughTokensText'),
+            cancel_button=False,
+            width=460,
+            height=130,
+        )

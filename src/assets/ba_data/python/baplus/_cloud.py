@@ -109,6 +109,15 @@ class CloudSubsystem(babase.AppSubsystem):
         ],
     ) -> None: ...
 
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.cloud.BSPrivatePartyMessage,
+        on_response: Callable[
+            [bacommon.cloud.BSPrivatePartyResponse | Exception], None
+        ],
+    ) -> None: ...
+
     def send_message_cb(
         self,
         msg: Message,

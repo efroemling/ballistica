@@ -64,6 +64,7 @@ class PrivateHostingState:
     unavailable_error: str | None = None
     party_code: str | None = None
     tickets_to_host_now: int = 0
+    tokens_to_host_now: int = 0
     minutes_until_free_host: float | None = None
     free_host_minutes_remaining: float | None = None
 

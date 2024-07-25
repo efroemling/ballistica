@@ -288,3 +288,27 @@ class StoreQueryResponse(Response):
 
     available_purchases: Annotated[list[Purchase], IOAttrs('p')]
     token_info_url: Annotated[str, IOAttrs('tiu')]
+
+
+@ioprepped
+@dataclass
+class BSPrivatePartyMessage(Message):
+    """Message asking about info we need for private-party UI."""
+
+    need_datacode: Annotated[bool, IOAttrs('d')]
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [BSPrivatePartyResponse]
+
+
+@ioprepped
+@dataclass
+class BSPrivatePartyResponse(Response):
+    """Here's that private party UI info you asked for, boss."""
+
+    success: Annotated[bool, IOAttrs('s')]
+    tokens: Annotated[int, IOAttrs('t')]
+    gold_pass: Annotated[bool, IOAttrs('g')]
+    datacode: Annotated[str | None, IOAttrs('d')]
