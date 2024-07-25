@@ -3,6 +3,7 @@
 """Utility snippets applying to generic Python code."""
 from __future__ import annotations
 
+import sys
 import types
 import weakref
 import random
@@ -79,6 +80,8 @@ def getclass(name: str, subclassof: type[T]) -> type[T]:
     splits = name.split('.')
     modulename = '.'.join(splits[:-1])
     classname = splits[-1]
+    if modulename in sys.stdlib_module_names:
+        raise Exception(f'{modulename} is an inbuilt module.')
     module = importlib.import_module(modulename)
     cls: type = getattr(module, classname)
 
