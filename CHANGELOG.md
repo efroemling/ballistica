@@ -1,3 +1,5 @@
+### 1.7.37 (build 21945, api 8, 2024-07-27)
+
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these
   can be used for is storage packs on ballistica.net, but this will expand to
