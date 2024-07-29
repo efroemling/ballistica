@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """UI functionality for advanced settings."""
 
 from __future__ import annotations
@@ -90,7 +91,7 @@ class AdvancedSettingsWindow(bui.Window):
         self._scroll_width = self._width - (100 + 2 * x_inset)
         self._scroll_height = self._height - 115.0
         self._sub_width = self._scroll_width * 0.95
-        self._sub_height = 870.0
+        self._sub_height = 912.0
 
         if self._show_always_use_internal_keyboard:
             self._sub_height += 62
@@ -461,6 +462,16 @@ class AdvancedSettingsWindow(bui.Window):
             size=(self._sub_width - 100, 30),
             configkey='Show Ping',
             displayname=bui.Lstr(resource=f'{self._r}.showInGamePingText'),
+            scale=1.0,
+            maxwidth=430,
+        )
+
+        v -= 42
+        self._auto_update_check_box = ConfigCheckBox(
+            parent=self._subcontainer,
+            position=(50, v),
+            size=(self._sub_width - 100, 30),
+            configkey='Automatically Check for Updates',
             scale=1.0,
             maxwidth=430,
         )
@@ -844,6 +855,8 @@ class AdvancedSettingsWindow(bui.Window):
                     sel_name = 'ShowDeprecatedLoginTypes'
                 elif sel == self._show_game_ping_check_box.widget:
                     sel_name = 'ShowPing'
+                elif sel == self._auto_update_check_box.widget:
+                    sel_name = 'AutoUpdateCheck'
                 elif sel == self._disable_camera_shake_check_box.widget:
                     sel_name = 'DisableCameraShake'
                 elif (
@@ -888,6 +901,7 @@ class AdvancedSettingsWindow(bui.Window):
 
     def _restore_state(self) -> None:
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
         try:
             assert bui.app.classic is not None
             sel_name = bui.app.ui_v1.window_states.get(type(self), {}).get(
@@ -915,6 +929,8 @@ class AdvancedSettingsWindow(bui.Window):
                     sel = self._show_deprecated_login_types_check_box.widget
                 elif sel_name == 'ShowPing':
                     sel = self._show_game_ping_check_box.widget
+                elif sel_name == 'AutoUpdateCheck':
+                    sel = self._auto_update_check_box.widget
                 elif sel_name == 'DisableCameraShake':
                     sel = self._disable_camera_shake_check_box.widget
                 elif (
