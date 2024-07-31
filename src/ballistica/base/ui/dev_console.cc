@@ -1444,6 +1444,20 @@ auto DevConsole::PasteFromClipboard() -> bool {
       if (g_base->ClipboardIsSupported()) {
         if (g_base->ClipboardHasText()) {
           auto text = g_base->ClipboardGetText();
+
+          // Strip trailing newlines (if we have a single line ending with a
+          // newline we want to allow that).
+
+          // Find the position of the last character that is not a newline.
+          size_t endpos = text.find_last_not_of("\n\r");
+          if (std::string::npos != endpos) {
+            // Erase all characters after the last non-newline character.
+            text.erase(endpos + 1);
+          } else {
+            // The string is entirely newlines.
+            text.clear();
+          }
+
           if (strstr(text.c_str(), "\n") || strstr(text.c_str(), "\r")) {
             g_base->audio->SafePlaySysSound(SysSoundID::kErrorBeep);
             ScreenMessage("Can only paste single lines of text.",

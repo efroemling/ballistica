@@ -1,4 +1,4 @@
-### 1.7.37 (build 21947, api 8, 2024-07-31)
+### 1.7.37 (build 21949, api 8, 2024-07-31)
 - Finally got things updated so language testing works again, and made it a bit
   spiffier while at it. You now simply point the game at your test language and
   it will update dynamically as you make edits; no need to download any files.
@@ -11,6 +11,10 @@
   doing more heavy downloading with Asset Packages coming online so its time to
   upgrade to a more modern web client library than Python's basic built in
   urllib stuff.
+- Pasting a single line of text followed by newlines now works. Previously it
+  would complain that multiple lines of text aren't supported, but now it
+  just ignores the trailing newlines.
+
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these
   can be used for is storage packs on ballistica.net, but this will expand to
