@@ -96,13 +96,9 @@ class MasterServerV1CallThread(threading.Thread):
             self._data = babase.utf8_all(self._data)
             babase.set_thread_name('BA_ServerCallThread')
             if self._request_type == 'get':
-                url = (
-                    plus.get_master_server_address()
-                    + '/'
-                    + self._request
-                    + '?'
-                    + urllib.parse.urlencode(self._data)
-                )
+                msaddr = plus.get_master_server_address()
+                dataenc = urllib.parse.urlencode(self._data)
+                url = f'{msaddr}/{self._request}?{dataenc}'
                 assert url is not None
                 response = urllib.request.urlopen(
                     urllib.request.Request(
@@ -114,7 +110,7 @@ class MasterServerV1CallThread(threading.Thread):
                     timeout=babase.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )
             elif self._request_type == 'post':
-                url = plus.get_master_server_address() + '/' + self._request
+                url = f'{plus.get_master_server_address()}/{self._request}'
                 assert url is not None
                 response = urllib.request.urlopen(
                     urllib.request.Request(

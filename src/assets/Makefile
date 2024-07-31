@@ -2706,6 +2706,40 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__main__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/core.py \
   $(BUILD_DIR)/ba_data/python-site-packages/typing_extensions.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/_base_connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/_collections.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/_request_methods.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/_version.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/connectionpool.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/fetch.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/request.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/response.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/pyopenssl.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/socks.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/exceptions.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/fields.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/filepost.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/poolmanager.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/response.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/proxy.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/request.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/response.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/retry.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/ssl_.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/ssl_match_hostname.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/ssltransport.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/timeout.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/url.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/util.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/wait.py \
   $(BUILD_DIR)/sphinx/static/conf.py
 
 SCRIPT_TARGETS_PYC_PRIVATE_COMMON = \
@@ -2713,6 +2747,40 @@ SCRIPT_TARGETS_PYC_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__pycache__/__main__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__pycache__/core.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/__pycache__/typing_extensions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/_base_connection.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/_collections.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/_request_methods.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/_version.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/connection.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/connectionpool.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__pycache__/connection.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__pycache__/fetch.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__pycache__/request.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__pycache__/response.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/__pycache__/pyopenssl.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/__pycache__/socks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/exceptions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/fields.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/filepost.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/http2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/poolmanager.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/response.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/connection.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/proxy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/request.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/response.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/retry.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/ssl_.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/ssl_match_hostname.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/ssltransport.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/timeout.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/url.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/util.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/wait.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/sphinx/static/__pycache__/conf.cpython-312.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.

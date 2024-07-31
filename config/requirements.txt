@@ -2,7 +2,7 @@ cpplint==1.6.1
 dmgbuild==1.6.1
 filelock==3.15.4
 furo==2024.7.18
-mypy==1.11.0
+mypy==1.11.1
 pbxproj==4.2.0
 pdoc==14.6.0
 pur==7.3.2
@@ -19,3 +19,4 @@ types-certifi==2021.10.8.3
 types-filelock==3.2.7
 types-requests==2.32.0.20240712
 typing_extensions==4.12.2
+urllib3==2.2.2

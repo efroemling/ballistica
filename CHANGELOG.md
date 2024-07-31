@@ -1,5 +1,16 @@
-### 1.7.37 (build 21945, api 8, 2024-07-27)
-
+### 1.7.37 (build 21947, api 8, 2024-07-31)
+- Finally got things updated so language testing works again, and made it a bit
+  spiffier while at it. You now simply point the game at your test language and
+  it will update dynamically as you make edits; no need to download any files.
+  Example: if you are editing PirateSpeak, you should see an id such as
+  'PirateSpeak_2248' in the website url. You can then go to the game and run
+  `import babase; babase.app.lang.testlanguage('PirateSpeak_2248')` and you
+  should instantly see some lovely pirate-speak. Also, any changes you make on
+  the website should show up in the game within a few seconds. Enjoy!
+- Added `urllib3` to our bundled third party Python modules. The engine will be
+  doing more heavy downloading with Asset Packages coming online so its time to
+  upgrade to a more modern web client library than Python's basic built in
+  urllib stuff.
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these
   can be used for is storage packs on ballistica.net, but this will expand to
