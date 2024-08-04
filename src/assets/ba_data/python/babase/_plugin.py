@@ -171,6 +171,10 @@ class PluginSubsystem(AppSubsystem):
 
                 _error.print_exception('Error in plugin on_app_running()')
 
+        # This seems illegal
+        assert _babase.app.plus is not None
+        _babase.app.plus.rpc_thread.start()
+
     @override
     def on_app_suspend(self) -> None:
         for plugin in self.active_plugins:

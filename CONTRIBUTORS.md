@@ -61,6 +61,7 @@
 
 ### brostos
 - Added support for joining using ipv6 address
+- Made the original Discord rich presence plugin
 
 ### Loup Garou
 - Added sphinx documentation generation
