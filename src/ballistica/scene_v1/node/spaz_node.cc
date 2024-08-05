@@ -2407,7 +2407,7 @@ void SpazNode::Step() {
       // Whether our feet are following the run ball or just hanging free.
       if (knockout_ || balance_ == 0 || frozen_) {
         // flail our legs when airborn and alive
-        if (!footing_ && balance_ == 0 && !dead_) {
+        if (!footing_ && balance_ == 0 && !dead_ && !knockout_) {
           left_leg_ik_joint_->linearStiffness = kRunJointLinearStiffness * 0.4f;
           left_leg_ik_joint_->linearDamping = kRunJointLinearDamping * 0.2f;
           left_leg_ik_joint_->angularStiffness =
@@ -2812,7 +2812,7 @@ void SpazNode::Step() {
               jf->anchor1[2] = 0.8f;
               right_arm_ik_joint_->linearStiffness = 10.0f;
               right_arm_ik_joint_->linearDamping = 0.1f;
-            } else if (!footing_ && balance_ == 0 && !dead_) {
+            } else if (!footing_ && balance_ == 0 && !dead_ && !knockout_) {
               // Wave arms when airborn.
               float wave_amt = static_cast<float>(scenetime) * -0.018f;
 
