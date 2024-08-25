@@ -154,11 +154,11 @@ def on_main_thread_start_app() -> None:
     # error only started showing up once I moved Python init to the main
     # thread; previously the various asyncio bg thread loops were
     # working fine (maybe something caused them to default to selector
-    # in that case?..
-    if sys.platform == 'win32':
-        import asyncio
+    # # in that case?..
+    # if sys.platform == 'win32':
+    #     import asyncio
 
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    #     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
 def on_app_state_initing() -> None:
