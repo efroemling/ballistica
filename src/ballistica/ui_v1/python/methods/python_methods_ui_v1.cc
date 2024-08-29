@@ -7,11 +7,11 @@
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_mesh.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_sound.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_texture.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
-#include "ballistica/ui_v1/support/root_ui.h"
 #include "ballistica/ui_v1/widget/button_widget.h"
 #include "ballistica/ui_v1/widget/check_box_widget.h"
 #include "ballistica/ui_v1/widget/column_widget.h"
@@ -1324,16 +1324,24 @@ static auto PyContainerWidget(PyObject* self, PyObject* args,
       val = Widget::ToolbarVisibility::kMenuMinimal;
     } else if (sval == "menu_minimal_no_back") {
       val = Widget::ToolbarVisibility::kMenuMinimalNoBack;
+    } else if (sval == "menu_store") {
+      val = Widget::ToolbarVisibility::kMenuStore;
+    } else if (sval == "menu_store_no_back") {
+      val = Widget::ToolbarVisibility::kMenuStoreNoBack;
+    } else if (sval == "menu_in_game") {
+      val = Widget::ToolbarVisibility::kMenuInGame;
+    } else if (sval == "menu_tokens") {
+      val = Widget::ToolbarVisibility::kMenuTokens;
     } else if (sval == "menu_full") {
       val = Widget::ToolbarVisibility::kMenuFull;
-    } else if (sval == "menu_currency") {
-      val = Widget::ToolbarVisibility::kMenuCurrency;
-    } else if (sval == "menu_full_root") {
-      val = Widget::ToolbarVisibility::kMenuFullRoot;
+    } else if (sval == "menu_full_no_back") {
+      val = Widget::ToolbarVisibility::kMenuFullNoBack;
     } else if (sval == "in_game") {
       val = Widget::ToolbarVisibility::kInGame;
     } else if (sval == "inherit") {
       val = Widget::ToolbarVisibility::kInherit;
+    } else if (sval == "get_tokens") {
+      val = Widget::ToolbarVisibility::kGetTokens;
     } else {
       throw Exception("Invalid toolbar_visibility: '" + sval + "'.",
                       PyExcType::kValue);
@@ -1384,7 +1392,17 @@ static PyMethodDef PyContainerWidgetDef = {
     "  always_highlight: bool | None = None,\n"
     "  selectable: bool | None = None,\n"
     "  scale_origin_stack_offset: Sequence[float] | None = None,\n"
-    "  toolbar_visibility: str | None = None,\n"
+    "  toolbar_visibility: Literal['menu_minimal',\n"
+    "                              'menu_minimal_no_back',\n"
+    "                              'menu_full',\n"
+    "                              'menu_full_no_back',\n"
+    "                              'menu_store',\n"
+    "                              'menu_store_no_back',\n"
+    "                              'menu_in_game',\n"
+    "                              'menu_tokens',\n"
+    "                              'get_tokens',\n"
+    "                              'inherit',\n"
+    "                             ] | None = None,\n"
     "  on_select_call: Callable[[], None] | None = None,\n"
     "  claim_outside_clicks: bool | None = None,\n"
     "  claims_up_down: bool | None = None) -> bauiv1.Widget\n"
@@ -2339,9 +2357,10 @@ static auto PyWidgetCall(PyObject* self, PyObject* args,
   if (edit_obj != Py_None) {
     widget = UIV1Python::GetPyWidget(edit_obj);
   }
-  if (!widget)
+  if (!widget) {
     throw Exception("Invalid or nonexistent widget passed.",
                     PyExcType::kWidgetNotFound);
+  }
 
   if (down_widget_obj != Py_None) {
     Widget* down_widget = UIV1Python::GetPyWidget(down_widget_obj);
@@ -2399,7 +2418,7 @@ static PyMethodDef PyWidgetDef = {
     (PyCFunction)PyWidgetCall,     // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "widget(edit: bauiv1.Widget | None = None,\n"
+    "widget(edit: bauiv1.Widget,\n"
     "  up_widget: bauiv1.Widget | None = None,\n"
     "  down_widget: bauiv1.Widget | None = None,\n"
     "  left_widget: bauiv1.Widget | None = None,\n"
@@ -2430,8 +2449,15 @@ auto PyUIBounds(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   assert(g_base->graphics);
   // Note: to be safe, we return our min guaranteed screen bounds; not our
   // current (which can be bigger).
-  float x = 0.5f * kBaseVirtualResX;
-  float virtual_res_y = kBaseVirtualResY;
+  float x, virtual_res_y;
+
+  if (g_base->ui->scale() == UIScale::kSmall) {
+    x = 0.5f * kBaseVirtualResSmallX;
+    virtual_res_y = kBaseVirtualResSmallY;
+  } else {
+    x = 0.5f * kBaseVirtualResX;
+    virtual_res_y = kBaseVirtualResY;
+  }
   float y = 0.5f * virtual_res_y;
   return Py_BuildValue("(ffff)", -x, x, -y, y);
   BA_PYTHON_CATCH;
@@ -2453,41 +2479,6 @@ static PyMethodDef PyUIBoundsDef = {
     "center remains onscreen.",
 };
 
-// --------------------- set_party_icon_always_visible -------------------------
-
-static auto PySetPartyIconAlwaysVisible(PyObject* self, PyObject* args,
-                                        PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-
-  int value;
-  static const char* kwlist[] = {"value", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
-                                   const_cast<char**>(kwlist), &value)) {
-    return nullptr;
-  }
-  BA_PRECONDITION(g_base->InLogicThread());
-  assert(g_base);
-  assert(g_ui_v1);
-  auto* root_ui = g_ui_v1->root_ui();
-  if (root_ui == nullptr) {
-    throw Exception("ui-v1 root ui not found.");
-  }
-
-  root_ui->set_always_draw_party_icon(static_cast<bool>(value));
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PySetPartyIconAlwaysVisibleDef = {
-    "set_party_icon_always_visible",           // name
-    (PyCFunction)PySetPartyIconAlwaysVisible,  // method
-    METH_VARARGS | METH_KEYWORDS,              // flags
-
-    "set_party_icon_always_visible(value: bool) -> None\n"
-    "\n"
-    "(internal)",
-};
-
 // ------------------------ set_party_window_open ------------------------------
 
 static auto PySetPartyWindowOpen(PyObject* self, PyObject* args,
@@ -2502,12 +2493,13 @@ static auto PySetPartyWindowOpen(PyObject* self, PyObject* args,
   BA_PRECONDITION(g_base->InLogicThread());
   assert(g_base->input);
   assert(g_ui_v1);
-  auto* root_ui = g_ui_v1->root_ui();
-  if (root_ui == nullptr) {
-    throw Exception("ui-v1 root ui not found.");
-  }
+  printf("FIXME SET PARTY WINDOW OPEN\n");
+  // auto* root_ui = g_ui_v1->root_ui();
+  // if (root_ui == nullptr) {
+  //   throw Exception("ui-v1 root ui not found.");
+  // }
 
-  root_ui->set_party_window_open(static_cast<bool>(value));
+  // root_ui->set_party_window_open(static_cast<bool>(value));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -2552,33 +2544,44 @@ static PyMethodDef PyGetSpecialWidgetDef = {
     (PyCFunction)PyGetSpecialWidget,  // method
     METH_VARARGS | METH_KEYWORDS,     // flags
 
-    "get_special_widget(name: str) -> bauiv1.Widget\n"
+    "get_special_widget(name:\n"
+    "    Literal["
+    "        'squad_button',"
+    "        'back_button',"
+    "        'account_button',"
+    "        'achievements_button',"
+    "        'settings_button',"
+    "        'inbox_button',"
+    "        'store_button',"
+    "        'get_tokens_button',"
+    "        'inventory_button',"
+    "        'tickets_meter',"
+    "        'tokens_meter',"
+    "        'trophy_meter',"
+    "        'level_meter',"
+    "        'overlay_stack',"
+    "    ]) -> bauiv1.Widget\n"
     "\n"
     "(internal)",
 };
 
-// ------------------------------ back_press -----------------------------------
+// -------------------------- root_ui_back_press -------------------------------
 
-static auto PyBackPress(PyObject* self, PyObject* args,
-                        PyObject* keywds) -> PyObject* {
+static auto PyRootUIBackPress(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-
-  static const char* kwlist[] = {nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
-                                   const_cast<char**>(kwlist))) {
-    return nullptr;
-  }
-  g_base->ui->PushBackButtonCall(nullptr);
+  BA_PRECONDITION(g_base->InLogicThread());
+  RootWidget* root_widget = g_ui_v1->root_widget();
+  BA_PRECONDITION(root_widget);
+  root_widget->BackPress();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyBackPressDef = {
-    "back_press",                  // name
-    (PyCFunction)PyBackPress,      // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "back_press() -> None\n"
+static PyMethodDef PyRootUIBackPressDef = {
+    "root_ui_back_press",            // name
+    (PyCFunction)PyRootUIBackPress,  // method
+    METH_NOARGS,                     // flags
+    "root_ui_back_press() -> None\n"
     "\n"
     "(internal)",
 };
@@ -2589,8 +2592,11 @@ static auto PyIsPartyIconVisible(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   bool party_button_active = (g_base->app_mode()->HasConnectionToClients()
-                              || g_base->app_mode()->HasConnectionToHost()
-                              || g_ui_v1->root_ui()->always_draw_party_icon());
+                              || g_base->app_mode()->HasConnectionToHost());
+  // bool party_button_active = (g_base->app_mode()->HasConnectionToClients()
+  //                             || g_base->app_mode()->HasConnectionToHost()
+  //                             ||
+  //                             g_ui_v1->root_ui()->always_draw_party_icon());
   if (party_button_active) {
     Py_RETURN_TRUE;
   } else {
@@ -2605,28 +2611,6 @@ static PyMethodDef PyIsPartyIconVisibleDef = {
     METH_NOARGS,                        // flags
 
     "is_party_icon_visible() -> bool\n"
-    "\n"
-    "(internal)",
-};
-
-// ----------------------------- toolbar_test ----------------------------------
-
-static auto PyToolbarTest(PyObject* self) -> PyObject* {
-  BA_PYTHON_TRY;
-  if (BA_UI_V1_TOOLBAR_TEST) {
-    Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
-  }
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyToolbarTestDef = {
-    "toolbar_test",              // name
-    (PyCFunction)PyToolbarTest,  // method
-    METH_NOARGS,                 // flags
-
-    "toolbar_test() -> bool\n"
     "\n"
     "(internal)",
 };
@@ -2661,10 +2645,9 @@ static PyMethodDef PyIsAvailableDef = {
 auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
   return {
       PyIsPartyIconVisibleDef,
-      PyBackPressDef,
+      PyRootUIBackPressDef,
       PyGetSpecialWidgetDef,
       PySetPartyWindowOpenDef,
-      PySetPartyIconAlwaysVisibleDef,
       PyButtonWidgetDef,
       PyCheckBoxWidgetDef,
       PyImageWidgetDef,
@@ -2680,7 +2663,6 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyGetTextureDef,
       PyGetQRCodeTextureDef,
       PyGetMeshDef,
-      PyToolbarTestDef,
       PyIsAvailableDef,
   };
 }

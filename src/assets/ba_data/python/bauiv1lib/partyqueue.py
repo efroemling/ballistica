@@ -223,7 +223,6 @@ class PartyQueueWindow(bui.Window):
 
     def __init__(self, queue_id: str, address: str, port: int):
         assert bui.app.classic is not None
-        bui.app.ui_v1.have_party_queue_window = True
         self._address = address
         self._port = port
         self._queue_id = queue_id
@@ -329,8 +328,6 @@ class PartyQueueWindow(bui.Window):
             plus = bui.app.plus
             assert plus is not None
 
-            assert bui.app.classic is not None
-            bui.app.ui_v1.have_party_queue_window = False
             plus.add_v1_account_transaction(
                 {'type': 'PARTY_QUEUE_REMOVE', 'q': self._queue_id}
             )
@@ -564,7 +561,8 @@ class PartyQueueWindow(bui.Window):
     def on_boost_press(self) -> None:
         """Boost was pressed."""
         from bauiv1lib import account
-        from bauiv1lib import gettickets
+
+        # from bauiv1lib import gettickets
 
         plus = bui.app.plus
         assert plus is not None
@@ -575,7 +573,7 @@ class PartyQueueWindow(bui.Window):
 
         if plus.get_v1_account_ticket_count() < self._boost_tickets:
             bui.getsound('error').play()
-            gettickets.show_get_tickets_prompt()
+            # gettickets.show_get_tickets_prompt()
             return
 
         bui.getsound('laserReverse').play()

@@ -5,12 +5,12 @@
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/scene_v1/assets/scene_data_asset.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/support/host_activity.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
@@ -26,7 +26,7 @@ HostSession::HostSession(PyObject* session_type_obj)
   assert(g_base->InLogicThread());
   assert(session_type_obj != nullptr);
 
-  auto* appmode = SceneV1AppMode::GetActiveOrFatal();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
   base::ScopedSetContext ssc(this);
 
   // FIXME: Should be an attr of the session class, not hard-coded.
@@ -61,7 +61,7 @@ HostSession::HostSession(PyObject* session_type_obj)
   }
 
   // Fade in from our current blackness.
-  g_base->graphics->FadeScreen(true, 250, nullptr);
+  // g_base->graphics->FadeScreen(true, 250, nullptr);
 
   // Start by showing the progress bar instead of hitching.
   g_base->graphics->EnableProgressBar(true);
@@ -209,7 +209,7 @@ auto HostSession::GetForegroundContext() -> base::ContextRef {
 
 void HostSession::RequestPlayer(SceneV1InputDeviceDelegate* device) {
   assert(g_base->InLogicThread());
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   // Ignore if we have no Python session Obj.
   if (!GetSessionPyObj()) {
@@ -254,7 +254,7 @@ void HostSession::RequestPlayer(SceneV1InputDeviceDelegate* device) {
 
 void HostSession::RemovePlayer(Player* player) {
   assert(player);
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   // If we find the player amongst our ranks, remove them.
   // Note that it is expected to get redundant calls for this that
@@ -330,7 +330,7 @@ void HostSession::SetForegroundHostActivity(HostActivity* a) {
   assert(a);
   assert(g_base->InLogicThread());
 
-  auto* appmode = SceneV1AppMode::GetActiveOrFatal();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
 
   if (shutting_down_) {
     Log(LogLevel::kWarning,

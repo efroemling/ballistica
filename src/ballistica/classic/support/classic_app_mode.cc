@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
@@ -25,7 +25,7 @@
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/ui_v1/ui_v1.h"
 
-namespace ballistica::scene_v1 {
+namespace ballistica::classic {
 
 const int kMaxChatMessages = 40;
 
@@ -44,53 +44,49 @@ const int kKickVoteFailRetryDelayInitiatorExtra = 120000;
 // to kick).
 const int kKickVoteMinimumClients = (g_buildconfig.headless_build() ? 3 : 4);
 
-struct SceneV1AppMode::ScanResultsEntryPriv_ {
+struct ClassicAppMode::ScanResultsEntryPriv_ {
   scene_v1::PlayerSpec player_spec;
   std::string address;
   uint32_t last_query_id{};
   millisecs_t last_contact_time{};
 };
 
-base::InputDeviceDelegate* SceneV1AppMode::CreateInputDeviceDelegate(
+base::InputDeviceDelegate* ClassicAppMode::CreateInputDeviceDelegate(
     base::InputDevice* device) {
   // We create a special delegate for our special ClientInputDevice types;
   // everything else gets our regular delegate.
-  if (auto* client_device = dynamic_cast<ClientInputDevice*>(device)) {
-    auto* obj = Object::NewDeferred<ClientInputDeviceDelegate>();
+  if (auto* client_device =
+          dynamic_cast<scene_v1::ClientInputDevice*>(device)) {
+    auto* obj = Object::NewDeferred<scene_v1::ClientInputDeviceDelegate>();
     obj->StoreClientDeviceInfo(client_device);
     return obj;
   }
-  return Object::NewDeferred<SceneV1InputDeviceDelegate>();
+  return Object::NewDeferred<scene_v1::SceneV1InputDeviceDelegate>();
 }
 
 // Go with 5 minute ban.
 const int kKickBanSeconds = 5 * 60;
 
-bool SceneV1AppMode::InClassicMainMenuSession() const {
-  HostSession* hostsession =
-      ContextRefSceneV1::FromAppForegroundContext().GetHostSession();
+bool ClassicAppMode::InClassicMainMenuSession() const {
+  scene_v1::HostSession* hostsession =
+      scene_v1::ContextRefSceneV1::FromAppForegroundContext().GetHostSession();
   return (hostsession && hostsession->is_main_menu());
 }
 
-static SceneV1AppMode* g_scene_v1_app_mode{};
+static ClassicAppMode* g_scene_v1_app_mode{};
 
-void SceneV1AppMode::OnActivate() {
+void ClassicAppMode::OnActivate() {
   assert(g_base->InLogicThread());
 
   // Make sure we pull this only once when we are first active.
   if (host_protocol_version_ == -1) {
-    host_protocol_version_ =
-        std::clamp(g_base->app_config->Resolve(
-                       base::AppConfig::IntID::kSceneV1HostProtocol),
-                   kProtocolVersionHostMin, kProtocolVersionMax);
+    host_protocol_version_ = std::clamp(
+        g_base->app_config->Resolve(
+            base::AppConfig::IntID::kSceneV1HostProtocol),
+        scene_v1::kProtocolVersionHostMin, scene_v1::kProtocolVersionMax);
   }
 
   Reset_();
-
-  // We use UIV1.
-  if (!g_core->HeadlessMode()) {
-    g_base->ui->set_ui_delegate(ui_v1::UIV1FeatureSet::Import());
-  }
 
   // To set initial states, explicitly fire some of our 'On-Foo-Changed'
   // callbacks.
@@ -98,28 +94,56 @@ void SceneV1AppMode::OnActivate() {
   LanguageChanged();
 }
 
-void SceneV1AppMode::OnAppStart() { assert(g_base->InLogicThread()); }
+void ClassicAppMode::OnAppStart() { assert(g_base->InLogicThread()); }
 
-void SceneV1AppMode::OnAppShutdown() {
+void ClassicAppMode::OnAppShutdown() {
   assert(g_base->InLogicThread());
   connections_->Shutdown();
 }
 
-void SceneV1AppMode::OnAppSuspend() {
+void ClassicAppMode::OnAppSuspend() {
   assert(g_base->InLogicThread());
 
   // App is going into background or whatnot. Kill any sockets/etc.
   EndHostScanning();
 }
 
-void SceneV1AppMode::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
+void ClassicAppMode::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
+
+// Reset everything to a blank slate.
+void ClassicAppMode::Reset_() {
+  assert(g_base);
+  assert(g_base->InLogicThread());
+
+  // Tear down any existing session.
+  foreground_session_.Clear();
+  PruneSessions_();
+
+  // If all is well our sessions should all be dead at this point.
+  if (g_scene_v1->session_count != 0) {
+    Log(LogLevel::kError, "SceneV1 session count is non-zero ("
+                              + std::to_string(g_scene_v1->session_count)
+                              + ") on ClassicAppMode::Reset_().");
+  }
+
+  // Reset the engine itself to a default state.
+  g_base->Reset();
+
+  // Import UIV1 and wire it up for UI duty.
+  if (!g_core->HeadlessMode()) {
+    g_base->ui->set_ui_delegate(ui_v1::UIV1FeatureSet::Import());
+  }
+
+  // Fade in if we currently aren't.
+  g_base->graphics->FadeScreen(true, 250, nullptr);
+}
 
 // Note: for now we're making our host-scan network calls directly from the
 // logic thread. This is generally not a good idea since it appears that even
 // in non-blocking mode they're still blocking for 3-4ms sometimes. But for
 // now since this is only used minimally and only while in the UI I guess it's
 // ok.
-void SceneV1AppMode::HostScanCycle() {
+void ClassicAppMode::HostScanCycle() {
   assert(g_base->InLogicThread());
 
   // We need to create a scanner socket - an ipv4 socket we can send out
@@ -291,14 +315,14 @@ void SceneV1AppMode::HostScanCycle() {
   }
 }
 
-void SceneV1AppMode::EndHostScanning() {
+void ClassicAppMode::EndHostScanning() {
   if (scan_socket_ != -1) {
     g_core->platform->CloseSocket(scan_socket_);
     scan_socket_ = -1;
   }
 }
 
-void SceneV1AppMode::PruneScanResults_() {
+void ClassicAppMode::PruneScanResults_() {
   millisecs_t t = g_core->GetAppTimeMillisecs();
   auto i = scan_results_.begin();
   while (i != scan_results_.end()) {
@@ -311,8 +335,8 @@ void SceneV1AppMode::PruneScanResults_() {
   }
 }
 
-auto SceneV1AppMode::GetScanResults()
-    -> std::vector<SceneV1AppMode::ScanResultsEntry> {
+auto ClassicAppMode::GetScanResults()
+    -> std::vector<ClassicAppMode::ScanResultsEntry> {
   std::vector<ScanResultsEntry> results;
   results.resize(scan_results_.size());
   {
@@ -330,7 +354,7 @@ auto SceneV1AppMode::GetScanResults()
   return results;
 }
 
-auto SceneV1AppMode::GetActive() -> SceneV1AppMode* {
+auto ClassicAppMode::GetActive() -> ClassicAppMode* {
   // Note: this gets called by non-logic threads, and not
   // doing any locking here so bg thread callers should
   // keep in mind that app-mode may change under them.
@@ -342,63 +366,64 @@ auto SceneV1AppMode::GetActive() -> SceneV1AppMode* {
   return nullptr;
 }
 
-bool SceneV1AppMode::HasConnectionToHost() const {
+bool ClassicAppMode::HasConnectionToHost() const {
   return connections()->has_connection_to_host();
 }
 
-millisecs_t SceneV1AppMode::LastClientJoinTime() const {
+millisecs_t ClassicAppMode::LastClientJoinTime() const {
   return last_connection_to_client_join_time();
 }
 
-bool SceneV1AppMode::HasConnectionToClients() const {
+bool ClassicAppMode::HasConnectionToClients() const {
   return connections()->HasConnectionToClients();
 }
 
-auto SceneV1AppMode::GetActiveOrWarn() -> SceneV1AppMode* {
+auto ClassicAppMode::GetActiveOrWarn() -> ClassicAppMode* {
   auto* val{GetActive()};
   if (val == nullptr) {
     Log(LogLevel::kWarning,
-        "Attempting to access SceneAppMode while it is inactive.");
+        "Attempting to access ClassicAppMode while it is inactive.");
   }
   return val;
 }
 
-auto SceneV1AppMode::GetActiveOrThrow() -> SceneV1AppMode* {
+auto ClassicAppMode::GetActiveOrThrow() -> ClassicAppMode* {
   auto* val{GetActive()};
   if (val == nullptr) {
-    throw Exception("Attempting to access SceneAppMode while it is inactive.");
+    throw Exception(
+        "Attempting to access ClassicAppMode while it is inactive.");
   }
   return val;
 }
 
-auto SceneV1AppMode::GetActiveOrFatal() -> SceneV1AppMode* {
+auto ClassicAppMode::GetActiveOrFatal() -> ClassicAppMode* {
   auto* val{GetActive()};
   if (val == nullptr) {
-    FatalError("Attempting to access SceneAppMode while it is inactive.");
+    FatalError("Attempting to access ClassicAppMode while it is inactive.");
   }
   return val;
 }
 
-auto SceneV1AppMode::GetSingleton() -> SceneV1AppMode* {
+auto ClassicAppMode::GetSingleton() -> ClassicAppMode* {
   assert(g_base->InLogicThread());
 
   if (g_scene_v1_app_mode == nullptr) {
-    g_scene_v1_app_mode = new SceneV1AppMode();
+    g_scene_v1_app_mode = new ClassicAppMode();
   }
   return g_scene_v1_app_mode;
 }
 
-SceneV1AppMode::SceneV1AppMode()
+ClassicAppMode::ClassicAppMode()
     : game_roster_(cJSON_CreateArray()),
-      connections_(std::make_unique<ConnectionSet>()) {}
+      connections_(std::make_unique<scene_v1::ConnectionSet>()) {}
 
-void SceneV1AppMode::HandleIncomingUDPPacket(const std::vector<uint8_t>& data,
+void ClassicAppMode::HandleIncomingUDPPacket(const std::vector<uint8_t>& data,
                                              const SockAddr& addr) {
   // Just forward it along to our connection-set to handle.
   connections()->HandleIncomingUDPPacket(data, addr);
 }
 
-auto SceneV1AppMode::HandleJSONPing(const std::string& data_str)
+auto ClassicAppMode::HandleJSONPing(const std::string& data_str)
     -> std::string {
   // Note to self - this is called in a non-logic thread.
   cJSON* data = cJSON_Parse(data_str.c_str());
@@ -415,20 +440,20 @@ auto SceneV1AppMode::HandleJSONPing(const std::string& data_str)
   return buffer;
 }
 
-void SceneV1AppMode::SetGameRoster(cJSON* r) {
+void ClassicAppMode::SetGameRoster(cJSON* r) {
   if (game_roster_ != nullptr) {
     cJSON_Delete(game_roster_);
   }
   game_roster_ = r;
 }
 
-auto SceneV1AppMode::GetPartySize() const -> int {
+auto ClassicAppMode::GetPartySize() const -> int {
   assert(g_base->InLogicThread());
   assert(game_roster_ != nullptr);
   return cJSON_GetArraySize(game_roster_);
 }
 
-auto SceneV1AppMode::GetHeadlessNextDisplayTimeStep() -> microsecs_t {
+auto ClassicAppMode::GetHeadlessNextDisplayTimeStep() -> microsecs_t {
   std::optional<microsecs_t> min_time_to_next;
   for (auto&& i : sessions_) {
     if (!i.Exists()) {
@@ -447,7 +472,7 @@ auto SceneV1AppMode::GetHeadlessNextDisplayTimeStep() -> microsecs_t {
                                       : base::kHeadlessMaxDisplayTimeStep;
 }
 
-void SceneV1AppMode::StepDisplayTime() {
+void ClassicAppMode::StepDisplayTime() {
   assert(g_base->InLogicThread());
 
   auto startms{core::CorePlatform::GetCurrentMillisecs()};
@@ -529,7 +554,7 @@ void SceneV1AppMode::StepDisplayTime() {
   }
 }
 
-auto SceneV1AppMode::GetGameRosterMessage_() -> std::vector<uint8_t> {
+auto ClassicAppMode::GetGameRosterMessage_() -> std::vector<uint8_t> {
   // This message is simply a flattened json string of our roster (including
   // terminating char).
   char* s = cJSON_PrintUnformatted(game_roster_);
@@ -542,8 +567,8 @@ auto SceneV1AppMode::GetGameRosterMessage_() -> std::vector<uint8_t> {
   return msg;
 }
 
-base::ContextRef SceneV1AppMode::GetForegroundContext() {
-  Session* s = GetForegroundSession();
+base::ContextRef ClassicAppMode::GetForegroundContext() {
+  scene_v1::Session* s = GetForegroundSession();
   if (s) {
     return s->GetForegroundContext();
   } else {
@@ -551,7 +576,7 @@ base::ContextRef SceneV1AppMode::GetForegroundContext() {
   }
 }
 
-void SceneV1AppMode::UpdateGameRoster() {
+void ClassicAppMode::UpdateGameRoster() {
   assert(g_base->InLogicThread());
 
   assert(game_roster_ != nullptr);
@@ -570,14 +595,15 @@ void SceneV1AppMode::UpdateGameRoster() {
 
   bool include_self = (connections()->GetConnectedClientCount() > 0);
 
-  if (auto* hs = dynamic_cast<HostSession*>(GetForegroundSession())) {
+  if (auto* hs = dynamic_cast<scene_v1::HostSession*>(GetForegroundSession())) {
     // Add our host-y self.
     if (include_self) {
       cJSON* client_dict = cJSON_CreateObject();
       cJSON_AddItemToObject(
           client_dict, "spec",
-          cJSON_CreateString(
-              PlayerSpec::GetAccountPlayerSpec().GetSpecString().c_str()));
+          cJSON_CreateString(scene_v1::PlayerSpec::GetAccountPlayerSpec()
+                                 .GetSpecString()
+                                 .c_str()));
 
       // Add our list of local players.
       cJSON* player_array = cJSON_CreateArray();
@@ -632,10 +658,11 @@ void SceneV1AppMode::UpdateGameRoster() {
           if (p->accepted() && p->name_is_real()
               && delegate->IsRemoteClient()) {
             auto* client_delegate =
-                static_cast<ClientInputDeviceDelegate*>(delegate);
-            assert(dynamic_cast<ClientInputDeviceDelegate*>(delegate)
+                static_cast<scene_v1::ClientInputDeviceDelegate*>(delegate);
+            assert(dynamic_cast<scene_v1::ClientInputDeviceDelegate*>(delegate)
                    == client_delegate);
-            ConnectionToClient* ctc = client_delegate->connection_to_client();
+            scene_v1::ConnectionToClient* ctc =
+                client_delegate->connection_to_client();
 
             // Add some basic info for each remote player.
             if (ctc != nullptr && ctc == i.second.Get()) {
@@ -669,12 +696,12 @@ void SceneV1AppMode::UpdateGameRoster() {
   game_roster_dirty_ = true;
 }
 
-void SceneV1AppMode::UpdateKickVote_() {
+void ClassicAppMode::UpdateKickVote_() {
   if (!kick_vote_in_progress_) {
     return;
   }
-  ConnectionToClient* kick_vote_starter = kick_vote_starter_.Get();
-  ConnectionToClient* kick_vote_target = kick_vote_target_.Get();
+  scene_v1::ConnectionToClient* kick_vote_starter = kick_vote_starter_.Get();
+  scene_v1::ConnectionToClient* kick_vote_target = kick_vote_target_.Get();
 
   // If the target is no longer with us, silently end.
   if (kick_vote_target == nullptr) {
@@ -688,7 +715,8 @@ void SceneV1AppMode::UpdateKickVote_() {
 
   // Tally current votes for connected clients; if anything has changed, print
   // the update and possibly perform the kick.
-  for (ConnectionToClient* client : connections()->GetConnectionsToClients()) {
+  for (scene_v1::ConnectionToClient* client :
+       connections()->GetConnectionsToClients()) {
     ++total_client_count;
     if (client->kick_voted()) {
       if (client->kick_vote_choice()) {
@@ -716,7 +744,7 @@ void SceneV1AppMode::UpdateKickVote_() {
 
     // Disallow kicking for a while for everyone.. but ESPECIALLY so for the
     // guy who launched the failed vote.
-    for (ConnectionToClient* client :
+    for (scene_v1::ConnectionToClient* client :
          connections()->GetConnectionsToClients()) {
       millisecs_t delay = kKickVoteFailRetryDelay;
       if (client == kick_vote_starter) {
@@ -774,8 +802,8 @@ void SceneV1AppMode::UpdateKickVote_() {
   }
 }
 
-void SceneV1AppMode::StartKickVote(ConnectionToClient* starter,
-                                   ConnectionToClient* target) {
+void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
+                                   scene_v1::ConnectionToClient* target) {
   // Restrict votes per client.
   millisecs_t current_time = g_core->GetAppTimeMillisecs();
 
@@ -825,7 +853,7 @@ void SceneV1AppMode::StartKickVote(ConnectionToClient* starter,
             + "\"]]}",
         1, 0, 0);
   } else {
-    std::vector<ConnectionToClient*> connected_clients =
+    std::vector<scene_v1::ConnectionToClient*> connected_clients =
         connections()->GetConnectionsToClients();
 
     // Ok, kick off a vote.. (send the question and instructions to everyone
@@ -861,7 +889,7 @@ void SceneV1AppMode::StartKickVote(ConnectionToClient* starter,
     kick_vote_target_ = target;
 
     // Reset votes for all connected clients.
-    for (ConnectionToClient* client :
+    for (scene_v1::ConnectionToClient* client :
          connections()->GetConnectionsToClients()) {
       if (client == starter) {
         client->set_kick_voted(true);
@@ -873,19 +901,19 @@ void SceneV1AppMode::StartKickVote(ConnectionToClient* starter,
   }
 }
 
-void SceneV1AppMode::SetForegroundScene(Scene* sg) {
+void ClassicAppMode::SetForegroundScene(scene_v1::Scene* sg) {
   assert(g_base->InLogicThread());
   if (foreground_scene_.Get() != sg) {
     foreground_scene_ = sg;
 
     // If this scene has a globals-node, put it in charge of stuff.
-    if (GlobalsNode* g = sg->globals_node()) {
+    if (scene_v1::GlobalsNode* g = sg->globals_node()) {
       g->SetAsForeground();
     }
   }
 }
 
-auto SceneV1AppMode::GetNetworkDebugString() -> std::string {
+auto ClassicAppMode::GetNetworkDebugString() -> std::string {
   char net_info_str[128];
   int64_t in_count = 0;
   int64_t in_size = 0;
@@ -898,7 +926,7 @@ auto SceneV1AppMode::GetNetworkDebugString() -> std::string {
   bool show = false;
 
   // Add in/out data for any host connection.
-  if (ConnectionToHost* connection_to_host =
+  if (scene_v1::ConnectionToHost* connection_to_host =
           connections()->connection_to_host()) {
     if (connection_to_host->can_communicate()) show = true;
     in_size += connection_to_host->GetBytesInPerSecond();
@@ -912,7 +940,7 @@ auto SceneV1AppMode::GetNetworkDebugString() -> std::string {
   } else {
     int connected_count = 0;
     for (auto&& i : connections()->connections_to_clients()) {
-      ConnectionToClient* client = i.second.Get();
+      scene_v1::ConnectionToClient* client = i.second.Get();
       if (client->can_communicate()) {
         show = true;
         connected_count += 1;
@@ -942,8 +970,8 @@ auto SceneV1AppMode::GetNetworkDebugString() -> std::string {
            static_cast_check_fit<int>(resends));
   return net_info_str;
 }
-auto SceneV1AppMode::GetDisplayPing() -> std::optional<float> {
-  if (ConnectionToHost* connection_to_host =
+auto ClassicAppMode::GetDisplayPing() -> std::optional<float> {
+  if (scene_v1::ConnectionToHost* connection_to_host =
           connections()->connection_to_host()) {
     if (connection_to_host->can_communicate()) {
       return connection_to_host->current_ping();
@@ -952,7 +980,7 @@ auto SceneV1AppMode::GetDisplayPing() -> std::optional<float> {
   return {};
 }
 
-void SceneV1AppMode::CleanUpBeforeConnectingToHost() {
+void ClassicAppMode::CleanUpBeforeConnectingToHost() {
   // We can't have connected clients and a host-connection at the same time.
   // Make a minimal attempt to disconnect any client connections we have, but
   // get them off the list immediately.
@@ -965,7 +993,7 @@ void SceneV1AppMode::CleanUpBeforeConnectingToHost() {
   SetPublicPartyEnabled(false);
 }
 
-void SceneV1AppMode::LaunchHostSession(PyObject* session_type_obj,
+void ClassicAppMode::LaunchHostSession(PyObject* session_type_obj,
                                        base::BenchmarkType benchmark_type) {
   if (in_update_) {
     throw Exception(
@@ -983,10 +1011,11 @@ void SceneV1AppMode::LaunchHostSession(PyObject* session_type_obj,
   // This should kill any current session and get us back to a blank slate.
   Reset_();
 
-  Object::WeakRef<Session> old_foreground_session(foreground_session_);
+  Object::WeakRef<scene_v1::Session> old_foreground_session(
+      foreground_session_);
   try {
     // Create the new session.
-    auto s(Object::New<HostSession>(session_type_obj));
+    auto s(Object::New<scene_v1::HostSession>(session_type_obj));
     s->set_benchmark_type(benchmark_type);
     sessions_.emplace_back(s);
 
@@ -1000,7 +1029,7 @@ void SceneV1AppMode::LaunchHostSession(PyObject* session_type_obj,
   }
 }
 
-void SceneV1AppMode::LaunchReplaySession(const std::string& file_name) {
+void ClassicAppMode::LaunchReplaySession(const std::string& file_name) {
   if (in_update_)
     throw Exception(
         "can't launch a session from within a session update; use "
@@ -1015,9 +1044,11 @@ void SceneV1AppMode::LaunchReplaySession(const std::string& file_name) {
   Reset_();
 
   // Create the new session.
-  Object::WeakRef<Session> old_foreground_session(foreground_session_);
+  Object::WeakRef<scene_v1::Session> old_foreground_session(
+      foreground_session_);
   try {
-    auto s(Object::New<Session, ClientSessionReplay>(file_name));
+    auto s(Object::New<scene_v1::Session, scene_v1::ClientSessionReplay>(
+        file_name));
     sessions_.push_back(s);
 
     // It should have set itself as FG.
@@ -1030,7 +1061,7 @@ void SceneV1AppMode::LaunchReplaySession(const std::string& file_name) {
   }
 }
 
-void SceneV1AppMode::LaunchClientSession() {
+void ClassicAppMode::LaunchClientSession() {
   if (in_update_) {
     throw Exception(
         "can't launch a session from within a session update; use "
@@ -1045,9 +1076,10 @@ void SceneV1AppMode::LaunchClientSession() {
   Reset_();
 
   // Create the new session.
-  Object::WeakRef<Session> old_foreground_session(foreground_session_);
+  Object::WeakRef<scene_v1::Session> old_foreground_session(
+      foreground_session_);
   try {
-    auto s(Object::New<Session, ClientSessionNet>());
+    auto s(Object::New<scene_v1::Session, scene_v1::ClientSessionNet>());
     sessions_.push_back(s);
 
     // It should have set itself as FG.
@@ -1059,35 +1091,11 @@ void SceneV1AppMode::LaunchClientSession() {
   }
 }
 
-// Reset to a blank slate.
-void SceneV1AppMode::Reset_() {
-  assert(g_base);
-  assert(g_base->InLogicThread());
-
-  // Tear down our existing session.
-  foreground_session_.Clear();
-  PruneSessions_();
-
-  // If all is well our sessions should all be dead.
-  if (g_scene_v1->session_count != 0) {
-    Log(LogLevel::kError, "Session-count is non-zero ("
-                              + std::to_string(g_scene_v1->session_count)
-                              + ") on Logic::Reset.");
-  }
-
-  g_scene_v1->Reset();
-  g_base->ui->Reset();
-  g_base->input->Reset();
-  g_base->graphics->Reset();
-  g_base->python->Reset();
-  g_base->audio->Reset();
-}
-
-void SceneV1AppMode::ChangeGameSpeed(int offs) {
+void ClassicAppMode::ChangeGameSpeed(int offs) {
   assert(g_base->InLogicThread());
 
   // If we're in a replay session, adjust playback speed there.
-  if (dynamic_cast<ClientSessionReplay*>(GetForegroundSession())) {
+  if (dynamic_cast<scene_v1::ClientSessionReplay*>(GetForegroundSession())) {
     int old_speed = replay_speed_exponent();
     SetReplaySpeedExponent(replay_speed_exponent() + offs);
     if (old_speed != replay_speed_exponent()) {
@@ -1103,27 +1111,27 @@ void SceneV1AppMode::ChangeGameSpeed(int offs) {
     debug_speed_exponent_ += offs;
     debug_speed_mult_ = powf(2.0f, static_cast<float>(debug_speed_exponent_));
     ScreenMessage("DEBUG GAME SPEED TO " + std::to_string(debug_speed_mult_));
-    Session* s = GetForegroundSession();
+    scene_v1::Session* s = GetForegroundSession();
     if (s) {
       s->DebugSpeedMultChanged();
     }
   }
 }
 
-void SceneV1AppMode::OnScreenSizeChange() {
-  if (Session* session = GetForegroundSession()) {
+void ClassicAppMode::OnScreenSizeChange() {
+  if (scene_v1::Session* session = GetForegroundSession()) {
     session->OnScreenSizeChange();
   }
 }
 
 // Called by a newly made Session instance to set itself as the current
 // session.
-void SceneV1AppMode::SetForegroundSession(Session* s) {
+void ClassicAppMode::SetForegroundSession(scene_v1::Session* s) {
   assert(g_base->InLogicThread());
   foreground_session_ = s;
 }
 
-void SceneV1AppMode::LocalDisplayChatMessage(
+void ClassicAppMode::LocalDisplayChatMessage(
     const std::vector<uint8_t>& buffer) {
   // 1 type byte, 1 spec-len byte, 1 or more spec chars, 0 or more msg chars.
   if (buffer.size() > 3) {
@@ -1140,7 +1148,7 @@ void SceneV1AppMode::LocalDisplayChatMessage(
       b2[msg_len] = 0;
 
       std::string final_message =
-          PlayerSpec(b1.data()).GetDisplayString() + ": " + b2.data();
+          scene_v1::PlayerSpec(b1.data()).GetDisplayString() + ": " + b2.data();
 
       // Store it locally.
       chat_messages_.push_back(final_message);
@@ -1165,9 +1173,10 @@ void SceneV1AppMode::LocalDisplayChatMessage(
   }
 }
 
-void SceneV1AppMode::DoApplyAppConfig() {
+void ClassicAppMode::DoApplyAppConfig() {
   // Kick-idle-players setting (hmm is this still relevant?).
-  auto* host_session = dynamic_cast<HostSession*>(foreground_session_.Get());
+  auto* host_session =
+      dynamic_cast<scene_v1::HostSession*>(foreground_session_.Get());
   kick_idle_players_ =
       g_base->app_config->Resolve(base::AppConfig::BoolID::kKickIdlePlayers);
   if (host_session) {
@@ -1181,7 +1190,7 @@ void SceneV1AppMode::DoApplyAppConfig() {
       base::AppConfig::OptionalFloatID::kIdleExitMinutes);
 }
 
-void SceneV1AppMode::PruneSessions_() {
+void ClassicAppMode::PruneSessions_() {
   bool have_dead_session = false;
   for (auto&& i : sessions_) {
     if (i.Exists()) {
@@ -1200,7 +1209,7 @@ void SceneV1AppMode::PruneSessions_() {
     }
   }
   if (have_dead_session) {
-    std::vector<Object::Ref<Session> > live_list;
+    std::vector<Object::Ref<scene_v1::Session> > live_list;
     for (auto&& i : sessions_) {
       if (i.Exists()) {
         live_list.push_back(i);
@@ -1210,31 +1219,31 @@ void SceneV1AppMode::PruneSessions_() {
   }
 }
 
-void SceneV1AppMode::LanguageChanged() {
+void ClassicAppMode::LanguageChanged() {
   assert(g_base && g_base->InLogicThread());
-  if (Session* session = GetForegroundSession()) {
+  if (scene_v1::Session* session = GetForegroundSession()) {
     session->LanguageChanged();
   }
 }
 
-void SceneV1AppMode::SetReplaySpeedExponent(int val) {
+void ClassicAppMode::SetReplaySpeedExponent(int val) {
   replay_speed_exponent_ = std::min(3, std::max(-3, val));
   replay_speed_mult_ = powf(2.0f, static_cast<float>(replay_speed_exponent_));
 }
 
-void SceneV1AppMode::PauseReplay() { replay_paused_ = true; }
+void ClassicAppMode::PauseReplay() { replay_paused_ = true; }
 
-void SceneV1AppMode::ResumeReplay() { replay_paused_ = false; }
+void ClassicAppMode::ResumeReplay() { replay_paused_ = false; }
 
-void SceneV1AppMode::SetDebugSpeedExponent(int val) {
+void ClassicAppMode::SetDebugSpeedExponent(int val) {
   debug_speed_exponent_ = val;
   debug_speed_mult_ = powf(2.0f, static_cast<float>(debug_speed_exponent_));
 
-  Session* s = GetForegroundSession();
+  scene_v1::Session* s = GetForegroundSession();
   if (s) s->DebugSpeedMultChanged();
 }
 
-void SceneV1AppMode::SetPublicPartyEnabled(bool val) {
+void ClassicAppMode::SetPublicPartyEnabled(bool val) {
   assert(g_base->InLogicThread());
   if (val == public_party_enabled_) {
     return;
@@ -1243,7 +1252,7 @@ void SceneV1AppMode::SetPublicPartyEnabled(bool val) {
   g_base->plus()->PushPublicPartyState();
 }
 
-void SceneV1AppMode::SetPublicPartySize(int count) {
+void ClassicAppMode::SetPublicPartySize(int count) {
   assert(g_base->InLogicThread());
   if (count == public_party_size_) {
     return;
@@ -1257,7 +1266,7 @@ void SceneV1AppMode::SetPublicPartySize(int count) {
   }
 }
 
-void SceneV1AppMode::SetPublicPartyQueueEnabled(bool enabled) {
+void ClassicAppMode::SetPublicPartyQueueEnabled(bool enabled) {
   assert(g_base->InLogicThread());
   if (enabled == public_party_queue_enabled_) {
     return;
@@ -1271,7 +1280,7 @@ void SceneV1AppMode::SetPublicPartyQueueEnabled(bool enabled) {
   }
 }
 
-void SceneV1AppMode::SetPublicPartyMaxSize(int count) {
+void ClassicAppMode::SetPublicPartyMaxSize(int count) {
   assert(g_base->InLogicThread());
   if (count == public_party_max_size_) {
     return;
@@ -1285,7 +1294,7 @@ void SceneV1AppMode::SetPublicPartyMaxSize(int count) {
   }
 }
 
-void SceneV1AppMode::SetPublicPartyName(const std::string& name) {
+void ClassicAppMode::SetPublicPartyName(const std::string& name) {
   assert(g_base->InLogicThread());
   if (name == public_party_name_) {
     return;
@@ -1299,7 +1308,7 @@ void SceneV1AppMode::SetPublicPartyName(const std::string& name) {
   }
 }
 
-void SceneV1AppMode::SetPublicPartyStatsURL(const std::string& url) {
+void ClassicAppMode::SetPublicPartyStatsURL(const std::string& url) {
   assert(g_base->InLogicThread());
   if (url == public_party_stats_url_) {
     return;
@@ -1313,7 +1322,7 @@ void SceneV1AppMode::SetPublicPartyStatsURL(const std::string& url) {
   }
 }
 
-void SceneV1AppMode::SetPublicPartyPlayerCount(int count) {
+void ClassicAppMode::SetPublicPartyPlayerCount(int count) {
   assert(g_base->InLogicThread());
   if (count == public_party_player_count_) {
     return;
@@ -1327,21 +1336,21 @@ void SceneV1AppMode::SetPublicPartyPlayerCount(int count) {
   }
 }
 
-auto SceneV1AppMode::DoesWorldFillScreen() -> bool {
+auto ClassicAppMode::DoesWorldFillScreen() -> bool {
   if (auto* session = GetForegroundSession()) {
     return session->DoesFillScreen();
   }
   return false;
 }
 
-void SceneV1AppMode::DrawWorld(base::FrameDef* frame_def) {
+void ClassicAppMode::DrawWorld(base::FrameDef* frame_def) {
   if (auto* session = GetForegroundSession()) {
     session->Draw(frame_def);
     frame_def->set_benchmark_type(session->benchmark_type());
   }
 }
 
-auto SceneV1AppMode::ShouldAnnouncePartyJoinsAndLeaves() -> bool {
+auto ClassicAppMode::ShouldAnnouncePartyJoinsAndLeaves() -> bool {
   assert(g_base->InLogicThread());
 
   // At the moment we don't announce these for public internet parties.. (too
@@ -1349,7 +1358,7 @@ auto SceneV1AppMode::ShouldAnnouncePartyJoinsAndLeaves() -> bool {
   return !public_party_enabled();
 }
 
-auto SceneV1AppMode::IsPlayerBanned(const PlayerSpec& spec) -> bool {
+auto ClassicAppMode::IsPlayerBanned(const scene_v1::PlayerSpec& spec) -> bool {
   millisecs_t current_time = g_core->GetAppTimeMillisecs();
 
   // Now is a good time to prune no-longer-banned specs.
@@ -1366,11 +1375,12 @@ auto SceneV1AppMode::IsPlayerBanned(const PlayerSpec& spec) -> bool {
   return false;
 }
 
-void SceneV1AppMode::BanPlayer(const PlayerSpec& spec, millisecs_t duration) {
+void ClassicAppMode::BanPlayer(const scene_v1::PlayerSpec& spec,
+                               millisecs_t duration) {
   banned_players_.emplace_back(g_core->GetAppTimeMillisecs() + duration, spec);
 }
 
-void SceneV1AppMode::HandleQuitOnIdle_() {
+void ClassicAppMode::HandleQuitOnIdle_() {
   if (idle_exit_minutes_) {
     auto idle_seconds{static_cast<float>(g_base->input->input_idle_time())
                       * 0.001f};
@@ -1383,7 +1393,7 @@ void SceneV1AppMode::HandleQuitOnIdle_() {
   }
 }
 
-void SceneV1AppMode::SetInternalMusic(base::SoundAsset* music, float volume,
+void ClassicAppMode::SetInternalMusic(base::SoundAsset* music, float volume,
                                       bool loop) {
   // Stop any playing music.
   if (internal_music_play_id_) {
@@ -1405,7 +1415,7 @@ void SceneV1AppMode::SetInternalMusic(base::SoundAsset* music, float volume,
   }
 }
 
-void SceneV1AppMode::HandleGameQuery(const char* buffer, size_t size,
+void ClassicAppMode::HandleGameQuery(const char* buffer, size_t size,
                                      sockaddr_storage* from) {
   if (size == 5) {
     // If we're already in a party, don't advertise since they
@@ -1467,18 +1477,19 @@ void SceneV1AppMode::HandleGameQuery(const char* buffer, size_t size,
   }
 }
 
-void SceneV1AppMode::RunMainMenu() {
+void ClassicAppMode::RunMainMenu() {
   assert(g_base->InLogicThread());
   if (g_base->logic->shutting_down()) {
     return;
   }
   assert(g_base->InLogicThread());
-  PythonRef result = g_scene_v1->python->objs()
-                         .Get(SceneV1Python::ObjID::kLaunchMainMenuSessionCall)
-                         .Call();
+  PythonRef result =
+      g_scene_v1->python->objs()
+          .Get(scene_v1::SceneV1Python::ObjID::kLaunchMainMenuSessionCall)
+          .Call();
   if (!result.Exists()) {
     throw Exception("Error running scene_v1 main menu.");
   }
 }
 
-}  // namespace ballistica::scene_v1
+}  // namespace ballistica::classic

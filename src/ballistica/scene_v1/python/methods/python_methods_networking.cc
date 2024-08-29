@@ -5,12 +5,12 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
 #include "ballistica/scene_v1/connection/connection_to_host_udp.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/shared/math/vector3f.h"
 #include "ballistica/shared/networking/sockaddr.h"
 #include "ballistica/shared/python/python.h"
@@ -32,7 +32,7 @@ static auto PyGetPublicPartyEnabled(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   if (appmode->public_party_enabled()) {
     Py_RETURN_TRUE;
   } else {
@@ -62,7 +62,7 @@ static auto PySetPublicPartyEnabled(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &enable)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   appmode->SetPublicPartyEnabled(static_cast<bool>(enable));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -89,7 +89,7 @@ static auto PySetPublicPartyName(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &name_obj)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   std::string name = g_base->python->GetPyLString(name_obj);
   appmode->SetPublicPartyName(name);
   Py_RETURN_NONE;
@@ -117,7 +117,7 @@ static auto PySetPublicPartyStatsURL(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &url_obj)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   // The call expects an empty string for the no-url option.
   std::string url = (url_obj == Py_None) ? "" : Python::GetPyString(url_obj);
@@ -146,7 +146,7 @@ static auto PyGetPublicPartyMaxSize(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   return PyLong_FromLong(appmode->public_party_max_size());
   BA_PYTHON_CATCH;
 }
@@ -172,7 +172,7 @@ static auto PySetPublicPartyMaxSize(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &max_size)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   appmode->SetPublicPartyMaxSize(max_size);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -200,7 +200,7 @@ static auto PySetPublicPartyQueueEnabled(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &enabled)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   appmode->SetPublicPartyQueueEnabled(enabled);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -227,7 +227,7 @@ static auto PySetPublicPartyPublicAddressIPV4(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &address_obj)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   // The call expects an empty string for the no-url option.
 
@@ -261,7 +261,7 @@ static auto PySetPublicPartyPublicAddressIPV6(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &address_obj)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   // The call expects an empty string for the no-url option.
 
@@ -295,7 +295,7 @@ static auto PySetAuthenticateClients(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &enable)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   appmode->set_require_client_authentication(static_cast<bool>(enable));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -322,7 +322,7 @@ static auto PySetAdmins(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &admins_obj)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   auto admins = g_base->python->GetPyLStrings(admins_obj);
   std::set<std::string> adminset;
@@ -358,7 +358,7 @@ static auto PySetEnableDefaultKickVoting(PyObject* self, PyObject* args,
   }
   assert(g_base->logic);
 
-  if (auto* appmode{SceneV1AppMode::GetActiveOrWarn()}) {
+  if (auto* appmode{classic::ClassicAppMode::GetActiveOrWarn()}) {
     appmode->set_kick_voting_enabled(static_cast<bool>(enable));
   }
 
@@ -398,7 +398,7 @@ static auto PyConnectToParty(PyObject* self, PyObject* args,
   }
 
   // Error if we're not in our app-mode.
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   address = Python::GetPyString(address_obj);
 
@@ -453,7 +453,7 @@ static auto PyClientInfoQueryResponse(PyObject* self, PyObject* args,
     return nullptr;
   }
   // Error if we're not in our app-mode.
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   appmode->connections()->SetClientInfoFromMasterServer(token, response_obj);
   Py_RETURN_NONE;
@@ -484,7 +484,7 @@ static auto PyGetConnectionToHostInfo(PyObject* self, PyObject* args,
               "bascenev1.get_connection_to_host_info() is deprecated; use "
               "bascenev1.get_connection_to_host_info_2().");
   BA_PRECONDITION(g_base->InLogicThread());
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   ConnectionToHost* hc = appmode->connections()->connection_to_host();
   if (hc) {
@@ -518,7 +518,7 @@ static auto PyGetConnectionToHostInfo2(PyObject* self, PyObject* args,
     return nullptr;
   }
   BA_PRECONDITION(g_base->InLogicThread());
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   ConnectionToHost* hc = appmode->connections()->connection_to_host();
   if (hc) {
@@ -569,7 +569,7 @@ static auto PyDisconnectFromHost(PyObject* self, PyObject* args,
     return nullptr;
   }
   // Error if we're not in our app-mode.
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   appmode->connections()->PushDisconnectFromHostCall();
   Py_RETURN_NONE;
@@ -602,7 +602,7 @@ static auto PyDisconnectClient(PyObject* self, PyObject* args,
     return nullptr;
   }
   // Error if we're not in our app-mode.
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   bool kickable = appmode->connections()->DisconnectClient(client_id, ban_time);
   if (kickable) {
@@ -635,7 +635,7 @@ static auto PyGetClientPublicDeviceUUID(PyObject* self, PyObject* args,
     return nullptr;
   }
   // Error if we're not in our app-mode.
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   auto&& connection{
       appmode->connections()->connections_to_clients().find(client_id)};
@@ -731,9 +731,9 @@ static PyMethodDef PySetMasterServerSourceDef = {
 static auto PyHostScanCycle(PyObject* self, PyObject* args,
                             PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   appmode->HostScanCycle();
-  std::vector<SceneV1AppMode::ScanResultsEntry> results =
+  std::vector<classic::ClassicAppMode::ScanResultsEntry> results =
       appmode->GetScanResults();
   PyObject* py_list = PyList_New(0);
   for (auto&& i : results) {
@@ -760,7 +760,7 @@ static PyMethodDef PyHostScanCycleDef = {
 static auto PyEndHostScanning(PyObject* self, PyObject* args,
                               PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   appmode->EndHostScanning();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -825,7 +825,7 @@ static auto PyChatMessage(PyObject* self, PyObject* args,
     return nullptr;
   }
   BA_PRECONDITION(g_base->InLogicThread());
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   message = g_base->python->GetPyLString(message_obj);
   if (sender_override_obj != Py_None) {
@@ -867,7 +867,7 @@ static auto PyGetChatMessages(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   PyObject* py_list = PyList_New(0);
   for (auto&& i : appmode->chat_messages()) {
     PyList_Append(py_list, PyUnicode_FromString(i.c_str()));

@@ -41,7 +41,7 @@ def generate_app_module(
     for _fsname, fset in sorted(fsets.items()):
         if fset.has_python_app_subsystem:
             modname = fset.name_python_package
-            classname = f'{fset.name_camel}Subsystem'
+            classname = f'{fset.name_camel}AppSubsystem'
             contents += f'from {modname} import {classname}\n'
     out = replace_section(
         out,
@@ -83,7 +83,7 @@ def generate_app_module(
             fset = fsets[fsetname]
             if fset.has_python_app_subsystem:
                 modname = fset.name_python_package
-                classname = f'{fset.name_camel}Subsystem'
+                classname = f'{fset.name_camel}AppSubsystem'
                 # If they are allowed as a soft requirement, *everyone*
                 # has to access them as TYPE | None. Originally I planned to
                 # add the '| None' *only* if another present feature set was
@@ -222,6 +222,25 @@ def generate_app_module(
         out,
         f'{indent}# __DEFAULT_APP_MODE_SELECTION_BEGIN__\n',
         f'{indent}# __DEFAULT_APP_MODE_SELECTION_END__\n',
+        textwrap.indent(f'{info}\n\n{contents}\n', indent),
+        keep_markers=True,
+    )
+
+    contents = (
+        '# Return all our default_app_modes as testable.\n'
+        "# (generated from 'default_app_modes' in projectconfig).\n"
+    )
+    for mode in default_app_modes:
+        contents += f'import {_module_for_app_mode(mode)}\n'
+    contents += '\n'
+    contents += 'return [\n'
+    for mode in default_app_modes:
+        contents += f'    {mode},\n'
+    contents += ']'
+    out = replace_section(
+        out,
+        f'{indent}# __DEFAULT_TESTABLE_APP_MODES_BEGIN__\n',
+        f'{indent}# __DEFAULT_TESTABLE_APP_MODES_END__\n',
         textwrap.indent(f'{info}\n\n{contents}\n', indent),
         keep_markers=True,
     )

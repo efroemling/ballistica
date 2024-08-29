@@ -61,7 +61,7 @@ class ConfirmWindow:
             toolbar_visibility='menu_minimal_no_back',
             parent=bui.get_special_widget('overlay_stack'),
             scale=(
-                2.1
+                1.9
                 if uiscale is bui.UIScale.SMALL
                 else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
             ),

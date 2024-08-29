@@ -51,7 +51,7 @@ class DiscordWindow(bui.Window):
             )
         )
 
-        if app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
                 edit=self._root_widget, on_cancel_call=self._do_back
             )

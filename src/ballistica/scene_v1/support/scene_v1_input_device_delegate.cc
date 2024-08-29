@@ -5,13 +5,13 @@
 #include "ballistica/base/input/device/input_device.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/support/plus_soft.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/scene_v1/connection/connection_to_host.h"
 #include "ballistica/scene_v1/node/player_node.h"
 #include "ballistica/scene_v1/python/class/python_class_input_device.h"
 #include "ballistica/scene_v1/support/client_session_net.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/shared/python/python.h"
 
 namespace ballistica::scene_v1 {
@@ -37,7 +37,7 @@ std::optional<Vector3f> SceneV1InputDeviceDelegate::GetPlayerPosition() {
       player_node = host_activity->scene()->GetPlayerNode(player->id());
     }
   } else {
-    if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+    if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
       if (Scene* scene = appmode->GetForegroundScene()) {
         player_node = scene->GetPlayerNode(remote_player_id());
       }
@@ -57,7 +57,7 @@ auto SceneV1InputDeviceDelegate::AttachedToPlayer() const -> bool {
 void SceneV1InputDeviceDelegate::RequestPlayer() {
   assert(g_base->InLogicThread());
 
-  auto* appmode = SceneV1AppMode::GetActive();
+  auto* appmode = classic::ClassicAppMode::GetActive();
   BA_PRECONDITION_FATAL(appmode);
 
   if (player_.Exists()) {
@@ -192,7 +192,7 @@ void SceneV1InputDeviceDelegate::InputCommand(InputType type, float value) {
 
 void SceneV1InputDeviceDelegate::ShipBufferIfFull() {
   assert(remote_player_.Exists());
-  auto* appmode = SceneV1AppMode::GetSingleton();
+  auto* appmode = classic::ClassicAppMode::GetSingleton();
 
   ConnectionToHost* hc = remote_player_.Get();
 

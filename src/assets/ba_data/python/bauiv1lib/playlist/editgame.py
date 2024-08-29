@@ -7,7 +7,7 @@ from __future__ import annotations
 import copy
 import random
 import logging
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from typing import Any, Callable
 
 
-class PlaylistEditGameWindow(bui.Window):
+class PlaylistEditGameWindow(bui.MainWindow):
     """Window for editing a game config."""
 
     def __init__(
@@ -26,7 +26,8 @@ class PlaylistEditGameWindow(bui.Window):
         config: dict[str, Any] | None,
         completion_call: Callable[[dict[str, Any] | None], Any],
         default_selection: str | None = None,
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
         edit_info: dict[str, Any] | None = None,
     ):
         # pylint: disable=too-many-branches
@@ -64,6 +65,7 @@ class PlaylistEditGameWindow(bui.Window):
             bui.screenmessage(bui.Lstr(resource='noValidMapsErrorText'))
             raise RuntimeError('No valid maps found.')
 
+        self._config = config
         self._settings_defs = gametype.get_available_settings(sessiontype)
         self._completion_call = completion_call
 
@@ -123,16 +125,17 @@ class PlaylistEditGameWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height + top_extra),
-                transition=transition,
                 scale=(
-                    2.19
+                    1.95
                     if uiscale is bui.UIScale.SMALL
                     else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
                     (0, -17) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         btn = bui.buttonwidget(
@@ -161,13 +164,12 @@ class PlaylistEditGameWindow(bui.Window):
             label=(
                 bui.Lstr(resource=f'{self._r}.addGameText')
                 if is_add
-                else bui.Lstr(resource='doneText')
+                else bui.Lstr(resource='applyText')
             ),
         )
 
-        if bui.app.ui_v1.use_toolbars:
-            pbtn = bui.get_special_widget('party_button')
-            bui.widget(edit=add_button, right_widget=pbtn, up_widget=pbtn)
+        pbtn = bui.get_special_widget('squad_button')
+        bui.widget(edit=add_button, right_widget=pbtn, up_widget=pbtn)
 
         bui.textwidget(
             parent=self._root_widget,
@@ -509,6 +511,29 @@ class PlaylistEditGameWindow(bui.Window):
                 edit=self._subcontainer, selected_child=map_button
             )
 
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Pull things out of self here so we don't refer to self in the
+        # lambda below which would keep us alive.
+        gametype = self._gametype
+        sessiontype = self._sessiontype
+        config = self._config
+        completion_call = self._completion_call
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition,
+                origin_widget=origin_widget,
+                gametype=gametype,
+                sessiontype=sessiontype,
+                config=config,
+                completion_call=completion_call,
+            )
+        )
+
     def _get_localized_setting_name(self, name: str) -> bui.Lstr:
         return bui.Lstr(translate=('settingNames', name))
 
@@ -523,15 +548,15 @@ class PlaylistEditGameWindow(bui.Window):
         # Replace ourself with the map-select UI.
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
+        bui.app.ui_v1.set_main_window(
             PlaylistMapSelectWindow(
                 self._gametype,
                 self._sessiontype,
                 copy.deepcopy(self._getconfig()),
                 self._edit_info,
                 self._completion_call,
-            ).get_root_widget(),
-            from_window=self._root_widget,
+            ),
+            from_window=self,
         )
 
     def _choice_inc(

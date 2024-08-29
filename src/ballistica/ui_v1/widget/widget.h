@@ -17,15 +17,23 @@ namespace ballistica::ui_v1 {
 class Widget : public Object {
  public:
   // Only relevant for direct children of the main stack widget.
+  // Note that these are bitmask values so that internal root elements can
+  // specific the entire set of visibilities they apply to.
   enum class ToolbarVisibility {
-    kInherit = 0,            // for popups and whatnot - leave toolbar as-is
-    kMenuMinimal = 1,        // menu, party, and back buttons
-    kMenuMinimalNoBack = 2,  // menu and party buttons
-    kMenuCurrency = 4,       // only menu, party, and currency
-    kInGame = 8,             // only menu and party buttons
-    kMenuFull = 16,          // everything
-    kMenuFullRoot = 32       // everything minus back button plus a backing for
-                             // visibility over scenes (obsolete?..)
+    kInherit = 0,             // For popups and whatnot - leave toolbar as-is.
+    kMenuMinimal = 1,         // Squad and back buttons.
+    kMenuMinimalNoBack = 2,   // Squad button only.
+    kMenuStore = 4,           // Squad, level, and soft currency buttons.
+    kMenuStoreNoBack = 8,     // Squad, level, and soft currency buttons.
+    kMenuReduced = 16,        // Squad, account, inbox, settings, back.
+    kMenuReducedNoBack = 32,  // Squad, account, inbox, settings.
+    kMenuFull = 64,           // Everything.
+    kMenuFullNoBack = 128,    // Everything.
+    kMenuFullRoot = 256,      // Obsolete.
+    kInGame = 512,            // Menu, squad.
+    kGetTokens = 1024,        // Squad, tokens without plus.
+    kMenuInGame = 2048,       // Squad, settings.
+    kMenuTokens = 4096        // Squad, tokens.
   };
 
   Widget();
@@ -120,7 +128,12 @@ class Widget : public Object {
   // Widgets normally draw with a local depth range of 0-1. It can be useful
   // to limit drawing to a subsection of that region however (for manually
   // resolving overlap issues with widgets at the same depth, etc).
-  void SetDepthRange(float minDepth, float maxDepth);
+  void set_depth_range(float min_depth, float max_depth) {
+    assert(min_depth >= 0.0f && min_depth <= 1.0f);
+    assert(max_depth >= min_depth && max_depth <= 1.0f);
+    depth_range_min_ = min_depth;
+    depth_range_max_ = max_depth;
+  }
 
   auto depth_range_min() const -> float { return depth_range_min_; }
   auto depth_range_max() const -> float { return depth_range_max_; }

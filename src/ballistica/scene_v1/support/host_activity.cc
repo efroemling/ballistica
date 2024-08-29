@@ -3,6 +3,7 @@
 #include "ballistica/scene_v1/support/host_activity.h"
 
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/assets/scene_data_asset.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
@@ -13,7 +14,6 @@
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/scene_v1/support/player.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
 #include "ballistica/shared/generic/utils.h"
@@ -259,7 +259,7 @@ void HostActivity::UpdateStepTimerLength() {
   if (!started_) {
     return;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrFatal();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
   auto* host_session = host_session_.Get();
   if (!host_session) {
     return;
@@ -347,7 +347,7 @@ void HostActivity::SetIsForeground(bool val) {
   if (val && sg) {
     // Set it locally.
 
-    if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+    if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
       appmode->SetForegroundScene(sg);
     }
 

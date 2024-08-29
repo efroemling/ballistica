@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_BASE_APP_MODE_APP_MODE_EMPTY_H_
-#define BALLISTICA_BASE_APP_MODE_APP_MODE_EMPTY_H_
+#ifndef BALLISTICA_BASE_APP_MODE_EMPTY_APP_MODE_H_
+#define BALLISTICA_BASE_APP_MODE_EMPTY_APP_MODE_H_
 
 #include <vector>
 
@@ -13,19 +13,21 @@ namespace ballistica::base {
 /// An app-mode that doesn't do much of anything in particular. It is set as
 /// a default when starting the app, but can also be used for 'hello world'
 /// type stuff.
-class AppModeEmpty : public AppMode {
+class EmptyAppMode : public AppMode {
  public:
-  AppModeEmpty();
+  EmptyAppMode();
 
-  static auto GetSingleton() -> AppModeEmpty*;
-  void Reset();
+  static auto GetSingleton() -> EmptyAppMode*;
+  void OnActivate() override;
   void DrawWorld(base::FrameDef* frame_def) override;
 
  private:
+  void Reset_();
   Object::Ref<TextGroup> hello_text_group_;
+  int reset_count_{};
   bool hello_mode_{};
 };
 
 }  // namespace ballistica::base
 
-#endif  // BALLISTICA_BASE_APP_MODE_APP_MODE_EMPTY_H_
+#endif  // BALLISTICA_BASE_APP_MODE_EMPTY_APP_MODE_H_

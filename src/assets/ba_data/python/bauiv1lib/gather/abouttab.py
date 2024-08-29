@@ -157,6 +157,7 @@ class AboutGatherTab(GatherTab):
                 autoselect=True,
                 on_activate_call=bui.WeakCall(self._invite_to_try_press),
                 up_widget=tab_button,
+                show_buffer_top=500,
             )
             y -= invite_height
         else:

@@ -5,25 +5,27 @@
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import cast, override
 
 import bauiv1 as bui
 
 
-class DebugWindow(bui.Window):
-    """Window for debugging internal values."""
+class BenchmarksAndStressTestsWindow(bui.MainWindow):
+    """Window for launching benchmarks or stress tests."""
 
-    def __init__(self, transition: str | None = 'in_right'):
+    def __init__(
+        self,
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
+    ):
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from bauiv1lib import popup
 
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_location('Benchmarks & Stress Tests')
         uiscale = bui.app.ui_v1.uiscale
-        self._width = width = 580
+        self._width = width = 650 if uiscale is bui.UIScale.SMALL else 580
         self._height = height = (
-            350
+            330
             if uiscale is bui.UIScale.SMALL
             else 420 if uiscale is bui.UIScale.MEDIUM else 520
         )
@@ -44,28 +46,41 @@ class DebugWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),
-                transition=transition,
                 scale=(
-                    2.35
+                    2.32
                     if uiscale is bui.UIScale.SMALL
                     else 1.55 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
                     (0, -30) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
+                ),
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
-        self._done_button = btn = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(40, height - 67),
-            size=(120, 60),
-            scale=0.8,
-            autoselect=True,
-            label=bui.Lstr(resource='doneText'),
-            on_activate_call=self._done,
-        )
-        bui.containerwidget(edit=self._root_widget, cancel_button=btn)
+        if bui.app.ui_v1.uiscale is bui.UIScale.SMALL:
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self.main_window_back
+            )
+            self._done_button = bui.get_special_widget('back_button')
+        else:
+            self._done_button = btn = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(40, height - 67),
+                size=(120, 60),
+                scale=0.8,
+                autoselect=True,
+                label=bui.Lstr(resource='doneText'),
+                on_activate_call=self.main_window_back,
+            )
+            bui.containerwidget(edit=self._root_widget, cancel_button=btn)
+
         bui.textwidget(
             parent=self._root_widget,
             position=(0, height - 60),
@@ -303,6 +318,16 @@ class DebugWindow(bui.Window):
         )
         bui.widget(btn, show_buffer_bottom=50)
 
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
+
     def _stress_test_player_count_decrement(self) -> None:
         self._stress_test_player_count = max(
             1, self._stress_test_player_count - 1
@@ -370,18 +395,3 @@ class DebugWindow(bui.Window):
             round_duration=self._stress_test_round_duration,
         )
         bui.containerwidget(edit=self._root_widget, transition='out_right')
-
-    def _done(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.settings.advanced import AdvancedSettingsWindow
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            AdvancedSettingsWindow(transition='in_left').get_root_widget(),
-            from_window=self._root_widget,
-        )

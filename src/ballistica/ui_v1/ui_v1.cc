@@ -7,7 +7,6 @@
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
-#include "ballistica/ui_v1/support/root_ui.h"
 #include "ballistica/ui_v1/widget/root_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"
 
@@ -81,44 +80,29 @@ bool UIV1FeatureSet::MainMenuVisible() {
 }
 
 bool UIV1FeatureSet::PartyIconVisible() {
-  int party_size = g_base->app_mode()->GetPartySize();
-  if (party_size > 1 || g_base->app_mode()->HasConnectionToHost()
-      || root_ui()->always_draw_party_icon()) {
-    return true;
-  }
+  printf("FIXME HANDLE PARTY ICON VISIBLE\n");
   return false;
+  // int party_size = g_base->app_mode()->GetPartySize();
+  // if (party_size > 1 || g_base->app_mode()->HasConnectionToHost()
+  //     || root_ui()->always_draw_party_icon()) {
+  //   return true;
+  // }
+  // return false;
 }
 
 void UIV1FeatureSet::ActivatePartyIcon() {
-  if (auto* r = root_ui()) {
-    r->ActivatePartyIcon();
-  }
+  printf("FIXME HANDLE ACTIVATE PARTY ICON\n");
+  // if (auto* r = root_ui()) {
+  //   r->ActivatePartyIcon();
+  // }
 }
 
 bool UIV1FeatureSet::PartyWindowOpen() {
-  if (auto* r = root_ui()) {
-    return r->party_window_open();
-  }
+  printf("FIXME HANDLE PARTY WINDOW OPEN\n");
+  // if (auto* r = root_ui()) {
+  //   return r->party_window_open();
+  // }
   return false;
-}
-
-void UIV1FeatureSet::HandleLegacyRootUIMouseMotion(float x, float y) {
-  if (auto* r = root_ui()) {
-    r->HandleMouseMotion(x, y);
-  }
-}
-
-auto UIV1FeatureSet::HandleLegacyRootUIMouseDown(float x, float y) -> bool {
-  if (auto* r = root_ui()) {
-    return r->HandleMouseButtonDown(x, y);
-  }
-  return false;
-}
-
-void UIV1FeatureSet::HandleLegacyRootUIMouseUp(float x, float y) {
-  if (auto* r = root_ui()) {
-    r->HandleMouseButtonUp(x, y);
-  }
 }
 
 void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
@@ -170,18 +154,9 @@ void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
 
     g_base->graphics->set_drawing_transparent_only(false);
   }
-
-  if (auto* r = root_ui()) {
-    r->Draw(frame_def);
-  }
 }
 
-void UIV1FeatureSet::OnActivate() {
-  assert(g_base->InLogicThread());
-  if (root_ui_ == nullptr) {
-    root_ui_ = new RootUI();
-  }
-}
+void UIV1FeatureSet::OnActivate() { assert(g_base->InLogicThread()); }
 void UIV1FeatureSet::OnDeactivate() { assert(g_base->InLogicThread()); }
 
 void UIV1FeatureSet::Reset() {
@@ -221,11 +196,11 @@ void UIV1FeatureSet::AddWidget(Widget* w, ContainerWidget* parent) {
 
   BA_PRECONDITION(parent != nullptr);
 
-  // If they're adding an initial window/dialog to our screen-stack
-  // or overlay stack, send a reset-local-input message so that characters
-  // who have lost focus will not get stuck running or whatnot.
-  // We should come up with a more generalized way to track this sort of
-  // focus as this is a bit hacky, but it works for now.
+  // If they're adding an initial window/dialog to our screen-stack or
+  // overlay stack, send a reset-local-input message so that characters who
+  // have lost focus will not get stuck running or whatnot. We should come
+  // up with a more generalized way to track this sort of focus as this is a
+  // bit hacky, but it works for now.
   auto* screen_root_widget = screen_root_widget_.Get();
   auto* overlay_root_widget = overlay_root_widget_.Get();
   if ((screen_root_widget && !screen_root_widget->HasChildren()

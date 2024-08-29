@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class EmptyAppMode(AppMode):
-    """An empty app mode that can be used as a fallback/etc."""
+    """An AppMode that does not do much at all."""
 
     @override
     @classmethod
@@ -32,17 +32,17 @@ class EmptyAppMode(AppMode):
     @override
     def handle_intent(self, intent: AppIntent) -> None:
         if isinstance(intent, AppIntentExec):
-            _babase.empty_app_mode_handle_intent_exec(intent.code)
+            _babase.empty_app_mode_handle_app_intent_exec(intent.code)
             return
         assert isinstance(intent, AppIntentDefault)
-        _babase.empty_app_mode_handle_intent_default()
+        _babase.empty_app_mode_handle_app_intent_default()
 
     @override
     def on_activate(self) -> None:
         # Let the native layer do its thing.
-        _babase.on_empty_app_mode_activate()
+        _babase.empty_app_mode_activate()
 
     @override
     def on_deactivate(self) -> None:
         # Let the native layer do its thing.
-        _babase.on_empty_app_mode_deactivate()
+        _babase.empty_app_mode_deactivate()

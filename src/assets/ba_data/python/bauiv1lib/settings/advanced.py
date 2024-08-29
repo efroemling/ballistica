@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupMenu
 import bauiv1 as bui
@@ -15,39 +15,28 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-class AdvancedSettingsWindow(bui.Window):
+class AdvancedSettingsWindow(bui.MainWindow):
     """Window for editing advanced app settings."""
 
     def __init__(
         self,
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=too-many-statements
-        import threading
 
         if bui.app.classic is None:
             raise RuntimeError('This requires classic support.')
 
         # Preload some modules we use in a background thread so we won't
         # have a visual hitch when the user taps them.
-        threading.Thread(target=self._preload_modules).start()
+        bui.app.threadpool_submit_no_wait(self._preload_modules)
 
         app = bui.app
         assert app.classic is not None
 
-        # If they provided an origin-widget, scale up from that.
-        scale_origin: tuple[float, float] | None
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
-        else:
-            self._transition_out = 'out_right'
-            scale_origin = None
-
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 970.0 if uiscale is bui.UIScale.SMALL else 670.0
+        self._width = 1030.0 if uiscale is bui.UIScale.SMALL else 670.0
         x_inset = 150 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
             390.0
@@ -63,18 +52,22 @@ class AdvancedSettingsWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
-                transition=transition,
-                toolbar_visibility='menu_minimal',
-                scale_origin_stack_offset=scale_origin,
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
+                ),
                 scale=(
-                    2.06
+                    2.04
                     if uiscale is bui.UIScale.SMALL
                     else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -25) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 10) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         self._prev_lang = ''
@@ -112,9 +105,9 @@ class AdvancedSettingsWindow(bui.Window):
 
         self._r = 'settingsWindowAdvanced'
 
-        if app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self._do_back
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
             self._back_button = None
         else:
@@ -126,7 +119,7 @@ class AdvancedSettingsWindow(bui.Window):
                 autoselect=True,
                 label=bui.Lstr(resource='backText'),
                 button_type='back',
-                on_activate_call=self._do_back,
+                on_activate_call=self.main_window_back,
             )
             bui.containerwidget(
                 edit=self._root_widget, cancel_button=self._back_button
@@ -134,12 +127,16 @@ class AdvancedSettingsWindow(bui.Window):
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
-            position=(0, self._height - 52),
-            size=(self._width, 25),
+            position=(
+                self._width * 0.5,
+                self._height - (57 if uiscale is bui.UIScale.SMALL else 40),
+            ),
+            size=(0, 0),
+            scale=0.5 if uiscale is bui.UIScale.SMALL else 1.0,
             text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=app.ui_v1.title_color,
             h_align='center',
-            v_align='top',
+            v_align='center',
         )
 
         if self._back_button is not None:
@@ -180,10 +177,23 @@ class AdvancedSettingsWindow(bui.Window):
             callback=bui.WeakCall(self._completed_langs_cb),
         )
 
-    # noinspection PyUnresolvedReferences
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
+
+    @override
+    def on_main_window_close(self) -> None:
+        self._save_state()
+
     @staticmethod
     def _preload_modules() -> None:
-        """Preload modules we use; avoids hitches (called in bg thread)."""
+        """Preload stuff in bg thread to avoid hitches in logic thread"""
         from babase import modutils as _unused2
         from bauiv1lib import config as _unused1
         from bauiv1lib.settings import vrtesting as _unused3
@@ -191,7 +201,7 @@ class AdvancedSettingsWindow(bui.Window):
         from bauiv1lib import appinvite as _unused5
         from bauiv1lib import account as _unused6
         from bauiv1lib import sendinfo as _unused7
-        from bauiv1lib import debug as _unused8
+        from bauiv1lib import benchmarks as _unused8
         from bauiv1lib.settings import plugins as _unused9
         from bauiv1lib.settings import devtools as _unused10
 
@@ -684,14 +694,13 @@ class AdvancedSettingsWindow(bui.Window):
         for child in self._subcontainer.get_children():
             bui.widget(edit=child, show_buffer_bottom=30, show_buffer_top=20)
 
-        if bui.app.ui_v1.use_toolbars:
-            pbtn = bui.get_special_widget('party_button')
-            bui.widget(edit=self._scrollwidget, right_widget=pbtn)
-            if self._back_button is None:
-                bui.widget(
-                    edit=self._scrollwidget,
-                    left_widget=bui.get_special_widget('back_button'),
-                )
+        pbtn = bui.get_special_widget('squad_button')
+        bui.widget(edit=self._scrollwidget, right_widget=pbtn)
+        if self._back_button is None:
+            bui.widget(
+                edit=self._scrollwidget,
+                left_widget=bui.get_special_widget('back_button'),
+            )
 
         self._restore_state()
 
@@ -719,9 +728,8 @@ class AdvancedSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            VRTestingWindow(transition='in_right').get_root_widget(),
-            from_window=self._root_widget,
+        bui.app.ui_v1.set_main_window(
+            VRTestingWindow(transition='in_right'), from_window=self
         )
 
     def _on_net_test_press(self) -> None:
@@ -736,9 +744,8 @@ class AdvancedSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            NetTestingWindow(transition='in_right').get_root_widget(),
-            from_window=self._root_widget,
+        bui.app.ui_v1.set_main_window(
+            NetTestingWindow(transition='in_right'), from_window=self
         )
 
     def _on_friend_promo_code_press(self) -> None:
@@ -763,9 +770,8 @@ class AdvancedSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            PluginWindow(origin_widget=self._plugins_button).get_root_widget(),
-            from_window=self._root_widget,
+        bui.app.ui_v1.set_main_window(
+            PluginWindow(origin_widget=self._plugins_button), from_window=self
         )
 
     def _on_dev_tools_button_press(self) -> None:
@@ -779,11 +785,9 @@ class AdvancedSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            DevToolsWindow(
-                origin_widget=self._dev_tools_button
-            ).get_root_widget(),
-            from_window=self._root_widget,
+        bui.app.ui_v1.set_main_window(
+            DevToolsWindow(origin_widget=self._dev_tools_button),
+            from_window=self,
         )
 
     def _on_send_info_press(self) -> None:
@@ -799,15 +803,13 @@ class AdvancedSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            SendInfoWindow(
-                origin_widget=self._send_info_button
-            ).get_root_widget(),
-            from_window=self._root_widget,
+        bui.app.ui_v1.set_main_window(
+            SendInfoWindow(origin_widget=self._send_info_button),
+            from_window=self,
         )
 
     def _on_benchmark_press(self) -> None:
-        from bauiv1lib.debug import DebugWindow
+        from bauiv1lib.benchmarks import BenchmarksAndStressTestsWindow
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -816,9 +818,9 @@ class AdvancedSettingsWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            DebugWindow(transition='in_right').get_root_widget(),
-            from_window=self._root_widget,
+        bui.app.ui_v1.set_main_window(
+            BenchmarksAndStressTestsWindow(transition='in_right'),
+            from_window=self,
         )
 
     def _save_state(self) -> None:
@@ -974,19 +976,20 @@ class AdvancedSettingsWindow(bui.Window):
             self._complete_langs_error = True
         bui.apptimer(0.001, bui.WeakCall(self._update_lang_status))
 
-    def _do_back(self) -> None:
-        from bauiv1lib.settings.allsettings import AllSettingsWindow
+    # def _do_back(self) -> None:
+    #     from bauiv1lib.settings.allsettings import AllSettingsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
+    #     # no-op if our underlying widget is dead or on its way out.
+    #     if not self._root_widget or self._root_widget.transitioning_out:
+    #         return
 
-        self._save_state()
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            AllSettingsWindow(transition='in_left').get_root_widget(),
-            from_window=self._root_widget,
-        )
+    #     self._save_state()
+    #     bui.containerwidget(
+    #         edit=self._root_widget, transition=self._transition_out
+    #     )
+    #     assert bui.app.classic is not None
+    #     bui.app.ui_v1.set_main_window(
+    #         AllSettingsWindow(transition='in_left'),
+    #         from_window=self,
+    #         is_back=True,
+    #     )

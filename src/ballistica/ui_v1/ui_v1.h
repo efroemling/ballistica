@@ -12,9 +12,6 @@
 // It predeclares our feature-set's various types and globals and other
 // bits.
 
-// BA 2.0 UI testing.
-#define BA_UI_V1_TOOLBAR_TEST 0
-
 // UI-Locks: make sure widget-lists don't change under you. Use a read-lock
 // if you just need to ensure lists remain intact but won't be changing
 // anything. Use a write-lock whenever modifying a list.
@@ -88,17 +85,17 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   auto MainMenuVisible() -> bool override;
   auto PartyIconVisible() -> bool override;
   void ActivatePartyIcon() override;
-  void HandleLegacyRootUIMouseMotion(float x, float y) override;
-  auto HandleLegacyRootUIMouseDown(float x, float y) -> bool override;
-  void HandleLegacyRootUIMouseUp(float x, float y) override;
+  // void HandleLegacyRootUIMouseMotion(float x, float y) override;
+  // auto HandleLegacyRootUIMouseDown(float x, float y) -> bool override;
+  // void HandleLegacyRootUIMouseUp(float x, float y) override;
   void Draw(base::FrameDef* frame_def) override;
 
   UIV1Python* const python;
 
-  auto root_ui() const -> ui_v1::RootUI* {
-    assert(root_ui_);
-    return root_ui_;
-  }
+  // auto root_ui() const -> ui_v1::RootUI* {
+  //   assert(root_ui_);
+  //   return root_ui_;
+  // }
   // void OnAppStart() override;
   void OnActivate() override;
   void OnDeactivate() override;
@@ -140,7 +137,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
 
  private:
   UIV1FeatureSet();
-  RootUI* root_ui_{};
+  // RootUI* root_ui_{};
   Object::Ref<ContainerWidget> screen_root_widget_;
   Object::Ref<ContainerWidget> overlay_root_widget_;
   Object::Ref<RootWidget> root_widget_;

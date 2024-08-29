@@ -13,6 +13,8 @@ import _babase
 if TYPE_CHECKING:
     from typing import Callable, Any, Literal
 
+    from babase import AppMode
+
 
 class DevConsoleTab:
     """Defines behavior for a tab in the dev-console."""
@@ -101,6 +103,102 @@ class DevConsoleTabPython(DevConsoleTab):
         self.python_terminal()
 
 
+class DevConsoleTabAppModes(DevConsoleTab):
+    """Tab to switch app modes."""
+
+    @override
+    def refresh(self) -> None:
+        from functools import partial
+
+        modes = _babase.app.mode_selector.testable_app_modes()
+        self.text(
+            'Available AppModes:',
+            scale=0.8,
+            pos=(15, 55),
+            h_anchor='left',
+            h_align='left',
+            v_align='none',
+        )
+        for i, mode in enumerate(modes):
+            self.button(
+                f'{mode.__module__}.{mode.__qualname__}',
+                pos=(10 + i * 260, 10),
+                size=(250, 40),
+                h_anchor='left',
+                label_scale=0.6,
+                call=partial(self._set_app_mode, mode),
+            )
+
+    @staticmethod
+    def _set_app_mode(mode: type[AppMode]) -> None:
+        from babase._appintent import AppIntentDefault
+
+        intent = AppIntentDefault()
+
+        # Use private functionality to force a specific app-mode to
+        # handle this intent. Note that this should never be done
+        # outside of this explicit testing case. It is the app's job to
+        # determine which app-mode should be used to handle a given
+        # intent.
+        setattr(intent, '_force_app_mode_handler', mode)
+
+        _babase.app.set_intent(intent)
+
+
+class DevConsoleTabUI(DevConsoleTab):
+    """Tab to debug/test UI stuff."""
+
+    @override
+    def refresh(self) -> None:
+
+        self.text(
+            'UI Testing: Make sure all static UI fits in the'
+            ' virtual screen at all UI scales (not counting things'
+            ' that follow screen edges).',
+            scale=0.8,
+            pos=(15, 55),
+            h_anchor='left',
+            h_align='left',
+            v_align='none',
+        )
+
+        ui_overlay = _babase.get_draw_ui_bounds()
+        self.button(
+            'Hide Virtual Screen' if ui_overlay else 'Show Virtual Screen',
+            pos=(10, 10),
+            size=(200, 30),
+            h_anchor='left',
+            label_scale=0.6,
+            call=self.toggle_ui_overlay,
+        )
+        x = 320
+        self.text(
+            'UI Scale:',
+            pos=(x - 10, 15),
+            h_anchor='left',
+            h_align='right',
+            v_align='none',
+            scale=0.6,
+        )
+
+        bwidth = 100
+        for sz in ('small', 'medium', 'large'):
+            self.button(
+                sz,
+                pos=(x, 10),
+                size=(bwidth, 30),
+                h_anchor='left',
+                label_scale=0.6,
+                call=lambda: _babase.screenmessage('UNDER CONSTRUCTION.'),
+            )
+            x += bwidth + 10
+
+    def toggle_ui_overlay(self) -> None:
+        """Toggle UI overlay drawing."""
+        _babase.set_draw_ui_bounds(not _babase.get_draw_ui_bounds())
+        self.request_refresh()
+
+
 class DevConsoleTabTest(DevConsoleTab):
     """Test dev-console tab."""
 
@@ -157,7 +255,9 @@ class DevConsoleSubsystem:
         # All tabs in the dev-console. Add your own stuff here via
         # plugins or whatnot.
         self.tabs: list[DevConsoleTabEntry] = [
-            DevConsoleTabEntry('Python', DevConsoleTabPython)
+            DevConsoleTabEntry('Python', DevConsoleTabPython),
+            DevConsoleTabEntry('AppModes', DevConsoleTabAppModes),
+            DevConsoleTabEntry('UI', DevConsoleTabUI),
         ]
         if os.environ.get('BA_DEV_CONSOLE_TEST_TAB', '0') == '1':
             self.tabs.append(DevConsoleTabEntry('Test', DevConsoleTabTest))

@@ -19,6 +19,7 @@ import logging
 from efro.util import set_canonical_module_names
 from babase import (
     add_clean_frame_callback,
+    allows_ticket_sales,
     app,
     AppIntent,
     AppIntentDefault,
@@ -113,7 +114,6 @@ from _bauiv1 import (
     Mesh,
     rowwidget,
     scrollwidget,
-    set_party_icon_always_visible,
     set_party_window_open,
     Sound,
     Texture,
@@ -123,11 +123,18 @@ from _bauiv1 import (
     widget,
 )
 from bauiv1._keyboard import Keyboard
-from bauiv1._uitypes import Window, uicleanupcheck
-from bauiv1._subsystem import UIV1Subsystem
+from bauiv1._uitypes import (
+    Window,
+    MainWindowState,
+    BasicMainWindowState,
+    uicleanupcheck,
+    MainWindow,
+)
+from bauiv1._appsubsystem import UIV1AppSubsystem
 
 __all__ = [
     'add_clean_frame_callback',
+    'allows_ticket_sales',
     'app',
     'AppIntent',
     'AppIntentDefault',
@@ -140,6 +147,7 @@ __all__ = [
     'AppTime',
     'apptimer',
     'AppTimer',
+    'BasicMainWindowState',
     'buttonwidget',
     'Call',
     'fullscreen_control_available',
@@ -189,6 +197,8 @@ __all__ = [
     'LoginAdapter',
     'LoginInfo',
     'Lstr',
+    'MainWindow',
+    'MainWindowState',
     'Mesh',
     'native_review_request',
     'native_review_request_supported',
@@ -212,7 +222,6 @@ __all__ = [
     'scrollwidget',
     'set_analytics_screen',
     'set_low_level_config_value',
-    'set_party_icon_always_visible',
     'set_party_window_open',
     'set_ui_input_device',
     'Sound',
@@ -225,7 +234,7 @@ __all__ = [
     'uibounds',
     'uicleanupcheck',
     'UIScale',
-    'UIV1Subsystem',
+    'UIV1AppSubsystem',
     'unlock_all_input',
     'WeakCall',
     'widget',

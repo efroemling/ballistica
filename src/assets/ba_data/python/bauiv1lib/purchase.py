@@ -44,7 +44,7 @@ class PurchaseWindow(bui.Window):
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
                 transition=transition,
-                toolbar_visibility='menu_currency',
+                toolbar_visibility='menu_store',
                 scale=(
                     1.2
                     if uiscale is bui.UIScale.SMALL
@@ -162,7 +162,7 @@ class PurchaseWindow(bui.Window):
             bui.containerwidget(edit=self._root_widget, transition='out_left')
 
     def _purchase(self) -> None:
-        from bauiv1lib import gettickets
+        # from bauiv1lib import gettickets
 
         plus = bui.app.plus
         assert plus is not None
@@ -176,7 +176,8 @@ class PurchaseWindow(bui.Window):
             except Exception:
                 ticket_count = None
             if ticket_count is not None and ticket_count < self._price:
-                gettickets.show_get_tickets_prompt()
+                # gettickets.show_get_tickets_prompt()
+                print('FIXME - show not-enough-tickets msg')
                 bui.getsound('error').play()
                 return
 

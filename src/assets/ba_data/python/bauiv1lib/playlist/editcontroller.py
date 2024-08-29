@@ -89,10 +89,8 @@ class PlaylistEditController:
             self._edit_ui_selection = 'add_button'
 
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            PlaylistEditWindow(
-                editcontroller=self, transition=transition
-            ).get_root_widget(),
+        bui.app.ui_v1.set_main_window(
+            PlaylistEditWindow(editcontroller=self, transition=transition),
             from_window=False,  # Disable this check.
         )
 
@@ -149,10 +147,9 @@ class PlaylistEditController:
         from bauiv1lib.playlist.addgame import PlaylistAddGameWindow
 
         assert bui.app.classic is not None
-        bui.app.ui_v1.clear_main_menu_window(transition='out_left')
-        bui.app.ui_v1.set_main_menu_window(
-            PlaylistAddGameWindow(editcontroller=self).get_root_widget(),
-            from_window=None,
+        bui.app.ui_v1.clear_main_window()
+        bui.app.ui_v1.set_main_window(
+            PlaylistAddGameWindow(editcontroller=self), from_window=None
         )
 
     def edit_game_pressed(self) -> None:
@@ -168,18 +165,17 @@ class PlaylistEditController:
             settings=self._playlist[self._selected_index],
         )
 
-    def add_game_cancelled(self) -> None:
-        """(internal)"""
-        from bauiv1lib.playlist.edit import PlaylistEditWindow
+    # def add_game_cancelled(self) -> None:
+    #     """(internal)"""
+    #     from bauiv1lib.playlist.edit import PlaylistEditWindow
 
-        assert bui.app.classic is not None
-        bui.app.ui_v1.clear_main_menu_window(transition='out_right')
-        bui.app.ui_v1.set_main_menu_window(
-            PlaylistEditWindow(
-                editcontroller=self, transition='in_left'
-            ).get_root_widget(),
-            from_window=None,
-        )
+    #     assert bui.app.classic is not None
+    #     bui.app.ui_v1.clear_main_window(transition='out_right')
+    #     bui.app.ui_v1.set_main_window(
+    #         PlaylistEditWindow(editcontroller=self, transition='in_left'),
+    #         from_window=None,
+    #         is_back=True,
+    #     )
 
     def _show_edit_ui(
         self, gametype: type[bs.GameActivity], settings: dict[str, Any] | None
@@ -204,22 +200,24 @@ class PlaylistEditController:
             # If we were editing, go back to our list.
             if self._editing_game:
                 bui.getsound('powerdown01').play()
-                bui.app.ui_v1.clear_main_menu_window(transition='out_right')
-                bui.app.ui_v1.set_main_menu_window(
+                bui.app.ui_v1.clear_main_window()
+                bui.app.ui_v1.set_main_window(
                     PlaylistEditWindow(
                         editcontroller=self, transition='in_left'
-                    ).get_root_widget(),
+                    ),
                     from_window=None,
+                    is_back=True,
                 )
 
             # Otherwise we were adding; go back to the add type choice list.
             else:
-                bui.app.ui_v1.clear_main_menu_window(transition='out_right')
-                bui.app.ui_v1.set_main_menu_window(
+                bui.app.ui_v1.clear_main_window()
+                bui.app.ui_v1.set_main_window(
                     PlaylistAddGameWindow(
                         editcontroller=self, transition='in_left'
-                    ).get_root_widget(),
+                    ),
                     from_window=None,
+                    is_back=True,
                 )
         else:
             # Make sure type is in there.
@@ -237,10 +235,9 @@ class PlaylistEditController:
                 self._selected_index = insert_index
 
             bui.getsound('gunCocking').play()
-            bui.app.ui_v1.clear_main_menu_window(transition='out_right')
-            bui.app.ui_v1.set_main_menu_window(
-                PlaylistEditWindow(
-                    editcontroller=self, transition='in_left'
-                ).get_root_widget(),
+            bui.app.ui_v1.clear_main_window()
+            bui.app.ui_v1.set_main_window(
+                PlaylistEditWindow(editcontroller=self, transition='in_left'),
                 from_window=None,
+                is_back=True,
             )

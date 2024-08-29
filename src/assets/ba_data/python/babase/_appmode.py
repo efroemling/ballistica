@@ -31,7 +31,7 @@ class AppMode:
         AppExperience associated with the AppMode must be supported by
         the current app and runtime environment.
         """
-        # FIXME: check AppExperience.
+        # TODO: check AppExperience.
         return cls._supports_intent(intent)
 
     @classmethod

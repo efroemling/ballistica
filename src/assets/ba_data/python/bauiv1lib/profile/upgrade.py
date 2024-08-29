@@ -32,12 +32,12 @@ class ProfileUpgradeWindow(bui.Window):
 
         self._r = 'editProfileWindow'
 
-        self._width = 680
+        uiscale = bui.app.ui_v1.uiscale
+        self._width = 750 if uiscale is bui.UIScale.SMALL else 680
         self._height = 350
         assert bui.app.classic is not None
-        uiscale = bui.app.ui_v1.uiscale
         self._base_scale = (
-            2.05
+            1.9
             if uiscale is bui.UIScale.SMALL
             else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.2
         )
@@ -49,17 +49,17 @@ class ProfileUpgradeWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
-                toolbar_visibility='menu_currency',
+                toolbar_visibility='menu_store_no_back',
                 transition=transition,
                 scale=self._base_scale,
                 stack_offset=(
-                    (0, 15) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, -30) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
             )
         )
         cancel_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(52, 30),
+            position=(52, 60),
             size=(155, 60),
             scale=0.8,
             autoselect=True,
@@ -68,7 +68,7 @@ class ProfileUpgradeWindow(bui.Window):
         )
         self._upgrade_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(self._width - 190, 30),
+            position=(self._width - 190, 60),
             size=(155, 60),
             scale=0.8,
             autoselect=True,
@@ -136,20 +136,20 @@ class ProfileUpgradeWindow(bui.Window):
         )
 
         self._tickets_text: bui.Widget | None
-        if not bui.app.ui_v1.use_toolbars:
-            self._tickets_text = bui.textwidget(
-                parent=self._root_widget,
-                position=(self._width * 0.9 - 5, self._height - 30),
-                size=(0, 0),
-                text=bui.charstr(bui.SpecialChar.TICKET) + '123',
-                color=(0.2, 1, 0.2),
-                maxwidth=100,
-                scale=0.5,
-                h_align='right',
-                v_align='center',
-            )
-        else:
-            self._tickets_text = None
+        # if not bui.app.ui_v1.use_toolbars:
+        #     self._tickets_text = bui.textwidget(
+        #         parent=self._root_widget,
+        #         position=(self._width * 0.9 - 5, self._height - 30),
+        #         size=(0, 0),
+        #         text=bui.charstr(bui.SpecialChar.TICKET) + '123',
+        #         color=(0.2, 1, 0.2),
+        #         maxwidth=100,
+        #         scale=0.5,
+        #         h_align='right',
+        #         v_align='center',
+        #     )
+        # else:
+        self._tickets_text = None
 
         bui.app.classic.master_server_v1_get(
             'bsGlobalProfileCheck',
@@ -210,7 +210,7 @@ class ProfileUpgradeWindow(bui.Window):
                 )
 
     def _on_upgrade_press(self) -> None:
-        from bauiv1lib import gettickets
+        # from bauiv1lib import gettickets
 
         if self._status is None:
             plus = bui.app.plus
@@ -220,7 +220,8 @@ class ProfileUpgradeWindow(bui.Window):
             tickets = plus.get_v1_account_ticket_count()
             if tickets < self._cost:
                 bui.getsound('error').play()
-                gettickets.show_get_tickets_prompt()
+                print('FIXME - show not-enough-tickets msg.')
+                # gettickets.show_get_tickets_prompt()
                 return
             bui.screenmessage(
                 bui.Lstr(resource='purchasingText'), color=(0, 1, 0)

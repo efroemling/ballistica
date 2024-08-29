@@ -40,6 +40,7 @@ class AchievementsWindow(PopupWindow):
             size=(self._width, self._height),
             scale=scale,
             bg_color=bg_color,
+            edge_buffer_scale=4.0,  # Try to keep button unobscured.
         )
 
         self._cancel_button = bui.buttonwidget(
@@ -74,7 +75,7 @@ class AchievementsWindow(PopupWindow):
             scale=0.6,
             text=txt_final,
             maxwidth=200,
-            color=(1, 1, 1, 0.4),
+            color=bui.app.ui_v1.title_color,
         )
 
         self._scrollwidget = bui.scrollwidget(

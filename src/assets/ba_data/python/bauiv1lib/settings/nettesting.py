@@ -8,7 +8,7 @@ import time
 import copy
 import weakref
 from threading import Thread
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from efro.error import CleanError
 from bauiv1lib.settings.testing import TestingWindow
@@ -22,40 +22,53 @@ if TYPE_CHECKING:
 MAX_TEST_SECONDS = 60 * 2
 
 
-class NetTestingWindow(bui.Window):
+class NetTestingWindow(bui.MainWindow):
     """Window that runs a networking test suite to help diagnose issues."""
 
-    def __init__(self, transition: str = 'in_right'):
+    def __init__(
+        self,
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
+    ):
+        uiscale = bui.app.ui_v1.uiscale
         self._width = 820
-        self._height = 500
+        self._height = 400 if uiscale is bui.UIScale.SMALL else 500
         self._printed_lines: list[str] = []
         assert bui.app.classic is not None
-        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
                 scale=(
-                    1.56
+                    1.75
                     if uiscale is bui.UIScale.SMALL
                     else 1.2 if uiscale is bui.UIScale.MEDIUM else 0.8
                 ),
-                stack_offset=(0.0, -7 if uiscale is bui.UIScale.SMALL else 0.0),
-                transition=transition,
-            )
+                stack_offset=(0, -4 if uiscale is bui.UIScale.SMALL else 0.0),
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
+                ),
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
-        self._done_button = bui.buttonwidget(
+        self._done_button: bui.Widget | None = bui.buttonwidget(
             parent=self._root_widget,
-            position=(40, self._height - 77),
+            position=(46, self._height - 77),
             size=(120, 60),
             scale=0.8,
             autoselect=True,
             label=bui.Lstr(resource='doneText'),
-            on_activate_call=self._done,
+            on_activate_call=self.main_window_back,
         )
+
+        # Avoid squads button on small mode.
+        xinset = -50 if uiscale is bui.UIScale.SMALL else 0
 
         self._copy_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(self._width - 200, self._height - 77),
+            position=(self._width - 200 + xinset, self._height - 77),
             size=(100, 60),
             scale=0.8,
             autoselect=True,
@@ -65,7 +78,7 @@ class NetTestingWindow(bui.Window):
 
         self._settings_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(self._width - 100, self._height - 77),
+            position=(self._width - 100 + xinset, self._height - 77),
             size=(60, 60),
             scale=0.8,
             autoselect=True,
@@ -73,7 +86,7 @@ class NetTestingWindow(bui.Window):
             on_activate_call=self._show_val_testing,
         )
 
-        twidth = self._width - 450
+        twidth = self._width - 540
         bui.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 55),
@@ -94,9 +107,16 @@ class NetTestingWindow(bui.Window):
         )
         self._rows = bui.columnwidget(parent=self._scroll)
 
-        bui.containerwidget(
-            edit=self._root_widget, cancel_button=self._done_button
-        )
+        if uiscale is bui.UIScale.SMALL:
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self.main_window_back
+            )
+            self._done_button.delete()
+            self._done_button = None
+        else:
+            bui.containerwidget(
+                edit=self._root_widget, cancel_button=self._done_button
+            )
 
         # Now kick off the tests.
         # Pass a weak-ref to this window so we don't keep it alive
@@ -106,6 +126,16 @@ class NetTestingWindow(bui.Window):
             daemon=True,
             target=bui.Call(_run_diagnostics, weakref.ref(self)),
         ).start()
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
 
     def print(self, text: str, color: tuple[float, float, float]) -> None:
         """Print text to our console thingie."""
@@ -138,26 +168,24 @@ class NetTestingWindow(bui.Window):
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
-        bui.app.ui_v1.set_main_menu_window(
-            NetValTestingWindow().get_root_widget(),
-            from_window=self._root_widget,
-        )
+        bui.app.ui_v1.set_main_window(NetValTestingWindow(), from_window=self)
         bui.containerwidget(edit=self._root_widget, transition='out_left')
 
-    def _done(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.settings.advanced import AdvancedSettingsWindow
+    # def _done(self) -> None:
+    #     # pylint: disable=cyclic-import
+    #     from bauiv1lib.settings.advanced import AdvancedSettingsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
+    #     # no-op if our underlying widget is dead or on its way out.
+    #     if not self._root_widget or self._root_widget.transitioning_out:
+    #         return
 
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            AdvancedSettingsWindow(transition='in_left').get_root_widget(),
-            from_window=self._root_widget,
-        )
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
+    #     assert bui.app.classic is not None
+    #     bui.app.ui_v1.set_main_window(
+    #         AdvancedSettingsWindow(transition='in_left'),
+    #         from_window=self,
+    #         is_back=True,
+    #     )
+    #     bui.containerwidget(edit=self._root_widget, transition='out_right')
 
 
 def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
@@ -471,5 +499,4 @@ class NetValTestingWindow(TestingWindow):
             title=bui.Lstr(resource='settingsWindowAdvanced.netTestingText'),
             entries=entries,
             transition=transition,
-            back_call=lambda: NetTestingWindow(transition='in_left'),
         )

@@ -283,24 +283,24 @@ class SpecialOfferWindow(bui.Window):
             )
 
         # Add ticket button only if this is ticket-purchasable.
-        if isinstance(offer.get('price'), int):
-            self._get_tickets_button = bui.buttonwidget(
-                parent=self._root_widget,
-                position=(self._width - 125, self._height - 68),
-                size=(90, 55),
-                scale=1.0,
-                button_type='square',
-                color=(0.7, 0.5, 0.85),
-                textcolor=(0.2, 1, 0.2),
-                autoselect=True,
-                label=bui.Lstr(resource='getTicketsWindow.titleText'),
-                on_activate_call=self._on_get_more_tickets_press,
-            )
+        # if isinstance(offer.get('price'), int):
+        #     self._get_tickets_button = bui.buttonwidget(
+        #         parent=self._root_widget,
+        #         position=(self._width - 125, self._height - 68),
+        #         size=(90, 55),
+        #         scale=1.0,
+        #         button_type='square',
+        #         color=(0.7, 0.5, 0.85),
+        #         textcolor=(0.2, 1, 0.2),
+        #         autoselect=True,
+        #         label=bui.Lstr(resource='getTicketsWindow.titleText'),
+        #         on_activate_call=self._on_get_more_tickets_press,
+        #     )
 
-            self._ticket_text_update_timer = bui.AppTimer(
-                1.0, bui.WeakCall(self._update_tickets_text), repeat=True
-            )
-            self._update_tickets_text()
+        #     self._ticket_text_update_timer = bui.AppTimer(
+        #         1.0, bui.WeakCall(self._update_tickets_text), repeat=True
+        #     )
+        #     self._update_tickets_text()
 
         self._update_timer = bui.AppTimer(
             1.0, bui.WeakCall(self._update), repeat=True
@@ -421,37 +421,37 @@ class SpecialOfferWindow(bui.Window):
 
         bui.containerwidget(edit=self._root_widget, transition=transition)
 
-    def _update_tickets_text(self) -> None:
-        from babase import SpecialChar
+    # def _update_tickets_text(self) -> None:
+    #     from babase import SpecialChar
 
-        plus = bui.app.plus
-        assert plus is not None
+    #     plus = bui.app.plus
+    #     assert plus is not None
 
-        if not self._root_widget:
-            return
-        sval: str | bui.Lstr
-        if plus.get_v1_account_state() == 'signed_in':
-            sval = bui.charstr(SpecialChar.TICKET) + str(
-                plus.get_v1_account_ticket_count()
-            )
-        else:
-            sval = bui.Lstr(resource='getTicketsWindow.titleText')
-        bui.buttonwidget(edit=self._get_tickets_button, label=sval)
+    #     if not self._root_widget:
+    #         return
+    # sval: str | bui.Lstr
+    # if plus.get_v1_account_state() == 'signed_in':
+    #     sval = bui.charstr(SpecialChar.TICKET) + str(
+    #         plus.get_v1_account_ticket_count()
+    #     )
+    # else:
+    #     sval = bui.Lstr(resource='getTicketsWindow.titleText')
+    # bui.buttonwidget(edit=self._get_tickets_button, label=sval)
 
-    def _on_get_more_tickets_press(self) -> None:
-        from bauiv1lib import account
-        from bauiv1lib import gettickets
+    # def _on_get_more_tickets_press(self) -> None:
+    #     from bauiv1lib import account
+    #     from bauiv1lib import gettickets
 
-        plus = bui.app.plus
-        assert plus is not None
+    #     plus = bui.app.plus
+    #     assert plus is not None
 
-        if plus.get_v1_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
-            return
-        gettickets.GetTicketsWindow(modal=True).get_root_widget()
+    #     if plus.get_v1_account_state() != 'signed_in':
+    #         account.show_sign_in_prompt()
+    #         return
+    #     gettickets.GetTicketsWindow(modal=True).get_root_widget()
 
     def _purchase(self) -> None:
-        from bauiv1lib import gettickets
+        # from bauiv1lib import gettickets
         from bauiv1lib import confirm
 
         plus = bui.app.plus
@@ -474,7 +474,7 @@ class SpecialOfferWindow(bui.Window):
             except Exception:
                 ticket_count = None
             if ticket_count is not None and ticket_count < self._offer['price']:
-                gettickets.show_get_tickets_prompt()
+                # gettickets.show_get_tickets_prompt()
                 bui.getsound('error').play()
                 return
 

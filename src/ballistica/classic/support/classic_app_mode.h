@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_SCENE_V1_SUPPORT_SCENE_V1_APP_MODE_H_
-#define BALLISTICA_SCENE_V1_SUPPORT_SCENE_V1_APP_MODE_H_
+#ifndef BALLISTICA_CLASSIC_SUPPORT_CLASSIC_APP_MODE_H_
+#define BALLISTICA_CLASSIC_SUPPORT_CLASSIC_APP_MODE_H_
 
 #include <list>
 #include <map>
@@ -12,37 +12,38 @@
 
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/base.h"
+#include "ballistica/classic/classic.h"
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/shared/foundation/object.h"
 
-namespace ballistica::scene_v1 {
+namespace ballistica::classic {
 
 const int kMaxPartyNameCombinedSize = 25;
 
 /// Defines high level app behavior when we're active.
-class SceneV1AppMode : public base::AppMode {
+class ClassicAppMode : public base::AppMode {
  public:
   /// Create or return our singleton (regardless of active state).
   /// Will never return nullptr.
-  static auto GetSingleton() -> SceneV1AppMode*;
+  static auto GetSingleton() -> ClassicAppMode*;
 
   /// Return our singleton if it is active and nullptr otherwise.
   /// Be sure to handle the case where it is not.
-  static auto GetActive() -> SceneV1AppMode*;
+  static auto GetActive() -> ClassicAppMode*;
 
   /// Return our singleton if it is active and log a warning and return nullptr
   /// if not. Use when you're gracefully handling the nullptr case but don't
   /// expect it to ever occur.
-  static auto GetActiveOrWarn() -> SceneV1AppMode*;
+  static auto GetActiveOrWarn() -> ClassicAppMode*;
 
   /// Return our singleton if it is active and throw an Exception if not.
   /// Use when exception logic can gracefully handle the fail case.
-  static auto GetActiveOrThrow() -> SceneV1AppMode*;
+  static auto GetActiveOrThrow() -> ClassicAppMode*;
 
   /// Return our singleton if it is active and fatal-error otherwise.
   /// Use when you are not handling the nullptr case and don't expect
   /// it to ever occur.
-  static auto GetActiveOrFatal() -> SceneV1AppMode*;
+  static auto GetActiveOrFatal() -> ClassicAppMode*;
 
   auto HandleJSONPing(const std::string& data_str) -> std::string override;
   void HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
@@ -55,9 +56,10 @@ class SceneV1AppMode : public base::AppMode {
   void SetGameRoster(cJSON* r);
   auto GetPartySize() const -> int override;
   auto kick_vote_in_progress() const -> bool { return kick_vote_in_progress_; }
-  void StartKickVote(ConnectionToClient* starter, ConnectionToClient* target);
+  void StartKickVote(scene_v1::ConnectionToClient* starter,
+                     scene_v1::ConnectionToClient* target);
   void set_kick_voting_enabled(bool enable) { kick_voting_enabled_ = enable; }
-  void SetForegroundScene(Scene* sg);
+  void SetForegroundScene(scene_v1::Scene* sg);
 
   void LaunchHostSession(
       PyObject* session_type_obj,
@@ -69,13 +71,13 @@ class SceneV1AppMode : public base::AppMode {
   auto GetDisplayPing() -> std::optional<float> override;
   auto HasConnectionToHost() const -> bool override;
   auto HasConnectionToClients() const -> bool override;
-  auto connections() const -> ConnectionSet* {
+  auto connections() const -> scene_v1::ConnectionSet* {
     assert(connections_.get());
     return connections_.get();
   }
   void CleanUpBeforeConnectingToHost();
   void ChangeGameSpeed(int offs) override;
-  void SetForegroundSession(Session* s);
+  void SetForegroundSession(scene_v1::Session* s);
   void LocalDisplayChatMessage(const std::vector<uint8_t>& buffer);
   auto chat_messages() const -> const std::list<std::string>& {
     return chat_messages_;
@@ -83,12 +85,12 @@ class SceneV1AppMode : public base::AppMode {
   void DoApplyAppConfig() override;
 
   // Return whichever session is front and center.
-  auto GetForegroundSession() const -> Session* {
+  auto GetForegroundSession() const -> scene_v1::Session* {
     return foreground_session_.Get();
   }
 
   // Used to know which globals is in control currently/etc.
-  auto GetForegroundScene() const -> Scene* {
+  auto GetForegroundScene() const -> scene_v1::Scene* {
     assert(g_base->InLogicThread());
     return foreground_scene_.Get();
   }
@@ -148,8 +150,8 @@ class SceneV1AppMode : public base::AppMode {
   void set_require_client_authentication(bool enable) {
     require_client_authentication_ = enable;
   }
-  auto IsPlayerBanned(const PlayerSpec& spec) -> bool;
-  void BanPlayer(const PlayerSpec& spec, millisecs_t duration);
+  auto IsPlayerBanned(const scene_v1::PlayerSpec& spec) -> bool;
+  void BanPlayer(const scene_v1::PlayerSpec& spec, millisecs_t duration);
   void OnAppStart() override;
   void OnAppSuspend() override;
   void OnAppUnsuspend() override;
@@ -208,7 +210,7 @@ class SceneV1AppMode : public base::AppMode {
   }
 
  private:
-  SceneV1AppMode();
+  ClassicAppMode();
   void PruneScanResults_();
   void UpdateKickVote_();
   auto GetGameRosterMessage_() -> std::vector<uint8_t>;
@@ -228,9 +230,9 @@ class SceneV1AppMode : public base::AppMode {
 
   std::list<std::string> chat_messages_;
   // *All* existing sessions (including old ones waiting to shut down).
-  std::vector<Object::Ref<Session> > sessions_;
-  Object::WeakRef<Scene> foreground_scene_;
-  Object::WeakRef<Session> foreground_session_;
+  std::vector<Object::Ref<scene_v1::Session> > sessions_;
+  Object::WeakRef<scene_v1::Scene> foreground_scene_;
+  Object::WeakRef<scene_v1::Session> foreground_session_;
 
   bool chat_muted_{};
   bool in_update_{};
@@ -246,9 +248,9 @@ class SceneV1AppMode : public base::AppMode {
 
   cJSON* game_roster_{};
   millisecs_t last_game_roster_send_time_{};
-  std::unique_ptr<ConnectionSet> connections_;
-  Object::WeakRef<ConnectionToClient> kick_vote_starter_;
-  Object::WeakRef<ConnectionToClient> kick_vote_target_;
+  std::unique_ptr<scene_v1::ConnectionSet> connections_;
+  Object::WeakRef<scene_v1::ConnectionToClient> kick_vote_starter_;
+  Object::WeakRef<scene_v1::ConnectionToClient> kick_vote_target_;
   millisecs_t kick_vote_end_time_{};
   int last_kick_votes_needed_{-1};
   millisecs_t legacy_display_time_millisecs_{};
@@ -277,13 +279,13 @@ class SceneV1AppMode : public base::AppMode {
   std::string public_party_name_;
   std::string public_party_min_league_;
   std::string public_party_stats_url_;
-  std::list<std::pair<millisecs_t, PlayerSpec> > banned_players_;
+  std::list<std::pair<millisecs_t, scene_v1::PlayerSpec> > banned_players_;
   std::optional<float> idle_exit_minutes_{};
   std::optional<uint32_t> internal_music_play_id_{};
   std::optional<std::string> public_party_public_address_ipv4_{};
   std::optional<std::string> public_party_public_address_ipv6_{};
 };
 
-}  // namespace ballistica::scene_v1
+}  // namespace ballistica::classic
 
-#endif  // BALLISTICA_SCENE_V1_SUPPORT_SCENE_V1_APP_MODE_H_
+#endif  // BALLISTICA_CLASSIC_SUPPORT_CLASSIC_APP_MODE_H_

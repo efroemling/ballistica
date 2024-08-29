@@ -393,7 +393,8 @@ class _Outputter:
                     ),
                     key=(
                         None
-                        if childanntypes[0] in [str, int, float, bool]
+                        if childanntypes[0]
+                        in [str, int, float, bool, datetime.datetime]
                         else lambda v: json.dumps(v, sort_keys=True)
                     ),
                 )

@@ -100,7 +100,7 @@ class TournamentEntryWindow(PopupWindow):
             scale=scale,
             bg_color=bg_color,
             offset=offset,
-            toolbar_visibility='menu_currency',
+            toolbar_visibility='menu_store_no_back',
         )
 
         self._last_ad_press_time = -9999.0
@@ -273,28 +273,6 @@ class TournamentEntryWindow(PopupWindow):
 
         self._get_tickets_button: bui.Widget | None = None
         self._ticket_count_text: bui.Widget | None = None
-        if not bui.app.ui_v1.use_toolbars:
-            if bui.app.classic.allow_ticket_purchases:
-                self._get_tickets_button = bui.buttonwidget(
-                    parent=self.root_widget,
-                    position=(self._width - 190 + 105, self._height - 34),
-                    autoselect=True,
-                    scale=0.5,
-                    size=(120, 60),
-                    textcolor=(0.2, 1, 0.2),
-                    label=bui.charstr(bui.SpecialChar.TICKET),
-                    color=(0.65, 0.5, 0.8),
-                    on_activate_call=self._on_get_tickets_press,
-                )
-            else:
-                self._ticket_count_text = bui.textwidget(
-                    parent=self.root_widget,
-                    scale=0.5,
-                    position=(self._width - 190 + 125, self._height - 34),
-                    color=(0.2, 1, 0.2),
-                    h_align='center',
-                    v_align='center',
-                )
 
         self._seconds_remaining = None
 
@@ -632,7 +610,7 @@ class TournamentEntryWindow(PopupWindow):
             bui.apptimer(0 if practice else 1.25, self._transition_out)
 
     def _on_pay_with_tickets_press(self) -> None:
-        from bauiv1lib import gettickets
+        # from bauiv1lib import gettickets
 
         plus = bui.app.plus
         assert plus is not None
@@ -675,7 +653,8 @@ class TournamentEntryWindow(PopupWindow):
             ticket_count = None
         ticket_cost = self._purchase_price
         if ticket_count is not None and ticket_count < ticket_cost:
-            gettickets.show_get_tickets_prompt()
+            # gettickets.show_get_tickets_prompt()
+            print('FIXME - show not-enough-tickets msg.')
             bui.getsound('error').play()
             self._transition_out()
             return
@@ -780,19 +759,19 @@ class TournamentEntryWindow(PopupWindow):
         plus.run_v1_account_transactions()
         self._launch()
 
-    def _on_get_tickets_press(self) -> None:
-        from bauiv1lib import gettickets
+    # def _on_get_tickets_press(self) -> None:
+    #     from bauiv1lib import gettickets
 
-        # If we're already entering, ignore presses.
-        if self._entering:
-            return
+    #     # If we're already entering, ignore presses.
+    #     if self._entering:
+    #         return
 
-        # Bring up get-tickets window and then kill ourself (we're on the
-        # overlay layer so we'd show up above it).
-        gettickets.GetTicketsWindow(
-            modal=True, origin_widget=self._get_tickets_button
-        )
-        self._transition_out()
+    #     # Bring up get-tickets window and then kill ourself (we're on the
+    #     # overlay layer so we'd show up above it).
+    #     gettickets.GetTicketsWindow(
+    #         modal=True, origin_widget=self._get_tickets_button
+    #     )
+    #     self._transition_out()
 
     def _on_cancel(self) -> None:
         plus = bui.app.plus

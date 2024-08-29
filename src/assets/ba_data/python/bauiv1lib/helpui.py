@@ -4,40 +4,33 @@
 
 from __future__ import annotations
 
+from typing import override
+
 import bauiv1 as bui
 
 
-class HelpWindow(bui.Window):
+class HelpWindow(bui.MainWindow):
     """A window providing help on how to play."""
 
     def __init__(
-        self, main_menu: bool = False, origin_widget: bui.Widget | None = None
+        self,
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
 
         bui.set_analytics_screen('Help Window')
 
-        # If they provided an origin-widget, scale up from that.
-        scale_origin: tuple[float, float] | None
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
-        else:
-            self._transition_out = 'out_right'
-            scale_origin = None
-            transition = 'in_right'
-
         self._r = 'helpWindow'
 
         getres = bui.app.lang.get_resource
 
-        self._main_menu = main_menu
+        # self._main_menu = main_menu
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         width = 1050 if uiscale is bui.UIScale.SMALL else 750
-        x_offs = 150 if uiscale is bui.UIScale.SMALL else 0
+        x_offs = 70 if uiscale is bui.UIScale.SMALL else 0
         height = (
             460
             if uiscale is bui.UIScale.SMALL
@@ -47,20 +40,24 @@ class HelpWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),
-                transition=transition,
-                toolbar_visibility='menu_minimal',
-                scale_origin_stack_offset=scale_origin,
-                scale=(
-                    1.77
+                toolbar_visibility=(
+                    'menu_minimal'
                     if uiscale is bui.UIScale.SMALL
-                    else 1.25 if uiscale is bui.UIScale.MEDIUM else 1.0
+                    else 'menu_full'
+                ),
+                scale=(
+                    1.55
+                    if uiscale is bui.UIScale.SMALL
+                    else 1.15 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -30)
+                    (0, -24)
                     if uiscale is bui.UIScale.SMALL
                     else (0, 15) if uiscale is bui.UIScale.MEDIUM else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         bui.textwidget(
@@ -87,20 +84,19 @@ class HelpWindow(bui.Window):
             capture_arrows=True,
         )
 
-        if bui.app.ui_v1.use_toolbars:
-            bui.widget(
-                edit=self._scrollwidget,
-                right_widget=bui.get_special_widget('party_button'),
-            )
+        bui.widget(
+            edit=self._scrollwidget,
+            right_widget=bui.get_special_widget('squad_button'),
+        )
         bui.containerwidget(
             edit=self._root_widget, selected_child=self._scrollwidget
         )
 
         # ugly: create this last so it gets first dibs at touch events (since
         # we have it close to the scroll widget)
-        if uiscale is bui.UIScale.SMALL and bui.app.ui_v1.use_toolbars:
+        if uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self._close
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
             bui.widget(
                 edit=self._scrollwidget,
@@ -109,33 +105,18 @@ class HelpWindow(bui.Window):
         else:
             btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(
-                    x_offs + (40 + 0 if uiscale is bui.UIScale.SMALL else 70),
-                    height - (59 if uiscale is bui.UIScale.SMALL else 50),
-                ),
-                size=(140, 60),
-                scale=0.7 if uiscale is bui.UIScale.SMALL else 0.8,
-                label=(
-                    bui.Lstr(resource='backText')
-                    if self._main_menu
-                    else 'Close'
-                ),
-                button_type='back' if self._main_menu else None,
+                position=(x_offs + 50, height - 55),
+                size=(60, 55),
+                scale=0.8,
+                label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
                 extra_touch_border_scale=2.0,
                 autoselect=True,
-                on_activate_call=self._close,
+                on_activate_call=self.main_window_back,
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
-            if self._main_menu:
-                bui.buttonwidget(
-                    edit=btn,
-                    button_type='backSmall',
-                    size=(60, 55),
-                    label=bui.charstr(bui.SpecialChar.BACK),
-                )
-
-        self._sub_width = 660
+        self._sub_width = 810 if uiscale is bui.UIScale.SMALL else 660
         self._sub_height = (
             1590
             + bui.app.lang.get_resource(f'{self._r}.someDaysExtraSpace')
@@ -639,20 +620,12 @@ class HelpWindow(bui.Window):
                 res_scale=0.5,
             )
 
-    def _close(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.mainmenu import MainMenuWindow
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        if self._main_menu:
-            assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_menu_window(
-                MainMenuWindow(transition='in_left').get_root_widget(),
-                from_window=self._root_widget,
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
             )
+        )

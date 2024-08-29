@@ -713,17 +713,17 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// High level screen-message call usable from any thread.
   void ScreenMessage(const std::string& s, const Vector3f& color) override;
 
+  /// Has the app bootstrapping phase completed? The bootstrapping phase
+  /// involves initial screen/graphics setup. Asset loading is not allowed
+  /// until it is complete.
+  auto IsAppBootstrapped() const -> bool override;
+
   /// Has StartApp been called (and completely finished its work)? Code that
   /// sends calls/messages to other threads or otherwise uses app
   /// functionality may want to check this to avoid crashes. Note that some
   /// app functionality such as loading assets is not available until
   /// IsAppBootstrapped returns true. This call is thread safe.
   auto IsAppStarted() const -> bool override;
-
-  /// Has the app bootstrapping phase completed? The bootstrapping phase
-  /// involves initial screen/graphics setup. Asset loading is not allowed
-  /// until it is complete.
-  auto IsAppBootstrapped() const -> bool override;
 
   void PlusDirectSendV1CloudLogs(const std::string& prefix,
                                  const std::string& suffix, bool instant,
@@ -773,13 +773,13 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// Return whether there is currently text on the clipboard.
   auto ClipboardHasText() -> bool;
 
-  /// Set current clipboard text. Raises an Exception if clipboard is
-  /// unsupported.
-  void ClipboardSetText(const std::string& text);
-
   /// Return current text from the clipboard. Raises an Exception if
   /// clipboard is unsupported or if there's no text on the clipboard.
   auto ClipboardGetText() -> std::string;
+
+  /// Set current clipboard text. Raises an Exception if clipboard is
+  /// unsupported.
+  void ClipboardSetText(const std::string& text);
 
   // Const subsystems.
   AppAdapter* const app_adapter;
@@ -818,6 +818,8 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   TouchInput* touch_input{};
 
   auto app_active() -> bool const { return app_active_; }
+
+  void Reset();
 
  private:
   BaseFeatureSet();

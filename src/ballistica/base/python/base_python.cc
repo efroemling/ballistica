@@ -463,17 +463,9 @@ auto BasePython::GetPyEnum_SpecialChar(PyObject* obj) -> SpecialChar {
   return GetPyEnum<SpecialChar>(BasePython::ObjID::kSpecialCharClass, obj);
 }
 
-// auto BasePython::GetPyEnum_TimeType(PyObject* obj) -> TimeType {
-//   return GetPyEnum<TimeType>(BasePython::ObjID::kTimeTypeClass, obj);
-// }
-
 auto BasePython::GetPyEnum_QuitType(PyObject* obj) -> QuitType {
   return GetPyEnum<QuitType>(BasePython::ObjID::kQuitTypeClass, obj);
 }
-
-// auto BasePython::GetPyEnum_TimeFormat(PyObject* obj) -> TimeFormat {
-//   return GetPyEnum<TimeFormat>(BasePython::ObjID::kTimeFormatClass, obj);
-// }
 
 auto BasePython::IsPyEnum_InputType(PyObject* obj) -> bool {
   return IsPyEnum<InputType>(BasePython::ObjID::kInputTypeClass, obj);

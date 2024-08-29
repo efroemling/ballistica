@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     import bascenev1 as bs
 
 
-class PlaylistMapSelectWindow(bui.Window):
+class PlaylistMapSelectWindow(bui.MainWindow):
     """Window to select a map."""
 
     def __init__(
@@ -25,8 +25,11 @@ class PlaylistMapSelectWindow(bui.Window):
         config: dict[str, Any],
         edit_info: dict[str, Any],
         completion_call: Callable[[dict[str, Any] | None], Any],
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
     ):
+        # pylint: disable=too-many-locals
+
         from bascenev1 import get_filtered_map_name
 
         self._gametype = gametype
@@ -56,16 +59,18 @@ class PlaylistMapSelectWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height + top_extra),
-                transition=transition,
+                # transition=transition,
                 scale=(
-                    2.17
+                    1.95
                     if uiscale is bui.UIScale.SMALL
                     else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
                     (0, -27) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         self._cancel_button = btn = bui.buttonwidget(
@@ -76,7 +81,7 @@ class PlaylistMapSelectWindow(bui.Window):
             text_scale=1.0,
             autoselect=True,
             label=bui.Lstr(resource='cancelText'),
-            on_activate_call=self._cancel,
+            on_activate_call=self.main_window_back,
         )
 
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)
@@ -198,10 +203,10 @@ class PlaylistMapSelectWindow(bui.Window):
                     bui.widget(edit=btn, left_widget=self._cancel_button)
                 if y == 0:
                     bui.widget(edit=btn, up_widget=self._cancel_button)
-                if x == columns - 1 and bui.app.ui_v1.use_toolbars:
+                if x == columns - 1:
                     bui.widget(
                         edit=btn,
-                        right_widget=bui.get_special_widget('party_button'),
+                        right_widget=bui.get_special_widget('squad_button'),
                     )
 
                 bui.widget(edit=btn, show_buffer_top=60, show_buffer_bottom=60)
@@ -267,51 +272,53 @@ class PlaylistMapSelectWindow(bui.Window):
         self._refresh(select_get_more_maps_button=True)
 
     def _select(self, map_name: str) -> None:
-        from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
+        # from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
         self._config['settings']['map'] = map_name
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            PlaylistEditGameWindow(
-                self._gametype,
-                self._sessiontype,
-                self._config,
-                self._completion_call,
-                default_selection='map',
-                transition='in_left',
-                edit_info=self._edit_info,
-            ).get_root_widget(),
-            from_window=self._root_widget,
-        )
+        self.main_window_back()
+        # bui.containerwidget(edit=self._root_widget, transition='out_right')
+        # assert bui.app.classic is not None
+        # bui.app.ui_v1.set_main_window(
+        #     PlaylistEditGameWindow(
+        #         self._gametype,
+        #         self._sessiontype,
+        #         self._config,
+        #         self._completion_call,
+        #         default_selection='map',
+        #         transition='in_left',
+        #         edit_info=self._edit_info,
+        #     ),
+        #     from_window=self,
+        # )
 
     def _select_with_delay(self, map_name: str) -> None:
         bui.lock_all_input()
         bui.apptimer(0.1, bui.unlock_all_input)
         bui.apptimer(0.1, bui.WeakCall(self._select, map_name))
 
-    def _cancel(self) -> None:
-        from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
+    # def _cancel(self) -> None:
+    #     from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
+    #     # no-op if our underlying widget is dead or on its way out.
+    #     if not self._root_widget or self._root_widget.transitioning_out:
+    #         return
 
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            PlaylistEditGameWindow(
-                self._gametype,
-                self._sessiontype,
-                self._config,
-                self._completion_call,
-                default_selection='map',
-                transition='in_left',
-                edit_info=self._edit_info,
-            ).get_root_widget(),
-            from_window=self._root_widget,
-        )
+    #     bui.containerwidget(edit=self._root_widget, transition='out_right')
+    #     assert bui.app.classic is not None
+    #     bui.app.ui_v1.set_main_window(
+    #         PlaylistEditGameWindow(
+    #             self._gametype,
+    #             self._sessiontype,
+    #             self._config,
+    #             self._completion_call,
+    #             default_selection='map',
+    #             transition='in_left',
+    #             edit_info=self._edit_info,
+    #         ),
+    #         from_window=self,
+    #         is_back=True,
+    #     )

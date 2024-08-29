@@ -87,11 +87,19 @@ class GameActivity(Activity[PlayerT, TeamT]):
         bascenev1.GameActivity.get_supported_maps() they can just rely on
         the default implementation here which calls those methods.
         """
+        # pylint: disable=cyclic-import
+        from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
+
         assert babase.app.classic is not None
-        delegate = babase.app.classic.delegate
-        assert delegate is not None
-        delegate.create_default_game_settings_ui(
-            cls, sessiontype, settings, completion_call
+        babase.app.ui_v1.clear_main_window()
+        babase.app.ui_v1.set_main_window(
+            PlaylistEditGameWindow(
+                cls,
+                sessiontype,
+                settings,
+                completion_call=completion_call,
+            ),
+            from_window=False,  # Disable check since we don't know.
         )
 
     @classmethod
@@ -465,7 +473,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
                             # Only attempt this if we're not currently paused
                             # and there appears to be no UI.
                             assert babase.app.classic is not None
-                            hmmw = babase.app.ui_v1.has_main_menu_window()
+                            hmmw = babase.app.ui_v1.has_main_window()
                             if not gnode.paused and not hmmw:
                                 self._is_waiting_for_continue = True
                                 with babase.ContextRef.empty():

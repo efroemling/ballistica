@@ -134,7 +134,6 @@ class ClientSessionReplay;
 class RigidBody;
 class SessionStream;
 class Scene;
-class SceneV1AppMode;
 class SceneV1FeatureSet;
 class Session;
 class SceneSound;

@@ -5,6 +5,7 @@
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/networking/networking.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/assets/scene_data_asset.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
@@ -18,12 +19,11 @@
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/scene_v1/support/scene.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 
 namespace ballistica::scene_v1 {
 
 SessionStream::SessionStream(HostSession* host_session, bool save_replay)
-    : app_mode_{SceneV1AppMode::GetActiveOrThrow()},
+    : app_mode_{classic::ClassicAppMode::GetActiveOrThrow()},
       host_session_{host_session} {
   if (save_replay) {
     // Sanity check - we should only ever be writing one replay at once.
@@ -42,7 +42,7 @@ SessionStream::SessionStream(HostSession* host_session, bool save_replay)
   // If we're the live output-stream from a host-session,
   // take responsibility for feeding all clients to this device.
   if (host_session_) {
-    auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+    auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
     appmode->connections()->RegisterClientController(this);
   }
 }
@@ -66,7 +66,7 @@ SessionStream::~SessionStream() {
 
   // If we're wired to the host-session, go ahead and release clients.
   if (host_session_) {
-    if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+    if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
       appmode->connections()->UnregisterClientController(this);
     }
 
@@ -431,7 +431,7 @@ void SessionStream::EndCommand(bool is_time_set) {
   // When attached to a host-session, send this message to clients if it's been
   // long enough. Also send off occasional correction packets.
   if (host_session_) {
-    auto* appmode = SceneV1AppMode::GetSingleton();
+    auto* appmode = classic::ClassicAppMode::GetSingleton();
     // Now if its been long enough *AND* this is a time-step command, send.
     millisecs_t real_time = g_core->GetAppTimeMillisecs();
     millisecs_t diff = real_time - last_send_time_;

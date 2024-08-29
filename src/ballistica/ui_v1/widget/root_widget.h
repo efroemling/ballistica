@@ -10,8 +10,8 @@
 
 namespace ballistica::ui_v1 {
 
-// Root-level widget; contains a top-bar, screen-stack, bottom-bar, menu-button,
-// etc. This is intended to replace RootUI.
+// Root-level widget; contains a top-bar, screen-stack, bottom-bar,
+// menu-button, etc. This is intended to replace RootUI.
 class RootWidget : public ContainerWidget {
  public:
   RootWidget();
@@ -22,6 +22,7 @@ class RootWidget : public ContainerWidget {
   void UpdateForFocusedWindow();
   void Setup();
   auto HandleMessage(const base::WidgetMessage& m) -> bool override;
+  void BackPress();
   void Draw(base::RenderPass* pass, bool transparent) override;
   auto GetSpecialWidget(const std::string& s) const -> Widget*;
   auto base_scale() const -> float { return base_scale_; }
@@ -29,38 +30,57 @@ class RootWidget : public ContainerWidget {
     return overlay_stack_widget_;
   }
 
+  void OnCancelCustom() override;
+  void UpdateLayout() override;
+
  private:
   struct ButtonDef;
   struct Button;
   struct TextDef;
+  struct ImageDef;
   struct Text;
+  struct Image;
+  enum class MeterType { kLevel, kTrophy, kTickets, kTokens };
   enum class VAlign { kTop, kCenter, kBottom };
-  void UpdateForFocusedWindow(Widget* widget);
-  void OnCancelCustom() override;
-  void UpdateLayout() override;
-  auto AddButton(const ButtonDef& def) -> Button*;
-  auto AddText(const TextDef& def) -> Text*;
-  void StepPositions(float dt);
-  void AddMeter(float h_align, float x, int type, float r, float g, float b,
-                bool plus, const std::string& s);
-  auto AddCover(float h_align, VAlign v_align, float x, float y, float w,
-                float h, float o) -> Button*;
+  void UpdateForFocusedWindow_(Widget* widget);
+  auto AddButton_(const ButtonDef& def) -> Button*;
+  auto AddText_(const TextDef& def) -> Text*;
+  auto AddImage_(const ImageDef& def) -> Image*;
+  void StepPositions_(float dt);
+  void AddMeter_(MeterType type, float h_align, float r, float g, float b,
+                 bool plus, const std::string& s);
+  auto AddCover_(float h_align, VAlign v_align, float x, float y, float w,
+                 float h, float o) -> Button*;
+  ToolbarVisibility toolbar_visibility_{ToolbarVisibility::kInGame};
   StackWidget* screen_stack_widget_{};
   StackWidget* overlay_stack_widget_{};
   float base_scale_{1.0f};
+  millisecs_t update_time_{};
   std::list<Button> buttons_;
   std::list<Text> texts_;
+  std::list<Image> images_;
+  std::vector<Button*> top_left_buttons_;
+  std::vector<Button*> top_right_buttons_;
+  std::vector<Button*> bottom_left_buttons_;
+  std::vector<Button*> bottom_right_buttons_;
   bool positions_dirty_{true};
-  millisecs_t update_time_{};
   bool in_main_menu_{};
   Button* back_button_{};
   Button* account_button_{};
-  Button* tickets_plus_button_{};
-  Button* tickets_info_button_{};
+  Button* achievements_button_{};
+  Button* inbox_button_{};
+  Button* tickets_meter_button_{};
+  Button* tokens_meter_button_{};
+  Button* trophy_meter_button_{};
   Button* settings_button_{};
+  Button* store_button_{};
+  Button* get_tokens_button_{};
+  Button* inventory_button_{};
   Button* menu_button_{};
-  Button* party_button_{};
-  ToolbarVisibility toolbar_visibility_{ToolbarVisibility::kInGame};
+  Button* squad_button_{};
+  Button* level_icon_{};
+  Button* level_meter_button_{};
+  Button* trophy_icon_{};
 };
 
 }  // namespace ballistica::ui_v1

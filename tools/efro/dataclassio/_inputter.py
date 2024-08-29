@@ -15,7 +15,7 @@ import types
 import datetime
 from typing import TYPE_CHECKING
 
-from efro.util import enum_by_value, check_utc
+from efro.util import check_utc
 from efro.dataclassio._base import (
     Codec,
     _parse_annotated,
@@ -188,7 +188,7 @@ class _Inputter:
             )
 
         if issubclass(origin, Enum):
-            return enum_by_value(origin, value)
+            return origin(value)
 
         if issubclass(origin, datetime.datetime):
             return self._datetime_from_input(cls, fieldpath, value, ioattrs)
@@ -491,7 +491,7 @@ class _Inputter:
                 if enumvaltype is str:
                     for key, val in value.items():
                         try:
-                            enumval = enum_by_value(keyanntype, key)
+                            enumval = keyanntype(key)
                         except ValueError as exc:
                             raise ValueError(
                                 f'Got invalid key value {key} for'
@@ -506,7 +506,7 @@ class _Inputter:
                 else:
                     for key, val in value.items():
                         try:
-                            enumval = enum_by_value(keyanntype, int(key))
+                            enumval = keyanntype(int(key))
                         except (ValueError, TypeError) as exc:
                             raise ValueError(
                                 f'Got invalid key value {key} for'

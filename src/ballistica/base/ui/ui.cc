@@ -235,11 +235,11 @@ auto UI::HandleMouseDown(int button, float x, float y,
     handled = dev_console_->HandleMouseDown(button, x, y);
   }
 
-  if (!handled) {
-    if (auto* ui_delegate = g_base->ui->delegate()) {
-      handled = ui_delegate->HandleLegacyRootUIMouseDown(x, y);
-    }
-  }
+  // if (!handled) {
+  //   if (auto* ui_delegate = g_base->ui->delegate()) {
+  //     handled = ui_delegate->HandleLegacyRootUIMouseDown(x, y);
+  //   }
+  // }
 
   if (!handled) {
     handled = SendWidgetMessage(WidgetMessage(
@@ -268,9 +268,9 @@ void UI::HandleMouseUp(int button, float x, float y) {
     }
   }
 
-  if (auto* ui_delegate = g_base->ui->delegate()) {
-    ui_delegate->HandleLegacyRootUIMouseUp(x, y);
-  }
+  // if (auto* ui_delegate = g_base->ui->delegate()) {
+  //   ui_delegate->HandleLegacyRootUIMouseUp(x, y);
+  // }
 }
 
 auto UI::UIHasDirectKeyboardInput() const -> bool {
@@ -296,9 +296,9 @@ void UI::HandleMouseMotion(float x, float y) {
   SendWidgetMessage(
       WidgetMessage(WidgetMessage::Type::kMouseMove, nullptr, x, y));
 
-  if (auto* ui_delegate = g_base->ui->delegate()) {
-    ui_delegate->HandleLegacyRootUIMouseMotion(x, y);
-  }
+  // if (auto* ui_delegate = g_base->ui->delegate()) {
+  //   ui_delegate->HandleLegacyRootUIMouseMotion(x, y);
+  // }
 }
 
 void UI::PushBackButtonCall(InputDevice* input_device) {
@@ -338,8 +338,11 @@ void UI::SetUIInputDevice(InputDevice* input_device) {
 }
 
 void UI::Reset() {
+  assert(g_base->InLogicThread());
+  // Reset and then deactivate any current delegate.
   if (auto* ui_delegate = g_base->ui->delegate()) {
     ui_delegate->Reset();
+    g_base->ui->set_ui_delegate(nullptr);
   }
 }
 
@@ -645,19 +648,25 @@ void UI::PushUIOperationRunnable(Runnable* runnable) {
   assert(g_base->InLogicThread());
 
   if (operation_context_ != nullptr) {
+    // Once we're finishing the context, nothing else should be adding calls
+    // to it. UPDATE - this is actually ok. Things like widget-select
+    // commands can happen as part of user callbacks which themselves add
+    // additional callbacks to the current ui-operation.
+    //
+    // if (operation_context_->ran_finish()) {
+    //   auto trace = g_core->platform->GetNativeStackTrace();
+    //   BA_LOG_ERROR_NATIVE_TRACE(
+    //       "UI::PushUIOperationRunnable() called during UI operation
+    //       finish.");
+    //   return;
+    // }
+
     operation_context_->AddRunnable(runnable);
     return;
+  } else {
+    BA_LOG_ERROR_NATIVE_TRACE(
+        "UI::PushUIOperationRunnable() called outside of UI operation.");
   }
-
-  // For now, gracefully fall back to pushing an event if there's no current
-  // operation. Once we've got any bugs cleared out, can leave this as just
-  // an error log.
-
-  auto trace = g_core->platform->GetNativeStackTrace();
-  BA_LOG_ERROR_NATIVE_TRACE_ONCE(
-      "UI::PushUIOperationRunnable() called outside of UI operation.");
-
-  g_base->logic->event_loop()->PushRunnable(runnable);
 }
 
 auto UI::InUIOperation() -> bool {

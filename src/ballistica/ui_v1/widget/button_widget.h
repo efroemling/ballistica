@@ -86,6 +86,9 @@ class ButtonWidget : public Widget {
   auto is_color_set() const -> bool { return color_set_; }
   void OnLanguageChange() override;
 
+  auto set_target_extra_left(float val) { target_extra_left_ = val; }
+  auto set_target_extra_right(float val) { target_extra_right_ = val; }
+
  private:
   bool text_width_dirty_ = true;
   bool color_set_ = false;
@@ -129,6 +132,8 @@ class ButtonWidget : public Widget {
   float tint2_color_red_{1.0f};
   float tint2_color_green_{1.0f};
   float tint2_color_blue_{1.0f};
+  float target_extra_right_{0.0f};
+  float target_extra_left_{0.0f};
   Object::Ref<base::TextureAsset> texture_;
   Object::Ref<base::TextureAsset> icon_;
   Object::Ref<base::TextureAsset> tint_texture_;

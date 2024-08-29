@@ -31,8 +31,8 @@ class AppInterfaceIdiom(Enum):
 class AppExperience(Enum):
     """A particular experience that can be provided by a Ballistica app.
 
-    This is one metric used to isolate different playerbases from
-    each other where there might be no technical barriers doing so. For
+    This is one metric used to isolate different playerbases from each
+    other where there might be no technical barriers doing so. For
     example, a casual one-hand-playable phone game and an augmented
     reality tabletop game may both use the same scene-versions and
     networking-protocols and whatnot, but it would make no sense to
@@ -75,10 +75,10 @@ class AppArchitecture(Enum):
 class AppPlatform(Enum):
     """Overall platform a Ballistica build is targeting.
 
-    Each distinct flavor of an app has a unique combination
-    of AppPlatform and AppVariant. Generally platform describes
-    a set of hardware, while variant describes a destination or
-    purpose for the build.
+    Each distinct flavor of an app has a unique combination of
+    AppPlatform and AppVariant. Generally platform describes a set of
+    hardware, while variant describes a destination or purpose for the
+    build.
     """
 
     MAC = 'mac'
@@ -92,10 +92,10 @@ class AppPlatform(Enum):
 class AppVariant(Enum):
     """A unique Ballistica build type within a single platform.
 
-    Each distinct flavor of an app has a unique combination
-    of AppPlatform and AppVariant. Generally platform describes
-    a set of hardware, while variant describes a destination or
-    purpose for the build.
+    Each distinct flavor of an app has a unique combination of
+    AppPlatform and AppVariant. Generally platform describes a set of
+    hardware, while variant describes a destination or purpose for the
+    build.
     """
 
     # Default builds.

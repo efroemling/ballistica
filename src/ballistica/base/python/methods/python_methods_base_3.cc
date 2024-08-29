@@ -14,6 +14,7 @@
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -1826,6 +1827,85 @@ static PyMethodDef PyGetInputIdleTimeDef = {
     "\n"
     "Return seconds since any local input occurred (touch, keypress, etc.).",
 };
+
+// --------------------------- get_draw_ui_bounds -----------------------------
+
+static auto PyGetDrawUIBounds(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (g_base->graphics->draw_ui_bounds()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetDrawUIBoundsDef = {
+    "get_draw_ui_bounds",            // name
+    (PyCFunction)PyGetDrawUIBounds,  // method
+    METH_NOARGS,                     // flags
+
+    "get_draw_ui_bounds() -> bool\n"
+    "\n"
+    "(internal)",
+};
+
+// --------------------------- set_draw_ui_bounds -----------------------------
+
+static auto PySetDrawUIBounds(PyObject* self, PyObject* args,
+                              PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  int value;
+  static const char* kwlist[] = {"value", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
+                                   const_cast<char**>(kwlist), &value)) {
+    return nullptr;
+  }
+
+  // if (g_base->graphics->draw_ui_bounds()) {
+  //   Py_RETURN_TRUE;
+  // }
+  // Py_RETURN_FALSE;
+  g_base->graphics->set_draw_ui_bounds(value);
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetDrawUIBoundsDef = {
+    "set_draw_ui_bounds",            // name
+    (PyCFunction)PySetDrawUIBounds,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
+
+    "set_draw_ui_bounds(value: bool) -> None\n"
+    "\n"
+    "(internal)",
+};
+
+// ----------------------------- push_back_press -------------------------------
+
+static auto PyPushBackPress(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  g_base->ui->PushBackButtonCall(nullptr);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyPushBackPressDef = {
+    "push_back_press",             // name
+    (PyCFunction)PyPushBackPress,  // method
+    METH_NOARGS,                   // flags
+
+    "push_back_press() -> None\n"
+    "\n"
+    "(internal)",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
@@ -1895,6 +1975,9 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyTempTestingDef,
       PyOpenFileExternallyDef,
       PyGetInputIdleTimeDef,
+      PyPushBackPressDef,
+      PyGetDrawUIBoundsDef,
+      PySetDrawUIBoundsDef,
   };
 }
 

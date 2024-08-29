@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import time
 import logging
+from typing import override
 
 from bacommon.cloud import WebLocation
 from bacommon.login import LoginType
@@ -20,12 +21,12 @@ import bauiv1 as bui
 FORCE_ENABLE_V1_LINKING = False
 
 
-class AccountSettingsWindow(bui.Window):
+class AccountSettingsWindow(bui.MainWindow):
     """Window for account related functionality."""
 
     def __init__(
         self,
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
         modal: bool = False,
         origin_widget: bui.Widget | None = None,
         close_once_signed_in: bool = False,
@@ -46,16 +47,6 @@ class AccountSettingsWindow(bui.Window):
 
         self._explicitly_signed_out_of_gpgs = False
 
-        # If they provided an origin-widget, scale up from that.
-        scale_origin: tuple[float, float] | None
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
-        else:
-            self._transition_out = 'out_right'
-            scale_origin = None
-
         self._r = 'accountSettingsWindow'
         self._modal = modal
         self._needs_refresh = False
@@ -71,10 +62,10 @@ class AccountSettingsWindow(bui.Window):
         assert app.classic is not None
         uiscale = app.ui_v1.uiscale
 
-        self._width = 860 if uiscale is bui.UIScale.SMALL else 660
-        x_offs = 100 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 850 if uiscale is bui.UIScale.SMALL else 660
+        x_offs = 70 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            390
+            380
             if uiscale is bui.UIScale.SMALL
             else 430 if uiscale is bui.UIScale.MEDIUM else 490
         )
@@ -107,23 +98,28 @@ class AccountSettingsWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
-                transition=transition,
-                toolbar_visibility='menu_minimal',
-                scale_origin_stack_offset=scale_origin,
+                # transition=transition,
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
+                ),
                 scale=(
-                    2.09
+                    2.07
                     if uiscale is bui.UIScale.SMALL
                     else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -19) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 8) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
-        if uiscale is bui.UIScale.SMALL and app.ui_v1.use_toolbars:
+        if uiscale is bui.UIScale.SMALL:
             self._back_button = None
             bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self._back
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
         else:
             self._back_button = btn = bui.buttonwidget(
@@ -137,7 +133,7 @@ class AccountSettingsWindow(bui.Window):
                     resource='doneText' if self._modal else 'backText'
                 ),
                 button_type='regular' if self._modal else 'back',
-                on_activate_call=self._back,
+                on_activate_call=self.main_window_back,
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
             if not self._modal:
@@ -148,12 +144,15 @@ class AccountSettingsWindow(bui.Window):
                     label=bui.charstr(bui.SpecialChar.BACK),
                 )
 
+        titleyoffs = -12 if uiscale is bui.UIScale.SMALL else 0
+        titlescale = 0.6 if uiscale is bui.UIScale.SMALL else 1.0
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 41),
+            position=(self._width * 0.5, self._height - 41 + titleyoffs),
             size=(0, 0),
             text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=app.ui_v1.title_color,
+            scale=titlescale,
             maxwidth=self._width - 340,
             h_align='center',
             v_align='center',
@@ -175,13 +174,27 @@ class AccountSettingsWindow(bui.Window):
         self._refresh()
         self._restore_state()
 
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
+
+    @override
+    def on_main_window_close(self) -> None:
+        self._save_state()
+
     def _update(self) -> None:
         plus = bui.app.plus
         assert plus is not None
 
         # If they want us to close once we're signed in, do so.
         if self._close_once_signed_in and self._v1_signed_in:
-            self._back()
+            self.main_window_back()
             return
 
         # Hmm should update this to use get_account_state_num.
@@ -215,7 +228,6 @@ class AccountSettingsWindow(bui.Window):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
-        from bauiv1lib import confirm
 
         plus = bui.app.plus
         assert plus is not None
@@ -316,10 +328,6 @@ class AccountSettingsWindow(bui.Window):
         show_game_service_button = game_center_active
         game_service_button_space = 60.0
 
-        # Phasing this out.
-        show_what_is_v2 = False
-        # show_what_is_v2 = self._v1_signed_in and v1_account_type == 'V2'
-
         # Phasing this out (for V2 accounts at least).
         show_linked_accounts_text = (
             self._v1_signed_in and v1_account_type != 'V2'
@@ -328,36 +336,41 @@ class AccountSettingsWindow(bui.Window):
 
         # Always show achievements except in the game-center case where
         # its unified UI covers them.
-        show_achievements_button = self._v1_signed_in and not game_center_active
+        # show_achievements_button =
+        # self._v1_signed_in and not game_center_active
+
+        # Update: No longer showing this since its visible on main
+        # toolbar.
+        show_achievements_button = False
         achievements_button_space = 60.0
 
-        show_achievements_text = (
-            self._v1_signed_in and not show_achievements_button
-        )
+        # show_achievements_text = (
+        #     self._v1_signed_in and not show_achievements_button
+        # )
+
+        # Update: No longer showing this since its visible on main
+        # toolbar.
+        show_achievements_text = False
         achievements_text_space = 27.0
 
         show_leaderboards_button = self._v1_signed_in and gpgs_active
         leaderboards_button_space = 60.0
 
-        show_campaign_progress = self._v1_signed_in
+        # Update: No longer showing this; trying to get progress type
+        # stuff out of the account panel.
+        # show_campaign_progress = self._v1_signed_in
+        show_campaign_progress = False
         campaign_progress_space = 27.0
 
-        show_tickets = self._v1_signed_in
+        # show_tickets = self._v1_signed_in
+        show_tickets = False
         tickets_space = 27.0
 
-        show_reset_progress_button = False
-        reset_progress_button_space = 70.0
-
-        show_manage_v2_account_button = primary_v2_account is not None
-        manage_v2_account_button_space = 100.0
+        show_manage_account_button = primary_v2_account is not None
+        manage_account_button_space = 70.0
 
         show_delete_account_button = primary_v2_account is not None
-        delete_account_button_space = 80.0
-
-        show_player_profiles_button = self._v1_signed_in
-        player_profiles_button_space = (
-            70.0 if show_manage_v2_account_button else 100.0
-        )
+        delete_account_button_space = 70.0
 
         show_link_accounts_button = self._v1_signed_in and (
             primary_v2_account is None or FORCE_ENABLE_V1_LINKING
@@ -376,7 +389,7 @@ class AccountSettingsWindow(bui.Window):
         show_sign_out_button = primary_v2_account is not None or (
             self._v1_signed_in and v1_account_type == 'Local'
         )
-        sign_out_button_space = 80.0
+        sign_out_button_space = 70.0
 
         # We can show cancel if we're either waiting on an adapter to
         # provide us with v2 credentials or waiting for those
@@ -419,12 +432,8 @@ class AccountSettingsWindow(bui.Window):
             self._sub_height += tickets_space
         if show_sign_in_benefits:
             self._sub_height += sign_in_benefits_space
-        if show_reset_progress_button:
-            self._sub_height += reset_progress_button_space
-        if show_manage_v2_account_button:
-            self._sub_height += manage_v2_account_button_space
-        if show_player_profiles_button:
-            self._sub_height += player_profiles_button_space
+        if show_manage_account_button:
+            self._sub_height += manage_account_button_space
         if show_link_accounts_button:
             self._sub_height += link_accounts_button_space
         if show_unlink_accounts_button:
@@ -452,8 +461,6 @@ class AccountSettingsWindow(bui.Window):
         v = self._sub_height - 10.0
 
         assert bui.app.classic is not None
-        self._account_name_what_is_text: bui.Widget | None
-        self._account_name_what_is_y = 0.0
         self._account_name_text: bui.Widget | None
         if show_signed_in_as:
             v -= signed_in_as_space * 0.2
@@ -484,32 +491,6 @@ class AccountSettingsWindow(bui.Window):
                 h_align='center',
                 v_align='center',
             )
-
-            if show_what_is_v2:
-                self._account_name_what_is_y = v - 23.0
-                self._account_name_what_is_text = bui.textwidget(
-                    parent=self._subcontainer,
-                    position=(0.0, self._account_name_what_is_y),
-                    size=(220.0, 60),
-                    text=bui.Lstr(
-                        value='${WHAT}  -->',
-                        subs=[('${WHAT}', bui.Lstr(resource='whatIsThisText'))],
-                    ),
-                    scale=0.6,
-                    color=(0.3, 0.7, 0.05),
-                    maxwidth=130.0,
-                    h_align='right',
-                    v_align='center',
-                    autoselect=True,
-                    selectable=True,
-                    on_activate_call=show_what_is_v2_page,
-                    click_activate=True,
-                    glow_type='uniform',
-                )
-                if first_selectable is None:
-                    first_selectable = self._account_name_what_is_text
-            else:
-                self._account_name_what_is_text = None
 
             self._refresh_account_name_text()
 
@@ -565,7 +546,6 @@ class AccountSettingsWindow(bui.Window):
 
         else:
             self._account_name_text = None
-            self._account_name_what_is_text = None
 
         if self._back_button is None:
             bbtn = bui.get_special_widget('back_button')
@@ -641,11 +621,9 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.ui_v1.use_toolbars:
-                bui.widget(
-                    edit=btn,
-                    right_widget=bui.get_special_widget('party_button'),
-                )
+            bui.widget(
+                edit=btn, right_widget=bui.get_special_widget('squad_button')
+            )
             bui.widget(edit=btn, left_widget=bbtn)
             bui.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
@@ -683,11 +661,9 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.ui_v1.use_toolbars:
-                bui.widget(
-                    edit=btn,
-                    right_widget=bui.get_special_widget('party_button'),
-                )
+            bui.widget(
+                edit=btn, right_widget=bui.get_special_widget('squad_button')
+            )
             bui.widget(edit=btn, left_widget=bbtn)
             bui.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
@@ -752,11 +728,9 @@ class AccountSettingsWindow(bui.Window):
                 )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.ui_v1.use_toolbars:
-                bui.widget(
-                    edit=btn,
-                    right_widget=bui.get_special_widget('party_button'),
-                )
+            bui.widget(
+                edit=btn, right_widget=bui.get_special_widget('squad_button')
+            )
             bui.widget(edit=btn, left_widget=bbtn)
             bui.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
@@ -821,21 +795,19 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.ui_v1.use_toolbars:
-                bui.widget(
-                    edit=btn,
-                    right_widget=bui.get_special_widget('party_button'),
-                )
+            bui.widget(
+                edit=btn, right_widget=bui.get_special_widget('squad_button')
+            )
             bui.widget(edit=btn, left_widget=bbtn)
             bui.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
 
-        if show_manage_v2_account_button:
+        if show_manage_account_button:
             button_width = 300
-            v -= manage_v2_account_button_space
-            self._manage_v2_button = btn = bui.buttonwidget(
+            v -= manage_account_button_space
+            self._manage_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
-                position=((self._sub_width - button_width) * 0.5, v + 30),
+                position=((self._sub_width - button_width) * 0.5, v),
                 autoselect=True,
                 size=(button_width, 60),
                 label=bui.Lstr(resource=f'{self._r}.manageAccountText'),
@@ -846,35 +818,10 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.ui_v1.use_toolbars:
-                bui.widget(
-                    edit=btn,
-                    right_widget=bui.get_special_widget('party_button'),
-                )
-            bui.widget(edit=btn, left_widget=bbtn)
-
-        if show_player_profiles_button:
-            button_width = 300
-            v -= player_profiles_button_space
-            self._player_profiles_button = btn = bui.buttonwidget(
-                parent=self._subcontainer,
-                position=((self._sub_width - button_width) * 0.5, v + 30),
-                autoselect=True,
-                size=(button_width, 60),
-                label=bui.Lstr(resource='playerProfilesWindow.titleText'),
-                color=(0.55, 0.5, 0.6),
-                icon=bui.gettexture('cuteSpaz'),
-                textcolor=(0.75, 0.7, 0.8),
-                on_activate_call=self._player_profiles_press,
+            bui.widget(
+                edit=btn, right_widget=bui.get_special_widget('squad_button')
             )
-            if first_selectable is None:
-                first_selectable = btn
-            if bui.app.ui_v1.use_toolbars:
-                bui.widget(
-                    edit=btn,
-                    right_widget=bui.get_special_widget('party_button'),
-                )
-            bui.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=0)
+            bui.widget(edit=btn, left_widget=bbtn)
 
         # the button to go to OS-Specific leaderboards/high-score-lists/etc.
         if show_game_service_button:
@@ -904,11 +851,9 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.ui_v1.use_toolbars:
-                bui.widget(
-                    edit=btn,
-                    right_widget=bui.get_special_widget('party_button'),
-                )
+            bui.widget(
+                edit=btn, right_widget=bui.get_special_widget('squad_button')
+            )
             bui.widget(edit=btn, left_widget=bbtn)
             v -= game_service_button_space * 0.4
         else:
@@ -959,11 +904,9 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.ui_v1.use_toolbars:
-                bui.widget(
-                    edit=btn,
-                    right_widget=bui.get_special_widget('party_button'),
-                )
+            bui.widget(
+                edit=btn, right_widget=bui.get_special_widget('squad_button')
+            )
             bui.widget(edit=btn, left_widget=bbtn)
             v -= achievements_button_space * 0.15
         else:
@@ -990,11 +933,9 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.ui_v1.use_toolbars:
-                bui.widget(
-                    edit=btn,
-                    right_widget=bui.get_special_widget('party_button'),
-                )
+            bui.widget(
+                edit=btn, right_widget=bui.get_special_widget('squad_button')
+            )
             bui.widget(edit=btn, left_widget=bbtn)
             v -= leaderboards_button_space * 0.15
         else:
@@ -1039,41 +980,9 @@ class AccountSettingsWindow(bui.Window):
             self._tickets_text = None
 
         # bit of spacing before the reset/sign-out section
-        v -= 5
+        # v -= 5
 
         button_width = 250
-        if show_reset_progress_button:
-            confirm_text = (
-                bui.Lstr(resource=f'{self._r}.resetProgressConfirmText')
-                if self._can_reset_achievements
-                else bui.Lstr(
-                    resource=f'{self._r}.resetProgressConfirmNoAchievementsText'
-                )
-            )
-            v -= reset_progress_button_space
-            self._reset_progress_button = btn = bui.buttonwidget(
-                parent=self._subcontainer,
-                position=((self._sub_width - button_width) * 0.5, v),
-                color=(0.55, 0.5, 0.6),
-                textcolor=(0.75, 0.7, 0.8),
-                autoselect=True,
-                size=(button_width, 60),
-                label=bui.Lstr(resource=f'{self._r}.resetProgressText'),
-                on_activate_call=lambda: confirm.ConfirmWindow(
-                    text=confirm_text,
-                    width=500,
-                    height=200,
-                    action=self._reset_progress,
-                ),
-            )
-            if first_selectable is None:
-                first_selectable = btn
-            if bui.app.ui_v1.use_toolbars:
-                bui.widget(
-                    edit=btn,
-                    right_widget=bui.get_special_widget('party_button'),
-                )
-            bui.widget(edit=btn, left_widget=bbtn)
 
         self._linked_accounts_text: bui.Widget | None
         if show_linked_accounts_text:
@@ -1133,11 +1042,9 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.ui_v1.use_toolbars:
-                bui.widget(
-                    edit=btn,
-                    right_widget=bui.get_special_widget('party_button'),
-                )
+            bui.widget(
+                edit=btn, right_widget=bui.get_special_widget('squad_button')
+            )
             bui.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=50)
 
         self._unlink_accounts_button: bui.Widget | None
@@ -1165,11 +1072,9 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.ui_v1.use_toolbars:
-                bui.widget(
-                    edit=btn,
-                    right_widget=bui.get_special_widget('party_button'),
-                )
+            bui.widget(
+                edit=btn, right_widget=bui.get_special_widget('squad_button')
+            )
             bui.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=50)
             self._update_unlink_accounts_button()
         else:
@@ -1235,11 +1140,9 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.ui_v1.use_toolbars:
-                bui.widget(
-                    edit=btn,
-                    right_widget=bui.get_special_widget('party_button'),
-                )
+            bui.widget(
+                edit=btn, right_widget=bui.get_special_widget('squad_button')
+            )
             bui.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=15)
 
         if show_cancel_sign_in_button:
@@ -1256,11 +1159,9 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.ui_v1.use_toolbars:
-                bui.widget(
-                    edit=btn,
-                    right_widget=bui.get_special_widget('party_button'),
-                )
+            bui.widget(
+                edit=btn, right_widget=bui.get_special_widget('squad_button')
+            )
             bui.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=15)
 
         if show_delete_account_button:
@@ -1277,11 +1178,9 @@ class AccountSettingsWindow(bui.Window):
             )
             if first_selectable is None:
                 first_selectable = btn
-            if bui.app.ui_v1.use_toolbars:
-                bui.widget(
-                    edit=btn,
-                    right_widget=bui.get_special_widget('party_button'),
-                )
+            bui.widget(
+                edit=btn, right_widget=bui.get_special_widget('squad_button')
+            )
             bui.widget(edit=btn, left_widget=bbtn, show_buffer_bottom=15)
 
         # Whatever the topmost selectable thing is, we want it to scroll all
@@ -1321,9 +1220,6 @@ class AccountSettingsWindow(bui.Window):
         achievements.AchievementsWindow(
             position=self._achievements_button.get_screen_space_center()
         )
-
-    def _on_what_is_v2_press(self) -> None:
-        show_what_is_v2_page()
 
     def _on_manage_account_press(self) -> None:
         self._do_manage_account_press(WebLocation.ACCOUNT_EDITOR)
@@ -1502,16 +1398,6 @@ class AccountSettingsWindow(bui.Window):
             name_str = '??'
 
         bui.textwidget(edit=self._account_name_text, text=name_str)
-        if self._account_name_what_is_text is not None:
-            swidth = bui.get_string_width(name_str, suppress_warning=True)
-            # Eww; number-fudging. Need to recalibrate this if
-            # account name scaling changes.
-            x = self._sub_width * 0.5 - swidth * 0.75 - 190
-
-            bui.textwidget(
-                edit=self._account_name_what_is_text,
-                position=(x, self._account_name_what_is_y),
-            )
 
     def _refresh_achievements(self) -> None:
         assert bui.app.classic is not None
@@ -1549,23 +1435,6 @@ class AccountSettingsWindow(bui.Window):
             return
 
         AccountUnlinkWindow(origin_widget=self._unlink_accounts_button)
-
-    def _player_profiles_press(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.profile.browser import ProfileBrowserWindow
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        bui.app.ui_v1.set_main_menu_window(
-            ProfileBrowserWindow(
-                origin_widget=self._player_profiles_button
-            ).get_root_widget(),
-            from_window=self._root_widget,
-        )
 
     def _cancel_sign_in_press(self) -> None:
         # If we're waiting on an adapter to give us credentials, abort.
@@ -1674,14 +1543,14 @@ class AccountSettingsWindow(bui.Window):
             bui.getsound('error').play()
         else:
             # Success! Plug in these credentials which will begin
-            # verifying them and set our primary account-handle
-            # when finished.
+            # verifying them and set our primary account-handle when
+            # finished.
             plus = bui.app.plus
             assert plus is not None
             plus.accounts.set_primary_credentials(result.credentials)
 
-            # Special case - if the user has explicitly logged out and
-            # logged in again with GPGS via this button, warn them that
+            # Special case - if the user has explicitly signed out and
+            # signed in again with GPGS via this button, warn them that
             # they need to use the app if they want to switch to a
             # different GPGS account.
             if (
@@ -1709,9 +1578,9 @@ class AccountSettingsWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.connectivity import wait_for_connectivity
 
-        # If we're still waiting for our master-server connection,
-        # keep the user informed of this instead of rushing in and
-        # failing immediately.
+        # If we're still waiting for our master-server connection, keep
+        # the user informed of this instead of rushing in and failing
+        # immediately.
         wait_for_connectivity(on_connected=self._v2_proxy_sign_in)
 
     def _v2_proxy_sign_in(self) -> None:
@@ -1720,44 +1589,6 @@ class AccountSettingsWindow(bui.Window):
 
         assert self._sign_in_v2_proxy_button is not None
         V2ProxySignInWindow(origin_widget=self._sign_in_v2_proxy_button)
-
-    def _reset_progress(self) -> None:
-        try:
-            assert bui.app.classic is not None
-            # FIXME: This would need to happen server-side these days.
-            if self._can_reset_achievements:
-                logging.warning('ach resets not wired up.')
-                # bui.app.config['Achievements'] = {}
-                # bui.reset_achievements()
-            campaign = bui.app.classic.getcampaign('Default')
-            campaign.reset()  # also writes the config..
-            campaign = bui.app.classic.getcampaign('Challenges')
-            campaign.reset()  # also writes the config..
-        except Exception:
-            logging.exception('Error resetting co-op campaign progress.')
-
-        bui.getsound('shieldDown').play()
-        self._refresh()
-
-    def _back(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.mainmenu import MainMenuWindow
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        self._save_state()
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-
-        if not self._modal:
-            assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_menu_window(
-                MainMenuWindow(transition='in_left').get_root_widget(),
-                from_window=self._root_widget,
-            )
 
     def _save_state(self) -> None:
         try:
@@ -1786,15 +1617,6 @@ class AccountSettingsWindow(bui.Window):
             bui.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
             logging.exception('Error restoring state for %s.', self)
-
-
-def show_what_is_v2_page() -> None:
-    """Show the webpage describing V2 accounts."""
-    plus = bui.app.plus
-    assert plus is not None
-
-    bamasteraddr = plus.get_master_server_address(version=2)
-    bui.open_url(f'{bamasteraddr}/whatisv2')
 
 
 def show_what_is_legacy_unlinking_page() -> None:

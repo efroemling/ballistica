@@ -4,11 +4,11 @@
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/networking/network_writer.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/scene_v1/connection/connection_to_client_udp.h"
 #include "ballistica/scene_v1/connection/connection_to_host_udp.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/host_session.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
@@ -88,14 +88,14 @@ void ConnectionSet::SendChatMessage(const std::string& message,
         "Can't send chat message with sender_override as a client.");
   }
 
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   std::string our_spec_string;
 
   if (sender_override != nullptr) {
     std::string override_final = *sender_override;
-    if (override_final.size() > kMaxPartyNameCombinedSize) {
-      override_final.resize(kMaxPartyNameCombinedSize);
+    if (override_final.size() > classic::kMaxPartyNameCombinedSize) {
+      override_final.resize(classic::kMaxPartyNameCombinedSize);
       override_final += "...";
     }
     our_spec_string =
@@ -129,8 +129,8 @@ void ConnectionSet::SendChatMessage(const std::string& message,
           }
         }
       }
-      if (p_name_combined.size() > kMaxPartyNameCombinedSize) {
-        p_name_combined.resize(kMaxPartyNameCombinedSize);
+      if (p_name_combined.size() > classic::kMaxPartyNameCombinedSize) {
+        p_name_combined.resize(classic::kMaxPartyNameCombinedSize);
         p_name_combined += "...";
       }
       if (!p_name_combined.empty()) {
@@ -275,14 +275,14 @@ void ConnectionSet::PrepareForLaunchHostSession() {
     connection_to_host_->RequestDisconnect();
     connection_to_host_.Clear();
     has_connection_to_host_ = false;
-    if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+    if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
       appmode->UpdateGameRoster();
     }
   }
 }
 
 void ConnectionSet::HandleClientDisconnected(int id) {
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   auto i = connections_to_clients_.find(id);
   if (i != connections_to_clients_.end()) {
     bool was_connected = i->second->can_communicate();
@@ -333,7 +333,7 @@ auto ConnectionSet::DisconnectClient(int client_id, int ban_seconds) -> bool {
       // If this is considered a kick, add an entry to our banned list so we
       // know not to let them back in for a while.
       if (ban_seconds > 0) {
-        if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+        if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
           appmode->BanPlayer(i->second->peer_spec(), 1000 * ban_seconds);
         }
       }
@@ -363,7 +363,7 @@ void ConnectionSet::PushDisconnectedFromHostCall() {
 
       // Clear out our party roster.
 
-      if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+      if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
         appmode->UpdateGameRoster();
 
         // Go back to main menu *if* the connection was fully connected.
@@ -382,7 +382,7 @@ void ConnectionSet::PushHostConnectedUDPCall(const SockAddr& addr,
   g_base->logic->event_loop()->PushCall([this, addr, print_connect_progress] {
     // Attempt to disconnect any clients we have, turn off public-party
     // advertising, etc.
-    if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+    if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
       appmode->CleanUpBeforeConnectingToHost();
     }
     print_udp_connect_progress_ = print_connect_progress;
@@ -434,7 +434,7 @@ void ConnectionSet::ForceDisconnectClients() {
 void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
                                             const SockAddr& addr) {
   assert(!data_in.empty());
-  auto* appmode = SceneV1AppMode::GetActiveOrFatal();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
 
   const uint8_t* data = &(data_in[0]);
   auto data_size = static_cast<size_t>(data_in.size());
@@ -736,7 +736,7 @@ void ConnectionSet::SetClientInfoFromMasterServer(
       client->HandleMasterServerClientInfo(info_obj);
 
       // Roster will now include account-id...
-      if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+      if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
         appmode->MarkGameRosterDirty();
       }
       break;

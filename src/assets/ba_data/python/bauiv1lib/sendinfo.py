@@ -14,26 +14,25 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-class SendInfoWindow(bui.Window):
+class SendInfoWindow(bui.MainWindow):
     """Window for sending info to the developer."""
 
     def __init__(
         self,
         modal: bool = False,
         legacy_code_mode: bool = False,
+        transition: str | None = 'in_scale',
         origin_widget: bui.Widget | None = None,
     ):
         self._legacy_code_mode = legacy_code_mode
 
-        scale_origin: tuple[float, float] | None
+        # scale_origin: tuple[float, float] | None
+
+        # Need to wrangle our own transition-out in modal mode.
         if origin_widget is not None:
             self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
         else:
             self._transition_out = 'out_right'
-            scale_origin = None
-            transition = 'in_right'
 
         width = 450 if legacy_code_mode else 600
         height = 200 if legacy_code_mode else 300
@@ -46,15 +45,19 @@ class SendInfoWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),
-                transition=transition,
-                toolbar_visibility='menu_minimal_no_back',
-                scale_origin_stack_offset=scale_origin,
+                toolbar_visibility=(
+                    'menu_minimal_no_back'
+                    if uiscale is bui.UIScale.SMALL or modal
+                    else 'menu_full'
+                ),
                 scale=(
                     2.0
                     if uiscale is bui.UIScale.SMALL
                     else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         btn = bui.buttonwidget(
@@ -165,7 +168,12 @@ class SendInfoWindow(bui.Window):
 
     def _do_back(self) -> None:
         # pylint: disable=cyclic-import
-        from bauiv1lib.settings.advanced import AdvancedSettingsWindow
+
+        if not self._modal:
+            self.main_window_back()
+            return
+
+        # from bauiv1lib.settings.advanced import AdvancedSettingsWindow
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -174,12 +182,13 @@ class SendInfoWindow(bui.Window):
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
         )
-        if not self._modal:
-            assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_menu_window(
-                AdvancedSettingsWindow(transition='in_left').get_root_widget(),
-                from_window=self._root_widget,
-            )
+        # if not self._modal:
+        #     assert bui.app.classic is not None
+        #     bui.app.ui_v1.set_main_window(
+        #         AdvancedSettingsWindow(transition='in_left'),
+        #         from_window=self,
+        #         is_back=True,
+        #     )
 
     def _activate_enter_button(self) -> None:
         self._enter_button.activate()
@@ -200,9 +209,8 @@ class SendInfoWindow(bui.Window):
         )
         if not self._modal:
             assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_menu_window(
-                AdvancedSettingsWindow(transition='in_left').get_root_widget(),
-                from_window=self._root_widget,
+            bui.app.ui_v1.set_main_window(
+                AdvancedSettingsWindow(transition='in_left'), from_window=self
             )
 
         description: Any = bui.textwidget(query=self._text_field)

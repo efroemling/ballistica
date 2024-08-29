@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, override
 import bauiv1 as bui
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Callable
+    from typing import Any, Sequence, Callable, Literal
 
 
 class PopupWindow:
@@ -27,7 +27,12 @@ class PopupWindow:
         bg_color: tuple[float, float, float] = (0.35, 0.55, 0.15),
         focus_position: tuple[float, float] = (0, 0),
         focus_size: tuple[float, float] | None = None,
-        toolbar_visibility: str = 'menu_minimal_no_back',
+        toolbar_visibility: Literal[
+            'inherit',
+            'menu_minimal_no_back',
+            'menu_store_no_back',
+        ] = 'menu_minimal_no_back',
+        edge_buffer_scale: float = 1.0,
     ):
         # pylint: disable=too-many-locals
         if focus_size is None:
@@ -45,7 +50,7 @@ class PopupWindow:
         # we now need to ensure that we're all onscreen by scaling down if
         # need be and clamping it to the UI bounds.
         bounds = bui.uibounds()
-        edge_buffer = 15
+        edge_buffer = 15 * edge_buffer_scale
         bounds_width = bounds[1] - bounds[0] - edge_buffer * 2
         bounds_height = bounds[3] - bounds[2] - edge_buffer * 2
 

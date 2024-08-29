@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
@@ -14,13 +14,14 @@ if TYPE_CHECKING:
     from bauiv1lib.playlist.editcontroller import PlaylistEditController
 
 
-class PlaylistEditWindow(bui.Window):
+class PlaylistEditWindow(bui.MainWindow):
     """Window for editing an individual game playlist."""
 
     def __init__(
         self,
         editcontroller: PlaylistEditController,
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
@@ -43,16 +44,17 @@ class PlaylistEditWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
-                transition=transition,
                 scale=(
-                    2.0
+                    1.8
                     if uiscale is bui.UIScale.SMALL
                     else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
                     (0, -16) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
         cancel_button = bui.buttonwidget(
             parent=self._root_widget,
@@ -74,11 +76,10 @@ class PlaylistEditWindow(bui.Window):
             text_scale=1.2,
         )
 
-        if bui.app.ui_v1.use_toolbars:
-            bui.widget(
-                edit=btn,
-                right_widget=bui.get_special_widget('party_button'),
-            )
+        bui.widget(
+            edit=btn,
+            right_widget=bui.get_special_widget('squad_button'),
+        )
 
         bui.widget(
             edit=cancel_button,
@@ -270,31 +271,49 @@ class PlaylistEditWindow(bui.Window):
                 edit=self._root_widget, selected_child=scrollwidget
             )
 
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        editcontroller = self._editcontroller
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition,
+                origin_widget=origin_widget,
+                editcontroller=editcontroller,
+            )
+        )
+
     def _set_ui_selection(self, selection: str) -> None:
         self._editcontroller.set_edit_ui_selection(selection)
 
     def _cancel(self) -> None:
-        from bauiv1lib.playlist.customizebrowser import (
-            PlaylistCustomizeBrowserWindow,
-        )
+        # from bauiv1lib.playlist.customizebrowser import (
+        #     PlaylistCustomizeBrowserWindow,
+        # )
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
         bui.getsound('powerdown01').play()
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            PlaylistCustomizeBrowserWindow(
-                transition='in_left',
-                sessiontype=self._editcontroller.get_session_type(),
-                select_playlist=(
-                    self._editcontroller.get_existing_playlist_name()
-                ),
-            ).get_root_widget(),
-            from_window=self._root_widget,
-        )
+        self.main_window_back()
+
+        # bui.containerwidget(edit=self._root_widget, transition='out_right')
+        # assert bui.app.classic is not None
+        # bui.app.ui_v1.set_main_window(
+        #     PlaylistCustomizeBrowserWindow(
+        #         transition='in_left',
+        #         sessiontype=self._editcontroller.get_session_type(),
+        #         select_playlist=(
+        #             self._editcontroller.get_existing_playlist_name()
+        #         ),
+        #     ),
+        #     from_window=self,
+        #     is_back=True,
+        # )
 
     def _add(self) -> None:
         # Store list name then tell the session to perform an add.
@@ -379,13 +398,14 @@ class PlaylistEditWindow(bui.Window):
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         bui.getsound('gunCocking').play()
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
+        bui.app.ui_v1.set_main_window(
             PlaylistCustomizeBrowserWindow(
                 transition='in_left',
                 sessiontype=self._editcontroller.get_session_type(),
                 select_playlist=new_name,
-            ).get_root_widget(),
-            from_window=self._root_widget,
+            ),
+            from_window=self,
+            is_back=True,
         )
 
     def _save_press_with_sound(self) -> None:
