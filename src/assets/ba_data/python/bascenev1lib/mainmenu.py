@@ -7,6 +7,7 @@ from __future__ import annotations
 import time
 import random
 import weakref
+import functools
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
@@ -566,7 +567,6 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         vr_depth_offset: float = 0.0,
     ) -> None:
         # pylint: disable=too-many-locals
-
         # Temp easter goodness.
         if custom_texture is None:
             custom_texture = self._get_custom_logo_tex_name()
@@ -584,6 +584,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             bs.newnode(
                 'image',
                 attrs={
+                    'position': (x, y),
                     'texture': ltex,
                     'mesh_opaque': mopaque,
                     'mesh_transparent': mtrans,
@@ -592,47 +593,65 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     'attach': 'center',
                     'tilt_translate': 0.21,
                     'absolute_scale': True,
+                    'scale': (
+                        (2000.0,2000.0) if custom_texture is None
+                        else None
+                    )
                 },
             )
         )
         self._logo_node = logo.node
         self._word_actors.append(logo)
 
-        # Add a bit of stop-motion-y jitter to the logo (unless we're in
-        # VR mode in which case its best to leave things still).
+        # Add a bit of stop-motion-y jitter to the logo
+        # (unless we're in VR mode in which case its best to
+        # leave things still).
         assert logo.node
-        if not bs.app.env.vr:
-            cmb = bs.newnode('combine', owner=logo.node, attrs={'size': 2})
-            cmb.connectattr('output', logo.node, 'position')
-            keys = {}
-            time_v = 0.0
+        def jitter() -> None:
+            if not bs.app.env.vr:
+                cmb = bs.newnode('combine', owner=logo.node, attrs={'size': 2})
+                cmb.connectattr('output', logo.node, 'position')
+                keys = {}
+                time_v = 0.0
 
-            # Gen some random keys for that stop-motion-y look
-            for _i in range(10):
-                keys[time_v] = x + (random.random() - 0.5) * 0.7 * jitter_scale
-                time_v += random.random() * 0.1
-            bs.animate(cmb, 'input0', keys, loop=True)
-            keys = {}
-            time_v = 0.0
-            for _i in range(10):
-                keys[time_v * self._ts] = (
-                    y + (random.random() - 0.5) * 0.7 * jitter_scale
+                # Gen some random keys for that stop-motion-y look
+                for _i in range(10):
+                    keys[time_v] = x + (random.random() - 0.5) * 0.7 * jitter_scale
+                    time_v += random.random() * 0.1
+                bs.animate(cmb, 'input0', keys, loop=True)
+                keys = {}
+                time_v = 0.0
+                for _i in range(10):
+                    keys[time_v * self._ts] = (
+                        y + (random.random() - 0.5) * 0.7 * jitter_scale
+                    )
+                    time_v += random.random() * 0.1
+                bs.animate(cmb, 'input1', keys, loop=True)
+
+        if custom_texture is None:
+            def rotate_logo() -> None:
+                logo.node.rotate = logo.node.rotate + 4
+                logo.node.scale = (
+                    logo.node.scale[0] - 20, logo.node.scale[1] - 20
                 )
-                time_v += random.random() * 0.1
-            bs.animate(cmb, 'input1', keys, loop=True)
+                if logo.node.rotate >= 355:
+                    self._logo_rotate_timer = None
+                    jitter()
+            self._logo_rotate_timer = bs.Timer(
+                0.001, functools.partial(rotate_logo), repeat = True
+            )
         else:
-            logo.node.position = (x, y)
+            jitter()
+            cmb = bs.newnode('combine', owner=logo.node, attrs={'size': 2})
 
-        cmb = bs.newnode('combine', owner=logo.node, attrs={'size': 2})
-
-        keys = {
-            delay: 0.0,
-            delay + 0.1: 700.0 * scale,
-            delay + 0.2: 600.0 * scale,
-        }
-        bs.animate(cmb, 'input0', keys)
-        bs.animate(cmb, 'input1', keys)
-        cmb.connectattr('output', logo.node, 'scale')
+            keys = {
+                delay: 0.0,
+                delay + 0.1: 700.0 * scale,
+                delay + 0.2: 600.0 * scale,
+            }
+            bs.animate(cmb, 'input0', keys)
+            bs.animate(cmb, 'input1', keys)
+            cmb.connectattr('output', logo.node, 'scale')
 
     def _start_preloads(self) -> None:
         # FIXME: The func that calls us back doesn't save/restore state
