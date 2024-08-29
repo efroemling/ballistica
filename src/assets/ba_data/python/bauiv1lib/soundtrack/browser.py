@@ -6,34 +6,28 @@ from __future__ import annotations
 
 import copy
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 
 if TYPE_CHECKING:
     from typing import Any
 
+REQUIRE_PRO = False
 
-class SoundtrackBrowserWindow(bui.Window):
+# Temp.
+UNDER_CONSTRUCTION = True
+
+
+class SoundtrackBrowserWindow(bui.MainWindow):
     """Window for browsing soundtracks."""
 
     def __init__(
         self,
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
-
-        # If they provided an origin-widget, scale up from that.
-        scale_origin: tuple[float, float] | None
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
-        else:
-            self._transition_out = 'out_right'
-            scale_origin = None
 
         self._r = 'editSoundtrackWindow'
         assert bui.app.classic is not None
@@ -52,22 +46,26 @@ class SoundtrackBrowserWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                transition=transition,
-                toolbar_visibility='menu_minimal',
-                scale_origin_stack_offset=scale_origin,
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
+                ),
                 scale=(
-                    2.3
+                    2.1
                     if uiscale is bui.UIScale.SMALL
                     else 1.6 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
                     (0, -18) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         assert bui.app.classic is not None
-        if bui.app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if uiscale is bui.UIScale.SMALL:
             self._back_button = None
         else:
             self._back_button = bui.buttonwidget(
@@ -239,11 +237,7 @@ class SoundtrackBrowserWindow(bui.Window):
         bui.widget(
             edit=self._scrollwidget,
             left_widget=self._new_button,
-            right_widget=(
-                bui.get_special_widget('party_button')
-                if bui.app.ui_v1.use_toolbars
-                else self._scrollwidget
-            ),
+            right_widget=bui.get_special_widget('squad_button'),
         )
         self._col = bui.columnwidget(parent=scrollwidget, border=2, margin=0)
 
@@ -255,23 +249,39 @@ class SoundtrackBrowserWindow(bui.Window):
         self._refresh()
         if self._back_button is not None:
             bui.buttonwidget(
-                edit=self._back_button, on_activate_call=self._back
+                edit=self._back_button, on_activate_call=self.main_window_back
             )
             bui.containerwidget(
                 edit=self._root_widget, cancel_button=self._back_button
             )
         else:
             bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self._back
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
 
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
+
+    @override
+    def on_main_window_close(self) -> None:
+        self._save_state()
+
     def _update(self) -> None:
-        have = (
+        have_pro = (
             bui.app.classic is None
             or bui.app.classic.accounts.have_pro_options()
         )
         for lock in self._lock_images:
-            bui.imagewidget(edit=lock, opacity=0.0 if have else 1.0)
+            bui.imagewidget(
+                edit=lock, opacity=0.0 if (have_pro or not REQUIRE_PRO) else 1.0
+            )
 
     def _do_delete_soundtrack(self) -> None:
         cfg = bui.app.config
@@ -292,7 +302,7 @@ class SoundtrackBrowserWindow(bui.Window):
         from bauiv1lib.purchase import PurchaseWindow
         from bauiv1lib.confirm import ConfirmWindow
 
-        if (
+        if REQUIRE_PRO and (
             bui.app.classic is not None
             and not bui.app.classic.accounts.have_pro_options()
         ):
@@ -321,7 +331,7 @@ class SoundtrackBrowserWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.purchase import PurchaseWindow
 
-        if (
+        if REQUIRE_PRO and (
             bui.app.classic is not None
             and not bui.app.classic.accounts.have_pro_options()
         ):
@@ -387,29 +397,30 @@ class SoundtrackBrowserWindow(bui.Window):
                 music.music_types[bui.app.classic.MusicPlayMode.REGULAR]
             )
 
-    def _back(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.settings.audio import AudioSettingsWindow
+    # def _back(self) -> None:
+    #     # pylint: disable=cyclic-import
+    #     from bauiv1lib.settings.audio import AudioSettingsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
+    #     # no-op if our underlying widget is dead or on its way out.
+    #     if not self._root_widget or self._root_widget.transitioning_out:
+    #         return
 
-        self._save_state()
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            AudioSettingsWindow(transition='in_left').get_root_widget(),
-            from_window=self._root_widget,
-        )
+    #     self._save_state()
+    #     bui.containerwidget(
+    #         edit=self._root_widget, transition=self._transition_out
+    #     )
+    #     assert bui.app.classic is not None
+    #     bui.app.ui_v1.set_main_window(
+    #         AudioSettingsWindow(transition='in_left'),
+    #         from_window=self,
+    #         is_back=True,
+    #     )
 
     def _edit_soundtrack_with_sound(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.purchase import PurchaseWindow
 
-        if (
+        if REQUIRE_PRO and (
             bui.app.classic is not None
             and not bui.app.classic.accounts.have_pro_options()
         ):
@@ -423,11 +434,15 @@ class SoundtrackBrowserWindow(bui.Window):
         from bauiv1lib.purchase import PurchaseWindow
         from bauiv1lib.soundtrack.edit import SoundtrackEditWindow
 
+        if UNDER_CONSTRUCTION:
+            bui.screenmessage('UNDER CONSTRUCTION')
+            return
+
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
-        if (
+        if REQUIRE_PRO and (
             bui.app.classic is not None
             and not bui.app.classic.accounts.have_pro_options()
         ):
@@ -446,11 +461,9 @@ class SoundtrackBrowserWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            SoundtrackEditWindow(
-                existing_soundtrack=self._selected_soundtrack
-            ).get_root_widget(),
-            from_window=self._root_widget,
+        bui.app.ui_v1.set_main_window(
+            SoundtrackEditWindow(existing_soundtrack=self._selected_soundtrack),
+            from_window=self,
         )
 
     def _get_soundtrack_display_name(self, soundtrack: str) -> bui.Lstr:
@@ -541,7 +554,11 @@ class SoundtrackBrowserWindow(bui.Window):
         from bauiv1lib.purchase import PurchaseWindow
         from bauiv1lib.soundtrack.edit import SoundtrackEditWindow
 
-        if (
+        if UNDER_CONSTRUCTION:
+            bui.screenmessage('UNDER CONSTRUCTION')
+            return
+
+        if REQUIRE_PRO and (
             bui.app.classic is not None
             and not bui.app.classic.accounts.have_pro_options()
         ):
@@ -549,9 +566,8 @@ class SoundtrackBrowserWindow(bui.Window):
             return
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
-        bui.app.ui_v1.set_main_menu_window(
-            SoundtrackEditWindow(existing_soundtrack=None).get_root_widget(),
-            from_window=self._root_widget,
+        bui.app.ui_v1.set_main_window(
+            SoundtrackEditWindow(existing_soundtrack=None), from_window=self
         )
 
     def _create_done(self, new_soundtrack: str) -> None:

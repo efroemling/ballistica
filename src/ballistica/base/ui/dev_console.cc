@@ -85,7 +85,7 @@ static auto XOffs(DevConsoleHAnchor_ attach) -> float {
 }
 
 static auto IsValidHungryChar_(uint32_t this_char) -> bool {
-  // Include letters, numbers, and underscore.
+  // Include letters, numbers, and underscore.
   return ((this_char >= 65 && this_char <= 90)
           || (this_char >= 97 && this_char <= 122)
           || (this_char >= 48 && this_char <= 57) || this_char == '_');
@@ -1204,15 +1204,21 @@ void DevConsole::Draw(FrameDef* frame_def) {
                                     border_height * bs);
     {
       SimpleComponent c(pass);
+
+      // Backing.
       c.SetTransparent(true);
-      c.SetColor(0, 0, 0.1f, 0.9f);
+      c.SetColor(0.04f, 0, 0.15f, 0.86f);
       c.DrawMesh(&bg_mesh_);
       c.Submit();
+
+      // Stripe.
       if (python_terminal_visible_) {
         c.SetColor(1.0f, 1.0f, 1.0f, 0.1f);
         c.DrawMesh(&stripe_mesh_);
         c.Submit();
       }
+
+      // Border.
       c.SetColor(0.25f, 0.2f, 0.3f, 1.0f);
       c.DrawMesh(&border_mesh_);
     }
@@ -1336,7 +1342,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
       c.SetTransparent(true);
       c.SetColor(1, 1, 1, 1);
       c.SetFlatness(1.0f);
-      float draw_scale = 0.6f;
+      float draw_scale = 0.64f;
       float v_inc = 18.0f;
       float h = 0.5f
                 * (g_base->graphics->screen_virtual_width()

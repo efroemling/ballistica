@@ -8,10 +8,14 @@ import bascenev1 as bs
 import bauiv1 as bui
 
 
-class KioskWindow(bui.Window):
+class KioskWindow(bui.MainWindow):
     """Kiosk mode window."""
 
-    def __init__(self, transition: str = 'in_right'):
+    def __init__(
+        self,
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
+    ):
         # pylint: disable=too-many-locals, too-many-statements
         from bauiv1lib.confirm import QuitWindow
 
@@ -26,11 +30,13 @@ class KioskWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                transition=transition,
+                # transition=transition,
                 on_cancel_call=_do_cancel,
                 background=False,
                 stack_offset=(0, -130),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         self._r = 'kioskWindow'
@@ -501,6 +507,7 @@ class KioskWindow(bui.Window):
             bui.containerwidget(edit=self._root_widget, transition='out_left')
 
     def _do_full_menu(self) -> None:
+        # pylint: disable=cyclic-import
         from bauiv1lib.mainmenu import MainMenuWindow
 
         # no-op if our underlying widget is dead or on its way out.
@@ -512,6 +519,4 @@ class KioskWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         bui.app.classic.did_menu_intro = True  # prevent delayed transition-in
-        bui.app.ui_v1.set_main_menu_window(
-            MainMenuWindow().get_root_widget(), from_window=self._root_widget
-        )
+        bui.app.ui_v1.set_main_window(MainMenuWindow(), from_window=self)

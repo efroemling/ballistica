@@ -4,15 +4,16 @@
 
 from __future__ import annotations
 
-import logging
 import copy
 import math
+import logging
+from typing import override
 
 import bascenev1 as bs
 import bauiv1 as bui
 
 
-class PlaylistBrowserWindow(bui.Window):
+class PlaylistBrowserWindow(bui.MainWindow):
     """Window for starting teams games."""
 
     def __init__(
@@ -21,28 +22,13 @@ class PlaylistBrowserWindow(bui.Window):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from bauiv1lib.playlist import PlaylistTypeVars
 
-        # If they provided an origin-widget, scale up from that.
-        scale_origin: tuple[float, float] | None
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
-        else:
-            self._transition_out = 'out_right'
-            scale_origin = None
-
-        assert bui.app.classic is not None
-
         # Store state for when we exit the next game.
         if issubclass(sessiontype, bs.DualTeamSession):
-            bui.app.ui_v1.set_main_menu_location('Team Game Select')
             bui.set_analytics_screen('Teams Window')
         elif issubclass(sessiontype, bs.FreeForAllSession):
-            bui.app.ui_v1.set_main_menu_location('Free-for-All Game Select')
             bui.set_analytics_screen('FreeForAll Window')
         else:
             raise TypeError(f'Invalid sessiontype: {sessiontype}.')
@@ -65,7 +51,7 @@ class PlaylistBrowserWindow(bui.Window):
         self._width = 1100.0 if uiscale is bui.UIScale.SMALL else 800.0
         x_inset = 150 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            480
+            440
             if uiscale is bui.UIScale.SMALL
             else 510 if uiscale is bui.UIScale.MEDIUM else 580
         )
@@ -75,18 +61,22 @@ class PlaylistBrowserWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
-                transition=transition,
-                toolbar_visibility='menu_full',
-                scale_origin_stack_offset=scale_origin,
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
+                ),
                 scale=(
-                    1.69
+                    1.83
                     if uiscale is bui.UIScale.SMALL
                     else 1.05 if uiscale is bui.UIScale.MEDIUM else 0.9
                 ),
                 stack_offset=(
-                    (0, -26) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, -56) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         self._back_button: bui.Widget | None = bui.buttonwidget(
@@ -102,19 +92,22 @@ class PlaylistBrowserWindow(bui.Window):
         bui.containerwidget(
             edit=self._root_widget, cancel_button=self._back_button
         )
-        txt = self._title_text = bui.textwidget(
+        self._title_text = bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 41),
+            position=(
+                self._width * 0.5,
+                self._height - (32 if uiscale is bui.UIScale.SMALL else 41),
+            ),
             size=(0, 0),
             text=self._pvars.window_title_name,
-            scale=1.3,
+            scale=(0.8 if uiscale is bui.UIScale.SMALL else 1.3),
             res_scale=1.5,
             color=bui.app.ui_v1.heading_color,
             h_align='center',
             v_align='center',
         )
-        if uiscale is bui.UIScale.SMALL and bui.app.ui_v1.use_toolbars:
-            bui.textwidget(edit=txt, text='')
+        # if uiscale is bui.UIScale.SMALL and bui.app.ui_v1.use_toolbars:
+        #     bui.textwidget(edit=txt, text='')
 
         bui.buttonwidget(
             edit=self._back_button,
@@ -124,7 +117,7 @@ class PlaylistBrowserWindow(bui.Window):
             label=bui.charstr(bui.SpecialChar.BACK),
         )
 
-        if uiscale is bui.UIScale.SMALL and bui.app.ui_v1.use_toolbars:
+        if uiscale is bui.UIScale.SMALL:
             self._back_button.delete()
             self._back_button = None
             bui.containerwidget(
@@ -135,9 +128,7 @@ class PlaylistBrowserWindow(bui.Window):
             scroll_offs = 0
         self._scroll_width = self._width - (100 + 2 * x_inset)
         self._scroll_height = self._height - (
-            146
-            if uiscale is bui.UIScale.SMALL and bui.app.ui_v1.use_toolbars
-            else 136
+            146 if uiscale is bui.UIScale.SMALL else 136
         )
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
@@ -159,6 +150,27 @@ class PlaylistBrowserWindow(bui.Window):
         self._update_timer = bui.AppTimer(
             1.0, bui.WeakCall(self._update), repeat=True
         )
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Pull things out of self here; if we do it below in the lambda
+        # then we keep self alive.
+        sessiontype = self._sessiontype
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition,
+                origin_widget=origin_widget,
+                sessiontype=sessiontype,
+            )
+        )
+
+    @override
+    def on_main_window_close(self) -> None:
+        self._save_state()
 
     def _ensure_standard_playlists_exist(self) -> None:
         plus = bui.app.plus
@@ -418,23 +430,15 @@ class PlaylistBrowserWindow(bui.Window):
                     position=pos,
                 )
 
-                if (
-                    x == 0
-                    and bui.app.ui_v1.use_toolbars
-                    and uiscale is bui.UIScale.SMALL
-                ):
+                if x == 0 and uiscale is bui.UIScale.SMALL:
                     bui.widget(
                         edit=btn,
                         left_widget=bui.get_special_widget('back_button'),
                     )
-                if (
-                    x == columns - 1
-                    and bui.app.ui_v1.use_toolbars
-                    and uiscale is bui.UIScale.SMALL
-                ):
+                if x == columns - 1 and uiscale is bui.UIScale.SMALL:
                     bui.widget(
                         edit=btn,
-                        right_widget=bui.get_special_widget('party_button'),
+                        right_widget=bui.get_special_widget('squad_button'),
                     )
                 bui.buttonwidget(
                     edit=btn,
@@ -687,17 +691,17 @@ class PlaylistBrowserWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
+        bui.app.ui_v1.set_main_window(
             PlaylistCustomizeBrowserWindow(
                 origin_widget=self._customize_button,
                 sessiontype=self._sessiontype,
-            ).get_root_widget(),
-            from_window=self._root_widget,
+            ),
+            from_window=self,
         )
 
     def _on_back_press(self) -> None:
         # pylint: disable=cyclic-import
-        from bauiv1lib.play import PlayWindow
+        # from bauiv1lib.play import PlayWindow
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -715,15 +719,16 @@ class PlaylistBrowserWindow(bui.Window):
                 )
                 cfg.commit()
 
-        self._save_state()
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            PlayWindow(transition='in_left').get_root_widget(),
-            from_window=self._root_widget,
-        )
+        self.main_window_back()
+
+        # self._save_state()
+        # bui.containerwidget(
+        #     edit=self._root_widget, transition=self._transition_out
+        # )
+        # assert bui.app.classic is not None
+        # bui.app.ui_v1.set_main_window(
+        #     PlayWindow(transition='in_left'), from_window=self, is_back=True
+        # )
 
     def _save_state(self) -> None:
         try:

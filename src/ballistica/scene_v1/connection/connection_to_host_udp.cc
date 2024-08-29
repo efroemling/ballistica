@@ -5,8 +5,8 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_writer.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/shared/math/vector3f.h"
 #include "ballistica/shared/networking/sockaddr.h"
 
@@ -33,7 +33,7 @@ ConnectionToHostUDP::ConnectionToHostUDP(const SockAddr& addr)
       last_host_response_time_millisecs_(
           static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0)) {
   GetRequestID_();
-  if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+  if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
     if (appmode->connections()->GetPrintUDPConnectProgress()) {
       ScreenMessage(g_base->assets->GetResourceString("connectingToPartyText"));
     }
@@ -58,7 +58,7 @@ void ConnectionToHostUDP::GetRequestID_() {
 
 void ConnectionToHostUDP::Update() {
   ConnectionToHost::Update();
-  auto* appmode = SceneV1AppMode::GetActiveOrWarn();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrWarn();
   if (!appmode) {
     return;
   }
@@ -125,7 +125,7 @@ void ConnectionToHostUDP::Die() {
     Log(LogLevel::kError, "Posting multiple die messages; probably not good.");
     return;
   }
-  if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+  if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
     if (appmode->connections()->connection_to_host() == this) {
       appmode->connections()->PushDisconnectedFromHostCall();
       did_die_ = true;

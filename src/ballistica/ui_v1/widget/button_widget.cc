@@ -471,6 +471,10 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     bottom_overlap = 7.0f * extra_touch_border_scale_;
   }
 
+  // Extra overlap that always applies.
+  right_overlap += target_extra_right_;
+  left_overlap += target_extra_left_;
+
   switch (m.type) {
     case base::WidgetMessage::Type::kMouseMove: {
       float x = m.fval1;
@@ -565,8 +569,17 @@ void ButtonWidget::DoActivate(bool is_repeat) {
     }
   }
   if (auto* call = on_activate_call_.Get()) {
-    // Schedule this to run immediately after any current UI traversal.
-    call->ScheduleInUIOperation();
+    // If we're being activated as part of a ui-operation (a click or other
+    // such event) then run at the end of that operation to avoid mucking
+    // with volatile UI.
+    if (g_base->ui->InUIOperation()) {
+      call->ScheduleInUIOperation();
+    } else {
+      // Ok, we're *not* in a ui-operation. This generally means we're
+      // being activated explicitly via a Python call or whatnot. Just
+      // run immediately in this case.
+      call->Run();
+    }
     return;
   }
 }

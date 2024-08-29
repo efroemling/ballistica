@@ -3,7 +3,7 @@
 #include "ballistica/base/python/methods/python_methods_base_1.h"
 
 #include "ballistica/base/app_adapter/app_adapter.h"
-#include "ballistica/base/app_mode/app_mode_empty.h"
+#include "ballistica/base/app_mode/empty_app_mode.h"
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
@@ -1321,29 +1321,27 @@ static PyMethodDef PyUserAgentStringDef = {
     "(internal)\n",
 };
 
-// --------------------- on_empty_app_mode_activate ----------------------------
+// --------------------- empty_app_mode_activate ----------------------------
 
 static auto PyOnEmptyAppModeActivate(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
-  g_base->set_app_mode(AppModeEmpty::GetSingleton());
-  AppModeEmpty::GetSingleton()->Reset();
-
+  g_base->set_app_mode(EmptyAppMode::GetSingleton());
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
 static PyMethodDef PyOnEmptyAppModeActivateDef = {
-    "on_empty_app_mode_activate",           // name
+    "empty_app_mode_activate",              // name
     (PyCFunction)PyOnEmptyAppModeActivate,  // method
     METH_NOARGS,                            // flags
 
-    "on_empty_app_mode_activate() -> None\n"
+    "empty_app_mode_activate() -> None\n"
     "\n"
     "(internal)\n",
 };
 
-// --------------------- on_empty_app_mode_deactivate --------------------------
+// --------------------- empty_app_mode_deactivate --------------------------
 
 static auto PyOnEmptyAppModeDeactivate(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
@@ -1354,38 +1352,38 @@ static auto PyOnEmptyAppModeDeactivate(PyObject* self) -> PyObject* {
 }
 
 static PyMethodDef PyOnEmptyAppModeDeactivateDef = {
-    "on_empty_app_mode_deactivate",           // name
+    "empty_app_mode_deactivate",              // name
     (PyCFunction)PyOnEmptyAppModeDeactivate,  // method
     METH_NOARGS,                              // flags
 
-    "on_empty_app_mode_deactivate() -> None\n"
+    "empty_app_mode_deactivate() -> None\n"
     "\n"
     "(internal)\n",
 };
 
-// ----------------- empty_app_mode_handle_intent_default ----------------------
+// --------------- empty_app_mode_handle_app_intent_default --------------------
 
-static auto PyEmptyAppModeHandleIntentDefault(PyObject* self) -> PyObject* {
+static auto PyEmptyAppModeHandleAppIntentDefault(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyEmptyAppModeHandleIntentDefaultDef = {
-    "empty_app_mode_handle_intent_default",          // name
-    (PyCFunction)PyEmptyAppModeHandleIntentDefault,  // method
-    METH_NOARGS,                                     // flags
+static PyMethodDef PyEmptyAppModeHandleAppIntentDefaultDef = {
+    "empty_app_mode_handle_app_intent_default",         // name
+    (PyCFunction)PyEmptyAppModeHandleAppIntentDefault,  // method
+    METH_NOARGS,                                        // flags
 
-    "empty_app_mode_handle_intent_default() -> None\n"
+    "empty_app_mode_handle_app_intent_default() -> None\n"
     "\n"
     "(internal)\n",
 };
 
-// ------------------ empty_app_mode_handle_intent_exec ------------------------
+// ---------------- empty_app_mode_handle_app_intent_exec ----------------------
 
-static auto PyEmptyAppModeHandleIntentExec(PyObject* self, PyObject* args,
-                                           PyObject* keywds) -> PyObject* {
+static auto PyEmptyAppModeHandleAppIntentExec(PyObject* self, PyObject* args,
+                                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char* command;
   static const char* kwlist[] = {"command", nullptr};
@@ -1408,12 +1406,12 @@ static auto PyEmptyAppModeHandleIntentExec(PyObject* self, PyObject* args,
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyEmptyAppModeHandleIntentExecDef = {
-    "empty_app_mode_handle_intent_exec",          // name
-    (PyCFunction)PyEmptyAppModeHandleIntentExec,  // method
-    METH_VARARGS | METH_KEYWORDS,                 // flags
+static PyMethodDef PyEmptyAppModeHandleAppIntentExecDef = {
+    "empty_app_mode_handle_app_intent_exec",         // name
+    (PyCFunction)PyEmptyAppModeHandleAppIntentExec,  // method
+    METH_VARARGS | METH_KEYWORDS,                    // flags
 
-    "empty_app_mode_handle_intent_exec(command: str) -> None\n"
+    "empty_app_mode_handle_app_intent_exec(command: str) -> None\n"
     "\n"
     "(internal)",
 };
@@ -1739,8 +1737,8 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyUserAgentStringDef,
       PyOnEmptyAppModeActivateDef,
       PyOnEmptyAppModeDeactivateDef,
-      PyEmptyAppModeHandleIntentDefaultDef,
-      PyEmptyAppModeHandleIntentExecDef,
+      PyEmptyAppModeHandleAppIntentDefaultDef,
+      PyEmptyAppModeHandleAppIntentExecDef,
       PyGetImmediateReturnCodeDef,
       PyCompleteShutdownDef,
       PyShutdownSuppressBeginDef,

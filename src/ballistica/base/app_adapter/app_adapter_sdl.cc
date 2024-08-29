@@ -647,8 +647,14 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
     fullscreen_ = settings->fullscreen;
 
     // A reasonable default window size.
-    auto width = static_cast<int>(kBaseVirtualResX * 0.8f);
-    auto height = static_cast<int>(kBaseVirtualResY * 0.8f);
+    int width, height;
+    if (g_base->ui->scale() == UIScale::kSmall) {
+      width = static_cast<int>(kBaseVirtualResSmallX * 0.8f);
+      height = static_cast<int>(kBaseVirtualResSmallY * 0.8f);
+    } else {
+      width = static_cast<int>(kBaseVirtualResX * 0.8f);
+      height = static_cast<int>(kBaseVirtualResY * 0.8f);
+    }
 
     uint32_t flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN
                      | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;

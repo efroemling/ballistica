@@ -29,12 +29,11 @@ if TYPE_CHECKING:
     from bascenev1lib.actor import spazappearance
     from bauiv1lib.party import PartyWindow
 
-    from baclassic._appdelegate import AppDelegate
     from baclassic._servermode import ServerController
     from baclassic._net import MasterServerCallback
 
 
-class ClassicSubsystem(babase.AppSubsystem):
+class ClassicAppSubsystem(babase.AppSubsystem):
     """Subsystem for classic functionality in the app.
 
     The single shared instance of this app can be accessed at
@@ -111,14 +110,28 @@ class ClassicSubsystem(babase.AppSubsystem):
         self.did_menu_intro = False  # FIXME: Move to mainmenu class.
         self.main_menu_window_refresh_check_count = 0  # FIXME: Mv to mainmenu.
         self.invite_confirm_windows: list[Any] = []  # FIXME: Don't use Any.
-        self.delegate: AppDelegate | None = None
         self.party_window: weakref.ref[PartyWindow] | None = None
+        self.main_menu_resume_callbacks: list = []
+        # Switch our overall game selection UI flow between Play and
+        # Private-party playlist selection modes; should do this in
+        # a more elegant way once we revamp high level UI stuff a bit.
+        self.selecting_private_party_playlist: bool = False
 
         # Store.
         self.store_layout: dict[str, list[dict[str, Any]]] | None = None
         self.store_items: dict[str, dict] | None = None
         self.pro_sale_start_time: int | None = None
         self.pro_sale_start_val: int | None = None
+
+    def add_main_menu_close_callback(self, call: Callable[[], Any]) -> None:
+        """(internal)"""
+
+        # If there's no main window up, just call immediately.
+        if not babase.app.ui_v1.has_main_window():
+            with babase.ContextRef.empty():
+                call()
+        else:
+            self.main_menu_resume_callbacks.append(call)
 
     @property
     def platform(self) -> str:
@@ -154,8 +167,6 @@ class ClassicSubsystem(babase.AppSubsystem):
         from bascenev1lib.actor import spazappearance
         from bascenev1lib import maps as stdmaps
 
-        from baclassic._appdelegate import AppDelegate
-
         plus = babase.app.plus
         assert plus is not None
 
@@ -163,8 +174,6 @@ class ClassicSubsystem(babase.AppSubsystem):
         cfg = babase.app.config
 
         self.music.on_app_loading()
-
-        self.delegate = AppDelegate()
 
         # Non-test, non-debug builds should generally be blessed; warn if not.
         # (so I don't accidentally release a build that can't play tourneys)
@@ -374,7 +383,7 @@ class ClassicSubsystem(babase.AppSubsystem):
         assert plus is not None
 
         if reset_ui:
-            babase.app.ui_v1.clear_main_menu_window()
+            babase.app.ui_v1.clear_main_window()
 
         if isinstance(bascenev1.get_foreground_host_session(), MainMenuSession):
             # It may be possible we're on the main menu but the screen is faded
@@ -684,13 +693,13 @@ class ClassicSubsystem(babase.AppSubsystem):
                 babase.Call(ServerDialogWindow, sddata),
             )
 
-    def ticket_icon_press(self) -> None:
-        """(internal)"""
-        from bauiv1lib.resourcetypeinfo import ResourceTypeInfoWindow
+    # def root_ui_ticket_icon_press(self) -> None:
+    #     """(internal)"""
+    #     from bauiv1lib.resourcetypeinfo import ResourceTypeInfoWindow
 
-        ResourceTypeInfoWindow(
-            origin_widget=bauiv1.get_special_widget('tickets_info_button')
-        )
+    #     ResourceTypeInfoWindow(
+    #         origin_widget=bauiv1.get_special_widget('tickets_meter')
+    #     )
 
     def show_url_window(self, address: str) -> None:
         """(internal)"""
@@ -781,6 +790,9 @@ class ClassicSubsystem(babase.AppSubsystem):
 
         assert app.env.gui
 
+        # Play explicit swish sound so it occurs due to keypresses/etc.
+        # This means we have to disable it for any button or else we get
+        # double.
         bauiv1.getsound('swish').play()
 
         # If it exists, dismiss it; otherwise make a new one.
@@ -794,18 +806,132 @@ class ClassicSubsystem(babase.AppSubsystem):
 
     def device_menu_press(self, device_id: int | None) -> None:
         """(internal)"""
-        from bauiv1lib.mainmenu import MainMenuWindow
+        from bauiv1lib.ingamemenu import InGameMenuWindow
         from bauiv1 import set_ui_input_device
 
         assert babase.app is not None
-        in_main_menu = babase.app.ui_v1.has_main_menu_window()
+        in_main_menu = babase.app.ui_v1.has_main_window()
         if not in_main_menu:
             set_ui_input_device(device_id)
 
+            # Hack(ish). We play swish sound here so it happens for
+            # device presses, but this means we need to disable default
+            # swish sounds for any menu buttons or we'll get double.
             if babase.app.env.gui:
                 bauiv1.getsound('swish').play()
 
-            babase.app.ui_v1.set_main_menu_window(
-                MainMenuWindow().get_root_widget(),
+            babase.app.ui_v1.set_main_window(
+                InGameMenuWindow(),
                 from_window=False,  # Disable check here.
+                is_top_level=True,
             )
+
+    def invoke_main_menu_ui(self) -> None:
+        """Bring up main menu ui."""
+        # Bring up the last place we were, or start at the main menu otherwise.
+        app = bauiv1.app
+        env = app.env
+        with bascenev1.ContextRef.empty():
+            from bauiv1lib import specialoffer
+
+            assert app.classic is not None
+            if app.env.headless:
+                # UI stuff fails now in headless builds; avoid it.
+                pass
+            else:
+                # main_menu_location = (
+                #     bascenev1.app.ui_v1.get_main_menu_location()
+                # )
+
+                # When coming back from a kiosk-mode game, jump to
+                # the kiosk start screen.
+                if env.demo or env.arcade:
+                    # pylint: disable=cyclic-import
+                    from bauiv1lib.kiosk import KioskWindow
+
+                    app.ui_v1.set_main_window(
+                        KioskWindow(), from_window=False  # Disable check here.
+                    )
+                # ..or in normal cases go back to the main menu
+                else:
+                    # if main_menu_location == 'Gather':
+                    #     # pylint: disable=cyclic-import
+                    #     from bauiv1lib.gather import GatherWindow
+
+                    #     app.ui_v1.set_main_window(
+                    #         GatherWindow(transition=None),
+                    #         from_window=False,  # Disable check here.
+                    #     )
+                    # elif main_menu_location == 'Watch':
+                    #     # pylint: disable=cyclic-import
+                    #     from bauiv1lib.watch import WatchWindow
+
+                    #     app.ui_v1.set_main_window(
+                    #         WatchWindow(transition=None),
+                    #         from_window=False,  # Disable check here.
+                    #     )
+                    # elif main_menu_location == 'Team Game Select':
+                    #     # pylint: disable=cyclic-import
+                    #     from bauiv1lib.playlist.browser import (
+                    #         PlaylistBrowserWindow,
+                    #     )
+
+                    #     app.ui_v1.set_main_window(
+                    #         PlaylistBrowserWindow(
+                    #             sessiontype=bascenev1.DualTeamSession,
+                    #             transition=None,
+                    #         ),
+                    #         from_window=False,  # Disable check here.
+                    #     )
+                    # elif main_menu_location == 'Free-for-All Game Select':
+                    #     # pylint: disable=cyclic-import
+                    #     from bauiv1lib.playlist.browser import (
+                    #         PlaylistBrowserWindow,
+                    #     )
+
+                    #     app.ui_v1.set_main_window(
+                    #         PlaylistBrowserWindow(
+                    #             sessiontype=bascenev1.FreeForAllSession,
+                    #             transition=None,
+                    #         ),
+                    #         from_window=False,  # Disable check here.
+                    #     )
+                    # elif main_menu_location == 'Coop Select':
+                    #     # pylint: disable=cyclic-import
+                    #     from bauiv1lib.coop.browser import CoopBrowserWindow
+
+                    #     app.ui_v1.set_main_window(
+                    #         CoopBrowserWindow(transition=None),
+                    #         from_window=False,  # Disable check here.
+                    #     )
+                    # elif main_menu_location == 'Benchmarks & Stress Tests':
+                    #     # pylint: disable=cyclic-import
+                    #     from bauiv1lib.debug import DebugWindow
+
+                    #     app.ui_v1.set_main_window(
+                    #         DebugWindow(transition=None),
+                    #         from_window=False,  # Disable check here.
+                    #     )
+                    # else:
+                    # pylint: disable=cyclic-import
+                    from bauiv1lib.mainmenu import MainMenuWindow
+
+                    app.ui_v1.set_main_window(
+                        MainMenuWindow(transition=None),
+                        from_window=False,  # Disable check.
+                        is_top_level=True,
+                    )
+
+                # attempt to show any pending offers immediately.
+                # If that doesn't work, try again in a few seconds
+                # (we may not have heard back from the server)
+                # ..if that doesn't work they'll just have to wait
+                # until the next opportunity.
+                if not specialoffer.show_offer():
+
+                    def try_again() -> None:
+                        if not specialoffer.show_offer():
+                            # Try one last time..
+                            bauiv1.apptimer(2.0, specialoffer.show_offer)
+
+                    bauiv1.apptimer(2.0, try_again)

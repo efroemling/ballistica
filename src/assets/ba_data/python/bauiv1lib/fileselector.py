@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
 
 
-class FileSelectorWindow(bui.Window):
+class FileSelectorWindow(bui.MainWindow):
     """Window for selecting files."""
 
     def __init__(
@@ -26,6 +26,8 @@ class FileSelectorWindow(bui.Window):
         show_base_path: bool = True,
         valid_file_extensions: Sequence[str] | None = None,
         allow_folders: bool = False,
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
     ):
         if valid_file_extensions is None:
             valid_file_extensions = []
@@ -51,7 +53,6 @@ class FileSelectorWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                transition='in_right',
                 scale=(
                     2.23
                     if uiscale is bui.UIScale.SMALL
@@ -60,7 +61,9 @@ class FileSelectorWindow(bui.Window):
                 stack_offset=(
                     (0, -35) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
         bui.textwidget(
             parent=self._root_widget,
@@ -134,6 +137,31 @@ class FileSelectorWindow(bui.Window):
             edit=self._root_widget, cancel_button=self._cancel_button
         )
         self._set_path(path)
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Pull everything out of self here. If we do it below in the lambda,
+        # we'll keep self alive which is bad.
+        path = self._base_path
+        callback = self._callback
+        show_base_path = self._show_base_path
+        valid_file_extensions = self._valid_file_extensions
+        allow_folders = self._allow_folders
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition,
+                origin_widget=origin_widget,
+                path=path,
+                callback=callback,
+                show_base_path=show_base_path,
+                valid_file_extensions=valid_file_extensions,
+                allow_folders=allow_folders,
+            )
+        )
 
     def _on_up_press(self) -> None:
         self._on_entry_activated('..')
@@ -458,6 +486,7 @@ class FileSelectorWindow(bui.Window):
         )
 
     def _cancel(self) -> None:
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
+        # bui.containerwidget(edit=self._root_widget, transition='out_right')
+        self.main_window_back()
         if self._callback is not None:
             self._callback(None)

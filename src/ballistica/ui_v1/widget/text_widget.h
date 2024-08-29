@@ -17,8 +17,8 @@ class TextWidget : public Widget {
   TextWidget();
   ~TextWidget() override;
   void Draw(base::RenderPass* pass, bool transparent) override;
-  void SetWidth(float widthIn);
-  void SetHeight(float heightIn);
+  void SetWidth(float width);
+  void SetHeight(float height);
   auto GetWidth() -> float override;
   auto GetHeight() -> float override;
   enum class HAlign : uint8_t { kLeft, kCenter, kRight };
@@ -44,18 +44,18 @@ class TextWidget : public Widget {
   void set_max_height(float m) { max_height_ = m; }
   void set_rotate(float val) { rotate_ = val; }
   void SetText(const std::string& text_in);
-  void set_color(float rIn, float gIn, float bIn, float aIn) {
-    color_r_ = rIn;
-    color_g_ = gIn;
-    color_b_ = bIn;
-    color_a_ = aIn;
+  void set_color(float r, float g, float b, float a) {
+    color_r_ = r;
+    color_g_ = g;
+    color_b_ = b;
+    color_a_ = a;
   }
   auto text_raw() const -> const std::string& { return text_raw_; }
   void SetEditable(bool e);
   void set_selectable(bool s) { selectable_ = s; }
   void SetEnabled(bool val);
   void set_padding(float padding_in) { padding_ = padding_in; }
-  void set_max_chars(int max_chars_in) { max_chars_ = max_chars_in; }
+  void set_max_chars(int max_chars) { max_chars_ = max_chars; }
   auto max_chars() const -> int { return max_chars_; }
   auto always_show_carat() const -> bool { return always_show_carat_; }
   void set_always_show_carat(bool val) { always_show_carat_ = val; }

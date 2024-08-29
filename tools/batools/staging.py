@@ -80,7 +80,8 @@ class AssetStager:
         print(
             f'{Clr.BLU}Staging for {Clr.MAG}{Clr.BLD}{self.desc}{Clr.RST}'
             f'{Clr.BLU} at {Clr.MAG}{Clr.BLD}{self.dst}'
-            f'{Clr.RST}{Clr.BLU}...{Clr.RST}'
+            f'{Clr.RST}{Clr.BLU}...{Clr.RST}',
+            flush=True,
         )
 
         # Do our janky wsl permissions workaround if need be.

@@ -4,9 +4,9 @@
 
 from __future__ import annotations
 
-from enum import Enum
 import logging
-from typing import TYPE_CHECKING, assert_never
+from enum import Enum
+from typing import TYPE_CHECKING, assert_never, override
 
 import bauiv1 as bui
 from bauiv1lib import popup
@@ -28,35 +28,24 @@ class Category(Enum):
         return f'{self.value}Text'
 
 
-class PluginWindow(bui.Window):
+class PluginWindow(bui.MainWindow):
     """Window for configuring plugins."""
 
     def __init__(
         self,
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-statements
         app = bui.app
 
         self._category = Category.ALL
-
-        # If they provided an origin-widget, scale up from that.
-        scale_origin: tuple[float, float] | None
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
-        else:
-            self._transition_out = 'out_right'
-            scale_origin = None
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         self._width = 870.0 if uiscale is bui.UIScale.SMALL else 670.0
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            390.0
+            370.0
             if uiscale is bui.UIScale.SMALL
             else 450.0 if uiscale is bui.UIScale.MEDIUM else 520.0
         )
@@ -64,18 +53,22 @@ class PluginWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
-                transition=transition,
-                toolbar_visibility='menu_minimal',
-                scale_origin_stack_offset=scale_origin,
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
+                ),
                 scale=(
-                    2.06
+                    1.9
                     if uiscale is bui.UIScale.SMALL
                     else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
                     (0, -25) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         self._scroll_width = self._width - (100 + 2 * x_inset)
@@ -84,9 +77,9 @@ class PluginWindow(bui.Window):
         self._sub_height = 724.0
 
         assert app.classic is not None
-        if app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self._do_back
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
             self._back_button = None
         else:
@@ -98,7 +91,7 @@ class PluginWindow(bui.Window):
                 autoselect=True,
                 label=bui.Lstr(resource='backText'),
                 button_type='back',
-                on_activate_call=self._do_back,
+                on_activate_call=self.main_window_back,
             )
             bui.containerwidget(
                 edit=self._root_widget, cancel_button=self._back_button
@@ -213,6 +206,20 @@ class PluginWindow(bui.Window):
         )
         self._restore_state()
 
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
+
+    @override
+    def on_main_window_close(self) -> None:
+        self._save_state()
+
     def _check_value_changed(self, plug: bui.PluginSpec, value: bool) -> None:
         bui.screenmessage(
             bui.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
@@ -235,9 +242,8 @@ class PluginWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            PluginSettingsWindow(transition='in_right').get_root_widget(),
-            from_window=self._root_widget,
+        bui.app.ui_v1.set_main_window(
+            PluginSettingsWindow(transition='in_right'), from_window=self
         )
 
     def _show_category_options(self) -> None:
@@ -451,21 +457,3 @@ class PluginWindow(bui.Window):
                 bui.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
             logging.exception('Error restoring state for %s.', self)
-
-    def _do_back(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.settings.advanced import AdvancedSettingsWindow
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        self._save_state()
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            AdvancedSettingsWindow(transition='in_left').get_root_widget(),
-            from_window=self._root_widget,
-        )

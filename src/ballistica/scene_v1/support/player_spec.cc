@@ -3,8 +3,8 @@
 #include "ballistica/scene_v1/support/player_spec.h"
 
 #include "ballistica/base/support/classic_soft.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/platform/core_platform.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -90,7 +90,7 @@ auto PlayerSpec::GetSpecString() const -> std::string {
 }
 
 auto PlayerSpec::GetAccountPlayerSpec() -> PlayerSpec {
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   PlayerSpec spec;
   if (g_base->HaveClassic() && g_base->classic()->IsV1AccountSignedIn()) {
     spec.v1_account_type_ = g_base->classic()->GetV1AccountType();

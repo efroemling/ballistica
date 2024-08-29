@@ -559,7 +559,8 @@ class PrivateGatherTab(GatherTab):
     def _build_host_tab(self) -> None:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
-        assert bui.app.classic is not None
+        classic = bui.app.classic
+        assert classic is not None
 
         plus = bui.app.plus
         assert plus is not None
@@ -636,41 +637,7 @@ class PrivateGatherTab(GatherTab):
             and hostingstate.tickets_to_host_now != 0
             and not havegoldpass
         ):
-            if not bui.app.ui_v1.use_toolbars:
-
-                # Currently have no allow_token_purchases value like
-                # we had with tickets; just assuming we always allow.
-                if bool(True):
-                    # if bui.app.classic.allow_ticket_purchases:
-                    self._get_tokens_button = bui.buttonwidget(
-                        parent=self._container,
-                        position=(
-                            self._c_width - 210 + 125,
-                            self._c_height - 44,
-                        ),
-                        autoselect=True,
-                        scale=0.6,
-                        size=(120, 60),
-                        textcolor=(1.0, 0.6, 0.0),
-                        label=bui.charstr(bui.SpecialChar.TOKEN),
-                        color=(0.65, 0.5, 0.8),
-                        on_activate_call=self._on_get_tokens_press,
-                    )
-                else:
-                    self._token_count_text = bui.textwidget(
-                        parent=self._container,
-                        scale=0.6,
-                        position=(
-                            self._c_width - 210 + 125,
-                            self._c_height - 44,
-                        ),
-                        color=(1.0, 0.6, 0.0),
-                        h_align='center',
-                        v_align='center',
-                    )
-
-                # Set initial token count.
-                self._update_currency_ui()
+            pass
 
         v = self._c_height - 90
         if hostingstate.party_code is None:
@@ -689,7 +656,7 @@ class PrivateGatherTab(GatherTab):
                 ),
             )
 
-        v -= 100
+        v -= 90
         if hostingstate.party_code is None:
             # We've got no current party running; show options to set
             # one up.
@@ -718,12 +685,12 @@ class PrivateGatherTab(GatherTab):
 
             # If it appears we're coming back from playlist selection,
             # re-select our playlist button.
-            if bui.app.ui_v1.selecting_private_party_playlist:
+            if classic.selecting_private_party_playlist:
                 bui.containerwidget(
                     edit=self._container,
                     selected_child=self._host_playlist_button,
                 )
-                bui.app.ui_v1.selecting_private_party_playlist = False
+                classic.selecting_private_party_playlist = False
         else:
             # We've got a current party; show its info.
             bui.textwidget(
@@ -785,7 +752,7 @@ class PrivateGatherTab(GatherTab):
                 autoselect=True,
             )
 
-        v -= 120
+        v -= 110
 
         # Line above the main action button:
 
@@ -951,6 +918,9 @@ class PrivateGatherTab(GatherTab):
         )
 
     def _playlist_press(self) -> None:
+        if bool(True):
+            bui.screenmessage('UNDER CONSTRUCTION')
+            return
         assert self._host_playlist_button is not None
         self.window.playlist_select(origin_widget=self._host_playlist_button)
 

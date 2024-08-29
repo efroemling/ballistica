@@ -2,14 +2,14 @@
 
 #include "ballistica/scene_v1/support/session.h"
 
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 
 namespace ballistica::scene_v1 {
 
 Session::Session() {
   g_scene_v1->session_count++;
 
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   // New sessions immediately become foreground.
   appmode->SetForegroundSession(this);

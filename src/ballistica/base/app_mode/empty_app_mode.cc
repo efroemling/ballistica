@@ -1,35 +1,50 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/base/app_mode/app_mode_empty.h"
+#include "ballistica/base/app_mode/empty_app_mode.h"
 
 #include "ballistica/base/graphics/component/simple_component.h"
 
 namespace ballistica::base {
 
-static AppModeEmpty* g_app_mode_empty{};
+static EmptyAppMode* g_empty_app_mode{};
 
-AppModeEmpty::AppModeEmpty() = default;
+EmptyAppMode::EmptyAppMode() = default;
 
-auto AppModeEmpty::GetSingleton() -> AppModeEmpty* {
+auto EmptyAppMode::GetSingleton() -> EmptyAppMode* {
   assert(g_base == nullptr || g_base->InLogicThread());
 
-  if (g_app_mode_empty == nullptr) {
-    g_app_mode_empty = new AppModeEmpty();
+  if (g_empty_app_mode == nullptr) {
+    g_empty_app_mode = new EmptyAppMode();
   }
-  return g_app_mode_empty;
+  return g_empty_app_mode;
 }
 
-void AppModeEmpty::Reset() {
+void EmptyAppMode::OnActivate() {
+  assert(g_base->InLogicThread());
+
+  Reset_();
+}
+
+void EmptyAppMode::Reset_() {
+  reset_count_++;
+
   // When we are first created (for use as a placeholder before any
   // app-modes are set) we just draw nothing. However once we actually get
   // reset for use as a an explicit app mode, we do our hello thing.
-  hello_mode_ = true;
+  hello_mode_ = (reset_count_ > 1);
 
-  // Fade in if we currently aren't.
-  g_base->graphics->FadeScreen(true, 250, nullptr);
+  // Reset the engine to a default state.
+  g_base->Reset();
+
+  // When we're a 'real' app-mode, fade in if we currently aren't. Otherwise
+  // let's stay faded out and let the first actual app-mode do the fading
+  // in.
+  if (hello_mode_) {
+    g_base->graphics->FadeScreen(true, 250, nullptr);
+  }
 }
 
-void AppModeEmpty::DrawWorld(base::FrameDef* frame_def) {
+void EmptyAppMode::DrawWorld(base::FrameDef* frame_def) {
   if (!hello_mode_) {
     return;
   }

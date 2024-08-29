@@ -7,12 +7,12 @@
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/support/classic_soft.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/scene.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/shared/python/python.h"
 
 // FIXME: should not need this here.
@@ -103,7 +103,7 @@ GlobalsNode::GlobalsNode(Scene* scene) : Node(scene, node_type) {
   // Set ourself as the current globals node for our scene.
   this->scene()->set_globals_node(this);
 
-  auto* appmode = SceneV1AppMode::GetActiveOrFatal();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
 
   // If we're being made in a host-activity, also set ourself as the current
   // globals node for our activity. (there should only be one, so complain if
@@ -191,7 +191,13 @@ void GlobalsNode::SetAsForeground() {
 auto GlobalsNode::IsCurrentGlobals() const -> bool {
   // We're current if our scene is the foreground one and we're the globals
   // node for our scene.
-  auto* appmode = SceneV1AppMode::GetActiveOrFatal();
+  auto* appmode = classic::ClassicAppMode::GetActive();
+  if (appmode == nullptr) {
+    BA_LOG_ERROR_NATIVE_TRACE(
+        "GlobalsNode::IsCurrentGlobals() called without ClassicAppMode "
+        "active.");
+    return false;
+  }
 
   Scene* scene = this->scene();
   assert(scene);

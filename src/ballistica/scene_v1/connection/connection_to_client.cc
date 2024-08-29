@@ -7,6 +7,7 @@
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/plus_soft.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
@@ -14,7 +15,6 @@
 #include "ballistica/scene_v1/support/client_input_device.h"
 #include "ballistica/scene_v1/support/client_input_device_delegate.h"
 #include "ballistica/scene_v1/support/host_session.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python_sys.h"
@@ -27,7 +27,7 @@ const int kNewClientKickVoteDelay = 60000;
 ConnectionToClient::ConnectionToClient(int id)
     : id_(id),
       protocol_version_{
-          SceneV1AppMode::GetSingleton()->host_protocol_version()} {
+          classic::ClassicAppMode::GetSingleton()->host_protocol_version()} {
   // We calc this once just in case it changes on our end
   // (the client uses it for their verification hash so we need to
   // ensure it stays consistent).
@@ -76,7 +76,7 @@ ConnectionToClient::~ConnectionToClient() {
 
   // If they had been announced as connected, announce their departure.
   // It's also expected our app mode may no longer be active here; that's ok.
-  auto* appmode = SceneV1AppMode::GetActive();
+  auto* appmode = classic::ClassicAppMode::GetActive();
   if (appmode && can_communicate()
       && appmode->ShouldAnnouncePartyJoinsAndLeaves()) {
     std::string s = g_base->assets->GetResourceString("playerLeftPartyText");
@@ -144,7 +144,7 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
     return;
   }
 
-  auto* appmode = SceneV1AppMode::GetActiveOrWarn();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrWarn();
   if (!appmode) {
     return;
   }
@@ -350,7 +350,7 @@ void ConnectionToClient::HandleMessagePacket(
     return;
   }
 
-  auto* appmode = SceneV1AppMode::GetActiveOrWarn();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrWarn();
   if (!appmode) {
     return;
   }
@@ -710,7 +710,7 @@ void ConnectionToClient::HandleMessagePacket(
 }
 
 auto ConnectionToClient::GetCombinedSpec() -> PlayerSpec {
-  auto* appmode = SceneV1AppMode::GetActiveOrFatal();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
 
   // Look for players coming from this client-connection.
   // If we find any, make a spec out of their name(s).
@@ -733,8 +733,8 @@ auto ConnectionToClient::GetCombinedSpec() -> PlayerSpec {
         }
       }
     }
-    if (p_name_combined.size() > kMaxPartyNameCombinedSize) {
-      p_name_combined.resize(kMaxPartyNameCombinedSize);
+    if (p_name_combined.size() > classic::kMaxPartyNameCombinedSize) {
+      p_name_combined.resize(classic::kMaxPartyNameCombinedSize);
       p_name_combined += "...";
     }
     if (!p_name_combined.empty()) {
@@ -765,7 +765,7 @@ auto ConnectionToClient::GetAsUDP() -> ConnectionToClientUDP* {
 }
 
 void ConnectionToClient::HandleMasterServerClientInfo(PyObject* info_obj) {
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   PyObject* profiles_obj = PyDict_GetItemString(info_obj, "p");
   if (profiles_obj != nullptr) {
@@ -802,7 +802,7 @@ void ConnectionToClient::HandleMasterServerClientInfo(PyObject* info_obj) {
 }
 
 auto ConnectionToClient::IsAdmin() const -> bool {
-  auto* appmode = SceneV1AppMode::GetActiveOrFatal();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
   if (peer_public_account_id_.empty()) {
     return false;
   }

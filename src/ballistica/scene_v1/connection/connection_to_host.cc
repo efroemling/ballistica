@@ -9,9 +9,9 @@
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/plus_soft.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/scene_v1/support/client_session_net.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
@@ -24,7 +24,7 @@ const int kPingSendInterval = 2000;
 
 ConnectionToHost::ConnectionToHost()
     : protocol_version_{
-          SceneV1AppMode::GetSingleton()->host_protocol_version()} {}
+          classic::ClassicAppMode::GetSingleton()->host_protocol_version()} {}
 
 auto ConnectionToHost::GetAsUDP() -> ConnectionToHostUDP* { return nullptr; }
 
@@ -93,7 +93,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
         break;
       }
 
-      auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+      auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
       // We expect a > 3 byte handshake packet with protocol version as the
       // second and third bytes and name/info beyond that.
@@ -354,7 +354,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         cJSON* new_roster =
             cJSON_Parse(reinterpret_cast<const char*>(&(buffer[1])));
         if (new_roster) {
-          if (auto* appmode = SceneV1AppMode::GetActive()) {
+          if (auto* appmode = classic::ClassicAppMode::GetActive()) {
             appmode->SetGameRoster(new_roster);
           }
         }
@@ -496,7 +496,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
     }
 
     case BA_MESSAGE_CHAT: {
-      if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+      if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
         appmode->LocalDisplayChatMessage(buffer);
       }
       break;

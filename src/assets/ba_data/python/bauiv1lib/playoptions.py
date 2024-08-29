@@ -41,8 +41,9 @@ class PlayOptionsWindow(PopupWindow):
 
         # We behave differently if we're being used for playlist selection
         # vs starting a game directly (should make this more elegant).
-        assert bui.app.classic is not None
-        self._selecting_mode = bui.app.ui_v1.selecting_private_party_playlist
+        classic = bui.app.classic
+        assert classic is not None
+        self._selecting_mode = classic.selecting_private_party_playlist
 
         self._do_randomize_val = bui.app.config.get(
             self._pvars.config_name + ' Playlist Randomize', 0
@@ -512,8 +513,8 @@ class PlayOptionsWindow(PopupWindow):
             # Note: this is a wonky situation where we aren't actually
             # the main window but we set it on behalf of the main window
             # that popped us up.
-            bui.app.ui_v1.set_main_menu_window(
-                GatherWindow(transition='in_right').get_root_widget(),
+            bui.app.ui_v1.set_main_window(
+                GatherWindow(transition='in_right'),
                 from_window=False,  # Disable this test.
             )
             self._transition_out(transition='out_left')

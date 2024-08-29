@@ -662,6 +662,34 @@ def test_sets() -> None:
     assert dataclass_to_dict(obj1) == {'sval': ['a', 'b', 'c', 'd', 'e', 'f']}
     assert dataclass_to_dict(obj2) == {'sval': ['a', 'b', 'c', 'd', 'e', 'f']}
 
+    @ioprepped
+    @dataclass
+    class _TestClass2:
+        dtval: set[datetime.datetime]
+
+    # Make sure serialization/deserialization with odd types like
+    # datetimes works.
+    obj3 = _TestClass2(
+        dtval={utc_now(), utc_now() + datetime.timedelta(hours=1)}
+    )
+
+    assert (
+        dataclass_from_dict(
+            _TestClass2,
+            dataclass_to_dict(obj3, codec=Codec.FIRESTORE),
+            codec=Codec.FIRESTORE,
+        )
+        == obj3
+    )
+    assert (
+        dataclass_from_dict(
+            _TestClass2,
+            dataclass_to_dict(obj3, codec=Codec.JSON),
+            codec=Codec.JSON,
+        )
+        == obj3
+    )
+
 
 def test_name_clashes() -> None:
     """Make sure we catch name clashes since we can remap attr names."""

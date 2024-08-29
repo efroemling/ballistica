@@ -21,6 +21,7 @@ from efro.util import set_canonical_module_names
 import _babase
 from _babase import (
     add_clean_frame_callback,
+    allows_ticket_sales,
     android_get_external_files_dir,
     appname,
     appnameupper,
@@ -86,6 +87,7 @@ from _babase import (
     overlay_web_browser_is_supported,
     overlay_web_browser_open_url,
     print_load_info,
+    push_back_press,
     pushcall,
     quit,
     reload_media,
@@ -188,6 +190,7 @@ __all__ = [
     'AccountV2Subsystem',
     'ActivityNotFoundError',
     'ActorNotFoundError',
+    'allows_ticket_sales',
     'add_clean_frame_callback',
     'android_get_external_files_dir',
     'app',
@@ -305,6 +308,7 @@ __all__ = [
     'print_error',
     'print_exception',
     'print_load_info',
+    'push_back_press',
     'pushcall',
     'quit',
     'QuitType',

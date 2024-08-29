@@ -7,6 +7,7 @@ from __future__ import annotations
 import weakref
 import logging
 from enum import Enum
+from typing import override
 
 from bauiv1lib.tabs import TabRow
 import bauiv1 as bui
@@ -52,7 +53,7 @@ class GatherTab:
         """Called when the parent window is restoring state."""
 
 
-class GatherWindow(bui.Window):
+class GatherWindow(bui.MainWindow):
     """Window for joining/inviting friends."""
 
     class TabID(Enum):
@@ -82,22 +83,11 @@ class GatherWindow(bui.Window):
         assert plus is not None
 
         bui.set_analytics_screen('Gather Window')
-        scale_origin: tuple[float, float] | None
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
-        else:
-            self._transition_out = 'out_right'
-            scale_origin = None
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_location('Gather')
-        bui.set_party_icon_always_visible(True)
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 1440 if uiscale is bui.UIScale.SMALL else 1040
+        self._width = 1640 if uiscale is bui.UIScale.SMALL else 1040
         x_offs = 200 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            582
+            550
             if uiscale is bui.UIScale.SMALL
             else 680 if uiscale is bui.UIScale.MEDIUM else 800
         )
@@ -108,25 +98,29 @@ class GatherWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + extra_top),
-                transition=transition,
-                toolbar_visibility='menu_minimal',
-                scale_origin_stack_offset=scale_origin,
-                scale=(
-                    1.3
+                toolbar_visibility=(
+                    'menu_tokens'
                     if uiscale is bui.UIScale.SMALL
-                    else 0.97 if uiscale is bui.UIScale.MEDIUM else 0.8
+                    else 'menu_full'
+                ),
+                scale=(
+                    1.15
+                    if uiscale is bui.UIScale.SMALL
+                    else 0.95 if uiscale is bui.UIScale.MEDIUM else 0.7
                 ),
                 stack_offset=(
-                    (0, -11)
+                    (0, -20)
                     if uiscale is bui.UIScale.SMALL
                     else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
-        if uiscale is bui.UIScale.SMALL and bui.app.ui_v1.use_toolbars:
+        if uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self._back
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
             self._back_button = None
         else:
@@ -138,7 +132,7 @@ class GatherWindow(bui.Window):
                 autoselect=True,
                 label=bui.Lstr(resource='backText'),
                 button_type='back',
-                on_activate_call=self._back,
+                on_activate_call=self.main_window_back,
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
             bui.buttonwidget(
@@ -151,7 +145,7 @@ class GatherWindow(bui.Window):
 
         condensed = uiscale is not bui.UIScale.LARGE
         t_offs_y = (
-            0 if not condensed else 25 if uiscale is bui.UIScale.MEDIUM else 17
+            0 if not condensed else 25 if uiscale is bui.UIScale.MEDIUM else 33
         )
         bui.textwidget(
             parent=self._root_widget,
@@ -161,12 +155,12 @@ class GatherWindow(bui.Window):
             scale=(
                 1.5
                 if not condensed
-                else 1.0 if uiscale is bui.UIScale.MEDIUM else 0.6
+                else 1.0 if uiscale is bui.UIScale.MEDIUM else 1.0
             ),
             h_align='center',
             v_align='center',
             text=bui.Lstr(resource=f'{self._r}.titleText'),
-            maxwidth=550,
+            maxwidth=320,
         )
 
         scroll_buffer_h = 130 + 2 * x_offs
@@ -218,16 +212,15 @@ class GatherWindow(bui.Window):
             if tabtype is not None:
                 self._tabs[tab_id] = tabtype(self)
 
-        if bui.app.ui_v1.use_toolbars:
+        bui.widget(
+            edit=self._tab_row.tabs[tabdefs[-1][0]].button,
+            right_widget=bui.get_special_widget('squad_button'),
+        )
+        if uiscale is bui.UIScale.SMALL:
             bui.widget(
-                edit=self._tab_row.tabs[tabdefs[-1][0]].button,
-                right_widget=bui.get_special_widget('party_button'),
+                edit=self._tab_row.tabs[tabdefs[0][0]].button,
+                left_widget=bui.get_special_widget('back_button'),
             )
-            if uiscale is bui.UIScale.SMALL:
-                bui.widget(
-                    edit=self._tab_row.tabs[tabdefs[0][0]].button,
-                    left_widget=bui.get_special_widget('back_button'),
-                )
 
         self._scroll_width = self._width - scroll_buffer_h
         self._scroll_height = self._height - 180.0 + tabs_top_extra
@@ -257,12 +250,26 @@ class GatherWindow(bui.Window):
 
         self._restore_state()
 
-    def __del__(self) -> None:
-        bui.set_party_icon_always_visible(False)
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
+
+    @override
+    def on_main_window_close(self) -> None:
+        self._save_state()
 
     def playlist_select(self, origin_widget: bui.Widget) -> None:
         """Called by the private-hosting tab to select a playlist."""
         from bauiv1lib.play import PlayWindow
+
+        classic = bui.app.classic
+        assert classic is not None
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -270,11 +277,9 @@ class GatherWindow(bui.Window):
 
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.selecting_private_party_playlist = True
-        bui.app.ui_v1.set_main_menu_window(
-            PlayWindow(origin_widget=origin_widget).get_root_widget(),
-            from_window=self._root_widget,
+        classic.selecting_private_party_playlist = True
+        bui.app.ui_v1.set_main_window(
+            PlayWindow(origin_widget=origin_widget), from_window=self
         )
 
     def _set_tab(self, tab_id: TabID) -> None:
@@ -340,8 +345,6 @@ class GatherWindow(bui.Window):
             logging.exception('Error saving state for %s.', self)
 
     def _restore_state(self) -> None:
-        from efro.util import enum_by_value
-
         try:
             for tab in self._tabs.values():
                 tab.restore_state()
@@ -354,7 +357,7 @@ class GatherWindow(bui.Window):
             current_tab = self.TabID.ABOUT
             gather_tab_val = bui.app.config.get('Gather Tab')
             try:
-                stored_tab = enum_by_value(self.TabID, gather_tab_val)
+                stored_tab = self.TabID(gather_tab_val)
                 if stored_tab in self._tab_row.tabs:
                     current_tab = stored_tab
             except ValueError:
@@ -366,9 +369,7 @@ class GatherWindow(bui.Window):
                 sel = self._tab_container
             elif isinstance(sel_name, str) and sel_name.startswith('Tab:'):
                 try:
-                    sel_tab_id = enum_by_value(
-                        self.TabID, sel_name.split(':')[-1]
-                    )
+                    sel_tab_id = self.TabID(sel_name.split(':')[-1])
                 except ValueError:
                     sel_tab_id = self.TabID.ABOUT
                 sel = self._tab_row.tabs[sel_tab_id].button
@@ -378,20 +379,3 @@ class GatherWindow(bui.Window):
 
         except Exception:
             logging.exception('Error restoring state for %s.', self)
-
-    def _back(self) -> None:
-        from bauiv1lib.mainmenu import MainMenuWindow
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        self._save_state()
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            MainMenuWindow(transition='in_left').get_root_widget(),
-            from_window=self._root_widget,
-        )

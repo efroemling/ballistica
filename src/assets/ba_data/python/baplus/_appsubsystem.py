@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from baplus._cloud import CloudSubsystem
 
 
-class PlusSubsystem(AppSubsystem):
+class PlusAppSubsystem(AppSubsystem):
     """Subsystem for plus functionality in the app.
 
     The single shared instance of this app can be accessed at

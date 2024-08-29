@@ -62,35 +62,6 @@ def snake_case_to_camel_case(val: str) -> str:
     return val.replace('_', ' ').title().replace(' ', '')
 
 
-def enum_by_value(cls: type[EnumT], value: Any) -> EnumT:
-    """Create an enum from a value.
-
-    This is basically the same as doing 'obj = EnumType(value)' except
-    that it works around an issue where a reference loop is created
-    if an exception is thrown due to an invalid value. Since we disable
-    the cyclic garbage collector for most of the time, such loops can lead
-    to our objects sticking around longer than we want.
-    This issue has been submitted to Python as a bug so hopefully we can
-    remove this eventually if it gets fixed: https://bugs.python.org/issue42248
-    UPDATE: This has been fixed as of later 3.8 builds, so we can kill this
-    off once we are 3.9+ across the board.
-    """
-
-    # Note: we don't recreate *ALL* the functionality of the Enum constructor
-    # such as the _missing_ hook; but this should cover our basic needs.
-    value2member_map = getattr(cls, '_value2member_map_')
-    assert value2member_map is not None
-    try:
-        out = value2member_map[value]
-        assert isinstance(out, cls)
-        return out
-    except KeyError:
-        # pylint: disable=consider-using-f-string
-        raise ValueError(
-            '%r is not a valid %s' % (value, cls.__name__)
-        ) from None
-
-
 def check_utc(value: datetime.datetime) -> None:
     """Ensure a datetime value is timezone-aware utc."""
     if value.tzinfo is not datetime.UTC:

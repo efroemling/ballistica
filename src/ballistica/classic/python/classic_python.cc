@@ -3,7 +3,7 @@
 #include "ballistica/classic/python/classic_python.h"
 
 #include "ballistica/classic/python/methods/python_methods_classic.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/shared/python/python_command.h"
 #include "ballistica/shared/python/python_module_builder.h"
 
@@ -91,7 +91,7 @@ auto ClassicPython::GetControllerFloatValue(
 }
 
 auto ClassicPython::BuildPublicPartyStateVal() -> PyObject* {
-  auto* appmode = scene_v1::SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = ClassicAppMode::GetActiveOrThrow();
 
   auto&& public_ipv4 = appmode->public_party_public_address_ipv4();
   PyObject* ipv4obj;

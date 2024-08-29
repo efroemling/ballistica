@@ -5,31 +5,35 @@
 from __future__ import annotations
 
 import logging
+from typing import override
 
 import bascenev1 as bs
 import bauiv1 as bui
 
 
-class PlayWindow(bui.Window):
+class PlayWindow(bui.MainWindow):
     """Window for selecting overall play type."""
 
     def __init__(
         self,
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
-        import threading
 
         # Preload some modules we use in a background thread so we won't
         # have a visual hitch when the user taps them.
-        threading.Thread(target=self._preload_modules).start()
+        bui.app.threadpool_submit_no_wait(self._preload_modules)
 
-        # We can currently be used either for main menu duty or for selecting
-        # playlists (should make this more elegant/general).
-        assert bui.app.classic is not None
-        self._is_main_menu = not bui.app.ui_v1.selecting_private_party_playlist
+        classic = bui.app.classic
+        assert classic is not None
+
+        # We can currently be used either for main window duty or
+        # modally for selecting playlists. Ideally we should clean
+        # things up and make playlist selection go through the
+        # main-window mechanism.
+        self._is_main_menu = not classic.selecting_private_party_playlist
 
         uiscale = bui.app.ui_v1.uiscale
         width = 1100 if uiscale is bui.UIScale.SMALL else 800
@@ -37,30 +41,31 @@ class PlayWindow(bui.Window):
         height = 550
         button_width = 400
 
-        scale_origin: tuple[float, float] | None
         if origin_widget is not None:
+
+            # Need to store this ourself since we can function as a
+            # non-main window.
             self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
         else:
             self._transition_out = 'out_right'
-            scale_origin = None
 
         self._r = 'playWindow'
 
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),
-                transition=transition,
                 toolbar_visibility='menu_full',
-                scale_origin_stack_offset=scale_origin,
                 scale=(
-                    1.6
+                    1.35
                     if uiscale is bui.UIScale.SMALL
                     else 0.9 if uiscale is bui.UIScale.MEDIUM else 0.8
                 ),
-                stack_offset=(0, 0) if uiscale is bui.UIScale.SMALL else (0, 0),
-            )
+                stack_offset=(
+                    (0, 20) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
         self._back_button = back_button = btn = bui.buttonwidget(
             parent=self._root_widget,
@@ -101,18 +106,14 @@ class PlayWindow(bui.Window):
             size=(60, 60),
             label=bui.charstr(bui.SpecialChar.BACK),
         )
-        if bui.app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if uiscale is bui.UIScale.SMALL:
             bui.textwidget(edit=txt, text='')
 
         v = height - (110 if self._is_main_menu else 90)
         v -= 100
         clr = (0.6, 0.7, 0.6, 1.0)
         v -= 280 if self._is_main_menu else 180
-        v += (
-            30
-            if bui.app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL
-            else 0
-        )
+        v += 30 if uiscale is bui.UIScale.SMALL else 0
         hoffs = x_offs + 80 if self._is_main_menu else x_offs - 100
         scl = 1.13 if self._is_main_menu else 0.68
 
@@ -153,7 +154,7 @@ class PlayWindow(bui.Window):
                 on_activate_call=self._coop,
             )
 
-            if bui.app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
+            if uiscale is bui.UIScale.SMALL:
                 bui.widget(
                     edit=btn,
                     left_widget=bui.get_special_widget('back_button'),
@@ -256,12 +257,11 @@ class PlayWindow(bui.Window):
             on_activate_call=self._team_tourney,
         )
 
-        if bui.app.ui_v1.use_toolbars:
-            bui.widget(
-                edit=btn,
-                up_widget=bui.get_special_widget('tickets_plus_button'),
-                right_widget=bui.get_special_widget('party_button'),
-            )
+        bui.widget(
+            edit=btn,
+            up_widget=bui.get_special_widget('get_tokens_button'),
+            right_widget=bui.get_special_widget('squad_button'),
+        )
 
         xxx = -14
         self._draw_dude(
@@ -489,11 +489,12 @@ class PlayWindow(bui.Window):
             color=clr,
         )
 
-        if bui.app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if uiscale is bui.UIScale.SMALL:
             back_button.delete()
             bui.containerwidget(
                 edit=self._root_widget,
                 on_cancel_call=self._back,
+                # cancel_button=bui.get_special_widget('back_button'),
                 selected_child=(
                     self._coop_button
                     if self._is_main_menu
@@ -514,7 +515,20 @@ class PlayWindow(bui.Window):
 
         self._restore_state()
 
-    # noinspection PyUnresolvedReferences
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
+
+    @override
+    def on_main_window_close(self) -> None:
+        self._save_state()
+
     @staticmethod
     def _preload_modules() -> None:
         """Preload modules we use; avoids hitches (called in bg thread)."""
@@ -526,30 +540,22 @@ class PlayWindow(bui.Window):
     def _back(self) -> None:
         # pylint: disable=cyclic-import
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not currently in control.
+        if not self.can_change_main_window():
             return
 
         if self._is_main_menu:
-            from bauiv1lib.mainmenu import MainMenuWindow
-
-            self._save_state()
-            assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_menu_window(
-                MainMenuWindow(transition='in_left').get_root_widget(),
-                from_window=self._root_widget,
-            )
-            bui.containerwidget(
-                edit=self._root_widget, transition=self._transition_out
-            )
+            self.main_window_back()
         else:
             from bauiv1lib.gather import GatherWindow
 
-            self._save_state()
             assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_menu_window(
-                GatherWindow(transition='in_left').get_root_widget(),
-                from_window=self._root_widget,
+
+            self._save_state()
+            bui.app.ui_v1.set_main_window(
+                GatherWindow(transition='in_left'),
+                from_window=self,
+                is_back=True,
             )
             bui.containerwidget(
                 edit=self._root_widget, transition=self._transition_out
@@ -560,8 +566,8 @@ class PlayWindow(bui.Window):
         from bauiv1lib.account import show_sign_in_prompt
         from bauiv1lib.coop.browser import CoopBrowserWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not currently in control.
+        if not self.can_change_main_window():
             return
 
         plus = bui.app.plus
@@ -573,48 +579,43 @@ class PlayWindow(bui.Window):
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            CoopBrowserWindow(
-                origin_widget=self._coop_button
-            ).get_root_widget(),
-            from_window=self._root_widget,
+        bui.app.ui_v1.set_main_window(
+            CoopBrowserWindow(origin_widget=self._coop_button), from_window=self
         )
 
     def _team_tourney(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.playlist.browser import PlaylistBrowserWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not currently in control.
+        if not self.can_change_main_window():
             return
 
         self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
+
+        self.main_window_replace(
             PlaylistBrowserWindow(
                 origin_widget=self._teams_button, sessiontype=bs.DualTeamSession
-            ).get_root_widget(),
-            from_window=self._root_widget,
+            )
         )
 
     def _free_for_all(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.playlist.browser import PlaylistBrowserWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not currently in control.
+        if not self.can_change_main_window():
             return
 
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
+        bui.app.ui_v1.set_main_window(
             PlaylistBrowserWindow(
                 origin_widget=self._free_for_all_button,
                 sessiontype=bs.FreeForAllSession,
-            ).get_root_widget(),
-            from_window=self._root_widget,
+            ),
+            from_window=self,
         )
 
     def _draw_dude(

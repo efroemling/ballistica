@@ -6,13 +6,13 @@
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/node/bomb_node.h"
 #include "ballistica/scene_v1/node/node_attribute_connection.h"
 #include "ballistica/scene_v1/node/player_node.h"
 #include "ballistica/scene_v1/node/text_node.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 
 namespace ballistica::scene_v1 {
@@ -133,7 +133,7 @@ auto Scene::GetPlayerNode(int id) -> PlayerNode* {
 void Scene::Step() {
   out_of_bounds_nodes_.clear();
 
-  auto* appmode = SceneV1AppMode::GetActiveOrFatal();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
 
   // Step all our nodes.
   {
@@ -281,7 +281,7 @@ auto Scene::NewNode(const std::string& type_string, const std::string& name,
 
 void Scene::Dump(SessionStream* stream) {
   assert(g_base->InLogicThread());
-  auto* appmode = SceneV1AppMode::GetActiveOrFatal();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
   stream->AddScene(this);
 
   // If we're the foreground one, communicate that fact as well.

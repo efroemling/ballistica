@@ -346,7 +346,8 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         } else if (auto* call = on_cancel_call_.Get()) {
           claimed = true;
 
-          // Schedule this to run immediately after any current UI traversal.
+          // Schedule this to run immediately after any current UI
+          // traversal.
           call->ScheduleInUIOperation();
         } else {
           OnCancelCustom();

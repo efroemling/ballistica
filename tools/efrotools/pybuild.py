@@ -12,17 +12,20 @@ from dataclasses import dataclass
 
 from efrotools.util import readfile, writefile, replace_exact
 
+# Slowly testing new setup which is significantly different.
+APPLE_NEW = False
+
 # Python version we build here (not necessarily same as we use in repo).
 PY_VER_ANDROID = '3.12'
 PY_VER_EXACT_ANDROID = '3.12.4'
 PY_VER_APPLE = '3.12'
-PY_VER_EXACT_APPLE = '3.12.0'
+PY_VER_EXACT_APPLE = '3.12.4' if APPLE_NEW else '3.12.0'
 
 # Can bump these up to whatever the min we need is. Though perhaps
 # leaving them at what the repo uses would lead to fewer build issues.
 VERSION_MIN_MACOS = '11.0'
-VERSION_MIN_IOS = '12.0'
-VERSION_MIN_TVOS = '9.0'
+VERSION_MIN_IOS = '13.0' if APPLE_NEW else '12.0'
+VERSION_MIN_TVOS = '12.0' if APPLE_NEW else '9.0'
 
 # I occasionally run into openssl problems (particularly on arm systems)
 # so keeping exact control of the versions we're building here to try
@@ -40,9 +43,9 @@ VERSION_MIN_TVOS = '9.0'
 OPENSSL_VER_APPLE = '3.0.12-1'
 OPENSSL_VER_ANDROID = '3.0.14'
 
-LIBFFI_VER_APPLE = '3.4.4-1'
+LIBFFI_VER_APPLE = '3.4.6-1' if APPLE_NEW else '3.4.4-1'
 BZIP2_VER_APPLE = '1.0.8-1'
-XZ_VER_APPLE = '5.4.4-1'
+XZ_VER_APPLE = '5.4.7-1' if APPLE_NEW else '5.4.4-1'
 
 # Android repo doesn't seem to be getting updated much so manually
 # bumping various versions to keep things up to date.
@@ -93,6 +96,7 @@ PRUNE_DLL_NAMES = ['*.ico', '*.pdb']
 
 def build_apple(arch: str, debug: bool = False) -> None:
     """Run a build for the provided apple arch (mac, ios, or tvos)."""
+    # pylint: disable=too-many-branches
     import platform
     from efro.error import CleanError
 
@@ -137,9 +141,9 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # re-test things and probably make adjustments. Holding off for now.
     # Might just do this when I update everything to 3.12 which will be
     # a bit of work anyway.
-    if bool(False):
+    if not APPLE_NEW:
         subprocess.run(
-            ['git', 'checkout', 'a8c93fed2bdf0122fc2ca663faa1e46e5cf28d69'],
+            ['git', 'checkout', 'c6808e53640de86d520fe39849b8f15d40ac589a'],
             check=True,
         )
     else:
@@ -189,58 +193,68 @@ def build_apple(arch: str, debug: bool = False) -> None:
     )
     txt = replace_exact(
         txt,
-        'VERSION_MIN-iOS=12.0\n',
+        'VERSION_MIN-iOS=' + ('13.0' if APPLE_NEW else '12.0') + '\n',
         f'VERSION_MIN-iOS={VERSION_MIN_IOS}\n',
     )
     txt = replace_exact(
         txt,
-        'VERSION_MIN-tvOS=9.0\n',
+        'VERSION_MIN-tvOS=' + ('12.0' if APPLE_NEW else '9.0') + '\n',
         f'VERSION_MIN-tvOS={VERSION_MIN_TVOS}\n',
     )
     txt = replace_exact(
         txt,
-        'OPENSSL_VERSION=3.0.12-1\n',
+        'OPENSSL_VERSION=' + ('3.0.14-1' if APPLE_NEW else '3.0.12-1') + '\n',
         f'OPENSSL_VERSION={OPENSSL_VER_APPLE}\n',
     )
 
     # Don't copy in lib-dynload; we don't build it so it errors if we try.
-    txt = replace_exact(
-        txt,
-        '\t$$(foreach sdk,$$(SDKS-$(os)),cp $$(PYTHON_STDLIB-$$(sdk))/'
-        'lib-dynload/*',
-        '\t# (ericf disabled) $$(foreach sdk,$$(SDKS-$(os)),'
-        'cp $$(PYTHON_STDLIB-$$(sdk))/lib-dynload/*',
-    )
+    if not APPLE_NEW:
+        txt = replace_exact(
+            txt,
+            '\t$$(foreach sdk,$$(SDKS-$(os)),cp $$(PYTHON_STDLIB-$$(sdk))/'
+            'lib-dynload/*',
+            '\t# (ericf disabled) $$(foreach sdk,$$(SDKS-$(os)),'
+            'cp $$(PYTHON_STDLIB-$$(sdk))/lib-dynload/*',
+        )
 
     assert '--with-pydebug' not in txt
     if debug:
         # Add debug build flag
+        dbgafter = '--with-system-libmpdec' if APPLE_NEW else '--enable-ipv6'
         txt = replace_exact(
             txt,
-            '\t\t\t--enable-ipv6 \\\n',
-            '\t\t\t--enable-ipv6 \\\n\t\t\t--with-pydebug \\\n',
-            count=2,
+            f'\t\t\t{dbgafter} \\\n',
+            f'\t\t\t{dbgafter} \\\n\t\t\t--with-pydebug \\\n',
+            count=1 if APPLE_NEW else 2,
         )
 
         # Debug lib has a different name.
-        txt = replace_exact(
-            txt,
-            '))/lib/libpython$(PYTHON_VER).a',
-            '))/lib/libpython$(PYTHON_VER)d.a',
-            count=2,
-        )
+        if not APPLE_NEW:
+            txt = replace_exact(
+                txt,
+                '))/lib/libpython$(PYTHON_VER).a',
+                '))/lib/libpython$(PYTHON_VER)d.a',
+                count=2,
+            )
 
         txt = replace_exact(
             txt,
             '/include/python$(PYTHON_VER)',
             '/include/python$(PYTHON_VER)d',
-            count=3,
+            count=2 if APPLE_NEW else 3,
         )
+        if not APPLE_NEW:
+            txt = replace_exact(
+                txt,
+                '/config-$(PYTHON_VER)-',
+                '/config-$(PYTHON_VER)d-',
+                count=2,
+            )
         txt = replace_exact(
-            txt, '/config-$(PYTHON_VER)-', '/config-$(PYTHON_VER)d-', count=2
-        )
-        txt = replace_exact(
-            txt, '/_sysconfigdata__', '/_sysconfigdata_d_', count=3
+            txt,
+            '/_sysconfigdata__',
+            '/_sysconfigdata_d_',
+            count=1 if APPLE_NEW else 3,
         )
 
         # Rename the patch files corresponding to these as well.
@@ -260,23 +274,24 @@ def build_apple(arch: str, debug: bool = False) -> None:
             )
 
     # Add our bit of patching right after standard patching.
-    for tword in ('target', 'sdk'):
-        txt = replace_exact(
-            txt,
-            (
-                '\t# Apply target Python patches\n'
-                f'\tcd $$(PYTHON_SRCDIR-$({tword})) && '
-                'patch -p1 < $(PROJECT_DIR)/patch/Python/Python.patch\n'
-            ),
-            (
-                '\t# Apply target Python patches\n'
-                f'\tcd $$(PYTHON_SRCDIR-$({tword})) && '
-                'patch -p1 < $(PROJECT_DIR)/patch/Python/Python.patch\n'
-                f'\t../../tools/pcommand python_apple_patch'
-                f' $$(PYTHON_SRCDIR-$({tword}))\n'
-            ),
-            count=1,
-        )
+    if not APPLE_NEW:
+        for tword in ['target', 'sdk']:
+            txt = replace_exact(
+                txt,
+                (
+                    '\t# Apply target Python patches\n'
+                    f'\tcd $$(PYTHON_SRCDIR-$({tword})) && '
+                    'patch -p1 < $(PROJECT_DIR)/patch/Python/Python.patch\n'
+                ),
+                (
+                    '\t# Apply target Python patches\n'
+                    f'\tcd $$(PYTHON_SRCDIR-$({tword})) && '
+                    'patch -p1 < $(PROJECT_DIR)/patch/Python/Python.patch\n'
+                    f'\t../../tools/pcommand python_apple_patch'
+                    f' $$(PYTHON_SRCDIR-$({tword}))\n'
+                ),
+                count=1,
+            )
     writefile('Makefile', txt)
 
     # Ok; let 'er rip.

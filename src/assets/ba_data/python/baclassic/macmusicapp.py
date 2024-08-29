@@ -15,6 +15,8 @@ from baclassic._music import MusicPlayer
 if TYPE_CHECKING:
     from typing import Callable, Any
 
+    import bauiv1
+
 
 class MacMusicAppMusicPlayer(MusicPlayer):
     """A music-player that utilizes the macOS Music.app for playback.
@@ -33,7 +35,7 @@ class MacMusicAppMusicPlayer(MusicPlayer):
         callback: Callable[[Any], None],
         current_entry: Any,
         selection_target_name: str,
-    ) -> Any:
+    ) -> bauiv1.MainWindow:
         # pylint: disable=cyclic-import
         from bauiv1lib.soundtrack import entrytypeselect as etsel
 

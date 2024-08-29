@@ -1,4 +1,41 @@
-### 1.7.37 (build 21949, api 8, 2024-07-31)
+### 1.7.37 (build 21968, api 8, 2024-08-29)
+- Playlist customization no longer requires pro.
+- Soundtrack customization no longer requires pro.
+- Switching over to the new 'toolbar mode' UI that has been in the works for
+  several years. This includes a number of handy things such as consistent
+  buttons and widgets for league status, currencies, inventory, and the store.
+  It also adds a fixed back button on phones that should be easier to hit and a
+  dock for earned treasure chests at the bottom of the screen (will finally use
+  those treasure chest textures!). This is a substantial change so please holler
+  if you run into anything that looks broken or doesn't behave as you think it
+  should.
+- When running in 'small' UI mode (phones) the engine now uses 1300x600 as its
+  virtual resolution. This gives a wider 19.5:9 aspect ratio which lines up with
+  most modern smartphones, so people with such phones should no longer see
+  wasted space on the sides of their screen. The virtual resolution on 'medium'
+  and 'large' is now 1280x720. This gives the same 16:9 aspect ratio as the old
+  resolution (1207x680) but is a cleaner number. The 16:9 aspect ratio still
+  works well for tablets monitors, and TVs. When writing a UI, always be sure to
+  test it on 'small', 'medium', and 'large' modes to make sure it fits on screen
+  and feels similar in scale to the rest of the UI. Ideally when 'ui_v2' rolls
+  around we can make it possible to build UIs that adapt better to screen sizes
+  so things like fixed aspect ratios will no longer be necessary.
+- Split the main menu UI into two classes: `bauiv1.mainmenu.MainMenuWindow` and
+  `bauiv1.ingamemenu.InGameMenuWindow`.
+- Removed some bits of `bauiv1` which were never fully implemented and which I
+  feel were a flawed/outdated design. This includes `UILocation`,
+  `UILocationWindow`, `UIEntry`, and `UIController`. The whole purpose of these
+  was to add a higher level layer to the UI to make things like saving/restoring
+  UI states easier, but I now plan to use `WindowState` classes to accomplish
+  much of that in a more backward-compatible way. More on that below.
+- Added a new `bauiv1.Window` subclass called `bauiv1.MainWindow` which handles
+  what was previously called the 'main-menu-window' system which was a bit
+  ad-hoc and messy. MainMenuWindows have a built-in stack system so things like
+  back-button handling are more automatic and windows don't have to hard-code
+  where they came from. There are also other benefits such as better state
+  saving/restoring. When writing a MainWindow, pretty much all navigation should
+  only need too use methods: `can_change_main_window()`, `main_window_back()`,
+  and `main_window_replace()`.
 - Finally got things updated so language testing works again, and made it a bit
   spiffier while at it. You now simply point the game at your test language and
   it will update dynamically as you make edits; no need to download any files.
@@ -11,9 +48,30 @@
   doing more heavy downloading with Asset Packages coming online so its time to
   upgrade to a more modern web client library than Python's basic built in
   urllib stuff.
-- Pasting a single line of text followed by newlines now works. Previously it
-  would complain that multiple lines of text aren't supported, but now it
-  just ignores the trailing newlines.
+- Pasting a single line of text followed by newlines to the dev console now
+  works. Previously it would complain that multiple lines of text aren't
+  supported, but now it just ignores the trailing newlines.
+- Added an 'AppModes' tab to the dev console, allowing switching between any
+  AppModes defined in the current build for testing. Currently this is just
+  SceneV1AppMode and EmptyAppMode. This will become more useful in the future
+  when things like SquadsAppMode (Squads mode) or RemoteAppMode (the revamped
+  BSRemote app) happen.
+- Added a 'UI' tab to the dev console allowing debugging virtual screen bounds
+  and testing different UI scales dynamically.
+- Renamed `SceneV1AppMode` to `ClassicAppMode` and relocated it from the
+  `scene_v1` featureset to the `classic` one. This makes more logical sense
+  since `classic` is more about app operation and `scene_v1` is more about
+  gameplay, though realistically it doesn't matter since those two featuresets
+  are hopelessly entangled. Future parallels such as `squads` and `scene_v2`
+  featuresets should be more independent of eachother.
+- Removed the warning when calling `ba*.screenmessage` in a game context.
+  Hopefully most code has been ported at this point and it has done its job. As
+  a final reminder, `ba*.screenmessage()` will only show messages locally now;
+  you need to use something like `bascenev1.broadcastmessage()` to show things
+  to everyone in a game.
+- Removed `efro.util.enum_by_value()` which was a workaround for a Python bug
+  that has been fixed for a few versions now. Instaed of
+  `enum_by_value(MyEnumType, foo)` you can simply do `MyEnumType(foo)`.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these

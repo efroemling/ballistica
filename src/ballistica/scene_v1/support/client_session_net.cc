@@ -6,8 +6,8 @@
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/net_graph.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/scene_v1/connection/connection_to_host.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 
 namespace ballistica::scene_v1 {
 
@@ -66,13 +66,13 @@ void ClientSessionNet::Update(int time_advance_millisecs, double time_advance) {
 }
 
 auto ClientSessionNet::GetBucketNum() -> int {
-  auto* appmode = scene_v1::SceneV1AppMode::GetSingleton();
+  auto* appmode = classic::ClassicAppMode::GetSingleton();
   return (delay_sample_counter_ / appmode->delay_bucket_samples())
          % static_cast<int>(buckets_.size());
 }
 
 void ClientSessionNet::UpdateBuffering() {
-  auto* appmode = scene_v1::SceneV1AppMode::GetSingleton();
+  auto* appmode = classic::ClassicAppMode::GetSingleton();
   // Keep record of the most and least amount of time we've had buffered
   // recently, and slow down/speed up a bit based on that.
   {

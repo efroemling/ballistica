@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class AppModeSelector:
-    """Defines which AppModes to use to handle given AppIntents.
+    """Defines which AppModes are available or used to handle given AppIntents.
 
     Category: **App Classes**
 
@@ -29,4 +29,16 @@ class AppModeSelector:
         This may be called in a background thread, so avoid any calls
         limited to logic thread use/etc.
         """
-        raise NotImplementedError('app_mode_for_intent() should be overridden.')
+        raise NotImplementedError()
+
+    def testable_app_modes(self) -> list[type[AppMode]]:
+        """Return a list of modes to appear in the dev-console app-mode ui.
+
+        The user can switch between these app modes for testing. App-modes
+        will be passed an AppIntentDefault when selected by the user.
+
+        Note that in normal circumstances AppModes should never be
+        selected explicitly by the user but rather determined implicitly
+        based on AppIntents.
+        """
+        raise NotImplementedError()

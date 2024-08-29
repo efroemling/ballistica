@@ -150,6 +150,8 @@ class Graphics {
                  r, g, b, a);
   }
 
+  void DrawUIBounds(RenderPass* pass);
+
   // Enable progress bar drawing locally.
   void EnableProgressBar(bool fade_in);
 
@@ -356,6 +358,8 @@ class Graphics {
     assert(client_context_snapshot_.Exists());
     return client_context_snapshot_.Get()->Get();
   }
+  auto draw_ui_bounds() const { return draw_ui_bounds_; }
+  void set_draw_ui_bounds(bool val) { draw_ui_bounds_ = val; }
 
   ScreenMessages* const screenmessages;
 
@@ -415,6 +419,7 @@ class Graphics {
   bool applied_app_config_{};
   bool sent_initial_graphics_settings_{};
   bool got_screen_resolution_{};
+  bool draw_ui_bounds_{};
   Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
   Vector2f shadow_scale_{1.0f, 1.0f};
   Vector3f tint_{1.0f, 1.0f, 1.0f};

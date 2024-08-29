@@ -11,6 +11,7 @@
 #include "ballistica/base/python/class/python_class_simple_sound.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
 #include "ballistica/base/support/plus_soft.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/assets/scene_texture.h"
@@ -26,7 +27,6 @@
 #include "ballistica/scene_v1/support/client_session_replay.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/generic/json.h"
@@ -316,7 +316,7 @@ static auto PyNewHostSession(PyObject* self, PyObject* args,
                                    &benchmark_type_str)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   base::BenchmarkType benchmark_type = base::BenchmarkType::kNone;
   if (benchmark_type_str != nullptr) {
     if (!strcmp(benchmark_type_str, "cpu")) {
@@ -357,7 +357,7 @@ static auto PyNewReplaySession(PyObject* self, PyObject* args,
           args, keywds, "O", const_cast<char**>(kwlist), &file_name_obj)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   file_name = Python::GetPyString(file_name_obj);
   appmode->LaunchReplaySession(file_name);
@@ -386,7 +386,7 @@ static auto PyIsInReplay(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActive();
+  auto* appmode = classic::ClassicAppMode::GetActive();
   if (appmode
       && dynamic_cast<ClientSessionReplay*>(appmode->GetForegroundSession())) {
     Py_RETURN_TRUE;
@@ -673,7 +673,7 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args,
           PyExcType::kValue);
     }
     std::vector<int32_t> client_ids;
-    if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+    if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
       if (clients_obj != Py_None) {
         std::vector<int> client_ids2 = Python::GetPyInts(clients_obj);
         appmode->connections()->SendScreenMessageToSpecificClients(
@@ -1050,7 +1050,8 @@ static auto PyCameraShake(PyObject* self, PyObject* args,
 
   if (Scene* scene = ContextRefSceneV1::FromCurrent().GetMutableScene()) {
     // Send to clients/replays (IF we're servering protocol 35+).
-    if (SceneV1AppMode::GetSingleton()->host_protocol_version() >= 35) {
+    if (classic::ClassicAppMode::GetSingleton()->host_protocol_version()
+        >= 35) {
       if (SessionStream* output_stream = scene->GetSceneStream()) {
         output_stream->EmitCameraShake(intensity);
       }
@@ -1314,7 +1315,7 @@ static auto PyGetGameRoster(PyObject* self, PyObject* args,
   }
   PythonRef py_client_list(PyList_New(0), PythonRef::kSteal);
 
-  cJSON* party = SceneV1AppMode::GetSingleton()->game_roster();
+  cJSON* party = classic::ClassicAppMode::GetSingleton()->game_roster();
   assert(party);
   int len = cJSON_GetArraySize(party);
   for (int i = 0; i < len; i++) {
@@ -1367,7 +1368,7 @@ static auto PyGetGameRoster(PyObject* self, PyObject* args,
     if (clientid == -1) {
       account_id = g_base->plus()->GetPublicV1AccountID();
     } else {
-      if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+      if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
         auto client2 =
             appmode->connections()->connections_to_clients().find(clientid);
         if (client2 != appmode->connections()->connections_to_clients().end()) {
@@ -1420,7 +1421,7 @@ static auto PySetDebugSpeedExponent(PyObject* self,
   if (!PyArg_ParseTuple(args, "i", &speed)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   HostActivity* host_activity =
       ContextRefSceneV1::FromCurrent().GetHostActivity();
@@ -1455,7 +1456,7 @@ static PyMethodDef PySetDebugSpeedExponentDef = {
 static auto PyGetReplaySpeedExponent(PyObject* self,
                                      PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   return PyLong_FromLong(appmode->replay_speed_exponent());
   BA_PYTHON_CATCH;
 }
@@ -1482,7 +1483,7 @@ static auto PySetReplaySpeedExponent(PyObject* self,
   if (!PyArg_ParseTuple(args, "i", &speed)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   appmode->SetReplaySpeedExponent(speed);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1504,7 +1505,7 @@ static PyMethodDef PySetReplaySpeedExponentDef = {
 
 static auto PyIsReplayPaused(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   if (appmode->is_replay_paused()) {
     Py_RETURN_TRUE;
   } else {
@@ -1528,7 +1529,7 @@ static PyMethodDef PyIsReplayPausedDef = {
 
 static auto PyPauseReplay(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   appmode->PauseReplay();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1550,7 +1551,7 @@ static PyMethodDef PyPauseReplayDef = {
 
 static auto PyResumeReplay(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   appmode->ResumeReplay();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1572,7 +1573,7 @@ static PyMethodDef PyResumeReplayDef = {
 
 static auto PySeekReplay(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   auto* session =
       dynamic_cast<ClientSessionReplay*>(appmode->GetForegroundSession());
   if (session == nullptr) {
@@ -1714,7 +1715,7 @@ static auto PySetInternalMusic(PyObject* self, PyObject* args,
                                    &volume, &loop)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   if (music_obj == Py_None) {
     appmode->SetInternalMusic(nullptr);
@@ -1737,117 +1738,13 @@ static PyMethodDef PySetInternalMusicDef = {
     "(internal).",
 };
 
-// -------------------------- on_app_mode_activate -----------------------------
-
-static auto PyOnAppModeActivate(PyObject* self) -> PyObject* {
-  BA_PYTHON_TRY;
-  BA_PRECONDITION(g_base->InLogicThread());
-  g_base->set_app_mode(SceneV1AppMode::GetSingleton());
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyOnAppModeActivateDef = {
-    "on_app_mode_activate",            // name
-    (PyCFunction)PyOnAppModeActivate,  // method
-    METH_NOARGS,                       // flags
-
-    "on_app_mode_activate() -> None\n"
-    "\n"
-    "(internal)\n",
-};
-
-// ------------------------- on_app_mode_deactivate ----------------------------
-
-static auto PyOnAppModeDeactivate(PyObject* self) -> PyObject* {
-  BA_PYTHON_TRY;
-  BA_PRECONDITION(g_base->InLogicThread());
-  // Currently doing nothing.
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyOnAppModeDeactivateDef = {
-    "on_app_mode_deactivate",            // name
-    (PyCFunction)PyOnAppModeDeactivate,  // method
-    METH_NOARGS,                         // flags
-
-    "on_app_mode_deactivate() -> None\n"
-    "\n"
-    "(internal)\n",
-};
-
-// ----------------------- handle_app_intent_default ---------------------------
-
-static auto PyHandleAppIntentDefault(PyObject* self) -> PyObject* {
-  BA_PYTHON_TRY;
-  BA_PRECONDITION(g_base->InLogicThread());
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
-  appmode->RunMainMenu();
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyHandleAppIntentDefaultDef = {
-    "handle_app_intent_default",            // name
-    (PyCFunction)PyHandleAppIntentDefault,  // method
-    METH_NOARGS,                            // flags
-
-    "handle_app_intent_default() -> None\n"
-    "\n"
-    "(internal)\n",
-};
-
-// ------------------------ handle_app_intent_exec -----------------------------
-
-static auto PyHandleAppIntentExec(PyObject* self, PyObject* args,
-                                  PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  const char* command;
-  static const char* kwlist[] = {"command", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char**>(kwlist), &command)) {
-    return nullptr;
-  }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
-
-  // Run the command.
-  if (g_core->core_config().exec_command.has_value()) {
-    bool success = PythonCommand(*g_core->core_config().exec_command,
-                                 BA_BUILD_COMMAND_FILENAME)
-                       .Exec(true, nullptr, nullptr);
-    if (!success) {
-      // TODO(ericf): what should we do in this case?
-      //  Obviously if we add return/success values for intents we should set
-      //  that here.
-    }
-  }
-  //  If the stuff we just ran didn't result in a session, create a default
-  //  one.
-  if (!appmode->GetForegroundSession()) {
-    appmode->RunMainMenu();
-  }
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyHandleAppIntentExecDef = {
-    "handle_app_intent_exec",            // name
-    (PyCFunction)PyHandleAppIntentExec,  // method
-    METH_VARARGS | METH_KEYWORDS,        // flags
-
-    "handle_app_intent_exec(command: str) -> None\n"
-    "\n"
-    "(internal)",
-};
-
 // ---------------------------- protocol_version -------------------------------
 
 static auto PyProtocolVersion(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
 
   return PyLong_FromLong(
-      SceneV1AppMode::GetActiveOrThrow()->host_protocol_version());
+      classic::ClassicAppMode::GetActiveOrThrow()->host_protocol_version());
   BA_PYTHON_CATCH;
 }
 
@@ -1900,10 +1797,6 @@ auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
       PyBaseTimeDef,
       PyBaseTimerDef,
       PyLsInputDevicesDef,
-      PyOnAppModeActivateDef,
-      PyOnAppModeDeactivateDef,
-      PyHandleAppIntentDefaultDef,
-      PyHandleAppIntentExecDef,
       PyProtocolVersionDef,
   };
 }

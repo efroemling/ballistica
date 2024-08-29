@@ -53,3 +53,10 @@ class AppSubsystem:
 
     def do_apply_app_config(self) -> None:
         """Called when the app config should be applied."""
+
+    def reset(self) -> None:
+        """Reset the subsystem to a default state.
+
+        This is called when switching app modes, but may be called
+        at other times too.
+        """

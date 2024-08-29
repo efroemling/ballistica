@@ -5,23 +5,23 @@
 This code concerns sensitive things like accounts and master-server
 communication so the native C++ parts of it remain closed. Native
 precompiled static libraries of this portion are provided for those who
-want to compile the rest of the engine, and a fully open-source engine
-can also be built by removing this 'plus' feature-set.
+want to compile the rest of the engine, or a fully open-source app
+can also be built by removing this feature-set.
 """
 
 from __future__ import annotations
 
-# Note: there's not much here.
-# All comms with this feature-set should go through app.plus.
+# Note: there's not much here. Most interaction with this feature-set
+# should go through ba*.app.plus.
 
 import logging
 
 from baplus._cloud import CloudSubsystem
-from baplus._subsystem import PlusSubsystem
+from baplus._appsubsystem import PlusAppSubsystem
 
 __all__ = [
     'CloudSubsystem',
-    'PlusSubsystem',
+    'PlusAppSubsystem',
 ]
 
 # Sanity check: we want to keep ballistica's dependencies and

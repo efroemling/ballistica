@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupMenuWindow
 import bauiv1 as bui
@@ -12,13 +12,19 @@ import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Any
+
     from bauiv1lib.popup import PopupWindow
 
 
-class ConfigKeyboardWindow(bui.Window):
+class ConfigKeyboardWindow(bui.MainWindow):
     """Window for configuring keyboards."""
 
-    def __init__(self, c: bs.InputDevice, transition: str = 'in_right'):
+    def __init__(
+        self,
+        c: bs.InputDevice,
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
+    ):
         self._r = 'configKeyboardWindow'
         self._input = c
         self._name = self._input.name
@@ -39,19 +45,38 @@ class ConfigKeyboardWindow(bui.Window):
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
                 scale=(
-                    1.6
+                    1.4
                     if uiscale is bui.UIScale.SMALL
                     else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(0, 5) if uiscale is bui.UIScale.SMALL else (0, 0),
                 transition=transition,
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         self._settings: dict[str, int] = {}
         self._get_config_mapping()
 
         self._rebuild_ui()
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Pull things from self here; if we do it within the lambda
+        # we'll keep self alive which is bad.
+        inputdevice = self._input
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition,
+                origin_widget=origin_widget,
+                c=inputdevice,
+            )
+        )
 
     def _get_config_mapping(self, default: bool = False) -> None:
         for button in [
@@ -87,7 +112,7 @@ class ConfigKeyboardWindow(bui.Window):
             size=(170, 60),
             label=bui.Lstr(resource='cancelText'),
             scale=0.9,
-            on_activate_call=self._cancel,
+            on_activate_call=self.main_window_back,
         )
         save_button = bui.buttonwidget(
             parent=self._root_widget,
@@ -287,20 +312,6 @@ class ConfigKeyboardWindow(bui.Window):
 
         bui.pushcall(doit)
 
-    def _cancel(self) -> None:
-        from bauiv1lib.settings.controls import ControlsSettingsWindow
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            ControlsSettingsWindow(transition='in_left').get_root_widget(),
-            from_window=self._root_widget,
-        )
-
     def _reset(self) -> None:
         from bauiv1lib.confirm import ConfirmWindow
 
@@ -366,14 +377,14 @@ class ConfigKeyboardWindow(bui.Window):
         """Called when the popup is closing."""
 
     def _save(self) -> None:
-        from bauiv1lib.settings.controls import ControlsSettingsWindow
+        # from bauiv1lib.settings.controls import ControlsSettingsWindow
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
         assert bui.app.classic is not None
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
+        # bui.containerwidget(edit=self._root_widget, transition='out_right')
         bui.getsound('gunCocking').play()
 
         # There's a chance the device disappeared; handle that gracefully.
@@ -405,10 +416,13 @@ class ConfigKeyboardWindow(bui.Window):
                 },
             )
         bui.app.config.apply_and_commit()
-        bui.app.ui_v1.set_main_menu_window(
-            ControlsSettingsWindow(transition='in_left').get_root_widget(),
-            from_window=self._root_widget,
-        )
+
+        self.main_window_back()
+        # bui.app.ui_v1.set_main_window(
+        #     ControlsSettingsWindow(transition='in_left'),
+        #     from_window=self,
+        #     is_back=True,
+        # )
 
 
 class AwaitKeyboardInputWindow(bui.Window):

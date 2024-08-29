@@ -38,7 +38,7 @@ class ContinuesWindow(bui.Window):
             bui.containerwidget(
                 size=(self._width, self._height),
                 background=False,
-                toolbar_visibility='menu_currency',
+                toolbar_visibility='menu_store',
                 transition='in_scale',
                 scale=1.5,
             )
@@ -100,29 +100,8 @@ class ContinuesWindow(bui.Window):
 
         self._tickets_text_base: str | None
         self._tickets_text: bui.Widget | None
-        if not bui.app.ui_v1.use_toolbars:
-            self._tickets_text_base = bui.Lstr(
-                resource='getTicketsWindow.youHaveShortText',
-                fallback_resource='getTicketsWindow.youHaveText',
-            ).evaluate()
-            self._tickets_text = bui.textwidget(
-                parent=self._root_widget,
-                text='',
-                flatness=1.0,
-                color=(0.2, 1.0, 0.2),
-                shadow=1.0,
-                position=(
-                    self._width * 0.5 + width_total_half,
-                    self._height - 50,
-                ),
-                size=(0, 0),
-                scale=0.35,
-                h_align='right',
-                v_align='center',
-            )
-        else:
-            self._tickets_text_base = None
-            self._tickets_text = None
+        self._tickets_text_base = None
+        self._tickets_text = None
 
         self._counter_text = bui.textwidget(
             parent=self._root_widget,
@@ -214,7 +193,7 @@ class ContinuesWindow(bui.Window):
             self._on_cancel()
 
     def _on_continue_press(self) -> None:
-        from bauiv1lib import gettickets
+        # from bauiv1lib import gettickets
 
         plus = bui.app.plus
         assert plus is not None
@@ -238,7 +217,7 @@ class ContinuesWindow(bui.Window):
                 self._counting_down = False
                 bui.textwidget(edit=self._counter_text, text='')
                 bui.getsound('error').play()
-                gettickets.show_get_tickets_prompt()
+                # gettickets.show_get_tickets_prompt()
                 return
             if not self._transitioning_out:
                 bui.getsound('swish').play()

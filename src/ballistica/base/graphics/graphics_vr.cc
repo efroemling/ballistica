@@ -87,8 +87,6 @@ auto GraphicsVR::ValueTest(const std::string& arg, double* absval,
     *outval = ValueTestFloat(&vr_overlay_scale_, absval, deltaval);
   } else if (arg == "lockVROverlay") {
     *outval = ValueTestBool(&lock_vr_overlay_, absval, deltaval);
-  } else if (arg == "showOverlayBounds") {
-    *outval = ValueTestBool(&draw_overlay_bounds_, absval, deltaval);
   } else if (arg == "headScale") {
     *outval = ValueTestFloat(&vr_test_head_scale_, absval, deltaval);
   } else if (arg == "vrCamOffsetY") {
@@ -143,9 +141,6 @@ void GraphicsVR::DrawUI(FrameDef* frame_def) {
   // In VR mode we have to draw our overlay-flat texture into space as
   // part of the regular overlay pass.
   DrawVROverlay(frame_def);
-
-  // We may want to see the bounds of our overlay.
-  DrawOverlayBounds(frame_def->overlay_pass());
 }
 
 void GraphicsVR::CalcVROverlayMatrices(FrameDef* frame_def) {
@@ -288,25 +283,6 @@ void GraphicsVR::DrawVROverlay(FrameDef* frame_def) {
               kBaseVirtualResY * (1.0f + kVRBorder),
               kBaseVirtualResX * (1.0f + kVRBorder));
       c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kVROverlay));
-    }
-    c.Submit();
-  }
-}
-
-void GraphicsVR::DrawOverlayBounds(RenderPass* pass) {
-  // We can optionally draw a guide to show the edges of the overlay pass
-  if (draw_overlay_bounds_) {
-    SimpleComponent c(pass);
-    c.SetColor(1, 0, 0);
-    {
-      auto xf = c.ScopedTransform();
-      float width = screen_virtual_width();
-      float height = screen_virtual_height();
-
-      // Slight offset in z to reduce z fighting.
-      c.Translate(0.5f * width, 0.5f * height, 1.0f);
-      c.Scale(width, height, 100.0f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kOverlayGuide));
     }
     c.Submit();
   }

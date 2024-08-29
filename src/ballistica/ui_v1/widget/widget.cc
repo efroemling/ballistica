@@ -35,13 +35,6 @@ void Widget::SetToolbarVisibility(ToolbarVisibility v) {
   }
 }
 
-void Widget::SetDepthRange(float min_depth, float max_depth) {
-  BA_PRECONDITION(min_depth >= 0.0f && min_depth <= 1.0f);
-  BA_PRECONDITION(max_depth >= min_depth && max_depth <= 1.0f);
-  depth_range_min_ = min_depth;
-  depth_range_max_ = max_depth;
-}
-
 auto Widget::IsInMainStack() const -> bool {
   if (!g_base->ui) {
     BA_LOG_ONCE(LogLevel::kError,

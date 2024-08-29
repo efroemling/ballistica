@@ -3,7 +3,7 @@
 #include "ballistica/base/base.h"
 
 #include "ballistica/base/app_adapter/app_adapter.h"
-#include "ballistica/base/app_mode/app_mode_empty.h"
+#include "ballistica/base/app_mode/empty_app_mode.h"
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_server.h"
@@ -40,7 +40,7 @@ BaseFeatureSet* g_base{};
 BaseFeatureSet::BaseFeatureSet()
     : app_adapter{BaseBuildSwitches::CreateAppAdapter()},
       app_config{new AppConfig()},
-      app_mode_{AppModeEmpty::GetSingleton()},
+      app_mode_{EmptyAppMode::GetSingleton()},
       assets{new Assets()},
       assets_server{new AssetsServer()},
       audio{new Audio()},
@@ -440,7 +440,7 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
 
   // Redundant sets should not happen (make an exception here for empty mode
   // since that's in place before any app mode is officially set).
-  if (mode == app_mode_ && mode != AppModeEmpty::GetSingleton()) {
+  if (mode == app_mode_ && mode != EmptyAppMode::GetSingleton()) {
     Log(LogLevel::kWarning,
         "set_app_mode called with already-current app-mode; unexpected.");
   }
@@ -977,6 +977,14 @@ void BaseFeatureSet::SetAppActive(bool active) {
 
   g_base->logic->event_loop()->PushCall(
       [] { g_base->logic->OnAppActiveChanged(); });
+}
+
+void BaseFeatureSet::Reset() {
+  ui->Reset();
+  input->Reset();
+  graphics->Reset();
+  python->Reset();
+  audio->Reset();
 }
 
 }  // namespace ballistica::base

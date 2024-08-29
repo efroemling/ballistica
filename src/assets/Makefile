@@ -198,28 +198,27 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/_achievement.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_ads.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_analytics.py \
-  $(BUILD_DIR)/ba_data/python/baclassic/_appdelegate.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_appmode.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_benchmark.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_input.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_music.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_net.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_servermode.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_store.py \
-  $(BUILD_DIR)/ba_data/python/baclassic/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_tips.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_tournament.py \
   $(BUILD_DIR)/ba_data/python/baclassic/macmusicapp.py \
   $(BUILD_DIR)/ba_data/python/baclassic/osmusic.py \
   $(BUILD_DIR)/ba_data/python/baenv.py \
   $(BUILD_DIR)/ba_data/python/baplus/__init__.py \
+  $(BUILD_DIR)/ba_data/python/baplus/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/baplus/_cloud.py \
   $(BUILD_DIR)/ba_data/python/baplus/_hooks.py \
-  $(BUILD_DIR)/ba_data/python/baplus/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activity.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activitytypes.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_actor.py \
-  $(BUILD_DIR)/ba_data/python/bascenev1/_appmode.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_campaign.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_collision.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_coopgame.py \
@@ -325,12 +324,12 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/session/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/tutorial.py \
   $(BUILD_DIR)/ba_data/python/batemplatefs/__init__.py \
+  $(BUILD_DIR)/ba_data/python/batemplatefs/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/batemplatefs/_hooks.py \
-  $(BUILD_DIR)/ba_data/python/batemplatefs/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_keyboard.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__init__.py \
@@ -342,6 +341,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/viewer.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/achievements.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/appinvite.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/benchmarks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/characterpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/colorpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/config.py \
@@ -353,8 +353,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/gamebutton.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/level.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/tournamentbutton.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/creditslist.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/debug.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/credits.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/discord.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/feedback.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/fileselector.py \
@@ -365,10 +364,12 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/privatetab.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/publictab.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/getremote.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/gettickets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gettokens.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/helpui.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/iconpicker.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/inbox.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/ingamemenu.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/inventory.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/englishkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/kiosk.py \
@@ -476,28 +477,27 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_achievement.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_ads.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_analytics.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_appdelegate.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_appmode.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_appsubsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_benchmark.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_input.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_music.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_net.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_servermode.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_store.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_subsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_tips.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_tournament.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/macmusicapp.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/osmusic.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/__pycache__/baenv.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baplus/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_appsubsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_cloud.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_hooks.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_subsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_activity.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_activitytypes.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_actor.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_appmode.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_campaign.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_collision.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_coopgame.cpython-312.opt-1.pyc \
@@ -603,12 +603,12 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/session/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/__pycache__/tutorial.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/_appsubsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/_hooks.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/_subsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_appsubsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_hooks.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_keyboard.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_subsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_uitypes.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/onscreenkeyboard.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/__init__.cpython-312.opt-1.pyc \
@@ -620,6 +620,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/viewer.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/achievements.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/appinvite.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/benchmarks.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/characterpicker.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/colorpicker.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/config.cpython-312.opt-1.pyc \
@@ -631,8 +632,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/gamebutton.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/level.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/tournamentbutton.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/creditslist.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/debug.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/credits.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/discord.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/feedback.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/fileselector.cpython-312.opt-1.pyc \
@@ -643,10 +643,12 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/privatetab.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/publictab.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/getremote.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/gettickets.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/gettokens.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/helpui.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/iconpicker.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/inbox.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/ingamemenu.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/inventory.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/__pycache__/englishkeyboard.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/kiosk.cpython-312.opt-1.pyc \

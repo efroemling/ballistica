@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import os
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 
@@ -14,30 +14,23 @@ if TYPE_CHECKING:
     from typing import Sequence
 
 
-class CreditsListWindow(bui.Window):
+class CreditsWindow(bui.MainWindow):
     """Window for displaying game credits."""
 
-    def __init__(self, origin_widget: bui.Widget | None = None):
+    def __init__(
+        self,
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
+    ):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         import json
 
         bui.set_analytics_screen('Credits Window')
 
-        # if they provided an origin-widget, scale up from that
-        scale_origin: tuple[float, float] | None
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
-        else:
-            self._transition_out = 'out_right'
-            scale_origin = None
-            transition = 'in_right'
-
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        width = 870 if uiscale is bui.UIScale.SMALL else 670
+        width = 990 if uiscale is bui.UIScale.SMALL else 670
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         height = 398 if uiscale is bui.UIScale.SMALL else 500
 
@@ -45,36 +38,37 @@ class CreditsListWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),
-                transition=transition,
-                toolbar_visibility='menu_minimal',
-                scale_origin_stack_offset=scale_origin,
-                scale=(
-                    2.0
+                toolbar_visibility=(
+                    'menu_minimal'
                     if uiscale is bui.UIScale.SMALL
-                    else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
+                    else 'menu_full'
+                ),
+                scale=(
+                    1.8
+                    if uiscale is bui.UIScale.SMALL
+                    else 1.2 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -8) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
-        if bui.app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self._back
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
         else:
             btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(
-                    40 + x_inset,
-                    height - (68 if uiscale is bui.UIScale.SMALL else 62),
-                ),
+                position=(40 + x_inset, height - 62),
                 size=(140, 60),
                 scale=0.8,
                 label=bui.Lstr(resource='backText'),
                 button_type='back',
-                on_activate_call=self._back,
+                on_activate_call=self.main_window_back,
                 autoselect=True,
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
@@ -84,7 +78,7 @@ class CreditsListWindow(bui.Window):
                 button_type='backSmall',
                 position=(
                     40 + x_inset,
-                    height - (68 if uiscale is bui.UIScale.SMALL else 62) + 5,
+                    height - 62 + 5,
                 ),
                 size=(60, 48),
                 label=bui.charstr(bui.SpecialChar.BACK),
@@ -92,8 +86,9 @@ class CreditsListWindow(bui.Window):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(0, height - (59 if uiscale is bui.UIScale.SMALL else 54)),
+            position=(0, height - (65 if uiscale is bui.UIScale.SMALL else 54)),
             size=(width, 30),
+            scale=0.8 if uiscale is bui.UIScale.SMALL else 1.0,
             text=bui.Lstr(
                 resource=f'{self._r}.titleText',
                 subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
@@ -111,16 +106,15 @@ class CreditsListWindow(bui.Window):
             capture_arrows=True,
         )
 
-        if bui.app.ui_v1.use_toolbars:
+        bui.widget(
+            edit=scroll,
+            right_widget=bui.get_special_widget('squad_button'),
+        )
+        if uiscale is bui.UIScale.SMALL:
             bui.widget(
                 edit=scroll,
-                right_widget=bui.get_special_widget('party_button'),
+                left_widget=bui.get_special_widget('back_button'),
             )
-            if uiscale is bui.UIScale.SMALL:
-                bui.widget(
-                    edit=scroll,
-                    left_widget=bui.get_special_widget('back_button'),
-                )
 
         def _format_names(names2: Sequence[str], inset: float) -> str:
             sval = ''
@@ -354,18 +348,12 @@ class CreditsListWindow(bui.Window):
             )
             voffs -= line_height
 
-    def _back(self) -> None:
-        from bauiv1lib.mainmenu import MainMenuWindow
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            MainMenuWindow(transition='in_left').get_root_widget(),
-            from_window=self._root_widget,
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
         )

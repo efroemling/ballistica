@@ -135,6 +135,7 @@ class UI {
     /// call.
     void Finish();
     void AddRunnable(Runnable* runnable);
+    auto ran_finish() const { return ran_finish_; }
 
    private:
     bool ran_finish_{};

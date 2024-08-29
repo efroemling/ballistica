@@ -3,11 +3,13 @@
 """UI settings functionality related to touchscreens."""
 from __future__ import annotations
 
+from typing import override
+
 import bauiv1 as bui
 import bascenev1 as bs
 
 
-class TouchscreenSettingsWindow(bui.Window):
+class TouchscreenSettingsWindow(bui.MainWindow):
     """Settings window for touchscreens."""
 
     def __del__(self) -> None:
@@ -18,7 +20,11 @@ class TouchscreenSettingsWindow(bui.Window):
         #  thing that exists.
         bs.set_touchscreen_editing(False)
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
+    ) -> None:
         self._width = 650
         self._height = 380
         self._spacing = 40
@@ -31,13 +37,14 @@ class TouchscreenSettingsWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                transition='in_right',
                 scale=(
                     1.9
                     if uiscale is bui.UIScale.SMALL
                     else 1.55 if uiscale is bui.UIScale.MEDIUM else 1.2
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         btn = bui.buttonwidget(
@@ -94,6 +101,16 @@ class TouchscreenSettingsWindow(bui.Window):
             selection_loops_to_parent=True,
         )
         self._build_gui()
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
 
     def _build_gui(self) -> None:
         from bauiv1lib.config import ConfigNumberEdit, ConfigCheckBox
@@ -280,10 +297,9 @@ class TouchscreenSettingsWindow(bui.Window):
 
         bui.containerwidget(edit=self._root_widget, transition='out_right')
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            controls.ControlsSettingsWindow(
-                transition='in_left'
-            ).get_root_widget(),
-            from_window=self._root_widget,
+        bui.app.ui_v1.set_main_window(
+            controls.ControlsSettingsWindow(transition='in_left'),
+            from_window=self,
+            is_back=True,
         )
         bs.set_touchscreen_editing(False)

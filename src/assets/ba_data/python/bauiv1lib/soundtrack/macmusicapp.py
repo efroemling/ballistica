@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from typing import Any, Callable
 
 
-class MacMusicAppPlaylistSelectWindow(bui.Window):
+class MacMusicAppPlaylistSelectWindow(bui.MainWindow):
     """Window for selecting an iTunes playlist."""
 
     def __init__(
@@ -21,6 +21,8 @@ class MacMusicAppPlaylistSelectWindow(bui.Window):
         callback: Callable[[Any], Any],
         existing_playlist: str | None,
         existing_entry: Any,
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
     ):
         from baclassic.macmusicapp import MacMusicAppMusicPlayer
 
@@ -34,9 +36,9 @@ class MacMusicAppPlaylistSelectWindow(bui.Window):
         v = self._height - 90.0
         v -= self._spacing * 1.0
         super().__init__(
-            root_widget=bui.containerwidget(
-                size=(self._width, self._height), transition='in_right'
-            )
+            root_widget=bui.containerwidget(size=(self._width, self._height)),
+            transition=transition,
+            origin_widget=origin_widget,
         )
         btn = bui.buttonwidget(
             parent=self._root_widget,
@@ -112,9 +114,12 @@ class MacMusicAppPlaylistSelectWindow(bui.Window):
 
     def _sel(self, selection: str) -> None:
         if self._root_widget:
-            bui.containerwidget(edit=self._root_widget, transition='out_right')
+            # bui.containerwidget(
+            # edit=self._root_widget, transition='out_right')
             self._callback({'type': 'iTunesPlaylist', 'name': selection})
+            self.main_window_back()
 
     def _back(self) -> None:
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
+        # bui.containerwidget(edit=self._root_widget, transition='out_right')
+        self.main_window_back()
         self._callback(self._existing_entry)

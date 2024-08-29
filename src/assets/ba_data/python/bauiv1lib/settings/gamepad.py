@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from bauiv1lib.popup import PopupWindow
 
 
-class GamepadSettingsWindow(bui.Window):
+class GamepadSettingsWindow(bui.MainWindow):
     """Window for configuring a gamepad."""
 
     # pylint: disable=too-many-public-methods
@@ -28,6 +28,7 @@ class GamepadSettingsWindow(bui.Window):
         is_main_menu: bool = True,
         transition: str = 'in_right',
         transition_out: str = 'out_right',
+        origin_widget: bui.Widget | None = None,
         settings: dict | None = None,
     ):
         self._input = gamepad
@@ -63,7 +64,9 @@ class GamepadSettingsWindow(bui.Window):
                     (-20, -16) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
                 transition=transition,
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         self._settings: dict[str, int] = {}
@@ -792,7 +795,7 @@ class GamepadSettingsWindow(bui.Window):
         return btn
 
     def _cancel(self) -> None:
-        from bauiv1lib.settings.controls import ControlsSettingsWindow
+        # from bauiv1lib.settings.controls import ControlsSettingsWindow
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -802,11 +805,13 @@ class GamepadSettingsWindow(bui.Window):
             edit=self._root_widget, transition=self._transition_out
         )
         if self._is_main_menu:
-            assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_menu_window(
-                ControlsSettingsWindow(transition='in_left').get_root_widget(),
-                from_window=self._root_widget,
-            )
+            self.main_window_back()
+            # assert bui.app.classic is not None
+            # bui.app.ui_v1.set_main_window(
+            #     ControlsSettingsWindow(transition='in_left'),
+            #     from_window=self,
+            #     is_back=True,
+            # )
 
     def _reset(self) -> None:
         from bauiv1lib.confirm import ConfirmWindow
@@ -937,9 +942,10 @@ class GamepadSettingsWindow(bui.Window):
             from bauiv1lib.settings.controls import ControlsSettingsWindow
 
             assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_menu_window(
-                ControlsSettingsWindow(transition='in_left').get_root_widget(),
-                from_window=self._root_widget,
+            bui.app.ui_v1.set_main_window(
+                ControlsSettingsWindow(transition='in_left'),
+                from_window=self,
+                is_back=True,
             )
 
 

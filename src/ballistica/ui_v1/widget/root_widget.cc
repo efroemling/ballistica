@@ -4,15 +4,16 @@
 
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/shared/foundation/inline.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/button_widget.h"
+#include "ballistica/ui_v1/widget/image_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"
 
 namespace ballistica::ui_v1 {
 
-// color we mult toolbars by in medium and large ui modes
-// (in small mode we keep them more the normal window color since everything
-// overlaps)
+// Color we mult toolbars by in medium and large ui modes (in small mode we
+// keep them more the normal window color since everything overlaps).
 #define TOOLBAR_COLOR_R 0.75f
 #define TOOLBAR_COLOR_G 0.85f
 #define TOOLBAR_COLOR_B 0.85f
@@ -21,20 +22,28 @@ namespace ballistica::ui_v1 {
 #define TOOLBAR_BACK_COLOR_G 0.8f
 #define TOOLBAR_BACK_COLOR_B 0.8f
 
-// opacity in med/large
+// Opacity in med/large.
 #define TOOLBAR_OPACITY 1.0f
 
-// opacity in small
+// Opacity in small.
 #define TOOLBAR_OPACITY_2 1.0f
 
 #define BOT_LEFT_COLOR_R 0.6
 #define BOT_LEFT_COLOR_G 0.6
 #define BOT_LEFT_COLOR_B 0.8
 
-// for defining toolbar buttons.
+// For defining toolbar buttons.
 struct RootWidget::ButtonDef {
-  float h_align{};
+  std::string label;
+  std::string img;
+  std::string mesh_transparent;
+  std::string mesh_opaque;
   VAlign v_align{VAlign::kTop};
+  UIV1Python::ObjID call{UIV1Python::ObjID::kEmptyCall};
+  uint32_t visibility_mask{};
+  bool selectable{true};
+  bool enable_sound{true};
+  float h_align{};
   float x{};
   float y{};
   float width{100.0f};
@@ -42,17 +51,15 @@ struct RootWidget::ButtonDef {
   float scale{1.0f};
   float depth_min{};
   float depth_max{1.0f};
-  std::string label;
-  std::string img;
-  std::string mesh_transparent;
-  std::string mesh_opaque;
-  UIV1Python::ObjID call{UIV1Python::ObjID::kEmptyCall};
   float color_r{1.0f};
   float color_g{1.0f};
   float color_b{1.0f};
   float opacity{1.0f};
-  bool selectable{true};
-  uint32_t visibility_mask{};
+  float disable_offset_scale{1.0f};
+  float target_extra_left{0.0f};
+  float target_extra_right{0.0f};
+  float pre_buffer{0.0f};
+  float post_buffer{0.0f};
 };
 
 struct RootWidget::Button {
@@ -68,31 +75,54 @@ struct RootWidget::Button {
   float width{100.0f};
   float height{30.0f};
   float scale{1.0f};
+  float disable_offset_scale{1.0f};
+  float pre_buffer{0.0f};
+  float post_buffer{0.0f};
   bool selectable{true};
+  bool fully_offscreen{};
+  bool enabled{};
   uint32_t visibility_mask{};
 };
 
-// for adding text label decorations to buttons
+// For adding text label decorations to buttons.
 struct RootWidget::TextDef {
-  Button* button = nullptr;
-  float x = 0.0f;
-  float y = 0.0f;
-  float width = -1.0f;
-  float scale = 1.0f;
-  float depth_min = 0.0f;
-  float depth_max = 1.0f;
-  float color_r = 1.0f;
-  float color_g = 1.0f;
-  float color_b = 1.0f;
-  float color_a = 1.0f;
-  float flatness = 0.5f;
-  float shadow = 0.5f;
+  Button* button{};
+  float x{};
+  float y{};
+  float width{-1.0f};
+  float scale{1.0f};
+  float depth_min{};
+  float depth_max{1.0f};
+  float color_r{1.0f};
+  float color_g{1.0f};
+  float color_b{1.0f};
+  float color_a{1.0f};
+  float flatness{0.5f};
+  float shadow{0.5f};
   std::string text;
 };
 
 struct RootWidget::Text {
   Button* button{};
   Object::Ref<TextWidget> widget;
+  float x{};
+  float y{};
+};
+
+struct RootWidget::ImageDef {
+  Button* button{};
+  float x{};
+  float y{};
+  float width{32.0f};
+  float height{32.0f};
+  float depth_min{};
+  float depth_max{1.0f};
+  std::string img;
+};
+
+struct RootWidget::Image {
+  Button* button{};
+  Object::Ref<ImageWidget> widget;
   float x{};
   float y{};
 };
@@ -108,8 +138,8 @@ RootWidget::RootWidget() {
 
 RootWidget::~RootWidget() = default;
 
-auto RootWidget::AddCover(float h_align, VAlign v_align, float x, float y,
-                          float w, float h, float o) -> RootWidget::Button* {
+auto RootWidget::AddCover_(float h_align, VAlign v_align, float x, float y,
+                           float w, float h, float o) -> RootWidget::Button* {
   // Currently just not doing these in vr mode.
   if (g_core->vr_mode()) {
     return nullptr;
@@ -132,58 +162,155 @@ auto RootWidget::AddCover(float h_align, VAlign v_align, float x, float y,
 
   bd.visibility_mask =
       static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot);
+
   // When the user specifies no backing it means they intend to cover the
-  // screen with a flat-ish window texture.. however this only applies to
+  // screen with a flat-ish window texture. However this only applies to
   // phone-size; for other sizes we always draw a backing.
+  //
+  // UPDATE: We no longer do backings, so ignore that.
   if (g_base->ui->scale() != UIScale::kSmall) {
     bd.visibility_mask |=
         static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull);
   }
 
-  Button* b = AddButton(bd);
+  Button* b = AddButton_(bd);
   return b;
 }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "ConstantParameter"
-
-void RootWidget::AddMeter(float h_align, float x, int type, float r, float g,
-                          float b, bool plus, const std::string& s) {
+void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
+                           float b, bool plus, const std::string& s) {
   float yoffs = (g_base->ui->scale() == UIScale::kSmall) ? 0.0f : -7.0f;
 
-  float width = type == 1 ? 80.0f : 110.0f;
-  // bar
+  float width = (type == MeterType::kTrophy) ? 80.0f : 110.0f;
+  width = 110.0f;
+
+  // Bar.
   {
     ButtonDef bd;
     bd.h_align = h_align;
     bd.v_align = VAlign::kTop;
     bd.width = width;
     bd.height = 36.0f;
-    bd.x = x;
+    // bd.x = x;
     bd.y = -36.0f + 10.0f + yoffs;
     bd.img = "uiAtlas2";
     bd.mesh_transparent = "currencyMeter";
-    bd.selectable = false;
-    bd.color_r = 0.32f;
-    bd.color_g = 0.30f;
-    bd.color_b = 0.4f;
-    if (g_base->ui->scale() != UIScale::kSmall) {
-      bd.color_r *= TOOLBAR_COLOR_R;
-      bd.color_g *= TOOLBAR_COLOR_G;
-      bd.color_b *= TOOLBAR_COLOR_B;
-    }
+    bd.selectable = true;
+
+    // bd.color_r = 0.32f;
+    // bd.color_g = 0.30f;
+    // bd.color_b = 0.4f;
+
+    bd.color_r = 0.4f;
+    bd.color_g = 0.38f;
+    bd.color_b = 0.5f;
+
+    // if (g_base->ui->scale() != UIScale::kSmall) {
+    //   bd.color_r *= TOOLBAR_COLOR_R;
+    //   bd.color_g *= TOOLBAR_COLOR_G;
+    //   bd.color_b *= TOOLBAR_COLOR_B;
+    // }
+    // if (g_base->ui->scale() != UIScale::kSmall) {
+    //   bd.color_r *= 2.0f;
+    //   bd.color_g *= 2.0f;
+    //   bd.color_b *= 2.0f;
+    // }
+
     bd.depth_min = 0.3f;
-    bd.call = UIV1Python::ObjID::kEmptyCall;
     bd.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
 
-    // show in currency mode
-    if (type == 2 || type == 3) {
+    // Show some in store mode.
+    if (type == MeterType::kLevel || type == MeterType::kTickets) {
       bd.visibility_mask |=
-          static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuCurrency);
+          static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStore)
+          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStoreNoBack);
     }
-    Button* btn = AddButton(bd);
+    // Show some in get-tokens/tokens mode
+    if (type == MeterType::kTokens) {
+      bd.visibility_mask |=
+          static_cast<uint32_t>(Widget::ToolbarVisibility::kGetTokens)
+          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuTokens);
+    }
+
+    // Adjust buffer between neighbors.
+    switch (type) {
+      case MeterType::kLevel:
+        bd.pre_buffer = 50.0f;
+        break;
+      case MeterType::kTrophy:
+        bd.pre_buffer = 50.0f;
+        break;
+      case MeterType::kTickets:
+        bd.pre_buffer = 50.0f;
+        break;
+      case MeterType::kTokens:
+        bd.pre_buffer = 50.0f;
+        break;
+      default:
+        break;
+    }
+
+    // Extend button target areas to cover where icon will go.
+    switch (type) {
+      case MeterType::kLevel:
+        bd.target_extra_left = 40.0f;
+        break;
+      case MeterType::kTrophy:
+        bd.target_extra_left = 40.0f;
+        break;
+      case MeterType::kTickets:
+        bd.target_extra_right = 40.0f;
+        break;
+      case MeterType::kTokens:
+        bd.target_extra_right = 40.0f;
+        break;
+      default:
+        break;
+    }
+
+    switch (type) {
+      case MeterType::kLevel:
+        bd.call = UIV1Python::ObjID::kRootUILevelIconPressCall;
+        break;
+      case MeterType::kTrophy:
+        bd.call = UIV1Python::ObjID::kRootUITrophyMeterPressCall;
+        break;
+      case MeterType::kTokens:
+        bd.call = UIV1Python::ObjID::kRootUITokensMeterPressCall;
+        break;
+      case MeterType::kTickets:
+        bd.call = UIV1Python::ObjID::kRootUITicketIconPressCall;
+        break;
+      default:
+        break;
+    }
+
+    Button* btn = AddButton_(bd);
+
+    // Store the bar button in some cases.
+    switch (type) {
+      case MeterType::kLevel:
+        level_meter_button_ = btn;
+        top_left_buttons_.push_back(btn);
+        break;
+      case MeterType::kTrophy:
+        trophy_meter_button_ = btn;
+        top_left_buttons_.push_back(btn);
+        break;
+      case MeterType::kTickets:
+        tickets_meter_button_ = btn;
+        top_right_buttons_.push_back(btn);
+        break;
+      case MeterType::kTokens:
+        tokens_meter_button_ = btn;
+        top_right_buttons_.push_back(btn);
+        break;
+      default:
+        break;
+    }
 
     // Bar value text.
     {
@@ -195,92 +322,138 @@ void RootWidget::AddMeter(float h_align, float x, int type, float r, float g,
       td.flatness = 1.0f;
       td.shadow = 1.0f;
       td.depth_min = 0.3f;
-      AddText(td);
+      AddText_(td);
+    }
+    // Icon on side.
+    {
+      ImageDef imgd;
+      imgd.button = btn;
+      // id.x = 0.0f;
+      if (type == MeterType::kLevel || type == MeterType::kTrophy) {
+        imgd.x = -0.5 * width - 10.0f;
+      } else {
+        imgd.x = 0.5 * width + 10.0f;
+      }
+
+      imgd.y = 0.0f;
+      imgd.width = 54.0f;
+      imgd.height = 54.0f;
+      switch (type) {
+        case MeterType::kLevel:
+          imgd.img = "levelIcon";
+          break;
+        case MeterType::kTrophy:
+          imgd.img = "trophy";
+          break;
+        case MeterType::kTokens:
+          imgd.img = "coin";
+          break;
+        case MeterType::kTickets:
+          imgd.img = "tickets";
+          break;
+        default:
+          break;
+      }
+      imgd.depth_min = 0.3f;
+      AddImage_(imgd);
+
+      // Level num.
+      if (type == MeterType::kLevel) {
+        TextDef td;
+        td.button = btn;
+        td.width = imgd.width * 0.8f;
+        td.text = "12";
+        td.x = imgd.x - 2.1f;
+        td.y = imgd.y + 1.0f;
+        td.scale = 0.9f;
+        td.flatness = 1.0f;
+        td.shadow = 1.0f;
+        td.depth_min = 0.3f;
+        td.color_r = 1.0f;
+        td.color_g = 1.0f;
+        td.color_b = 1.0f;
+        AddText_(td);
+      }
     }
   }
-  // Icon on left.
+  // Icon on side.
   {
-    ButtonDef bd;
-    bd.h_align = h_align;
-    bd.v_align = VAlign::kTop;
-    bd.width = bd.height = 50.0f;
-    if (type == 0 || type == 1) {
-      bd.x = x - width * 0.5f - 10.0f;
-    } else {
-      bd.x = x + width * 0.5f + 10.0f;
-    }
-    bd.y = -32.0f + 7.0f + yoffs;
-    bd.color_r = r;
-    bd.color_g = g;
-    bd.color_b = b;
-    bd.depth_min = 0.3f;
-    switch (type) {
-      case 0:
-        bd.img = "levelIcon";
-        bd.call = UIV1Python::ObjID::kLevelIconPressCall;
-        break;
-      case 1:
-        bd.img = "trophy";
-        bd.call = UIV1Python::ObjID::kTrophyIconPressCall;
-        break;
-      case 2:
-        bd.img = "coin";
-        bd.call = UIV1Python::ObjID::kCoinIconPressCall;
-        break;
-      case 3:
-        bd.img = "tickets";
-        bd.call = UIV1Python::ObjID::kTicketIconPressCall;
-        break;
+    // ButtonDef bd;
+    // bd.selectable = false;
+    // bd.h_align = h_align;
+    // bd.v_align = VAlign::kTop;
+    // bd.width = bd.height = 50.0f;
+    // if (type == MeterType::kLevel || type == MeterType::kTrophy) {
+    //   bd.x = x - width * 0.5f - 10.0f;
+    // } else {
+    //   bd.x = x + width * 0.5f + 10.0f;
+    // }
+    // bd.y = -32.0f + 7.0f + yoffs;
+    // bd.color_r = r;
+    // bd.color_g = g;
+    // bd.color_b = b;
+    // bd.depth_min = 0.3f;
+    // switch (type) {
+    //   case MeterType::kLevel:
+    //     bd.img = "levelIcon";
+    //     bd.call = UIV1Python::ObjID::kRootUILevelIconPressCall;
+    //     break;
+    //   case MeterType::kTrophy:
+    //     bd.img = "trophy";
+    //     bd.call = UIV1Python::ObjID::kRootUITrophyMeterPressCall;
+    //     break;
+    //   case MeterType::kToken:
+    //     bd.img = "coin";
+    //     bd.call = UIV1Python::ObjID::kRootUITokensMeterPressCall;
+    //     break;
+    //   case MeterType::kTicket:
+    //     bd.img = "tickets";
+    //     bd.call = UIV1Python::ObjID::kRootUITicketIconPressCall;
+    //     break;
+    //   default:
+    //     break;
+    // }
+    // bd.visibility_mask =
+    //     (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+    //      | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
+    //      | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "UnreachableCode"
-      default:
-        break;
-#pragma clang diagnostic pop
-    }
-    bd.visibility_mask =
-        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    // show in currency mode
-    if (type == 2 || type == 3) {
-      bd.visibility_mask |=
-          static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuCurrency);
-    }
-    Button* btn = AddButton(bd);
-    switch (type) {  // NOLINT
-      case 3:
-        tickets_info_button_ = btn;
-        break;
-      default:
-        break;
-    }
+    // // Show some in store mode.
+    // if (type == MeterType::kLevel || type == MeterType::kTicket
+    //     || type == MeterType::kToken) {
+    //   bd.visibility_mask |=
+    //       static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStore)
+    //       |
+    //       static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStoreNoBack);
+    // }
+    // // Show some in get-tokens mode.
+    // if (type == MeterType::kToken) {
+    //   bd.visibility_mask |=
+    //       static_cast<uint32_t>(Widget::ToolbarVisibility::kGetTokens);
+    // }
+    // Button* btn = AddButton_(bd);
 
-    // Level num.
-    if (type == 0) {
-      TextDef td;
-      td.button = btn;
-      td.width = bd.width * 0.8f;
-      td.text = "12";
-      td.x = -1.6f;
-      td.y = 0.8f;
-      td.scale = 0.9f;
-      td.flatness = 1.0f;
-      td.shadow = 1.0f;
-      td.depth_min = 0.3f;
-      td.color_r = 1.0f;
-      td.color_g = 1.0f;
-      td.color_b = 1.0f;
-      AddText(td);
-    }
+    // // Store certain ones.
+    // switch (type) {
+    //   case MeterType::kLevel:
+    //     level_icon_ = btn;
+    //     break;
+    //   case MeterType::kTrophy:
+    //     trophy_icon_ = btn;
+    //     break;
+    //     break;
+    //   default:
+    //     break;
+    // }
   }
-  // plus button
+
+  // Plus button.
   if (plus) {
     ButtonDef bd;
     bd.h_align = h_align;
     bd.v_align = VAlign::kTop;
     bd.width = bd.height = 45.0f;
-    // bd.x = x + 72;
-    bd.x = x - 68;
+    // bd.x = x - 68;
     bd.y = -36.0f + 11.0f + yoffs;
     bd.img = "uiAtlas2";
     bd.mesh_transparent = "currencyPlusButton";
@@ -293,31 +466,41 @@ void RootWidget::AddMeter(float h_align, float x, int type, float r, float g,
       bd.color_b *= TOOLBAR_COLOR_B;
     }
     bd.depth_min = 0.3f;
-    bd.call = UIV1Python::ObjID::kEmptyCall;
+    switch (type) {
+      case MeterType::kTokens:
+        bd.call = UIV1Python::ObjID::kRootUIGetTokensButtonPressCall;
+        break;
+      default:
+        break;
+    }
     bd.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
 
-    // Show in currency mode.
-    if (type == 2 || type == 3) {
+    // Show some in store mode.
+    if (type == MeterType::kLevel || type == MeterType::kTickets) {
       bd.visibility_mask |=
-          static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuCurrency);
+          static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStore)
+          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStoreNoBack);
     }
-    Button* btn = AddButton(bd);
-    if (type == 3) {
-      tickets_plus_button_ = btn;
+    // Show some in tokens mode.
+    if (type == MeterType::kTokens) {
+      bd.visibility_mask |=
+          static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuTokens);
     }
+
+    bd.pre_buffer = -10.0f;
+    Button* btn = AddButton_(bd);
+    if (type == MeterType::kTokens) {
+      get_tokens_button_ = btn;
+    }
+    top_right_buttons_.push_back(btn);
   }
 }
 
-#pragma clang diagnostic pop
-
 void RootWidget::Setup() {
-  if (!explicit_bool(BA_UI_V1_TOOLBAR_TEST)) {
-    return;
-  }
-
-  // back button
+  // Back button.
   {
     ButtonDef bd;
     bd.h_align = 0.0f;
@@ -327,16 +510,20 @@ void RootWidget::Setup() {
     bd.color_g = 0.4f;
     bd.color_b = 0.35f;
 
-    bd.x = 40.0f;
+    // bd.x = 40.0f;
     bd.y = -40.0f;
     bd.img = "nub";
-    bd.call = UIV1Python::ObjID::kBackButtonPressCall;
+    bd.call = UIV1Python::ObjID::kRootUIBackButtonPressCall;
     bd.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuMinimal)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull));
-    Button* b = back_button_ = AddButton(bd);
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStore)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kGetTokens)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuTokens));
+    bd.pre_buffer = -30.0f;
+    Button* b = back_button_ = AddButton_(bd);
+    top_left_buttons_.push_back(b);
 
-    // clan
     {
       TextDef td;
       td.button = b;
@@ -348,7 +535,7 @@ void RootWidget::Setup() {
       td.scale = 2.0f;
       td.flatness = 0.0f;
       td.shadow = 0.5f;
-      AddText(td);
+      AddText_(td);
     }
   }
 
@@ -361,10 +548,10 @@ void RootWidget::Setup() {
   // }
   // if (c) {
   //   c->visibility_mask |=
-  //   static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuCurrency);
+  //   static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStore);
   // }
 
-  // top bar backing (currency only)
+  // Top bar backing (currency only).
   if (explicit_bool(false)) {
     ButtonDef bd;
     bd.h_align = 0.5f;
@@ -404,11 +591,11 @@ void RootWidget::Setup() {
     // bd.visibility_mask |=
     // static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull);
     bd.visibility_mask |=
-        static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuCurrency);
-    AddButton(bd);
+        static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStore);
+    AddButton_(bd);
   }
 
-  // top bar backing
+  // Top bar backing.
   if (explicit_bool(false)) {
     ButtonDef bd;
     bd.h_align = 0.5f;
@@ -443,34 +630,36 @@ void RootWidget::Setup() {
     bd.visibility_mask |=
         static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull);
     // bd.visibility_mask |=
-    // static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuCurrency);
-    AddButton(bd);
+    // static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStore);
+    AddButton_(bd);
   }
 
+  // float xoffs = (g_base->ui->scale() == UIScale::kSmall) ? 90.0f : 0.0f;
   float yoffs = (g_base->ui->scale() == UIScale::kSmall) ? 0.0f : -10.0f;
 
-  // account button
+  // Account Button
   {
     ButtonDef bd;
-    bd.h_align = 0.1f;
+    bd.h_align = 0.0f;
     bd.v_align = VAlign::kTop;
     bd.width = 160.0f;
     bd.height = 60.0f;
     bd.depth_min = 0.3f;
-    bd.x = (g_base->ui->scale() == UIScale::kSmall) ? 100.0f : -50.0f;
+    // bd.x = 110.0f + xoffs;
     bd.y = -24.0f + yoffs;
     bd.color_r = 0.56f;
     bd.color_g = 0.5f;
     bd.color_b = 0.73f;
+    bd.call = UIV1Python::ObjID::kRootUIAccountButtonPressCall;
     if (g_base->ui->scale() != UIScale::kSmall) {
       bd.color_r *= TOOLBAR_COLOR_R;
       bd.color_g *= TOOLBAR_COLOR_G;
       bd.color_b *= TOOLBAR_COLOR_B;
     }
-    // bd.call = "";
-    bd.call = UIV1Python::ObjID::kEmptyCall;
+    bd.pre_buffer = 10.0f;
     bd.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
 
     // on desktop, stick this in the top left corner
@@ -479,9 +668,10 @@ void RootWidget::Setup() {
     //   bd.x = 120.0f;
     // }
 
-    Button* b = account_button_ = AddButton(bd);
+    Button* b = account_button_ = AddButton_(bd);
+    top_left_buttons_.push_back(b);
 
-    // player name
+    // Player name.
     {
       TextDef td;
       td.button = b;
@@ -494,9 +684,10 @@ void RootWidget::Setup() {
       td.color_g = 0.8f;
       td.color_b = 0.8f;
       td.shadow = 1.0f;
-      AddText(td);
+      AddText_(td);
     }
-    // clan
+
+    // Clan.
     {
       TextDef td;
       td.button = b;
@@ -508,114 +699,224 @@ void RootWidget::Setup() {
       td.scale = 0.6f;
       td.flatness = 1.0f;
       td.shadow = 0.0f;
-      AddText(td);
+      AddText_(td);
     }
   }
 
-  float anchorx = (g_base->ui->scale() == UIScale::kSmall) ? 0.3f : 0.25f;
+  // float anchorx = 0.0f;
+  // float anchorx = (g_base->ui->scale() == UIScale::kSmall) ? 0.3f : 0.25f;
 
-  AddMeter(anchorx, 200.0f - 148.0f, 0, 1.0f, 1.0f, 1.0f, false, "456/1000");
-  AddMeter(anchorx, 200.0f, 1, 1.0f, 1.0f, 1.0f, false, "123");
+  AddMeter_(MeterType::kLevel, 0.0f, 1.0f, 1.0f, 1.0f, false, "456/1000");
+  AddMeter_(MeterType::kTrophy, 0.0f, 1.0f, 1.0f, 1.0f, false, "#123");
+  // AddMeter(anchorx, 200.0f - 148.0f, 0, 1.0f, 1.0f, 1.0f, false, "456/1000");
+  // AddMeter(anchorx, 200.0f, 1, 1.0f, 1.0f, 1.0f, false, "123");
 
-  AddMeter(0.7f, -100.0f, 2, 1.0f, 1.0f, 1.0f, true, "12343");
-  AddMeter(0.7f, -100.0f + 188.0f, 3, 1.0f, 1.0f, 1.0f, true, "123");
-
-  // party button
-  {
-    ButtonDef b;
-    b.h_align = 1.0f;
-    b.v_align = VAlign::kTop;
-    b.width = b.height = 70.0f;
-    b.x = -110.0f;
-    b.y = b.height * -0.41f;
-    b.img = "usersButton";
-    b.call = UIV1Python::ObjID::kFriendsButtonPressCall;
-    b.visibility_mask =
-        (static_cast<uint32_t>(Widget::ToolbarVisibility::kInGame)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuMinimal)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuMinimalNoBack)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuCurrency)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    party_button_ = AddButton(b);
-  }
-
-  // menu button (only shows up when we're not in a menu)
+  // Menu button (only shows up when we're not in a menu)
   // FIXME - this should never be visible on TV or VR UI modes
   {
     ButtonDef b;
     b.h_align = 1.0f;
     b.v_align = VAlign::kTop;
     b.width = b.height = 65.0f;
-    b.x = -36.0f;
+    // b.x = -36.0f;
     b.y = b.height * -0.48f;
     b.img = "menuButton";
-    b.call = UIV1Python::ObjID::kBackButtonPressCall;
+    b.call = UIV1Python::ObjID::kRootUIMenuButtonPressCall;
     b.color_r = 0.3f;
     b.color_g = 0.5f;
     b.color_b = 0.2f;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kInGame)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuInGame)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuMinimal)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuMinimalNoBack)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuCurrency)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStore)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStoreNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    menu_button_ = AddButton(b);
+    b.pre_buffer = 5.0f;
+    b.enable_sound = false;
+    menu_button_ = AddButton_(b);
+    top_right_buttons_.push_back(menu_button_);
   }
 
-  // bot-left cover
+  // Party button.
+  {
+    ButtonDef b;
+    b.h_align = 1.0f;
+    b.v_align = VAlign::kTop;
+    b.width = b.height = 70.0f;
+    // b.x = -110.0f;
+    b.y = b.height * -0.41f;
+    b.img = "usersButton";
+    b.call = UIV1Python::ObjID::kRootUISquadButtonPressCall;
+    b.visibility_mask =
+        (static_cast<uint32_t>(Widget::ToolbarVisibility::kInGame)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuInGame)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuMinimal)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuMinimalNoBack)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStore)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStoreNoBack)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kGetTokens)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuTokens));
+    b.pre_buffer = 5.0f;
+    b.enable_sound = false;
+    squad_button_ = AddButton_(b);
+    top_right_buttons_.push_back(squad_button_);
+  }
+
+  AddMeter_(MeterType::kTokens, 1.0f, 1.0f, 1.0f, 1.0f, true, "123");
+  AddMeter_(MeterType::kTickets, 1.0f, 1.0f, 1.0f, 1.0f, false, "12345");
+
+  // Bot-left cover
   // AddCover(0.0f, VAlign::kBottom, 0.0f, -210.0f, 600.0f, 600.0f, 0.25f);
 
-  float bx = 45.0f;
+  float bx = 55.0f;
 
-  // log button
+  // Inbox button.
   {
     ButtonDef b;
     b.h_align = 0.0f;
     b.v_align = VAlign::kBottom;
-    b.width = b.height = 50.0f;
-    b.x = bx;
+    b.width = b.height = 55.0f;
+    // b.x = bx;
     b.y = b.height * 0.5f + 5;
     b.color_r = BOT_LEFT_COLOR_R;
     b.color_g = BOT_LEFT_COLOR_G;
     b.color_b = BOT_LEFT_COLOR_B;
     b.img = "logIcon";
+    b.call = UIV1Python::ObjID::kRootUIInboxButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    AddButton(b);
+    b.pre_buffer = 20.0f;
+    inbox_button_ = AddButton_(b);
+    bottom_left_buttons_.push_back(inbox_button_);
   }
 
-  bx += 70.0f;
+  bx += 80.0f;
 
-  // achievements button
-  {
+  // Achievements button.
+  if (explicit_bool(true)) {
     ButtonDef b;
     b.h_align = 0.0f;
     b.v_align = VAlign::kBottom;
-    b.width = b.height = 50.0f;
-    b.x = bx;
+    b.width = b.height = 55.0f;
+    // b.x = bx;
     b.y = b.height * 0.5f + 5;
     b.color_r = BOT_LEFT_COLOR_R;
     b.color_g = BOT_LEFT_COLOR_G;
     b.color_b = BOT_LEFT_COLOR_B;
     b.img = "achievementsIcon";
+    b.call = UIV1Python::ObjID::kRootUIAchievementsButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    AddButton(b);
+    b.pre_buffer = 20.0f;
+    achievements_button_ = AddButton_(b);
+    bottom_left_buttons_.push_back(achievements_button_);
+    bx += 80.0f;
+
+    // Achievement count.
+    // {
+    //   TextDef td;
+    //   td.button = achievements_button_;
+    //   td.width = 26.0f;
+    //   td.text = "12/39";
+    //   td.x = -1.5f;
+    //   td.y = 8.0f;
+    //   td.scale = 0.9f;
+    //   td.flatness = 1.0f;
+    //   td.shadow = 1.0f;
+    //   td.depth_min = 0.3f;
+    //   td.color_r = 1.0f;
+    //   td.color_g = 1.0f;
+    //   td.color_b = 1.0f;
+    //   AddText_(td);
+    // }
+    auto centerx = -1.5f;
+    auto centery = 8.0f;
+    auto offsx = 5.5f;
+    auto offsy = 5.5f;
+    // {
+    //   TextDef td;
+    //   td.button = achievements_button_;
+    //   td.width = 26.0f;
+    //   td.text = "/";
+    //   td.x = centerx;
+    //   td.y = centery;
+    //   td.scale = 0.3f;
+    //   td.flatness = 1.0f;
+    //   td.shadow = 1.0f;
+    //   td.depth_min = 0.3f;
+    //   td.color_r = 1.0f;
+    //   td.color_g = 1.0f;
+    //   td.color_b = 1.0f;
+    //   AddText_(td);
+    // }
+    // {
+    //   TextDef td;
+    //   td.button = achievements_button_;
+    //   td.width = 26.0f;
+    //   td.text = "12";
+    //   td.x = centerx - offsx;
+    //   td.y = centery + offsy;
+    //   td.scale = 0.4f;
+    //   td.flatness = 1.0f;
+    //   td.shadow = 1.0f;
+    //   td.depth_min = 0.3f;
+    //   td.color_r = 1.0f;
+    //   td.color_g = 1.0f;
+    //   td.color_b = 1.0f;
+    //   AddText_(td);
+    // }
+    // {
+    //   TextDef td;
+    //   td.button = achievements_button_;
+    //   td.width = 26.0f;
+    //   td.text = "34";
+    //   td.x = centerx + offsx;
+    //   td.y = centery - offsy;
+    //   td.scale = 0.4f;
+    //   td.flatness = 1.0f;
+    //   td.shadow = 1.0f;
+    //   td.depth_min = 0.3f;
+    //   td.color_r = 1.0f;
+    //   td.color_g = 1.0f;
+    //   td.color_b = 1.0f;
+    //   AddText_(td);
+    // }
+    {
+      TextDef td;
+      td.button = achievements_button_;
+      td.width = 26.0f;
+      td.text = "34%";
+      td.x = centerx;
+      td.y = centery;
+      td.scale = 0.6f;
+      td.flatness = 1.0f;
+      td.shadow = 0.0f;
+      td.depth_min = 0.3f;
+      td.color_r = 0.8f;
+      td.color_g = 0.75f;
+      td.color_b = 0.9f;
+      AddText_(td);
+    }
   }
 
-  bx += 70.0f;
-
-  // leaderboards button
-  {
+  // Leaderboards button.
+  if (explicit_bool(false)) {
     ButtonDef b;
     b.h_align = 0.0f;
     b.v_align = VAlign::kBottom;
     b.width = b.height = 50.0f;
-    b.x = bx;
+    // b.x = bx;
     b.y = b.height * 0.5f + 5;
     b.color_r = BOT_LEFT_COLOR_R;
     b.color_g = BOT_LEFT_COLOR_G;
@@ -623,33 +924,39 @@ void RootWidget::Setup() {
     b.img = "leaderboardsIcon";
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    AddButton(b);
+    AddButton_(b);
+    bx += 70.0f;
   }
 
-  bx += 70.0f;
-
-  // settings button
+  // Settings button.
   {
     ButtonDef b;
     b.h_align = 0.0f;
     b.v_align = VAlign::kBottom;
-    b.width = b.height = 50.0f;
-    b.x = bx;
+    b.width = b.height = 55.0f;
+    // b.x = bx;
     b.y = b.height * 0.58f;
     b.color_r = BOT_LEFT_COLOR_R;
     b.color_g = BOT_LEFT_COLOR_G;
     b.color_b = BOT_LEFT_COLOR_B;
     b.img = "settingsIcon";
+    b.call = UIV1Python::ObjID::kRootUISettingsButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    settings_button_ = AddButton(b);
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuInGame));
+    b.pre_buffer = 20.0f;
+    settings_button_ = AddButton_(b);
+    bottom_left_buttons_.push_back(settings_button_);
   }
 
-  // chests
+  // Chests.
   {
-    // AddCover(0.5f, VAlign::kBottom, 0.0f, -180.0f, 600.0f, 550.0f, 0.35f);
+    // AddCover(0.5f, VAlign::kBottom, 0.0f, -180.0f, 600.0f, 550.0f,
+    // 0.35f);
 
     float backingR = 0.44f;
     float backingG = 0.41f;
@@ -676,7 +983,7 @@ void RootWidget::Setup() {
       backingA *= TOOLBAR_OPACITY_2;
     }
 
-    // bar backing
+    // Bar backing.
     {
       ButtonDef bd;
       bd.h_align = 0.5f;
@@ -697,50 +1004,55 @@ void RootWidget::Setup() {
       // bd.call = "";
       bd.call = UIV1Python::ObjID::kEmptyCall;
       bd.visibility_mask =
-          static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot);
-      bd.visibility_mask |=
-          static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull);
+          (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+           | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
+           | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
 
-      AddButton(bd);
+      AddButton_(bd);
     }
 
     ButtonDef b;
     b.h_align = 0.5f;
     b.v_align = VAlign::kBottom;
-    b.width = b.height = 110.0f;
+    b.width = b.height = 120.0f;
     b.x = 0.0f;
     b.y = b.height * 0.4f;
     b.img = "chestIcon";
     b.depth_min = 0.3f;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    float spacing = 110.0f;
-    b.x = -2.0f * spacing;
-    AddButton(b);
+    float spacing = 130.0f;
+    b.x = -1.5f * spacing;
+    b.call = UIV1Python::ObjID::kRootUIChestSlot1PressCall;
+    AddButton_(b);
 
-    b.x = -1.0f * spacing;
+    b.x = -0.5f * spacing;
     b.img = "chestOpenIcon";
     b.y = b.height * 0.5f;
-    AddButton(b);
+    b.call = UIV1Python::ObjID::kRootUIChestSlot2PressCall;
+    AddButton_(b);
 
     // test - empty icons
     b.y = b.height * 0.4f;
-    b.x = 0.0f;
+    b.x = 0.5f * spacing;
     b.img = "chestIconEmpty";
     b.width = b.height = 80.0f;
     b.color_r = backingCoverR;
     b.color_g = backingCoverG;
     b.color_b = backingCoverB;
     b.opacity = 1.0f;
-    AddButton(b);
-    b.x = 1.0f * spacing;
-    AddButton(b);
-    b.x = 2.0f * spacing;
+    b.call = UIV1Python::ObjID::kRootUIChestSlot3PressCall;
+    AddButton_(b);
+    b.x = 1.5f * spacing;
+    b.call = UIV1Python::ObjID::kRootUIChestSlot4PressCall;
+    AddButton_(b);
+    // b.x = 2.0f * spacing;
 
     // test - multi-icon tile
-    b.img = "chestIconMulti";
-    AddButton(b);
+    // b.img = "chestIconMulti";
+    // AddButton(b);
   }
 
   // bot-right cover
@@ -762,59 +1074,73 @@ void RootWidget::Setup() {
   //   AddButton(b);
   // }
 
-  // store button
-  {
-    ButtonDef b;
-    b.h_align = 1.0f;
-    b.v_align = VAlign::kBottom;
-    b.width = b.height = 85.0f;
-    b.x = -206.0f;
-    b.y = b.height * 0.5f;
-    b.img = "storeIcon";
-    b.visibility_mask =
-        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    AddButton(b);
-  }
-
-  // inventory button
+  // Inventory button.
   {
     ButtonDef b;
     b.h_align = 1.0f;
     b.v_align = VAlign::kBottom;
     b.width = b.height = 135.0f;
-    b.x = -80.0f;
+    // b.x = -80.0f;
     b.y = b.height * 0.45f;
     b.img = "inventoryIcon";
+    b.call = UIV1Python::ObjID::kRootUIInventoryButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    AddButton(b);
+    b.disable_offset_scale = 1.5f;
+    b.pre_buffer = 20.0f;
+    inventory_button_ = AddButton_(b);
+    bottom_right_buttons_.push_back(inventory_button_);
   }
 
-  UpdateForFocusedWindow(nullptr);
+  // Store button.
+  {
+    ButtonDef b;
+    b.h_align = 1.0f;
+    b.v_align = VAlign::kBottom;
+    b.width = b.height = 85.0f;
+    // b.x = -206.0f;
+    b.y = b.height * 0.5f;
+    b.img = "storeIcon";
+    b.call = UIV1Python::ObjID::kRootUIStoreButtonPressCall;
+    b.visibility_mask =
+        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
+    b.pre_buffer = 20.0f;
+    store_button_ = AddButton_(b);
+    bottom_right_buttons_.push_back(store_button_);
+  }
+
+  UpdateForFocusedWindow_(nullptr);
 }
 
 void RootWidget::Draw(base::RenderPass* pass, bool transparent) {
   // Opaque pass gets drawn first; use that as an opportunity to step up our
   // motion.
+
   if (!transparent) {
     millisecs_t current_time = pass->frame_def()->display_time_millisecs();
     millisecs_t time_diff =
         std::min(millisecs_t{100}, current_time - update_time_);
-    StepPositions(static_cast<float>(time_diff));
+
+    StepPositions_(static_cast<float>(time_diff));
     update_time_ = current_time;
   }
   ContainerWidget::Draw(pass, transparent);
 }
 
-auto RootWidget::AddButton(const ButtonDef& def) -> RootWidget::Button* {
+auto RootWidget::AddButton_(const ButtonDef& def) -> RootWidget::Button* {
   base::ScopedSetContext ssc(nullptr);
   buttons_.emplace_back();
   Button& b(buttons_.back());
   b.x = b.x_smoothed = b.x_target = def.x;
   b.y = b.y_smoothed = b.y_target = def.y;
   b.visibility_mask = def.visibility_mask;
+  b.disable_offset_scale = def.disable_offset_scale;
+  b.pre_buffer = def.pre_buffer;
+  b.post_buffer = def.post_buffer;
   b.scale = def.scale;
   b.width = def.width;
   b.height = def.height;
@@ -828,7 +1154,11 @@ auto RootWidget::AddButton(const ButtonDef& def) -> RootWidget::Button* {
   b.widget->set_text(def.label);
   b.widget->set_enabled(def.selectable);
   b.widget->set_selectable(def.selectable);
-  b.widget->SetDepthRange(def.depth_min, def.depth_max);
+  b.widget->set_depth_range(def.depth_min, def.depth_max);
+  b.widget->set_target_extra_left(def.target_extra_left);
+  b.widget->set_target_extra_right(def.target_extra_right);
+
+  b.widget->set_enable_sound(def.enable_sound);
 
   // Make sure up/down moves focus into the main stack.
   assert(screen_stack_widget_ != nullptr);
@@ -843,13 +1173,16 @@ auto RootWidget::AddButton(const ButtonDef& def) -> RootWidget::Button* {
   b.widget->set_neighbors_locked(true);
 
   if (!def.img.empty()) {
+    base::Assets::AssetListLock lock;
     b.widget->SetTexture(g_base->assets->GetTexture(def.img).Get());
   }
   if (!def.mesh_transparent.empty()) {
+    base::Assets::AssetListLock lock;
     b.widget->SetMeshTransparent(
         g_base->assets->GetMesh(def.mesh_transparent).Get());
   }
   if (!def.mesh_opaque.empty()) {
+    base::Assets::AssetListLock lock;
     b.widget->SetMeshOpaque(g_base->assets->GetMesh(def.mesh_opaque).Get());
   }
   if (def.call != UIV1Python::ObjID::kEmptyCall) {
@@ -859,7 +1192,7 @@ auto RootWidget::AddButton(const ButtonDef& def) -> RootWidget::Button* {
   return &b;
 }
 
-auto RootWidget::AddText(const TextDef& def) -> RootWidget::Text* {
+auto RootWidget::AddText_(const TextDef& def) -> RootWidget::Text* {
   base::ScopedSetContext ssc(nullptr);
   texts_.emplace_back();
   Text& t(texts_.back());
@@ -875,7 +1208,7 @@ auto RootWidget::AddText(const TextDef& def) -> RootWidget::Text* {
   t.widget->set_color(def.color_r, def.color_g, def.color_b, def.color_a);
   t.widget->set_shadow(def.shadow);
   t.widget->set_flatness(def.flatness);
-  t.widget->SetDepthRange(def.depth_min, def.depth_max);
+  t.widget->set_depth_range(def.depth_min, def.depth_max);
   assert(def.button->widget.Exists());
   t.widget->set_draw_control_parent(def.button->widget.Get());
   t.x = def.x;
@@ -884,16 +1217,39 @@ auto RootWidget::AddText(const TextDef& def) -> RootWidget::Text* {
   return &t;
 }
 
+auto RootWidget::AddImage_(const ImageDef& def) -> RootWidget::Image* {
+  base::ScopedSetContext ssc(nullptr);
+  images_.emplace_back();
+  Image& img(images_.back());
+  img.button = def.button;
+  img.widget = Object::New<ImageWidget>();
+  img.widget->set_width(def.width);
+  img.widget->set_height(def.height);
+  img.widget->set_depth_range(def.depth_min, def.depth_max);
+  if (!def.img.empty()) {
+    base::Assets::AssetListLock lock;
+    img.widget->SetTexture(g_base->assets->GetTexture(def.img).Get());
+  }
+  assert(def.button->widget.Exists());
+  img.widget->set_draw_control_parent(def.button->widget.Get());
+  img.x = def.x - def.width * 0.5f;
+  img.y = def.y - def.height * 0.5f;
+  AddWidget(img.widget.Get());
+  return &img;
+}
+
 void RootWidget::UpdateForFocusedWindow() {
-  UpdateForFocusedWindow(
+  UpdateForFocusedWindow_(
       screen_stack_widget_ != nullptr
           ? screen_stack_widget_->GetTopmostToolbarInfluencingWidget()
           : nullptr);
 }
 
-void RootWidget::UpdateForFocusedWindow(Widget* widget) {
+void RootWidget::UpdateForFocusedWindow_(Widget* widget) {
   // Take note if the current session is the main menu; we do a few things
   // differently there.
+  //
+  // FIXME - need a more generalized way to determine this.
   in_main_menu_ = g_base->app_mode()->InClassicMainMenuSession();
 
   if (widget == nullptr) {
@@ -904,9 +1260,86 @@ void RootWidget::UpdateForFocusedWindow(Widget* widget) {
   MarkForUpdate();
 }
 
-void RootWidget::StepPositions(float dt) {
+void RootWidget::StepPositions_(float dt) {
+  // Hitches tend to break our math and cause buttons to overshoot on
+  // their transitions in and then back up. So let's limit our max dt
+  // to about what ~30fps would give us.
+  dt = std::min(dt, 1000.0f / 30.0f);
+
   if (!positions_dirty_) {
     return;
+  }
+
+  // Update enabled-state for all buttons.
+  for (Button& b : buttons_) {
+    bool enable_button =
+        static_cast<bool>(static_cast<uint32_t>(toolbar_visibility_)
+                          & static_cast<uint32_t>(b.visibility_mask));
+    // When we're in the main menu, always disable the menu button and
+    // shift the party button a bit to the right
+    if (in_main_menu_) {
+      if (&b == menu_button_) {
+        enable_button = false;
+      }
+    }
+    if (&b == back_button_) {
+      // Back button is always disabled in medium/large UI.
+      if (g_base->ui->scale() != UIScale::kSmall) {
+        enable_button = false;
+      }
+    }
+    b.enabled = enable_button;
+  }
+
+  // Go through our corner button lists updating positions based on
+  // what is visible.
+  float xpos = 0.0f;
+  for (auto* btn : top_left_buttons_) {
+    auto enabled = btn->enabled;
+    float bwidthhalf = btn->width * 0.5;
+    if (enabled) {
+      xpos += bwidthhalf + btn->pre_buffer;
+    }
+    btn->x = xpos;
+    if (enabled) {
+      xpos += bwidthhalf + btn->post_buffer;
+    }
+  }
+  xpos = 0.0f;
+  for (auto* btn : top_right_buttons_) {
+    auto enabled = btn->enabled;
+    float bwidthhalf = btn->width * 0.5;
+    if (enabled) {
+      xpos -= bwidthhalf + btn->pre_buffer;
+    }
+    btn->x = xpos;
+    if (enabled) {
+      xpos -= bwidthhalf + btn->post_buffer;
+    }
+  }
+  xpos = 0.0f;
+  for (auto* btn : bottom_left_buttons_) {
+    auto enabled = btn->enabled;
+    float bwidthhalf = btn->width * 0.5;
+    if (enabled) {
+      xpos += bwidthhalf + btn->pre_buffer;
+    }
+    btn->x = xpos;
+    if (enabled) {
+      xpos += bwidthhalf + btn->post_buffer;
+    }
+  }
+  xpos = 0.0f;
+  for (auto* btn : bottom_right_buttons_) {
+    auto enabled = btn->enabled;
+    float bwidthhalf = btn->width * 0.5;
+    if (enabled) {
+      xpos -= bwidthhalf + btn->pre_buffer;
+    }
+    btn->x = xpos;
+    if (enabled) {
+      xpos -= bwidthhalf + btn->post_buffer;
+    }
   }
 
   // Go through our buttons updating their target points and smooth values.
@@ -916,44 +1349,59 @@ void RootWidget::StepPositions(float dt) {
     // Update our target position.
     b.x_target = b.x;
     b.y_target = b.y;
-    float disable_offset =
-        110.0f * ((b.v_align == VAlign::kTop) ? 1.0f : -1.0f);
+    float disable_offset = b.disable_offset_scale * 110.0f
+                           * ((b.v_align == VAlign::kTop) ? 1.0f : -1.0f);
     // float top_right_offset = 100.0f;
 
     // Can turn this down to debug visibility.
     if (explicit_bool(false)) {
-      disable_offset *= 0.5f;
+      disable_offset *= 0.1f;
       // top_right_offset *= 0.5f;
     }
-    bool enable_button =
-        static_cast<bool>(static_cast<uint32_t>(toolbar_visibility_)
-                          & static_cast<uint32_t>(b.visibility_mask));
+    // bool enable_button =
+    //     static_cast<bool>(static_cast<uint32_t>(toolbar_visibility_)
+    //                       & static_cast<uint32_t>(b.visibility_mask));
 
-    // When we're in the main menu, always disable the menu button and shift
-    // the party button a bit to the right
+    // When the back button is hidden, move the account button to the left.
+    // bool move_left_for_back{};
+    // if (g_base->ui->scale() == UIScale::kSmall
+    //     && !static_cast<bool>(
+    //         static_cast<uint32_t>(toolbar_visibility_)
+    //         & static_cast<uint32_t>(back_button_->visibility_mask))) {
+    //   move_left_for_back = true;
+    // }
+    // if (move_left_for_back
+    //     && (&b == account_button_ || &b == level_icon_
+    //         || &b == level_meter_button_ || &b == trophy_icon_
+    //         || &b == trophy_meter_button_)) {
+    //   b.x_target -= 100.0f;
+    // }
+
+    // When we're in the main menu, always disable the menu button and
+    // shift the party button a bit to the right
     if (in_main_menu_) {
-      if (&b == menu_button_) {
-        enable_button = false;
-      }
-      if (&b == party_button_) {
-        b.x_target += 70.0f;
-      }
+      // if (&b == menu_button_) {
+      //   enable_button = false;
+      // }
+      // if (&b == squad_button_) {
+      //   b.x_target += 70.0f;
+      // }
     }
     if (&b == back_button_) {
       // Back button is always disabled in medium/large UI.
-      if (g_base->ui->scale() != UIScale::kSmall) {
-        enable_button = false;
-      }
+      // if (g_base->ui->scale() != UIScale::kSmall) {
+      //   enable_button = false;
+      // }
 
       // Whenever back button is enabled, left on account button should go
       // to it; otherwise it goes nowhere.
       Widget* ab = account_button_->widget.Get();
       ab->set_neighbors_locked(false);
-      ab->set_left_widget(enable_button ? back_button_->widget.Get() : ab);
+      ab->set_left_widget(b.enabled ? back_button_->widget.Get() : ab);
       account_button_->widget->set_neighbors_locked(true);
     }
 
-    if (!enable_button) {
+    if (!b.enabled) {
       b.y_target += disable_offset;
     }
 
@@ -968,7 +1416,7 @@ void RootWidget::StepPositions(float dt) {
     // b.x_target += top_right_offset;
     // }
 
-    // Now push our smooth value towards our target value...
+    // Now push our smooth value towards our target value.
     b.x_smoothed += (b.x_target - b.x_smoothed) * 0.015f * dt;
     b.y_smoothed += (b.y_target - b.y_smoothed) * 0.015f * dt;
 
@@ -979,14 +1427,16 @@ void RootWidget::StepPositions(float dt) {
       b.x_smoothed = b.x_target;
       b.y_smoothed = b.y_target;
 
-      // Also flip off visibility if we're moving offscreen and have reached
-      // our target.
-      if (!enable_button) {
+      // Also flip off visibility if we're moving offscreen and have
+      // reached our target.
+      if (!b.enabled) {
+        b.fully_offscreen = true;
         b.widget->set_visible_in_container(false);
       }
     } else {
       have_dirty = true;
       // Always remain visible while still moving.
+      b.fully_offscreen = false;
       b.widget->set_visible_in_container(true);
     }
 
@@ -1007,8 +1457,8 @@ void RootWidget::StepPositions(float dt) {
         y = base_scale_ * (b.y_smoothed - b.height * b.scale * 0.5f);
         break;
     }
-    b.widget->set_selectable(enable_button && b.selectable);
-    b.widget->set_enabled(enable_button && b.selectable);
+    b.widget->set_selectable(b.enabled && b.selectable);
+    b.widget->set_enabled(b.enabled && b.selectable);
     b.widget->set_translate(x, y);
     b.widget->set_width(b.width);
     b.widget->set_height(b.height);
@@ -1024,6 +1474,19 @@ void RootWidget::StepPositions(float dt) {
         b->widget->ty() + base_scale_ * b->scale * (b->height * 0.5f + t.y);
     t.widget->set_translate(x, y);
     t.widget->set_scale(base_scale_ * b->scale);
+    t.widget->set_visible_in_container(!b->fully_offscreen);
+  }
+
+  for (Image& img : images_) {
+    // Move the image widget to wherever its target button is (plus offset).
+    Button* b = img.button;
+    float x =
+        b->widget->tx() + base_scale_ * b->scale * (b->width * 0.5f + img.x);
+    float y =
+        b->widget->ty() + base_scale_ * b->scale * (b->height * 0.5f + img.y);
+    img.widget->set_translate(x, y);
+    img.widget->set_scale(base_scale_ * b->scale);
+    img.widget->set_visible_in_container(!b->fully_offscreen);
   }
 
   positions_dirty_ = have_dirty;
@@ -1072,13 +1535,12 @@ void RootWidget::UpdateLayout() {
 
   // Run an immediate step to update things; (avoids jumpy positions if
   // resizing game window))
-  StepPositions(0.0f);
+  StepPositions_(0.0f);
 }
 
 auto RootWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
-  // If a cancel message comes through and our back button is active, fire our
-  // back button.
-  // ..in all other cases just do the default.
+  // If a cancel message comes through and our back button is enabled, fire
+  // our back button. In all other cases just do the default.
   if (m.type == base::WidgetMessage::Type::kCancel && back_button_ != nullptr
       && back_button_->widget->enabled()
       && !overlay_stack_widget_->HasChildren()) {
@@ -1088,9 +1550,14 @@ auto RootWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     return ContainerWidget::HandleMessage(m);
   }
 }
+void RootWidget::BackPress() {
+  assert(g_base->InLogicThread());
+  screen_stack_widget_->HandleMessage(
+      base::WidgetMessage(base::WidgetMessage::Type::kCancel));
+}
 
 void RootWidget::SetScreenWidget(StackWidget* w) {
-  // this needs to happen before any buttons get added..
+  // this needs to happen before any buttons get added.
   assert(buttons_.empty());
   AddWidget(w);
   screen_stack_widget_ = w;
@@ -1098,9 +1565,8 @@ void RootWidget::SetScreenWidget(StackWidget* w) {
 
 void RootWidget::SetOverlayWidget(StackWidget* w) {
   // this needs to happen after our buttons and things get added..
-  if (explicit_bool(BA_UI_V1_TOOLBAR_TEST)) {
-    assert(!buttons_.empty());
-  }
+  assert(!buttons_.empty());
+
   AddWidget(w);
   overlay_stack_widget_ = w;
 }
@@ -1112,22 +1578,41 @@ void RootWidget::OnCancelCustom() {
   // then it gets them all. Current repro case is Sign-in-with-BombSquad-Account
   // window - press escape a few times while that is up and then click cancel;
   // This code is only used for toolbar mode so should be safe to leave it
-  // disabled for now. g_ui->PushBackButtonCall(nullptr);
+  // disabled for now.
+
+  // Is there a reason for this to exist? If so, what is it?
+  // printf("GOT OnCancelCustom\n");
+  // g_base->ui->PushBackButtonCall(nullptr);
 }
 
 auto RootWidget::GetSpecialWidget(const std::string& s) const -> Widget* {
-  if (s == "party_button") {
-    return party_button_ ? party_button_->widget.Get() : nullptr;
-  } else if (s == "tickets_plus_button") {
-    return tickets_plus_button_ ? tickets_plus_button_->widget.Get() : nullptr;
+  if (s == "squad_button") {
+    return squad_button_ ? squad_button_->widget.Get() : nullptr;
   } else if (s == "back_button") {
     return back_button_ ? back_button_->widget.Get() : nullptr;
   } else if (s == "account_button") {
     return account_button_ ? account_button_->widget.Get() : nullptr;
+  } else if (s == "achievements_button") {
+    return achievements_button_ ? achievements_button_->widget.Get() : nullptr;
+  } else if (s == "inbox_button") {
+    return inbox_button_ ? inbox_button_->widget.Get() : nullptr;
   } else if (s == "settings_button") {
     return settings_button_ ? settings_button_->widget.Get() : nullptr;
-  } else if (s == "tickets_info_button") {
-    return tickets_info_button_ ? tickets_info_button_->widget.Get() : nullptr;
+  } else if (s == "store_button") {
+    return store_button_ ? store_button_->widget.Get() : nullptr;
+  } else if (s == "get_tokens_button") {
+    return get_tokens_button_ ? get_tokens_button_->widget.Get() : nullptr;
+  } else if (s == "inventory_button") {
+    return inventory_button_ ? inventory_button_->widget.Get() : nullptr;
+  } else if (s == "tickets_meter") {
+    return tickets_meter_button_ ? tickets_meter_button_->widget.Get()
+                                 : nullptr;
+  } else if (s == "tokens_meter") {
+    return tokens_meter_button_ ? tokens_meter_button_->widget.Get() : nullptr;
+  } else if (s == "trophy_meter") {
+    return trophy_meter_button_ ? trophy_meter_button_->widget.Get() : nullptr;
+  } else if (s == "level_meter") {
+    return level_meter_button_ ? level_meter_button_->widget.Get() : nullptr;
   } else if (s == "overlay_stack") {
     return overlay_stack_widget_;
   }

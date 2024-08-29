@@ -26,6 +26,7 @@ class SceneV1FeatureSet;
 namespace ballistica::classic {
 
 // Predeclared types our feature-set provides.
+class ClassicAppMode;
 class ClassicFeatureSet;
 class ClassicPython;
 class StressTest;

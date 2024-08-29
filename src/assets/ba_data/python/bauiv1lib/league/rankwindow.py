@@ -16,14 +16,14 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-class LeagueRankWindow(bui.Window):
+class LeagueRankWindow(bui.MainWindow):
     """Window for showing league rank."""
 
     def __init__(
         self,
-        transition: str = 'in_right',
-        modal: bool = False,
+        transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
+        modal: bool = False,
     ):
         # pylint: disable=too-many-statements
         plus = bui.app.plus
@@ -46,28 +46,26 @@ class LeagueRankWindow(bui.Window):
         self._to_ranked_text: bui.Widget | None = None
         self._trophy_counts_reset_text: bui.Widget | None = None
 
-        # If they provided an origin-widget, scale up from that.
-        scale_origin: tuple[float, float] | None
+        # Need to handle transitioning out ourself for modal case
         if origin_widget is not None:
             self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
         else:
             self._transition_out = 'out_right'
-            scale_origin = None
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 1320 if uiscale is bui.UIScale.SMALL else 1120
+        self._width = 1490 if uiscale is bui.UIScale.SMALL else 1120
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            657
+            660
             if uiscale is bui.UIScale.SMALL
             else 710 if uiscale is bui.UIScale.MEDIUM else 800
         )
         self._r = 'coopSelectWindow'
         self._rdict = bui.app.lang.get_resource(self._r)
         top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
+
+        self._xoffs = 80.0 if uiscale is bui.UIScale.SMALL else 0
 
         self._league_url_arg = ''
 
@@ -78,37 +76,62 @@ class LeagueRankWindow(bui.Window):
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
                 stack_offset=(
-                    (0, -15)
+                    (0, 0)
                     if uiscale is bui.UIScale.SMALL
                     else (0, 10) if uiscale is bui.UIScale.MEDIUM else (0, 0)
                 ),
-                transition=transition,
-                scale_origin_stack_offset=scale_origin,
                 scale=(
-                    1.2
+                    1.08
                     if uiscale is bui.UIScale.SMALL
                     else 0.93 if uiscale is bui.UIScale.MEDIUM else 0.8
                 ),
-            )
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
+                ),
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
-        self._back_button = btn = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(
-                75 + x_inset,
-                self._height - 87 - (4 if uiscale is bui.UIScale.SMALL else 0),
-            ),
-            size=(120, 60),
-            scale=1.2,
-            autoselect=True,
-            label=bui.Lstr(resource='doneText' if self._modal else 'backText'),
-            button_type=None if self._modal else 'back',
-            on_activate_call=self._back,
-        )
+        if uiscale is bui.UIScale.SMALL:
+            self._back_button = bui.get_special_widget('back_button')
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self._back
+            )
+        else:
+            self._back_button = btn = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(75 + x_inset, self._height - 87),
+                size=(120, 60),
+                scale=1.2,
+                autoselect=True,
+                label=bui.Lstr(
+                    resource='doneText' if self._modal else 'backText'
+                ),
+                button_type=None if self._modal else 'back',
+                on_activate_call=self._back,
+            )
+            bui.buttonwidget(
+                edit=btn,
+                button_type='backSmall',
+                position=(75 + x_inset, self._height - 87),
+                size=(60, 55),
+                label=bui.charstr(bui.SpecialChar.BACK),
+            )
+            bui.containerwidget(
+                edit=self._root_widget,
+                cancel_button=self._back_button,
+                selected_child=self._back_button,
+            )
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 56),
+            position=(
+                self._width * 0.5,
+                self._height - (66 if uiscale is bui.UIScale.SMALL else 56),
+            ),
             size=(0, 0),
             text=bui.Lstr(
                 resource='league.leagueRankText',
@@ -119,17 +142,6 @@ class LeagueRankWindow(bui.Window):
             scale=1.4,
             maxwidth=600,
             v_align='center',
-        )
-
-        bui.buttonwidget(
-            edit=btn,
-            button_type='backSmall',
-            position=(
-                75 + x_inset,
-                self._height - 87 - (2 if uiscale is bui.UIScale.SMALL else 0),
-            ),
-            size=(60, 55),
-            label=bui.charstr(bui.SpecialChar.BACK),
         )
 
         self._scroll_width = self._width - (130 + 2 * x_inset)
@@ -143,11 +155,6 @@ class LeagueRankWindow(bui.Window):
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
         bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)
-        bui.containerwidget(
-            edit=self._root_widget,
-            cancel_button=self._back_button,
-            selected_child=self._back_button,
-        )
 
         self._last_power_ranking_query_time: float | None = None
         self._doing_power_ranking_query = False
@@ -374,7 +381,7 @@ class LeagueRankWindow(bui.Window):
 
         bui.textwidget(
             parent=w_parent,
-            position=(h2 - 60, v2 + 106),
+            position=(self._xoffs + h2 - 60, v2 + 106),
             size=(0, 0),
             flatness=1.0,
             shadow=0.0,
@@ -388,7 +395,7 @@ class LeagueRankWindow(bui.Window):
 
         self._power_ranking_achievements_button = bui.buttonwidget(
             parent=w_parent,
-            position=(h2 - 60, v2 + 10),
+            position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 80),
             icon=bui.gettexture('achievementsIcon'),
             autoselect=True,
@@ -402,7 +409,7 @@ class LeagueRankWindow(bui.Window):
 
         self._power_ranking_achievement_total_text = bui.textwidget(
             parent=w_parent,
-            position=(h2 + h_offs_tally, v2 + 45),
+            position=(self._xoffs + h2 + h_offs_tally, v2 + 45),
             size=(0, 0),
             flatness=1.0,
             shadow=0.0,
@@ -418,7 +425,7 @@ class LeagueRankWindow(bui.Window):
 
         self._power_ranking_trophies_button = bui.buttonwidget(
             parent=w_parent,
-            position=(h2 - 60, v2 + 10),
+            position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 80),
             icon=bui.gettexture('medalSilver'),
             autoselect=True,
@@ -430,7 +437,7 @@ class LeagueRankWindow(bui.Window):
         )
         self._power_ranking_trophies_total_text = bui.textwidget(
             parent=w_parent,
-            position=(h2 + h_offs_tally, v2 + 45),
+            position=(self._xoffs + h2 + h_offs_tally, v2 + 45),
             size=(0, 0),
             flatness=1.0,
             shadow=0.0,
@@ -446,7 +453,7 @@ class LeagueRankWindow(bui.Window):
 
         bui.textwidget(
             parent=w_parent,
-            position=(h2 - 60, v2 + 86),
+            position=(self._xoffs + h2 - 60, v2 + 86),
             size=(0, 0),
             flatness=1.0,
             shadow=0.0,
@@ -462,7 +469,7 @@ class LeagueRankWindow(bui.Window):
         if plus.get_v1_account_misc_read_val('act', False):
             self._activity_mult_button = bui.buttonwidget(
                 parent=w_parent,
-                position=(h2 - 60, v2 + 10),
+                position=(self._xoffs + h2 - 60, v2 + 10),
                 size=(200, 60),
                 icon=bui.gettexture('heart'),
                 icon_color=(0.5, 0, 0.5),
@@ -476,7 +483,7 @@ class LeagueRankWindow(bui.Window):
 
             self._activity_mult_text = bui.textwidget(
                 parent=w_parent,
-                position=(h2 + h_offs_tally, v2 + 40),
+                position=(self._xoffs + h2 + h_offs_tally, v2 + 40),
                 size=(0, 0),
                 flatness=1.0,
                 shadow=0.0,
@@ -493,7 +500,7 @@ class LeagueRankWindow(bui.Window):
 
         self._pro_mult_button = bui.buttonwidget(
             parent=w_parent,
-            position=(h2 - 60, v2 + 10),
+            position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 60),
             icon=bui.gettexture('logo'),
             icon_color=(0.3, 0, 0.3),
@@ -510,7 +517,7 @@ class LeagueRankWindow(bui.Window):
 
         self._pro_mult_text = bui.textwidget(
             parent=w_parent,
-            position=(h2 + h_offs_tally, v2 + 40),
+            position=(self._xoffs + h2 + h_offs_tally, v2 + 40),
             size=(0, 0),
             flatness=1.0,
             shadow=0.0,
@@ -526,7 +533,7 @@ class LeagueRankWindow(bui.Window):
         v2 -= spc
         bui.textwidget(
             parent=w_parent,
-            position=(h2 + h_offs_tally - 10 - 40, v2 + 35),
+            position=(self._xoffs + h2 + h_offs_tally - 10 - 40, v2 + 35),
             size=(0, 0),
             flatness=1.0,
             shadow=0.0,
@@ -539,7 +546,7 @@ class LeagueRankWindow(bui.Window):
         )
         self._power_ranking_total_text = bui.textwidget(
             parent=w_parent,
-            position=(h2 + h_offs_tally - 40, v2 + 35),
+            position=(self._xoffs + h2 + h_offs_tally - 40, v2 + 35),
             size=(0, 0),
             flatness=1.0,
             shadow=0.0,
@@ -553,7 +560,7 @@ class LeagueRankWindow(bui.Window):
 
         self._season_show_text = bui.textwidget(
             parent=w_parent,
-            position=(390 - 15, v - 20),
+            position=(self._xoffs + 390 - 15, v - 20),
             size=(0, 0),
             color=(0.6, 0.6, 0.7),
             maxwidth=200,
@@ -567,7 +574,7 @@ class LeagueRankWindow(bui.Window):
 
         self._league_title_text = bui.textwidget(
             parent=w_parent,
-            position=(470, v - 97),
+            position=(self._xoffs + 470, v - 97),
             size=(0, 0),
             color=(0.6, 0.6, 0.7),
             maxwidth=230,
@@ -583,7 +590,7 @@ class LeagueRankWindow(bui.Window):
         self._league_text_maxwidth = 210
         self._league_text = bui.textwidget(
             parent=w_parent,
-            position=(470, v - 140),
+            position=(self._xoffs + 470, v - 140),
             size=(0, 0),
             color=(1, 1, 1),
             maxwidth=self._league_text_maxwidth,
@@ -597,7 +604,7 @@ class LeagueRankWindow(bui.Window):
         self._league_number_base_pos = (470, v - 140)
         self._league_number_text = bui.textwidget(
             parent=w_parent,
-            position=(470, v - 140),
+            position=(self._xoffs + 470, v - 140),
             size=(0, 0),
             color=(1, 1, 1),
             maxwidth=100,
@@ -611,7 +618,7 @@ class LeagueRankWindow(bui.Window):
 
         self._your_power_ranking_text = bui.textwidget(
             parent=w_parent,
-            position=(470, v - 142 - 70),
+            position=(self._xoffs + 470, v - 142 - 70),
             size=(0, 0),
             color=(0.6, 0.6, 0.7),
             maxwidth=230,
@@ -625,7 +632,7 @@ class LeagueRankWindow(bui.Window):
 
         self._to_ranked_text = bui.textwidget(
             parent=w_parent,
-            position=(470, v - 250 - 70),
+            position=(self._xoffs + 470, v - 250 - 70),
             size=(0, 0),
             color=(0.6, 0.6, 0.7),
             maxwidth=230,
@@ -639,7 +646,7 @@ class LeagueRankWindow(bui.Window):
 
         self._power_ranking_rank_text = bui.textwidget(
             parent=w_parent,
-            position=(473, v - 210 - 70),
+            position=(self._xoffs + 473, v - 210 - 70),
             size=(0, 0),
             big=False,
             text='-',
@@ -650,7 +657,7 @@ class LeagueRankWindow(bui.Window):
 
         self._season_ends_text = bui.textwidget(
             parent=w_parent,
-            position=(470, v - 380),
+            position=(self._xoffs + 470, v - 380),
             size=(0, 0),
             color=(0.6, 0.6, 0.6),
             maxwidth=230,
@@ -663,7 +670,7 @@ class LeagueRankWindow(bui.Window):
         )
         self._trophy_counts_reset_text = bui.textwidget(
             parent=w_parent,
-            position=(470, v - 410),
+            position=(self._xoffs + 470, v - 410),
             size=(0, 0),
             color=(0.5, 0.5, 0.5),
             maxwidth=230,
@@ -685,7 +692,7 @@ class LeagueRankWindow(bui.Window):
         self._see_more_button = bui.buttonwidget(
             parent=w_parent,
             label=self._rdict.seeMoreText,
-            position=(h, v),
+            position=(self._xoffs + h, v),
             color=(0.5, 0.5, 0.6),
             textcolor=(0.7, 0.7, 0.8),
             size=(230, 60),
@@ -732,6 +739,7 @@ class LeagueRankWindow(bui.Window):
         if not self._root_widget:
             return
         plus = bui.app.plus
+        uiscale = bui.app.ui_v1.uiscale
         assert plus is not None
         assert bui.app.classic is not None
         accounts = bui.app.classic.accounts
@@ -825,7 +833,7 @@ class LeagueRankWindow(bui.Window):
             assert self._subcontainer
             self._season_popup_menu = PopupMenu(
                 parent=self._subcontainer,
-                position=(390, v - 45),
+                position=(self._xoffs + 390, v - 45),
                 width=150,
                 button_size=(200, 50),
                 choices=season_choices,
@@ -843,11 +851,12 @@ class LeagueRankWindow(bui.Window):
                 edit=self._season_popup_menu.get_button(),
                 up_widget=self._back_button,
             )
-            bui.widget(
-                edit=self._back_button,
-                down_widget=self._power_ranking_achievements_button,
-                right_widget=self._season_popup_menu.get_button(),
-            )
+            if uiscale is not bui.UIScale.SMALL:
+                bui.widget(
+                    edit=self._back_button,
+                    down_widget=self._power_ranking_achievements_button,
+                    right_widget=self._season_popup_menu.get_button(),
+                )
 
         bui.textwidget(
             edit=self._league_title_text,
@@ -928,7 +937,10 @@ class LeagueRankWindow(bui.Window):
             text=lnum,
             color=lcolor,
             position=(
-                self._league_number_base_pos[0] + l_text_width * 0.5 + 8,
+                self._xoffs
+                + self._league_number_base_pos[0]
+                + l_text_width * 0.5
+                + 8,
                 self._league_number_base_pos[1] + 10,
             ),
         )
@@ -957,7 +969,7 @@ class LeagueRankWindow(bui.Window):
 
         bui.textwidget(
             edit=self._power_ranking_rank_text,
-            position=(473, v - 70 - (170 if do_percent else 220)),
+            position=(self._xoffs + 473, v - 70 - (170 if do_percent else 220)),
             text=status_text,
             big=(in_top or do_percent),
             scale=(
@@ -1080,7 +1092,7 @@ class LeagueRankWindow(bui.Window):
             self._power_ranking_score_widgets.append(
                 bui.textwidget(
                     parent=w_parent,
-                    position=(h2 - 20, v2),
+                    position=(self._xoffs + h2 - 20, v2),
                     size=(0, 0),
                     color=(1, 1, 1) if is_us else (0.6, 0.6, 0.7),
                     maxwidth=40,
@@ -1095,7 +1107,7 @@ class LeagueRankWindow(bui.Window):
             self._power_ranking_score_widgets.append(
                 bui.textwidget(
                     parent=w_parent,
-                    position=(h2 + 20, v2),
+                    position=(self._xoffs + h2 + 20, v2),
                     size=(0, 0),
                     color=(1, 1, 1) if is_us else tally_color,
                     maxwidth=60,
@@ -1109,7 +1121,7 @@ class LeagueRankWindow(bui.Window):
             )
             txt = bui.textwidget(
                 parent=w_parent,
-                position=(h2 + 60, v2 - (28 * 0.5) / 0.9),
+                position=(self._xoffs + h2 + 60, v2 - (28 * 0.5) / 0.9),
                 size=(210 / 0.9, 28),
                 color=(1, 1, 1) if is_us else (0.6, 0.6, 0.6),
                 maxwidth=210,
@@ -1155,19 +1167,15 @@ class LeagueRankWindow(bui.Window):
         pass
 
     def _back(self) -> None:
-        from bauiv1lib.coop.browser import CoopBrowserWindow
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
         self._save_state()
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        if not self._modal:
-            assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_menu_window(
-                CoopBrowserWindow(transition='in_left').get_root_widget(),
-                from_window=self._root_widget,
+        if self._modal:
+            bui.containerwidget(
+                edit=self._root_widget, transition=self._transition_out
             )
+        else:
+            self.main_window_back()

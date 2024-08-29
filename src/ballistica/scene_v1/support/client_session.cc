@@ -7,6 +7,7 @@
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/networking/networking.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
@@ -18,7 +19,6 @@
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/scene.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 
 namespace ballistica::scene_v1 {
@@ -364,7 +364,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
         }
         case SessionCommand::kSetForegroundScene: {
           Scene* scene = GetScene(ReadInt32());
-          if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+          if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
             appmode->SetForegroundScene(scene);
           }
           break;

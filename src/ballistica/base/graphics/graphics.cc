@@ -19,6 +19,7 @@
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
@@ -728,6 +729,9 @@ void Graphics::DrawUI(FrameDef* frame_def) {
   // Just do generic thing in our default implementation.
   // Special variants like GraphicsVR may do fancier stuff here.
   g_base->ui->Draw(frame_def);
+
+  // We may want to see the bounds of our virtual screen.
+  DrawUIBounds(frame_def->overlay_pass());
 }
 
 void Graphics::DrawDevUI(FrameDef* frame_def) {
@@ -1500,14 +1504,25 @@ void Graphics::DrawRadialMeter(MeshIndexedSimpleFull* m, float amt) {
 void Graphics::OnScreenSizeChange() {}
 
 void Graphics::CalcVirtualRes_(float* x, float* y) {
+  assert(g_base);
+  float base_virtual_res_x;
+  float base_virtual_res_y;
+  if (g_base->ui->scale() == UIScale::kSmall) {
+    base_virtual_res_x = kBaseVirtualResSmallX;
+    base_virtual_res_y = kBaseVirtualResSmallY;
+  } else {
+    base_virtual_res_x = kBaseVirtualResX;
+    base_virtual_res_y = kBaseVirtualResY;
+  }
+
   float x_in = *x;
   float y_in = *y;
-  if (*x / *y > static_cast<float>(kBaseVirtualResX)
-                    / static_cast<float>(kBaseVirtualResY)) {
-    *y = kBaseVirtualResY;
+  if (*x / *y > static_cast<float>(base_virtual_res_x)
+                    / static_cast<float>(base_virtual_res_y)) {
+    *y = base_virtual_res_y;
     *x = *y * (x_in / y_in);
   } else {
-    *x = kBaseVirtualResX;
+    *x = base_virtual_res_x;
     *y = *x * (y_in / x_in);
   }
 }
@@ -1699,6 +1714,37 @@ void Graphics::UpdatePlaceholderSettings() {
 
   texture_quality_placeholder_ = TextureQualityFromRequest(
       settings()->texture_quality, client_context()->auto_texture_quality);
+}
+
+void Graphics::DrawUIBounds(RenderPass* pass) {
+  // We can optionally draw a guide to show the edges of the overlay pass
+  if (draw_ui_bounds_) {
+    SimpleComponent c(pass);
+    c.SetColor(1, 0, 0);
+    {
+      auto xf = c.ScopedTransform();
+      // float width = pass->virtual_width();
+      // float height = pass->virtual_height();
+
+      // printf("DIMS %.2f %.2f\n", width, height);
+
+      float width, height;
+      if (g_base->ui->scale() == UIScale::kSmall) {
+        width = kBaseVirtualResSmallX;
+        height = kBaseVirtualResSmallY;
+      } else {
+        width = kBaseVirtualResX;
+        height = kBaseVirtualResY;
+      }
+
+      // Slight offset in z to reduce z fighting.
+      c.Translate(0.5f * pass->virtual_width(), 0.5f * pass->virtual_height(),
+                  0.0f);
+      c.Scale(width, height, 0.01f);
+      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kOverlayGuide));
+    }
+    c.Submit();
+  }
 }
 
 }  // namespace ballistica::base

@@ -7,7 +7,7 @@ from __future__ import annotations
 import copy
 import time
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 import bauiv1 as bui
@@ -15,16 +15,21 @@ import bauiv1 as bui
 if TYPE_CHECKING:
     from typing import Any
 
+REQUIRE_PRO = False
 
-class PlaylistCustomizeBrowserWindow(bui.Window):
+# TEMP
+UNDER_CONSTRUCTION = True
+
+
+class PlaylistCustomizeBrowserWindow(bui.MainWindow):
     """Window for viewing a playlist."""
 
     def __init__(
         self,
         sessiontype: type[bs.Session],
-        transition: str = 'in_right',
-        select_playlist: str | None = None,
+        transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
+        select_playlist: str | None = None,
     ):
         # Yes this needs tidying.
         # pylint: disable=too-many-locals
@@ -32,22 +37,13 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib import playlist
 
-        scale_origin: tuple[float, float] | None
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
-        else:
-            self._transition_out = 'out_right'
-            scale_origin = None
-
         self._sessiontype = sessiontype
         self._pvars = playlist.PlaylistTypeVars(sessiontype)
         self._max_playlists = 30
         self._r = 'gameListWindow'
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 850.0 if uiscale is bui.UIScale.SMALL else 650.0
+        self._width = 970.0 if uiscale is bui.UIScale.SMALL else 650.0
         x_inset = 100.0 if uiscale is bui.UIScale.SMALL else 0.0
         self._height = (
             380.0
@@ -59,29 +55,47 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
-                transition=transition,
-                scale_origin_stack_offset=scale_origin,
                 scale=(
-                    2.05
+                    1.83
                     if uiscale is bui.UIScale.SMALL
                     else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
+                ),
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
                 ),
                 stack_offset=(
                     (0, -10) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
-        self._back_button = back_button = btn = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(43 + x_inset, self._height - 60),
-            size=(160, 68),
-            scale=0.77,
-            autoselect=True,
-            text_scale=1.3,
-            label=bui.Lstr(resource='backText'),
-            button_type='back',
-        )
+        self._back_button: bui.Widget | None
+        if uiscale is bui.UIScale.SMALL:
+            self._back_button = None
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self._back
+            )
+        else:
+            self._back_button = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(43 + x_inset, self._height - 60),
+                size=(160, 68),
+                scale=0.77,
+                autoselect=True,
+                text_scale=1.3,
+                label=bui.Lstr(resource='backText'),
+                button_type='back',
+            )
+            bui.buttonwidget(
+                edit=self._back_button,
+                button_type='backSmall',
+                size=(60, 60),
+                label=bui.charstr(bui.SpecialChar.BACK),
+            )
 
         bui.textwidget(
             parent=self._root_widget,
@@ -95,13 +109,6 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
             maxwidth=290,
             h_align='center',
             v_align='center',
-        )
-
-        bui.buttonwidget(
-            edit=btn,
-            button_type='backSmall',
-            size=(60, 60),
-            label=bui.charstr(bui.SpecialChar.BACK),
         )
 
         v = self._height - 59.0
@@ -261,7 +268,9 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
             size=(self._width - (180 + 2 * x_inset), self._scroll_height + 10),
             highlight=False,
         )
-        bui.widget(edit=back_button, right_widget=scrollwidget)
+        if self._back_button is not None:
+            bui.widget(edit=self._back_button, right_widget=scrollwidget)
+
         self._columnwidget = bui.columnwidget(
             parent=scrollwidget, border=2, margin=0
         )
@@ -279,11 +288,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         bui.widget(
             edit=scrollwidget,
             left_widget=new_button,
-            right_widget=(
-                bui.get_special_widget('party_button')
-                if bui.app.ui_v1.use_toolbars
-                else None
-            ),
+            right_widget=bui.get_special_widget('squad_button'),
         )
 
         # make sure config exists
@@ -298,8 +303,13 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
 
         self._refresh(select_playlist=select_playlist)
 
-        bui.buttonwidget(edit=back_button, on_activate_call=self._back)
-        bui.containerwidget(edit=self._root_widget, cancel_button=back_button)
+        if self._back_button is not None:
+            bui.buttonwidget(
+                edit=self._back_button, on_activate_call=self._back
+            )
+            bui.containerwidget(
+                edit=self._root_widget, cancel_button=self._back_button
+            )
 
         bui.containerwidget(edit=self._root_widget, selected_child=scrollwidget)
 
@@ -309,15 +319,38 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         )
         self._update()
 
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Avoid dereferencing self within the lambda or we'll keep
+        # ourself alive indefinitely.
+        stype = self._sessiontype
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition,
+                origin_widget=origin_widget,
+                sessiontype=stype,
+            )
+        )
+
+    # @override
+    # def on_main_window_close(self) -> None:
+    #     self._save_state()
+
     def _update(self) -> None:
         assert bui.app.classic is not None
         have = bui.app.classic.accounts.have_pro_options()
         for lock in self._lock_images:
-            bui.imagewidget(edit=lock, opacity=0.0 if have else 1.0)
+            bui.imagewidget(
+                edit=lock, opacity=0.0 if (have or not REQUIRE_PRO) else 1.0
+            )
 
     def _back(self) -> None:
         # pylint: disable=cyclic-import
-        from bauiv1lib.playlist import browser
+        # from bauiv1lib.playlist import browser
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -330,16 +363,18 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
             )
             cfg.commit()
 
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            browser.PlaylistBrowserWindow(
-                transition='in_left', sessiontype=self._sessiontype
-            ).get_root_widget(),
-            from_window=self._root_widget,
-        )
+        self.main_window_back()
+        # bui.containerwidget(
+        #     edit=self._root_widget, transition=self._transition_out
+        # )
+        # assert bui.app.classic is not None
+        # bui.app.ui_v1.set_main_window(
+        #     browser.PlaylistBrowserWindow(
+        #         transition='in_left', sessiontype=self._sessiontype
+        #     ),
+        #     from_window=self,
+        #     is_back=True,
+        # )
 
     def _select(self, name: str, index: int) -> None:
         self._selected_playlist_name = name
@@ -418,7 +453,14 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
 
             # Hitting up from top widget should jump to 'back'
             if index == 0:
-                bui.widget(edit=txtw, up_widget=self._back_button)
+                bui.widget(
+                    edit=txtw,
+                    up_widget=(
+                        self._back_button
+                        if self._back_button is not None
+                        else bui.get_special_widget('back_button')
+                    ),
+                )
 
             self._playlist_widgets.append(txtw)
 
@@ -469,8 +511,12 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         from bauiv1lib.playlist.editcontroller import PlaylistEditController
         from bauiv1lib.purchase import PurchaseWindow
 
+        if UNDER_CONSTRUCTION:
+            bui.screenmessage('UNDER CONSTRUCTION')
+            return
+
         assert bui.app.classic is not None
-        if not bui.app.classic.accounts.have_pro_options():
+        if REQUIRE_PRO and not bui.app.classic.accounts.have_pro_options():
             PurchaseWindow(items=['pro'])
             return
 
@@ -500,8 +546,12 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         from bauiv1lib.playlist.editcontroller import PlaylistEditController
         from bauiv1lib.purchase import PurchaseWindow
 
+        if UNDER_CONSTRUCTION:
+            bui.screenmessage('UNDER CONSTRUCTION')
+            return
+
         assert bui.app.classic is not None
-        if not bui.app.classic.accounts.have_pro_options():
+        if REQUIRE_PRO and not bui.app.classic.accounts.have_pro_options():
             PurchaseWindow(items=['pro'])
             return
         if self._selected_playlist_name is None:
@@ -584,7 +634,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         assert plus is not None
 
         assert bui.app.classic is not None
-        if not bui.app.classic.accounts.have_pro_options():
+        if REQUIRE_PRO and not bui.app.classic.accounts.have_pro_options():
             PurchaseWindow(items=['pro'])
             return
 
@@ -626,7 +676,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         from bauiv1lib.confirm import ConfirmWindow
 
         assert bui.app.classic is not None
-        if not bui.app.classic.accounts.have_pro_options():
+        if REQUIRE_PRO and not bui.app.classic.accounts.have_pro_options():
             PurchaseWindow(items=['pro'])
             return
 
@@ -666,7 +716,7 @@ class PlaylistCustomizeBrowserWindow(bui.Window):
         assert plus is not None
 
         assert bui.app.classic is not None
-        if not bui.app.classic.accounts.have_pro_options():
+        if REQUIRE_PRO and not bui.app.classic.accounts.have_pro_options():
             PurchaseWindow(items=['pro'])
             return
         if self._selected_playlist_name is None:

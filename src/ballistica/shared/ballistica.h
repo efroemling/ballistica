@@ -41,10 +41,16 @@ const int kMaxPacketSize = 700;
 const int kMessagePacketHeaderSize = 6;
 
 // The screen, no matter what size/aspect, will always fit this virtual
-// rectangle, so placing UI elements within these coords is always safe. (we
-// currently match the screen ratio of an iPhone 5).
-const int kBaseVirtualResX = 1207;
-const int kBaseVirtualResY = 680;
+// rectangle, so placing UI elements within these coords is always safe.
+
+// Our standard virtual res (16:9 aspect ratio).
+const int kBaseVirtualResX = 1280;
+const int kBaseVirtualResY = 720;
+
+// Our 'small' res which is used for 'small' ui mode only. This matches
+// the 19.5:9 aspect ratio common on modern smartphones (as of 2024).
+const int kBaseVirtualResSmallX = 1300;
+const int kBaseVirtualResSmallY = 600;
 
 // Magic numbers at the start of our file types.
 const int kBrpFileID = 83749;
