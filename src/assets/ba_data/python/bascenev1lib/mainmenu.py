@@ -43,6 +43,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         self._update_timer: bs.Timer | None = None
         self._news: NewsDisplay | None = None
         self._attract_mode_timer: bs.Timer | None = None
+        self._logo_rotate_timer: bs.Timer | None = None
 
     @override
     def on_transition_in(self) -> None:
