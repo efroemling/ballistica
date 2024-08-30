@@ -67,7 +67,7 @@ base::InputDeviceDelegate* ClassicAppMode::CreateInputDeviceDelegate(
 // Go with 5 minute ban.
 const int kKickBanSeconds = 5 * 60;
 
-bool ClassicAppMode::InClassicMainMenuSession() const {
+bool ClassicAppMode::IsInMainMenu() const {
   scene_v1::HostSession* hostsession =
       scene_v1::ContextRefSceneV1::FromAppForegroundContext().GetHostSession();
   return (hostsession && hostsession->is_main_menu());

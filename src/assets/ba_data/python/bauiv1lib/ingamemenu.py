@@ -49,7 +49,11 @@ class InGameMenuWindow(bui.MainWindow):
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
-        cls = type(self)
+        return self.do_get_main_window_state()
+
+    @classmethod
+    def do_get_main_window_state(cls) -> bui.MainWindowState:
+        """Classmethod to gen a windowstate for the main menu."""
         return bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
                 transition=transition, origin_widget=origin_widget

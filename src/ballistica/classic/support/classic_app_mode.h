@@ -155,7 +155,7 @@ class ClassicAppMode : public base::AppMode {
   void OnAppStart() override;
   void OnAppSuspend() override;
   void OnAppUnsuspend() override;
-  auto InClassicMainMenuSession() const -> bool override;
+  auto IsInMainMenu() const -> bool override;
   auto CreateInputDeviceDelegate(base::InputDevice* device)
       -> base::InputDeviceDelegate* override;
 

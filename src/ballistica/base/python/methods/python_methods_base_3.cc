@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
+#include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/platform/base_platform.h"
@@ -348,6 +349,37 @@ static PyMethodDef PyInLogicThreadDef = {
     "(internal)\n"
     "\n"
     "Returns whether or not the current thread is the logic thread.",
+};
+
+// ------------------------------ in_main_menu ---------------------------------
+
+static auto PyInMainMenu(PyObject* self, PyObject* args,
+                         PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  static const char* kwlist[] = {nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
+                                   const_cast<char**>(kwlist))) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (g_base->app_mode()->IsInMainMenu()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyInMainMenuDef = {
+    "in_main_menu",                // name
+    (PyCFunction)PyInMainMenu,     // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "in_main_menu() -> bool\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Returns whether or not the app-mode is currently in a main menu\n"
+    "situation (as opposed to gameplay).",
 };
 
 // ----------------------------- set_thread_name -------------------------------
@@ -1949,6 +1981,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyGetThreadNameDef,
       PySetThreadNameDef,
       PyInLogicThreadDef,
+      PyInMainMenuDef,
       PyRequestPermissionDef,
       PyHavePermissionDef,
       PyUnlockAllInputDef,
