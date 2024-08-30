@@ -683,7 +683,7 @@ void RootWidget::Setup() {
       td.button = b;
       td.y = 0.0f;
       td.width = bd.width * 0.8f;
-      td.text = "PlayerName";
+      td.text = "AccountName";
       td.scale = 1.2f;
       td.depth_min = 0.3f;
       td.color_r = 0.5f;

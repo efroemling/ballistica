@@ -1,4 +1,4 @@
-### 1.7.37 (build 21974, api 9, 2024-08-30)
+### 1.7.37 (build 21976, api 9, 2024-08-30)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -41,7 +41,7 @@
   back-button handling are more automatic and windows don't have to hard-code
   where they came from. There are also other benefits such as better state
   saving/restoring. When writing a MainWindow, pretty much all navigation should
-  only need too use methods: `can_change_main_window()`, `main_window_back()`,
+  only need too use methods: `main_window_has_control()`, `main_window_back()`,
   and `main_window_replace()`.
 - Finally got things updated so language testing works again, and made it a bit
   spiffier while at it. You now simply point the game at your test language and

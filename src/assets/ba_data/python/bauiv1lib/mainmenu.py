@@ -487,7 +487,7 @@ class MainMenuWindow(bui.MainWindow):
         from bauiv1lib.confirm import QuitWindow
 
         # no-op if we're not currently in control.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             return
 
         # Note: Normally we should go through bui.quit(confirm=True) but
@@ -500,7 +500,7 @@ class MainMenuWindow(bui.MainWindow):
         from bauiv1lib.credits import CreditsWindow
 
         # no-op if we're not currently in control.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             return
 
         self.main_window_replace(
@@ -513,7 +513,7 @@ class MainMenuWindow(bui.MainWindow):
         from bauiv1lib.helpui import HelpWindow
 
         # no-op if we're not currently in control.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             return
 
         self.main_window_replace(
@@ -580,7 +580,7 @@ class MainMenuWindow(bui.MainWindow):
         from bauiv1lib.gather import GatherWindow
 
         # no-op if we're not currently in control.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             return
 
         self.main_window_replace(
@@ -592,7 +592,7 @@ class MainMenuWindow(bui.MainWindow):
         from bauiv1lib.watch import WatchWindow
 
         # no-op if we're not currently in control.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             return
 
         self.main_window_replace(
@@ -604,7 +604,7 @@ class MainMenuWindow(bui.MainWindow):
         from bauiv1lib.play import PlayWindow
 
         # no-op if we're not currently in control.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             return
 
         classic = bui.app.classic
