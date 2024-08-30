@@ -2,7 +2,7 @@
 #
 """Gameplay-centric api for classic BombSquad."""
 
-# ba_meta require api 8
+# ba_meta require api 9
 
 # The stuff we expose here at the top level is our 'public' api for use
 # from other modules/packages. Code *within* this package should import

@@ -2,7 +2,7 @@
 #
 """Defines a capture-the-flag game."""
 
-# ba_meta require api 8
+# ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
 from __future__ import annotations

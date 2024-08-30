@@ -16,7 +16,7 @@ classic submodules directly, it is much harder to make it cleanly handle
 classic not being present.
 """
 
-# ba_meta require api 8
+# ba_meta require api 9
 
 # Note: Code relying on classic should import things from here *only*
 # for type-checking and use the versions in ba*.app.classic at runtime;

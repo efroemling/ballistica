@@ -3,7 +3,9 @@
 #include "ballistica/ui_v1/widget/root_widget.h"
 
 #include "ballistica/base/app_mode/app_mode.h"
-#include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/base/assets/assets.h"
+#include "ballistica/base/graphics/renderer/render_pass.h"
+#include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/shared/foundation/inline.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/button_widget.h"

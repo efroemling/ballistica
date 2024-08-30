@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 
     from bauiv1lib.coop.tournamentbutton import TournamentButton
 
+HARD_REQUIRES_PRO = False
+
 
 class CoopBrowserWindow(bui.MainWindow):
     """Window for browsing co-op levels/games/etc."""
@@ -90,6 +92,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         if (
             self._campaign_difficulty == 'hard'
+            and HARD_REQUIRES_PRO
             and not classic.accounts.have_pro_options()
         ):
             plus.add_v1_account_transaction(
@@ -430,7 +433,12 @@ class CoopBrowserWindow(bui.MainWindow):
             bui.imagewidget(
                 edit=self._hard_button_lock_image,
                 opacity=(
-                    0.0 if bui.app.classic.accounts.have_pro_options() else 1.0
+                    0.0
+                    if (
+                        (not HARD_REQUIRES_PRO)
+                        or bui.app.classic.accounts.have_pro_options()
+                    )
+                    else 1.0
                 ),
             )
         except Exception:
@@ -490,6 +498,7 @@ class CoopBrowserWindow(bui.MainWindow):
         if difficulty != self._campaign_difficulty:
             if (
                 difficulty == 'hard'
+                and HARD_REQUIRES_PRO
                 and not bui.app.classic.accounts.have_pro_options()
             ):
                 PurchaseWindow(items=['pro'])

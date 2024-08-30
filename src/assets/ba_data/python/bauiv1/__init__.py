@@ -2,7 +2,7 @@
 #
 """Ballistica user interface api version 1"""
 
-# ba_meta require api 8
+# ba_meta require api 9
 
 # The stuff we expose here at the top level is our 'public' api.
 # It should only be imported by code outside of this package or
