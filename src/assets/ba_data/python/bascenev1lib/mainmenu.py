@@ -630,12 +630,13 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 bs.animate(cmb, 'input1', keys, loop=True)
 
         if custom_texture is None:
+            logo_scale = 2000.0
             def rotate_logo() -> None:
                 logo.node.rotate = logo.node.rotate + 4
                 logo.node.scale = (
-                    logo.node.scale[0] - 20, logo.node.scale[1] - 20
+                    logo_scale - 20, logo_scale - 20
                 )
-                if logo.node.rotate >= 355:
+                if logo.node.rotate >= 356:
                     self._logo_rotate_timer = None
                     jitter()
             self._logo_rotate_timer = bs.Timer(
