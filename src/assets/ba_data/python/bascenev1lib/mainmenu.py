@@ -617,7 +617,9 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
 
                 # Gen some random keys for that stop-motion-y look
                 for _i in range(10):
-                    keys[time_v] = x + (random.random() - 0.5) * 0.7 * jitter_scale
+                    keys[time_v] = (
+                        x + (random.random() - 0.5) * 0.7 * jitter_scale
+                    )
                     time_v += random.random() * 0.1
                 bs.animate(cmb, 'input0', keys, loop=True)
                 keys = {}
