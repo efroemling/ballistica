@@ -425,7 +425,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/edit.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/entrytypeselect.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/macmusicapp.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/specialoffer.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/browser.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/button.py \
@@ -704,7 +703,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/__pycache__/edit.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/__pycache__/entrytypeselect.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/__pycache__/macmusicapp.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/specialoffer.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/browser.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/button.cpython-312.opt-1.pyc \

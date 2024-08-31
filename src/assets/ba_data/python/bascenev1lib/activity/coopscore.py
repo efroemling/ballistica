@@ -207,20 +207,22 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         )
 
     def _ui_menu(self) -> None:
-        from bauiv1lib import specialoffer
+        # from bauiv1lib import specialoffer
 
-        if specialoffer.show_offer():
-            return
+        # if specialoffer.show_offer():
+        #     return
+
         bui.containerwidget(edit=self._root_ui, transition='out_left')
         with self.context:
             bs.timer(0.1, bs.Call(bs.WeakCall(self.session.end)))
 
     def _ui_restart(self) -> None:
         from bauiv1lib.tournamententry import TournamentEntryWindow
-        from bauiv1lib import specialoffer
 
-        if specialoffer.show_offer():
-            return
+        # from bauiv1lib import specialoffer
+
+        # if specialoffer.show_offer():
+        #     return
 
         # If we're in a tournament and it looks like there's no time left,
         # disallow.
@@ -268,10 +270,10 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 self.end({'outcome': 'restart'})
 
     def _ui_next(self) -> None:
-        from bauiv1lib.specialoffer import show_offer
+        # from bauiv1lib.specialoffer import show_offer
 
-        if show_offer():
-            return
+        # if show_offer():
+        #     return
 
         # If we didn't just complete this level but are choosing to play the
         # next one, set it as current (this won't happen otherwise).

@@ -1,4 +1,4 @@
-### 1.7.37 (build 21976, api 9, 2024-08-30)
+### 1.7.37 (build 21977, api 9, 2024-08-30)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -8,6 +8,7 @@
 - Soundtrack customization no longer requires pro.
 - Campaign hard mode no longer requires pro.
 - Full player profile color customization no longer requires pro.
+- Removed nag screens for purchasing pro or bundle offers.
 - Switching over to the new 'toolbar mode' UI that has been in the works for
   several years. This includes a number of handy things such as consistent
   buttons and widgets for league status, currencies, inventory, and the store.
