@@ -15,6 +15,7 @@ from babase import (
     AppIntentDefault,
     invoke_main_menu,
     screenmessage,
+    in_main_menu,
 )
 
 import _baclassic
@@ -120,20 +121,28 @@ class ClassicAppMode(AppMode):
     def _jump_to_main_window(self, window: MainWindow) -> None:
         """Jump to a window with the main menu as its parent."""
         from bauiv1lib.mainmenu import MainMenuWindow
+        from bauiv1lib.ingamemenu import InGameMenuWindow
 
         ui = app.ui_v1
 
         old_window = ui.get_main_window()
-        if isinstance(old_window, MainMenuWindow):
+
+        if isinstance(old_window, (MainMenuWindow, InGameMenuWindow)):
+            # If we're currently in the top level menu window, just push
+            # our mainwindow on to the end.
             old_window.main_window_replace(window)
         else:
-            # Blow away the window stack.
+            # Blow away the window stack and build a fresh one.
             ui.clear_main_window()
 
             ui.set_main_window(
                 window,
                 from_window=False,  # Disable from-check.
-                back_state=MainMenuWindow.do_get_main_window_state(),
+                back_state=(
+                    MainMenuWindow.do_get_main_window_state()
+                    if in_main_menu()
+                    else InGameMenuWindow.do_get_main_window_state()
+                ),
             )
 
     def _root_ui_menu_press(self) -> None:

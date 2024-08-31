@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, NewType
 
@@ -243,7 +244,6 @@ def cameraflash(duration: float = 999.0) -> None:
     Duration is in seconds.
     """
     # pylint: disable=too-many-locals
-    import random
     from bascenev1._nodeactor import NodeActor
 
     x_spread = 10

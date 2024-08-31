@@ -2,7 +2,7 @@
 #
 """Ballistica user interface api version 1"""
 
-# ba_meta require api 8
+# ba_meta require api 9
 
 # The stuff we expose here at the top level is our 'public' api.
 # It should only be imported by code outside of this package or
@@ -60,6 +60,7 @@ from babase import (
     getclass,
     have_permission,
     in_logic_thread,
+    in_main_menu,
     increment_analytics_count,
     is_browser_likely_available,
     is_xcode_build,
@@ -188,6 +189,7 @@ __all__ = [
     'hscrollwidget',
     'imagewidget',
     'in_logic_thread',
+    'in_main_menu',
     'increment_analytics_count',
     'is_browser_likely_available',
     'is_party_icon_visible',

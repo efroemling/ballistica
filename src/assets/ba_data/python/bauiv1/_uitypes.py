@@ -99,7 +99,7 @@ class MainWindow(Window):
             edit=self._root_widget, transition=self._main_window_transition_out
         )
 
-    def can_change_main_window(self) -> bool:
+    def main_window_has_control(self) -> bool:
         """Is this MainWindow allowed to change the global main window?
 
         It is a good idea to make sure this is True before calling
@@ -118,12 +118,12 @@ class MainWindow(Window):
     def main_window_back(self) -> None:
         """Move back in the main window stack."""
 
-        # Users should always check can_change_main_window() before
+        # Users should always check main_window_has_control() before
         # calling us. Error if it seems they did not.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             raise RuntimeError(
                 'main_window_back() should only be called'
-                ' if can_change_main_window() returns True'
+                ' if main_window_has_control() returns True'
                 ' (it currently is False).'
             )
 
@@ -137,13 +137,13 @@ class MainWindow(Window):
     ) -> None:
         """Replace ourself with a new MainWindow."""
 
-        # Users should always check can_change_main_window() before
+        # Users should always check main_window_has_control() before
         # creating new MainWindows and passing them in here. Error if it
         # seems they did not.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             raise RuntimeError(
                 'main_window_replace() should only be called'
-                ' if can_change_main_window() returns True'
+                ' if main_window_has_control() returns True'
                 ' (it currently is False).'
             )
 

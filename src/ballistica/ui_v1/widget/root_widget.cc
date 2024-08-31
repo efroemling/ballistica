@@ -3,7 +3,9 @@
 #include "ballistica/ui_v1/widget/root_widget.h"
 
 #include "ballistica/base/app_mode/app_mode.h"
-#include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/base/assets/assets.h"
+#include "ballistica/base/graphics/renderer/render_pass.h"
+#include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/shared/foundation/inline.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/button_widget.h"
@@ -43,6 +45,8 @@ struct RootWidget::ButtonDef {
   uint32_t visibility_mask{};
   bool selectable{true};
   bool enable_sound{true};
+  bool allow_in_main_menu{true};
+  bool allow_in_game{true};
   float h_align{};
   float x{};
   float y{};
@@ -81,6 +85,8 @@ struct RootWidget::Button {
   bool selectable{true};
   bool fully_offscreen{};
   bool enabled{};
+  bool allow_in_main_menu{true};
+  bool allow_in_game{true};
   uint32_t visibility_mask{};
 };
 
@@ -221,6 +227,8 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
+
+    bd.allow_in_game = false;
 
     // Show some in store mode.
     if (type == MeterType::kLevel || type == MeterType::kTickets) {
@@ -491,6 +499,8 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
     }
 
     bd.pre_buffer = -10.0f;
+    bd.allow_in_game = false;
+
     Button* btn = AddButton_(bd);
     if (type == MeterType::kTokens) {
       get_tokens_button_ = btn;
@@ -662,11 +672,7 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
 
-    // on desktop, stick this in the top left corner
-    // if (g_ui->scale() == UIScale::kLarge) {
-    //   bd.h_align = 0.0f;
-    //   bd.x = 120.0f;
-    // }
+    bd.allow_in_game = false;
 
     Button* b = account_button_ = AddButton_(bd);
     top_left_buttons_.push_back(b);
@@ -675,9 +681,9 @@ void RootWidget::Setup() {
     {
       TextDef td;
       td.button = b;
-      td.y = 9.0f;
-      td.width = bd.width * 0.9f;
-      td.text = "Player Name";
+      td.y = 0.0f;
+      td.width = bd.width * 0.8f;
+      td.text = "AccountName";
       td.scale = 1.2f;
       td.depth_min = 0.3f;
       td.color_r = 0.5f;
@@ -688,19 +694,19 @@ void RootWidget::Setup() {
     }
 
     // Clan.
-    {
-      TextDef td;
-      td.button = b;
-      td.y = -12.0f;
-      td.width = bd.width * 0.9f;
-      td.depth_min = 0.3f;
-      td.text = "Clan Name";
-      td.color_a = 0.6f;
-      td.scale = 0.6f;
-      td.flatness = 1.0f;
-      td.shadow = 0.0f;
-      AddText_(td);
-    }
+    // {
+    //   TextDef td;
+    //   td.button = b;
+    //   td.y = -12.0f;
+    //   td.width = bd.width * 0.9f;
+    //   td.depth_min = 0.3f;
+    //   td.text = "Clan Name";
+    //   td.color_a = 0.6f;
+    //   td.scale = 0.6f;
+    //   td.flatness = 1.0f;
+    //   td.shadow = 0.0f;
+    //   AddText_(td);
+    // }
   }
 
   // float anchorx = 0.0f;
@@ -737,6 +743,7 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     b.pre_buffer = 5.0f;
     b.enable_sound = false;
+    b.allow_in_main_menu = false;
     menu_button_ = AddButton_(b);
     top_right_buttons_.push_back(menu_button_);
   }
@@ -795,6 +802,7 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     b.pre_buffer = 20.0f;
+    b.allow_in_game = false;
     inbox_button_ = AddButton_(b);
     bottom_left_buttons_.push_back(inbox_button_);
   }
@@ -819,6 +827,7 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     b.pre_buffer = 20.0f;
+    b.allow_in_game = false;
     achievements_button_ = AddButton_(b);
     bottom_left_buttons_.push_back(achievements_button_);
     bx += 80.0f;
@@ -1007,7 +1016,7 @@ void RootWidget::Setup() {
           (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
            | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
            | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-
+      bd.allow_in_game = false;
       AddButton_(bd);
     }
 
@@ -1026,6 +1035,7 @@ void RootWidget::Setup() {
     float spacing = 130.0f;
     b.x = -1.5f * spacing;
     b.call = UIV1Python::ObjID::kRootUIChestSlot1PressCall;
+    b.allow_in_game = false;
     AddButton_(b);
 
     b.x = -0.5f * spacing;
@@ -1090,6 +1100,7 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     b.disable_offset_scale = 1.5f;
     b.pre_buffer = 20.0f;
+    b.allow_in_game = false;
     inventory_button_ = AddButton_(b);
     bottom_right_buttons_.push_back(inventory_button_);
   }
@@ -1109,6 +1120,8 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     b.pre_buffer = 20.0f;
+    b.allow_in_game = false;
+
     store_button_ = AddButton_(b);
     bottom_right_buttons_.push_back(store_button_);
   }
@@ -1147,6 +1160,8 @@ auto RootWidget::AddButton_(const ButtonDef& def) -> RootWidget::Button* {
   b.h_align = def.h_align;
   b.v_align = def.v_align;
   b.selectable = def.selectable;
+  b.allow_in_game = def.allow_in_game;
+  b.allow_in_main_menu = def.allow_in_main_menu;
   b.widget = Object::New<ButtonWidget>();
   b.widget->SetColor(def.color_r, def.color_g, def.color_b);
   b.widget->set_opacity(def.opacity);
@@ -1246,11 +1261,8 @@ void RootWidget::UpdateForFocusedWindow() {
 }
 
 void RootWidget::UpdateForFocusedWindow_(Widget* widget) {
-  // Take note if the current session is the main menu; we do a few things
-  // differently there.
-  //
-  // FIXME - need a more generalized way to determine this.
-  in_main_menu_ = g_base->app_mode()->InClassicMainMenuSession();
+  // Take note whether we're currently in a main menu vs gameplay.
+  in_main_menu_ = g_base->app_mode()->IsInMainMenu();
 
   if (widget == nullptr) {
     toolbar_visibility_ = ToolbarVisibility::kInGame;
@@ -1278,9 +1290,23 @@ void RootWidget::StepPositions_(float dt) {
     // When we're in the main menu, always disable the menu button and
     // shift the party button a bit to the right
     if (in_main_menu_) {
-      if (&b == menu_button_) {
+      if (!b.allow_in_main_menu) {
         enable_button = false;
       }
+      // Disallow menu button in the main menu.
+      // if (&b == menu_button_) {
+      //   enable_button = false;
+      // }
+    } else {
+      if (!b.allow_in_game) {
+        enable_button = false;
+      }
+      // Disallow most buttons in-game.
+      // if (&b == inbox_button_ || &b == achievements_button_
+      //     || &b == account_button_ || &b == level_meter_button_
+      //     || &b == trophy_meter_button_ || &b == store_button_ || &b == ) {
+      //   enable_button = false;
+      // }
     }
     if (&b == back_button_) {
       // Back button is always disabled in medium/large UI.

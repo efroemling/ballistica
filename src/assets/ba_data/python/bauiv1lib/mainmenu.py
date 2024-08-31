@@ -153,6 +153,33 @@ class MainMenuWindow(bui.MainWindow):
 
         app = bui.app
         assert app.classic is not None
+        uiscale = app.ui_v1.uiscale
+
+        # Temp note about UI changes.
+        bui.textwidget(
+            parent=self._root_widget,
+            position=(
+                (-400, 400)
+                if uiscale is bui.UIScale.LARGE
+                else (
+                    (-270, 320)
+                    if uiscale is bui.UIScale.MEDIUM
+                    else (-280, 280)
+                )
+            ),
+            size=(0, 0),
+            scale=0.4,
+            flatness=1.0,
+            text=(
+                'WARNING: This build contains a revamped UI\n'
+                'which is still a work-in-progress. A number\n'
+                'of features are not currently functional or\n'
+                'contain bugs. To go back to the stable legacy UI,\n'
+                'grab version 1.7.36 from ballistica.net'
+            ),
+            h_align='left',
+            v_align='top',
+        )
 
         self._have_quit_button = app.classic.platform in (
             'windows',
@@ -183,7 +210,6 @@ class MainMenuWindow(bui.MainWindow):
         side_button_2_y_offs = 10.0
         side_button_2_scale = 0.5
 
-        uiscale = bui.app.ui_v1.uiscale
         if uiscale is bui.UIScale.SMALL:
             root_widget_scale = 1.3
             button_y_offs = -20.0
@@ -202,6 +228,24 @@ class MainMenuWindow(bui.MainWindow):
             size=(self._width, self._height),
             background=False,
             scale=root_widget_scale,
+        )
+
+        # Version/copyright info.
+        bui.textwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, button_y_offs - 10),
+            size=(0, 0),
+            scale=0.4,
+            flatness=1.0,
+            color=(1, 1, 1, 0.3),
+            text=(
+                f'{app.env.engine_version}'
+                f' build {app.env.engine_build_number}.'
+                f' Copyright 2024 Eric Froemling.'
+            ),
+            h_align='center',
+            v_align='center',
+            transition_delay=self._t_delay_play,
         )
 
         # In kiosk mode, provide a button to get back to the kiosk menu.
@@ -443,7 +487,7 @@ class MainMenuWindow(bui.MainWindow):
         from bauiv1lib.confirm import QuitWindow
 
         # no-op if we're not currently in control.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             return
 
         # Note: Normally we should go through bui.quit(confirm=True) but
@@ -456,7 +500,7 @@ class MainMenuWindow(bui.MainWindow):
         from bauiv1lib.credits import CreditsWindow
 
         # no-op if we're not currently in control.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             return
 
         self.main_window_replace(
@@ -469,7 +513,7 @@ class MainMenuWindow(bui.MainWindow):
         from bauiv1lib.helpui import HelpWindow
 
         # no-op if we're not currently in control.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             return
 
         self.main_window_replace(
@@ -536,7 +580,7 @@ class MainMenuWindow(bui.MainWindow):
         from bauiv1lib.gather import GatherWindow
 
         # no-op if we're not currently in control.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             return
 
         self.main_window_replace(
@@ -548,7 +592,7 @@ class MainMenuWindow(bui.MainWindow):
         from bauiv1lib.watch import WatchWindow
 
         # no-op if we're not currently in control.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             return
 
         self.main_window_replace(
@@ -560,7 +604,7 @@ class MainMenuWindow(bui.MainWindow):
         from bauiv1lib.play import PlayWindow
 
         # no-op if we're not currently in control.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             return
 
         classic = bui.app.classic

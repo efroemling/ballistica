@@ -12,6 +12,8 @@ import bauiv1 as bui
 if TYPE_CHECKING:
     from typing import Any, Sequence
 
+REQUIRE_PRO = False
+
 
 class ColorPicker(PopupWindow):
     """A popup UI to select from a set of colors.
@@ -105,9 +107,8 @@ class ColorPicker(PopupWindow):
             on_activate_call=bui.WeakCall(self._select_other),
         )
 
-        # Custom colors are limited to pro currently.
         assert bui.app.classic is not None
-        if not bui.app.classic.accounts.have_pro():
+        if REQUIRE_PRO and not bui.app.classic.accounts.have_pro():
             bui.imagewidget(
                 parent=self.root_widget,
                 position=(50, 12),
@@ -137,7 +138,7 @@ class ColorPicker(PopupWindow):
 
         # Requires pro.
         assert bui.app.classic is not None
-        if not bui.app.classic.accounts.have_pro():
+        if REQUIRE_PRO and not bui.app.classic.accounts.have_pro():
             purchase.PurchaseWindow(items=['pro'])
             self._transition_out()
             return

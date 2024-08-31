@@ -216,24 +216,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         cfg['launchCount'] = launch_count
         cfg.commit()
 
-        # Run a test in a few seconds to see if we should pop up an existing
-        # pending special offer.
-        def check_special_offer() -> None:
-            assert plus is not None
-
-            from bauiv1lib.specialoffer import show_offer
-
-            if (
-                'pendingSpecialOffer' in cfg
-                and plus.get_v1_account_public_login_id()
-                == cfg['pendingSpecialOffer']['a']
-            ):
-                self.special_offer = cfg['pendingSpecialOffer']['o']
-                show_offer()
-
-        if babase.app.env.gui:
-            babase.apptimer(3.0, check_special_offer)
-
         # If there's a leftover log file, attempt to upload it to the
         # master-server and/or get rid of it.
         babase.handle_leftover_v1_cloud_log_file()
@@ -832,7 +814,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         app = bauiv1.app
         env = app.env
         with bascenev1.ContextRef.empty():
-            from bauiv1lib import specialoffer
+            # from bauiv1lib import specialoffer
 
             assert app.classic is not None
             if app.env.headless:
@@ -927,11 +909,11 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 # (we may not have heard back from the server)
                 # ..if that doesn't work they'll just have to wait
                 # until the next opportunity.
-                if not specialoffer.show_offer():
+                # if not specialoffer.show_offer():
 
-                    def try_again() -> None:
-                        if not specialoffer.show_offer():
-                            # Try one last time..
-                            bauiv1.apptimer(2.0, specialoffer.show_offer)
+                #     def try_again() -> None:
+                #         if not specialoffer.show_offer():
+                #             # Try one last time..
+                #             bauiv1.apptimer(2.0, specialoffer.show_offer)
 
-                    bauiv1.apptimer(2.0, try_again)
+                #     bauiv1.apptimer(2.0, try_again)

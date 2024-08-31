@@ -541,7 +541,7 @@ class PlayWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
 
         # no-op if we're not currently in control.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             return
 
         if self._is_main_menu:
@@ -567,7 +567,7 @@ class PlayWindow(bui.MainWindow):
         from bauiv1lib.coop.browser import CoopBrowserWindow
 
         # no-op if we're not currently in control.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             return
 
         plus = bui.app.plus
@@ -588,7 +588,7 @@ class PlayWindow(bui.MainWindow):
         from bauiv1lib.playlist.browser import PlaylistBrowserWindow
 
         # no-op if we're not currently in control.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             return
 
         self._save_state()
@@ -604,7 +604,7 @@ class PlayWindow(bui.MainWindow):
         from bauiv1lib.playlist.browser import PlaylistBrowserWindow
 
         # no-op if we're not currently in control.
-        if not self.can_change_main_window():
+        if not self.main_window_has_control():
             return
 
         self._save_state()

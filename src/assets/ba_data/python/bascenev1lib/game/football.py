@@ -3,7 +3,7 @@
 # pylint: disable=too-many-lines
 """Implements football games (both co-op and teams varieties)."""
 
-# ba_meta require api 8
+# ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
 from __future__ import annotations
