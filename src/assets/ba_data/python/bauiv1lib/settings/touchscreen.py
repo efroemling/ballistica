@@ -47,20 +47,26 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             origin_widget=origin_widget,
         )
 
-        btn = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(55, self._height - 60),
-            size=(120, 60),
-            label=bui.Lstr(resource='backText'),
-            button_type='back',
-            scale=0.8,
-            on_activate_call=self._back,
-        )
+        if uiscale is bui.UIScale.SMALL:
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self.main_window_back
+            )
+            btn = None
+        else:
+            btn = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(55, self._height - 60),
+                size=(120, 60),
+                label=bui.Lstr(resource='backText'),
+                button_type='back',
+                scale=0.8,
+                on_activate_call=self.main_window_back
+            )
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(25, self._height - 50),
+            position=(25, self._height - 62),
             size=(self._width, 25),
             text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=bui.app.ui_v1.title_color,

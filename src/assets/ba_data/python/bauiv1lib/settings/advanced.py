@@ -132,7 +132,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
                 self._height - (57 if uiscale is bui.UIScale.SMALL else 40),
             ),
             size=(0, 0),
-            scale=0.5 if uiscale is bui.UIScale.SMALL else 1.0,
+            scale=0.65 if uiscale is bui.UIScale.SMALL else 1.0,
             text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=app.ui_v1.title_color,
             h_align='center',
