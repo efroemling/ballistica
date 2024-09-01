@@ -42,6 +42,11 @@ class TouchscreenSettingsWindow(bui.MainWindow):
                     if uiscale is bui.UIScale.SMALL
                     else 1.55 if uiscale is bui.UIScale.MEDIUM else 1.2
                 ),
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
+                ),
             ),
             transition=transition,
             origin_widget=origin_widget,
