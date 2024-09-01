@@ -592,3 +592,15 @@ class InGameMenuWindow(bui.MainWindow):
                 logging.exception('Error in classic resume callback.')
 
         classic.main_menu_resume_callbacks.clear()
+
+    def __del__(self) -> None:
+        import bascenev1lib.tutorial as tutorial
+        activity = bs.get_foreground_host_activity()
+
+        if isinstance(activity, (bs.GameActivity, tutorial.TutorialActivity)):
+            classic = bui.app.classic
+
+            assert classic is not None
+            classic.resume()
+
+            bui.app.ui_v1.clear_main_window()
