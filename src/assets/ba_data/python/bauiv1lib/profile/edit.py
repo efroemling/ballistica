@@ -686,7 +686,7 @@ class EditProfileWindow(bui.MainWindow):
         )
 
     def _cancel(self) -> None:
-        
+
         if self._in_main_menu:
             self.main_window_back()
             return
@@ -860,7 +860,7 @@ class EditProfileWindow(bui.MainWindow):
             plus.run_v1_account_transactions()
             if self._in_main_menu:
                 self.main_window_back()
-                return
+                return True
             bui.containerwidget(edit=self._root_widget,
             transition='out_right')
             assert bui.app.classic is not None
