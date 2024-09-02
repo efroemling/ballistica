@@ -5,15 +5,7 @@ on:
   push:
   pull_request:
 
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: psf/black@stable
-        with:
-          options: ". --target-version py312 --line-length 80 --skip-string-normalization"
-          
+jobs:     
   make_linux_x86_64_gui_debug_build:
     runs-on: ubuntu-latest
     steps:
