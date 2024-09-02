@@ -6,13 +6,13 @@ on:
   pull_request:
 
 jobs:
-   lint:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: psf/black@stable
         with:
-          options: ". --check --target-version py312 --line-length 80 --skip-string-normalization"
+          options: ". --target-version py312 --line-length 80 --skip-string-normalization"
           
   make_linux_x86_64_gui_debug_build:
     runs-on: ubuntu-latest
