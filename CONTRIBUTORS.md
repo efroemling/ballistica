@@ -61,6 +61,7 @@
 
 ### brostos
 - Added support for joining using ipv6 address
+- Added black formatter to the workflow
 
 ### Loup Garou
 - Added sphinx documentation generation
