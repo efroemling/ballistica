@@ -5,7 +5,7 @@ on:
   push:
   pull_request:
 
-jobs:     
+jobs:
   make_linux_x86_64_gui_debug_build:
     runs-on: ubuntu-latest
     steps:
