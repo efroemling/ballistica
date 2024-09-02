@@ -7,9 +7,10 @@ from __future__ import annotations
 import random
 from typing import cast, override
 
-from bauiv1lib.colorpicker import ColorPicker
 import bauiv1 as bui
 import bascenev1 as bs
+from bauiv1lib.colorpicker import ColorPicker
+from bauiv1lib.profile.browser import ProfileBrowserWindow
 
 
 class EditProfileWindow(bui.MainWindow):
@@ -79,11 +80,6 @@ class EditProfileWindow(bui.MainWindow):
                 scale=self._base_scale,
                 stack_offset=(
                     (0, -40) if uiscale is bui.UIScale.SMALL else (0, 0)
-                ),
-                toolbar_visibility=(
-                    'menu_minimal'
-                    if uiscale is bui.UIScale.SMALL
-                    else 'menu_full'
                 ),
             ),
             transition=transition,
@@ -690,24 +686,27 @@ class EditProfileWindow(bui.MainWindow):
         )
 
     def _cancel(self) -> None:
-        self.main_window_back()
-        # from bauiv1lib.profile.browser import ProfileBrowserWindow
+        
+        if self._in_main_menu:
+            self.main_window_back()
+            return
 
-        # # no-op if our underlying widget is dead or on its way out.
-        # if not self._root_widget or self._root_widget.transitioning_out:
-        #     return
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
 
-        # bui.containerwidget(edit=self._root_widget, transition='out_right')
-        # assert bui.app.classic is not None
-        # bui.app.ui_v1.set_main_window(
-        #     ProfileBrowserWindow(
-        #         'in_left',
-        #         selected_profile=self._existing_profile,
-        #         in_main_menu=self._in_main_menu,
-        #     ),
-        #     from_window=self,
-        #     is_back=True,
-        # )
+        bui.containerwidget(edit=self._root_widget, transition='out_right')
+        assert bui.app.classic is not None
+
+        bui.app.ui_v1.set_main_window(
+            ProfileBrowserWindow(
+                'in_left',
+                selected_profile=self._existing_profile,
+                in_main_menu=self._in_main_menu,
+            ),
+            from_window=self,
+            is_back=True,
+        )
 
     def _set_color(self, color: tuple[float, float, float]) -> None:
         self._color = color
@@ -859,17 +858,19 @@ class EditProfileWindow(bui.MainWindow):
 
         if transition_out:
             plus.run_v1_account_transactions()
-            self.main_window_back()
-            # bui.containerwidget(edit=self._root_widget,
-            # transition='out_right')
-            # assert bui.app.classic is not None
-            # bui.app.ui_v1.set_main_window(
-            #     ProfileBrowserWindow(
-            #         'in_left',
-            #         selected_profile=new_name,
-            #         in_main_menu=self._in_main_menu,
-            #     ),
-            #     from_window=self,
-            #     is_back=True,
-            # )
+            if self._in_main_menu:
+                self.main_window_back()
+                return
+            bui.containerwidget(edit=self._root_widget,
+            transition='out_right')
+            assert bui.app.classic is not None
+            bui.app.ui_v1.set_main_window(
+                ProfileBrowserWindow(
+                    'in_left',
+                    selected_profile=new_name,
+                    in_main_menu=self._in_main_menu,
+                ),
+                from_window=self,
+                is_back=True,
+            )
         return True
