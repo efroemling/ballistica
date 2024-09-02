@@ -6,14 +6,13 @@ on:
   pull_request:
 
 jobs:
-  linter_name:
-    name: runner / black formatter
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: rickstaa/action-black@v1
+      - uses: psf/black@stable
         with:
-          black_args: ". --target-version py312 --line-length 80 --skip-string-normalization"
+          black_args: ". --check --target-version py312 --line-length 80 --skip-string-normalization"
           
   make_linux_x86_64_gui_debug_build:
     runs-on: ubuntu-latest
