@@ -13,14 +13,13 @@ jobs:
 
   # We run most of our testing only on linux but it should apply to mac too;
   # we can always add an explicit mac job later if it seems worthwhile.
-  linter_name:
-    name: runner / black formatter
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: rickstaa/action-black@v1
+      - uses: psf/black@stable
         with:
-          black_args: ". --target-version py312 --line-length 80 --skip-string-normalization"
+          options: ". --target-version py312 --line-length 80 --skip-string-normalization"
           
   check_linux:
     runs-on: ubuntu-22.04
