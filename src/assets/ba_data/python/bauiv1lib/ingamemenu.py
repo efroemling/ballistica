@@ -594,13 +594,4 @@ class InGameMenuWindow(bui.MainWindow):
         classic.main_menu_resume_callbacks.clear()
 
     def __del__(self) -> None:
-        from bascenev1lib.tutorial import TutorialActivity
-        activity = bs.get_foreground_host_activity()
-
-        if isinstance(activity, (bs.GameActivity, TutorialActivity)):
-            classic = bui.app.classic
-
-            assert classic is not None
-            classic.resume()
-
-            bui.app.ui_v1.clear_main_window()
+        self._resume()
