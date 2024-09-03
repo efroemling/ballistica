@@ -7,10 +7,13 @@ from __future__ import annotations
 import copy
 import math
 import logging
-from typing import override
+from typing import override, TYPE_CHECKING
 
 import bascenev1 as bs
 import bauiv1 as bui
+
+if TYPE_CHECKING:
+    from bauiv1lib.play import PlaylistSelectContext
 
 
 class PlaylistBrowserWindow(bui.MainWindow):
@@ -21,6 +24,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
         sessiontype: type[bs.Session],
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
+        playlist_select_context: PlaylistSelectContext | None = None,
     ):
         # pylint: disable=cyclic-import
         from bauiv1lib.playlist import PlaylistTypeVars
@@ -39,6 +43,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
         self._customize_button: bui.Widget | None = None
         self._sub_width: float | None = None
         self._sub_height: float | None = None
+        self._playlist_select_context = playlist_select_context
 
         self._ensure_standard_playlists_exist()
 
@@ -63,7 +68,10 @@ class PlaylistBrowserWindow(bui.MainWindow):
                 size=(self._width, self._height + top_extra),
                 toolbar_visibility=(
                     'menu_minimal'
-                    if uiscale is bui.UIScale.SMALL
+                    if (
+                        uiscale is bui.UIScale.SMALL
+                        or playlist_select_context is not None
+                    )
                     else 'menu_full'
                 ),
                 scale=(
@@ -160,11 +168,16 @@ class PlaylistBrowserWindow(bui.MainWindow):
         # then we keep self alive.
         sessiontype = self._sessiontype
 
+        # Pull anything out of self here; if we do it in the lambda
+        # we'll inadvertanly keep self alive.
+        playlist_select_context = self._playlist_select_context
+
         return bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
                 transition=transition,
                 origin_widget=origin_widget,
                 sessiontype=sessiontype,
+                playlist_select_context=playlist_select_context,
             )
         )
 
@@ -639,9 +652,30 @@ class PlaylistBrowserWindow(bui.MainWindow):
 
     def on_play_options_window_run_game(self) -> None:
         """(internal)"""
-        if not self._root_widget:
+
+        # No-op if we're not in control.
+        if not self.main_window_has_control():
+            # if not self._root_widget:
             return
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
+
+        if self._playlist_select_context is not None:
+            # Done doing a playlist selection; now back all the way out
+            # of our selection windows to our stored starting point.
+            if self._playlist_select_context.back_state is None:
+                logging.error(
+                    'No back state found'
+                    ' after playlist select context completion.'
+                )
+            else:
+                self.main_window_back_state = (
+                    self._playlist_select_context.back_state
+                )
+            self.main_window_back()
+        else:
+            # Launching a regular game session; simply get our window
+            # transitioning out.
+            self.main_window_close(transition='out_left')
+            # bui.containerwidget(edit=self._root_widget, transition='out_left')
 
     def _on_playlist_select(self, playlist_name: str) -> None:
         self._selected_playlist = playlist_name
@@ -676,6 +710,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
             scale_origin=button.get_screen_space_center(),
             playlist=playlist_name,
             delegate=self,
+            playlist_select_context=self._playlist_select_context,
         )
 
     def _on_customize_press(self) -> None:
@@ -690,7 +725,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
 
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
+        # assert bui.app.classic is not None
         bui.app.ui_v1.set_main_window(
             PlaylistCustomizeBrowserWindow(
                 origin_widget=self._customize_button,

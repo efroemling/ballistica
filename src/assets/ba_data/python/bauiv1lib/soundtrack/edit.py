@@ -393,8 +393,7 @@ class SoundtrackEditWindow(bui.MainWindow):
                 bui.Call(self._restore_editor, state, song_type),
                 entry,
                 selection_target_name,
-            ),
-            group_id='soundtrackentryselect',
+            )
         )
         # bui.containerwidget(edit=self._root_widget, transition='out_left')
         # bui.app.ui_v1.set_main_window(

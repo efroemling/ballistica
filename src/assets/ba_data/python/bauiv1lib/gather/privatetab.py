@@ -22,6 +22,7 @@ from bacommon.net import (
     PrivatePartyConnectResult,
 )
 from bauiv1lib.gather import GatherTab
+from bauiv1lib.play import PlaylistSelectContext
 
 from bauiv1lib.gettokens import GetTokensWindow, show_get_tokens_prompt
 import bascenev1 as bs
@@ -49,6 +50,7 @@ class State:
     """Our core state that persists while the app is running."""
 
     sub_tab: SubTabType = SubTabType.JOIN
+    playlist_select_context: PlaylistSelectContext | None = None
 
 
 class PrivateGatherTab(GatherTab):
@@ -685,12 +687,13 @@ class PrivateGatherTab(GatherTab):
 
             # If it appears we're coming back from playlist selection,
             # re-select our playlist button.
-            if classic.selecting_private_party_playlist:
+            if self._state.playlist_select_context is not None:
+                self._state.playlist_select_context = None
                 bui.containerwidget(
                     edit=self._container,
                     selected_child=self._host_playlist_button,
                 )
-                classic.selecting_private_party_playlist = False
+
         else:
             # We've got a current party; show its info.
             bui.textwidget(
@@ -918,11 +921,17 @@ class PrivateGatherTab(GatherTab):
         )
 
     def _playlist_press(self) -> None:
-        if bool(True):
-            bui.screenmessage('UNDER CONSTRUCTION')
-            return
+        # if bool(True):
+        #     bui.screenmessage('UNDER CONSTRUCTION')
+        #     return
         assert self._host_playlist_button is not None
-        self.window.playlist_select(origin_widget=self._host_playlist_button)
+
+        self._state.playlist_select_context = PlaylistSelectContext()
+
+        self.window.playlist_select(
+            origin_widget=self._host_playlist_button,
+            context=self._state.playlist_select_context,
+        )
 
     def _host_copy_press(self) -> None:
         assert self._hostingstate.party_code is not None

@@ -112,10 +112,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self.invite_confirm_windows: list[Any] = []  # FIXME: Don't use Any.
         self.party_window: weakref.ref[PartyWindow] | None = None
         self.main_menu_resume_callbacks: list = []
-        # Switch our overall game selection UI flow between Play and
-        # Private-party playlist selection modes; should do this in
-        # a more elegant way once we revamp high level UI stuff a bit.
-        self.selecting_private_party_playlist: bool = False
 
         # Store.
         self.store_layout: dict[str, list[dict[str, Any]]] | None = None
