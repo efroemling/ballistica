@@ -921,9 +921,6 @@ class PrivateGatherTab(GatherTab):
         )
 
     def _playlist_press(self) -> None:
-        # if bool(True):
-        #     bui.screenmessage('UNDER CONSTRUCTION')
-        #     return
         assert self._host_playlist_button is not None
 
         self._state.playlist_select_context = PlaylistSelectContext()

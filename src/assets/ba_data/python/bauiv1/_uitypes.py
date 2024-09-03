@@ -136,7 +136,9 @@ class MainWindow(Window):
 
         self.main_window_close()
 
-    def main_window_replace(self, new_window: MainWindow) -> None:
+    def main_window_replace(
+        self, new_window: MainWindow, back_state: MainWindowState | None = None
+    ) -> None:
         """Replace ourself with a new MainWindow."""
 
         # Users should always check main_window_has_control() *before*
@@ -161,7 +163,9 @@ class MainWindow(Window):
             logging.exception('Error in on_main_window_close() for %s.', self)
 
         _bauiv1.containerwidget(edit=self._root_widget, transition=transition)
-        babase.app.ui_v1.set_main_window(new_window, from_window=self)
+        babase.app.ui_v1.set_main_window(
+            new_window, from_window=self, back_state=back_state
+        )
 
     def on_main_window_close(self) -> None:
         """Called before transitioning out a main window.

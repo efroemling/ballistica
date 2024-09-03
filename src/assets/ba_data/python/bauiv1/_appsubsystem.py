@@ -346,13 +346,13 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         """Return whether a main menu window is present."""
         return bool(self._main_window_widget)
 
-    def clear_main_window(self) -> None:
+    def clear_main_window(self, transition: str | None = None) -> None:
         """Clear any existing main window."""
         from bauiv1._uitypes import MainWindow
 
         main_window = self._main_window()
         if main_window:
-            main_window.main_window_close()
+            main_window.main_window_close(transition=transition)
         else:
             # Fallback; if we have a widget but no window, nuke the widget.
             if self._main_window_widget:
