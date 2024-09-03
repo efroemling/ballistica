@@ -6,19 +6,19 @@ from __future__ import annotations
 
 import copy
 import time
-import logging
+
+# import logging
 from typing import TYPE_CHECKING, override
 
-import bascenev1 as bs
+# import bascenev1 as bs
 import bauiv1 as bui
 
 if TYPE_CHECKING:
     from typing import Any
 
-REQUIRE_PRO = False
+    import bascenev1 as bs
 
-# TEMP
-UNDER_CONSTRUCTION = True
+REQUIRE_PRO = False
 
 
 class PlaylistCustomizeBrowserWindow(bui.MainWindow):
@@ -77,7 +77,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         if uiscale is bui.UIScale.SMALL:
             self._back_button = None
             bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self._back
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
         else:
             self._back_button = bui.buttonwidget(
@@ -291,8 +291,8 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             right_widget=bui.get_special_widget('squad_button'),
         )
 
-        # make sure config exists
-        self._config_name_full = self._pvars.config_name + ' Playlists'
+        # Make sure config exists.
+        self._config_name_full = f'{self._pvars.config_name} Playlists'
 
         if self._config_name_full not in bui.app.config:
             bui.app.config[self._config_name_full] = {}
@@ -305,7 +305,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
 
         if self._back_button is not None:
             bui.buttonwidget(
-                edit=self._back_button, on_activate_call=self._back
+                edit=self._back_button, on_activate_call=self.main_window_back
             )
             bui.containerwidget(
                 edit=self._root_widget, cancel_button=self._back_button
@@ -336,9 +336,14 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             )
         )
 
-    # @override
-    # def on_main_window_close(self) -> None:
-    #     self._save_state()
+    @override
+    def on_main_window_close(self) -> None:
+        if self._selected_playlist_name is not None:
+            cfg = bui.app.config
+            cfg[f'{self._pvars.config_name} Playlist Selection'] = (
+                self._selected_playlist_name
+            )
+            cfg.commit()
 
     def _update(self) -> None:
         assert bui.app.classic is not None
@@ -348,58 +353,9 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
                 edit=lock, opacity=0.0 if (have or not REQUIRE_PRO) else 1.0
             )
 
-    def _back(self) -> None:
-        # pylint: disable=cyclic-import
-        # from bauiv1lib.playlist import browser
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        if self._selected_playlist_name is not None:
-            cfg = bui.app.config
-            cfg[self._pvars.config_name + ' Playlist Selection'] = (
-                self._selected_playlist_name
-            )
-            cfg.commit()
-
-        self.main_window_back()
-        # bui.containerwidget(
-        #     edit=self._root_widget, transition=self._transition_out
-        # )
-        # assert bui.app.classic is not None
-        # bui.app.ui_v1.set_main_window(
-        #     browser.PlaylistBrowserWindow(
-        #         transition='in_left', sessiontype=self._sessiontype
-        #     ),
-        #     from_window=self,
-        #     is_back=True,
-        # )
-
     def _select(self, name: str, index: int) -> None:
         self._selected_playlist_name = name
         self._selected_playlist_index = index
-
-    def _run_selected_playlist(self) -> None:
-        # pylint: disable=cyclic-import
-        bui.unlock_all_input()
-        try:
-            bs.new_host_session(self._sessiontype)
-        except Exception:
-            from bascenev1lib import mainmenu
-
-            logging.exception('Error running session %s.', self._sessiontype)
-
-            # Drop back into a main menu session.
-            bs.new_host_session(mainmenu.MainMenuSession)
-
-    def _choose_playlist(self) -> None:
-        if self._selected_playlist_name is None:
-            return
-        self._save_playlist_selection()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        bui.fade_screen(False, endcall=self._run_selected_playlist)
-        bui.lock_all_input()
 
     def _refresh(self, select_playlist: str | None = None) -> None:
         from efro.util import asserttype
@@ -451,7 +407,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             )
             bui.widget(edit=txtw, show_buffer_top=50, show_buffer_bottom=50)
 
-            # Hitting up from top widget should jump to 'back'
+            # Hitting up from top widget should jump to 'back'.
             if index == 0:
                 bui.widget(
                     edit=txtw,
@@ -473,8 +429,8 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
                         visible_child=txtw,
                     )
             else:
-                # Select this one if it was previously selected.
-                # Go by index if there's one.
+                # Select this one if it was previously selected. Go by
+                # index if there's one.
                 if old_selection_index is not None:
                     if index == old_selection_index:
                         bui.columnwidget(
@@ -493,10 +449,10 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             index += 1
 
     def _save_playlist_selection(self) -> None:
-        # Store the selected playlist in prefs.
-        # This serves dual purposes of letting us re-select it next time
-        # if we want and also lets us pass it to the game (since we reset
-        # the whole python environment that's not actually easy).
+        # Store the selected playlist in prefs. This serves dual
+        # purposes of letting us re-select it next time if we want and
+        # also lets us pass it to the game (since we reset the whole
+        # python environment that's not actually easy).
         cfg = bui.app.config
         cfg[self._pvars.config_name + ' Playlist Selection'] = (
             self._selected_playlist_name
@@ -511,8 +467,8 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         from bauiv1lib.playlist.editcontroller import PlaylistEditController
         from bauiv1lib.purchase import PurchaseWindow
 
-        if UNDER_CONSTRUCTION:
-            bui.screenmessage('UNDER CONSTRUCTION')
+        # No-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
         assert bui.app.classic is not None
@@ -538,17 +494,12 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         self._save_playlist_selection()
 
         # Kick off the edit UI.
-        PlaylistEditController(sessiontype=self._sessiontype)
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
+        PlaylistEditController(sessiontype=self._sessiontype, from_window=self)
 
     def _edit_playlist(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.playlist.editcontroller import PlaylistEditController
         from bauiv1lib.purchase import PurchaseWindow
-
-        if UNDER_CONSTRUCTION:
-            bui.screenmessage('UNDER CONSTRUCTION')
-            return
 
         assert bui.app.classic is not None
         if REQUIRE_PRO and not bui.app.classic.accounts.have_pro_options():
@@ -566,8 +517,8 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         PlaylistEditController(
             existing_playlist_name=self._selected_playlist_name,
             sessiontype=self._sessiontype,
+            from_window=self,
         )
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
 
     def _do_delete_playlist(self) -> None:
         plus = bui.app.plus
@@ -732,7 +683,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
                 bui.getsound('error').play()
                 return
 
-        # clamp at our max playlist number
+        # Clamp at our max playlist number.
         if len(bui.app.config[self._config_name_full]) > self._max_playlists:
             bui.screenmessage(
                 bui.Lstr(
@@ -747,10 +698,11 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             return
 
         copy_text = bui.Lstr(resource='copyOfText').evaluate()
-        # get just 'Copy' or whatnot
-        copy_word = copy_text.replace('${NAME}', '').strip()
-        # find a valid dup name that doesn't exist
 
+        # Get just 'Copy' or whatnot.
+        copy_word = copy_text.replace('${NAME}', '').strip()
+
+        # Find a valid dup name that doesn't exist.
         test_index = 1
         base_name = self._get_playlist_display_name(
             self._selected_playlist_name

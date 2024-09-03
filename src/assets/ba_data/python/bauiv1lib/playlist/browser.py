@@ -114,8 +114,6 @@ class PlaylistBrowserWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
         )
-        # if uiscale is bui.UIScale.SMALL and bui.app.ui_v1.use_toolbars:
-        #     bui.textwidget(edit=txt, text='')
 
         bui.buttonwidget(
             edit=self._back_button,
@@ -152,8 +150,8 @@ class PlaylistBrowserWindow(bui.MainWindow):
         self._config_name_full = self._pvars.config_name + ' Playlists'
         self._last_config = None
 
-        # Update now and once per second.
-        # (this should do our initial refresh)
+        # Update now and once per second (this should do our initial
+        # refresh).
         self._update()
         self._update_timer = bui.AppTimer(
             1.0, bui.WeakCall(self._update), repeat=True
@@ -675,13 +673,12 @@ class PlaylistBrowserWindow(bui.MainWindow):
             # Launching a regular game session; simply get our window
             # transitioning out.
             self.main_window_close(transition='out_left')
-            # bui.containerwidget(edit=self._root_widget, transition='out_left')
 
     def _on_playlist_select(self, playlist_name: str) -> None:
         self._selected_playlist = playlist_name
 
     def _update(self) -> None:
-        # make sure config exists
+        # Make sure config exists.
         if self._config_name_full not in bui.app.config:
             bui.app.config[self._config_name_full] = {}
 
@@ -725,7 +722,6 @@ class PlaylistBrowserWindow(bui.MainWindow):
 
         self._save_state()
         bui.containerwidget(edit=self._root_widget, transition='out_left')
-        # assert bui.app.classic is not None
         bui.app.ui_v1.set_main_window(
             PlaylistCustomizeBrowserWindow(
                 origin_widget=self._customize_button,
@@ -755,15 +751,6 @@ class PlaylistBrowserWindow(bui.MainWindow):
                 cfg.commit()
 
         self.main_window_back()
-
-        # self._save_state()
-        # bui.containerwidget(
-        #     edit=self._root_widget, transition=self._transition_out
-        # )
-        # assert bui.app.classic is not None
-        # bui.app.ui_v1.set_main_window(
-        #     PlayWindow(transition='in_left'), from_window=self, is_back=True
-        # )
 
     def _save_state(self) -> None:
         try:

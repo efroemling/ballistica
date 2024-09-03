@@ -159,7 +159,8 @@ class IconPicker(PopupWindow):
 
     def _on_store_press(self) -> None:
         from bauiv1lib.account import show_sign_in_prompt
-        from bauiv1lib.store.browser import StoreBrowserWindow
+
+        # from bauiv1lib.store.browser import StoreBrowserWindow
 
         plus = bui.app.plus
         assert plus is not None
@@ -167,12 +168,16 @@ class IconPicker(PopupWindow):
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
-        self._transition_out()
-        StoreBrowserWindow(
-            modal=True,
-            show_tab=StoreBrowserWindow.TabID.ICONS,
-            origin_widget=self._get_more_icons_button,
-        )
+        # self._transition_out()
+
+        bui.screenmessage('UNDER CONSTRUCTION')
+        return
+
+        # StoreBrowserWindow(
+        #     modal=True,
+        #     show_tab=StoreBrowserWindow.TabID.ICONS,
+        #     origin_widget=self._get_more_icons_button,
+        # )
 
     def _select_icon(self, icon: str) -> None:
         if self._delegate is not None:

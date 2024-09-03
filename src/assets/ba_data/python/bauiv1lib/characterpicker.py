@@ -181,7 +181,8 @@ class CharacterPicker(PopupWindow):
 
     def _on_store_press(self) -> None:
         from bauiv1lib.account import show_sign_in_prompt
-        from bauiv1lib.store.browser import StoreBrowserWindow
+
+        # from bauiv1lib.store.browser import StoreBrowserWindow
 
         plus = bui.app.plus
         assert plus is not None
@@ -189,12 +190,16 @@ class CharacterPicker(PopupWindow):
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
-        self._transition_out()
-        StoreBrowserWindow(
-            modal=True,
-            show_tab=StoreBrowserWindow.TabID.CHARACTERS,
-            origin_widget=self._get_more_characters_button,
-        )
+
+        bui.screenmessage('UNDER CONSTRUCTION')
+        return
+
+        # self._transition_out()
+        # StoreBrowserWindow(
+        #     modal=True,
+        #     show_tab=StoreBrowserWindow.TabID.CHARACTERS,
+        #     origin_widget=self._get_more_characters_button,
+        # )
 
     def _select_character(self, character: str) -> None:
         if self._delegate is not None:
