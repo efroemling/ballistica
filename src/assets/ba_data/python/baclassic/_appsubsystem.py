@@ -735,15 +735,30 @@ class ClassicAppSubsystem(babase.AppSubsystem):
     def profile_browser_window(
         self,
         transition: str = 'in_right',
-        in_main_menu: bool = True,
-        selected_profile: str | None = None,
         origin_widget: bauiv1.Widget | None = None,
+        # in_main_menu: bool = True,
+        selected_profile: str | None = None,
     ) -> None:
         """(internal)"""
         from bauiv1lib.profile.browser import ProfileBrowserWindow
 
-        ProfileBrowserWindow(
-            transition, in_main_menu, selected_profile, origin_widget
+        main_window = babase.app.ui_v1.get_main_window()
+        if main_window is not None:
+            logging.warning(
+                'profile_browser_window()'
+                ' called with existing main window; should not happen.'
+            )
+            return
+
+        babase.app.ui_v1.set_main_window(
+            ProfileBrowserWindow(
+                transition=transition,
+                selected_profile=selected_profile,
+                origin_widget=origin_widget,
+                minimal_toolbar=True,
+            ),
+            is_top_level=True,
+            suppress_warning=True,
         )
 
     def preload_map_preview_media(self) -> None:
@@ -799,9 +814,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 bauiv1.getsound('swish').play()
 
             babase.app.ui_v1.set_main_window(
-                InGameMenuWindow(),
-                from_window=False,  # Disable check here.
-                is_top_level=True,
+                InGameMenuWindow(), is_top_level=True, suppress_warning=True
             )
 
     def invoke_main_menu_ui(self) -> None:
@@ -896,8 +909,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
                     app.ui_v1.set_main_window(
                         MainMenuWindow(transition=None),
-                        from_window=False,  # Disable check.
                         is_top_level=True,
+                        suppress_warning=True,
                     )
 
                 # attempt to show any pending offers immediately.

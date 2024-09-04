@@ -78,9 +78,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
                     (0, -10) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
                 toolbar_visibility=(
-                    'menu_minimal'
-                    if uiscale is bui.UIScale.SMALL
-                    else 'menu_full'
+                    None if uiscale is bui.UIScale.SMALL else 'menu_full'
                 ),
             ),
             transition=transition,
@@ -90,7 +88,6 @@ class GraphicsSettingsWindow(bui.MainWindow):
         back_button = bui.buttonwidget(
             parent=self._root_widget,
             position=(35, height - 50),
-            # size=(120, 60),
             size=(60, 60),
             scale=0.8,
             text_scale=1.2,

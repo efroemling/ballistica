@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import override
 
-from bauiv1lib.popup import PopupMenu
 import bascenev1 as bs
 import bauiv1 as bui
 
@@ -87,19 +86,6 @@ class ControlsSettingsWindow(bui.MainWindow):
         show_xinput_toggle = False
         if platform == 'windows' and not app.env.vr:
             show_xinput_toggle = True
-
-        # On mac builds, show an option to switch between generic and
-        # made-for-iOS/Mac systems
-        # (we can run into problems where devices register as one of each
-        # type otherwise)..
-        # UPDATE: We always use the apple system these days (which should
-        # support older controllers). So no need for a switch.
-        show_mac_controller_subsystem = False
-        # if platform == 'mac' and bui.is_xcode_build():
-        #     show_mac_controller_subsystem = True
-
-        if show_mac_controller_subsystem:
-            height += spacing * 1.5
 
         if show_xinput_toggle:
             height += spacing
@@ -339,48 +325,6 @@ class ControlsSettingsWindow(bui.MainWindow):
             )
             v -= spacing
 
-        if show_mac_controller_subsystem:
-            PopupMenu(
-                parent=self._root_widget,
-                position=(260, v - 10),
-                width=160,
-                button_size=(150, 50),
-                scale=1.5,
-                choices=['Classic', 'MFi', 'Both'],
-                choices_display=[
-                    bui.Lstr(resource='macControllerSubsystemClassicText'),
-                    bui.Lstr(resource='macControllerSubsystemMFiText'),
-                    bui.Lstr(resource='macControllerSubsystemBothText'),
-                ],
-                current_choice=bui.app.config.resolve(
-                    'Mac Controller Subsystem'
-                ),
-                on_value_change_call=self._set_mac_controller_subsystem,
-            )
-            bui.textwidget(
-                parent=self._root_widget,
-                position=(245, v + 13),
-                size=(0, 0),
-                text=bui.Lstr(resource='macControllerSubsystemTitleText'),
-                scale=1.0,
-                h_align='right',
-                v_align='center',
-                color=bui.app.ui_v1.infotextcolor,
-                maxwidth=180,
-            )
-            bui.textwidget(
-                parent=self._root_widget,
-                position=(width * 0.5, v - 20),
-                size=(0, 0),
-                text=bui.Lstr(resource='macControllerSubsystemDescriptionText'),
-                scale=0.5,
-                h_align='center',
-                v_align='center',
-                color=bui.app.ui_v1.infotextcolor,
-                maxwidth=width * 0.8,
-            )
-            v -= spacing * 1.5
-
         self._restore_state()
 
     @override
@@ -406,76 +350,55 @@ class ControlsSettingsWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.keyboard import ConfigKeyboardWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            ConfigKeyboardWindow(bs.getinputdevice('Keyboard', '#1')),
-            from_window=self,
+        self.main_window_replace(
+            ConfigKeyboardWindow(bs.getinputdevice('Keyboard', '#1'))
         )
 
     def _config_keyboard2(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.keyboard import ConfigKeyboardWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            ConfigKeyboardWindow(bs.getinputdevice('Keyboard', '#2')),
-            from_window=self,
+        self.main_window_replace(
+            ConfigKeyboardWindow(bs.getinputdevice('Keyboard', '#2'))
         )
 
     def _do_mobile_devices(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.remoteapp import RemoteAppSettingsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            RemoteAppSettingsWindow(), from_window=self
-        )
+        self.main_window_replace(RemoteAppSettingsWindow())
 
     def _do_gamepads(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.gamepadselect import GamepadSelectWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(GamepadSelectWindow(), from_window=self)
+        self.main_window_replace(GamepadSelectWindow())
 
     def _do_touchscreen(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.touchscreen import TouchscreenSettingsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            TouchscreenSettingsWindow(), from_window=self
-        )
+        self.main_window_replace(TouchscreenSettingsWindow())
 
     def _save_state(self) -> None:
         sel = self._root_widget.get_selected_child()
@@ -516,22 +439,3 @@ class ControlsSettingsWindow(bui.MainWindow):
                 else self._back_button
             )
         bui.containerwidget(edit=self._root_widget, selected_child=sel)
-
-    # def _back(self) -> None:
-    #     # pylint: disable=cyclic-import
-    #     from bauiv1lib.settings.allsettings import AllSettingsWindow
-
-    #     # no-op if our underlying widget is dead or on its way out.
-    #     if not self._root_widget or self._root_widget.transitioning_out:
-    #         return
-
-    #     self._save_state()
-    #     bui.containerwidget(
-    #         edit=self._root_widget, transition=self._transition_out
-    #     )
-    #     assert bui.app.classic is not None
-    #     bui.app.ui_v1.set_main_window(
-    #         AllSettingsWindow(transition='in_left'),
-    #         from_window=self,
-    #         is_back=True,
-    #     )

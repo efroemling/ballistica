@@ -135,14 +135,19 @@ class ClassicAppMode(AppMode):
             # Blow away the window stack and build a fresh one.
             ui.clear_main_window()
 
+            back_state = (
+                MainMenuWindow.do_get_main_window_state()
+                if in_main_menu()
+                else InGameMenuWindow.do_get_main_window_state()
+            )
+            # set_main_window() needs this to be set.
+            back_state.is_top_level = True
+
             ui.set_main_window(
                 window,
                 from_window=False,  # Disable from-check.
-                back_state=(
-                    MainMenuWindow.do_get_main_window_state()
-                    if in_main_menu()
-                    else InGameMenuWindow.do_get_main_window_state()
-                ),
+                back_state=back_state,
+                suppress_warning=True,
             )
 
     def _root_ui_menu_press(self) -> None:

@@ -63,6 +63,8 @@ class MainWindow(Window):
         # A back-state supplied by the ui system.
         self.main_window_back_state: MainWindowState | None = None
 
+        self.main_window_is_top_level: bool = False
+
         self._main_window_transition = transition
         self._main_window_origin_widget = origin_widget
         super().__init__(root_widget, cleanupcheck)
@@ -131,8 +133,10 @@ class MainWindow(Window):
         if not self.main_window_has_control():
             return
 
-        # Get the 'back' window coming in.
-        babase.app.ui_v1.do_main_window_back(self)
+        if not self.main_window_is_top_level:
+
+            # Get the 'back' window coming in.
+            babase.app.ui_v1.auto_set_back_window(self)
 
         self.main_window_close()
 
@@ -164,7 +168,10 @@ class MainWindow(Window):
 
         _bauiv1.containerwidget(edit=self._root_widget, transition=transition)
         babase.app.ui_v1.set_main_window(
-            new_window, from_window=self, back_state=back_state
+            new_window,
+            from_window=self,
+            back_state=back_state,
+            suppress_warning=True,
         )
 
     def on_main_window_close(self) -> None:
@@ -186,9 +193,10 @@ class MainWindowState:
     purposes, when switching app-modes, etc.
     """
 
-    def __init__(self, parent: MainWindowState | None = None) -> None:
+    def __init__(self) -> None:
         # The window that back/cancel navigation should take us to.
-        self.parent = parent
+        self.parent: MainWindowState | None = None
+        self.is_top_level: bool | None = None
 
     def create_window(
         self,

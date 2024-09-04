@@ -580,11 +580,9 @@ class PlayWindow(bui.MainWindow):
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            CoopBrowserWindow(origin_widget=self._coop_button), from_window=self
+
+        self.main_window_replace(
+            CoopBrowserWindow(origin_widget=self._coop_button)
         )
 
     def _team_tourney(self) -> None:
@@ -594,8 +592,6 @@ class PlayWindow(bui.MainWindow):
         # no-op if we're not currently in control.
         if not self.main_window_has_control():
             return
-
-        self._save_state()
 
         self.main_window_replace(
             PlaylistBrowserWindow(
@@ -613,16 +609,12 @@ class PlayWindow(bui.MainWindow):
         if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
+        self.main_window_replace(
             PlaylistBrowserWindow(
                 origin_widget=self._free_for_all_button,
                 sessiontype=bs.FreeForAllSession,
                 playlist_select_context=self._playlist_select_context,
-            ),
-            from_window=self,
+            )
         )
 
     def _draw_dude(

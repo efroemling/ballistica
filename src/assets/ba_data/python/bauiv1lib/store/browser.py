@@ -41,11 +41,11 @@ class StoreBrowserWindow(bui.MainWindow):
     def __init__(
         self,
         transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
         # modal: bool = False,
         show_tab: StoreBrowserWindow.TabID | None = None,
         # on_close_call: Callable[[], Any] | None = None,
         # back_location: str | None = None,
-        origin_widget: bui.Widget | None = None,
         minimal_toolbars: bool = False,
     ):
         # pylint: disable=too-many-statements
