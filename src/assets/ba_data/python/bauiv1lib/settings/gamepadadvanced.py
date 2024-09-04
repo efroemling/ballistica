@@ -40,7 +40,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
                 size=(self._width, self._height),
                 scale=1.06
                 * (
-                    1.85
+                    1.6
                     if uiscale is bui.UIScale.SMALL
                     else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),

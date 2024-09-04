@@ -56,12 +56,12 @@ class GamepadSettingsWindow(bui.MainWindow):
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
                 scale=(
-                    1.63
+                    1.4
                     if uiscale is bui.UIScale.SMALL
-                    else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
+                    else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (-20, -16) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, -10) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
             ),
             transition=transition,

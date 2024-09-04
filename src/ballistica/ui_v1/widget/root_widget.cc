@@ -967,9 +967,12 @@ void RootWidget::Setup() {
     // AddCover(0.5f, VAlign::kBottom, 0.0f, -180.0f, 600.0f, 550.0f,
     // 0.35f);
 
-    float backingR = 0.44f;
-    float backingG = 0.41f;
-    float backingB = 0.56f;
+    float backingR = 0.4f;
+    float backingG = 0.38f;
+    float backingB = 0.53f;
+    // float backingR = 0.44f;
+    // float backingG = 0.41f;
+    // float backingB = 0.56f;
     float backingCoverR = backingR;
     float backingCoverG = backingG;
     float backingCoverB = backingB;
@@ -997,8 +1000,8 @@ void RootWidget::Setup() {
       ButtonDef bd;
       bd.h_align = 0.5f;
       bd.v_align = VAlign::kBottom;
-      bd.width = 550.0f;
-      bd.height = 110.0f;
+      bd.width = 500.0f;
+      bd.height = 100.0f;
       bd.x = 0.0f;
       bd.y = 41.0f;
       bd.img = "uiAtlas2";
@@ -1023,7 +1026,7 @@ void RootWidget::Setup() {
     ButtonDef b;
     b.h_align = 0.5f;
     b.v_align = VAlign::kBottom;
-    b.width = b.height = 120.0f;
+    b.width = b.height = 110.0f;
     b.x = 0.0f;
     b.y = b.height * 0.4f;
     b.img = "chestIcon";
@@ -1032,7 +1035,7 @@ void RootWidget::Setup() {
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    float spacing = 130.0f;
+    float spacing = 120.0f;
     b.x = -1.5f * spacing;
     b.call = UIV1Python::ObjID::kRootUIChestSlot1PressCall;
     b.allow_in_game = false;

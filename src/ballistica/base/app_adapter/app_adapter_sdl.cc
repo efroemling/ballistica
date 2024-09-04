@@ -585,6 +585,17 @@ void AppAdapterSDL::RemoveSDLInputDevice_(int index) {
   assert(g_core->InMainThread());
   assert(index >= 0);
   JoystickInput* j = GetSDLJoystickInput_(index);
+
+  // Note: am running into this with a PS5 controller on macOS Sequoia beta.
+  if (!j) {
+    Log(LogLevel::kError,
+        "GetSDLJoystickInput_() returned nullptr on RemoveSDLInputDevice_();"
+        " joysticks size is "
+            + std::to_string(sdl_joysticks_.size()) + "; index is "
+            + std::to_string(index));
+    return;
+  }
+
   assert(j);
   if (static_cast_check_fit<int>(sdl_joysticks_.size()) > index) {
     sdl_joysticks_[index] = nullptr;
