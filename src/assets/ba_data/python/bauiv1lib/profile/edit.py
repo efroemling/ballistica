@@ -7,13 +7,13 @@ from __future__ import annotations
 import random
 from typing import cast, override
 
+from bauiv1lib.colorpicker import ColorPicker
+from bauiv1lib.characterpicker import CharacterPickerDelegate
 import bauiv1 as bui
 import bascenev1 as bs
-from bauiv1lib.colorpicker import ColorPicker
-from bauiv1lib.profile.browser import ProfileBrowserWindow
 
 
-class EditProfileWindow(bui.MainWindow):
+class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
     """Window for editing a player profile."""
 
     def reload_window(self) -> None:
@@ -23,18 +23,20 @@ class EditProfileWindow(bui.MainWindow):
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            EditProfileWindow(self.getname(), self._in_main_menu),
-            from_window=self,
-            is_back=True,
-        )
+        bui.screenmessage('UNDER CONSTRUCTION')
+        return
+        # bui.containerwidget(edit=self._root_widget, transition='out_left')
+        # assert bui.app.classic is not None
+        # bui.app.ui_v1.set_main_window(
+        #     EditProfileWindow(self.getname()),
+        #     from_window=self,
+        #     is_back=True,
+        # )
 
     def __init__(
         self,
         existing_profile: str | None,
-        in_main_menu: bool,
+        # in_main_menu: bool,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
@@ -47,7 +49,7 @@ class EditProfileWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        self._in_main_menu = in_main_menu
+        # self._in_main_menu = in_main_menu
         self._existing_profile = existing_profile
         self._r = 'editProfileWindow'
         self._spazzes: list[str] = []
@@ -80,6 +82,12 @@ class EditProfileWindow(bui.MainWindow):
                 scale=self._base_scale,
                 stack_offset=(
                     (0, -40) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
+                toolbar_visibility=(
+                    # 'menu_minimal'
+                    None
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
                 ),
             ),
             transition=transition,
@@ -522,7 +530,7 @@ class EditProfileWindow(bui.MainWindow):
                 transition=transition,
                 origin_widget=origin_widget,
                 existing_profile=self._existing_profile,
-                in_main_menu=self._in_main_menu,
+                # in_main_menu=self._in_main_menu,
             )
         )
 
@@ -628,6 +636,7 @@ class EditProfileWindow(bui.MainWindow):
         self._icon = icon
         self._update_icon()
 
+    @override
     def on_character_picker_pick(self, character: str) -> None:
         """A character has been selected by the picker."""
         if not self._root_widget:
@@ -639,6 +648,20 @@ class EditProfileWindow(bui.MainWindow):
             self._spazzes.index(character) if character in self._spazzes else 0
         )
         self._update_character()
+
+    @override
+    def on_character_picker_get_more_press(self) -> None:
+        from bauiv1lib.store.browser import StoreBrowserWindow
+
+        if not self.main_window_has_control():
+            return
+
+        self.main_window_replace(
+            StoreBrowserWindow(
+                minimal_toolbars=True,
+                show_tab=StoreBrowserWindow.TabID.CHARACTERS,
+            )
+        )
 
     def _on_character_press(self) -> None:
         from bauiv1lib import characterpicker
@@ -686,27 +709,7 @@ class EditProfileWindow(bui.MainWindow):
         )
 
     def _cancel(self) -> None:
-
-        if self._in_main_menu:
-            self.main_window_back()
-            return
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
-        assert bui.app.classic is not None
-
-        bui.app.ui_v1.set_main_window(
-            ProfileBrowserWindow(
-                'in_left',
-                selected_profile=self._existing_profile,
-                in_main_menu=self._in_main_menu,
-            ),
-            from_window=self,
-            is_back=True,
-        )
+        self.main_window_back()
 
     def _set_color(self, color: tuple[float, float, float]) -> None:
         self._color = color
@@ -858,19 +861,6 @@ class EditProfileWindow(bui.MainWindow):
 
         if transition_out:
             plus.run_v1_account_transactions()
-            if self._in_main_menu:
-                self.main_window_back()
-                return True
-            bui.containerwidget(edit=self._root_widget,
-            transition='out_right')
-            assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_window(
-                ProfileBrowserWindow(
-                    'in_left',
-                    selected_profile=new_name,
-                    in_main_menu=self._in_main_menu,
-                ),
-                from_window=self,
-                is_back=True,
-            )
+            self.main_window_back()
+
         return True
