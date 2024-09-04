@@ -967,31 +967,31 @@ void RootWidget::Setup() {
     // AddCover(0.5f, VAlign::kBottom, 0.0f, -180.0f, 600.0f, 550.0f,
     // 0.35f);
 
-    float backingR = 0.4f;
-    float backingG = 0.38f;
-    float backingB = 0.53f;
+    float backing_r = 0.43f;
+    float backing_g = 0.40f;
+    float backing_b = 0.53f;
     // float backingR = 0.44f;
     // float backingG = 0.41f;
     // float backingB = 0.56f;
-    float backingCoverR = backingR;
-    float backingCoverG = backingG;
-    float backingCoverB = backingB;
+    float backing_cover_r = backing_r;
+    float backing_cover_g = backing_g;
+    float backing_cover_b = backing_b;
     float backingA = 1.0f;
     if (g_base->ui->scale() != UIScale::kSmall) {
-      backingR *= TOOLBAR_COLOR_R * TOOLBAR_BACK_COLOR_R;
-      backingG *= TOOLBAR_COLOR_G * TOOLBAR_BACK_COLOR_G;
-      backingB *= TOOLBAR_COLOR_B * TOOLBAR_BACK_COLOR_B;
-      backingCoverR *= TOOLBAR_COLOR_R;
-      backingCoverG *= TOOLBAR_COLOR_G;
-      backingCoverB *= TOOLBAR_COLOR_B;
+      backing_r *= TOOLBAR_COLOR_R * TOOLBAR_BACK_COLOR_R;
+      backing_g *= TOOLBAR_COLOR_G * TOOLBAR_BACK_COLOR_G;
+      backing_b *= TOOLBAR_COLOR_B * TOOLBAR_BACK_COLOR_B;
+      backing_cover_r *= TOOLBAR_COLOR_R;
+      backing_cover_g *= TOOLBAR_COLOR_G;
+      backing_cover_b *= TOOLBAR_COLOR_B;
       backingA *= TOOLBAR_OPACITY;
     } else {
-      backingR *= 1.1f;
-      backingG *= 1.1f;
-      backingB *= 1.1f;
-      backingCoverR *= 1.1f;
-      backingCoverG *= 1.1f;
-      backingCoverB *= 1.1f;
+      backing_r *= 1.1f;
+      backing_g *= 1.1f;
+      backing_b *= 1.1f;
+      backing_cover_r *= 1.1f;
+      backing_cover_g *= 1.1f;
+      backing_cover_b *= 1.1f;
       backingA *= TOOLBAR_OPACITY_2;
     }
 
@@ -1007,9 +1007,9 @@ void RootWidget::Setup() {
       bd.img = "uiAtlas2";
       bd.mesh_transparent = "toolbarBackingBottom2";
       bd.selectable = false;
-      bd.color_r = backingR;
-      bd.color_g = backingG;
-      bd.color_b = backingB;
+      bd.color_r = backing_r;
+      bd.color_g = backing_g;
+      bd.color_b = backing_b;
       bd.opacity = backingA;
 
       bd.depth_min = 0.2f;
@@ -1041,22 +1041,25 @@ void RootWidget::Setup() {
     b.allow_in_game = false;
     AddButton_(b);
 
-    b.x = -0.5f * spacing;
-    b.img = "chestOpenIcon";
-    b.y = b.height * 0.5f;
-    b.call = UIV1Python::ObjID::kRootUIChestSlot2PressCall;
-    AddButton_(b);
+    // b.x = -0.5f * spacing;
+    // b.img = "chestOpenIcon";
+    // b.y = b.height * 0.5f;
+    // b.call = UIV1Python::ObjID::kRootUIChestSlot2PressCall;
+    // AddButton_(b);
 
     // test - empty icons
     b.y = b.height * 0.4f;
     b.x = 0.5f * spacing;
     b.img = "chestIconEmpty";
     b.width = b.height = 80.0f;
-    b.color_r = backingCoverR;
-    b.color_g = backingCoverG;
-    b.color_b = backingCoverB;
+    b.color_r = backing_cover_r;
+    b.color_g = backing_cover_g;
+    b.color_b = backing_cover_b;
     b.opacity = 1.0f;
     b.call = UIV1Python::ObjID::kRootUIChestSlot3PressCall;
+    b.x = -0.5f * spacing;
+    AddButton_(b);
+    b.x = 0.5f * spacing;
     AddButton_(b);
     b.x = 1.5f * spacing;
     b.call = UIV1Python::ObjID::kRootUIChestSlot4PressCall;
