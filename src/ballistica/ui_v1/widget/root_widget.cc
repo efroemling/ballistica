@@ -16,13 +16,16 @@ namespace ballistica::ui_v1 {
 
 // Color we mult toolbars by in medium and large ui modes (in small mode we
 // keep them more the normal window color since everything overlaps).
-#define TOOLBAR_COLOR_R 0.75f
-#define TOOLBAR_COLOR_G 0.85f
-#define TOOLBAR_COLOR_B 0.85f
+#define TOOLBAR_COLOR_R 1.0f
+#define TOOLBAR_COLOR_G 1.0f
+#define TOOLBAR_COLOR_B 1.0f
+// #define TOOLBAR_COLOR_R 0.75f
+// #define TOOLBAR_COLOR_G 0.85f
+// #define TOOLBAR_COLOR_B 0.85f
 
-#define TOOLBAR_BACK_COLOR_R 0.8f
-#define TOOLBAR_BACK_COLOR_G 0.8f
-#define TOOLBAR_BACK_COLOR_B 0.8f
+#define TOOLBAR_BACK_COLOR_R 1.0f
+#define TOOLBAR_BACK_COLOR_G 1.0f
+#define TOOLBAR_BACK_COLOR_B 1.0f
 
 // Opacity in med/large.
 #define TOOLBAR_OPACITY 1.0f
@@ -469,9 +472,9 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
     bd.color_g = 0.35f;
     bd.color_b = 0.55f;
     if (g_base->ui->scale() != UIScale::kSmall) {
-      bd.color_r *= TOOLBAR_COLOR_R;
-      bd.color_g *= TOOLBAR_COLOR_G;
-      bd.color_b *= TOOLBAR_COLOR_B;
+      // bd.color_r *= TOOLBAR_COLOR_R;
+      // bd.color_g *= TOOLBAR_COLOR_G;
+      // bd.color_b *= TOOLBAR_COLOR_B;
     }
     bd.depth_min = 0.3f;
     switch (type) {
@@ -662,9 +665,9 @@ void RootWidget::Setup() {
     bd.color_b = 0.73f;
     bd.call = UIV1Python::ObjID::kRootUIAccountButtonPressCall;
     if (g_base->ui->scale() != UIScale::kSmall) {
-      bd.color_r *= TOOLBAR_COLOR_R;
-      bd.color_g *= TOOLBAR_COLOR_G;
-      bd.color_b *= TOOLBAR_COLOR_B;
+      // bd.color_r *= TOOLBAR_COLOR_R;
+      // bd.color_g *= TOOLBAR_COLOR_G;
+      // bd.color_b *= TOOLBAR_COLOR_B;
     }
     bd.pre_buffer = 10.0f;
     bd.visibility_mask =
@@ -1056,10 +1059,11 @@ void RootWidget::Setup() {
     b.color_g = backing_cover_g;
     b.color_b = backing_cover_b;
     b.opacity = 1.0f;
-    b.call = UIV1Python::ObjID::kRootUIChestSlot3PressCall;
+    b.call = UIV1Python::ObjID::kRootUIChestSlot2PressCall;
     b.x = -0.5f * spacing;
     AddButton_(b);
     b.x = 0.5f * spacing;
+    b.call = UIV1Python::ObjID::kRootUIChestSlot3PressCall;
     AddButton_(b);
     b.x = 1.5f * spacing;
     b.call = UIV1Python::ObjID::kRootUIChestSlot4PressCall;

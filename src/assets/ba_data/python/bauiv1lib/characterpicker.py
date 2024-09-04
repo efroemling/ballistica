@@ -14,6 +14,18 @@ if TYPE_CHECKING:
     from typing import Any, Sequence
 
 
+class CharacterPickerDelegate:
+    """Delegate for character-picker."""
+
+    def on_character_picker_pick(self, character: str) -> None:
+        """Called when a character is selected."""
+        raise NotImplementedError()
+
+    def on_character_picker_get_more_press(self) -> None:
+        """Called when the 'get more characters' button is pressed."""
+        raise NotImplementedError()
+
+
 class CharacterPicker(PopupWindow):
     """Popup window for selecting characters."""
 
@@ -21,7 +33,7 @@ class CharacterPicker(PopupWindow):
         self,
         parent: bui.Widget,
         position: tuple[float, float] = (0.0, 0.0),
-        delegate: Any = None,
+        delegate: CharacterPickerDelegate | None = None,
         scale: float | None = None,
         offset: tuple[float, float] = (0.0, 0.0),
         tint_color: Sequence[float] = (1.0, 1.0, 1.0),
@@ -191,10 +203,14 @@ class CharacterPicker(PopupWindow):
             show_sign_in_prompt()
             return
 
-        bui.screenmessage('UNDER CONSTRUCTION')
-        return
+        if self._delegate is not None:
+            self._delegate.on_character_picker_get_more_press()
 
-        # self._transition_out()
+        self._transition_out()
+
+        # bui.screenmessage('UNDER CONSTRUCTION')
+        # return
+
         # StoreBrowserWindow(
         #     modal=True,
         #     show_tab=StoreBrowserWindow.TabID.CHARACTERS,

@@ -240,64 +240,48 @@ class AllSettingsWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.controls import ControlsSettingsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            ControlsSettingsWindow(origin_widget=self._controllers_button),
-            from_window=self,
+        self.main_window_replace(
+            ControlsSettingsWindow(origin_widget=self._controllers_button)
         )
 
     def _do_graphics(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.graphics import GraphicsSettingsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            GraphicsSettingsWindow(origin_widget=self._graphics_button),
-            from_window=self,
+        self.main_window_replace(
+            GraphicsSettingsWindow(origin_widget=self._graphics_button)
         )
 
     def _do_audio(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.audio import AudioSettingsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            AudioSettingsWindow(origin_widget=self._audio_button),
-            from_window=self,
+        self.main_window_replace(
+            AudioSettingsWindow(origin_widget=self._audio_button)
         )
 
     def _do_advanced(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.advanced import AdvancedSettingsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            AdvancedSettingsWindow(origin_widget=self._advanced_button),
-            from_window=self,
+        self.main_window_replace(
+            AdvancedSettingsWindow(origin_widget=self._advanced_button)
         )
 
     def _save_state(self) -> None:

@@ -235,16 +235,11 @@ class PluginWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.pluginsettings import PluginSettingsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we don't have control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            PluginSettingsWindow(transition='in_right'), from_window=self
-        )
+        self.main_window_replace(PluginSettingsWindow(transition='in_right'))
 
     def _show_category_options(self) -> None:
         uiscale = bui.app.ui_v1.uiscale

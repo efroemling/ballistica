@@ -7,6 +7,7 @@ from __future__ import annotations
 import logging
 import inspect
 import weakref
+import warnings
 from enum import Enum
 from typing import TYPE_CHECKING, override
 
@@ -162,10 +163,16 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # FIXME: Can probably kill this if we do immediate UI death checks.
         self.upkeeptimer = babase.AppTimer(2.6543, ui_upkeep, repeat=True)
 
-    def do_main_window_back(self, from_window: MainWindow) -> None:
+    def auto_set_back_window(self, from_window: MainWindow) -> None:
         """Sets the main menu window automatically from a parent WindowState."""
 
         main_window = self._main_window()
+
+        # This should never get called for top-level main-windows.
+        assert (
+            main_window is None or main_window.main_window_is_top_level is False
+        )
+
         back_state = (
             None if main_window is None else main_window.main_window_back_state
         )
@@ -175,8 +182,17 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                 f' cannot use auto-back.'
             )
         backwin = back_state.create_window(transition='in_left')
-        backwin.main_window_back_state = back_state.parent
-        self.set_main_window(backwin, from_window=from_window, is_back=True)
+
+        # Properly created state should have a value here.
+        assert back_state.is_top_level is not None
+
+        self.set_main_window(
+            backwin,
+            from_window=from_window,
+            is_back=True,
+            back_state=back_state,
+            suppress_warning=True,
+        )
 
     def get_main_window(self) -> bauiv1.MainWindow | None:
         """Return main window, if any."""
@@ -189,6 +205,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         is_back: bool = False,
         is_top_level: bool = False,
         back_state: MainWindowState | None = None,
+        suppress_warning: bool = False,
     ) -> None:
         """Set the current 'main' window, replacing any existing.
 
@@ -201,7 +218,17 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # pylint: disable=too-many-statements
         from bauiv1._uitypes import MainWindow
 
-        from_window_widget: bauiv1.Widget | None
+        # Encourage migration to the new higher level nav calls.
+        if not suppress_warning:
+            warnings.warn(
+                'set_main_window() should usually not be called directly;'
+                ' use the main_window_replace() or main_window_back()'
+                ' methods on MainWindow objects for navigation instead.'
+                ' If you truly need to use set_main_window(),'
+                ' pass suppress_warning=True to silence this warning.',
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
         # We used to accept Widgets but now want MainWindows.
         if not isinstance(window, MainWindow):
@@ -213,7 +240,8 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         window_widget = window.get_root_widget()
 
         if isinstance(from_window, MainWindow):
-            from_window_widget = from_window.get_root_widget()
+            # from_window_widget = from_window.get_root_widget()
+            pass
         else:
             if from_window is not None and not isinstance(from_window, bool):
                 raise RuntimeError(
@@ -222,110 +250,93 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                     f' You passed a {type(from_window)}.',
                 )
 
-            from_window_widget = None
+        existing = self._main_window()
 
-        existing = self._main_window_widget
-
-        try:
-            if isinstance(from_window, bool):
-                # For default val True we warn that the arg wasn't
-                # passed. False can be explicitly passed to disable this
-                # check.
-                if from_window is True:
-                    caller_frame = inspect.stack()[1]
-                    caller_filename = caller_frame.filename
-                    caller_line_number = caller_frame.lineno
-                    logging.warning(
-                        'set_main_window() should be passed a'
-                        " 'from_window' value to help ensure proper UI behavior"
-                        ' (%s line %i).',
-                        caller_filename,
-                        caller_line_number,
-                    )
-            else:
-                # For everything else, warn if what they passed wasn't
-                # the previous main menu widget.
-                if from_window_widget is not existing:
-                    caller_frame = inspect.stack()[1]
-                    caller_filename = caller_frame.filename
-                    caller_line_number = caller_frame.lineno
-                    logging.warning(
-                        "set_main_window() was passed 'from_window' %s"
-                        ' but existing main-menu-window is %s. (%s line %i).',
-                        from_window_widget,
-                        existing,
-                        caller_filename,
-                        caller_line_number,
-                    )
-        except Exception:
-            # Prevent any bugs in these checks from causing problems.
-            logging.exception('Error checking from_window')
-
-        # Once the above code leads to us fixing all leftover window
-        # bugs at the source, we can kill the code below.
-
-        # Let's grab the location where we were called from to report if
-        # we have to force-kill the existing window (which normally
-        # should not happen).
-        frameline = None
-        try:
-            frame = inspect.currentframe()
-            if frame is not None:
-                frame = frame.f_back
-            if frame is not None:
-                frameinfo = inspect.getframeinfo(frame)
-                frameline = f'{frameinfo.filename} {frameinfo.lineno}'
-        except Exception:
-            logging.exception('Error calcing line for set_main_window')
-
-        # NOTE: disabling this for now since hopefully our new system
-        # will be bulletproof enough to avoid this. Can turn it back on
-        # if that's not the case.
-
-        # With our legacy main-menu system, the caller is responsible
-        # for clearing out the old main menu window when assigning the
-        # new. However there are corner cases where that doesn't happen
-        # and we get old windows stuck under the new main one. So let's
-        # guard against that. However, we can't simply delete the
-        # existing main window when a new one is assigned because the
-        # user may transition the old out *after* the assignment. Sigh.
-        # So, as a happy medium, let's check in on the old after a short
-        # bit of time and kill it if its still alive. That will be a bit
-        # ugly on screen but at least should un-break things.
-        def _delay_kill() -> None:
-            import time
-
-            if existing:
-                print(
-                    f'Killing old main_menu_window'
-                    f' when called at: {frameline} t={time.time():.3f}'
+        # If they passed a back-state, make sure it is fully filled out.
+        if back_state is not None:
+            if back_state.is_top_level is None:
+                raise RuntimeError(
+                    'back_state.is_top_level has not been set.'
+                    ' Make sure to only pass fully-filled-out MainWindowStates.'
                 )
-                existing.delete()
-
-        if bool(False):
-            babase.apptimer(1.0, _delay_kill)
+        # If a top-level main-window is being set, complain if there already
+        # is a main-window.
+        if is_top_level:
+            if existing:
+                logging.warning(
+                    'set_main_window() called with top-level window %s'
+                    ' but found existing main-window %s.',
+                    window,
+                    existing,
+                )
+        else:
+            # In other cases, sanity-check that the window ordering this
+            # switch is the one we're switching away from.
+            try:
+                if isinstance(from_window, bool):
+                    # For default val True we warn that the arg wasn't
+                    # passed. False can be explicitly passed to disable this
+                    # check.
+                    if from_window is True:
+                        caller_frame = inspect.stack()[1]
+                        caller_filename = caller_frame.filename
+                        caller_line_number = caller_frame.lineno
+                        logging.warning(
+                            'set_main_window() should be passed a'
+                            " 'from_window' value to help ensure proper"
+                            ' UI behavior (%s line %i).',
+                            caller_filename,
+                            caller_line_number,
+                        )
+                else:
+                    # For everything else, warn if what they passed wasn't
+                    # the previous main menu widget.
+                    if from_window is not existing:
+                        caller_frame = inspect.stack()[1]
+                        caller_filename = caller_frame.filename
+                        caller_line_number = caller_frame.lineno
+                        logging.warning(
+                            "set_main_window() was passed 'from_window' %s"
+                            ' but existing main-menu-window is %s.'
+                            ' (%s line %i).',
+                            from_window,
+                            existing,
+                            caller_filename,
+                            caller_line_number,
+                        )
+            except Exception:
+                # Prevent any bugs in these checks from causing problems.
+                logging.exception('Error checking from_window')
 
         if is_back:
-            pass
+            # is_top_level should never be True here (only applies forward).
+            assert not is_top_level
+            # Always should have back_state in this case.
+            assert back_state is not None
+            assert back_state.is_top_level is not None
+            window.main_window_back_state = back_state.parent
+            window.main_window_is_top_level = back_state.is_top_level
         else:
+            # Store if the window is top-level so we won't complain later if
+            # we go back from it and there's nowhere to go to.
+            window.main_window_is_top_level = is_top_level
+
             # When navigating forward, generate a back-window-state from
             # the outgoing window.
             if is_top_level:
                 # Top level windows don't have or expect anywhere to
                 # go back to.
-                #
-                # self._main_window_back_state = None
                 window.main_window_back_state = None
             elif back_state is not None:
                 window.main_window_back_state = back_state
             else:
                 oldwin = self._main_window()
                 if oldwin is None:
-                    # We currenty only hold weak refs to windows so
-                    # that they are free to die on their own, but we
-                    # expect the main menu window to keep itself
-                    # alive as long as its the main one. Holler if
-                    # that seems to not be happening.
+                    # We currenty only hold weak refs to windows so that
+                    # they are free to die on their own, but we expect
+                    # the main menu window to keep itself alive as long
+                    # as its the main one. Holler if that seems to not
+                    # be happening.
                     logging.warning(
                         'set_main_window: No old MainWindow found'
                         ' and is_top_level is False;'
@@ -335,8 +346,9 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                 else:
                     oldwinstate = oldwin.get_main_window_state()
 
-                    # Store our previous back state on this new one.
+                    # Store some common window stuff on its state.
                     oldwinstate.parent = oldwin.main_window_back_state
+                    oldwinstate.is_top_level = oldwin.main_window_is_top_level
                     window.main_window_back_state = oldwinstate
 
         self._main_window = window_weakref

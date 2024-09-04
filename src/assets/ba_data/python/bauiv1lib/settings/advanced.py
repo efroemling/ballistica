@@ -721,32 +721,20 @@ class AdvancedSettingsWindow(bui.MainWindow):
     def _on_vr_test_press(self) -> None:
         from bauiv1lib.settings.vrtesting import VRTestingWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            VRTestingWindow(transition='in_right'), from_window=self
-        )
+        self.main_window_replace(VRTestingWindow(transition='in_right'))
 
     def _on_net_test_press(self) -> None:
-        plus = bui.app.plus
-        assert plus is not None
         from bauiv1lib.settings.nettesting import NetTestingWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            NetTestingWindow(transition='in_right'), from_window=self
-        )
+        self.main_window_replace(NetTestingWindow(transition='in_right'))
 
     def _on_friend_promo_code_press(self) -> None:
         from bauiv1lib import appinvite
@@ -763,64 +751,46 @@ class AdvancedSettingsWindow(bui.MainWindow):
     def _on_plugins_button_press(self) -> None:
         from bauiv1lib.settings.plugins import PluginWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            PluginWindow(origin_widget=self._plugins_button), from_window=self
+        self.main_window_replace(
+            PluginWindow(origin_widget=self._plugins_button)
         )
 
     def _on_dev_tools_button_press(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.devtools import DevToolsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            DevToolsWindow(origin_widget=self._dev_tools_button),
-            from_window=self,
+        self.main_window_replace(
+            DevToolsWindow(origin_widget=self._dev_tools_button)
         )
 
     def _on_send_info_press(self) -> None:
         from bauiv1lib.sendinfo import SendInfoWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        plus = bui.app.plus
-        assert plus is not None
-
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            SendInfoWindow(origin_widget=self._send_info_button),
-            from_window=self,
+        self.main_window_replace(
+            SendInfoWindow(origin_widget=self._send_info_button)
         )
 
     def _on_benchmark_press(self) -> None:
         from bauiv1lib.benchmarks import BenchmarksAndStressTestsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            BenchmarksAndStressTestsWindow(transition='in_right'),
-            from_window=self,
+        self.main_window_replace(
+            BenchmarksAndStressTestsWindow(transition='in_right')
         )
 
     def _save_state(self) -> None:
@@ -975,21 +945,3 @@ class AdvancedSettingsWindow(bui.MainWindow):
             self._complete_langs_list = None
             self._complete_langs_error = True
         bui.apptimer(0.001, bui.WeakCall(self._update_lang_status))
-
-    # def _do_back(self) -> None:
-    #     from bauiv1lib.settings.allsettings import AllSettingsWindow
-
-    #     # no-op if our underlying widget is dead or on its way out.
-    #     if not self._root_widget or self._root_widget.transitioning_out:
-    #         return
-
-    #     self._save_state()
-    #     bui.containerwidget(
-    #         edit=self._root_widget, transition=self._transition_out
-    #     )
-    #     assert bui.app.classic is not None
-    #     bui.app.ui_v1.set_main_window(
-    #         AllSettingsWindow(transition='in_left'),
-    #         from_window=self,
-    #         is_back=True,
-    #     )
