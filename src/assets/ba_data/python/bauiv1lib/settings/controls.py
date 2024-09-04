@@ -105,7 +105,7 @@ class ControlsSettingsWindow(bui.MainWindow):
             height += spacing
 
         assert bui.app.classic is not None
-        smallscale = 1.7 if show_keyboard else 2.2
+        smallscale = 1.7
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),

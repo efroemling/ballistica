@@ -68,7 +68,6 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # another MainWindow and we complain if they don't.
         self._main_window = empty_weakref(MainWindow)
         self._main_window_widget: bauiv1.Widget | None = None
-        self.main_window_group_id: str | None = None
 
         self.quit_window: bauiv1.Widget | None = None
 
@@ -123,7 +122,6 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         self.root_ui_calls.clear()
         self._main_window = empty_weakref(MainWindow)
         self._main_window_widget = None
-        self.main_window_group_id = None
 
     @property
     def uiscale(self) -> babase.UIScale:
@@ -164,7 +162,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # FIXME: Can probably kill this if we do immediate UI death checks.
         self.upkeeptimer = babase.AppTimer(2.6543, ui_upkeep, repeat=True)
 
-    def do_main_window_back(self, window: MainWindow) -> None:
+    def do_main_window_back(self, from_window: MainWindow) -> None:
         """Sets the main menu window automatically from a parent WindowState."""
 
         main_window = self._main_window()
@@ -178,7 +176,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             )
         backwin = back_state.create_window(transition='in_left')
         backwin.main_window_back_state = back_state.parent
-        self.set_main_window(backwin, from_window=window, is_back=True)
+        self.set_main_window(backwin, from_window=from_window, is_back=True)
 
     def get_main_window(self) -> bauiv1.MainWindow | None:
         """Return main window, if any."""
@@ -189,30 +187,14 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         window: bauiv1.MainWindow,
         from_window: bauiv1.MainWindow | None | bool = True,
         is_back: bool = False,
-        group_id: str | None = None,
         is_top_level: bool = False,
         back_state: MainWindowState | None = None,
     ) -> None:
         """Set the current 'main' window, replacing any existing.
 
-        If 'from_window' is passed as a bauiv1.Widget or bauiv1.Window
-        or None, a warning will be issued if it that value does not
-        match the current main window. This can help identify flawed
-        code that can lead to bad UI states. A value of False will
-        disable the check, which is necessary in some cases when the
-        current main window is not known.
-
-        When navigating somewhere from a cancel or back-button, pass
-        is_back=True; this will prevent the new main window from itself
-        being registered as a new location on the stack that can be
-        returned to.
-
-        If a 'group_id' string is provided and the window being replaced
-        has the same group-id, the WindowState stack is left unchanged,
-        effectively replacing the previous window with the new one in
-        the stack. This can be useful in cases where tab-bar-like UIs
-        allow flipping between sibling windows with the back button
-        always leading to a shared parent.
+        Generally this should not be called directly; The high level
+        MainWindow methods main_window_replace() and main_window_back()
+        should be used when possible for navigation.
         """
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
@@ -222,13 +204,24 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         from_window_widget: bauiv1.Widget | None
 
         # We used to accept Widgets but now want MainWindows.
-        assert isinstance(window, MainWindow)
+        if not isinstance(window, MainWindow):
+            raise RuntimeError(
+                f'set_main_window() now takes a MainWindow as its "window" arg.'
+                f' You passed a {type(window)}.',
+            )
         window_weakref = weakref.ref(window)
         window_widget = window.get_root_widget()
 
         if isinstance(from_window, MainWindow):
             from_window_widget = from_window.get_root_widget()
         else:
+            if from_window is not None and not isinstance(from_window, bool):
+                raise RuntimeError(
+                    f'set_main_window() now takes a MainWindow or bool or None'
+                    f'as its "from_window" arg.'
+                    f' You passed a {type(from_window)}.',
+                )
+
             from_window_widget = None
 
         existing = self._main_window_widget
@@ -317,13 +310,15 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         else:
             # When navigating forward, generate a back-window-state from
             # the outgoing window.
-
-            # Exception is when we were passed a group and it matches
-            # the existing group; in that case we just keep the existing
-            # back-state.
-            if group_id is not None and group_id == self.main_window_group_id:
-                assert not is_top_level
-                print(f'GOT GROUP ID MATCH {group_id}; KEEPING BACK STATE.')
+            if is_top_level:
+                # Top level windows don't have or expect anywhere to
+                # go back to.
+                #
+                # self._main_window_back_state = None
+                window.main_window_back_state = None
+            elif back_state is not None:
+                window.main_window_back_state = back_state
+            else:
                 oldwin = self._main_window()
                 if oldwin is None:
                     # We currenty only hold weak refs to windows so
@@ -332,60 +327,32 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                     # alive as long as its the main one. Holler if
                     # that seems to not be happening.
                     logging.warning(
-                        'set_main_window: no existing MainWindow found'
-                        ' (and is_top_level is False); should not happen.'
-                        ' a MainWindow should keep itself alive as long'
-                        ' as it is main.'
+                        'set_main_window: No old MainWindow found'
+                        ' and is_top_level is False;'
+                        ' this should not happen.'
                     )
                     window.main_window_back_state = None
                 else:
-                    window.main_window_back_state = (
-                        oldwin.main_window_back_state
-                    )
-            else:
-                if is_top_level:
-                    # Top level windows don't have or expect anywhere to go
-                    # back to.
-                    # self._main_window_back_state = None
-                    window.main_window_back_state = None
-                elif back_state is not None:
-                    window.main_window_back_state = back_state
-                else:
-                    oldwin = self._main_window()
-                    if oldwin is None:
-                        # We currenty only hold weak refs to windows so
-                        # that they are free to die on their own, but we
-                        # expect the main menu window to keep itself
-                        # alive as long as its the main one. Holler if
-                        # that seems to not be happening.
-                        logging.warning(
-                            'set_main_window: No old MainWindow found'
-                            ' and is_top_level is False;'
-                            ' this should not happen.'
-                        )
-                        window.main_window_back_state = None
-                    else:
-                        oldwinstate = oldwin.get_main_window_state()
+                    oldwinstate = oldwin.get_main_window_state()
 
-                        # Store our previous back state on this new one.
-                        oldwinstate.parent = oldwin.main_window_back_state
-                        window.main_window_back_state = oldwinstate
+                    # Store our previous back state on this new one.
+                    oldwinstate.parent = oldwin.main_window_back_state
+                    window.main_window_back_state = oldwinstate
 
         self._main_window = window_weakref
         self._main_window_widget = window_widget
-        self.main_window_group_id = group_id
 
     def has_main_window(self) -> bool:
         """Return whether a main menu window is present."""
         return bool(self._main_window_widget)
 
-    def clear_main_window(self) -> None:
+    def clear_main_window(self, transition: str | None = None) -> None:
         """Clear any existing main window."""
         from bauiv1._uitypes import MainWindow
 
         main_window = self._main_window()
         if main_window:
-            main_window.main_window_close()
+            main_window.main_window_close(transition=transition)
         else:
             # Fallback; if we have a widget but no window, nuke the widget.
             if self._main_window_widget:
@@ -397,4 +364,3 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
         self._main_window = empty_weakref(MainWindow)
         self._main_window_widget = None
-        self.main_window_group_id = None

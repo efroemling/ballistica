@@ -209,8 +209,7 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
         self.main_window_replace(
             MacMusicAppPlaylistSelectWindow(
                 self._callback, current_playlist_entry, self._current_entry
-            ),
-            group_id='soundtrackentryselect',
+            )
         )
         # MacMusicAppPlaylistSelectWindow(
         #     self._callback, current_playlist_entry, self._current_entry
@@ -241,7 +240,6 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
                 ),
                 allow_folders=False,
             ),
-            group_id='soundtrackentryselect',
         )
         # bui.app.ui_v1.set_main_window(
         #     FileSelectorWindow(
@@ -276,7 +274,6 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
                 valid_file_extensions=[],
                 allow_folders=True,
             ),
-            group_id='soundtrackentryselect',
         )
         # bui.app.ui_v1.set_main_window(
         #     FileSelectorWindow(

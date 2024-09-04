@@ -15,6 +15,8 @@ from bauiv1lib.popup import PopupWindow
 if TYPE_CHECKING:
     from typing import Any
 
+    from bauiv1lib.play import PlaylistSelectContext
+
 
 class PlayOptionsWindow(PopupWindow):
     """A popup window for configuring play options."""
@@ -25,6 +27,7 @@ class PlayOptionsWindow(PopupWindow):
         playlist: str,
         scale_origin: tuple[float, float],
         delegate: Any = None,
+        playlist_select_context: PlaylistSelectContext | None = None,
     ):
         # FIXME: Tidy this up.
         # pylint: disable=too-many-branches
@@ -39,11 +42,7 @@ class PlayOptionsWindow(PopupWindow):
         self._pvars = PlaylistTypeVars(sessiontype)
         self._transitioning_out = False
 
-        # We behave differently if we're being used for playlist selection
-        # vs starting a game directly (should make this more elegant).
-        classic = bui.app.classic
-        assert classic is not None
-        self._selecting_mode = classic.selecting_private_party_playlist
+        self._playlist_select_context = playlist_select_context
 
         self._do_randomize_val = bui.app.config.get(
             self._pvars.config_name + ' Playlist Randomize', 0
@@ -66,7 +65,8 @@ class PlayOptionsWindow(PopupWindow):
         mesh_transparent = bui.getmesh('level_select_button_transparent')
         mask_tex = bui.gettexture('mapPreviewMask')
 
-        # Poke into this playlist and see if we can display some of its maps.
+        # Poke into this playlist and see if we can display some of its
+        # maps.
         map_textures = []
         map_texture_entries = []
         rows = 0
@@ -405,7 +405,11 @@ class PlayOptionsWindow(PopupWindow):
             on_activate_call=self._on_ok_press,
             autoselect=True,
             label=bui.Lstr(
-                resource='okText' if self._selecting_mode else 'playText'
+                resource=(
+                    'okText'
+                    if self._playlist_select_context is not None
+                    else 'playText'
+                )
             ),
         )
 
@@ -498,8 +502,8 @@ class PlayOptionsWindow(PopupWindow):
 
         # Head back to the gather window in playlist-select mode
         # or start the game in regular mode.
-        if self._selecting_mode:
-            from bauiv1lib.gather import GatherWindow
+        if self._playlist_select_context is not None:
+            # from bauiv1lib.gather import GatherWindow
 
             if self._sessiontype is bs.FreeForAllSession:
                 typename = 'ffa'
@@ -509,14 +513,15 @@ class PlayOptionsWindow(PopupWindow):
                 raise RuntimeError('Only teams and ffa currently supported')
             cfg['Private Party Host Session Type'] = typename
             bui.getsound('gunCocking').play()
-            assert bui.app.classic is not None
-            # Note: this is a wonky situation where we aren't actually
-            # the main window but we set it on behalf of the main window
-            # that popped us up.
-            bui.app.ui_v1.set_main_window(
-                GatherWindow(transition='in_right'),
-                from_window=False,  # Disable this test.
-            )
+
+            # assert bui.app.classic is not None
+            # # Note: this is a wonky situation where we aren't actually
+            # # the main window but we set it on behalf of the main window
+            # # that popped us up.
+            # bui.app.ui_v1.set_main_window(
+            #     GatherWindow(transition='in_right'),
+            #     from_window=False,  # Disable this test.
+            # )
             self._transition_out(transition='out_left')
             if self._delegate is not None:
                 self._delegate.on_play_options_window_run_game()

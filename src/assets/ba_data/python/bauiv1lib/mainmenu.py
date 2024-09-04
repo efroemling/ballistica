@@ -505,7 +505,6 @@ class MainMenuWindow(bui.MainWindow):
 
         self.main_window_replace(
             CreditsWindow(origin_widget=self._credits_button),
-            # group_id='mainmenutop',
         )
 
     def _howtoplay(self) -> None:
@@ -606,9 +605,5 @@ class MainMenuWindow(bui.MainWindow):
         # no-op if we're not currently in control.
         if not self.main_window_has_control():
             return
-
-        classic = bui.app.classic
-        if classic is not None:
-            classic.selecting_private_party_playlist = False
 
         self.main_window_replace(PlayWindow(origin_widget=self._play_button))

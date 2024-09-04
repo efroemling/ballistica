@@ -57,12 +57,10 @@ class PlaylistAddGameWindow(bui.MainWindow):
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
                 position=(58 + x_inset, self._height - 53),
-                size=(165, 70),
-                scale=0.75,
-                text_scale=1.2,
-                label=bui.Lstr(resource='backText'),
+                size=(60, 48),
+                label=bui.charstr(bui.SpecialChar.BACK),
                 autoselect=True,
-                button_type='back',
+                button_type='backSmall',
                 on_activate_call=self.main_window_back,
             )
         self._select_button = select_button = bui.buttonwidget(
@@ -257,27 +255,37 @@ class PlaylistAddGameWindow(bui.MainWindow):
         from bauiv1lib.account import show_sign_in_prompt
         from bauiv1lib.store.browser import StoreBrowserWindow
 
+        # No-op if we're not in control.
+        if self.main_window_has_control():
+            return
+
         plus = bui.app.plus
         assert plus is not None
 
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
-        StoreBrowserWindow(
-            modal=True,
-            show_tab=StoreBrowserWindow.TabID.MINIGAMES,
-            on_close_call=self._on_store_close,
-            origin_widget=self._get_more_games_button,
+
+        self.main_window_replace(
+            StoreBrowserWindow(
+                # modal=True,
+                show_tab=StoreBrowserWindow.TabID.MINIGAMES,
+                # on_close_call=self._on_store_close,
+                origin_widget=self._get_more_games_button,
+                minimal_toolbars=True,
+            )
         )
 
-    def _on_store_close(self) -> None:
-        self._refresh(select_get_more_games_button=True)
+    # def _on_store_close(self) -> None:
+    #     self._refresh(select_get_more_games_button=True)
 
     def _add(self) -> None:
         bui.lock_all_input()  # Make sure no more commands happen.
         bui.apptimer(0.1, bui.unlock_all_input)
         assert self._selected_game_type is not None
-        self._editcontroller.add_game_type_selected(self._selected_game_type)
+        self._editcontroller.add_game_type_selected(
+            self._selected_game_type, from_window=self
+        )
 
     def _set_selected_game_type(self, gametype: type[bs.GameActivity]) -> None:
         self._selected_game_type = gametype
@@ -290,6 +298,3 @@ class PlaylistAddGameWindow(bui.MainWindow):
                 self._editcontroller.get_session_type()
             ),
         )
-
-    # def _back(self) -> None:
-    #     self._editcontroller.add_game_cancelled()
