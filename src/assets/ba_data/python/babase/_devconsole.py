@@ -161,11 +161,11 @@ class DevConsoleTabUI(DevConsoleTab):
         #     v_align='center',
         # )
         self.text(
-            'Make sure all static UI fits in the'
-            ' virtual screen at all UI scales (not counting things'
+            'Make sure all interactive UI fits in the'
+            ' virtual bounds at all UI-scales (not counting things'
             ' that follow screen edges).\n'
-            'Note that some UI elements'
-            ' may not reflect scale changes until recreated.',
+            'Note that some elements may not reflect UI-scale changes'
+            ' until recreated.',
             scale=0.6,
             pos=(15, 70),
             h_anchor='left',
@@ -185,7 +185,7 @@ class DevConsoleTabUI(DevConsoleTab):
         )
         x = 300
         self.text(
-            'UI Scale',
+            'UI-Scale',
             pos=(x - 5, 15),
             h_anchor='left',
             h_align='right',
@@ -196,14 +196,16 @@ class DevConsoleTabUI(DevConsoleTab):
         bwidth = 100
         for scale in UIScale:
             self.button(
-                scale.name.lower(),
+                scale.name.capitalize(),
                 pos=(x, 10),
                 size=(bwidth, 30),
                 h_anchor='left',
                 label_scale=0.6,
                 call=partial(_babase.app.set_ui_scale, scale),
                 style=(
-                    'light' if scale is _babase.app.ui_v1.uiscale else 'normal'
+                    'light'
+                    if scale.name.lower() == _babase.get_ui_scale()
+                    else 'normal'
                 ),
             )
             x += bwidth + 2
