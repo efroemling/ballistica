@@ -68,6 +68,8 @@ class DevConsole {
   auto BaseScale() const -> float;
   void RequestRefresh();
 
+  void OnUIScaleChanged();
+
  private:
   class ScopedUILock_;
   class Widget_;

@@ -4,7 +4,6 @@
 #define BALLISTICA_SHARED_FOUNDATION_MACROS_H_
 
 #ifdef __cplusplus
-#include <cassert>
 #include <string>
 #endif
 

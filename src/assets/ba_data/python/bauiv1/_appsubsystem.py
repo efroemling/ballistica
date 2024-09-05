@@ -61,7 +61,6 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         from bauiv1._uitypes import MainWindow
 
         super().__init__()
-        env = babase.env()
 
         # We hold only a weak ref to the current main Window; we want it
         # to be able to disappear on its own. That being said, we do
@@ -72,18 +71,28 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
         self.quit_window: bauiv1.Widget | None = None
 
-        # The following should probably go away or move to classic.
-        # self._main_menu_location: str | None = None
-
         # For storing arbitrary class-level state data for Windows or
         # other UI related classes.
         self.window_states: dict[type, Any] = {}
 
-        uiscalestr = babase.app.config.get('UI Scale', env['ui_scale'])
-        if uiscalestr == 'auto':
-            uiscalestr = env['ui_scale']
-
         self._uiscale: babase.UIScale
+        self._update_ui_scale()
+
+        self.cleanupchecks: list[UICleanupCheck] = []
+        self.upkeeptimer: babase.AppTimer | None = None
+
+        self.title_color = (0.72, 0.7, 0.75)
+        self.heading_color = (0.72, 0.7, 0.75)
+        self.infotextcolor = (0.7, 0.9, 0.7)
+
+        # Elements in our root UI will call anything here when
+        # activated.
+        self.root_ui_calls: dict[
+            UIV1AppSubsystem.RootUIElement, Callable[[], None]
+        ] = {}
+
+    def _update_ui_scale(self) -> None:
+        uiscalestr = babase.get_ui_scale()
         if uiscalestr == 'large':
             self._uiscale = babase.UIScale.LARGE
         elif uiscalestr == 'medium':
@@ -93,18 +102,6 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         else:
             logging.error("Invalid UIScale '%s'.", uiscalestr)
             self._uiscale = babase.UIScale.MEDIUM
-
-        self.cleanupchecks: list[UICleanupCheck] = []
-        self.upkeeptimer: babase.AppTimer | None = None
-
-        self.title_color = (0.72, 0.7, 0.75)
-        self.heading_color = (0.72, 0.7, 0.75)
-        self.infotextcolor = (0.7, 0.9, 0.7)
-
-        # Elements in our root UI will call anything here when activated.
-        self.root_ui_calls: dict[
-            UIV1AppSubsystem.RootUIElement, Callable[[], None]
-        ] = {}
 
     @property
     def available(self) -> bool:
@@ -133,20 +130,20 @@ class UIV1AppSubsystem(babase.AppSubsystem):
     def on_app_loading(self) -> None:
         from bauiv1._uitypes import ui_upkeep
 
-        # IMPORTANT: If tweaking UI stuff, make sure it behaves for small,
-        # medium, and large UI modes. (doesn't run off screen, etc).
-        # The overrides below can be used to test with different sizes.
-        # Generally small is used on phones, medium is used on tablets/tvs,
-        # and large is on desktop computers or perhaps large tablets. When
-        # possible, run in windowed mode and resize the window to assure
-        # this holds true at all aspect ratios.
+        # IMPORTANT: If tweaking UI stuff, make sure it behaves for
+        # small, medium, and large UI modes. (doesn't run off screen,
+        # etc). The overrides below can be used to test with different
+        # sizes. Generally small is used on phones, medium is used on
+        # tablets/tvs, and large is on desktop computers or perhaps
+        # large tablets. When possible, run in windowed mode and resize
+        # the window to assure this holds true at all aspect ratios.
 
-        # UPDATE: A better way to test this is now by setting the environment
-        # variable BA_UI_SCALE to "small", "medium", or "large".
-        # This will affect system UIs not covered by the values below such
-        # as screen-messages. The below values remain functional, however,
-        # for cases such as Android where environment variables can't be set
-        # easily.
+        # UPDATE: A better way to test this is now by setting the
+        # environment variable BA_UI_SCALE to "small", "medium", or
+        # "large". This will affect system UIs not covered by the values
+        # below such as screen-messages. The below values remain
+        # functional, however, for cases such as Android where
+        # environment variables can't be set easily.
 
         if bool(False):  # force-test ui scale
             self._uiscale = babase.UIScale.SMALL
@@ -160,7 +157,9 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                 )
 
         # Kick off our periodic UI upkeep.
-        # FIXME: Can probably kill this if we do immediate UI death checks.
+
+        # FIXME: Can probably kill this if we do immediate UI death
+        # checks.
         self.upkeeptimer = babase.AppTimer(2.6543, ui_upkeep, repeat=True)
 
     def auto_set_back_window(self, from_window: MainWindow) -> None:
@@ -181,10 +180,11 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                 f'Main window {main_window} provides no back-state;'
                 f' cannot use auto-back.'
             )
-        backwin = back_state.create_window(transition='in_left')
 
-        # Properly created state should have a value here.
+        # Valid states should have a value here.
         assert back_state.is_top_level is not None
+
+        backwin = back_state.create_window(transition='in_left')
 
         self.set_main_window(
             backwin,
@@ -213,7 +213,6 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         MainWindow methods main_window_replace() and main_window_back()
         should be used when possible for navigation.
         """
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         from bauiv1._uitypes import MainWindow
@@ -275,8 +274,8 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             try:
                 if isinstance(from_window, bool):
                     # For default val True we warn that the arg wasn't
-                    # passed. False can be explicitly passed to disable this
-                    # check.
+                    # passed. False can be explicitly passed to disable
+                    # this check.
                     if from_window is True:
                         caller_frame = inspect.stack()[1]
                         caller_filename = caller_frame.filename
@@ -289,8 +288,8 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                             caller_line_number,
                         )
                 else:
-                    # For everything else, warn if what they passed wasn't
-                    # the previous main menu widget.
+                    # For everything else, warn if what they passed
+                    # wasn't the previous main menu widget.
                     if from_window is not existing:
                         caller_frame = inspect.stack()[1]
                         caller_filename = caller_frame.filename
@@ -344,12 +343,9 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                     )
                     window.main_window_back_state = None
                 else:
-                    oldwinstate = oldwin.get_main_window_state()
-
-                    # Store some common window stuff on its state.
-                    oldwinstate.parent = oldwin.main_window_back_state
-                    oldwinstate.is_top_level = oldwin.main_window_is_top_level
-                    window.main_window_back_state = oldwinstate
+                    window.main_window_back_state = self.save_main_window_state(
+                        oldwin
+                    )
 
         self._main_window = window_weakref
         self._main_window_widget = window_widget
@@ -376,3 +372,52 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
         self._main_window = empty_weakref(MainWindow)
         self._main_window_widget = None
+
+    def save_main_window_state(self, window: MainWindow) -> MainWindowState:
+        """Fully initialize a window-state from a window.
+
+        Use this to get a state for later restoration purposes.
+        Calling the window's get_main_window_state() directly is
+        insufficient.
+        """
+        winstate = window.get_main_window_state()
+
+        # Store some common window stuff on its state.
+        winstate.parent = window.main_window_back_state
+        winstate.is_top_level = window.main_window_is_top_level
+
+        return winstate
+
+    def restore_main_window_state(self, state: MainWindowState) -> None:
+        """Restore UI to a saved state."""
+        existing = self.get_main_window()
+        if existing is not None:
+            raise RuntimeError('There is already a MainWindow.')
+
+        # Valid states should have a value here.
+        assert state.is_top_level is not None
+
+        win = state.create_window(transition=None)
+        self.set_main_window(
+            win,
+            from_window=False,  # disable check
+            is_top_level=state.is_top_level,
+            back_state=state.parent,
+            suppress_warning=True,
+        )
+
+    @override
+    def on_screen_change(self) -> None:
+        # Update our stored UIScale.
+        self._update_ui_scale()
+
+        # Update native bits (allow root widget to rebuild itself/etc.)
+        _bauiv1.on_screen_change()
+
+        # Lastly, if we have a main window, recreate it to pick up the
+        # new UIScale/etc.
+        mainwindow = self.get_main_window()
+        if mainwindow is not None:
+            winstate = self.save_main_window_state(mainwindow)
+            self.clear_main_window(transition='instant')
+            self.restore_main_window_state(winstate)

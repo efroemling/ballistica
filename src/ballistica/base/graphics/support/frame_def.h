@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "ballistica/base/assets/asset.h"
+#include "ballistica/base/graphics/support/graphics_settings.h"
 #include "ballistica/shared/generic/snapshot.h"
 #include "ballistica/shared/math/matrix44f.h"
 #include "ballistica/shared/math/vector2f.h"

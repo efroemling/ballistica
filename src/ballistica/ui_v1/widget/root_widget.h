@@ -30,7 +30,9 @@ class RootWidget : public ContainerWidget {
     return overlay_stack_widget_;
   }
 
-  void OnCancelCustom() override;
+  /// Called when UIScale or screen dimensions change.
+  void OnUIScaleChange();
+
   void UpdateLayout() override;
 
  private:

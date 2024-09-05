@@ -140,6 +140,13 @@ UI::UI() {
     }
   }
 }
+void UI::SetScale(UIScale val) {
+  BA_PRECONDITION(g_base->InLogicThread());
+  scale_ = val;
+  if (dev_console_ != nullptr) {
+    dev_console_->OnUIScaleChanged();
+  }
+}
 
 void UI::StepDisplayTime() {
   assert(g_base->InLogicThread());

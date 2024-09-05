@@ -6,6 +6,7 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/renderer/render_pass.h"
 #include "ballistica/base/graphics/support/frame_def.h"
+#include "ballistica/base/support/context.h"
 #include "ballistica/shared/foundation/inline.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/button_widget.h"
@@ -1574,6 +1575,8 @@ void RootWidget::UpdateLayout() {
   StepPositions_(0.0f);
 }
 
+void RootWidget::OnUIScaleChange() { MarkForUpdate(); }
+
 auto RootWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   // If a cancel message comes through and our back button is enabled, fire
   // our back button. In all other cases just do the default.
@@ -1605,20 +1608,6 @@ void RootWidget::SetOverlayWidget(StackWidget* w) {
 
   AddWidget(w);
   overlay_stack_widget_ = w;
-}
-
-void RootWidget::OnCancelCustom() {
-  // Need to revisit this. If the cancel event it pushes is not handled, it will
-  // wind up back here where it pushes another back call. This cycle repeats
-  // forever until something comes along which does handle cancel events and
-  // then it gets them all. Current repro case is Sign-in-with-BombSquad-Account
-  // window - press escape a few times while that is up and then click cancel;
-  // This code is only used for toolbar mode so should be safe to leave it
-  // disabled for now.
-
-  // Is there a reason for this to exist? If so, what is it?
-  // printf("GOT OnCancelCustom\n");
-  // g_base->ui->PushBackButtonCall(nullptr);
 }
 
 auto RootWidget::GetSpecialWidget(const std::string& s) const -> Widget* {

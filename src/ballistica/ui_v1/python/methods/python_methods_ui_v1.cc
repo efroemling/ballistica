@@ -2,11 +2,9 @@
 
 #include "ballistica/ui_v1/python/methods/python_methods_ui_v1.h"
 
-#include "ballistica/base/app_adapter/app_adapter.h"
-#include "ballistica/base/app_mode/app_mode.h"
-#include "ballistica/base/assets/sound_asset.h"
-#include "ballistica/base/platform/base_platform.h"
+#include "ballistica/base/assets/sound_asset.h"  // IWYU pragma: keep.
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/context.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_mesh.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_sound.h"
@@ -581,7 +579,7 @@ static auto PyCheckBoxWidget(PyObject* self, PyObject* args,
     widget = Object::New<CheckBoxWidget>();
   }
 
-  // set applicable values ----------------------------
+  // Set applicable values.
   if (size_obj != Py_None) {
     Point2D p = Python::GetPyPoint2D(size_obj);
     widget->SetWidth(p.x);
@@ -1022,7 +1020,7 @@ static auto PyColumnWidget(PyObject* self, PyObject* args,
     widget->set_claims_tab(Python::GetPyBool(claims_tab_obj));
   }
 
-  // if making a new widget add it at the end
+  // If making a new widget, add it at the end.
   if (edit_obj == Py_None) {
     g_ui_v1->AddWidget(widget.Get(), parent_widget);
   }
@@ -1628,7 +1626,7 @@ static auto PyScrollWidget(PyObject* self, PyObject* args,
     widget = Object::New<ScrollWidget>();
   }
 
-  // Set applicable values. ----------------------------
+  // Set applicable values.
   if (size_obj != Py_None) {
     Point2D p = Python::GetPyPoint2D(size_obj);
     widget->SetWidth(p.x);
@@ -2586,35 +2584,6 @@ static PyMethodDef PyRootUIBackPressDef = {
     "(internal)",
 };
 
-// ------------------------ is_party_icon_visible ------------------------------
-
-static auto PyIsPartyIconVisible(PyObject* self) -> PyObject* {
-  BA_PYTHON_TRY;
-  BA_PRECONDITION(g_base->InLogicThread());
-  bool party_button_active = (g_base->app_mode()->HasConnectionToClients()
-                              || g_base->app_mode()->HasConnectionToHost());
-  // bool party_button_active = (g_base->app_mode()->HasConnectionToClients()
-  //                             || g_base->app_mode()->HasConnectionToHost()
-  //                             ||
-  //                             g_ui_v1->root_ui()->always_draw_party_icon());
-  if (party_button_active) {
-    Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
-  }
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyIsPartyIconVisibleDef = {
-    "is_party_icon_visible",            // name
-    (PyCFunction)PyIsPartyIconVisible,  // method
-    METH_NOARGS,                        // flags
-
-    "is_party_icon_visible() -> bool\n"
-    "\n"
-    "(internal)",
-};
-
 // ----------------------------- is_available ----------------------------------
 
 static auto PyIsAvailable(PyObject* self) -> PyObject* {
@@ -2640,31 +2609,37 @@ static PyMethodDef PyIsAvailableDef = {
     "(internal)",
 };
 
+// --------------------------- on_screen_change --------------------------------
+
+static auto PyOnScreenChange(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  g_ui_v1->OnScreenChange();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyOnScreenChangeDef = {
+    "on_screen_change",             // name
+    (PyCFunction)PyOnScreenChange,  // method
+    METH_NOARGS,                    // flags
+
+    "on_screen_change() -> None\n"
+    "\n"
+    "(internal)",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
-  return {
-      PyIsPartyIconVisibleDef,
-      PyRootUIBackPressDef,
-      PyGetSpecialWidgetDef,
-      PySetPartyWindowOpenDef,
-      PyButtonWidgetDef,
-      PyCheckBoxWidgetDef,
-      PyImageWidgetDef,
-      PyColumnWidgetDef,
-      PyContainerWidgetDef,
-      PyRowWidgetDef,
-      PyScrollWidgetDef,
-      PyHScrollWidgetDef,
-      PyTextWidgetDef,
-      PyWidgetDef,
-      PyUIBoundsDef,
-      PyGetSoundDef,
-      PyGetTextureDef,
-      PyGetQRCodeTextureDef,
-      PyGetMeshDef,
-      PyIsAvailableDef,
-  };
+  return {PyRootUIBackPressDef, PyGetSpecialWidgetDef, PySetPartyWindowOpenDef,
+          PyButtonWidgetDef,    PyCheckBoxWidgetDef,   PyImageWidgetDef,
+          PyColumnWidgetDef,    PyContainerWidgetDef,  PyRowWidgetDef,
+          PyScrollWidgetDef,    PyHScrollWidgetDef,    PyTextWidgetDef,
+          PyWidgetDef,          PyUIBoundsDef,         PyGetSoundDef,
+          PyGetTextureDef,      PyGetQRCodeTextureDef, PyGetMeshDef,
+          PyIsAvailableDef,     PyOnScreenChangeDef};
 }
 
 #pragma clang diagnostic pop

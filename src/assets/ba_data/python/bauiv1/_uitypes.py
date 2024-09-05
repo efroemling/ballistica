@@ -96,14 +96,20 @@ class MainWindow(Window):
         except Exception:
             logging.exception('Error in on_main_window_close() for %s.', self)
 
-        _bauiv1.containerwidget(
-            edit=self._root_widget,
-            transition=(
-                self._main_window_transition_out
-                if transition is None
-                else transition
-            ),
-        )
+        # Note: normally transition of None means instant, but we use
+        # that to mean 'do the default' so we support a special
+        # 'instant' string..
+        if transition == 'instant':
+            self._root_widget.delete()
+        else:
+            _bauiv1.containerwidget(
+                edit=self._root_widget,
+                transition=(
+                    self._main_window_transition_out
+                    if transition is None
+                    else transition
+                ),
+            )
 
     def main_window_has_control(self) -> bool:
         """Is this MainWindow allowed to change the global main window?

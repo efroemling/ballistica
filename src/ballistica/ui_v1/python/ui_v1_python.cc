@@ -3,14 +3,12 @@
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 
 #include "ballistica/base/audio/audio.h"
-#include "ballistica/base/input/device/keyboard_input.h"
+#include "ballistica/base/input/device/keyboard_input.h"  // IWYU pragma: keep.
 #include "ballistica/base/input/input.h"
-#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/ui/dev_console.h"
-#include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/python/python_command.h"
+#include "ballistica/shared/python/python_command.h"  // IWYU pragma: keep.
 #include "ballistica/shared/python/python_module_builder.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_mesh.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_sound.h"
@@ -22,9 +20,9 @@ namespace ballistica::ui_v1 {
 
 UIV1Python::UIV1Python() = default;
 
-// Declare a plain c PyInit_XXX function for our Python module;
-// this is how Python inits our binary module (and by extension, our
-// entire feature-set).
+// Declare a plain C PyInit_XXX function for our Python module; this is how
+// Python inits our binary module (and by extension, our entire
+// feature-set).
 extern "C" auto PyInit__bauiv1() -> PyObject* {
   auto* builder =
       new PythonModuleBuilder("_bauiv1",
@@ -48,8 +46,8 @@ void UIV1Python::AddPythonClasses(PyObject* module) {
 }
 
 void UIV1Python::ImportPythonObjs() {
-  // Import and grab all our objs_.
-  // This code blob expects 'ObjID' and 'objs_' to be defined.
+  // Import and grab all our objs_. This code blob expects 'ObjID' and
+  // 'objs_' to be defined.
 #include "ballistica/ui_v1/mgen/pyembed/binding_ui_v1.inc"
 }
 
@@ -113,8 +111,8 @@ void UIV1Python::InvokeStringEditor(PyObject* string_edit_adapter_instance) {
   auto context_call = Object::New<base::PythonContextCall>(
       objs().Get(ObjID::kOnScreenKeyboardClass));
 
-  // This is probably getting called from within UI handling, so we
-  // need to schedule things to run post-ui-traversal in that case.
+  // This is probably getting called from within UI handling, so we need to
+  // schedule things to run post-ui-traversal in that case.
   if (g_base->ui->InUIOperation()) {
     context_call->ScheduleInUIOperation(args);
   } else {

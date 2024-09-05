@@ -819,6 +819,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
     def invoke_main_menu_ui(self) -> None:
         """Bring up main menu ui."""
+        print('INVOKING MAIN MENU UI')
+
         # Bring up the last place we were, or start at the main menu otherwise.
         app = bauiv1.app
         env = app.env

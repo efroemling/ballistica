@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_BASE_PYTHON_BASE_PYTHON_H_
 #define BALLISTICA_BASE_PYTHON_BASE_PYTHON_H_
 
+#include <set>
+
 #include "ballistica/base/base.h"
 #include "ballistica/shared/python/python_object_set.h"
 
@@ -175,7 +177,6 @@ class BasePython {
 
   void SoftImportPlus();
   void SoftImportClassic();
-  // void SoftImportUIV1();
 
  private:
   std::set<std::string> do_once_locations_;

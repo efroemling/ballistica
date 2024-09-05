@@ -25,7 +25,7 @@
 #include "ballistica/base/graphics/gl/program/program_sprite_gl.h"
 #include "ballistica/base/graphics/gl/render_target_gl.h"
 #include "ballistica/base/graphics/gl/texture_data_gl.h"
-#include "ballistica/base/platform/base_platform.h"
+#include "ballistica/shared/math/rect.h"
 
 // Turn this off to see how much blend overdraw is occurring.
 #define BA_GL_ENABLE_BLEND 1

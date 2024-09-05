@@ -362,7 +362,7 @@ class WatchWindow(bui.MainWindow):
                 bui.fade_screen(True)
                 assert self._my_replay_selected is not None
                 bs.new_replay_session(
-                    bui.get_replays_dir() + '/' + self._my_replay_selected
+                    f'{bui.get_replays_dir()}/{self._my_replay_selected}'
                 )
             except Exception:
                 logging.exception('Error running replay session.')

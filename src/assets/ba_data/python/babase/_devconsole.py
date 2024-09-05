@@ -4,16 +4,17 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, override
-from dataclasses import dataclass
 import logging
+from functools import partial
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, override
 
 import _babase
 
 if TYPE_CHECKING:
     from typing import Callable, Any, Literal
 
-    from babase import AppMode
+    from babase import AppMode, UIScale
 
 
 class DevConsoleTab:
@@ -108,7 +109,6 @@ class DevConsoleTabAppModes(DevConsoleTab):
 
     @override
     def refresh(self) -> None:
-        from functools import partial
 
         modes = _babase.app.mode_selector.testable_app_modes()
         self.text(
@@ -150,6 +150,7 @@ class DevConsoleTabUI(DevConsoleTab):
 
     @override
     def refresh(self) -> None:
+        from babase._mgen.enums import UIScale
 
         self.text(
             'UI Testing: Make sure all static UI fits in the'
@@ -182,14 +183,14 @@ class DevConsoleTabUI(DevConsoleTab):
         )
 
         bwidth = 100
-        for sz in ('small', 'medium', 'large'):
+        for scale in UIScale:
             self.button(
-                sz,
+                scale.name,
                 pos=(x, 10),
                 size=(bwidth, 30),
                 h_anchor='left',
                 label_scale=0.6,
-                call=lambda: _babase.screenmessage('UNDER CONSTRUCTION.'),
+                call=partial(_babase.app.set_ui_scale, scale),
             )
             x += bwidth + 10
 
