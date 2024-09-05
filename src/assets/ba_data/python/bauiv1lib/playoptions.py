@@ -500,8 +500,8 @@ class PlayOptionsWindow(PopupWindow):
         cfg = bui.app.config
         cfg[self._pvars.config_name + ' Playlist Selection'] = self._playlist
 
-        # Head back to the gather window in playlist-select mode
-        # or start the game in regular mode.
+        # Head back to the gather window in playlist-select mode or
+        # start the game in regular mode.
         if self._playlist_select_context is not None:
             # from bauiv1lib.gather import GatherWindow
 
@@ -514,14 +514,6 @@ class PlayOptionsWindow(PopupWindow):
             cfg['Private Party Host Session Type'] = typename
             bui.getsound('gunCocking').play()
 
-            # assert bui.app.classic is not None
-            # # Note: this is a wonky situation where we aren't actually
-            # # the main window but we set it on behalf of the main window
-            # # that popped us up.
-            # bui.app.ui_v1.set_main_window(
-            #     GatherWindow(transition='in_right'),
-            #     from_window=False,  # Disable this test.
-            # )
             self._transition_out(transition='out_left')
             if self._delegate is not None:
                 self._delegate.on_play_options_window_run_game()

@@ -56,10 +56,11 @@ class NetTestingWindow(bui.MainWindow):
         self._done_button: bui.Widget | None = bui.buttonwidget(
             parent=self._root_widget,
             position=(46, self._height - 77),
-            size=(120, 60),
-            scale=0.8,
+            size=(60, 60),
+            scale=0.9,
+            label=bui.charstr(bui.SpecialChar.BACK),
+            button_type='backSmall',
             autoselect=True,
-            label=bui.Lstr(resource='doneText'),
             on_activate_call=self.main_window_back,
         )
 
@@ -164,28 +165,11 @@ class NetTestingWindow(bui.MainWindow):
     def _show_val_testing(self) -> None:
         assert bui.app.classic is not None
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        bui.app.ui_v1.set_main_window(NetValTestingWindow(), from_window=self)
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-
-    # def _done(self) -> None:
-    #     # pylint: disable=cyclic-import
-    #     from bauiv1lib.settings.advanced import AdvancedSettingsWindow
-
-    #     # no-op if our underlying widget is dead or on its way out.
-    #     if not self._root_widget or self._root_widget.transitioning_out:
-    #         return
-
-    #     assert bui.app.classic is not None
-    #     bui.app.ui_v1.set_main_window(
-    #         AdvancedSettingsWindow(transition='in_left'),
-    #         from_window=self,
-    #         is_back=True,
-    #     )
-    #     bui.containerwidget(edit=self._root_widget, transition='out_right')
+        self.main_window_replace(NetValTestingWindow())
 
 
 def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:

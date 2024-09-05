@@ -42,10 +42,7 @@ class StoreBrowserWindow(bui.MainWindow):
         self,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
-        # modal: bool = False,
         show_tab: StoreBrowserWindow.TabID | None = None,
-        # on_close_call: Callable[[], Any] | None = None,
-        # back_location: str | None = None,
         minimal_toolbars: bool = False,
     ):
         # pylint: disable=too-many-statements
@@ -59,20 +56,11 @@ class StoreBrowserWindow(bui.MainWindow):
 
         bui.set_analytics_screen('Store Window')
 
-        # Need to store this ourself for modal mode.
-        # if origin_widget is not None:
-        #     self._transition_out = 'out_scale'
-        # else:
-        #     self._transition_out = 'out_right'
-
         self.button_infos: dict[str, dict[str, Any]] | None = None
         self.update_buttons_timer: bui.AppTimer | None = None
         self._status_textwidget_update_timer = None
 
-        # self._back_location = back_location
-        # self._on_close_call = on_close_call
         self._show_tab = show_tab
-        # self._modal = modal
         self._width = 1670 if uiscale is bui.UIScale.SMALL else 1040
         self._x_inset = x_inset = 310 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
@@ -1252,31 +1240,13 @@ class StoreBrowserWindow(bui.MainWindow):
         except Exception:
             logging.exception('Error restoring state for %s.', self)
 
-    # def _back(self) -> None:
-
-    #     # if self._modal:
-    #     #     # no-op if our underlying widget is dead or on its way out.
-    #     #     if not self._root_widget or self._root_widget.transitioning_out:
-    #     #         return
-    #     #     self._save_state()
-    #     #     bui.containerwidget(
-    #     #         edit=self._root_widget, transition=self._transition_out
-    #     #     )
-    #     # else:
-    #     # no-op if we're not currently in control.
-    #     if not self.main_window_has_control():
-    #         return
-    #     self.main_window_back()
-    #     # if self._on_close_call is not None:
-    #     #     self._on_close_call()
-
 
 def _check_merch_availability_in_bg_thread() -> None:
     # pylint: disable=cell-var-from-loop
 
-    # Merch is available from some countries only.
-    # Make a reasonable check to ask the master-server about this at
-    # launch and store the results.
+    # Merch is available from some countries only. Make a reasonable
+    # check to ask the master-server about this at launch and store the
+    # results.
     plus = bui.app.plus
     assert plus is not None
 

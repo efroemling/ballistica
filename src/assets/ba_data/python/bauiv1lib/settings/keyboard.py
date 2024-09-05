@@ -377,17 +377,16 @@ class ConfigKeyboardWindow(bui.MainWindow):
         """Called when the popup is closing."""
 
     def _save(self) -> None:
-        # from bauiv1lib.settings.controls import ControlsSettingsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
         assert bui.app.classic is not None
-        # bui.containerwidget(edit=self._root_widget, transition='out_right')
         bui.getsound('gunCocking').play()
 
-        # There's a chance the device disappeared; handle that gracefully.
+        # There's a chance the device disappeared; handle that
+        # gracefully.
         if not self._input:
             return
 
@@ -402,8 +401,8 @@ class ConfigKeyboardWindow(bui.MainWindow):
             if val != -1:
                 dst2[key] = val
 
-        # Send this config to the master-server so we can generate
-        # more defaults in the future.
+        # Send this config to the master-server so we can generate more
+        # defaults in the future.
         if bui.app.classic is not None:
             bui.app.classic.master_server_v1_post(
                 'controllerConfig',
@@ -418,11 +417,6 @@ class ConfigKeyboardWindow(bui.MainWindow):
         bui.app.config.apply_and_commit()
 
         self.main_window_back()
-        # bui.app.ui_v1.set_main_window(
-        #     ControlsSettingsWindow(transition='in_left'),
-        #     from_window=self,
-        #     is_back=True,
-        # )
 
 
 class AwaitKeyboardInputWindow(bui.Window):

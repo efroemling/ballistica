@@ -64,44 +64,6 @@ class GameActivity(Activity[PlayerT, TeamT]):
     # (unless overridden by the map).
     default_music: bascenev1.MusicType | None = None
 
-    # @classmethod
-    # def create_settings_ui(
-    #     cls,
-    #     sessiontype: type[bascenev1.Session],
-    #     settings: dict | None,
-    #     completion_call: Callable[[dict | None], None],
-    # ) -> None:
-    #     """Launch an in-game UI to configure settings for a game type.
-
-    #     'sessiontype' should be the bascenev1.Session class the game will
-    #       be used in.
-
-    #     'settings' should be an existing settings dict (implies 'edit'
-    #       ui mode) or None (implies 'add' ui mode).
-
-    #     'completion_call' will be called with a filled-out settings dict on
-    #       success or None on cancel.
-
-    #     Generally subclasses don't need to override this; if they override
-    #     bascenev1.GameActivity.get_available_settings() and
-    #     bascenev1.GameActivity.get_supported_maps() they can just rely on
-    #     the default implementation here which calls those methods.
-    #     """
-    #     # pylint: disable=cyclic-import
-    #     from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
-
-    #     assert babase.app.classic is not None
-    #     babase.app.ui_v1.clear_main_window()
-    #     babase.app.ui_v1.set_main_window(
-    #         PlaylistEditGameWindow(
-    #             cls,
-    #             sessiontype,
-    #             settings,
-    #             completion_call=completion_call,
-    #         ),
-    #         from_window=False,  # Disable check since we don't know.
-    #     )
-
     @classmethod
     def getscoreconfig(cls) -> bascenev1.ScoreConfig:
         """Return info about game scoring setup; can be overridden by games."""

@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from typing import override
+
 import bascenev1 as bs
 import bauiv1 as bui
 
@@ -359,6 +361,20 @@ class KioskWindow(bui.MainWindow):
             1.0, bui.WeakCall(self._update), repeat=True
         )
 
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
+
+    @override
+    def on_main_window_close(self) -> None:
+        self._save_state()
+
     def _restore_state(self) -> None:
         assert bui.app.classic is not None
         sel_name = bui.app.ui_v1.window_states.get(type(self))
@@ -510,13 +526,13 @@ class KioskWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.mainmenu import MainMenuWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
         assert bui.app.classic is not None
 
         self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
         bui.app.classic.did_menu_intro = True  # prevent delayed transition-in
-        bui.app.ui_v1.set_main_window(MainMenuWindow(), from_window=self)
+
+        self.main_window_replace(MainMenuWindow())

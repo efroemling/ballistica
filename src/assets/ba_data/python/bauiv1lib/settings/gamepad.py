@@ -798,22 +798,15 @@ class GamepadSettingsWindow(bui.MainWindow):
 
     def _cancel(self) -> None:
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
         if self._modal:
+            # no-op if our underlying widget is dead or on its way out.
+            if not self._root_widget or self._root_widget.transitioning_out:
+                return
             bui.containerwidget(
                 edit=self._root_widget, transition=self._transition_out
             )
         else:
             self.main_window_back()
-            # assert bui.app.classic is not None
-            # bui.app.ui_v1.set_main_window(
-            #     ControlsSettingsWindow(transition='in_left'),
-            #     from_window=self,
-            #     is_back=True,
-            # )
 
     def _reset(self) -> None:
         from bauiv1lib.confirm import ConfirmWindow

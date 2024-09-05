@@ -87,19 +87,13 @@ class WatchWindow(bui.MainWindow):
                 parent=self._root_widget,
                 autoselect=True,
                 position=(70 + x_inset, self._height - 74),
-                size=(140, 60),
+                size=(60, 60),
                 scale=1.1,
-                label=bui.Lstr(resource='backText'),
-                button_type='back',
+                label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
                 on_activate_call=self.main_window_back,
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
-            bui.buttonwidget(
-                edit=btn,
-                button_type='backSmall',
-                size=(60, 60),
-                label=bui.charstr(bui.SpecialChar.BACK),
-            )
 
         bui.textwidget(
             parent=self._root_widget,

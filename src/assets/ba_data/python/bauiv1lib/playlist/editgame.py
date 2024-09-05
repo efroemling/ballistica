@@ -545,10 +545,6 @@ class PlaylistEditGameWindow(bui.MainWindow):
         if not self.main_window_has_control():
             return
 
-        # no-op if our underlying widget is dead or on its way out.
-        # if not self._root_widget or self._root_widget.transitioning_out:
-        #     return
-
         self._config = self._getconfig()
 
         # Replace ourself with the map-select UI.
@@ -556,25 +552,11 @@ class PlaylistEditGameWindow(bui.MainWindow):
             PlaylistMapSelectWindow(
                 self._gametype,
                 self._sessiontype,
-                # copy.deepcopy(self._getconfig()),
                 self._config,
                 self._edit_info,
                 self._completion_call,
             )
         )
-
-        # bui.containerwidget(edit=self._root_widget, transition='out_left')
-        # assert bui.app.classic is not None
-        # bui.app.ui_v1.set_main_window(
-        #     PlaylistMapSelectWindow(
-        #         self._gametype,
-        #         self._sessiontype,
-        #         copy.deepcopy(self._getconfig()),
-        #         self._edit_info,
-        #         self._completion_call,
-        #     ),
-        #     from_window=self,
-        # )
 
     def _choice_inc(
         self,
