@@ -19,19 +19,16 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
     def reload_window(self) -> None:
         """Transitions out and recreates ourself."""
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        bui.screenmessage('UNDER CONSTRUCTION')
-        return
-        # bui.containerwidget(edit=self._root_widget, transition='out_left')
-        # assert bui.app.classic is not None
-        # bui.app.ui_v1.set_main_window(
-        #     EditProfileWindow(self.getname()),
-        #     from_window=self,
-        #     is_back=True,
-        # )
+        # Replace ourself with ourself, but keep the same back location.
+        assert self.main_window_back_state is not None
+        self.main_window_replace(
+            EditProfileWindow(self.getname()),
+            back_state=self.main_window_back_state,
+        )
 
     def __init__(
         self,
@@ -547,6 +544,15 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
         """Attempt to upgrade the profile to global."""
         from bauiv1lib import account
         from bauiv1lib.profile import upgrade as pupgrade
+
+        new_name = self.getname().strip()
+
+        if self._existing_profile and self._existing_profile != new_name:
+            bui.screenmessage(
+                'Unsaved changes found; you must save first.', color=(1, 0, 0)
+            )
+            bui.getsound('error').play()
+            return
 
         plus = bui.app.plus
         assert plus is not None

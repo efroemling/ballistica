@@ -1,4 +1,4 @@
-### 1.7.37 (build 21986, api 9, 2024-09-04)
+### 1.7.37 (build 21987, api 9, 2024-09-04)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -36,6 +36,8 @@
   was to add a higher level layer to the UI to make things like saving/restoring
   UI states easier, but I now plan to use `WindowState` classes to accomplish
   much of that in a more backward-compatible way. More on that below.
+- Removed touch-specific button target-area adjustements. If you find any
+  buttons that are hard to hit accurately on a touchscreen, please holler.
 - Added a new `bauiv1.Window` subclass called `bauiv1.MainWindow` which handles
   what was previously called the 'main-menu-window' system which was a bit
   ad-hoc and messy. MainMenuWindows have a built-in stack system so things like
