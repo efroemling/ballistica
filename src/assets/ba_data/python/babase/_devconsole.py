@@ -36,7 +36,7 @@ class DevConsoleTab:
         h_anchor: Literal['left', 'center', 'right'] = 'center',
         label_scale: float = 1.0,
         corner_radius: float = 8.0,
-        style: Literal['normal', 'dark'] = 'normal',
+        style: Literal['normal', 'light'] = 'normal',
     ) -> None:
         """Add a button to the tab being refreshed."""
         assert _babase.app.devconsole.is_refreshing
@@ -152,30 +152,41 @@ class DevConsoleTabUI(DevConsoleTab):
     def refresh(self) -> None:
         from babase._mgen.enums import UIScale
 
+        # self.text(
+        #     'UI Testing',
+        #     scale=0.8,
+        #     pos=(15, 77),
+        #     h_anchor='left',
+        #     h_align='left',
+        #     v_align='center',
+        # )
         self.text(
-            'UI Testing: Make sure all static UI fits in the'
+            'Make sure all static UI fits in the'
             ' virtual screen at all UI scales (not counting things'
-            ' that follow screen edges).',
-            scale=0.8,
-            pos=(15, 55),
+            ' that follow screen edges).\n'
+            'Note that some UI elements'
+            ' may not reflect scale changes until recreated.',
+            scale=0.6,
+            pos=(15, 70),
             h_anchor='left',
             h_align='left',
-            v_align='none',
+            v_align='center',
         )
 
         ui_overlay = _babase.get_draw_ui_bounds()
         self.button(
-            'Hide Virtual Screen' if ui_overlay else 'Show Virtual Screen',
+            'Virtual Bounds ON' if ui_overlay else 'Virtual Bounds OFF',
             pos=(10, 10),
             size=(200, 30),
             h_anchor='left',
             label_scale=0.6,
             call=self.toggle_ui_overlay,
+            style='light' if ui_overlay else 'normal',
         )
-        x = 320
+        x = 300
         self.text(
-            'UI Scale:',
-            pos=(x - 10, 15),
+            'UI Scale',
+            pos=(x - 5, 15),
             h_anchor='left',
             h_align='right',
             v_align='none',
@@ -185,14 +196,17 @@ class DevConsoleTabUI(DevConsoleTab):
         bwidth = 100
         for scale in UIScale:
             self.button(
-                scale.name,
+                scale.name.lower(),
                 pos=(x, 10),
                 size=(bwidth, 30),
                 h_anchor='left',
                 label_scale=0.6,
                 call=partial(_babase.app.set_ui_scale, scale),
+                style=(
+                    'light' if scale is _babase.app.ui_v1.uiscale else 'normal'
+                ),
             )
-            x += bwidth + 10
+            x += bwidth + 2
 
     def toggle_ui_overlay(self) -> None:
         """Toggle UI overlay drawing."""
@@ -221,7 +235,7 @@ class DevConsoleTabTest(DevConsoleTab):
             size=(100, 30),
             h_anchor='left',
             label_scale=0.6,
-            style='dark',
+            style='light',
         )
         self.text(
             'TestText',

@@ -652,12 +652,6 @@ class App:
                     'Error in on_screen_change() for subsystem %s.', subsystem
                 )
 
-        # Note to the user that this is currently an imperfect system.
-        _babase.screenmessage(
-            f'UI Scale is now {scale.name}.\n'
-            f' NOTE: some UI elements may not respond to this currently.'
-        )
-
     def _set_intent(self, intent: AppIntent) -> None:
         from babase._appmode import AppMode
 

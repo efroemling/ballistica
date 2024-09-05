@@ -472,13 +472,13 @@ void RenderPass::SetFrustum(float near_val, float far_val) {
   } else {
     // Old angle-based stuff:
     float x;
-    float angleY = (cam_fov_y_ / 2.0f) * kPi / 180.0f;
-    float y = near_val * tanf(angleY);
+    float angle_y = (cam_fov_y_ / 2.0f) * kPi / 180.0f;
+    float y = near_val * tanf(angle_y);
 
     // Fov-x < 0 implies to use aspect ratio.
     if (cam_fov_x_ > 0.0f) {
-      float angleX = (cam_fov_x_ / 2.0f) * kPi / 180.0f;
-      x = near_val * tanf(angleX);
+      float angle_x = (cam_fov_x_ / 2.0f) * kPi / 180.0f;
+      x = near_val * tanf(angle_x);
     } else {
       x = y * GetPhysicalAspectRatio();
     }

@@ -31,11 +31,11 @@ const float kDevConsoleTabButtonCornerRadius{16.0f};
 const double kTransitionSeconds{0.15};
 
 enum class DevConsoleHAnchor_ { kLeft, kCenter, kRight };
-enum class DevButtonStyle_ { kNormal, kDark };
+enum class DevButtonStyle_ { kNormal, kLight };
 
 static auto DevButtonStyleFromStr_(const char* strval) {
-  if (!strcmp(strval, "dark")) {
-    return DevButtonStyle_::kDark;
+  if (!strcmp(strval, "light")) {
+    return DevButtonStyle_::kLight;
   }
   assert(!strcmp(strval, "normal"));
   return DevButtonStyle_::kNormal;
@@ -247,11 +247,11 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
     Vector3f fgcolor;
     Vector3f bgcolor;
     switch (style) {
-      case DevButtonStyle_::kDark:
+      case DevButtonStyle_::kLight:
         fgcolor =
-            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.8f, 0.7f, 0.8f};
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
         bgcolor =
-            pressed ? Vector3f{0.6f, 0.5f, 0.6f} : Vector3f{0.16, 0.07f, 0.18f};
+            pressed ? Vector3f{0.8f, 0.7f, 0.8f} : Vector3f{0.4, 0.33f, 0.5f};
         break;
       default:
         assert(style == DevButtonStyle_::kNormal);

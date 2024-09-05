@@ -254,42 +254,6 @@ void RendererGL::CheckGLCapabilities_() {
   // On Android, look at the GL version and try to get gl3 funcs to
   // determine if we're running ES3 or not.
 #if BA_OSTYPE_ANDROID
-  //   bool have_es3;
-  // #if BA_USE_ES3_INCLUDES
-  //   have_es3 = true;
-  // #else
-  //   have_es3 = (strstr(version_str, "OpenGL ES 3.") && gl3stubInit());
-  // #endif  // BA_OSTYPE_ANDROID
-
-  //   if (have_es3) {
-  //     g_running_es3 = true;
-  //   } else {
-  // #if !BA_USE_ES3_INCLUDES
-  //     g_running_es3 = false;
-
-  //     // Can still support some stuff like framebuffer-blit with es2
-  //     extensions. assert(glBlitFramebuffer == nullptr ||
-  //     !first_extension_check_); glBlitFramebuffer =
-  //         (decltype(glBlitFramebuffer))eglGetProcAddress("glBlitFramebufferNV");
-  //     assert(glRenderbufferStorageMultisample == nullptr
-  //            || !first_extension_check_);
-  //     glRenderbufferStorageMultisample =
-  //         (decltype(glRenderbufferStorageMultisample))eglGetProcAddress(
-  //             "glRenderbufferStorageMultisampleNV");
-
-  //     assert(glGenVertexArrays == nullptr || !first_extension_check_);
-  //     glGenVertexArrays =
-  //         (decltype(glGenVertexArrays))eglGetProcAddress("glGenVertexArraysOES");
-  //     assert(glDeleteVertexArrays == nullptr || !first_extension_check_);
-  //     glDeleteVertexArrays =
-  //     (decltype(glDeleteVertexArrays))eglGetProcAddress(
-  //         "glDeleteVertexArraysOES");
-  //     assert(glBindVertexArray == nullptr || !first_extension_check_);
-  //     glBindVertexArray =
-  //         (decltype(glBindVertexArray))eglGetProcAddress("glBindVertexArrayOES");
-
-  // #endif  // BA_USE_ES3_INCLUDES
-  //   }
 
   BA_DEBUG_CHECK_GL_ERROR;
 
@@ -300,75 +264,7 @@ void RendererGL::CheckGLCapabilities_() {
   assert(gl_version_major() == 3);
   is_speedy_android_device_ = gl_version_minor() >= 2;
 
-  // is_extra_speedy_android_device_ = false;
   is_adreno_ = (strstr(renderer, "Adreno") != nullptr);
-  // draws_shields_funny_ = false;  // Start optimistic.
-
-  // Ali tv box.
-  // if (!strcmp(renderer, "Mali-450 MP")) {
-  //   is_speedy_android_device_ = true;  // this is borderline
-  //   speedy/extra-speedy
-  //   // draws_shields_funny_ = true;
-  // }
-
-  // Firetv, etc.. lets enable MSAA.
-  // if (!strcmp(renderer, "Adreno (TM) 320")) {
-  //   is_recent_adreno_ = true;
-  // }
-
-  // This is right on the borderline, but lets go with extra-speedy I guess.
-  // if (!strcmp(renderer, "Adreno (TM) 330")) {
-  //   is_recent_adreno_ = true;
-  //   is_extra_speedy_android_device_ = true;
-  // }
-
-  // *any* of the 4xx or 5xx series are extra-speedy.
-  // if (strstr(renderer, "Adreno (TM) 4") || strstr(renderer, "Adreno (TM) 5")
-  //     || strstr(renderer, "Adreno (TM) 6")) {
-  //   is_extra_speedy_android_device_ = true;
-  //   is_recent_adreno_ = true;
-  // }
-
-  // Some speedy malis (Galaxy S6 / Galaxy S7-ish).
-  // if (strstr(renderer, "Mali-T760") || strstr(renderer, "Mali-T860")
-  //     || strstr(renderer, "Mali-T880")) {
-  //   is_extra_speedy_android_device_ = true;
-  // }
-
-  // Note 8 is speed-tastic
-  // if (!strcmp(renderer, "Mali-G71") || !strcmp(renderer, "Mali-G72")) {
-  //   is_extra_speedy_android_device_ = true;
-  // }
-
-  // Covers Nexus player.
-  // HMM Scratch that - this winds up being too slow for phones using this chip.
-  // if (strstr(renderer, "PowerVR Rogue G6430")) {
-  // is_extra_speedy_android_device_ = true;
-  // }
-
-  // Figure out if we're a Tegra 4/K1/etc since we do some special stuff on
-  // those...
-  // if (!strcmp(renderer, "NVIDIA Tegra")) {
-  //   // tegra 4 won't have ES3 but will have framebuffer_multisample
-  //   if (!g_running_es3 && CheckGLExtension(ex, "framebuffer_multisample")) {
-  //     is_tegra_4_ = true;
-  //     is_speedy_android_device_ = true;
-  //   } else if (g_running_es3) {
-  //     // running ES3 - must be a K1 (for now)
-  //     is_tegra_k1_ = true;
-  //     is_extra_speedy_android_device_ = true;
-  //   } else {
-  //     // looks like Tegra-2 era stuff was just "NVIDIA Tegra" as well...
-  //   }
-  // }
-
-  // Also store this globally for a few other bits of the app to use..
-  // g_core->platform->set_is_tegra_k1(is_tegra_k1_);
-
-  // Extra-speedy implies speedy too..
-  // if (is_extra_speedy_android_device_) {
-  //   is_speedy_android_device_ = true;
-  // }
 
 #endif  // BA_OSTYPE_ANDROID
 
@@ -407,15 +303,11 @@ void RendererGL::CheckGLCapabilities_() {
 
   g_base->graphics_server->SetTextureCompressionTypes(c_types);
 
-  // Both GL 3 and GL ES 3.0 support depth textures (and thus our high
-  // quality mode) as a core feature.
-  // g_base->graphics->SetSupportsHighQualityGraphics(true);
-
   // Store the tex-compression type we support.
   BA_DEBUG_CHECK_GL_ERROR;
 
-  // Anisotropic sampling is still an extension as of both GL 3 and ES 3,
-  // so we need to test for it.
+  // Anisotropic sampling is still an extension as of both GL 3 and ES 3, so
+  // we need to test for it.
   anisotropic_support_ =
       CheckGLExtension(extensions, "texture_filter_anisotropic");
   if (anisotropic_support_) {
@@ -436,8 +328,8 @@ void RendererGL::CheckGLCapabilities_() {
   combined_texture_image_unit_count_ =
       GLGetInt(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
 
-  // If we're running ES3, ask about our max multisample counts and whether we
-  // can enable MSAA.
+  // If we're running ES3, ask about our max multisample counts and whether
+  // we can enable MSAA.
   msaa_max_samples_rgb565_ = msaa_max_samples_rgb8_ = 0;  // start pessimistic
 
   bool have_gl_get_internal_format_iv{};
@@ -850,12 +742,6 @@ void RendererGL::SyncGLState_() {
     glFrontFace(GL_CCW);
   }
   BA_DEBUG_CHECK_GL_ERROR;
-
-  // if (time(nullptr)%2 == 0) {
-  //   glEnable(GL_FRAMEBUFFER_SRGB);
-  // } else {
-  //   glDisable(GL_FRAMEBUFFER_SRGB);
-  // }
 #endif  // BA_RIFT_BUILD
 
   active_tex_unit_ = -1;      // force a set next time
@@ -948,8 +834,8 @@ void RendererGL::SyncGLState_() {
   assert(VAR&& VAR == dynamic_cast<TYPE*>(buffer->Get())); \
   buffer++
 
-// Takes all latest mesh data from the client side and applies it
-// to our gl implementations.
+// Takes all latest mesh data from the client side and applies it to our gl
+// implementations.
 void RendererGL::UpdateMeshes(
     const std::vector<Object::Ref<MeshDataClientHandle> >& meshes,
     const std::vector<int8_t>& index_sizes,
@@ -1193,7 +1079,8 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             const TextureAsset* t = buffer->GetTexture();
             const TextureAsset* t_mask = buffer->GetTexture();
             p->SetColorTexture(t);
-            // If this isn't a full-res texture, ramp down the blurring we do.
+            // If this isn't a full-res texture, ramp down the blurring we
+            // do.
             p->SetShadow(shadow_offset_x, shadow_offset_y,
                          std::max(0.0f, shadow_blur), shadow_opacity);
             p->SetMaskUV2Texture(t_mask);
@@ -1215,7 +1102,8 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             const TextureAsset* t = buffer->GetTexture();
             const TextureAsset* t_mask = buffer->GetTexture();
             p->SetColorTexture(t);
-            // If this isn't a full-res texture, ramp down the blurring we do.
+            // If this isn't a full-res texture, ramp down the blurring we
+            // do.
             p->SetShadow(shadow_offset_x, shadow_offset_y,
                          std::max(0.0f, shadow_blur), shadow_opacity);
             p->SetMaskUV2Texture(t_mask);
@@ -1612,7 +1500,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             buffer->GetFloats(&r, &g, &b, &reflect_r, &reflect_g, &reflect_b);
             ProgramObjectGL* p;
 
-            // Testing why reflection is wonky..
+            // Testing why reflection is wonky.
             if (explicit_bool(false)) {
               p = world_space ? obj_lightshad_worldspace_prog_
                               : obj_lightshad_prog_;
@@ -1928,8 +1816,8 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
           case ShadingType::kSpecial: {
             SetDoubleSided_(false);
 
-            // if we ever need to use non-blend version
-            // of this in real renders, we should split off a non-blend version
+            // If we ever need to use non-blend version of this in real
+            // renders, we should split off a non-blend version.
             SetBlend(true);
             SetBlendPremult(true);
             auto source = (SpecialComponent::Source)buffer->GetInt();
@@ -2211,8 +2099,8 @@ void RendererGL::BlitBuffer(RenderTarget* src_in, RenderTarget* dst_in,
 
   bool do_shader_blit{true};
 
-  // If they want depth we *MUST* use glBlitFramebuffer and can't have linear
-  // interp.
+  // If they want depth we *MUST* use glBlitFramebuffer and can't have
+  // linear interp.
   if (depth) {
     assert(!force_shader_mode);
     linear_interpolation = false;
@@ -2250,7 +2138,7 @@ void RendererGL::BlitBuffer(RenderTarget* src_in, RenderTarget* dst_in,
     g_base->graphics_server->ModelViewReset();
     g_base->graphics_server->SetOrthoProjection(-1, 1, -1, 1, -1, 1);
 
-    // Copied from ShadingType::kSimpleColor
+    // Copied from ShadingType::kSimpleColor.
     SetDoubleSided_(false);
     SetBlend(false);
     ProgramSimpleGL* p = simple_tex_prog_;
@@ -2554,14 +2442,6 @@ auto RendererGL::GetFunkyDepthIssue_() -> bool {
   return funky_depth_issue_;
 }
 
-// auto RendererGL::GetDrawsShieldsFunny_() -> bool {
-//   if (!draws_shields_funny_set_) {
-//     BA_LOG_ONCE(LogLevel::kError,
-//                 "fetching draws-shields-funny value but not set");
-//   }
-//   return draws_shields_funny_;
-// }
-
 #if BA_OSTYPE_ANDROID
 std::string RendererGL::GetAutoAndroidRes() {
   assert(g_base->app_adapter->InGraphicsContext());
@@ -2759,9 +2639,9 @@ void RendererGL::Load() {
   p = shield_prog_ = new ProgramShieldGL(this, 0);
   RetainShader_(p);
 
-  // Conditional seems to be a *very* slight win on some architectures (A7), a
-  // loss on some (A5) and a wash on some (Adreno 320).
-  // Gonna wait before a clean win before turning it on.
+  // Conditional seems to be a *very* slight win on some architectures (A7),
+  // a loss on some (A5) and a wash on some (Adreno 320). Gonna wait before
+  // a clean win before turning it on.
   p = postprocess_prog_ = new ProgramPostProcessGL(this, high_qual_pp_flag);
   RetainShader_(p);
   if (g_base->graphics_server->quality() >= GraphicsQuality::kHigher) {
@@ -2805,8 +2685,8 @@ void RendererGL::Load() {
     UpdateVignetteTex_(true);
   }
 
-  // Let's pre-fill our recyclable mesh-datas list to reduce the need to make
-  // more which could cause hitches.
+  // Let's pre-fill our recyclable mesh-datas list to reduce the need to
+  // make more which could cause hitches.
   assert(recycle_mesh_datas_simple_split_.empty());
   for (int i = 0; i < 10; i++) {
     recycle_mesh_datas_simple_split_.push_back(new MeshDataSimpleSplitGL(this));
@@ -2958,7 +2838,7 @@ auto RendererGL::NewMeshData(MeshDataType mesh_type,
   switch (mesh_type) {
     case MeshDataType::kIndexedSimpleSplit: {
       MeshDataSimpleSplitGL* data;
-      // use a recycled one if we've got one.. otherwise create a new one
+      // Use a recycled one if we've got one; otherwise create a new one.
       auto i = recycle_mesh_datas_simple_split_.rbegin();
       if (i != recycle_mesh_datas_simple_split_.rend()) {
         data = *i;
@@ -2971,7 +2851,7 @@ auto RendererGL::NewMeshData(MeshDataType mesh_type,
     }
     case MeshDataType::kIndexedObjectSplit: {
       MeshDataObjectSplitGL* data;
-      // use a recycled one if we've got one.. otherwise create a new one
+      // Use a recycled one if we've got one; otherwise create a new one.
       auto i = recycle_mesh_datas_object_split_.rbegin();
       if (i != recycle_mesh_datas_object_split_.rend()) {
         data = *i;
@@ -2984,7 +2864,7 @@ auto RendererGL::NewMeshData(MeshDataType mesh_type,
     }
     case MeshDataType::kIndexedSimpleFull: {
       MeshDataSimpleFullGL* data;
-      // use a recycled one if we've got one.. otherwise create a new one
+      // Use a recycled one if we've got one; otherwise create a new one.
       auto i = recycle_mesh_datas_simple_full_.rbegin();
       if (i != recycle_mesh_datas_simple_full_.rend()) {
         data = *i;
@@ -2998,7 +2878,7 @@ auto RendererGL::NewMeshData(MeshDataType mesh_type,
     }
     case MeshDataType::kIndexedDualTextureFull: {
       MeshDataDualTextureFullGL* data;
-      // use a recycled one if we've got one.. otherwise create a new one
+      // Use a recycled one if we've got one; otherwise create a new one.
       auto i = recycle_mesh_datas_dual_texture_full_.rbegin();
       if (i != recycle_mesh_datas_dual_texture_full_.rend()) {
         data = *i;
@@ -3012,7 +2892,7 @@ auto RendererGL::NewMeshData(MeshDataType mesh_type,
     }
     case MeshDataType::kIndexedSmokeFull: {
       MeshDataSmokeFullGL* data;
-      // use a recycled one if we've got one.. otherwise create a new one
+      // Use a recycled one if we've got one; otherwise create a new one.
       auto i = recycle_mesh_datas_smoke_full_.rbegin();
       if (i != recycle_mesh_datas_smoke_full_.rend()) {
         data = *i;
@@ -3026,7 +2906,7 @@ auto RendererGL::NewMeshData(MeshDataType mesh_type,
     }
     case MeshDataType::kSprite: {
       MeshDataSpriteGL* data;
-      // use a recycled one if we've got one.. otherwise create a new one
+      // Use a recycled one if we've got one; otherwise create a new one.
       auto i = recycle_mesh_datas_sprite_.rbegin();
       if (i != recycle_mesh_datas_sprite_.rend()) {
         data = *i;
@@ -3046,10 +2926,9 @@ auto RendererGL::NewMeshData(MeshDataType mesh_type,
 
 void RendererGL::DeleteMeshData(MeshRendererData* source_in,
                                 MeshDataType mesh_type) {
-  // When we're done with mesh-data we keep it around for recycling.
-  // It seems that killing off VAO/VBOs can be hitchy (on mac at least).
-  // Hmmm should we have some sort of threshold at which point we kill off
-  // some?
+  // When we're done with mesh-data we keep it around for recycling. It
+  // seems that killing off VAO/VBOs can be hitchy (on mac at least). Hmmm
+  // should we have some sort of threshold at which point we kill off some?
 
   switch (mesh_type) {
     case MeshDataType::kIndexedSimpleSplit: {
@@ -3105,8 +2984,8 @@ void RendererGL::DeleteMeshData(MeshRendererData* source_in,
 }
 
 void RendererGL::CheckForErrors() {
-  // lets only check periodically.. i doubt it hurts to run this all the time
-  // but just in case...
+  // Lets only check periodically. I doubt it hurts to run this all the time
+  // but just in case.
   error_check_counter_++;
   if (error_check_counter_ > 120) {
     error_check_counter_ = 0;
@@ -3201,8 +3080,8 @@ void RendererGL::GenerateCameraBufferBlurPasses() {
           true,               // linear_interp
           false,              // depth
           true,               // tex
-          false,              // depthTex
-          high_quality_fbos,  // highQuality
+          false,              // depth_tex
+          high_quality_fbos,  // high_quality
           false,              // msaa
           false               // alpha
           ));                 // NOLINT(whitespace/parens)
@@ -3215,8 +3094,8 @@ void RendererGL::GenerateCameraBufferBlurPasses() {
           true,   // linear_interp
           false,  // depth
           true,   // tex
-          false,  // depthTex
-          false,  // highQuality
+          false,  // depth_tex
+          false,  // high_quality
           false,  // msaa
           false   // alpha
           ));     // NOLINT(whitespace/parens)
@@ -3263,9 +3142,9 @@ void RendererGL::CardboardEnableScissor() { glEnable(GL_SCISSOR_TEST); }
 void RendererGL::VREyeRenderBegin() {
   assert(g_core->vr_mode());
 
-  // On rift we need to turn off srgb conversion for each eye render
-  // so we can dump our linear data into oculus' srgb buffer as-is.
-  // (we really should add proper srgb support to the engine at some point)
+  // On rift we need to turn off srgb conversion for each eye render so we
+  // can dump our linear data into oculus' srgb buffer as-is. (we really
+  // should add proper srgb support to the engine at some point).
 #if BA_RIFT_BUILD
   glDisable(GL_FRAMEBUFFER_SRGB);
 #endif  // BA_RIFT_BUILD
@@ -3275,7 +3154,7 @@ void RendererGL::VREyeRenderBegin() {
 
 #if BA_VR_BUILD
 void RendererGL::VRSyncRenderStates() {
-  // GL state has been mucked with outside of our code; let's resync stuff..
+  // GL state has been mucked with outside of our code; let's resync stuff.
   SyncGLState_();
 }
 #endif  // BA_VR_BUILD
