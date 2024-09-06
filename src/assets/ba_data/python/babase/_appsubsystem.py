@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import _babase
 
 if TYPE_CHECKING:
-    pass
+    from babase import UIScale
 
 
 class AppSubsystem:
@@ -53,6 +53,9 @@ class AppSubsystem:
 
     def do_apply_app_config(self) -> None:
         """Called when the app config should be applied."""
+
+    def on_screen_change(self) -> None:
+        """Called when screen dimensions or ui-scale changes."""
 
     def reset(self) -> None:
         """Reset the subsystem to a default state.

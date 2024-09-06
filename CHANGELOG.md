@@ -1,4 +1,4 @@
-### 1.7.37 (build 21986, api 9, 2024-09-04)
+### 1.7.37 (build 22004, api 9, 2024-09-05)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -36,6 +36,8 @@
   was to add a higher level layer to the UI to make things like saving/restoring
   UI states easier, but I now plan to use `WindowState` classes to accomplish
   much of that in a more backward-compatible way. More on that below.
+- Removed touch-specific button target-area adjustements. If you find any
+  buttons that are hard to hit accurately on a touchscreen, please holler.
 - Added a new `bauiv1.Window` subclass called `bauiv1.MainWindow` which handles
   what was previously called the 'main-menu-window' system which was a bit
   ad-hoc and messy. MainMenuWindows have a built-in stack system so things like
@@ -80,6 +82,14 @@
 - Removed `efro.util.enum_by_value()` which was a workaround for a Python bug
   that has been fixed for a few versions now. Instaed of
   `enum_by_value(MyEnumType, foo)` you can simply do `MyEnumType(foo)`.
+- Removed `bauiv1.is_party_icon_visible()` as it is now always visible.
+- 'ui_scale' is no longer available in _babase.env() since it can now change;
+  use `babase.get_ui_scale()` to get it now.
+- Removed the UIScale control from the devtools window, which was only partially
+  wired up (it did not affect native layer bits). For now the official ways to
+  test UIScales are by using the UI panel in the dev-console or by setting the
+  `BA_UI_SCALE` env var. If we can get UIScale switches to feel seamless enough
+  at some point, it may be worth adding to display settings.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these

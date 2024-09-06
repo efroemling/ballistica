@@ -7,8 +7,6 @@
 #include <string>
 #include <vector>
 
-#include "ballistica/shared/ballistica.h"
-
 #if BA_ENABLE_OPENGL
 
 #include "ballistica/base/graphics/gl/gl_sys.h"
@@ -26,13 +24,6 @@
 #endif
 
 namespace ballistica::base {
-
-// extern int g_msaa_max_samples_rgb565;
-// extern int g_msaa_max_samples_rgb8;
-// extern bool g_vao_support;
-// extern bool g_running_es3;
-// extern bool g_anisotropic_support;
-// extern float g_max_anisotropy;
 
 // For now lets not go above 8 since that's what the iPhone 3gs has. ...haha
 // perhaps can reconsider that since the 3gs was 15 years ago.
@@ -227,7 +218,6 @@ class RendererGL : public Renderer {
 
  private:
   static auto GetFunkyDepthIssue_() -> bool;
-  // static auto GetDrawsShieldsFunny_()->bool;
   void CheckFunkyDepthIssue_();
   auto GetMSAASamplesForFramebuffer_(int width, int height) -> int;
   void UpdateMSAAEnabled_() override;
@@ -248,8 +238,8 @@ class RendererGL : public Renderer {
   void ScissorPop_(RenderTarget* render_target);
   void BindVertexArray_(GLuint v);
 
-  // Note: This is only for use when VAOs aren't supported.
-  // void SetVertexAttributeArrayEnabled_(GLuint i, bool enabled);
+  // Note: This is only for use when VAOs aren't supported. void
+  // SetVertexAttributeArrayEnabled_(GLuint i, bool enabled);
   void BindTexture_(GLuint type, const TextureAsset* t, GLuint tex_unit = 0);
   void BindTexture_(GLuint type, GLuint tex, GLuint tex_unit = 0);
   void BindTextureUnit(uint32_t tex_unit);
@@ -276,8 +266,6 @@ class RendererGL : public Renderer {
   bool double_sided_{};
   bool invalidate_framebuffer_support_{};
   bool checked_gl_version_{};
-  GLint gl_version_major_{};
-  GLint gl_version_minor_{};
   int last_blur_res_count_{};
   float last_cam_buffer_width_{};
   float last_cam_buffer_height_{};
@@ -289,13 +277,15 @@ class RendererGL : public Renderer {
   float vignette_tex_inner_b_{};
   float depth_range_min_{};
   float depth_range_max_{};
+  GLint gl_version_major_{};
+  GLint gl_version_minor_{};
   GLint screen_framebuffer_{};
   GLuint random_tex_{};
-  GLuint vignette_tex_{};
   GLint viewport_x_{};
   GLint viewport_y_{};
   GLint viewport_width_{};
   GLint viewport_height_{};
+  GLuint vignette_tex_{};
   millisecs_t dof_update_time_{};
   std::vector<Object::Ref<FramebufferObjectGL> > blur_buffers_;
   std::vector<std::unique_ptr<ProgramGL> > shaders_;

@@ -11,6 +11,8 @@
 #include "ballistica/base/graphics/component/special_component.h"
 #include "ballistica/base/graphics/component/sprite_component.h"
 #include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/mesh/image_mesh.h"
+#include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/graphics/support/net_graph.h"
 #include "ballistica/base/graphics/support/screen_messages.h"
@@ -1535,11 +1537,22 @@ void Graphics::SetScreenResolution(float x, float y) {
     return;
   }
 
-  // We'll need to ship a new settings to the server with this change.
-  graphics_settings_dirty_ = true;
-
   res_x_ = x;
   res_y_ = y;
+
+  UpdateScreen_();
+}
+
+void Graphics::OnUIScaleChange() {
+  // UIScale affects our virtual res calculations. Redo those.
+  UpdateScreen_();
+}
+
+void Graphics::UpdateScreen_() {
+  assert(g_base->InLogicThread());
+
+  // We'll need to ship a new settings to the server with this change.
+  graphics_settings_dirty_ = true;
 
   // Calc virtual res. In vr mode our virtual res is independent of our
   // screen size (since it gets drawn to an overlay).
@@ -1555,14 +1568,14 @@ void Graphics::SetScreenResolution(float x, float y) {
   // Need to rebuild internal components (some are sized to the screen).
   internal_components_inited_ = false;
 
-  // Inform all our logic thread buddies of this change.
-  g_base->logic->OnScreenSizeChange(res_x_virtual_, res_y_virtual_, res_x_,
-                                    res_y_);
-
   // This may trigger us sending initial graphics settings to the
   // graphics-server to kick off drawing.
   got_screen_resolution_ = true;
   UpdateInitialGraphicsSettingsSend_();
+
+  // Inform all our logic thread buddies of virtual/physical res changes.
+  g_base->logic->OnScreenSizeChange(res_x_virtual_, res_y_virtual_, res_x_,
+                                    res_y_);
 }
 
 auto Graphics::CubeMapFromReflectionType(ReflectionType reflection_type)
@@ -1723,10 +1736,6 @@ void Graphics::DrawUIBounds(RenderPass* pass) {
     c.SetColor(1, 0, 0);
     {
       auto xf = c.ScopedTransform();
-      // float width = pass->virtual_width();
-      // float height = pass->virtual_height();
-
-      // printf("DIMS %.2f %.2f\n", width, height);
 
       float width, height;
       if (g_base->ui->scale() == UIScale::kSmall) {

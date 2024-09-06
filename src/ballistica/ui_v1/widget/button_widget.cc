@@ -2,6 +2,7 @@
 
 #include "ballistica/ui_v1/widget/button_widget.h"
 
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
@@ -103,15 +104,11 @@ auto ButtonWidget::GetMult(millisecs_t current_time) const -> float {
       mult *= 2.0f;
     }
   } else {
-    if (!texture_.Exists()) {
-    } else {
-      // In desktop mode we want image buttons to light up when we
-      // mouse over them.
-      if (!g_core->platform->IsRunningOnDesktop()) {
-        if (mouse_over_) {
-          mult = 1.4f;
-        }
-      }
+    // Slightly highlighting all buttons for mouse-over. Once we can
+    // differentiate between touch events and pointer events we should limit
+    // this to pointer events.
+    if (mouse_over_) {
+      mult = 1.2f;
     }
   }
   return mult;
@@ -459,17 +456,22 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   // How far outside button touches register.
   float left_overlap, top_overlap, right_overlap, bottom_overlap;
-  if (g_core->platform->IsRunningOnDesktop()) {
-    left_overlap = 3.0f;
-    top_overlap = 1.0f;
-    right_overlap = 0.0f;
-    bottom_overlap = 0.0f;
-  } else {
-    left_overlap = 3.0f + 9.0f * extra_touch_border_scale_;
-    top_overlap = 1.0f + 5.0f * extra_touch_border_scale_;
-    right_overlap = 7.0f * extra_touch_border_scale_;
-    bottom_overlap = 7.0f * extra_touch_border_scale_;
-  }
+  // if (g_core->platform->IsRunningOnDesktop()) {
+
+  // UPDATE - removing touch-specific boundary adjustments. If it is
+  // necessary to reenable these, should do it on a per-event basis so need
+  // to differentiate between touches and clicks. It is probably sufficient
+  // to simply expose manual boundary tweaks that apply everywhere though.
+  left_overlap = 3.0f;
+  top_overlap = 1.0f;
+  right_overlap = 0.0f;
+  bottom_overlap = 0.0f;
+  // } else {
+  //   left_overlap = 3.0f + 9.0f * extra_touch_border_scale_;
+  //   top_overlap = 1.0f + 5.0f * extra_touch_border_scale_;
+  //   right_overlap = 7.0f * extra_touch_border_scale_;
+  //   bottom_overlap = 7.0f * extra_touch_border_scale_;
+  // }
 
   // Extra overlap that always applies.
   right_overlap += target_extra_right_;

@@ -4,11 +4,9 @@
 #define BALLISTICA_BASE_UI_UI_H_
 
 #include <string>
-#include <unordered_map>
 
-#include "ballistica/base/support/context.h"
+#include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/base/ui/widget_message.h"
-#include "ballistica/shared/generic/timer_list.h"
 
 // Predeclare a few things from ui_v1.
 namespace ballistica::ui_v1 {
@@ -114,8 +112,11 @@ class UI {
   /// These generally only get shown if a joystick of some form is present.
   auto ShouldShowButtonShortcuts() const -> bool;
 
-  /// Overall ui scale for the app.
+  /// Get overall ui scale for the app.
   auto scale() const { return scale_; }
+
+  /// Set overall ui scale for the app.
+  void SetScale(UIScale val);
 
   /// Push a generic 'menu press' event, optionally associated with an input
   /// device (nullptr to specify none). Can be called from any thread.

@@ -5,7 +5,6 @@
 
 #include <atomic>
 #include <mutex>
-#include <set>
 #include <string>
 
 #include "ballistica/core/support/base_soft.h"
@@ -780,6 +779,9 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// Set current clipboard text. Raises an Exception if clipboard is
   /// unsupported.
   void ClipboardSetText(const std::string& text);
+
+  /// Set overall ui scale for the app.
+  void SetUIScale(UIScale scale);
 
   // Const subsystems.
   AppAdapter* const app_adapter;

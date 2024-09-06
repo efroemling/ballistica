@@ -2,6 +2,7 @@
 
 #include "ballistica/base/dynamics/collision_cache.h"
 
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ode/ode_collision_kernel.h"
 #include "ode/ode_collision_space_internal.h"

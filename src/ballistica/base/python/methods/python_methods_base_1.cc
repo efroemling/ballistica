@@ -719,20 +719,6 @@ static auto PyEnv(PyObject* self) -> PyObject* {
 
   // Just build this once and recycle it.
   if (!g_base->python->objs().Exists(BasePython::ObjID::kEnv)) {
-    const char* ui_scale;
-    switch (g_base->ui->scale()) {
-      case UIScale::kLarge:
-        ui_scale = "large";
-        break;
-      case UIScale::kMedium:
-        ui_scale = "medium";
-        break;
-      case UIScale::kSmall:
-        ui_scale = "small";
-        break;
-      default:
-        throw Exception();
-    }
     std::optional<std::string> user_py_dir = g_core->GetUserPythonDirectory();
     std::optional<std::string> app_py_dir = g_core->GetAppPythonDirectory();
     std::optional<std::string> site_py_dir = g_core->GetSitePythonDirectory();
@@ -751,7 +737,6 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "sO"  // python_directory_app
         "ss"  // platform
         "ss"  // subplatform
-        "ss"  // ui_scale
         "sO"  // on_tv
         "sO"  // vr_mode
         "sO"  // demo_mode
@@ -774,7 +759,6 @@ static auto PyEnv(PyObject* self) -> PyObject* {
           app_py_dir ? *PythonRef::FromString(*app_py_dir) : Py_None,
         "platform", g_core->platform->GetPlatformName().c_str(),
         "subplatform", g_core->platform->GetSubplatformName().c_str(),
-        "ui_scale", ui_scale,
         "on_tv", g_core->platform->IsRunningOnTV() ? Py_True : Py_False,
         "vr_mode", g_core->vr_mode() ? Py_True : Py_False,
         "demo_mode", g_buildconfig.demo_build() ? Py_True : Py_False,

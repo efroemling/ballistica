@@ -61,7 +61,6 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height + top_extra),
-                # transition=transition,
                 scale=(
                     1.95
                     if uiscale is bui.UIScale.SMALL
@@ -299,66 +298,22 @@ class PlaylistMapSelectWindow(bui.MainWindow):
 
         self.main_window_replace(
             StoreBrowserWindow(
-                # modal=True,
                 show_tab=StoreBrowserWindow.TabID.MAPS,
-                # on_close_call=self._on_store_close,
                 origin_widget=self._get_more_maps_button,
                 minimal_toolbars=True,
             )
         )
 
-    # def _on_store_close(self) -> None:
-    #     pass
-    # self._refresh(select_get_more_maps_button=True)
-
     def _select(self, map_name: str) -> None:
-        # from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
 
         # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        if not self.main_window_has_control():
             return
 
         self._config['settings']['map'] = map_name
         self.main_window_back()
-        # bui.containerwidget(edit=self._root_widget, transition='out_right')
-        # assert bui.app.classic is not None
-        # bui.app.ui_v1.set_main_window(
-        #     PlaylistEditGameWindow(
-        #         self._gametype,
-        #         self._sessiontype,
-        #         self._config,
-        #         self._completion_call,
-        #         default_selection='map',
-        #         transition='in_left',
-        #         edit_info=self._edit_info,
-        #     ),
-        #     from_window=self,
-        # )
 
     def _select_with_delay(self, map_name: str) -> None:
         bui.lock_all_input()
         bui.apptimer(0.1, bui.unlock_all_input)
         bui.apptimer(0.1, bui.WeakCall(self._select, map_name))
-
-    # def _cancel(self) -> None:
-    #     from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
-
-    #     # no-op if our underlying widget is dead or on its way out.
-    #     if not self._root_widget or self._root_widget.transitioning_out:
-    #         return
-
-    #     bui.containerwidget(edit=self._root_widget, transition='out_right')
-    #     assert bui.app.classic is not None
-    #     bui.app.ui_v1.set_main_window(
-    #         PlaylistEditGameWindow(
-    #             self._gametype,
-    #             self._sessiontype,
-    #             self._config,
-    #             self._completion_call,
-    #             default_selection='map',
-    #             transition='in_left',
-    #             edit_info=self._edit_info,
-    #         ),
-    #         from_window=self,
-    #         is_back=True,
-    #     )

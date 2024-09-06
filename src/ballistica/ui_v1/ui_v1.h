@@ -85,18 +85,10 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   auto MainMenuVisible() -> bool override;
   auto PartyIconVisible() -> bool override;
   void ActivatePartyIcon() override;
-  // void HandleLegacyRootUIMouseMotion(float x, float y) override;
-  // auto HandleLegacyRootUIMouseDown(float x, float y) -> bool override;
-  // void HandleLegacyRootUIMouseUp(float x, float y) override;
   void Draw(base::FrameDef* frame_def) override;
 
   UIV1Python* const python;
 
-  // auto root_ui() const -> ui_v1::RootUI* {
-  //   assert(root_ui_);
-  //   return root_ui_;
-  // }
-  // void OnAppStart() override;
   void OnActivate() override;
   void OnDeactivate() override;
 
@@ -123,6 +115,8 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   void DeleteWidget(Widget* widget);
 
   void OnScreenSizeChange() override;
+  void OnScreenChange();
+
   void OnLanguageChange() override;
   auto GetRootWidget() -> ui_v1::Widget* override;
   auto SendWidgetMessage(const base::WidgetMessage& m) -> int override;
@@ -140,7 +134,6 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
 
  private:
   UIV1FeatureSet();
-  // RootUI* root_ui_{};
   Object::Ref<ContainerWidget> screen_root_widget_;
   Object::Ref<ContainerWidget> overlay_root_widget_;
   Object::Ref<RootWidget> root_widget_;

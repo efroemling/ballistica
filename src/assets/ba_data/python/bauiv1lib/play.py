@@ -44,7 +44,8 @@ class PlayWindow(bui.MainWindow):
         uiscale = bui.app.ui_v1.uiscale
         width = 1100 if uiscale is bui.UIScale.SMALL else 800
         x_offs = 150 if uiscale is bui.UIScale.SMALL else 0
-        height = 550
+        y_offs = -60 if uiscale is bui.UIScale.SMALL else 0
+        height = 650 if uiscale is bui.UIScale.SMALL else 550
         button_width = 400
 
         if origin_widget is not None:
@@ -77,21 +78,34 @@ class PlayWindow(bui.MainWindow):
             transition=transition,
             origin_widget=origin_widget,
         )
-        self._back_button = back_button = btn = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(55 + x_offs, height - 132),
-            size=(120, 60),
-            scale=1.1,
-            text_res_scale=1.5,
-            text_scale=1.2,
-            autoselect=True,
-            label=bui.Lstr(resource='backText'),
-            button_type='back',
-        )
+
+        self._back_button: bui.Widget | None
+        if uiscale is bui.UIScale.SMALL:
+            self._back_button = None
+            bui.containerwidget(
+                edit=self._root_widget,
+                on_cancel_call=self.main_window_back,
+            )
+        else:
+            self._back_button = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(55 + x_offs, height - 132 + y_offs),
+                size=(60, 60),
+                scale=1.1,
+                text_res_scale=1.5,
+                text_scale=1.2,
+                autoselect=True,
+                label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
+                on_activate_call=self.main_window_back,
+            )
+            bui.containerwidget(
+                edit=self._root_widget, cancel_button=self._back_button
+            )
 
         txt = bui.textwidget(
             parent=self._root_widget,
-            position=(width * 0.5, height - 101),
+            position=(width * 0.5, height - 101 + y_offs),
             # position=(width * 0.5, height -
             #           (101 if main_menu else 61)),
             size=(0, 0),
@@ -110,16 +124,14 @@ class PlayWindow(bui.MainWindow):
             v_align='center',
         )
 
-        bui.buttonwidget(
-            edit=btn,
-            button_type='backSmall',
-            size=(60, 60),
-            label=bui.charstr(bui.SpecialChar.BACK),
-        )
         if uiscale is bui.UIScale.SMALL:
             bui.textwidget(edit=txt, text='')
 
-        v = height - (110 if self._playlist_select_context is None else 90)
+        v = (
+            height
+            - (110 if self._playlist_select_context is None else 90)
+            + y_offs
+        )
         v -= 100
         clr = (0.6, 0.7, 0.6, 1.0)
         v -= 280 if self._playlist_select_context is None else 180
@@ -510,11 +522,8 @@ class PlayWindow(bui.MainWindow):
         )
 
         if uiscale is bui.UIScale.SMALL:
-            back_button.delete()
             bui.containerwidget(
                 edit=self._root_widget,
-                on_cancel_call=self.main_window_back,
-                # cancel_button=bui.get_special_widget('back_button'),
                 selected_child=(
                     self._coop_button
                     if self._playlist_select_context is None
@@ -522,12 +531,8 @@ class PlayWindow(bui.MainWindow):
                 ),
             )
         else:
-            bui.buttonwidget(
-                edit=back_button, on_activate_call=self.main_window_back
-            )
             bui.containerwidget(
                 edit=self._root_widget,
-                cancel_button=back_button,
                 selected_child=(
                     self._coop_button
                     if self._playlist_select_context is None
@@ -763,7 +768,7 @@ class PlayWindow(bui.MainWindow):
                 sel = self._coop_button
             elif sel_name == 'Free-for-All Games':
                 sel = self._free_for_all_button
-            elif sel_name == 'Back':
+            elif sel_name == 'Back' and self._back_button is not None:
                 sel = self._back_button
             else:
                 sel = (

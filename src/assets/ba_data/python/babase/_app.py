@@ -629,6 +629,29 @@ class App:
         self._initial_sign_in_completed = True
         self._update_state()
 
+    def set_ui_scale(self, scale: babase.UIScale) -> None:
+        """Change ui-scale on the fly.
+
+        Currently this is mainly for debugging and will not
+        be called as part of normal app operation.
+        """
+        assert _babase.in_logic_thread()
+
+        # Apply to the native layer.
+        _babase.set_ui_scale(scale.name.lower())
+
+        # Inform all subsystems that something screen-related has
+        # changed. We assume subsystems won't be added at this point so
+        # we can use the list directly.
+        assert self._subsystem_registration_ended
+        for subsystem in self._subsystems:
+            try:
+                subsystem.on_screen_change()
+            except Exception:
+                logging.exception(
+                    'Error in on_screen_change() for subsystem %s.', subsystem
+                )
+
     def _set_intent(self, intent: AppIntent) -> None:
         from babase._appmode import AppMode
 
@@ -718,7 +741,7 @@ class App:
                     subsystem.reset()
                 except Exception:
                     logging.exception(
-                        'Error in reset for subsystem %s.', subsystem
+                        'Error in reset() for subsystem %s.', subsystem
                     )
 
             self._mode = mode
@@ -805,7 +828,7 @@ class App:
                 subsystem.on_app_loading()
             except Exception:
                 logging.exception(
-                    'Error in on_app_loading for subsystem %s.', subsystem
+                    'Error in on_app_loading() for subsystem %s.', subsystem
                 )
 
         # Normally plus tells us when initial sign-in is done. If plus
@@ -854,7 +877,7 @@ class App:
                 subsystem.on_app_running()
             except Exception:
                 logging.exception(
-                    'Error in on_app_running for subsystem %s.', subsystem
+                    'Error in on_app_running() for subsystem %s.', subsystem
                 )
 
         # Cut off new subsystem additions at this point.
@@ -890,7 +913,8 @@ class App:
                 subsystem.do_apply_app_config()
             except Exception:
                 logging.exception(
-                    'Error in do_apply_app_config for subsystem %s.', subsystem
+                    'Error in do_apply_app_config() for subsystem %s.',
+                    subsystem,
                 )
 
         # Let the native layer do its thing.
@@ -1013,7 +1037,7 @@ class App:
                 subsystem.on_app_suspend()
             except Exception:
                 logging.exception(
-                    'Error in on_app_suspend for subsystem %s.', subsystem
+                    'Error in on_app_suspend() for subsystem %s.', subsystem
                 )
 
     def _on_unsuspend(self) -> None:
@@ -1027,7 +1051,7 @@ class App:
                 subsystem.on_app_unsuspend()
             except Exception:
                 logging.exception(
-                    'Error in on_app_unsuspend for subsystem %s.', subsystem
+                    'Error in on_app_unsuspend() for subsystem %s.', subsystem
                 )
 
     def _on_shutting_down(self) -> None:
@@ -1041,7 +1065,7 @@ class App:
                 subsystem.on_app_shutdown()
             except Exception:
                 logging.exception(
-                    'Error in on_app_shutdown for subsystem %s.', subsystem
+                    'Error in on_app_shutdown() for subsystem %s.', subsystem
                 )
 
         # Now kick off any async shutdown task(s).
@@ -1059,7 +1083,7 @@ class App:
                 subsystem.on_app_shutdown_complete()
             except Exception:
                 logging.exception(
-                    'Error in on_app_shutdown_complete for subsystem %s.',
+                    'Error in on_app_shutdown_complete() for subsystem %s.',
                     subsystem,
                 )
 

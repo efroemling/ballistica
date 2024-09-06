@@ -716,26 +716,23 @@ class PlaylistBrowserWindow(bui.MainWindow):
             PlaylistCustomizeBrowserWindow,
         )
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        bui.app.ui_v1.set_main_window(
+        self.main_window_replace(
             PlaylistCustomizeBrowserWindow(
                 origin_widget=self._customize_button,
                 sessiontype=self._sessiontype,
-            ),
-            from_window=self,
+            )
         )
 
     def _on_back_press(self) -> None:
         # pylint: disable=cyclic-import
         # from bauiv1lib.play import PlayWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
         # Store our selected playlist if that's changed.

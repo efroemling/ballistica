@@ -2,7 +2,9 @@
 
 #include "ballistica/ui_v1/widget/image_widget.h"
 
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
 #include "ballistica/base/logic/logic.h"
 
 namespace ballistica::ui_v1 {

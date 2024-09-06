@@ -3,6 +3,7 @@
 
 #include "ballistica/base/graphics/graphics_vr.h"
 
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/component/special_component.h"

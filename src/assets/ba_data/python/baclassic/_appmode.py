@@ -49,6 +49,8 @@ class ClassicAppMode(AppMode):
 
     @override
     def on_activate(self) -> None:
+        print('CLASSIC ACTIVATING')
+
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_activate()
 
@@ -108,6 +110,7 @@ class ClassicAppMode(AppMode):
 
     @override
     def on_deactivate(self) -> None:
+        print('CLASSIC DEACTIVATING')
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_deactivate()
 

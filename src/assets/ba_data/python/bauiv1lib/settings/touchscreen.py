@@ -22,7 +22,6 @@ class TouchscreenSettingsWindow(bui.MainWindow):
     ) -> None:
         self._width = 780
         self._height = 380
-        # self._spacing = 40
         self._r = 'configTouchscreenWindow'
 
         bs.set_touchscreen_editing(True)
@@ -302,19 +301,3 @@ class TouchscreenSettingsWindow(bui.MainWindow):
                 del cfg[cfgkey]
         cfg.apply_and_commit()
         bui.apptimer(0, self._build_gui)
-
-    # def _back(self) -> None:
-    #     from bauiv1lib.settings import controls
-
-    #     # no-op if our underlying widget is dead or on its way out.
-    #     if not self._root_widget or self._root_widget.transitioning_out:
-    #         return
-
-    #     bui.containerwidget(edit=self._root_widget, transition='out_right')
-    #     assert bui.app.classic is not None
-    #     bui.app.ui_v1.set_main_window(
-    #         controls.ControlsSettingsWindow(transition='in_left'),
-    #         from_window=self,
-    #         is_back=True,
-    #     )
-    #     bs.set_touchscreen_editing(False)

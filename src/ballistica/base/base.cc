@@ -4,10 +4,12 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/empty_app_mode.h"
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_server.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
@@ -24,7 +26,6 @@
 #include "ballistica/base/support/huffman.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/support/stdio_console.h"
-#include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -193,12 +194,6 @@ void BaseFeatureSet::OnAssetsAvailable() {
 }
 
 void BaseFeatureSet::StartApp() {
-  // {
-  //   // TEST - recreate the ID python dumps in its thread tracebacks.
-  //   auto val = PyThread_get_thread_ident();
-  //   printf("MAIN THREAD IS %#018lx\n", val);
-  // }
-
   BA_PRECONDITION(g_core->InMainThread());
   BA_PRECONDITION(g_base);
 
@@ -985,6 +980,16 @@ void BaseFeatureSet::Reset() {
   graphics->Reset();
   python->Reset();
   audio->Reset();
+}
+
+void BaseFeatureSet::SetUIScale(UIScale scale) {
+  assert(InLogicThread());
+
+  // Store the canonical value in UI.
+  ui->SetScale(scale);
+
+  // Let interested parties know that it has changed.
+  graphics->OnUIScaleChange();
 }
 
 }  // namespace ballistica::base

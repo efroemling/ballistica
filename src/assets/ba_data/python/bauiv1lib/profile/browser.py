@@ -268,13 +268,6 @@ class ProfileBrowserWindow(bui.MainWindow):
 
         self.main_window_replace(EditProfileWindow(existing_profile=None))
 
-        # self._save_state()
-        # bui.containerwidget(edit=self._root_widget, transition='out_left')
-        # bui.app.ui_v1.set_main_window(
-        #     EditProfileWindow(existing_profile=None),
-        #     from_window=self if self._in_main_menu else False,
-        # )
-
     def _delete_profile(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib import confirm
