@@ -536,6 +536,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         )
 
     def _update_corner_button_positions(self) -> None:
+        offs = -55
         assert self._corner_button_offs is not None
         pos_x = self._corner_button_offs[0]
         pos_y = self._corner_button_offs[1]
