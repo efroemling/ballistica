@@ -1355,6 +1355,7 @@ static auto PyContainerWidget(PyObject* self, PyObject* args,
   ui_op_context.Finish();
 
   return widget->NewPyRef();
+
   BA_PYTHON_CATCH;
 }
 
@@ -2633,13 +2634,15 @@ static PyMethodDef PyOnScreenChangeDef = {
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
-  return {PyRootUIBackPressDef, PyGetSpecialWidgetDef, PySetPartyWindowOpenDef,
-          PyButtonWidgetDef,    PyCheckBoxWidgetDef,   PyImageWidgetDef,
-          PyColumnWidgetDef,    PyContainerWidgetDef,  PyRowWidgetDef,
-          PyScrollWidgetDef,    PyHScrollWidgetDef,    PyTextWidgetDef,
-          PyWidgetDef,          PyUIBoundsDef,         PyGetSoundDef,
-          PyGetTextureDef,      PyGetQRCodeTextureDef, PyGetMeshDef,
-          PyIsAvailableDef,     PyOnScreenChangeDef};
+  return {
+      PyRootUIBackPressDef, PyGetSpecialWidgetDef, PySetPartyWindowOpenDef,
+      PyButtonWidgetDef,    PyCheckBoxWidgetDef,   PyImageWidgetDef,
+      PyColumnWidgetDef,    PyContainerWidgetDef,  PyRowWidgetDef,
+      PyScrollWidgetDef,    PyHScrollWidgetDef,    PyTextWidgetDef,
+      PyWidgetDef,          PyUIBoundsDef,         PyGetSoundDef,
+      PyGetTextureDef,      PyGetQRCodeTextureDef, PyGetMeshDef,
+      PyIsAvailableDef,     PyOnScreenChangeDef,
+  };
 }
 
 #pragma clang diagnostic pop
