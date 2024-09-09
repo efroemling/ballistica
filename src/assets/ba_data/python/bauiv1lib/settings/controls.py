@@ -148,8 +148,9 @@ class ControlsSettingsWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(0, height + yoffs - (
-                75 if uiscale is bui.UIScale.SMALL else 50)
+            position=(
+                0,
+                height + yoffs - (75 if uiscale is bui.UIScale.SMALL else 50),
             ),
             size=(width, 25),
             text=bui.Lstr(resource=f'{self._r}.titleText'),
@@ -298,8 +299,10 @@ class ControlsSettingsWindow(bui.MainWindow):
 
             xinput_checkbox = bui.checkboxwidget(
                 parent=self._root_widget,
-                position=(width * (
-                    0.35 if uiscale is bui.UIScale.SMALL else 0.25), v + 3),
+                position=(
+                    width * (0.35 if uiscale is bui.UIScale.SMALL else 0.25),
+                    v + 3,
+                ),
                 size=(120, 30),
                 value=(not bui.get_low_level_config_value('enablexinput', 1)),
                 maxwidth=200,

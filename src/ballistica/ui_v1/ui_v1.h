@@ -125,9 +125,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   auto always_use_internal_on_screen_keyboard() const {
     return always_use_internal_on_screen_keyboard_;
   }
-  auto set_party_window_open(bool value) {
-    party_window_open_ = value;
-  }
+  auto set_party_window_open(bool value) { party_window_open_ = value; }
 
   auto HasQuitConfirmDialog() -> bool override;
   void ConfirmQuit(QuitType quit_type) override;

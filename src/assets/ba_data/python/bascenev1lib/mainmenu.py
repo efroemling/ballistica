@@ -595,9 +595,8 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     'tilt_translate': 0.21,
                     'absolute_scale': True,
                     'scale': (
-                        (2000.0,2000.0) if custom_texture is None
-                        else None
-                    )
+                        (2000.0, 2000.0) if custom_texture is None else None
+                    ),
                 },
             )
         )
@@ -608,6 +607,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         # (unless we're in VR mode in which case its best to
         # leave things still).
         assert logo.node
+
         def jitter() -> None:
             if not bs.app.env.vr:
                 cmb = bs.newnode('combine', owner=logo.node, attrs={'size': 2})
@@ -632,18 +632,18 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 bs.animate(cmb, 'input1', keys, loop=True)
 
         if custom_texture is None:
+
             def rotate_logo() -> None:
                 logo_scale = logo.node.scale
                 assert not isinstance(logo_scale, float)
                 logo.node.rotate = logo.node.rotate + 4
-                logo.node.scale = (
-                    logo_scale[0] - 20, logo_scale[1] - 20
-                )
+                logo.node.scale = (logo_scale[0] - 20, logo_scale[1] - 20)
                 if logo.node.rotate >= 356:
                     self._logo_rotate_timer = None
                     jitter()
+
             self._logo_rotate_timer = bs.Timer(
-                0.001, functools.partial(rotate_logo), repeat = True
+                0.001, functools.partial(rotate_logo), repeat=True
             )
         else:
             jitter()
