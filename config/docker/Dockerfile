@@ -82,6 +82,7 @@ RUN apt-get update -y && \
             libsdl2-dev \
             libvorbis-dev \
             libglut-dev \
+            pulseaudio-utils \
             libopenal-dev; \
     fi && \
     rm -rf /var/lib/apt/lists/* && \
