@@ -634,6 +634,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         if custom_texture is None:
             def rotate_logo() -> None:
                 logo_scale = logo.node.scale
+                assert not isinstance(logo_scale, float)
                 logo.node.rotate = logo.node.rotate + 4
                 logo.node.scale = (
                     logo_scale[0] - 20, logo_scale[1] - 20
