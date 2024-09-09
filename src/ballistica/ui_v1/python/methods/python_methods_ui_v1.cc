@@ -2499,6 +2499,7 @@ static auto PySetPartyWindowOpen(PyObject* self, PyObject* args,
   // }
 
   // root_ui->set_party_window_open(static_cast<bool>(value));
+  g_ui_v1->set_party_window_open(static_cast<bool>(value));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
