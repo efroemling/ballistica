@@ -2,6 +2,7 @@
 
 #include "ballistica/base/input/device/touch_input.h"
 
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/input/input.h"

@@ -26,8 +26,6 @@ class SendInfoWindow(bui.MainWindow):
     ):
         self._legacy_code_mode = legacy_code_mode
 
-        # scale_origin: tuple[float, float] | None
-
         # Need to wrangle our own transition-out in modal mode.
         if origin_widget is not None:
             self._transition_out = 'out_scale'
@@ -173,7 +171,7 @@ class SendInfoWindow(bui.MainWindow):
             self.main_window_back()
             return
 
-        # from bauiv1lib.settings.advanced import AdvancedSettingsWindow
+        # Handle modal case:
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -182,39 +180,32 @@ class SendInfoWindow(bui.MainWindow):
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out
         )
-        # if not self._modal:
-        #     assert bui.app.classic is not None
-        #     bui.app.ui_v1.set_main_window(
-        #         AdvancedSettingsWindow(transition='in_left'),
-        #         from_window=self,
-        #         is_back=True,
-        #     )
 
     def _activate_enter_button(self) -> None:
         self._enter_button.activate()
 
     def _do_enter(self) -> None:
         # pylint: disable=cyclic-import
-        from bauiv1lib.settings.advanced import AdvancedSettingsWindow
+        # from bauiv1lib.settings.advanced import AdvancedSettingsWindow
 
         plus = bui.app.plus
         assert plus is not None
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        if not self._modal:
-            assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_window(
-                AdvancedSettingsWindow(transition='in_left'), from_window=self
-            )
-
         description: Any = bui.textwidget(query=self._text_field)
         assert isinstance(description, str)
+
+        if self._modal:
+            # no-op if our underlying widget is dead or on its way out.
+            if not self._root_widget or self._root_widget.transitioning_out:
+                return
+            bui.containerwidget(
+                edit=self._root_widget, transition=self._transition_out
+            )
+        else:
+            # no-op if we're not in control.
+            if not self.main_window_has_control():
+                return
+            self.main_window_back()
 
         # Used for things like unlocking shared playlists or linking
         # accounts: talk directly to V1 server via transactions.

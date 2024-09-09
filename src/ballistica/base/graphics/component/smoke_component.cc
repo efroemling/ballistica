@@ -2,6 +2,8 @@
 
 #include "ballistica/base/graphics/component/smoke_component.h"
 
+#include "ballistica/base/assets/assets.h"
+
 namespace ballistica::base {
 
 void SmokeComponent::WriteConfig() {

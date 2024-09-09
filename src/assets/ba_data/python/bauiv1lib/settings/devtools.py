@@ -40,7 +40,7 @@ class DevToolsWindow(bui.MainWindow):
         self._scroll_width = self._width - (100 + 2 * x_inset)
         self._scroll_height = self._height - 115.0
         self._sub_width = self._scroll_width * 0.95
-        self._sub_height = 350.0
+        self._sub_height = 300.0
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -169,37 +169,41 @@ class DevToolsWindow(bui.MainWindow):
             ),
         )
 
-        v -= self._spacing * 2.5
-        bui.textwidget(
-            parent=self._subcontainer,
-            position=(170, v + 10),
-            size=(0, 0),
-            text=bui.Lstr(resource='uiScaleText'),
-            color=app.ui_v1.title_color,
-            h_align='center',
-            v_align='center',
-        )
+        # Currently this is not wired up. The current official way to test
+        # UIScales is either to use the switcher in the dev-console or to
+        # set the BA_UI_SCALE env var.
+        if bool(False):
+            v -= self._spacing * 2.5
+            bui.textwidget(
+                parent=self._subcontainer,
+                position=(170, v + 10),
+                size=(0, 0),
+                text=bui.Lstr(resource='uiScaleText'),
+                color=app.ui_v1.title_color,
+                h_align='center',
+                v_align='center',
+            )
 
-        PopupMenu(
-            parent=self._subcontainer,
-            position=(230, v - 20),
-            button_size=(200.0, 60.0),
-            width=100.0,
-            choices=[
-                'auto',
-                'small',
-                'medium',
-                'large',
-            ],
-            choices_display=[
-                bui.Lstr(resource='autoText'),
-                bui.Lstr(resource='sizeSmallText'),
-                bui.Lstr(resource='sizeMediumText'),
-                bui.Lstr(resource='sizeLargeText'),
-            ],
-            current_choice=app.config.get('UI Scale', 'auto'),
-            on_value_change_call=self._set_uiscale,
-        )
+            PopupMenu(
+                parent=self._subcontainer,
+                position=(230, v - 20),
+                button_size=(200.0, 60.0),
+                width=100.0,
+                choices=[
+                    'auto',
+                    'small',
+                    'medium',
+                    'large',
+                ],
+                choices_display=[
+                    bui.Lstr(resource='autoText'),
+                    bui.Lstr(resource='sizeSmallText'),
+                    bui.Lstr(resource='sizeMediumText'),
+                    bui.Lstr(resource='sizeLargeText'),
+                ],
+                current_choice=app.config.get('UI Scale', 'auto'),
+                on_value_change_call=self._set_uiscale,
+            )
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:

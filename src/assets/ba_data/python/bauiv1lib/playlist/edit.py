@@ -290,9 +290,6 @@ class PlaylistEditWindow(bui.MainWindow):
         self._editcontroller.set_edit_ui_selection(selection)
 
     def _cancel(self) -> None:
-        # from bauiv1lib.playlist.customizebrowser import (
-        #     PlaylistCustomizeBrowserWindow,
-        # )
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -301,38 +298,25 @@ class PlaylistEditWindow(bui.MainWindow):
         bui.getsound('powerdown01').play()
         self.main_window_back()
 
-        # bui.containerwidget(edit=self._root_widget, transition='out_right')
-        # assert bui.app.classic is not None
-        # bui.app.ui_v1.set_main_window(
-        #     PlaylistCustomizeBrowserWindow(
-        #         transition='in_left',
-        #         sessiontype=self._editcontroller.get_session_type(),
-        #         select_playlist=(
-        #             self._editcontroller.get_existing_playlist_name()
-        #         ),
-        #     ),
-        #     from_window=self,
-        #     is_back=True,
-        # )
-
     def _add(self) -> None:
         # Store list name then tell the session to perform an add.
         self._editcontroller.setname(
             cast(str, bui.textwidget(query=self._text_field))
         )
-        self._editcontroller.add_game_pressed()
+        self._editcontroller.add_game_pressed(from_window=self)
 
     def _edit(self) -> None:
         # Store list name then tell the session to perform an add.
         self._editcontroller.setname(
             cast(str, bui.textwidget(query=self._text_field))
         )
-        self._editcontroller.edit_game_pressed()
+        self._editcontroller.edit_game_pressed(from_window=self)
 
     def _save_press(self) -> None:
-        from bauiv1lib.playlist.customizebrowser import (
-            PlaylistCustomizeBrowserWindow,
-        )
+
+        # No-op if we're not in control.
+        if not self.main_window_has_control():
+            return
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -395,18 +379,9 @@ class PlaylistEditWindow(bui.MainWindow):
         )
         plus.run_v1_account_transactions()
 
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
         bui.getsound('gunCocking').play()
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            PlaylistCustomizeBrowserWindow(
-                transition='in_left',
-                sessiontype=self._editcontroller.get_session_type(),
-                select_playlist=new_name,
-            ),
-            from_window=self,
-            is_back=True,
-        )
+
+        self.main_window_back()
 
     def _save_press_with_sound(self) -> None:
         bui.getsound('swish').play()

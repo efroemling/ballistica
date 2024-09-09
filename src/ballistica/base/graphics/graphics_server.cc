@@ -50,9 +50,12 @@ void GraphicsServer::ApplySettings(const GraphicsSettings* settings) {
   if (renderer_) {
     renderer_->set_pixel_scale(settings->pixel_scale);
   }
-  // Note: not checking virtual res here; assuming it only changes when
-  // actual res changes.
-  if (res_x_ != settings->resolution.x || res_y_ != settings->resolution.y) {
+  // Note: need to look at both physical and virtual res here; its possible
+  // for physical to stay the same but for virtual to change (ui-scale
+  // changes can do this).
+  if (res_x_ != settings->resolution.x || res_y_ != settings->resolution.y
+      || res_x_virtual_ != settings->resolution_virtual.x
+      || res_y_virtual_ != settings->resolution_virtual.y) {
     res_x_ = settings->resolution.x;
     res_y_ = settings->resolution.y;
     res_x_virtual_ = settings->resolution_virtual.x;

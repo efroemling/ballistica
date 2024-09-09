@@ -1022,64 +1022,6 @@ class CoopBrowserWindow(bui.MainWindow):
     def _enable_selectable_callback(self) -> None:
         self._do_selection_callbacks = True
 
-    # def _switch_to_league_rankings(self) -> None:
-    #     # pylint: disable=cyclic-import
-    #     from bauiv1lib.account import show_sign_in_prompt
-    #     from bauiv1lib.league.rankwindow import LeagueRankWindow
-
-    #     # no-op if our underlying widget is dead or on its way out.
-    #     if not self._root_widget or self._root_widget.transitioning_out:
-    #         return
-
-    #     plus = bui.app.plus
-    #     assert plus is not None
-
-    #     if plus.get_v1_account_state() != 'signed_in':
-    #         show_sign_in_prompt()
-    #         return
-    #     self._save_state()
-    #     bui.containerwidget(edit=self._root_widget, transition='out_left')
-    #     assert self._league_rank_button is not None
-    #     assert bui.app.classic is not None
-    #     bui.app.ui_v1.set_main_window(
-    #         LeagueRankWindow(
-    #             origin_widget=self._league_rank_button.get_button()
-    #         ),
-    #         from_window=self,
-    #     )
-
-    # def _switch_to_score(
-    #     self,
-    #     show_tab: (
-    #         StoreBrowserWindow.TabID | None
-    #     ) = StoreBrowserWindow.TabID.EXTRAS,
-    # ) -> None:
-    #     # pylint: disable=cyclic-import
-    #     from bauiv1lib.account import show_sign_in_prompt
-
-    #     # no-op if our underlying widget is dead or on its way out.
-    #     if not self._root_widget or self._root_widget.transitioning_out:
-    #         return
-
-    #     plus = bui.app.plus
-    #     assert plus is not None
-
-    #     if plus.get_v1_account_state() != 'signed_in':
-    #         show_sign_in_prompt()
-    #         return
-    #     self._save_state()
-    #     bui.containerwidget(edit=self._root_widget, transition='out_left')
-    #     assert self._store_button is not None
-    #     assert bui.app.classic is not None
-    #     bui.app.ui_v1.set_main_window(
-    #         StoreBrowserWindow(
-    #             origin_widget=self._store_button.get_button(),
-    #             show_tab=show_tab,
-    #             back_location='CoopBrowserWindow',
-    #         ),
-    #         from_window=self,
-    #     )
-
     def is_tourney_data_up_to_date(self) -> bool:
         """Return whether our tourney data is up to date."""
         return self._tourney_data_up_to_date
@@ -1232,24 +1174,6 @@ class CoopBrowserWindow(bui.MainWindow):
             tournament_id=tournament_button.tournament_id,
             position=tournament_button.button.get_screen_space_center(),
         )
-
-    # def _back(self) -> None:
-    #     # pylint: disable=cyclic-import
-    #     from bauiv1lib.play import PlayWindow
-
-    #     # no-op if our underlying widget is dead or on its way out.
-    #     if not self._root_widget or self._root_widget.transitioning_out:
-    #         return
-
-    #     # If something is selected, store it.
-    #     self._save_state()
-    #     bui.containerwidget(
-    #         edit=self._root_widget, transition=self._transition_out
-    #     )
-    #     assert bui.app.classic is not None
-    #     bui.app.ui_v1.set_main_window(
-    #         PlayWindow(transition='in_left'), from_window=self, is_back=True
-    #     )
 
     def _save_state(self) -> None:
         cfg = bui.app.config

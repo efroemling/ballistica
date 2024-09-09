@@ -6,6 +6,7 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/renderer/render_pass.h"
 #include "ballistica/base/graphics/support/frame_def.h"
+#include "ballistica/base/support/context.h"
 #include "ballistica/shared/foundation/inline.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/button_widget.h"
@@ -16,13 +17,16 @@ namespace ballistica::ui_v1 {
 
 // Color we mult toolbars by in medium and large ui modes (in small mode we
 // keep them more the normal window color since everything overlaps).
-#define TOOLBAR_COLOR_R 0.75f
-#define TOOLBAR_COLOR_G 0.85f
-#define TOOLBAR_COLOR_B 0.85f
+#define TOOLBAR_COLOR_R 1.0f
+#define TOOLBAR_COLOR_G 1.0f
+#define TOOLBAR_COLOR_B 1.0f
+// #define TOOLBAR_COLOR_R 0.75f
+// #define TOOLBAR_COLOR_G 0.85f
+// #define TOOLBAR_COLOR_B 0.85f
 
-#define TOOLBAR_BACK_COLOR_R 0.8f
-#define TOOLBAR_BACK_COLOR_G 0.8f
-#define TOOLBAR_BACK_COLOR_B 0.8f
+#define TOOLBAR_BACK_COLOR_R 1.0f
+#define TOOLBAR_BACK_COLOR_G 1.0f
+#define TOOLBAR_BACK_COLOR_B 1.0f
 
 // Opacity in med/large.
 #define TOOLBAR_OPACITY 1.0f
@@ -469,9 +473,9 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
     bd.color_g = 0.35f;
     bd.color_b = 0.55f;
     if (g_base->ui->scale() != UIScale::kSmall) {
-      bd.color_r *= TOOLBAR_COLOR_R;
-      bd.color_g *= TOOLBAR_COLOR_G;
-      bd.color_b *= TOOLBAR_COLOR_B;
+      // bd.color_r *= TOOLBAR_COLOR_R;
+      // bd.color_g *= TOOLBAR_COLOR_G;
+      // bd.color_b *= TOOLBAR_COLOR_B;
     }
     bd.depth_min = 0.3f;
     switch (type) {
@@ -662,9 +666,9 @@ void RootWidget::Setup() {
     bd.color_b = 0.73f;
     bd.call = UIV1Python::ObjID::kRootUIAccountButtonPressCall;
     if (g_base->ui->scale() != UIScale::kSmall) {
-      bd.color_r *= TOOLBAR_COLOR_R;
-      bd.color_g *= TOOLBAR_COLOR_G;
-      bd.color_b *= TOOLBAR_COLOR_B;
+      // bd.color_r *= TOOLBAR_COLOR_R;
+      // bd.color_g *= TOOLBAR_COLOR_G;
+      // bd.color_b *= TOOLBAR_COLOR_B;
     }
     bd.pre_buffer = 10.0f;
     bd.visibility_mask =
@@ -967,28 +971,31 @@ void RootWidget::Setup() {
     // AddCover(0.5f, VAlign::kBottom, 0.0f, -180.0f, 600.0f, 550.0f,
     // 0.35f);
 
-    float backingR = 0.44f;
-    float backingG = 0.41f;
-    float backingB = 0.56f;
-    float backingCoverR = backingR;
-    float backingCoverG = backingG;
-    float backingCoverB = backingB;
+    float backing_r = 0.43f;
+    float backing_g = 0.40f;
+    float backing_b = 0.53f;
+    // float backingR = 0.44f;
+    // float backingG = 0.41f;
+    // float backingB = 0.56f;
+    float backing_cover_r = backing_r;
+    float backing_cover_g = backing_g;
+    float backing_cover_b = backing_b;
     float backingA = 1.0f;
     if (g_base->ui->scale() != UIScale::kSmall) {
-      backingR *= TOOLBAR_COLOR_R * TOOLBAR_BACK_COLOR_R;
-      backingG *= TOOLBAR_COLOR_G * TOOLBAR_BACK_COLOR_G;
-      backingB *= TOOLBAR_COLOR_B * TOOLBAR_BACK_COLOR_B;
-      backingCoverR *= TOOLBAR_COLOR_R;
-      backingCoverG *= TOOLBAR_COLOR_G;
-      backingCoverB *= TOOLBAR_COLOR_B;
+      backing_r *= TOOLBAR_COLOR_R * TOOLBAR_BACK_COLOR_R;
+      backing_g *= TOOLBAR_COLOR_G * TOOLBAR_BACK_COLOR_G;
+      backing_b *= TOOLBAR_COLOR_B * TOOLBAR_BACK_COLOR_B;
+      backing_cover_r *= TOOLBAR_COLOR_R;
+      backing_cover_g *= TOOLBAR_COLOR_G;
+      backing_cover_b *= TOOLBAR_COLOR_B;
       backingA *= TOOLBAR_OPACITY;
     } else {
-      backingR *= 1.1f;
-      backingG *= 1.1f;
-      backingB *= 1.1f;
-      backingCoverR *= 1.1f;
-      backingCoverG *= 1.1f;
-      backingCoverB *= 1.1f;
+      backing_r *= 1.1f;
+      backing_g *= 1.1f;
+      backing_b *= 1.1f;
+      backing_cover_r *= 1.1f;
+      backing_cover_g *= 1.1f;
+      backing_cover_b *= 1.1f;
       backingA *= TOOLBAR_OPACITY_2;
     }
 
@@ -997,16 +1004,16 @@ void RootWidget::Setup() {
       ButtonDef bd;
       bd.h_align = 0.5f;
       bd.v_align = VAlign::kBottom;
-      bd.width = 550.0f;
-      bd.height = 110.0f;
+      bd.width = 500.0f;
+      bd.height = 100.0f;
       bd.x = 0.0f;
       bd.y = 41.0f;
       bd.img = "uiAtlas2";
       bd.mesh_transparent = "toolbarBackingBottom2";
       bd.selectable = false;
-      bd.color_r = backingR;
-      bd.color_g = backingG;
-      bd.color_b = backingB;
+      bd.color_r = backing_r;
+      bd.color_g = backing_g;
+      bd.color_b = backing_b;
       bd.opacity = backingA;
 
       bd.depth_min = 0.2f;
@@ -1023,7 +1030,7 @@ void RootWidget::Setup() {
     ButtonDef b;
     b.h_align = 0.5f;
     b.v_align = VAlign::kBottom;
-    b.width = b.height = 120.0f;
+    b.width = b.height = 110.0f;
     b.x = 0.0f;
     b.y = b.height * 0.4f;
     b.img = "chestIcon";
@@ -1032,27 +1039,31 @@ void RootWidget::Setup() {
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    float spacing = 130.0f;
+    float spacing = 120.0f;
     b.x = -1.5f * spacing;
     b.call = UIV1Python::ObjID::kRootUIChestSlot1PressCall;
     b.allow_in_game = false;
     AddButton_(b);
 
-    b.x = -0.5f * spacing;
-    b.img = "chestOpenIcon";
-    b.y = b.height * 0.5f;
-    b.call = UIV1Python::ObjID::kRootUIChestSlot2PressCall;
-    AddButton_(b);
+    // b.x = -0.5f * spacing;
+    // b.img = "chestOpenIcon";
+    // b.y = b.height * 0.5f;
+    // b.call = UIV1Python::ObjID::kRootUIChestSlot2PressCall;
+    // AddButton_(b);
 
     // test - empty icons
     b.y = b.height * 0.4f;
     b.x = 0.5f * spacing;
     b.img = "chestIconEmpty";
     b.width = b.height = 80.0f;
-    b.color_r = backingCoverR;
-    b.color_g = backingCoverG;
-    b.color_b = backingCoverB;
+    b.color_r = backing_cover_r;
+    b.color_g = backing_cover_g;
+    b.color_b = backing_cover_b;
     b.opacity = 1.0f;
+    b.call = UIV1Python::ObjID::kRootUIChestSlot2PressCall;
+    b.x = -0.5f * spacing;
+    AddButton_(b);
+    b.x = 0.5f * spacing;
     b.call = UIV1Python::ObjID::kRootUIChestSlot3PressCall;
     AddButton_(b);
     b.x = 1.5f * spacing;
@@ -1564,6 +1575,8 @@ void RootWidget::UpdateLayout() {
   StepPositions_(0.0f);
 }
 
+void RootWidget::OnUIScaleChange() { MarkForUpdate(); }
+
 auto RootWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   // If a cancel message comes through and our back button is enabled, fire
   // our back button. In all other cases just do the default.
@@ -1595,20 +1608,6 @@ void RootWidget::SetOverlayWidget(StackWidget* w) {
 
   AddWidget(w);
   overlay_stack_widget_ = w;
-}
-
-void RootWidget::OnCancelCustom() {
-  // Need to revisit this. If the cancel event it pushes is not handled, it will
-  // wind up back here where it pushes another back call. This cycle repeats
-  // forever until something comes along which does handle cancel events and
-  // then it gets them all. Current repro case is Sign-in-with-BombSquad-Account
-  // window - press escape a few times while that is up and then click cancel;
-  // This code is only used for toolbar mode so should be safe to leave it
-  // disabled for now.
-
-  // Is there a reason for this to exist? If so, what is it?
-  // printf("GOT OnCancelCustom\n");
-  // g_base->ui->PushBackButtonCall(nullptr);
 }
 
 auto RootWidget::GetSpecialWidget(const std::string& s) const -> Widget* {

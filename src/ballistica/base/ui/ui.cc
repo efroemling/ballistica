@@ -7,7 +7,7 @@
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/simple_component.h"
-#include "ballistica/base/input/device/keyboard_input.h"
+#include "ballistica/base/input/device/keyboard_input.h"  // IWYU pragma: keep
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/support/app_config.h"
@@ -54,11 +54,11 @@ UI::OperationContext::~OperationContext() {
     assert(runnables_.empty());
   }
 
-  // Complain if our Finish() call was never run (unless we're being torn
-  // down due to an exception).
-  if (!ran_finish_ && !std::current_exception()) {
+  // Complain if our Finish() call was never run (unless it seems we're being
+  // torn down as part of stack-unwinding due to an exception).
+  if (!ran_finish_ && !std::uncaught_exceptions()) {
     BA_LOG_ERROR_NATIVE_TRACE_ONCE(
-        "UI::InteractionContext_ being torn down without Complete called.");
+        "UI::InteractionContext_ being torn down without Finish() called.");
   }
 
   // Our runnables are raw unmanaged pointers; need to explicitly kill them.
@@ -138,6 +138,13 @@ UI::UI() {
     } else {
       scale_ = g_core->platform->GetDefaultUIScale();
     }
+  }
+}
+void UI::SetScale(UIScale val) {
+  BA_PRECONDITION(g_base->InLogicThread());
+  scale_ = val;
+  if (dev_console_ != nullptr) {
+    dev_console_->OnUIScaleChanged();
   }
 }
 

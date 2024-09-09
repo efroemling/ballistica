@@ -15,9 +15,8 @@
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/foundation/types.h"
 #include "ballistica/shared/generic/snapshot.h"
-#include "ballistica/shared/math/matrix44f.h"
-#include "ballistica/shared/math/rect.h"
 #include "ballistica/shared/math/vector2f.h"
+#include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {
 
@@ -63,9 +62,12 @@ class Graphics {
   void OnScreenSizeChange();
   void DoApplyAppConfig();
 
-  /// Should be called by the app-adapter to keep the engine informed
-  /// on the drawable area it has to work with (in pixels).
+  /// Should be called by the app-adapter to keep the engine informed on the
+  /// drawable area it has to work with (in pixels).
   void SetScreenResolution(float x, float y);
+
+  /// Should be called when UIScale changes.
+  void OnUIScaleChange();
 
   void StepDisplayTime();
 
@@ -364,6 +366,7 @@ class Graphics {
   ScreenMessages* const screenmessages;
 
  protected:
+  void UpdateScreen_();
   virtual ~Graphics();
   virtual void DoDrawFade(FrameDef* frame_def, float amt);
   static void CalcVirtualRes_(float* x, float* y);

@@ -15,9 +15,6 @@ if TYPE_CHECKING:
 
 REQUIRE_PRO = False
 
-# Temp.
-UNDER_CONSTRUCTION = True
-
 
 class SoundtrackBrowserWindow(bui.MainWindow):
     """Window for browsing soundtracks."""
@@ -397,25 +394,6 @@ class SoundtrackBrowserWindow(bui.MainWindow):
                 music.music_types[bui.app.classic.MusicPlayMode.REGULAR]
             )
 
-    # def _back(self) -> None:
-    #     # pylint: disable=cyclic-import
-    #     from bauiv1lib.settings.audio import AudioSettingsWindow
-
-    #     # no-op if our underlying widget is dead or on its way out.
-    #     if not self._root_widget or self._root_widget.transitioning_out:
-    #         return
-
-    #     self._save_state()
-    #     bui.containerwidget(
-    #         edit=self._root_widget, transition=self._transition_out
-    #     )
-    #     assert bui.app.classic is not None
-    #     bui.app.ui_v1.set_main_window(
-    #         AudioSettingsWindow(transition='in_left'),
-    #         from_window=self,
-    #         is_back=True,
-    #     )
-
     def _edit_soundtrack_with_sound(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.purchase import PurchaseWindow
@@ -434,12 +412,8 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         from bauiv1lib.purchase import PurchaseWindow
         from bauiv1lib.soundtrack.edit import SoundtrackEditWindow
 
-        if UNDER_CONSTRUCTION:
-            bui.screenmessage('UNDER CONSTRUCTION')
-            return
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we don't have control.
+        if not self.main_window_has_control():
             return
 
         if REQUIRE_PRO and (
@@ -448,8 +422,10 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         ):
             PurchaseWindow(items=['pro'])
             return
+
         if self._selected_soundtrack is None:
             return
+
         if self._selected_soundtrack == '__default__':
             bui.getsound('error').play()
             bui.screenmessage(
@@ -458,12 +434,8 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             )
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            SoundtrackEditWindow(existing_soundtrack=self._selected_soundtrack),
-            from_window=self,
+        self.main_window_replace(
+            SoundtrackEditWindow(existing_soundtrack=self._selected_soundtrack)
         )
 
     def _get_soundtrack_display_name(self, soundtrack: str) -> bui.Lstr:
@@ -554,8 +526,8 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         from bauiv1lib.purchase import PurchaseWindow
         from bauiv1lib.soundtrack.edit import SoundtrackEditWindow
 
-        if UNDER_CONSTRUCTION:
-            bui.screenmessage('UNDER CONSTRUCTION')
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
         if REQUIRE_PRO and (
@@ -564,11 +536,8 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         ):
             PurchaseWindow(items=['pro'])
             return
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        bui.app.ui_v1.set_main_window(
-            SoundtrackEditWindow(existing_soundtrack=None), from_window=self
-        )
+
+        self.main_window_replace(SoundtrackEditWindow(existing_soundtrack=None))
 
     def _create_done(self, new_soundtrack: str) -> None:
         if new_soundtrack is not None:

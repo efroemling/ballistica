@@ -112,10 +112,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self.invite_confirm_windows: list[Any] = []  # FIXME: Don't use Any.
         self.party_window: weakref.ref[PartyWindow] | None = None
         self.main_menu_resume_callbacks: list = []
-        # Switch our overall game selection UI flow between Play and
-        # Private-party playlist selection modes; should do this in
-        # a more elegant way once we revamp high level UI stuff a bit.
-        self.selecting_private_party_playlist: bool = False
 
         # Store.
         self.store_layout: dict[str, list[dict[str, Any]]] | None = None
@@ -739,15 +735,30 @@ class ClassicAppSubsystem(babase.AppSubsystem):
     def profile_browser_window(
         self,
         transition: str = 'in_right',
-        in_main_menu: bool = True,
-        selected_profile: str | None = None,
         origin_widget: bauiv1.Widget | None = None,
+        # in_main_menu: bool = True,
+        selected_profile: str | None = None,
     ) -> None:
         """(internal)"""
         from bauiv1lib.profile.browser import ProfileBrowserWindow
 
-        ProfileBrowserWindow(
-            transition, in_main_menu, selected_profile, origin_widget
+        main_window = babase.app.ui_v1.get_main_window()
+        if main_window is not None:
+            logging.warning(
+                'profile_browser_window()'
+                ' called with existing main window; should not happen.'
+            )
+            return
+
+        babase.app.ui_v1.set_main_window(
+            ProfileBrowserWindow(
+                transition=transition,
+                selected_profile=selected_profile,
+                origin_widget=origin_widget,
+                minimal_toolbar=True,
+            ),
+            is_top_level=True,
+            suppress_warning=True,
         )
 
     def preload_map_preview_media(self) -> None:
@@ -803,13 +814,13 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 bauiv1.getsound('swish').play()
 
             babase.app.ui_v1.set_main_window(
-                InGameMenuWindow(),
-                from_window=False,  # Disable check here.
-                is_top_level=True,
+                InGameMenuWindow(), is_top_level=True, suppress_warning=True
             )
 
     def invoke_main_menu_ui(self) -> None:
         """Bring up main menu ui."""
+        print('INVOKING MAIN MENU UI')
+
         # Bring up the last place we were, or start at the main menu otherwise.
         app = bauiv1.app
         env = app.env
@@ -821,18 +832,15 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 # UI stuff fails now in headless builds; avoid it.
                 pass
             else:
-                # main_menu_location = (
-                #     bascenev1.app.ui_v1.get_main_menu_location()
-                # )
 
-                # When coming back from a kiosk-mode game, jump to
-                # the kiosk start screen.
+                # When coming back from a kiosk-mode game, jump to the
+                # kiosk start screen.
                 if env.demo or env.arcade:
                     # pylint: disable=cyclic-import
                     from bauiv1lib.kiosk import KioskWindow
 
                     app.ui_v1.set_main_window(
-                        KioskWindow(), from_window=False  # Disable check here.
+                        KioskWindow(), is_top_level=True, suppress_warning=True
                     )
                 # ..or in normal cases go back to the main menu
                 else:
@@ -900,20 +908,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
                     app.ui_v1.set_main_window(
                         MainMenuWindow(transition=None),
-                        from_window=False,  # Disable check.
                         is_top_level=True,
+                        suppress_warning=True,
                     )
-
-                # attempt to show any pending offers immediately.
-                # If that doesn't work, try again in a few seconds
-                # (we may not have heard back from the server)
-                # ..if that doesn't work they'll just have to wait
-                # until the next opportunity.
-                # if not specialoffer.show_offer():
-
-                #     def try_again() -> None:
-                #         if not specialoffer.show_offer():
-                #             # Try one last time..
-                #             bauiv1.apptimer(2.0, specialoffer.show_offer)
-
-                #     bauiv1.apptimer(2.0, try_again)

@@ -41,11 +41,9 @@ class StoreBrowserWindow(bui.MainWindow):
     def __init__(
         self,
         transition: str | None = 'in_right',
-        modal: bool = False,
-        show_tab: StoreBrowserWindow.TabID | None = None,
-        on_close_call: Callable[[], Any] | None = None,
-        back_location: str | None = None,
         origin_widget: bui.Widget | None = None,
+        show_tab: StoreBrowserWindow.TabID | None = None,
+        minimal_toolbars: bool = False,
     ):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
@@ -58,20 +56,11 @@ class StoreBrowserWindow(bui.MainWindow):
 
         bui.set_analytics_screen('Store Window')
 
-        # Need to store this ourself for modal mode.
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-        else:
-            self._transition_out = 'out_right'
-
         self.button_infos: dict[str, dict[str, Any]] | None = None
         self.update_buttons_timer: bui.AppTimer | None = None
         self._status_textwidget_update_timer = None
 
-        self._back_location = back_location
-        self._on_close_call = on_close_call
         self._show_tab = show_tab
-        self._modal = modal
         self._width = 1670 if uiscale is bui.UIScale.SMALL else 1040
         self._x_inset = x_inset = 310 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
@@ -91,7 +80,7 @@ class StoreBrowserWindow(bui.MainWindow):
                 size=(self._width, self._height + extra_top),
                 toolbar_visibility=(
                     'menu_store'
-                    if uiscale is bui.UIScale.SMALL
+                    if (uiscale is bui.UIScale.SMALL or minimal_toolbars)
                     else 'menu_full'
                 ),
                 scale=(
@@ -115,15 +104,15 @@ class StoreBrowserWindow(bui.MainWindow):
             size=(140, 60),
             scale=1.1,
             autoselect=True,
-            label=bui.Lstr(resource='doneText' if self._modal else 'backText'),
-            button_type=None if self._modal else 'back',
-            on_activate_call=self._back,
+            label=bui.Lstr(resource='backText'),
+            button_type='back',
+            on_activate_call=self.main_window_back,
         )
 
         if uiscale is bui.UIScale.SMALL:
             self._back_button.delete()
             bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self._back
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
             backbuttonspecial = True
         else:
@@ -163,7 +152,7 @@ class StoreBrowserWindow(bui.MainWindow):
             maxwidth=290,
         )
 
-        if not self._modal and not backbuttonspecial:
+        if not backbuttonspecial:
             bui.buttonwidget(
                 edit=self._back_button,
                 button_type='backSmall',
@@ -1251,31 +1240,13 @@ class StoreBrowserWindow(bui.MainWindow):
         except Exception:
             logging.exception('Error restoring state for %s.', self)
 
-    def _back(self) -> None:
-
-        if self._modal:
-            # no-op if our underlying widget is dead or on its way out.
-            if not self._root_widget or self._root_widget.transitioning_out:
-                return
-            self._save_state()
-            bui.containerwidget(
-                edit=self._root_widget, transition=self._transition_out
-            )
-        else:
-            # no-op if we're not currently in control.
-            if not self.main_window_has_control():
-                return
-            self.main_window_back()
-        if self._on_close_call is not None:
-            self._on_close_call()
-
 
 def _check_merch_availability_in_bg_thread() -> None:
     # pylint: disable=cell-var-from-loop
 
-    # Merch is available from some countries only.
-    # Make a reasonable check to ask the master-server about this at
-    # launch and store the results.
+    # Merch is available from some countries only. Make a reasonable
+    # check to ask the master-server about this at launch and store the
+    # results.
     plus = bui.app.plus
     assert plus is not None
 

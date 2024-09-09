@@ -229,14 +229,18 @@ class StoreButton:
     def _default_on_activate_call(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.account import show_sign_in_prompt
-        from bauiv1lib.store.browser import StoreBrowserWindow
+
+        # from bauiv1lib.store.browser import StoreBrowserWindow
 
         plus = bui.app.plus
         assert plus is not None
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
-        StoreBrowserWindow(modal=True, origin_widget=self._button)
+
+        raise RuntimeError('no longer wired up')
+
+        # StoreBrowserWindow(modal=True, origin_widget=self._button)
 
     def get_button(self) -> bui.Widget:
         """Return the underlying button widget."""

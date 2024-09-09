@@ -7,7 +7,7 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
-#include "ballistica/base/assets/sound_asset.h"
+#include "ballistica/base/assets/sound_asset.h"  // IWYU pragma: keep.
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
@@ -62,7 +62,7 @@ static PyMethodDef PyGetSimpleSoundDef = {
 static auto PySetUIInputDevice(PyObject* self, PyObject* args,
                                PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  assert(g_base->InLogicThread());
+  BA_PRECONDITION(g_base->InLogicThread());
   static const char* kwlist[] = {"input_device_id", nullptr};
   PyObject* input_device_id_obj = Py_None;
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
@@ -95,6 +95,89 @@ static PyMethodDef PySetUIInputDeviceDef = {
     "(internal)\n"
     "\n"
     "Sets the input-device that currently owns the user interface.",
+};
+
+// ------------------------------ set_ui_scale ---------------------------------
+
+static auto PySetUIScale(PyObject* self, PyObject* args,
+                         PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  const char* scalestr;
+
+  static const char* kwlist[] = {"scale", nullptr};
+  PyObject* input_device_id_obj = Py_None;
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &scalestr)) {
+    return nullptr;
+  }
+
+  // FIXME: Should have this take an enum directly once we have an easy way
+  // to share enums between Python/CPP.
+  UIScale scale;
+  if (!strcmp(scalestr, "small")) {
+    scale = UIScale::kSmall;
+  } else if (!strcmp(scalestr, "medium")) {
+    scale = UIScale::kMedium;
+  } else if (!strcmp(scalestr, "large")) {
+    scale = UIScale::kLarge;
+  } else {
+    throw Exception("Invalid scale value.", PyExcType::kValue);
+  }
+  g_base->SetUIScale(scale);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetUIScaleDef = {
+    "set_ui_scale",                // name
+    (PyCFunction)PySetUIScale,     // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "set_ui_scale(scale: str)"
+    " -> None\n"
+    "\n"
+    "(internal)\n",
+};
+// ------------------------------ set_ui_scale ---------------------------------
+
+static auto PyGetUIScale(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  // FIXME: Should have this return enums directly once we have an easy way
+  // to share enums between Python/CPP.
+  auto scale = g_base->ui->scale();
+
+  const char* val;
+  switch (scale) {
+    case UIScale::kSmall:
+      val = "small";
+      break;
+    case UIScale::kMedium:
+      val = "medium";
+      break;
+    case UIScale::kLarge:
+      val = "large";
+      break;
+    default:
+      throw Exception("Unhandled scale value.");
+  }
+  return PyUnicode_FromString(val);
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetUIScaleDef = {
+    "get_ui_scale",             // name
+    (PyCFunction)PyGetUIScale,  // method
+    METH_NOARGS,                // flags
+
+    "get_ui_scale()"
+    " -> str\n"
+    "\n"
+    "(internal)\n",
 };
 
 // ----------------------------- hastouchscreen --------------------------------
@@ -1899,10 +1982,6 @@ static auto PySetDrawUIBounds(PyObject* self, PyObject* args,
     return nullptr;
   }
 
-  // if (g_base->graphics->draw_ui_bounds()) {
-  //   Py_RETURN_TRUE;
-  // }
-  // Py_RETURN_FALSE;
   g_base->graphics->set_draw_ui_bounds(value);
   Py_RETURN_NONE;
 
@@ -1978,6 +2057,8 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyGetIdleTimeDef,
       PyExtraHashValueDef,
       PySetUIInputDeviceDef,
+      PyGetUIScaleDef,
+      PySetUIScaleDef,
       PyGetThreadNameDef,
       PySetThreadNameDef,
       PyInLogicThreadDef,

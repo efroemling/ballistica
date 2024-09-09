@@ -2,6 +2,7 @@
 
 #include "ballistica/scene_v1/node/flash_node.h"
 
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"

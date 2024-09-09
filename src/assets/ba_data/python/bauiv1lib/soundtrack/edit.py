@@ -26,8 +26,6 @@ class SoundtrackEditWindow(bui.MainWindow):
     ):
         # pylint: disable=too-many-statements
 
-        print('SPAWNING EDIT')
-
         appconfig = bui.app.config
         self._r = 'editSoundtrackWindow'
         self._folder_tex = bui.gettexture('folder')
@@ -110,7 +108,7 @@ class SoundtrackEditWindow(bui.MainWindow):
                 self._existing_soundtrack_name = existing_soundtrack
                 self._last_edited_song_type = None
             else:
-                # otherwise they can pass info on an in-progress edit
+                # Otherwise they can pass info on an in-progress edit.
                 self._soundtrack = existing_soundtrack['soundtrack']
                 self._soundtrack_name = existing_soundtrack['name']
                 self._existing_soundtrack_name = existing_soundtrack[
@@ -202,7 +200,13 @@ class SoundtrackEditWindow(bui.MainWindow):
 
         # Pull this out of self here; if we do it in the lambda we'll
         # keep our window alive due to the 'self' reference.
-        existing_soundtrack = self._existing_soundtrack
+        existing_soundtrack = {
+            'name': self._soundtrack_name,
+            'existing_name': self._existing_soundtrack_name,
+            'soundtrack': self._soundtrack,
+            'last_edited_song_type': self._last_edited_song_type,
+        }
+
         return bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
                 transition=transition,
@@ -348,8 +352,6 @@ class SoundtrackEditWindow(bui.MainWindow):
         assert bui.app.classic is not None
         music = bui.app.classic.music
 
-        print('GoT RESTORE', state, musictype, entry)
-
         # Apply the change and recreate the window.
         soundtrack = state['soundtrack']
         existing_entry = (
@@ -370,14 +372,20 @@ class SoundtrackEditWindow(bui.MainWindow):
         else:
             soundtrack[musictype] = entry
 
+        mainwindow = bui.app.ui_v1.get_main_window()
+        assert mainwindow is not None
+
+        mainwindow.main_window_back_state = state['back_state']
+        mainwindow.main_window_back()
+
     def _get_entry(
         self, song_type: str, entry: Any, selection_target_name: str
     ) -> None:
         assert bui.app.classic is not None
         music = bui.app.classic.music
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
         if selection_target_name != '':
@@ -388,23 +396,17 @@ class SoundtrackEditWindow(bui.MainWindow):
             'soundtrack': self._soundtrack,
             'last_edited_song_type': song_type,
         }
-        self.main_window_replace(
-            music.get_music_player().select_entry(
-                bui.Call(self._restore_editor, state, song_type),
-                entry,
-                selection_target_name,
-            ),
-            group_id='soundtrackentryselect',
+        new_win = music.get_music_player().select_entry(
+            bui.Call(self._restore_editor, state, song_type),
+            entry,
+            selection_target_name,
         )
-        # bui.containerwidget(edit=self._root_widget, transition='out_left')
-        # bui.app.ui_v1.set_main_window(
-        #     music.get_music_player().select_entry(
-        #         bui.Call(self._restore_editor, state, song_type),
-        #         entry,
-        #         selection_target_name,
-        #     ),
-        #     from_window=self,
-        # )
+        self.main_window_replace(new_win)
+
+        # Once we've set the new window, grab the back-state; we'll use
+        # that to jump back here after selection completes.
+        assert new_win.main_window_back_state is not None
+        state['back_state'] = new_win.main_window_back_state
 
     def _test(self, song_type: bs.MusicType) -> None:
         assert bui.app.classic is not None
@@ -461,15 +463,8 @@ class SoundtrackEditWindow(bui.MainWindow):
         music.set_music_play_mode(bui.app.classic.MusicPlayMode.REGULAR)
 
         self.main_window_back()
-        # bui.containerwidget(edit=self._root_widget, transition='out_right')
-        # bui.app.ui_v1.set_main_window(
-        #     SoundtrackBrowserWindow(transition='in_left'),
-        #     from_window=self,
-        #     is_back=True,
-        # )
 
     def _do_it(self) -> None:
-        # from bauiv1lib.soundtrack.browser import SoundtrackBrowserWindow
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -515,7 +510,6 @@ class SoundtrackEditWindow(bui.MainWindow):
 
         cfg.commit()
         bui.getsound('gunCocking').play()
-        # bui.containerwidget(edit=self._root_widget, transition='out_right')
 
         # Resets music back to normal.
         music.set_music_play_mode(
@@ -523,11 +517,6 @@ class SoundtrackEditWindow(bui.MainWindow):
         )
 
         self.main_window_back()
-        # bui.app.ui_v1.set_main_window(
-        #     SoundtrackBrowserWindow(transition='in_left'),
-        #     from_window=self,
-        #     is_back=True,
-        # )
 
     def _do_it_with_sound(self) -> None:
         bui.getsound('swish').play()

@@ -24,7 +24,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
         gametype: type[bs.GameActivity],
         sessiontype: type[bs.Session],
         config: dict[str, Any] | None,
-        completion_call: Callable[[dict[str, Any] | None], Any],
+        completion_call: Callable[[dict[str, Any] | None, bui.MainWindow], Any],
         default_selection: str | None = None,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
@@ -141,15 +141,15 @@ class PlaylistEditGameWindow(bui.MainWindow):
         btn = bui.buttonwidget(
             parent=self._root_widget,
             position=(45 + x_inset, height - 82 + y_extra2),
-            size=(180, 70) if is_add else (180, 65),
+            size=(60, 48) if is_add else (180, 65),
             label=(
-                bui.Lstr(resource='backText')
+                bui.charstr(bui.SpecialChar.BACK)
                 if is_add
                 else bui.Lstr(resource='cancelText')
             ),
-            button_type='back' if is_add else None,
+            button_type='backSmall' if is_add else None,
             autoselect=True,
-            scale=0.75,
+            scale=1.0 if is_add else 0.75,
             text_scale=1.3,
             on_activate_call=bui.Call(self._cancel),
         )
@@ -541,22 +541,21 @@ class PlaylistEditGameWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.playlist.mapselect import PlaylistMapSelectWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # No-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
+        self._config = self._getconfig()
+
         # Replace ourself with the map-select UI.
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
+        self.main_window_replace(
             PlaylistMapSelectWindow(
                 self._gametype,
                 self._sessiontype,
-                copy.deepcopy(self._getconfig()),
+                self._config,
                 self._edit_info,
                 self._completion_call,
-            ),
-            from_window=self,
+            )
         )
 
     def _choice_inc(
@@ -586,7 +585,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
         ][1]
 
     def _cancel(self) -> None:
-        self._completion_call(None)
+        self._completion_call(None, self)
 
     def _check_value_change(
         self, setting_name: str, widget: bui.Widget, value: int
@@ -607,7 +606,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
         return {'settings': settings}
 
     def _add(self) -> None:
-        self._completion_call(copy.deepcopy(self._getconfig()))
+        self._completion_call(self._getconfig(), self)
 
     def _inc(
         self,

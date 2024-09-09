@@ -13,11 +13,6 @@ class TouchscreenSettingsWindow(bui.MainWindow):
     """Settings window for touchscreens."""
 
     def __del__(self) -> None:
-        # Note - this happens in 'back' too;
-        # we just do it here too in case the window is closed by other means.
-
-        # FIXME: Could switch to a UI destroy callback now that those are a
-        #  thing that exists.
         bs.set_touchscreen_editing(False)
 
     def __init__(
@@ -25,9 +20,8 @@ class TouchscreenSettingsWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ) -> None:
-        self._width = 650
+        self._width = 780
         self._height = 380
-        self._spacing = 40
         self._r = 'configTouchscreenWindow'
 
         bs.set_touchscreen_editing(True)
@@ -42,38 +36,44 @@ class TouchscreenSettingsWindow(bui.MainWindow):
                     if uiscale is bui.UIScale.SMALL
                     else 1.55 if uiscale is bui.UIScale.MEDIUM else 1.2
                 ),
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
+                ),
+                stack_offset=(
+                    (0, -20) if uiscale is bui.UIScale.SMALL else (0, 0)
+                ),
             ),
             transition=transition,
             origin_widget=origin_widget,
         )
 
-        btn = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(55, self._height - 60),
-            size=(120, 60),
-            label=bui.Lstr(resource='backText'),
-            button_type='back',
-            scale=0.8,
-            on_activate_call=self._back,
-        )
-        bui.containerwidget(edit=self._root_widget, cancel_button=btn)
+        if uiscale is bui.UIScale.SMALL:
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self.main_window_back
+            )
+        else:
+            btn = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(55, self._height - 60),
+                size=(60, 60),
+                label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
+                scale=0.8,
+                on_activate_call=self.main_window_back,
+            )
+            bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(25, self._height - 50),
+            position=(25, self._height - 57),
             size=(self._width, 25),
             text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=bui.app.ui_v1.title_color,
             maxwidth=280,
             h_align='center',
             v_align='center',
-        )
-
-        bui.buttonwidget(
-            edit=btn,
-            button_type='backSmall',
-            size=(60, 60),
-            label=bui.charstr(bui.SpecialChar.BACK),
         )
 
         self._scroll_width = self._width - 100
@@ -113,6 +113,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
         )
 
     def _build_gui(self) -> None:
+        # pylint: disable=too-many-locals
         from bauiv1lib.config import ConfigNumberEdit, ConfigCheckBox
         from bauiv1lib.radiogroup import make_radio_group
 
@@ -121,13 +122,16 @@ class TouchscreenSettingsWindow(bui.MainWindow):
         for child in children:
             child.delete()
         h = 30
+        hoffs = 100
+        hoffs2 = 70
+        hoffs3 = 320
         v = self._sub_height - 85
         clr = (0.8, 0.8, 0.8, 1.0)
         clr2 = (0.8, 0.8, 0.8)
         bui.textwidget(
             parent=self._subcontainer,
-            position=(-10, v + 43),
-            size=(self._sub_width, 25),
+            position=(self._sub_width * 0.5, v + 63),
+            size=(0, 0),
             text=bui.Lstr(resource=f'{self._r}.swipeInfoText'),
             flatness=1.0,
             color=(0, 0.9, 0.1, 0.7),
@@ -148,7 +152,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
         )
         cb1 = bui.checkboxwidget(
             parent=self._subcontainer,
-            position=(h + 220, v),
+            position=(h + hoffs + 220, v),
             size=(170, 30),
             text=bui.Lstr(resource=f'{self._r}.joystickText'),
             maxwidth=100,
@@ -157,7 +161,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
         )
         cb2 = bui.checkboxwidget(
             parent=self._subcontainer,
-            position=(h + 357, v),
+            position=(h + hoffs + 357, v),
             size=(170, 30),
             text=bui.Lstr(resource=f'{self._r}.swipeText'),
             maxwidth=100,
@@ -172,7 +176,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
         ConfigNumberEdit(
             parent=self._subcontainer,
             position=(h, v),
-            xoffset=65,
+            xoffset=hoffs2 + 65,
             configkey='Touch Controls Scale Movement',
             displayname=bui.Lstr(
                 resource=f'{self._r}.movementControlScaleText'
@@ -195,7 +199,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
         )
         cb1 = bui.checkboxwidget(
             parent=self._subcontainer,
-            position=(h + 220, v),
+            position=(h + hoffs + 220, v),
             size=(170, 30),
             text=bui.Lstr(resource=f'{self._r}.buttonsText'),
             maxwidth=100,
@@ -204,7 +208,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
         )
         cb2 = bui.checkboxwidget(
             parent=self._subcontainer,
-            position=(h + 357, v),
+            position=(h + hoffs + 357, v),
             size=(170, 30),
             text=bui.Lstr(resource=f'{self._r}.swipeText'),
             maxwidth=100,
@@ -218,7 +222,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
         ConfigNumberEdit(
             parent=self._subcontainer,
             position=(h, v),
-            xoffset=65,
+            xoffset=hoffs2 + 65,
             configkey='Touch Controls Scale Actions',
             displayname=bui.Lstr(resource=f'{self._r}.actionControlScaleText'),
             changesound=False,
@@ -228,13 +232,23 @@ class TouchscreenSettingsWindow(bui.MainWindow):
         )
 
         v -= 50
+        bui.textwidget(
+            parent=self._subcontainer,
+            position=(h, v - 2),
+            size=(0, 30),
+            text=bui.Lstr(resource=f'{self._r}.swipeControlsHiddenText'),
+            maxwidth=190,
+            color=clr,
+            v_align='center',
+        )
+
         ConfigCheckBox(
             parent=self._subcontainer,
-            position=(h, v),
-            size=(400, 30),
+            position=(h + hoffs3, v),
+            size=(100, 30),
             maxwidth=400,
             configkey='Touch Controls Swipe Hidden',
-            displayname=bui.Lstr(resource=f'{self._r}.swipeControlsHiddenText'),
+            displayname='',
         )
         v -= 65
 
@@ -287,19 +301,3 @@ class TouchscreenSettingsWindow(bui.MainWindow):
                 del cfg[cfgkey]
         cfg.apply_and_commit()
         bui.apptimer(0, self._build_gui)
-
-    def _back(self) -> None:
-        from bauiv1lib.settings import controls
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            controls.ControlsSettingsWindow(transition='in_left'),
-            from_window=self,
-            is_back=True,
-        )
-        bs.set_touchscreen_editing(False)

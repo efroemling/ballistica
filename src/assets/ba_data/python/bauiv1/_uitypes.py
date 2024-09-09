@@ -60,9 +60,10 @@ class MainWindow(Window):
         Automatically handles in and out transitions on the provided widget,
         so there is no need to set transitions when creating it.
         """
-        # TODO - move to MainWindow
         # A back-state supplied by the ui system.
         self.main_window_back_state: MainWindowState | None = None
+
+        self.main_window_is_top_level: bool = False
 
         self._main_window_transition = transition
         self._main_window_origin_widget = origin_widget
@@ -82,7 +83,7 @@ class MainWindow(Window):
             scale_origin_stack_offset=scale_origin,
         )
 
-    def main_window_close(self) -> None:
+    def main_window_close(self, transition: str | None = None) -> None:
         """Get window transitioning out if still alive."""
 
         # no-op if our underlying widget is dead or on its way out.
@@ -95,17 +96,28 @@ class MainWindow(Window):
         except Exception:
             logging.exception('Error in on_main_window_close() for %s.', self)
 
-        _bauiv1.containerwidget(
-            edit=self._root_widget, transition=self._main_window_transition_out
-        )
+        # Note: normally transition of None means instant, but we use
+        # that to mean 'do the default' so we support a special
+        # 'instant' string..
+        if transition == 'instant':
+            self._root_widget.delete()
+        else:
+            _bauiv1.containerwidget(
+                edit=self._root_widget,
+                transition=(
+                    self._main_window_transition_out
+                    if transition is None
+                    else transition
+                ),
+            )
 
     def main_window_has_control(self) -> bool:
         """Is this MainWindow allowed to change the global main window?
 
         It is a good idea to make sure this is True before calling
-        either main_window_back() or main_window_replace(). This
-        prevents fluke UI breakage such as multiple simultaneous events
-        causing a MainWindow to spawn multiple replacements for itself.
+        main_window_replace(). This prevents fluke UI breakage such as
+        multiple simultaneous events causing a MainWindow to spawn
+        multiple replacements for itself.
         """
         # We are allowed to change main windows if we are the current one
         # AND our underlying widget is still alive and not transitioning out.
@@ -116,48 +128,43 @@ class MainWindow(Window):
         )
 
     def main_window_back(self) -> None:
-        """Move back in the main window stack."""
+        """Move back in the main window stack.
+
+        Is a no-op if the main window does not have control;
+        no need to check main_window_has_control() first.
+        """
 
         # Users should always check main_window_has_control() before
         # calling us. Error if it seems they did not.
         if not self.main_window_has_control():
-            raise RuntimeError(
-                'main_window_back() should only be called'
-                ' if main_window_has_control() returns True'
-                ' (it currently is False).'
-            )
+            return
 
-        # Get the 'back' window coming in.
-        babase.app.ui_v1.do_main_window_back(self)
+        if not self.main_window_is_top_level:
+
+            # Get the 'back' window coming in.
+            babase.app.ui_v1.auto_set_back_window(self)
 
         self.main_window_close()
 
     def main_window_replace(
-        self, new_window: MainWindow, group_id: str | None = None
+        self, new_window: MainWindow, back_state: MainWindowState | None = None
     ) -> None:
         """Replace ourself with a new MainWindow."""
 
-        # Users should always check main_window_has_control() before
-        # creating new MainWindows and passing them in here. Error if it
-        # seems they did not.
+        # Users should always check main_window_has_control() *before*
+        # creating new MainWindows and passing them in here. Kill the
+        # passed window and Error if it seems they did not.
         if not self.main_window_has_control():
+            new_window.get_root_widget().delete()
             raise RuntimeError(
-                'main_window_replace() should only be called'
-                ' if main_window_has_control() returns True'
-                ' (it currently is False).'
+                f'main_window_replace() called on a not-in-control window'
+                f' ({self}); always check main_window_has_control() before'
+                f' calling main_window_replace().'
             )
 
-        # If we're navigating within a group, we want it to look like we're
-        # backing out of the old one and going into the new one.
-        if (
-            group_id is not None
-            and babase.app.ui_v1.main_window_group_id == group_id
-        ):
-            transition = self._main_window_transition_out
-        else:
-            # Otherwise just shove the old out the left to give the feel
-            # that we're adding to the nav stack.
-            transition = 'out_left'
+        # Just shove the old out the left to give the feel that we're
+        # adding to the nav stack.
+        transition = 'out_left'
 
         # Transition ourself out.
         try:
@@ -167,7 +174,10 @@ class MainWindow(Window):
 
         _bauiv1.containerwidget(edit=self._root_widget, transition=transition)
         babase.app.ui_v1.set_main_window(
-            new_window, from_window=self, group_id=group_id
+            new_window,
+            from_window=self,
+            back_state=back_state,
+            suppress_warning=True,
         )
 
     def on_main_window_close(self) -> None:
@@ -189,9 +199,10 @@ class MainWindowState:
     purposes, when switching app-modes, etc.
     """
 
-    def __init__(self, parent: MainWindowState | None = None) -> None:
+    def __init__(self) -> None:
         # The window that back/cancel navigation should take us to.
-        self.parent = parent
+        self.parent: MainWindowState | None = None
+        self.is_top_level: bool | None = None
 
     def create_window(
         self,

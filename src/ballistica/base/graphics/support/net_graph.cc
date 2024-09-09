@@ -5,6 +5,9 @@
 #include <list>
 
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/mesh/image_mesh.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
+#include "ballistica/base/graphics/text/text_group.h"
 
 namespace ballistica::base {
 

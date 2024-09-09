@@ -2,6 +2,7 @@
 
 #include "ballistica/ui_v1/widget/scroll_widget.h"
 
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/support/app_timer.h"

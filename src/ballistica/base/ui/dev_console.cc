@@ -2,6 +2,8 @@
 
 #include "ballistica/base/ui/dev_console.h"
 
+#include <Python.h>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
@@ -11,12 +13,12 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/context.h"
 #include "ballistica/base/support/repeater.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python_command.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::base {
 
@@ -29,11 +31,11 @@ const float kDevConsoleTabButtonCornerRadius{16.0f};
 const double kTransitionSeconds{0.15};
 
 enum class DevConsoleHAnchor_ { kLeft, kCenter, kRight };
-enum class DevButtonStyle_ { kNormal, kDark };
+enum class DevButtonStyle_ { kNormal, kLight };
 
 static auto DevButtonStyleFromStr_(const char* strval) {
-  if (!strcmp(strval, "dark")) {
-    return DevButtonStyle_::kDark;
+  if (!strcmp(strval, "light")) {
+    return DevButtonStyle_::kLight;
   }
   assert(!strcmp(strval, "normal"));
   return DevButtonStyle_::kNormal;
@@ -245,11 +247,11 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
     Vector3f fgcolor;
     Vector3f bgcolor;
     switch (style) {
-      case DevButtonStyle_::kDark:
+      case DevButtonStyle_::kLight:
         fgcolor =
-            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.8f, 0.7f, 0.8f};
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
         bgcolor =
-            pressed ? Vector3f{0.6f, 0.5f, 0.6f} : Vector3f{0.16, 0.07f, 0.18f};
+            pressed ? Vector3f{0.8f, 0.7f, 0.8f} : Vector3f{0.4, 0.33f, 0.5f};
         break;
       default:
         assert(style == DevButtonStyle_::kNormal);
@@ -452,6 +454,13 @@ DevConsole::DevConsole() {
   title_text_group_.SetText(title);
   built_text_group_.SetText("Built: " __DATE__ " " __TIME__);
   prompt_text_group_.SetText(">");
+}
+
+void DevConsole::OnUIScaleChanged() {
+  g_base->logic->event_loop()->PushCall([this] {
+    RefreshTabButtons_();
+    RefreshTabContents_();
+  });
 }
 
 void DevConsole::RefreshTabButtons_() {

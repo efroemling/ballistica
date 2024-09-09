@@ -2,6 +2,7 @@
 
 #include "ballistica/ui_v1/widget/container_widget.h"
 
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
@@ -349,8 +350,6 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           // Schedule this to run immediately after any current UI
           // traversal.
           call->ScheduleInUIOperation();
-        } else {
-          OnCancelCustom();
         }
       }
       break;
@@ -1407,7 +1406,7 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
     }
     for (auto& widget : widgets_) {
       if (&(*widget) == w) {
-        Widget* prevSelectedWidget = selected_widget_;
+        Widget* prev_selected_widget = selected_widget_;
 
         // Deactivate old selected widget.
         if (selected_widget_) {
@@ -1421,8 +1420,8 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
           // Store the old one as prev-selected if its not the one we're
           // selecting now. (otherwise re-selecting repeatedly kills our prev
           // mechanism).
-          if (prevSelectedWidget != selected_widget_) {
-            prev_selected_widget_ = prevSelectedWidget;
+          if (prev_selected_widget != selected_widget_) {
+            prev_selected_widget_ = prev_selected_widget;
           }
         } else {
           static bool printed = false;

@@ -142,9 +142,9 @@ typedef int64_t TimerMedium;
 ///    content needs to be presented as large and clear in order to remain
 ///    readable from an average distance.
 enum class UIScale : uint8_t {
-  kLarge,
-  kMedium,
   kSmall,
+  kMedium,
+  kLarge,
   kLast  // Sentinel.
 };
 

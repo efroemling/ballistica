@@ -4,9 +4,8 @@
 #define BALLISTICA_BASE_LOGIC_LOGIC_H_
 
 #include <memory>
-#include <string>
 
-#include "ballistica/shared/foundation/object.h"
+#include "ballistica/shared/generic/runnable.h"
 
 namespace ballistica::base {
 
@@ -117,9 +116,7 @@ class Logic {
   auto applied_app_config() const { return applied_app_config_; }
   auto shutting_down() const { return shutting_down_; }
   auto shutdown_completed() const { return shutdown_completed_; }
-
   auto graphics_ready() const { return graphics_ready_; }
-
   auto app_active() const { return app_active_; }
 
  private:

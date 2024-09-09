@@ -2,6 +2,8 @@
 
 #include "ballistica/base/graphics/component/sprite_component.h"
 
+#include "ballistica/base/assets/assets.h"
+
 namespace ballistica::base {
 
 void SpriteComponent::WriteConfig() {

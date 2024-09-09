@@ -5,10 +5,19 @@
 from __future__ import annotations
 
 import logging
-from typing import override
+from typing import override, TYPE_CHECKING
 
 import bascenev1 as bs
 import bauiv1 as bui
+
+if TYPE_CHECKING:
+    from bauiv1 import MainWindowState
+
+
+class PlaylistSelectContext:
+    """For using PlayWindow to select a playlist instead of running game."""
+
+    back_state: MainWindowState | None = None
 
 
 class PlayWindow(bui.MainWindow):
@@ -18,6 +27,7 @@ class PlayWindow(bui.MainWindow):
         self,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
+        playlist_select_context: PlaylistSelectContext | None = None,
     ):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
@@ -29,16 +39,13 @@ class PlayWindow(bui.MainWindow):
         classic = bui.app.classic
         assert classic is not None
 
-        # We can currently be used either for main window duty or
-        # modally for selecting playlists. Ideally we should clean
-        # things up and make playlist selection go through the
-        # main-window mechanism.
-        self._is_main_menu = not classic.selecting_private_party_playlist
+        self._playlist_select_context = playlist_select_context
 
         uiscale = bui.app.ui_v1.uiscale
         width = 1100 if uiscale is bui.UIScale.SMALL else 800
         x_offs = 150 if uiscale is bui.UIScale.SMALL else 0
-        height = 550
+        y_offs = -60 if uiscale is bui.UIScale.SMALL else 0
+        height = 650 if uiscale is bui.UIScale.SMALL else 550
         button_width = 400
 
         if origin_widget is not None:
@@ -54,7 +61,11 @@ class PlayWindow(bui.MainWindow):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),
-                toolbar_visibility='menu_full',
+                toolbar_visibility=(
+                    'menu_full'
+                    if playlist_select_context is None
+                    else 'menu_minimal'
+                ),
                 scale=(
                     1.35
                     if uiscale is bui.UIScale.SMALL
@@ -67,28 +78,41 @@ class PlayWindow(bui.MainWindow):
             transition=transition,
             origin_widget=origin_widget,
         )
-        self._back_button = back_button = btn = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(55 + x_offs, height - 132),
-            size=(120, 60),
-            scale=1.1,
-            text_res_scale=1.5,
-            text_scale=1.2,
-            autoselect=True,
-            label=bui.Lstr(resource='backText'),
-            button_type='back',
-        )
+
+        self._back_button: bui.Widget | None
+        if uiscale is bui.UIScale.SMALL:
+            self._back_button = None
+            bui.containerwidget(
+                edit=self._root_widget,
+                on_cancel_call=self.main_window_back,
+            )
+        else:
+            self._back_button = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(55 + x_offs, height - 132 + y_offs),
+                size=(60, 60),
+                scale=1.1,
+                text_res_scale=1.5,
+                text_scale=1.2,
+                autoselect=True,
+                label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
+                on_activate_call=self.main_window_back,
+            )
+            bui.containerwidget(
+                edit=self._root_widget, cancel_button=self._back_button
+            )
 
         txt = bui.textwidget(
             parent=self._root_widget,
-            position=(width * 0.5, height - 101),
+            position=(width * 0.5, height - 101 + y_offs),
             # position=(width * 0.5, height -
             #           (101 if main_menu else 61)),
             size=(0, 0),
             text=bui.Lstr(
                 resource=(
                     (f'{self._r}.titleText')
-                    if self._is_main_menu
+                    if self._playlist_select_context is None
                     else 'playlistsText'
                 )
             ),
@@ -100,22 +124,24 @@ class PlayWindow(bui.MainWindow):
             v_align='center',
         )
 
-        bui.buttonwidget(
-            edit=btn,
-            button_type='backSmall',
-            size=(60, 60),
-            label=bui.charstr(bui.SpecialChar.BACK),
-        )
         if uiscale is bui.UIScale.SMALL:
             bui.textwidget(edit=txt, text='')
 
-        v = height - (110 if self._is_main_menu else 90)
+        v = (
+            height
+            - (110 if self._playlist_select_context is None else 90)
+            + y_offs
+        )
         v -= 100
         clr = (0.6, 0.7, 0.6, 1.0)
-        v -= 280 if self._is_main_menu else 180
+        v -= 280 if self._playlist_select_context is None else 180
         v += 30 if uiscale is bui.UIScale.SMALL else 0
-        hoffs = x_offs + 80 if self._is_main_menu else x_offs - 100
-        scl = 1.13 if self._is_main_menu else 0.68
+        hoffs = (
+            x_offs + 80
+            if self._playlist_select_context is None
+            else x_offs - 100
+        )
+        scl = 1.13 if self._playlist_select_context is None else 0.68
 
         self._lineup_tex = bui.gettexture('playerLineup')
         angry_computer_transparent_mesh = bui.getmesh(
@@ -137,8 +163,8 @@ class PlayWindow(bui.MainWindow):
 
         self._coop_button: bui.Widget | None = None
 
-        # Only show coop button in main-menu variant.
-        if self._is_main_menu:
+        # Only show coop button in regular variant.
+        if self._playlist_select_context is None:
             self._coop_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
                 position=(hoffs, v + (scl * 15)),
@@ -238,16 +264,19 @@ class PlayWindow(bui.MainWindow):
                 color=clr,
             )
 
-        scl = 0.5 if self._is_main_menu else 0.68
-        hoffs += 440 if self._is_main_menu else 216
-        v += 180 if self._is_main_menu else -68
+        scl = 0.5 if self._playlist_select_context is None else 0.68
+        hoffs += 440 if self._playlist_select_context is None else 216
+        v += 180 if self._playlist_select_context is None else -68
 
         self._teams_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(hoffs, v + (scl * 15 if self._is_main_menu else 0)),
+            position=(
+                hoffs,
+                v + (scl * 15 if self._playlist_select_context is None else 0),
+            ),
             size=(
                 scl * button_width,
-                scl * (300 if self._is_main_menu else 360),
+                scl * (300 if self._playlist_select_context is None else 360),
             ),
             extra_touch_border_scale=0.1,
             autoselect=True,
@@ -369,14 +398,17 @@ class PlayWindow(bui.MainWindow):
             color=clr,
         )
 
-        hoffs += 0 if self._is_main_menu else 300
-        v -= 155 if self._is_main_menu else 0
+        hoffs += 0 if self._playlist_select_context is None else 300
+        v -= 155 if self._playlist_select_context is None else 0
         self._free_for_all_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(hoffs, v + (scl * 15 if self._is_main_menu else 0)),
+            position=(
+                hoffs,
+                v + (scl * 15 if self._playlist_select_context is None else 0),
+            ),
             size=(
                 scl * button_width,
-                scl * (300 if self._is_main_menu else 360),
+                scl * (300 if self._playlist_select_context is None else 360),
             ),
             extra_touch_border_scale=0.1,
             autoselect=True,
@@ -490,25 +522,20 @@ class PlayWindow(bui.MainWindow):
         )
 
         if uiscale is bui.UIScale.SMALL:
-            back_button.delete()
             bui.containerwidget(
                 edit=self._root_widget,
-                on_cancel_call=self._back,
-                # cancel_button=bui.get_special_widget('back_button'),
                 selected_child=(
                     self._coop_button
-                    if self._is_main_menu
+                    if self._playlist_select_context is None
                     else self._teams_button
                 ),
             )
         else:
-            bui.buttonwidget(edit=back_button, on_activate_call=self._back)
             bui.containerwidget(
                 edit=self._root_widget,
-                cancel_button=back_button,
                 selected_child=(
                     self._coop_button
-                    if self._is_main_menu
+                    if self._playlist_select_context is None
                     else self._teams_button
                 ),
             )
@@ -519,9 +546,15 @@ class PlayWindow(bui.MainWindow):
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
         cls = type(self)
+
+        # Pull any values out of self here; if we do it in the lambda
+        # we'll keep our window alive inadvertantly.
+        playlist_select_context = self._playlist_select_context
         return bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
-                transition=transition, origin_widget=origin_widget
+                transition=transition,
+                origin_widget=origin_widget,
+                playlist_select_context=playlist_select_context,
             )
         )
 
@@ -536,30 +569,6 @@ class PlayWindow(bui.MainWindow):
         import bauiv1lib.account as _unused2
         import bauiv1lib.coop.browser as _unused3
         import bauiv1lib.playlist.browser as _unused4
-
-    def _back(self) -> None:
-        # pylint: disable=cyclic-import
-
-        # no-op if we're not currently in control.
-        if not self.main_window_has_control():
-            return
-
-        if self._is_main_menu:
-            self.main_window_back()
-        else:
-            from bauiv1lib.gather import GatherWindow
-
-            assert bui.app.classic is not None
-
-            self._save_state()
-            bui.app.ui_v1.set_main_window(
-                GatherWindow(transition='in_left'),
-                from_window=self,
-                is_back=True,
-            )
-            bui.containerwidget(
-                edit=self._root_widget, transition=self._transition_out
-            )
 
     def _coop(self) -> None:
         # pylint: disable=cyclic-import
@@ -576,11 +585,9 @@ class PlayWindow(bui.MainWindow):
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            CoopBrowserWindow(origin_widget=self._coop_button), from_window=self
+
+        self.main_window_replace(
+            CoopBrowserWindow(origin_widget=self._coop_button)
         )
 
     def _team_tourney(self) -> None:
@@ -591,11 +598,11 @@ class PlayWindow(bui.MainWindow):
         if not self.main_window_has_control():
             return
 
-        self._save_state()
-
         self.main_window_replace(
             PlaylistBrowserWindow(
-                origin_widget=self._teams_button, sessiontype=bs.DualTeamSession
+                origin_widget=self._teams_button,
+                sessiontype=bs.DualTeamSession,
+                playlist_select_context=self._playlist_select_context,
             )
         )
 
@@ -607,15 +614,12 @@ class PlayWindow(bui.MainWindow):
         if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
+        self.main_window_replace(
             PlaylistBrowserWindow(
                 origin_widget=self._free_for_all_button,
                 sessiontype=bs.FreeForAllSession,
-            ),
-            from_window=self,
+                playlist_select_context=self._playlist_select_context,
+            )
         )
 
     def _draw_dude(
@@ -764,7 +768,7 @@ class PlayWindow(bui.MainWindow):
                 sel = self._coop_button
             elif sel_name == 'Free-for-All Games':
                 sel = self._free_for_all_button
-            elif sel_name == 'Back':
+            elif sel_name == 'Back' and self._back_button is not None:
                 sel = self._back_button
             else:
                 sel = (

@@ -33,8 +33,8 @@ class FileSelectorWindow(bui.MainWindow):
             valid_file_extensions = []
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 700 if uiscale is bui.UIScale.SMALL else 600
-        self._x_inset = x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 850 if uiscale is bui.UIScale.SMALL else 600
+        self._x_inset = x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = 365 if uiscale is bui.UIScale.SMALL else 418
         self._callback = callback
         self._base_path = path
@@ -54,7 +54,7 @@ class FileSelectorWindow(bui.MainWindow):
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
                 scale=(
-                    2.23
+                    1.93
                     if uiscale is bui.UIScale.SMALL
                     else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
@@ -175,7 +175,6 @@ class FileSelectorWindow(bui.MainWindow):
             bui.getsound('error').play()
 
     def _on_folder_entry_activated(self) -> None:
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
         if self._callback is not None:
             assert self._path is not None
             self._callback(self._path)
@@ -204,9 +203,6 @@ class FileSelectorWindow(bui.MainWindow):
                 elif os.path.isfile(test_path):
                     if self._is_valid_file_path(test_path):
                         bui.getsound('swish').play()
-                        bui.containerwidget(
-                            edit=self._root_widget, transition='out_right'
-                        )
                         if self._callback is not None:
                             self._callback(test_path)
                     else:
@@ -486,7 +482,6 @@ class FileSelectorWindow(bui.MainWindow):
         )
 
     def _cancel(self) -> None:
-        # bui.containerwidget(edit=self._root_widget, transition='out_right')
         self.main_window_back()
         if self._callback is not None:
             self._callback(None)

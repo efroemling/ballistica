@@ -189,11 +189,9 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
             MacMusicAppPlaylistSelectWindow,
         )
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
-
-        # bui.containerwidget(edit=self._root_widget, transition='out_left')
 
         current_playlist_entry: str | None
         if (
@@ -209,25 +207,18 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
         self.main_window_replace(
             MacMusicAppPlaylistSelectWindow(
                 self._callback, current_playlist_entry, self._current_entry
-            ),
-            group_id='soundtrackentryselect',
+            )
         )
-        # MacMusicAppPlaylistSelectWindow(
-        #     self._callback, current_playlist_entry, self._current_entry
-        # ),
-        # from_window=self,
-        # )
 
     def _on_music_file_press(self) -> None:
         from babase import android_get_external_files_dir
         from baclassic.osmusic import OSMusicPlayer
         from bauiv1lib.fileselector import FileSelectorWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        # bui.containerwidget(edit=self._root_widget, transition='out_left')
         base_path = android_get_external_files_dir()
         assert bui.app.classic is not None
 
@@ -241,30 +232,16 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
                 ),
                 allow_folders=False,
             ),
-            group_id='soundtrackentryselect',
         )
-        # bui.app.ui_v1.set_main_window(
-        #     FileSelectorWindow(
-        #         base_path,
-        #         callback=self._music_file_selector_cb,
-        #         show_base_path=False,
-        #         valid_file_extensions=(
-        #             OSMusicPlayer.get_valid_music_file_extensions()
-        #         ),
-        #         allow_folders=False,
-        #     ),
-        #     from_window=self,
-        # )
 
     def _on_music_folder_press(self) -> None:
         from bauiv1lib.fileselector import FileSelectorWindow
         from babase import android_get_external_files_dir
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        # bui.containerwidget(edit=self._root_widget, transition='out_left')
         base_path = android_get_external_files_dir()
         assert bui.app.classic is not None
 
@@ -276,18 +253,7 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
                 valid_file_extensions=[],
                 allow_folders=True,
             ),
-            group_id='soundtrackentryselect',
         )
-        # bui.app.ui_v1.set_main_window(
-        #     FileSelectorWindow(
-        #         base_path,
-        #         callback=self._music_folder_selector_cb,
-        #         show_base_path=False,
-        #         valid_file_extensions=[],
-        #         allow_folders=True,
-        #     ),
-        #     from_window=self,
-        # )
 
     def _music_file_selector_cb(self, result: str | None) -> None:
         if result is None:
@@ -303,10 +269,8 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
 
     def _on_default_press(self) -> None:
         self.main_window_back()
-        # bui.containerwidget(edit=self._root_widget, transition='out_right')
         self._callback(None)
 
     def _on_cancel_press(self) -> None:
         self.main_window_back()
-        # bui.containerwidget(edit=self._root_widget, transition='out_right')
         self._callback(self._current_entry)

@@ -7,10 +7,13 @@ from __future__ import annotations
 import weakref
 import logging
 from enum import Enum
-from typing import override
+from typing import override, TYPE_CHECKING
 
 from bauiv1lib.tabs import TabRow
 import bauiv1 as bui
+
+if TYPE_CHECKING:
+    from bauiv1lib.play import PlaylistSelectContext
 
 
 class GatherTab:
@@ -264,23 +267,27 @@ class GatherWindow(bui.MainWindow):
     def on_main_window_close(self) -> None:
         self._save_state()
 
-    def playlist_select(self, origin_widget: bui.Widget) -> None:
+    def playlist_select(
+        self,
+        origin_widget: bui.Widget,
+        context: PlaylistSelectContext,
+    ) -> None:
         """Called by the private-hosting tab to select a playlist."""
         from bauiv1lib.play import PlayWindow
 
-        classic = bui.app.classic
-        assert classic is not None
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # Avoid redundant window spawns.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        classic.selecting_private_party_playlist = True
-        bui.app.ui_v1.set_main_window(
-            PlayWindow(origin_widget=origin_widget), from_window=self
+        playwindow = PlayWindow(
+            origin_widget=origin_widget, playlist_select_context=context
         )
+        self.main_window_replace(playwindow)
+
+        # Grab the newly-set main-window's back-state; that will lead us
+        # back here once we're done going down our main-window
+        # rabbit-hole for playlist selection.
+        context.back_state = playwindow.main_window_back_state
 
     def _set_tab(self, tab_id: TabID) -> None:
         if self._current_tab is tab_id:

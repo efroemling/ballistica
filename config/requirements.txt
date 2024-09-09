@@ -6,8 +6,8 @@ mypy==1.11.2
 pbxproj==4.2.1
 pdoc==14.6.1
 pur==7.3.2
-pylint==3.2.6
-pylsp-mypy==0.6.8
+pylint==3.2.7
+pylsp-mypy==0.6.9
 pytest==8.3.2
 python-daemon==3.0.1
 python-lsp-black==2.0.0
@@ -17,6 +17,6 @@ Sphinx==8.0.2
 tomlkit==0.13.2
 types-certifi==2021.10.8.3
 types-filelock==3.2.7
-types-requests==2.32.0.20240712
+types-requests==2.32.0.20240905
 typing_extensions==4.12.2
 urllib3==2.2.2

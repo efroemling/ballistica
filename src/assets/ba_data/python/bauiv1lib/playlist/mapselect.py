@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 
@@ -24,9 +24,10 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         sessiontype: type[bs.Session],
         config: dict[str, Any],
         edit_info: dict[str, Any],
-        completion_call: Callable[[dict[str, Any] | None], Any],
+        completion_call: Callable[[dict[str, Any] | None, bui.MainWindow], Any],
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
+        select_get_more_maps_button: bool = False,
     ):
         # pylint: disable=too-many-locals
 
@@ -38,6 +39,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         self._completion_call = completion_call
         self._edit_info = edit_info
         self._maps: list[tuple[str, bui.Texture]] = []
+        self._selected_get_more_maps = False
         try:
             self._previous_map = get_filtered_map_name(
                 config['settings']['map']
@@ -59,7 +61,6 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height + top_extra),
-                # transition=transition,
                 scale=(
                     1.95
                     if uiscale is bui.UIScale.SMALL
@@ -114,7 +115,34 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)
 
         self._subcontainer: bui.Widget | None = None
-        self._refresh()
+        self._refresh(select_get_more_maps_button=select_get_more_maps_button)
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Pull things out of self here; if we do it in the lambda we'll
+        # keep ourself alive.
+        gametype = self._gametype
+        sessiontype = self._sessiontype
+        config = self._config
+        edit_info = self._edit_info
+        completion_call = self._completion_call
+        select_get_more_maps = self._selected_get_more_maps
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition,
+                origin_widget=origin_widget,
+                gametype=gametype,
+                sessiontype=sessiontype,
+                config=config,
+                edit_info=edit_info,
+                completion_call=completion_call,
+                select_get_more_maps_button=select_get_more_maps,
+            )
+        )
 
     def _refresh(self, select_get_more_maps_button: bool = False) -> None:
         # pylint: disable=too-many-statements
@@ -255,70 +283,37 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         from bauiv1lib import account
         from bauiv1lib.store.browser import StoreBrowserWindow
 
+        # No-op if we're not in control.
+        if not self.main_window_has_control():
+            return
+
         plus = bui.app.plus
         assert plus is not None
 
         if plus.get_v1_account_state() != 'signed_in':
             account.show_sign_in_prompt()
             return
-        StoreBrowserWindow(
-            modal=True,
-            show_tab=StoreBrowserWindow.TabID.MAPS,
-            on_close_call=self._on_store_close,
-            origin_widget=self._get_more_maps_button,
+
+        self._selected_get_more_maps = True
+
+        self.main_window_replace(
+            StoreBrowserWindow(
+                show_tab=StoreBrowserWindow.TabID.MAPS,
+                origin_widget=self._get_more_maps_button,
+                minimal_toolbars=True,
+            )
         )
 
-    def _on_store_close(self) -> None:
-        self._refresh(select_get_more_maps_button=True)
-
     def _select(self, map_name: str) -> None:
-        # from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
 
         # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        if not self.main_window_has_control():
             return
 
         self._config['settings']['map'] = map_name
         self.main_window_back()
-        # bui.containerwidget(edit=self._root_widget, transition='out_right')
-        # assert bui.app.classic is not None
-        # bui.app.ui_v1.set_main_window(
-        #     PlaylistEditGameWindow(
-        #         self._gametype,
-        #         self._sessiontype,
-        #         self._config,
-        #         self._completion_call,
-        #         default_selection='map',
-        #         transition='in_left',
-        #         edit_info=self._edit_info,
-        #     ),
-        #     from_window=self,
-        # )
 
     def _select_with_delay(self, map_name: str) -> None:
         bui.lock_all_input()
         bui.apptimer(0.1, bui.unlock_all_input)
         bui.apptimer(0.1, bui.WeakCall(self._select, map_name))
-
-    # def _cancel(self) -> None:
-    #     from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
-
-    #     # no-op if our underlying widget is dead or on its way out.
-    #     if not self._root_widget or self._root_widget.transitioning_out:
-    #         return
-
-    #     bui.containerwidget(edit=self._root_widget, transition='out_right')
-    #     assert bui.app.classic is not None
-    #     bui.app.ui_v1.set_main_window(
-    #         PlaylistEditGameWindow(
-    #             self._gametype,
-    #             self._sessiontype,
-    #             self._config,
-    #             self._completion_call,
-    #             default_selection='map',
-    #             transition='in_left',
-    #             edit_info=self._edit_info,
-    #         ),
-    #         from_window=self,
-    #         is_back=True,
-    #     )

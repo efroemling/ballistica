@@ -65,9 +65,7 @@ class AudioSettingsWindow(bui.MainWindow):
                     (0, -20) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
                 toolbar_visibility=(
-                    'menu_minimal'
-                    if uiscale is bui.UIScale.SMALL
-                    else 'menu_full'
+                    None if uiscale is bui.UIScale.SMALL else 'menu_full'
                 ),
             ),
             transition=transition,
@@ -241,14 +239,14 @@ class AudioSettingsWindow(bui.MainWindow):
 
     def _do_soundtracks(self) -> None:
         # pylint: disable=cyclic-import
-        from bauiv1lib.soundtrack import browser as stb
+        from bauiv1lib.soundtrack.browser import SoundtrackBrowserWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        # We require disk access for soundtracks;
-        # if we don't have it, request it.
+        # We require disk access for soundtracks; request it if we don't
+        # have it.
         if not bui.have_permission(bui.Permission.STORAGE):
             bui.getsound('ding').play()
             bui.screenmessage(
@@ -260,12 +258,8 @@ class AudioSettingsWindow(bui.MainWindow):
             )
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_window(
-            stb.SoundtrackBrowserWindow(origin_widget=self._soundtrack_button),
-            from_window=self,
+        self.main_window_replace(
+            SoundtrackBrowserWindow(origin_widget=self._soundtrack_button)
         )
 
     def _save_state(self) -> None:

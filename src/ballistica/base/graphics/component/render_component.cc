@@ -2,6 +2,8 @@
 
 #include "ballistica/base/graphics/component/render_component.h"
 
+#include "ballistica/shared/math/rect.h"
+
 namespace ballistica::base {
 
 void RenderComponent::ScissorPush(const Rect& rect) {

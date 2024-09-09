@@ -7,12 +7,13 @@
 // This header pulls in the actual Python includes and also defines some handy
 // macros and functions for working with Python objects.
 
-// This is the ONE place we actually include Python.
+// UPDATE (September 2024): We now include Python.h directly in some places;
+// this causes less friction with include-what-you-use checks.
 #include <Python.h>
 #include <frameobject.h>
 #include <weakrefobject.h>
 
-#include <string>
+#include <string>  // IWYU pragma: keep. (macros below use this)
 
 // Saving/restoring Python error state; useful when function PyObject_Str()
 // or other functionality is needed during error reporting; by default it

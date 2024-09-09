@@ -328,10 +328,10 @@ void Camera::UpdatePosition() {
                   x_clamped_focus, y_clamped_focus, z_clamped_focus);
             }
 
-            // Now, for camera aiming purposes, add some of their velocity and
-            // clamp to the bounds, taking their radius into account. if our AOI
-            // sphere is bigger than a given dimension, center it; otherwise
-            // clamp to the box inset by our radius.
+            // Now, for camera aiming purposes, add some of their velocity
+            // and clamp to the bounds, taking their radius into account. if
+            // our AOI sphere is bigger than a given dimension, center it;
+            // otherwise clamp to the box inset by our radius.
             float x_clamped, y_clamped, z_clamped, x_mirrored_clamped;
             float diameter = i.radius() * 2.0f;
 
@@ -371,9 +371,9 @@ void Camera::UpdatePosition() {
                                     i.position().z));
             }
 
-            // Let's also do a version mirrored across the camera's x coordinate
-            // (adding this to our tracked point set causes us zoom out instead
-            // of rotating generally)
+            // Let's also do a version mirrored across the camera's x
+            // coordinate (adding this to our tracked point set causes us
+            // zoom out instead of rotating generally)
             float x_mirrored = position_.x - (i.position().x - position_.x);
             if (diameter
                 > (area_of_interest_bounds_[3] - area_of_interest_bounds_[0])) {
@@ -395,8 +395,8 @@ void Camera::UpdatePosition() {
                                 z_clamped - position_.z};
 
               // For sample 0, subtract AOI radius in camera-space x and y.
-              // For sample 1, add them.
-              // this way we should get the whole sphere.
+              // For sample 1, add them. this way we should get the whole
+              // sphere.
               if (sample == 0) {
                 to_point -= corner_offs;
               } else if (sample == 1) {
@@ -607,7 +607,6 @@ void Camera::Update(millisecs_t elapsed) {
   float damping2 = 0.006f;
   float xy_blend_speed = 0.0002f;
   time_ += elapsed;
-  // millisecs_t real_time = g_core->GetAppTimeMillisecs();
 
   // Prevent camera "explosions" if we've been unable to update for a while.
   elapsed = std::min(millisecs_t{100}, elapsed);
@@ -676,8 +675,8 @@ void Camera::Update(millisecs_t elapsed) {
         elapsedf * rand_component * 4.0f * (-0.5f + RandomFloat());
   }
 
-  // If we have no important areas of interest, keep our camera from moving too
-  // fast.
+  // If we have no important areas of interest, keep our camera from moving
+  // too fast.
   if (!have_real_areas_of_interest_) {
     speed *= 0.5f;
   }
@@ -952,7 +951,9 @@ void Camera::ApplyToFrameDef(FrameDef* frame_def) {
   float final_fov_y2 = final_fov_x / render_ratio;
 
   // If we're not smoothing this frame, snap immediately.
-  if (!smooth_next_frame_) xy_constrain_blend_ = x_constrained_ ? 1.0f : 0.0f;
+  if (!smooth_next_frame_) {
+    xy_constrain_blend_ = x_constrained_ ? 1.0f : 0.0f;
+  }
 
   // We smoothly blend between our x-constrained and non-x-constrained y values
   // so that we don't see a hitch when it switches.

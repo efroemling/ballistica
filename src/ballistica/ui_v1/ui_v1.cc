@@ -2,7 +2,7 @@
 
 #include "ballistica/ui_v1/ui_v1.h"
 
-#include "ballistica/base/app_mode/app_mode.h"
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/support/app_config.h"
@@ -214,10 +214,21 @@ void UIV1FeatureSet::AddWidget(Widget* w, ContainerWidget* parent) {
 }
 
 void UIV1FeatureSet::OnScreenSizeChange() {
+  // This gets called by the native layer as window is resized/etc.
   if (root_widget_.Exists()) {
     root_widget_->SetWidth(g_base->graphics->screen_virtual_width());
     root_widget_->SetHeight(g_base->graphics->screen_virtual_height());
   }
+}
+
+void UIV1FeatureSet::OnScreenChange() {
+  // This gets called by the Python layer when UIScale or window size
+  // changes.
+  assert(g_base->InLogicThread());
+
+  // We allow OnScreenSizeChange() to handle size changes but *do* handle
+  // UIScale changes here.
+  root_widget_->OnUIScaleChange();
 }
 
 void UIV1FeatureSet::OnLanguageChange() {
