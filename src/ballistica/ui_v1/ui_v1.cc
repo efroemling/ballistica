@@ -102,7 +102,7 @@ bool UIV1FeatureSet::PartyWindowOpen() {
   // if (auto* r = root_ui()) {
   //   return r->party_window_open();
   // }
-  return false;
+  return party_window_open_;
 }
 
 void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {

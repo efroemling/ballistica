@@ -125,6 +125,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   auto always_use_internal_on_screen_keyboard() const {
     return always_use_internal_on_screen_keyboard_;
   }
+  auto set_party_window_open(bool value) { party_window_open_ = value; }
 
   auto HasQuitConfirmDialog() -> bool override;
   void ConfirmQuit(QuitType quit_type) override;
@@ -135,6 +136,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   Object::Ref<ContainerWidget> overlay_root_widget_;
   Object::Ref<RootWidget> root_widget_;
   bool always_use_internal_on_screen_keyboard_{};
+  bool party_window_open_{false};
   int ui_lock_count_{};
   int language_state_{};
 };
