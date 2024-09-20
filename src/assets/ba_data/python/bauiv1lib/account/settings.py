@@ -982,7 +982,7 @@ class AccountSettingsWindow(bui.MainWindow):
         # bit of spacing before the reset/sign-out section
         # v -= 5
 
-        button_width = 250
+        button_width = 300
 
         self._linked_accounts_text: bui.Widget | None
         if show_linked_accounts_text:

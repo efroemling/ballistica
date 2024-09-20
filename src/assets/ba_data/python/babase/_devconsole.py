@@ -152,14 +152,6 @@ class DevConsoleTabUI(DevConsoleTab):
     def refresh(self) -> None:
         from babase._mgen.enums import UIScale
 
-        # self.text(
-        #     'UI Testing',
-        #     scale=0.8,
-        #     pos=(15, 77),
-        #     h_anchor='left',
-        #     h_align='left',
-        #     v_align='center',
-        # )
         self.text(
             'Make sure all interactive UI fits in the'
             ' virtual bounds at all UI-scales (not counting things'

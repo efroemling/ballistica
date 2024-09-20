@@ -188,10 +188,15 @@ class MainMenuWindow(bui.MainWindow):
         )
 
         if not classic.did_menu_intro:
-            self._tdelay = 1.7
-            self._t_delay_inc = 0.05
-            self._t_delay_play = 1.7
+            self._tdelay = 1.6
+            self._t_delay_inc = 0.03
             classic.did_menu_intro = True
+
+        td1 = 2
+        td2 = 1
+        td3 = 0
+        td4 = -1
+        td5 = -2
 
         self._width = 400.0
         self._height = 200.0
@@ -231,6 +236,7 @@ class MainMenuWindow(bui.MainWindow):
         )
 
         # Version/copyright info.
+        thistdelay = self._tdelay + td3 * self._t_delay_inc
         bui.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, button_y_offs - 10),
@@ -245,7 +251,8 @@ class MainMenuWindow(bui.MainWindow):
             ),
             h_align='center',
             v_align='center',
-            transition_delay=self._t_delay_play,
+            # transition_delay=self._t_delay_play,
+            transition_delay=thistdelay,
         )
 
         # In kiosk mode, provide a button to get back to the kiosk menu.
@@ -255,11 +262,12 @@ class MainMenuWindow(bui.MainWindow):
             v = button_y_offs
             scale = 1.0
             this_b_width = self._button_width * 0.4 * scale
-            demo_menu_delay = (
-                0.0
-                if self._t_delay_play == 0.0
-                else max(0, self._t_delay_play + 0.1)
-            )
+            # demo_menu_delay = (
+            #     0.0
+            #     if self._t_delay_play == 0.0
+            #     else max(0, self._t_delay_play + 0.1)
+            # )
+            demo_menu_delay = 0.0
             self._demo_menu_button = bui.buttonwidget(
                 parent=self._root_widget,
                 position=(self._width * 0.5 - this_b_width * 0.5, v + 90),
@@ -289,6 +297,8 @@ class MainMenuWindow(bui.MainWindow):
             - side_button_width * side_button_scale * 0.5
         )
         v = button_y_offs + side_button_y_offs
+
+        thistdelay = self._tdelay + td2 * self._t_delay_inc
         self._gather_button = btn = bui.buttonwidget(
             parent=self._root_widget,
             position=(h - side_button_width * side_button_scale * 0.5, v),
@@ -297,7 +307,7 @@ class MainMenuWindow(bui.MainWindow):
             autoselect=self._use_autoselect,
             button_type='square',
             label='',
-            transition_delay=self._tdelay,
+            transition_delay=thistdelay,
             on_activate_call=self._gather_press,
         )
         bui.textwidget(
@@ -305,7 +315,7 @@ class MainMenuWindow(bui.MainWindow):
             position=(h, v + side_button_height * side_button_scale * 0.25),
             size=(0, 0),
             scale=0.75,
-            transition_delay=self._tdelay,
+            transition_delay=thistdelay,
             draw_controller=btn,
             color=(0.75, 1.0, 0.7),
             maxwidth=side_button_width * side_button_scale * 0.8,
@@ -318,7 +328,7 @@ class MainMenuWindow(bui.MainWindow):
             parent=self._root_widget,
             size=(icon_size, icon_size),
             draw_controller=btn,
-            transition_delay=self._tdelay,
+            transition_delay=thistdelay,
             position=(
                 h - 0.5 * icon_size,
                 v
@@ -327,6 +337,8 @@ class MainMenuWindow(bui.MainWindow):
             ),
             texture=bui.gettexture('usersButton'),
         )
+        thistdelay = self._tdelay + td1 * self._t_delay_inc
+        # self._tdelay += self._t_delay_inc
 
         h -= (
             side_button_width * side_button_scale * 0.5
@@ -343,7 +355,7 @@ class MainMenuWindow(bui.MainWindow):
             button_type='square',
             scale=side_button_2_scale,
             label=bui.Lstr(resource=f'{self._r}.howToPlayText'),
-            transition_delay=self._tdelay,
+            transition_delay=thistdelay,
             on_activate_call=self._howtoplay,
         )
         self._how_to_play_button = btn
@@ -353,6 +365,7 @@ class MainMenuWindow(bui.MainWindow):
         v = button_y_offs
         assert play_button_width is not None
         assert play_button_height is not None
+        thistdelay = self._tdelay + td3 * self._t_delay_inc
         self._play_button = start_button = bui.buttonwidget(
             parent=self._root_widget,
             position=(h - play_button_width * 0.5 * play_button_scale, v),
@@ -361,7 +374,7 @@ class MainMenuWindow(bui.MainWindow):
             scale=play_button_scale,
             text_res_scale=2.0,
             label=bui.Lstr(resource='playText'),
-            transition_delay=self._t_delay_play,
+            transition_delay=thistdelay,
             on_activate_call=self._play_press,
         )
         bui.containerwidget(
@@ -370,7 +383,7 @@ class MainMenuWindow(bui.MainWindow):
             selected_child=start_button,
         )
 
-        self._tdelay += self._t_delay_inc
+        # self._tdelay += self._t_delay_inc
 
         h = (
             self._width * 0.5
@@ -379,6 +392,7 @@ class MainMenuWindow(bui.MainWindow):
             + side_button_width * side_button_scale * 0.5
         )
         v = button_y_offs + side_button_y_offs
+        thistdelay = self._tdelay + td4 * self._t_delay_inc
         self._watch_button = btn = bui.buttonwidget(
             parent=self._root_widget,
             position=(h - side_button_width * side_button_scale * 0.5, v),
@@ -387,7 +401,7 @@ class MainMenuWindow(bui.MainWindow):
             autoselect=self._use_autoselect,
             button_type='square',
             label='',
-            transition_delay=self._tdelay,
+            transition_delay=thistdelay,
             on_activate_call=self._watch_press,
         )
         bui.textwidget(
@@ -395,7 +409,7 @@ class MainMenuWindow(bui.MainWindow):
             position=(h, v + side_button_height * side_button_scale * 0.25),
             size=(0, 0),
             scale=0.75,
-            transition_delay=self._tdelay,
+            transition_delay=thistdelay,
             color=(0.75, 1.0, 0.7),
             draw_controller=btn,
             maxwidth=side_button_width * side_button_scale * 0.8,
@@ -408,7 +422,7 @@ class MainMenuWindow(bui.MainWindow):
             parent=self._root_widget,
             size=(icon_size, icon_size),
             draw_controller=btn,
-            transition_delay=self._tdelay,
+            transition_delay=thistdelay,
             position=(
                 h - 0.5 * icon_size,
                 v
@@ -419,7 +433,8 @@ class MainMenuWindow(bui.MainWindow):
         )
 
         # Credits button.
-        self._tdelay += self._t_delay_inc
+        # self._tdelay += self._t_delay_inc
+        thistdelay = self._tdelay + td5 * self._t_delay_inc
 
         h += side_button_width * side_button_scale * 0.5 + hspace2
         v = button_y_offs + side_button_2_y_offs
@@ -438,10 +453,10 @@ class MainMenuWindow(bui.MainWindow):
             scale=side_button_2_scale,
             autoselect=self._use_autoselect,
             label=bui.Lstr(resource=f'{self._r}.creditsText'),
-            transition_delay=self._tdelay,
+            transition_delay=thistdelay,
             on_activate_call=self._credits,
         )
-        self._tdelay += self._t_delay_inc
+        # self._tdelay += self._t_delay_inc
 
         self._quit_button: bui.Widget | None
         if self._have_quit_button:
@@ -461,13 +476,13 @@ class MainMenuWindow(bui.MainWindow):
                     )
                 ),
                 on_activate_call=self._quit,
-                transition_delay=self._tdelay,
+                transition_delay=thistdelay,
             )
 
             bui.containerwidget(
                 edit=self._root_widget, cancel_button=quit_button
             )
-            self._tdelay += self._t_delay_inc
+            # self._tdelay += self._t_delay_inc
         else:
             self._quit_button = None
 

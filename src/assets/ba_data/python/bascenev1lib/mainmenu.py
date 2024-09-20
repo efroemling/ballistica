@@ -7,7 +7,6 @@ from __future__ import annotations
 import time
 import random
 import weakref
-import functools
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
@@ -251,7 +250,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             y = -15
             base_scale = 1.1
             self._word_actors = []
-            base_delay = 1.0
+            base_delay = 0.8
             delay = base_delay
             delay_inc = 0.02
 
@@ -631,21 +630,37 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     time_v += random.random() * 0.1
                 bs.animate(cmb, 'input1', keys, loop=True)
 
-        if custom_texture is None:
+        # Do a fun spinny animation on the logo the first time in.
+        if (
+            custom_texture is None
+            and bs.app.classic is not None
+            and not bs.app.classic.main_menu_did_initial_transition
+        ):
+            jitter()
+            cmb = bs.newnode('combine', owner=logo.node, attrs={'size': 2})
 
-            def rotate_logo() -> None:
-                logo_scale = logo.node.scale
-                assert not isinstance(logo_scale, float)
-                logo.node.rotate = logo.node.rotate + 4
-                logo.node.scale = (logo_scale[0] - 20, logo_scale[1] - 20)
-                if logo.node.rotate >= 356:
-                    self._logo_rotate_timer = None
-                    jitter()
+            delay = 0.0
+            keys = {
+                delay: 5000.0 * scale,
+                delay + 0.4: 530.0 * scale,
+                delay + 0.45: 620.0 * scale,
+                delay + 0.5: 590.0 * scale,
+                delay + 0.55: 605.0 * scale,
+                delay + 0.6: 600.0 * scale,
+            }
+            bs.animate(cmb, 'input0', keys)
+            bs.animate(cmb, 'input1', keys)
+            cmb.connectattr('output', logo.node, 'scale')
 
-            self._logo_rotate_timer = bs.Timer(
-                0.001, functools.partial(rotate_logo), repeat=True
-            )
+            keys = {
+                delay: 100.0,
+                delay + 0.4: 370.0,
+                delay + 0.45: 357.0,
+                delay + 0.5: 360.0,
+            }
+            bs.animate(logo.node, 'rotate', keys)
         else:
+            # For all other cases do a simple scale up animation.
             jitter()
             cmb = bs.newnode('combine', owner=logo.node, attrs={'size': 2})
 

@@ -339,13 +339,17 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         subprocess.run(['git', 'checkout', PY_VER_EXACT_ANDROID], check=True)
 
     # These builds require ANDROID_NDK to be set; make sure that's the case.
-    os.environ['ANDROID_NDK'] = (
+    ndkpath = (
         subprocess.check_output(
             [f'{rootdir}/tools/pcommand', 'android_sdk_utils', 'get-ndk-path']
         )
         .decode()
         .strip()
     )
+    if not os.path.isdir(ndkpath):
+        raise RuntimeError(f'NDK path does not exist: "{ndkpath}".')
+
+    os.environ['ANDROID_NDK'] = ndkpath
 
     # TEMP - hard coding old ndk for the moment; looks like libffi needs to
     # be fixed to build with it. I *think* this has already been done; we just

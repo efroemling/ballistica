@@ -135,13 +135,8 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     show_icons = true;
   }
 
-  bool ouya_icons = false;
   bool remote_icons = false;
 
-  // Phasing out ouya stuff.
-  if (explicit_bool(false)) {
-    ouya_icons = true;
-  }
   if (icon_type_ == IconType::kCancel && device != nullptr
       && device->IsRemoteControl()) {
     remote_icons = true;
@@ -151,7 +146,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   millisecs_t transition =
       (birth_time_millisecs_ + transition_delay_) - current_time;
   if (transition > 0) {
-    extra_offs_x -= static_cast<float>(transition) * 4.0f;
+    extra_offs_x -= static_cast<float>(transition) * 4.0f / scale();
   }
 
   if (text_width_dirty_) {
@@ -380,11 +375,6 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                        1.0f * mult * (1.0f), 1.0f);
             c.SetTexture(
                 g_base->assets->SysTexture(base::SysTextureID::kBackIcon));
-          } else if (ouya_icons) {
-            c.SetColor(1.0f * mult * (1.0f), 1.0f * mult * (1.0f),
-                       1.0f * mult * (1.0f), 1.0f);
-            c.SetTexture(
-                g_base->assets->SysTexture(base::SysTextureID::kOuyaAButton));
           } else {
             c.SetColor(1.5f * mult * (color_red_), 1.5f * mult * (color_green_),
                        1.5f * mult * (color_blue_), 1.0f);
