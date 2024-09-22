@@ -222,13 +222,13 @@ jobs:
       run: |
         make docker-gui-release
         make docker-save
-    - name: Rename the build
-      run: mv build/docker/bombsquad_gui_release_docker.tar build/docker/bombsquad_docker_gui.tar
+    - name: Zip the build
+      run: zip build/docker/bombsquad_docker_gui.tar.zip build/docker/bombsquad_gui_release_docker.tar
     - name: Upload the build
       uses: ncipollo/release-action@v1
       with:
         allowUpdates: true
-        artifacts: build/docker/bombsquad_docker_gui.tar
+        artifacts: build/docker/bombsquad_docker_gui.tar.zip
     
   release_docker_server_image:
     runs-on: ubuntu-latest
@@ -244,13 +244,13 @@ jobs:
       run: |
         make docker-server-release
         make docker-save
-    - name: Rename the build
-      run: mv build/docker/bombsquad_server_release_docker.tar build/docker/bombsquad_docker_server.tar
+    - name: Zip the build
+      run: zip build/docker/bombsquad_docker_server.tar.zip build/docker/bombsquad_server_release_docker.tar
     - name: Upload the build
       uses: ncipollo/release-action@v1
       with:
         allowUpdates: true
-        artifacts: build/docker/bombsquad_docker_server.tar
+        artifacts: build/docker/bombsquad_docker_server.tar.zip
 
   release_sphinx_docs:
     runs-on: ubuntu-latest
