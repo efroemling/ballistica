@@ -25,7 +25,9 @@ class _Entry:
         width: float | None = None,
         height: float | None = None,
     ):
+        # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-positional-arguments
         self._scoreboard = weakref.ref(scoreboard)
         self._do_cover = do_cover
         self._scale = scale
@@ -384,6 +386,7 @@ class Scoreboard:
         Label can be something like 'points' and will
         show up on boards if provided.
         """
+        # pylint: disable=too-many-positional-arguments
         self._flat_tex = bs.gettexture('null')
         self._entries: dict[int, _Entry] = {}
         self._label = label
@@ -417,6 +420,7 @@ class Scoreboard:
         show_value: bool = True,
     ) -> None:
         """Update the score-board display for the given bs.Team."""
+        # pylint: disable=too-many-positional-arguments
         if team.id not in self._entries:
             self._add_team(team)
 
