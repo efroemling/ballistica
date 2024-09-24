@@ -125,7 +125,13 @@ def root_ui_level_icon_press() -> None:
 
 def root_ui_menu_button_press() -> None:
     from bauiv1._appsubsystem import UIV1AppSubsystem
+    from babase import app
 
+    if app.classic is None:
+        logging.exception('Classic not present.')
+        return
+
+    app.classic.resume()
     _root_ui_button_press(UIV1AppSubsystem.RootUIElement.MENU_BUTTON)
 
 
