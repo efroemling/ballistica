@@ -30,6 +30,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         select_get_more_maps_button: bool = False,
     ):
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-positional-arguments
 
         from bascenev1 import get_filtered_map_name
 

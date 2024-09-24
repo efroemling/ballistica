@@ -44,6 +44,7 @@ class GatherTab:
         The tab should create and return a container widget covering the
         specified region.
         """
+        # pylint: disable=too-many-positional-arguments
         raise RuntimeError('Should not get here.')
 
     def on_deactivate(self) -> None:

@@ -23,6 +23,7 @@ class IconPicker(PopupWindow):
         position: tuple[float, float] = (0.0, 0.0),
         delegate: Any = None,
         scale: float | None = None,
+        *,
         offset: tuple[float, float] = (0.0, 0.0),
         tint_color: Sequence[float] = (1.0, 1.0, 1.0),
         tint2_color: Sequence[float] = (1.0, 1.0, 1.0),

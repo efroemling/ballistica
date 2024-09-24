@@ -40,6 +40,7 @@ class _Outputter:
     def __init__(
         self,
         obj: Any,
+        *,
         create: bool,
         codec: Codec,
         coerce_to_float: bool,
@@ -192,6 +193,7 @@ class _Outputter:
         value: Any,
         ioattrs: IOAttrs | None,
     ) -> Any:
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
@@ -512,6 +514,7 @@ class _Outputter:
         value: dict,
         ioattrs: IOAttrs | None,
     ) -> Any:
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-branches
         if not isinstance(value, dict):
             raise TypeError(

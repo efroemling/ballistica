@@ -882,6 +882,7 @@ def _run_idea_inspections(
 
     Throw an Exception if anything is found or goes wrong.
     """
+    # pylint: disable=too-many-positional-arguments
     # pylint: disable=too-many-locals
     # pylint: disable=consider-using-with
 
@@ -957,6 +958,7 @@ def _run_idea_inspections_cached(
     inspectdir: Path | None = None,
 ) -> None:
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-positional-arguments
     import hashlib
     import json
 

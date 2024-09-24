@@ -1151,10 +1151,10 @@ class LeagueRankWindow(bui.MainWindow):
     def _show_account_info(
         self, account_id: str, textwidget: bui.Widget
     ) -> None:
-        from bauiv1lib.account import viewer
+        from bauiv1lib.account.viewer import AccountViewerWindow
 
         bui.getsound('swish').play()
-        viewer.AccountViewerWindow(
+        AccountViewerWindow(
             account_id=account_id, position=textwidget.get_screen_space_center()
         )
 

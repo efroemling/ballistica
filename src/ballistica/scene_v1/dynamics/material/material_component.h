@@ -29,8 +29,8 @@ class MaterialComponent : public Object {
   Object::Ref<MaterialConditionNode> conditions;
   auto eval_conditions(const Object::Ref<MaterialConditionNode>& condition,
                        const Material& c, const Part* part,
-                       const Part* opposing_part,
-                       const MaterialContext& s) -> bool;
+                       const Part* opposing_part, const MaterialContext& s)
+      -> bool;
 
   // Apply the component to a context.
   void Apply(MaterialContext* c, const Part* src_part, const Part* dst_part);

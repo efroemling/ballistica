@@ -99,6 +99,7 @@ class PrivateGatherTab(GatherTab):
         region_left: float,
         region_bottom: float,
     ) -> bui.Widget:
+        # pylint: disable=too-many-positional-arguments
         self._c_width = region_width
         self._c_height = region_height - 20
         self._container = bui.containerwidget(

@@ -112,6 +112,7 @@ def animate_array(
     attr: str,
     size: int,
     keys: dict[float, Sequence[float]],
+    *,
     loop: bool = False,
     offset: float = 0,
 ) -> None:

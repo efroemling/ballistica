@@ -43,8 +43,8 @@ class Input {
   // Given a device name and persistent identifier for it, returns a device or
   // nullptr. Note that this can return hidden devices (ones the user has
   // flagged as totally-ignored, etc).
-  auto GetInputDevice(const std::string& name,
-                      const std::string& persistent_id) -> InputDevice*;
+  auto GetInputDevice(const std::string& name, const std::string& persistent_id)
+      -> InputDevice*;
 
   // Return a device by id, or nullptr for an invalid id. Note that this can
   // return hidden devices (ones the user has flagged as totally-ignored, etc).

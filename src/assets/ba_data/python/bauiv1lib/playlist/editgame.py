@@ -31,6 +31,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
         edit_info: dict[str, Any] | None = None,
     ):
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         from bascenev1 import (
@@ -485,11 +486,11 @@ class PlaylistEditGameWindow(bui.MainWindow):
                 if prev_widgets is not None:
                     # Wire our rightmost to their rightmost.
                     bui.widget(edit=prev_widgets[-1], down_widget=cwdg[-1])
-                    bui.widget(cwdg[-1], up_widget=prev_widgets[-1])
+                    bui.widget(edit=cwdg[-1], up_widget=prev_widgets[-1])
 
                     # Wire our leftmost to their leftmost.
                     bui.widget(edit=prev_widgets[0], down_widget=cwdg[0])
-                    bui.widget(cwdg[0], up_widget=prev_widgets[0])
+                    bui.widget(edit=cwdg[0], up_widget=prev_widgets[0])
                 prev_widgets = cwdg
         except Exception:
             logging.exception(
@@ -617,6 +618,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
         setting_type: type,
         setting_name: str,
     ) -> None:
+        # pylint: disable=too-many-positional-arguments
         if setting_type == float:
             val = float(cast(str, bui.textwidget(query=ctrl)))
         else:

@@ -27,6 +27,7 @@ class Level:
         gametype: type[bascenev1.GameActivity],
         settings: dict,
         preview_texture_name: str,
+        *,
         displayname: str | None = None,
     ):
         self._name = name

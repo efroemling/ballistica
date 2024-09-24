@@ -457,7 +457,8 @@ static PyMethodDef PyButtonWidgetDef = {
     (PyCFunction)PyButtonWidget,   // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "buttonwidget(edit: bauiv1.Widget | None = None,\n"
+    "buttonwidget(*,\n"
+    "  edit: bauiv1.Widget | None = None,\n"
     "  parent: bauiv1.Widget | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
@@ -653,7 +654,8 @@ static PyMethodDef PyCheckBoxWidgetDef = {
     (PyCFunction)PyCheckBoxWidget,  // method
     METH_VARARGS | METH_KEYWORDS,   // flags
 
-    "checkboxwidget(edit: bauiv1.Widget | None = None,\n"
+    "checkboxwidget(*,\n"
+    "  edit: bauiv1.Widget | None = None,\n"
     "  parent: bauiv1.Widget | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
@@ -853,7 +855,8 @@ static PyMethodDef PyImageWidgetDef = {
     (PyCFunction)PyImageWidget,    // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "imagewidget(edit: bauiv1.Widget | None = None,\n"
+    "imagewidget(*,\n"
+    "  edit: bauiv1.Widget | None = None,\n"
     "  parent: bauiv1.Widget | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
@@ -1038,7 +1041,8 @@ static PyMethodDef PyColumnWidgetDef = {
     (PyCFunction)PyColumnWidget,   // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "columnwidget(edit: bauiv1.Widget | None = None,\n"
+    "columnwidget(*,\n"
+    "  edit: bauiv1.Widget | None = None,\n"
     "  parent: bauiv1.Widget | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
@@ -1364,7 +1368,8 @@ static PyMethodDef PyContainerWidgetDef = {
     (PyCFunction)PyContainerWidget,  // method
     METH_VARARGS | METH_KEYWORDS,    // flags
 
-    "containerwidget(edit: bauiv1.Widget | None = None,\n"
+    "containerwidget(*,\n"
+    "  edit: bauiv1.Widget | None = None,\n"
     "  parent: bauiv1.Widget | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
@@ -1704,7 +1709,8 @@ static PyMethodDef PyScrollWidgetDef = {
     (PyCFunction)PyScrollWidget,   // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "scrollwidget(edit: bauiv1.Widget | None = None,\n"
+    "scrollwidget(*,\n"
+    "  edit: bauiv1.Widget | None = None,\n"
     "  parent: bauiv1.Widget | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
@@ -1885,7 +1891,8 @@ static PyMethodDef PyHScrollWidgetDef = {
     (PyCFunction)PyHScrollWidget,  // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "hscrollwidget(edit: bauiv1.Widget | None = None,\n"
+    "hscrollwidget(*,\n"
+    "  edit: bauiv1.Widget | None = None,\n"
     "  parent: bauiv1.Widget | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
@@ -2258,7 +2265,8 @@ static PyMethodDef PyTextWidgetDef = {
     (PyCFunction)PyTextWidget,     // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "textwidget(edit: bauiv1.Widget | None = None,\n"
+    "textwidget(*,\n"
+    "  edit: bauiv1.Widget | None = None,\n"
     "  parent: bauiv1.Widget | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
@@ -2417,7 +2425,8 @@ static PyMethodDef PyWidgetDef = {
     (PyCFunction)PyWidgetCall,     // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "widget(edit: bauiv1.Widget,\n"
+    "widget(*,\n"
+    "  edit: bauiv1.Widget,\n"
     "  up_widget: bauiv1.Widget | None = None,\n"
     "  down_widget: bauiv1.Widget | None = None,\n"
     "  left_widget: bauiv1.Widget | None = None,\n"

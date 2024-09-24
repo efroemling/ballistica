@@ -152,8 +152,8 @@ class Renderer {
       -> Object::Ref<MeshAssetRendererData> = 0;
   virtual auto NewTextureData(const TextureAsset& texture)
       -> Object::Ref<TextureAssetRendererData> = 0;
-  virtual auto NewMeshData(MeshDataType t,
-                           MeshDrawType drawType) -> MeshRendererData* = 0;
+  virtual auto NewMeshData(MeshDataType t, MeshDrawType drawType)
+      -> MeshRendererData* = 0;
   virtual void DeleteMeshData(MeshRendererData* data, MeshDataType t) = 0;
   virtual void ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
                                           const RenderPass& pass,
@@ -176,10 +176,12 @@ class Renderer {
   virtual void InvalidateFramebuffer(bool color, bool depth,
                                      bool target_read_framebuffer) = 0;
   virtual auto NewScreenRenderTarget() -> RenderTarget* = 0;
-  virtual auto NewFramebufferRenderTarget(
-      int width, int height, bool linear_interp, bool depth, bool texture,
-      bool depth_texture, bool high_quality, bool msaa,
-      bool alpha) -> Object::Ref<RenderTarget> = 0;
+  virtual auto NewFramebufferRenderTarget(int width, int height,
+                                          bool linear_interp, bool depth,
+                                          bool texture, bool depth_texture,
+                                          bool high_quality, bool msaa,
+                                          bool alpha)
+      -> Object::Ref<RenderTarget> = 0;
   virtual void PushGroupMarker(const char* label) = 0;
   virtual void PopGroupMarker() = 0;
   virtual void BlitBuffer(RenderTarget* src, RenderTarget* dst, bool depth,

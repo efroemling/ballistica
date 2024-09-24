@@ -42,8 +42,8 @@ class PythonClassSimpleSound : public PythonClass {
  private:
   static PyMethodDef tp_methods[];
   static auto tp_repr(PythonClassSimpleSound* self) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args,
-                     PyObject* keywds) -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
+      -> PyObject*;
   static void tp_dealloc(PythonClassSimpleSound* self);
   Object::Ref<SoundAsset>* sound_;
   static auto Play(PythonClassSimpleSound* self, PyObject* args,

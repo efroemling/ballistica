@@ -21,6 +21,7 @@ class MacMusicAppPlaylistSelectWindow(bui.MainWindow):
         callback: Callable[[Any], Any],
         existing_playlist: str | None,
         existing_entry: Any,
+        *,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):

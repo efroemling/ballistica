@@ -41,6 +41,7 @@ class CharacterPicker(PopupWindow):
         selected_character: str | None = None,
     ):
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-positional-arguments
         from bascenev1lib.actor import spazappearance
 
         assert bui.app.classic is not None

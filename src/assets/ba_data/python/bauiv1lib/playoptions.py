@@ -23,6 +23,7 @@ class PlayOptionsWindow(PopupWindow):
 
     def __init__(
         self,
+        *,
         sessiontype: type[bs.Session],
         playlist: str,
         scale_origin: tuple[float, float],

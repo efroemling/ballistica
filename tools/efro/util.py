@@ -190,6 +190,7 @@ class DirtyBit:
         self,
         dirty: bool = False,
         retry_interval: float = 5.0,
+        *,
         use_lock: bool = False,
         auto_dirty_seconds: float | None = None,
         min_update_interval: float | None = None,

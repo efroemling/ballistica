@@ -543,6 +543,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
     def run_stress_test(
         self,
+        *,
         playlist_type: str = 'Random',
         playlist_name: str = '__default__',
         player_count: int = 8,
@@ -694,6 +695,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
     def tournament_entry_window(
         self,
         tournament_id: str,
+        *,
         tournament_activity: bascenev1.Activity | None = None,
         position: tuple[float, float] = (0.0, 0.0),
         delegate: Any = None,

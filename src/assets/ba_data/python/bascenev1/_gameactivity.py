@@ -1247,6 +1247,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
     def show_zoom_message(
         self,
         message: babase.Lstr,
+        *,
         color: Sequence[float] = (0.9, 0.4, 0.0),
         scale: float = 0.8,
         duration: float = 2.0,

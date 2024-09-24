@@ -114,6 +114,7 @@ class ManualGatherTab(GatherTab):
         region_left: float,
         region_bottom: float,
     ) -> bui.Widget:
+        # pylint: disable=too-many-positional-arguments
         c_width = region_width
         c_height = region_height - 20
 

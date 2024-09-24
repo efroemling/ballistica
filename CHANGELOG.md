@@ -1,9 +1,17 @@
-### 1.7.37 (build 22007, api 9, 2024-09-19)
+### 1.7.37 (build 22009, api 9, 2024-09-23)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
   I'm hopeful that api version won't need to be bumped again for along time (if
   ever).
+- The newest Pylint update (3.3) added a check for
+  'too-many-positional-arguments'. This seems like a good idea, so I updated
+  various functions to conform to it and set some others to ignore it. Basically
+  if you see a function like `def dothing(a, b, *, c, d)` then everything after
+  the `*` needs to be passed as a keyword. So you can't do `dothing(val1, val2,
+  val3, val4)`; you need to do `dothing(val1, val2, c=val3, d=val4)`. Requiring
+  keywords for complex functions generally leads to more readable code and less
+  breakage if arguments are added or removed from the function.
 - Playlist customization no longer requires pro.
 - Soundtrack customization no longer requires pro.
 - Campaign hard mode no longer requires pro.

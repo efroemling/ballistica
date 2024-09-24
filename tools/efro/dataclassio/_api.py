@@ -99,6 +99,7 @@ def dataclass_to_json(
 def dataclass_from_dict(
     cls: type[T],
     values: dict,
+    *,
     codec: Codec = Codec.JSON,
     coerce_to_float: bool = True,
     allow_unknown_attrs: bool = True,

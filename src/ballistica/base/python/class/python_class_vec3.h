@@ -30,19 +30,19 @@ class PythonClassVec3 : public PythonClass {
   static auto tp_repr(PythonClassVec3* self) -> PyObject*;
   static auto sq_length(PythonClassVec3* self) -> Py_ssize_t;
   static auto sq_item(PythonClassVec3* self, Py_ssize_t i) -> PyObject*;
-  static auto sq_ass_item(PythonClassVec3* self, Py_ssize_t i,
-                          PyObject* val) -> int;
+  static auto sq_ass_item(PythonClassVec3* self, Py_ssize_t i, PyObject* val)
+      -> int;
   static auto nb_add(PythonClassVec3* l, PythonClassVec3* r) -> PyObject*;
   static auto nb_subtract(PythonClassVec3* l, PythonClassVec3* r) -> PyObject*;
   static auto nb_multiply(PyObject* l, PyObject* r) -> PyObject*;
   static auto nb_negative(PythonClassVec3* self) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args,
-                     PyObject* keywds) -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
+      -> PyObject*;
   static auto tp_getattro(PythonClassVec3* self, PyObject* attr) -> PyObject*;
-  static auto tp_richcompare(PythonClassVec3* c1, PyObject* c2,
-                             int op) -> PyObject*;
-  static auto tp_setattro(PythonClassVec3* self, PyObject* attr,
-                          PyObject* val) -> int;
+  static auto tp_richcompare(PythonClassVec3* c1, PyObject* c2, int op)
+      -> PyObject*;
+  static auto tp_setattro(PythonClassVec3* self, PyObject* attr, PyObject* val)
+      -> int;
 };
 
 }  // namespace ballistica::base

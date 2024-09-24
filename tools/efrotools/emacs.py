@@ -31,6 +31,7 @@ def py_examine(
     operation: str,
 ) -> None:
     """Given file position info, performs some code inspection."""
+    # pylint: disable=too-many-positional-arguments
     # pylint: disable=too-many-locals
     # pylint: disable=cyclic-import
     import astroid

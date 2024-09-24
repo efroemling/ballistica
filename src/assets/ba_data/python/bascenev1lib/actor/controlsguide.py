@@ -24,6 +24,7 @@ class ControlsGuide(bs.Actor):
 
     def __init__(
         self,
+        *,
         position: tuple[float, float] = (390.0, 120.0),
         scale: float = 1.0,
         delay: float = 0.0,

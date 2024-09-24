@@ -48,6 +48,7 @@ class LazyBuildContext:
         target: str,
         srcpaths: list[str],
         command: str,
+        *,
         buildlockname: str | None = None,
         dirfilter: Callable[[str, str], bool] | None = None,
         filefilter: Callable[[str, str], bool] | None = None,

@@ -316,7 +316,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             label=bui.Lstr(resource=f'{self._r}.runStressTestText'),
             on_activate_call=self._stress_test_pressed,
         )
-        bui.widget(btn, show_buffer_bottom=50)
+        bui.widget(edit=btn, show_buffer_bottom=50)
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:

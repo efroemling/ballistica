@@ -20,6 +20,7 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
         callback: Callable[[Any], Any],
         current_entry: Any,
         selection_target_name: str,
+        *,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):

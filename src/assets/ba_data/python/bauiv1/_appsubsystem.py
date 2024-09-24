@@ -201,6 +201,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
     def set_main_window(
         self,
         window: bauiv1.MainWindow,
+        *,
         from_window: bauiv1.MainWindow | None | bool = True,
         is_back: bool = False,
         is_top_level: bool = False,
