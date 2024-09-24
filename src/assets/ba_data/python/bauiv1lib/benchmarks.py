@@ -8,6 +8,7 @@ import logging
 from typing import cast, override
 
 import bauiv1 as bui
+import bascenev1 as bs
 
 
 class BenchmarksAndStressTestsWindow(bui.MainWindow):
