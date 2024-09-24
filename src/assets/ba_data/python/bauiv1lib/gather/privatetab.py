@@ -1081,6 +1081,11 @@ class PrivateGatherTab(GatherTab):
                 return
             self._debug_server_comm('got valid connect response')
             assert cresult.address4 is not None and cresult.port is not None
+
+            # Store UI location to return to when done.
+            if bs.app.classic is not None:
+                bs.app.classic.save_ui_state()
+
             bs.connect_to_party(cresult.address4, port=cresult.port)
         except Exception:
             self._debug_server_comm('got connect response error')

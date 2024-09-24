@@ -1,4 +1,4 @@
-### 1.7.37 (build 22009, api 9, 2024-09-23)
+### 1.7.37 (build 22010, api 9, 2024-09-24)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -98,6 +98,9 @@
   test UIScales are by using the UI panel in the dev-console or by setting the
   `BA_UI_SCALE` env var. If we can get UIScale switches to feel seamless enough
   at some point, it may be worth adding to display settings.
+- There is now a `ba*.app.classic.save_ui_state()` method that should be called
+  right before jumping into a game/replay/etc. This will save a state that will
+  automatically be restored the next time the main menu activity is entered.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these

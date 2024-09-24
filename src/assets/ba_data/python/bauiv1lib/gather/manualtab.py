@@ -871,6 +871,11 @@ class ManualGatherTab(GatherTab):
             config['Last Manual Party Connect Address'] = resolved_address
             config['Last Manual Party Connect Port'] = port
             config.commit()
+
+            # Store UI location to return to when done.
+            if bs.app.classic is not None:
+                bs.app.classic.save_ui_state()
+
             bs.connect_to_party(resolved_address, port=port)
 
     def _run_addr_fetch(self) -> None:

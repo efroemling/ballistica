@@ -529,6 +529,11 @@ class PlayOptionsWindow(PopupWindow):
 
     def _run_selected_playlist(self) -> None:
         bui.unlock_all_input()
+
+        # Save our place in the UI that we'll return to when done.
+        if bs.app.classic is not None:
+            bs.app.classic.save_ui_state()
+
         try:
             bs.new_host_session(self._sessiontype)
         except Exception:

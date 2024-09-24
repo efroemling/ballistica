@@ -53,6 +53,11 @@ class NetScanner:
         self._last_selected_host = host
 
     def _on_activate(self, host: dict[str, Any]) -> None:
+
+        # Store UI location to return to when done.
+        if bs.app.classic is not None:
+            bs.app.classic.save_ui_state()
+
         bs.connect_to_party(host['address'])
 
     def update(self) -> None:

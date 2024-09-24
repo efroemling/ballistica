@@ -49,7 +49,6 @@ class ClassicAppMode(AppMode):
 
     @override
     def on_activate(self) -> None:
-        print('CLASSIC ACTIVATING')
 
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_activate()
@@ -110,7 +109,11 @@ class ClassicAppMode(AppMode):
 
     @override
     def on_deactivate(self) -> None:
-        print('CLASSIC DEACTIVATING')
+
+        # Save where we were in the UI so we return there next time.
+        if app.classic is not None:
+            app.classic.save_ui_state()
+
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_deactivate()
 

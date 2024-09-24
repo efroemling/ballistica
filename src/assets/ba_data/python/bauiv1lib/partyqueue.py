@@ -552,6 +552,11 @@ class PartyQueueWindow(bui.Window):
                     self._last_connect_attempt_time is None
                     or now - self._last_connect_attempt_time > 10.0
                 ):
+
+                    # Store UI location to return to when done.
+                    if bs.app.classic is not None:
+                        bs.app.classic.save_ui_state()
+
                     bs.connect_to_party(
                         address=self._address,
                         port=self._port,

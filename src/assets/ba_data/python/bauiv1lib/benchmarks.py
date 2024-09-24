@@ -126,16 +126,6 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             position=((self._sub_width - button_width) * 0.5, v),
             size=(button_width, 60),
             autoselect=True,
-            label=bui.Lstr(resource=f'{self._r}.runGPUBenchmarkText'),
-            on_activate_call=self._run_gpu_benchmark_pressed,
-        )
-        v -= 60
-
-        bui.buttonwidget(
-            parent=self._subcontainer,
-            position=((self._sub_width - button_width) * 0.5, v),
-            size=(button_width, 60),
-            autoselect=True,
             label=bui.Lstr(resource=f'{self._r}.runMediaReloadBenchmarkText'),
             on_activate_call=self._run_media_reload_benchmark_pressed,
         )
@@ -368,12 +358,6 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             logging.warning('run-cpu-benchmark requires classic')
             return
         bui.app.classic.run_cpu_benchmark()
-
-    def _run_gpu_benchmark_pressed(self) -> None:
-        if bui.app.classic is None:
-            logging.warning('run-gpu-benchmark requires classic')
-            return
-        bui.app.classic.run_gpu_benchmark()
 
     def _run_media_reload_benchmark_pressed(self) -> None:
         if bui.app.classic is None:

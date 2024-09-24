@@ -1450,6 +1450,10 @@ class PublicGatherTab(GatherTab):
             address = party.address
             port = party.port
 
+            # Store UI location to return to when done.
+            if bs.app.classic is not None:
+                bs.app.classic.save_ui_state()
+
             # Rate limit this a bit.
             now = time.time()
             last_connect_time = self._last_connect_attempt_time
