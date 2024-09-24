@@ -181,8 +181,10 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                 f' cannot use auto-back.'
             )
 
-        # Valid states should have a value here.
+        # Valid states should have values here.
         assert back_state.is_top_level is not None
+        assert back_state.is_auxiliary is not None
+        assert back_state.window_type is not None
 
         backwin = back_state.create_window(transition='in_left')
 
@@ -205,6 +207,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         from_window: bauiv1.MainWindow | None | bool = True,
         is_back: bool = False,
         is_top_level: bool = False,
+        is_auxiliary: bool = False,
         back_state: MainWindowState | None = None,
         suppress_warning: bool = False,
     ) -> None:
@@ -214,6 +217,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         MainWindow methods main_window_replace() and main_window_back()
         should be used when possible for navigation.
         """
+        # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         from bauiv1._uitypes import MainWindow
@@ -254,9 +258,13 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
         # If they passed a back-state, make sure it is fully filled out.
         if back_state is not None:
-            if back_state.is_top_level is None:
+            if (
+                back_state.is_top_level is None
+                or back_state.is_auxiliary is None
+                or back_state.window_type is None
+            ):
                 raise RuntimeError(
-                    'back_state.is_top_level has not been set.'
+                    'Provided back_state is incomplete.'
                     ' Make sure to only pass fully-filled-out MainWindowStates.'
                 )
         # If a top-level main-window is being set, complain if there already
@@ -309,17 +317,23 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                 logging.exception('Error checking from_window')
 
         if is_back:
-            # is_top_level should never be True here (only applies forward).
+            # These values should only be passed for forward navigation.
             assert not is_top_level
-            # Always should have back_state in this case.
+            assert not is_auxiliary
+            # Make sure back state is complete.
             assert back_state is not None
             assert back_state.is_top_level is not None
+            assert back_state.is_auxiliary is not None
+            assert back_state.window_type is type(window)
             window.main_window_back_state = back_state.parent
             window.main_window_is_top_level = back_state.is_top_level
+            window.main_window_is_auxiliary = back_state.is_auxiliary
         else:
             # Store if the window is top-level so we won't complain later if
             # we go back from it and there's nowhere to go to.
             window.main_window_is_top_level = is_top_level
+
+            window.main_window_is_auxiliary = is_auxiliary
 
             # When navigating forward, generate a back-window-state from
             # the outgoing window.
@@ -386,6 +400,8 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # Store some common window stuff on its state.
         winstate.parent = window.main_window_back_state
         winstate.is_top_level = window.main_window_is_top_level
+        winstate.is_auxiliary = window.main_window_is_auxiliary
+        winstate.window_type = type(window)
 
         return winstate
 
@@ -397,12 +413,15 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
         # Valid states should have a value here.
         assert state.is_top_level is not None
+        assert state.is_auxiliary is not None
+        assert state.window_type is not None
 
         win = state.create_window(transition=None)
         self.set_main_window(
             win,
             from_window=False,  # disable check
             is_top_level=state.is_top_level,
+            is_auxiliary=state.is_auxiliary,
             back_state=state.parent,
             suppress_warning=True,
         )

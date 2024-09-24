@@ -1,4 +1,4 @@
-### 1.7.37 (build 22010, api 9, 2024-09-24)
+### 1.7.37 (build 22011, api 9, 2024-09-24)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -101,6 +101,11 @@
 - There is now a `ba*.app.classic.save_ui_state()` method that should be called
   right before jumping into a game/replay/etc. This will save a state that will
   automatically be restored the next time the main menu activity is entered.
+- (build 22010) Added the concept of 'auxiliary' windows and used them to make
+  various window navigation more intuitive. Example: previously, if you were on
+  the co-op screen and pressed the trophy toolbar icon to see your league rank
+  and then pressed back, you would be taken back to the top level main menu. Now
+  it will take you back to the co-op screen.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these
