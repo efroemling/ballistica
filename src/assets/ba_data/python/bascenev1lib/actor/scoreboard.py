@@ -279,6 +279,7 @@ class _Entry:
     def set_value(
         self,
         score: float,
+        *,
         max_score: float | None = None,
         countdown: bool = False,
         flash: bool = True,
