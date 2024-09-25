@@ -24,7 +24,7 @@ from bacommon.net import (
 from bauiv1lib.gather import GatherTab
 from bauiv1lib.play import PlaylistSelectContext
 
-from bauiv1lib.gettokens import GetTokensWindow, show_get_tokens_prompt
+from bauiv1lib.gettokens import show_get_tokens_prompt
 import bascenev1 as bs
 import bauiv1 as bui
 
@@ -551,13 +551,13 @@ class PrivateGatherTab(GatherTab):
             edit=self._join_party_code_text, on_return_press_call=btn.activate
         )
 
-    def _on_get_tokens_press(self) -> None:
-        if self._waiting_for_start_stop_response:
-            return
+    # def _on_get_tokens_press(self) -> None:
+    #     if self._waiting_for_start_stop_response:
+    #         return
 
-        # Bring up get-tickets window and then kill ourself (we're on
-        # the overlay layer so we'd show up above it).
-        GetTokensWindow(origin_widget=self._get_tokens_button)
+    #     # Bring up get-tickets window and then kill ourself (we're on
+    #     # the overlay layer so we'd show up above it).
+    #     GetTokensWindow(origin_widget=self._get_tokens_button)
 
     def _build_host_tab(self) -> None:
         # pylint: disable=too-many-branches

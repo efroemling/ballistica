@@ -186,16 +186,14 @@ class LeagueRankWindow(bui.MainWindow):
         self._update(show=info is None)
 
     def _on_achievements_press(self) -> None:
-        from bauiv1lib import achievements
+        from bauiv1lib.achievements import AchievementsWindow
 
         # only allow this for all-time or the current season
         # (we currently don't keep specific achievement data for old seasons)
         if self._season == 'a' or self._is_current_season:
             prab = self._power_ranking_achievements_button
             assert prab is not None
-            achievements.AchievementsWindow(
-                position=prab.get_screen_space_center()
-            )
+            self.main_window_replace(AchievementsWindow(origin_widget=prab))
         else:
             bui.screenmessage(
                 bui.Lstr(

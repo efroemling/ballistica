@@ -264,17 +264,23 @@ class ClassicAppMode(AppMode):
         import bauiv1
         from bauiv1lib.achievements import AchievementsWindow
 
-        btn = bauiv1.get_special_widget('achievements_button')
-
-        AchievementsWindow(position=btn.get_screen_space_center())
+        self._auxiliary_window_nav(
+            win_type=AchievementsWindow,
+            win_create_call=lambda: AchievementsWindow(
+                origin_widget=bauiv1.get_special_widget('achievements_button')
+            ),
+        )
 
     def _root_ui_inbox_press(self) -> None:
         import bauiv1
         from bauiv1lib.inbox import InboxWindow
 
-        btn = bauiv1.get_special_widget('inbox_button')
-
-        InboxWindow(position=btn.get_screen_space_center())
+        self._auxiliary_window_nav(
+            win_type=InboxWindow,
+            win_create_call=lambda: InboxWindow(
+                origin_widget=bauiv1.get_special_widget('inbox_button')
+            ),
+        )
 
     def _root_ui_store_press(self) -> None:
         import bauiv1
@@ -339,26 +345,16 @@ class ClassicAppMode(AppMode):
                 origin_widget=bauiv1.get_special_widget('inventory_button')
             ),
         )
-        # ui = app.ui_v1
-
-        # # If the window is already showing, back out of it.
-        # current_main_window = ui.get_main_window()
-        # if isinstance(current_main_window, InventoryWindow):
-        #     current_main_window.main_window_back()
-        #     return
-
-        # self._jump_to_auxiliary_window(
-        #     InventoryWindow(
-        #         origin_widget=bauiv1.get_special_widget('inventory_button')
-        #     )
-        # )
 
     def _root_ui_get_tokens_press(self) -> None:
         import bauiv1
         from bauiv1lib.gettokens import GetTokensWindow
 
-        GetTokensWindow(
-            origin_widget=bauiv1.get_special_widget('get_tokens_button')
+        self._auxiliary_window_nav(
+            win_type=GetTokensWindow,
+            win_create_call=lambda: GetTokensWindow(
+                origin_widget=bauiv1.get_special_widget('get_tokens_button')
+            ),
         )
 
     def _root_ui_chest_slot_pressed(self, index: int) -> None:
