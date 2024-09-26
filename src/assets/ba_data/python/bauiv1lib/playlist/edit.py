@@ -35,22 +35,22 @@ class PlaylistEditWindow(bui.MainWindow):
         self._width = 870 if uiscale is bui.UIScale.SMALL else 670
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            400
+            500
             if uiscale is bui.UIScale.SMALL
             else 470 if uiscale is bui.UIScale.MEDIUM else 540
         )
+        yoffs = -68 if uiscale is bui.UIScale.SMALL else 0
 
-        top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(self._width, self._height + top_extra),
+                size=(self._width, self._height),
                 scale=(
-                    1.8
+                    1.76
                     if uiscale is bui.UIScale.SMALL
                     else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -16) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
             ),
             transition=transition,
@@ -58,7 +58,7 @@ class PlaylistEditWindow(bui.MainWindow):
         )
         cancel_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(35 + x_inset, self._height - 60),
+            position=(35 + x_inset, self._height - 60 + yoffs),
             scale=0.8,
             size=(175, 60),
             autoselect=True,
@@ -67,7 +67,7 @@ class PlaylistEditWindow(bui.MainWindow):
         )
         save_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(self._width - (195 + x_inset), self._height - 60),
+            position=(self._width - (195 + x_inset), self._height - 60 + yoffs),
             scale=0.8,
             size=(190, 60),
             autoselect=True,
@@ -89,7 +89,7 @@ class PlaylistEditWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(-10, self._height - 50),
+            position=(-10, self._height - 50 + yoffs),
             size=(self._width, 25),
             text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=bui.app.ui_v1.title_color,
@@ -99,7 +99,7 @@ class PlaylistEditWindow(bui.MainWindow):
             maxwidth=270,
         )
 
-        v = self._height - 115.0
+        v = self._height - 115.0 + yoffs
 
         self._scroll_width = self._width - (205 + 2 * x_inset)
 
@@ -136,7 +136,7 @@ class PlaylistEditWindow(bui.MainWindow):
         self._list_widgets: list[bui.Widget] = []
 
         h = 40 + x_inset
-        v = self._height - 172.0
+        v = self._height - 172.0 + yoffs
 
         b_color = (0.6, 0.53, 0.63)
         b_textcolor = (0.75, 0.7, 0.8)
@@ -222,8 +222,10 @@ class PlaylistEditWindow(bui.MainWindow):
             repeat=True,
         )
 
-        v = self._height - 100
-        scroll_height = self._height - 155
+        v = self._height - 100 + yoffs
+        scroll_height = self._height - (
+            250 if uiscale is bui.UIScale.SMALL else 155
+        )
         scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             position=(160 + x_inset, v - scroll_height),

@@ -53,22 +53,22 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         width = 815 if uiscale is bui.UIScale.SMALL else 615
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         height = (
-            400
+            420
             if uiscale is bui.UIScale.SMALL
             else 480 if uiscale is bui.UIScale.MEDIUM else 600
         )
+        yoffs = -37 if uiscale is bui.UIScale.SMALL else 0
 
-        top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(width, height + top_extra),
+                size=(width, height),
                 scale=(
                     1.95
                     if uiscale is bui.UIScale.SMALL
                     else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -27) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
             ),
             transition=transition,
@@ -77,7 +77,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
 
         self._cancel_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(38 + x_inset, height - 67),
+            position=(38 + x_inset, height - 67 + yoffs),
             size=(140, 50),
             scale=0.9,
             text_scale=1.0,
@@ -89,7 +89,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)
         bui.textwidget(
             parent=self._root_widget,
-            position=(width * 0.5, height - 46),
+            position=(width * 0.5, height - 46 + yoffs),
             size=(0, 0),
             maxwidth=260,
             scale=1.1,
@@ -101,9 +101,11 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
         )
-        v = height - 70
+        v = height - 70 + yoffs
         self._scroll_width = width - (80 + 2 * x_inset)
-        self._scroll_height = height - 140
+        self._scroll_height = height - (
+            170 if uiscale is bui.UIScale.SMALL else 140
+        )
 
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,

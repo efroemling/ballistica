@@ -90,8 +90,9 @@ class GatherWindow(bui.MainWindow):
         uiscale = bui.app.ui_v1.uiscale
         self._width = 1640 if uiscale is bui.UIScale.SMALL else 1040
         x_offs = 200 if uiscale is bui.UIScale.SMALL else 0
+        y_offs = -65 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            550
+            650
             if uiscale is bui.UIScale.SMALL
             else 680 if uiscale is bui.UIScale.MEDIUM else 800
         )
@@ -113,7 +114,7 @@ class GatherWindow(bui.MainWindow):
                     else 0.95 if uiscale is bui.UIScale.MEDIUM else 0.7
                 ),
                 stack_offset=(
-                    (0, -20)
+                    (0, 0)
                     if uiscale is bui.UIScale.SMALL
                     else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
                 ),
@@ -130,7 +131,7 @@ class GatherWindow(bui.MainWindow):
         else:
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(70 + x_offs, self._height - 74),
+                position=(70 + x_offs, self._height - 74 + y_offs),
                 size=(140, 60),
                 scale=1.1,
                 autoselect=True,
@@ -153,7 +154,7 @@ class GatherWindow(bui.MainWindow):
         )
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 42 + t_offs_y),
+            position=(self._width * 0.5, self._height - 42 + t_offs_y + y_offs),
             size=(0, 0),
             color=bui.app.ui_v1.title_color,
             scale=(
@@ -197,7 +198,10 @@ class GatherWindow(bui.MainWindow):
         self._tab_row = TabRow(
             self._root_widget,
             tabdefs,
-            pos=(tab_buffer_h * 0.5, self._height - 130 + tabs_top_extra),
+            pos=(
+                tab_buffer_h * 0.5,
+                self._height - 130 + tabs_top_extra + y_offs,
+            ),
             size=(self._width - tab_buffer_h, 50),
             on_select_call=bui.WeakCall(self._set_tab),
         )
@@ -227,11 +231,20 @@ class GatherWindow(bui.MainWindow):
             )
 
         self._scroll_width = self._width - scroll_buffer_h
-        self._scroll_height = self._height - 180.0 + tabs_top_extra
+        self._scroll_height = (
+            self._height
+            - (270.0 if uiscale is bui.UIScale.SMALL else 180.0)
+            + tabs_top_extra
+        )
 
         self._scroll_left = (self._width - self._scroll_width) * 0.5
         self._scroll_bottom = (
-            self._height - self._scroll_height - 79 - 48 + tabs_top_extra
+            self._height
+            - self._scroll_height
+            - 79
+            - 48
+            + tabs_top_extra
+            + y_offs
         )
         buffer_h = 10
         buffer_v = 4

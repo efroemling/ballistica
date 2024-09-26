@@ -25,13 +25,16 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
         uiscale = bui.app.ui_v1.uiscale
         self._width = width = 650 if uiscale is bui.UIScale.SMALL else 580
         self._height = height = (
-            330
+            400
             if uiscale is bui.UIScale.SMALL
             else 420 if uiscale is bui.UIScale.MEDIUM else 520
         )
+        yoffs = -30 if uiscale is bui.UIScale.SMALL else 0
 
         self._scroll_width = self._width - 100
-        self._scroll_height = self._height - 120
+        self._scroll_height = self._height - (
+            180 if uiscale is bui.UIScale.SMALL else 120
+        )
 
         self._sub_width = self._scroll_width * 0.95
         self._sub_height = 520
@@ -72,7 +75,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
         else:
             self._done_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(40, height - 67),
+                position=(40, height - 67 + yoffs),
                 size=(120, 60),
                 scale=0.8,
                 autoselect=True,
@@ -83,7 +86,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(0, height - 60),
+            position=(0, height - 60 + yoffs),
             size=(width, 30),
             text=bui.Lstr(resource=f'{self._r}.titleText'),
             h_align='center',
@@ -96,7 +99,10 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             parent=self._root_widget,
             highlight=False,
             size=(self._scroll_width, self._scroll_height),
-            position=((self._width - self._scroll_width) * 0.5, 50),
+            position=(
+                (self._width - self._scroll_width) * 0.5,
+                (115 if uiscale is bui.UIScale.SMALL else 50) + yoffs,
+            ),
         )
         bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)
 

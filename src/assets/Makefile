@@ -341,7 +341,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/viewer.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/achievements.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/appinvite.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/benchmarks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/characterpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/colorpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/config.py \
@@ -365,7 +364,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/publictab.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/getremote.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gettokens.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/helpui.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/help.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/iconpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/inbox.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/ingamemenu.py \
@@ -406,6 +405,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/advanced.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/allsettings.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/audio.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/benchmarks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/controls.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/devtools.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/gamepad.py \
@@ -619,7 +619,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/viewer.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/achievements.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/appinvite.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/benchmarks.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/characterpicker.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/colorpicker.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/config.cpython-312.opt-1.pyc \
@@ -643,7 +642,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/publictab.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/getremote.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/gettokens.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/helpui.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/help.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/iconpicker.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/inbox.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/ingamemenu.cpython-312.opt-1.pyc \
@@ -684,6 +683,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/advanced.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/allsettings.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/audio.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/benchmarks.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/controls.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/devtools.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/gamepad.cpython-312.opt-1.pyc \

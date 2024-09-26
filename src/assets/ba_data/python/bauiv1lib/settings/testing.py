@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 
@@ -25,9 +25,12 @@ class TestingWindow(bui.MainWindow):
     ):
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 700 if uiscale is bui.UIScale.SMALL else 600
-        self._height = 324 if uiscale is bui.UIScale.SMALL else 400
+        self._width = 690 if uiscale is bui.UIScale.SMALL else 600
+        self._height = 400 if uiscale is bui.UIScale.SMALL else 400
+        self._entries_orig = copy.deepcopy(entries)
         self._entries = copy.deepcopy(entries)
+        yoffs = -50 if uiscale is bui.UIScale.SMALL else 0
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -37,7 +40,7 @@ class TestingWindow(bui.MainWindow):
                     else 1.2 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -20) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
                 toolbar_visibility=(
                     'menu_minimal'
@@ -58,7 +61,7 @@ class TestingWindow(bui.MainWindow):
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
                 autoselect=True,
-                position=(65, self._height - 59),
+                position=(65, self._height - 59 + yoffs),
                 size=(130, 60),
                 scale=0.8,
                 text_scale=1.2,
@@ -74,25 +77,30 @@ class TestingWindow(bui.MainWindow):
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
+        self.title = title
         bui.textwidget(
             parent=self._root_widget,
             position=(
                 self._width * 0.5,
-                self._height - (42 if uiscale is bui.UIScale.SMALL else 35),
+                self._height
+                - (42 if uiscale is bui.UIScale.SMALL else 35)
+                + yoffs,
             ),
             size=(0, 0),
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
             maxwidth=245,
-            text=title,
+            text=self.title,
         )
 
         bui.textwidget(
             parent=self._root_widget,
             position=(
                 self._width * 0.5,
-                self._height - (80 if uiscale is bui.UIScale.SMALL else 80),
+                self._height
+                - (80 if uiscale is bui.UIScale.SMALL else 80)
+                + yoffs,
             ),
             size=(0, 0),
             color=bui.app.ui_v1.infotextcolor,
@@ -102,12 +110,17 @@ class TestingWindow(bui.MainWindow):
             text=bui.Lstr(resource='settingsWindowAdvanced.forTestingText'),
         )
         self._scroll_width = self._width - 130
-        self._scroll_height = self._height - 140
+        self._scroll_height = self._height - (
+            220 if uiscale is bui.UIScale.SMALL else 140
+        )
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             size=(self._scroll_width, self._scroll_height),
             highlight=False,
-            position=((self._width - self._scroll_width) * 0.5, 40),
+            position=(
+                (self._width - self._scroll_width) * 0.5,
+                (120 if uiscale is bui.UIScale.SMALL else 40) + yoffs,
+            ),
         )
         bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)
 
@@ -225,4 +238,23 @@ class TestingWindow(bui.MainWindow):
         bui.textwidget(
             edit=entry['widget'],
             text='%.4g' % bui.app.classic.value_test(entry['name']),
+        )
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Pull values from self here; if we do it in the lambda we'll keep
+        # self alive which we don't want.
+        title = self.title
+        entries = self._entries_orig
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                title=title,
+                entries=entries,
+                transition=transition,
+                origin_widget=origin_widget,
+            )
         )

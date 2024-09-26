@@ -77,12 +77,12 @@ class CoopBrowserWindow(bui.MainWindow):
         self._width = 1520 if uiscale is bui.UIScale.SMALL else 1120
         self._x_inset = x_inset = 200 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            565
+            600
             if uiscale is bui.UIScale.SMALL
             else 730 if uiscale is bui.UIScale.MEDIUM else 800
         )
         self._r = 'coopSelectWindow'
-        top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
+        top_extra = 0 if uiscale is bui.UIScale.SMALL else 0
 
         self._tourney_data_up_to_date = False
 
@@ -109,7 +109,7 @@ class CoopBrowserWindow(bui.MainWindow):
                 size=(self._width, self._height + top_extra),
                 toolbar_visibility='menu_full',
                 stack_offset=(
-                    (0, -17)
+                    (0, -8)
                     if uiscale is bui.UIScale.SMALL
                     else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
                 ),
@@ -256,7 +256,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         self._scroll_width = self._width - (130 + 2 * x_inset)
         self._scroll_height = self._height - (
-            185 if uiscale is bui.UIScale.SMALL else 160
+            219 if uiscale is bui.UIScale.SMALL else 160
         )
 
         self._subcontainerwidth = 800.0

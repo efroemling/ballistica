@@ -33,9 +33,10 @@ class AllSettingsWindow(bui.MainWindow):
         uiscale = bui.app.ui_v1.uiscale
         width = 1000 if uiscale is bui.UIScale.SMALL else 580
         x_inset = 125 if uiscale is bui.UIScale.SMALL else 0
-        height = 435
+        height = 500 if uiscale is bui.UIScale.SMALL else 435
         self._r = 'settingsWindow'
         top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
+        yoffs = -30 if uiscale is bui.UIScale.SMALL else 0
 
         uiscale = bui.app.ui_v1.uiscale
         super().__init__(
@@ -68,7 +69,7 @@ class AllSettingsWindow(bui.MainWindow):
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
                 autoselect=True,
-                position=(40 + x_inset, height - 55),
+                position=(40 + x_inset, height - 55 + yoffs),
                 size=(130, 60),
                 scale=0.8,
                 text_scale=1.2,
@@ -80,7 +81,7 @@ class AllSettingsWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(0, height - 44),
+            position=(0, height - 44 + yoffs),
             size=(width, 25),
             text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=bui.app.ui_v1.title_color,
@@ -97,7 +98,7 @@ class AllSettingsWindow(bui.MainWindow):
                 label=bui.charstr(bui.SpecialChar.BACK),
             )
 
-        v = height - 80
+        v = height - 80 + yoffs
         v -= 145
 
         basew = 280 if uiscale is bui.UIScale.SMALL else 230

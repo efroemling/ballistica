@@ -22,10 +22,11 @@ class AchievementsWindow(bui.MainWindow):
         uiscale = bui.app.ui_v1.uiscale
         self._width = 600 if uiscale is bui.UIScale.SMALL else 450
         self._height = (
-            300
+            380
             if uiscale is bui.UIScale.SMALL
             else 370 if uiscale is bui.UIScale.MEDIUM else 450
         )
+        yoffs = -45 if uiscale is bui.UIScale.SMALL else 0
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -41,7 +42,7 @@ class AchievementsWindow(bui.MainWindow):
                     else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
                 ),
                 stack_offset=(
-                    (0, -10)
+                    (0, 0)
                     if uiscale is bui.UIScale.SMALL
                     else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
                 ),
@@ -59,7 +60,7 @@ class AchievementsWindow(bui.MainWindow):
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
                 autoselect=True,
-                position=(50, self._height - 38),
+                position=(50, self._height - 38 + yoffs),
                 size=(60, 60),
                 scale=0.6,
                 label=bui.charstr(bui.SpecialChar.BACK),
@@ -84,7 +85,9 @@ class AchievementsWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(
                 self._width * 0.5,
-                self._height - (27 if uiscale is bui.UIScale.SMALL else 20),
+                self._height
+                - (27 if uiscale is bui.UIScale.SMALL else 20)
+                + yoffs,
             ),
             size=(0, 0),
             h_align='center',
@@ -97,8 +100,14 @@ class AchievementsWindow(bui.MainWindow):
 
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
-            size=(self._width - 60, self._height - 70),
-            position=(30, 30),
+            size=(
+                self._width - 60,
+                self._height - (150 if uiscale is bui.UIScale.SMALL else 70),
+            ),
+            position=(
+                30,
+                (110 if uiscale is bui.UIScale.SMALL else 30) + yoffs,
+            ),
             capture_arrows=True,
             simple_culling_v=10,
         )
