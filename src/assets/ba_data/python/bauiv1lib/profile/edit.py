@@ -62,10 +62,11 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
         self._width = width = 880.0 if uiscale is bui.UIScale.SMALL else 680.0
         self._x_inset = x_inset = 100.0 if uiscale is bui.UIScale.SMALL else 0.0
         self._height = height = (
-            450.0
+            500.0
             if uiscale is bui.UIScale.SMALL
             else 400.0 if uiscale is bui.UIScale.MEDIUM else 450.0
         )
+        yoffs = -42 if uiscale is bui.UIScale.SMALL else 0
         spacing = 40
         self._base_scale = (
             1.6
@@ -78,7 +79,7 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
                 size=(width, height + top_extra),
                 scale=self._base_scale,
                 stack_offset=(
-                    (0, -40) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
                 toolbar_visibility=(
                     # 'menu_minimal'
@@ -92,7 +93,7 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
         )
         cancel_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(52 + x_inset, height - 60),
+            position=(52 + x_inset, height - 60 + yoffs),
             size=(155, 60),
             scale=0.8,
             autoselect=True,
@@ -102,7 +103,7 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)
         save_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(width - (177 + x_inset), height - 60),
+            position=(width - (177 + x_inset), height - 60 + yoffs),
             size=(155, 60),
             autoselect=True,
             scale=0.8,
@@ -113,7 +114,7 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
         bui.containerwidget(edit=self._root_widget, start_button=btn)
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, height - 38),
+            position=(self._width * 0.5, height - 38 + yoffs),
             size=(0, 0),
             text=(
                 bui.Lstr(resource=f'{self._r}.titleNewText')
@@ -163,7 +164,7 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
         self._icon_index = icon_index
         bui.buttonwidget(edit=save_button, on_activate_call=self.save)
 
-        v = height - 115.0
+        v = height - 115.0 + yoffs
         self._name = (
             '' if self._existing_profile is None else self._existing_profile
         )

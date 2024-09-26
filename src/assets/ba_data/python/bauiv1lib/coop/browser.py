@@ -47,7 +47,7 @@ class CoopBrowserWindow(bui.MainWindow):
         # Quick note to players that tourneys won't work in ballistica
         # core builds. (need to split the word so it won't get subbed
         # out)
-        if 'ballistica' + 'kit' == bui.appname():
+        if 'ballistica' + 'kit' == bui.appname() and bui.do_once():
             bui.apptimer(
                 1.0,
                 lambda: bui.screenmessage(
