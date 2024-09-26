@@ -247,11 +247,6 @@ class ProfileUpgradeWindow(bui.Window):
             self._cancel()
             return
 
-        # try:
-        #     t_str = str(plus.get_v1_account_ticket_count())
-        # except Exception:
-        #     t_str = '?'
-
         # Once we've kicked off an upgrade attempt and all transactions go
         # through, we're done.
         if (

@@ -327,10 +327,10 @@ def ui_upkeep() -> None:
                 print(
                     'WARNING:',
                     obj,
-                    'is still alive 5 second after its widget died;'
+                    'is still alive 5 second after its Widget died;'
                     ' you might have a memory leak. Look for circular'
-                    ' references or outside things referencing your window'
-                    ' instance. See efro.debug module'
+                    ' references or outside things referencing your Window'
+                    ' class instance. See efro.debug module'
                     ' for tools that can help debug this sort of thing.',
                 )
             else:
