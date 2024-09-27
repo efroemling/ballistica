@@ -415,6 +415,7 @@ class Scoreboard:
         team: bs.Team,
         score: float,
         max_score: float | None = None,
+        *,
         countdown: bool = False,
         flash: bool = True,
         show_value: bool = True,
