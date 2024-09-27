@@ -96,6 +96,7 @@ class UIRow:
     ) -> None:
         """Update for the given data."""
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-positional-arguments
 
         plus = bui.app.plus
         assert plus is not None
@@ -404,6 +405,7 @@ class PublicGatherTab(GatherTab):
         region_left: float,
         region_bottom: float,
     ) -> bui.Widget:
+        # pylint: disable=too-many-positional-arguments
         c_width = region_width
         c_height = region_height - 20
         self._container = bui.containerwidget(
@@ -1447,6 +1449,10 @@ class PublicGatherTab(GatherTab):
         else:
             address = party.address
             port = party.port
+
+            # Store UI location to return to when done.
+            if bs.app.classic is not None:
+                bs.app.classic.save_ui_state()
 
             # Rate limit this a bit.
             now = time.time()

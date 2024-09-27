@@ -92,7 +92,7 @@ class DevToolsWindow(bui.MainWindow):
                 self._height - (64 if uiscale is bui.UIScale.SMALL else 48),
             ),
             size=(0, 25),
-            scale=(0.6 if uiscale is bui.UIScale.SMALL else 1.0),
+            scale=(0.8 if uiscale is bui.UIScale.SMALL else 1.0),
             maxwidth=self._width - 200,
             text=bui.Lstr(resource='settingsWindowAdvanced.devToolsText'),
             color=app.ui_v1.title_color,

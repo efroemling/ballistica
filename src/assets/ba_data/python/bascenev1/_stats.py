@@ -196,6 +196,7 @@ class PlayerRecord:
             scale2: float,
             sound2: bascenev1.Sound | None,
         ) -> None:
+            # pylint: disable=too-many-positional-arguments
             from bascenev1lib.actor.popuptext import PopupText
 
             # Only award this if they're still alive and we can get
@@ -341,6 +342,7 @@ class Stats:
         self,
         player: bascenev1.Player,
         base_points: int = 1,
+        *,
         target: Sequence[float] | None = None,
         kill: bool = False,
         victim_player: bascenev1.Player | None = None,

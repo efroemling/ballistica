@@ -261,6 +261,7 @@ class PrepSession:
         recursion_level: int,
     ) -> None:
         """Run prep on a dataclass."""
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements

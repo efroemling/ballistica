@@ -81,7 +81,9 @@ class AdvancedSettingsWindow(bui.MainWindow):
         self._show_always_use_internal_keyboard = not app.env.vr
 
         self._scroll_width = self._width - (100 + 2 * x_inset)
-        self._scroll_height = self._height - 115.0
+        self._scroll_height = self._height - (
+            125.0 if uiscale is bui.UIScale.SMALL else 115.0
+        )
         self._sub_width = self._scroll_width * 0.95
         self._sub_height = 870.0
 
@@ -129,10 +131,10 @@ class AdvancedSettingsWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(
                 self._width * 0.5,
-                self._height - (57 if uiscale is bui.UIScale.SMALL else 40),
+                self._height - (61 if uiscale is bui.UIScale.SMALL else 40),
             ),
             size=(0, 0),
-            scale=0.65 if uiscale is bui.UIScale.SMALL else 1.0,
+            scale=0.85 if uiscale is bui.UIScale.SMALL else 1.0,
             text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=app.ui_v1.title_color,
             h_align='center',
@@ -201,7 +203,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
         from bauiv1lib import appinvite as _unused5
         from bauiv1lib import account as _unused6
         from bauiv1lib import sendinfo as _unused7
-        from bauiv1lib import benchmarks as _unused8
+        from bauiv1lib.settings import benchmarks as _unused8
         from bauiv1lib.settings import plugins as _unused9
         from bauiv1lib.settings import devtools as _unused10
 
@@ -783,7 +785,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
         )
 
     def _on_benchmark_press(self) -> None:
-        from bauiv1lib.benchmarks import BenchmarksAndStressTestsWindow
+        from bauiv1lib.settings.benchmarks import BenchmarksAndStressTestsWindow
 
         # no-op if we're not in control.
         if not self.main_window_has_control():

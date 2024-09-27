@@ -61,7 +61,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
             else 510 if uiscale is bui.UIScale.MEDIUM else 580
         )
 
-        top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
+        top_extra = 30 if uiscale is bui.UIScale.SMALL else 0
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -80,7 +80,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     else 1.05 if uiscale is bui.UIScale.MEDIUM else 0.9
                 ),
                 stack_offset=(
-                    (0, -56) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, -46) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
             ),
             transition=transition,

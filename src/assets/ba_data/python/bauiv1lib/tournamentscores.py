@@ -21,6 +21,7 @@ class TournamentScoresWindow(PopupWindow):
     def __init__(
         self,
         tournament_id: str,
+        *,
         tournament_activity: bs.GameActivity | None = None,
         position: tuple[float, float] = (0.0, 0.0),
         scale: float | None = None,

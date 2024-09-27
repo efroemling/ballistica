@@ -22,6 +22,7 @@ class PopupText(bs.Actor):
     def __init__(
         self,
         text: str | bs.Lstr,
+        *,
         position: Sequence[float] = (0.0, 0.0, 0.0),
         color: Sequence[float] = (1.0, 1.0, 1.0, 1.0),
         random_offset: float = 0.5,

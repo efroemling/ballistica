@@ -56,6 +56,7 @@ class Text(bs.Actor):
     def __init__(
         self,
         text: str | bs.Lstr,
+        *,
         position: tuple[float, float] = (0.0, 0.0),
         h_align: HAlign = HAlign.LEFT,
         v_align: VAlign = VAlign.NONE,

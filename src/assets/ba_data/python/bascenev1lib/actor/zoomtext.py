@@ -26,6 +26,7 @@ class ZoomText(bs.Actor):
         self,
         text: str | bs.Lstr,
         position: tuple[float, float] = (0.0, 0.0),
+        *,
         shiftposition: tuple[float, float] | None = None,
         shiftdelay: float | None = None,
         lifespan: float | None = None,

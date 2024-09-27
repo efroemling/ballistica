@@ -24,6 +24,7 @@ class _Entry:
         flash_length: float,
     ):
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-positional-arguments
         self._scoreboard = weakref.ref(scoreboard)
         self._do_cover = do_cover
         self._scale = scale
@@ -277,6 +278,7 @@ class _Entry:
     def set_value(
         self,
         score: float,
+        *,
         max_score: float | None = None,
         countdown: bool = False,
         flash: bool = True,
@@ -399,6 +401,7 @@ class Scoreboard:
         team: bs.Team,
         score: float,
         max_score: float | None = None,
+        *,
         countdown: bool = False,
         flash: bool = True,
         show_value: bool = True,

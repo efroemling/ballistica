@@ -355,6 +355,10 @@ class WatchWindow(bui.MainWindow):
             return
         bui.increment_analytics_count('Replay watch')
 
+        # Save our place in the UI so we return there when done.
+        if bui.app.classic is not None:
+            bui.app.classic.save_ui_state()
+
         def do_it() -> None:
             try:
                 # Reset to normal speed.

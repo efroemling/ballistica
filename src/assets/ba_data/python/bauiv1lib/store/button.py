@@ -23,6 +23,7 @@ class StoreButton:
         position: Sequence[float],
         size: Sequence[float],
         scale: float,
+        *,
         on_activate_call: Callable[[], Any] | None = None,
         transition_delay: float | None = None,
         color: Sequence[float] | None = None,

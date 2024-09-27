@@ -21,23 +21,23 @@ class PythonClassNode : public PythonClass {
   auto GetNode(bool doraise = true) const -> Node*;
 
  private:
-  static auto tp_new(PyTypeObject* type, PyObject* args,
-                     PyObject* keywds) -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
+      -> PyObject*;
   static void tp_dealloc(PythonClassNode* self);
   static auto tp_repr(PythonClassNode* self) -> PyObject*;
   static auto tp_getattro(PythonClassNode* self, PyObject* attr) -> PyObject*;
-  static auto tp_setattro(PythonClassNode* self, PyObject* attr,
-                          PyObject* val) -> int;
+  static auto tp_setattro(PythonClassNode* self, PyObject* attr, PyObject* val)
+      -> int;
   static auto Exists(PythonClassNode* self) -> PyObject*;
   static auto GetNodeType(PythonClassNode* self) -> PyObject*;
   static auto GetName(PythonClassNode* self) -> PyObject*;
   static auto GetDelegate(PythonClassNode* self, PyObject* args,
                           PyObject* keywds) -> PyObject*;
-  static auto Delete(PythonClassNode* self, PyObject* args,
-                     PyObject* keywds) -> PyObject*;
+  static auto Delete(PythonClassNode* self, PyObject* args, PyObject* keywds)
+      -> PyObject*;
   static auto HandleMessage(PythonClassNode* self, PyObject* args) -> PyObject*;
-  static auto AddDeathAction(PythonClassNode* self,
-                             PyObject* args) -> PyObject*;
+  static auto AddDeathAction(PythonClassNode* self, PyObject* args)
+      -> PyObject*;
   static auto ConnectAttr(PythonClassNode* self, PyObject* args) -> PyObject*;
   static auto Dir(PythonClassNode* self) -> PyObject*;
   static auto nb_bool(PythonClassNode* self) -> int;

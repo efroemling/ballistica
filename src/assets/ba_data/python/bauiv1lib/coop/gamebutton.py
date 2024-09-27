@@ -26,6 +26,7 @@ class GameButton:
         select: bool,
         row: str,
     ):
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
 

@@ -221,6 +221,7 @@ class PlusAppSubsystem(AppSubsystem):
         name: Any,
         score: int | None,
         callback: Callable,
+        *,
         order: str = 'increasing',
         tournament_id: str | None = None,
         score_type: str = 'points',

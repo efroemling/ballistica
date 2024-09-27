@@ -339,8 +339,9 @@ class Graphics {
   static auto GraphicsQualityFromRequest(GraphicsQualityRequest request,
                                          GraphicsQuality auto_val)
       -> GraphicsQuality;
-  static auto TextureQualityFromRequest(
-      TextureQualityRequest request, TextureQuality auto_val) -> TextureQuality;
+  static auto TextureQualityFromRequest(TextureQualityRequest request,
+                                        TextureQuality auto_val)
+      -> TextureQuality;
 
   /// For temporary use from arbitrary threads. This should be removed when
   /// possible and replaced with proper safe thread-specific access patterns

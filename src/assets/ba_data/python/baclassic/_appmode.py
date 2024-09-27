@@ -15,14 +15,16 @@ from babase import (
     AppIntentDefault,
     invoke_main_menu,
     screenmessage,
-    in_main_menu,
+    # in_main_menu,
 )
 
 import _baclassic
 
 if TYPE_CHECKING:
+    from typing import Callable
+
     from babase import AppIntent
-    from bauiv1 import UIV1AppSubsystem, MainWindow
+    from bauiv1 import UIV1AppSubsystem, MainWindow, MainWindowState
 
 
 class ClassicAppMode(AppMode):
@@ -49,7 +51,6 @@ class ClassicAppMode(AppMode):
 
     @override
     def on_activate(self) -> None:
-        print('CLASSIC ACTIVATING')
 
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_activate()
@@ -110,7 +111,11 @@ class ClassicAppMode(AppMode):
 
     @override
     def on_deactivate(self) -> None:
-        print('CLASSIC DEACTIVATING')
+
+        # Save where we were in the UI so we return there next time.
+        if app.classic is not None:
+            app.classic.save_ui_state()
+
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_deactivate()
 
@@ -120,38 +125,6 @@ class ClassicAppMode(AppMode):
         # side effect of pausing the action (when possible).
         if not app.active:
             invoke_main_menu()
-
-    def _jump_to_main_window(self, window: MainWindow) -> None:
-        """Jump to a window with the main menu as its parent."""
-        from bauiv1lib.mainmenu import MainMenuWindow
-        from bauiv1lib.ingamemenu import InGameMenuWindow
-
-        ui = app.ui_v1
-
-        old_window = ui.get_main_window()
-
-        if isinstance(old_window, (MainMenuWindow, InGameMenuWindow)):
-            # If we're currently in the top level menu window, just push
-            # our mainwindow on to the end.
-            old_window.main_window_replace(window)
-        else:
-            # Blow away the window stack and build a fresh one.
-            ui.clear_main_window()
-
-            back_state = (
-                MainMenuWindow.do_get_main_window_state()
-                if in_main_menu()
-                else InGameMenuWindow.do_get_main_window_state()
-            )
-            # set_main_window() needs this to be set.
-            back_state.is_top_level = True
-
-            ui.set_main_window(
-                window,
-                from_window=False,  # Disable from-check.
-                back_state=back_state,
-                suppress_warning=True,
-            )
 
     def _root_ui_menu_press(self) -> None:
         from babase import push_back_press
@@ -170,18 +143,11 @@ class ClassicAppMode(AppMode):
         import bauiv1
         from bauiv1lib.account.settings import AccountSettingsWindow
 
-        ui = app.ui_v1
-
-        # If the window is already showing, back out of it.
-        current_main_window = ui.get_main_window()
-        if isinstance(current_main_window, AccountSettingsWindow):
-            current_main_window.main_window_back()
-            return
-
-        self._jump_to_main_window(
-            AccountSettingsWindow(
+        self._auxiliary_window_nav(
+            win_type=AccountSettingsWindow,
+            win_create_call=lambda: AccountSettingsWindow(
                 origin_widget=bauiv1.get_special_widget('account_button')
-            )
+            ),
         )
 
     def _root_ui_squad_press(self) -> None:
@@ -198,52 +164,133 @@ class ClassicAppMode(AppMode):
         import bauiv1
         from bauiv1lib.settings.allsettings import AllSettingsWindow
 
+        self._auxiliary_window_nav(
+            win_type=AllSettingsWindow,
+            win_create_call=lambda: AllSettingsWindow(
+                origin_widget=bauiv1.get_special_widget('settings_button')
+            ),
+        )
+
+    def _auxiliary_window_nav(
+        self,
+        win_type: type[MainWindow],
+        win_create_call: Callable[[], MainWindow],
+    ) -> None:
+        """Navigate to or away from a particular type of Auxiliary window."""
+        # pylint: disable=unidiomatic-typecheck
+
         ui = app.ui_v1
 
-        # If the window is already showing, back out of it.
         current_main_window = ui.get_main_window()
-        if isinstance(current_main_window, AllSettingsWindow):
+
+        # Scan our ancestors for auxiliary states matching our type as
+        # well as auxiliary states in general.
+        aux_matching_state: MainWindowState | None = None
+        aux_state: MainWindowState | None = None
+
+        if current_main_window is None:
+            raise RuntimeError(
+                'Not currently handling no-top-level-window case.'
+            )
+
+        state = current_main_window.main_window_back_state
+        while state is not None:
+            assert state.window_type is not None
+            if state.is_auxiliary:
+                if state.window_type is win_type:
+                    aux_matching_state = state
+                else:
+                    aux_state = state
+
+            state = state.parent
+
+        # If there's an ancestor auxiliary window-state matching our
+        # type, back out past it (example: poking settings, navigating
+        # down a level or two, and then poking settings again should
+        # back out of settings).
+        if aux_matching_state is not None:
+            current_main_window.main_window_back_state = (
+                aux_matching_state.parent
+            )
             current_main_window.main_window_back()
             return
 
-        self._jump_to_main_window(
-            AllSettingsWindow(
-                origin_widget=bauiv1.get_special_widget('settings_button')
+        # If there's an ancestory auxiliary state *not* matching our
+        # type, crop the state and swap in our new auxiliary UI
+        # (example: poking settings, then poking account, then poking
+        # back should end up where things were before the settings
+        # poke).
+        if aux_state is not None:
+            # Blow away the window stack and build a fresh one.
+            ui.clear_main_window()
+            ui.set_main_window(
+                win_create_call(),
+                from_window=False,  # Disable from-check.
+                back_state=aux_state.parent,
+                suppress_warning=True,
+                is_auxiliary=True,
             )
+            return
+
+        # Ok, no auxiliary states found. Now if current window is auxiliary
+        # and the type matches, simply do a back.
+        if (
+            current_main_window.main_window_is_auxiliary
+            and type(current_main_window) is win_type
+        ):
+            current_main_window.main_window_back()
+            return
+
+        # If current window is auxiliary but type doesn't match,
+        # swap it out for our new auxiliary UI.
+        if current_main_window.main_window_is_auxiliary:
+            ui.clear_main_window()
+            ui.set_main_window(
+                win_create_call(),
+                from_window=False,  # Disable from-check.
+                back_state=current_main_window.main_window_back_state,
+                suppress_warning=True,
+                is_auxiliary=True,
+            )
+            return
+
+        # Ok, no existing auxiliary stuff was found period. Just
+        # navigate forward to this UI.
+        current_main_window.main_window_replace(
+            win_create_call(), is_auxiliary=True
         )
 
     def _root_ui_achievements_press(self) -> None:
         import bauiv1
         from bauiv1lib.achievements import AchievementsWindow
 
-        btn = bauiv1.get_special_widget('achievements_button')
-
-        AchievementsWindow(position=btn.get_screen_space_center())
+        self._auxiliary_window_nav(
+            win_type=AchievementsWindow,
+            win_create_call=lambda: AchievementsWindow(
+                origin_widget=bauiv1.get_special_widget('achievements_button')
+            ),
+        )
 
     def _root_ui_inbox_press(self) -> None:
         import bauiv1
         from bauiv1lib.inbox import InboxWindow
 
-        btn = bauiv1.get_special_widget('inbox_button')
-
-        InboxWindow(position=btn.get_screen_space_center())
+        self._auxiliary_window_nav(
+            win_type=InboxWindow,
+            win_create_call=lambda: InboxWindow(
+                origin_widget=bauiv1.get_special_widget('inbox_button')
+            ),
+        )
 
     def _root_ui_store_press(self) -> None:
         import bauiv1
         from bauiv1lib.store.browser import StoreBrowserWindow
 
-        ui = app.ui_v1
-
-        # If the window is already showing, back out of it.
-        current_main_window = ui.get_main_window()
-        if isinstance(current_main_window, StoreBrowserWindow):
-            current_main_window.main_window_back()
-            return
-
-        self._jump_to_main_window(
-            StoreBrowserWindow(
+        self._auxiliary_window_nav(
+            win_type=StoreBrowserWindow,
+            win_create_call=lambda: StoreBrowserWindow(
                 origin_widget=bauiv1.get_special_widget('store_button')
-            )
+            ),
         )
 
     def _root_ui_tickets_meter_press(self) -> None:
@@ -267,25 +314,17 @@ class ClassicAppMode(AppMode):
         from bauiv1lib.account import show_sign_in_prompt
         from bauiv1lib.league.rankwindow import LeagueRankWindow
 
-        ui = app.ui_v1
-
-        # If the window is already showing, back out of it.
-        current_main_window = ui.get_main_window()
-        if isinstance(current_main_window, LeagueRankWindow):
-            current_main_window.main_window_back()
-            return
-
         plus = bauiv1.app.plus
         assert plus is not None
-
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
 
-        self._jump_to_main_window(
-            LeagueRankWindow(
+        self._auxiliary_window_nav(
+            win_type=LeagueRankWindow,
+            win_create_call=lambda: LeagueRankWindow(
                 origin_widget=bauiv1.get_special_widget('trophy_meter')
-            )
+            ),
         )
 
     def _root_ui_level_meter_press(self) -> None:
@@ -300,26 +339,22 @@ class ClassicAppMode(AppMode):
         import bauiv1
         from bauiv1lib.inventory import InventoryWindow
 
-        ui = app.ui_v1
-
-        # If the window is already showing, back out of it.
-        current_main_window = ui.get_main_window()
-        if isinstance(current_main_window, InventoryWindow):
-            current_main_window.main_window_back()
-            return
-
-        self._jump_to_main_window(
-            InventoryWindow(
+        self._auxiliary_window_nav(
+            win_type=InventoryWindow,
+            win_create_call=lambda: InventoryWindow(
                 origin_widget=bauiv1.get_special_widget('inventory_button')
-            )
+            ),
         )
 
     def _root_ui_get_tokens_press(self) -> None:
         import bauiv1
         from bauiv1lib.gettokens import GetTokensWindow
 
-        GetTokensWindow(
-            origin_widget=bauiv1.get_special_widget('get_tokens_button')
+        self._auxiliary_window_nav(
+            win_type=GetTokensWindow,
+            win_create_call=lambda: GetTokensWindow(
+                origin_widget=bauiv1.get_special_widget('get_tokens_button')
+            ),
         )
 
     def _root_ui_chest_slot_pressed(self, index: int) -> None:

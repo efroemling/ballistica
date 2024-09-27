@@ -271,6 +271,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
         button: str,
         scale: float = 1.0,
     ) -> None:
+        # pylint: disable=too-many-positional-arguments
         base_size = 79
         btn = bui.buttonwidget(
             parent=self._root_widget,

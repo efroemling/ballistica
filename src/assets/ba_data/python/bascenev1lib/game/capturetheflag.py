@@ -73,6 +73,7 @@ class Team(bs.Team[Player]):
 
     def __init__(
         self,
+        *,
         base_pos: Sequence[float],
         base_region_material: bs.Material,
         base_region: bs.Node,

@@ -91,7 +91,7 @@ class MainMenuWindow(bui.MainWindow):
         import bauiv1lib.account.settings as _unused5
         import bauiv1lib.store.browser as _unused6
         import bauiv1lib.credits as _unused7
-        import bauiv1lib.helpui as _unused8
+        import bauiv1lib.help as _unused8
         import bauiv1lib.settings.allsettings as _unused9
         import bauiv1lib.gather as _unused10
         import bauiv1lib.watch as _unused11
@@ -524,7 +524,7 @@ class MainMenuWindow(bui.MainWindow):
 
     def _howtoplay(self) -> None:
         # pylint: disable=cyclic-import
-        from bauiv1lib.helpui import HelpWindow
+        from bauiv1lib.help import HelpWindow
 
         # no-op if we're not currently in control.
         if not self.main_window_has_control():

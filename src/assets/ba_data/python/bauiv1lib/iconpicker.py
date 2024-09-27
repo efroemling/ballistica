@@ -14,6 +14,18 @@ if TYPE_CHECKING:
     from typing import Any, Sequence
 
 
+class IconPickerDelegate:
+    """Delegate for character-picker."""
+
+    def on_icon_picker_pick(self, icon: str) -> None:
+        """Called when a character is selected."""
+        raise NotImplementedError()
+
+    def on_icon_picker_get_more_press(self) -> None:
+        """Called when the 'get more characters' button is pressed."""
+        raise NotImplementedError()
+
+
 class IconPicker(PopupWindow):
     """Picker for icons."""
 
@@ -21,8 +33,9 @@ class IconPicker(PopupWindow):
         self,
         parent: bui.Widget,
         position: tuple[float, float] = (0.0, 0.0),
-        delegate: Any = None,
+        delegate: IconPickerDelegate | None = None,
         scale: float | None = None,
+        *,
         offset: tuple[float, float] = (0.0, 0.0),
         tint_color: Sequence[float] = (1.0, 1.0, 1.0),
         tint2_color: Sequence[float] = (1.0, 1.0, 1.0),
@@ -160,24 +173,17 @@ class IconPicker(PopupWindow):
     def _on_store_press(self) -> None:
         from bauiv1lib.account import show_sign_in_prompt
 
-        # from bauiv1lib.store.browser import StoreBrowserWindow
-
         plus = bui.app.plus
         assert plus is not None
 
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
-        # self._transition_out()
 
-        bui.screenmessage('UNDER CONSTRUCTION')
-        return
+        if self._delegate is not None:
+            self._delegate.on_icon_picker_get_more_press()
 
-        # StoreBrowserWindow(
-        #     modal=True,
-        #     show_tab=StoreBrowserWindow.TabID.ICONS,
-        #     origin_widget=self._get_more_icons_button,
-        # )
+        self._transition_out()
 
     def _select_icon(self, icon: str) -> None:
         if self._delegate is not None:

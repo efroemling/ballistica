@@ -25,19 +25,21 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-locals
 
         self._r = 'editSoundtrackWindow'
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         self._width = 800 if uiscale is bui.UIScale.SMALL else 600
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
+        yoffs = -30 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            340
+            400
             if uiscale is bui.UIScale.SMALL
             else 370 if uiscale is bui.UIScale.MEDIUM else 440
         )
         spacing = 40.0
-        v = self._height - 40.0
+        v = self._height - 40.0 + yoffs
         v -= spacing * 1.0
 
         super().__init__(
@@ -54,7 +56,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
                     else 1.6 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -18) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
             ),
             transition=transition,
@@ -67,7 +69,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(45 + x_inset, self._height - 60),
+                position=(45 + x_inset, self._height - 60 + yoffs),
                 size=(120, 60),
                 scale=0.8,
                 label=bui.Lstr(resource='backText'),
@@ -82,7 +84,12 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             )
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 35),
+            position=(
+                self._width * 0.5,
+                self._height
+                - (46 if uiscale is bui.UIScale.SMALL else 35)
+                + yoffs,
+            ),
             size=(0, 0),
             maxwidth=300,
             text=bui.Lstr(resource=f'{self._r}.titleText'),
@@ -92,7 +99,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         )
 
         h = 43 + x_inset
-        v = self._height - 60
+        v = self._height - 60 + yoffs
         b_color = (0.6, 0.53, 0.63)
         b_textcolor = (0.75, 0.7, 0.8)
         lock_tex = bui.gettexture('lock')
@@ -222,8 +229,10 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         )
         self._update()
 
-        v = self._height - 65
-        scroll_height = self._height - 105
+        v = self._height - 65 + yoffs
+        scroll_height = self._height - (
+            160 if uiscale is bui.UIScale.SMALL else 105
+        )
         v -= scroll_height
         self._scrollwidget = scrollwidget = bui.scrollwidget(
             parent=self._root_widget,

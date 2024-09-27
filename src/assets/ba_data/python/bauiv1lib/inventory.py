@@ -24,11 +24,12 @@ class InventoryWindow(bui.MainWindow):
         uiscale = bui.app.ui_v1.uiscale
         width = 1050 if uiscale is bui.UIScale.SMALL else 750
         height = (
-            460
+            500
             if uiscale is bui.UIScale.SMALL
             else 530 if uiscale is bui.UIScale.MEDIUM else 600
         )
         x_offs = 70 if uiscale is bui.UIScale.SMALL else 0
+        yoffs = -45 if uiscale is bui.UIScale.SMALL else 0
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -44,7 +45,7 @@ class InventoryWindow(bui.MainWindow):
                     else 1.15 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -24)
+                    (0, 0)
                     if uiscale is bui.UIScale.SMALL
                     else (0, 15) if uiscale is bui.UIScale.MEDIUM else (0, 0)
                 ),
@@ -55,7 +56,7 @@ class InventoryWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(0, height - (50 if uiscale is bui.UIScale.SMALL else 45)),
+            position=(0, height - 45 + yoffs),
             size=(width, 25),
             text='INVENTORY',
             color=bui.app.ui_v1.title_color,
@@ -70,7 +71,7 @@ class InventoryWindow(bui.MainWindow):
         else:
             btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(x_offs + 50, height - 55),
+                position=(x_offs + 50, height - 55 + yoffs),
                 size=(60, 55),
                 scale=0.8,
                 label=bui.charstr(bui.SpecialChar.BACK),
@@ -83,7 +84,7 @@ class InventoryWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(0, height - 120),
+            position=(0, height - 120 + yoffs),
             size=(width, 25),
             text='(under construction)',
             scale=0.7,
@@ -94,7 +95,7 @@ class InventoryWindow(bui.MainWindow):
         button_width = 300
         self._player_profiles_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=((width - button_width) * 0.5, height - 200),
+            position=((width - button_width) * 0.5, height - 200 + yoffs),
             autoselect=True,
             size=(button_width, 60),
             label=bui.Lstr(resource='playerProfilesWindow.titleText'),

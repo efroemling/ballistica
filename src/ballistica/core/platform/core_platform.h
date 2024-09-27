@@ -229,8 +229,8 @@ class CorePlatform {
   virtual auto CreateTextTexture(int width, int height,
                                  const std::vector<std::string>& strings,
                                  const std::vector<float>& positions,
-                                 const std::vector<float>& widths,
-                                 float scale) -> void*;
+                                 const std::vector<float>& widths, float scale)
+      -> void*;
   virtual auto GetTextTextureData(void* tex) -> uint8_t*;
 
 #pragma mark ACCOUNTS ----------------------------------------------------------

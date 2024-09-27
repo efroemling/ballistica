@@ -35,6 +35,8 @@ class MasterServerV1CallThread(threading.Thread):
         callback: MasterServerCallback | None,
         response_type: MasterServerResponseType,
     ):
+        # pylint: disable=too-many-positional-arguments
+
         # Set daemon=True so long-running requests don't keep us from
         # quitting the app.
         super().__init__(daemon=True)
@@ -52,8 +54,9 @@ class MasterServerV1CallThread(threading.Thread):
         self._activity = weakref.ref(activity) if activity is not None else None
 
     def _run_callback(self, arg: None | dict[str, Any]) -> None:
-        # If we were created in an activity context and that activity has
-        # since died, do nothing.
+        # If we were created in an activity context and that activity
+        # has since died, do nothing.
+
         # FIXME: Should we just be using a ContextCall instead of doing
         # this check manually?
         if self._activity is not None:

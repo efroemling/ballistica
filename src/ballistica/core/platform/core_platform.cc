@@ -219,8 +219,8 @@ auto CorePlatform::GetConfigFilePath() -> std::string {
 }
 
 // FIXME: should make this unnecessary.
-auto CorePlatform::GetLowLevelConfigValue(const char* key,
-                                          int default_value) -> int {
+auto CorePlatform::GetLowLevelConfigValue(const char* key, int default_value)
+    -> int {
   std::string path =
       g_core->GetConfigDirectory() + BA_DIRSLASH + ".cvar_" + key;
   int val = default_value;
@@ -318,7 +318,7 @@ auto CorePlatform::FOpen(const char* path, const char* mode) -> FILE* {
 }
 
 auto CorePlatform::FilePathExists(const std::string& name) -> bool {
-  struct BA_STAT buffer {};
+  struct BA_STAT buffer{};
   return (Stat(name.c_str(), &buffer) == 0);
 }
 
@@ -512,14 +512,16 @@ void CorePlatform::EmitPlatformLog(const std::string& name, LogLevel level,
   // Do nothing by default.
 }
 
-auto CorePlatform::ReportFatalError(
-    const std::string& message, bool in_top_level_exception_handler) -> bool {
+auto CorePlatform::ReportFatalError(const std::string& message,
+                                    bool in_top_level_exception_handler)
+    -> bool {
   // Don't override handling by default.
   return false;
 }
 
-auto CorePlatform::HandleFatalError(
-    bool exit_cleanly, bool in_top_level_exception_handler) -> bool {
+auto CorePlatform::HandleFatalError(bool exit_cleanly,
+                                    bool in_top_level_exception_handler)
+    -> bool {
   // Don't override handling by default.
   return false;
 }
@@ -851,8 +853,8 @@ void CorePlatform::Unlink(const char* path) {
 #endif
 }
 
-auto CorePlatform::AbsPath(const std::string& path,
-                           std::string* outpath) -> bool {
+auto CorePlatform::AbsPath(const std::string& path, std::string* outpath)
+    -> bool {
   // Ensure all implementations fail if the file does not exist.
   if (!FilePathExists(path)) {
     return false;
@@ -860,8 +862,8 @@ auto CorePlatform::AbsPath(const std::string& path,
   return DoAbsPath(path, outpath);
 }
 
-auto CorePlatform::DoAbsPath(const std::string& path,
-                             std::string* outpath) -> bool {
+auto CorePlatform::DoAbsPath(const std::string& path, std::string* outpath)
+    -> bool {
   // This covers all but windows.
 #if BA_OSTYPE_WINDOWS
   throw Exception();

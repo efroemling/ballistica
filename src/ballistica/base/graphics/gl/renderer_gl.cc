@@ -2824,17 +2824,19 @@ auto RendererGL::NewScreenRenderTarget() -> RenderTarget* {
   return Object::NewDeferred<RenderTargetGL>(this);
 }
 
-auto RendererGL::NewFramebufferRenderTarget(
-    int width, int height, bool linear_interp, bool depth, bool texture,
-    bool depth_texture, bool high_quality, bool msaa,
-    bool alpha) -> Object::Ref<RenderTarget> {
+auto RendererGL::NewFramebufferRenderTarget(int width, int height,
+                                            bool linear_interp, bool depth,
+                                            bool texture, bool depth_texture,
+                                            bool high_quality, bool msaa,
+                                            bool alpha)
+    -> Object::Ref<RenderTarget> {
   return Object::New<RenderTarget, RenderTargetGL>(
       this, width, height, linear_interp, depth, texture, depth_texture,
       high_quality, msaa, alpha);
 }
 
-auto RendererGL::NewMeshData(MeshDataType mesh_type,
-                             MeshDrawType draw_type) -> MeshRendererData* {
+auto RendererGL::NewMeshData(MeshDataType mesh_type, MeshDrawType draw_type)
+    -> MeshRendererData* {
   switch (mesh_type) {
     case MeshDataType::kIndexedSimpleSplit: {
       MeshDataSimpleSplitGL* data;

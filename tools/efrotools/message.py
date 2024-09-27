@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
 
 def standard_message_sender_gen_pcommand(
+    *,
     projroot: Path,
     basename: str,
     source_module: str,
@@ -84,6 +85,7 @@ def standard_message_sender_gen_pcommand(
 
 
 def standard_message_receiver_gen_pcommand(
+    *,
     projroot: Path,
     basename: str,
     source_module: str,

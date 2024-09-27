@@ -45,6 +45,7 @@ class ProjectUpdater:
     def __init__(
         self,
         projroot: str,
+        *,
         check: bool,
         fix: bool,
         empty: bool = False,

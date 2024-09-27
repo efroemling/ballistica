@@ -22,6 +22,7 @@ class LeagueRankButton:
         position: tuple[float, float],
         size: tuple[float, float],
         scale: float,
+        *,
         on_activate_call: Callable[[], Any] | None = None,
         transition_delay: float | None = None,
         color: tuple[float, float, float] | None = None,

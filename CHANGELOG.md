@@ -1,9 +1,17 @@
-### 1.7.37 (build 22007, api 9, 2024-09-19)
+### 1.7.37 (build 22015, api 9, 2024-09-25)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
   I'm hopeful that api version won't need to be bumped again for along time (if
   ever).
+- The newest Pylint update (3.3) added a check for
+  'too-many-positional-arguments'. This seems like a good idea, so I updated
+  various functions to conform to it and set some others to ignore it. Basically
+  if you see a function like `def dothing(a, b, *, c, d)` then everything after
+  the `*` needs to be passed as a keyword. So you can't do `dothing(val1, val2,
+  val3, val4)`; you need to do `dothing(val1, val2, c=val3, d=val4)`. Requiring
+  keywords for complex functions generally leads to more readable code and less
+  breakage if arguments are added or removed from the function.
 - Playlist customization no longer requires pro.
 - Soundtrack customization no longer requires pro.
 - Campaign hard mode no longer requires pro.
@@ -90,6 +98,14 @@
   test UIScales are by using the UI panel in the dev-console or by setting the
   `BA_UI_SCALE` env var. If we can get UIScale switches to feel seamless enough
   at some point, it may be worth adding to display settings.
+- There is now a `ba*.app.classic.save_ui_state()` method that should be called
+  right before jumping into a game/replay/etc. This will save a state that will
+  automatically be restored the next time the main menu activity is entered.
+- (build 22010) Added the concept of 'auxiliary' windows and used them to make
+  various window navigation more intuitive. Example: previously, if you were on
+  the co-op screen and pressed the trophy toolbar icon to see your league rank
+  and then pressed back, you would be taken back to the top level main menu. Now
+  it will take you back to the co-op screen.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these

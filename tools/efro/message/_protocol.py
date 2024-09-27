@@ -42,6 +42,7 @@ class MessageProtocol:
         self,
         message_types: dict[int, type[Message]],
         response_types: dict[int, type[Response]],
+        *,
         forward_communication_errors: bool = False,
         forward_clean_errors: bool = False,
         remote_errors_include_stack_traces: bool = False,
@@ -414,6 +415,7 @@ class MessageProtocol:
         protocol_module_level_import_code: str | None = None,
     ) -> str:
         """Used by create_sender_module(); do not call directly."""
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         import textwrap
@@ -531,6 +533,7 @@ class MessageProtocol:
     ) -> str:
         """Used by create_receiver_module(); do not call directly."""
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-positional-arguments
         import textwrap
 
         desc = 'asynchronous' if is_async else 'synchronous'

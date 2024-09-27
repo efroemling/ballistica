@@ -632,6 +632,7 @@ class PlayWindow(bui.MainWindow):
         position: tuple[float, float],
         color: tuple[float, float, float],
     ) -> None:
+        # pylint: disable=too-many-positional-arguments
         h_extra = -100
         v_extra = 130
         eye_color = (

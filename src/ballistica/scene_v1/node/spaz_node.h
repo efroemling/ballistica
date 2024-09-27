@@ -271,8 +271,8 @@ class SpazNode : public Node {
   // points line up.
   auto CreateFixedJoint(RigidBody* b1, RigidBody* b2, float ls, float ld,
                         float as, float ad, float a1x, float a1y, float a1z,
-                        float a2x, float a2y, float a2z,
-                        bool reposition = true) -> JointFixedEF*;
+                        float a2x, float a2y, float a2z, bool reposition = true)
+      -> JointFixedEF*;
   void Throw(bool withBombButton);
 
   // Reset to a standing, non-moving state at the given point.
@@ -285,8 +285,8 @@ class SpazNode : public Node {
   auto IsBrokenBodyPart(int id) -> bool;
   static auto StaticCollideCallback(dContact* c, int count,
                                     RigidBody* colliding_body,
-                                    RigidBody* opposingbody,
-                                    void* data) -> bool {
+                                    RigidBody* opposingbody, void* data)
+      -> bool {
     auto* a = static_cast<SpazNode*>(data);
     return a->CollideCallback(c, count, colliding_body, opposingbody);
   }

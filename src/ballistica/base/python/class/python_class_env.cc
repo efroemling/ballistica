@@ -214,8 +214,8 @@ void PythonClassEnv::tp_dealloc(PythonClassEnv* self) {
   Py_TYPE(self)->tp_free(reinterpret_cast<PyObject*>(self));
 }
 
-auto PythonClassEnv::tp_getattro(PythonClassEnv* self,
-                                 PyObject* attr) -> PyObject* {
+auto PythonClassEnv::tp_getattro(PythonClassEnv* self, PyObject* attr)
+    -> PyObject* {
   BA_PYTHON_TRY;
 
   // Do we need to support other attr types?

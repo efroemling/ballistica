@@ -169,6 +169,7 @@ class Flag(bs.Actor):
 
     def __init__(
         self,
+        *,
         position: Sequence[float] = (0.0, 1.0, 0.0),
         color: Sequence[float] = (1.0, 1.0, 1.0),
         materials: Sequence[bs.Material] | None = None,

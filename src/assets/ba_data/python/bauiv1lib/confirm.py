@@ -22,6 +22,7 @@ class ConfirmWindow:
         action: Callable[[], Any] | None = None,
         width: float = 360.0,
         height: float = 100.0,
+        *,
         cancel_button: bool = True,
         cancel_is_selected: bool = False,
         color: tuple[float, float, float] = (1, 1, 1),

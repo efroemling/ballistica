@@ -126,6 +126,7 @@ class LogHandler(logging.Handler):
 
     def __init__(
         self,
+        *,
         path: str | Path | None,
         echofile: TextIO | None,
         suppress_non_root_debug: bool,
@@ -447,6 +448,7 @@ class LogHandler(logging.Handler):
         message: str | logging.LogRecord,
         labels: dict[str, str],
     ) -> None:
+        # pylint: disable=too-many-positional-arguments
         try:
             # If they passed a raw record here, bake it down to a string.
             if isinstance(message, logging.LogRecord):
@@ -678,6 +680,7 @@ class FileLogEcho:
 def setup_logging(
     log_path: str | Path | None,
     level: LogLevel,
+    *,
     suppress_non_root_debug: bool = False,
     log_stdout_stderr: bool = False,
     echo_to_stderr: bool = True,
@@ -710,7 +713,7 @@ def setup_logging(
     # won't themselves be intercepted and sent to the logger
     # which would create an infinite loop.
     loghandler = LogHandler(
-        log_path,
+        path=log_path,
         echofile=sys.stderr if echo_to_stderr else None,
         suppress_non_root_debug=suppress_non_root_debug,
         cache_size_limit=cache_size_limit,
