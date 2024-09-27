@@ -109,13 +109,14 @@ class PlaylistEditGameWindow(bui.MainWindow):
         width = 820 if uiscale is bui.UIScale.SMALL else 620
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         height = (
-            365
+            400
             if uiscale is bui.UIScale.SMALL
             else 460 if uiscale is bui.UIScale.MEDIUM else 550
         )
         spacing = 52
         y_extra = 15
         y_extra2 = 21
+        yoffs = -30 if uiscale is bui.UIScale.SMALL else 0
 
         map_tex_name = get_map_class(self._map).get_preview_texture_name()
         if map_tex_name is None:
@@ -132,7 +133,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
                     else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -17) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
             ),
             transition=transition,
@@ -141,7 +142,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
 
         btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(45 + x_inset, height - 82 + y_extra2),
+            position=(45 + x_inset, height - 82 + y_extra2 + yoffs),
             size=(60, 48) if is_add else (180, 65),
             label=(
                 bui.charstr(bui.SpecialChar.BACK)
@@ -158,7 +159,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
 
         add_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(width - (193 + x_inset), height - 82 + y_extra2),
+            position=(width - (193 + x_inset), height - 82 + y_extra2 + yoffs),
             size=(200, 65),
             scale=0.75,
             text_scale=1.3,
@@ -174,7 +175,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(-8, height - 70 + y_extra2),
+            position=(-8, height - 70 + y_extra2 + yoffs),
             size=(width, 25),
             text=gametype.get_display_string(),
             color=bui.app.ui_v1.title_color,
@@ -194,8 +195,14 @@ class PlaylistEditGameWindow(bui.MainWindow):
         scroll_width = width - (86 + 2 * x_inset)
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
-            position=(44 + x_inset, 35 + y_extra),
-            size=(scroll_width, height - 116),
+            position=(
+                44 + x_inset,
+                (80 if uiscale is bui.UIScale.SMALL else 35) + y_extra + yoffs,
+            ),
+            size=(
+                scroll_width,
+                height - (166 if uiscale is bui.UIScale.SMALL else 116),
+            ),
             highlight=False,
             claims_left_right=True,
             claims_tab=True,

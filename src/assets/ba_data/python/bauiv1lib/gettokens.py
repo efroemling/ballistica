@@ -8,7 +8,7 @@ import time
 from enum import Enum
 from functools import partial
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, assert_never
+from typing import TYPE_CHECKING, assert_never, override
 
 import bacommon.cloud
 import bauiv1 as bui
@@ -54,7 +54,7 @@ class _TxtDef:
     rotate: float | None = None
 
 
-class GetTokensWindow(bui.Window):
+class GetTokensWindow(bui.MainWindow):
     """Window for purchasing/acquiring classic tickets."""
 
     class State(Enum):
@@ -67,12 +67,10 @@ class GetTokensWindow(bui.Window):
 
     def __init__(
         self,
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
-        restore_previous_call: Callable[[bui.Widget], None] | None = None,
+        # restore_previous_call: Callable[[bui.Widget], None] | None = None,
     ):
-        # pylint: disable=too-many-locals
-
         bwidthstd = 170
         bwidthwide = 300
         ycolor = (0, 0, 0.3)
@@ -304,7 +302,7 @@ class GetTokensWindow(bui.Window):
         ]
 
         self._transitioning_out = False
-        self._restore_previous_call = restore_previous_call
+        # self._restore_previous_call = restore_previous_call
         self._textcolor = (0.92, 0.92, 2.0)
 
         self._query_in_flight = False
@@ -314,14 +312,14 @@ class GetTokensWindow(bui.Window):
         )
 
         # If they provided an origin-widget, scale up from that.
-        scale_origin: tuple[float, float] | None
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
-        else:
-            self._transition_out = 'out_right'
-            scale_origin = None
+        # scale_origin: tuple[float, float] | None
+        # if origin_widget is not None:
+        #     self._transition_out = 'out_scale'
+        #     scale_origin = origin_widget.get_screen_space_center()
+        #     transition = 'in_scale'
+        # else:
+        #     self._transition_out = 'out_right'
+        #     scale_origin = None
 
         uiscale = bui.app.ui_v1.uiscale
         self._width = 1000.0 if uiscale is bui.UIScale.SMALL else 800.0
@@ -334,8 +332,8 @@ class GetTokensWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                transition=transition,
-                scale_origin_stack_offset=scale_origin,
+                # transition=transition,
+                # scale_origin_stack_offset=scale_origin,
                 color=(0.3, 0.23, 0.36),
                 scale=(
                     1.5
@@ -346,13 +344,19 @@ class GetTokensWindow(bui.Window):
                     (0, -3) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
                 # toolbar_visibility='menu_minimal',
-                toolbar_visibility='get_tokens',
-            )
+                toolbar_visibility=(
+                    'get_tokens'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
+                ),
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         if uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self._back
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
             self._back_button = bui.get_special_widget('back_button')
         else:
@@ -363,23 +367,26 @@ class GetTokensWindow(bui.Window):
                     self._height - 80 + self._y_offset,
                 ),
                 size=(
-                    (140, 60)
-                    if self._restore_previous_call is None
-                    else (60, 60)
+                    # (140, 60)
+                    # if self._restore_previous_call is None
+                    # else
+                    (60, 60)
                 ),
                 scale=1.0,
                 autoselect=True,
                 label=(
-                    bui.Lstr(resource='doneText')
-                    if self._restore_previous_call is None
-                    else bui.charstr(bui.SpecialChar.BACK)
+                    # bui.Lstr(resource='doneText')
+                    # if self._restore_previous_call is None
+                    # else
+                    bui.charstr(bui.SpecialChar.BACK)
                 ),
                 button_type=(
-                    'regular'
-                    if self._restore_previous_call is None
-                    else 'backSmall'
+                    # 'regular'
+                    # if self._restore_previous_call is None
+                    # else
+                    'backSmall'
                 ),
-                on_activate_call=self._back,
+                on_activate_call=self.main_window_back,
             )
             # if uiscale is bui.UIScale.SMALL:
             #     bui.widget(
@@ -445,6 +452,16 @@ class GetTokensWindow(bui.Window):
     #     if self._ticking_sound is not None:
     #         self._ticking_sound.stop()
     #         self._ticking_sound = None
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
 
     def _update(self) -> None:
         # No-op if our underlying widget is dead or on its way out.
@@ -815,17 +832,18 @@ class GetTokensWindow(bui.Window):
     #             self._ticking_sound = None
     #             bui.getsound('cashRegister2').play()
 
-    def _back(self) -> None:
+    # def _back(self) -> None:
 
-        # No-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
+    #     self.main_
+    # No-op if our underlying widget is dead or on its way out.
+    # if not self._root_widget or self._root_widget.transitioning_out:
+    #     return
 
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        if self._restore_previous_call is not None:
-            self._restore_previous_call(self._root_widget)
+    # bui.containerwidget(
+    #     edit=self._root_widget, transition=self._transition_out
+    # )
+    # if self._restore_previous_call is not None:
+    #     self._restore_previous_call(self._root_widget)
 
     def _on_learn_more_press(self, url: str) -> None:
         bui.open_url(url)

@@ -32,7 +32,7 @@ class CreditsWindow(bui.MainWindow):
         uiscale = bui.app.ui_v1.uiscale
         width = 990 if uiscale is bui.UIScale.SMALL else 670
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
-        height = 398 if uiscale is bui.UIScale.SMALL else 500
+        height = 450 if uiscale is bui.UIScale.SMALL else 500
 
         self._r = 'creditsWindow'
         super().__init__(
@@ -86,7 +86,7 @@ class CreditsWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(0, height - (65 if uiscale is bui.UIScale.SMALL else 54)),
+            position=(0, height - (93 if uiscale is bui.UIScale.SMALL else 54)),
             size=(width, 30),
             scale=0.8 if uiscale is bui.UIScale.SMALL else 1.0,
             text=bui.Lstr(
@@ -101,8 +101,11 @@ class CreditsWindow(bui.MainWindow):
 
         scroll = bui.scrollwidget(
             parent=self._root_widget,
-            position=(40 + x_inset, 35),
-            size=(width - (80 + 2 * x_inset), height - 100),
+            position=(40 + x_inset, 62 if uiscale is bui.UIScale.SMALL else 35),
+            size=(
+                width - (80 + 2 * x_inset),
+                height - (160 if uiscale is bui.UIScale.SMALL else 100),
+            ),
             capture_arrows=True,
         )
 

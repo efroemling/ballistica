@@ -150,7 +150,7 @@ class ControlsSettingsWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(
                 0,
-                height + yoffs - (75 if uiscale is bui.UIScale.SMALL else 50),
+                height + yoffs - (53 if uiscale is bui.UIScale.SMALL else 50),
             ),
             size=(width, 25),
             text=bui.Lstr(resource=f'{self._r}.titleText'),
@@ -159,7 +159,7 @@ class ControlsSettingsWindow(bui.MainWindow):
             v_align='top',
         )
 
-        v = height - 75 + yoffs
+        v = height - (85 if uiscale is bui.UIScale.SMALL else 75) + yoffs
         v -= spacing
 
         if show_touch:

@@ -21,7 +21,8 @@ class RemoteAppSettingsWindow(bui.MainWindow):
         app = bui.app
         uiscale = app.ui_v1.uiscale
         width = 800 if uiscale is bui.UIScale.SMALL else 700
-        height = 390
+        height = 480 if uiscale is bui.UIScale.SMALL else 390
+        yoffs = -48 if uiscale is bui.UIScale.SMALL else 0
         spacing = 40
         assert bui.app.classic is not None
         super().__init__(
@@ -33,12 +34,12 @@ class RemoteAppSettingsWindow(bui.MainWindow):
                     else 'menu_full'
                 ),
                 scale=(
-                    1.76
+                    1.75
                     if uiscale is bui.UIScale.SMALL
                     else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (-10, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
             ),
             transition=transition,
@@ -52,7 +53,7 @@ class RemoteAppSettingsWindow(bui.MainWindow):
         else:
             btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(40, height - 67),
+                position=(40, height - 67 + yoffs),
                 size=(140, 65),
                 scale=0.8,
                 label=bui.Lstr(resource='backText'),
@@ -71,7 +72,7 @@ class RemoteAppSettingsWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(width * 0.5, height - 42),
+            position=(width * 0.5, height - 42 + yoffs),
             size=(0, 0),
             text=bui.Lstr(resource=f'{self._r}.titleText'),
             maxwidth=370,
@@ -85,7 +86,7 @@ class RemoteAppSettingsWindow(bui.MainWindow):
         v -= spacing * 1.2
         bui.textwidget(
             parent=self._root_widget,
-            position=(15, v - 26),
+            position=(15, v - 26 + yoffs),
             size=(width - 30, 30),
             maxwidth=width * 0.95,
             color=(0.7, 0.9, 0.7, 1.0),
@@ -106,7 +107,7 @@ class RemoteAppSettingsWindow(bui.MainWindow):
         # Update: now we just show link to the remote webpage.
         bui.textwidget(
             parent=self._root_widget,
-            position=(width * 0.5, v + 5),
+            position=(width * 0.5, v + 5 + yoffs),
             size=(0, 0),
             color=(0.7, 0.9, 0.7, 1.0),
             scale=1.4,
@@ -120,7 +121,7 @@ class RemoteAppSettingsWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(width * 0.5, v - 35),
+            position=(width * 0.5, v - 35 + yoffs),
             size=(0, 0),
             color=(0.7, 0.9, 0.7, 0.8),
             scale=0.65,
@@ -133,7 +134,7 @@ class RemoteAppSettingsWindow(bui.MainWindow):
 
         bui.checkboxwidget(
             parent=self._root_widget,
-            position=(width * 0.5 - 150, v - 116),
+            position=(width * 0.5 - 150, v - 116 + yoffs),
             size=(300, 30),
             maxwidth=300,
             scale=0.8,
