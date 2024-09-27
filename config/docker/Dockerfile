@@ -23,7 +23,7 @@ ENV CMAKE_BUILD_TYPE=${cmake_build_type}
 ENV HEADLESS_BUILD=${headless_build}
 
 # Install build dependencies
-RUN apt-get update -y && \
+RUN apt-get update && \
     apt-get install -y \
         python3.12-dev \
         python3.12-venv \
@@ -61,7 +61,7 @@ RUN mkdir /ballistica_cmake && \
 FROM ${base_image}
 
 # Environment settings
-ENV LANG en_US.utf8
+ENV LANG=en_US.utf8
 ENV LANGUAGE=en_US
 ENV LC_ALL=en_US.utf8
 ENV DEBIAN_FRONTEND=noninteractive
