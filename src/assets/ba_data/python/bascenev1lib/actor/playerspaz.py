@@ -46,6 +46,7 @@ class PlayerSpaz(Spaz):
     def __init__(
         self,
         player: bs.Player,
+        *,
         color: Sequence[float] = (1.0, 1.0, 1.0),
         highlight: Sequence[float] = (0.5, 0.5, 0.5),
         character: str = 'Spaz',
@@ -102,6 +103,7 @@ class PlayerSpaz(Spaz):
 
     def connect_controls_to_player(
         self,
+        *,
         enable_jump: bool = True,
         enable_punch: bool = True,
         enable_pickup: bool = True,

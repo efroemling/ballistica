@@ -805,6 +805,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         max_level: int,
     ) -> list[list[tuple[int, int]]]:
         """Calculate a distribution of bad guys given some params."""
+        # pylint: disable=too-many-positional-arguments
         max_iterations = 10 + max_dudes * 2
 
         groups: list[list[tuple[int, int]]] = []

@@ -17,8 +17,8 @@ namespace ballistica::scene_v1 {
 
 // ----------------------- get_configurable_game_pads --------------------------
 
-static auto PyGetConfigurableGamePads(PyObject* self,
-                                      PyObject* args) -> PyObject* {
+static auto PyGetConfigurableGamePads(PyObject* self, PyObject* args)
+    -> PyObject* {
   BA_PYTHON_TRY;
   std::vector<base::InputDevice*> gamepads =
       g_base->input->GetConfigurableGamePads();
@@ -52,8 +52,8 @@ static PyMethodDef PyGetConfigurableGamePadsDef = {
 
 // ------------------------ have_touchscreen_input -----------------------------
 
-static auto PyHaveTouchScreenInput(PyObject* self,
-                                   PyObject* args) -> PyObject* {
+static auto PyHaveTouchScreenInput(PyObject* self, PyObject* args)
+    -> PyObject* {
   BA_PYTHON_TRY;
   if (g_base->touch_input) {
     Py_RETURN_TRUE;
@@ -77,8 +77,8 @@ static PyMethodDef PyHaveTouchScreenInputDef = {
 
 // ------------------------- set_touchscreen_editing ---------------------------
 
-static auto PySetTouchscreenEditing(PyObject* self,
-                                    PyObject* args) -> PyObject* {
+static auto PySetTouchscreenEditing(PyObject* self, PyObject* args)
+    -> PyObject* {
   BA_PYTHON_TRY;
   int editing;
   if (!PyArg_ParseTuple(args, "p", &editing)) {
@@ -152,8 +152,8 @@ static PyMethodDef PyReleaseGamePadInputDef = {
 
 // ------------------------ capture_keyboard_input -----------------------------
 
-static auto PyCaptureKeyboardInput(PyObject* self,
-                                   PyObject* args) -> PyObject* {
+static auto PyCaptureKeyboardInput(PyObject* self, PyObject* args)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   assert(g_scene_v1);
@@ -181,8 +181,8 @@ static PyMethodDef PyCaptureKeyboardInputDef = {
 
 // ------------------------- release_keyboard_input ----------------------------
 
-static auto PyReleaseKeyboardInput(PyObject* self,
-                                   PyObject* args) -> PyObject* {
+static auto PyReleaseKeyboardInput(PyObject* self, PyObject* args)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   assert(g_scene_v1);
@@ -205,8 +205,8 @@ static PyMethodDef PyReleaseKeyboardInputDef = {
 
 // --------------------------- get_ui_input_device -----------------------------
 
-static auto PyGetUIInputDevice(PyObject* self, PyObject* args,
-                               PyObject* keywds) -> PyObject* {
+static auto PyGetUIInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   static const char* kwlist[] = {nullptr};
@@ -252,8 +252,8 @@ static PyMethodDef PyGetUIInputDeviceDef = {
 
 // ---------------------------- getinputdevice ---------------------------------
 
-static auto PyGetInputDevice(PyObject* self, PyObject* args,
-                             PyObject* keywds) -> PyObject* {
+static auto PyGetInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   const char* name;

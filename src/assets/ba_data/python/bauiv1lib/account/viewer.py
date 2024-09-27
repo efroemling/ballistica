@@ -23,6 +23,7 @@ class AccountViewerWindow(PopupWindow):
     def __init__(
         self,
         account_id: str,
+        *,
         profile_id: str | None = None,
         position: tuple[float, float] = (0.0, 0.0),
         scale: float | None = None,

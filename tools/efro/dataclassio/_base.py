@@ -180,6 +180,7 @@ class IOAttrs:
     def __init__(
         self,
         storagename: str | None = storagename,
+        *,
         store_default: bool = store_default,
         whole_days: bool = whole_days,
         whole_hours: bool = whole_hours,

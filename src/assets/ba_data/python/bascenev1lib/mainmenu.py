@@ -57,8 +57,8 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         plus = bs.app.plus
         assert plus is not None
 
-        # Throw up some text that only clients can see so they know that the
-        # host is navigating menus while they're just staring at an
+        # Throw up some text that only clients can see so they know that
+        # the host is navigating menus while they're just staring at an
         # empty-ish screen.
         tval = bs.Lstr(
             resource='hostIsNavigatingMenusText',
@@ -433,6 +433,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         word: str,
         x: float,
         y: float,
+        *,
         scale: float = 1.0,
         delay: float = 0.0,
         vr_depth_offset: float = 0.0,
@@ -561,13 +562,13 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         y: float,
         scale: float,
         delay: float,
+        *,
         custom_texture: str | None = None,
         jitter_scale: float = 1.0,
         rotate: float = 0.0,
         vr_depth_offset: float = 0.0,
     ) -> None:
         # pylint: disable=too-many-locals
-        # Temp easter goodness.
         if custom_texture is None:
             custom_texture = self._get_custom_logo_tex_name()
         self._custom_logo_tex_name = custom_texture
@@ -602,9 +603,8 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         self._logo_node = logo.node
         self._word_actors.append(logo)
 
-        # Add a bit of stop-motion-y jitter to the logo
-        # (unless we're in VR mode in which case its best to
-        # leave things still).
+        # Add a bit of stop-motion-y jitter to the logo (unless we're in
+        # VR mode in which case its best to leave things still).
         assert logo.node
 
         def jitter() -> None:

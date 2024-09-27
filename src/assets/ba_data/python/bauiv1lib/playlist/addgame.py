@@ -28,17 +28,18 @@ class PlaylistAddGameWindow(bui.MainWindow):
         uiscale = bui.app.ui_v1.uiscale
         self._width = 750 if uiscale is bui.UIScale.SMALL else 650
         x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
+        yoffs = -44 if uiscale is bui.UIScale.SMALL else 0
+
         self._height = (
-            346
+            400
             if uiscale is bui.UIScale.SMALL
-            else 380 if uiscale is bui.UIScale.MEDIUM else 440
+            else 400 if uiscale is bui.UIScale.MEDIUM else 460
         )
-        top_extra = 30 if uiscale is bui.UIScale.SMALL else 20
         self._scroll_width = 210
 
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(self._width, self._height + top_extra),
+                size=(self._width, self._height),
                 scale=(
                     1.95
                     if uiscale is bui.UIScale.SMALL
@@ -56,7 +57,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(58 + x_inset, self._height - 53),
+                position=(58 + x_inset, self._height - 53 + yoffs),
                 size=(60, 48),
                 label=bui.charstr(bui.SpecialChar.BACK),
                 autoselect=True,
@@ -65,7 +66,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
             )
         self._select_button = select_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(self._width - (172 + x_inset), self._height - 50),
+            position=(self._width - (172 + x_inset), self._height - 50 + yoffs),
             autoselect=True,
             size=(160, 60),
             scale=0.75,
@@ -81,7 +82,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 28),
+            position=(self._width * 0.5, self._height - 28 + yoffs),
             size=(0, 0),
             scale=1.0,
             text=bui.Lstr(resource=f'{self._r}.titleText'),
@@ -90,7 +91,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
             maxwidth=250,
             v_align='center',
         )
-        v = self._height - 64
+        v = self._height - 64 + yoffs
 
         self._selected_title_text = bui.textwidget(
             parent=self._root_widget,
@@ -114,9 +115,11 @@ class PlaylistAddGameWindow(bui.MainWindow):
             h_align='left',
         )
 
-        scroll_height = self._height - 100
+        scroll_height = self._height - (
+            160 if uiscale is bui.UIScale.SMALL else 100
+        )
 
-        v = self._height - 60
+        v = self._height - 60 + yoffs
 
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,

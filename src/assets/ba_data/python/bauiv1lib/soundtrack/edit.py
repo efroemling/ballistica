@@ -35,10 +35,12 @@ class SoundtrackEditWindow(bui.MainWindow):
         self._width = 900 if uiscale is bui.UIScale.SMALL else 648
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            395
+            450
             if uiscale is bui.UIScale.SMALL
             else 450 if uiscale is bui.UIScale.MEDIUM else 560
         )
+        yoffs = -48 if uiscale is bui.UIScale.SMALL else 0
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -48,7 +50,7 @@ class SoundtrackEditWindow(bui.MainWindow):
                     else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -37)
+                    (0, 0)
                     if uiscale is bui.UIScale.SMALL
                     else (0, 15) if uiscale is bui.UIScale.MEDIUM else (0, 0)
                 ),
@@ -58,7 +60,7 @@ class SoundtrackEditWindow(bui.MainWindow):
         )
         cancel_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(38 + x_inset, self._height - 60),
+            position=(38 + x_inset, self._height - 60 + yoffs),
             size=(160, 60),
             autoselect=True,
             label=bui.Lstr(resource='cancelText'),
@@ -66,7 +68,7 @@ class SoundtrackEditWindow(bui.MainWindow):
         )
         save_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(self._width - (168 + x_inset), self._height - 60),
+            position=(self._width - (168 + x_inset), self._height - 60 + yoffs),
             autoselect=True,
             size=(160, 60),
             label=bui.Lstr(resource='saveText'),
@@ -76,7 +78,7 @@ class SoundtrackEditWindow(bui.MainWindow):
         bui.widget(edit=cancel_button, right_widget=save_button)
         bui.textwidget(
             parent=self._root_widget,
-            position=(0, self._height - 50),
+            position=(0, self._height - 50 + yoffs),
             size=(self._width, 25),
             text=bui.Lstr(
                 resource=self._r
@@ -91,7 +93,7 @@ class SoundtrackEditWindow(bui.MainWindow):
             v_align='center',
             maxwidth=280,
         )
-        v = self._height - 110
+        v = self._height - 110 + yoffs
         if 'Soundtracks' not in appconfig:
             appconfig['Soundtracks'] = {}
 
@@ -165,7 +167,9 @@ class SoundtrackEditWindow(bui.MainWindow):
             on_return_press_call=self._do_it_with_sound,
         )
 
-        scroll_height = self._height - 180
+        scroll_height = self._height - (
+            230 if uiscale is bui.UIScale.SMALL else 180
+        )
         self._scrollwidget = scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=False,

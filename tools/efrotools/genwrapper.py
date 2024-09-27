@@ -42,6 +42,14 @@ if __name__ == '__main__':
         if public
         else get_non_public_legal_notice()
     )
+
+    # For some reason 'contents' is triggering Constant-name-not-uppercase
+    # errors only in spinoff projects.
+
+    # pylint: disable=useless-suppression
+    # pylint: disable=invalid-name
+    # pylint: enable=useless-suppression
+
     contents = (
         f'#!{pybinpath}\n'
         f'# {legalnotice}\n'

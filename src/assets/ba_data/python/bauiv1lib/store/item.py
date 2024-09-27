@@ -19,6 +19,7 @@ def instantiate_store_item_display(
     b_pos: tuple[float, float],
     b_width: float,
     b_height: float,
+    *,
     boffs_h: float = 0.0,
     boffs_h2: float = 0.0,
     boffs_v2: float = 0,
@@ -26,6 +27,7 @@ def instantiate_store_item_display(
     button: bool = True,
 ) -> None:
     """(internal)"""
+    # pylint: disable=too-many-positional-arguments
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals

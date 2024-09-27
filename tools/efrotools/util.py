@@ -25,6 +25,7 @@ def replace_section(
     begin_marker: str,
     end_marker: str,
     replace_text: str = '',
+    *,
     keep_markers: bool = False,
     error_if_missing: bool = True,
 ) -> str:

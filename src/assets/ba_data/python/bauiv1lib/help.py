@@ -26,13 +26,14 @@ class HelpWindow(bui.MainWindow):
 
         getres = bui.app.lang.get_resource
 
-        # self._main_menu = main_menu
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         width = 1050 if uiscale is bui.UIScale.SMALL else 750
-        x_offs = 70 if uiscale is bui.UIScale.SMALL else 0
+        xoffs = 70 if uiscale is bui.UIScale.SMALL else 0
+        yoffs = -33 if uiscale is bui.UIScale.SMALL else 0
+
         height = (
-            460
+            500
             if uiscale is bui.UIScale.SMALL
             else 530 if uiscale is bui.UIScale.MEDIUM else 600
         )
@@ -51,7 +52,7 @@ class HelpWindow(bui.MainWindow):
                     else 1.15 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -24)
+                    (0, 0)
                     if uiscale is bui.UIScale.SMALL
                     else (0, 15) if uiscale is bui.UIScale.MEDIUM else (0, 0)
                 ),
@@ -62,7 +63,10 @@ class HelpWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(0, height - (50 if uiscale is bui.UIScale.SMALL else 45)),
+            position=(
+                0,
+                height - (50 if uiscale is bui.UIScale.SMALL else 45) + yoffs,
+            ),
             size=(width, 25),
             text=bui.Lstr(
                 resource=f'{self._r}.titleText',
@@ -75,11 +79,14 @@ class HelpWindow(bui.MainWindow):
 
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
-            position=(44 + x_offs, 55 if uiscale is bui.UIScale.SMALL else 55),
+            position=(
+                44 + xoffs,
+                (92 if uiscale is bui.UIScale.SMALL else 55) + yoffs,
+            ),
             simple_culling_v=100.0,
             size=(
-                width - (88 + 2 * x_offs),
-                height - 120 + (5 if uiscale is bui.UIScale.SMALL else 0),
+                width - (88 + 2 * xoffs),
+                height - (150 if uiscale is bui.UIScale.SMALL else 120),
             ),
             capture_arrows=True,
         )
@@ -105,7 +112,7 @@ class HelpWindow(bui.MainWindow):
         else:
             btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(x_offs + 50, height - 55),
+                position=(xoffs + 50, height - 55),
                 size=(60, 55),
                 scale=0.8,
                 label=bui.charstr(bui.SpecialChar.BACK),

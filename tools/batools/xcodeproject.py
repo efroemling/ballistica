@@ -35,6 +35,7 @@ def update_xcode_project(
     force: bool = False,
 ) -> str:
     """Given an xcode project, update it for the current set of files."""
+    # pylint: disable=too-many-positional-arguments
 
     suffixes = ['.cc', '.h', '.m', '.mm', '.swift']
     updater = Updater(
@@ -63,8 +64,8 @@ class Updater:
         existing_data: str,
         sources: list[str],
         projname: str,
-        # has_app_delegate_mm: bool = False,
     ) -> None:
+        # pylint: disable=too-many-positional-arguments
         if not path.endswith('.xcodeproj'):
             raise RuntimeError(f"Path does not end in .xcodeproj: '{path}'.")
 
@@ -73,7 +74,6 @@ class Updater:
         self.existing_data = existing_data
         self.sources = sources
         self.project = None
-        # self.has_app_delegate_mm = has_app_delegate_mm
 
         # Project name variations.
         self.pnameu = projname

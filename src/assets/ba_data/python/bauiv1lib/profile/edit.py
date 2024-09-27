@@ -9,11 +9,14 @@ from typing import cast, override
 
 from bauiv1lib.colorpicker import ColorPicker
 from bauiv1lib.characterpicker import CharacterPickerDelegate
+from bauiv1lib.iconpicker import IconPickerDelegate
 import bauiv1 as bui
 import bascenev1 as bs
 
 
-class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
+class EditProfileWindow(
+    bui.MainWindow, CharacterPickerDelegate, IconPickerDelegate
+):
     """Window for editing a player profile."""
 
     def reload_window(self) -> None:
@@ -30,10 +33,12 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
             back_state=self.main_window_back_state,
         )
 
+    # def __del__(self) -> None:
+    #     print(f'~EditProfileWindow({id(self)})')
+
     def __init__(
         self,
         existing_profile: str | None,
-        # in_main_menu: bool,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
@@ -41,12 +46,13 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
+
         assert bui.app.classic is not None
+        # print(f'EditProfileWindow({id(self)})')
 
         plus = bui.app.plus
         assert plus is not None
 
-        # self._in_main_menu = in_main_menu
         self._existing_profile = existing_profile
         self._r = 'editProfileWindow'
         self._spazzes: list[str] = []
@@ -62,10 +68,11 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
         self._width = width = 880.0 if uiscale is bui.UIScale.SMALL else 680.0
         self._x_inset = x_inset = 100.0 if uiscale is bui.UIScale.SMALL else 0.0
         self._height = height = (
-            450.0
+            500.0
             if uiscale is bui.UIScale.SMALL
             else 400.0 if uiscale is bui.UIScale.MEDIUM else 450.0
         )
+        yoffs = -42 if uiscale is bui.UIScale.SMALL else 0
         spacing = 40
         self._base_scale = (
             1.6
@@ -78,13 +85,10 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
                 size=(width, height + top_extra),
                 scale=self._base_scale,
                 stack_offset=(
-                    (0, -40) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
                 toolbar_visibility=(
-                    # 'menu_minimal'
-                    None
-                    if uiscale is bui.UIScale.SMALL
-                    else 'menu_full'
+                    None if uiscale is bui.UIScale.SMALL else 'menu_full'
                 ),
             ),
             transition=transition,
@@ -92,7 +96,7 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
         )
         cancel_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(52 + x_inset, height - 60),
+            position=(52 + x_inset, height - 60 + yoffs),
             size=(155, 60),
             scale=0.8,
             autoselect=True,
@@ -102,7 +106,7 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)
         save_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(width - (177 + x_inset), height - 60),
+            position=(width - (177 + x_inset), height - 60 + yoffs),
             size=(155, 60),
             autoselect=True,
             scale=0.8,
@@ -113,7 +117,7 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
         bui.containerwidget(edit=self._root_widget, start_button=btn)
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, height - 38),
+            position=(self._width * 0.5, height - 38 + yoffs),
             size=(0, 0),
             text=(
                 bui.Lstr(resource=f'{self._r}.titleNewText')
@@ -163,7 +167,7 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
         self._icon_index = icon_index
         bui.buttonwidget(edit=save_button, on_activate_call=self.save)
 
-        v = height - 115.0
+        v = height - 115.0 + yoffs
         self._name = (
             '' if self._existing_profile is None else self._existing_profile
         )
@@ -522,12 +526,16 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
         cls = type(self)
+
+        # Pull things out of self here; if we do it within the lambda
+        # we'll keep ourself alive which is bad.
+
+        existing_profile = self._existing_profile
         return bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
                 transition=transition,
                 origin_widget=origin_widget,
-                existing_profile=self._existing_profile,
-                # in_main_menu=self._in_main_menu,
+                existing_profile=existing_profile,
             )
         )
 
@@ -637,10 +645,26 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
             for s in self._spazzes
         ]
 
+    @override
     def on_icon_picker_pick(self, icon: str) -> None:
         """An icon has been selected by the picker."""
         self._icon = icon
         self._update_icon()
+
+    @override
+    def on_icon_picker_get_more_press(self) -> None:
+        """User wants to get more icons."""
+        from bauiv1lib.store.browser import StoreBrowserWindow
+
+        if not self.main_window_has_control():
+            return
+
+        self.main_window_replace(
+            StoreBrowserWindow(
+                minimal_toolbars=True,
+                show_tab=StoreBrowserWindow.TabID.ICONS,
+            )
+        )
 
     @override
     def on_character_picker_pick(self, character: str) -> None:
@@ -648,7 +672,8 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
         if not self._root_widget:
             return
 
-        # The player could have bought a new one while the picker was up.
+        # The player could have bought a new one while the picker was
+        # up.
         self.refresh_characters()
         self._icon_index = (
             self._spazzes.index(character) if character in self._spazzes else 0
@@ -847,8 +872,8 @@ class EditProfileWindow(bui.MainWindow, CharacterPickerDelegate):
                 }
             )
 
-            # Also lets be aware we're no longer global if we're taking a
-            # new name (will need to re-request it).
+            # Also lets be aware we're no longer global if we're taking
+            # a new name (will need to re-request it).
             self._global = False
 
         plus.add_v1_account_transaction(

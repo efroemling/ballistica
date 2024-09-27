@@ -657,6 +657,7 @@ class Achievement:
         award: int,
         hard_mode_only: bool = False,
     ):
+        # pylint: disable=too-many-positional-arguments
         self._name = name
         self._icon_name = icon_name
         self._icon_color: Sequence[float] = list(icon_color) + [1]
@@ -870,6 +871,7 @@ class Achievement:
         x: float,
         y: float,
         delay: float,
+        *,
         outdelay: float | None = None,
         color: Sequence[float] | None = None,
         style: str = 'post_game',

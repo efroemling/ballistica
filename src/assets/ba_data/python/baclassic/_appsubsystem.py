@@ -112,6 +112,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self.invite_confirm_windows: list[Any] = []  # FIXME: Don't use Any.
         self.party_window: weakref.ref[PartyWindow] | None = None
         self.main_menu_resume_callbacks: list = []
+        self.saved_ui_state: bauiv1.MainWindowState | None = None
 
         # Store.
         self.store_layout: dict[str, list[dict[str, Any]]] | None = None
@@ -327,6 +328,9 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                     )
                     return False
 
+        # Save where we are in the UI to come back to when done.
+        babase.app.classic.save_ui_state()
+
         # Ok, we're good to go.
         self.coop_session_args = {
             'campaign': campaignname,
@@ -523,26 +527,21 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         tip = self.tips.pop()
         return tip
 
-    def run_gpu_benchmark(self) -> None:
-        """Kick off a benchmark to test gpu speeds."""
-        from baclassic._benchmark import run_gpu_benchmark as run
-
-        run()
-
     def run_cpu_benchmark(self) -> None:
         """Kick off a benchmark to test cpu speeds."""
-        from baclassic._benchmark import run_cpu_benchmark as run
+        from baclassic._benchmark import run_cpu_benchmark
 
-        run()
+        run_cpu_benchmark()
 
     def run_media_reload_benchmark(self) -> None:
         """Kick off a benchmark to test media reloading speeds."""
-        from baclassic._benchmark import run_media_reload_benchmark as run
+        from baclassic._benchmark import run_media_reload_benchmark
 
-        run()
+        run_media_reload_benchmark()
 
     def run_stress_test(
         self,
+        *,
         playlist_type: str = 'Random',
         playlist_name: str = '__default__',
         player_count: int = 8,
@@ -550,9 +549,9 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         attract_mode: bool = False,
     ) -> None:
         """Run a stress test."""
-        from baclassic._benchmark import run_stress_test as run
+        from baclassic._benchmark import run_stress_test
 
-        run(
+        run_stress_test(
             playlist_type=playlist_type,
             playlist_name=playlist_name,
             player_count=player_count,
@@ -694,6 +693,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
     def tournament_entry_window(
         self,
         tournament_id: str,
+        *,
         tournament_activity: bascenev1.Activity | None = None,
         position: tuple[float, float] = (0.0, 0.0),
         delegate: Any = None,
@@ -817,11 +817,20 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 InGameMenuWindow(), is_top_level=True, suppress_warning=True
             )
 
+    def save_ui_state(self) -> None:
+        """Store our current place in the UI."""
+        ui = babase.app.ui_v1
+        mainwindow = ui.get_main_window()
+        if mainwindow is not None:
+            self.saved_ui_state = ui.save_main_window_state(mainwindow)
+        else:
+            self.saved_ui_state = None
+
     def invoke_main_menu_ui(self) -> None:
         """Bring up main menu ui."""
-        print('INVOKING MAIN MENU UI')
 
-        # Bring up the last place we were, or start at the main menu otherwise.
+        # Bring up the last place we were, or start at the main menu
+        # otherwise.
         app = bauiv1.app
         env = app.env
         with bascenev1.ContextRef.empty():
@@ -842,72 +851,16 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                     app.ui_v1.set_main_window(
                         KioskWindow(), is_top_level=True, suppress_warning=True
                     )
-                # ..or in normal cases go back to the main menu
                 else:
-                    # if main_menu_location == 'Gather':
-                    #     # pylint: disable=cyclic-import
-                    #     from bauiv1lib.gather import GatherWindow
+                    # If there's a saved ui state, restore that.
+                    if self.saved_ui_state is not None:
+                        app.ui_v1.restore_main_window_state(self.saved_ui_state)
+                    else:
+                        # Otherwise start fresh at the main menu.
+                        from bauiv1lib.mainmenu import MainMenuWindow
 
-                    #     app.ui_v1.set_main_window(
-                    #         GatherWindow(transition=None),
-                    #         from_window=False,  # Disable check here.
-                    #     )
-                    # elif main_menu_location == 'Watch':
-                    #     # pylint: disable=cyclic-import
-                    #     from bauiv1lib.watch import WatchWindow
-
-                    #     app.ui_v1.set_main_window(
-                    #         WatchWindow(transition=None),
-                    #         from_window=False,  # Disable check here.
-                    #     )
-                    # elif main_menu_location == 'Team Game Select':
-                    #     # pylint: disable=cyclic-import
-                    #     from bauiv1lib.playlist.browser import (
-                    #         PlaylistBrowserWindow,
-                    #     )
-
-                    #     app.ui_v1.set_main_window(
-                    #         PlaylistBrowserWindow(
-                    #             sessiontype=bascenev1.DualTeamSession,
-                    #             transition=None,
-                    #         ),
-                    #         from_window=False,  # Disable check here.
-                    #     )
-                    # elif main_menu_location == 'Free-for-All Game Select':
-                    #     # pylint: disable=cyclic-import
-                    #     from bauiv1lib.playlist.browser import (
-                    #         PlaylistBrowserWindow,
-                    #     )
-
-                    #     app.ui_v1.set_main_window(
-                    #         PlaylistBrowserWindow(
-                    #             sessiontype=bascenev1.FreeForAllSession,
-                    #             transition=None,
-                    #         ),
-                    #         from_window=False,  # Disable check here.
-                    #     )
-                    # elif main_menu_location == 'Coop Select':
-                    #     # pylint: disable=cyclic-import
-                    #     from bauiv1lib.coop.browser import CoopBrowserWindow
-
-                    #     app.ui_v1.set_main_window(
-                    #         CoopBrowserWindow(transition=None),
-                    #         from_window=False,  # Disable check here.
-                    #     )
-                    # elif main_menu_location == 'Benchmarks & Stress Tests':
-                    #     # pylint: disable=cyclic-import
-                    #     from bauiv1lib.debug import DebugWindow
-
-                    #     app.ui_v1.set_main_window(
-                    #         DebugWindow(transition=None),
-                    #         from_window=False,  # Disable check here.
-                    #     )
-                    # else:
-                    # pylint: disable=cyclic-import
-                    from bauiv1lib.mainmenu import MainMenuWindow
-
-                    app.ui_v1.set_main_window(
-                        MainMenuWindow(transition=None),
-                        is_top_level=True,
-                        suppress_warning=True,
-                    )
+                        app.ui_v1.set_main_window(
+                            MainMenuWindow(transition=None),
+                            is_top_level=True,
+                            suppress_warning=True,
+                        )

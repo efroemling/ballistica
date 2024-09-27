@@ -27,6 +27,7 @@ class Icon(bs.Actor):
         player: Player,
         position: tuple[float, float],
         scale: float,
+        *,
         show_lives: bool = True,
         show_death: bool = True,
         name_scale: float = 1.0,

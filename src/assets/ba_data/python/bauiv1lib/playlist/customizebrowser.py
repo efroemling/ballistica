@@ -45,20 +45,20 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         uiscale = bui.app.ui_v1.uiscale
         self._width = 970.0 if uiscale is bui.UIScale.SMALL else 650.0
         x_inset = 100.0 if uiscale is bui.UIScale.SMALL else 0.0
+        yoffs = -51 if uiscale is bui.UIScale.SMALL else 0.0
         self._height = (
-            380.0
+            440.0
             if uiscale is bui.UIScale.SMALL
             else 420.0 if uiscale is bui.UIScale.MEDIUM else 500.0
         )
-        top_extra = 20.0 if uiscale is bui.UIScale.SMALL else 0.0
 
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(self._width, self._height + top_extra),
+                size=(self._width, self._height),
                 scale=(
-                    1.83
+                    1.8
                     if uiscale is bui.UIScale.SMALL
-                    else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
+                    else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 toolbar_visibility=(
                     'menu_minimal'
@@ -66,7 +66,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
                     else 'menu_full'
                 ),
                 stack_offset=(
-                    (0, -10) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
             ),
             transition=transition,
@@ -82,7 +82,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(43 + x_inset, self._height - 60),
+                position=(43 + x_inset, self._height - 60 + yoffs),
                 size=(160, 68),
                 scale=0.77,
                 autoselect=True,
@@ -99,7 +99,12 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(0, self._height - 47),
+            position=(
+                0,
+                self._height
+                - (47 if uiscale is bui.UIScale.SMALL else 47)
+                + yoffs,
+            ),
             size=(self._width, 25),
             text=bui.Lstr(
                 resource=f'{self._r}.titleText',
@@ -111,7 +116,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             v_align='center',
         )
 
-        v = self._height - 59.0
+        v = self._height - 59.0 + yoffs
         h = 41 + x_inset
         b_color = (0.6, 0.53, 0.63)
         b_textcolor = (0.75, 0.7, 0.8)
@@ -260,8 +265,10 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             )
         )
 
-        v = self._height - 75
-        self._scroll_height = self._height - 119
+        v = self._height - 75 + yoffs
+        self._scroll_height = self._height - (
+            180 if uiscale is bui.UIScale.SMALL else 119
+        )
         scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             position=(140 + x_inset, v - self._scroll_height),

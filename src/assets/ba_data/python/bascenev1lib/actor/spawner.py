@@ -50,6 +50,7 @@ class Spawner:
 
     def __init__(
         self,
+        *,
         data: Any = None,
         pt: Sequence[float] = (0, 0, 0),
         spawn_time: float = 1.0,

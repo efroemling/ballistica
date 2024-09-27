@@ -24,6 +24,7 @@ class TournamentButton:
         select: bool,
         on_pressed: Callable[[TournamentButton], None],
     ) -> None:
+        # pylint: disable=too-many-positional-arguments
         self._r = 'coopSelectWindow'
         sclx = 300
         scly = 195.0

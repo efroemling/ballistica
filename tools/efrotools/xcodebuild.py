@@ -970,6 +970,7 @@ class XCodeBuild:
         prefix_unexpected: bool = True,
     ) -> None:
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-positional-arguments
         if ignore_line_starts is None:
             ignore_line_starts = []
         if ignore_line_start_tails is None:

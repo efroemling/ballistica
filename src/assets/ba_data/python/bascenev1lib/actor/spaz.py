@@ -71,6 +71,7 @@ class Spaz(bs.Actor):
 
     def __init__(
         self,
+        *,
         color: Sequence[float] = (1.0, 1.0, 1.0),
         highlight: Sequence[float] = (0.5, 0.5, 0.5),
         character: str = 'Spaz',

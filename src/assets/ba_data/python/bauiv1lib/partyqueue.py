@@ -33,6 +33,7 @@ class PartyQueueWindow(bui.Window):
             account_id: str,
             name: str,
         ):
+            # pylint: disable=too-many-positional-arguments
             self.claimed = False
             self._line_left = parent.get_line_left()
             self._line_width = parent.get_line_width()
@@ -351,12 +352,12 @@ class PartyQueueWindow(bui.Window):
         self, account_id: str | None, origin_widget: bui.Widget
     ) -> None:
         """A dude was clicked so we should show his account info."""
-        from bauiv1lib.account import viewer
+        from bauiv1lib.account.viewer import AccountViewerWindow
 
         if account_id is None:
             bui.getsound('error').play()
             return
-        viewer.AccountViewerWindow(
+        AccountViewerWindow(
             account_id=account_id,
             position=origin_widget.get_screen_space_center(),
         )
@@ -551,6 +552,11 @@ class PartyQueueWindow(bui.Window):
                     self._last_connect_attempt_time is None
                     or now - self._last_connect_attempt_time > 10.0
                 ):
+
+                    # Store UI location to return to when done.
+                    if bs.app.classic is not None:
+                        bs.app.classic.save_ui_state()
+
                     bs.connect_to_party(
                         address=self._address,
                         port=self._port,

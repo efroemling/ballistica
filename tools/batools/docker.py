@@ -8,6 +8,7 @@ import subprocess
 def _docker_build(
     image_name: str,
     dockerfile_dir: str,
+    *,
     cmake_build_type: str | None = None,
     labels: dict[str, str] | None = None,
     platform: str | None = None,

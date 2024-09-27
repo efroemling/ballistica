@@ -312,6 +312,7 @@ def _desc(obj: Any) -> str:
 
 def _printrefs(
     obj: Any,
+    *,
     level: int,
     max_level: int,
     exclude_objs: list,

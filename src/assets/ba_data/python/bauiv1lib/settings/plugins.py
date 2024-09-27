@@ -44,12 +44,13 @@ class PluginWindow(bui.MainWindow):
         uiscale = bui.app.ui_v1.uiscale
         self._width = 870.0 if uiscale is bui.UIScale.SMALL else 670.0
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
+        yoffs = -55.0 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            370.0
+            450.0
             if uiscale is bui.UIScale.SMALL
             else 450.0 if uiscale is bui.UIScale.MEDIUM else 520.0
         )
-        top_extra = 10 if uiscale is bui.UIScale.SMALL else 0
+        top_extra = 0 if uiscale is bui.UIScale.SMALL else 0
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
@@ -64,7 +65,7 @@ class PluginWindow(bui.MainWindow):
                     else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -25) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
             ),
             transition=transition,
@@ -72,7 +73,9 @@ class PluginWindow(bui.MainWindow):
         )
 
         self._scroll_width = self._width - (100 + 2 * x_inset)
-        self._scroll_height = self._height - 115.0
+        self._scroll_height = self._height - (
+            200.0 if uiscale is bui.UIScale.SMALL else 115.0
+        )
         self._sub_width = self._scroll_width * 0.95
         self._sub_height = 724.0
 
@@ -85,7 +88,7 @@ class PluginWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(53 + x_inset, self._height - 60),
+                position=(53 + x_inset, self._height - 60 + yoffs),
                 size=(140, 60),
                 scale=0.8,
                 autoselect=True,
@@ -99,7 +102,7 @@ class PluginWindow(bui.MainWindow):
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 41),
+            position=(self._width * 0.5, self._height - 41 + yoffs),
             size=(0, 0),
             text=bui.Lstr(resource='pluginsText'),
             color=app.ui_v1.title_color,
@@ -120,7 +123,7 @@ class PluginWindow(bui.MainWindow):
 
         self._num_plugins_text = bui.textwidget(
             parent=self._root_widget,
-            position=(settings_button_x - 130, self._height - 41),
+            position=(settings_button_x - 130, self._height - 41 + yoffs),
             size=(0, 0),
             text='',
             h_align='center',
@@ -130,7 +133,7 @@ class PluginWindow(bui.MainWindow):
         self._category_button = bui.buttonwidget(
             parent=self._root_widget,
             scale=0.7,
-            position=(settings_button_x - 105, self._height - 60),
+            position=(settings_button_x - 105, self._height - 60 + yoffs),
             size=(130, 60),
             label=bui.Lstr(resource='allText'),
             autoselect=True,
@@ -141,7 +144,7 @@ class PluginWindow(bui.MainWindow):
 
         self._settings_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(settings_button_x, self._height - 58),
+            position=(settings_button_x, self._height - 58 + yoffs),
             size=(40, 40),
             label='',
             on_activate_call=self._open_settings,
@@ -149,7 +152,7 @@ class PluginWindow(bui.MainWindow):
 
         bui.imagewidget(
             parent=self._root_widget,
-            position=(settings_button_x + 3, self._height - 57),
+            position=(settings_button_x + 3, self._height - 57 + yoffs),
             draw_controller=self._settings_button,
             size=(35, 35),
             texture=bui.gettexture('settingsIcon'),
@@ -163,7 +166,10 @@ class PluginWindow(bui.MainWindow):
 
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
-            position=(50 + x_inset, 50),
+            position=(
+                50 + x_inset,
+                (135 if uiscale is bui.UIScale.SMALL else 50) + yoffs,
+            ),
             simple_culling_v=20.0,
             highlight=False,
             size=(self._scroll_width, self._scroll_height),

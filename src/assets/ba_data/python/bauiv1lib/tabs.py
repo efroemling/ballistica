@@ -37,6 +37,7 @@ class TabRow(Generic[T]):
         tabdefs: list[tuple[T, bui.Lstr]],
         pos: tuple[float, float],
         size: tuple[float, float],
+        *,
         on_select_call: Callable[[T], None] | None = None,
     ) -> None:
         if not tabdefs:

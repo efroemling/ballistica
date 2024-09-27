@@ -28,7 +28,7 @@ class TournamentEntryWindow(PopupWindow):
         offset: tuple[float, float] = (0.0, 0.0),
         on_close_call: Callable[[], Any] | None = None,
     ):
-        # Needs some tidying.
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements

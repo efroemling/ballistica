@@ -20,11 +20,14 @@ def run_cpu_benchmark() -> None:
     # pylint: disable=cyclic-import
     from bascenev1lib import tutorial
 
+    # Save our UI state that we'll return to when done.
+    if babase.app.classic is not None:
+        babase.app.classic.save_ui_state()
+
     class BenchmarkSession(bascenev1.Session):
         """Session type for cpu benchmark."""
 
         def __init__(self) -> None:
-            # print('FIXME: BENCHMARK SESSION WOULD CALC DEPS.')
             depsets: Sequence[bascenev1.DependencySet] = []
 
             super().__init__(depsets)
@@ -99,7 +102,9 @@ def _start_stress_test(args: _StressTestArgs) -> None:
     """(internal)"""
     from bascenev1 import DualTeamSession, FreeForAllSession
 
-    assert babase.app.classic is not None
+    classic = babase.app.classic
+
+    assert classic is not None
 
     appconfig = babase.app.config
     playlist_type = args.playlist_type
@@ -116,6 +121,10 @@ def _start_stress_test(args: _StressTestArgs) -> None:
             + args.playlist_name
             + '")...'
         )
+
+    # Save where we are in the UI so we'll return there when done.
+    classic.save_ui_state()
+
     if playlist_type == 'Teams':
         appconfig['Team Tournament Playlist Selection'] = args.playlist_name
         appconfig['Team Tournament Playlist Randomize'] = 1
@@ -137,11 +146,11 @@ def _start_stress_test(args: _StressTestArgs) -> None:
             ),
         )
     _baclassic.set_stress_testing(True, args.player_count, args.attract_mode)
-    babase.app.classic.stress_test_update_timer = babase.AppTimer(
+    classic.stress_test_update_timer = babase.AppTimer(
         args.round_duration, babase.Call(_reset_stress_test, args)
     )
     if args.attract_mode:
-        babase.app.classic.stress_test_update_timer_2 = babase.AppTimer(
+        classic.stress_test_update_timer_2 = babase.AppTimer(
             0.48, babase.Call(_update_attract_mode_test, args), repeat=True
         )
 
@@ -170,12 +179,6 @@ def _reset_stress_test(args: _StressTestArgs) -> None:
         babase.apptimer(1.0, babase.Call(_start_stress_test, args))
 
 
-def run_gpu_benchmark() -> None:
-    """Kick off a benchmark to test gpu speeds."""
-    # FIXME: Not wired up yet.
-    babase.screenmessage('Not wired up yet.', color=(1, 0, 0))
-
-
 def run_media_reload_benchmark() -> None:
     """Kick off a benchmark to test media reloading speeds."""
     babase.reload_media()
@@ -199,6 +202,6 @@ def run_media_reload_benchmark() -> None:
 
         babase.add_clean_frame_callback(babase.Call(doit, start_time))
 
-    # The reload starts (should add a completion callback to the
-    # reload func to fix this).
+    # The reload starts (should add a completion callback to the reload
+    # func to fix this).
     babase.apptimer(0.05, babase.Call(delay_add, babase.apptime()))

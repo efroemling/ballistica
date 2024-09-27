@@ -54,6 +54,7 @@ struct RootWidget::ButtonDef {
   float h_align{};
   float x{};
   float y{};
+  float y_offs_small{};
   float width{100.0f};
   float height{30.0f};
   float scale{1.0f};
@@ -74,12 +75,13 @@ struct RootWidget::Button {
   Object::Ref<ButtonWidget> widget;
   float h_align{};
   VAlign v_align{VAlign::kTop};
-  float x{};           // user provided x
-  float y{};           // user provided y
-  float x_target{};    // final target x (accounting for visibility, etc)
-  float y_target{};    // final target y (accounting for visibility, etc)
-  float x_smoothed{};  // current x (on way to target)
-  float y_smoothed{};  // current y (on way to target)
+  float x{};             // user provided x
+  float y{};             // user provided y
+  float y_offs_small{};  // user provided y offset for small uiscale
+  float x_target{};      // final target x (accounting for visibility, etc)
+  float y_target{};      // final target y (accounting for visibility, etc)
+  float x_smoothed{};    // current x (on way to target)
+  float y_smoothed{};    // current y (on way to target)
   float width{100.0f};
   float height{30.0f};
   float scale{1.0f};
@@ -178,10 +180,10 @@ auto RootWidget::AddCover_(float h_align, VAlign v_align, float x, float y,
   // phone-size; for other sizes we always draw a backing.
   //
   // UPDATE: We no longer do backings, so ignore that.
-  if (g_base->ui->scale() != UIScale::kSmall) {
-    bd.visibility_mask |=
-        static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull);
-  }
+  // if (g_base->ui->scale() != UIScale::kSmall) {
+  //   bd.visibility_mask |=
+  //       static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull);
+  // }
 
   Button* b = AddButton_(bd);
   return b;
@@ -189,7 +191,9 @@ auto RootWidget::AddCover_(float h_align, VAlign v_align, float x, float y,
 
 void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
                            float b, bool plus, const std::string& s) {
-  float yoffs = (g_base->ui->scale() == UIScale::kSmall) ? 0.0f : -7.0f;
+  // float yoffs = (g_base->ui->scale() == UIScale::kSmall) ? 0.0f : -7.0f;
+
+  float y_offs_small{7.0f};
 
   float width = (type == MeterType::kTrophy) ? 80.0f : 110.0f;
   width = 110.0f;
@@ -202,7 +206,8 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
     bd.width = width;
     bd.height = 36.0f;
     // bd.x = x;
-    bd.y = -36.0f + 10.0f + yoffs;
+    bd.y = -36.0f + 10.0f - y_offs_small;
+    bd.y_offs_small = y_offs_small;
     bd.img = "uiAtlas2";
     bd.mesh_transparent = "currencyMeter";
     bd.selectable = true;
@@ -466,17 +471,18 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
     bd.v_align = VAlign::kTop;
     bd.width = bd.height = 45.0f;
     // bd.x = x - 68;
-    bd.y = -36.0f + 11.0f + yoffs;
+    bd.y = -36.0f + 11.0f - y_offs_small;
+    bd.y_offs_small = y_offs_small;
     bd.img = "uiAtlas2";
     bd.mesh_transparent = "currencyPlusButton";
     bd.color_r = 0.35f;
     bd.color_g = 0.35f;
     bd.color_b = 0.55f;
-    if (g_base->ui->scale() != UIScale::kSmall) {
-      // bd.color_r *= TOOLBAR_COLOR_R;
-      // bd.color_g *= TOOLBAR_COLOR_G;
-      // bd.color_b *= TOOLBAR_COLOR_B;
-    }
+    // if (g_base->ui->scale() != UIScale::kSmall) {
+    // bd.color_r *= TOOLBAR_COLOR_R;
+    // bd.color_g *= TOOLBAR_COLOR_G;
+    // bd.color_b *= TOOLBAR_COLOR_B;
+    // }
     bd.depth_min = 0.3f;
     switch (type) {
       case MeterType::kTokens:
@@ -615,9 +621,9 @@ void RootWidget::Setup() {
     bd.h_align = 0.5f;
     bd.v_align = VAlign::kTop;
     bd.width = 850.0f;
-    if (g_base->ui->scale() != UIScale::kSmall) {
-      bd.width = 850.0f;
-    }
+    // if (g_base->ui->scale() != UIScale::kSmall) {
+    //   bd.width = 850.0f;
+    // }
     bd.height = 90.0f;
     bd.x = 0.0f;
     bd.y = -20.0f;
@@ -628,14 +634,14 @@ void RootWidget::Setup() {
     bd.color_g = 0.41f;
     bd.color_b = 0.56f;
     bd.opacity = 1.0f;
-    if (g_base->ui->scale() != UIScale::kSmall) {
-      bd.color_r *= TOOLBAR_COLOR_R * TOOLBAR_BACK_COLOR_R;
-      bd.color_g *= TOOLBAR_COLOR_G * TOOLBAR_BACK_COLOR_G;
-      bd.color_b *= TOOLBAR_COLOR_B * TOOLBAR_BACK_COLOR_B;
-      bd.opacity *= TOOLBAR_OPACITY;
-    } else {
-      bd.opacity *= TOOLBAR_OPACITY_2;
-    }
+    // if (g_base->ui->scale() != UIScale::kSmall) {
+    //   bd.color_r *= TOOLBAR_COLOR_R * TOOLBAR_BACK_COLOR_R;
+    //   bd.color_g *= TOOLBAR_COLOR_G * TOOLBAR_BACK_COLOR_G;
+    //   bd.color_b *= TOOLBAR_COLOR_B * TOOLBAR_BACK_COLOR_B;
+    //   bd.opacity *= TOOLBAR_OPACITY;
+    // } else {
+    //   bd.opacity *= TOOLBAR_OPACITY_2;
+    // }
     bd.depth_min = 0.2f;
     // bd.call = "";
     bd.call = UIV1Python::ObjID::kEmptyCall;
@@ -649,7 +655,7 @@ void RootWidget::Setup() {
   }
 
   // float xoffs = (g_base->ui->scale() == UIScale::kSmall) ? 90.0f : 0.0f;
-  float yoffs = (g_base->ui->scale() == UIScale::kSmall) ? 0.0f : -10.0f;
+  // float yoffs = (g_base->ui->scale() == UIScale::kSmall) ? 0.0f : -10.0f;
 
   // Account Button
   {
@@ -660,16 +666,18 @@ void RootWidget::Setup() {
     bd.height = 60.0f;
     bd.depth_min = 0.3f;
     // bd.x = 110.0f + xoffs;
-    bd.y = -24.0f + yoffs;
+    // bd.y = -24.0f + yoffs;
+    bd.y = -34.0f;
+    bd.y_offs_small = 10.0f;
     bd.color_r = 0.56f;
     bd.color_g = 0.5f;
     bd.color_b = 0.73f;
     bd.call = UIV1Python::ObjID::kRootUIAccountButtonPressCall;
-    if (g_base->ui->scale() != UIScale::kSmall) {
-      // bd.color_r *= TOOLBAR_COLOR_R;
-      // bd.color_g *= TOOLBAR_COLOR_G;
-      // bd.color_b *= TOOLBAR_COLOR_B;
-    }
+    // if (g_base->ui->scale() != UIScale::kSmall) {
+    // bd.color_r *= TOOLBAR_COLOR_R;
+    // bd.color_g *= TOOLBAR_COLOR_G;
+    // bd.color_b *= TOOLBAR_COLOR_B;
+    // }
     bd.pre_buffer = 10.0f;
     bd.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
@@ -752,7 +760,7 @@ void RootWidget::Setup() {
     top_right_buttons_.push_back(menu_button_);
   }
 
-  // Party button.
+  // Squad button.
   {
     ButtonDef b;
     b.h_align = 1.0f;
@@ -786,16 +794,16 @@ void RootWidget::Setup() {
   // Bot-left cover
   // AddCover(0.0f, VAlign::kBottom, 0.0f, -210.0f, 600.0f, 600.0f, 0.25f);
 
-  float bx = 55.0f;
+  // float bx = 55.0f;
 
   // Inbox button.
   {
     ButtonDef b;
     b.h_align = 0.0f;
     b.v_align = VAlign::kBottom;
-    b.width = b.height = 55.0f;
+    b.width = b.height = 60.0f;
     // b.x = bx;
-    b.y = b.height * 0.5f + 5;
+    b.y = b.height * 0.5f + 2.0f;
     b.color_r = BOT_LEFT_COLOR_R;
     b.color_g = BOT_LEFT_COLOR_G;
     b.color_b = BOT_LEFT_COLOR_B;
@@ -805,22 +813,22 @@ void RootWidget::Setup() {
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    b.pre_buffer = 20.0f;
+    b.pre_buffer = 25.0f;
     b.allow_in_game = false;
     inbox_button_ = AddButton_(b);
     bottom_left_buttons_.push_back(inbox_button_);
   }
 
-  bx += 80.0f;
+  // bx += 80.0f;
 
   // Achievements button.
   if (explicit_bool(true)) {
     ButtonDef b;
     b.h_align = 0.0f;
     b.v_align = VAlign::kBottom;
-    b.width = b.height = 55.0f;
+    b.width = b.height = 60.0f;
     // b.x = bx;
-    b.y = b.height * 0.5f + 5;
+    b.y = b.height * 0.5f + 2.0f;
     b.color_r = BOT_LEFT_COLOR_R;
     b.color_g = BOT_LEFT_COLOR_G;
     b.color_b = BOT_LEFT_COLOR_B;
@@ -830,11 +838,11 @@ void RootWidget::Setup() {
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    b.pre_buffer = 20.0f;
+    b.pre_buffer = 25.0f;
     b.allow_in_game = false;
     achievements_button_ = AddButton_(b);
     bottom_left_buttons_.push_back(achievements_button_);
-    bx += 80.0f;
+    // bx += 80.0f;
 
     // Achievement count.
     // {
@@ -928,9 +936,9 @@ void RootWidget::Setup() {
     ButtonDef b;
     b.h_align = 0.0f;
     b.v_align = VAlign::kBottom;
-    b.width = b.height = 50.0f;
+    b.width = b.height = 60.0f;
     // b.x = bx;
-    b.y = b.height * 0.5f + 5;
+    b.y = b.height * 0.5f + 2.0f;
     b.color_r = BOT_LEFT_COLOR_R;
     b.color_g = BOT_LEFT_COLOR_G;
     b.color_b = BOT_LEFT_COLOR_B;
@@ -940,7 +948,7 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     AddButton_(b);
-    bx += 70.0f;
+    // bx += 70.0f;
   }
 
   // Settings button.
@@ -948,9 +956,9 @@ void RootWidget::Setup() {
     ButtonDef b;
     b.h_align = 0.0f;
     b.v_align = VAlign::kBottom;
-    b.width = b.height = 55.0f;
+    b.width = b.height = 60.0f;
     // b.x = bx;
-    b.y = b.height * 0.58f;
+    b.y = b.height * 0.58f - 2.0f;
     b.color_r = BOT_LEFT_COLOR_R;
     b.color_g = BOT_LEFT_COLOR_G;
     b.color_b = BOT_LEFT_COLOR_B;
@@ -961,7 +969,7 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuInGame));
-    b.pre_buffer = 20.0f;
+    b.pre_buffer = 25.0f;
     settings_button_ = AddButton_(b);
     bottom_left_buttons_.push_back(settings_button_);
   }
@@ -981,23 +989,23 @@ void RootWidget::Setup() {
     float backing_cover_g = backing_g;
     float backing_cover_b = backing_b;
     float backingA = 1.0f;
-    if (g_base->ui->scale() != UIScale::kSmall) {
-      backing_r *= TOOLBAR_COLOR_R * TOOLBAR_BACK_COLOR_R;
-      backing_g *= TOOLBAR_COLOR_G * TOOLBAR_BACK_COLOR_G;
-      backing_b *= TOOLBAR_COLOR_B * TOOLBAR_BACK_COLOR_B;
-      backing_cover_r *= TOOLBAR_COLOR_R;
-      backing_cover_g *= TOOLBAR_COLOR_G;
-      backing_cover_b *= TOOLBAR_COLOR_B;
-      backingA *= TOOLBAR_OPACITY;
-    } else {
-      backing_r *= 1.1f;
-      backing_g *= 1.1f;
-      backing_b *= 1.1f;
-      backing_cover_r *= 1.1f;
-      backing_cover_g *= 1.1f;
-      backing_cover_b *= 1.1f;
-      backingA *= TOOLBAR_OPACITY_2;
-    }
+    // if (g_base->ui->scale() != UIScale::kSmall) {
+    //   backing_r *= TOOLBAR_COLOR_R * TOOLBAR_BACK_COLOR_R;
+    //   backing_g *= TOOLBAR_COLOR_G * TOOLBAR_BACK_COLOR_G;
+    //   backing_b *= TOOLBAR_COLOR_B * TOOLBAR_BACK_COLOR_B;
+    //   backing_cover_r *= TOOLBAR_COLOR_R;
+    //   backing_cover_g *= TOOLBAR_COLOR_G;
+    //   backing_cover_b *= TOOLBAR_COLOR_B;
+    //   backingA *= TOOLBAR_OPACITY;
+    // } else {
+    backing_r *= 1.1f;
+    backing_g *= 1.1f;
+    backing_b *= 1.1f;
+    backing_cover_r *= 1.1f;
+    backing_cover_g *= 1.1f;
+    backing_cover_b *= 1.1f;
+    backingA *= TOOLBAR_OPACITY_2;
+    // }
 
     // Bar backing.
     {
@@ -1161,6 +1169,7 @@ auto RootWidget::AddButton_(const ButtonDef& def) -> RootWidget::Button* {
   Button& b(buttons_.back());
   b.x = b.x_smoothed = b.x_target = def.x;
   b.y = b.y_smoothed = b.y_target = def.y;
+  b.y_offs_small = def.y_offs_small;
   b.visibility_mask = def.visibility_mask;
   b.disable_offset_scale = def.disable_offset_scale;
   b.pre_buffer = def.pre_buffer;
@@ -1293,6 +1302,8 @@ void RootWidget::StepPositions_(float dt) {
     return;
   }
 
+  bool is_small{g_base->ui->scale() == UIScale::kSmall};
+
   // Update enabled-state for all buttons.
   for (Button& b : buttons_) {
     bool enable_button =
@@ -1319,11 +1330,9 @@ void RootWidget::StepPositions_(float dt) {
       //   enable_button = false;
       // }
     }
-    if (&b == back_button_) {
-      // Back button is always disabled in medium/large UI.
-      if (g_base->ui->scale() != UIScale::kSmall) {
-        enable_button = false;
-      }
+    // Back button is always disabled in medium/large UI.
+    if (&b == back_button_ && !is_small) {
+      enable_button = false;
     }
     b.enabled = enable_button;
   }
@@ -1385,7 +1394,7 @@ void RootWidget::StepPositions_(float dt) {
   for (Button& b : buttons_) {
     // Update our target position.
     b.x_target = b.x;
-    b.y_target = b.y;
+    b.y_target = b.y + (is_small ? b.y_offs_small : 0.0f);
     float disable_offset = b.disable_offset_scale * 110.0f
                            * ((b.v_align == VAlign::kTop) ? 1.0f : -1.0f);
     // float top_right_offset = 100.0f;

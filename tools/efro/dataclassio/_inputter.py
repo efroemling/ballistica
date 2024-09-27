@@ -41,6 +41,7 @@ class _Inputter:
     def __init__(
         self,
         cls: type[Any],
+        *,
         codec: Codec,
         coerce_to_float: bool,
         allow_unknown_attrs: bool = True,
@@ -110,6 +111,7 @@ class _Inputter:
         ioattrs: IOAttrs | None,
     ) -> Any:
         """Convert an assigned value to what a dataclass field expects."""
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
 
@@ -413,6 +415,7 @@ class _Inputter:
         value: Any,
         ioattrs: IOAttrs | None,
     ) -> Any:
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
 
@@ -533,6 +536,7 @@ class _Inputter:
         seqtype: type,
         ioattrs: IOAttrs | None,
     ) -> Any:
+        # pylint: disable=too-many-positional-arguments
         # Because we are json-centric, we expect a list for all sequences.
         if type(value) is not list:
             raise TypeError(
@@ -582,6 +586,7 @@ class _Inputter:
         value: Any,
         ioattrs: IOAttrs | None,
     ) -> Any:
+        # pylint: disable=too-many-positional-arguments
         out: list = []
 
         # Because we are json-centric, we expect a list for all sequences.

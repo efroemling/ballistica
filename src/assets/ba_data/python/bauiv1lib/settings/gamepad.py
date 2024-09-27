@@ -25,6 +25,7 @@ class GamepadSettingsWindow(bui.MainWindow):
     def __init__(
         self,
         inputdevice: bs.InputDevice,
+        *,
         modal: bool = False,
         transition: str = 'in_right',
         transition_out: str = 'out_right',
@@ -744,6 +745,7 @@ class GamepadSettingsWindow(bui.MainWindow):
         color: tuple[float, float, float],
         texture: bui.Texture,
         button: str,
+        *,
         scale: float = 1.0,
         message: bui.Lstr | None = None,
         message2: bui.Lstr | None = None,
@@ -955,6 +957,7 @@ class AwaitGamepadInputWindow(bui.Window):
         message: bui.Lstr | None = None,
         message2: bui.Lstr | None = None,
     ):
+        # pylint: disable=too-many-positional-arguments
         if message is None:
             print('AwaitGamepadInputWindow message is None!')
             # Shouldn't get here.

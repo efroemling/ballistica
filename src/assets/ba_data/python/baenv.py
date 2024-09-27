@@ -52,7 +52,7 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22007
+TARGET_BALLISTICA_BUILD = 22015
 TARGET_BALLISTICA_VERSION = '1.7.37'
 
 
@@ -156,6 +156,7 @@ def get_config() -> EnvConfig:
 
 
 def configure(
+    *,
     config_dir: str | None = None,
     data_dir: str | None = None,
     user_python_dir: str | None = None,

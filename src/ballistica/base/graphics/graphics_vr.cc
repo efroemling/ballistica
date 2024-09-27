@@ -16,8 +16,8 @@
 
 namespace ballistica::base {
 
-static auto ValueTestFloat(float* storage, double* absval,
-                           double* deltaval) -> double {
+static auto ValueTestFloat(float* storage, double* absval, double* deltaval)
+    -> double {
   if (absval) {
     *storage = static_cast<float>(*absval);
   }
@@ -27,8 +27,8 @@ static auto ValueTestFloat(float* storage, double* absval,
   return *storage;
 }
 
-static auto ValueTestBool(bool* storage, double* absval,
-                          double* deltaval) -> double {
+static auto ValueTestBool(bool* storage, double* absval, double* deltaval)
+    -> double {
   if (absval) {
     *storage = static_cast<bool>(*absval);
   }
@@ -241,8 +241,9 @@ void GraphicsVR::CalcVROverlayMatrices(FrameDef* frame_def) {
   }
 }
 
-auto GraphicsVR::CalcVROverlayMatrix(
-    const Vector3f& cam_pt, const Vector3f& cam_target_pt) const -> Matrix44f {
+auto GraphicsVR::CalcVROverlayMatrix(const Vector3f& cam_pt,
+                                     const Vector3f& cam_target_pt) const
+    -> Matrix44f {
   Matrix44f m = Matrix44fTranslate(cam_target_pt);
   Vector3f diff = cam_pt - cam_target_pt;
   diff.Normalize();

@@ -473,6 +473,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
         name: bui.Lstr,
         control: str,
         position: tuple[float, float],
+        *,
         min_val: float = 0.0,
         max_val: float = 100.0,
         increment: float = 1.0,

@@ -65,6 +65,13 @@ class MainWindow(Window):
 
         self.main_window_is_top_level: bool = False
 
+        # Windows can be flagged as auxiliary when not related to the
+        # main UI task at hand. UI code may choose to handle auxiliary
+        # windows in special ways, such as by implicitly replacing
+        # existing auxiliary windows with new ones instead of keeping
+        # old ones as back targets.
+        self.main_window_is_auxiliary: bool = False
+
         self._main_window_transition = transition
         self._main_window_origin_widget = origin_widget
         super().__init__(root_widget, cleanupcheck)
@@ -147,7 +154,10 @@ class MainWindow(Window):
         self.main_window_close()
 
     def main_window_replace(
-        self, new_window: MainWindow, back_state: MainWindowState | None = None
+        self,
+        new_window: MainWindow,
+        back_state: MainWindowState | None = None,
+        is_auxiliary: bool = False,
     ) -> None:
         """Replace ourself with a new MainWindow."""
 
@@ -177,6 +187,7 @@ class MainWindow(Window):
             new_window,
             from_window=self,
             back_state=back_state,
+            is_auxiliary=is_auxiliary,
             suppress_warning=True,
         )
 
@@ -203,6 +214,8 @@ class MainWindowState:
         # The window that back/cancel navigation should take us to.
         self.parent: MainWindowState | None = None
         self.is_top_level: bool | None = None
+        self.is_auxiliary: bool | None = None
+        self.window_type: type[MainWindow] | None = None
 
     def create_window(
         self,
@@ -314,10 +327,10 @@ def ui_upkeep() -> None:
                 print(
                     'WARNING:',
                     obj,
-                    'is still alive 5 second after its widget died;'
+                    'is still alive 5 second after its Widget died;'
                     ' you might have a memory leak. Look for circular'
-                    ' references or outside things referencing your window'
-                    ' instance. See efro.debug module'
+                    ' references or outside things referencing your Window'
+                    ' class instance. See efro.debug module'
                     ' for tools that can help debug this sort of thing.',
                 )
             else:

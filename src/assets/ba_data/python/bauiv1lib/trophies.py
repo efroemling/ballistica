@@ -134,6 +134,7 @@ class TrophiesWindow(popup.PopupWindow):
         sub_width: int,
         trophy_types: list[list[str]],
     ) -> int:
+        # pylint: disable=too-many-positional-arguments
         from bascenev1 import get_trophy_string
 
         total_pts = 0

@@ -334,20 +334,6 @@ class AccountSettingsWindow(bui.MainWindow):
         )
         linked_accounts_text_space = 60.0
 
-        # Always show achievements except in the game-center case where
-        # its unified UI covers them.
-        # show_achievements_button =
-        # self._v1_signed_in and not game_center_active
-
-        # Update: No longer showing this since its visible on main
-        # toolbar.
-        show_achievements_button = False
-        achievements_button_space = 60.0
-
-        # show_achievements_text = (
-        #     self._v1_signed_in and not show_achievements_button
-        # )
-
         # Update: No longer showing this since its visible on main
         # toolbar.
         show_achievements_text = False
@@ -422,8 +408,6 @@ class AccountSettingsWindow(bui.MainWindow):
             self._sub_height += linked_accounts_text_space
         if show_achievements_text:
             self._sub_height += achievements_text_space
-        if show_achievements_button:
-            self._sub_height += achievements_button_space
         if show_leaderboards_button:
             self._sub_height += leaderboards_button_space
         if show_campaign_progress:
@@ -876,43 +860,7 @@ class AccountSettingsWindow(bui.MainWindow):
         else:
             self._achievements_text = None
 
-        self._achievements_button: bui.Widget | None
-        if show_achievements_button:
-            button_width = 300
-            v -= achievements_button_space * 0.85
-            self._achievements_button = btn = bui.buttonwidget(
-                parent=self._subcontainer,
-                position=((self._sub_width - button_width) * 0.5, v),
-                color=(0.55, 0.5, 0.6),
-                textcolor=(0.75, 0.7, 0.8),
-                autoselect=True,
-                icon=bui.gettexture(
-                    'googlePlayAchievementsIcon'
-                    if gpgs_active
-                    else 'achievementsIcon'
-                ),
-                icon_color=(
-                    (0.8, 0.95, 0.7) if gpgs_active else (0.85, 0.8, 0.9)
-                ),
-                on_activate_call=(
-                    self._on_custom_achievements_press
-                    if gpgs_active
-                    else self._on_achievements_press
-                ),
-                size=(button_width, 50),
-                label='',
-            )
-            if first_selectable is None:
-                first_selectable = btn
-            bui.widget(
-                edit=btn, right_widget=bui.get_special_widget('squad_button')
-            )
-            bui.widget(edit=btn, left_widget=bbtn)
-            v -= achievements_button_space * 0.15
-        else:
-            self._achievements_button = None
-
-        if show_achievements_text or show_achievements_button:
+        if show_achievements_text:
             self._refresh_achievements()
 
         self._leaderboards_button: bui.Widget | None
@@ -1212,15 +1160,6 @@ class AccountSettingsWindow(bui.MainWindow):
         else:
             logging.warning('show_game_service_ui requires plus feature-set.')
 
-    def _on_achievements_press(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib import achievements
-
-        assert self._achievements_button is not None
-        achievements.AchievementsWindow(
-            position=self._achievements_button.get_screen_space_center()
-        )
-
     def _on_manage_account_press(self) -> None:
         self._do_manage_account_press(WebLocation.ACCOUNT_EDITOR)
 
@@ -1401,10 +1340,7 @@ class AccountSettingsWindow(bui.MainWindow):
 
     def _refresh_achievements(self) -> None:
         assert bui.app.classic is not None
-        if (
-            self._achievements_text is None
-            and self._achievements_button is None
-        ):
+        if self._achievements_text is None:
             return
         complete = sum(
             1 if a.complete else 0 for a in bui.app.classic.ach.achievements
@@ -1417,8 +1353,6 @@ class AccountSettingsWindow(bui.MainWindow):
 
         if self._achievements_text is not None:
             bui.textwidget(edit=self._achievements_text, text=txt_final)
-        if self._achievements_button is not None:
-            bui.buttonwidget(edit=self._achievements_button, label=txt_final)
 
     def _link_accounts_press(self) -> None:
         # pylint: disable=cyclic-import

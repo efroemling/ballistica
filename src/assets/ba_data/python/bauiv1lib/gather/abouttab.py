@@ -27,6 +27,7 @@ class AboutGatherTab(GatherTab):
         region_bottom: float,
     ) -> bui.Widget:
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-positional-arguments
 
         plus = bui.app.plus
         assert plus is not None

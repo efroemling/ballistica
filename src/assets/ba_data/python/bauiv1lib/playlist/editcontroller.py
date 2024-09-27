@@ -21,6 +21,7 @@ class PlaylistEditController:
         self,
         sessiontype: type[bs.Session],
         from_window: bui.MainWindow,
+        *,
         existing_playlist_name: str | None = None,
         playlist: list[dict[str, Any]] | None = None,
         playlist_name: str | None = None,

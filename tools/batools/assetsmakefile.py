@@ -29,6 +29,7 @@ def _get_targets(
 ) -> str:
     """Generic function to map source extension to dst files."""
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-positional-arguments
 
     src = ASSETS_SRC
     dst = BUILD_DIR
@@ -66,6 +67,7 @@ def _get_py_targets(
     all_targets: set[str],
     subset: str,
 ) -> None:
+    # pylint: disable=too-many-positional-arguments
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
@@ -213,6 +215,7 @@ def _get_py_targets_subset(
     suffix: str,
 ) -> str:
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-positional-arguments
     if subset == 'public_tools':
         src = 'tools'
         dst = f'{BUILD_DIR}/ba_data/python'
