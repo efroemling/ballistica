@@ -72,10 +72,7 @@ def docker_build(
         headless_build=headless_build, build_type=build_type
     )
 
-    if platform is not None and 'arm64' in platform:
-        config_file = 'config/docker/Dockerfile_arm64'
-    else:
-        config_file = 'config/docker/Dockerfile'
+    config_file = 'config/docker/Dockerfile'
 
     print(
         f'Building docker image {image_name} '
