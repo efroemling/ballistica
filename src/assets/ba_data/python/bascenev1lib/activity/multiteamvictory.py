@@ -24,7 +24,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         self._allow_server_transition = True
         self._tips_text = None
         self._default_show_tips = False
-        self._topscored_player = None
+        self._topscored_player: list[object] | None = None
 
     @override
     def on_begin(self) -> None:
@@ -77,7 +77,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             player_entries.sort(reverse=True, key=lambda x: x[0])
 
         self._topscored_player = list(player_entries[0])
-        self._mostscore_player[1] = self._mostscore_player[2].getname()
+        self._topscored_player[1] = self._topscored_player[2].getname()
         self._topscored_player[2] = self._topscored_player[2].get_icon()
         ts_height = 300.0
         ts_h_offs = -390.0
@@ -438,7 +438,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 maxwidth=250,
             ).autoretain()
         else:
-            offs_v = -80.0
+            offs_v = -80
             series_length = self.session.get_ffa_series_length()
             if len(team.players) == 1:
                 icon = team.players[0].get_icon()
@@ -461,7 +461,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
             ZoomText(
                 bs.Lstr(value=player_name),
-                position=(0, 97 + offs_v + (60 if icon is None else 0)),
+                position=(0, 97 + offs_v + (0 if icon is not None else 60)),
                 color=team.color,
                 scale=1.15,
                 jitter=1.0,
