@@ -421,7 +421,6 @@ class Scoreboard:
         show_value: bool = True,
     ) -> None:
         """Update the score-board display for the given bs.Team."""
-        # pylint: disable=too-many-positional-arguments
         if team.id not in self._entries:
             self._add_team(team)
 

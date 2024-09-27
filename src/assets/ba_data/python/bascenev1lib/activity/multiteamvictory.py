@@ -24,6 +24,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         self._allow_server_transition = True
         self._tips_text = None
         self._default_show_tips = False
+        self._topscored_player = None
 
     @override
     def on_begin(self) -> None:
@@ -438,15 +439,16 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
         else:
             offs_v = -80.0
+            series_length = self.session.get_ffa_series_length()
             if len(team.players) == 1:
                 icon = team.players[0].get_icon()
                 player_name = team.players[0].getname(full=True, icon=False)
-            elif self._topscored_player[0] >= self.session.get_ffa_series_length():
+            elif self._topscored_player[0] >= series_length:
                 icon = self._topscored_player[2]
                 player_name = self._topscored_player[1]
             else:
                 icon = None
-                player_name = "Player Not Found"
+                player_name = 'Player Not Found'
 
             if icon is not None:
                 i = Image(

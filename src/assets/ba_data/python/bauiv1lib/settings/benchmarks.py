@@ -383,11 +383,15 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             bui.app.classic.run_stress_test(
                 playlist_type=self._stress_test_game_type,
                 playlist_name=cast(
-                    str, bui.textwidget(query=self._stress_test_playlist_name_field)
+                    str, bui.textwidget(
+                        query=self._stress_test_playlist_name_field
+                    )
                 ),
                 player_count=self._stress_test_player_count,
                 round_duration=self._stress_test_round_duration,
             )
             bui.containerwidget(edit=self._root_widget, transition='out_right')
         else:
-            bui.screenmessage(bui.Lstr(value='Already present in another activity.'))
+            bui.screenmessage(
+                bui.Lstr(value='Already present in another activity.')
+            )
