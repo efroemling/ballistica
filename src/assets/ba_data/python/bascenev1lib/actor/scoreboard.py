@@ -379,7 +379,7 @@ class Scoreboard:
         score_split: float = 0.7,
         pos: Sequence[float] | None = None,
         width: float | None = None,
-        height: float | None = None
+        height: float | None = None,
     ):
         """Instantiate a scoreboard.
 

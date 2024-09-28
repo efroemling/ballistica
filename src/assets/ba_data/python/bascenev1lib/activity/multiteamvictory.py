@@ -4,11 +4,14 @@
 
 from __future__ import annotations
 
-from typing import override
+from typing import override, TYPE_CHECKING
 
 import bascenev1 as bs
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
@@ -24,7 +27,8 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         self._allow_server_transition = True
         self._tips_text = None
         self._default_show_tips = False
-        self._topscored_player: list[object] | None = None
+        self._ffa_top_player_info: list[Any] | None = None
+        self._ffa_top_player_rec: bs.PlayerRecord | None = None
 
     @override
     def on_begin(self) -> None:
@@ -72,9 +76,15 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                     )
             player_entries.sort(reverse=True, key=lambda x: x[0])
             if len(player_entries) > 0:
-                self._topscored_player = list(player_entries[0])
-                self._topscored_player[1] = self._topscored_player[2].getname()
-                self._topscored_player[2] = self._topscored_player[2].get_icon()
+                # Store some info for the top ffa player so we can
+                # show winner info even if they leave.
+                self._ffa_top_player_info = list(player_entries[0])
+                self._ffa_top_player_info[1] = self._ffa_top_player_info[
+                    2
+                ].getname()
+                self._ffa_top_player_info[2] = self._ffa_top_player_info[
+                    2
+                ].get_icon()
         else:
             for _pkey, prec in self.stats.get_records().items():
                 player_entries.append((prec.score, prec.name_full, prec))
@@ -377,40 +387,41 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         v_offs = 0.0
         tdelay += len(player_entries) * 8 * t_incr
         for _score, name, prec in player_entries:
-            if prec.player.in_game:
-                tdelay -= 4 * t_incr
-                v_offs -= 40
-                Text(
-                    (
-                        str(prec.team.customdata['score'])
-                        if self._is_ffa
-                        else str(prec.score)
-                    ),
-                    color=(0.5, 0.5, 0.5, 1.0),
-                    position=(ts_h_offs + 230, ts_height / 2 + v_offs),
-                    h_align=Text.HAlign.RIGHT,
-                    transition=Text.Transition.IN_RIGHT,
-                    transition_delay=tdelay,
-                ).autoretain()
-                tdelay -= 4 * t_incr
+            if not prec.player.in_game:
+                continue
+            tdelay -= 4 * t_incr
+            v_offs -= 40
+            Text(
+                (
+                    str(prec.team.customdata['score'])
+                    if self._is_ffa
+                    else str(prec.score)
+                ),
+                color=(0.5, 0.5, 0.5, 1.0),
+                position=(ts_h_offs + 230, ts_height / 2 + v_offs),
+                h_align=Text.HAlign.RIGHT,
+                transition=Text.Transition.IN_RIGHT,
+                transition_delay=tdelay,
+            ).autoretain()
+            tdelay -= 4 * t_incr
 
-                Image(
-                    prec.get_icon(),
-                    position=(ts_h_offs - 72, ts_height / 2 + v_offs + 15),
-                    scale=(30, 30),
-                    transition=Image.Transition.IN_LEFT,
-                    transition_delay=tdelay,
-                ).autoretain()
-                Text(
-                    bs.Lstr(value=name),
-                    position=(ts_h_offs - 50, ts_height / 2 + v_offs + 15),
-                    h_align=Text.HAlign.LEFT,
-                    v_align=Text.VAlign.CENTER,
-                    maxwidth=180,
-                    color=bs.safecolor(prec.team.color + (1,)),
-                    transition=Text.Transition.IN_RIGHT,
-                    transition_delay=tdelay,
-                ).autoretain()
+            Image(
+                prec.get_icon(),
+                position=(ts_h_offs - 72, ts_height / 2 + v_offs + 15),
+                scale=(30, 30),
+                transition=Image.Transition.IN_LEFT,
+                transition_delay=tdelay,
+            ).autoretain()
+            Text(
+                bs.Lstr(value=name),
+                position=(ts_h_offs - 50, ts_height / 2 + v_offs + 15),
+                h_align=Text.HAlign.LEFT,
+                v_align=Text.VAlign.CENTER,
+                maxwidth=180,
+                color=bs.safecolor(prec.team.color + (1,)),
+                transition=Text.Transition.IN_RIGHT,
+                transition_delay=tdelay,
+            ).autoretain()
 
         bs.timer(15.0, bs.WeakCall(self._show_tips))
 
@@ -440,16 +451,20 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
         else:
             offs_v = -80
+            assert isinstance(self.session, bs.MultiTeamSession)
             series_length = self.session.get_ffa_series_length()
+            icon: dict | None
+            # Pull live player info if they're still around.
             if len(team.players) == 1:
                 icon = team.players[0].get_icon()
                 player_name = team.players[0].getname(full=True, icon=False)
+            # Otherwise use the special info we stored when we came in.
             elif (
-                self._topscored_player is not None and
-                self._topscored_player[0] >= series_length
+                self._ffa_top_player_info is not None
+                and self._ffa_top_player_info[0] >= series_length
             ):
-                icon = self._topscored_player[2]
-                player_name = self._topscored_player[1]
+                icon = self._ffa_top_player_info[2]
+                player_name = self._ffa_top_player_info[1]
             else:
                 icon = None
                 player_name = 'Player Not Found'
