@@ -71,14 +71,15 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                         )
                     )
             player_entries.sort(reverse=True, key=lambda x: x[0])
+            if len(player_entries) > 0:
+                self._topscored_player = list(player_entries[0])
+                self._topscored_player[1] = self._topscored_player[2].getname()
+                self._topscored_player[2] = self._topscored_player[2].get_icon()
         else:
             for _pkey, prec in self.stats.get_records().items():
                 player_entries.append((prec.score, prec.name_full, prec))
             player_entries.sort(reverse=True, key=lambda x: x[0])
 
-        self._topscored_player = list(player_entries[0])
-        self._topscored_player[1] = self._topscored_player[2].getname()
-        self._topscored_player[2] = self._topscored_player[2].get_icon()
         ts_height = 300.0
         ts_h_offs = -390.0
         tval = 6.4
@@ -443,7 +444,10 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             if len(team.players) == 1:
                 icon = team.players[0].get_icon()
                 player_name = team.players[0].getname(full=True, icon=False)
-            elif self._topscored_player[0] >= series_length:
+           elif (
+                self._topscored_player is not None and
+                self._topscored_player[0] >= series_length
+            ):
                 icon = self._topscored_player[2]
                 player_name = self._topscored_player[1]
             else:
