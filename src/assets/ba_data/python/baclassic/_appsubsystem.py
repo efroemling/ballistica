@@ -720,18 +720,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
         return MainMenuSession
 
-    def continues_window(
-        self,
-        activity: bascenev1.Activity,
-        cost: int,
-        continue_call: Callable[[], Any],
-        cancel_call: Callable[[], Any],
-    ) -> None:
-        """(internal)"""
-        from bauiv1lib.continues import ContinuesWindow
-
-        ContinuesWindow(activity, cost, continue_call, cancel_call)
-
     def profile_browser_window(
         self,
         transition: str = 'in_right',

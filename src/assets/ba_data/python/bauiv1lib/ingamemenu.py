@@ -593,5 +593,5 @@ class InGameMenuWindow(bui.MainWindow):
 
         classic.main_menu_resume_callbacks.clear()
 
-    def __del__(self) -> None:
-        self._resume()
+    # def __del__(self) -> None:
+    #     self._resume()

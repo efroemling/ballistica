@@ -208,8 +208,6 @@ class GameActivity(Activity[PlayerT, TeamT]):
         """Instantiate the Activity."""
         super().__init__(settings)
 
-        plus = babase.app.plus
-
         # Holds some flattened info about the player set at the point
         # when on_begin() is called.
         self.initialplayerinfos: list[bascenev1.PlayerInfo] | None = None
@@ -239,23 +237,6 @@ class GameActivity(Activity[PlayerT, TeamT]):
             None
         )
         self._zoom_message_times: dict[int, float] = {}
-        self._is_waiting_for_continue = False
-
-        self._continue_cost = (
-            25
-            if plus is None
-            else plus.get_v1_account_misc_read_val('continueStartCost', 25)
-        )
-        self._continue_cost_mult = (
-            2
-            if plus is None
-            else plus.get_v1_account_misc_read_val('continuesMult', 2)
-        )
-        self._continue_cost_offset = (
-            0
-            if plus is None
-            else plus.get_v1_account_misc_read_val('continuesOffset', 0)
-        )
 
     @property
     def map(self) -> _map.Map:
@@ -361,103 +342,6 @@ class GameActivity(Activity[PlayerT, TeamT]):
 
         if music is not None:
             _music.setmusic(music)
-
-    def on_continue(self) -> None:
-        """
-        This is called if a game supports and offers a continue and the player
-        accepts.  In this case the player should be given an extra life or
-        whatever is relevant to keep the game going.
-        """
-
-    def _continue_choice(self, do_continue: bool) -> None:
-        plus = babase.app.plus
-        assert plus is not None
-        self._is_waiting_for_continue = False
-        if self.has_ended():
-            return
-        with self.context:
-            if do_continue:
-                _bascenev1.getsound('shieldUp').play()
-                _bascenev1.getsound('cashRegister').play()
-                plus.add_v1_account_transaction(
-                    {'type': 'CONTINUE', 'cost': self._continue_cost}
-                )
-                if plus is not None:
-                    plus.run_v1_account_transactions()
-                self._continue_cost = (
-                    self._continue_cost * self._continue_cost_mult
-                    + self._continue_cost_offset
-                )
-                self.on_continue()
-            else:
-                self.end_game()
-
-    def is_waiting_for_continue(self) -> bool:
-        """Returns whether or not this activity is currently waiting for the
-        player to continue (or timeout)"""
-        return self._is_waiting_for_continue
-
-    def continue_or_end_game(self) -> None:
-        """If continues are allowed, prompts the player to purchase a continue
-        and calls either end_game or continue_game depending on the result
-        """
-        # pylint: disable=too-many-nested-blocks
-        # pylint: disable=cyclic-import
-        from bascenev1._coopsession import CoopSession
-
-        classic = babase.app.classic
-        assert classic is not None
-        continues_window = classic.continues_window
-
-        # Turning these off. I want to migrate towards monetization that
-        # feels less pay-to-win-ish.
-        allow_continues = False
-
-        plus = babase.app.plus
-        try:
-            if (
-                plus is not None
-                and plus.get_v1_account_misc_read_val('enableContinues', False)
-                and allow_continues
-            ):
-                session = self.session
-
-                # We only support continuing in non-tournament games.
-                tournament_id = session.tournament_id
-                if tournament_id is None:
-                    # We currently only support continuing in sequential
-                    # co-op campaigns.
-                    if isinstance(session, CoopSession):
-                        assert session.campaign is not None
-                        if session.campaign.sequential:
-                            gnode = self.globalsnode
-
-                            # Only attempt this if we're not currently paused
-                            # and there appears to be no UI.
-                            assert babase.app.classic is not None
-                            hmmw = babase.app.ui_v1.has_main_window()
-                            if not gnode.paused and not hmmw:
-                                self._is_waiting_for_continue = True
-                                with babase.ContextRef.empty():
-                                    babase.apptimer(
-                                        0.5,
-                                        lambda: continues_window(
-                                            self,
-                                            self._continue_cost,
-                                            continue_call=babase.WeakCall(
-                                                self._continue_choice, True
-                                            ),
-                                            cancel_call=babase.WeakCall(
-                                                self._continue_choice, False
-                                            ),
-                                        ),
-                                    )
-                                return
-
-        except Exception:
-            logging.exception('Error handling continues.')
-
-        self.end_game()
 
     @override
     def on_begin(self) -> None:

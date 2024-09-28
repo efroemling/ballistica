@@ -131,9 +131,15 @@ class ClassicAppMode(AppMode):
 
         ui = app.ui_v1
 
-        # If *any* main-window is up, kill it.
+        # If *any* main-window is up, kill it and resume play.
         old_window = ui.get_main_window()
         if old_window is not None:
+
+            classic = app.classic
+
+            assert classic is not None
+            classic.resume()
+
             ui.clear_main_window()
             return
 
