@@ -267,7 +267,7 @@ def _run_sphinx(
             'copyright': copyright_text,
             'version': version,
             'buildnum': buildnum,
-            'ballistica_logo': 'https://camo.githubusercontent.com/25021344ceaa7def6fa6523f79115f7ffada8d26b4768bb9a0cf65fc33304f45/68747470733a2f2f66696c65732e62616c6c6973746963612e6e65742f62616c6c6973746963615f6d656469612f62616c6c6973746963615f6c6f676f5f68616c662e706e67',  # pylint: disable=line-too-long
+            'ballistica_logo': 'https://files.ballistica.net/ballistica_media/ballistica_logo_half.png',  # pylint: disable=line-too-long
         }
     )
 

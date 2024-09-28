@@ -588,13 +588,8 @@ class Chooser:
         # Handle '_edit' as a special case.
         if profilename == '_edit' and ready:
             with babase.ContextRef.empty():
-                # if bool(True):
-                #     babase.screenmessage('UNDER CONSTRUCTION')
-                #     return
 
-                classic.profile_browser_window(
-                    # in_main_menu=False
-                )
+                classic.profile_browser_window()
 
                 # Give their input-device UI ownership too (prevent
                 # someone else from snatching it in crowded games).

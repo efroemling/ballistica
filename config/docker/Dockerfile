@@ -8,7 +8,7 @@ ARG base_image=ubuntu:latest
 
 #-------------------------------BUILDER--------------------------------
 # Start with the base image
-FROM ${base_image} AS builder
+FROM --platform=$TARGETPLATFORM ${base_image} AS builder
 
 # Renew the args
 ARG headless_build
@@ -23,20 +23,22 @@ ENV CMAKE_BUILD_TYPE=${cmake_build_type}
 ENV HEADLESS_BUILD=${headless_build}
 
 # Install build dependencies
-RUN apt-get update -y && \
-    apt-get install -y \
-        python3.12-dev \
-        python3.12-venv \
-        python3-pip \
-        libsdl2-dev \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        clang \
+        clang-format \
+        cmake \
+        curl \
         libglut-dev \
         libopenal-dev \
+        libsdl2-dev \
         libvorbis-dev \
         make \
-        curl \
-        rsync \
-        clang-format \
-        cmake
+        python3-pip \
+        python3.12-dev \
+        python3.12-venv \
+        rsync
 
 # Copy source code
 COPY ./ /ballistica
@@ -55,13 +57,12 @@ RUN mkdir /ballistica_cmake && \
     fi && \
     mv build/cmake/*/staged/* /ballistica_cmake
 
-
 #-------------------------------RUNNER--------------------------------
 # Create a new stage for the runtime environment
-FROM ${base_image}
+FROM --platform=$TARGETPLATFORM ${base_image} as runner
 
 # Environment settings
-ENV LANG en_US.utf8
+ENV LANG=en_US.utf8
 ENV LANGUAGE=en_US
 ENV LC_ALL=en_US.utf8
 ENV DEBIAN_FRONTEND=noninteractive
@@ -70,11 +71,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 ARG headless_build
 ENV HEADLESS_BUILD=${headless_build}
 ARG cmake_build_type
-
 LABEL BOMBSQUAD_BUILD_TYPE=${cmake_build_type}
 
 # Install runtime dependencies
-RUN apt-get update -y && \
+RUN apt-get update && \
     apt-get install -y \
         python3.12-dev && \
     if [ "$HEADLESS_BUILD" = "0" ]; then \
