@@ -444,7 +444,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             if len(team.players) == 1:
                 icon = team.players[0].get_icon()
                 player_name = team.players[0].getname(full=True, icon=False)
-           elif (
+            elif (
                 self._topscored_player is not None and
                 self._topscored_player[0] >= series_length
             ):
