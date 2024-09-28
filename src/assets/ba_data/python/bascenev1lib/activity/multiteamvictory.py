@@ -24,6 +24,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         self._allow_server_transition = True
         self._tips_text = None
         self._default_show_tips = False
+        self._topscored_player: list[object] | None = None
 
     @override
     def on_begin(self) -> None:
@@ -70,6 +71,10 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                         )
                     )
             player_entries.sort(reverse=True, key=lambda x: x[0])
+            if len(player_entries) > 0:
+                self._topscored_player = list(player_entries[0])
+                self._topscored_player[1] = self._topscored_player[2].getname()
+                self._topscored_player[2] = self._topscored_player[2].get_icon()
         else:
             for _pkey, prec in self.stats.get_records().items():
                 player_entries.append((prec.score, prec.name_full, prec))
@@ -372,39 +377,40 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         v_offs = 0.0
         tdelay += len(player_entries) * 8 * t_incr
         for _score, name, prec in player_entries:
-            tdelay -= 4 * t_incr
-            v_offs -= 40
-            Text(
-                (
-                    str(prec.team.customdata['score'])
-                    if self._is_ffa
-                    else str(prec.score)
-                ),
-                color=(0.5, 0.5, 0.5, 1.0),
-                position=(ts_h_offs + 230, ts_height / 2 + v_offs),
-                h_align=Text.HAlign.RIGHT,
-                transition=Text.Transition.IN_RIGHT,
-                transition_delay=tdelay,
-            ).autoretain()
-            tdelay -= 4 * t_incr
+            if prec.player.in_game:
+                tdelay -= 4 * t_incr
+                v_offs -= 40
+                Text(
+                    (
+                        str(prec.team.customdata['score'])
+                        if self._is_ffa
+                        else str(prec.score)
+                    ),
+                    color=(0.5, 0.5, 0.5, 1.0),
+                    position=(ts_h_offs + 230, ts_height / 2 + v_offs),
+                    h_align=Text.HAlign.RIGHT,
+                    transition=Text.Transition.IN_RIGHT,
+                    transition_delay=tdelay,
+                ).autoretain()
+                tdelay -= 4 * t_incr
 
-            Image(
-                prec.get_icon(),
-                position=(ts_h_offs - 72, ts_height / 2 + v_offs + 15),
-                scale=(30, 30),
-                transition=Image.Transition.IN_LEFT,
-                transition_delay=tdelay,
-            ).autoretain()
-            Text(
-                bs.Lstr(value=name),
-                position=(ts_h_offs - 50, ts_height / 2 + v_offs + 15),
-                h_align=Text.HAlign.LEFT,
-                v_align=Text.VAlign.CENTER,
-                maxwidth=180,
-                color=bs.safecolor(prec.team.color + (1,)),
-                transition=Text.Transition.IN_RIGHT,
-                transition_delay=tdelay,
-            ).autoretain()
+                Image(
+                    prec.get_icon(),
+                    position=(ts_h_offs - 72, ts_height / 2 + v_offs + 15),
+                    scale=(30, 30),
+                    transition=Image.Transition.IN_LEFT,
+                    transition_delay=tdelay,
+                ).autoretain()
+                Text(
+                    bs.Lstr(value=name),
+                    position=(ts_h_offs - 50, ts_height / 2 + v_offs + 15),
+                    h_align=Text.HAlign.LEFT,
+                    v_align=Text.VAlign.CENTER,
+                    maxwidth=180,
+                    color=bs.safecolor(prec.team.color + (1,)),
+                    transition=Text.Transition.IN_RIGHT,
+                    transition_delay=tdelay,
+                ).autoretain()
 
         bs.timer(15.0, bs.WeakCall(self._show_tips))
 
@@ -433,25 +439,38 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 maxwidth=250,
             ).autoretain()
         else:
-            offs_v = -80.0
+            offs_v = -80
+            series_length = self.session.get_ffa_series_length()
             if len(team.players) == 1:
+                icon = team.players[0].get_icon()
+                player_name = team.players[0].getname(full=True, icon=False)
+            elif (
+                self._topscored_player is not None and
+                self._topscored_player[0] >= series_length
+            ):
+                icon = self._topscored_player[2]
+                player_name = self._topscored_player[1]
+            else:
+                icon = None
+                player_name = 'Player Not Found'
+
+            if icon is not None:
                 i = Image(
-                    team.players[0].get_icon(),
+                    icon,
                     position=(0, 143),
                     scale=(100, 100),
                 ).autoretain()
                 assert i.node
                 bs.animate(i.node, 'opacity', {0.0: 0.0, 0.25: 1.0})
-                ZoomText(
-                    bs.Lstr(
-                        value=team.players[0].getname(full=True, icon=False)
-                    ),
-                    position=(0, 97 + offs_v),
-                    color=team.color,
-                    scale=1.15,
-                    jitter=1.0,
-                    maxwidth=250,
-                ).autoretain()
+
+            ZoomText(
+                bs.Lstr(value=player_name),
+                position=(0, 97 + offs_v + (0 if icon is not None else 60)),
+                color=team.color,
+                scale=1.15,
+                jitter=1.0,
+                maxwidth=250,
+            ).autoretain()
 
         s_extra = 1.0 if self._is_ffa else 1.0
 
