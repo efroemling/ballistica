@@ -58,6 +58,15 @@ Exception::~Exception() { delete stack_trace_; }
 
 auto Exception::what() const noexcept -> const char* {
   // Return a nice pretty stack trace and other relevant info.
+
+  // Note: Design-wise it is a bit odd to have what() always return a stack
+  // trace. It would seem more reasonable and closer to how Python itself
+  // behaves to have what() simply give the exception message and have a
+  // separate method to extract the stack trace. However, in cases such as
+  // crash reports, what() often makes it into the reports and including the
+  // stack trace there is often useful, so we do things a bit backward;
+  // including the trace by default and having a separate method to get the
+  // message without it.
   try {
     // This call is const so we're technically not supposed to modify ourself,
     // but a one-time flattening of our description into an internal buffer

@@ -13,6 +13,7 @@
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
 
@@ -54,7 +55,13 @@ JoystickInput::JoystickInput(int sdl_joystick_id,
     assert(g_core->InMainThread());
 
     sdl_joystick_ = SDL_JoystickOpen(sdl_joystick_id);
-    assert(sdl_joystick_);
+    if (sdl_joystick_ == nullptr) {
+      auto* err = SDL_GetError();
+      if (!err) {
+        err = "Unknown SDL error.";
+      }
+      throw Exception(std::string("Error in SDL_JoystickOpen: ") + err + ".");
+    }
 
     // In SDL2 we're passed a device-id but that's only used to open the
     // joystick; events and most everything else use an instance ID, so we store

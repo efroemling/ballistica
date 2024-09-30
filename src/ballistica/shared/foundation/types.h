@@ -262,6 +262,9 @@ enum class SpecialChar : uint8_t {
   kLast  // Sentinel
 };
 
+// NOTE: When adding exception types here, add a corresponding
+// handler in Python::SetPythonException.
+
 /// Python exception types we can raise from our own exceptions.
 enum class PyExcType : uint8_t {
   kRuntime,

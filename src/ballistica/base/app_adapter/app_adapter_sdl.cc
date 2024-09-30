@@ -5,7 +5,6 @@
 #include "ballistica/base/app_adapter/app_adapter_sdl.h"
 
 #include "ballistica/base/base.h"
-#include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/gl/gl_sys.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics.h"
@@ -555,8 +554,18 @@ void AppAdapterSDL::OnSDLJoystickAdded_(int device_index) {
 
   // Create the joystick here in the main thread and then pass it over to
   // the logic thread to be added to the action.
-  auto* j = Object::NewDeferred<JoystickInput>(device_index);
-  int instance_id = SDL_JoystickInstanceID(j->sdl_joystick());
+  JoystickInput* j{};
+  try {
+    j = Object::NewDeferred<JoystickInput>(device_index);
+  } catch (const std::exception& exc) {
+    Log(LogLevel::kError,
+        std::string("Error creating JoystickInput for SDL device-index "
+                    + std::to_string(device_index) + ": ")
+            + exc.what());
+    return;
+  }
+  assert(j != nullptr);
+  auto instance_id = SDL_JoystickInstanceID(j->sdl_joystick());
   AddSDLInputDevice_(j, instance_id);
 }
 
@@ -592,7 +601,7 @@ void AppAdapterSDL::RemoveSDLInputDevice_(int index) {
         "GetSDLJoystickInput_() returned nullptr on RemoveSDLInputDevice_();"
         " joysticks size is "
             + std::to_string(sdl_joysticks_.size()) + "; index is "
-            + std::to_string(index));
+            + std::to_string(index) + ".");
     return;
   }
 
@@ -602,7 +611,7 @@ void AppAdapterSDL::RemoveSDLInputDevice_(int index) {
   } else {
     Log(LogLevel::kError, "Invalid index on RemoveSDLInputDevice: size is "
                               + std::to_string(sdl_joysticks_.size())
-                              + "; index is " + std::to_string(index));
+                              + "; index is " + std::to_string(index) + ".");
   }
   g_base->input->PushRemoveInputDeviceCall(j, true);
 }
@@ -636,9 +645,9 @@ auto AppAdapterSDL::GetSDLJoystickInput_(const SDL_Event* e) const
 auto AppAdapterSDL::GetSDLJoystickInput_(int sdl_joystick_id) const
     -> JoystickInput* {
   assert(g_core->InMainThread());
-  for (auto sdl_joystick : sdl_joysticks_) {
-    if ((sdl_joystick != nullptr) && (*sdl_joystick).sdl_joystick_id() >= 0
-        && (*sdl_joystick).sdl_joystick_id() == sdl_joystick_id)
+  for (auto* sdl_joystick : sdl_joysticks_) {
+    if ((sdl_joystick != nullptr) && sdl_joystick->sdl_joystick_id() >= 0
+        && sdl_joystick->sdl_joystick_id() == sdl_joystick_id)
       return sdl_joystick;
   }
   return nullptr;  // Epic fail.

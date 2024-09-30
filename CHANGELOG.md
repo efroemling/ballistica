@@ -1,4 +1,4 @@
-### 1.7.37 (build 22018, api 9, 2024-09-28)
+### 1.7.37 (build 22019, api 9, 2024-09-30)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -108,6 +108,8 @@
   the co-op screen and pressed the trophy toolbar icon to see your league rank
   and then pressed back, you would be taken back to the top level main menu. Now
   it will take you back to the co-op screen.
+- (build 22018) Hardened SDL joystick handling code so the app won't crash if
+  SDL_JoystickOpen() returns nullptr for whatever reason.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these
