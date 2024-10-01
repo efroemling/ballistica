@@ -50,10 +50,6 @@ void UIV1FeatureSet::OnModuleExec(PyObject* module) {
   assert(g_base == nullptr);  // Should be getting set once here.
   g_base = base::BaseFeatureSet::Import();
 
-  // Let base know we exist.
-  // (save it the trouble of trying to load us if it uses us passively).
-  // g_base->set_ui_v1(g_ui_v1);
-
   g_core->LifecycleLog("_bauiv1 exec end");
 }
 
@@ -80,30 +76,25 @@ bool UIV1FeatureSet::MainMenuVisible() {
 }
 
 bool UIV1FeatureSet::PartyIconVisible() {
-  printf("FIXME HANDLE PARTY ICON VISIBLE\n");
-  return false;
-  // int party_size = g_base->app_mode()->GetPartySize();
-  // if (party_size > 1 || g_base->app_mode()->HasConnectionToHost()
-  //     || root_ui()->always_draw_party_icon()) {
-  //   return true;
-  // }
-  // return false;
+  // Currently this is always visible.
+  return true;
+}
+
+void UIV1FeatureSet::SetPartyIconNumber(int num) {
+  // Store the value and plug it in if we've got a live widget.
+  party_icon_number_ = num;
+  if (auto* r = root_widget()) {
+    root_widget_->SetSquadSizeLabel(num);
+  }
 }
 
 void UIV1FeatureSet::ActivatePartyIcon() {
-  printf("FIXME HANDLE ACTIVATE PARTY ICON\n");
-  // if (auto* r = root_ui()) {
-  //   r->ActivatePartyIcon();
-  // }
+  if (auto* r = root_widget()) {
+    root_widget_->SquadPress();
+  }
 }
 
-bool UIV1FeatureSet::PartyWindowOpen() {
-  printf("FIXME HANDLE PARTY WINDOW OPEN\n");
-  // if (auto* r = root_ui()) {
-  //   return r->party_window_open();
-  // }
-  return party_window_open_;
-}
+bool UIV1FeatureSet::PartyWindowOpen() { return party_window_open_; }
 
 void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
   base::RenderPass* overlay_flat_pass = frame_def->GetOverlayFlatPass();
@@ -187,6 +178,9 @@ void UIV1FeatureSet::Reset() {
   rw->SetScreenWidget(sw.Get());
   rw->Setup();
   rw->SetOverlayWidget(ow.Get());
+
+  // Plug in current values for everything.
+  rw->SetSquadSizeLabel(party_icon_number_);
 
   sw->GlobalSelect();
 }

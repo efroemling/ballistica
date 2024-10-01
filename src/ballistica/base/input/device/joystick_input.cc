@@ -3,19 +3,14 @@
 #include "ballistica/base/input/device/joystick_input.h"
 
 #include "ballistica/base/app_adapter/app_adapter.h"
-#include "ballistica/base/app_mode/app_mode.h"
-#include "ballistica/base/audio/audio.h"
-#include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/base/support/repeater.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
-#include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
-#include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_command.h"
 
 namespace ballistica::base {
 

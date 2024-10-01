@@ -7,11 +7,11 @@
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/base/networking/network_writer.h"
-#include "ballistica/base/python/base_python.h"
+#include "ballistica/base/networking/networking.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
-#include "ballistica/scene_v1/connection/connection_to_client_udp.h"
+#include "ballistica/scene_v1/connection/connection_to_client.h"
 #include "ballistica/scene_v1/connection/connection_to_host.h"
 #include "ballistica/scene_v1/node/globals_node.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
@@ -23,6 +23,7 @@
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
+#include "ballistica/shared/networking/sockaddr.h"
 #include "ballistica/ui_v1/ui_v1.h"
 
 namespace ballistica::classic {
@@ -92,6 +93,7 @@ void ClassicAppMode::OnActivate() {
   // callbacks.
   DoApplyAppConfig();
   LanguageChanged();
+  OnGameRosterChanged_();
 }
 
 void ClassicAppMode::OnAppStart() { assert(g_base->InLogicThread()); }
@@ -131,7 +133,7 @@ void ClassicAppMode::Reset_() {
 
   // Import UIV1 and wire it up for UI duty.
   if (!g_core->HeadlessMode()) {
-    g_base->ui->set_ui_delegate(ui_v1::UIV1FeatureSet::Import());
+    g_base->ui->SetUIDelegate(ui_v1::UIV1FeatureSet::Import());
   }
 
   // Fade in if we currently aren't.
@@ -441,10 +443,17 @@ auto ClassicAppMode::HandleJSONPing(const std::string& data_str)
 }
 
 void ClassicAppMode::SetGameRoster(cJSON* r) {
+  assert(g_base->InLogicThread());
   if (game_roster_ != nullptr) {
     cJSON_Delete(game_roster_);
   }
   game_roster_ = r;
+  OnGameRosterChanged_();
+}
+
+void ClassicAppMode::OnGameRosterChanged_() {
+  assert(g_base->InLogicThread());
+  g_base->ui->SetPartyIconNumber(GetPartySize());
 }
 
 auto ClassicAppMode::GetPartySize() const -> int {
@@ -686,6 +695,8 @@ void ClassicAppMode::UpdateGameRoster() {
       }
     }
   }
+
+  OnGameRosterChanged_();
 
   // Keep the Python layer informed on our number of connections; it may want
   // to pass the info along to the master server if we're hosting a public

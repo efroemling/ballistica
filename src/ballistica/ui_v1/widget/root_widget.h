@@ -29,11 +29,13 @@ class RootWidget : public ContainerWidget {
   auto overlay_window_stack() const -> StackWidget* {
     return overlay_stack_widget_;
   }
+  void SquadPress();
 
   /// Called when UIScale or screen dimensions change.
   void OnUIScaleChange();
 
   void UpdateLayout() override;
+  void SetSquadSizeLabel(int val);
 
  private:
   struct ButtonDef;
@@ -51,8 +53,6 @@ class RootWidget : public ContainerWidget {
   void StepPositions_(float dt);
   void AddMeter_(MeterType type, float h_align, float r, float g, float b,
                  bool plus, const std::string& s);
-  auto AddCover_(float h_align, VAlign v_align, float x, float y, float w,
-                 float h, float o) -> Button*;
   ToolbarVisibility toolbar_visibility_{ToolbarVisibility::kInGame};
   StackWidget* screen_stack_widget_{};
   StackWidget* overlay_stack_widget_{};
@@ -83,6 +83,7 @@ class RootWidget : public ContainerWidget {
   Button* level_icon_{};
   Button* level_meter_button_{};
   Button* trophy_icon_{};
+  Text* squad_size_text_{};
 };
 
 }  // namespace ballistica::ui_v1

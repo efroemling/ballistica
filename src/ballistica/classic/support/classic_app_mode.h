@@ -137,6 +137,7 @@ class ClassicAppMode : public base::AppMode {
   auto public_party_stats_url() const -> const std::string& {
     return public_party_stats_url_;
   }
+
   void SetPublicPartyMaxSize(int count);
   void SetPublicPartyName(const std::string& name);
   void SetPublicPartyStatsURL(const std::string& name);
@@ -211,6 +212,7 @@ class ClassicAppMode : public base::AppMode {
 
  private:
   ClassicAppMode();
+  void OnGameRosterChanged_();
   void PruneScanResults_();
   void UpdateKickVote_();
   auto GetGameRosterMessage_() -> std::vector<uint8_t>;

@@ -133,35 +133,6 @@ RootWidget::RootWidget() {
 
 RootWidget::~RootWidget() = default;
 
-auto RootWidget::AddCover_(float h_align, VAlign v_align, float x, float y,
-                           float w, float h, float o) -> RootWidget::Button* {
-  // Currently just not doing these in vr mode.
-  if (g_core->vr_mode()) {
-    return nullptr;
-  }
-
-  ButtonDef bd;
-  bd.h_align = h_align;
-  bd.v_align = v_align;
-  bd.width = w;
-  bd.height = h;
-  bd.x = x;
-  bd.y = y;
-  bd.img = "softRect";
-  bd.selectable = false;
-  bd.color_r = 0.0f;
-  bd.color_g = 0.0f;
-  bd.color_b = 0.0f;
-  bd.opacity = o;
-  bd.call = UIV1Python::ObjID::kEmptyCall;
-
-  bd.visibility_mask =
-      static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot);
-
-  Button* b = AddButton_(bd);
-  return b;
-}
-
 void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
                            float b, bool plus, const std::string& s) {
   float y_offs_small{7.0f};
@@ -585,6 +556,24 @@ void RootWidget::Setup() {
     b.enable_sound = false;
     squad_button_ = AddButton_(b);
     top_right_buttons_.push_back(squad_button_);
+
+    {
+      TextDef td;
+      td.button = squad_button_;
+      td.width = 70.0f;
+      td.text = "0";
+      td.x = -2.0f;
+      td.y = -10.0f;
+      td.scale = 1.0f;
+      td.flatness = 1.0f;
+      td.shadow = 1.0f;
+      td.depth_min = 0.3f;
+      td.color_r = 0.0f;
+      td.color_g = 1.0f;
+      td.color_b = 0.0f;
+      td.color_a = 0.5f;
+      squad_size_text_ = AddText_(td);
+    }
   }
 
   AddMeter_(MeterType::kTokens, 1.0f, 1.0f, 1.0f, 1.0f, true, "123");
@@ -1211,6 +1200,13 @@ auto RootWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     return ContainerWidget::HandleMessage(m);
   }
 }
+void RootWidget::SquadPress() {
+  assert(g_base->InLogicThread());
+  if (squad_button_) {
+    squad_button_->widget->Activate();
+  }
+}
+
 void RootWidget::BackPress() {
   assert(g_base->InLogicThread());
   screen_stack_widget_->HandleMessage(
@@ -1264,6 +1260,19 @@ auto RootWidget::GetSpecialWidget(const std::string& s) const -> Widget* {
     return overlay_stack_widget_;
   }
   return nullptr;
+}
+
+void RootWidget::SetSquadSizeLabel(int val) {
+  if (squad_size_text_) {
+    auto* w{squad_size_text_->widget.Get()};
+    assert(w);
+    w->SetText(std::to_string(val));
+    if (val > 0) {
+      w->set_color(0.0f, 1.0f, 0.0f, 1.0f);
+    } else {
+      w->set_color(0.0f, 1.0f, 0.0f, 0.5f);
+    }
+  }
 }
 
 }  // namespace ballistica::ui_v1

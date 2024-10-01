@@ -2501,13 +2501,6 @@ static auto PySetPartyWindowOpen(PyObject* self, PyObject* args,
   BA_PRECONDITION(g_base->InLogicThread());
   assert(g_base->input);
   assert(g_ui_v1);
-  printf("FIXME SET PARTY WINDOW OPEN\n");
-  // auto* root_ui = g_ui_v1->root_ui();
-  // if (root_ui == nullptr) {
-  //   throw Exception("ui-v1 root ui not found.");
-  // }
-
-  // root_ui->set_party_window_open(static_cast<bool>(value));
   g_ui_v1->set_party_window_open(static_cast<bool>(value));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

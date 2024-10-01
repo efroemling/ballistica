@@ -16,6 +16,8 @@ namespace ballistica::base {
 
 class UIDelegateInterface {
  public:
+  virtual void Reset() = 0;
+
   /// Called when this delegate is becoming the active one.
   virtual void OnActivate() = 0;
 
@@ -34,14 +36,11 @@ class UIDelegateInterface {
   virtual auto MainMenuVisible() -> bool = 0;
   virtual auto PartyIconVisible() -> bool = 0;
   virtual void ActivatePartyIcon() = 0;
-  // virtual void HandleLegacyRootUIMouseMotion(float x, float y) = 0;
-  // virtual auto HandleLegacyRootUIMouseDown(float x, float y) -> bool = 0;
-  // virtual void HandleLegacyRootUIMouseUp(float x, float y) = 0;
   virtual void Draw(FrameDef* frame_def) = 0;
   virtual auto PartyWindowOpen() -> bool = 0;
-  virtual void Reset() = 0;
   virtual auto GetRootWidget() -> ui_v1::Widget* = 0;
   virtual auto SendWidgetMessage(const WidgetMessage& m) -> int = 0;
+  virtual void SetPartyIconNumber(int num) = 0;
 
   /// Should return true if this app mode can confirm quitting the app.
   virtual auto HasQuitConfirmDialog() -> bool = 0;

@@ -214,6 +214,12 @@ void UI::ActivatePartyIcon() {
   }
 }
 
+void UI::SetPartyIconNumber(int val) {
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    ui_delegate->SetPartyIconNumber(val);
+  }
+}
+
 auto UI::PartyWindowOpen() -> bool {
   if (auto* ui_delegate = g_base->ui->delegate()) {
     return ui_delegate->PartyWindowOpen();
@@ -349,7 +355,7 @@ void UI::Reset() {
   // Reset and then deactivate any current delegate.
   if (auto* ui_delegate = g_base->ui->delegate()) {
     ui_delegate->Reset();
-    g_base->ui->set_ui_delegate(nullptr);
+    g_base->ui->SetUIDelegate(nullptr);
   }
 }
 
@@ -586,7 +592,7 @@ void UI::ShowURL(const std::string& url) {
   }
 }
 
-void UI::set_ui_delegate(base::UIDelegateInterface* delegate) {
+void UI::SetUIDelegate(base::UIDelegateInterface* delegate) {
   assert(g_base->InLogicThread());
 
   if (delegate == delegate_) {

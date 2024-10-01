@@ -46,7 +46,7 @@ class UI {
   /// switching app-modes or when resetting things within an app mode.
   void Reset();
 
-  void set_ui_delegate(base::UIDelegateInterface* delegate);
+  void SetUIDelegate(base::UIDelegateInterface* delegate);
 
   /// Pop up an in-app window to display a URL (NOT to open the URL in a
   /// browser). Can be called from any thread.
@@ -59,6 +59,7 @@ class UI {
   auto PartyIconVisible() -> bool;
   auto PartyWindowOpen() -> bool;
   void ActivatePartyIcon();
+  void SetPartyIconNumber(int val);
 
   auto HandleMouseDown(int button, float x, float y, bool double_click) -> bool;
   void HandleMouseUp(int button, float x, float y);

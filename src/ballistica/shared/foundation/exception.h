@@ -48,9 +48,6 @@ auto GetShortExceptionDescription(const std::exception& exc) -> const char*;
 
 class Exception : public std::exception {
  public:
-  // NOTE: When adding exception types here, add a corresponding
-  // handler in Python::SetPythonException.
-
   explicit Exception(std::string message = "",
                      PyExcType python_type = PyExcType::kRuntime);
   explicit Exception(PyExcType python_type);
