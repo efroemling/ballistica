@@ -446,8 +446,9 @@ class StoreSubsystem:
                     'price.' + item, None
                 )
                 if ticket_cost is not None:
-                    if our_tickets >= ticket_cost and not plus.get_purchased(
-                        item
+                    if (
+                        our_tickets >= ticket_cost
+                        and not plus.get_v1_account_product_purchased(item)
                     ):
                         count += 1
         return count
@@ -522,7 +523,7 @@ class StoreSubsystem:
             for section in store_layout[tab]:
                 for item in section['items']:
                     if item in sales_raw:
-                        if not plus.get_purchased(item):
+                        if not plus.get_v1_account_product_purchased(item):
                             to_end = (
                                 datetime.datetime.fromtimestamp(
                                     sales_raw[item]['e'], datetime.UTC
@@ -550,7 +551,10 @@ class StoreSubsystem:
         if babase.app.env.gui:
             for map_section in self.get_store_layout()['maps']:
                 for mapitem in map_section['items']:
-                    if plus is None or not plus.get_purchased(mapitem):
+                    if (
+                        plus is None
+                        or not plus.get_v1_account_product_purchased(mapitem)
+                    ):
                         m_info = self.get_store_item(mapitem)
                         unowned_maps.add(m_info['map_type'].name)
         return sorted(unowned_maps)
@@ -563,7 +567,10 @@ class StoreSubsystem:
             if babase.app.env.gui:
                 for section in self.get_store_layout()['minigames']:
                     for mname in section['items']:
-                        if plus is None or not plus.get_purchased(mname):
+                        if (
+                            plus is None
+                            or not plus.get_v1_account_product_purchased(mname)
+                        ):
                             m_info = self.get_store_item(mname)
                             unowned_games.add(m_info['gametype'])
             return unowned_games

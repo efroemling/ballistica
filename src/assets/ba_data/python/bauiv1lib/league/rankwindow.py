@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import copy
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupMenu
 import bauiv1 as bui
@@ -23,7 +23,6 @@ class LeagueRankWindow(bui.MainWindow):
         self,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
-        modal: bool = False,
     ):
         # pylint: disable=too-many-statements
         plus = bui.app.plus
@@ -32,7 +31,6 @@ class LeagueRankWindow(bui.MainWindow):
         bui.set_analytics_screen('League Rank Window')
 
         self._league_rank_data: dict[str, Any] | None = None
-        self._modal = modal
 
         self._power_ranking_achievements_button: bui.Widget | None = None
         self._pro_mult_button: bui.Widget | None = None
@@ -45,12 +43,6 @@ class LeagueRankWindow(bui.MainWindow):
         self._power_ranking_rank_text: bui.Widget | None = None
         self._to_ranked_text: bui.Widget | None = None
         self._trophy_counts_reset_text: bui.Widget | None = None
-
-        # Need to handle transitioning out ourself for modal case
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-        else:
-            self._transition_out = 'out_right'
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
@@ -98,7 +90,7 @@ class LeagueRankWindow(bui.MainWindow):
         if uiscale is bui.UIScale.SMALL:
             self._back_button = bui.get_special_widget('back_button')
             bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self._back
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
         else:
             self._back_button = btn = bui.buttonwidget(
@@ -107,11 +99,9 @@ class LeagueRankWindow(bui.MainWindow):
                 size=(120, 60),
                 scale=1.2,
                 autoselect=True,
-                label=bui.Lstr(
-                    resource='doneText' if self._modal else 'backText'
-                ),
-                button_type=None if self._modal else 'back',
-                on_activate_call=self._back,
+                label=bui.Lstr(resource='backText'),
+                button_type='back',
+                on_activate_call=self.main_window_back,
             )
             bui.buttonwidget(
                 edit=btn,
@@ -184,6 +174,20 @@ class LeagueRankWindow(bui.MainWindow):
             1.0, bui.WeakCall(self._update), repeat=True
         )
         self._update(show=info is None)
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
+
+    @override
+    def on_main_window_close(self) -> None:
+        self._save_state()
 
     def _on_achievements_press(self) -> None:
         from bauiv1lib.achievements import AchievementsWindow
@@ -1163,17 +1167,3 @@ class LeagueRankWindow(bui.MainWindow):
 
     def _save_state(self) -> None:
         pass
-
-    def _back(self) -> None:
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        self._save_state()
-        if self._modal:
-            bui.containerwidget(
-                edit=self._root_widget, transition=self._transition_out
-            )
-        else:
-            self.main_window_back()

@@ -64,11 +64,11 @@ class AccountV2Subsystem:
     def have_primary_credentials(self) -> bool:
         """Are credentials currently set for the primary app account?
 
-        Note that this does not mean these credentials are currently valid;
-        only that they exist. If/when credentials are validated, the 'primary'
-        account handle will be set.
+        Note that this does not mean these credentials have been checked
+        for validity; only that they exist. If/when credentials are
+        validated, the 'primary' account handle will be set.
         """
-        raise NotImplementedError('This should be overridden.')
+        raise NotImplementedError()
 
     @property
     def primary(self) -> AccountV2Handle | None:
@@ -105,9 +105,9 @@ class AccountV2Subsystem:
                     on_completed=self._on_set_active_workspace_completed,
                 )
             else:
-                # Don't activate workspaces if we've already told the game
-                # that initial-log-in is done or if we've already kicked
-                # off a workspace load.
+                # Don't activate workspaces if we've already told the
+                # game that initial-log-in is done or if we've already
+                # kicked off a workspace load.
                 _babase.screenmessage(
                     f'\'{account.workspacename}\''
                     f' will be activated at next app launch.',
@@ -264,11 +264,11 @@ class AccountV2Subsystem:
 
     def do_get_primary(self) -> AccountV2Handle | None:
         """Internal - should be overridden by subclass."""
-        raise NotImplementedError('This should be overridden.')
+        raise NotImplementedError()
 
     def set_primary_credentials(self, credentials: str | None) -> None:
         """Set credentials for the primary app account."""
-        raise NotImplementedError('This should be overridden.')
+        raise NotImplementedError()
 
     def _update_auto_sign_in(self) -> None:
         plus = _babase.app.plus

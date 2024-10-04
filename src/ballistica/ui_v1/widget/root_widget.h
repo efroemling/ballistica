@@ -36,6 +36,7 @@ class RootWidget : public ContainerWidget {
 
   void UpdateLayout() override;
   void SetSquadSizeLabel(int val);
+  void SetAccountState(bool signed_in, const std::string& name);
 
  private:
   struct ButtonDef;
@@ -84,6 +85,7 @@ class RootWidget : public ContainerWidget {
   Button* level_meter_button_{};
   Button* trophy_icon_{};
   Text* squad_size_text_{};
+  Text* account_name_text_{};
 };
 
 }  // namespace ballistica::ui_v1

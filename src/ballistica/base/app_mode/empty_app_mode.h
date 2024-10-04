@@ -3,8 +3,6 @@
 #ifndef BALLISTICA_BASE_APP_MODE_EMPTY_APP_MODE_H_
 #define BALLISTICA_BASE_APP_MODE_EMPTY_APP_MODE_H_
 
-#include <vector>
-
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/shared/foundation/object.h"
 
@@ -23,6 +21,7 @@ class EmptyAppMode : public AppMode {
 
  private:
   void Reset_();
+
   Object::Ref<TextGroup> hello_text_group_;
   int reset_count_{};
   bool hello_mode_{};

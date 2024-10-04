@@ -40,7 +40,6 @@ class PlusAppSubsystem(AppSubsystem):
         _baplus.on_app_loading()
         self.accounts.on_app_loading()
 
-    # noinspection PyUnresolvedReferences
     @staticmethod
     def add_v1_account_transaction(
         transaction: dict, callback: Callable | None = None
@@ -66,9 +65,9 @@ class PlusAppSubsystem(AppSubsystem):
         return _baplus.get_master_server_address(source, version)
 
     @staticmethod
-    def get_news_show() -> str:
+    def get_classic_news_show() -> str:
         """(internal)"""
-        return _baplus.get_news_show()
+        return _baplus.get_classic_news_show()
 
     @staticmethod
     def get_price(item: str) -> str | None:
@@ -76,14 +75,14 @@ class PlusAppSubsystem(AppSubsystem):
         return _baplus.get_price(item)
 
     @staticmethod
-    def get_purchased(item: str) -> bool:
+    def get_v1_account_product_purchased(item: str) -> bool:
         """(internal)"""
-        return _baplus.get_purchased(item)
+        return _baplus.get_v1_account_product_purchased(item)
 
     @staticmethod
-    def get_purchases_state() -> int:
+    def get_v1_account_product_purchases_state() -> int:
         """(internal)"""
-        return _baplus.get_purchases_state()
+        return _baplus.get_v1_account_product_purchases_state()
 
     @staticmethod
     def get_v1_account_display_string(full: bool = True) -> str:
@@ -129,7 +128,7 @@ class PlusAppSubsystem(AppSubsystem):
     def get_v1_account_ticket_count() -> int:
         """(internal)
 
-        Returns the number of tickets for the current account.
+        Return the number of tickets for the current account.
         """
         return _baplus.get_v1_account_ticket_count()
 

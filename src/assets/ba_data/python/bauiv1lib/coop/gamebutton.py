@@ -243,7 +243,9 @@ class GameButton:
             )
             or (
                 game in ('Challenges:Meteor Shower',)
-                and not plus.get_purchased('games.meteor_shower')
+                and not plus.get_v1_account_product_purchased(
+                    'games.meteor_shower'
+                )
             )
             or (
                 game
@@ -251,15 +253,21 @@ class GameButton:
                     'Challenges:Target Practice',
                     'Challenges:Target Practice B',
                 )
-                and not plus.get_purchased('games.target_practice')
+                and not plus.get_v1_account_product_purchased(
+                    'games.target_practice'
+                )
             )
             or (
                 game in ('Challenges:Ninja Fight',)
-                and not plus.get_purchased('games.ninja_fight')
+                and not plus.get_v1_account_product_purchased(
+                    'games.ninja_fight'
+                )
             )
             or (
                 game in ('Challenges:Pro Ninja Fight',)
-                and not plus.get_purchased('games.ninja_fight')
+                and not plus.get_v1_account_product_purchased(
+                    'games.ninja_fight'
+                )
             )
             or (
                 game
@@ -267,7 +275,9 @@ class GameButton:
                     'Challenges:Easter Egg Hunt',
                     'Challenges:Pro Easter Egg Hunt',
                 )
-                and not plus.get_purchased('games.easter_egg_hunt')
+                and not plus.get_v1_account_product_purchased(
+                    'games.easter_egg_hunt'
+                )
             )
         ):
             unlocked = False

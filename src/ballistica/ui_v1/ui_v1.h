@@ -87,7 +87,9 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   auto PartyIconVisible() -> bool override;
   void ActivatePartyIcon() override;
   void Draw(base::FrameDef* frame_def) override;
-  void SetPartyIconNumber(int num) override;
+
+  void SetSquadSizeLabel(int num) override;
+  void SetAccountState(bool signed_in, const std::string& name);
 
   UIV1Python* const python;
 
@@ -109,7 +111,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   // Return the absolute root widget; this includes persistent UI bits such
   // as the top/bottom bars
   auto root_widget() -> ui_v1::RootWidget* { return root_widget_.Get(); }
-  void Reset() override;
+  // void Reset() override;
 
   // Add a widget to a container. If a parent is provided, the widget is
   // added to it; otherwise it is added to the root widget.
@@ -142,6 +144,8 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   int party_icon_number_{};
   bool always_use_internal_on_screen_keyboard_{};
   bool party_window_open_{};
+  bool account_signed_in_{};
+  std::string account_name_{};
 };
 
 }  // namespace ballistica::ui_v1

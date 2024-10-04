@@ -15,7 +15,6 @@ from babase import (
     AppIntentDefault,
     invoke_main_menu,
     screenmessage,
-    # in_main_menu,
 )
 
 import _baclassic

@@ -14,6 +14,7 @@
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
@@ -214,9 +215,9 @@ void UI::ActivatePartyIcon() {
   }
 }
 
-void UI::SetPartyIconNumber(int val) {
+void UI::SetSquadSizeLabel(int val) {
   if (auto* ui_delegate = g_base->ui->delegate()) {
-    ui_delegate->SetPartyIconNumber(val);
+    ui_delegate->SetSquadSizeLabel(val);
   }
 }
 
@@ -248,12 +249,6 @@ auto UI::HandleMouseDown(int button, float x, float y, bool double_click)
     handled = dev_console_->HandleMouseDown(button, x, y);
   }
 
-  // if (!handled) {
-  //   if (auto* ui_delegate = g_base->ui->delegate()) {
-  //     handled = ui_delegate->HandleLegacyRootUIMouseDown(x, y);
-  //   }
-  // }
-
   if (!handled) {
     handled = SendWidgetMessage(WidgetMessage(
         WidgetMessage::Type::kMouseDown, nullptr, x, y, double_click ? 2 : 1));
@@ -280,10 +275,6 @@ void UI::HandleMouseUp(int button, float x, float y) {
       }
     }
   }
-
-  // if (auto* ui_delegate = g_base->ui->delegate()) {
-  //   ui_delegate->HandleLegacyRootUIMouseUp(x, y);
-  // }
 }
 
 auto UI::UIHasDirectKeyboardInput() const -> bool {
@@ -352,10 +343,9 @@ void UI::SetUIInputDevice(InputDevice* input_device) {
 
 void UI::Reset() {
   assert(g_base->InLogicThread());
-  // Reset and then deactivate any current delegate.
+  // Deactivate any current delegate.
   if (auto* ui_delegate = g_base->ui->delegate()) {
-    ui_delegate->Reset();
-    g_base->ui->SetUIDelegate(nullptr);
+    SetUIDelegate(nullptr);
   }
 }
 
@@ -364,10 +354,6 @@ auto UI::ShouldHighlightWidgets() const -> bool {
   // only when the main UI is visible (dont want a selection highlight for
   // toolbar buttons during a game).
   return g_base->input->have_non_touch_inputs() && MainMenuVisible();
-}
-
-auto UI::ShouldShowButtonShortcuts() const -> bool {
-  return g_base->input->have_non_touch_inputs();
 }
 
 auto UI::SendWidgetMessage(const WidgetMessage& m) -> bool {
@@ -595,8 +581,17 @@ void UI::ShowURL(const std::string& url) {
 void UI::SetUIDelegate(base::UIDelegateInterface* delegate) {
   assert(g_base->InLogicThread());
 
-  if (delegate == delegate_) {
-    return;
+  // We should always be either setting or clearing delegate; never setting
+  // redundantly.
+  if (delegate_) {
+    if (delegate) {
+      FatalError(
+          "Can\'t set UI Delegate when one is already set. Reset base first.");
+    }
+  } else {
+    if (!delegate) {
+      FatalError("Can\'t clear UI Delegate when already cleared.");
+    }
   }
 
   try {
@@ -610,8 +605,8 @@ void UI::SetUIDelegate(base::UIDelegateInterface* delegate) {
       delegate_->OnActivate();
 
       // Inform them that a few things changed, since they might have since
-      // the last time they were active (these callbacks only go to the *active*
-      // ui delegate).
+      // the last time they were active (these callbacks only go to the
+      // *active* ui delegate).
       delegate_->DoApplyAppConfig();
       delegate_->OnScreenSizeChange();
       delegate_->OnLanguageChange();
@@ -629,8 +624,8 @@ void UI::PushDevConsolePrintCall(const std::string& msg) {
   if (g_core->HeadlessMode()) {
     return;
   }
-  // If our event loop AND console are up and running, ship it off to
-  // be printed. Otherwise store it for the console to grab when it's ready.
+  // If our event loop AND console are up and running, ship it off to be
+  // printed. Otherwise store it for the console to grab when it's ready.
   if (auto* event_loop = g_base->logic->event_loop()) {
     if (dev_console_ != nullptr) {
       event_loop->PushCall([this, msg] { dev_console_->Print(msg); });
@@ -662,9 +657,11 @@ void UI::PushUIOperationRunnable(Runnable* runnable) {
 
   if (operation_context_ != nullptr) {
     // Once we're finishing the context, nothing else should be adding calls
-    // to it. UPDATE - this is actually ok. Things like widget-select
-    // commands can happen as part of user callbacks which themselves add
-    // additional callbacks to the current ui-operation.
+    // to it.
+    //
+    // UPDATE - this is actually ok. Things like widget-select commands can
+    // happen as part of user callbacks which themselves add additional
+    // callbacks to the current ui-operation.
     //
     // if (operation_context_->ran_finish()) {
     //   auto trace = g_core->platform->GetNativeStackTrace();

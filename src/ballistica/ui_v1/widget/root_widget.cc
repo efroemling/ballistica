@@ -494,7 +494,7 @@ void RootWidget::Setup() {
       td.color_g = 0.8f;
       td.color_b = 0.8f;
       td.shadow = 1.0f;
-      AddText_(td);
+      account_name_text_ = AddText_(td);
     }
   }
   AddMeter_(MeterType::kLevel, 0.0f, 1.0f, 1.0f, 1.0f, false, "456/1000");
@@ -1260,6 +1260,21 @@ auto RootWidget::GetSpecialWidget(const std::string& s) const -> Widget* {
     return overlay_stack_widget_;
   }
   return nullptr;
+}
+
+void RootWidget::SetAccountState(bool signed_in, const std::string& name) {
+  if (account_name_text_) {
+    auto* w{account_name_text_->widget.Get()};
+    assert(w);
+
+    if (signed_in) {
+      w->SetText(name);
+      w->set_color(0.0f, 1.0f, 0.0f, 1.0f);
+    } else {
+      w->SetText("NOT SIGNED IN");
+      w->set_color(1.0f, 0.2f, 0.2f, 1.0f);
+    }
+  }
 }
 
 void RootWidget::SetSquadSizeLabel(int val) {

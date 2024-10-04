@@ -89,8 +89,8 @@ void ClassicAppMode::OnActivate() {
 
   Reset_();
 
-  // To set initial states, explicitly fire some of our 'On-Foo-Changed'
-  // callbacks.
+  // Explicitly fire some of our 'On-Foo-Changed' callbacks to set initial
+  // states.
   DoApplyAppConfig();
   LanguageChanged();
   OnGameRosterChanged_();
@@ -453,7 +453,7 @@ void ClassicAppMode::SetGameRoster(cJSON* r) {
 
 void ClassicAppMode::OnGameRosterChanged_() {
   assert(g_base->InLogicThread());
-  g_base->ui->SetPartyIconNumber(GetPartySize());
+  g_base->ui->SetSquadSizeLabel(GetPartySize());
 }
 
 auto ClassicAppMode::GetPartySize() const -> int {

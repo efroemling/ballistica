@@ -115,7 +115,7 @@ def handle_v1_cloud_log() -> None:
                 'userRanCommands': _babase.has_user_run_commands(),
                 'time': _babase.apptime(),
                 'userModded': _babase.workspaces_in_use(),
-                'newsShow': plus.get_news_show(),
+                'newsShow': plus.get_classic_news_show(),
             }
 
             def response(data: Any) -> None:

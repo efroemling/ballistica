@@ -283,7 +283,7 @@ class StoreButton:
                 # Look at the current set of sales; filter any with time
                 # remaining that we don't own.
                 for sale_item, sale_info in list(sales_raw.items()):
-                    if not plus.get_purchased(sale_item):
+                    if not plus.get_v1_account_product_purchased(sale_item):
                         to_end = (
                             datetime.datetime.fromtimestamp(
                                 sale_info['e'], datetime.UTC

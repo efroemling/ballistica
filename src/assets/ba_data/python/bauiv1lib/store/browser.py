@@ -621,7 +621,7 @@ class StoreBrowserWindow(bui.MainWindow):
                 assert bui.app.classic is not None
                 purchased = bui.app.classic.accounts.have_pro()
             else:
-                purchased = plus.get_purchased(b_type)
+                purchased = plus.get_v1_account_product_purchased(b_type)
 
             sale_opacity = 0.0
             sale_title_text: str | bui.Lstr = ''

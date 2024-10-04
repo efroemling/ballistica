@@ -199,8 +199,7 @@ class MainWindow(Window):
 
     def get_main_window_state(self) -> MainWindowState:
         """Return a WindowState to recreate this window, if supported."""
-        # TODO - change to NotImplementedError when moved to MainWindow.
-        raise RuntimeError('FIXME NOT IMPLEMENTED')
+        raise NotImplementedError()
 
 
 class MainWindowState:

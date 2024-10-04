@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupMenuWindow
 import bascenev1 as bs
@@ -14,6 +14,7 @@ import bauiv1 as bui
 
 if TYPE_CHECKING:
     from typing import Any, Callable
+
     from bauiv1lib.popup import PopupWindow
 
 
@@ -27,7 +28,7 @@ class GamepadSettingsWindow(bui.MainWindow):
         inputdevice: bs.InputDevice,
         *,
         modal: bool = False,
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
         transition_out: str = 'out_right',
         origin_widget: bui.Widget | None = None,
         settings: dict | None = None,
@@ -75,6 +76,26 @@ class GamepadSettingsWindow(bui.MainWindow):
 
         # Don't ask to config joysticks while we're in here.
         self._rebuild_ui()
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Pull stuff out of self here; if we do it in the lambda we keep
+        # self alive which we don't want.
+        assert not self._is_secondary
+        assert not self._modal
+
+        inputdevice = self._inputdevice
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                inputdevice=inputdevice,
+                transition=transition,
+                origin_widget=origin_widget,
+            )
+        )
 
     def _get_config_mapping(self, default: bool = False) -> None:
         for button in [

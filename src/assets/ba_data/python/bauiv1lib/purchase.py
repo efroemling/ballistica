@@ -155,7 +155,7 @@ class PurchaseWindow(bui.Window):
             if bui.app.classic.accounts.have_pro():
                 can_die = True
         else:
-            if plus.get_purchased(self._items[0]):
+            if plus.get_v1_account_product_purchased(self._items[0]):
                 can_die = True
 
         if can_die:

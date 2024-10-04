@@ -910,7 +910,7 @@ class CoopBrowserWindow(bui.MainWindow):
         # Show easter-egg-hunt either if its easter or we own it.
         if plus.get_v1_account_misc_read_val(
             'easter', False
-        ) or plus.get_purchased('games.easter_egg_hunt'):
+        ) or plus.get_v1_account_product_purchased('games.easter_egg_hunt'):
             items = [
                 'Challenges:Easter Egg Hunt',
                 'Challenges:Pro Easter Egg Hunt',
@@ -1089,8 +1089,9 @@ class CoopBrowserWindow(bui.MainWindow):
         else:
             required_purchase = None
 
-        if required_purchase is not None and not plus.get_purchased(
-            required_purchase
+        if (
+            required_purchase is not None
+            and not plus.get_v1_account_product_purchased(required_purchase)
         ):
             if plus.get_v1_account_state() != 'signed_in':
                 show_sign_in_prompt()

@@ -54,7 +54,7 @@ class AppMode:
         """Called when the mode is being deactivated."""
 
     def on_app_active_changed(self) -> None:
-        """Called when babase.app.active changes.
+        """Called when ba*.app.active changes while this mode is active.
 
         The app-mode may want to take action such as pausing a running
         game in such cases.

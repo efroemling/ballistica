@@ -42,8 +42,8 @@ class UI {
 
   void LanguageChanged();
 
-  /// Reset all UI to a default state. Generally should be called when
-  /// switching app-modes or when resetting things within an app mode.
+  /// Reset all UI to a default state. Note that this includes deactivating
+  /// any current UI Delegate.
   void Reset();
 
   void SetUIDelegate(base::UIDelegateInterface* delegate);
@@ -59,7 +59,8 @@ class UI {
   auto PartyIconVisible() -> bool;
   auto PartyWindowOpen() -> bool;
   void ActivatePartyIcon();
-  void SetPartyIconNumber(int val);
+
+  void SetSquadSizeLabel(int val);
 
   auto HandleMouseDown(int button, float x, float y, bool double_click) -> bool;
   void HandleMouseUp(int button, float x, float y);
@@ -109,10 +110,6 @@ class UI {
   /// present.
   auto ShouldHighlightWidgets() const -> bool;
 
-  /// Return whether currently selected widget should show button shortcuts.
-  /// These generally only get shown if a joystick of some form is present.
-  auto ShouldShowButtonShortcuts() const -> bool;
-
   /// Get overall ui scale for the app.
   auto scale() const { return scale_; }
 
@@ -140,9 +137,9 @@ class UI {
     auto ran_finish() const { return ran_finish_; }
 
    private:
-    bool ran_finish_{};
-    OperationContext* parent_{};
     std::vector<Runnable*> runnables_;
+    OperationContext* parent_{};
+    bool ran_finish_{};
   };
 
  private:
@@ -151,18 +148,18 @@ class UI {
   auto InDevConsoleButton_(float x, float y) const -> bool;
   void DrawDevConsoleButton_(FrameDef* frame_def);
 
+  Object::Ref<TextGroup> dev_console_button_txt_;
+  Object::WeakRef<InputDevice> ui_input_device_;
   OperationContext* operation_context_{};
   base::UIDelegateInterface* delegate_{};
   DevConsole* dev_console_{};
   std::string dev_console_startup_messages_;
-  Object::WeakRef<InputDevice> ui_input_device_;
   millisecs_t last_input_device_use_time_{};
   millisecs_t last_widget_input_reject_err_sound_time_{};
   UIScale scale_{UIScale::kLarge};
   bool force_scale_{};
   bool show_dev_console_button_{};
   bool dev_console_button_pressed_{};
-  Object::Ref<TextGroup> dev_console_button_txt_;
 };
 
 }  // namespace ballistica::base

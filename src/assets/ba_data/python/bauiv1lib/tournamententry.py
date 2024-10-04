@@ -742,7 +742,7 @@ class TournamentEntryWindow(PopupWindow):
         # This should have awarded us the tournament_entry_ad purchase;
         # make sure that's present.
         # (otherwise the server will ignore our tournament entry anyway)
-        if not plus.get_purchased('tournament_entry_ad'):
+        if not plus.get_v1_account_product_purchased('tournament_entry_ad'):
             print('no tournament_entry_ad purchase present in _on_ad_complete')
             bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
             bui.getsound('error').play()
@@ -781,7 +781,7 @@ class TournamentEntryWindow(PopupWindow):
         # the tournament.
         if (bui.apptime() - self._last_ticket_press_time < 6.0) and (
             plus.have_outstanding_v1_account_transactions()
-            or plus.get_purchased(self._purchase_name)
+            or plus.get_v1_account_product_purchased(self._purchase_name)
             or self._entering
         ):
             bui.getsound('error').play()

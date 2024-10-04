@@ -393,9 +393,10 @@ class LeagueRankButton:
 
     def _default_on_activate_call(self) -> None:
         # pylint: disable=cyclic-import
-        from bauiv1lib.league.rankwindow import LeagueRankWindow
+        # from bauiv1lib.league.rankwindow import LeagueRankWindow
 
-        LeagueRankWindow(modal=True, origin_widget=self._button)
+        raise RuntimeError()
+        # LeagueRankWindow(modal=True, origin_widget=self._button)
 
     def set_position(self, position: tuple[float, float]) -> None:
         """Set the button's position."""

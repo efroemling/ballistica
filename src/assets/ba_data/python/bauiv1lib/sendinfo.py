@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import time
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 
@@ -162,6 +162,25 @@ class SendInfoWindow(bui.MainWindow):
             cancel_button=btn,
             start_button=btn2,
             selected_child=self._text_field,
+        )
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        assert not self._modal
+
+        # Pull stuff out of self here; if we do it in the lambda we'll
+        # keep self alive which we don't want.
+        legacy_code_mode = self._legacy_code_mode
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                legacy_code_mode=legacy_code_mode,
+                transition=transition,
+                origin_widget=origin_widget,
+            )
         )
 
     def _do_back(self) -> None:
