@@ -2,6 +2,10 @@
 
 #include "ballistica/classic/support/v1_account.h"
 
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/support/plus_soft.h"

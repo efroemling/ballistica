@@ -19,6 +19,11 @@
 #include <dbghelp.h>
 /* clang-format on */
 
+#include <cstdio>
+#include <list>
+#include <string>
+#include <vector>
+
 #pragma comment(lib, "Rpcrt4.lib")
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "iphlpapi.lib")

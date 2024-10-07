@@ -2,6 +2,9 @@
 
 #include "ballistica/base/assets/collision_mesh_asset.h"
 
+#include <cstdio>
+#include <string>
+
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/core/core.h"
 

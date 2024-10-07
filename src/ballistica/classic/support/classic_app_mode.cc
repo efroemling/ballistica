@@ -2,6 +2,11 @@
 
 #include "ballistica/classic/support/classic_app_mode.h"
 
+#include <algorithm>
+#include <cstdio>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/base/graphics/graphics.h"

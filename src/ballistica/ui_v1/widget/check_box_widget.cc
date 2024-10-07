@@ -2,11 +2,15 @@
 
 #include "ballistica/ui_v1/widget/check_box_widget.h"
 
+#include <Python.h>
+
+#include <string>
+
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/python/support/python_context_call.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::ui_v1 {
 

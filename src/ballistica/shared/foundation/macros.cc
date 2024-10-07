@@ -2,7 +2,9 @@
 
 #include "ballistica/shared/foundation/macros.h"
 
+#include <cstdio>
 #include <cstring>
+#include <string>
 
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"

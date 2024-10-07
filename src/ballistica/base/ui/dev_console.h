@@ -5,10 +5,10 @@
 
 #include <list>
 #include <string>
-#include <utility>
 #include <vector>
 
-#include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/base/graphics/mesh/image_mesh.h"
+#include "ballistica/base/graphics/text/text_group.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/python/python_ref.h"
 

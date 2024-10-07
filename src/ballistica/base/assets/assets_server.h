@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_ASSETS_ASSETS_SERVER_H_
 #define BALLISTICA_BASE_ASSETS_ASSETS_SERVER_H_
 
+#include <cstdio>
 #include <list>
 #include <vector>
 

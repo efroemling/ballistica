@@ -2,14 +2,16 @@
 
 #include "ballistica/shared/generic/utils.h"
 
+#include <cstdio>
 #include <fstream>
+#include <list>
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include "ballistica/core/core.h"
-#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/generic/json.h"
-#include "ballistica/shared/generic/runnable.h"
 #include "ballistica/shared/generic/utf8.h"
 #include "ballistica/shared/math/random.h"
 #include "ballistica/shared/math/vector3f.h"

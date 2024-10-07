@@ -2,6 +2,9 @@
 
 #include "ballistica/base/support/huffman.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/networking/networking.h"
 
 namespace ballistica::base {

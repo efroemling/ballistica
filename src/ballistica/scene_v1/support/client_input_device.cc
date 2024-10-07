@@ -2,6 +2,8 @@
 
 #include "ballistica/scene_v1/support/client_input_device.h"
 
+#include <string>
+
 #include "ballistica/scene_v1/connection/connection_to_client.h"
 
 namespace ballistica::scene_v1 {

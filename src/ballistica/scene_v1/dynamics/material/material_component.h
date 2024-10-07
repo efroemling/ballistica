@@ -3,9 +3,9 @@
 #ifndef BALLISTICA_SCENE_V1_DYNAMICS_MATERIAL_MATERIAL_COMPONENT_H_
 #define BALLISTICA_SCENE_V1_DYNAMICS_MATERIAL_MATERIAL_COMPONENT_H_
 
-#include <utility>
 #include <vector>
 
+#include "ballistica/scene_v1/dynamics/material/material_action.h"
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/shared/foundation/object.h"
 

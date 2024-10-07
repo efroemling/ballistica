@@ -26,8 +26,10 @@
 
    René Nyffenegger rene.nyffenegger@adp-gmbh.ch
 
-*/
+ */
 #include "ballistica/shared/generic/base64.h"
+
+#include <string>
 
 namespace ballistica {
 

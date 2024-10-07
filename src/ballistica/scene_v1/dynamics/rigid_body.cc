@@ -3,7 +3,6 @@
 #include "ballistica/scene_v1/dynamics/rigid_body.h"
 
 #include "ballistica/base/graphics/component/render_component.h"
-#include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/dynamics/part.h"

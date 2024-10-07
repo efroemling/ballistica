@@ -2,6 +2,8 @@
 
 #include "ballistica/scene_v1/node/texture_sequence_node.h"
 
+#include <vector>
+
 #include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"

@@ -6,6 +6,7 @@
 #include "ballistica/base/base.h"
 #if BA_SDL_BUILD
 
+#include <string>
 #include <vector>
 
 #include "ballistica/base/app_adapter/app_adapter.h"

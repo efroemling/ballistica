@@ -4,6 +4,11 @@
 
 #include "ballistica/base/app_adapter/app_adapter_sdl.h"
 
+#include <algorithm>
+#include <cstdio>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/base.h"
 #include "ballistica/base/graphics/gl/gl_sys.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
@@ -78,7 +83,7 @@ void AppAdapterSDL::OnMainThreadStartApp() {
 
   // Register events we can send ourself.
   sdl_runnable_event_id_ = SDL_RegisterEvents(1);
-  assert(sdl_runnable_event_id_ != (uint32_t)-1);
+  assert(sdl_runnable_event_id_ != static_cast<uint32_t>(-1));
 
   // SDL builds just assume keyboard input is available.
   g_base->input->PushCreateKeyboardInputDevices();

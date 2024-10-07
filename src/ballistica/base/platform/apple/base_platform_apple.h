@@ -4,8 +4,9 @@
 #define BALLISTICA_BASE_PLATFORM_APPLE_BASE_PLATFORM_APPLE_H_
 #if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS
 
-#include "ballistica/base/platform/base_platform.h"
+#include <string>
 
+#include "ballistica/base/platform/base_platform.h"
 namespace ballistica::base {
 
 class BasePlatformApple : public BasePlatform {

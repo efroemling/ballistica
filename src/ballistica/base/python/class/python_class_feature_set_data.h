@@ -3,7 +3,8 @@
 #ifndef BALLISTICA_BASE_PYTHON_CLASS_PYTHON_CLASS_FEATURE_SET_DATA_H_
 #define BALLISTICA_BASE_PYTHON_CLASS_PYTHON_CLASS_FEATURE_SET_DATA_H_
 
-#include "ballistica/shared/foundation/object.h"
+#include <string>
+
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_class.h"
 

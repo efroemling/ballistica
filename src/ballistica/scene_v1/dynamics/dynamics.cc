@@ -2,10 +2,12 @@
 
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 
+#include <unordered_map>
+#include <utility>
+
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/base/dynamics/collision_cache.h"
-#include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/core/core.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/dynamics/collision.h"

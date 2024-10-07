@@ -2,12 +2,16 @@
 
 #include "ballistica/shared/foundation/event_loop.h"
 
+#include <Python.h>
+
+#include <list>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include "ballistica/core/platform/core_platform.h"
-#include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/fatal_error.h"
-#include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica {
 

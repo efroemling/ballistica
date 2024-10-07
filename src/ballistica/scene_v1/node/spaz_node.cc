@@ -2,6 +2,11 @@
 
 #include "ballistica/scene_v1/node/spaz_node.h"
 
+#include <algorithm>
+#include <cstdio>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_shadow.h"
@@ -9,10 +14,10 @@
 #include "ballistica/base/graphics/component/post_process_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/graphics/support/area_of_interest.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
-#include "ballistica/base/input/device/input_device.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
@@ -20,12 +25,10 @@
 #include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/dynamics/collision.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
-#include "ballistica/scene_v1/dynamics/material/material_action.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
-#include "ballistica/shared/python/python.h"
 #include "ode/ode_collision_util.h"
 
 namespace ballistica::scene_v1 {
@@ -184,9 +187,9 @@ static auto AngleBetween2DVectors(dReal x1, dReal y1, dReal x2, dReal y2)
 static void RotationFrom2Axes(dMatrix3 r, dReal x_forward, dReal y_forward,
                               dReal z_forward, dReal x_up, dReal y_up,
                               dReal z_up) {
-  Vector3f forward(x_forward, y_forward, z_forward);
+  Vector3f fwd(x_forward, y_forward, z_forward);
   Vector3f up = Vector3f(x_up, y_up, z_up).Normalized();
-  Vector3f side = Vector3f(Vector3f::Cross(forward, up)).Normalized();
+  Vector3f side = Vector3f(Vector3f::Cross(fwd, up)).Normalized();
   Vector3f forward2 = Vector3f::Cross(up, side);
   r[0] = forward2.x;
   r[4] = forward2.y;

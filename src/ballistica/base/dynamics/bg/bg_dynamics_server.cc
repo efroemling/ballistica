@@ -2,6 +2,11 @@
 
 #include "ballistica/base/dynamics/bg/bg_dynamics_server.h"
 
+#include <algorithm>
+#include <list>
+#include <memory>
+#include <vector>
+
 #include "ballistica/base/assets/collision_mesh_asset.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_draw_snapshot.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_fuse_data.h"
@@ -9,7 +14,7 @@
 #include "ballistica/base/dynamics/bg/bg_dynamics_shadow_data.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_volume_light_data.h"
 #include "ballistica/base/dynamics/collision_cache.h"
-#include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"

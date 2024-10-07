@@ -2,13 +2,14 @@
 
 #include "ballistica/scene_v1/python/class/python_class_activity_data.h"
 
+#include <string>
+
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/class/python_class_context_ref.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::scene_v1 {
 

@@ -3,8 +3,14 @@
 #if BA_ENABLE_OPENGL
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 
+#include <algorithm>
+#include <cstdio>
 #include <iterator>
+#include <list>
+#include <memory>
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include "ballistica/base/graphics/component/special_component.h"
 #include "ballistica/base/graphics/gl/mesh/mesh_asset_data_gl.h"

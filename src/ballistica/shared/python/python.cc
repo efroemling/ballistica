@@ -2,8 +2,14 @@
 
 #include "ballistica/shared/python/python.h"
 
+#include <Python.h>
+
+#include <list>
+#include <string>
+#include <vector>
+
+#include "ballistica/core/core.h"
 #include "ballistica/core/support/base_soft.h"
-#include "ballistica/shared/python/python_sys.h"
 
 // Sanity test: our XCode, Android, and Windows builds should be
 // using a debug build of the Python library.

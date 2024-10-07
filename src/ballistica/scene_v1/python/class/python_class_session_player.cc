@@ -2,6 +2,9 @@
 
 #include "ballistica/scene_v1/python/class/python_class_session_player.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/host_session.h"

@@ -2,6 +2,10 @@
 
 #include "ballistica/scene_v1/support/player.h"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/input/device/joystick_input.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/classic/support/classic_app_mode.h"

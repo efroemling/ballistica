@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_BASE_GRAPHICS_MESH_NINE_PATCH_MESH_H_
 #define BALLISTICA_BASE_GRAPHICS_MESH_NINE_PATCH_MESH_H_
 
+#include <algorithm>
+
 #include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
 
 namespace ballistica::base {

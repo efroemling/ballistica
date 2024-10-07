@@ -2,6 +2,9 @@
 
 #include "ballistica/scene_v1/node/terrain_node.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/core/core.h"

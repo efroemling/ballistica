@@ -15,6 +15,8 @@
 
 #include <string>  // IWYU pragma: keep. (macros below use this)
 
+#include "ballistica/shared/python/python.h"  // IWYU pragma: keep.
+
 // Saving/restoring Python error state; useful when function PyObject_Str()
 // or other functionality is needed during error reporting; by default it
 // craps out when an error is set.

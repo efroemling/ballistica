@@ -2,6 +2,12 @@
 
 #include "ballistica/ui_v1/widget/text_widget.h"
 
+#include <Python.h>
+
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
@@ -9,7 +15,7 @@
 #include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/graphics/text/text_group.h"
-#include "ballistica/base/input/device/keyboard_input.h"
+#include "ballistica/base/input/device/keyboard_input.h"  // IWYU pragma: keep.
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/platform/base_platform.h"
@@ -17,7 +23,6 @@
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_sys.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/container_widget.h"
 

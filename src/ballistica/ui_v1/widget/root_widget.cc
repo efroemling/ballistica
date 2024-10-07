@@ -2,6 +2,9 @@
 
 #include "ballistica/ui_v1/widget/root_widget.h"
 
+#include <algorithm>
+#include <string>
+
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/renderer/render_pass.h"

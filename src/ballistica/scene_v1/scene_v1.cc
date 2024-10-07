@@ -2,6 +2,10 @@
 
 #include "ballistica/scene_v1/scene_v1.h"
 
+#include <list>
+#include <string>
+#include <unordered_map>
+
 #include "ballistica/scene_v1/node/anim_curve_node.h"
 #include "ballistica/scene_v1/node/bomb_node.h"
 #include "ballistica/scene_v1/node/combine_node.h"

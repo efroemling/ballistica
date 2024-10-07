@@ -2,7 +2,10 @@
 
 #include "ballistica/core/platform/core_platform.h"
 
-#include <stdexcept>
+#include <cstdio>
+#include <list>
+#include <string>
+#include <vector>
 
 #if !BA_OSTYPE_WINDOWS
 #include <dirent.h>
@@ -24,14 +27,12 @@
 #include <unistd.h>
 #endif
 
-#include "ballistica/core/platform/support/min_sdl.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/platform/support/min_sdl.h"  // IWYU pragma: keep.
 #include "ballistica/core/support/base_soft.h"
-#include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/networking/networking_sys.h"
-#include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_sys.h"
+#include "ballistica/shared/networking/networking_sys.h"  // IWYU pragma: keep.
 
 // ------------------------- PLATFORM SELECTION --------------------------------
 

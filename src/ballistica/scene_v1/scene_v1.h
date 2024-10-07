@@ -4,12 +4,11 @@
 #define BALLISTICA_SCENE_V1_SCENE_V1_H_
 
 #include <list>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
-#include "ballistica/shared/python/python_ref.h"
 
 // Common header that most everything using our feature-set should include.
 // It predeclares our feature-set's various types and globals and other

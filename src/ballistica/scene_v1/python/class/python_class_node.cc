@@ -3,6 +3,8 @@
 #include "ballistica/scene_v1/python/class/python_class_node.h"
 
 #include <list>
+#include <string>
+#include <vector>
 
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/scene.h"

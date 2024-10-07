@@ -2,11 +2,12 @@
 
 #include "ballistica/ui_v1/python/class/python_class_widget.h"
 
+#include <string>
+
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/python/python.h"
 #include "ballistica/ui_v1/widget/container_widget.h"
 
 namespace ballistica::ui_v1 {

@@ -2,6 +2,8 @@
 
 #include "ballistica/base/python/class/python_class_simple_sound.h"
 
+#include <string>
+
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/logic/logic.h"

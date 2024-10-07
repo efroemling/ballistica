@@ -6,9 +6,9 @@
 #include <list>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "ballistica/base/base.h"
-#include "ballistica/base/support/context.h"
 #include "ballistica/scene_v1/support/scene_v1_context.h"
 #include "ballistica/shared/generic/timer_list.h"
 #include "ballistica/shared/python/python_ref.h"

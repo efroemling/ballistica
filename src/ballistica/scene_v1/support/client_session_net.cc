@@ -2,6 +2,9 @@
 
 #include "ballistica/scene_v1/support/client_session_net.h"
 
+#include <algorithm>
+#include <vector>
+
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/net_graph.h"

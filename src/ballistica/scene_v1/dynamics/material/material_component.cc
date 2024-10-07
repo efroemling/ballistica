@@ -2,6 +2,8 @@
 
 #include "ballistica/scene_v1/dynamics/material/material_component.h"
 
+#include <vector>
+
 #include "ballistica/scene_v1/dynamics/material/impact_sound_material_action.h"
 #include "ballistica/scene_v1/dynamics/material/material.h"
 #include "ballistica/scene_v1/dynamics/material/material_condition_node.h"

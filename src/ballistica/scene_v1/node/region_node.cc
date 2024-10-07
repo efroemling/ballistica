@@ -2,6 +2,9 @@
 
 #include "ballistica/scene_v1/node/region_node.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/scene_v1/node/node_attribute.h"

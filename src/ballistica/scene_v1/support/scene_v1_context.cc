@@ -2,10 +2,13 @@
 
 #include "ballistica/scene_v1/support/scene_v1_context.h"
 
+#include <Python.h>
+
+#include <string>
+
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/shared/generic/runnable.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::scene_v1 {
 

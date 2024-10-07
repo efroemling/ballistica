@@ -2,6 +2,10 @@
 
 #include "ballistica/base/base.h"
 
+#include <cstdio>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/empty_app_mode.h"
 #include "ballistica/base/assets/assets.h"

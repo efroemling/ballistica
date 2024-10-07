@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_UI_V1_WIDGET_IMAGE_WIDGET_H_
 #define BALLISTICA_UI_V1_WIDGET_IMAGE_WIDGET_H_
 
+#include <algorithm>
 #include <string>
 
 #include "ballistica/base/assets/mesh_asset.h"

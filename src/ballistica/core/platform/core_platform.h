@@ -5,12 +5,13 @@
 
 #include <sys/stat.h>
 
+#include <cstdio>
 #include <list>
 #include <optional>
 #include <string>
 #include <vector>
 
-#include "ballistica/shared/ballistica.h"
+#include "ballistica/shared/foundation/types.h"
 
 namespace ballistica::core {
 

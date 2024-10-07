@@ -5,7 +5,6 @@
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
-#include "ballistica/scene_v1/dynamics/material/material_action.h"
 #include "ballistica/scene_v1/support/scene.h"
 
 namespace ballistica::scene_v1 {

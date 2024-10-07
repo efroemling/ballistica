@@ -4,7 +4,6 @@
 #define BALLISTICA_BASE_INPUT_DEVICE_INPUT_DEVICE_H_
 
 #include <string>
-#include <vector>
 
 #include "ballistica/base/input/device/input_device_delegate.h"
 #include "ballistica/shared/foundation/object.h"

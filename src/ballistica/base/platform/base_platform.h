@@ -3,8 +3,10 @@
 #ifndef BALLISTICA_BASE_PLATFORM_BASE_PLATFORM_H_
 #define BALLISTICA_BASE_PLATFORM_BASE_PLATFORM_H_
 
+#include <cstdio>
 #include <deque>
 #include <mutex>
+#include <string>
 
 #include "ballistica/base/base.h"
 #include "ballistica/shared/python/python_ref.h"

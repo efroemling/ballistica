@@ -5,9 +5,13 @@
 
 #include <sys/utsname.h>
 
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <list>
 #include <string>
+
+#include "ballistica/shared/ballistica.h"
 
 namespace ballistica::core {
 

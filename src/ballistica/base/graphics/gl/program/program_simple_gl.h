@@ -5,9 +5,10 @@
 
 #if BA_ENABLE_OPENGL
 
+#include <string>
+
 #include "ballistica/base/graphics/gl/program/program_gl.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
-#include "ballistica/base/graphics/graphics_server.h"
 
 namespace ballistica::base {
 class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {

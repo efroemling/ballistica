@@ -5,6 +5,8 @@
 
 #include <ballistica/base/input/device/input_device.h>
 
+#include <string>
+
 #include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
 

@@ -2,9 +2,12 @@
 
 #include "ballistica/shared/foundation/feature_set_native_component.h"
 
+#include <Python.h>
+
+#include <string>
+
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica {
 

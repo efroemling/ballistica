@@ -2,6 +2,10 @@
 
 #include "ballistica/classic/python/methods/python_methods_classic.h"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/input/input.h"

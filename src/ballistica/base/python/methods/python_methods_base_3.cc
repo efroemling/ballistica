@@ -3,11 +3,14 @@
 #include "ballistica/base/python/methods/python_methods_base_3.h"
 
 #include <list>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/assets/sound_asset.h"  // IWYU pragma: keep.
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"

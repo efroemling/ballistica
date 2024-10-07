@@ -2,6 +2,9 @@
 
 #include "ballistica/scene_v1/support/client_session.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/graphics.h"

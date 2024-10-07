@@ -3,23 +3,25 @@
 #include "ballistica/base/platform/base_platform.h"
 
 #include <csignal>
+#include <cstdio>
+#include <list>
+#include <string>
 
 #if !BA_OSTYPE_WINDOWS
 #include <fcntl.h>
 #include <poll.h>
 #endif
 
+#include <Python.h>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/base.h"
-#include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
-#include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::base {
 

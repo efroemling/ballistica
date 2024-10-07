@@ -2,6 +2,10 @@
 
 #include "ballistica/shared/foundation/fatal_error.h"
 
+#include <cstdio>
+#include <string>
+
+#include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/logging.h"

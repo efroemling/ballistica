@@ -2,6 +2,10 @@
 
 #include "ballistica/base/assets/assets_server.h"
 
+#include <cstdio>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/assets/asset.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/graphics.h"

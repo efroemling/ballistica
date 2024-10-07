@@ -5,6 +5,8 @@
 
 #include <list>
 #include <mutex>
+#include <string>
+#include <vector>
 
 #include "ballistica/core/core.h"
 #include "ballistica/shared/python/python_object_set.h"

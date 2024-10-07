@@ -2,6 +2,10 @@
 
 #include "ballistica/scene_v1/node/flag_node.h"
 
+#include <algorithm>
+#include <vector>
+
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_shadow.h"
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"

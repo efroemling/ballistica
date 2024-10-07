@@ -2,6 +2,8 @@
 
 #include "ballistica/base/graphics/support/camera.h"
 
+#include <algorithm>
+
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_vr.h"

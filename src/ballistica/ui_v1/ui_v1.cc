@@ -2,6 +2,8 @@
 
 #include "ballistica/ui_v1/ui_v1.h"
 
+#include <string>
+
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/input/input.h"

@@ -2,7 +2,12 @@
 
 #include "ballistica/base/graphics/graphics_server.h"
 
+#include <list>
+#include <vector>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
+#include "ballistica/base/assets/assets.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/shared/foundation/event_loop.h"

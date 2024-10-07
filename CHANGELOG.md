@@ -1,9 +1,12 @@
-### 1.7.37 (build 22024, api 9, 2024-10-04)
+### 1.7.37 (build 22025, api 9, 2024-10-07)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
   I'm hopeful that api version won't need to be bumped again for along time (if
   ever).
+- Went ahead and fully removed `efro.call.tpartial` (since we're breaking
+  compatibility anyway by bumping api version). If you are using
+  `efro.call.tpartial` anywhere, simply replace it with `functools.partial`.
 - The newest Pylint update (3.3) added a check for
   'too-many-positional-arguments'. This seems like a good idea, so I updated
   various functions to conform to it and set some others to ignore it. Basically

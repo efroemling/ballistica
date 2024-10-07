@@ -3,6 +3,8 @@
 #include "ballistica/base/ui/ui.h"
 
 #include <exception>
+#include <string>
+#include <vector>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/audio/audio.h"

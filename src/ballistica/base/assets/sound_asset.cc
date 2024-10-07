@@ -2,7 +2,10 @@
 
 #include "ballistica/base/assets/sound_asset.h"
 
+#include <cstdio>
 #include <cstring>
+#include <string>
+#include <vector>
 
 #if BA_ENABLE_AUDIO
 #if BA_USE_TREMOR_VORBIS
@@ -16,7 +19,6 @@
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/core.h"
-#include "ballistica/shared/python/python.h"
 
 // Need to move away from OpenAL on Apple stuff.
 #if __clang__

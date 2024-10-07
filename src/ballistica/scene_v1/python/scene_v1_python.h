@@ -3,6 +3,9 @@
 #ifndef BALLISTICA_SCENE_V1_PYTHON_SCENE_V1_PYTHON_H_
 #define BALLISTICA_SCENE_V1_PYTHON_SCENE_V1_PYTHON_H_
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/base.h"
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/shared/python/python_object_set.h"

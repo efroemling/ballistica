@@ -2,6 +2,9 @@
 
 #include "ballistica/scene_v1/connection/connection_to_host_udp.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_writer.h"

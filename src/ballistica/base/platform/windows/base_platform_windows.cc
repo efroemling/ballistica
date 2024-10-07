@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <sysinfoapi.h>
 
+#include <string>
+
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/core/platform/windows/core_platform_windows.h"
 #include "ballistica/shared/foundation/event_loop.h"

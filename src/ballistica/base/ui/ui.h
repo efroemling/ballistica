@@ -4,6 +4,7 @@
 #define BALLISTICA_BASE_UI_UI_H_
 
 #include <string>
+#include <vector>
 
 #include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/base/ui/widget_message.h"

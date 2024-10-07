@@ -2,17 +2,23 @@
 
 #include "ballistica/scene_v1/support/scene.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/audio/audio.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
-#include "ballistica/scene_v1/node/bomb_node.h"
+#include "ballistica/scene_v1/dynamics/part.h"
+#include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_attribute_connection.h"
+#include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/node/player_node.h"
-#include "ballistica/scene_v1/node/text_node.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 
 namespace ballistica::scene_v1 {

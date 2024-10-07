@@ -2,6 +2,8 @@
 
 #include "ballistica/shared/foundation/logging.h"
 
+#include <string>
+
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"

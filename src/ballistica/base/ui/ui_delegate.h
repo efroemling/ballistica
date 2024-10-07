@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_BASE_UI_UI_DELEGATE_H_
 #define BALLISTICA_BASE_UI_UI_DELEGATE_H_
 
+#include <string>
+
 #include "ballistica/base/ui/ui.h"
 
 // Predeclare some types we use.

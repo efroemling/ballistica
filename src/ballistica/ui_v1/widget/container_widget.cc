@@ -2,6 +2,9 @@
 
 #include "ballistica/ui_v1/widget/container_widget.h"
 
+#include <algorithm>
+#include <string>
+
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"

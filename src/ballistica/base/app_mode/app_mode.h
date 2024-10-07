@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_APP_MODE_APP_MODE_H_
 #define BALLISTICA_BASE_APP_MODE_APP_MODE_H_
 
+#include <string>
 #include <vector>
 
 #include "ballistica/base/base.h"

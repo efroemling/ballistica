@@ -3,9 +3,9 @@
 #ifndef BALLISTICA_BASE_SUPPORT_STDIO_CONSOLE_H_
 #define BALLISTICA_BASE_SUPPORT_STDIO_CONSOLE_H_
 
-#include <deque>
+#include <string>
 
-#include "ballistica/shared/ballistica.h"
+#include "ballistica/shared/foundation/types.h"
 
 namespace ballistica::base {
 

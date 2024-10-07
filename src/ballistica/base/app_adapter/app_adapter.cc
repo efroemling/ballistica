@@ -2,7 +2,10 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 
-#include "ballistica/base/graphics/renderer/renderer.h"
+#include <string>
+
+#include "ballistica/base/graphics/support/graphics_client_context.h"
+#include "ballistica/base/graphics/support/graphics_settings.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"

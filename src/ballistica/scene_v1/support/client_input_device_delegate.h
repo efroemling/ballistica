@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_SCENE_V1_SUPPORT_CLIENT_INPUT_DEVICE_DELEGATE_H_
 #define BALLISTICA_SCENE_V1_SUPPORT_CLIENT_INPUT_DEVICE_DELEGATE_H_
 
+#include <string>
+
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 
 namespace ballistica::scene_v1 {

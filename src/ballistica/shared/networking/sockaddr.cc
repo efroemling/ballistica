@@ -2,6 +2,8 @@
 
 #include "ballistica/shared/networking/sockaddr.h"
 
+#include <string>
+
 namespace ballistica {
 
 SockAddr::SockAddr(const std::string& addr, int port) {

@@ -2,6 +2,10 @@
 
 #include "ballistica/ui_v1/python/methods/python_methods_ui_v1.h"
 
+#include <string>
+#include <vector>
+
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/sound_asset.h"  // IWYU pragma: keep.
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/context.h"

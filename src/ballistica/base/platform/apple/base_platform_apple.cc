@@ -3,6 +3,8 @@
 #if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS
 #include "ballistica/base/platform/apple/base_platform_apple.h"
 
+#include <string>
+
 #if BA_XCODE_BUILD
 #include "ballistica/base/platform/apple/from_swift.h"
 #endif

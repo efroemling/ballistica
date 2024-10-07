@@ -2,6 +2,9 @@
 
 #include "ballistica/scene_v1/connection/connection.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/base.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/support/huffman.h"
@@ -9,7 +12,6 @@
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/shared/generic/json.h"
-#include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::scene_v1 {

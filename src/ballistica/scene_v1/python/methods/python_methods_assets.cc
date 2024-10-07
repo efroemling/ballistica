@@ -2,8 +2,8 @@
 
 #include "ballistica/scene_v1/python/methods/python_methods_assets.h"
 
-#include <list>
 #include <string>
+#include <vector>
 
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/assets/scene_data_asset.h"
@@ -11,7 +11,6 @@
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
-#include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::scene_v1 {

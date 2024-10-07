@@ -2,6 +2,10 @@
 
 #include "ballistica/base/input/device/joystick_input.h"
 
+#include <algorithm>
+#include <cstdio>
+#include <string>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/input/input.h"

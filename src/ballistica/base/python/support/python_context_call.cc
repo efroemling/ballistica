@@ -2,6 +2,8 @@
 
 #include "ballistica/base/python/support/python_context_call.h"
 
+#include <string>
+
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/python/core_python.h"

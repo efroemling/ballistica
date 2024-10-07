@@ -4,8 +4,8 @@
 #define BALLISTICA_SCENE_V1_ASSETS_SCENE_SOUND_H_
 
 #include <string>
-#include <vector>
 
+#include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/base.h"
 #include "ballistica/scene_v1/assets/scene_asset.h"
 

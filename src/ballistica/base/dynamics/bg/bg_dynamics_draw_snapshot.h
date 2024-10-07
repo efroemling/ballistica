@@ -5,7 +5,10 @@
 
 #include <vector>
 
-#include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/base/graphics/mesh/mesh_buffer_vertex_simple_full.h"
+#include "ballistica/base/graphics/mesh/mesh_buffer_vertex_smoke_full.h"
+#include "ballistica/base/graphics/mesh/mesh_buffer_vertex_sprite.h"
+#include "ballistica/base/graphics/mesh/mesh_index_buffer_16.h"
 
 namespace ballistica::base {
 

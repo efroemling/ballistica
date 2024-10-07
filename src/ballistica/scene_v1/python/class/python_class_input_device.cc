@@ -2,12 +2,13 @@
 
 #include "ballistica/scene_v1/python/class/python_class_input_device.h"
 
+#include <string>
+
 #include "ballistica/base/input/device/input_device.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::scene_v1 {
 

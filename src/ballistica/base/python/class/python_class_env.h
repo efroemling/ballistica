@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_BASE_PYTHON_CLASS_PYTHON_CLASS_ENV_H_
 #define BALLISTICA_BASE_PYTHON_CLASS_PYTHON_CLASS_ENV_H_
 
+#include <string>
+
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_class.h"
 

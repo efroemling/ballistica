@@ -9,6 +9,8 @@
 #include <mutex>
 #include <optional>
 #include <set>
+#include <string>
+#include <vector>
 
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/base.h"

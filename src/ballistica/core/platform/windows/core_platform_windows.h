@@ -4,6 +4,8 @@
 #define BALLISTICA_CORE_PLATFORM_WINDOWS_CORE_PLATFORM_WINDOWS_H_
 #if BA_OSTYPE_WINDOWS
 
+#include <cstdio>
+#include <list>
 #include <mutex>
 #include <string>
 #include <vector>

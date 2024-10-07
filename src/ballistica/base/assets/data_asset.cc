@@ -2,10 +2,13 @@
 
 #include "ballistica/base/assets/data_asset.h"
 
+#include <Python.h>
+
+#include <string>
+
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::base {
 

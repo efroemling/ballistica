@@ -2,6 +2,8 @@
 
 #include "ballistica/base/audio/al_sys.h"
 
+#include <cstdio>
+
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/shared/generic/utils.h"
 

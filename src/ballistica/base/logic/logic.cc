@@ -4,9 +4,13 @@
 
 #include <Python.h>
 
+#include <algorithm>
+#include <cstdio>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/platform/base_platform.h"

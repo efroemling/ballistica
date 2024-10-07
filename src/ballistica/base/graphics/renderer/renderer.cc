@@ -2,11 +2,16 @@
 
 #include "ballistica/base/graphics/renderer/renderer.h"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
-#include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/core/core.h"
 
 #if BA_VR_BUILD
+#include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/graphics_vr.h"
 #endif
 

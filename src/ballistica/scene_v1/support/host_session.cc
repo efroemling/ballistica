@@ -2,6 +2,12 @@
 
 #include "ballistica/scene_v1/support/host_session.h"
 
+#include <Python.h>
+
+#include <cstdio>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
@@ -16,7 +22,6 @@
 #include "ballistica/shared/generic/lambda_runnable.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::scene_v1 {
 

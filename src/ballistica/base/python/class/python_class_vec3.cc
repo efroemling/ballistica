@@ -2,6 +2,9 @@
 
 #include "ballistica/base/python/class/python_class_vec3.h"
 
+#include <cstdio>
+#include <string>
+
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/shared/python/python.h"
 

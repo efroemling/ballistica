@@ -2,6 +2,9 @@
 
 #include "ballistica/base/input/support/remote_app_server.h"
 
+#include <cstdio>
+#include <string>
+
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/graphics.h"
@@ -10,7 +13,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/core/platform/core_platform.h"
-#include "ballistica/core/platform/support/min_sdl.h"
+#include "ballistica/core/platform/support/min_sdl.h"  // IWYU pragma: keep.
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 

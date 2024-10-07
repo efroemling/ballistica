@@ -2,8 +2,10 @@
 
 #include "ballistica/core/support/core_config.h"
 
+#include <cstdio>
 #include <cstring>
 #include <filesystem>
+#include <string>
 
 // Note to self: this stuff gets used before *any* of the engine is inited
 // so we can't use engine functionality at all here.

@@ -5,6 +5,8 @@
 
 #if BA_ENABLE_OPENGL
 
+#include <algorithm>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/texture_asset_preload_data.h"
 #include "ballistica/base/assets/texture_asset_renderer_data.h"

@@ -5,7 +5,7 @@
 
 #include <vector>
 
-#include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_object_split.h"
 #include "ballistica/scene_v1/dynamics/part.h"
 #include "ballistica/scene_v1/node/node.h"
 

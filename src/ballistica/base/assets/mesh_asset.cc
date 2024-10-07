@@ -2,6 +2,11 @@
 
 #include "ballistica/base/assets/mesh_asset.h"
 
+#include <cstdio>
+#include <string>
+#include <vector>
+
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/core/core.h"

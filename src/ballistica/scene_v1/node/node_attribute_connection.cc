@@ -2,6 +2,8 @@
 
 #include "ballistica/scene_v1/node/node_attribute_connection.h"
 
+#include <string>
+
 #include "ballistica/scene_v1/node/node.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"

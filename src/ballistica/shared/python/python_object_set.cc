@@ -2,11 +2,13 @@
 
 #include "ballistica/shared/python/python_object_set.h"
 
+#include <Python.h>
+
 #include <string>
 
+#include "ballistica/core/core.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/python/python_command.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica {
 

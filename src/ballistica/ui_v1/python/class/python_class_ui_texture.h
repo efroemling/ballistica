@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_UI_V1_PYTHON_CLASS_PYTHON_CLASS_UI_TEXTURE_H_
 #define BALLISTICA_UI_V1_PYTHON_CLASS_PYTHON_CLASS_UI_TEXTURE_H_
 
+#include <string>
+
 #include "ballistica/base/base.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/python/python.h"

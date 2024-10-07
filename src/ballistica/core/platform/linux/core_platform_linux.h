@@ -4,6 +4,7 @@
 #define BALLISTICA_CORE_PLATFORM_LINUX_CORE_PLATFORM_LINUX_H_
 #if BA_OSTYPE_LINUX
 
+#include <list>
 #include <string>
 
 #include "ballistica/core/platform/core_platform.h"

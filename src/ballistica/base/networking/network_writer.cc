@@ -2,6 +2,8 @@
 
 #include "ballistica/base/networking/network_writer.h"
 
+#include <vector>
+
 #include "ballistica/base/base.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/shared/foundation/event_loop.h"

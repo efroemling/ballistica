@@ -2,8 +2,9 @@
 
 #include "ballistica/base/audio/audio_streamer.h"
 
-#include "ballistica/base/audio/audio.h"
-#include "ballistica/base/audio/audio_server.h"
+#include <cstdio>
+
+#include "ballistica/base/base.h"
 
 // Need to move away from OpenAL on Apple stuff.
 #if __clang__

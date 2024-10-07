@@ -3,6 +3,10 @@
 #include "ballistica/scene_v1/support/client_session_replay.h"
 
 #include <algorithm>
+#include <cstdio>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/networking/networking.h"

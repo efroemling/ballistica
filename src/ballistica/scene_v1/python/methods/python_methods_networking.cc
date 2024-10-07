@@ -2,6 +2,10 @@
 
 #include "ballistica/scene_v1/python/methods/python_methods_networking.h"
 
+#include <set>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/base/python/base_python.h"

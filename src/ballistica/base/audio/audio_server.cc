@@ -3,6 +3,12 @@
 #include "ballistica/base/audio/audio_server.h"
 
 #include <algorithm>
+#include <cstdio>
+#include <list>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "ballistica/shared/buildconfig/buildconfig_common.h"
 

@@ -3,42 +3,17 @@
 #ifndef BALLISTICA_BASE_GRAPHICS_RENDERER_RENDERER_H_
 #define BALLISTICA_BASE_GRAPHICS_RENDERER_RENDERER_H_
 
-#include <memory>
 #include <string>
 #include <vector>
 
-#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/mesh_asset.h"
-#include "ballistica/base/graphics/graphics.h"
-#include "ballistica/base/graphics/mesh/image_mesh.h"
-#include "ballistica/base/graphics/mesh/mesh.h"
-#include "ballistica/base/graphics/mesh/mesh_buffer.h"
 #include "ballistica/base/graphics/mesh/mesh_buffer_base.h"
-#include "ballistica/base/graphics/mesh/mesh_buffer_vertex_simple_full.h"
-#include "ballistica/base/graphics/mesh/mesh_buffer_vertex_smoke_full.h"
-#include "ballistica/base/graphics/mesh/mesh_buffer_vertex_sprite.h"
-#include "ballistica/base/graphics/mesh/mesh_data.h"
 #include "ballistica/base/graphics/mesh/mesh_data_client_handle.h"
-#include "ballistica/base/graphics/mesh/mesh_index_buffer_16.h"
-#include "ballistica/base/graphics/mesh/mesh_index_buffer_32.h"
-#include "ballistica/base/graphics/mesh/mesh_indexed.h"
-#include "ballistica/base/graphics/mesh/mesh_indexed_dual_texture_full.h"
-#include "ballistica/base/graphics/mesh/mesh_indexed_object_split.h"
-#include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
-#include "ballistica/base/graphics/mesh/mesh_indexed_simple_split.h"
-#include "ballistica/base/graphics/mesh/mesh_indexed_smoke_full.h"
-#include "ballistica/base/graphics/mesh/mesh_indexed_static_dynamic.h"
-#include "ballistica/base/graphics/mesh/mesh_non_indexed.h"
-#include "ballistica/base/graphics/mesh/sprite_mesh.h"
-#include "ballistica/base/graphics/mesh/text_mesh.h"
-#include "ballistica/base/graphics/renderer/framebuffer.h"
 #include "ballistica/base/graphics/renderer/render_pass.h"
 #include "ballistica/base/graphics/renderer/render_target.h"
 #include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/base/graphics/support/render_command_buffer.h"
-#include "ballistica/base/graphics/text/text_group.h"
 #include "ballistica/shared/foundation/object.h"
-#include "ballistica/shared/math/matrix44f.h"
 #include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {

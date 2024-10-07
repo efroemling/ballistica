@@ -2,6 +2,9 @@
 
 #include "ballistica/scene_v1/python/class/python_class_scene_sound.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/shared/foundation/event_loop.h"

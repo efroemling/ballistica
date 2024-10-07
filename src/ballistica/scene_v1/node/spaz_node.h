@@ -6,7 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
+#include "ballistica/base/graphics/text/text_group.h"
 #include "ballistica/scene_v1/dynamics/part.h"
 #include "ballistica/scene_v1/node/node.h"
 #include "ballistica/scene_v1/support/player.h"

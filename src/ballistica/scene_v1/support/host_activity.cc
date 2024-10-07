@@ -2,6 +2,12 @@
 
 #include "ballistica/scene_v1/support/host_activity.h"
 
+#include <Python.h>
+
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
@@ -17,7 +23,6 @@
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::scene_v1 {
 

@@ -2,6 +2,11 @@
 
 #include "ballistica/base/graphics/graphics.h"
 
+#include <algorithm>
+#include <cstdio>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
@@ -12,10 +17,13 @@
 #include "ballistica/base/graphics/component/sprite_component.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/mesh/image_mesh.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
+#include "ballistica/base/graphics/mesh/sprite_mesh.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/graphics/support/net_graph.h"
 #include "ballistica/base/graphics/support/screen_messages.h"
+#include "ballistica/base/graphics/text/text_group.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/support/python_context_call.h"

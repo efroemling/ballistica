@@ -2,7 +2,9 @@
 
 #include "ballistica/base/graphics/support/net_graph.h"
 
+#include <cstdio>
 #include <list>
+#include <string>
 
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/mesh/image_mesh.h"

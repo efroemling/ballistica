@@ -2,6 +2,10 @@
 
 #include "ballistica/base/graphics/support/screen_messages.h"
 
+#include <algorithm>
+#include <string>
+#include <utility>
+
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/mesh/nine_patch_mesh.h"

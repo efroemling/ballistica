@@ -4,6 +4,8 @@
 #define BALLISTICA_BASE_PYTHON_BASE_PYTHON_H_
 
 #include <set>
+#include <string>
+#include <vector>
 
 #include "ballistica/base/base.h"
 #include "ballistica/shared/python/python_object_set.h"

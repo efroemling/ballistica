@@ -2,6 +2,11 @@
 
 #include "ballistica/scene_v1/connection/connection_to_client.h"
 
+#include <Python.h>
+
+#include <string>
+#include <vector>
+
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/networking/networking.h"
@@ -17,7 +22,6 @@
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::scene_v1 {
 

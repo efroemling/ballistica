@@ -2,8 +2,12 @@
 
 #include "ballistica/base/python/class/python_class_env.h"
 
+#include <map>
+#include <string>
+
 #include "ballistica/base/base.h"
 #include "ballistica/core/platform/core_platform.h"
+
 namespace ballistica::base {
 
 struct EnvEntry_ {

@@ -5,6 +5,9 @@
 
 #include <ballistica/base/input/device/input_device.h>
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
 

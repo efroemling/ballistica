@@ -2,8 +2,8 @@
 
 #include "ballistica/base/input/device/input_device.h"
 
-#include <list>
-#include <unordered_map>
+#include <cstdio>
+#include <string>
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/input/input.h"

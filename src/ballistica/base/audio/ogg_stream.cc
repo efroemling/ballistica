@@ -2,6 +2,9 @@
 
 #include "ballistica/base/audio/ogg_stream.h"
 
+#include <cstdio>
+#include <string>
+
 #include "ballistica/base/base.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"

@@ -2,7 +2,8 @@
 
 #include "ballistica/template_fs/python/methods/python_methods_template_fs.h"
 
-#include "ballistica/shared/python/python.h"
+#include <vector>
+
 #include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::template_fs {

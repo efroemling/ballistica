@@ -5,6 +5,7 @@
 
 #include <list>
 #include <string>
+#include <vector>
 
 #include "ballistica/ui_v1/widget/container_widget.h"
 

@@ -2,6 +2,9 @@
 
 #include "ballistica/shared/python/python_command.h"
 
+#include <string>
+#include <utility>
+
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_sys.h"

@@ -2,6 +2,8 @@
 
 #include "ballistica/scene_v1/assets/scene_cube_map_texture.h"
 
+#include <string>
+
 #include "ballistica/base/assets/assets.h"
 
 namespace ballistica::scene_v1 {

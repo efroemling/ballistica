@@ -161,10 +161,14 @@ def check_cpplint(projroot: Path, full: bool) -> None:
         )
 
     disabled_filters: list[str] = [
-        'build/include_what_you_use',
-        'build/c++11',
+        # 'build/include_what_you_use',
+        # 'build/c++11',
+        'build/c++17',
         'readability/nolint',
         'legal/copyright',
+        # As of cpplint 2.0 (Oct 2024), seeing a bunch of false positives
+        # for this based on how clang-format formats things.
+        'whitespace/indent_namespace',
     ]
     filterstr = ','.join(f'-{x}' for x in disabled_filters)
 
@@ -174,8 +178,8 @@ def check_cpplint(projroot: Path, full: bool) -> None:
                 sys.executable,
                 # Currently (May 2023) seeing a bunch of warnings
                 # about 'sre_compile deprecated'. Ignoring them.
-                '-W',
-                'ignore::DeprecationWarning',
+                # '-W',
+                # 'ignore::DeprecationWarning',
                 '-m',
                 'cpplint',
                 '--root=src',

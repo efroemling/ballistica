@@ -2,9 +2,12 @@
 
 #include "ballistica/core/python/core_python.h"
 
+#include <cstdio>
+#include <string>
+#include <vector>
+
 #include "ballistica/core/mgen/python_modules_monolithic.h"
 #include "ballistica/core/platform/core_platform.h"
-#include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
 

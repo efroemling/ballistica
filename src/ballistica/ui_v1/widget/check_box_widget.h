@@ -5,7 +5,7 @@
 
 #include <string>
 
-#include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/base/graphics/mesh/image_mesh.h"
 #include "ballistica/ui_v1/widget/text_widget.h"
 
 namespace ballistica::ui_v1 {

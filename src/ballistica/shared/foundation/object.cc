@@ -2,8 +2,11 @@
 
 #include "ballistica/shared/foundation/object.h"
 
+#include <algorithm>
 #include <mutex>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"

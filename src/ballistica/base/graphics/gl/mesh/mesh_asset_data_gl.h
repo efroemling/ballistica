@@ -5,12 +5,12 @@
 
 #if BA_ENABLE_OPENGL
 
+#include <string>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/graphics/gl/gl_sys.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics_server.h"
-#include "ballistica/base/graphics/mesh/mesh_renderer_data.h"
-#include "ballistica/shared/ballistica.h"
 
 namespace ballistica::base {
 

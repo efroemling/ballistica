@@ -2,10 +2,11 @@
 
 #include "ballistica/scene_v1/python/class/python_class_scene_mesh.h"
 
+#include <string>
+
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::scene_v1 {
 

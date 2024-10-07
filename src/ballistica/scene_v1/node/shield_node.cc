@@ -2,6 +2,9 @@
 
 #include "ballistica/scene_v1/node/shield_node.h"
 
+#include <algorithm>
+#include <vector>
+
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/base/graphics/component/post_process_component.h"

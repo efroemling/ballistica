@@ -2,13 +2,16 @@
 
 #include "ballistica/core/core.h"
 
+#include <cstdio>
 #include <cstring>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/python/core_python.h"
-#include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/types.h"
+#include "ballistica/shared/generic/runnable.h"
 
 namespace ballistica::core {
 

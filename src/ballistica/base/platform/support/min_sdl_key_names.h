@@ -3,7 +3,9 @@
 #ifndef BALLISTICA_BASE_PLATFORM_SUPPORT_MIN_SDL_KEY_NAMES_H_
 #define BALLISTICA_BASE_PLATFORM_SUPPORT_MIN_SDL_KEY_NAMES_H_
 
-#include "ballistica/base/input/device/keyboard_input.h"
+#include <string>  // IWYU pragma: keep.
+
+#include "ballistica/base/input/device/keyboard_input.h"  // IWYU pragma: keep.
 
 namespace ballistica::base {
 

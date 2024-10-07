@@ -2,6 +2,10 @@
 
 #include "ballistica/scene_v1/node/prop_node.h"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/support/area_of_interest.h"

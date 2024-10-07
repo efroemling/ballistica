@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_SCENE_V1_SUPPORT_SCENE_V1_CONTEXT_H_
 #define BALLISTICA_SCENE_V1_SUPPORT_SCENE_V1_CONTEXT_H_
 
+#include <string>
+
 #include "ballistica/base/support/context.h"
 #include "ballistica/scene_v1/scene_v1.h"
 

@@ -2,6 +2,8 @@
 
 #include "ballistica/scene_v1/support/player_spec.h"
 
+#include <string>
+
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/platform/core_platform.h"

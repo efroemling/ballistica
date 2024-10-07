@@ -2,6 +2,11 @@
 
 #include "ballistica/base/networking/network_reader.h"
 
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/input/support/remote_app_server.h"
 #include "ballistica/base/logic/logic.h"

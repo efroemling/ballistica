@@ -2,7 +2,9 @@
 
 #include "ballistica/classic/classic.h"
 
-#include "ballistica/base/support/app_timer.h"
+#include <string>
+#include <vector>
+
 #include "ballistica/classic/python/classic_python.h"
 #include "ballistica/classic/support/stress_test.h"
 #include "ballistica/classic/support/v1_account.h"

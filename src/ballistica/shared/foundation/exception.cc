@@ -2,6 +2,9 @@
 
 #include "ballistica/shared/foundation/exception.h"
 
+#include <string>
+#include <utility>
+
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/generic/native_stack_trace.h"

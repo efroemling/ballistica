@@ -2,6 +2,10 @@
 
 #include "ballistica/shared/python/python_ref.h"
 
+#include <list>
+#include <string>
+
+#include "ballistica/core/core.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/math/vector2f.h"
 #include "ballistica/shared/python/python.h"

@@ -2,6 +2,9 @@
 
 #include "ballistica/scene_v1/support/session_stream.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/networking/networking.h"

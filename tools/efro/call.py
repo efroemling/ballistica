@@ -4,14 +4,32 @@
 
 from __future__ import annotations
 
-import functools
-from typing import TYPE_CHECKING
+# import functools
+from typing import TYPE_CHECKING, TypeVar, Generic
+
+T = TypeVar('T')
 
 if TYPE_CHECKING:
     pass
 
-# TODO: should deprecate tpartial since it nowadays simply wraps
-# functools.partial (mypy added support for functools.partial in 1.11 so
-# there's no benefit to rolling our own type-safe version anymore).
-# Perhaps we can use Python 13's @warnings.deprecated() stuff for this.
-tpartial = functools.partial
+
+class SimpleCallbackSet(Generic[T]):
+    """A simple way to manage a set of callbacks."""
+
+    def __init__(self) -> None:
+        self._entries: list[SimpleCallbackSetEntry[T]] = []
+
+    def add(self, call: T) -> None:
+        """Add a callback."""
+        self._entries.append(SimpleCallbackSetEntry(call))
+
+    def getcalls(self) -> list[T]:
+        """Return the current set of registered calls."""
+        return [e.call for e in self._entries]
+
+
+class SimpleCallbackSetEntry(Generic[T]):
+    """An entry for a callback set."""
+
+    def __init__(self, call: T) -> None:
+        self.call = call

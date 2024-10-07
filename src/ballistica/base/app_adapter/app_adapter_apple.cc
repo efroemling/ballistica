@@ -3,6 +3,9 @@
 
 #include "ballistica/base/app_adapter/app_adapter_apple.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"

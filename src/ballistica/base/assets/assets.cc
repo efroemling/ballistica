@@ -2,6 +2,12 @@
 
 #include "ballistica/base/assets/assets.h"
 
+#include <cstdio>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/assets/assets_server.h"

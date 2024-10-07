@@ -2,6 +2,13 @@
 
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 
+#include <algorithm>
+#include <cstdio>
+#include <list>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_context_ref.h"
@@ -31,7 +38,7 @@
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/python/python_command.h"
+#include "ballistica/shared/python/python_command.h"  // IWYU pragma: keep.
 #include "ballistica/shared/python/python_module_builder.h"
 
 namespace ballistica::scene_v1 {

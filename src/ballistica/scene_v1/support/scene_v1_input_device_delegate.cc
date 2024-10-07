@@ -2,6 +2,10 @@
 
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 
+#include <cstdio>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/input/device/input_device.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/support/plus_soft.h"

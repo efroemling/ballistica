@@ -2,6 +2,9 @@
 
 #include "ballistica/base/python/base_python.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/python/class/python_class_app_timer.h"
 #include "ballistica/base/python/class/python_class_context_call.h"
@@ -14,7 +17,7 @@
 #include "ballistica/base/python/methods/python_methods_base_1.h"
 #include "ballistica/base/python/methods/python_methods_base_2.h"
 #include "ballistica/base/python/methods/python_methods_base_3.h"
-#include "ballistica/shared/python/python_command.h"
+#include "ballistica/shared/python/python_command.h"  // IWYU pragma: keep.
 #include "ballistica/shared/python/python_module_builder.h"
 
 namespace ballistica::base {

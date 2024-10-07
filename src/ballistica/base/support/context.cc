@@ -2,6 +2,8 @@
 
 #include "ballistica/base/support/context.h"
 
+#include <string>
+
 namespace ballistica::base {
 
 ContextRef::ContextRef()

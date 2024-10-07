@@ -2,7 +2,10 @@
 
 #include "ballistica/base/support/stdio_console.h"
 
-#include <cstring>
+#include <Python.h>
+
+#include <cstdio>
+#include <string>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
@@ -12,7 +15,6 @@
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python_command.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::base {
 

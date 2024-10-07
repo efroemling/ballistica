@@ -2,6 +2,8 @@
 
 #include "ballistica/scene_v1/dynamics/part.h"
 
+#include <vector>
+
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/dynamics/material/material.h"
 #include "ballistica/scene_v1/support/scene.h"

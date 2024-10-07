@@ -2,6 +2,8 @@
 
 #include "ballistica/ui_v1/python/class/python_class_ui_texture.h"
 
+#include <string>
+
 #include "ballistica/base/assets/texture_asset.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/shared/foundation/event_loop.h"

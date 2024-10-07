@@ -3,8 +3,9 @@
 #ifndef BALLISTICA_CORE_SUPPORT_BASE_SOFT_H_
 #define BALLISTICA_CORE_SUPPORT_BASE_SOFT_H_
 
-#include "ballistica/core/core.h"
-#include "ballistica/shared/ballistica.h"
+#include <string>
+
+#include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::core {
 

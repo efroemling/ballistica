@@ -2,11 +2,12 @@
 
 #include "ballistica/shared/ballistica.h"
 
+#include <string>
+
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/platform/support/min_sdl.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"
-#include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/fatal_error.h"
 #include "ballistica/shared/foundation/logging.h"
 #include "ballistica/shared/math/vector3f.h"
@@ -39,7 +40,7 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 22024;
+const int kEngineBuildNumber = 22025;
 const char* kEngineVersion = "1.7.37";
 const int kEngineApiVersion = 9;
 

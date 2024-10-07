@@ -2,6 +2,14 @@
 
 #include "ballistica/base/graphics/text/text_graphics.h"
 
+#include <cstdio>
+#include <list>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 #include "ballistica/base/graphics/text/font_page_map_data.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/generic/utils.h"

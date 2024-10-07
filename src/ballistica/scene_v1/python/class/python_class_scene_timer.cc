@@ -2,11 +2,12 @@
 
 #include "ballistica/scene_v1/python/class/python_class_scene_timer.h"
 
+#include <string>
+
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
 #include "ballistica/scene_v1/support/scene_v1_context.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::scene_v1 {
 

@@ -2,6 +2,9 @@
 
 #include "ballistica/base/app_mode/app_mode.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/input/device/input_device_delegate.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/support/context.h"

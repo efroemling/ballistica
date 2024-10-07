@@ -2,6 +2,8 @@
 
 #include "ballistica/shared/generic/runnable.h"
 
+#include <string>
+
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
 

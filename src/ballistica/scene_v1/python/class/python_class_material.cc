@@ -2,6 +2,9 @@
 
 #include "ballistica/scene_v1/python/class/python_class_material.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/scene_v1/dynamics/material/impact_sound_material_action.h"
 #include "ballistica/scene_v1/dynamics/material/material.h"

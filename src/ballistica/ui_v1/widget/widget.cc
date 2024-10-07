@@ -2,7 +2,8 @@
 
 #include "ballistica/ui_v1/widget/widget.h"
 
-#include "ballistica/base/logic/logic.h"
+#include <vector>
+
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/ui_v1/python/class/python_class_widget.h"

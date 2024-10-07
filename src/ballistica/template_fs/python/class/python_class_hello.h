@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_TEMPLATE_FS_PYTHON_CLASS_PYTHON_CLASS_HELLO_H_
 #define BALLISTICA_TEMPLATE_FS_PYTHON_CLASS_PYTHON_CLASS_HELLO_H_
 
+#include <string>
+
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_class.h"
 

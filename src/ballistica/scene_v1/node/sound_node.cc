@@ -2,6 +2,8 @@
 
 #include "ballistica/scene_v1/node/sound_node.h"
 
+#include <vector>
+
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"

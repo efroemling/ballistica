@@ -2,9 +2,14 @@
 
 #include "ballistica/base/input/input.h"
 
+#include <cstdio>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/input/device/joystick_input.h"
 #include "ballistica/base/input/device/keyboard_input.h"
