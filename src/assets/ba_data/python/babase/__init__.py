@@ -15,6 +15,7 @@ a more focused way.
 # dependency loops. The exception is TYPE_CHECKING blocks and
 # annotations since those aren't evaluated at runtime.
 
+import logging
 from efro.util import set_canonical_module_names
 
 
@@ -109,6 +110,7 @@ from _babase import (
     supports_max_fps,
     supports_vsync,
     unlock_all_input,
+    update_internal_logger_levels,
     user_agent_string,
     Vec3,
     workspaces_in_use,
@@ -185,6 +187,9 @@ from babase._plugin import PluginSpec, Plugin, PluginSubsystem
 from babase._stringedit import StringEditAdapter, StringEditSubsystem
 from babase._text import timestring
 
+# Our standard set of loggers.
+balog = logging.getLogger('ba')
+
 _babase.app = app = App()
 app.postinit()
 
@@ -215,6 +220,7 @@ __all__ = [
     'apptimer',
     'AppTimer',
     'asset_loads_allowed',
+    'balog',
     'Call',
     'fullscreen_control_available',
     'fullscreen_control_get',
@@ -344,6 +350,7 @@ __all__ = [
     'timestring',
     'UIScale',
     'unlock_all_input',
+    'update_internal_logger_levels',
     'user_agent_string',
     'utf8_all',
     'Vec3',

@@ -97,7 +97,7 @@ void NodeAttributeConnection::Update() {
           src_node->type()->GetAttribute(src_attr_index);
       NodeAttributeUnbound* dst_attr =
           dst_node->type()->GetAttribute(dst_attr_index);
-      Log(LogLevel::kError,
+      Log(LogName::kBa, LogLevel::kError,
           "Attribute connection update: " + std::string(e.what())
               + "; srcAttr='" + src_attr->name() + "', src_node='"
               + src_node->type()->name() + "', srcNodeName='"

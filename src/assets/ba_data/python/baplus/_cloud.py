@@ -128,14 +128,8 @@ class CloudSubsystem(babase.AppSubsystem):
         The provided on_response call will be run in the logic thread
         and passed either the response or the error that occurred.
         """
-
-        del msg  # Unused.
-
-        babase.pushcall(
-            babase.Call(
-                on_response,
-                RuntimeError('Cloud functionality is not available.'),
-            )
+        raise NotImplementedError(
+            'Cloud functionality is not present in this build.'
         )
 
     @overload
@@ -158,7 +152,9 @@ class CloudSubsystem(babase.AppSubsystem):
 
         Must be called from a background thread.
         """
-        raise RuntimeError('Cloud functionality is not available.')
+        raise NotImplementedError(
+            'Cloud functionality is not present in this build.'
+        )
 
     @overload
     async def send_message_async(
@@ -175,7 +171,14 @@ class CloudSubsystem(babase.AppSubsystem):
 
         Must be called from the logic thread.
         """
-        raise RuntimeError('Cloud functionality is not available.')
+        raise NotImplementedError(
+            'Cloud functionality is not present in this build.'
+        )
+
+    # def subscribe(
+    #     self,
+    #     on_response: Callable[[Any], None],
+    # ) -> CallbackRegistration:
 
 
 def cloud_console_exec(code: str) -> None:

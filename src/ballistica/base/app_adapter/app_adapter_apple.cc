@@ -169,7 +169,7 @@ auto AppAdapterApple::InGraphicsContext() -> bool {
 void AppAdapterApple::DoPushGraphicsContextRunnable(Runnable* runnable) {
   auto lock = std::scoped_lock(graphics_calls_mutex_);
   if (graphics_calls_.size() > 1000) {
-    BA_LOG_ONCE(LogLevel::kError, "graphics_calls_ got too big.");
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError, "graphics_calls_ got too big.");
   }
   graphics_calls_.push_back(runnable);
 }

@@ -241,7 +241,9 @@ void UIV1FeatureSet::OnScreenChange() {
 
   // We allow OnScreenSizeChange() to handle size changes but *do* handle
   // UIScale changes here.
-  root_widget_->OnUIScaleChange();
+  if (auto* root_widget = root_widget_.Get()) {
+    root_widget->OnUIScaleChange();
+  }
 }
 
 void UIV1FeatureSet::OnLanguageChange() {

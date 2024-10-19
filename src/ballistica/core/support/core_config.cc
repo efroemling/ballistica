@@ -78,11 +78,15 @@ static auto ParseArgValue(int argc, char** argv, int* i, const char* arg_long,
 }
 
 void CoreConfig::ApplyEnvVars() {
-  if (auto* envval = getenv("BA_LIFECYCLE_LOG")) {
-    if (!strcmp(envval, "1")) {
-      lifecycle_log = true;
-    }
-  }
+  // TODO(ericf): This is now simply a log level. If we want to allow
+  // controlling log-levels via env-vars we should come up with a unified
+  // system for that.
+
+  // if (auto* envval = getenv("BA_LIFECYCLE_LOG")) {
+  //   if (!strcmp(envval, "1")) {
+  //     lifecycle_log = true;
+  //   }
+  // }
   if (auto* envval = getenv("BA_DEBUGGER_ATTACHED")) {
     if (!strcmp(envval, "1")) {
       debugger_attached = true;

@@ -136,14 +136,14 @@ class Dynamics::Impl_ {
 
 Dynamics::Dynamics(Scene* scene_in)
     : scene_(scene_in),
-      collision_cache_(new base::CollisionCache()),
+      collision_cache_(std::make_unique<base::CollisionCache>()),
       impl_(std::make_unique<Impl_>(this)) {
   ResetODE_();
 }
 
 Dynamics::~Dynamics() {
   if (in_process_) {
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         "Dynamics going down within Process() call;"
         " should not happen.");
   }

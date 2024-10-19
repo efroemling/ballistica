@@ -90,7 +90,7 @@ void RendererGL::CheckGLError(const char* file, int line) {
     BA_PRECONDITION_FATAL(vendor);
     const char* renderer = (const char*)glGetString(GL_RENDERER);
     BA_PRECONDITION_FATAL(renderer);
-    Log(LogLevel::kError,
+    Log(LogName::kBaGraphics, LogLevel::kError,
         "OpenGL Error at " + std::string(file) + " line " + std::to_string(line)
             + ": " + GLErrorToString(err) + "\nrenderer: " + renderer
             + "\nvendor: " + vendor + "\nversion: " + version
@@ -174,7 +174,7 @@ void RendererGL::CheckGLVersion() {
   if (gl_is_es()) {
     // GL ES version strings start with 'OpenGL ES X' with X being version.
     const char* prefix = "OpenGL ES ";
-    int prefixlen = strlen(prefix);
+    auto prefixlen = strlen(prefix);
     BA_PRECONDITION_FATAL(!strncmp(version_str, prefix, prefixlen));
     if (version_str[prefixlen] != '3') {
       FatalError(
@@ -223,11 +223,9 @@ void RendererGL::CheckGLCapabilities_() {
     basestr = "OpenGL";
   }
 
-  if (g_buildconfig.debug_build()) {
-    Log(LogLevel::kInfo, std::string("Using ") + basestr + " (vendor: " + vendor
-                             + ", renderer: " + renderer
-                             + ", version: " + version_str + ").");
-  }
+  Log(LogName::kBaGraphics, LogLevel::kInfo,
+      std::string("Using ") + basestr + " (vendor: " + vendor
+          + ", renderer: " + renderer + ", version: " + version_str + ").");
 
   // Build a vector of extensions. Newer GLs give us extensions as lists
   // already, but on older ones we may need to break a single string apart
@@ -246,7 +244,8 @@ void RendererGL::CheckGLCapabilities_() {
       extensions.push_back(extension);
     }
   } else {
-    Log(LogLevel::kWarning, "Falling back on legacy GL_EXTENSIONS parsing.");
+    Log(LogName::kBaGraphics, LogLevel::kWarning,
+        "Falling back on legacy GL_EXTENSIONS parsing.");
     // Fall back on parsing the single giant string if need be.
     // (Can probably kill this).
     auto* ex = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
@@ -292,7 +291,8 @@ void RendererGL::CheckGLCapabilities_() {
     c_types.push_back(TextureCompressionType::kETC1);
   } else {
     if (g_buildconfig.ostype_android()) {
-      Log(LogLevel::kError, "Android device missing ETC1 support.");
+      Log(LogName::kBaGraphics, LogLevel::kError,
+          "Android device missing ETC1 support.");
     }
   }
 
@@ -360,7 +360,8 @@ void RendererGL::CheckGLCapabilities_() {
                             &samples[0]);
       msaa_max_samples_rgb565_ = samples[0];
     } else {
-      BA_LOG_ONCE(LogLevel::kError, "Got 0 samplecounts for RGB565");
+      BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
+                  "Got 0 samplecounts for RGB565");
       msaa_max_samples_rgb565_ = 0;
     }
 
@@ -374,7 +375,8 @@ void RendererGL::CheckGLCapabilities_() {
                             &samples[0]);
       msaa_max_samples_rgb8_ = samples[0];
     } else {
-      BA_LOG_ONCE(LogLevel::kError, "Got 0 samplecounts for RGB8");
+      BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
+                  "Got 0 samplecounts for RGB8");
       msaa_max_samples_rgb8_ = 0;
     }
   } else {
@@ -2385,7 +2387,7 @@ void RendererGL::UpdateVignetteTex_(bool force) {
     if (err != GL_NO_ERROR) {
       static bool reported = false;
       if (!reported) {
-        Log(LogLevel::kError,
+        Log(LogName::kBaGraphics, LogLevel::kError,
             "32-bit vignette creation failed; falling back to 16.");
         reported = true;
       }
@@ -2443,7 +2445,8 @@ void RendererGL::UpdateVignetteTex_(bool force) {
 
 auto RendererGL::GetFunkyDepthIssue_() -> bool {
   if (!funky_depth_issue_set_) {
-    BA_LOG_ONCE(LogLevel::kError, "fetching funky depth issue but not set");
+    BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
+                "fetching funky depth issue but not set");
   }
   return funky_depth_issue_;
 }

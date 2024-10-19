@@ -384,7 +384,7 @@ void Logic::OnAppModeChanged() {
   // long sleep we're currently in the middle of.
   if (g_core->HeadlessMode()) {
     if (debug_log_display_time_) {
-      Log(LogLevel::kDebug,
+      Log(LogName::kBa, LogLevel::kDebug,
           "Resetting headless display step timer due to app-mode change.");
     }
     assert(headless_display_time_step_timer_);
@@ -419,7 +419,7 @@ void Logic::UpdateDisplayTimeForHeadlessMode_() {
     char buffer[256];
     snprintf(buffer, sizeof(buffer), "stepping display-time at app-time %.4f",
              static_cast<double>(app_time_microsecs) / 1000000.0);
-    Log(LogLevel::kDebug, buffer);
+    Log(LogName::kBa, LogLevel::kDebug, buffer);
   }
 }
 
@@ -441,7 +441,7 @@ void Logic::PostUpdateDisplayTimeForHeadlessMode_() {
     snprintf(buffer, sizeof(buffer),
              "will try to sleep for %.4f at app-time %.4f (until %.4f)",
              sleepsecs, apptimesecs, apptimesecs + sleepsecs);
-    Log(LogLevel::kDebug, buffer);
+    Log(LogName::kBa, LogLevel::kDebug, buffer);
   }
 
   auto sleep_microsecs = headless_display_step_microsecs;
@@ -548,7 +548,7 @@ void Logic::UpdateDisplayTimeForFrameDraw_() {
         snprintf(buffer, sizeof(buffer),
                  "trailing_dist %.6f > trail_buffer %.6f; will offset %.6f).",
                  trailing_dist, trail_buffer, offs);
-        Log(LogLevel::kDebug, buffer);
+        Log(LogName::kBa, LogLevel::kDebug, buffer);
       }
       display_time_increment_ = display_time_increment_ + offs;
     }
@@ -559,7 +559,7 @@ void Logic::UpdateDisplayTimeForFrameDraw_() {
                "final %.5f current(%s) %.5f sample %.5f chaos %.5f",
                display_time_increment_, use_avg ? "avg" : "sample", used,
                this_increment, chaos);
-      Log(LogLevel::kDebug, buffer);
+      Log(LogName::kBa, LogLevel::kDebug, buffer);
     }
   }
 
@@ -660,7 +660,7 @@ void Logic::SetAppTimerLength(int timer_id, microsecs_t length) {
   if (t) {
     t->SetLength(length);
   } else {
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         "Logic::SetAppTimerLength() called on nonexistent timer.");
   }
 }
@@ -687,7 +687,7 @@ void Logic::SetDisplayTimerLength(int timer_id, microsecs_t length) {
   if (t) {
     t->SetLength(length);
   } else {
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         "Logic::SetDisplayTimerLength() called on nonexistent timer.");
   }
 }

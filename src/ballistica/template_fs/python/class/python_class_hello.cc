@@ -50,11 +50,13 @@ void PythonClassHello::tp_dealloc(PythonClassHello* self) {
 }
 
 PythonClassHello::PythonClassHello() {
-  Log(LogLevel::kInfo, "Hello from PythonClassHello constructor!!!");
+  Log(LogName::kBa, LogLevel::kInfo,
+      "Hello from PythonClassHello constructor!!!");
 }
 
 PythonClassHello::~PythonClassHello() {
-  Log(LogLevel::kInfo, "Goodbye from PythonClassHello destructor!!!");
+  Log(LogName::kBa, LogLevel::kInfo,
+      "Goodbye from PythonClassHello destructor!!!");
 }
 
 auto PythonClassHello::TestMethod(PythonClassHello* self, PyObject* args,
@@ -66,8 +68,9 @@ auto PythonClassHello::TestMethod(PythonClassHello* self, PyObject* args,
                                    const_cast<char**>(kwlist), &val)) {
     return nullptr;
   }
-  Log(LogLevel::kInfo, "Hello from PythonClassHello.test_method!!! (val="
-                           + std::to_string(val) + ")");
+  Log(LogName::kBa, LogLevel::kInfo,
+      "Hello from PythonClassHello.test_method!!! (val=" + std::to_string(val)
+          + ")");
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

@@ -17,7 +17,8 @@ class MeshData {
       : type_(type), draw_type_(draw_type) {}
   virtual ~MeshData() {
     if (renderer_data_) {
-      Log(LogLevel::kError, "MeshData going down with rendererData intact!");
+      Log(LogName::kBaGraphics, LogLevel::kError,
+          "MeshData going down with rendererData intact!");
     }
   }
   std::list<MeshData*>::iterator iterator_;

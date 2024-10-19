@@ -543,7 +543,7 @@ void ButtonWidget::Activate() { DoActivate(); }
 
 void ButtonWidget::DoActivate(bool is_repeat) {
   if (!enabled_) {
-    Log(LogLevel::kWarning,
+    Log(LogName::kBa, LogLevel::kWarning,
         "ButtonWidget::DoActivate() called on disabled button");
     return;
   }

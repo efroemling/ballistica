@@ -93,7 +93,7 @@ void OggStream::DoStream(char* pcm, int* size, unsigned int* rate) {
         static bool reported_error = false;
         if (!reported_error) {
           reported_error = true;
-          Log(LogLevel::kError,
+          Log(LogName::kBaAudio, LogLevel::kError,
               "Error streaming ogg file: '" + file_name() + "'.");
         }
         if (loops()) {

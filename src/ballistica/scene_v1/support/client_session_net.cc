@@ -17,7 +17,7 @@ namespace ballistica::scene_v1 {
 ClientSessionNet::ClientSessionNet() {
   // Sanity check: we should only ever be writing one replay at once.
   if (g_scene_v1->replay_open) {
-    Log(LogLevel::kError,
+    Log(LogName::kBaNetworking, LogLevel::kError,
         "g_scene_v1->replay_open true at netclient start;"
         " shouldn't happen.");
   }
@@ -33,7 +33,7 @@ ClientSessionNet::~ClientSessionNet() {
   if (writing_replay_) {
     // Sanity check: we should only ever be writing one replay at once.
     if (!g_scene_v1->replay_open) {
-      Log(LogLevel::kError,
+      Log(LogName::kBaNetworking, LogLevel::kError,
           "g_scene_v1->replay_open false at net-client close;"
           " shouldn't happen.");
     }

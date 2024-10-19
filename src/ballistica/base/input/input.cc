@@ -34,7 +34,7 @@ void Input::PushCreateKeyboardInputDevices() {
 void Input::CreateKeyboardInputDevices_() {
   assert(g_base->InLogicThread());
   if (keyboard_input_ != nullptr || keyboard_input_2_ != nullptr) {
-    Log(LogLevel::kError,
+    Log(LogName::kBaInput, LogLevel::kError,
         "CreateKeyboardInputDevices called with existing kbs.");
     return;
   }
@@ -53,7 +53,7 @@ void Input::PushDestroyKeyboardInputDevices() {
 void Input::DestroyKeyboardInputDevices_() {
   assert(g_base->InLogicThread());
   if (keyboard_input_ == nullptr || keyboard_input_2_ == nullptr) {
-    Log(LogLevel::kError,
+    Log(LogName::kBaInput, LogLevel::kError,
         "DestroyKeyboardInputDevices called with null kb(s).");
     return;
   }
@@ -558,7 +558,7 @@ void Input::StepDisplayTime() {
   // If input has been locked an excessively long amount of time, unlock it.
   if (input_lock_count_temp_) {
     if (real_time - last_input_temp_lock_time_ > 10000) {
-      Log(LogLevel::kError,
+      Log(LogName::kBaInput, LogLevel::kError,
           "Input has been temp-locked for 10 seconds; unlocking.");
       input_lock_count_temp_ = 0;
       PrintLockLabels_();
@@ -664,7 +664,7 @@ void Input::UnlockAllInput(bool permanent, const std::string& label) {
     input_lock_count_temp_--;
     input_unlock_temp_labels_.push_back(label);
     if (input_lock_count_temp_ < 0) {
-      Log(LogLevel::kWarning,
+      Log(LogName::kBaInput, LogLevel::kWarning,
           "temp input unlock at time "
               + std::to_string(g_core->GetAppTimeMillisecs())
               + " with no active lock: '" + label + "'");
@@ -719,7 +719,7 @@ void Input::PrintLockLabels_() {
     s += "\n   " + std::to_string(num++) + ": " + recent_input_locks_unlock;
   }
 
-  Log(LogLevel::kError, s);
+  Log(LogName::kBaInput, LogLevel::kError, s);
 }
 
 void Input::PushTextInputEvent(const std::string& text) {
@@ -757,7 +757,8 @@ void Input::PushTextInputEvent(const std::string& text) {
     // platforms) but make a stink if they sent us something that we can't
     // at least translate to unicode.
     if (!Utils::IsValidUTF8(text)) {
-      Log(LogLevel::kWarning, "PushTextInputEvent passed invalid utf-8 text.");
+      Log(LogName::kBaInput, LogLevel::kWarning,
+          "PushTextInputEvent passed invalid utf-8 text.");
       return;
     }
 
@@ -844,7 +845,8 @@ void Input::CaptureKeyboardInput(HandleKeyPressCall* press_call,
                                  HandleKeyReleaseCall* release_call) {
   assert(g_base->InLogicThread());
   if (keyboard_input_capture_press_ || keyboard_input_capture_release_) {
-    Log(LogLevel::kError, "Setting key capture redundantly.");
+    Log(LogName::kBaInput, LogLevel::kError,
+        "Setting key capture redundantly.");
   }
   keyboard_input_capture_press_ = press_call;
   keyboard_input_capture_release_ = release_call;
@@ -859,7 +861,8 @@ void Input::ReleaseKeyboardInput() {
 void Input::CaptureJoystickInput(HandleJoystickEventCall* call) {
   assert(g_base->InLogicThread());
   if (joystick_input_capture_) {
-    Log(LogLevel::kError, "Setting joystick capture redundantly.");
+    Log(LogName::kBaInput, LogLevel::kError,
+        "Setting joystick capture redundantly.");
   }
   joystick_input_capture_ = call;
 }
@@ -930,7 +933,7 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
       count++;
       if (count > 10) {
         BA_LOG_ONCE(
-            LogLevel::kWarning,
+            LogName::kBaInput, LogLevel::kWarning,
             "Input::HandleKeyPress_ seems to be getting passed repeat key"
             " press events. Only initial press events should be passed.");
       }
@@ -1442,7 +1445,7 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
     // overall multitouch gesture, it should always be winding up as our
     // single_touch_.
     if (e.type == TouchEvent::Type::kDown && single_touch_ != nullptr) {
-      BA_LOG_ONCE(LogLevel::kError,
+      BA_LOG_ONCE(LogName::kBaInput, LogLevel::kError,
                   "Got touch labeled first but will not be our single.");
     }
 
@@ -1452,7 +1455,7 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
     if ((e.type == TouchEvent::Type::kUp
          || e.type == TouchEvent::Type::kCanceled)
         && single_touch_ != nullptr && single_touch_ != e.touch) {
-      BA_LOG_ONCE(LogLevel::kError,
+      BA_LOG_ONCE(LogName::kBaInput, LogLevel::kError,
                   "Last touch coming up is not single touch!");
     }
   }
@@ -1567,7 +1570,7 @@ void Input::LsInputDevices() {
     ++index;
   }
 
-  Log(LogLevel::kInfo, out);
+  Log(LogName::kBaInput, LogLevel::kInfo, out);
 }
 
 auto Input::ShouldAllowInputInAttractMode_(InputDevice* device) const -> bool {

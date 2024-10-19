@@ -3,7 +3,6 @@
 #ifndef BALLISTICA_CORE_CORE_H_
 #define BALLISTICA_CORE_CORE_H_
 
-#include <list>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -186,13 +185,36 @@ class CoreFeatureSet {
   void set_event_loops_suspended(bool val) { event_loops_suspended_ = val; }
   static auto CurrentThreadName() -> std::string;
 
+  auto HandOverInitialAppConfig() -> PyObject*;
+
+  /// Grab current Python logging levels for all logs we use internally. If
+  /// any changes are made at runtime to Python logging levels that we use,
+  /// this should be called after.
+  void UpdateInternalLoggerLevels();
+
+  /// Check whether a certain log name/level combo will be shown. It is much
+  /// more efficient to gate log calls using this (especially frequent or
+  /// debug ones) rather than letting the Python layer do the gating. Be
+  /// aware, however, that UpdateInternalLoggerLevels() must be called after
+  /// making any changes to Python logger levels to keep this internal
+  /// system up to date.
+  auto LogLevelEnabled(LogName name, LogLevel level) -> bool {
+    return log_levels_[static_cast<int>(name)] <= level;
+  }
+
+  auto ba_env_launch_timestamp() {
+    // Make sure we set this before accessing it.
+    assert(ba_env_launch_timestamp_ > 0.0);
+    return ba_env_launch_timestamp_;
+  }
+
  private:
   explicit CoreFeatureSet(CoreConfig config);
-  static void DoImport(const CoreConfig& config);
-  static auto CalcBuildSrcDir() -> std::string;
-  void RunSanityChecks();
-  void UpdateAppTime();
-  void PostInit();
+  static void DoImport_(const CoreConfig& config);
+  static auto CalcBuildSrcDir_() -> std::string;
+  void RunSanityChecks_();
+  void UpdateAppTime_();
+  void PostInit_();
 
   // Note to self: don't use single bits for these as they may be owned by
   // different threads.
@@ -203,7 +225,9 @@ class CoreFeatureSet {
   bool vr_mode_{};
   bool using_custom_app_python_dir_{};
   bool engine_done_{};
+  LogLevel log_levels_[static_cast<int>(LogName::kLast)]{};
 
+  PyObject* initial_app_config_{};
   std::thread::id main_thread_id_{};
   CoreConfig core_config_;
   std::string build_src_dir_;
@@ -217,6 +241,7 @@ class CoreFeatureSet {
   std::optional<std::string> ba_env_user_python_dir_;
   std::optional<std::string> ba_env_site_python_dir_;
   std::string ba_env_data_dir_;
+  double ba_env_launch_timestamp_{-1.0};
   std::mutex thread_info_map_mutex_;
   std::unordered_map<std::thread::id, std::string> thread_info_map_;
 };

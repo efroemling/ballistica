@@ -92,7 +92,7 @@ void RegionNode::Step() {
           RigidBody::kCollideRegion, RigidBody::kCollideActive);
     } else {
       if (region_type_ != "box") {
-        BA_LOG_ONCE(LogLevel::kError,
+        BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                     "Got unexpected region type: " + region_type_);
       }
       body_ = Object::New<RigidBody>(

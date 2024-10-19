@@ -1372,7 +1372,7 @@ void BGDynamicsServer::Emit(const BGDynamicsEmission& def) {
     }
     default: {
       int t = static_cast<int>(def.emit_type);
-      BA_LOG_ONCE(LogLevel::kError,
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                   "Invalid bg-dynamics emit type: " + std::to_string(t));
       break;
     }
@@ -2361,9 +2361,9 @@ void BGDynamicsServer::Step(StepData* step_data) {
 
   // Math sanity check.
   if (step_count_ < 0) {
-    BA_LOG_ONCE(LogLevel::kWarning, "BGDynamics step_count too low ("
-                                        + std::to_string(step_count_)
-                                        + "); should not happen.");
+    BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kWarning,
+                "BGDynamics step_count too low (" + std::to_string(step_count_)
+                    + "); should not happen.");
   }
 }
 
@@ -2376,9 +2376,9 @@ void BGDynamicsServer::PushStep(StepData* data) {
 
   // Client thread should stop feeding us if we get clogged up.
   if (step_count_ > 5) {
-    BA_LOG_ONCE(LogLevel::kWarning, "BGDynamics step_count too high ("
-                                        + std::to_string(step_count_)
-                                        + "); should not happen.");
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
+                "BGDynamics step_count too high (" + std::to_string(step_count_)
+                    + "); should not happen.");
   }
 
   event_loop()->PushCall([this, data] { Step(data); });

@@ -128,9 +128,10 @@ void ClassicAppMode::Reset_() {
 
   // If all is well our sessions should all be dead at this point.
   if (g_scene_v1->session_count != 0) {
-    Log(LogLevel::kError, "SceneV1 session count is non-zero ("
-                              + std::to_string(g_scene_v1->session_count)
-                              + ") on ClassicAppMode::Reset_().");
+    Log(LogName::kBa, LogLevel::kError,
+        "SceneV1 session count is non-zero ("
+            + std::to_string(g_scene_v1->session_count)
+            + ") on ClassicAppMode::Reset_().");
   }
 
   // Reset the engine itself to a default state.
@@ -159,15 +160,16 @@ void ClassicAppMode::HostScanCycle() {
     scan_socket_ = socket(AF_INET, SOCK_DGRAM, 0);
 
     if (scan_socket_ == -1) {
-      Log(LogLevel::kError, "Error opening scan socket: "
-                                + g_core->platform->GetSocketErrorString()
-                                + ".");
+      Log(LogName::kBaNetworking, LogLevel::kError,
+          "Error opening scan socket: "
+              + g_core->platform->GetSocketErrorString() + ".");
       return;
     }
 
     // Since this guy lives in the logic-thread we need it to not block.
     if (!g_core->platform->SetSocketNonBlocking(scan_socket_)) {
-      Log(LogLevel::kError, "Error setting socket non-blocking.");
+      Log(LogName::kBaNetworking, LogLevel::kError,
+          "Error setting socket non-blocking.");
       g_core->platform->CloseSocket(scan_socket_);
       scan_socket_ = -1;
       return;
@@ -182,7 +184,7 @@ void ClassicAppMode::HostScanCycle() {
     int result =
         ::bind(scan_socket_, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     if (result == 1) {
-      Log(LogLevel::kError,
+      Log(LogName::kBaNetworking, LogLevel::kError,
           "Error binding socket: " + g_core->platform->GetSocketErrorString()
               + ".");
       g_core->platform->CloseSocket(scan_socket_);
@@ -196,9 +198,9 @@ void ClassicAppMode::HostScanCycle() {
                         sizeof(op_val));
 
     if (result != 0) {
-      Log(LogLevel::kError, "Error enabling broadcast for scan-socket: "
-                                + g_core->platform->GetSocketErrorString()
-                                + ".");
+      Log(LogName::kBaNetworking, LogLevel::kError,
+          "Error enabling broadcast for scan-socket: "
+              + g_core->platform->GetSocketErrorString() + ".");
       g_core->platform->CloseSocket(scan_socket_);
       scan_socket_ = -1;
       return;
@@ -230,8 +232,9 @@ void ClassicAppMode::HostScanCycle() {
         case ENETUNREACH:
           break;
         default:
-          Log(LogLevel::kError, "Error on scanSocket sendto: "
-                                    + g_core->platform->GetSocketErrorString());
+          Log(LogName::kBaNetworking, LogLevel::kError,
+              "Error on scan-socket sendto: "
+                  + g_core->platform->GetSocketErrorString());
       }
     }
   }
@@ -253,8 +256,9 @@ void ClassicAppMode::HostScanCycle() {
         case EWOULDBLOCK:
           break;
         default:
-          Log(LogLevel::kError, "Error: recvfrom error: "
-                                    + g_core->platform->GetSocketErrorString());
+          Log(LogName::kBaNetworking, LogLevel::kError,
+              "Error: recvfrom error: "
+                  + g_core->platform->GetSocketErrorString());
           break;
       }
       break;
@@ -311,11 +315,11 @@ void ClassicAppMode::HostScanCycle() {
             PruneScanResults_();
           }
         } else {
-          Log(LogLevel::kError,
+          Log(LogName::kBaNetworking, LogLevel::kError,
               "Got invalid BA_PACKET_HOST_QUERY_RESPONSE packet");
         }
       } else {
-        Log(LogLevel::kError,
+        Log(LogName::kBaNetworking, LogLevel::kError,
             "Got invalid BA_PACKET_HOST_QUERY_RESPONSE packet");
       }
     }
@@ -388,7 +392,7 @@ bool ClassicAppMode::HasConnectionToClients() const {
 auto ClassicAppMode::GetActiveOrWarn() -> ClassicAppMode* {
   auto* val{GetActive()};
   if (val == nullptr) {
-    Log(LogLevel::kWarning,
+    Log(LogName::kBa, LogLevel::kWarning,
         "Attempting to access ClassicAppMode while it is inactive.");
   }
   return val;
@@ -515,6 +519,16 @@ void ClassicAppMode::StepDisplayTime() {
   }
   legacy_display_time_millisecs_prev_ = legacy_display_time_millisecs_;
 
+  // Special case: due to things like app-mode-switches our
+  // prev-display-time-millisecs may be way in the past which
+  // can give us huge step values. So if this value is much bigger
+  // than the direct conversion of display_time_increment, clamp it.
+  auto milliseconds_inc_max =
+      static_cast<int>(g_base->logic->display_time_increment() * 1000.0 * 1.5);
+  if (legacy_display_time_millisecs_inc > milliseconds_inc_max) {
+    legacy_display_time_millisecs_inc = milliseconds_inc_max;
+  }
+
   UpdateKickVote_();
 
   HandleQuitOnIdle_();
@@ -559,8 +573,9 @@ void ClassicAppMode::StepDisplayTime() {
 
     // Complain when our full update takes longer than 1/60th second.
     if (duration > (1000 / 60)) {
-      Log(LogLevel::kInfo, "Logic::StepDisplayTime update took too long ("
-                               + std::to_string(duration) + " ms).");
+      Log(LogName::kBa, LogLevel::kInfo,
+          "Logic::StepDisplayTime update took too long ("
+              + std::to_string(duration) + " ms).");
 
       // Limit these if we want (not doing so for now).
       next_long_update_report_time_ = app_time;
@@ -624,7 +639,7 @@ void ClassicAppMode::UpdateGameRoster() {
       for (auto&& p : hs->players()) {
         auto* delegate = p->input_device_delegate();
         if (delegate == nullptr || !delegate->InputDeviceExists()) {
-          BA_LOG_ONCE(LogLevel::kWarning,
+          BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
                       "Found player with no/invalid input-device-delegate in "
                       "UpdateGameRoster.");
           continue;
@@ -1215,7 +1230,7 @@ void ClassicAppMode::PruneSessions_() {
         try {
           i.Clear();
         } catch (const std::exception& e) {
-          Log(LogLevel::kError,
+          Log(LogName::kBa, LogLevel::kError,
               "Exception killing Session: " + std::string(e.what()));
         }
         have_dead_session = true;
@@ -1403,7 +1418,8 @@ void ClassicAppMode::HandleQuitOnIdle_() {
     if (!idle_exiting_ && idle_seconds > (idle_exit_minutes_.value() * 60.0f)) {
       idle_exiting_ = true;
 
-      Log(LogLevel::kInfo, "Quitting due to reaching idle-exit-minutes.");
+      Log(LogName::kBa, LogLevel::kInfo,
+          "Quitting due to reaching idle-exit-minutes.");
       g_base->logic->event_loop()->PushCall([] { g_base->logic->Shutdown(); });
     }
   }
@@ -1462,7 +1478,8 @@ void ClassicAppMode::HandleGameQuery(const char* buffer, size_t size,
 
     BA_PRECONDITION_FATAL(!usid.empty());
     if (usid.size() > 100) {
-      Log(LogLevel::kError, "had to truncate session-id; shouldn't happen");
+      Log(LogName::kBa, LogLevel::kError,
+          "had to truncate session-id; shouldn't happen");
       usid.resize(100);
     }
     if (usid.empty()) {
@@ -1488,8 +1505,9 @@ void ClassicAppMode::HandleGameQuery(const char* buffer, size_t size,
     g_base->network_writer->PushSendToCall(msg_buffer, SockAddr(*from));
 
   } else {
-    Log(LogLevel::kError, "Got invalid game-query packet of len "
-                              + std::to_string(size) + "; expected 5.");
+    Log(LogName::kBaNetworking, LogLevel::kError,
+        "Got invalid game-query packet of len " + std::to_string(size)
+            + "; expected 5.");
   }
 }
 

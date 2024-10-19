@@ -4,7 +4,7 @@
 #define BALLISTICA_SHARED_FOUNDATION_EXCEPTION_H_
 #ifdef __cplusplus
 
-#include <stdexcept>
+#include <stdexcept>  // IWYU pragma: keep.
 #include <string>
 
 #include "ballistica/shared/foundation/types.h"

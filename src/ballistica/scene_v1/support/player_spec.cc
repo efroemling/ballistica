@@ -39,7 +39,8 @@ PlayerSpec::PlayerSpec(const std::string& s) {
     cJSON_Delete(root_obj);
   }
   if (!success) {
-    Log(LogLevel::kError, "Error creating PlayerSpec from string: '" + s + "'");
+    Log(LogName::kBa, LogLevel::kError,
+        "Error creating PlayerSpec from string: '" + s + "'");
     name_ = "<error>";
     short_name_ = "";
     // account_type_ = classic::V1AccountType::kInvalid;
@@ -113,7 +114,8 @@ auto PlayerSpec::GetAccountPlayerSpec() -> PlayerSpec {
   }
   if (spec.name_.size() > 100) {
     // FIXME should perhaps clamp this in unicode space
-    Log(LogLevel::kError, "account name size too long: '" + spec.name_ + "'");
+    Log(LogName::kBa, LogLevel::kError,
+        "account name size too long: '" + spec.name_ + "'");
     spec.name_.resize(100);
     spec.name_ = Utils::GetValidUTF8(spec.name_.c_str(), "bsgaps3");
   }
@@ -125,7 +127,7 @@ auto PlayerSpec::GetDummyPlayerSpec(const std::string& name) -> PlayerSpec {
   spec.name_ = Utils::GetValidUTF8(name.c_str(), "bsgdps1");
   if (spec.name_.size() > 100) {
     // FIXME should perhaps clamp this in unicode space
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         "dummy player spec name too long: '" + spec.name_ + "'");
     spec.name_.resize(100);
     spec.name_ = Utils::GetValidUTF8(spec.name_.c_str(), "bsgdps2");

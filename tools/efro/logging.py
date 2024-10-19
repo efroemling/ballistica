@@ -22,7 +22,7 @@ from efro.dataclassio import ioprepped, IOAttrs, dataclass_to_json
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from typing import Any, Callable, TextIO
+    from typing import Any, Callable, TextIO, Literal
 
 
 class LogLevel(Enum):
@@ -129,21 +129,23 @@ class LogHandler(logging.Handler):
         *,
         path: str | Path | None,
         echofile: TextIO | None,
-        suppress_non_root_debug: bool,
         cache_size_limit: int,
         cache_time_limit: datetime.timedelta | None,
+        echofile_timestamp_format: Literal['default', 'relative'] = 'default',
+        launch_time: float | None = None,
     ):
         super().__init__()
         # pylint: disable=consider-using-with
         self._file = None if path is None else open(path, 'w', encoding='utf-8')
         self._echofile = echofile
+        self._echofile_timestamp_format = echofile_timestamp_format
         self._callbacks: list[Callable[[LogEntry], None]] = []
-        self._suppress_non_root_debug = suppress_non_root_debug
         self._file_chunks: dict[str, list[str]] = {'stdout': [], 'stderr': []}
         self._file_chunk_ship_task: dict[str, asyncio.Task | None] = {
             'stdout': None,
             'stderr': None,
         }
+        self._launch_time = time.time() if launch_time is None else launch_time
         self._cache_size = 0
         assert cache_size_limit >= 0
         self._cache_size_limit = cache_size_limit
@@ -159,8 +161,8 @@ class LogHandler(logging.Handler):
         self._thread.start()
 
         # Spin until our thread is up and running; otherwise we could
-        # wind up trying to push stuff to our event loop before the
-        # loop exists.
+        # wind up trying to push stuff to our event loop before the loop
+        # exists.
         while not self._thread_bootstrapped:
             time.sleep(0.001)
 
@@ -235,8 +237,8 @@ class LogHandler(logging.Handler):
             await asyncio.sleep(61.27)
             now = utc_now()
             with self._cache_lock:
-                # Prune the oldest entry as long as there is a first one that
-                # is too old.
+                # Prune the oldest entry as long as there is a first one
+                # that is too old.
                 while (
                     self._cache
                     and (now - self._cache[0][1].time) >= self._cache_time_limit
@@ -252,9 +254,9 @@ class LogHandler(logging.Handler):
 
         This will only include entries that have been processed by the
         background thread, so may not include just-submitted logs or
-        entries for partially written stdout/stderr lines.
-        Entries from the range [start_index:start_index+max_entries]
-        which are still present in the cache will be returned.
+        entries for partially written stdout/stderr lines. Entries from
+        the range [start_index:start_index+max_entries] which are still
+        present in the cache will be returned.
         """
 
         assert start_index >= 0
@@ -283,11 +285,11 @@ class LogHandler(logging.Handler):
     def _cache_slice(
         self, start: int, end: int, step: int = 1
     ) -> list[LogEntry]:
-        # Deque doesn't natively support slicing but we can do it manually.
-        # It sounds like rotating the deque and pulling from the beginning
-        # is the most efficient way to do this. The downside is the deque
-        # gets temporarily modified in the process so we need to make sure
-        # we're holding the lock.
+        # Deque doesn't natively support slicing but we can do it
+        # manually. It sounds like rotating the deque and pulling from
+        # the beginning is the most efficient way to do this. The
+        # downside is the deque gets temporarily modified in the process
+        # so we need to make sure we're holding the lock.
         assert self._cache_lock.locked()
         cache = self._cache
         cache.rotate(-start)
@@ -310,25 +312,18 @@ class LogHandler(logging.Handler):
     @override
     def emit(self, record: logging.LogRecord) -> None:
         # pylint: disable=too-many-branches
+
         if __debug__:
             starttime = time.monotonic()
 
         # Called by logging to send us records.
 
-        # TODO - kill this.
-        if (
-            self._suppress_non_root_debug
-            and record.name != 'root'
-            and record.levelname == 'DEBUG'
-        ):
-            return
-
         # Optimization: if our log args are all simple immutable values,
-        # we can just kick the whole thing over to our background thread to
-        # be formatted there at our leisure. If anything is mutable and
-        # thus could possibly change between now and then or if we want
-        # to do immediate file echoing then we need to bite the bullet
-        # and do that stuff here at the call site.
+        # we can just kick the whole thing over to our background thread
+        # to be formatted there at our leisure. If anything is mutable
+        # and thus could possibly change between now and then or if we
+        # want to do immediate file echoing then we need to bite the
+        # bullet and do that stuff here at the call site.
         fast_path = self._echofile is None and self._is_immutable_log_data(
             record.args
         )
@@ -360,37 +355,27 @@ class LogHandler(logging.Handler):
             if __debug__:
                 formattime = time.monotonic()
 
-            # Also immediately print pretty colored output to our echo file
-            # (generally stderr). We do this part here instead of in our bg
-            # thread because the delay can throw off command line prompts or
-            # make tight debugging harder.
+            # Also immediately print pretty colored output to our echo
+            # file (generally stderr). We do this part here instead of
+            # in our bg thread because the delay can throw off command
+            # line prompts or make tight debugging harder.
             if self._echofile is not None:
-                # try:
-                # if self._report_blocking_io_on_echo_error:
-                #     premsg = (
-                #         'WARNING: BlockingIOError ON LOG ECHO OUTPUT;'
-                #         ' YOU ARE PROBABLY MISSING LOGS\n'
-                #     )
-                #     self._report_blocking_io_on_echo_error = False
-                # else:
-                #     premsg = ''
-                ends = LEVELNO_COLOR_CODES.get(record.levelno)
-                namepre = f'{Clr.WHT}{record.name}:{Clr.RST} '
-                if ends is not None:
-                    self._echofile.write(
-                        f'{namepre}{ends[0]}'
-                        f'{msg}{ends[1]}\n'
-                        # f'{namepre}{ends[0]}' f'{premsg}{msg}{ends[1]}\n'
-                    )
+                if self._echofile_timestamp_format == 'relative':
+                    timestamp = f'{record.created - self._launch_time:.3f}'
                 else:
-                    self._echofile.write(f'{namepre}{msg}\n')
+                    timestamp = (
+                        datetime.datetime.fromtimestamp(
+                            record.created, tz=datetime.UTC
+                        ).strftime('%H:%M:%S')
+                        + f'.{int(record.msecs):03d}'
+                    )
+                preinfo = f'{Clr.WHT}{timestamp} {record.name}:{Clr.RST} '
+                ends = LEVELNO_COLOR_CODES.get(record.levelno)
+                if ends is not None:
+                    self._echofile.write(f'{preinfo}{ends[0]}{msg}{ends[1]}\n')
+                else:
+                    self._echofile.write(f'{preinfo}{msg}\n')
                 self._echofile.flush()
-                # except BlockingIOError:
-                #     # Ran into this when doing a bunch of logging; assuming
-                #     # this is asyncio's doing?.. For now trying to survive
-                #     # the error but telling the user something is probably
-                #     # missing in their output.
-                #     self._report_blocking_io_on_echo_error = True
 
             if __debug__:
                 echotime = time.monotonic()
@@ -408,29 +393,28 @@ class LogHandler(logging.Handler):
 
         if __debug__:
             # pylint: disable=used-before-assignment
-            # Make noise if we're taking a significant amount of time here.
-            # Limit the noise to once every so often though; otherwise we
-            # could get a feedback loop where every log emit results in a
-            # warning log which results in another, etc.
+            #
+            # Make noise if we're taking a significant amount of time
+            # here. Limit the noise to once every so often though;
+            # otherwise we could get a feedback loop where every log
+            # emit results in a warning log which results in another,
+            # etc.
             now = time.monotonic()
-            # noinspection PyUnboundLocalVariable
-            duration = now - starttime  # pyright: ignore
-            # noinspection PyUnboundLocalVariable
-            format_duration = formattime - starttime  # pyright: ignore
-            # noinspection PyUnboundLocalVariable
-            echo_duration = echotime - formattime  # pyright: ignore
+            duration = now - starttime
+            format_duration = formattime - starttime
+            echo_duration = echotime - formattime
             if duration > 0.05 and (
                 self._last_slow_emit_warning_time is None
                 or now > self._last_slow_emit_warning_time + 10.0
             ):
-                # Logging calls from *within* a logging handler
-                # sounds sketchy, so let's just kick this over to
-                # the bg event loop thread we've already got.
+                # Logging calls from *within* a logging handler sounds
+                # sketchy, so let's just kick this over to the bg event
+                # loop thread we've already got.
                 self._last_slow_emit_warning_time = now
                 self._event_loop.call_soon_threadsafe(
                     partial(
                         logging.warning,
-                        'efro.log.LogHandler emit took too long'
+                        'efro.logging.LogHandler emit took too long'
                         ' (%.2fs total; %.2fs format, %.2fs echo,'
                         ' fast_path=%s).',
                         duration,
@@ -491,17 +475,17 @@ class LogHandler(logging.Handler):
 
             self._file_chunks[name].append(output)
 
-            # Individual parts of a print come across as separate writes,
-            # and the end of a print will be a standalone '\n' by default.
-            # Let's use that as a hint that we're likely at the end of
-            # a full print statement and ship what we've got.
+            # Individual parts of a print come across as separate
+            # writes, and the end of a print will be a standalone '\n'
+            # by default. Let's use that as a hint that we're likely at
+            # the end of a full print statement and ship what we've got.
             if output == '\n':
                 self._ship_file_chunks(name, cancel_ship_task=True)
             else:
-                # By default just keep adding chunks.
-                # However we keep a timer running anytime we've got
-                # unshipped chunks so that we can ship what we've got
-                # after a short bit if we never get a newline.
+                # By default just keep adding chunks. However we keep a
+                # timer running anytime we've got unshipped chunks so
+                # that we can ship what we've got after a short bit if
+                # we never get a newline.
                 ship_task = self._file_chunk_ship_task[name]
                 if ship_task is None:
                     self._file_chunk_ship_task[name] = (
@@ -612,6 +596,7 @@ class LogHandler(logging.Handler):
             self._run_callback_on_entry(call, entry)
 
         # Dump to our structured log file.
+        #
         # TODO: should set a timer for flushing; don't flush every line.
         if self._file is not None:
             entry_s = dataclass_to_json(entry)
@@ -644,23 +629,9 @@ class FileLogEcho:
         self._name = name
         self._handler = handler
 
-        # Think this was a result of setting non-blocking stdin somehow;
-        # probably not needed.
-        # self._report_blocking_io_error = False
-
     def write(self, output: Any) -> None:
         """Override standard write call."""
-        # try:
-        # if self._report_blocking_io_error:
-        #     self._report_blocking_io_error = False
-        #     self._original.write(
-        #         'WARNING: BlockingIOError ENCOUNTERED;'
-        #         ' OUTPUT IS PROBABLY MISSING'
-        #     )
-
         self._original.write(output)
-        # except BlockingIOError:
-        #     self._report_blocking_io_error = True
         self._handler.file_write(self._name, output)
 
     def flush(self) -> None:
@@ -681,11 +652,11 @@ def setup_logging(
     log_path: str | Path | None,
     level: LogLevel,
     *,
-    suppress_non_root_debug: bool = False,
     log_stdout_stderr: bool = False,
     echo_to_stderr: bool = True,
     cache_size_limit: int = 0,
     cache_time_limit: datetime.timedelta | None = None,
+    launch_time: float | None = None,
 ) -> LogHandler:
     """Set up our logging environment.
 
@@ -701,34 +672,35 @@ def setup_logging(
         LogLevel.CRITICAL: logging.CRITICAL,
     }
 
-    # Wire logger output to go to a structured log file.
-    # Also echo it to stderr IF we're running in a terminal.
-    # UPDATE: Actually gonna always go to stderr. Is there a
-    # reason we shouldn't? This makes debugging possible if all
-    # we have is access to a non-interactive terminal or file dump.
-    # We could add a '--quiet' arg or whatnot to change this behavior.
+    # Wire logger output to go to a structured log file. Also echo it to
+    # stderr IF we're running in a terminal.
+    #
+    # UPDATE: Actually gonna always go to stderr. Is there a reason we
+    # shouldn't? This makes debugging possible if all we have is access
+    # to a non-interactive terminal or file dump. We could add a
+    # '--quiet' arg or whatnot to change this behavior.
 
     # Note: by passing in the *original* stderr here before we
-    # (potentially) replace it, we ensure that our log echos
-    # won't themselves be intercepted and sent to the logger
-    # which would create an infinite loop.
+    # (potentially) replace it, we ensure that our log echos won't
+    # themselves be intercepted and sent to the logger which would
+    # create an infinite loop.
     loghandler = LogHandler(
         path=log_path,
         echofile=sys.stderr if echo_to_stderr else None,
-        suppress_non_root_debug=suppress_non_root_debug,
+        echofile_timestamp_format='relative',
         cache_size_limit=cache_size_limit,
         cache_time_limit=cache_time_limit,
+        launch_time=launch_time,
     )
 
     # Note: going ahead with force=True here so that we replace any
-    # existing logger. Though we warn if it looks like we are doing
-    # that so we can try to avoid creating the first one.
+    # existing logger. Though we warn if it looks like we are doing that
+    # so we can try to avoid creating the first one.
     had_previous_handlers = bool(logging.root.handlers)
     logging.basicConfig(
         level=lmap[level],
-        # format='%(name)s: %(message)s',
-        # We dump *only* the message here. We pass various log record bits
-        # around and format things fancier where they end up.
+        # We dump *only* the message here. We pass various log record
+        # bits around so we can write rich logs or format things later.
         format='%(message)s',
         handlers=[loghandler],
         force=True,

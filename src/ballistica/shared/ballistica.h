@@ -13,9 +13,9 @@
 #endif
 
 // Minimum functionality we want available everywhere we are included.
-#include "ballistica/shared/foundation/exception.h"
-#include "ballistica/shared/foundation/inline.h"
-#include "ballistica/shared/foundation/macros.h"
+#include "ballistica/shared/foundation/exception.h"  // IWYU pragma: keep.
+#include "ballistica/shared/foundation/inline.h"     // IWYU pragma: keep.
+#include "ballistica/shared/foundation/macros.h"     // IWYU pragma: keep.
 #include "ballistica/shared/foundation/types.h"
 
 // There are one or two places where we include this from regular C or
@@ -89,7 +89,7 @@ void ScreenMessage(const std::string& msg, const Vector3f& color);
 auto CurrentThreadName() -> std::string;
 
 /// Convenient access to Logging::Log.
-void Log(LogLevel level, const std::string& msg);
+void Log(LogName name, LogLevel level, const std::string& msg);
 
 /// Log a fatal error and kill the app. Can be called from any thread at any
 /// time. Provided message will be shown to the user if possible. This will

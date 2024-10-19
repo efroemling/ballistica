@@ -10,11 +10,12 @@ from functools import partial
 from typing import TYPE_CHECKING, assert_never
 
 from efro.error import CommunicationError
+from efro.call import CallbackSet
 from bacommon.login import LoginType
 import _babase
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Callable
 
     from babase._login import LoginAdapter, LoginInfo
 
@@ -31,10 +32,12 @@ class AccountV2Subsystem:
     """
 
     def __init__(self) -> None:
+        assert _babase.in_logic_thread()
+
         from babase._login import LoginAdapterGPGS, LoginAdapterGameCenter
 
-        # Whether or not everything related to an initial login
-        # (or lack thereof) has completed. This includes things like
+        # Whether or not everything related to an initial sign in (or
+        # lack thereof) has completed. This includes things like
         # workspace syncing. Completion of this is what flips the app
         # into 'running' state.
         self._initial_sign_in_completed = False
@@ -46,6 +49,9 @@ class AccountV2Subsystem:
         self._implicit_signed_in_adapter: LoginAdapter | None = None
         self._implicit_state_changed = False
         self._can_do_auto_sign_in = True
+        self.on_primary_account_changed_callbacks: CallbackSet[
+            Callable[[AccountV2Handle | None], None]
+        ] = CallbackSet()
 
         adapter: LoginAdapter
         if _babase.using_google_play_game_services():
@@ -84,6 +90,13 @@ class AccountV2Subsystem:
         are set but have not yet been verified.
         """
         assert _babase.in_logic_thread()
+
+        # Fire any registered callbacks.
+        for call in self.on_primary_account_changed_callbacks.getcalls():
+            try:
+                call(account)
+            except Exception:
+                logging.exception('Error in primary-account-changed callback.')
 
         # Currently don't do anything special on sign-outs.
         if account is None:

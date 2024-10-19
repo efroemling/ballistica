@@ -627,6 +627,7 @@ class StoreBrowserWindow(bui.MainWindow):
             sale_title_text: str | bui.Lstr = ''
             sale_time_text: str | bui.Lstr = ''
 
+            call: Callable | None
             if purchased:
                 title_color = (0.8, 0.7, 0.9, 1.0)
                 color = (0.63, 0.55, 0.78)

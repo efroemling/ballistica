@@ -10,6 +10,7 @@
 
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/python/core_python.h"
+#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/foundation/types.h"
 #include "ballistica/shared/generic/runnable.h"
 
@@ -29,14 +30,14 @@ auto CoreFeatureSet::Import(const CoreConfig* config) -> CoreFeatureSet* {
             "call.");
       }
       if (g_core == nullptr) {
-        DoImport(*config);
+        DoImport_(*config);
       }
     } else {
       // If no config is passed, use a default. If the user wants env vars
       // or anything else factored in, they should do so themselves in the
       // config they pass (CoreConfig::ForEnvVars(), etc.).
       if (g_core == nullptr) {
-        DoImport({});
+        DoImport_({});
       }
     }
   } else {
@@ -57,23 +58,23 @@ auto CoreFeatureSet::Import(const CoreConfig* config) -> CoreFeatureSet* {
         // between monolithic and modular.
         std::vector<std::string> argbuffer;
         std::vector<char*> argv = CorePython::FetchPythonArgs(&argbuffer);
-        DoImport(CoreConfig::ForArgsAndEnvVars(static_cast<int>(argv.size()),
-                                               argv.data()));
+        DoImport_(CoreConfig::ForArgsAndEnvVars(static_cast<int>(argv.size()),
+                                                argv.data()));
       } else {
         // Not using Python sys args but we still want to process env vars.
-        DoImport(CoreConfig::ForEnvVars());
+        DoImport_(CoreConfig::ForEnvVars());
       }
     }
   }
   return g_core;
 }
 
-void CoreFeatureSet::DoImport(const CoreConfig& config) {
+void CoreFeatureSet::DoImport_(const CoreConfig& config) {
   millisecs_t start_millisecs = CorePlatform::GetCurrentMillisecs();
 
   assert(g_core == nullptr);
   g_core = new CoreFeatureSet(config);
-  g_core->PostInit();
+  g_core->PostInit_();
 
   // Slightly hacky: have to report our begin time after the fact since core
   // didn't exist before. Can at least add an offset to give an accurate
@@ -97,16 +98,16 @@ CoreFeatureSet::CoreFeatureSet(CoreConfig config)
   assert(g_core == nullptr);
 }
 
-void CoreFeatureSet::PostInit() {
+void CoreFeatureSet::PostInit_() {
   // Some of this stuff might access g_core so we run most of our init
   // *after* assigning our singleton to be safe.
 
   // Should migrate this to classic.
   set_legacy_user_agent_string(platform->GetLegacyUserAgentString());
 
-  RunSanityChecks();
+  RunSanityChecks_();
 
-  build_src_dir_ = CalcBuildSrcDir();
+  build_src_dir_ = CalcBuildSrcDir_();
 
   // On monolithic builds we need to bring up Python itself.
   if (g_buildconfig.monolithic_build()) {
@@ -119,13 +120,9 @@ void CoreFeatureSet::PostInit() {
   // Grab whatever Python stuff we use.
   python->ImportPythonObjs();
 
-  // Normally we wait until later to start pushing logs through to Python
-  // (so that our log handling system is fully bootstrapped), but
-  // technically we can push our log calls out to Python any time now since
-  // we grabbed the logging calls above. Do so immediately here if asked.
-  if (!core_config_.hold_early_logs) {
-    python->EnablePythonLoggingCalls();
-  }
+  // We grabbed all our log handles/etc. above, so we can start piping logs
+  // through to Python now.
+  python->EnablePythonLoggingCalls();
 }
 
 auto CoreFeatureSet::core_config() const -> const CoreConfig& {
@@ -167,6 +164,16 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
   ba_env_site_python_dir_ =
       envcfg.GetAttr("site_python_dir").ValueAsOptionalString();
 
+  ba_env_launch_timestamp_ = envcfg.GetAttr("launch_time").ValueAsDouble();
+
+  auto appcfg = envcfg.GetAttr("initial_app_config");
+  initial_app_config_ = appcfg.NewRef();
+
+  // This is also a reasonable time to grab initial logger levels that baenv
+  // likely mucked with. For any changes after this to make it to the native
+  // layer, babase.update_internal_logger_levels() must be called.
+  UpdateInternalLoggerLevels();
+
   // Consider app-python-dir to be 'custom' if baenv provided a value for it
   // AND that value differs from baenv's default.
   auto standard_app_python_dir =
@@ -181,6 +188,10 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
   if (!platform->FilePathExists(fullpath)) {
     FatalError("ba_data directory not found at '" + fullpath + "'.");
   }
+}
+
+void CoreFeatureSet::UpdateInternalLoggerLevels() {
+  python->UpdateInternalLoggerLevels(log_levels_);
 }
 
 auto CoreFeatureSet::GetAppPythonDirectory() -> std::optional<std::string> {
@@ -209,7 +220,7 @@ auto CoreFeatureSet::GetSitePythonDirectory() -> std::optional<std::string> {
   return ba_env_site_python_dir_;
 }
 
-auto CoreFeatureSet::CalcBuildSrcDir() -> std::string {
+auto CoreFeatureSet::CalcBuildSrcDir_() -> std::string {
   // Let's grab a string of the portion of __FILE__ before our project root.
   // We can use it to make error messages/etc. more pretty by stripping out
   // all but sub-project paths.
@@ -217,14 +228,15 @@ auto CoreFeatureSet::CalcBuildSrcDir() -> std::string {
   auto* f_end = strstr(f, "src" BA_DIRSLASH "ballistica" BA_DIRSLASH
                           "core" BA_DIRSLASH "core.cc");
   if (!f_end) {
-    Log(LogLevel::kWarning, "Unable to calc build source dir from __FILE__.");
+    Log(LogName::kBa, LogLevel::kWarning,
+        "Unable to calc build source dir from __FILE__.");
     return "";
   } else {
     return std::string(f).substr(0, f_end - f);
   }
 }
 
-void CoreFeatureSet::RunSanityChecks() {
+void CoreFeatureSet::RunSanityChecks_() {
   // Sanity check: make sure asserts are stripped out of release builds
   // (NDEBUG should do this).
 #if !BA_DEBUG_BUILD
@@ -267,11 +279,11 @@ void CoreFeatureSet::RunSanityChecks() {
   // from. Use this to adjust the filtering as necessary so the resulting
   // type name matches what is expected.
   if (explicit_bool(false)) {
-    Log(LogLevel::kError, "static_type_name check; name is '"
-                              + static_type_name<decltype(g_core)>()
-                              + "' debug_full is '"
-                              + static_type_name<decltype(g_core)>(true) + "'");
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
+        "static_type_name check; name is '"
+            + static_type_name<decltype(g_core)>() + "' debug_full is '"
+            + static_type_name<decltype(g_core)>(true) + "'");
+    Log(LogName::kBa, LogLevel::kError,
         "static_type_name check; name is '"
             + static_type_name<decltype(testrunnable)>() + "' debug_full is '"
             + static_type_name<decltype(testrunnable)>(true) + "'");
@@ -293,13 +305,16 @@ auto CoreFeatureSet::SoftImportBase() -> BaseSoftInterface* {
 }
 
 void CoreFeatureSet::LifecycleLog(const char* msg, double offset_seconds) {
-  if (!core_config_.lifecycle_log) {
+  // Early out to avoid work if we won't show anyway.
+  if (!LogLevelEnabled(LogName::kBaLifecycle, LogLevel::kDebug)) {
     return;
   }
+
+  // We include time-since-start as part of the message here.
   char buffer[128];
-  snprintf(buffer, sizeof(buffer), "LIFE: %s @ %.3fs.", msg,
+  snprintf(buffer, sizeof(buffer), "%s @ %.3fs.", msg,
            g_core->GetAppTimeSeconds() + offset_seconds);
-  Log(LogLevel::kInfo, buffer);
+  Log(LogName::kBaLifecycle, LogLevel::kDebug, buffer);
 }
 
 auto CoreFeatureSet::HeadlessMode() -> bool {
@@ -308,29 +323,27 @@ auto CoreFeatureSet::HeadlessMode() -> bool {
   return g_buildconfig.headless_build();
 }
 
-// auto CoreFeatureSet::vr_mode() -> bool { return core_config_.vr_mode; }
-
 static void WaitThenDie(millisecs_t wait, const std::string& action) {
   CorePlatform::SleepMillisecs(wait);
   FatalError("Timed out waiting for " + action + ".");
 }
 
 auto CoreFeatureSet::GetAppTimeMillisecs() -> millisecs_t {
-  UpdateAppTime();
+  UpdateAppTime_();
   return app_time_microsecs_ / 1000;
 }
 
 auto CoreFeatureSet::GetAppTimeMicrosecs() -> microsecs_t {
-  UpdateAppTime();
+  UpdateAppTime_();
   return app_time_microsecs_;
 }
 
 auto CoreFeatureSet::GetAppTimeSeconds() -> seconds_t {
-  UpdateAppTime();
+  UpdateAppTime_();
   return static_cast<seconds_t>(app_time_microsecs_) / 1000000;
 }
 
-void CoreFeatureSet::UpdateAppTime() {
+void CoreFeatureSet::UpdateAppTime_() {
   microsecs_t t = CorePlatform::GetCurrentMicrosecs();
 
   // If we're at a different time than our last query, do our funky math.
@@ -355,15 +368,6 @@ void CoreFeatureSet::UpdateAppTime() {
     last_app_time_measure_microsecs_ = t;
   }
 }
-
-// void CoreFeatureSet::UpdateMainThreadID() {
-//   auto current_id = std::this_thread::get_id();
-
-//   // This gets called a lot and it may happen before we are spun up, so just
-//   // ignore it in that case.
-//   main_thread_id = current_id;
-//   main_event_loop_->set_thread_id(current_id);
-// }
 
 void CoreFeatureSet::StartSuicideTimer(const std::string& action,
                                        millisecs_t delay) {
@@ -431,6 +435,16 @@ auto CoreFeatureSet::CurrentThreadName() -> std::string {
 #else
   return "unknown";
 #endif
+}
+
+auto CoreFeatureSet::HandOverInitialAppConfig() -> PyObject* {
+  BA_PRECONDITION(initial_app_config_);
+
+  // Don't decrement the refcount on the pointer we're holding; just clear
+  // and return it, effectively handing over the ref.
+  auto* out{initial_app_config_};
+  initial_app_config_ = nullptr;
+  return out;
 }
 
 }  // namespace ballistica::core

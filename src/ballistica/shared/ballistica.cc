@@ -40,7 +40,7 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 22025;
+const int kEngineBuildNumber = 22040;
 const char* kEngineVersion = "1.7.37";
 const int kEngineApiVersion = 9;
 
@@ -134,7 +134,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
       auto env_config_duration = time3 - time2;
       auto base_import_duration = time4 - time3;
       auto start_app_duration = time5 - time4;
-      Log(LogLevel::kWarning,
+      Log(LogName::kBa, LogLevel::kWarning,
           "MonolithicMain took too long (" + std::to_string(total_duration)
               + " ms; " + std::to_string(core_import_duration)
               + " core-import, " + std::to_string(env_config_duration)
@@ -284,13 +284,15 @@ void FatalError(const std::string& message) {
   FatalError::DoFatalError(message);
 }
 
-void Log(LogLevel level, const std::string& msg) { Logging::Log(level, msg); }
+void Log(LogName name, LogLevel level, const std::string& msg) {
+  Logging::Log(name, level, msg);
+}
 
 void ScreenMessage(const std::string& s, const Vector3f& color) {
   if (core::g_base_soft) {
     core::g_base_soft->ScreenMessage(s, color);
   } else {
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         "ScreenMessage called without base feature-set loaded (will be lost): '"
             + s + "'");
   }

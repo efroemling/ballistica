@@ -1575,6 +1575,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                         transition_delay=1.0,
                     ).autoretain()
         else:
+            assert rating is not None
             ZoomText(
                 (
                     f'{rating:.1f}'

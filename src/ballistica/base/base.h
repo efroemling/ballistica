@@ -731,7 +731,8 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
       -> PyObject* override;
   auto FeatureSetFromData(PyObject* obj) -> FeatureSetNativeComponent* override;
   void DoV1CloudLog(const std::string& msg) override;
-  void PushDevConsolePrintCall(const std::string& msg) override;
+  void PushDevConsolePrintCall(const std::string& msg, float scale,
+                               Vector4f color) override;
   auto GetPyExceptionType(PyExcType exctype) -> PyObject* override;
   auto PrintPythonStackTrace() -> bool override;
   auto GetPyLString(PyObject* obj) -> std::string override;

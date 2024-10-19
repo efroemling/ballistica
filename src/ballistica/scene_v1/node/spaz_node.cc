@@ -5977,7 +5977,7 @@ auto SpazNode::GetRigidBody(int id) -> RigidBody* {
       return hair_ponytail_bottom_body_.Get();
       break;
     default:
-      Log(LogLevel::kError,
+      Log(LogName::kBa, LogLevel::kError,
           "Request for unknown spaz body: " + std::to_string(id));
       break;
   }
@@ -6568,7 +6568,8 @@ void SpazNode::SetStyle(const std::string& val) {
     shoulder_offset_y_ = -0.05f;
     reflection_scale_ = 0.02f;
   } else {
-    BA_LOG_ONCE(LogLevel::kError, "Unrecognized spaz style: '" + style_ + "'");
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                "Unrecognized spaz style: '" + style_ + "'");
   }
   UpdateBodiesForStyle();
 }
@@ -6697,25 +6698,25 @@ void SpazNode::SetHoldNode(Node* val) {
         assert(dynamics);
         Collision* c = dynamics->active_collision();
         if (c) {
-          Log(LogLevel::kError,
+          Log(LogName::kBa, LogLevel::kError,
               "SRC NODE: " + ObjToString(dynamics->GetActiveCollideSrcNode()));
-          Log(LogLevel::kError,
+          Log(LogName::kBa, LogLevel::kError,
               "OPP NODE: " + ObjToString(dynamics->GetActiveCollideDstNode()));
-          Log(LogLevel::kError,
+          Log(LogName::kBa, LogLevel::kError,
               "SRC BODY "
                   + std::to_string(dynamics->GetCollideMessageReverseOrder()
                                        ? c->body_id_1
                                        : c->body_id_2));
-          Log(LogLevel::kError,
+          Log(LogName::kBa, LogLevel::kError,
               "OPP BODY "
                   + std::to_string(dynamics->GetCollideMessageReverseOrder()
                                        ? c->body_id_2
                                        : c->body_id_1));
-          Log(LogLevel::kError,
+          Log(LogName::kBa, LogLevel::kError,
               "REVERSE "
                   + std::to_string(dynamics->GetCollideMessageReverseOrder()));
         } else {
-          Log(LogLevel::kError, "<NO ACTIVE COLLISION>");
+          Log(LogName::kBa, LogLevel::kError, "<NO ACTIVE COLLISION>");
         }
       }
       throw Exception("specified hold_body (" + std::to_string(hold_body_)

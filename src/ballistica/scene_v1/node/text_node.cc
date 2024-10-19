@@ -120,11 +120,12 @@ void TextNode::SetText(const std::string& val) {
       g_base->assets->CompileResourceString(val, "setText format check",
                                             &valid);
       if (!valid) {
-        BA_LOG_ONCE(LogLevel::kError, "Invalid resource string: '" + val
-                                          + "' on node '" + label() + "'");
+        BA_LOG_ONCE(
+            LogName::kBa, LogLevel::kError,
+            "Invalid resource string: '" + val + "' on node '" + label() + "'");
         Python::PrintStackTrace();
       } else if (print_false_positives) {
-        BA_LOG_ONCE(LogLevel::kError,
+        BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                     "Got false positive for json check on '" + val + "'");
         Python::PrintStackTrace();
       }

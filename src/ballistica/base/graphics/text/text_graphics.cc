@@ -349,7 +349,8 @@ TextGraphics::TextGraphics() {
         if (g.tex_max_x > 1.0f || g.tex_max_x < 0.0f || g.tex_min_x > 1.0
             || g.tex_min_x < 0.0f || g.tex_max_y > 1.0f || g.tex_max_y < 0.0
             || g.tex_min_y > 1.0f || g.tex_min_y < 0.0f) {
-          BA_LOG_ONCE(LogLevel::kWarning, "glyph bounds error");
+          BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kWarning,
+                      "glyph bounds error");
         }
       }
     }
@@ -1042,7 +1043,7 @@ void TextGraphics::GetOSTextSpanBoundsAndWidth(const std::string& s, Rect* r,
     g_core->platform->GetTextBoundsAndWidth(s, &entry->r, &entry->width);
   } else {
     BA_LOG_ONCE(
-        LogLevel::kError,
+        LogName::kBaGraphics, LogLevel::kError,
         "FIXME: GetOSTextSpanBoundsAndWidth unimplemented on this platform");
     r->l = 0.0f;
     r->r = 1.0f;

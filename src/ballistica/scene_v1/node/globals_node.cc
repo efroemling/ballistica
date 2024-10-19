@@ -112,7 +112,7 @@ GlobalsNode::GlobalsNode(Scene* scene) : Node(scene, node_type) {
   // FIXME: Need to update this for non-host activities at some point.
   if (HostActivity* ha = context_ref().GetHostActivity()) {
     if (ha->globals_node()) {
-      Log(LogLevel::kWarning,
+      Log(LogName::kBa, LogLevel::kWarning,
           "More than one globals node created in HostActivity; this "
           "shouldn't happen");
     }
@@ -184,7 +184,7 @@ void GlobalsNode::SetAsForeground() {
   if (g_base->HaveClassic()) {
     g_base->classic()->PlayMusic(music_, music_continuous_);
   } else {
-    BA_LOG_ONCE(LogLevel::kWarning,
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
                 "Classic not present; music will not play.");
   }
 }
@@ -480,7 +480,7 @@ void GlobalsNode::SetMusicCount(int val) {
     if (g_base->HaveClassic()) {
       g_base->classic()->PlayMusic(music_, music_continuous_);
     } else {
-      BA_LOG_ONCE(LogLevel::kWarning,
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
                   "Classic not present; music will not play (b).");
     }
     // g_classic->python->PlayMusic(music_, music_continuous_);

@@ -166,19 +166,19 @@ auto Audio::SafePlaySysSound(SysSoundID sound_id) -> std::optional<uint32_t> {
     return {};
   }
   if (!g_base->InLogicThread()) {
-    Log(LogLevel::kError,
+    Log(LogName::kBaAudio, LogLevel::kError,
         "Audio::SafePlaySysSound called from non-logic thread. id="
             + std::to_string(static_cast<int>(sound_id)));
     return {};
   }
   if (!g_base->assets->sys_assets_loaded()) {
-    Log(LogLevel::kWarning,
+    Log(LogName::kBaAudio, LogLevel::kWarning,
         "Audio::SafePlaySysSound called before sys assets loaded. id="
             + std::to_string(static_cast<int>(sound_id)));
     return {};
   }
   if (!g_base->assets->IsValidSysSound(sound_id)) {
-    Log(LogLevel::kWarning,
+    Log(LogName::kBaAudio, LogLevel::kWarning,
         "Audio::SafePlaySysSound called with invalid sound_id. id="
             + std::to_string(static_cast<int>(sound_id)));
     return {};

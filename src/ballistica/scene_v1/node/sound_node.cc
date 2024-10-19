@@ -84,7 +84,7 @@ void SoundNode::SetLoop(bool val) {
 
   // We don't actually update looping on a playing sound.
   if (playing_) {
-    BA_LOG_ONCE(LogLevel::kError,
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                 "Can't set 'loop' attr on already-playing sound.");
   }
 }
@@ -106,7 +106,7 @@ void SoundNode::SetPositional(bool val) {
   }
   positional_ = val;
   if (playing_) {
-    BA_LOG_ONCE(LogLevel::kError,
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                 "Can't set 'positional' attr on already-playing sound");
   }
 }

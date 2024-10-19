@@ -1402,7 +1402,7 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
     }
   } else {
     if (root_selectable_) {
-      Log(LogLevel::kError,
+      Log(LogName::kBa, LogLevel::kError,
           "SelectWidget() called on a ContainerWidget which is itself "
           "selectable. Ignoring.");
       return;
@@ -1429,7 +1429,7 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
         } else {
           static bool printed = false;
           if (!printed) {
-            Log(LogLevel::kWarning,
+            Log(LogName::kBa, LogLevel::kWarning,
                 "SelectWidget called on unselectable widget: "
                     + w->GetWidgetTypeName());
             Python::PrintStackTrace();
@@ -1600,7 +1600,8 @@ void ContainerWidget::SelectDownWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
   if (!g_ui_v1 || !g_ui_v1->root_widget() || !g_ui_v1->screen_root_widget()) {
-    BA_LOG_ONCE(LogLevel::kError, "SelectDownWidget called before UI init.");
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                "SelectDownWidget called before UI init.");
     return;
   }
 
@@ -1633,7 +1634,7 @@ void ContainerWidget::SelectDownWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        Log(LogLevel::kError, "Down_widget is not selectable.");
+        Log(LogName::kBa, LogLevel::kError, "Down_widget is not selectable.");
       } else {
         w->Show();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
@@ -1664,7 +1665,8 @@ void ContainerWidget::SelectUpWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
   if (!g_ui_v1 || !g_ui_v1->root_widget() || !g_ui_v1->screen_root_widget()) {
-    BA_LOG_ONCE(LogLevel::kError, "SelectUpWidget called before UI init.");
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                "SelectUpWidget called before UI init.");
     return;
   }
 
@@ -1697,7 +1699,7 @@ void ContainerWidget::SelectUpWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        Log(LogLevel::kError, "up_widget is not selectable.");
+        Log(LogName::kBa, LogLevel::kError, "up_widget is not selectable.");
       } else {
         w->Show();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
@@ -1728,7 +1730,8 @@ void ContainerWidget::SelectLeftWidget() {
   BA_DEBUG_UI_READ_LOCK;
 
   if (!g_ui_v1 || !g_ui_v1->root_widget() || !g_ui_v1->screen_root_widget()) {
-    BA_LOG_ONCE(LogLevel::kError, "SelectLeftWidget called before UI init.");
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                "SelectLeftWidget called before UI init.");
     return;
   }
 
@@ -1749,7 +1752,7 @@ void ContainerWidget::SelectLeftWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        Log(LogLevel::kError, "left_widget is not selectable.");
+        Log(LogName::kBa, LogLevel::kError, "left_widget is not selectable.");
       } else {
         w->Show();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
@@ -1780,7 +1783,8 @@ void ContainerWidget::SelectRightWidget() {
 
   if (!g_base->ui || !g_ui_v1->root_widget()
       || !g_ui_v1->screen_root_widget()) {
-    BA_LOG_ONCE(LogLevel::kError, "SelectRightWidget called before UI init.");
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                "SelectRightWidget called before UI init.");
     return;
   }
 
@@ -1801,7 +1805,7 @@ void ContainerWidget::SelectRightWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        Log(LogLevel::kError, "right_widget is not selectable.");
+        Log(LogName::kBa, LogLevel::kError, "right_widget is not selectable.");
       } else {
         w->Show();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
@@ -1833,7 +1837,8 @@ void ContainerWidget::SelectNextWidget() {
 
   if (!g_base->ui || !g_ui_v1->root_widget()
       || !g_ui_v1->screen_root_widget()) {
-    BA_LOG_ONCE(LogLevel::kError, "SelectNextWidget called before UI init.");
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                "SelectNextWidget called before UI init.");
     return;
   }
 

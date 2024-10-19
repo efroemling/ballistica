@@ -369,6 +369,9 @@ class CorePlatform {
   /// to not go backwards.
   static auto GetCurrentWholeSeconds() -> int64_t;
 
+  /// Return seconds since the epoch; same as Python's time.time().
+  static auto GetSecondsSinceEpoch() -> double;
+
   static void SleepSeconds(seconds_t duration);
   static void SleepMillisecs(millisecs_t duration);
   static void SleepMicrosecs(microsecs_t duration);

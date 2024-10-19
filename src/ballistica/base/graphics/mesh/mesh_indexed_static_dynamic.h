@@ -32,7 +32,7 @@ class MeshIndexedStaticDynamic : public MeshIndexedBase {
 
     // Static and dynamic data sizes should always match, right?
     if (static_data_->elements.size() != dynamic_data_->elements.size()) {
-      BA_LOG_ONCE(LogLevel::kError,
+      BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
                   "Mesh static and dynamic data sizes do not match");
       return false;
     }

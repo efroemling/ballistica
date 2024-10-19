@@ -25,7 +25,7 @@ void Runnable::RunAndLogErrors() {
     } else {
       type_name = "<type unavailable>";
     }
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         std::string("Error in Runnable: " + type_name + ": ") + exc.what());
   }
 }

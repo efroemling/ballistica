@@ -111,7 +111,7 @@ HostActivity::~HostActivity() {
       for (auto& python_call : context_calls_)
         s += "\n  " + std::to_string(count++) + ": "
              + (*python_call).GetObjectDescription();
-      Log(LogLevel::kWarning, s);
+      Log(LogName::kBa, LogLevel::kWarning, s);
     }
   }
 }
@@ -157,7 +157,7 @@ void HostActivity::RegisterContextCall(base::PythonContextCall* call) {
   // If we're shutting down, just kill the call immediately.
   // (we turn all of our calls to no-ops as we shut down)
   if (shutting_down_) {
-    Log(LogLevel::kWarning,
+    Log(LogName::kBa, LogLevel::kWarning,
         "Adding call to expired activity; call will not function: "
             + call->GetObjectDescription());
     call->MarkDead();
@@ -166,18 +166,19 @@ void HostActivity::RegisterContextCall(base::PythonContextCall* call) {
 
 void HostActivity::Start() {
   if (started_) {
-    Log(LogLevel::kError, "HostActivity::Start() called twice.");
+    Log(LogName::kBa, LogLevel::kError, "HostActivity::Start() called twice.");
     return;
   }
   started_ = true;
   if (shutting_down_) {
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         "HostActivity::Start() called for shutting-down activity.");
     return;
   }
   auto* host_session = host_session_.Get();
   if (!host_session) {
-    Log(LogLevel::kError, "HostActivity::Start() called with dead session.");
+    Log(LogName::kBa, LogLevel::kError,
+        "HostActivity::Start() called with dead session.");
     return;
   }
   // Create our step timer - gets called whenever scene should step.
@@ -289,7 +290,7 @@ void HostActivity::HandleOutOfBoundsNodes() {
   // Make sure someone's handling our out-of-bounds messages.
   out_of_bounds_in_a_row_++;
   if (out_of_bounds_in_a_row_ > 100) {
-    Log(LogLevel::kWarning,
+    Log(LogName::kBa, LogLevel::kWarning,
         "100 consecutive out-of-bounds messages sent."
         " They are probably not being handled properly");
     int j = 0;
@@ -302,7 +303,7 @@ void HostActivity::HandleOutOfBoundsNodes() {
         if (delegate) {
           dstr = PythonRef(delegate, PythonRef::kAcquire).Str();
         }
-        Log(LogLevel::kWarning,
+        Log(LogName::kBa, LogLevel::kWarning,
             "   node #" + std::to_string(j) + ": type='" + n->type()->name()
                 + "' addr=" + Utils::PtrToString(i.Get()) + " name='"
                 + n->label() + "' delegate=" + dstr);

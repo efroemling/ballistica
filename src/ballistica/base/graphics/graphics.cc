@@ -204,7 +204,7 @@ auto Graphics::TextureQualityFromAppConfig() -> TextureQualityRequest {
   } else if (texqualstr == "Low") {
     texture_quality_requested = TextureQualityRequest::kLow;
   } else {
-    Log(LogLevel::kError,
+    Log(LogName::kBaGraphics, LogLevel::kError,
         "Invalid texture quality: '" + texqualstr + "'; defaulting to low.");
     texture_quality_requested = TextureQualityRequest::kLow;
   }
@@ -221,7 +221,8 @@ auto Graphics::VSyncFromAppConfig() -> VSyncRequest {
   } else if (v_sync == "Never") {
     return VSyncRequest::kNever;
   }
-  Log(LogLevel::kError, "Invalid 'Vertical Sync' value: '" + v_sync + "'");
+  Log(LogName::kBaGraphics, LogLevel::kError,
+      "Invalid 'Vertical Sync' value: '" + v_sync + "'");
   return VSyncRequest::kNever;
 }
 
@@ -240,7 +241,7 @@ auto Graphics::GraphicsQualityFromAppConfig() -> GraphicsQualityRequest {
   } else if (gqualstr == "Low") {
     graphics_quality_requested = GraphicsQualityRequest::kLow;
   } else {
-    Log(LogLevel::kError,
+    Log(LogName::kBaGraphics, LogLevel::kError,
         "Invalid graphics quality: '" + gqualstr + "'; defaulting to auto.");
     graphics_quality_requested = GraphicsQualityRequest::kAuto;
   }
@@ -627,7 +628,7 @@ void Graphics::FadeScreen(bool to, millisecs_t time, PyObject* endcall) {
   // (otherwise, overlapping fades can cause things to get lost)
   if (fade_end_call_.Exists()) {
     if (g_buildconfig.debug_build()) {
-      Log(LogLevel::kWarning,
+      Log(LogName::kBaGraphics, LogLevel::kWarning,
           "2 fades overlapping; running first fade-end-call early.");
     }
     fade_end_call_->Schedule();
@@ -861,7 +862,7 @@ void Graphics::BuildAndPushFrameDef() {
     if (g_core->vr_mode()) {
       if (frame_def->GetOverlayFlatPass()->HasDrawCommands()) {
         if (!g_base->ui->MainMenuVisible()) {
-          BA_LOG_ONCE(LogLevel::kError,
+          BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
                       "Drawing in overlay pass in VR mode with no UI present; "
                       "shouldn't happen!");
         }
@@ -1015,7 +1016,7 @@ void Graphics::DrawFades(FrameDef* frame_def) {
     // TEMP HACK - don't trigger this while inactive.
     // Need to make overall fade logic smarter.
     if (faded_time > 15000 && g_base->app_active()) {
-      Log(LogLevel::kError, "FORCE-ENDING STUCK FADE");
+      Log(LogName::kBaGraphics, LogLevel::kError, "FORCE-ENDING STUCK FADE");
       fade_out_ = false;
       fade_ = 1.0f;
       fade_time_ = 1000;
@@ -1513,8 +1514,9 @@ void Graphics::DrawRadialMeter(MeshIndexedSimpleFull* m, float amt) {
 
 void Graphics::OnScreenSizeChange() {}
 
-void Graphics::CalcVirtualRes_(float* x, float* y) {
-  assert(g_base);
+void Graphics::GetBaseVirtualRes(float* x, float* y) {
+  assert(x);
+  assert(y);
   float base_virtual_res_x;
   float base_virtual_res_y;
   if (g_base->ui->scale() == UIScale::kSmall) {
@@ -1524,6 +1526,15 @@ void Graphics::CalcVirtualRes_(float* x, float* y) {
     base_virtual_res_x = kBaseVirtualResX;
     base_virtual_res_y = kBaseVirtualResY;
   }
+  *x = base_virtual_res_x;
+  *y = base_virtual_res_y;
+}
+
+void Graphics::CalcVirtualRes_(float* x, float* y) {
+  assert(g_base);
+  float base_virtual_res_x;
+  float base_virtual_res_y;
+  GetBaseVirtualRes(&base_virtual_res_x, &base_virtual_res_y);
 
   float x_in = *x;
   float y_in = *y;
@@ -1662,7 +1673,7 @@ auto Graphics::ReflectionTypeFromString(const std::string& s)
 void Graphics::LanguageChanged() {
   assert(g_base && g_base->InLogicThread());
   if (building_frame_def_) {
-    Log(LogLevel::kWarning,
+    Log(LogName::kBa, LogLevel::kWarning,
         "Graphics::LanguageChanged() called during draw; should not happen.");
   }
   screenmessages->ClearScreenMessageTranslations();
@@ -1683,8 +1694,9 @@ auto Graphics::GraphicsQualityFromRequest(GraphicsQualityRequest request,
     case GraphicsQualityRequest::kAuto:
       return auto_val;
     default:
-      Log(LogLevel::kError, "Unhandled GraphicsQualityRequest value: "
-                                + std::to_string(static_cast<int>(request)));
+      Log(LogName::kBa, LogLevel::kError,
+          "Unhandled GraphicsQualityRequest value: "
+              + std::to_string(static_cast<int>(request)));
       return GraphicsQuality::kLow;
   }
 }
@@ -1702,8 +1714,9 @@ auto Graphics::TextureQualityFromRequest(TextureQualityRequest request,
     case TextureQualityRequest::kAuto:
       return auto_val;
     default:
-      Log(LogLevel::kError, "Unhandled TextureQualityRequest value: "
-                                + std::to_string(static_cast<int>(request)));
+      Log(LogName::kBaGraphics, LogLevel::kError,
+          "Unhandled TextureQualityRequest value: "
+              + std::to_string(static_cast<int>(request)));
       return TextureQuality::kLow;
   }
 }
@@ -1747,13 +1760,8 @@ void Graphics::DrawUIBounds(RenderPass* pass) {
       auto xf = c.ScopedTransform();
 
       float width, height;
-      if (g_base->ui->scale() == UIScale::kSmall) {
-        width = kBaseVirtualResSmallX;
-        height = kBaseVirtualResSmallY;
-      } else {
-        width = kBaseVirtualResX;
-        height = kBaseVirtualResY;
-      }
+
+      GetBaseVirtualRes(&width, &height);
 
       // Slight offset in z to reduce z fighting.
       c.Translate(0.5f * pass->virtual_width(), 0.5f * pass->virtual_height(),

@@ -31,7 +31,7 @@ void ConnectionSet::RegisterClientController(ClientControllerInterface* c) {
   // This shouldn't happen, but if there's already a controller registered,
   // detach all clients from it.
   if (client_controller_) {
-    Log(LogLevel::kError,
+    Log(LogName::kBaNetworking, LogLevel::kError,
         "RegisterClientController() called "
         "but already have a controller; bad.");
     for (auto&& i : connections_to_clients_) {
@@ -214,7 +214,7 @@ auto ConnectionSet::GetConnectionsToClients()
     if (connections_to_client.second.Exists()) {
       connections.push_back(connections_to_client.second.Get());
     } else {
-      Log(LogLevel::kError,
+      Log(LogName::kBaNetworking, LogLevel::kError,
           "HAVE NONEXISTENT CONNECTION_TO_CLIENT IN LIST; UNEXPECTED");
     }
   }
@@ -274,7 +274,7 @@ void ConnectionSet::SendScreenMessageToAll(const std::string& s, float r,
 void ConnectionSet::PrepareForLaunchHostSession() {
   // If for some reason we're still attached to a host, kill the connection.
   if (connection_to_host_.Exists()) {
-    Log(LogLevel::kError,
+    Log(LogName::kBaNetworking, LogLevel::kError,
         "Had host-connection during LaunchHostSession(); shouldn't happen.");
     connection_to_host_->RequestDisconnect();
     connection_to_host_.Clear();
@@ -320,8 +320,9 @@ auto ConnectionSet::DisconnectClient(int client_id, int ban_seconds) -> bool {
       return false;
     }
     if (client_id > 255) {
-      Log(LogLevel::kError, "DisconnectClient got client_id > 255 ("
-                                + std::to_string(client_id) + ")");
+      Log(LogName::kBaNetworking, LogLevel::kError,
+          "DisconnectClient got client_id > 255 (" + std::to_string(client_id)
+              + ")");
     } else {
       std::vector<uint8_t> msg_out(2);
       msg_out[0] = BA_MESSAGE_KICK_VOTE;
@@ -409,7 +410,7 @@ void ConnectionSet::UnregisterClientController(ClientControllerInterface* c) {
 
   // This shouldn't happen.
   if (client_controller_ != c) {
-    Log(LogLevel::kError,
+    Log(LogName::kBaNetworking, LogLevel::kError,
         "UnregisterClientController() called with a non-registered "
         "controller");
     return;
@@ -675,7 +676,8 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
               msg_out[0] = BA_PACKET_CLIENT_DENY;
               msg_out[1] = request_id;
               g_base->network_writer->PushSendToCall(msg_out, addr);
-              Log(LogLevel::kError, "All client slots full; really?..");
+              Log(LogName::kBaNetworking, LogLevel::kError,
+                  "All client slots full; really?..");
               break;
             }
             connection_to_client = Object::New<ConnectionToClientUDP>(
@@ -717,7 +719,7 @@ auto ConnectionSet::VerifyClientAddr(uint8_t client_id, const SockAddr& addr)
     if (addr == connection_to_client_udp->addr()) {
       return true;
     }
-    BA_LOG_ONCE(LogLevel::kError,
+    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
                 "VerifyClientAddr() found mismatch for client "
                     + std::to_string(client_id) + ".");
     return false;
@@ -730,7 +732,7 @@ void ConnectionSet::SetClientInfoFromMasterServer(
     const std::string& client_token, PyObject* info_obj) {
   // NOLINTNEXTLINE  (python doing bitwise math on signed int)
   if (!PyDict_Check(info_obj)) {
-    Log(LogLevel::kError,
+    Log(LogName::kBaNetworking, LogLevel::kError,
         "got non-dict for master-server client info for token " + client_token
             + ": " + Python::ObjToString(info_obj));
     return;

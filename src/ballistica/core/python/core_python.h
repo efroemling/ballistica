@@ -24,11 +24,29 @@ class CorePython {
     kJsonDumpsCall,
     kJsonLoadsCall,
     kEmptyTuple,
-    kLoggingDebugCall,
-    kLoggingInfoCall,
-    kLoggingWarningCall,
-    kLoggingErrorCall,
-    kLoggingCriticalCall,
+    kLoggingLevelDebug,
+    kLoggingLevelInfo,
+    kLoggingLevelWarning,
+    kLoggingLevelError,
+    kLoggingLevelCritical,
+    kLoggerRoot,
+    kLoggerRootLogCall,
+    kLoggerBa,
+    kLoggerBaLogCall,
+    kLoggerBaAccount,
+    kLoggerBaAccountLogCall,
+    kLoggerBaAudio,
+    kLoggerBaAudioLogCall,
+    kLoggerBaGraphics,
+    kLoggerBaGraphicsLogCall,
+    kLoggerBaLifecycle,
+    kLoggerBaLifecycleLogCall,
+    kLoggerBaAssets,
+    kLoggerBaAssetsLogCall,
+    kLoggerBaInput,
+    kLoggerBaInputLogCall,
+    kLoggerBaNetworking,
+    kLoggerBaNetworkingLogCall,
     kPrependSysPathCall,
     kBaEnvConfigureCall,
     kBaEnvGetConfigCall,
@@ -49,10 +67,11 @@ class CorePython {
   /// Can be called from any thread at any time. If called before Python
   /// logging is available, logs locally using Logging::EmitPlatformLog()
   /// (with an added warning).
-  void LoggingCall(LogLevel loglevel, const std::string& msg);
+  void LoggingCall(LogName logname, LogLevel loglevel, const std::string& msg);
   void ImportPythonObjs();
   void VerifyPythonEnvironment();
   void SoftImportBase();
+  void UpdateInternalLoggerLevels(LogLevel* log_levels);
 
   static auto WasModularMainCalled() -> bool;
 
@@ -70,7 +89,7 @@ class CorePython {
   // go here. They all get shipped at once as soon as it is possible.
   bool python_logging_calls_enabled_{};
   std::mutex early_log_lock_;
-  std::list<std::pair<LogLevel, std::string>> early_logs_;
+  std::list<std::tuple<LogName, LogLevel, std::string>> early_logs_;
 };
 
 }  // namespace ballistica::core

@@ -65,13 +65,13 @@ void SceneV1InputDeviceDelegate::RequestPlayer() {
   BA_PRECONDITION_FATAL(appmode);
 
   if (player_.Exists()) {
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         "InputDevice::RequestPlayer()"
         " called with already-existing player");
     return;
   }
   if (remote_player_.Exists()) {
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         "InputDevice::RequestPlayer() called with already-existing "
         "remote-player");
     return;
@@ -101,14 +101,14 @@ void SceneV1InputDeviceDelegate::RequestPlayer() {
 // When the host-session tells us to attach to a player
 void SceneV1InputDeviceDelegate::AttachToLocalPlayer(Player* player) {
   if (player_.Exists()) {
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         "InputDevice::AttachToLocalPlayer() called with already "
         "existing "
         "player");
     return;
   }
   if (remote_player_.Exists()) {
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         "InputDevice::AttachToLocalPlayer() called with already "
         "existing "
         "remote-player");
@@ -122,14 +122,14 @@ void SceneV1InputDeviceDelegate::AttachToRemotePlayer(
     ConnectionToHost* connection_to_host, int remote_player_id) {
   assert(connection_to_host);
   if (player_.Exists()) {
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         "InputDevice::AttachToRemotePlayer()"
         " called with already existing "
         "player");
     return;
   }
   if (remote_player_.Exists()) {
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         "InputDevice::AttachToRemotePlayer()"
         " called with already existing "
         "remote-player");

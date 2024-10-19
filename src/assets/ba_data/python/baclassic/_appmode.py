@@ -14,6 +14,7 @@ from babase import (
     AppIntentExec,
     AppIntentDefault,
     invoke_main_menu,
+    in_logic_thread,
     screenmessage,
 )
 
@@ -22,12 +23,18 @@ import _baclassic
 if TYPE_CHECKING:
     from typing import Callable
 
-    from babase import AppIntent
+    from efro.call import CallbackRegistration
+    from babase import AppIntent, AccountV2Handle
     from bauiv1 import UIV1AppSubsystem, MainWindow, MainWindowState
 
 
 class ClassicAppMode(AppMode):
     """AppMode for the classic BombSquad experience."""
+
+    def __init__(self) -> None:
+        self._on_primary_account_changed_callback: (
+            CallbackRegistration | None
+        ) = None
 
     @override
     @classmethod
@@ -53,6 +60,8 @@ class ClassicAppMode(AppMode):
 
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_activate()
+
+        assert app.plus is not None
 
         # Wire up the root ui to do what we want.
         ui = app.ui_v1
@@ -108,8 +117,23 @@ class ClassicAppMode(AppMode):
             self._root_ui_chest_slot_pressed, 4
         )
 
+        # We want to be informed when primary account changes.
+        self._on_primary_account_changed_callback = (
+            app.plus.accounts.on_primary_account_changed_callbacks.add(
+                self.update_for_primary_account
+            )
+        )
+        # Establish subscriptions/etc. for any current primary account.
+        self.update_for_primary_account(app.plus.accounts.primary)
+
     @override
     def on_deactivate(self) -> None:
+
+        # Stop being informed of account changes.
+        self._on_primary_account_changed_callback = None
+
+        # Remove any listeners for any current primary account.
+        self.update_for_primary_account(None)
 
         # Save where we were in the UI so we return there next time.
         if app.classic is not None:
@@ -124,6 +148,14 @@ class ClassicAppMode(AppMode):
         # side effect of pausing the action (when possible).
         if not app.active:
             invoke_main_menu()
+
+    def update_for_primary_account(
+        self, account: AccountV2Handle | None
+    ) -> None:
+        """Update subscriptions/etc. for a new primary account state."""
+        assert in_logic_thread()
+        del account  # Unused.
+        # print('WOULD WIRE UP LISTENERS FOR ACCOUNT', account)
 
     def _root_ui_menu_press(self) -> None:
         from babase import push_back_press

@@ -20,7 +20,7 @@ Session::~Session() { g_scene_v1->session_count--; }
 void Session::Update(int time_advance_millisecs, double time_advance) {}
 
 auto Session::TimeToNextEvent() -> std::optional<microsecs_t> {
-  BA_LOG_ONCE(LogLevel::kError,
+  BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
               "Session::TimeToNextEvent() being called; should not happen.");
   return 5000000;
 }
@@ -36,7 +36,7 @@ void Session::LanguageChanged() {}
 void Session::DebugSpeedMultChanged() {}
 
 void Session::DumpFullState(SessionStream* out) {
-  Log(LogLevel::kError,
+  Log(LogName::kBa, LogLevel::kError,
       "Session::DumpFullState() being called; shouldn't happen.");
 }
 

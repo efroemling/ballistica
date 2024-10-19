@@ -629,8 +629,8 @@ void RootWidget::Setup() {
 
     auto centerx = -1.5f;
     auto centery = 8.0f;
-    auto offsx = 5.5f;
-    auto offsy = 5.5f;
+    // auto offsx = 5.5f;
+    // auto offsy = 5.5f;
     {
       TextDef td;
       td.button = achievements_button_;

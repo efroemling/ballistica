@@ -82,7 +82,7 @@ TextureAsset::TextureAsset(const std::string& qr_url) : is_qr_code_(true) {
              "QR code url byte length %zu exceeds soft-limit of %zu;"
              " please use shorter urls. (url=%s)",
              qr_url.size(), soft_limit, qr_url.c_str());
-    Log(LogLevel::kWarning, buffer);
+    Log(LogName::kBaAssets, LogLevel::kWarning, buffer);
   }
   file_name_ = qr_url;
   valid_ = true;

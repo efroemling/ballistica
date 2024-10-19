@@ -56,7 +56,7 @@ void AssetsServer::PushBeginWriteReplayCall(uint16_t protocol_version) {
     // We only allow writing one replay at once; make sure that's actually
     // the case.
     if (writing_replay_) {
-      Log(LogLevel::kError,
+      Log(LogName::kBaAssets, LogLevel::kError,
           "AssetsServer got BeginWriteReplayCall while already writing");
       WriteReplayMessages();
       if (replay_out_file_) {
@@ -76,7 +76,7 @@ void AssetsServer::PushBeginWriteReplayCall(uint16_t protocol_version) {
     replay_bytes_written_ = 0;
 
     if (!replay_out_file_) {
-      Log(LogLevel::kError,
+      Log(LogName::kBa, LogLevel::kError,
           "unable to open output-stream file: '" + file_path + "'");
     } else {
       // Write file id and protocol-version.
@@ -88,8 +88,9 @@ void AssetsServer::PushBeginWriteReplayCall(uint16_t protocol_version) {
           || (fwrite(&version, sizeof(version), 1, replay_out_file_) != 1)) {
         fclose(replay_out_file_);
         replay_out_file_ = nullptr;
-        Log(LogLevel::kError, "error writing replay file header: "
-                                  + g_core->platform->GetErrnoString());
+        Log(LogName::kBa, LogLevel::kError,
+            "error writing replay file header: "
+                + g_core->platform->GetErrnoString());
       }
       replay_bytes_written_ = 5;
     }
@@ -109,7 +110,7 @@ void AssetsServer::PushAddMessageToReplayCall(
 
     // Sanity check.
     if (!writing_replay_) {
-      Log(LogLevel::kError,
+      Log(LogName::kBa, LogLevel::kError,
           "AssetsServer got AddMessageToReplayCall while not writing replay");
       replays_broken_ = true;
       return;
@@ -120,7 +121,7 @@ void AssetsServer::PushAddMessageToReplayCall(
       // If we've got too much data built up (lets go with 10 megs for now),
       // abort.
       if (replay_message_bytes_ > 10000000) {
-        Log(LogLevel::kError,
+        Log(LogName::kBa, LogLevel::kError,
             "replay output buffer exceeded 10 megs; aborting replay");
         fclose(replay_out_file_);
         replay_out_file_ = nullptr;
@@ -142,7 +143,8 @@ void AssetsServer::PushEndWriteReplayCall() {
 
     // Sanity check.
     if (!writing_replay_) {
-      Log(LogLevel::kError, "_finishWritingReplay called while not writing");
+      Log(LogName::kBa, LogLevel::kError,
+          "_finishWritingReplay called while not writing");
       replays_broken_ = true;
       return;
     }
@@ -179,8 +181,9 @@ void AssetsServer::WriteReplayMessages() {
         if (fwrite(&len8, 1, 1, replay_out_file_) != 1) {
           fclose(replay_out_file_);
           replay_out_file_ = nullptr;
-          Log(LogLevel::kError, "error writing replay file: "
-                                    + g_core->platform->GetErrnoString());
+          Log(LogName::kBaAudio, LogLevel::kError,
+              "error writing replay file: "
+                  + g_core->platform->GetErrnoString());
           return;
         }
       }
@@ -191,16 +194,18 @@ void AssetsServer::WriteReplayMessages() {
           if (fwrite(&len16, 2, 1, replay_out_file_) != 1) {
             fclose(replay_out_file_);
             replay_out_file_ = nullptr;
-            Log(LogLevel::kError, "error writing replay file: "
-                                      + g_core->platform->GetErrnoString());
+            Log(LogName::kBaAudio, LogLevel::kError,
+                "error writing replay file: "
+                    + g_core->platform->GetErrnoString());
             return;
           }
         } else {
           if (fwrite(&len32, 4, 1, replay_out_file_) != 1) {
             fclose(replay_out_file_);
             replay_out_file_ = nullptr;
-            Log(LogLevel::kError, "error writing replay file: "
-                                      + g_core->platform->GetErrnoString());
+            Log(LogName::kBaAudio, LogLevel::kError,
+                "error writing replay file: "
+                    + g_core->platform->GetErrnoString());
             return;
           }
         }
@@ -211,7 +216,7 @@ void AssetsServer::WriteReplayMessages() {
       if (result != 1) {
         fclose(replay_out_file_);
         replay_out_file_ = nullptr;
-        Log(LogLevel::kError,
+        Log(LogName::kBaAudio, LogLevel::kError,
             "error writing replay file: " + g_core->platform->GetErrnoString());
         return;
       }

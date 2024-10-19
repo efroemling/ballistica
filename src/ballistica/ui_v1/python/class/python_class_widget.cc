@@ -127,7 +127,6 @@ auto PythonClassWidget::tp_setattro(PythonClassWidget* self, PyObject* attr,
 
   // Assuming this will always be a str?
   assert(PyUnicode_Check(attr));
-  const char* s = PyUnicode_AsUTF8(attr);
 
   throw Exception("Attr '" + std::string(PyUnicode_AsUTF8(attr))
                       + "' is not settable on SessionPlayer objects.",
@@ -302,7 +301,7 @@ auto PythonClassWidget::Delete(PythonClassWidget* self, PyObject* args,
     if (p) {
       p->DeleteWidget(w);
     } else {
-      Log(LogLevel::kError, "Can't delete widget: no parent.");
+      Log(LogName::kBa, LogLevel::kError, "Can't delete widget: no parent.");
     }
   }
 

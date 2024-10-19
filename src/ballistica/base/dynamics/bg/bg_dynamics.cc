@@ -72,8 +72,8 @@ void BGDynamics::Step(const Vector3f& cam_pos, int step_millisecs) {
     return;
   }
 
-  // Pass a newly allocated raw pointer to the bg-dynamics thread; it takes care
-  // of disposing it when done.
+  // Pass a newly allocated raw pointer to the bg-dynamics thread; it takes
+  // care of disposing it when done.
   auto d = Object::NewDeferred<BGDynamicsServer::StepData>();
   d->graphics_quality = Graphics::GraphicsQualityFromRequest(
       g_base->graphics->settings()->graphics_quality,

@@ -11,7 +11,7 @@ from functools import partial
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
-from efro.log import LogLevel
+from efro.logging import LogLevel
 from efro.dataclassio import ioprepped, dataclass_to_json, dataclass_from_json
 
 import _babase

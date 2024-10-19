@@ -96,7 +96,7 @@ void Python::PrintStackTrace() {
     available = g_base_soft->PrintPythonStackTrace();
   }
   if (!available) {
-    Log(LogLevel::kWarning,
+    Log(LogName::kBa, LogLevel::kWarning,
         "Python::PrintStackTrace() called before _babase set up; "
         "not printing.");
   }

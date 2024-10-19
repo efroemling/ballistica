@@ -126,7 +126,7 @@ class RendererGL::MeshDataGL : public MeshRendererData {
                    dynamic_draw_ ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
       index_state_ = data->state;
       have_index_data_ = true;
-      BA_LOG_ONCE(LogLevel::kWarning,
+      BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kWarning,
                   "GL WARNING - USING 32 BIT INDICES WHICH WONT WORK IN ES2!!");
       index_type_ = GL_UNSIGNED_INT;
     }

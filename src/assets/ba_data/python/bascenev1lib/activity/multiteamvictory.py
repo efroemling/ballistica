@@ -387,8 +387,6 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         v_offs = 0.0
         tdelay += len(player_entries) * 8 * t_incr
         for _score, name, prec in player_entries:
-            if not prec.player.in_game:
-                continue
             tdelay -= 4 * t_incr
             v_offs -= 40
             Text(

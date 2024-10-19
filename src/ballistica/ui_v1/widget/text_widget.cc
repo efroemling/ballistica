@@ -549,11 +549,11 @@ void TextWidget::SetText(const std::string& text_in_raw) {
     g_base->assets->CompileResourceString(
         text_in_raw, "TextWidget::set_text format check", &valid);
     if (!valid) {
-      BA_LOG_ONCE(LogLevel::kError,
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                   "Invalid resource string: '" + text_in_raw + "'");
       Python::PrintStackTrace();
     } else if (explicit_bool(print_false_positives)) {
-      BA_LOG_ONCE(LogLevel::kError,
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                   "Got false positive for json check on '" + text_in_raw + "'");
       Python::PrintStackTrace();
     }
@@ -643,7 +643,7 @@ void TextWidget::InvokeStringEditor_() {
                     .Get(UIV1Python::ObjID::kTextWidgetStringEditAdapterClass)
                     .Call(args);
   if (!result.Exists()) {
-    Log(LogLevel::kError, "Error invoking string edit dialog.");
+    Log(LogName::kBa, LogLevel::kError, "Error invoking string edit dialog.");
     return;
   }
 

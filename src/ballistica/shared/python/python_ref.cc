@@ -29,7 +29,7 @@ static void ClearPythonExceptionAndWarnIfUnset() {
   // avoid that situation because it opens up the possibility of us clearing
   // exceptions that aren't related to our nullptr.
   if (!PyErr_Occurred()) {
-    Log(LogLevel::kWarning,
+    Log(LogName::kBa, LogLevel::kWarning,
         "A PythonRef acquire/steal call was passed nullptr but no Python "
         "exception is set. This situation should be avoided; only pass "
         "acquire/steal if it is directly due to a Python exception.");
@@ -226,6 +226,12 @@ auto PythonRef::ValueAsInt() const -> int64_t {
   assert(Python::HaveGIL());
   ThrowIfUnset();
   return Python::GetPyInt64(obj_);
+}
+
+auto PythonRef::ValueAsDouble() const -> double {
+  assert(Python::HaveGIL());
+  ThrowIfUnset();
+  return Python::GetPyDouble(obj_);
 }
 
 auto PythonRef::GetAttr(const char* name) const -> PythonRef {

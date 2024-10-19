@@ -44,7 +44,8 @@ auto CombineNode::GetOutput() -> std::vector<float> {
   if (dirty_) {
     if (do_size_unset_warning_) {
       do_size_unset_warning_ = false;
-      BA_LOG_ONCE(LogLevel::kError, "CombineNode size unset for " + label());
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                  "CombineNode size unset for " + label());
     }
     int actual_size = std::min(4, std::max(0, size_));
     output_.resize(static_cast<size_t>(actual_size));

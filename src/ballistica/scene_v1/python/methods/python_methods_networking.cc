@@ -484,7 +484,7 @@ static auto PyGetConnectionToHostInfo(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  BA_LOG_ONCE(LogLevel::kWarning,
+  BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
               "bascenev1.get_connection_to_host_info() is deprecated; use "
               "bascenev1.get_connection_to_host_info_2().");
   BA_PRECONDITION(g_base->InLogicThread());
@@ -711,7 +711,7 @@ static auto PySetMasterServerSource(PyObject* self, PyObject* args)
   int source;
   if (!PyArg_ParseTuple(args, "i", &source)) return nullptr;
   if (source != 0 && source != 1) {
-    BA_LOG_ONCE(LogLevel::kError,
+    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
                 "Invalid server source: " + std::to_string(source) + ".");
     source = 1;
   }

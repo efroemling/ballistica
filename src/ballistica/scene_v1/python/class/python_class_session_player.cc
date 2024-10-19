@@ -271,9 +271,9 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
     if (!p->has_py_data()) {
-      BA_LOG_ONCE(LogLevel::kError, "Calling getAttr for player attr '"
-                                        + std::string(s)
-                                        + "' without data set.");
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                  "Calling getAttr for player attr '" + std::string(s)
+                      + "' without data set.");
     }
     PyObject* obj = p->GetPyCharacter();
     Py_INCREF(obj);
@@ -284,9 +284,9 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
     if (!p->has_py_data()) {
-      BA_LOG_ONCE(LogLevel::kError, "Calling getAttr for player attr '"
-                                        + std::string(s)
-                                        + "' without data set.");
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                  "Calling getAttr for player attr '" + std::string(s)
+                      + "' without data set.");
     }
     PyObject* obj = p->GetPyColor();
     Py_INCREF(obj);
@@ -297,9 +297,9 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
     if (!p->has_py_data()) {
-      BA_LOG_ONCE(LogLevel::kError, "Calling getAttr for player attr '"
-                                        + std::string(s)
-                                        + "' without data set.");
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                  "Calling getAttr for player attr '" + std::string(s)
+                      + "' without data set.");
     }
     PyObject* obj = p->GetPyHighlight();
     Py_INCREF(obj);
@@ -310,9 +310,9 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
     if (!p->has_py_data()) {
-      BA_LOG_ONCE(LogLevel::kError, "Calling getAttr for player attr '"
-                                        + std::string(s)
-                                        + "' without data set.");
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                  "Calling getAttr for player attr '" + std::string(s)
+                      + "' without data set.");
     }
     PyObject* obj = p->GetPyActivityPlayer();
     Py_INCREF(obj);

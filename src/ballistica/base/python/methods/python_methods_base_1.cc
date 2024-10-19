@@ -275,7 +275,7 @@ static auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds)
     // Warn the user not to use this from the logic thread since it doesnt
     // save/restore context.
     if (!suppress_warning && g_base->InLogicThread()) {
-      Log(LogLevel::kWarning,
+      Log(LogName::kBa, LogLevel::kWarning,
           "babase.pushcall() called from the logic thread with "
           "from_other_thread set to true (call "
               + Python::ObjToString(call_obj) + " at "
@@ -802,13 +802,15 @@ static PyMethodDef PyEnvDef = {
 static auto PyEmitLog(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  static const char* kwlist[] = {"name", "level", "message", nullptr};
+  static const char* kwlist[] = {"name", "level", "timestamp", "message",
+                                 nullptr};
   const char* name;
   const char* levelstr;
   const char* message;
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "sss",
+  double timestamp;
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ssds",
                                    const_cast<char**>(kwlist), &name, &levelstr,
-                                   &message)) {
+                                   &timestamp, &message)) {
     return nullptr;
   }
 
@@ -829,7 +831,7 @@ static auto PyEmitLog(PyObject* self, PyObject* args, PyObject* keywds)
     fprintf(stderr, "Invalid log level to emit_log(): %s\n", levelstr);
     level = LogLevel::kInfo;
   }
-  Logging::EmitLog(name, level, message);
+  Logging::EmitLog(name, level, timestamp, message);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -840,7 +842,8 @@ static PyMethodDef PyEmitLogDef = {
     (PyCFunction)PyEmitLog,        // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "emit_log(name: str, level: str, message: str) -> None\n"
+    "emit_log(name: str, level: str, timestamp: float, message: str)"
+    " -> None\n"
     "\n"
     "(internal)\n"
     "\n"

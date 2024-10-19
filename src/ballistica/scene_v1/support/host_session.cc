@@ -218,7 +218,7 @@ void HostSession::RequestPlayer(SceneV1InputDeviceDelegate* device) {
 
   // Ignore if we have no Python session Obj.
   if (!GetSessionPyObj()) {
-    Log(LogLevel::kError,
+    Log(LogName::kBaNetworking, LogLevel::kError,
         "HostSession::RequestPlayer() called w/no session_py_obj_.");
     return;
   }
@@ -312,12 +312,12 @@ void HostSession::IssuePlayerLeft(Player* player) {
         BA_LOG_PYTHON_TRACE_ONCE("missing player on IssuePlayerLeft");
       }
     } else {
-      Log(LogLevel::kWarning,
+      Log(LogName::kBaNetworking, LogLevel::kWarning,
           "HostSession: IssuePlayerLeft caled with no "
           "session_py_obj_");
     }
   } catch (const std::exception& e) {
-    Log(LogLevel::kError,
+    Log(LogName::kBaNetworking, LogLevel::kError,
         std::string("Error calling on_player_leave(): ") + e.what());
   }
 }
@@ -338,7 +338,7 @@ void HostSession::SetForegroundHostActivity(HostActivity* a) {
   auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
 
   if (shutting_down_) {
-    Log(LogLevel::kWarning,
+    Log(LogName::kBa, LogLevel::kWarning,
         "SetForegroundHostActivity called during session shutdown; "
         "ignoring.");
     return;
@@ -509,6 +509,16 @@ void HostSession::Update(int time_advance_millisecs, double time_advance) {
     }
   }
 
+  // Shouldn't be getting huge steps through here; watch out for that.
+  if (time_advance_millisecs > 500 || time_advance > 0.5) {
+    printf(
+        "WARNING: HostSession::Update() got excessive time_advance "
+        "(%d ms, %f s); should not happen.\n",
+        time_advance_millisecs, time_advance);
+  }
+
+  // printf("ADV %d %f\n", time_advance_millisecs, time_advance);
+
   // We can be killed at any time, so let's keep an eye out for that.
   WeakRef<HostSession> test_ref(this);
   assert(test_ref.Exists());
@@ -518,8 +528,8 @@ void HostSession::Update(int time_advance_millisecs, double time_advance) {
   SessionStream* output_stream = GetSceneStream();
   auto too_slow{false};
 
-  // Try to advance our base time by the provided amount,
-  // firing all timers along the way.
+  // Try to advance our base time by the provided amount, firing all timers
+  // along the way.
   millisecs_t target_base_time_millisecs =
       base_time_millisecs_ + time_advance_millisecs;
   while (!base_timers_.Empty()
@@ -656,11 +666,11 @@ HostSession::~HostSession() {
           s += ("\n  " + std::to_string(count++) + ": "
                 + i->GetObjectDescription());
         }
-        Log(LogLevel::kWarning, s);
+        Log(LogName::kBa, LogLevel::kWarning, s);
       }
     }
   } catch (const std::exception& e) {
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         "Exception in HostSession destructor: " + std::string(e.what()));
   }
 }
@@ -678,7 +688,7 @@ void HostSession::RegisterContextCall(base::PythonContextCall* call) {
   // If we're shutting down, just kill the call immediately.
   // (we turn all of our calls to no-ops as we shut down).
   if (shutting_down_) {
-    Log(LogLevel::kWarning,
+    Log(LogName::kBa, LogLevel::kWarning,
         "Adding call to expired session; call will not function: "
             + call->GetObjectDescription());
     call->MarkDead();

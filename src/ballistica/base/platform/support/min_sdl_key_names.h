@@ -348,7 +348,7 @@ static const char* GetScancodeName(SDL_Scancode scancode) {
   const char* name;
   if (static_cast<int>(scancode) < SDL_SCANCODE_UNKNOWN
       || scancode >= SDL_NUM_SCANCODES) {
-    BA_LOG_ONCE(LogLevel::kError,
+    BA_LOG_ONCE(LogName::kBaInput, LogLevel::kError,
                 "GetScancodeName passed invalid scancode "
                     + std::to_string(static_cast<int>(scancode)));
     return "";

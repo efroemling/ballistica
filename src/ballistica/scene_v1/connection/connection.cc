@@ -156,7 +156,7 @@ void Connection::HandleGamePacketCompressed(const std::vector<uint8_t>& data) {
   try {
     data_decompressed = g_base->huffman->decompress(data);
   } catch (const std::exception& e) {
-    Log(LogLevel::kError,
+    Log(LogName::kBaNetworking, LogLevel::kError,
         std::string("Error in huffman decompression for packet: ") + e.what());
 
     // Hmmm i guess lets just ignore this packet and keep on trucking?.. or
@@ -176,7 +176,7 @@ void Connection::HandleGamePacket(const std::vector<uint8_t>& data) {
   switch (data[0]) {
     case BA_SCENEPACKET_KEEPALIVE: {
       if (data.size() != 4) {
-        BA_LOG_ONCE(LogLevel::kError,
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
                     "Error: got invalid BA_SCENEPACKET_KEEPALIVE packet.");
         return;
       }
@@ -190,7 +190,8 @@ void Connection::HandleGamePacket(const std::vector<uint8_t>& data) {
 
       // Expect 1 byte type, 2 byte num, 3 byte acks, at least 1 byte payload.
       if (data.size() < 7) {
-        Log(LogLevel::kError, "Got invalid BA_PACKET_STATE packet.");
+        Log(LogName::kBaNetworking, LogLevel::kError,
+            "Got invalid BA_PACKET_STATE packet.");
         return;
       }
       uint16_t num;
@@ -221,7 +222,8 @@ void Connection::HandleGamePacket(const std::vector<uint8_t>& data) {
       // Expect 1 byte type, 2 byte num, 2 byte unreliable-num, 3 byte acks,
       // at least 1 byte payload.
       if (data.size() < 9) {
-        Log(LogLevel::kError, "Got invalid BA_PACKET_STATE_UNRELIABLE packet.");
+        Log(LogName::kBaNetworking, LogLevel::kError,
+            "Got invalid BA_PACKET_STATE_UNRELIABLE packet.");
         return;
       }
       uint16_t num, num_unreliable;
@@ -242,8 +244,9 @@ void Connection::HandleGamePacket(const std::vector<uint8_t>& data) {
     }
 
     default:
-      Log(LogLevel::kError, "Connection got unknown packet type: "
-                                + std::to_string(static_cast<int>(data[0])));
+      Log(LogName::kBaNetworking, LogLevel::kError,
+          "Connection got unknown packet type: "
+              + std::to_string(static_cast<int>(data[0])));
       break;
   }
 }
@@ -325,7 +328,7 @@ void Connection::SendReliableMessage(const std::vector<uint8_t>& data) {
 void Connection::SendUnreliableMessage(const std::vector<uint8_t>& data) {
   // For now we just silently drop anything bigger than our max packet size.
   if (data.size() + 8 > kMaxPacketSize) {
-    BA_LOG_ONCE(LogLevel::kError,
+    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
                 "Error: Dropping outgoing unreliable packet of size "
                     + std::to_string(data.size()) + ".");
     return;
@@ -438,11 +441,12 @@ void Connection::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         multipart_buffer_.resize(old_size + (buffer.size() - 1));
         memcpy(&(multipart_buffer_[old_size]), &(buffer[1]), buffer.size() - 1);
       } else {
-        Log(LogLevel::kError, "got invalid BA_MESSAGE_MULTIPART");
+        Log(LogName::kBaNetworking, LogLevel::kError,
+            "got invalid BA_MESSAGE_MULTIPART");
       }
       if (buffer[0] == BA_MESSAGE_MULTIPART_END) {
         if (multipart_buffer_[0] == BA_MESSAGE_MULTIPART) {
-          BA_LOG_ONCE(LogLevel::kError,
+          BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
                       "nested multipart message detected; kicking");
           Error("");
         }
@@ -487,7 +491,7 @@ void Connection::SendGamePacket(const std::vector<uint8_t>& data) {
       && data[0] != BA_SCENEPACKET_HANDSHAKE_RESPONSE) {
     if (explicit_bool(false)) {
       BA_LOG_ONCE(
-          LogLevel::kError,
+          LogName::kBaNetworking, LogLevel::kError,
           "SendGamePacket() called before can_communicate set ("
               + g_core->platform->DemangleCXXSymbol(typeid(*this).name())
               + " ptype " + std::to_string(static_cast<int>(data[0])) + ")");

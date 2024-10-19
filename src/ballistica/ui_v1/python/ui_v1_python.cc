@@ -78,7 +78,7 @@ void UIV1Python::ShowURL(const std::string& url) {
     PythonRef args(Py_BuildValue("(s)", url.c_str()), PythonRef::kSteal);
     objs().Get(ObjID::kShowURLWindowCall).Call(args);
   } else {
-    Log(LogLevel::kError, "ShowURLWindowCall nonexistent.");
+    Log(LogName::kBa, LogLevel::kError, "ShowURLWindowCall nonexistent.");
   }
 }
 
@@ -119,7 +119,7 @@ void UIV1Python::InvokeStringEditor(PyObject* string_edit_adapter_instance) {
     context_call->ScheduleInUIOperation(args);
   } else {
     // Otherwise just run immediately.
-    Log(LogLevel::kWarning,
+    Log(LogName::kBa, LogLevel::kWarning,
         "UIV1Python::InvokeStringEditor running outside of UIInteraction; "
         "unexpected.");
     context_call->Run(args);

@@ -60,7 +60,7 @@ class RendererGL::RenderTargetGL : public RenderTarget {
         //  this needs to be on for glClear to work on depth.
         if (!renderer_->depth_writing_enabled_) {
           BA_LOG_ONCE(
-              LogLevel::kWarning,
+              LogName::kBaGraphics, LogLevel::kWarning,
               "RendererGL: depth-writing not enabled when clearing depth");
         }
         clear_mask |= GL_DEPTH_BUFFER_BIT;

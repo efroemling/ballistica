@@ -653,7 +653,7 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   if (log) {
-    Log(LogLevel::kInfo, message);
+    Log(LogName::kBaNetworking, LogLevel::kInfo, message);
   }
 
   // Transient messages get sent to clients as high-level messages instead of
@@ -751,7 +751,8 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
             tint_color.x, tint_color.y, tint_color.z, tint2_color.x,
             tint2_color.y, tint2_color.z);
       } else {
-        Log(LogLevel::kError, "Unhandled screenmessage output_stream case.");
+        Log(LogName::kBaNetworking, LogLevel::kError,
+            "Unhandled screenmessage output_stream case.");
       }
     }
 
@@ -861,7 +862,7 @@ static auto PyPrintNodes(PyObject* self, PyObject* args) -> PyObject* {
     snprintf(buffer, sizeof(buffer), "#%d:   type: %-14s desc: %s", count,
              i->type()->name().c_str(), i->label().c_str());
     s += buffer;
-    Log(LogLevel::kInfo, buffer);
+    Log(LogName::kBa, LogLevel::kInfo, buffer);
     count++;
   }
   Py_RETURN_NONE;

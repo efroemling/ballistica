@@ -19,14 +19,17 @@ TimerList::~TimerList() {
 
   if (g_buildconfig.debug_build()) {
     if (timer_count_active_ != 0) {
-      Log(LogLevel::kError, "Invalid timerlist state on teardown.");
+      Log(LogName::kBa, LogLevel::kError,
+          "Invalid timerlist state on teardown.");
     }
     if (timer_count_inactive_ != 0) {
-      Log(LogLevel::kError, "Invalid timerlist state on teardown.");
+      Log(LogName::kBa, LogLevel::kError,
+          "Invalid timerlist state on teardown.");
     }
     if (!((timer_count_total_ == 0)
           || (client_timer_ != nullptr && timer_count_total_ == 1))) {
-      Log(LogLevel::kError, "Invalid timerlist state on teardown.");
+      Log(LogName::kBa, LogLevel::kError,
+          "Invalid timerlist state on teardown.");
     }
   }
 }

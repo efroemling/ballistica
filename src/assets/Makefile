@@ -175,6 +175,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_assetmanager.py \
   $(BUILD_DIR)/ba_data/python/babase/_asyncio.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsole.py \
+  $(BUILD_DIR)/ba_data/python/babase/_devconsoletabs.py \
   $(BUILD_DIR)/ba_data/python/babase/_emptyappmode.py \
   $(BUILD_DIR)/ba_data/python/babase/_env.py \
   $(BUILD_DIR)/ba_data/python/babase/_error.py \
@@ -452,6 +453,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_assetmanager.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_asyncio.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_devconsole.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_devconsoletabs.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_emptyappmode.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_env.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_error.cpython-312.opt-1.pyc \
@@ -732,6 +734,8 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/bacloud.py \
   $(BUILD_DIR)/ba_data/python/bacommon/build.py \
   $(BUILD_DIR)/ba_data/python/bacommon/cloud.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/loggercontrol.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/logging.py \
   $(BUILD_DIR)/ba_data/python/bacommon/login.py \
   $(BUILD_DIR)/ba_data/python/bacommon/net.py \
   $(BUILD_DIR)/ba_data/python/bacommon/servermanager.py \
@@ -751,7 +755,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/efro/dataclassio/extras.py \
   $(BUILD_DIR)/ba_data/python/efro/debug.py \
   $(BUILD_DIR)/ba_data/python/efro/error.py \
-  $(BUILD_DIR)/ba_data/python/efro/log.py \
+  $(BUILD_DIR)/ba_data/python/efro/logging.py \
   $(BUILD_DIR)/ba_data/python/efro/message/__init__.py \
   $(BUILD_DIR)/ba_data/python/efro/message/_message.py \
   $(BUILD_DIR)/ba_data/python/efro/message/_module.py \
@@ -769,6 +773,8 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/bacloud.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/build.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/cloud.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/loggercontrol.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/logging.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/login.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/net.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/servermanager.cpython-312.opt-1.pyc \
@@ -788,7 +794,7 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/extras.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/debug.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/error.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/__pycache__/log.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/__pycache__/logging.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/_message.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/_module.cpython-312.opt-1.pyc \

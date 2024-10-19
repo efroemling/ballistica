@@ -151,9 +151,9 @@ auto ClassicFeatureSet::GetV1AccountLoginStateString() -> std::string {
       out = "signing_in";
       break;
     default:
-      Log(LogLevel::kError, "Unknown V1LoginState '"
-                                + std::to_string(static_cast<int>(state))
-                                + "'");
+      Log(LogName::kBaAccount, LogLevel::kError,
+          "Unknown V1LoginState '" + std::to_string(static_cast<int>(state))
+              + "'");
       out = "signed_out";
       break;
   }

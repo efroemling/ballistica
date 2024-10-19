@@ -125,7 +125,8 @@ void ConnectionToHostUDP::Update() {
 // departure before doing this when possible.
 void ConnectionToHostUDP::Die() {
   if (did_die_) {
-    Log(LogLevel::kError, "Posting multiple die messages; probably not good.");
+    Log(LogName::kBaNetworking, LogLevel::kError,
+        "Posting multiple die messages; probably not good.");
     return;
   }
   if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
@@ -133,7 +134,7 @@ void ConnectionToHostUDP::Die() {
       appmode->connections()->PushDisconnectedFromHostCall();
       did_die_ = true;
     } else {
-      Log(LogLevel::kError,
+      Log(LogName::kBaNetworking, LogLevel::kError,
           "Running update for non-current host-connection; shouldn't "
           "happen.");
     }

@@ -289,7 +289,7 @@ auto JoystickInput::GetButtonName(int index) -> std::string {
 
 JoystickInput::~JoystickInput() {
   if (!g_base->InLogicThread()) {
-    Log(LogLevel::kError, "Joystick dying in wrong thread.");
+    Log(LogName::kBaInput, LogLevel::kError, "Joystick dying in wrong thread.");
   }
 
   // Kill our child if need be.
@@ -311,7 +311,7 @@ JoystickInput::~JoystickInput() {
         [joystick] { SDL_JoystickClose(joystick); });
     sdl_joystick_ = nullptr;
 #else
-    Log(LogLevel::kError,
+    Log(LogName::kBaInput, LogLevel::kError,
         "sdl_joystick_ set in non-sdl-joystick build destructor.");
 #endif  // BA_ENABLE_SDL_JOYSTICKS
   }
@@ -654,7 +654,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
         hat_held_ = true;
         break;
       default:
-        BA_LOG_ONCE(LogLevel::kError,
+        BA_LOG_ONCE(LogName::kBaInput, LogLevel::kError,
                     "Invalid hat value: "
                         + std::to_string(static_cast<int>(e->jhat.value)));
         break;
@@ -1231,7 +1231,7 @@ void JoystickInput::UpdateMapping() {
   auto* cl{g_base->HaveClassic() ? g_base->classic() : nullptr};
 
   if (!cl) {
-    Log(LogLevel::kWarning,
+    Log(LogName::kBaInput, LogLevel::kWarning,
         "Classic not present; can't config joystick mapping.");
   }
 

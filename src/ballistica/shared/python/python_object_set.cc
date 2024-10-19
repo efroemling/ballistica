@@ -39,7 +39,7 @@ void PythonObjectSetBase::StoreObj(int id, PyObject* pyobj) {
     // Also make sure we're not storing an object that's already been stored.
     for (auto&& i : objs_) {
       if (i.Get() != nullptr && i.Get() == pyobj) {
-        Log(LogLevel::kWarning,
+        Log(LogName::kBa, LogLevel::kWarning,
             "Python::StoreObj() called twice for same ptr; id="
                 + std::to_string(id) + ".");
       }

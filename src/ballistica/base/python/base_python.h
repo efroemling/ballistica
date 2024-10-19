@@ -75,7 +75,6 @@ class BasePython {
     kEmptyCall,
     kPrintTraceCall,
     kToggleFullscreenCall,
-    kAppReadConfigCall,
     kUIRemotePressCall,
     kRemoveInGameAdsMessageCall,
     kAppOnNativeStartCall,
@@ -124,7 +123,8 @@ class BasePython {
   void AddPythonClasses(PyObject* module);
   void ImportPythonObjs();
   void ImportPythonAppObjs();
-  void ReadConfig();
+  void SetConfig(PyObject* config);
+  // void ReadConfig();
 
   const auto& objs() { return objs_; }
 

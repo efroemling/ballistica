@@ -152,7 +152,7 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
 
           if (i->translation_dirty) {
             BA_LOG_ONCE(
-                LogLevel::kWarning,
+                LogName::kBaGraphics, LogLevel::kWarning,
                 "Found dirty translation on screenmessage draw pass 1; raw="
                     + i->s_raw);
           }
@@ -261,7 +261,7 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
           }
           if (i->translation_dirty) {
             BA_LOG_ONCE(
-                LogLevel::kWarning,
+                LogName::kBaGraphics, LogLevel::kWarning,
                 "Found dirty translation on screenmessage draw pass 2; raw="
                     + i->s_raw);
           }
@@ -495,7 +495,7 @@ void ScreenMessages::ClearScreenMessageTranslations() {
 auto ScreenMessages::ScreenMessageEntry::GetText() -> TextGroup& {
   if (translation_dirty) {
     BA_LOG_ONCE(
-        LogLevel::kWarning,
+        LogName::kBaGraphics, LogLevel::kWarning,
         "Found dirty translation on screenmessage GetText; raw=" + s_raw);
   }
   if (!s_mesh_.Exists()) {

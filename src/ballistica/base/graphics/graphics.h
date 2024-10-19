@@ -153,6 +153,7 @@ class Graphics {
   }
 
   void DrawUIBounds(RenderPass* pass);
+  static void GetBaseVirtualRes(float* x, float* y);
 
   // Enable progress bar drawing locally.
   void EnableProgressBar(bool fade_in);

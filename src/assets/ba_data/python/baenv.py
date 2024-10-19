@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 import logging
 from pathlib import Path
 from dataclasses import dataclass
@@ -27,7 +28,7 @@ import __main__
 if TYPE_CHECKING:
     from typing import Any
 
-    from efro.log import LogHandler
+    from efro.logging import LogHandler
 
 # IMPORTANT - It is likely (and in some cases expected) that this
 # module's code will be exec'ed multiple times. This is because it is
@@ -52,7 +53,7 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22025
+TARGET_BALLISTICA_BUILD = 22040
 TARGET_BALLISTICA_VERSION = '1.7.37'
 
 
@@ -87,13 +88,12 @@ class EnvConfig:
     # stderr into the engine so they show up on in-app consoles, etc.
     log_handler: LogHandler | None
 
-    # Initial data from the ballisticakit-config.json file. This is
-    # passed mostly as an optimization to avoid reading the same config
-    # file twice, since config data is first needed in baenv and next in
-    # the engine. It will be cleared after passing it to the app's
-    # config management subsystem and should not be accessed by any
-    # other code.
+    # Initial data from the config.json file in the config dir. The
+    # config file is parsed by
     initial_app_config: Any
+
+    # Timestamp when we first started doing stuff.
+    launch_time: float
 
 
 @dataclass
@@ -172,6 +172,11 @@ def configure(
     are imported; the environment is locked in as soon as that happens.
     """
 
+    # Measure when we start doing this stuff. We plug this in to show
+    # relative times in our log timestamp displays and also pass this to
+    # the engine to do the same there.
+    launch_time = time.time()
+
     envglobals = _EnvGlobals.get()
 
     # Keep track of whether we've been *called*, not whether a config
@@ -206,11 +211,19 @@ def configure(
         config_dir,
     )
 
-    # The second thing we do is set up our logging system and pipe
-    # Python's stdout/stderr into it. At this point we can at least
-    # debug problems on systems where native stdout/stderr is not easily
-    # accessible such as Android.
-    log_handler = _setup_logging() if setup_logging else None
+    # Set up our log-handler and pipe Python's stdout/stderr into it.
+    # Later, once the engine comes up, the handler will feed its logs
+    # (including cached history) to the os-specific output location.
+    # This means anything printed or logged at this point forward should
+    # be visible on all platforms.
+    log_handler = _setup_logging(launch_time) if setup_logging else None
+
+    # Load the raw app-config dict.
+    app_config = _read_app_config(os.path.join(config_dir, 'config.json'))
+
+    # Set logging levels to stored values or defaults.
+    if setup_logging:
+        _set_log_levels(app_config)
 
     # We want to always be run in UTF-8 mode; complain if we're not.
     if sys.flags.utf8_mode != 1:
@@ -235,8 +248,44 @@ def configure(
         site_python_dir=site_python_dir,
         log_handler=log_handler,
         is_user_app_python_dir=is_user_app_python_dir,
-        initial_app_config=None,
+        initial_app_config=app_config,
+        launch_time=launch_time,
     )
+
+
+def _read_app_config(config_file_path: str) -> dict:
+    """Read the app config."""
+    import json
+
+    config: dict | Any
+    config_contents = ''
+    try:
+        if os.path.exists(config_file_path):
+            with open(config_file_path, encoding='utf-8') as infile:
+                config_contents = infile.read()
+            config = json.loads(config_contents)
+            if not isinstance(config, dict):
+                raise RuntimeError('Got non-dict for config root.')
+        else:
+            config = {}
+
+    except Exception:
+        logging.exception(
+            "Error reading config file '%s'.\n"
+            "Backing up broken config to'%s.broken'.",
+            config_file_path,
+            config_file_path,
+        )
+
+        try:
+            import shutil
+
+            shutil.copyfile(config_file_path, config_file_path + '.broken')
+        except Exception:
+            logging.exception('Error copying broken config.')
+        config = {}
+
+    return config
 
 
 def _calc_data_dir(data_dir: str | None) -> str:
@@ -262,21 +311,55 @@ def _calc_data_dir(data_dir: str | None) -> str:
     return data_dir
 
 
-def _setup_logging() -> LogHandler:
-    from efro.log import setup_logging, LogLevel
+def _setup_logging(launch_time: float) -> LogHandler:
+    from efro.logging import setup_logging, LogLevel
 
-    # TODO: should set this up with individual loggers under a top level
-    # 'ba' logger, and at that point we can kill off the
-    # suppress_non_root_debug option since we'll only ever need to set
-    # 'ba' to DEBUG at most.
     log_handler = setup_logging(
         log_path=None,
         level=LogLevel.DEBUG,
-        suppress_non_root_debug=True,
         log_stdout_stderr=True,
         cache_size_limit=1024 * 1024,
+        launch_time=launch_time,
     )
     return log_handler
+
+
+def _set_log_levels(app_config: dict) -> None:
+
+    from bacommon.logging import get_base_logger_control_config_client
+    from bacommon.loggercontrol import LoggerControlConfig
+
+    try:
+        config = app_config.get('Log Levels', None)
+
+        if config is None:
+            get_base_logger_control_config_client().apply()
+            return
+
+        # Make sure data is expected types/values.
+        valid_levels = {
+            logging.NOTSET,
+            logging.DEBUG,
+            logging.INFO,
+            logging.WARNING,
+            logging.ERROR,
+            logging.CRITICAL,
+        }
+        for logname, loglevel in config.items():
+            if (
+                not isinstance(logname, str)
+                or not logname
+                or not isinstance(loglevel, int)
+                or not loglevel in valid_levels
+            ):
+                raise ValueError("Invalid 'Log Levels' data read from config.")
+
+        get_base_logger_control_config_client().apply_diff(
+            LoggerControlConfig(levels=config)
+        ).apply()
+
+    except Exception:
+        logging.exception('Error setting log levels.')
 
 
 def _setup_certs(contains_python_dist: bool) -> None:

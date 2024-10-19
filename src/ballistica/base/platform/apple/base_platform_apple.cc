@@ -116,7 +116,7 @@ void BasePlatformApple::LoginAdapterGetSignInToken(
   if (login_type == "game_center") {
     BallisticaKit::GameCenterContext::getSignInToken(attempt_id);
   } else {
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         "Got unexpected get-sign-in-token login-type: " + login_type);
   }
 #else
@@ -130,7 +130,7 @@ void BasePlatformApple::LoginAdapterBackEndActiveChange(
   if (login_type == "game_center") {
     BallisticaKit::GameCenterContext::backEndActiveChange(active);
   } else {
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         "Got unexpected back-end-active-change login-type: " + login_type);
   }
 #else

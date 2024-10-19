@@ -72,7 +72,8 @@ void ConnectionToClientUDP::HandleGamePacket(
 
 void ConnectionToClientUDP::Die() {
   if (did_die_) {
-    Log(LogLevel::kError, "Posting multiple die messages; probably not good.");
+    Log(LogName::kBaNetworking, LogLevel::kError,
+        "Posting multiple die messages; probably not good.");
     return;
   }
   // this will actually clear the object..

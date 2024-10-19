@@ -223,9 +223,9 @@ auto Utils::GetValidUTF8(const char* str, const char* loc) -> std::string {
         }
       }
       logged_count++;
-      Log(LogLevel::kError, "GOT INVALID UTF8 SEQUENCE: (" + log_str
-                                + "); RETURNING '" + to + "'; LOC '" + loc
-                                + "'");
+      Log(LogName::kBa, LogLevel::kError,
+          "GOT INVALID UTF8 SEQUENCE: (" + log_str + "); RETURNING '" + to
+              + "'; LOC '" + loc + "'");
     }
 
   } else {

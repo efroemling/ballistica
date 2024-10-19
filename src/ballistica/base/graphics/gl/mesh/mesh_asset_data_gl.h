@@ -80,7 +80,7 @@ class RendererGL::MeshAssetDataGL : public MeshAssetRendererData {
       }
       case 4: {
         BA_LOG_ONCE(
-            LogLevel::kWarning,
+            LogName::kBaGraphics, LogLevel::kWarning,
             "GL WARNING - USING 32 BIT INDICES WHICH WONT WORK IN ES2!!");
         elem_count_ = static_cast<uint32_t>(model.indices32().size());
         index_type_ = GL_UNSIGNED_INT;

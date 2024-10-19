@@ -11,7 +11,7 @@ class Vector4f {
  public:
   Vector4f() = default;
   // NOLINTNEXTLINE saying we don't init v but in effect we do.
-  Vector4f(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+  Vector4f(float x, float y, float z, float a) : x(x), y(y), z(z), a(a) {}
 
   auto xyz() const -> Vector3f { return {x, y, z}; }
 
@@ -20,13 +20,14 @@ class Vector4f {
       float x;
       float y;
       float z;
-      float w;
+      float a;
     };
     float v[4];
   };
 };
 
-const Vector4f kVector4f0{0.0f, 0.0f, 0.0f, 0.0f};  // NOLINT(cert-err58-cpp)
+const Vector4f kVector4f0{0.0f, 0.0f, 0.0f, 0.0f};
+const Vector4f kVector4f1{1.0f, 1.0f, 1.0f, 1.0f};
 
 }  // namespace ballistica
 

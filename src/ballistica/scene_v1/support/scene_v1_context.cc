@@ -77,7 +77,8 @@ auto SceneV1Context::NewTimer(TimeType timetype, TimerMedium length,
 void SceneV1Context::DeleteTimer(TimeType timetype, int timer_id) {
   // We throw on NewTimer; lets just ignore anything that comes
   // through here to avoid messing up destructors.
-  Log(LogLevel::kError, "ContextTarget::DeleteTimer() called; unexpected.");
+  Log(LogName::kBa, LogLevel::kError,
+      "ContextTarget::DeleteTimer() called; unexpected.");
 }
 
 auto SceneV1Context::GetTime(TimeType timetype) -> millisecs_t {

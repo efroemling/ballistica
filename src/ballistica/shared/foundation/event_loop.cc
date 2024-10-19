@@ -545,7 +545,7 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
 
   // Now log anything we accumulated safely outside of the locked section.
   for (auto&& log_entry : log_entries) {
-    Log(log_entry.first, log_entry.second);
+    Log(LogName::kBa, log_entry.first, log_entry.second);
   }
 }
 
@@ -728,8 +728,9 @@ void EventLoop::AcquireGIL_() {
   if (debug_timing) {
     auto duration{core::CorePlatform::GetCurrentMillisecs() - startmillisecs};
     if (duration > (1000 / 120)) {
-      Log(LogLevel::kInfo, "GIL acquire took too long ("
-                               + std::to_string(duration) + " millisecs).");
+      Log(LogName::kBa, LogLevel::kInfo,
+          "GIL acquire took too long (" + std::to_string(duration)
+              + " millisecs).");
     }
   }
 }

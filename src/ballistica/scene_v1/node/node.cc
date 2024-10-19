@@ -18,7 +18,7 @@
 namespace ballistica::scene_v1 {
 
 NodeType::~NodeType() {
-  Log(LogLevel::kError,
+  Log(LogName::kBa, LogLevel::kError,
       "SHOULD NOT BE DESTRUCTING A TYPE type=(" + name_ + ")");
 }
 
@@ -265,7 +265,7 @@ void Node::DispatchOutOfBoundsMessage() {
   if (instance.Exists()) {
     DispatchUserMessage(instance.Get(), "Node OutOfBoundsMessage dispatch");
   } else {
-    Log(LogLevel::kError, "Error creating OutOfBoundsMessage");
+    Log(LogName::kBa, LogLevel::kError, "Error creating OutOfBoundsMessage");
   }
 }
 
@@ -282,7 +282,7 @@ void Node::DispatchPickUpMessage(Node* node) {
   if (instance.Exists()) {
     DispatchUserMessage(instance.Get(), "Node PickUpMessage dispatch");
   } else {
-    Log(LogLevel::kError, "Error creating PickUpMessage");
+    Log(LogName::kBa, LogLevel::kError, "Error creating PickUpMessage");
   }
 }
 
@@ -297,7 +297,7 @@ void Node::DispatchDropMessage() {
   if (instance.Exists()) {
     DispatchUserMessage(instance.Get(), "Node DropMessage dispatch");
   } else {
-    Log(LogLevel::kError, "Error creating DropMessage");
+    Log(LogName::kBa, LogLevel::kError, "Error creating DropMessage");
   }
 }
 
@@ -315,7 +315,7 @@ void Node::DispatchPickedUpMessage(Node* by_node) {
   if (instance.Exists()) {
     DispatchUserMessage(instance.Get(), "Node PickedUpMessage dispatch");
   } else {
-    Log(LogLevel::kError, "Error creating PickedUpMessage");
+    Log(LogName::kBa, LogLevel::kError, "Error creating PickedUpMessage");
   }
 }
 
@@ -333,7 +333,7 @@ void Node::DispatchDroppedMessage(Node* by_node) {
   if (instance.Exists()) {
     DispatchUserMessage(instance.Get(), "Node DroppedMessage dispatch");
   } else {
-    Log(LogLevel::kError, "Error creating DroppedMessage");
+    Log(LogName::kBa, LogLevel::kError, "Error creating DroppedMessage");
   }
 }
 
@@ -348,7 +348,7 @@ void Node::DispatchShouldShatterMessage() {
   if (instance.Exists()) {
     DispatchUserMessage(instance.Get(), "Node ShouldShatterMessage dispatch");
   } else {
-    Log(LogLevel::kError, "Error creating ShouldShatterMessage");
+    Log(LogName::kBa, LogLevel::kError, "Error creating ShouldShatterMessage");
   }
 }
 
@@ -364,7 +364,7 @@ void Node::DispatchImpactDamageMessage(float intensity) {
   if (instance.Exists()) {
     DispatchUserMessage(instance.Get(), "Node ImpactDamageMessage dispatch");
   } else {
-    Log(LogLevel::kError, "Error creating ImpactDamageMessage");
+    Log(LogName::kBa, LogLevel::kError, "Error creating ImpactDamageMessage");
   }
 }
 
@@ -392,7 +392,7 @@ void Node::DispatchUserMessage(PyObject* obj, const char* label) {
         c.Call(PythonRef(Py_BuildValue("(O)", obj), PythonRef::kSteal));
       }
     } catch (const std::exception& e) {
-      Log(LogLevel::kError,
+      Log(LogName::kBa, LogLevel::kError,
           std::string("Error in handlemessage() with message ")
               + PythonRef(obj, PythonRef::kAcquire).Str() + ": '" + e.what()
               + "'");

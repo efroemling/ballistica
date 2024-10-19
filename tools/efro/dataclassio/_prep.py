@@ -185,7 +185,7 @@ class PrepSession:
             # which allows us to pick up nested classes, etc.
             resolved_annotations = get_type_hints(
                 cls,
-                localns=vars(cls),  # type: ignore[arg-type]
+                localns=vars(cls),
                 globalns=self.globalns,
                 include_extras=True,
             )

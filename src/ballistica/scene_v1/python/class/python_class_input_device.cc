@@ -438,7 +438,7 @@ auto PythonClassInputDevice::GetButtonName(PythonClassInputDevice* self,
                           .Get(base::BasePython::ObjID::kLstrFromJsonCall)
                           .Call(args2);
   if (!results.Exists()) {
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         "Error creating Lstr from raw button name: '" + bname + "'");
     PythonRef args3(Py_BuildValue("(s)", "?"), PythonRef::kSteal);
     results = g_base->python->objs()

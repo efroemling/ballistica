@@ -24,12 +24,14 @@
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
+#include "ballistica/shared/math/vector4f.h"
 #include "ballistica/shared/python/python_command.h"
 
 namespace ballistica::base {
 
 // How much of the screen the console covers when it is at full size.
-const float kDevConsoleSize{0.9f};
+const float kDevConsoleFullSizeCoverage{0.9f};
+const float kDevConsoleMiniSize{100.0f};
 const int kDevConsoleLineLimit{80};
 const int kDevConsoleStringBreakUpSize{1950};
 const float kDevConsoleTabButtonCornerRadius{16.0f};
@@ -99,32 +101,32 @@ static auto IsValidHungryChar_(uint32_t this_char) -> bool {
           || (this_char >= 48 && this_char <= 57) || this_char == '_');
 }
 
-static void DrawRect(RenderPass* pass, Mesh* mesh, float bottom, float x,
-                     float y, float width, float height,
-                     const Vector3f& bgcolor) {
+static void DrawRect(RenderPass* pass, Mesh* mesh, float x, float y,
+                     float width, float height, const Vector3f& bgcolor,
+                     float alpha = 1.0f) {
   SimpleComponent c(pass);
   c.SetTransparent(true);
-  c.SetColor(bgcolor.x, bgcolor.y, bgcolor.z, 1.0f);
+  c.SetColor(bgcolor.x, bgcolor.y, bgcolor.z, alpha);
   c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCircle));
   // Draw mesh bg.
   if (mesh) {
     auto xf = c.ScopedTransform();
-    c.Translate(x, y + bottom, kDevConsoleZDepth);
+    c.Translate(x, y, kDevConsoleZDepth);
     c.DrawMesh(mesh);
   }
 }
 
-static void DrawText(RenderPass* pass, TextGroup* tgrp, float tscale,
-                     float bottom, float x, float y, const Vector3f& fgcolor) {
+static void DrawText(RenderPass* pass, TextGroup* tgrp, float tscale, float x,
+                     float y, const Vector3f& fgcolor, float alpha = 1.0f) {
   SimpleComponent c(pass);
   c.SetTransparent(true);
   // Draw text.
   {
     auto xf = c.ScopedTransform();
-    c.Translate(x, y + bottom, kDevConsoleZDepth);
+    c.Translate(x, y, kDevConsoleZDepth);
     c.Scale(tscale, tscale, 1.0f);
     int elem_count = tgrp->GetElementCount();
-    c.SetColor(fgcolor.x, fgcolor.y, fgcolor.z, 1.0f);
+    c.SetColor(fgcolor.x, fgcolor.y, fgcolor.z, alpha);
     c.SetFlatness(1.0f);
     for (int e = 0; e < elem_count; e++) {
       c.SetTexture(tgrp->GetElementTexture(e));
@@ -186,7 +188,8 @@ class DevConsole::Text_ : public DevConsole::Widget_ {
 
   void Draw(RenderPass* pass, float bottom) override {
     auto fgcolor = Vector3f{0.8f, 0.7f, 0.8f};
-    DrawText(pass, &text_group, scale, bottom, x + XOffs(h_attach), y, fgcolor);
+    DrawText(pass, &text_group, scale, x + XOffs(h_attach), bottom + y,
+             fgcolor);
   }
 };
 
@@ -203,11 +206,12 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
   TextGroup text_group;
   float text_scale;
   DevButtonStyle_ style;
+  bool disabled;
 
   template <typename F>
   Button_(const std::string& label, float text_scale, DevConsoleHAnchor_ attach,
           float x, float y, float width, float height, float corner_radius,
-          DevButtonStyle_ style, const F& lambda)
+          DevButtonStyle_ style, bool disabled, const F& lambda)
       : attach{attach},
         x{x},
         y{y},
@@ -216,6 +220,7 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
         call{NewLambdaRunnable(lambda)},
         text_scale{text_scale},
         style{style},
+        disabled{disabled},
         mesh(0.0f, 0.0f, 0.0f, width, height,
              NinePatchMesh::BorderForRadius(corner_radius, width, height),
              NinePatchMesh::BorderForRadius(corner_radius, height, width),
@@ -232,7 +237,9 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
 
   auto HandleMouseDown(float mx, float my) -> bool override {
     if (InUs(mx, my)) {
-      pressed = true;
+      if (!disabled) {
+        pressed = true;
+      }
       return true;
     }
     return false;
@@ -266,9 +273,11 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
         bgcolor =
             pressed ? Vector3f{0.8f, 0.7f, 0.8f} : Vector3f{0.25, 0.2f, 0.3f};
     }
-    DrawRect(pass, &mesh, bottom, x + XOffs(attach), y, width, height, bgcolor);
-    DrawText(pass, &text_group, text_scale, bottom,
-             x + XOffs(attach) + width * 0.5f, y + height * 0.5f, fgcolor);
+    float alpha = disabled ? 0.3f : 1.0f;
+    DrawRect(pass, &mesh, x + XOffs(attach), bottom + y, width, height, bgcolor,
+             alpha);
+    DrawText(pass, &text_group, text_scale, x + XOffs(attach) + width * 0.5f,
+             bottom + y + height * 0.5f, fgcolor, alpha);
   }
 };
 
@@ -336,12 +345,12 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
   }
 
   void Draw(RenderPass* pass, float bottom) override {
-    DrawRect(pass, &mesh, bottom, x + XOffs(attach), y, width, height,
+    DrawRect(pass, &mesh, x + XOffs(attach), bottom + y, width, height,
              pressed ? Vector3f{0.5f, 0.2f, 1.0f}
              : on    ? Vector3f{0.5f, 0.4f, 0.6f}
                      : Vector3f{0.25, 0.2f, 0.3f});
-    DrawText(pass, &text_group, text_scale, bottom,
-             x + XOffs(attach) + width * 0.5f, y + height * 0.5f,
+    DrawText(pass, &text_group, text_scale, x + XOffs(attach) + width * 0.5f,
+             bottom + y + height * 0.5f,
              pressed ? Vector3f{1.0f, 1.0f, 1.0f}
              : on    ? Vector3f{1.0f, 1.0f, 1.0f}
                      : Vector3f{0.8f, 0.7f, 0.8f});
@@ -417,12 +426,12 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
   }
 
   void Draw(RenderPass* pass, float bottom) override {
-    DrawRect(pass, &mesh, bottom, x + XOffs(attach), y, width, height,
+    DrawRect(pass, &mesh, x + XOffs(attach), bottom + y, width, height,
              pressed    ? Vector3f{0.4f, 0.2f, 0.8f}
              : selected ? Vector3f{0.4f, 0.3f, 0.4f}
                         : Vector3f{0.25, 0.2f, 0.3f});
-    DrawText(pass, &text_group, text_scale, bottom,
-             x + XOffs(attach) + width * 0.5f, y + height * 0.5f,
+    DrawText(pass, &text_group, text_scale, x + XOffs(attach) + width * 0.5f,
+             bottom + y + height * 0.5f,
              pressed    ? Vector3f{1.0f, 1.0f, 1.0f}
              : selected ? Vector3f{1.0f, 1.0f, 1.0f}
                         : Vector3f{0.6f, 0.5f, 0.6f});
@@ -431,10 +440,16 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
 
 class DevConsole::OutputLine_ {
  public:
-  OutputLine_(std::string s_in, double c)
-      : creation_time(c), s(std::move(s_in)) {}
-  double creation_time;
+  OutputLine_(std::string s_in, double creation_time, float scale,
+              Vector4f color)
+      : creation_time(creation_time),
+        s(std::move(s_in)),
+        scale(scale),
+        color(color) {}
   std::string s;
+  double creation_time;
+  float scale;
+  Vector4f color;
   auto GetText() -> TextGroup& {
     if (!s_mesh_.Exists()) {
       s_mesh_ = Object::New<TextGroup>();
@@ -555,7 +570,8 @@ void DevConsole::AddText(const char* text, float x, float y,
 void DevConsole::AddButton(const char* label, float x, float y, float width,
                            float height, PyObject* call,
                            const char* h_anchor_str, float label_scale,
-                           float corner_radius, const char* style_str) {
+                           float corner_radius, const char* style_str,
+                           bool disabled) {
   assert(g_base->InLogicThread());
 
   auto style = DevButtonStyleFromStr_(style_str);
@@ -563,7 +579,7 @@ void DevConsole::AddButton(const char* label, float x, float y, float width,
 
   widgets_.emplace_back(std::make_unique<Button_>(
       label, label_scale, h_anchor, x, y, width, height, corner_radius, style,
-      [this, callref = PythonRef::Acquired(call)] {
+      disabled, [this, callref = PythonRef::Acquired(call)] {
         if (callref.Get() != Py_None) {
           callref.Call();
         }
@@ -574,7 +590,7 @@ void DevConsole::AddPythonTerminal() {
   float bs = BaseScale();
   widgets_.emplace_back(std::make_unique<Button_>(
       "Exec", 0.5f * bs, DevConsoleHAnchor_::kRight, -33.0f * bs, 15.95f * bs,
-      32.0f * bs, 13.0f * bs, 2.0 * bs, DevButtonStyle_::kNormal,
+      32.0f * bs, 13.0f * bs, 2.0 * bs, DevButtonStyle_::kNormal, false,
       [this] { Exec(); }));
   python_terminal_visible_ = true;
 }
@@ -632,7 +648,11 @@ auto DevConsole::Width() -> float {
 }
 
 auto DevConsole::Height() -> float {
-  return g_base->graphics->screen_virtual_height() - Bottom_();
+  if (state_ == State_::kMini) {
+    return kDevConsoleMiniSize;
+  }
+  return g_base->graphics->screen_virtual_height()
+         * kDevConsoleFullSizeCoverage;
 }
 
 void DevConsole::HandleMouseUp(int button, float x, float y) {
@@ -678,7 +698,7 @@ void DevConsole::InvokeStringEditor_() {
                     .Get(BasePython::ObjID::kDevConsoleStringEditAdapterClass)
                     .Call();
   if (!result.Exists()) {
-    Log(LogLevel::kError, "Error invoking string edit dialog.");
+    Log(LogName::kBa, LogLevel::kError, "Error invoking string edit dialog.");
     return;
   }
 
@@ -1037,12 +1057,11 @@ auto DevConsole::HandleKeyRelease(const SDL_Keysym* keysym) -> bool {
 void DevConsole::Exec() {
   BA_PRECONDITION(g_base->InLogicThread());
   if (!input_enabled_) {
-    Log(LogLevel::kWarning, "Console input is not allowed yet.");
+    Log(LogName::kBa, LogLevel::kWarning, "Console input is not allowed yet.");
     return;
   }
   input_history_position_ = 0;
   if (input_string_ == "clear") {
-    last_line_.clear();
     output_lines_.clear();
   } else {
     SubmitPythonCommand_(input_string_);
@@ -1077,7 +1096,7 @@ void DevConsole::SubmitPythonCommand_(const std::string& command) {
     if (cmd.CanEval()) {
       auto obj = cmd.Eval(true, nullptr, nullptr);
       if (obj.Exists() && obj.Get() != Py_None) {
-        Print(obj.Repr() + "\n");
+        Print(obj.Repr(), 1.0f, kVector4f1);
       }
     } else {
       // Not eval-able; just exec it.
@@ -1129,23 +1148,21 @@ void DevConsole::ToggleState() {
   transition_start_ = g_base->logic->display_time();
 }
 
-void DevConsole::Print(const std::string& s_in) {
+void DevConsole::Print(const std::string& s_in, float scale, Vector4f color) {
   assert(g_base->InLogicThread());
   std::string s = Utils::GetValidUTF8(s_in.c_str(), "cspr");
-  last_line_ += s;
   std::vector<std::string> broken_up;
   g_base->text_graphics->BreakUpString(
-      last_line_.c_str(), kDevConsoleStringBreakUpSize, &broken_up);
+      s.c_str(), kDevConsoleStringBreakUpSize / scale, &broken_up);
 
-  // Spit out all completed lines and keep the last one as lastline.
-  for (size_t i = 0; i < broken_up.size() - 1; i++) {
-    output_lines_.emplace_back(broken_up[i], g_base->logic->display_time());
+  // Spit out all lines.
+  for (size_t i = 0; i < broken_up.size(); i++) {
+    output_lines_.emplace_back(broken_up[i], g_base->logic->display_time(),
+                               scale, color);
     if (output_lines_.size() > kDevConsoleLineLimit) {
       output_lines_.pop_front();
     }
   }
-  last_line_ = broken_up[broken_up.size() - 1];
-  last_line_mesh_dirty_ = true;
 }
 
 auto DevConsole::Bottom_() const -> float {
@@ -1160,30 +1177,29 @@ auto DevConsole::Bottom_() const -> float {
   // dev-consoles are not meant to be especially pretty and I think it is
   // more important for them to be able to be written to a known hard-coded
   // mini-size.
-  float mini_size = 100.0f;
-
+  //
   // Now that we have tabs and drop-shadows hanging down, we have to
   // overshoot the top of the screen when transitioning out.
   float top_buffer = 100.0f;
   if (state_ == State_::kMini) {
-    bottom = vh - mini_size;
+    bottom = vh - kDevConsoleMiniSize;
   } else {
-    bottom = vh - vh * kDevConsoleSize;
+    bottom = vh * (1.0f - kDevConsoleFullSizeCoverage);
   }
   if (g_base->logic->display_time() - transition_start_ < kTransitionSeconds) {
     float from_height;
     if (state_prev_ == State_::kMini) {
-      from_height = vh - mini_size;
+      from_height = vh - kDevConsoleMiniSize;
     } else if (state_prev_ == State_::kFull) {
-      from_height = vh - vh * kDevConsoleSize;
+      from_height = vh - vh * kDevConsoleFullSizeCoverage;
     } else {
       from_height = vh + top_buffer;
     }
     float to_height;
     if (state_ == State_::kMini) {
-      to_height = vh - mini_size;
+      to_height = vh - kDevConsoleMiniSize;
     } else if (state_ == State_::kFull) {
-      to_height = vh - vh * kDevConsoleSize;
+      to_height = vh - vh * kDevConsoleFullSizeCoverage;
     } else {
       to_height = vh + top_buffer;
     }
@@ -1203,6 +1219,31 @@ void DevConsole::Draw(FrameDef* frame_def) {
           && ((g_base->logic->display_time() - transition_start_)
               >= kTransitionSeconds))) {
     return;
+  }
+
+  // If the virtual screen size has changed, refresh.
+  auto screen_virtual_width{g_base->graphics->screen_virtual_width()};
+  auto screen_virtual_height{g_base->graphics->screen_virtual_height()};
+
+  if (last_virtual_res_x_ < 0.0f) {
+    // First time through, just grab current value; don't refresh.
+    last_virtual_res_x_ = screen_virtual_width;
+    last_virtual_res_y_ = screen_virtual_height;
+  } else {
+    // Otherwise if virtual res changed and its been long enough, refresh.
+    auto display_time{g_base->logic->display_time()};
+    double update_interval{0.2};
+    if (display_time > last_virtual_res_change_time_ + update_interval
+        && (last_virtual_res_x_ != screen_virtual_width
+            || last_virtual_res_y_ != screen_virtual_height)) {
+      last_virtual_res_x_ = screen_virtual_width;
+      last_virtual_res_y_ = screen_virtual_height;
+      last_virtual_res_change_time_ = display_time;
+      g_base->logic->event_loop()->PushCall([this] {
+        RefreshTabButtons_();
+        RefreshTabContents_();
+      });
+    }
   }
 
   float bottom = Bottom_();
@@ -1355,7 +1396,6 @@ void DevConsole::Draw(FrameDef* frame_def) {
     {
       SimpleComponent c(pass);
       c.SetTransparent(true);
-      c.SetColor(1, 1, 1, 1);
       c.SetFlatness(1.0f);
       float draw_scale = 0.64f;
       float v_inc = 18.0f;
@@ -1363,38 +1403,19 @@ void DevConsole::Draw(FrameDef* frame_def) {
                 * (g_base->graphics->screen_virtual_width()
                    - (kDevConsoleStringBreakUpSize * draw_scale));
       float v = bottom + 32.0f * bs;
-      if (!last_line_.empty()) {
-        if (last_line_mesh_dirty_) {
-          if (!last_line_mesh_group_.Exists()) {
-            last_line_mesh_group_ = Object::New<TextGroup>();
-          }
-          last_line_mesh_group_->SetText(last_line_);
-          last_line_mesh_dirty_ = false;
-        }
-        int elem_count = last_line_mesh_group_->GetElementCount();
-        for (int e = 0; e < elem_count; e++) {
-          c.SetTexture(last_line_mesh_group_->GetElementTexture(e));
-          {
-            auto xf = c.ScopedTransform();
-            c.Translate(h, v + 2, kDevConsoleZDepth);
-            c.Scale(draw_scale, draw_scale);
-            c.DrawMesh(last_line_mesh_group_->GetElementMesh(e));
-          }
-        }
-        v += v_inc;
-      }
       for (auto i = output_lines_.rbegin(); i != output_lines_.rend(); i++) {
         int elem_count = i->GetText().GetElementCount();
         for (int e = 0; e < elem_count; e++) {
+          c.SetColor(i->color.x, i->color.y, i->color.z, i->color.a);
           c.SetTexture(i->GetText().GetElementTexture(e));
           {
             auto xf = c.ScopedTransform();
             c.Translate(h, v + 2, kDevConsoleZDepth);
-            c.Scale(draw_scale, draw_scale);
+            c.Scale(draw_scale * i->scale, draw_scale * i->scale);
             c.DrawMesh(i->GetText().GetElementMesh(e));
           }
         }
-        v += v_inc;
+        v += v_inc * i->scale;
         if (v > pass->virtual_height() + v_inc) {
           break;
         }

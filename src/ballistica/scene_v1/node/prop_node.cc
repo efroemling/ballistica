@@ -274,7 +274,7 @@ void PropNode::SetBody(const std::string& val) {
   // we're ok with redundant sets, but complain/ignore if they try to switch..
   if (body_.Exists()) {
     if (body_type_ != body_type || shape_ != shape) {
-      Log(LogLevel::kError,
+      Log(LogName::kBa, LogLevel::kError,
           "body attr can not be changed from its initial value");
       return;
     }
@@ -436,8 +436,9 @@ void PropNode::Step() {
   if (body_type_ == BodyType::UNSET) {
     if (!reported_unset_body_type_) {
       reported_unset_body_type_ = true;
-      Log(LogLevel::kError, "prop-node " + GetObjectDescription()
-                                + " did not have its 'body' attr set.");
+      Log(LogName::kBa, LogLevel::kError,
+          "prop-node " + GetObjectDescription()
+              + " did not have its 'body' attr set.");
       return;
     }
   }

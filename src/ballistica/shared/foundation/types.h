@@ -284,6 +284,19 @@ enum class PyExcType : uint8_t {
   kWidgetNotFound
 };
 
+enum class LogName : uint8_t {
+  kRoot,
+  kBa,
+  kBaAccount,
+  kBaLifecycle,
+  kBaAudio,
+  kBaGraphics,
+  kBaAssets,
+  kBaInput,
+  kBaNetworking,
+  kLast  // Sentinel
+};
+
 enum class LogLevel : uint8_t {
   kDebug,
   kInfo,

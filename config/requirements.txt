@@ -2,9 +2,9 @@ cpplint==2.0.0
 dmgbuild==1.6.2
 filelock==3.16.1
 furo==2024.8.6
-mypy==1.11.2
+mypy==1.12.0
 pbxproj==4.2.1
-pdoc==14.7.0
+pdoc==15.0.0
 pur==7.3.2
 pylint==3.3.1
 pylsp-mypy==0.6.9
@@ -13,10 +13,10 @@ python-daemon==3.0.1
 python-lsp-black==2.0.0
 python-lsp-server==1.12.0
 requests==2.32.3
-Sphinx==8.0.2
+Sphinx==8.1.3
 tomlkit==0.13.2
 types-certifi==2021.10.8.3
 types-filelock==3.2.7
-types-requests==2.32.0.20240914
+types-requests==2.32.0.20241016
 typing_extensions==4.12.2
 urllib3==2.2.3

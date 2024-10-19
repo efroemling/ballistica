@@ -144,7 +144,8 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
   }
 
   if (data.empty()) {
-    Log(LogLevel::kError, "ConnectionToClient got data size 0.");
+    Log(LogName::kBaNetworking, LogLevel::kError,
+        "ConnectionToClient got data size 0.");
     return;
   }
 
@@ -157,7 +158,8 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
     case BA_SCENEPACKET_HANDSHAKE_RESPONSE: {
       // We sent the client a handshake and they're responding.
       if (data.size() < 3) {
-        Log(LogLevel::kError, "got invalid BA_SCENEPACKET_HANDSHAKE_RESPONSE");
+        Log(LogName::kBaNetworking, LogLevel::kError,
+            "got invalid BA_SCENEPACKET_HANDSHAKE_RESPONSE");
         return;
       }
 
@@ -350,7 +352,8 @@ void ConnectionToClient::SendScreenMessage(const std::string& s, float r,
 void ConnectionToClient::HandleMessagePacket(
     const std::vector<uint8_t>& buffer) {
   if (buffer.empty()) {
-    Log(LogLevel::kError, "Got invalid HandleMessagePacket.");
+    Log(LogName::kBaNetworking, LogLevel::kError,
+        "Got invalid HandleMessagePacket.");
     return;
   }
 
@@ -404,7 +407,8 @@ void ConnectionToClient::HandleMessagePacket(
           if (b) {
             build_number_ = b->valueint;
           } else {
-            Log(LogLevel::kError, "No buildnumber in clientinfo msg.");
+            Log(LogName::kBaNetworking, LogLevel::kError,
+                "No buildnumber in clientinfo msg.");
           }
 
           // Grab their token (we use this to ask the
@@ -413,7 +417,8 @@ void ConnectionToClient::HandleMessagePacket(
           if (t) {
             token_ = t->valuestring;
           } else {
-            Log(LogLevel::kError, "No token in clientinfo msg.");
+            Log(LogName::kBaNetworking, LogLevel::kError,
+                "No token in clientinfo msg.");
           }
 
           // Newer clients also pass a peer-hash, which
@@ -432,7 +437,7 @@ void ConnectionToClient::HandleMessagePacket(
           }
           cJSON_Delete(info);
         } else {
-          Log(LogLevel::kError,
+          Log(LogName::kBaNetworking, LogLevel::kError,
               "Got invalid json in clientinfo message: '"
                   + std::string(reinterpret_cast<const char*>(&(buffer[1])))
                   + "'.");
@@ -473,7 +478,7 @@ void ConnectionToClient::HandleMessagePacket(
       // we support for game streams vs client-connections.  We could disallow
       // connections to/from these older peers while still allowing old replays
       // to play back.
-      BA_LOG_ONCE(LogLevel::kError,
+      BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
                   "Received old pre-json player profiles msg; ignoring.");
       break;
     }
@@ -501,7 +506,7 @@ void ConnectionToClient::HandleMessagePacket(
         // spamming before we can verify their identities)
         if (appmode->require_client_authentication()
             && !got_info_from_master_server_) {
-          Log(LogLevel::kError,
+          Log(LogName::kBaNetworking, LogLevel::kError,
               "Ignoring chat message from peer with no client info.");
           SendScreenMessage(R"({"r":"loadingTryAgainText"})", 1, 0, 0);
         } else if (last_chat_times_.size() >= 5) {
@@ -599,7 +604,8 @@ void ConnectionToClient::HandleMessagePacket(
               GetClientInputDevice(buffer[1])) {
         int count = static_cast<int>((buffer.size() - 2) / 5);
         if ((buffer.size() - 2) % 5 != 0) {
-          Log(LogLevel::kError, "Error: invalid player-input-commands packet");
+          Log(LogName::kBaNetworking, LogLevel::kError,
+              "Error: invalid player-input-commands packet");
           break;
         }
         int index = 2;
@@ -617,7 +623,8 @@ void ConnectionToClient::HandleMessagePacket(
     case BA_MESSAGE_REMOVE_REMOTE_PLAYER: {
       last_remove_player_time_ = g_core->GetAppTimeMillisecs();
       if (buffer.size() != 2) {
-        Log(LogLevel::kError, "Error: invalid remove-remote-player packet");
+        Log(LogName::kBaNetworking, LogLevel::kError,
+            "Error: invalid remove-remote-player packet");
         break;
       }
       if (ClientInputDevice* cid = GetClientInputDevice(buffer[1])) {
@@ -632,7 +639,7 @@ void ConnectionToClient::HandleMessagePacket(
             host_session->RemovePlayer(player);
           }
         } else {
-          Log(LogLevel::kError,
+          Log(LogName::kBaNetworking, LogLevel::kError,
               "Unable to get ClientInputDevice for remove-remote-player msg.");
         }
       }
@@ -641,7 +648,8 @@ void ConnectionToClient::HandleMessagePacket(
 
     case BA_MESSAGE_REQUEST_REMOTE_PLAYER: {
       if (buffer.size() != 2) {
-        Log(LogLevel::kError, "Error: invalid remote-player-request packet");
+        Log(LogName::kBaNetworking, LogLevel::kError,
+            "Error: invalid remote-player-request packet");
         break;
       }
 
@@ -652,7 +660,7 @@ void ConnectionToClient::HandleMessagePacket(
       // It should have one of our special client delegates attached.
       auto* cid_d = dynamic_cast<ClientInputDeviceDelegate*>(&cid->delegate());
       if (!cid_d) {
-        Log(LogLevel::kError,
+        Log(LogName::kBaNetworking, LogLevel::kError,
             "Can't get client-input-device-delegate in request-remote-player "
             "msg.");
         break;
@@ -676,7 +684,7 @@ void ConnectionToClient::HandleMessagePacket(
           } else {
             // Either timed out or have info; let the request go through.
             if (still_waiting_for_auth) {
-              Log(LogLevel::kError,
+              Log(LogName::kBaNetworking, LogLevel::kError,
                   "Allowing player-request without client\'s master-server "
                   "info (build "
                       + std::to_string(build_number_) + ")");
@@ -685,7 +693,7 @@ void ConnectionToClient::HandleMessagePacket(
           }
         }
       } else {
-        Log(LogLevel::kError,
+        Log(LogName::kBaNetworking, LogLevel::kError,
             "ConnectionToClient got remote player"
             " request but have no host session");
       }
@@ -699,9 +707,9 @@ void ConnectionToClient::HandleMessagePacket(
         if (multipart_buffer_size() > 50000) {
           // Its not actually unknown but shhh don't tell the hackers...
           SendScreenMessage(R"({"r":"errorUnknownText"})", 1, 0, 0);
-          Log(LogLevel::kError, "Client data limit exceeded by '"
-                                    + peer_spec().GetShortName()
-                                    + "'; kicking.");
+          Log(LogName::kBaNetworking, LogLevel::kError,
+              "Client data limit exceeded by '" + peer_spec().GetShortName()
+                  + "'; kicking.");
           appmode->BanPlayer(peer_spec(), 1000 * 60);
           Error("");
           return;
@@ -792,8 +800,9 @@ void ConnectionToClient::HandleMasterServerClientInfo(PyObject* info_obj) {
           "{\"t\":[\"serverResponses\","
           "\"Your account was rejected. Are you signed in?\"]}",
           1, 0, 0);
-      Log(LogLevel::kError, "Master server found no valid account for '"
-                                + peer_spec().GetShortName() + "'; kicking.");
+      Log(LogName::kBaNetworking, LogLevel::kError,
+          "Master server found no valid account for '"
+              + peer_spec().GetShortName() + "'; kicking.");
 
       // Not benning anymore. People were exploiting this by impersonating
       // other players using their public ids to get them banned from

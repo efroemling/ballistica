@@ -18,6 +18,7 @@
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/utils.h"
+#include "ballistica/shared/math/vector4f.h"
 
 namespace ballistica::base {
 
@@ -165,13 +166,13 @@ void UI::OnAppStart() {
   if (force_scale_) {
     if (scale_ == UIScale::kSmall) {
       ScreenMessage("FORCING SMALL UI FOR TESTING", Vector3f(1, 0, 0));
-      Log(LogLevel::kInfo, "FORCING SMALL UI FOR TESTING");
+      Log(LogName::kBa, LogLevel::kInfo, "FORCING SMALL UI FOR TESTING");
     } else if (scale_ == UIScale::kMedium) {
       ScreenMessage("FORCING MEDIUM UI FOR TESTING", Vector3f(1, 0, 0));
-      Log(LogLevel::kInfo, "FORCING MEDIUM UI FOR TESTING");
+      Log(LogName::kBa, LogLevel::kInfo, "FORCING MEDIUM UI FOR TESTING");
     } else if (scale_ == UIScale::kLarge) {
       ScreenMessage("FORCING LARGE UI FOR TESTING", Vector3f(1, 0, 0));
-      Log(LogLevel::kInfo, "FORCING LARGE UI FOR TESTING");
+      Log(LogName::kBa, LogLevel::kInfo, "FORCING LARGE UI FOR TESTING");
     } else {
       FatalError("Unhandled scale.");
     }
@@ -576,7 +577,8 @@ void UI::ShowURL(const std::string& url) {
     g_base->logic->event_loop()->PushCall(
         [ui_delegate, url] { ui_delegate->DoShowURL(url); });
   } else {
-    Log(LogLevel::kWarning, "UI::ShowURL called without ui_delegate present.");
+    Log(LogName::kBa, LogLevel::kWarning,
+        "UI::ShowURL called without ui_delegate present.");
   }
 }
 
@@ -621,7 +623,8 @@ void UI::SetUIDelegate(base::UIDelegateInterface* delegate) {
   }
 }
 
-void UI::PushDevConsolePrintCall(const std::string& msg) {
+void UI::PushDevConsolePrintCall(const std::string& msg, float scale,
+                                 Vector4f color) {
   // Completely ignore this stuff in headless mode.
   if (g_core->HeadlessMode()) {
     return;
@@ -630,12 +633,14 @@ void UI::PushDevConsolePrintCall(const std::string& msg) {
   // printed. Otherwise store it for the console to grab when it's ready.
   if (auto* event_loop = g_base->logic->event_loop()) {
     if (dev_console_ != nullptr) {
-      event_loop->PushCall([this, msg] { dev_console_->Print(msg); });
+      event_loop->PushCall([this, msg, scale, color] {
+        dev_console_->Print(msg, scale, color);
+      });
       return;
     }
   }
   // Didn't send a print; store for later.
-  dev_console_startup_messages_ += msg;
+  dev_console_startup_messages_.emplace_back(msg, scale, color);
 }
 
 void UI::OnAssetsAvailable() {
@@ -648,7 +653,10 @@ void UI::OnAssetsAvailable() {
 
     // Print any messages that have built up.
     if (!dev_console_startup_messages_.empty()) {
-      dev_console_->Print(dev_console_startup_messages_);
+      for (auto&& entry : dev_console_startup_messages_) {
+        dev_console_->Print(std::get<0>(entry), std::get<1>(entry),
+                            std::get<2>(entry));
+      }
       dev_console_startup_messages_.clear();
     }
   }

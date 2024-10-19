@@ -1,9 +1,24 @@
-### 1.7.37 (build 22025, api 9, 2024-10-07)
+### 1.7.37 (build 22040, api 9, 2024-10-19)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
   I'm hopeful that api version won't need to be bumped again for along time (if
   ever).
+- Heavily reworked and cleaned up the logging system. There is now a 'ba' Python
+  logger and various logger categories under it such as 'ba.lifecycle',
+  'ba.connectivity' or 'ba.v2transport'. By setting these individual loggers to
+  different levels such as 'debug', one can easily observe and debug specific
+  parts of app behavior. Over time I will better organize the logger hierarchy
+  and wire up more functionality to be logged this way.
+- Added a 'Logging' tab to the dev-console. This allows easily setting log
+  levels for all existing Python loggers, as well as resetting them all to
+  defaults. Levels set here are restored on startup, so it is possible to debug
+  app startup behavior this way. Previously this sort of thing would generally
+  require setting cryptic environment variables which was not feasable on all
+  platforms, but this new system should work everywhere.
+- Logs printed to both the command line and the in-app console now include
+  timestamps and logger names, and are color coded for severity (DEBUG=blue,
+  INFO=default, WARNING=orange/yellow, ERROR=red, CRITICAL=purple).
 - Went ahead and fully removed `efro.call.tpartial` (since we're breaking
   compatibility anyway by bumping api version). If you are using
   `efro.call.tpartial` anywhere, simply replace it with `functools.partial`.
@@ -113,6 +128,8 @@
   it will take you back to the co-op screen.
 - (build 22018) Hardened SDL joystick handling code so the app won't crash if
   SDL_JoystickOpen() returns nullptr for whatever reason.
+- (build 22028) Fixed a longstanding issue that could cause logic thread
+  bg-dynamics message overflows.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these
@@ -159,6 +176,8 @@
   version and then upgrading to later builds of the same version containing
   incompatibilities with the older sys scripts. This should help with that
   problem.
+- `efro.log` is now `efro.logging` which better lines up with other logging
+  module names. It was originally named `log` to work around a mypy bug.
   
 ### 1.7.35 (build 21889, api 8, 2024-06-20)
 - Fixed an issue where the engine would block at exit on some version of Linux

@@ -227,7 +227,7 @@ static auto PyGetUIInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
       // Assuming this would be due to getting called in another app-mode.
       // Wonder if it would be wise to error in that case...
       BA_LOG_ONCE(
-          LogLevel::kWarning,
+          LogName::kBa, LogLevel::kWarning,
           "scene_v1: Found unexpected delegate "
               + (delegate ? delegate->GetObjectDescription() : "(nullptr)")
               + " for ui-input-device " + d->GetObjectDescription() + ".");

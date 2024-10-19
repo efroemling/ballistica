@@ -23,6 +23,7 @@ from babase._appmodeselector import AppModeSelector
 from babase._appintent import AppIntentDefault, AppIntentExec
 from babase._stringedit import StringEditSubsystem
 from babase._devconsole import DevConsoleSubsystem
+from babase._appconfig import AppConfig
 
 if TYPE_CHECKING:
     import asyncio
@@ -182,6 +183,11 @@ class App:
         if os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') == '1':
             return
 
+        # Wrap our raw app config in our special wrapper and pass it to
+        # the native layer.
+        self.config = AppConfig(_babase.get_initial_app_config())
+        _babase.set_app_config(self.config)
+
         self.env: babase.Env = _babase.Env()
         self.state = self.State.NOT_STARTED
 
@@ -223,7 +229,7 @@ class App:
         self._asyncio_loop: asyncio.AbstractEventLoop | None = None
         self._asyncio_tasks: set[asyncio.Task] = set()
         self._asyncio_timer: babase.AppTimer | None = None
-        self._config: babase.AppConfig | None = None
+        # self._config: babase.AppConfig | None = None
         self._pending_intent: AppIntent | None = None
         self._intent: AppIntent | None = None
         self._mode_selector: babase.AppModeSelector | None = None
@@ -330,11 +336,12 @@ class App:
 
         self._asyncio_tasks.remove(task)
 
-    @property
-    def config(self) -> babase.AppConfig:
-        """The babase.AppConfig instance representing the app's config state."""
-        assert self._config is not None
-        return self._config
+    # @property
+    # def config(self) -> babase.AppConfig:
+    #     """The babase.AppConfig instance
+    # representing the app's config state."""
+    #     assert self._config is not None
+    #     return self._config
 
     @property
     def mode_selector(self) -> babase.AppModeSelector:
@@ -584,12 +591,6 @@ class App:
         assert _babase.in_logic_thread()
         if self._mode is not None:
             self._mode.on_app_active_changed()
-
-    def read_config(self) -> None:
-        """(internal)"""
-        from babase._appconfig import read_app_config
-
-        self._config = read_app_config()
 
     def handle_deep_link(self, url: str) -> None:
         """Handle a deep link URL."""

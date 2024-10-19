@@ -3,11 +3,13 @@
 #ifndef BALLISTICA_BASE_UI_UI_H_
 #define BALLISTICA_BASE_UI_UI_H_
 
+#include <list>
 #include <string>
 #include <vector>
 
 #include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/base/ui/widget_message.h"
+#include "ballistica/shared/math/vector4f.h"
 
 // Predeclare a few things from ui_v1.
 namespace ballistica::ui_v1 {
@@ -123,7 +125,8 @@ class UI {
 
   auto* dev_console() const { return dev_console_; }
 
-  void PushDevConsolePrintCall(const std::string& msg);
+  void PushDevConsolePrintCall(const std::string& msg, float scale,
+                               Vector4f color);
 
   auto* delegate() const { return delegate_; }
 
@@ -154,7 +157,8 @@ class UI {
   OperationContext* operation_context_{};
   base::UIDelegateInterface* delegate_{};
   DevConsole* dev_console_{};
-  std::string dev_console_startup_messages_;
+  std::list<std::tuple<std::string, float, Vector4f>>
+      dev_console_startup_messages_;
   millisecs_t last_input_device_use_time_{};
   millisecs_t last_widget_input_reject_err_sound_time_{};
   UIScale scale_{UIScale::kLarge};

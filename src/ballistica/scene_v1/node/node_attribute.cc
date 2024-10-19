@@ -52,7 +52,7 @@ auto NodeAttributeUnbound::GetNodeAttributeTypeName(NodeAttributeType t)
     case NodeAttributeType::kCollisionMeshArray:
       return "collision-mesh-array";
     default:
-      Log(LogLevel::kError,
+      Log(LogName::kBa, LogLevel::kError,
           "Unknown attr type name: " + std::to_string(static_cast<int>(t)));
       return "unknown";
   }
@@ -102,7 +102,8 @@ void NodeAttributeUnbound::DisconnectIncoming(Node* node) {
 
 #if BA_DEBUG_BUILD
     if (test_ref.Exists()) {
-      Log(LogLevel::kError, "Attr connection still exists after ref releases!");
+      Log(LogName::kBa, LogLevel::kError,
+          "Attr connection still exists after ref releases!");
     }
 #endif
   }

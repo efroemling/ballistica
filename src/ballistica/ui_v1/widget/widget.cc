@@ -38,7 +38,7 @@ void Widget::SetToolbarVisibility(ToolbarVisibility v) {
 
 auto Widget::IsInMainStack() const -> bool {
   if (!g_base->ui) {
-    BA_LOG_ONCE(LogLevel::kError,
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                 "Widget::IsInMainStack() called before ui creation.");
     return false;
   }
@@ -193,7 +193,7 @@ void Widget::ScreenPointToWidget(float* x, float* y) const {
   float y_test = *y;
   WidgetPointToScreen(&x_test, &y_test);
   if (std::abs(x_test - x_old) > 0.01f || std::abs(y_test - y_old) > 0.01f) {
-    Log(LogLevel::kError,
+    Log(LogName::kBa, LogLevel::kError,
         "ScreenPointToWidget sanity check error: expected ("
             + std::to_string(x_old) + "," + std::to_string(y_old) + ") got ("
             + std::to_string(x_test) + "," + std::to_string(y_test) + ")");

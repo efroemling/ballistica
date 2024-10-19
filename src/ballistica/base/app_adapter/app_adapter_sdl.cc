@@ -61,7 +61,7 @@ void AppAdapterSDL::OnMainThreadStartApp() {
   uint32_t sdl_flags{SDL_INIT_VIDEO | SDL_INIT_JOYSTICK};
 
   if (strict_graphics_context_) {
-    Log(LogLevel::kWarning,
+    Log(LogName::kBaNetworking, LogLevel::kWarning,
         "AppAdapterSDL strict_graphics_context_ is enabled."
         " Remember to turn this off.");
   }
@@ -309,7 +309,8 @@ void AppAdapterSDL::SleepUntilNextEventCycle_(microsecs_t cycle_start_time) {
   const microsecs_t min_sleep{2000};
   if (now + min_sleep >= target_time) {
     if (debug_log_sdl_frame_timing_) {
-      Log(LogLevel::kDebug, "no sleep.");  // 'till brooklyn!
+      Log(LogName::kBaNetworking, LogLevel::kDebug,
+          "no sleep.");  // 'till brooklyn!
     }
   } else {
     if (debug_log_sdl_frame_timing_) {
@@ -317,7 +318,7 @@ void AppAdapterSDL::SleepUntilNextEventCycle_(microsecs_t cycle_start_time) {
       snprintf(buf, sizeof(buf), "render %.1f sleep %.1f",
                (now - cycle_start_time) / 1000.0f,
                (target_time - now) / 1000.0f);
-      Log(LogLevel::kDebug, buf);
+      Log(LogName::kBaNetworking, LogLevel::kDebug, buf);
     }
     g_core->platform->SleepMicrosecs(target_time - now);
   }
@@ -375,8 +376,9 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
           g_base->input->PushJoystickEvent(event, js);
         }
       } else {
-        Log(LogLevel::kError, "Unable to get SDL Joystick for event type "
-                                  + std::to_string(event.type));
+        Log(LogName::kBaInput, LogLevel::kError,
+            "Unable to get SDL Joystick for event type "
+                + std::to_string(event.type));
       }
       break;
     }
@@ -563,7 +565,7 @@ void AppAdapterSDL::OnSDLJoystickAdded_(int device_index) {
   try {
     j = Object::NewDeferred<JoystickInput>(device_index);
   } catch (const std::exception& exc) {
-    Log(LogLevel::kError,
+    Log(LogName::kBaInput, LogLevel::kError,
         std::string("Error creating JoystickInput for SDL device-index "
                     + std::to_string(device_index) + ": ")
             + exc.what());
@@ -602,7 +604,7 @@ void AppAdapterSDL::RemoveSDLInputDevice_(int index) {
 
   // Note: am running into this with a PS5 controller on macOS Sequoia beta.
   if (!j) {
-    Log(LogLevel::kError,
+    Log(LogName::kBaInput, LogLevel::kError,
         "GetSDLJoystickInput_() returned nullptr on RemoveSDLInputDevice_();"
         " joysticks size is "
             + std::to_string(sdl_joysticks_.size()) + "; index is "
@@ -614,9 +616,10 @@ void AppAdapterSDL::RemoveSDLInputDevice_(int index) {
   if (static_cast_check_fit<int>(sdl_joysticks_.size()) > index) {
     sdl_joysticks_[index] = nullptr;
   } else {
-    Log(LogLevel::kError, "Invalid index on RemoveSDLInputDevice: size is "
-                              + std::to_string(sdl_joysticks_.size())
-                              + "; index is " + std::to_string(index) + ".");
+    Log(LogName::kBaInput, LogLevel::kError,
+        "Invalid index on RemoveSDLInputDevice: size is "
+            + std::to_string(sdl_joysticks_.size()) + "; index is "
+            + std::to_string(index) + ".");
   }
   g_base->input->PushRemoveInputDeviceCall(j, true);
 }
@@ -785,7 +788,8 @@ void AppAdapterSDL::DoPushGraphicsContextRunnable(Runnable* runnable) {
   if (strict_graphics_context_) {
     auto lock = std::scoped_lock(strict_graphics_calls_mutex_);
     if (strict_graphics_calls_.size() > 1000) {
-      BA_LOG_ONCE(LogLevel::kError, "strict_graphics_calls_ got too big.");
+      BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
+                  "strict_graphics_calls_ got too big.");
     }
     strict_graphics_calls_.push_back(runnable);
   } else {

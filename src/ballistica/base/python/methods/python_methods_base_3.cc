@@ -110,7 +110,7 @@ static auto PySetUIScale(PyObject* self, PyObject* args, PyObject* keywds)
   const char* scalestr;
 
   static const char* kwlist[] = {"scale", nullptr};
-  PyObject* input_device_id_obj = Py_None;
+  // PyObject* input_device_id_obj = Py_None;
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
                                    const_cast<char**>(kwlist), &scalestr)) {
     return nullptr;
@@ -328,7 +328,8 @@ static auto PySetUpSigInt(PyObject* self) -> PyObject* {
   if (g_base) {
     g_base->platform->SetupInterruptHandling();
   } else {
-    Log(LogLevel::kError, "setup_sigint called before g_base exists.");
+    Log(LogName::kBa, LogLevel::kError,
+        "setup_sigint called before g_base exists.");
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1578,13 +1579,14 @@ static auto PyDevConsoleAddButton(PyObject* self, PyObject* args) -> PyObject* {
   float label_scale;
   float corner_radius;
   const char* style;
-  if (!PyArg_ParseTuple(args, "sffffOsffs", &label, &x, &y, &width, &height,
-                        &call, &h_anchor, &label_scale, &corner_radius,
-                        &style)) {
+  int disabled;
+  if (!PyArg_ParseTuple(args, "sffffOsffsp", &label, &x, &y, &width, &height,
+                        &call, &h_anchor, &label_scale, &corner_radius, &style,
+                        &disabled)) {
     return nullptr;
   }
   dev_console->AddButton(label, x, y, width, height, call, h_anchor,
-                         label_scale, corner_radius, style);
+                         label_scale, corner_radius, style, disabled);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1605,6 +1607,7 @@ static PyMethodDef PyDevConsoleAddButtonDef = {
     "  label_scale: float,\n"
     "  corner_radius: float,\n"
     "  style: str,\n"
+    "  disabled: bool,\n"
     ") -> None\n"
     "\n"
     "(internal)",
@@ -1970,6 +1973,26 @@ static PyMethodDef PyGetDrawUIBoundsDef = {
     "(internal)",
 };
 
+// -------------------------- get_initial_app_config ---------------------------
+
+static auto PyGetInitialAppConfig(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  return g_core->HandOverInitialAppConfig();
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetInitialAppConfigDef = {
+    "get_initial_app_config",            // name
+    (PyCFunction)PyGetInitialAppConfig,  // method
+    METH_NOARGS,                         // flags
+
+    "get_initial_app_config() -> dict\n"
+    "\n"
+    "(internal)",
+};
+
 // --------------------------- set_draw_ui_bounds -----------------------------
 
 static auto PySetDrawUIBounds(PyObject* self, PyObject* args, PyObject* keywds)
@@ -2020,6 +2043,53 @@ static PyMethodDef PyPushBackPressDef = {
     "(internal)",
 };
 
+// ---------------------------- set_app_config ---------------------------------
+
+static auto PySetAppConfig(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* config_obj;
+  if (!PyArg_ParseTuple(args, "O", &config_obj)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(PyDict_Check(config_obj));
+  g_base->python->SetConfig(config_obj);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetAppConfigDef = {
+    "set_app_config",  // name
+    PySetAppConfig,    // method
+    METH_VARARGS,      // flags
+
+    "set_app_config(config: dict) -> None\n"
+    "\n"
+    "(internal)",
+};
+
+// --------------------- update_internal_logger_levels -------------------------
+
+static auto PyUpdateInternalLoggerLevels(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  g_core->UpdateInternalLoggerLevels();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyUpdateInternalLoggerLevelsDef = {
+    "update_internal_logger_levels",            // name
+    (PyCFunction)PyUpdateInternalLoggerLevels,  // method
+    METH_NOARGS,                                // flags
+
+    "update_internal_logger_levels() -> None\n"
+    "\n"
+    "Update the native layer to re-cache Python logger levels.\n"
+    "\n"
+    "The native layer caches logger levels so it can efficiently\n"
+    "avoid making Python log calls for disabled logger levels. If any\n"
+    "logger levels are changed at runtime, call this method after to\n"
+    "instruct the native layer to regenerate its cache so the change\n"
+    "is properly reflected in logs originating from the native layer."};
 // -----------------------------------------------------------------------------
 
 auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
@@ -2095,6 +2165,9 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyPushBackPressDef,
       PyGetDrawUIBoundsDef,
       PySetDrawUIBoundsDef,
+      PyGetInitialAppConfigDef,
+      PySetAppConfigDef,
+      PyUpdateInternalLoggerLevelsDef,
   };
 }
 
