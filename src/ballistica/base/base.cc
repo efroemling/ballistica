@@ -213,10 +213,6 @@ void BaseFeatureSet::StartApp() {
   // We'll explicitly grab it if/when we need it.
   Python::ScopedInterpreterLockRelease gil_release;
 
-  // Read in ba.app.config for anyone who wants to start looking at it
-  // (though we don't explicitly ask anyone to apply it until later).
-  // python->ReadConfig();
-
   // Allow our subsystems to start doing work in their own threads and
   // communicating with other subsystems. Note that we may still want to run
   // some things serially here and ordering may be important (for instance
@@ -666,7 +662,6 @@ void BaseFeatureSet::DoV1CloudLog(const std::string& msg) {
     static bool warned = false;
     if (!warned) {
       warned = true;
-      printf("MSG %s\n", msg.c_str());
       printf(
           "WARNING: V1CloudLog called before babase fully imported; "
           "ignoring.\n");

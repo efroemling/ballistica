@@ -517,8 +517,6 @@ void HostSession::Update(int time_advance_millisecs, double time_advance) {
         time_advance_millisecs, time_advance);
   }
 
-  // printf("ADV %d %f\n", time_advance_millisecs, time_advance);
-
   // We can be killed at any time, so let's keep an eye out for that.
   WeakRef<HostSession> test_ref(this);
   assert(test_ref.Exists());

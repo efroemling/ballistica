@@ -611,7 +611,6 @@ void RootWidget::Setup() {
     b.h_align = 0.0f;
     b.v_align = VAlign::kBottom;
     b.width = b.height = 60.0f;
-    // b.x = bx;
     b.y = b.height * 0.5f + 2.0f;
     b.color_r = BOT_LEFT_COLOR_R;
     b.color_g = BOT_LEFT_COLOR_G;
@@ -629,8 +628,6 @@ void RootWidget::Setup() {
 
     auto centerx = -1.5f;
     auto centery = 8.0f;
-    // auto offsx = 5.5f;
-    // auto offsy = 5.5f;
     {
       TextDef td;
       td.button = achievements_button_;
@@ -984,10 +981,6 @@ void RootWidget::StepPositions_(float dt) {
       if (!b.allow_in_main_menu) {
         enable_button = false;
       }
-      // Disallow menu button in the main menu.
-      // if (&b == menu_button_) {
-      //   enable_button = false;
-      // }
     } else {
       if (!b.allow_in_game) {
         enable_button = false;

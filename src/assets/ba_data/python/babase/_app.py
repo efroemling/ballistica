@@ -229,7 +229,6 @@ class App:
         self._asyncio_loop: asyncio.AbstractEventLoop | None = None
         self._asyncio_tasks: set[asyncio.Task] = set()
         self._asyncio_timer: babase.AppTimer | None = None
-        # self._config: babase.AppConfig | None = None
         self._pending_intent: AppIntent | None = None
         self._intent: AppIntent | None = None
         self._mode_selector: babase.AppModeSelector | None = None
@@ -335,13 +334,6 @@ class App:
             logging.exception('Error reporting async task error.')
 
         self._asyncio_tasks.remove(task)
-
-    # @property
-    # def config(self) -> babase.AppConfig:
-    #     """The babase.AppConfig instance
-    # representing the app's config state."""
-    #     assert self._config is not None
-    #     return self._config
 
     @property
     def mode_selector(self) -> babase.AppModeSelector:
@@ -960,6 +952,7 @@ class App:
                     if not self._called_on_running:
                         self._called_on_running = True
                         self._on_running()
+
             # Entering or returning to loading state:
             elif self._init_completed:
                 if self.state is not self.State.LOADING:

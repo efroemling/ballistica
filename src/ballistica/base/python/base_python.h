@@ -124,7 +124,6 @@ class BasePython {
   void ImportPythonObjs();
   void ImportPythonAppObjs();
   void SetConfig(PyObject* config);
-  // void ReadConfig();
 
   const auto& objs() { return objs_; }
 

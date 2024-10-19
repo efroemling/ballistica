@@ -1,4 +1,4 @@
-### 1.7.37 (build 22040, api 9, 2024-10-19)
+### 1.7.37 (build 22044, api 9, 2024-10-19)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -16,9 +16,11 @@
   app startup behavior this way. Previously this sort of thing would generally
   require setting cryptic environment variables which was not feasable on all
   platforms, but this new system should work everywhere.
-- Logs printed to both the command line and the in-app console now include
-  timestamps and logger names, and are color coded for severity (DEBUG=blue,
-  INFO=default, WARNING=orange/yellow, ERROR=red, CRITICAL=purple).
+- Log messages printed to both the command line and the in-app console now
+  include timestamps and logger names, and are color coded for severity
+  (DEBUG=blue, INFO=default, WARNING=orange/yellow, ERROR=red, CRITICAL=purple).
+- `efro.log` is now `efro.logging` which better lines up with other logging
+  module names. It was originally named `log` to work around a mypy bug.
 - Went ahead and fully removed `efro.call.tpartial` (since we're breaking
   compatibility anyway by bumping api version). If you are using
   `efro.call.tpartial` anywhere, simply replace it with `functools.partial`.
@@ -176,8 +178,6 @@
   version and then upgrading to later builds of the same version containing
   incompatibilities with the older sys scripts. This should help with that
   problem.
-- `efro.log` is now `efro.logging` which better lines up with other logging
-  module names. It was originally named `log` to work around a mypy bug.
   
 ### 1.7.35 (build 21889, api 8, 2024-06-20)
 - Fixed an issue where the engine would block at exit on some version of Linux

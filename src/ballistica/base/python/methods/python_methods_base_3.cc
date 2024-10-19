@@ -110,7 +110,6 @@ static auto PySetUIScale(PyObject* self, PyObject* args, PyObject* keywds)
   const char* scalestr;
 
   static const char* kwlist[] = {"scale", nullptr};
-  // PyObject* input_device_id_obj = Py_None;
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
                                    const_cast<char**>(kwlist), &scalestr)) {
     return nullptr;
