@@ -1450,8 +1450,9 @@ void DevConsole::Draw(FrameDef* frame_def) {
     // Make sure we don't muck with our UI while we're in here.
     auto lock = ScopedUILock_(this);
 
-    close_button_->Draw(pass, bottom);
-
+    if (close_button_) {
+      close_button_->Draw(pass, bottom);
+    }
     for (auto&& button : tab_buttons_) {
       button->Draw(pass, bottom);
     }
