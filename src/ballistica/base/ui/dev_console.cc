@@ -479,9 +479,21 @@ DevConsole::DevConsole() {
 
 void DevConsole::OnUIScaleChanged() {
   g_base->logic->event_loop()->PushCall([this] {
+    RefreshCloseButton_();
     RefreshTabButtons_();
     RefreshTabContents_();
   });
+}
+
+void DevConsole::RefreshCloseButton_() {
+  float bs = BaseScale();
+  float bwidth = 32.0f * bs;
+  float bheight = 26.0f * bs;
+  float bscale = 0.6f * bs;
+  float x = 0.0f;
+  close_button_ = std::make_unique<TabButton_>(
+      "×", false, bscale, DevConsoleHAnchor_::kLeft, x, -bheight, bwidth,
+      bheight, [this] { Dismiss(); });
 }
 
 void DevConsole::RefreshTabButtons_() {
@@ -525,6 +537,7 @@ void DevConsole::RefreshTabButtons_() {
           // Can't muck with UI from code called while iterating through UI.
           // So defer it.
           g_base->logic->event_loop()->PushCall([this] {
+            RefreshCloseButton_();
             RefreshTabButtons_();
             RefreshTabContents_();
           });
@@ -620,6 +633,9 @@ auto DevConsole::HandleMouseDown(int button, float x, float y) -> bool {
     // Make sure we don't muck with our UI while we're in here.
     auto lock = ScopedUILock_(this);
 
+    if (close_button_ && close_button_->HandleMouseDown(x, y - bottom)) {
+      return true;
+    }
     for (auto&& button : tab_buttons_) {
       if (button->HandleMouseDown(x, y - bottom)) {
         return true;
@@ -662,6 +678,10 @@ void DevConsole::HandleMouseUp(int button, float x, float y) {
   if (button == 1) {
     // Make sure we don't muck with our UI while we're in here.
     auto lock = ScopedUILock_(this);
+
+    if (close_button_) {
+      close_button_->HandleMouseUp(x, y - bottom);
+    }
 
     for (auto&& button : tab_buttons_) {
       button->HandleMouseUp(x, y - bottom);
@@ -1130,6 +1150,7 @@ void DevConsole::ToggleState() {
       // Can't muck with UI from code (potentially) called while iterating
       // through UI. So defer it.
       g_base->logic->event_loop()->PushCall([this] {
+        RefreshCloseButton_();
         RefreshTabButtons_();
         RefreshTabContents_();
       });
@@ -1240,6 +1261,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
       last_virtual_res_y_ = screen_virtual_height;
       last_virtual_res_change_time_ = display_time;
       g_base->logic->event_loop()->PushCall([this] {
+        RefreshCloseButton_();
         RefreshTabButtons_();
         RefreshTabContents_();
       });
@@ -1423,10 +1445,12 @@ void DevConsole::Draw(FrameDef* frame_def) {
     }
   }
 
-  // Tab Buttons.
+  // Close Button and Tab Buttons.
   {
     // Make sure we don't muck with our UI while we're in here.
     auto lock = ScopedUILock_(this);
+
+    close_button_->Draw(pass, bottom);
 
     for (auto&& button : tab_buttons_) {
       button->Draw(pass, bottom);

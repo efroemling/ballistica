@@ -1,4 +1,4 @@
-### 1.7.37 (build 22044, api 9, 2024-10-19)
+### 1.7.37 (build 22045, api 9, 2024-10-19)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -132,6 +132,8 @@
   SDL_JoystickOpen() returns nullptr for whatever reason.
 - (build 22028) Fixed a longstanding issue that could cause logic thread
   bg-dynamics message overflows.
+- Added a close button to the dev-console as an alternate to using key presses
+  to close it.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these

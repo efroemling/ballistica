@@ -4,6 +4,7 @@
 #define BALLISTICA_BASE_UI_DEV_CONSOLE_H_
 
 #include <list>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -87,6 +88,7 @@ class DevConsole {
   auto Bottom_() const -> float;
   void SubmitPythonCommand_(const std::string& command);
   void InvokeStringEditor_();
+  void RefreshCloseButton_();
   void RefreshTabButtons_();
   void RefreshTabContents_();
 
@@ -120,6 +122,7 @@ class DevConsole {
   PythonRef string_edit_adapter_;
   std::list<std::string> input_history_;
   std::list<OutputLine_> output_lines_;
+  std::unique_ptr<Widget_> close_button_;
   std::vector<std::unique_ptr<Widget_> > widgets_;
   std::vector<std::unique_ptr<Widget_> > tab_buttons_;
   Object::Ref<Repeater> key_repeater_;
