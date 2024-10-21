@@ -181,8 +181,7 @@ auto BaseFeatureSet::GetV2AccountID() -> std::optional<std::string> {
     }
     return result.ValueAsString();
   } else {
-    Log(LogName::kBaAccount, LogLevel::kError,
-        "GetV2AccountID() py call errored.");
+    Log(LogName::kBa, LogLevel::kError, "GetV2AccountID() py call errored.");
     return {};
   }
 }

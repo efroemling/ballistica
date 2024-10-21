@@ -187,8 +187,6 @@ void CorePython::EnablePythonLoggingCalls() {
   assert(objs().Exists(ObjID::kLoggerRootLogCall));
   assert(objs().Exists(ObjID::kLoggerBa));
   assert(objs().Exists(ObjID::kLoggerBaLogCall));
-  assert(objs().Exists(ObjID::kLoggerBaAccount));
-  assert(objs().Exists(ObjID::kLoggerBaAccountLogCall));
   assert(objs().Exists(ObjID::kLoggerBaAudio));
   assert(objs().Exists(ObjID::kLoggerBaAudioLogCall));
   assert(objs().Exists(ObjID::kLoggerBaGraphics));
@@ -260,7 +258,6 @@ void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
   std::pair<LogName, ObjID> pairs[] = {
       {LogName::kRoot, ObjID::kLoggerRoot},
       {LogName::kBa, ObjID::kLoggerBa},
-      {LogName::kBaAccount, ObjID::kLoggerBaAccount},
       {LogName::kBaAudio, ObjID::kLoggerBaAudio},
       {LogName::kBaGraphics, ObjID::kLoggerBaGraphics},
       {LogName::kBaLifecycle, ObjID::kLoggerBaLifecycle},
@@ -432,10 +429,6 @@ void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
       break;
     case LogName::kBa:
       logcallobj = ObjID::kLoggerBaLogCall;
-      handled = true;
-      break;
-    case LogName::kBaAccount:
-      logcallobj = ObjID::kLoggerBaAccountLogCall;
       handled = true;
       break;
     case LogName::kBaAudio:

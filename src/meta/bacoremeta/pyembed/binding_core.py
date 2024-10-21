@@ -27,8 +27,6 @@ values = [
     logging.getLogger('root').log,  # kLoggerRootLogCall
     logging.getLogger('ba'),  # kLoggerBa
     logging.getLogger('ba').log,  # kLoggerBaLogCall
-    logging.getLogger('ba.account'),  # kLoggerBaAccount
-    logging.getLogger('ba.account').log,  # kLoggerBaAccountLogCall
     logging.getLogger('ba.audio'),  # kLoggerBaAudio
     logging.getLogger('ba.audio').log,  # kLoggerBaAudioLogCall
     logging.getLogger('ba.graphics'),  # kLoggerBaGraphics
