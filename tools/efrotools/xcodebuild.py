@@ -60,6 +60,7 @@ class _Section(Enum):
     SWIFTGENERATEPCH = 'SwiftGeneratePch'
     SWIFTDRIVER = 'SwiftDriver'
     SWIFTDRIVERJOBDISCOVERY = 'SwiftDriverJobDiscovery'
+    CONSTRUCTSTUBEXECUTORLINKFILELIST = 'ConstructStubExecutorLinkFileList'
     SWIFTEMITMODULE = 'SwiftEmitModule'
     COMPILESWIFT = 'CompileSwift'
     MKDIR = 'MkDir'
@@ -70,6 +71,7 @@ class _Section(Enum):
     COMPILESTORYBOARD = 'CompileStoryboard'
     CONVERTICONSETFILE = 'ConvertIconsetFile'
     LINKSTORYBOARDS = 'LinkStoryboards'
+    PRECOMPILESWIFTBRIDGINGHEADER = 'PrecompileSwiftBridgingHeader'
     PROCESSINFOPLISTFILE = 'ProcessInfoPlistFile'
     COPYSWIFTLIBS = 'CopySwiftLibs'
     REGISTEREXECUTIONPOLICYEXCEPTION = 'RegisterExecutionPolicyException'
@@ -441,12 +443,35 @@ class XCodeBuild:
             sys.stdout.flush()
             return
 
+        if line.startswith('    builtin-ScanDependencies '):
+            lastbit = line.split('/')[-1].strip()
+            sys.stdout.write(
+                f'{Clr.BLU}Scanning Dependencies: {lastbit}{Clr.RST}\n'
+            )
+            sys.stdout.flush()
+            return
+
+        if line.startswith('ScanDependencies '):
+            return
+
+        if line.startswith('PrecompileModule '):
+            # sys.stdout.write('PRECOMPILING\n')
+            # sys.stdout.flush()
+            return
+
+        if line.startswith('    builtin-precompileModule '):
+            lastbit = line.split('/')[-1].split('-')[0]
+            sys.stdout.write(f'{Clr.BLU}Precompiling {lastbit}{Clr.RST}\n')
+            sys.stdout.flush()
+            return
+
         # Seeing these popping up in the middle of other stuff a lot.
         if any(
             line.startswith(x)
             for x in [
                 'SwiftDriver\\ Compilation\\ Requirements ',
                 'SwiftDriver\\ Compilation ',
+                '    Using response file:',
             ]
         ):
             return
@@ -505,6 +530,13 @@ class XCodeBuild:
             self._print_simple_section_line(
                 line, ignore_line_starts=['builtin-swiftHeaderTool']
             )
+        elif self._section is _Section.PRECOMPILESWIFTBRIDGINGHEADER:
+            self._print_simple_section_line(
+                line,
+                prefix='Precompiling Swift Briding Header',
+                ignore_line_start_tails=['/swift-frontend'],
+            )
+
         elif self._section is _Section.SWIFTDRIVER:
             self._print_simple_section_line(
                 line,
@@ -513,13 +545,24 @@ class XCodeBuild:
                     'builtin-Swift-Compilation',
                 ],
             )
+        elif self._section is _Section.CONSTRUCTSTUBEXECUTORLINKFILELIST:
+            self._print_simple_section_line(
+                line,
+                ignore_line_starts=[
+                    'construct-stub-executor-link-file-list',
+                    'note: Using stub executor library with Swift entry point',
+                ],
+            )
+
         elif self._section is _Section.SWIFTEMITMODULE:
             self._print_simple_section_line(
                 line,
                 ignore_line_starts=[
                     'builtin-SwiftDriver',
                     'builtin-swiftTaskExecution',
+                    'EmitSwiftModule',
                 ],
+                ignore_line_start_tails=['/swift-frontend'],
             )
         elif self._section is _Section.SWIFTGENERATEPCH:
             self._print_simple_section_line(
@@ -540,6 +583,9 @@ class XCodeBuild:
                     'builtin-Swift-Compilation-Requirements',
                     'builtin-Swift-Compilation',
                     'builtin-swiftTaskExecution',
+                    'builtin-ScanDependencies',
+                    '/Applications/Xcode.app/Contents/Developer/'
+                    'Toolchains/XcodeDefault.xctoolchain/usr/bin/clang',
                 ],
             )
         elif self._section is _Section.MKDIR:
@@ -717,6 +763,7 @@ class XCodeBuild:
                 ignore_line_start_tails=['/derq'],
             )
         elif self._section is _Section.WRITEAUXILIARYFILE:
+
             # EW: this spits out our full list of entitlements line by line.
             # We should make this smart enough to ignore that whole section
             # but just ignoring specific exact lines for now.

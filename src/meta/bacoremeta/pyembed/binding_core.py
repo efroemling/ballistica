@@ -17,6 +17,7 @@ values = [
     copy.copy,  # kShallowCopyCall
     json.dumps,  # kJsonDumpsCall
     json.loads,  # kJsonLoadsCall
+    logging.NOTSET,  # kLoggingLevelNotSet
     logging.DEBUG,  # kLoggingLevelDebug
     logging.INFO,  # kLoggingLevelInfo
     logging.WARNING,  # kLoggingLevelWarning

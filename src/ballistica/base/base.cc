@@ -423,7 +423,7 @@ void BaseFeatureSet::LogVersionInfo_() {
     snprintf(buffer, sizeof(buffer), "BallisticaKit %s build %d.",
              kEngineVersion, kEngineBuildNumber);
   }
-  Log(LogName::kBa, LogLevel::kInfo, buffer);
+  Log(LogName::kBaLifecycle, LogLevel::kInfo, buffer);
 }
 
 void BaseFeatureSet::set_app_mode(AppMode* mode) {

@@ -177,6 +177,7 @@ void CorePython::EnablePythonLoggingCalls() {
   auto gil{Python::ScopedInterpreterLock()};
 
   // Make sure we've got all our logging Python bits we need.
+  assert(objs().Exists(ObjID::kLoggingLevelNotSet));
   assert(objs().Exists(ObjID::kLoggingLevelDebug));
   assert(objs().Exists(ObjID::kLoggingLevelInfo));
   assert(objs().Exists(ObjID::kLoggingLevelWarning));
@@ -240,11 +241,14 @@ void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
   assert(python_logging_calls_enabled_);
   assert(Python::HaveGIL());
 
+  const int log_level_not_set{0};
   const int log_level_debug{10};
   const int log_level_info{20};
   const int log_level_warning{30};
   const int log_level_error{40};
   const int log_level_critical{50};
+  assert(log_level_not_set
+         == objs().Get(ObjID::kLoggingLevelNotSet).ValueAsInt());
   assert(log_level_debug == objs().Get(ObjID::kLoggingLevelDebug).ValueAsInt());
   assert(log_level_info == objs().Get(ObjID::kLoggingLevelInfo).ValueAsInt());
   assert(log_level_warning
@@ -275,6 +279,10 @@ void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
     auto outval{static_cast<int>(out.ValueAsInt())};
 
     switch (outval) {
+      // We ask for resolved level here so we normally shouldn't get NOTSET;
+      // however if the root logger is set to that then we do. It means
+      // don't apply filtering, so effectively its the same as debug for us.
+      case log_level_not_set:
       case log_level_debug:
         log_levels[static_cast<int>(logname)] = LogLevel::kDebug;
         break;

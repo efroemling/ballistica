@@ -921,7 +921,7 @@ class App:
         if self._native_shutdown_complete_called:
             if self.state is not self.State.SHUTDOWN_COMPLETE:
                 self.state = self.State.SHUTDOWN_COMPLETE
-                _babase.lifecyclelog('app state shutdown complete')
+                _babase.lifecyclelog(f'app-state is now {self.state.name}')
                 self._on_shutdown_complete()
 
         # Shutdown trumps all. Though we can't start shutting down until
@@ -931,7 +931,7 @@ class App:
             # Entering shutdown state:
             if self.state is not self.State.SHUTTING_DOWN:
                 self.state = self.State.SHUTTING_DOWN
-                _babase.lifecyclelog('app state shutting down')
+                _babase.lifecyclelog(f'app-state is now {self.state.name}')
                 self._on_shutting_down()
 
         elif self._native_suspended:
@@ -948,7 +948,7 @@ class App:
             if self._initial_sign_in_completed and self._meta_scan_completed:
                 if self.state != self.State.RUNNING:
                     self.state = self.State.RUNNING
-                    _babase.lifecyclelog('app state running')
+                    _babase.lifecyclelog(f'app-state is now {self.state.name}')
                     if not self._called_on_running:
                         self._called_on_running = True
                         self._on_running()
@@ -957,7 +957,7 @@ class App:
             elif self._init_completed:
                 if self.state is not self.State.LOADING:
                     self.state = self.State.LOADING
-                    _babase.lifecyclelog('app state loading')
+                    _babase.lifecyclelog(f'app-state is now {self.state.name}')
                     if not self._called_on_loading:
                         self._called_on_loading = True
                         self._on_loading()
@@ -966,7 +966,7 @@ class App:
             elif self._native_bootstrapping_completed:
                 if self.state is not self.State.INITING:
                     self.state = self.State.INITING
-                    _babase.lifecyclelog('app state initing')
+                    _babase.lifecyclelog(f'app-state is now {self.state.name}')
                     if not self._called_on_initing:
                         self._called_on_initing = True
                         self._on_initing()
@@ -975,7 +975,7 @@ class App:
             elif self._native_start_called:
                 if self.state is not self.State.NATIVE_BOOTSTRAPPING:
                     self.state = self.State.NATIVE_BOOTSTRAPPING
-                    _babase.lifecyclelog('app state native bootstrapping')
+                    _babase.lifecyclelog(f'app-state is now {self.state.name}')
             else:
                 # Only logical possibility left is NOT_STARTED, in which
                 # case we should not be getting called.
@@ -1086,10 +1086,10 @@ class App:
 
         # Spin and wait for anything blocking shutdown to complete.
         starttime = _babase.apptime()
-        _babase.lifecyclelog('shutdown-suppress wait begin')
+        _babase.lifecyclelog('shutdown-suppress-wait begin')
         while _babase.shutdown_suppress_count() > 0:
             await asyncio.sleep(0.001)
-        _babase.lifecyclelog('shutdown-suppress wait end')
+        _babase.lifecyclelog('shutdown-suppress-wait end')
         duration = _babase.apptime() - starttime
         if duration > 1.0:
             logging.warning(

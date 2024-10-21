@@ -15,5 +15,9 @@ if TYPE_CHECKING:
 def get_base_logger_control_config_client() -> LoggerControlConfig:
     """Return the logger-control-config used by the ballistica client."""
 
-    # Just info for everything by default.
-    return LoggerControlConfig(levels={'root': logging.INFO})
+    # By default, go with WARNING on everything to keep things mostly
+    # clean but show INFO for ba.lifecycle to get basic app
+    # startup/shutdown messages.
+    return LoggerControlConfig(
+        levels={'root': logging.WARNING, 'ba.lifecycle': logging.INFO}
+    )

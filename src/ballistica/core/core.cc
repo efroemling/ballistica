@@ -10,6 +10,7 @@
 
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/python/core_python.h"
+#include "ballistica/shared/foundation/inline.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/foundation/types.h"
 #include "ballistica/shared/generic/runnable.h"
@@ -310,11 +311,17 @@ void CoreFeatureSet::LifecycleLog(const char* msg, double offset_seconds) {
     return;
   }
 
-  // We include time-since-start as part of the message here.
-  char buffer[128];
-  snprintf(buffer, sizeof(buffer), "%s @ %.3fs.", msg,
-           g_core->GetAppTimeSeconds() + offset_seconds);
-  Log(LogName::kBaLifecycle, LogLevel::kDebug, buffer);
+  // We're now showing relative timestamps in more places so trying without
+  // adding that to the message...
+  if (explicit_bool(false)) {
+    // We include time-since-start as part of the message here.
+    char buffer[128];
+    snprintf(buffer, sizeof(buffer), "%s @ %.3fs.", msg,
+             g_core->GetAppTimeSeconds() + offset_seconds);
+    Log(LogName::kBaLifecycle, LogLevel::kDebug, buffer);
+  } else {
+    Log(LogName::kBaLifecycle, LogLevel::kDebug, msg);
+  }
 }
 
 auto CoreFeatureSet::HeadlessMode() -> bool {

@@ -24,6 +24,7 @@ class CorePython {
     kJsonDumpsCall,
     kJsonLoadsCall,
     kEmptyTuple,
+    kLoggingLevelNotSet,
     kLoggingLevelDebug,
     kLoggingLevelInfo,
     kLoggingLevelWarning,
