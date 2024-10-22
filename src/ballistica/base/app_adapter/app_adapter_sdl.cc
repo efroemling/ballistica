@@ -46,12 +46,6 @@ class AppAdapterSDL::ScopedAllowGraphics_ {
 AppAdapterSDL::AppAdapterSDL() {
   assert(!g_core->HeadlessMode());
   assert(g_core->InMainThread());
-
-  // Enable display-time debug logs via env var.
-  auto val = g_core->platform->GetEnv("BA_DEBUG_LOG_SDL_FRAME_TIMING");
-  if (val && *val == "1") {
-    debug_log_sdl_frame_timing_ = true;
-  }
 }
 
 void AppAdapterSDL::OnMainThreadStartApp() {
@@ -286,16 +280,15 @@ void AppAdapterSDL::SleepUntilNextEventCycle_(microsecs_t cycle_start_time) {
 
   // Special case: if we've got vsync enabled, let's tweak our drawing to
   // happen just a *tiny* bit faster than requested. This means, if our
-  // max-fps matches the refresh rate, we'll be trying to render just a
-  // *bit* faster than vsync which should push us up against the vsync wall
-  // and keep vsync doing most of the delay work. In that case the logging
-  // below should show mostly 'no sleep.'. Without this delay, our render
-  // kick-offs tend to drift around the middle of the vsync cycle and I
-  // worry there could be bad interference patterns in certain spots close
-  // to the edges. Note that we want this tweak to be small enough that it
-  // won't be noticable in situations where vsync and max-fps *don't* match.
-  // For instance, limiting to 60hz on a 120hz vsynced monitor should still
-  // work as expected.
+  // max-fps matches the refresh rate, we should gently push us up against
+  // the vsync wall and keep vsync doing most of the delay work. In that
+  // case the logging below should show mostly 'no sleep.'. Without this
+  // delay, our render kick-offs tend to drift around the middle of the
+  // vsync cycle and I worry there could be bad interference patterns in
+  // certain spots close to the edges. Note that we want this tweak to be
+  // small enough that it won't be noticable in situations where vsync and
+  // max-fps *don't* match. For instance, limiting to 60hz on a 120hz
+  // vsynced monitor should still work as expected.
   if (vsync_actually_enabled_) {
     millisecs_per_frame = 99 * millisecs_per_frame / 100;
   }
@@ -307,19 +300,19 @@ void AppAdapterSDL::SleepUntilNextEventCycle_(microsecs_t cycle_start_time) {
   // oversleep system will compensate for our earliness just as it does if
   // we sleep too long.
   const microsecs_t min_sleep{2000};
+
   if (now + min_sleep >= target_time) {
-    if (debug_log_sdl_frame_timing_) {
-      g_core->Log(LogName::kBaNetworking, LogLevel::kDebug,
-                  "no sleep.");  // 'till brooklyn!
-    }
+    g_core->Log(LogName::kBaGraphics, LogLevel::kDebug,
+                "no sleep.");  // 'till brooklyn!
   } else {
-    if (debug_log_sdl_frame_timing_) {
-      char buf[256];
-      snprintf(buf, sizeof(buf), "render %.1f sleep %.1f",
-               (now - cycle_start_time) / 1000.0f,
-               (target_time - now) / 1000.0f);
-      g_core->Log(LogName::kBaNetworking, LogLevel::kDebug, buf);
-    }
+    g_core->Log(LogName::kBaGraphics, LogLevel::kDebug,
+                [now, cycle_start_time, target_time] {
+                  char buf[256];
+                  snprintf(buf, sizeof(buf), "render %.1fms sleep %.1fms",
+                           (now - cycle_start_time) / 1000.0f,
+                           (target_time - now) / 1000.0f);
+                  return std::string(buf);
+                });
     g_core->platform->SleepMicrosecs(target_time - now);
   }
 

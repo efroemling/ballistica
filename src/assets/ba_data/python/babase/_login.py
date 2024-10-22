@@ -17,8 +17,7 @@ import _babase
 if TYPE_CHECKING:
     from typing import Callable
 
-
-DEBUG_LOG = False
+logger = logging.getLogger('ba.loginadapter')
 
 
 @dataclass
@@ -94,20 +93,17 @@ class LoginAdapter:
         if state == self._implicit_login_state:
             return
 
-        if DEBUG_LOG:
-            if state is None:
-                logging.debug(
-                    'LoginAdapter: %s implicit state changed;'
-                    ' now signed out.',
-                    self.login_type.name,
-                )
-            else:
-                logging.debug(
-                    'LoginAdapter: %s implicit state changed;'
-                    ' now signed in as %s.',
-                    self.login_type.name,
-                    state.display_name,
-                )
+        if state is None:
+            logger.debug(
+                '%s implicit state changed; now signed out.',
+                self.login_type.name,
+            )
+        else:
+            logger.debug(
+                '%s implicit state changed; now signed in as %s.',
+                self.login_type.name,
+                state.display_name,
+            )
 
         self._implicit_login_state = state
         self._implicit_login_state_dirty = True
@@ -128,12 +124,11 @@ class LoginAdapter:
         only a reference to it is stored, not a copy.
         """
         assert _babase.in_logic_thread()
-        if DEBUG_LOG:
-            logging.debug(
-                'LoginAdapter: %s adapter got active logins %s.',
-                self.login_type.name,
-                {k: v[:4] + '...' + v[-4:] for k, v in logins.items()},
-            )
+        logger.debug(
+            '%s adapter got active logins %s.',
+            self.login_type.name,
+            {k: v[:4] + '...' + v[-4:] for k, v in logins.items()},
+        )
 
         self._active_login_id = logins.get(self.login_type)
         self._update_back_end_active()
@@ -197,24 +192,21 @@ class LoginAdapter:
         self._last_sign_in_desc = description
         self._last_sign_in_time = now
 
-        if DEBUG_LOG:
-            logging.debug(
-                'LoginAdapter: %s adapter sign_in() called;'
-                ' fetching sign-in-token...',
-                self.login_type.name,
-            )
+        logger.debug(
+            '%s adapter sign_in() called; fetching sign-in-token...',
+            self.login_type.name,
+        )
 
         def _got_sign_in_token_result(result: str | None) -> None:
             import bacommon.cloud
 
             # Failed to get a sign-in-token.
             if result is None:
-                if DEBUG_LOG:
-                    logging.debug(
-                        'LoginAdapter: %s adapter sign-in-token fetch failed;'
-                        ' aborting sign-in.',
-                        self.login_type.name,
-                    )
+                logger.debug(
+                    '%s adapter sign-in-token fetch failed;'
+                    ' aborting sign-in.',
+                    self.login_type.name,
+                )
                 _babase.pushcall(
                     partial(
                         result_cb,
@@ -227,25 +219,22 @@ class LoginAdapter:
             # Got a sign-in token! Now pass it to the cloud which will use
             # it to verify our identity and give us app credentials on
             # success.
-            if DEBUG_LOG:
-                logging.debug(
-                    'LoginAdapter: %s adapter sign-in-token fetch succeeded;'
-                    ' passing to cloud for verification...',
-                    self.login_type.name,
-                )
+            logger.debug(
+                '%s adapter sign-in-token fetch succeeded;'
+                ' passing to cloud for verification...',
+                self.login_type.name,
+            )
 
             def _got_sign_in_response(
                 response: bacommon.cloud.SignInResponse | Exception,
             ) -> None:
                 # This likely means we couldn't communicate with the server.
                 if isinstance(response, Exception):
-                    if DEBUG_LOG:
-                        logging.debug(
-                            'LoginAdapter: %s adapter got error'
-                            ' sign-in response: %s',
-                            self.login_type.name,
-                            response,
-                        )
+                    logger.debug(
+                        '%s adapter got error sign-in response: %s',
+                        self.login_type.name,
+                        response,
+                    )
                     _babase.pushcall(partial(result_cb, self, response))
                 else:
                     # This means our credentials were explicitly rejected.
@@ -254,12 +243,10 @@ class LoginAdapter:
                             RuntimeError('Sign-in-token was rejected.')
                         )
                     else:
-                        if DEBUG_LOG:
-                            logging.debug(
-                                'LoginAdapter: %s adapter got successful'
-                                ' sign-in response',
-                                self.login_type.name,
-                            )
+                        logger.debug(
+                            '%s adapter got successful sign-in response',
+                            self.login_type.name,
+                        )
                         result2 = self.SignInResult(
                             credentials=response.credentials
                         )
@@ -305,12 +292,10 @@ class LoginAdapter:
         # any existing state so it can properly respond to this.
         if self._implicit_login_state_dirty and self._on_app_loading_called:
 
-            if DEBUG_LOG:
-                logging.debug(
-                    'LoginAdapter: %s adapter sending'
-                    ' implicit-state-changed to app.',
-                    self.login_type.name,
-                )
+            logger.debug(
+                '%s adapter sending implicit-state-changed to app.',
+                self.login_type.name,
+            )
 
             assert _babase.app.plus is not None
             _babase.pushcall(
@@ -331,12 +316,11 @@ class LoginAdapter:
                 self._implicit_login_state.login_id == self._active_login_id
             )
         if was_active != is_active:
-            if DEBUG_LOG:
-                logging.debug(
-                    'LoginAdapter: %s adapter back-end-active is now %s.',
-                    self.login_type.name,
-                    is_active,
-                )
+            logger.debug(
+                '%s adapter back-end-active is now %s.',
+                self.login_type.name,
+                is_active,
+            )
             self.on_back_end_active_change(is_active)
             self._back_end_active = is_active
 

@@ -212,6 +212,10 @@ class CoreFeatureSet {
   void Log(LogName name, LogLevel level, const char* msg);
   void Log(LogName name, LogLevel level, char* msg);
 
+  /// Log call variant taking a call returning a string instead of a string
+  /// directly. This can be useful for log strings requiring significant
+  /// effort to construct, as the call will be skipped if the log level is
+  /// not currently visible.
   template <typename C>
   void Log(LogName name, LogLevel level, C getmsgcall) {
     if (!LogLevelEnabled(name, level)) {

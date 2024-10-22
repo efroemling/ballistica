@@ -19,8 +19,7 @@ if TYPE_CHECKING:
 
     from babase._login import LoginAdapter, LoginInfo
 
-
-DEBUG_LOG = False
+logger = logging.getLogger('ba.accountv2')
 
 
 class AccountV2Subsystem:
@@ -255,13 +254,12 @@ class AccountV2Subsystem:
         # generally this means the user has explicitly signed in/out or
         # switched accounts within that back-end.
         if prev_state != new_state:
-            if DEBUG_LOG:
-                logging.debug(
-                    'AccountV2: Implicit state changed (%s -> %s);'
-                    ' will update app sign-in state accordingly.',
-                    prev_state,
-                    new_state,
-                )
+            logger.debug(
+                'Implicit state changed (%s -> %s);'
+                ' will update app sign-in state accordingly.',
+                prev_state,
+                new_state,
+            )
             self._implicit_state_changed = True
 
         # We may want to auto-sign-in based on this new state.
@@ -292,11 +290,9 @@ class AccountV2Subsystem:
             if self._implicit_signed_in_adapter is None:
                 # If implicit back-end has signed out, we follow suit
                 # immediately; no need to wait for network connectivity.
-                if DEBUG_LOG:
-                    logging.debug(
-                        'AccountV2: Signing out as result'
-                        ' of implicit state change...',
-                    )
+                logger.debug(
+                    'Signing out as result of implicit state change...',
+                )
                 plus.accounts.set_primary_credentials(None)
                 self._implicit_state_changed = False
 
@@ -313,11 +309,9 @@ class AccountV2Subsystem:
                 # switching accounts via the back-end). NOTE: should
                 # test case where we don't have connectivity here.
                 if plus.cloud.is_connected():
-                    if DEBUG_LOG:
-                        logging.debug(
-                            'AccountV2: Signing in as result'
-                            ' of implicit state change...',
-                        )
+                    logger.debug(
+                        'Signing in as result of implicit state change...',
+                    )
                     self._implicit_signed_in_adapter.sign_in(
                         self._on_explicit_sign_in_completed,
                         description='implicit state change',
@@ -348,10 +342,9 @@ class AccountV2Subsystem:
             and not signed_in_v2
             and self._implicit_signed_in_adapter is not None
         ):
-            if DEBUG_LOG:
-                logging.debug(
-                    'AccountV2: Signing in due to on-launch-auto-sign-in...',
-                )
+            logger.debug(
+                'Signing in due to on-launch-auto-sign-in...',
+            )
             self._can_do_auto_sign_in = False  # Only ATTEMPT once
             self._implicit_signed_in_adapter.sign_in(
                 self._on_implicit_sign_in_completed, description='auto-sign-in'
