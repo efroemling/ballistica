@@ -215,9 +215,9 @@ void MaterialComponent::Restore(const char** buffer, ClientSession* cs) {
         action = Object::New<NodeModMaterialAction>();
         break;
       default:
-        Log(LogName::kBa, LogLevel::kError,
-            "Invalid material action: '"
-                + std::to_string(static_cast<int>(type)) + "'.");
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    "Invalid material action: '"
+                        + std::to_string(static_cast<int>(type)) + "'.");
         throw Exception();
     }
     action->Restore(buffer, cs);

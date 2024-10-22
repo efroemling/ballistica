@@ -643,7 +643,8 @@ void TextWidget::InvokeStringEditor_() {
                     .Get(UIV1Python::ObjID::kTextWidgetStringEditAdapterClass)
                     .Call(args);
   if (!result.Exists()) {
-    Log(LogName::kBa, LogLevel::kError, "Error invoking string edit dialog.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Error invoking string edit dialog.");
     return;
   }
 

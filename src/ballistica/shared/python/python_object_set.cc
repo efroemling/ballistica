@@ -15,6 +15,7 @@ namespace ballistica {
 // Using core stuff implicitly here. Our behavior is undefined if core
 // has not yet been imported by anyone.
 using core::g_base_soft;
+using core::g_core;
 
 PythonObjectSetBase::~PythonObjectSetBase() {
   // We make assumptions that ids remain valid once established.
@@ -39,9 +40,9 @@ void PythonObjectSetBase::StoreObj(int id, PyObject* pyobj) {
     // Also make sure we're not storing an object that's already been stored.
     for (auto&& i : objs_) {
       if (i.Get() != nullptr && i.Get() == pyobj) {
-        Log(LogName::kBa, LogLevel::kWarning,
-            "Python::StoreObj() called twice for same ptr; id="
-                + std::to_string(id) + ".");
+        g_core->Log(LogName::kBa, LogLevel::kWarning,
+                    "Python::StoreObj() called twice for same ptr; id="
+                        + std::to_string(id) + ".");
       }
     }
   }

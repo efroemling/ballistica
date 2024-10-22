@@ -29,6 +29,8 @@ values = [
     logging.getLogger('ba').log,  # kLoggerBaLogCall
     logging.getLogger('ba.audio'),  # kLoggerBaAudio
     logging.getLogger('ba.audio').log,  # kLoggerBaAudioLogCall
+    logging.getLogger('ba.displaytime'),  # kLoggerBaDisplayTime
+    logging.getLogger('ba.displaytime').log,  # kLoggerBaDisplayTimeLogCall
     logging.getLogger('ba.graphics'),  # kLoggerBaGraphics
     logging.getLogger('ba.graphics').log,  # kLoggerBaGraphicsLogCall
     logging.getLogger('ba.lifecycle'),  # kLoggerBaLifecycle

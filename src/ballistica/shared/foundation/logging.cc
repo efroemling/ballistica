@@ -20,14 +20,9 @@ using core::g_core;
 int g_early_v1_cloud_log_writes{10};
 
 void Logging::Log(LogName name, LogLevel level, const std::string& msg) {
-  BA_PRECONDITION(g_core);
-
-  // Optimization: avoid touching Python at all if this log level isn't
-  // enabled.
-  if (!g_core->LogLevelEnabled(name, level)) {
-    return;
-  }
-
+  // Wrappers calling us should check these bits.
+  assert(g_core);
+  assert(g_core->LogLevelEnabled(name, level));
   g_core->python->LoggingCall(name, level, msg);
 }
 
@@ -41,33 +36,26 @@ void Logging::EmitLog(const std::string& name, LogLevel level, double timestamp,
     auto rel_time{timestamp - g_core->ba_env_launch_timestamp()};
 
     if (g_base_soft) {
-      // const char* loglevelname{"?"};
       Vector4f logcolor;
       switch (level) {
         case LogLevel::kDebug:
-          // loglevelname = "D";
           logcolor = Vector4f(0.0f, 0.5f, 1.0f, 1.0f);
           break;
         case LogLevel::kInfo:
-          // loglevelname = "I";
           logcolor = Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
           break;
         case LogLevel::kWarning:
-          // loglevelname = "W";
           logcolor = Vector4f(1.0f, 0.7f, 0.0f, 1.0f);
           break;
         case LogLevel::kError:
-          // loglevelname = "E";
           logcolor = Vector4f(1.0f, 0.0, 0.0f, 1.0f);
           break;
         case LogLevel::kCritical:
-          // loglevelname = "C";
           logcolor = Vector4f(0.6f, 0.0, 0.25f, 1.0f);
           break;
       }
       char prestr[256];
       snprintf(prestr, sizeof(prestr), "%.3f  %s", rel_time, name.c_str());
-      // std::string msgfull = prestr + msg;
       g_base_soft->PushDevConsolePrintCall("", 0.3f, kVector4f1);
       g_base_soft->PushDevConsolePrintCall(
           prestr, 0.75f,

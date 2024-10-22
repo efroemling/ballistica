@@ -155,7 +155,8 @@ void BaseFeatureSet::SuccessScreenMessage() {
       python->objs().Get(BasePython::ObjID::kSuccessMessageCall).Call();
     });
   } else {
-    Log(LogName::kBa, LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "SuccessScreenMessage called without logic event_loop in place.");
   }
 }
@@ -166,8 +167,8 @@ void BaseFeatureSet::ErrorScreenMessage() {
       python->objs().Get(BasePython::ObjID::kErrorMessageCall).Call();
     });
   } else {
-    Log(LogName::kBa, LogLevel::kError,
-        "ErrorScreenMessage called without logic event_loop in place.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "ErrorScreenMessage called without logic event_loop in place.");
   }
 }
 
@@ -181,7 +182,8 @@ auto BaseFeatureSet::GetV2AccountID() -> std::optional<std::string> {
     }
     return result.ValueAsString();
   } else {
-    Log(LogName::kBa, LogLevel::kError, "GetV2AccountID() py call errored.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "GetV2AccountID() py call errored.");
     return {};
   }
 }
@@ -253,7 +255,7 @@ void BaseFeatureSet::StartApp() {
     char buffer[128];
     snprintf(buffer, sizeof(buffer),
              "StartApp() took too long (%.2lf seconds).", duration);
-    Log(LogName::kBa, LogLevel::kWarning, buffer);
+    g_core->Log(LogName::kBa, LogLevel::kWarning, buffer);
   }
 }
 
@@ -262,8 +264,8 @@ void BaseFeatureSet::SuspendApp() {
   assert(g_core->InMainThread());
 
   if (app_suspended_) {
-    Log(LogName::kBa, LogLevel::kWarning,
-        "AppAdapter::SuspendApp() called with app already suspended.");
+    g_core->Log(LogName::kBa, LogLevel::kWarning,
+                "AppAdapter::SuspendApp() called with app already suspended.");
     return;
   }
 
@@ -304,7 +306,8 @@ void BaseFeatureSet::SuspendApp() {
     // running_loop_count = loops.size();
     if (running_loops.empty()) {
       if (g_buildconfig.debug_build()) {
-        Log(LogName::kBa, LogLevel::kDebug,
+        g_core->Log(
+            LogName::kBa, LogLevel::kDebug,
             "SuspendApp() completed in "
                 + std::to_string(core::CorePlatform::GetCurrentMillisecs()
                                  - start_time)
@@ -365,7 +368,7 @@ void BaseFeatureSet::SuspendApp() {
   }
   msg += ").";
 
-  Log(LogName::kBa, LogLevel::kError, msg);
+  g_core->Log(LogName::kBa, LogLevel::kError, msg);
 }
 
 void BaseFeatureSet::UnsuspendApp() {
@@ -373,7 +376,8 @@ void BaseFeatureSet::UnsuspendApp() {
   assert(g_core->InMainThread());
 
   if (!app_suspended_) {
-    Log(LogName::kBa, LogLevel::kWarning,
+    g_core->Log(
+        LogName::kBa, LogLevel::kWarning,
         "AppAdapter::UnsuspendApp() called with app not in suspendedstate.");
     return;
   }
@@ -391,11 +395,11 @@ void BaseFeatureSet::UnsuspendApp() {
   g_base->networking->OnAppUnsuspend();
 
   if (g_buildconfig.debug_build()) {
-    Log(LogName::kBa, LogLevel::kDebug,
-        "UnsuspendApp() completed in "
-            + std::to_string(core::CorePlatform::GetCurrentMillisecs()
-                             - start_time)
-            + "ms.");
+    g_core->Log(LogName::kBa, LogLevel::kDebug,
+                "UnsuspendApp() completed in "
+                    + std::to_string(core::CorePlatform::GetCurrentMillisecs()
+                                     - start_time)
+                    + "ms.");
   }
 }
 
@@ -422,7 +426,7 @@ void BaseFeatureSet::LogVersionInfo_() {
     snprintf(buffer, sizeof(buffer), "BallisticaKit %s build %d.",
              kEngineVersion, kEngineBuildNumber);
   }
-  Log(LogName::kBaLifecycle, LogLevel::kInfo, buffer);
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, buffer);
 }
 
 void BaseFeatureSet::set_app_mode(AppMode* mode) {
@@ -431,7 +435,8 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
   // Redundant sets should not happen (make an exception here for empty mode
   // since that's in place before any app mode is officially set).
   if (mode == app_mode_ && mode != EmptyAppMode::GetSingleton()) {
-    Log(LogName::kBa, LogLevel::kWarning,
+    g_core->Log(
+        LogName::kBa, LogLevel::kWarning,
         "set_app_mode called with already-current app-mode; unexpected.");
   }
 
@@ -559,8 +564,8 @@ auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
     if (!have_app_instance_uuid) {
       // As an emergency fallback simply use a single random number. We
       // should probably simply disallow this before Python is up.
-      Log(LogName::kBa, LogLevel::kWarning,
-          "GetSessionUUID() using rand fallback.");
+      g_core->Log(LogName::kBa, LogLevel::kWarning,
+                  "GetSessionUUID() using rand fallback.");
       srand(static_cast<unsigned int>(
           core::CorePlatform::GetCurrentMillisecs()));  // NOLINT
       app_instance_uuid =
@@ -568,8 +573,8 @@ auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
       have_app_instance_uuid = true;
     }
     if (app_instance_uuid.size() >= 100) {
-      Log(LogName::kBa, LogLevel::kWarning,
-          "session id longer than it should be.");
+      g_core->Log(LogName::kBa, LogLevel::kWarning,
+                  "session id longer than it should be.");
     }
   }
   return app_instance_uuid;
@@ -962,9 +967,9 @@ void BaseFeatureSet::SetAppActive(bool active) {
   // Issue a gentle warning if they are feeding us the same state twice in a
   // row; might imply faulty logic on an app-adapter or whatnot.
   if (app_active_set_ && app_active_ == active) {
-    Log(LogName::kBa, LogLevel::kWarning,
-        "SetAppActive called with state " + std::to_string(active)
-            + " twice in a row.");
+    g_core->Log(LogName::kBa, LogLevel::kWarning,
+                "SetAppActive called with state " + std::to_string(active)
+                    + " twice in a row.");
   }
   app_active_set_ = true;
   app_active_ = active;

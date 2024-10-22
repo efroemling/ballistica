@@ -193,10 +193,11 @@ void Widget::ScreenPointToWidget(float* x, float* y) const {
   float y_test = *y;
   WidgetPointToScreen(&x_test, &y_test);
   if (std::abs(x_test - x_old) > 0.01f || std::abs(y_test - y_old) > 0.01f) {
-    Log(LogName::kBa, LogLevel::kError,
-        "ScreenPointToWidget sanity check error: expected ("
-            + std::to_string(x_old) + "," + std::to_string(y_old) + ") got ("
-            + std::to_string(x_test) + "," + std::to_string(y_test) + ")");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "ScreenPointToWidget sanity check error: expected ("
+                    + std::to_string(x_old) + "," + std::to_string(y_old)
+                    + ") got (" + std::to_string(x_test) + ","
+                    + std::to_string(y_test) + ")");
   }
 #endif  // BA_DEBUG_BUILD || BA_TEST_BUILD
 }

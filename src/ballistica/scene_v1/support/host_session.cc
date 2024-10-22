@@ -218,8 +218,8 @@ void HostSession::RequestPlayer(SceneV1InputDeviceDelegate* device) {
 
   // Ignore if we have no Python session Obj.
   if (!GetSessionPyObj()) {
-    Log(LogName::kBaNetworking, LogLevel::kError,
-        "HostSession::RequestPlayer() called w/no session_py_obj_.");
+    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                "HostSession::RequestPlayer() called w/no session_py_obj_.");
     return;
   }
 
@@ -312,13 +312,13 @@ void HostSession::IssuePlayerLeft(Player* player) {
         BA_LOG_PYTHON_TRACE_ONCE("missing player on IssuePlayerLeft");
       }
     } else {
-      Log(LogName::kBaNetworking, LogLevel::kWarning,
-          "HostSession: IssuePlayerLeft caled with no "
-          "session_py_obj_");
+      g_core->Log(LogName::kBaNetworking, LogLevel::kWarning,
+                  "HostSession: IssuePlayerLeft caled with no "
+                  "session_py_obj_");
     }
   } catch (const std::exception& e) {
-    Log(LogName::kBaNetworking, LogLevel::kError,
-        std::string("Error calling on_player_leave(): ") + e.what());
+    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                std::string("Error calling on_player_leave(): ") + e.what());
   }
 }
 
@@ -338,9 +338,9 @@ void HostSession::SetForegroundHostActivity(HostActivity* a) {
   auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
 
   if (shutting_down_) {
-    Log(LogName::kBa, LogLevel::kWarning,
-        "SetForegroundHostActivity called during session shutdown; "
-        "ignoring.");
+    g_core->Log(LogName::kBa, LogLevel::kWarning,
+                "SetForegroundHostActivity called during session shutdown; "
+                "ignoring.");
     return;
   }
 
@@ -664,11 +664,12 @@ HostSession::~HostSession() {
           s += ("\n  " + std::to_string(count++) + ": "
                 + i->GetObjectDescription());
         }
-        Log(LogName::kBa, LogLevel::kWarning, s);
+        g_core->Log(LogName::kBa, LogLevel::kWarning, s);
       }
     }
   } catch (const std::exception& e) {
-    Log(LogName::kBa, LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "Exception in HostSession destructor: " + std::string(e.what()));
   }
 }
@@ -686,9 +687,9 @@ void HostSession::RegisterContextCall(base::PythonContextCall* call) {
   // If we're shutting down, just kill the call immediately.
   // (we turn all of our calls to no-ops as we shut down).
   if (shutting_down_) {
-    Log(LogName::kBa, LogLevel::kWarning,
-        "Adding call to expired session; call will not function: "
-            + call->GetObjectDescription());
+    g_core->Log(LogName::kBa, LogLevel::kWarning,
+                "Adding call to expired session; call will not function: "
+                    + call->GetObjectDescription());
     call->MarkDead();
   }
 }

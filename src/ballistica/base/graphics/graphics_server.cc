@@ -178,9 +178,9 @@ auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
     millisecs_t t = g_core->GetAppTimeMillisecs() - start_time;
     if (t >= 1000) {
       if (g_buildconfig.debug_build()) {
-        Log(LogName::kBaGraphics, LogLevel::kWarning,
-            "GraphicsServer: timed out at " + std::to_string(t)
-                + "ms waiting for logic thread to send us a FrameDef.");
+        g_core->Log(LogName::kBaGraphics, LogLevel::kWarning,
+                    "GraphicsServer: timed out at " + std::to_string(t)
+                        + "ms waiting for logic thread to send us a FrameDef.");
       }
       break;  // Fail.
     }
@@ -266,8 +266,8 @@ void GraphicsServer::ReloadLostRenderer() {
   assert(g_base->app_adapter->InGraphicsContext());
 
   if (!renderer_) {
-    Log(LogName::kBaGraphics, LogLevel::kError,
-        "No renderer on GraphicsServer::ReloadLostRenderer.");
+    g_core->Log(LogName::kBaGraphics, LogLevel::kError,
+                "No renderer on GraphicsServer::ReloadLostRenderer.");
     return;
   }
 
@@ -324,12 +324,13 @@ void GraphicsServer::set_renderer(Renderer* renderer) {
 void GraphicsServer::LoadRenderer() {
   assert(g_base->app_adapter->InGraphicsContext());
   if (!renderer_) {
-    Log(LogName::kBaGraphics, LogLevel::kError,
-        "LoadRenderer() called with no renderer present.");
+    g_core->Log(LogName::kBaGraphics, LogLevel::kError,
+                "LoadRenderer() called with no renderer present.");
     return;
   }
   if (renderer_loaded_) {
-    Log(LogName::kBaGraphics, LogLevel::kError,
+    g_core->Log(
+        LogName::kBaGraphics, LogLevel::kError,
         "LoadRenderer() called with an already-loaded renderer present.");
     return;
   }
@@ -371,12 +372,13 @@ void GraphicsServer::LoadRenderer() {
 void GraphicsServer::UnloadRenderer() {
   assert(g_base->app_adapter->InGraphicsContext());
   if (!renderer_) {
-    Log(LogName::kBaGraphics, LogLevel::kError,
-        "UnloadRenderer() called with no renderer present.");
+    g_core->Log(LogName::kBaGraphics, LogLevel::kError,
+                "UnloadRenderer() called with no renderer present.");
     return;
   }
   if (!renderer_loaded_) {
-    Log(LogName::kBaGraphics, LogLevel::kError,
+    g_core->Log(
+        LogName::kBaGraphics, LogLevel::kError,
         "UnloadRenderer() called with an already unloaded renderer present.");
     return;
   }
@@ -535,7 +537,7 @@ void GraphicsServer::PushRemoveRenderHoldCall() {
     assert(render_hold_);
     render_hold_--;
     if (render_hold_ < 0) {
-      Log(LogName::kBaGraphics, LogLevel::kError, "RenderHold < 0");
+      g_core->Log(LogName::kBaGraphics, LogLevel::kError, "RenderHold < 0");
       render_hold_ = 0;
     }
   });

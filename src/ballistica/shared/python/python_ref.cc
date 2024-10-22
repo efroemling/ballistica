@@ -16,6 +16,7 @@ namespace ballistica {
 // Note: implicitly using core globals here; our behavior is undefined
 // if core has not been imported by anyone yet.
 using core::g_base_soft;
+using core::g_core;
 
 // Ignore a few things that python macros do.
 #pragma clang diagnostic push
@@ -29,7 +30,8 @@ static void ClearPythonExceptionAndWarnIfUnset() {
   // avoid that situation because it opens up the possibility of us clearing
   // exceptions that aren't related to our nullptr.
   if (!PyErr_Occurred()) {
-    Log(LogName::kBa, LogLevel::kWarning,
+    g_core->Log(
+        LogName::kBa, LogLevel::kWarning,
         "A PythonRef acquire/steal call was passed nullptr but no Python "
         "exception is set. This situation should be avoided; only pass "
         "acquire/steal if it is directly due to a Python exception.");

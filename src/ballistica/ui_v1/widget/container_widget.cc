@@ -1402,9 +1402,9 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
     }
   } else {
     if (root_selectable_) {
-      Log(LogName::kBa, LogLevel::kError,
-          "SelectWidget() called on a ContainerWidget which is itself "
-          "selectable. Ignoring.");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "SelectWidget() called on a ContainerWidget which is itself "
+                  "selectable. Ignoring.");
       return;
     }
     for (auto& widget : widgets_) {
@@ -1429,9 +1429,9 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
         } else {
           static bool printed = false;
           if (!printed) {
-            Log(LogName::kBa, LogLevel::kWarning,
-                "SelectWidget called on unselectable widget: "
-                    + w->GetWidgetTypeName());
+            g_core->Log(LogName::kBa, LogLevel::kWarning,
+                        "SelectWidget called on unselectable widget: "
+                            + w->GetWidgetTypeName());
             Python::PrintStackTrace();
             printed = true;
           }
@@ -1634,7 +1634,8 @@ void ContainerWidget::SelectDownWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        Log(LogName::kBa, LogLevel::kError, "Down_widget is not selectable.");
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    "Down_widget is not selectable.");
       } else {
         w->Show();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
@@ -1699,7 +1700,8 @@ void ContainerWidget::SelectUpWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        Log(LogName::kBa, LogLevel::kError, "up_widget is not selectable.");
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    "up_widget is not selectable.");
       } else {
         w->Show();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
@@ -1752,7 +1754,8 @@ void ContainerWidget::SelectLeftWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        Log(LogName::kBa, LogLevel::kError, "left_widget is not selectable.");
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    "left_widget is not selectable.");
       } else {
         w->Show();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
@@ -1805,7 +1808,8 @@ void ContainerWidget::SelectRightWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        Log(LogName::kBa, LogLevel::kError, "right_widget is not selectable.");
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    "right_widget is not selectable.");
       } else {
         w->Show();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.

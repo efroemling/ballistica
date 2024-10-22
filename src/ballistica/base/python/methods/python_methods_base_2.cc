@@ -190,7 +190,7 @@ static auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
     color = BasePython::GetPyVector3f(color_obj);
   }
   if (log) {
-    Log(LogName::kBa, LogLevel::kInfo, message_str);
+    g_core->Log(LogName::kBa, LogLevel::kInfo, message_str);
   }
 
   // This version simply displays it locally.

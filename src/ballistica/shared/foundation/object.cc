@@ -155,10 +155,10 @@ void Object::LsObjects() {
       assert(count == g_core->object_count);
     }
   }
-  Log(LogName::kBa, LogLevel::kInfo, s);
+  g_core->Log(LogName::kBa, LogLevel::kInfo, s);
 #else
-  Log(LogName::kBa, LogLevel::kInfo,
-      "LsObjects() only functions in debug builds.");
+  g_core->Log(LogName::kBa, LogLevel::kInfo,
+              "LsObjects() only functions in debug builds.");
 #endif  // BA_DEBUG_BUILD
 }
 

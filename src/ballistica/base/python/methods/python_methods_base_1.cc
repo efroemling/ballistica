@@ -275,12 +275,12 @@ static auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds)
     // Warn the user not to use this from the logic thread since it doesnt
     // save/restore context.
     if (!suppress_warning && g_base->InLogicThread()) {
-      Log(LogName::kBa, LogLevel::kWarning,
-          "babase.pushcall() called from the logic thread with "
-          "from_other_thread set to true (call "
-              + Python::ObjToString(call_obj) + " at "
-              + Python::GetPythonFileLocation()
-              + "). That arg should only be used from other threads.");
+      g_core->Log(LogName::kBa, LogLevel::kWarning,
+                  "babase.pushcall() called from the logic thread with "
+                  "from_other_thread set to true (call "
+                      + Python::ObjToString(call_obj) + " at "
+                      + Python::GetPythonFileLocation()
+                      + "). That arg should only be used from other threads.");
     }
 
     assert(Python::HaveGIL());

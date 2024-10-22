@@ -112,9 +112,9 @@ GlobalsNode::GlobalsNode(Scene* scene) : Node(scene, node_type) {
   // FIXME: Need to update this for non-host activities at some point.
   if (HostActivity* ha = context_ref().GetHostActivity()) {
     if (ha->globals_node()) {
-      Log(LogName::kBa, LogLevel::kWarning,
-          "More than one globals node created in HostActivity; this "
-          "shouldn't happen");
+      g_core->Log(LogName::kBa, LogLevel::kWarning,
+                  "More than one globals node created in HostActivity; this "
+                  "shouldn't happen");
     }
     ha->SetGlobalsNode(this);
 

@@ -36,6 +36,8 @@ class CorePython {
     kLoggerBaLogCall,
     kLoggerBaAudio,
     kLoggerBaAudioLogCall,
+    kLoggerBaDisplayTime,
+    kLoggerBaDisplayTimeLogCall,
     kLoggerBaGraphics,
     kLoggerBaGraphicsLogCall,
     kLoggerBaLifecycle,

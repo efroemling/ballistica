@@ -88,9 +88,6 @@ void ScreenMessage(const std::string& msg, const Vector3f& color);
 /// Return a human-readable name for the current thread.
 auto CurrentThreadName() -> std::string;
 
-/// Convenient access to Logging::Log.
-void Log(LogName name, LogLevel level, const std::string& msg);
-
 /// Log a fatal error and kill the app. Can be called from any thread at any
 /// time. Provided message will be shown to the user if possible. This will
 /// attempt to ship all accumulated logs to the master-server so the

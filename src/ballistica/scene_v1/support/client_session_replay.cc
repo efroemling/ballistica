@@ -69,17 +69,17 @@ void ClientSessionReplay::OnClientConnected(ConnectionToClient* c) {
   // sanity check - abort if its on either of our lists already
   for (ConnectionToClient* i : connections_to_clients_) {
     if (i == c) {
-      Log(LogName::kBaNetworking, LogLevel::kError,
-          "ReplayClientSession::OnClientConnected()"
-          " got duplicate connection");
+      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                  "ReplayClientSession::OnClientConnected()"
+                  " got duplicate connection");
       return;
     }
   }
   for (ConnectionToClient* i : connections_to_clients_ignored_) {
     if (i == c) {
-      Log(LogName::kBaNetworking, LogLevel::kError,
-          "ReplayClientSession::OnClientConnected()"
-          " got duplicate connection");
+      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                  "ReplayClientSession::OnClientConnected()"
+                  " got duplicate connection");
       return;
     }
   }
@@ -139,9 +139,9 @@ void ClientSessionReplay::OnClientDisconnected(ConnectionToClient* c) {
       return;
     }
   }
-  Log(LogName::kBaNetworking, LogLevel::kError,
-      "ReplayClientSession::OnClientDisconnected()"
-      " called for connection not on lists");
+  g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+              "ReplayClientSession::OnClientDisconnected()"
+              " called for connection not on lists");
 }
 
 void ClientSessionReplay::FetchMessages() {

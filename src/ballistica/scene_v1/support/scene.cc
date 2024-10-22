@@ -216,8 +216,8 @@ void Scene::DeleteNode(Node* node) {
   // Sanity test: at this point the node should be dead.
 #if BA_DEBUG_BUILD
   if (temp_weak_ref.Exists()) {
-    Log(LogName::kBa, LogLevel::kError,
-        "Node still exists after ref release!!");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Node still exists after ref release!!");
   }
 #endif  // BA_DEBUG_BUILD
 
@@ -401,9 +401,9 @@ void Scene::DumpNodes(SessionStream* out) {
             break;
           }
           default:
-            Log(LogName::kBa, LogLevel::kError,
-                "Invalid attr type for Scene::DumpNodes() attr set: "
-                    + std::to_string(static_cast<int>(attr.type())));
+            g_core->Log(LogName::kBa, LogLevel::kError,
+                        "Invalid attr type for Scene::DumpNodes() attr set: "
+                            + std::to_string(static_cast<int>(attr.type())));
             break;
         }
       }

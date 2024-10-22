@@ -15,6 +15,8 @@
 
 namespace ballistica {
 
+using core::g_core;
+
 void MacroFunctionTimerEnd(core::CoreFeatureSet* corefs, millisecs_t starttime,
                            millisecs_t time, const char* funcname) {
   // Currently disabling this for test builds; not really useful for
@@ -25,9 +27,9 @@ void MacroFunctionTimerEnd(core::CoreFeatureSet* corefs, millisecs_t starttime,
   assert(corefs);
   millisecs_t endtime = corefs->platform->GetTicks();
   if (endtime - starttime > time) {
-    Log(LogName::kBa, LogLevel::kWarning,
-        std::to_string(endtime - starttime) + " milliseconds spent in "
-            + funcname);
+    core::g_core->Log(LogName::kBa, LogLevel::kWarning,
+                      std::to_string(endtime - starttime)
+                          + " milliseconds spent in " + funcname);
   }
 }
 
@@ -42,9 +44,10 @@ void MacroFunctionTimerEndThread(core::CoreFeatureSet* corefs,
   assert(corefs);
   millisecs_t endtime = corefs->platform->GetTicks();
   if (endtime - starttime > time) {
-    Log(LogName::kBa, LogLevel::kWarning,
-        std::to_string(endtime - starttime) + " milliseconds spent by "
-            + ballistica::CurrentThreadName() + " thread in " + funcname);
+    g_core->Log(LogName::kBa, LogLevel::kWarning,
+                std::to_string(endtime - starttime) + " milliseconds spent by "
+                    + ballistica::CurrentThreadName() + " thread in "
+                    + funcname);
   }
 }
 
@@ -59,9 +62,9 @@ void MacroFunctionTimerEndEx(core::CoreFeatureSet* corefs,
   assert(corefs);
   millisecs_t endtime = corefs->platform->GetTicks();
   if (endtime - starttime > time) {
-    Log(LogName::kBa, LogLevel::kWarning,
-        std::to_string(endtime - starttime) + " milliseconds spent in "
-            + funcname + " for " + what);
+    g_core->Log(LogName::kBa, LogLevel::kWarning,
+                std::to_string(endtime - starttime) + " milliseconds spent in "
+                    + funcname + " for " + what);
   }
 }
 
@@ -77,10 +80,10 @@ void MacroFunctionTimerEndThreadEx(core::CoreFeatureSet* corefs,
   assert(corefs);
   millisecs_t endtime = corefs->platform->GetTicks();
   if (endtime - starttime > time) {
-    Log(LogName::kBa, LogLevel::kWarning,
-        std::to_string(endtime - starttime) + " milliseconds spent by "
-            + ballistica::CurrentThreadName() + " thread in " + funcname
-            + " for " + what);
+    g_core->Log(LogName::kBa, LogLevel::kWarning,
+                std::to_string(endtime - starttime) + " milliseconds spent by "
+                    + ballistica::CurrentThreadName() + " thread in " + funcname
+                    + " for " + what);
   }
 }
 
@@ -95,10 +98,10 @@ void MacroTimeCheckEnd(core::CoreFeatureSet* corefs, millisecs_t starttime,
   assert(corefs);
   millisecs_t e = corefs->platform->GetTicks();
   if (e - starttime > time) {
-    Log(LogName::kBa, LogLevel::kWarning,
-        std::string(name) + " took " + std::to_string(e - starttime)
-            + " milliseconds; " + MacroPathFilter(corefs, file) + " line "
-            + std::to_string(line));
+    g_core->Log(LogName::kBa, LogLevel::kWarning,
+                std::string(name) + " took " + std::to_string(e - starttime)
+                    + " milliseconds; " + MacroPathFilter(corefs, file)
+                    + " line " + std::to_string(line));
   }
 }
 
@@ -111,8 +114,8 @@ void MacroLogErrorNativeTrace(core::CoreFeatureSet* corefs,
   auto trace = corefs->platform->GetNativeStackTrace();
   auto trace_s =
       trace ? trace->FormatForDisplay() : "<native stack trace unavailable>";
-  Log(LogName::kBa, LogLevel::kError,
-      std::string(buffer) + " error: " + msg + "\n" + trace_s);
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              std::string(buffer) + " error: " + msg + "\n" + trace_s);
 }
 
 void MacroLogErrorPythonTrace(core::CoreFeatureSet* corefs,
@@ -125,7 +128,8 @@ void MacroLogErrorPythonTrace(core::CoreFeatureSet* corefs,
   //  Since our logging goes through Python anyway, we should just ask
   //  Python do include the trace in our log call.
   Python::PrintStackTrace();
-  Log(LogName::kBa, LogLevel::kError, std::string(buffer) + " error: " + msg);
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              std::string(buffer) + " error: " + msg);
 }
 
 void MacroLogError(core::CoreFeatureSet* corefs, const std::string& msg,
@@ -133,12 +137,13 @@ void MacroLogError(core::CoreFeatureSet* corefs, const std::string& msg,
   char e_buffer[2048];
   snprintf(e_buffer, sizeof(e_buffer), "%s:%d:", MacroPathFilter(corefs, fname),
            line);
-  Log(LogName::kBa, LogLevel::kError, std::string(e_buffer) + " error: " + msg);
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              std::string(e_buffer) + " error: " + msg);
 }
 
 void MacroLogPythonTrace(core::CoreFeatureSet* corefs, const std::string& msg) {
   Python::PrintStackTrace();
-  Log(LogName::kBa, LogLevel::kError, msg);
+  g_core->Log(LogName::kBa, LogLevel::kError, msg);
 }
 
 auto MacroPathFilter(core::CoreFeatureSet* corefs, const char* filename)

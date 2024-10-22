@@ -11,6 +11,7 @@
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/inline.h"
+#include "ballistica/shared/foundation/logging.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/foundation/types.h"
 #include "ballistica/shared/generic/runnable.h"
@@ -230,7 +231,7 @@ auto CoreFeatureSet::CalcBuildSrcDir_() -> std::string {
                           "core" BA_DIRSLASH "core.cc");
   if (!f_end) {
     Log(LogName::kBa, LogLevel::kWarning,
-        "Unable to calc build source dir from __FILE__.");
+        [] { return "Unable to calc build source dir from __FILE__."; });
     return "";
   } else {
     return std::string(f).substr(0, f_end - f);
@@ -280,14 +281,16 @@ void CoreFeatureSet::RunSanityChecks_() {
   // from. Use this to adjust the filtering as necessary so the resulting
   // type name matches what is expected.
   if (explicit_bool(false)) {
-    Log(LogName::kBa, LogLevel::kError,
-        "static_type_name check; name is '"
-            + static_type_name<decltype(g_core)>() + "' debug_full is '"
-            + static_type_name<decltype(g_core)>(true) + "'");
-    Log(LogName::kBa, LogLevel::kError,
-        "static_type_name check; name is '"
-            + static_type_name<decltype(testrunnable)>() + "' debug_full is '"
-            + static_type_name<decltype(testrunnable)>(true) + "'");
+    Log(LogName::kBa, LogLevel::kError, [] {
+      return "static_type_name check; name is '"
+             + static_type_name<decltype(g_core)>() + "' debug_full is '"
+             + static_type_name<decltype(g_core)>(true) + "'";
+    });
+    Log(LogName::kBa, LogLevel::kError, [] {
+      return "static_type_name check; name is '"
+             + static_type_name<decltype(testrunnable)>() + "' debug_full is '"
+             + static_type_name<decltype(testrunnable)>(true) + "'";
+    });
   }
 
   if (vr_mode_ && !g_buildconfig.vr_build()) {
@@ -321,6 +324,30 @@ void CoreFeatureSet::LifecycleLog(const char* msg, double offset_seconds) {
     Log(LogName::kBaLifecycle, LogLevel::kDebug, buffer);
   } else {
     Log(LogName::kBaLifecycle, LogLevel::kDebug, msg);
+  }
+}
+
+void CoreFeatureSet::Log(LogName name, LogLevel level, char* msg) {
+  // Avoid touching the Python layer if the log will get ignored there
+  // anyway.
+  if (LogLevelEnabled(name, level)) {
+    Logging::Log(name, level, msg);
+  }
+}
+
+void CoreFeatureSet::Log(LogName name, LogLevel level, const char* msg) {
+  // Avoid touching the Python layer if the log will get ignored there
+  // anyway.
+  if (LogLevelEnabled(name, level)) {
+    Logging::Log(name, level, msg);
+  }
+}
+
+void CoreFeatureSet::Log(LogName name, LogLevel level, const std::string& msg) {
+  // Avoid touching the Python layer if the log will get ignored there
+  // anyway.
+  if (LogLevelEnabled(name, level)) {
+    Logging::Log(name, level, msg);
   }
 }
 

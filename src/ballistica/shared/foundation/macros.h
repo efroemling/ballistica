@@ -104,14 +104,14 @@
   }                                                                            \
   ((void)0)  // (see 'Trailing-semicolon note' at top)
 
-#define BA_LOG_ONCE(nm, lvl, msg)      \
-  {                                    \
-    static bool did_log_here{};        \
-    if (!did_log_here) {               \
-      ::ballistica::Log(nm, lvl, msg); \
-      did_log_here = true;             \
-    }                                  \
-  }                                    \
+#define BA_LOG_ONCE(nm, lvl, msg) \
+  {                               \
+    static bool did_log_here{};   \
+    if (!did_log_here) {          \
+      g_core->Log(nm, lvl, msg);  \
+      did_log_here = true;        \
+    }                             \
+  }                               \
   ((void)0)  // (see 'Trailing-semicolon note' at top)
 
 #define BA_LOG_PYTHON_TRACE(msg) ::ballistica::MacroLogPythonTrace(g_core, msg)

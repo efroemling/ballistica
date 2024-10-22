@@ -65,7 +65,8 @@ auto ClientInputDeviceDelegate::GetClientID() const -> int {
   if (ConnectionToClient* c = connection_to_client_.Get()) {
     return c->id();
   } else {
-    Log(LogName::kBaNetworking, LogLevel::kError,
+    g_core->Log(
+        LogName::kBaNetworking, LogLevel::kError,
         "ClientInputDevice::get_client_id(): connection_to_client no longer "
         "exists; returning -1..");
     return -1;

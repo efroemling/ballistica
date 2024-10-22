@@ -200,7 +200,8 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
         if (g_buildconfig.debug_build()) {
           if (current_cmd_ptr_ != nullptr) {
             if (current_cmd_ptr_ != &(current_cmd_[0]) + current_cmd_.size()) {
-              Log(LogName::kBaNetworking, LogLevel::kError,
+              g_core->Log(
+                  LogName::kBaNetworking, LogLevel::kError,
                   "SIZE ERROR FOR CMD "
                       + std::to_string(static_cast<int>(current_cmd_[0]))
                       + " expected " + std::to_string(current_cmd_.size())
@@ -969,8 +970,8 @@ auto ClientSession::GetCollisionMesh(int id) const -> SceneCollisionMesh* {
 }
 
 void ClientSession::Error(const std::string& description) {
-  Log(LogName::kBaNetworking, LogLevel::kError,
-      "Client session error: " + description);
+  g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+              "Client session error: " + description);
   End();
 }
 

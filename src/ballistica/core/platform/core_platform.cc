@@ -178,11 +178,12 @@ auto CorePlatform::GetLegacyDeviceUUID() -> const std::string& {
         if (FILE* f2 = FOpen(path.c_str(), "wb")) {
           size_t result = fwrite(val.c_str(), val.size(), 1, f2);
           if (result != 1)
-            Log(LogName::kBa, LogLevel::kError, "unable to write bsuuid file.");
+            g_core->Log(LogName::kBa, LogLevel::kError,
+                        "unable to write bsuuid file.");
           fclose(f2);
         } else {
-          Log(LogName::kBa, LogLevel::kError,
-              "unable to open bsuuid file for writing: '" + path + "'");
+          g_core->Log(LogName::kBa, LogLevel::kError,
+                      "unable to open bsuuid file for writing: '" + path + "'");
         }
       }
     }
@@ -192,8 +193,8 @@ auto CorePlatform::GetLegacyDeviceUUID() -> const std::string& {
 }
 
 auto CorePlatform::GetDeviceV1AccountUUIDPrefix() -> std::string {
-  Log(LogName::kBa, LogLevel::kError,
-      "GetDeviceV1AccountUUIDPrefix() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "GetDeviceV1AccountUUIDPrefix() unimplemented");
   return "u";
 }
 
@@ -249,12 +250,12 @@ void CorePlatform::SetLowLevelConfigValue(const char* key, int value) {
   if (f) {
     size_t result = fwrite(out.c_str(), out.size(), 1, f);
     if (result != 1)
-      Log(LogName::kBa, LogLevel::kError,
-          "unable to write low level config file.");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "unable to write low level config file.");
     fclose(f);
   } else {
-    Log(LogName::kBa, LogLevel::kError,
-        "unable to open low level config file for writing.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "unable to open low level config file for writing.");
   }
 }
 
@@ -691,7 +692,8 @@ auto CorePlatform::ConvertIncomingLeaderboardScore(
 
 void CorePlatform::SubmitScore(const std::string& game,
                                const std::string& version, int64_t score) {
-  Log(LogName::kBa, LogLevel::kError, "FIXME: SubmitScore() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "FIXME: SubmitScore() unimplemented");
 }
 
 void CorePlatform::ReportAchievement(const std::string& achievement) {}
@@ -704,8 +706,8 @@ auto CorePlatform::HaveLeaderboard(const std::string& game,
 void CorePlatform::ShowGameServiceUI(const std::string& show,
                                      const std::string& game,
                                      const std::string& game_version) {
-  Log(LogName::kBa, LogLevel::kError,
-      "FIXME: ShowGameServiceUI() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "FIXME: ShowGameServiceUI() unimplemented");
 }
 
 void CorePlatform::AndroidSetResString(const std::string& res) {
@@ -748,29 +750,30 @@ auto CorePlatform::DemangleCXXSymbol(const std::string& s) -> std::string {
 }
 
 void CorePlatform::ResetAchievements() {
-  Log(LogName::kBa, LogLevel::kError, "ResetAchievements() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "ResetAchievements() unimplemented");
 }
 
 void CorePlatform::RunEvents() {}
 
 void CorePlatform::MusicPlayerPlay(PyObject* target) {
-  Log(LogName::kBa, LogLevel::kError,
-      "MusicPlayerPlay() unimplemented on this platform");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "MusicPlayerPlay() unimplemented on this platform");
 }
 
 void CorePlatform::MusicPlayerStop() {
-  Log(LogName::kBa, LogLevel::kError,
-      "MusicPlayerStop() unimplemented on this platform");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "MusicPlayerStop() unimplemented on this platform");
 }
 
 void CorePlatform::MusicPlayerShutdown() {
-  Log(LogName::kBa, LogLevel::kError,
-      "MusicPlayerShutdown() unimplemented on this platform");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "MusicPlayerShutdown() unimplemented on this platform");
 }
 
 void CorePlatform::MusicPlayerSetVolume(float volume) {
-  Log(LogName::kBa, LogLevel::kError,
-      "MusicPlayerSetVolume() unimplemented on this platform");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "MusicPlayerSetVolume() unimplemented on this platform");
 }
 
 auto CorePlatform::IsOSPlayingMusic() -> bool { return false; }
@@ -792,7 +795,7 @@ void CorePlatform::SubmitAnalyticsCounts() {}
 void CorePlatform::SetPlatformMiscReadVals(const std::string& vals) {}
 
 void CorePlatform::ShowAd(const std::string& purpose) {
-  Log(LogName::kBa, LogLevel::kError, "ShowAd() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError, "ShowAd() unimplemented");
 }
 
 auto CorePlatform::GetHasAds() -> bool { return false; }
@@ -803,7 +806,7 @@ auto CorePlatform::GetHasVideoAds() -> bool {
 }
 
 void CorePlatform::SignInV1(const std::string& account_type) {
-  Log(LogName::kBa, LogLevel::kError, "SignInV1() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError, "SignInV1() unimplemented");
 }
 
 void CorePlatform::V1LoginDidChange() {
@@ -811,35 +814,39 @@ void CorePlatform::V1LoginDidChange() {
 }
 
 void CorePlatform::SignOutV1() {
-  Log(LogName::kBa, LogLevel::kError, "SignOutV1() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError, "SignOutV1() unimplemented");
 }
 
 void CorePlatform::MacMusicAppInit() {
-  Log(LogName::kBa, LogLevel::kError, "MacMusicAppInit() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "MacMusicAppInit() unimplemented");
 }
 
 auto CorePlatform::MacMusicAppGetVolume() -> int {
-  Log(LogName::kBa, LogLevel::kError, "MacMusicAppGetVolume() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "MacMusicAppGetVolume() unimplemented");
   return 0;
 }
 
 void CorePlatform::MacMusicAppSetVolume(int volume) {
-  Log(LogName::kBa, LogLevel::kError, "MacMusicAppSetVolume() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "MacMusicAppSetVolume() unimplemented");
 }
 
 void CorePlatform::MacMusicAppStop() {
-  Log(LogName::kBa, LogLevel::kError, "MacMusicAppStop() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "MacMusicAppStop() unimplemented");
 }
 
 auto CorePlatform::MacMusicAppPlayPlaylist(const std::string& playlist)
     -> bool {
-  Log(LogName::kBa, LogLevel::kError,
-      "MacMusicAppPlayPlaylist() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "MacMusicAppPlayPlaylist() unimplemented");
   return false;
 }
 auto CorePlatform::MacMusicAppGetPlaylists() -> std::list<std::string> {
-  Log(LogName::kBa, LogLevel::kError,
-      "MacMusicAppGetPlaylists() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "MacMusicAppGetPlaylists() unimplemented");
   return {};
 }
 
@@ -944,9 +951,9 @@ auto CorePlatform::SetSocketNonBlocking(int sd) -> bool {
 #else
   int result = fcntl(sd, F_SETFL, O_NONBLOCK);
   if (result != 0) {
-    Log(LogName::kBa, LogLevel::kError,
-        "Error setting non-blocking socket: "
-            + g_core->platform->GetSocketErrorString());
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Error setting non-blocking socket: "
+                    + g_core->platform->GetSocketErrorString());
     return false;
   }
   return true;

@@ -208,10 +208,22 @@ class CoreFeatureSet {
     return ba_env_launch_timestamp_;
   }
 
+  void Log(LogName name, LogLevel level, const std::string& msg);
+  void Log(LogName name, LogLevel level, const char* msg);
+  void Log(LogName name, LogLevel level, char* msg);
+
+  template <typename C>
+  void Log(LogName name, LogLevel level, C getmsgcall) {
+    if (!LogLevelEnabled(name, level)) {
+      return;
+    }
+    Log(name, level, getmsgcall());
+  }
+
  private:
   explicit CoreFeatureSet(CoreConfig config);
   static void DoImport_(const CoreConfig& config);
-  static auto CalcBuildSrcDir_() -> std::string;
+  auto CalcBuildSrcDir_() -> std::string;
   void RunSanityChecks_();
   void UpdateAppTime_();
   void PostInit_();

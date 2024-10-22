@@ -146,7 +146,6 @@ class Logic {
   bool app_active_{true};
   bool app_bootstrapping_complete_{};
   bool have_pending_loads_{};
-  bool debug_log_display_time_{};
   bool applied_app_config_{};
   bool shutting_down_{};
   bool shutdown_completed_{};

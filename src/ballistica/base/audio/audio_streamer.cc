@@ -89,9 +89,9 @@ void AudioStreamer::Update() {
   // A fun anomaly in the linux version; we sometimes get more
   // "processed" buffers than we have queued.
   if (queued < processed) {
-    Log(LogName::kBaAudio, LogLevel::kError,
-        "Streamer oddness: queued(" + std::to_string(queued) + "); processed("
-            + std::to_string(processed) + ")");
+    g_core->Log(LogName::kBaAudio, LogLevel::kError,
+                "Streamer oddness: queued(" + std::to_string(queued)
+                    + "); processed(" + std::to_string(processed) + ")");
     processed = queued;
   }
 

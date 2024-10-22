@@ -156,7 +156,8 @@ void Connection::HandleGamePacketCompressed(const std::vector<uint8_t>& data) {
   try {
     data_decompressed = g_base->huffman->decompress(data);
   } catch (const std::exception& e) {
-    Log(LogName::kBaNetworking, LogLevel::kError,
+    g_core->Log(
+        LogName::kBaNetworking, LogLevel::kError,
         std::string("Error in huffman decompression for packet: ") + e.what());
 
     // Hmmm i guess lets just ignore this packet and keep on trucking?.. or
@@ -190,8 +191,8 @@ void Connection::HandleGamePacket(const std::vector<uint8_t>& data) {
 
       // Expect 1 byte type, 2 byte num, 3 byte acks, at least 1 byte payload.
       if (data.size() < 7) {
-        Log(LogName::kBaNetworking, LogLevel::kError,
-            "Got invalid BA_PACKET_STATE packet.");
+        g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                    "Got invalid BA_PACKET_STATE packet.");
         return;
       }
       uint16_t num;
@@ -222,8 +223,8 @@ void Connection::HandleGamePacket(const std::vector<uint8_t>& data) {
       // Expect 1 byte type, 2 byte num, 2 byte unreliable-num, 3 byte acks,
       // at least 1 byte payload.
       if (data.size() < 9) {
-        Log(LogName::kBaNetworking, LogLevel::kError,
-            "Got invalid BA_PACKET_STATE_UNRELIABLE packet.");
+        g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                    "Got invalid BA_PACKET_STATE_UNRELIABLE packet.");
         return;
       }
       uint16_t num, num_unreliable;
@@ -244,9 +245,9 @@ void Connection::HandleGamePacket(const std::vector<uint8_t>& data) {
     }
 
     default:
-      Log(LogName::kBaNetworking, LogLevel::kError,
-          "Connection got unknown packet type: "
-              + std::to_string(static_cast<int>(data[0])));
+      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                  "Connection got unknown packet type: "
+                      + std::to_string(static_cast<int>(data[0])));
       break;
   }
 }
@@ -441,8 +442,8 @@ void Connection::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         multipart_buffer_.resize(old_size + (buffer.size() - 1));
         memcpy(&(multipart_buffer_[old_size]), &(buffer[1]), buffer.size() - 1);
       } else {
-        Log(LogName::kBaNetworking, LogLevel::kError,
-            "got invalid BA_MESSAGE_MULTIPART");
+        g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                    "got invalid BA_MESSAGE_MULTIPART");
       }
       if (buffer[0] == BA_MESSAGE_MULTIPART_END) {
         if (multipart_buffer_[0] == BA_MESSAGE_MULTIPART) {

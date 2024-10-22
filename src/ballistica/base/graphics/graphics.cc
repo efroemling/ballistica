@@ -204,7 +204,8 @@ auto Graphics::TextureQualityFromAppConfig() -> TextureQualityRequest {
   } else if (texqualstr == "Low") {
     texture_quality_requested = TextureQualityRequest::kLow;
   } else {
-    Log(LogName::kBaGraphics, LogLevel::kError,
+    g_core->Log(
+        LogName::kBaGraphics, LogLevel::kError,
         "Invalid texture quality: '" + texqualstr + "'; defaulting to low.");
     texture_quality_requested = TextureQualityRequest::kLow;
   }
@@ -221,8 +222,8 @@ auto Graphics::VSyncFromAppConfig() -> VSyncRequest {
   } else if (v_sync == "Never") {
     return VSyncRequest::kNever;
   }
-  Log(LogName::kBaGraphics, LogLevel::kError,
-      "Invalid 'Vertical Sync' value: '" + v_sync + "'");
+  g_core->Log(LogName::kBaGraphics, LogLevel::kError,
+              "Invalid 'Vertical Sync' value: '" + v_sync + "'");
   return VSyncRequest::kNever;
 }
 
@@ -241,7 +242,8 @@ auto Graphics::GraphicsQualityFromAppConfig() -> GraphicsQualityRequest {
   } else if (gqualstr == "Low") {
     graphics_quality_requested = GraphicsQualityRequest::kLow;
   } else {
-    Log(LogName::kBaGraphics, LogLevel::kError,
+    g_core->Log(
+        LogName::kBaGraphics, LogLevel::kError,
         "Invalid graphics quality: '" + gqualstr + "'; defaulting to auto.");
     graphics_quality_requested = GraphicsQualityRequest::kAuto;
   }
@@ -628,8 +630,8 @@ void Graphics::FadeScreen(bool to, millisecs_t time, PyObject* endcall) {
   // (otherwise, overlapping fades can cause things to get lost)
   if (fade_end_call_.Exists()) {
     if (g_buildconfig.debug_build()) {
-      Log(LogName::kBaGraphics, LogLevel::kWarning,
-          "2 fades overlapping; running first fade-end-call early.");
+      g_core->Log(LogName::kBaGraphics, LogLevel::kWarning,
+                  "2 fades overlapping; running first fade-end-call early.");
     }
     fade_end_call_->Schedule();
     fade_end_call_.Clear();
@@ -1016,7 +1018,8 @@ void Graphics::DrawFades(FrameDef* frame_def) {
     // TEMP HACK - don't trigger this while inactive.
     // Need to make overall fade logic smarter.
     if (faded_time > 15000 && g_base->app_active()) {
-      Log(LogName::kBaGraphics, LogLevel::kError, "FORCE-ENDING STUCK FADE");
+      g_core->Log(LogName::kBaGraphics, LogLevel::kError,
+                  "FORCE-ENDING STUCK FADE");
       fade_out_ = false;
       fade_ = 1.0f;
       fade_time_ = 1000;
@@ -1673,7 +1676,8 @@ auto Graphics::ReflectionTypeFromString(const std::string& s)
 void Graphics::LanguageChanged() {
   assert(g_base && g_base->InLogicThread());
   if (building_frame_def_) {
-    Log(LogName::kBa, LogLevel::kWarning,
+    g_core->Log(
+        LogName::kBa, LogLevel::kWarning,
         "Graphics::LanguageChanged() called during draw; should not happen.");
   }
   screenmessages->ClearScreenMessageTranslations();
@@ -1694,9 +1698,9 @@ auto Graphics::GraphicsQualityFromRequest(GraphicsQualityRequest request,
     case GraphicsQualityRequest::kAuto:
       return auto_val;
     default:
-      Log(LogName::kBa, LogLevel::kError,
-          "Unhandled GraphicsQualityRequest value: "
-              + std::to_string(static_cast<int>(request)));
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "Unhandled GraphicsQualityRequest value: "
+                      + std::to_string(static_cast<int>(request)));
       return GraphicsQuality::kLow;
   }
 }
@@ -1714,9 +1718,9 @@ auto Graphics::TextureQualityFromRequest(TextureQualityRequest request,
     case TextureQualityRequest::kAuto:
       return auto_val;
     default:
-      Log(LogName::kBaGraphics, LogLevel::kError,
-          "Unhandled TextureQualityRequest value: "
-              + std::to_string(static_cast<int>(request)));
+      g_core->Log(LogName::kBaGraphics, LogLevel::kError,
+                  "Unhandled TextureQualityRequest value: "
+                      + std::to_string(static_cast<int>(request)));
       return TextureQuality::kLow;
   }
 }

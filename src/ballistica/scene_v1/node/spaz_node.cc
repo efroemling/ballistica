@@ -5977,8 +5977,8 @@ auto SpazNode::GetRigidBody(int id) -> RigidBody* {
       return hair_ponytail_bottom_body_.Get();
       break;
     default:
-      Log(LogName::kBa, LogLevel::kError,
-          "Request for unknown spaz body: " + std::to_string(id));
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "Request for unknown spaz body: " + std::to_string(id));
       break;
   }
 
@@ -6698,25 +6698,30 @@ void SpazNode::SetHoldNode(Node* val) {
         assert(dynamics);
         Collision* c = dynamics->active_collision();
         if (c) {
-          Log(LogName::kBa, LogLevel::kError,
+          g_core->Log(
+              LogName::kBa, LogLevel::kError,
               "SRC NODE: " + ObjToString(dynamics->GetActiveCollideSrcNode()));
-          Log(LogName::kBa, LogLevel::kError,
+          g_core->Log(
+              LogName::kBa, LogLevel::kError,
               "OPP NODE: " + ObjToString(dynamics->GetActiveCollideDstNode()));
-          Log(LogName::kBa, LogLevel::kError,
+          g_core->Log(
+              LogName::kBa, LogLevel::kError,
               "SRC BODY "
                   + std::to_string(dynamics->GetCollideMessageReverseOrder()
                                        ? c->body_id_1
                                        : c->body_id_2));
-          Log(LogName::kBa, LogLevel::kError,
+          g_core->Log(
+              LogName::kBa, LogLevel::kError,
               "OPP BODY "
                   + std::to_string(dynamics->GetCollideMessageReverseOrder()
                                        ? c->body_id_2
                                        : c->body_id_1));
-          Log(LogName::kBa, LogLevel::kError,
+          g_core->Log(
+              LogName::kBa, LogLevel::kError,
               "REVERSE "
                   + std::to_string(dynamics->GetCollideMessageReverseOrder()));
         } else {
-          Log(LogName::kBa, LogLevel::kError, "<NO ACTIVE COLLISION>");
+          g_core->Log(LogName::kBa, LogLevel::kError, "<NO ACTIVE COLLISION>");
         }
       }
       throw Exception("specified hold_body (" + std::to_string(hold_body_)

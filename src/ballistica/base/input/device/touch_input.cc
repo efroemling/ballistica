@@ -852,8 +852,8 @@ void TouchInput::UpdateMapping() {
   } else if (touch_movement_type == "joystick") {
     movement_control_type_ = TouchInput::MovementControlType::kJoystick;
   } else {
-    Log(LogName::kBaInput, LogLevel::kError,
-        "Invalid touch-movement-type: " + touch_movement_type);
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                "Invalid touch-movement-type: " + touch_movement_type);
     movement_control_type_ = TouchInput::MovementControlType::kSwipe;
   }
   std::string touch_action_type =
@@ -863,8 +863,8 @@ void TouchInput::UpdateMapping() {
   } else if (touch_action_type == "buttons") {
     action_control_type_ = TouchInput::ActionControlType::kButtons;
   } else {
-    Log(LogName::kBaInput, LogLevel::kError,
-        "Invalid touch-action-type: " + touch_action_type);
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                "Invalid touch-action-type: " + touch_action_type);
     action_control_type_ = TouchInput::ActionControlType::kSwipe;
   }
 

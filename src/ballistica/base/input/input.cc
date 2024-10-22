@@ -34,8 +34,8 @@ void Input::PushCreateKeyboardInputDevices() {
 void Input::CreateKeyboardInputDevices_() {
   assert(g_base->InLogicThread());
   if (keyboard_input_ != nullptr || keyboard_input_2_ != nullptr) {
-    Log(LogName::kBaInput, LogLevel::kError,
-        "CreateKeyboardInputDevices called with existing kbs.");
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                "CreateKeyboardInputDevices called with existing kbs.");
     return;
   }
   keyboard_input_ = Object::NewDeferred<KeyboardInput>(nullptr);
@@ -53,8 +53,8 @@ void Input::PushDestroyKeyboardInputDevices() {
 void Input::DestroyKeyboardInputDevices_() {
   assert(g_base->InLogicThread());
   if (keyboard_input_ == nullptr || keyboard_input_2_ == nullptr) {
-    Log(LogName::kBaInput, LogLevel::kError,
-        "DestroyKeyboardInputDevices called with null kb(s).");
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                "DestroyKeyboardInputDevices called with null kb(s).");
     return;
   }
   RemoveInputDevice(keyboard_input_, false);
@@ -558,8 +558,8 @@ void Input::StepDisplayTime() {
   // If input has been locked an excessively long amount of time, unlock it.
   if (input_lock_count_temp_) {
     if (real_time - last_input_temp_lock_time_ > 10000) {
-      Log(LogName::kBaInput, LogLevel::kError,
-          "Input has been temp-locked for 10 seconds; unlocking.");
+      g_core->Log(LogName::kBaInput, LogLevel::kError,
+                  "Input has been temp-locked for 10 seconds; unlocking.");
       input_lock_count_temp_ = 0;
       PrintLockLabels_();
       input_lock_temp_labels_.clear();
@@ -664,10 +664,10 @@ void Input::UnlockAllInput(bool permanent, const std::string& label) {
     input_lock_count_temp_--;
     input_unlock_temp_labels_.push_back(label);
     if (input_lock_count_temp_ < 0) {
-      Log(LogName::kBaInput, LogLevel::kWarning,
-          "temp input unlock at time "
-              + std::to_string(g_core->GetAppTimeMillisecs())
-              + " with no active lock: '" + label + "'");
+      g_core->Log(LogName::kBaInput, LogLevel::kWarning,
+                  "temp input unlock at time "
+                      + std::to_string(g_core->GetAppTimeMillisecs())
+                      + " with no active lock: '" + label + "'");
       // This is to be expected since we can reset this to 0.
       input_lock_count_temp_ = 0;
     }
@@ -719,7 +719,7 @@ void Input::PrintLockLabels_() {
     s += "\n   " + std::to_string(num++) + ": " + recent_input_locks_unlock;
   }
 
-  Log(LogName::kBaInput, LogLevel::kError, s);
+  g_core->Log(LogName::kBaInput, LogLevel::kError, s);
 }
 
 void Input::PushTextInputEvent(const std::string& text) {
@@ -757,8 +757,8 @@ void Input::PushTextInputEvent(const std::string& text) {
     // platforms) but make a stink if they sent us something that we can't
     // at least translate to unicode.
     if (!Utils::IsValidUTF8(text)) {
-      Log(LogName::kBaInput, LogLevel::kWarning,
-          "PushTextInputEvent passed invalid utf-8 text.");
+      g_core->Log(LogName::kBaInput, LogLevel::kWarning,
+                  "PushTextInputEvent passed invalid utf-8 text.");
       return;
     }
 
@@ -845,8 +845,8 @@ void Input::CaptureKeyboardInput(HandleKeyPressCall* press_call,
                                  HandleKeyReleaseCall* release_call) {
   assert(g_base->InLogicThread());
   if (keyboard_input_capture_press_ || keyboard_input_capture_release_) {
-    Log(LogName::kBaInput, LogLevel::kError,
-        "Setting key capture redundantly.");
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                "Setting key capture redundantly.");
   }
   keyboard_input_capture_press_ = press_call;
   keyboard_input_capture_release_ = release_call;
@@ -861,8 +861,8 @@ void Input::ReleaseKeyboardInput() {
 void Input::CaptureJoystickInput(HandleJoystickEventCall* call) {
   assert(g_base->InLogicThread());
   if (joystick_input_capture_) {
-    Log(LogName::kBaInput, LogLevel::kError,
-        "Setting joystick capture redundantly.");
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                "Setting joystick capture redundantly.");
   }
   joystick_input_capture_ = call;
 }
@@ -1570,7 +1570,7 @@ void Input::LsInputDevices() {
     ++index;
   }
 
-  Log(LogName::kBaInput, LogLevel::kInfo, out);
+  g_core->Log(LogName::kBaInput, LogLevel::kInfo, out);
 }
 
 auto Input::ShouldAllowInputInAttractMode_(InputDevice* device) const -> bool {

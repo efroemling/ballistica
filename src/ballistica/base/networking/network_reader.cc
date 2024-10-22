@@ -61,9 +61,9 @@ void NetworkReader::OnAppUnsuspend() {
 void NetworkReader::PokeSelf_() {
   int sd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sd < 0) {
-    Log(LogName::kBaNetworking, LogLevel::kError,
-        "Unable to create sleep ping socket; errno "
-            + g_core->platform->GetSocketErrorString());
+    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                "Unable to create sleep ping socket; errno "
+                    + g_core->platform->GetSocketErrorString());
   } else {
     struct sockaddr_in serv_addr{};
     memset(&serv_addr, 0, sizeof(serv_addr));
@@ -72,9 +72,9 @@ void NetworkReader::PokeSelf_() {
     serv_addr.sin_port = 0;                         // any
     int bresult = ::bind(sd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     if (bresult == 1) {
-      Log(LogName::kBaNetworking, LogLevel::kError,
-          "Unable to bind sleep socket: "
-              + g_core->platform->GetSocketErrorString());
+      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                  "Unable to bind sleep socket: "
+                      + g_core->platform->GetSocketErrorString());
     } else {
       struct sockaddr_in t_addr{};
       memset(&t_addr, 0, sizeof(t_addr));
@@ -85,9 +85,9 @@ void NetworkReader::PokeSelf_() {
       ssize_t sresult =
           sendto(sd, b, 1, 0, (struct sockaddr*)(&t_addr), sizeof(t_addr));
       if (sresult == -1) {
-        Log(LogName::kBaNetworking, LogLevel::kError,
-            "Error on sleep self-sendto: "
-                + g_core->platform->GetSocketErrorString());
+        g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                    "Error on sleep self-sendto: "
+                        + g_core->platform->GetSocketErrorString());
       }
     }
     g_core->platform->CloseSocket(sd);
@@ -118,7 +118,8 @@ void NetworkReader::DoPoll_(bool* can_read_4, bool* can_read_6) {
         // Aint no thang.
       } else {
         // Let's complain for anything else though.
-        Log(LogName::kBaNetworking, LogLevel::kError,
+        g_core->Log(
+            LogName::kBaNetworking, LogLevel::kError,
             "Error on select: " + g_core->platform->GetSocketErrorString());
       }
     } else {
@@ -171,7 +172,8 @@ void NetworkReader::DoSelect_(bool* can_read_4, bool* can_read_6) {
       // Aint no thang.
     } else {
       // Let's complain for anything else though.
-      Log(LogName::kBaNetworking, LogLevel::kError,
+      g_core->Log(
+          LogName::kBaNetworking, LogLevel::kError,
           "Error on select: " + g_core->platform->GetSocketErrorString());
     }
   } else {
@@ -239,9 +241,9 @@ auto NetworkReader::RunThread_() -> int {
             recvfrom(sd, buffer, sizeof(buffer), 0,
                      reinterpret_cast<sockaddr*>(&from), &from_size);
         if (rresult == 0) {
-          Log(LogName::kBaNetworking, LogLevel::kError,
-              "NetworkReader Recv got length 0; this shouldn't "
-              "happen");
+          g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                      "NetworkReader Recv got length 0; this shouldn't "
+                      "happen");
         } else if (rresult == -1) {
           // This needs to be locked during any sd changes/writes.
           std::scoped_lock lock(sd_mutex_);
@@ -417,9 +419,9 @@ void NetworkReader::OpenSockets_() {
 
   sd4_ = socket(AF_INET, SOCK_DGRAM, 0);
   if (sd4_ < 0) {
-    Log(LogName::kBaNetworking, LogLevel::kError,
-        "Unable to open host socket; errno "
-            + g_core->platform->GetSocketErrorString());
+    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                "Unable to open host socket; errno "
+                    + g_core->platform->GetSocketErrorString());
   } else {
     g_core->platform->SetSocketNonBlocking(sd4_);
 
@@ -470,9 +472,9 @@ void NetworkReader::OpenSockets_() {
   // available everywhere (win XP, etc) so let's do this for now.
   sd6_ = socket(AF_INET6, SOCK_DGRAM, 0);
   if (sd6_ < 0) {
-    Log(LogName::kBaNetworking, LogLevel::kError,
-        "Unable to open ipv6 socket: "
-            + g_core->platform->GetSocketErrorString());
+    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                "Unable to open ipv6 socket: "
+                    + g_core->platform->GetSocketErrorString());
   } else {
     // Since we're explicitly creating both a v4 and v6 socket, tell the v6
     // to *not* do both itself (not sure if this is necessary; on mac it
@@ -481,8 +483,8 @@ void NetworkReader::OpenSockets_() {
     if (setsockopt(sd6_, IPPROTO_IPV6, IPV6_V6ONLY,
                    reinterpret_cast<char*>(&on), sizeof(on))
         == -1) {
-      Log(LogName::kBaNetworking, LogLevel::kError,
-          "Error setting socket as ipv6-only");
+      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                  "Error setting socket as ipv6-only");
     }
 
     g_core->platform->SetSocketNonBlocking(sd6_);
@@ -529,9 +531,10 @@ void NetworkReader::OpenSockets_() {
                       + std::to_string(initial_requested_port)
                       + "; some network functionality may fail.",
                   {1, 0.5f, 0});
-    Log(LogName::kBaNetworking, LogLevel::kWarning,
-        "Unable to bind udp port " + std::to_string(initial_requested_port)
-            + "; some network functionality may fail.");
+    g_core->Log(LogName::kBaNetworking, LogLevel::kWarning,
+                "Unable to bind udp port "
+                    + std::to_string(initial_requested_port)
+                    + "; some network functionality may fail.");
   }
 }
 

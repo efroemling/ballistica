@@ -301,7 +301,8 @@ auto PythonClassWidget::Delete(PythonClassWidget* self, PyObject* args,
     if (p) {
       p->DeleteWidget(w);
     } else {
-      Log(LogName::kBa, LogLevel::kError, "Can't delete widget: no parent.");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "Can't delete widget: no parent.");
     }
   }
 
@@ -327,6 +328,25 @@ auto PythonClassWidget::AddDeleteCallback(PythonClassWidget* self,
   }
   w->AddOnDeleteCall(call_obj);
   Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+auto PythonClassWidget::Dir(PythonClassWidget* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  // Start with the standard Python dir listing.
+  PyObject* dir_list = Python::generic_dir(reinterpret_cast<PyObject*>(self));
+  assert(PyList_Check(dir_list));
+
+  // ..and add in our custom attr names.
+  for (const char** name = extra_dir_attrs; *name != nullptr; name++) {
+    PyList_Append(
+        dir_list,
+        PythonRef(PyUnicode_FromString(*name), PythonRef::kSteal).Get());
+  }
+  PyList_Sort(dir_list);
+  return dir_list;
+
   BA_PYTHON_CATCH;
 }
 
@@ -376,6 +396,8 @@ PyMethodDef PythonClassWidget::tp_methods[] = {
      "add_delete_callback(call: Callable) -> None\n"
      "\n"
      "Add a call to be run immediately after this widget is destroyed."},
+    {"__dir__", (PyCFunction)Dir, METH_NOARGS,
+     "allows inclusion of our custom attrs in standard python dir()"},
     {nullptr}};
 
 }  // namespace ballistica::ui_v1

@@ -367,10 +367,10 @@ auto SceneV1Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
         attr_vals.emplace_back(
             t->GetAttribute(std::string(PyUnicode_AsUTF8(key))), value);
       } catch (const std::exception&) {
-        Log(LogName::kBa, LogLevel::kError,
-            "Attr not found on initial attr set: '"
-                + std::string(PyUnicode_AsUTF8(key)) + "' on " + type
-                + " node '" + name + "'");
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    "Attr not found on initial attr set: '"
+                        + std::string(PyUnicode_AsUTF8(key)) + "' on " + type
+                        + " node '" + name + "'");
       }
     }
 
@@ -380,9 +380,9 @@ auto SceneV1Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
       try {
         SetNodeAttr(node, i.first->name().c_str(), i.second);
       } catch (const std::exception& e) {
-        Log(LogName::kBa, LogLevel::kError,
-            "Exception in initial attr set for attr '" + i.first->name()
-                + "' on " + type + " node '" + name + "':" + e.what());
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    "Exception in initial attr set for attr '" + i.first->name()
+                        + "' on " + type + " node '" + name + "':" + e.what());
       }
     }
   }
@@ -395,12 +395,12 @@ auto SceneV1Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
     if (PythonClassNode::Check(owner_obj)) {
       Node* owner_node = GetPyNode(owner_obj, true);
       if (owner_node == nullptr) {
-        Log(LogName::kBa, LogLevel::kError,
-            "Empty node-ref passed for 'owner'; pass None if you want "
-            "no owner.");
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    "Empty node-ref passed for 'owner'; pass None if you want "
+                    "no owner.");
       } else if (owner_node->scene() != node->scene()) {
-        Log(LogName::kBa, LogLevel::kError,
-            "Owner node is from a different scene; ignoring.");
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    "Owner node is from a different scene; ignoring.");
       } else {
         owner_node->AddDependentNode(node);
       }
@@ -420,9 +420,9 @@ auto SceneV1Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
     }
     node->OnCreate();
   } catch (const std::exception& e) {
-    Log(LogName::kBa, LogLevel::kError,
-        "Exception in OnCreate() for node " + ballistica::ObjToString(node)
-            + "':" + e.what());
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Exception in OnCreate() for node "
+                    + ballistica::ObjToString(node) + "':" + e.what());
   }
 
   return node;
@@ -1141,7 +1141,8 @@ auto SceneV1Python::FilterChatMessage(std::string* message, int client_id)
   try {
     *message = g_base->python->GetPyLString(result.Get());
   } catch (const std::exception& e) {
-    Log(LogName::kBa, LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "Error getting string from chat filter: " + std::string(e.what()));
   }
   return true;

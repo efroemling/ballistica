@@ -42,8 +42,8 @@ void AudioSource::SetPosition(float x, float y, float z) {
   assert(client_queue_size_ > 0);
 #if BA_DEBUG_BUILD
   if (std::isnan(x) || std::isnan(y) || std::isnan(z)) {
-    Log(LogName::kBaAudio, LogLevel::kError,
-        "Got nan value in AudioSource::SetPosition.");
+    g_core->Log(LogName::kBaAudio, LogLevel::kError,
+                "Got nan value in AudioSource::SetPosition.");
   }
 #endif
   g_base->audio_server->PushSourceSetPositionCall(play_id_, Vector3f(x, y, z));

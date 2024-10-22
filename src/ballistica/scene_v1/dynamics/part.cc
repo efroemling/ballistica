@@ -99,8 +99,8 @@ void Part::SetCollidingWith(int64_t node_id, int part, bool colliding,
     for (auto&& i : collisions_) {
       if (i.node == node_id && i.part == part) {
         BA_PRECONDITION(node());
-        Log(LogName::kBa, LogLevel::kError,
-            "Got SetCollidingWith for part already colliding with.");
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    "Got SetCollidingWith for part already colliding with.");
         return;
       }
     }
@@ -120,9 +120,9 @@ void Part::SetCollidingWith(int64_t node_id, int part, bool colliding,
         return;
       }
     }
-    Log(LogName::kBa, LogLevel::kError,
-        "Got SetCollidingWith (separated) call for part we're "
-        "not colliding with.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Got SetCollidingWith (separated) call for part we're "
+                "not colliding with.");
   }
 }
 

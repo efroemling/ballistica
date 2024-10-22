@@ -166,13 +166,16 @@ void UI::OnAppStart() {
   if (force_scale_) {
     if (scale_ == UIScale::kSmall) {
       ScreenMessage("FORCING SMALL UI FOR TESTING", Vector3f(1, 0, 0));
-      Log(LogName::kBa, LogLevel::kInfo, "FORCING SMALL UI FOR TESTING");
+      g_core->Log(LogName::kBa, LogLevel::kInfo,
+                  "FORCING SMALL UI FOR TESTING");
     } else if (scale_ == UIScale::kMedium) {
       ScreenMessage("FORCING MEDIUM UI FOR TESTING", Vector3f(1, 0, 0));
-      Log(LogName::kBa, LogLevel::kInfo, "FORCING MEDIUM UI FOR TESTING");
+      g_core->Log(LogName::kBa, LogLevel::kInfo,
+                  "FORCING MEDIUM UI FOR TESTING");
     } else if (scale_ == UIScale::kLarge) {
       ScreenMessage("FORCING LARGE UI FOR TESTING", Vector3f(1, 0, 0));
-      Log(LogName::kBa, LogLevel::kInfo, "FORCING LARGE UI FOR TESTING");
+      g_core->Log(LogName::kBa, LogLevel::kInfo,
+                  "FORCING LARGE UI FOR TESTING");
     } else {
       FatalError("Unhandled scale.");
     }
@@ -577,8 +580,8 @@ void UI::ShowURL(const std::string& url) {
     g_base->logic->event_loop()->PushCall(
         [ui_delegate, url] { ui_delegate->DoShowURL(url); });
   } else {
-    Log(LogName::kBa, LogLevel::kWarning,
-        "UI::ShowURL called without ui_delegate present.");
+    g_core->Log(LogName::kBa, LogLevel::kWarning,
+                "UI::ShowURL called without ui_delegate present.");
   }
 }
 

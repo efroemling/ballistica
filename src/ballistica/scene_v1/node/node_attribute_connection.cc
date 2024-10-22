@@ -97,13 +97,13 @@ void NodeAttributeConnection::Update() {
           src_node->type()->GetAttribute(src_attr_index);
       NodeAttributeUnbound* dst_attr =
           dst_node->type()->GetAttribute(dst_attr_index);
-      Log(LogName::kBa, LogLevel::kError,
-          "Attribute connection update: " + std::string(e.what())
-              + "; srcAttr='" + src_attr->name() + "', src_node='"
-              + src_node->type()->name() + "', srcNodeName='"
-              + src_node->label() + "', dstAttr='" + dst_attr->name()
-              + "', dstNode='" + dst_node->type()->name() + "', dstNodeName='"
-              + dst_node->label() + "'");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "Attribute connection update: " + std::string(e.what())
+                      + "; srcAttr='" + src_attr->name() + "', src_node='"
+                      + src_node->type()->name() + "', srcNodeName='"
+                      + src_node->label() + "', dstAttr='" + dst_attr->name()
+                      + "', dstNode='" + dst_node->type()->name()
+                      + "', dstNodeName='" + dst_node->label() + "'");
     }
   }
 }

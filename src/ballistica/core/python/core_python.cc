@@ -189,6 +189,8 @@ void CorePython::EnablePythonLoggingCalls() {
   assert(objs().Exists(ObjID::kLoggerBaLogCall));
   assert(objs().Exists(ObjID::kLoggerBaAudio));
   assert(objs().Exists(ObjID::kLoggerBaAudioLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaDisplayTime));
+  assert(objs().Exists(ObjID::kLoggerBaDisplayTimeLogCall));
   assert(objs().Exists(ObjID::kLoggerBaGraphics));
   assert(objs().Exists(ObjID::kLoggerBaGraphicsLogCall));
   assert(objs().Exists(ObjID::kLoggerBaLifecycle));
@@ -260,6 +262,7 @@ void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
       {LogName::kBa, ObjID::kLoggerBa},
       {LogName::kBaAudio, ObjID::kLoggerBaAudio},
       {LogName::kBaGraphics, ObjID::kLoggerBaGraphics},
+      {LogName::kBaDisplayTime, ObjID::kLoggerBaDisplayTime},
       {LogName::kBaLifecycle, ObjID::kLoggerBaLifecycle},
       {LogName::kBaAssets, ObjID::kLoggerBaAssets},
       {LogName::kBaInput, ObjID::kLoggerBaInput},
@@ -437,6 +440,10 @@ void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
       break;
     case LogName::kBaGraphics:
       logcallobj = ObjID::kLoggerBaGraphicsLogCall;
+      handled = true;
+      break;
+    case LogName::kBaDisplayTime:
+      logcallobj = ObjID::kLoggerBaDisplayTimeLogCall;
       handled = true;
       break;
     case LogName::kBaAssets:

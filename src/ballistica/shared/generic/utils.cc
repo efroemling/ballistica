@@ -18,6 +18,8 @@
 
 namespace ballistica {
 
+using core::g_core;
+
 #define USE_BAKED_RANDS 1
 
 #if BA_OSTYPE_WINDOWS
@@ -223,9 +225,9 @@ auto Utils::GetValidUTF8(const char* str, const char* loc) -> std::string {
         }
       }
       logged_count++;
-      Log(LogName::kBa, LogLevel::kError,
-          "GOT INVALID UTF8 SEQUENCE: (" + log_str + "); RETURNING '" + to
-              + "'; LOC '" + loc + "'");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "GOT INVALID UTF8 SEQUENCE: (" + log_str + "); RETURNING '"
+                      + to + "'; LOC '" + loc + "'");
     }
 
   } else {

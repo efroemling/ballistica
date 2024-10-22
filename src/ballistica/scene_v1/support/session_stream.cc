@@ -31,9 +31,9 @@ SessionStream::SessionStream(HostSession* host_session, bool save_replay)
   if (save_replay) {
     // Sanity check - we should only ever be writing one replay at once.
     if (g_scene_v1->replay_open) {
-      Log(LogName::kBa, LogLevel::kError,
-          "g_scene_v1->replay_open true at replay start;"
-          " shouldn't happen.");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "g_scene_v1->replay_open true at replay start;"
+                  " shouldn't happen.");
     }
     // We always write replays as the max protocol version we support.
     assert(g_base->assets_server);
@@ -57,9 +57,9 @@ SessionStream::~SessionStream() {
   if (writing_replay_) {
     // Sanity check: We should only ever be writing one replay at once.
     if (!g_scene_v1->replay_open) {
-      Log(LogName::kBa, LogLevel::kError,
-          "g_scene_v1->replay_open false at replay close;"
-          " shouldn't happen.");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "g_scene_v1->replay_open false at replay close;"
+                  " shouldn't happen.");
     }
     g_scene_v1->replay_open = false;
     assert(g_base->assets_server);
@@ -78,40 +78,45 @@ SessionStream::~SessionStream() {
       size_t count;
       count = GetPointerCount(scenes_);
       if (count != 0) {
-        Log(LogName::kBa, LogLevel::kError,
-            std::to_string(count)
-                + " scene graphs in output stream at shutdown");
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    std::to_string(count)
+                        + " scene graphs in output stream at shutdown");
       }
       count = GetPointerCount(nodes_);
       if (count != 0) {
-        Log(LogName::kBa, LogLevel::kError,
+        g_core->Log(
+            LogName::kBa, LogLevel::kError,
             std::to_string(count) + " nodes in output stream at shutdown");
       }
       count = GetPointerCount(materials_);
       if (count != 0) {
-        Log(LogName::kBa, LogLevel::kError,
+        g_core->Log(
+            LogName::kBa, LogLevel::kError,
             std::to_string(count) + " materials in output stream at shutdown");
       }
       count = GetPointerCount(textures_);
       if (count != 0) {
-        Log(LogName::kBa, LogLevel::kError,
+        g_core->Log(
+            LogName::kBa, LogLevel::kError,
             std::to_string(count) + " textures in output stream at shutdown");
       }
       count = GetPointerCount(meshes_);
       if (count != 0) {
-        Log(LogName::kBa, LogLevel::kError,
+        g_core->Log(
+            LogName::kBa, LogLevel::kError,
             std::to_string(count) + " meshes in output stream at shutdown");
       }
       count = GetPointerCount(sounds_);
       if (count != 0) {
-        Log(LogName::kBa, LogLevel::kError,
+        g_core->Log(
+            LogName::kBa, LogLevel::kError,
             std::to_string(count) + " sounds in output stream at shutdown");
       }
       count = GetPointerCount(collision_meshes_);
       if (count != 0) {
-        Log(LogName::kBa, LogLevel::kError,
-            std::to_string(count)
-                + " collision_meshes in output stream at shutdown");
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    std::to_string(count)
+                        + " collision_meshes in output stream at shutdown");
       }
     }
   }
@@ -122,8 +127,8 @@ auto SessionStream::GetOutMessage() const -> std::vector<uint8_t> {
   assert(!host_session_);  // this should only be getting used for
   // standalone temp ones..
   if (!out_command_.empty()) {
-    Log(LogName::kBa, LogLevel::kError,
-        "SceneStream shutting down with non-empty outCommand");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "SceneStream shutting down with non-empty outCommand");
   }
   return out_message_;
 }
@@ -188,13 +193,13 @@ void SessionStream::Remove(T* val, std::vector<T*>* vec,
 }
 
 void SessionStream::Fail() {
-  Log(LogName::kBa, LogLevel::kError, "Error writing replay file");
+  g_core->Log(LogName::kBa, LogLevel::kError, "Error writing replay file");
   if (writing_replay_) {
     // Sanity check: We should only ever be writing one replay at once.
     if (!g_scene_v1->replay_open) {
-      Log(LogName::kBa, LogLevel::kError,
-          "g_scene_v1->replay_open false at replay close;"
-          " shouldn't happen.");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "g_scene_v1->replay_open false at replay close;"
+                  " shouldn't happen.");
     }
     assert(g_base->assets_server);
     g_base->assets_server->PushEndWriteReplayCall();
@@ -205,8 +210,8 @@ void SessionStream::Fail() {
 
 void SessionStream::Flush() {
   if (!out_command_.empty())
-    Log(LogName::kBa, LogLevel::kError,
-        "SceneStream flushing down with non-empty outCommand");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "SceneStream flushing down with non-empty outCommand");
   if (!out_message_.empty()) {
     ShipSessionCommandsMessage();
   }
@@ -535,8 +540,8 @@ void SessionStream::SetTime(millisecs_t t) {
   }
   millisecs_t diff = t - time_;
   if (diff > 255) {
-    Log(LogName::kBa, LogLevel::kError,
-        "SceneStream got time diff > 255; not expected.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "SceneStream got time diff > 255; not expected.");
     diff = 255;
   }
   WriteCommandInt64(SessionCommand::kBaseTimeStep, diff);
@@ -1195,15 +1200,15 @@ void SessionStream::OnClientConnected(ConnectionToClient* c) {
   // Sanity check - abort if its on either of our lists already.
   for (auto& connections_to_client : connections_to_clients_) {
     if (connections_to_client == c) {
-      Log(LogName::kBa, LogLevel::kError,
-          "SceneStream::OnClientConnected() got duplicate connection.");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "SceneStream::OnClientConnected() got duplicate connection.");
       return;
     }
   }
   for (auto& i : connections_to_clients_ignored_) {
     if (i == c) {
-      Log(LogName::kBa, LogLevel::kError,
-          "SceneStream::OnClientConnected() got duplicate connection.");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "SceneStream::OnClientConnected() got duplicate connection.");
       return;
     }
   }
@@ -1256,7 +1261,8 @@ void SessionStream::OnClientDisconnected(ConnectionToClient* c) {
       return;
     }
   }
-  Log(LogName::kBaNetworking, LogLevel::kError,
+  g_core->Log(
+      LogName::kBaNetworking, LogLevel::kError,
       "SceneStream::OnClientDisconnected() called for connection not on "
       "lists");
 }

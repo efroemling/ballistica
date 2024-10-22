@@ -104,12 +104,13 @@ void BasePlatform::DoPurchase(const std::string& item) {
 }
 
 void BasePlatform::RestorePurchases() {
-  Log(LogName::kBa, LogLevel::kError, "RestorePurchases() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "RestorePurchases() unimplemented");
 }
 
 void BasePlatform::PurchaseAck(const std::string& purchase,
                                const std::string& order_id) {
-  Log(LogName::kBa, LogLevel::kError, "PurchaseAck() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError, "PurchaseAck() unimplemented");
 }
 
 void BasePlatform::OpenURL(const std::string& url) {
@@ -134,7 +135,8 @@ void BasePlatform::OverlayWebBrowserOpenURL(const std::string& url) {
 
   std::scoped_lock lock(web_overlay_mutex_);
   if (web_overlay_open_) {
-    Log(LogName::kBa, LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "OverlayWebBrowserOnClose called with already existing overlay.");
     return;
   }
@@ -155,8 +157,8 @@ auto BasePlatform::OverlayWebBrowserIsOpen() -> bool {
 void BasePlatform::OverlayWebBrowserOnClose() {
   std::scoped_lock lock(web_overlay_mutex_);
   if (!web_overlay_open_) {
-    Log(LogName::kBa, LogLevel::kError,
-        "OverlayWebBrowserOnClose called with no known overlay.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "OverlayWebBrowserOnClose called with no known overlay.");
   }
   web_overlay_open_ = false;
 }
@@ -174,13 +176,14 @@ void BasePlatform::OverlayWebBrowserClose() {
 }
 
 void BasePlatform::DoOverlayWebBrowserOpenURL(const std::string& url) {
-  Log(LogName::kBa, LogLevel::kError,
-      "DoOpenURLInOverlayBrowser unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "DoOpenURLInOverlayBrowser unimplemented");
 }
 
 void BasePlatform::DoOverlayWebBrowserClose() {
   // As a default, use Python's webbrowser module functionality.
-  Log(LogName::kBa, LogLevel::kError, "DoOverlayWebBrowserClose unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "DoOverlayWebBrowserClose unimplemented");
 }
 
 #if !BA_OSTYPE_WINDOWS
@@ -189,7 +192,8 @@ static void HandleSIGINT(int s) {
     g_base->logic->event_loop()->PushCall(
         [] { g_base->logic->HandleInterruptSignal(); });
   } else {
-    Log(LogName::kBa, LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "SigInt handler called before g_base->logic->event_loop exists.");
   }
 }
@@ -198,7 +202,8 @@ static void HandleSIGTERM(int s) {
     g_base->logic->event_loop()->PushCall(
         [] { g_base->logic->HandleTerminateSignal(); });
   } else {
-    Log(LogName::kBa, LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "SigInt handler called before g_base->logic->event_loop exists.");
   }
 }
@@ -277,18 +282,20 @@ void BasePlatform::StringEditorCancel() {
 void BasePlatform::DoInvokeStringEditor(const std::string& title,
                                         const std::string& value,
                                         std::optional<int> max_chars) {
-  Log(LogName::kBa, LogLevel::kError,
-      "FIXME: DoInvokeStringEditor() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "FIXME: DoInvokeStringEditor() unimplemented");
 }
 
 auto BasePlatform::SupportsOpenDirExternally() -> bool { return false; }
 
 void BasePlatform::OpenDirExternally(const std::string& path) {
-  Log(LogName::kBa, LogLevel::kError, "OpenDirExternally() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "OpenDirExternally() unimplemented");
 }
 
 void BasePlatform::OpenFileExternally(const std::string& path) {
-  Log(LogName::kBa, LogLevel::kError, "OpenFileExternally() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "OpenFileExternally() unimplemented");
 }
 
 auto BasePlatform::SafeStdinFGetS(char* s, int n, FILE* iop) -> char* {

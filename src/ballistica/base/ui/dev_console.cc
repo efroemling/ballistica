@@ -718,7 +718,8 @@ void DevConsole::InvokeStringEditor_() {
                     .Get(BasePython::ObjID::kDevConsoleStringEditAdapterClass)
                     .Call();
   if (!result.Exists()) {
-    Log(LogName::kBa, LogLevel::kError, "Error invoking string edit dialog.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Error invoking string edit dialog.");
     return;
   }
 
@@ -1077,7 +1078,8 @@ auto DevConsole::HandleKeyRelease(const SDL_Keysym* keysym) -> bool {
 void DevConsole::Exec() {
   BA_PRECONDITION(g_base->InLogicThread());
   if (!input_enabled_) {
-    Log(LogName::kBa, LogLevel::kWarning, "Console input is not allowed yet.");
+    g_core->Log(LogName::kBa, LogLevel::kWarning,
+                "Console input is not allowed yet.");
     return;
   }
   input_history_position_ = 0;

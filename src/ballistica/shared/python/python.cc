@@ -32,6 +32,7 @@ namespace ballistica {
 // We implicitly use core functionality here; our behavior is undefined
 // if nobody has imported core yet.
 using core::g_base_soft;
+using core::g_core;
 
 // Ignore signed bitwise stuff; python macros do it quite a bit.
 #pragma clang diagnostic push
@@ -96,9 +97,9 @@ void Python::PrintStackTrace() {
     available = g_base_soft->PrintPythonStackTrace();
   }
   if (!available) {
-    Log(LogName::kBa, LogLevel::kWarning,
-        "Python::PrintStackTrace() called before _babase set up; "
-        "not printing.");
+    g_core->Log(LogName::kBa, LogLevel::kWarning,
+                "Python::PrintStackTrace() called before _babase set up; "
+                "not printing.");
   }
 }
 

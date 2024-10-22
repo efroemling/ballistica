@@ -919,8 +919,8 @@ auto CorePlatformWindows::GetEnv(const std::string& name)
 
   // This should always succeed at this point; make noise if not.
   if (result == 0 || result > big_buffer.size()) {
-    Log(LogName::kBa, LogLevel::kError,
-        "GetEnv to allocated buffer failed; unexpected.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "GetEnv to allocated buffer failed; unexpected.");
     return {};
   }
   return UTF8Encode(big_buffer.data());
@@ -998,15 +998,16 @@ std::vector<uint32_t> CorePlatformWindows::GetBroadcastAddrs() {
       pIPAddrTable = static_cast<MIB_IPADDRTABLE*>(MALLOC(dwSize));
     }
     if (pIPAddrTable == nullptr) {
-      Log(LogName::kBa, LogLevel::kError,
-          "Memory allocation failed for GetIpAddrTable\n");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "Memory allocation failed for GetIpAddrTable\n");
       err = true;
     }
 
     if (!err) {
       // Make a second call to GetIpAddrTable to get the actual data we want
       if ((dwRetVal = GetIpAddrTable(pIPAddrTable, &dwSize, 0)) != NO_ERROR) {
-        Log(LogName::kBa, LogLevel::kError,
+        g_core->Log(
+            LogName::kBa, LogLevel::kError,
             "GetIpAddrTable failed with error " + std::to_string(dwRetVal));
         err = true;
       }
@@ -1042,9 +1043,9 @@ bool CorePlatformWindows::SetSocketNonBlocking(int sd) {
   unsigned long dataval = 1;  // NOLINT (func signature wants long)
   int result = ioctlsocket(sd, FIONBIO, &dataval);
   if (result != 0) {
-    Log(LogName::kBa, LogLevel::kError,
-        "Error setting non-blocking socket: "
-            + g_core->platform->GetSocketErrorString());
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Error setting non-blocking socket: "
+                    + g_core->platform->GetSocketErrorString());
     return false;
   }
   return true;

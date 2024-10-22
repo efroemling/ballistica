@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <string>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
@@ -24,13 +25,7 @@
 
 namespace ballistica::base {
 
-Logic::Logic() : display_timers_(new TimerList()) {
-  // Enable display-time debug logs via env var.
-  auto val = g_core->platform->GetEnv("BA_DEBUG_LOG_DISPLAY_TIME");
-  if (val && *val == "1") {
-    debug_log_display_time_ = true;
-  }
-}
+Logic::Logic() : display_timers_(new TimerList()) {}
 
 void Logic::OnMainThreadStartApp() {
   // Spin up our logic thread and sit and wait for it to init.
@@ -383,8 +378,9 @@ void Logic::OnAppModeChanged() {
   // Kick our headless stepping into high gear; this will snap us out of any
   // long sleep we're currently in the middle of.
   if (g_core->HeadlessMode()) {
-    if (debug_log_display_time_) {
-      Log(LogName::kBa, LogLevel::kDebug,
+    if (g_core->LogLevelEnabled(LogName::kBaDisplayTime, LogLevel::kDebug)) {
+      g_core->Log(
+          LogName::kBaDisplayTime, LogLevel::kDebug,
           "Resetting headless display step timer due to app-mode change.");
     }
     assert(headless_display_time_step_timer_);
@@ -415,12 +411,12 @@ void Logic::UpdateDisplayTimeForHeadlessMode_() {
   display_time_increment_ =
       static_cast<double>(display_time_increment_microsecs_) / 1000000.0;
 
-  if (debug_log_display_time_) {
+  g_core->Log(LogName::kBaDisplayTime, LogLevel::kDebug, [app_time_microsecs] {
     char buffer[256];
     snprintf(buffer, sizeof(buffer), "stepping display-time at app-time %.4f",
              static_cast<double>(app_time_microsecs) / 1000000.0);
-    Log(LogName::kBa, LogLevel::kDebug, buffer);
-  }
+    return std::string(buffer);
+  });
 }
 
 void Logic::PostUpdateDisplayTimeForHeadlessMode_() {
@@ -433,16 +429,18 @@ void Logic::PostUpdateDisplayTimeForHeadlessMode_() {
                         kHeadlessMaxDisplayTimeStep),
                kHeadlessMinDisplayTimeStep);
 
-  if (debug_log_display_time_) {
-    auto sleepsecs =
-        static_cast<double>(headless_display_step_microsecs) / 1000000.0;
-    auto apptimesecs = g_core->GetAppTimeSeconds();
-    char buffer[256];
-    snprintf(buffer, sizeof(buffer),
-             "will try to sleep for %.4f at app-time %.4f (until %.4f)",
-             sleepsecs, apptimesecs, apptimesecs + sleepsecs);
-    Log(LogName::kBa, LogLevel::kDebug, buffer);
-  }
+  g_core->Log(
+      LogName::kBaDisplayTime, LogLevel::kDebug,
+      [headless_display_step_microsecs] {
+        auto sleepsecs =
+            static_cast<double>(headless_display_step_microsecs) / 1000000.0;
+        auto apptimesecs = g_core->GetAppTimeSeconds();
+        char buffer[256];
+        snprintf(buffer, sizeof(buffer),
+                 "will try to sleep for %.4f at app-time %.4f (until %.4f)",
+                 sleepsecs, apptimesecs, apptimesecs + sleepsecs);
+        return std::string(buffer);
+      });
 
   auto sleep_microsecs = headless_display_step_microsecs;
   headless_display_time_step_timer_->SetLength(sleep_microsecs);
@@ -543,24 +541,28 @@ void Logic::UpdateDisplayTimeForFrameDraw_() {
     if (trailing_dist > trail_buffer) {
       auto offs =
           (trailing_dist - trail_buffer) * (trailing_diff > 0.0 ? 1.0 : -1.0);
-      if (debug_log_display_time_) {
-        char buffer[256];
-        snprintf(buffer, sizeof(buffer),
-                 "trailing_dist %.6f > trail_buffer %.6f; will offset %.6f).",
-                 trailing_dist, trail_buffer, offs);
-        Log(LogName::kBa, LogLevel::kDebug, buffer);
-      }
+      g_core->Log(
+          LogName::kBaDisplayTime, LogLevel::kDebug,
+          [trailing_dist, trail_buffer, offs] {
+            char buffer[256];
+            snprintf(
+                buffer, sizeof(buffer),
+                "trailing_dist %.6f > trail_buffer %.6f; will offset %.6f).",
+                trailing_dist, trail_buffer, offs);
+            return std::string(buffer);
+          });
       display_time_increment_ = display_time_increment_ + offs;
     }
 
-    if (debug_log_display_time_) {
-      char buffer[256];
-      snprintf(buffer, sizeof(buffer),
-               "final %.5f current(%s) %.5f sample %.5f chaos %.5f",
-               display_time_increment_, use_avg ? "avg" : "sample", used,
-               this_increment, chaos);
-      Log(LogName::kBa, LogLevel::kDebug, buffer);
-    }
+    g_core->Log(LogName::kBaDisplayTime, LogLevel::kDebug,
+                [this, use_avg, this_increment, chaos, used] {
+                  char buffer[256];
+                  snprintf(buffer, sizeof(buffer),
+                           "final %.5f current(%s) %.5f sample %.5f chaos %.5f",
+                           display_time_increment_, use_avg ? "avg" : "sample",
+                           used, this_increment, chaos);
+                  return std::string(buffer);
+                });
   }
 
   // Lastly, apply our updated increment value to our time.
@@ -660,8 +662,8 @@ void Logic::SetAppTimerLength(int timer_id, microsecs_t length) {
   if (t) {
     t->SetLength(length);
   } else {
-    Log(LogName::kBa, LogLevel::kError,
-        "Logic::SetAppTimerLength() called on nonexistent timer.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Logic::SetAppTimerLength() called on nonexistent timer.");
   }
 }
 
@@ -687,8 +689,8 @@ void Logic::SetDisplayTimerLength(int timer_id, microsecs_t length) {
   if (t) {
     t->SetLength(length);
   } else {
-    Log(LogName::kBa, LogLevel::kError,
-        "Logic::SetDisplayTimerLength() called on nonexistent timer.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Logic::SetDisplayTimerLength() called on nonexistent timer.");
   }
 }
 

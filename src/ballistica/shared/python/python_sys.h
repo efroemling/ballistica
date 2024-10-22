@@ -67,13 +67,13 @@
   ((void)0)
 
 // For use in tp_dealloc; simply prints the error.
-#define BA_PYTHON_DEALLOC_CATCH                 \
-  }                                             \
-  catch (const std::exception& e) {             \
-    Log(LogName::kBa, LogLevel::kError,         \
-        std::string("tp_dealloc exception: ")   \
-            + GetShortExceptionDescription(e)); \
-  }                                             \
+#define BA_PYTHON_DEALLOC_CATCH                         \
+  }                                                     \
+  catch (const std::exception& e) {                     \
+    g_core->Log(LogName::kBa, LogLevel::kError,         \
+                std::string("tp_dealloc exception: ")   \
+                    + GetShortExceptionDescription(e)); \
+  }                                                     \
   ((void)0)
 
 // Sets Python error and returns -1.

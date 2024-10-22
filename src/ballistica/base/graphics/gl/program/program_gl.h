@@ -49,12 +49,12 @@ class RendererGL::ShaderGL : public Object {
       const char* renderer = (const char*)glGetString(GL_RENDERER);
       // Let's not crash here. We have a better chance of calling home this
       // way and theres a chance the game will still be playable.
-      Log(LogName::kBaGraphics, LogLevel::kError,
-          std::string("Compile failed for ") + GetTypeName()
-              + " shader:\n------------SOURCE BEGIN-------------\n" + src_fin
-              + "\n-----------SOURCE END-------------\n" + GetInfo()
-              + "\nrenderer: " + renderer + "\nvendor: " + vendor
-              + "\nversion:" + version);
+      g_core->Log(LogName::kBaGraphics, LogLevel::kError,
+                  std::string("Compile failed for ") + GetTypeName()
+                      + " shader:\n------------SOURCE BEGIN-------------\n"
+                      + src_fin + "\n-----------SOURCE END-------------\n"
+                      + GetInfo() + "\nrenderer: " + renderer
+                      + "\nvendor: " + vendor + "\nversion:" + version);
     } else {
       assert(compile_status == GL_TRUE);
       std::string info = GetInfo();
@@ -65,12 +65,12 @@ class RendererGL::ShaderGL : public Object {
         const char* version = (const char*)glGetString(GL_VERSION);
         const char* vendor = (const char*)glGetString(GL_VENDOR);
         const char* renderer = (const char*)glGetString(GL_RENDERER);
-        Log(LogName::kBaGraphics, LogLevel::kError,
-            std::string("WARNING: info returned for ") + GetTypeName()
-                + " shader:\n------------SOURCE BEGIN-------------\n" + src_fin
-                + "\n-----------SOURCE END-------------\n" + info
-                + "\nrenderer: " + renderer + "\nvendor: " + vendor
-                + "\nversion:" + version);
+        g_core->Log(LogName::kBaGraphics, LogLevel::kError,
+                    std::string("WARNING: info returned for ") + GetTypeName()
+                        + " shader:\n------------SOURCE BEGIN-------------\n"
+                        + src_fin + "\n-----------SOURCE END-------------\n"
+                        + info + "\nrenderer: " + renderer
+                        + "\nvendor: " + vendor + "\nversion:" + version);
       }
     }
     BA_DEBUG_CHECK_GL_ERROR;
@@ -166,8 +166,8 @@ class RendererGL::ProgramGL {
     GLint linkStatus;
     glGetProgramiv(program_, GL_LINK_STATUS, &linkStatus);
     if (linkStatus == GL_FALSE) {
-      Log(LogName::kBaGraphics, LogLevel::kError,
-          "Link failed for program '" + name_ + "':\n" + GetInfo());
+      g_core->Log(LogName::kBaGraphics, LogLevel::kError,
+                  "Link failed for program '" + name_ + "':\n" + GetInfo());
     } else {
       assert(linkStatus == GL_TRUE);
 
@@ -176,9 +176,9 @@ class RendererGL::ProgramGL {
           && (strstr(info.c_str(), "error:") || strstr(info.c_str(), "warning:")
               || strstr(info.c_str(), "Error:")
               || strstr(info.c_str(), "Warning:"))) {
-        Log(LogName::kBaGraphics, LogLevel::kError,
-            "WARNING: program using frag shader '" + name_
-                + "' returned info:\n" + info);
+        g_core->Log(LogName::kBaGraphics, LogLevel::kError,
+                    "WARNING: program using frag shader '" + name_
+                        + "' returned info:\n" + info);
       }
     }
 
@@ -315,9 +315,10 @@ class RendererGL::ProgramGL {
     assert(IsBound());
     int c = glGetUniformLocation(program_, tex_name);
     if (c == -1) {
-      Log(LogName::kBaGraphics, LogLevel::kError,
-          "ShaderGL: " + name_ + ": Can't set texture unit for texture '"
-              + tex_name + "'");
+      g_core->Log(LogName::kBaGraphics, LogLevel::kError,
+                  "ShaderGL: " + name_
+                      + ": Can't set texture unit for texture '" + tex_name
+                      + "'");
       BA_DEBUG_CHECK_GL_ERROR;
     } else {
       glUniform1i(c, unit);

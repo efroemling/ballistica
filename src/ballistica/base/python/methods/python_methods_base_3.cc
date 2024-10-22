@@ -327,8 +327,8 @@ static auto PySetUpSigInt(PyObject* self) -> PyObject* {
   if (g_base) {
     g_base->platform->SetupInterruptHandling();
   } else {
-    Log(LogName::kBa, LogLevel::kError,
-        "setup_sigint called before g_base exists.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "setup_sigint called before g_base exists.");
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

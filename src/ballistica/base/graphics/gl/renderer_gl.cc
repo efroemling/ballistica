@@ -90,7 +90,8 @@ void RendererGL::CheckGLError(const char* file, int line) {
     BA_PRECONDITION_FATAL(vendor);
     const char* renderer = (const char*)glGetString(GL_RENDERER);
     BA_PRECONDITION_FATAL(renderer);
-    Log(LogName::kBaGraphics, LogLevel::kError,
+    g_core->Log(
+        LogName::kBaGraphics, LogLevel::kError,
         "OpenGL Error at " + std::string(file) + " line " + std::to_string(line)
             + ": " + GLErrorToString(err) + "\nrenderer: " + renderer
             + "\nvendor: " + vendor + "\nversion: " + version
@@ -223,9 +224,10 @@ void RendererGL::CheckGLCapabilities_() {
     basestr = "OpenGL";
   }
 
-  Log(LogName::kBaGraphics, LogLevel::kInfo,
-      std::string("Using ") + basestr + " (vendor: " + vendor
-          + ", renderer: " + renderer + ", version: " + version_str + ").");
+  g_core->Log(LogName::kBaGraphics, LogLevel::kInfo,
+              std::string("Using ") + basestr + " (vendor: " + vendor
+                  + ", renderer: " + renderer + ", version: " + version_str
+                  + ").");
 
   // Build a vector of extensions. Newer GLs give us extensions as lists
   // already, but on older ones we may need to break a single string apart
@@ -244,8 +246,8 @@ void RendererGL::CheckGLCapabilities_() {
       extensions.push_back(extension);
     }
   } else {
-    Log(LogName::kBaGraphics, LogLevel::kWarning,
-        "Falling back on legacy GL_EXTENSIONS parsing.");
+    g_core->Log(LogName::kBaGraphics, LogLevel::kWarning,
+                "Falling back on legacy GL_EXTENSIONS parsing.");
     // Fall back on parsing the single giant string if need be.
     // (Can probably kill this).
     auto* ex = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
@@ -291,8 +293,8 @@ void RendererGL::CheckGLCapabilities_() {
     c_types.push_back(TextureCompressionType::kETC1);
   } else {
     if (g_buildconfig.ostype_android()) {
-      Log(LogName::kBaGraphics, LogLevel::kError,
-          "Android device missing ETC1 support.");
+      g_core->Log(LogName::kBaGraphics, LogLevel::kError,
+                  "Android device missing ETC1 support.");
     }
   }
 
@@ -2387,8 +2389,8 @@ void RendererGL::UpdateVignetteTex_(bool force) {
     if (err != GL_NO_ERROR) {
       static bool reported = false;
       if (!reported) {
-        Log(LogName::kBaGraphics, LogLevel::kError,
-            "32-bit vignette creation failed; falling back to 16.");
+        g_core->Log(LogName::kBaGraphics, LogLevel::kError,
+                    "32-bit vignette creation failed; falling back to 16.");
         reported = true;
       }
       const int kVignetteTexWidth = 64;

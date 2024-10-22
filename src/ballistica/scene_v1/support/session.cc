@@ -36,8 +36,8 @@ void Session::LanguageChanged() {}
 void Session::DebugSpeedMultChanged() {}
 
 void Session::DumpFullState(SessionStream* out) {
-  Log(LogName::kBa, LogLevel::kError,
-      "Session::DumpFullState() being called; shouldn't happen.");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "Session::DumpFullState() being called; shouldn't happen.");
 }
 
 }  // namespace ballistica::scene_v1

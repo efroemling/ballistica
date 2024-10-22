@@ -341,7 +341,8 @@ auto BasePython::GetRawConfigValue(const char* name, float default_value)
   try {
     return Python::GetPyFloat(value);
   } catch (const std::exception&) {
-    Log(LogName::kBa, LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "expected a float for config value '" + std::string(name) + "'");
     return default_value;
   }
@@ -363,7 +364,8 @@ auto BasePython::GetRawConfigValue(const char* name,
     }
     return Python::GetPyFloat(value);
   } catch (const std::exception&) {
-    Log(LogName::kBa, LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "expected a float for config value '" + std::string(name) + "'");
     return default_value;
   }
@@ -380,7 +382,8 @@ auto BasePython::GetRawConfigValue(const char* name, int default_value) -> int {
   try {
     return static_cast_check_fit<int>(Python::GetPyInt64(value));
   } catch (const std::exception&) {
-    Log(LogName::kBa, LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "Expected an int value for config value '" + std::string(name) + "'.");
     return default_value;
   }
@@ -398,7 +401,8 @@ auto BasePython::GetRawConfigValue(const char* name, bool default_value)
   try {
     return Python::GetPyBool(value);
   } catch (const std::exception&) {
-    Log(LogName::kBa, LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "Expected a bool value for config value '" + std::string(name) + "'.");
     return default_value;
   }
@@ -506,16 +510,16 @@ auto BasePython::GetResource(const char* key, const char* fallback_resource,
     try {
       return g_base->python->GetPyLString(results.Get());
     } catch (const std::exception&) {
-      Log(LogName::kBa, LogLevel::kError,
-          "GetResource failed for '" + std::string(key) + "'");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "GetResource failed for '" + std::string(key) + "'");
 
       // Hmm; I guess let's just return the key to help identify/fix the
       // issue?..
       return std::string("<res-err: ") + key + ">";
     }
   } else {
-    Log(LogName::kBa, LogLevel::kError,
-        "GetResource failed for '" + std::string(key) + "'");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "GetResource failed for '" + std::string(key) + "'");
   }
 
   // Hmm; I guess let's just return the key to help identify/fix the issue?..
@@ -535,12 +539,13 @@ auto BasePython::GetTranslation(const char* category, const char* s)
     try {
       return g_base->python->GetPyLString(results.Get());
     } catch (const std::exception&) {
-      Log(LogName::kBa, LogLevel::kError,
-          "GetTranslation failed for '" + std::string(category) + "'");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "GetTranslation failed for '" + std::string(category) + "'");
       return "";
     }
   } else {
-    Log(LogName::kBa, LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "GetTranslation failed for category '" + std::string(category) + "'");
   }
   return "";
@@ -556,7 +561,7 @@ void BasePython::RunDeepLink(const std::string& url) {
         .Get(base::BasePython::ObjID::kAppHandleDeepLinkCall)
         .Call(args);
   } else {
-    Log(LogName::kBa, LogLevel::kError, "Error on deep-link call");
+    g_core->Log(LogName::kBa, LogLevel::kError, "Error on deep-link call");
   }
 }
 
@@ -577,8 +582,8 @@ auto BasePython::CanPyStringEditAdapterBeReplaced(PyObject* o) -> bool {
                     .Get(BasePython::ObjID::kStringEditAdapterCanBeReplacedCall)
                     .Call(args);
   if (!result.Exists()) {
-    Log(LogName::kBa, LogLevel::kError,
-        "Error getting StringEdit valid state.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Error getting StringEdit valid state.");
     return false;
   }
   if (result.Get() == Py_True) {
@@ -587,8 +592,8 @@ auto BasePython::CanPyStringEditAdapterBeReplaced(PyObject* o) -> bool {
   if (result.Get() == Py_False) {
     return false;
   }
-  Log(LogName::kBa, LogLevel::kError,
-      "Got unexpected value for StringEdit valid.");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "Got unexpected value for StringEdit valid.");
   return false;
 }
 
