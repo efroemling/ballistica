@@ -174,10 +174,32 @@ class CloudSubsystem(babase.AppSubsystem):
             'Cloud functionality is not present in this build.'
         )
 
-    # def subscribe(
-    #     self,
-    #     on_response: Callable[[Any], None],
-    # ) -> CallbackRegistration:
+    def subscribe(
+        self, updatecall: Callable[[Any], None]
+    ) -> babase.CloudSubscription:
+        """Subscribe to some data."""
+        from bacommon.cloud import TestCloudSubscriptionRequest
+
+        return self._subscribe(TestCloudSubscriptionRequest(), updatecall)
+
+    def _subscribe(
+        self,
+        request: bacommon.cloud.CloudSubscriptionRequest,
+        updatecall: Callable[[Any], None],
+    ) -> babase.CloudSubscription:
+        """Subscribe to some cloud data."""
+        raise NotImplementedError(
+            'Cloud functionality is not present in this build.'
+        )
+
+    def unsubscribe(self, subscription_id: int) -> None:
+        """Unsubscribe from some subscription.
+
+        Do not call this manually; it is called by CloudSubscription.
+        """
+        raise NotImplementedError(
+            'Cloud functionality is not present in this build.'
+        )
 
 
 def cloud_console_exec(code: str) -> None:

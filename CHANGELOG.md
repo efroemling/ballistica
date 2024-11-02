@@ -1,4 +1,7 @@
-### 1.7.37 (build 22062, api 9, 2024-10-22)
+### 1.7.37 (build 22068, api 9, 2024-11-01)
+- I am pleased to announce that after years of hard work from many members of
+  the community, PirateSpeak is now complete and available as a language choice.
+  This changes everything.
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -134,6 +137,10 @@
   bg-dynamics message overflows.
 - Added a close button to the dev-console as an alternate to using key presses
   to close it.
+- (build 22063) Added a 'Copy History' button in the Python tab in the
+  dev-console. Note that this will copy all cached log history; not just what is
+  displayed in the dev-console. This should be handy for diagnosing problems in
+  the future.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these

@@ -241,7 +241,11 @@ auto NetworkReader::RunThread_() -> int {
             recvfrom(sd, buffer, sizeof(buffer), 0,
                      reinterpret_cast<sockaddr*>(&from), &from_size);
         if (rresult == 0) {
-          g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+          // Note: have gotten reports of server attacks with this log
+          // message repeating. So now only logging this once to eliminate
+          // repeated log overhead and hopefully make the attack less
+          // effective.
+          BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
                       "NetworkReader Recv got length 0; this shouldn't "
                       "happen");
         } else if (rresult == -1) {

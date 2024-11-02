@@ -32,6 +32,7 @@ class CTFFlag(Flag):
     activity: CaptureTheFlagGame
 
     def __init__(self, team: Team):
+
         assert team.flagmaterial is not None
         super().__init__(
             materials=[team.flagmaterial],

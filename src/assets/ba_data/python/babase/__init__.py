@@ -131,6 +131,7 @@ from babase._apputils import (
     get_remote_app_name,
     AppHealthMonitor,
 )
+from babase._cloud import CloudSubscription
 from babase._devconsole import (
     DevConsoleTab,
     DevConsoleTabEntry,
@@ -230,6 +231,7 @@ __all__ = [
     'clipboard_get_text',
     'clipboard_has_text',
     'clipboard_is_supported',
+    'CloudSubscription',
     'clipboard_set_text',
     'commit_app_config',
     'ContextCall',

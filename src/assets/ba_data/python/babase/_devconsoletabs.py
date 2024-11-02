@@ -57,7 +57,9 @@ class DevConsoleTabAppModes(DevConsoleTab):
                 label_scale=0.6,
                 call=partial(self._set_app_mode, mode),
                 style=(
-                    'light' if isinstance(_babase.app._mode, mode) else 'normal'
+                    'bright'
+                    if isinstance(_babase.app._mode, mode)
+                    else 'normal'
                 ),
             )
 
@@ -110,7 +112,7 @@ class DevConsoleTabUI(DevConsoleTab):
             # h_anchor='left',
             label_scale=0.6,
             call=self.toggle_ui_overlay,
-            style='light' if ui_overlay else 'normal',
+            style='bright' if ui_overlay else 'normal',
         )
         x = 300
         self.text(
@@ -132,7 +134,7 @@ class DevConsoleTabUI(DevConsoleTab):
                 label_scale=0.6,
                 call=partial(_babase.app.set_ui_scale, scale),
                 style=(
-                    'light'
+                    'bright'
                     if scale.name.lower() == _babase.get_ui_scale()
                     else 'normal'
                 ),
@@ -232,14 +234,20 @@ class Table(Generic[T]):
         )
 
         # Align everything to the bottom of the dev-console.
-        yoffs = -1.0 * (
-            tab.height
-            - (
-                rows_on_this_page * self._entry_height
-                + margin_top
-                + margin_bottom
+        #
+        # UPDATE: Nevermind; top feels better. Keeping this code around
+        # in case we ever want to make it an option though.
+        if bool(False):
+            yoffs = -1.0 * (
+                tab.height
+                - (
+                    rows_on_this_page * self._entry_height
+                    + margin_top
+                    + margin_bottom
+                )
             )
-        )
+        else:
+            yoffs = 0
 
         # Keep our corners up to date for user use.
         self.top_left = (center_to_left + xoffs, tab.height + yoffs)
@@ -253,12 +261,14 @@ class Table(Generic[T]):
         # Page left/right buttons.
         tab.button(
             '<',
-            pos=(center_to_left + xoffs, margin_bottom),
+            pos=(
+                center_to_left + xoffs,
+                yoffs + tab.height - margin_top - rows * self._entry_height,
+            ),
             size=(
                 self._margin_left_right,
-                rows_on_this_page * self._entry_height,
+                rows * self._entry_height,
             ),
-            # h_anchor='left',
             call=partial(self._page_left, tab),
             disabled=entry_offset == 0,
         )
@@ -269,13 +279,12 @@ class Table(Generic[T]):
                 + xoffs
                 + self._margin_left_right
                 + columns_on_this_page * self._entry_width,
-                margin_bottom,
+                yoffs + tab.height - margin_top - rows * self._entry_height,
             ),
             size=(
                 self._margin_left_right,
-                rows_on_this_page * self._entry_height,
+                rows * self._entry_height,
             ),
-            # h_anchor='left',
             call=partial(self._page_right, tab),
             disabled=(
                 entry_offset + entries_on_this_page >= len(self._entries)
@@ -353,6 +362,7 @@ class DevConsoleTabLogging(DevConsoleTab):
         self._table = Table(
             title='Logging Levels',
             entry_width=800,
+            entry_height=42,
             debug_bounds=False,
             entries=list[str](),
             draw_entry_call=self._draw_entry,
@@ -469,21 +479,22 @@ class DevConsoleTabLogging(DevConsoleTab):
         logger = logging.getLogger(entry)
         level = logger.level
         index = 0
-        if entry != 'root' and level == logging.NOTSET:
-            # Show the level being inherited in NOTSET cases.
-            notsetlevelname = logging.getLevelName(logger.getEffectiveLevel())
-            if notsetlevelname == 'NOTSET':
-                notsetname = 'Not Set'
-            else:
-                notsetname = f'Not Set ({notsetlevelname.capitalize()})'
-        else:
-            notsetname = 'Not Set'
+        effectivelevel = logger.getEffectiveLevel()
+        # if entry != 'root' and level == logging.NOTSET:
+        #     # Show the level being inherited in NOTSET cases.
+        #     notsetlevelname = logging.getLevelName(logger.getEffectiveLevel())
+        #     if notsetlevelname == 'NOTSET':
+        #         notsetname = 'Not Set'
+        #     else:
+        #         notsetname = f'Not Set ({notsetlevelname.capitalize()})'
+        # else:
+        notsetname = 'Not Set'
         tab.button(
             notsetname,
             pos=(x + width - bwidth * 6.5 + xoffs + 1.0, y + 5.0),
-            size=(bwidth * 1.5 - 2.0, height - 10),
+            size=(bwidth * 1.0 - 2.0, height - 10),
             label_scale=btextscale,
-            style='light' if level == logging.NOTSET else 'normal',
+            style='white_bright' if level == logging.NOTSET else 'black',
             call=partial(
                 self._set_entry_val, entry_index, entry, logging.NOTSET
             ),
@@ -494,7 +505,12 @@ class DevConsoleTabLogging(DevConsoleTab):
             pos=(x + width - bwidth * 5 + xoffs + 1.0, y + 5.0),
             size=(bwidth - 2.0, height - 10),
             label_scale=btextscale,
-            style='light' if level == logging.DEBUG else 'normal',
+            style=(
+                'blue_bright'
+                if level == logging.DEBUG
+                else 'blue' if effectivelevel <= logging.DEBUG else 'black'
+            ),
+            # style='bright' if level == logging.DEBUG else 'normal',
             call=partial(
                 self._set_entry_val, entry_index, entry, logging.DEBUG
             ),
@@ -505,7 +521,12 @@ class DevConsoleTabLogging(DevConsoleTab):
             pos=(x + width - bwidth * 4 + xoffs + 1.0, y + 5.0),
             size=(bwidth - 2.0, height - 10),
             label_scale=btextscale,
-            style='light' if level == logging.INFO else 'normal',
+            style=(
+                'white_bright'
+                if level == logging.INFO
+                else 'white' if effectivelevel <= logging.INFO else 'black'
+            ),
+            # style='bright' if level == logging.INFO else 'normal',
             call=partial(self._set_entry_val, entry_index, entry, logging.INFO),
         )
         index += 1
@@ -514,7 +535,11 @@ class DevConsoleTabLogging(DevConsoleTab):
             pos=(x + width - bwidth * 3 + xoffs + 1.0, y + 5.0),
             size=(bwidth - 2.0, height - 10),
             label_scale=btextscale,
-            style='light' if level == logging.WARNING else 'normal',
+            style=(
+                'yellow_bright'
+                if level == logging.WARNING
+                else 'yellow' if effectivelevel <= logging.WARNING else 'black'
+            ),
             call=partial(
                 self._set_entry_val, entry_index, entry, logging.WARNING
             ),
@@ -525,7 +550,11 @@ class DevConsoleTabLogging(DevConsoleTab):
             pos=(x + width - bwidth * 2 + xoffs + 1.0, y + 5.0),
             size=(bwidth - 2.0, height - 10),
             label_scale=btextscale,
-            style='light' if level == logging.ERROR else 'normal',
+            style=(
+                'red_bright'
+                if level == logging.ERROR
+                else 'red' if effectivelevel <= logging.ERROR else 'black'
+            ),
             call=partial(
                 self._set_entry_val, entry_index, entry, logging.ERROR
             ),
@@ -536,7 +565,13 @@ class DevConsoleTabLogging(DevConsoleTab):
             pos=(x + width - bwidth * 1 + xoffs + 1.0, y + 5.0),
             size=(bwidth - 2.0, height - 10),
             label_scale=btextscale,
-            style='light' if level == logging.CRITICAL else 'normal',
+            style=(
+                'purple_bright'
+                if level == logging.CRITICAL
+                else (
+                    'purple' if effectivelevel <= logging.CRITICAL else 'black'
+                )
+            ),
             call=partial(
                 self._set_entry_val, entry_index, entry, logging.CRITICAL
             ),
@@ -563,7 +598,7 @@ class DevConsoleTabTest(DevConsoleTab):
             size=(100, 30),
             h_anchor='left',
             label_scale=0.6,
-            style='light',
+            style='bright',
         )
         self.text(
             'TestText',

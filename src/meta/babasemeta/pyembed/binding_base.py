@@ -59,6 +59,7 @@ values = [
     _hooks.get_dev_console_tab_names,  # kGetDevConsoleTabNamesCall
     _hooks.unsupported_controller_message,  # kUnsupportedControllerMessageCall
     _hooks.get_v2_account_id,  # kGetV2AccountIdCall
+    _hooks.copy_dev_console_history,  # kCopyDevConsoleHistoryCall
     _language.Lstr,  # kLStrClass
     _general.Call,  # kCallClass
     _apputils.garbage_collect_session_end,  # kGarbageCollectSessionEndCall

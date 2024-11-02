@@ -184,7 +184,7 @@ void AssetsServer::WriteReplayMessages() {
           fclose(replay_out_file_);
           replay_out_file_ = nullptr;
           g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                      "error writing replay file: "
+                      "Error writing replay file: "
                           + g_core->platform->GetErrnoString());
           return;
         }
@@ -197,7 +197,7 @@ void AssetsServer::WriteReplayMessages() {
             fclose(replay_out_file_);
             replay_out_file_ = nullptr;
             g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                        "error writing replay file: "
+                        "Error writing replay file: "
                             + g_core->platform->GetErrnoString());
             return;
           }
@@ -206,7 +206,7 @@ void AssetsServer::WriteReplayMessages() {
             fclose(replay_out_file_);
             replay_out_file_ = nullptr;
             g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                        "error writing replay file: "
+                        "Error writing replay file: "
                             + g_core->platform->GetErrnoString());
             return;
           }
@@ -220,7 +220,7 @@ void AssetsServer::WriteReplayMessages() {
         replay_out_file_ = nullptr;
         g_core->Log(
             LogName::kBaAudio, LogLevel::kError,
-            "error writing replay file: " + g_core->platform->GetErrnoString());
+            "Error writing replay file: " + g_core->platform->GetErrnoString());
         return;
       }
       replay_bytes_written_ += data_compressed.size() + 2;
@@ -240,11 +240,6 @@ void AssetsServer::Process() {
   if (!g_base->graphics->has_client_context()) {
     return;
   }
-  // if (!g_base->assets ||
-  //     || !g_base->graphics->texture_compression_types_are_set()  // NOLINT
-  //     || !g_base->graphics_server->texture_quality_set()) {
-  //   return;
-  // }
 
   // Process exactly 1 preload item. Empty out our non-audio list first
   // (audio is less likely to cause noticeable hitches if it needs to be loaded

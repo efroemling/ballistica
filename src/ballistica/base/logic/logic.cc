@@ -394,7 +394,7 @@ void Logic::UpdateDisplayTimeForHeadlessMode_() {
   // don't care about keeping the increments smooth or consistent.
 
   // The one thing we *do* try to do, however, is keep our timer length
-  // updated so that we fire exactly when the next app-mode event is
+  // updated so that we'll fire exactly when the next app-mode event is
   // scheduled (or at least close enough so we can fudge it and tell them
   // its that exact time).
 
@@ -552,6 +552,18 @@ void Logic::UpdateDisplayTimeForFrameDraw_() {
             return std::string(buffer);
           });
       display_time_increment_ = display_time_increment_ + offs;
+    }
+
+    // If our final increment is bigger than some sane threshold, clamp it
+    // and try to report the conditions that caused it. We should finesse
+    // our math so that this never happens naturally.
+    const float max_increment{0.25f};
+    if (display_time_increment_ > max_increment) {
+      BA_LOG_ONCE(LogName::kBaDisplayTime, LogLevel::kWarning,
+                  "Calced excessively large display_time_increment_ ("
+                      + std::to_string(display_time_increment_)
+                      + "); should not happen.");
+      display_time_increment_ = max_increment;
     }
 
     g_core->Log(LogName::kBaDisplayTime, LogLevel::kDebug,

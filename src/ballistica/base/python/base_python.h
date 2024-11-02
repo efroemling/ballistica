@@ -117,6 +117,7 @@ class BasePython {
     kUnsupportedControllerMessageCall,
     kGetV2AccountIdCall,
     kAppOnNativeActiveChangedCall,
+    kCopyDevConsoleHistoryCall,
     kLast  // Sentinel; must be at end.
   };
 

@@ -57,6 +57,7 @@ class DevConsole {
   auto HandleMouseDown(int button, float x, float y) -> bool;
   void HandleMouseUp(int button, float x, float y);
   void Exec();
+  void CopyHistory();
 
   void AddButton(const char* label, float x, float y, float width, float height,
                  PyObject* call, const char* h_anchor_str, float label_scale,

@@ -39,13 +39,69 @@ const float kDevConsoleTabButtonCornerRadius{16.0f};
 const double kTransitionSeconds{0.15};
 
 enum class DevConsoleHAnchor_ { kLeft, kCenter, kRight };
-enum class DevButtonStyle_ { kNormal, kLight };
+enum class DevButtonStyle_ {
+  kNormal,
+  kBright,
+  kRed,
+  kRedBright,
+  kPurple,
+  kPurpleBright,
+  kYellow,
+  kYellowBright,
+  kBlue,
+  kBlueBright,
+  kWhite,
+  kWhiteBright,
+  kBlack,
+  kBlackBright
+};
 
 static auto DevButtonStyleFromStr_(const char* strval) {
-  if (!strcmp(strval, "light")) {
-    return DevButtonStyle_::kLight;
+  if (!strcmp(strval, "normal")) {
+    return DevButtonStyle_::kNormal;
   }
-  assert(!strcmp(strval, "normal"));
+  if (!strcmp(strval, "bright")) {
+    return DevButtonStyle_::kBright;
+  }
+  if (!strcmp(strval, "red")) {
+    return DevButtonStyle_::kRed;
+  }
+  if (!strcmp(strval, "red_bright")) {
+    return DevButtonStyle_::kRedBright;
+  }
+  if (!strcmp(strval, "blue")) {
+    return DevButtonStyle_::kBlue;
+  }
+  if (!strcmp(strval, "blue_bright")) {
+    return DevButtonStyle_::kBlueBright;
+  }
+  if (!strcmp(strval, "purple")) {
+    return DevButtonStyle_::kPurple;
+  }
+  if (!strcmp(strval, "purple_bright")) {
+    return DevButtonStyle_::kPurpleBright;
+  }
+  if (!strcmp(strval, "yellow")) {
+    return DevButtonStyle_::kYellow;
+  }
+  if (!strcmp(strval, "yellow_bright")) {
+    return DevButtonStyle_::kYellowBright;
+  }
+  if (!strcmp(strval, "white")) {
+    return DevButtonStyle_::kWhite;
+  }
+  if (!strcmp(strval, "white_bright")) {
+    return DevButtonStyle_::kWhiteBright;
+  }
+  if (!strcmp(strval, "black")) {
+    return DevButtonStyle_::kBlack;
+  }
+  if (!strcmp(strval, "black_bright")) {
+    return DevButtonStyle_::kBlackBright;
+  }
+
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              std::string("Invalid button-style: ") + strval);
   return DevButtonStyle_::kNormal;
 }
 
@@ -260,7 +316,79 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
     Vector3f fgcolor;
     Vector3f bgcolor;
     switch (style) {
-      case DevButtonStyle_::kLight:
+      case DevButtonStyle_::kYellow:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
+        bgcolor =
+            pressed ? Vector3f{0.8f, 0.5f, 0.0f} : Vector3f{0.45, 0.4f, 0.35f};
+        break;
+      case DevButtonStyle_::kYellowBright:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.0f, 0.0f, 0.0f};
+        bgcolor =
+            pressed ? Vector3f{1.0f, 0.5f, 0.0f} : Vector3f{0.9, 0.7f, 0.0f};
+        break;
+      case DevButtonStyle_::kRed:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
+        bgcolor =
+            pressed ? Vector3f{1.0f, 0.2f, 0.2f} : Vector3f{0.45, 0.3f, 0.35f};
+        break;
+      case DevButtonStyle_::kRedBright:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
+        bgcolor =
+            pressed ? Vector3f{1.0f, 0.0f, 0.0f} : Vector3f{0.8, 0.05f, 0.1f};
+        break;
+      case DevButtonStyle_::kPurple:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
+        bgcolor =
+            pressed ? Vector3f{0.8f, 0.0f, 1.0f} : Vector3f{0.35, 0.2f, 0.4f};
+        break;
+      case DevButtonStyle_::kPurpleBright:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
+        bgcolor =
+            pressed ? Vector3f{1.0f, 0.5f, 1.0f} : Vector3f{0.6, 0.2f, 0.8f};
+        break;
+      case DevButtonStyle_::kBlue:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
+        bgcolor =
+            pressed ? Vector3f{0.0f, 0.5f, 0.7f} : Vector3f{0.35, 0.4f, 0.55f};
+        break;
+      case DevButtonStyle_::kBlueBright:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.0f, 0.0f, 0.0f};
+        bgcolor =
+            pressed ? Vector3f{0.2f, 0.2f, 1.0f} : Vector3f{0.5, 0.7f, 1.0f};
+        break;
+      case DevButtonStyle_::kWhite:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
+        bgcolor =
+            pressed ? Vector3f{0.3f, 0.3f, 0.3f} : Vector3f{0.38, 0.33f, 0.4f};
+        break;
+      case DevButtonStyle_::kWhiteBright:
+        fgcolor =
+            pressed ? Vector3f{1.0f, 1.0f, 1.0f} : Vector3f{0.0f, 0.0f, 0.0f};
+        bgcolor =
+            pressed ? Vector3f{0.4f, 0.4f, 0.4f} : Vector3f{0.8, 0.7f, 0.8f};
+        break;
+      case DevButtonStyle_::kBlack:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.8f, 0.7f, 0.8f};
+        bgcolor =
+            pressed ? Vector3f{1.0f, 1.0f, 1.0f} : Vector3f{0.0, 0.0f, 0.0f};
+        break;
+      case DevButtonStyle_::kBlackBright:
+        fgcolor =
+            pressed ? Vector3f{1.0f, 1.0f, 1.0f} : Vector3f{1.0f, 0.9f, 1.0f};
+        bgcolor =
+            pressed ? Vector3f{0.4f, 0.4f, 0.4f} : Vector3f{0.25f, 0.2f, 0.25f};
+        break;
+      case DevButtonStyle_::kBright:
         fgcolor =
             pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
         bgcolor =
@@ -605,6 +733,10 @@ void DevConsole::AddPythonTerminal() {
       "Exec", 0.5f * bs, DevConsoleHAnchor_::kRight, -33.0f * bs, 15.95f * bs,
       32.0f * bs, 13.0f * bs, 2.0 * bs, DevButtonStyle_::kNormal, false,
       [this] { Exec(); }));
+  widgets_.emplace_back(std::make_unique<Button_>(
+      "Copy History", 0.5f * bs, DevConsoleHAnchor_::kRight, -85.0f * bs,
+      Height() - 25.0f * bs, 80.0f * bs, 20.0f * bs, 4.0 * bs,
+      DevButtonStyle_::kNormal, false, [this] { CopyHistory(); }));
   python_terminal_visible_ = true;
 }
 
@@ -1073,6 +1205,13 @@ auto DevConsole::HandleKeyRelease(const SDL_Keysym* keysym) -> bool {
 
   // Otherwise absorb *all* key-ups when we're active.
   return state_ != State_::kInactive;
+}
+
+void DevConsole::CopyHistory() {
+  BA_PRECONDITION(g_base->InLogicThread());
+  g_base->python->objs()
+      .Get(BasePython::ObjID::kCopyDevConsoleHistoryCall)
+      .Call();
 }
 
 void DevConsole::Exec() {

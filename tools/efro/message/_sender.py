@@ -6,6 +6,7 @@ Supports static typing for message types and possible return types.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from efro.error import CleanError, RemoteError, CommunicationError
@@ -369,6 +370,19 @@ class MessageSender:
                     bound_obj, message, response_dict, response
                 )
         except Exception as exc:
+
+            # We pragmatically log by default if decoding fails. This
+            # means a message type was likely changed in a way that
+            # breaks the protocol, but individual message handlers are
+            # likely to lump all errors together (communication and
+            # otherwise) which could cause such breakage to go
+            # unnoticed.
+            if self.protocol.log_response_decode_errors:
+                logging.exception(
+                    'Error decoding message response;'
+                    ' protocol might be broken.',
+                )
+
             response = ErrorSysResponse(
                 error_message='Error decoding raw response.',
                 error_type=ErrorSysResponse.ErrorType.LOCAL,

@@ -83,6 +83,8 @@ class LanguageSubsystem(AppSubsystem):
             for i, name in enumerate(names):
                 if name == 'Chinesetraditional':
                     names[i] = 'ChineseTraditional'
+                elif name == 'Piratespeak':
+                    names[i] = 'PirateSpeak'
         except Exception:
             from babase import _error
 

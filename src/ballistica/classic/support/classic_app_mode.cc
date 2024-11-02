@@ -520,9 +520,9 @@ void ClassicAppMode::StepDisplayTime() {
   legacy_display_time_millisecs_prev_ = legacy_display_time_millisecs_;
 
   // Special case: due to things like app-mode-switches our
-  // prev-display-time-millisecs may be way in the past which
-  // can give us huge step values. So if this value is much bigger
-  // than the direct conversion of display_time_increment, clamp it.
+  // prev-display-time-millisecs may be way far in the past which can give
+  // us huge step values. So if this value is much bigger than the direct
+  // conversion of display_time_increment, clamp it.
   auto milliseconds_inc_max =
       static_cast<int>(g_base->logic->display_time_increment() * 1000.0 * 1.5);
   if (legacy_display_time_millisecs_inc > milliseconds_inc_max) {

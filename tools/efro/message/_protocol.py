@@ -47,6 +47,7 @@ class MessageProtocol:
         forward_clean_errors: bool = False,
         remote_errors_include_stack_traces: bool = False,
         log_errors_on_receiver: bool = True,
+        log_response_decode_errors: bool = True,
     ) -> None:
         """Create a protocol with a given configuration.
 
@@ -78,14 +79,22 @@ class MessageProtocol:
         goal is usually to avoid returning opaque RemoteErrors and to
         instead return something meaningful as part of the expected
         response type (even if that value itself represents a logical
-        error state). If 'log_errors_on_receiver' is False, however, such
-        exceptions will *not* be logged on the receiver. This can be
-        useful in combination with 'remote_errors_include_stack_traces'
-        and 'forward_clean_errors' in situations where all error
-        logging/management will be happening on the sender end. Be
-        aware, however, that in that case it may be possible for
-        communication errors to prevent such error messages from
-        ever being seen.
+        error state). If 'log_errors_on_receiver' is False, however,
+        such exceptions will *not* be logged on the receiver. This can
+        be useful in combination with
+        'remote_errors_include_stack_traces' and 'forward_clean_errors'
+        in situations where all error logging/management will be
+        happening on the sender end. Be aware, however, that in that
+        case it may be possible for communication errors to prevent some
+        errors from ever being acknowledged.
+
+        If an error occurs when decoding a message response, a
+        RuntimeError is generated locally. However, in practice it is
+        likely for such errors to be silently ignored by message
+        handling code alongside more common communication type errors,
+        meaning serious protocol breakage could go unnoticed. To avoid
+        this, a log message is also printed in such cases. Pass
+        'log_response_decode_errors' as False to disable this logging.
         """
         # pylint: disable=too-many-locals
         self.message_types_by_id: dict[int, type[Message]] = {}
@@ -170,6 +179,7 @@ class MessageProtocol:
             remote_errors_include_stack_traces
         )
         self.log_errors_on_receiver = log_errors_on_receiver
+        self.log_response_decode_errors = log_response_decode_errors
 
     @staticmethod
     def encode_dict(obj: dict) -> str:
@@ -252,7 +262,7 @@ class MessageProtocol:
         return out
 
     def message_from_dict(self, data: dict) -> Message:
-        """Decode a message from a json string."""
+        """Decode a message from a dict."""
         out = self._from_dict(data, self.message_types_by_id, 'message')
         assert isinstance(out, Message)
         return out

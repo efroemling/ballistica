@@ -174,6 +174,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_apputils.py \
   $(BUILD_DIR)/ba_data/python/babase/_assetmanager.py \
   $(BUILD_DIR)/ba_data/python/babase/_asyncio.py \
+  $(BUILD_DIR)/ba_data/python/babase/_cloud.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsole.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsoletabs.py \
   $(BUILD_DIR)/ba_data/python/babase/_emptyappmode.py \
@@ -452,6 +453,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_apputils.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_assetmanager.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_asyncio.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_cloud.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_devconsole.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_devconsoletabs.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_emptyappmode.cpython-312.opt-1.pyc \
@@ -2728,7 +2730,9 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/exceptions.py \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/fields.py \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/filepost.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/probe.py \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/poolmanager.py \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/response.py \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__init__.py \
@@ -2769,7 +2773,9 @@ SCRIPT_TARGETS_PYC_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/exceptions.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/fields.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/filepost.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/http2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/__pycache__/connection.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/__pycache__/probe.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/poolmanager.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/response.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/__init__.cpython-312.opt-1.pyc \
@@ -5160,6 +5166,7 @@ DATA_TARGETS = \
   $(BUILD_DIR)/ba_data/data/languages/korean.json \
   $(BUILD_DIR)/ba_data/data/languages/malay.json \
   $(BUILD_DIR)/ba_data/data/languages/persian.json \
+  $(BUILD_DIR)/ba_data/data/languages/piratespeak.json \
   $(BUILD_DIR)/ba_data/data/languages/polish.json \
   $(BUILD_DIR)/ba_data/data/languages/portuguese.json \
   $(BUILD_DIR)/ba_data/data/languages/romanian.json \

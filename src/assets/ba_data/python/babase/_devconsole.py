@@ -34,7 +34,22 @@ class DevConsoleTab:
         h_anchor: Literal['left', 'center', 'right'] = 'center',
         label_scale: float = 1.0,
         corner_radius: float = 8.0,
-        style: Literal['normal', 'light'] = 'normal',
+        style: Literal[
+            'normal',
+            'bright',
+            'red',
+            'red_bright',
+            'purple',
+            'purple_bright',
+            'yellow',
+            'yellow_bright',
+            'blue',
+            'blue_bright',
+            'white',
+            'white_bright',
+            'black',
+            'black_bright',
+        ] = 'normal',
         disabled: bool = False,
     ) -> None:
         """Add a button to the tab being refreshed."""

@@ -21,10 +21,10 @@ from babase import (
 import _baclassic
 
 if TYPE_CHECKING:
-    from typing import Callable
+    from typing import Callable, Any
 
     from efro.call import CallbackRegistration
-    from babase import AppIntent, AccountV2Handle
+    from babase import AppIntent, AccountV2Handle, CloudSubscription
     from bauiv1 import UIV1AppSubsystem, MainWindow, MainWindowState
 
 
@@ -35,6 +35,7 @@ class ClassicAppMode(AppMode):
         self._on_primary_account_changed_callback: (
             CallbackRegistration | None
         ) = None
+        self._test_sub: CloudSubscription | None = None
 
     @override
     @classmethod
@@ -154,8 +155,21 @@ class ClassicAppMode(AppMode):
     ) -> None:
         """Update subscriptions/etc. for a new primary account state."""
         assert in_logic_thread()
-        del account  # Unused.
-        # print('WOULD WIRE UP LISTENERS FOR ACCOUNT', account)
+
+        if bool(False):
+            assert app.plus is not None
+            if account is None:
+                self._test_sub = None
+            else:
+                with account:
+                    self._test_sub = app.plus.cloud.subscribe(
+                        self._on_sub_update
+                    )
+        else:
+            self._test_sub = None
+
+    def _on_sub_update(self, val: Any) -> None:
+        print(f'GOT SUB UPDATE: {val}')
 
     def _root_ui_menu_press(self) -> None:
         from babase import push_back_press

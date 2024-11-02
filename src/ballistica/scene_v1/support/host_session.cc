@@ -509,12 +509,13 @@ void HostSession::Update(int time_advance_millisecs, double time_advance) {
     }
   }
 
-  // Shouldn't be getting huge steps through here; watch out for that.
+  // We shouldn't be getting *huge* steps coming through here. Warn if that
+  // ever happens so we can fix it at the source.
   if (time_advance_millisecs > 500 || time_advance > 0.5) {
-    printf(
-        "WARNING: HostSession::Update() got excessive time_advance "
-        "(%d ms, %f s); should not happen.\n",
-        time_advance_millisecs, time_advance);
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                "HostSession::Update() got excessive time_advance ("
+                    + std::to_string(time_advance_millisecs) + " ms, "
+                    + std::to_string(time_advance) + " s); should not happen.");
   }
 
   // We can be killed at any time, so let's keep an eye out for that.
