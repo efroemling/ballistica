@@ -189,6 +189,9 @@ class ShouldShatterMessage:
     Category: **Message Classes**
     """
 
+    extreme: bool = False
+    """If this is set to True, the actor should shatter extremely."""
+
 
 @dataclass
 class ImpactDamageMessage:

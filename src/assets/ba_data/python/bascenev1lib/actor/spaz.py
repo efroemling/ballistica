@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import random
 import logging
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
@@ -34,8 +35,10 @@ class PunchHitMessage:
     """Message saying an object was hit."""
 
 
+@dataclass
 class CurseExplodeMessage:
     """We are cursed and should blow up now."""
+    srcplayer: bs.Player | None = None
 
 
 class BombDiedMessage:
@@ -720,7 +723,7 @@ class Spaz(bs.Actor):
             # Eww; seems we have to do this in a timer or it wont work right.
             # (since we're getting called from within update() perhaps?..)
             # NOTE: should test to see if that's still the case.
-            bs.timer(0.001, bs.WeakCall(self.shatter))
+            bs.timer(0.001, bs.WeakCall(self.shatter, msg.extreme))
 
         elif isinstance(msg, bs.ImpactDamageMessage):
             # Eww; seems we have to do this in a timer or it wont work right.
@@ -1165,7 +1168,9 @@ class Spaz(bs.Actor):
                     bs.timer(
                         0.05,
                         bs.WeakCall(
-                            self.curse_explode, msg.get_source_player(bs.Player)
+                            self.handlemessage, CurseExplodeMessage(
+                                srcplayer=msg.get_source_player(bs.Player)
+                            ),
                         ),
                     )
 
@@ -1223,7 +1228,7 @@ class Spaz(bs.Actor):
                 )
 
         elif isinstance(msg, CurseExplodeMessage):
-            self.curse_explode()
+            self.curse_explode(msg.srcplayer)
 
         elif isinstance(msg, PunchHitMessage):
             if not self.node:
