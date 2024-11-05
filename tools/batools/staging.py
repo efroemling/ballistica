@@ -180,6 +180,7 @@ class AssetStager:
             self._parse_android_args(args)
         elif platform_arg.startswith('-win'):
             self.desc = 'windows'
+            self.asset_package_flavor = 'gui_desktop_v2dev1'
             self._parse_win_args(platform_arg, args)
         elif platform_arg == '-cmake':
             self.desc = 'cmake'
@@ -193,6 +194,7 @@ class AssetStager:
             self.desc = 'cmake modular'
             self.dst = args[-1]
             self.tex_suffix = '.dds'
+            self.asset_package_flavor = 'gui_desktop_v2dev1'
             self.include_python_dylib = True
             self.include_shell_executable = True
             self.executable_name = 'ballisticakit'
