@@ -723,7 +723,7 @@ class Spaz(bs.Actor):
             # Eww; seems we have to do this in a timer or it wont work right.
             # (since we're getting called from within update() perhaps?..)
             # NOTE: should test to see if that's still the case.
-            bs.timer(0.001, bs.WeakCall(self.shatter, msg.extreme))
+            bs.timer(0.001, bs.WeakCall(self.shatter))
 
         elif isinstance(msg, bs.ImpactDamageMessage):
             # Eww; seems we have to do this in a timer or it wont work right.
