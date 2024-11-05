@@ -554,17 +554,10 @@ void Logic::UpdateDisplayTimeForFrameDraw_() {
       display_time_increment_ = display_time_increment_ + offs;
     }
 
-    // If our final increment is bigger than some sane threshold, clamp it
-    // and try to report the conditions that caused it. We should finesse
-    // our math so that this never happens naturally.
-    const float max_increment{0.25f};
-    if (display_time_increment_ > max_increment) {
-      BA_LOG_ONCE(LogName::kBaDisplayTime, LogLevel::kWarning,
-                  "Calced excessively large display_time_increment_ ("
-                      + std::to_string(display_time_increment_)
-                      + "); should not happen.");
-      display_time_increment_ = max_increment;
-    }
+    // After all is said and done, clamp our increment size to some sane
+    // amount. Trying to push too much through in a single instant can
+    // overflow thread message lists and whatnot.
+    display_time_increment_ = std::min(display_time_increment_, 0.25);
 
     g_core->Log(LogName::kBaDisplayTime, LogLevel::kDebug,
                 [this, use_avg, this_increment, chaos, used] {
