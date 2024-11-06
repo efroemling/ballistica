@@ -298,28 +298,28 @@ void BasePython::StorePreEnv(PyObject* obj) {
 }
 
 void BasePython::SetRawConfigValue(const char* name, float value) {
-  assert(g_base->InLogicThread());
+  assert(Python::HaveGIL());
   assert(objs().Exists(ObjID::kConfig));
   PythonRef value_obj(PyFloat_FromDouble(value), PythonRef::kSteal);
   int result = PyDict_SetItemString(objs().Get(ObjID::kConfig).Get(), name,
                                     value_obj.Get());
   if (result == -1) {
-    // Failed, we have.
-    // Clear any Python error that got us here; we're in C++ Exception land now.
+    // Failed, we have. Clear any Python error that got us here; we're in
+    // C++ Exception land now.
     PyErr_Clear();
     throw Exception("Error setting config dict value.");
   }
 }
 
 auto BasePython::GetRawConfigValue(const char* name) -> PyObject* {
-  assert(g_base->InLogicThread());
+  assert(Python::HaveGIL());
   assert(objs().Exists(ObjID::kConfig));
   return PyDict_GetItemString(objs().Get(ObjID::kConfig).Get(), name);
 }
 
 auto BasePython::GetRawConfigValue(const char* name, const char* default_value)
     -> std::string {
-  assert(g_base->InLogicThread());
+  assert(Python::HaveGIL());
   assert(objs().Exists(ObjID::kConfig));
   PyObject* value =
       PyDict_GetItemString(objs().Get(ObjID::kConfig).Get(), name);
@@ -331,7 +331,7 @@ auto BasePython::GetRawConfigValue(const char* name, const char* default_value)
 
 auto BasePython::GetRawConfigValue(const char* name, float default_value)
     -> float {
-  assert(g_base->InLogicThread());
+  assert(Python::HaveGIL());
   assert(objs().Exists(ObjID::kConfig));
   PyObject* value =
       PyDict_GetItemString(objs().Get(ObjID::kConfig).Get(), name);
@@ -351,7 +351,7 @@ auto BasePython::GetRawConfigValue(const char* name, float default_value)
 auto BasePython::GetRawConfigValue(const char* name,
                                    std::optional<float> default_value)
     -> std::optional<float> {
-  assert(g_base->InLogicThread());
+  assert(Python::HaveGIL());
   assert(objs().Exists(ObjID::kConfig));
   PyObject* value =
       PyDict_GetItemString(objs().Get(ObjID::kConfig).Get(), name);
@@ -372,7 +372,7 @@ auto BasePython::GetRawConfigValue(const char* name,
 }
 
 auto BasePython::GetRawConfigValue(const char* name, int default_value) -> int {
-  assert(g_base->InLogicThread());
+  assert(Python::HaveGIL());
   assert(objs().Exists(ObjID::kConfig));
   PyObject* value =
       PyDict_GetItemString(objs().Get(ObjID::kConfig).Get(), name);
@@ -391,7 +391,7 @@ auto BasePython::GetRawConfigValue(const char* name, int default_value) -> int {
 
 auto BasePython::GetRawConfigValue(const char* name, bool default_value)
     -> bool {
-  assert(g_base->InLogicThread());
+  assert(Python::HaveGIL());
   assert(objs().Exists(ObjID::kConfig));
   PyObject* value =
       PyDict_GetItemString(objs().Get(ObjID::kConfig).Get(), name);

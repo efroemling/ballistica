@@ -1,5 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
+
 """UI functionality for advanced settings."""
 
 from __future__ import annotations
@@ -93,6 +95,10 @@ class AdvancedSettingsWindow(bui.MainWindow):
         self._show_disable_gyro = app.classic.platform in {'ios', 'android'}
         if self._show_disable_gyro:
             self._sub_height += 42
+
+        self._show_use_insecure_connections = True
+        if self._show_use_insecure_connections:
+            self._sub_height += 82
 
         self._do_vr_test_button = app.env.vr
         self._do_net_test_button = True
@@ -527,6 +533,47 @@ class AdvancedSettingsWindow(bui.MainWindow):
                 maxwidth=430,
             )
 
+        self._use_insecure_connections_check_box: ConfigCheckBox | None
+        if self._show_use_insecure_connections:
+            v -= 42
+            self._use_insecure_connections_check_box = ConfigCheckBox(
+                parent=self._subcontainer,
+                position=(50, v),
+                size=(self._sub_width - 100, 30),
+                configkey='Use Insecure Connections',
+                autoselect=True,
+                # displayname='USE INSECURE CONNECTIONS',
+                displayname=bui.Lstr(
+                    resource=(f'{self._r}.insecureConnectionsText')
+                ),
+                # displayname=bui.Lstr(
+                #     resource=f'{self._r}.alwaysUseInternalKeyboardText'
+                # ),
+                scale=1.0,
+                maxwidth=430,
+            )
+            bui.textwidget(
+                parent=self._subcontainer,
+                position=(90, v - 20),
+                size=(0, 0),
+                # text=(
+                #     'not recommended, but may allow online play\n'
+                #     'from restricted countries or networks'
+                # ),
+                text=bui.Lstr(
+                    resource=(f'{self._r}.insecureConnectionsDescriptionText')
+                ),
+                maxwidth=400,
+                flatness=1.0,
+                scale=0.65,
+                color=(0.4, 0.9, 0.4, 0.8),
+                h_align='left',
+                v_align='center',
+            )
+            v -= 40
+        else:
+            self._use_insecure_connections_check_box = None
+
         self._always_use_internal_keyboard_check_box: ConfigCheckBox | None
         if self._show_always_use_internal_keyboard:
             v -= 42
@@ -827,6 +874,11 @@ class AdvancedSettingsWindow(bui.MainWindow):
                 ):
                     sel_name = 'AlwaysUseInternalKeyboard'
                 elif (
+                    self._use_insecure_connections_check_box is not None
+                    and sel == self._use_insecure_connections_check_box.widget
+                ):
+                    sel_name = 'UseInsecureConnections'
+                elif (
                     self._disable_gyro_check_box is not None
                     and sel == self._disable_gyro_check_box.widget
                 ):
@@ -862,6 +914,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
 
     def _restore_state(self) -> None:
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
         try:
             assert bui.app.classic is not None
             sel_name = bui.app.ui_v1.window_states.get(type(self), {}).get(
@@ -896,6 +949,11 @@ class AdvancedSettingsWindow(bui.MainWindow):
                     and self._always_use_internal_keyboard_check_box is not None
                 ):
                     sel = self._always_use_internal_keyboard_check_box.widget
+                elif (
+                    sel_name == 'UseInsecureConnections'
+                    and self._use_insecure_connections_check_box is not None
+                ):
+                    sel = self._use_insecure_connections_check_box.widget
                 elif (
                     sel_name == 'DisableGyro'
                     and self._disable_gyro_check_box is not None

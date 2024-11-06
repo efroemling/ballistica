@@ -1,4 +1,4 @@
-### 1.7.37 (build 22071, api 9, 2024-11-04)
+### 1.7.37 (build 22075, api 9, 2024-11-06)
 - I am pleased to announce that after years of hard work from many members of
   the community, PirateSpeak is now complete and available as a language choice.
   This changes everything.
@@ -141,6 +141,9 @@
   dev-console. Note that this will copy all cached log history; not just what is
   displayed in the dev-console. This should be handy for diagnosing problems in
   the future.
+- (build 22072) Added a 'Use insecure connections' option in settings ->
+  advanced. This may make it possible to play from places such as Iran where ssl
+  connections are being blocked. Do not enable this if you don't need to.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these
