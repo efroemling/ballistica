@@ -1,4 +1,4 @@
-### 1.7.37 (build 22075, api 9, 2024-11-06)
+### 1.7.37 (build 22076, api 9, 2024-11-06)
 - I am pleased to announce that after years of hard work from many members of
   the community, PirateSpeak is now complete and available as a language choice.
   This changes everything.
