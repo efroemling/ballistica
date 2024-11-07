@@ -10,6 +10,7 @@
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/platform/core_platform.h"
 
 namespace ballistica::base {
 
@@ -23,11 +24,7 @@ MeshAsset::MeshAsset(const std::string& file_name_in)
 auto MeshAsset::GetAssetType() const -> AssetType { return AssetType::kMesh; }
 
 auto MeshAsset::GetName() const -> std::string {
-  if (!file_name_full_.empty()) {
-    return file_name_full_;
-  } else {
-    return "invalid mesh";
-  }
+  return (!file_name_.empty()) ? file_name_ : "invalid mesh";
 }
 
 void MeshAsset::DoPreload() {

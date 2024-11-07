@@ -50,6 +50,12 @@ class Object {
 
 #endif
 
+  /// Called on newly constructed objects by the various New() methods. This
+  /// allows classes to run code after their full class heirarchy has been
+  /// constructed, meaning things like virtual functions will work as
+  /// expected.
+  virtual void ObjectPostInit();
+
   /// Called by the default ObjectThreadCheck() to determine ownership for
   /// an Object. By default, an object is owned by a specific thread,
   /// defaulting to the logic thread.
@@ -567,6 +573,7 @@ class Object {
   template <typename TRETURN, typename TALLOC = TRETURN, typename... ARGS>
   [[nodiscard]] static auto New(ARGS&&... args) -> Object::Ref<TRETURN> {
     auto* ptr = new TALLOC(std::forward<ARGS>(args)...);
+
 #if BA_DEBUG_BUILD
     /// Objects assume they are statically allocated by default; it's up
     /// to us to tell them when they're not.
@@ -579,7 +586,16 @@ class Object {
                  + ptr->GetObjectDescription());
     }
     ptr->object_is_ref_counted_ = true;
+    assert(!ptr->object_is_post_inited_);
 #endif
+
+    ptr->ObjectPostInit();
+
+#if BA_DEBUG_BUILD
+    // Make sure top level post-init was called.
+    assert(ptr->object_is_post_inited_);
+#endif
+
     return Object::Ref<TRETURN>(ptr);
   }
 
@@ -595,6 +611,7 @@ class Object {
   template <typename T, typename... ARGS>
   [[nodiscard]] static auto NewDeferred(ARGS&&... args) -> T* {
     T* ptr = new T(std::forward<ARGS>(args)...);
+
 #if BA_DEBUG_BUILD
     /// Objects assume they are statically allocated by default; it's up
     /// to us to tell them when they're not.
@@ -608,7 +625,16 @@ class Object {
           + ptr->GetObjectDescription());
     }
     ptr->object_is_pending_deferred_ = true;
+    assert(!ptr->object_is_post_inited_);
 #endif
+
+    ptr->ObjectPostInit();
+
+#if BA_DEBUG_BUILD
+    // Make sure top level post-init was called.
+    assert(ptr->object_is_post_inited_);
+#endif
+
     return ptr;
   }
 
@@ -636,6 +662,7 @@ class Object {
           "deferred: "
           + ptr->GetObjectDescription());
     }
+    assert(ptr->object_is_post_inited_);
     ptr->object_is_pending_deferred_ = false;
     ptr->object_is_ref_counted_ = true;
 #endif
@@ -645,17 +672,28 @@ class Object {
 
   /// Allocate an Object with no ref-counting; for use when an object
   /// will be manually managed/deleted.
+  ///
   /// In debug builds, these objects will complain if attempts are made to
   /// create strong references to them.
   template <typename T, typename... ARGS>
   [[nodiscard]] static auto NewUnmanaged(ARGS&&... args) -> T* {
     T* ptr = new T(std::forward<ARGS>(args)...);
+
 #if BA_DEBUG_BUILD
     /// Objects assume they are statically allocated by default; it's up
     /// to us to tell them when they're not.
     ptr->object_is_static_allocated_ = false;
     ptr->object_is_unmanaged_ = true;
+    assert(!ptr->object_is_post_inited_);
 #endif
+
+    ptr->ObjectPostInit();
+
+#if BA_DEBUG_BUILD
+    // Make sure top level post-init was called.
+    assert(ptr->object_is_post_inited_);
+#endif
+
     return ptr;
   }
 
@@ -675,6 +713,7 @@ class Object {
   bool object_is_static_allocated_{true};
   bool object_has_been_strong_reffed_{};
   bool object_is_ref_counted_{};
+  bool object_is_post_inited_{};
   bool object_is_pending_deferred_{};
   bool object_is_unmanaged_{};
   bool object_is_dead_{};

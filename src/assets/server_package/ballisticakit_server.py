@@ -33,9 +33,17 @@ if TYPE_CHECKING:
     from types import FrameType
     from bacommon.servermanager import ServerCommand
 
-VERSION_STR = '1.3.2'
+VERSION_STR = '1.3.3'
 
 # Version history:
+#
+# 1.3.3
+#
+#  - Added log_levels dict in server config for setting levels on
+#    individual loggers within the server binary. Can be useful for
+#    debugging issues or just keeping better track of what the server is
+#    up to. Check the logging tab in the dev console in the graphical
+#    client to learn which loggers are available.
 #
 # 1.3.2
 #

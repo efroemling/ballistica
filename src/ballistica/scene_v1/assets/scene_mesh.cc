@@ -4,6 +4,7 @@
 
 #include <string>
 
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/scene_v1/python/class/python_class_scene_mesh.h"
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/session_stream.h"

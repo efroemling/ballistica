@@ -506,7 +506,7 @@ class DevConsoleTabLogging(DevConsoleTab):
             size=(bwidth - 2.0, height - 10),
             label_scale=btextscale,
             style=(
-                'blue_bright'
+                'white_bright'
                 if level == logging.DEBUG
                 else 'blue' if effectivelevel <= logging.DEBUG else 'black'
             ),
@@ -536,7 +536,7 @@ class DevConsoleTabLogging(DevConsoleTab):
             size=(bwidth - 2.0, height - 10),
             label_scale=btextscale,
             style=(
-                'yellow_bright'
+                'white_bright'
                 if level == logging.WARNING
                 else 'yellow' if effectivelevel <= logging.WARNING else 'black'
             ),
@@ -551,7 +551,7 @@ class DevConsoleTabLogging(DevConsoleTab):
             size=(bwidth - 2.0, height - 10),
             label_scale=btextscale,
             style=(
-                'red_bright'
+                'white_bright'
                 if level == logging.ERROR
                 else 'red' if effectivelevel <= logging.ERROR else 'black'
             ),
@@ -566,7 +566,7 @@ class DevConsoleTabLogging(DevConsoleTab):
             size=(bwidth - 2.0, height - 10),
             label_scale=btextscale,
             style=(
-                'purple_bright'
+                'white_bright'
                 if level == logging.CRITICAL
                 else (
                     'purple' if effectivelevel <= logging.CRITICAL else 'black'

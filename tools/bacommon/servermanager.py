@@ -186,6 +186,11 @@ class ServerConfig:
     # involving leaving and rejoining or switching teams rapidly.
     player_rejoin_cooldown: float = 10.0
 
+    # Log levels for particular loggers, overriding the engine's
+    # defaults. Valid values are NOTSET, DEBUG, INFO, WARNING, ERROR, or
+    # CRITICAL.
+    log_levels: dict[str, str] | None = None
+
 
 # NOTE: as much as possible, communication from the server-manager to
 # the child-process should go through these and not ad-hoc Python string

@@ -18,8 +18,9 @@
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/macros.h"
-#include "ballistica/shared/generic/native_stack_trace.h"
+#include "ballistica/shared/generic/native_stack_trace.h"  // IWYU pragma: keep.
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {

@@ -15,6 +15,7 @@ class TextureAsset : public Asset {
  public:
   TextureAsset();
   ~TextureAsset() override;
+
   // Pass a newly allocated TextPacker pointer here; TextureData takes ownership
   // and handles cleaning it up.
   explicit TextureAsset(TextPacker* packer);

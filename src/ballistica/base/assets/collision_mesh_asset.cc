@@ -7,6 +7,7 @@
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/platform/core_platform.h"
 
 namespace ballistica::base {
 
@@ -23,11 +24,7 @@ auto CollisionMeshAsset::GetAssetType() const -> AssetType {
 }
 
 auto CollisionMeshAsset::GetName() const -> std::string {
-  if (!file_name_full_.empty()) {
-    return file_name_full_;
-  } else {
-    return "invalid CollisionMesh";
-  }
+  return (!file_name_.empty()) ? file_name_ : "invalid collision mesh";
 }
 
 void CollisionMeshAsset::DoPreload() {

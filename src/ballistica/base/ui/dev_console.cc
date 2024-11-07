@@ -372,9 +372,9 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
         break;
       case DevButtonStyle_::kWhiteBright:
         fgcolor =
-            pressed ? Vector3f{1.0f, 1.0f, 1.0f} : Vector3f{0.0f, 0.0f, 0.0f};
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.0f, 0.0f, 0.0f};
         bgcolor =
-            pressed ? Vector3f{0.4f, 0.4f, 0.4f} : Vector3f{0.8, 0.7f, 0.8f};
+            pressed ? Vector3f{1.0f, 1.0f, 1.0f} : Vector3f{0.9, 0.85f, 0.95f};
         break;
       case DevButtonStyle_::kBlack:
         fgcolor =

@@ -22,11 +22,7 @@ DataAsset::DataAsset(const std::string& file_name_in)
 auto DataAsset::GetAssetType() const -> AssetType { return AssetType::kData; }
 
 auto DataAsset::GetName() const -> std::string {
-  if (!file_name_full_.empty()) {
-    return file_name_full_;
-  } else {
-    return "invalid data";
-  }
+  return (!file_name_.empty()) ? file_name_ : "invalid data";
 }
 
 void DataAsset::DoPreload() {

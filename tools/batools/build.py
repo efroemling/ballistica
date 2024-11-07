@@ -461,8 +461,8 @@ def _get_server_config_template_toml(projroot: str) -> str:
 
     cfg = ServerConfig()
 
-    # Override some defaults with values we want to display commented
-    # out instead.
+    # Override some defaults with dummy values we want to display
+    # commented out instead.
     cfg.playlist_code = 12345
     cfg.stats_url = 'https://mystatssite.com/showstats?player=${ACCOUNT}'
     cfg.clean_exit_minutes = 60
@@ -476,6 +476,7 @@ def _get_server_config_template_toml(projroot: str) -> str:
     cfg.team_colors = ((0.1, 0.25, 1.0), (1.0, 0.25, 0.2))
     cfg.public_ipv4_address = '123.123.123.123'
     cfg.public_ipv6_address = '123A::A123:23A1:A312:12A3:A213:2A13'
+    cfg.log_levels = {'ba.lifecycle': 'DEBUG', 'ba.assets': 'DEBUG'}
 
     lines_in = _get_server_config_raw_contents(projroot).splitlines()
 

@@ -18,6 +18,7 @@
 #include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
 #include "ballistica/base/graphics/mesh/mesh_indexed_smoke_full.h"
 #include "ballistica/base/graphics/mesh/sprite_mesh.h"
+#include "ballistica/core/platform/core_platform.h"  // IWYU pragma: keep.
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {

@@ -23,19 +23,20 @@ class AssetsServer {
   auto event_loop() const -> EventLoop* { return event_loop_; }
 
  private:
-  void OnAppStartInThread();
-  void Process();
-  void WriteReplayMessages();
-  EventLoop* event_loop_{};
-  FILE* replay_out_file_{};
-  size_t replay_bytes_written_{};
-  bool writing_replay_{};
-  bool replays_broken_{};
+  void OnAppStartInThread_();
+  void Process_();
+  void WriteReplayMessages_();
+
   std::list<std::vector<uint8_t> > replay_messages_;
-  size_t replay_message_bytes_{};
-  Timer* process_timer_{};
   std::vector<Object::Ref<Asset>*> pending_preloads_;
   std::vector<Object::Ref<Asset>*> pending_preloads_audio_;
+  EventLoop* event_loop_{};
+  FILE* replay_out_file_{};
+  Timer* process_timer_{};
+  size_t replay_bytes_written_{};
+  size_t replay_message_bytes_{};
+  bool writing_replay_{};
+  bool replays_broken_{};
 };
 
 }  // namespace ballistica::base

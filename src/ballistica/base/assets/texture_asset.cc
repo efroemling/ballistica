@@ -19,6 +19,7 @@
 #include "ballistica/base/graphics/texture/dds.h"
 #include "ballistica/base/graphics/texture/ktx.h"
 #include "ballistica/base/graphics/texture/pvr.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "external/qr_code_generator/QrCode.hpp"
 
 namespace ballistica::base {
@@ -88,7 +89,7 @@ TextureAsset::TextureAsset(const std::string& qr_url) : is_qr_code_(true) {
   valid_ = true;
 }
 
-TextureAsset::~TextureAsset() = default;
+TextureAsset::~TextureAsset() {}
 
 auto TextureAsset::GetName() const -> std::string {
   return (!file_name_.empty()) ? file_name_ : "invalid texture";
