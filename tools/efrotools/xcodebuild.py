@@ -533,7 +533,7 @@ class XCodeBuild:
         elif self._section is _Section.PRECOMPILESWIFTBRIDGINGHEADER:
             self._print_simple_section_line(
                 line,
-                prefix='Precompiling Swift Briding Header',
+                prefix='Precompiling Swift Bridging Header',
                 ignore_line_start_tails=['/swift-frontend'],
             )
 

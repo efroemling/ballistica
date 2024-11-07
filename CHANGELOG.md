@@ -1,12 +1,12 @@
 ### 1.7.37 (build 22076, api 9, 2024-11-06)
-- I am pleased to announce that after years of hard work from many members of
-  the community, PirateSpeak is now complete and available as a language choice.
-  This changes everything.
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
   I'm hopeful that api version won't need to be bumped again for along time (if
   ever).
+- I am pleased to announce that after years of hard work from many members of
+  the community, PirateSpeak is now complete and available as a language choice.
+  This changes everything.
 - Heavily reworked and cleaned up the logging system. There is now a 'ba' Python
   logger and various logger categories under it such as 'ba.lifecycle',
   'ba.connectivity' or 'ba.v2transport'. By setting these individual loggers to
@@ -16,9 +16,10 @@
 - Added a 'Logging' tab to the dev-console. This allows easily setting log
   levels for all existing Python loggers, as well as resetting them all to
   defaults. Levels set here are restored on startup, so it is possible to debug
-  app startup behavior this way. Previously this sort of thing would generally
-  require setting cryptic environment variables which was not feasable on all
-  platforms, but this new system should work everywhere.
+  app startup behavior by setting log levels and then relaunching the app.
+  Previously this sort of thing would generally require setting cryptic
+  environment variables which was not feasable on all platforms, but this new
+  system should work everywhere.
 - Log messages printed to both the command line and the in-app console now
   include timestamps and logger names, and are color coded for severity
   (DEBUG=blue, INFO=default, WARNING=orange/yellow, ERROR=red, CRITICAL=purple).
@@ -70,15 +71,15 @@
   UI states easier, but I now plan to use `WindowState` classes to accomplish
   much of that in a more backward-compatible way. More on that below.
 - Removed touch-specific button target-area adjustements. If you find any
-  buttons that are hard to hit accurately on a touchscreen, please holler.
+  buttons that are now hard to hit accurately on a touchscreen, please holler.
 - Added a new `bauiv1.Window` subclass called `bauiv1.MainWindow` which handles
   what was previously called the 'main-menu-window' system which was a bit
   ad-hoc and messy. MainMenuWindows have a built-in stack system so things like
   back-button handling are more automatic and windows don't have to hard-code
-  where they came from. There are also other benefits such as better state
-  saving/restoring. When writing a MainWindow, pretty much all navigation should
-  only need too use methods: `main_window_has_control()`, `main_window_back()`,
-  and `main_window_replace()`.
+  where their back button goes to. There are also other benefits such as better
+  state saving/restoring. When writing a MainWindow, pretty much all navigation
+  should only need too use methods: `main_window_has_control()`,
+  `main_window_back()`, and `main_window_replace()`.
 - Finally got things updated so language testing works again, and made it a bit
   spiffier while at it. You now simply point the game at your test language and
   it will update dynamically as you make edits; no need to download any files.
@@ -120,7 +121,7 @@
   use `babase.get_ui_scale()` to get it now.
 - Removed the UIScale control from the devtools window, which was only partially
   wired up (it did not affect native layer bits). For now the official ways to
-  test UIScales are by using the UI panel in the dev-console or by setting the
+  test UIScales are by using the UI tab in the dev-console or by setting the
   `BA_UI_SCALE` env var. If we can get UIScale switches to feel seamless enough
   at some point, it may be worth adding to display settings.
 - There is now a `ba*.app.classic.save_ui_state()` method that should be called
