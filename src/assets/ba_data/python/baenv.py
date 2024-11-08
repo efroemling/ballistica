@@ -53,7 +53,7 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22077
+TARGET_BALLISTICA_BUILD = 22080
 TARGET_BALLISTICA_VERSION = '1.7.37'
 
 
@@ -316,7 +316,7 @@ def _setup_logging(launch_time: float) -> LogHandler:
 
     log_handler = setup_logging(
         log_path=None,
-        level=LogLevel.DEBUG,
+        level=LogLevel.INFO,
         log_stdout_stderr=True,
         cache_size_limit=1024 * 1024,
         launch_time=launch_time,
@@ -335,6 +335,8 @@ def _set_log_levels(app_config: dict) -> None:
         if config is None:
             get_base_logger_control_config_client().apply()
             return
+
+        print('WTF', config)
 
         # Make sure data is expected types/values.
         valid_levels = {

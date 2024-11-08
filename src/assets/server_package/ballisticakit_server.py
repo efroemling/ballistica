@@ -11,6 +11,7 @@ import time
 import json
 import signal
 import tomllib
+import logging
 import subprocess
 from pathlib import Path
 from threading import Lock, Thread, current_thread
@@ -801,23 +802,46 @@ class ServerManagerApp:
 
         # Some of our config values translate directly into the
         # ballisticakit config file; the rest we pass at runtime.
+
+        # IMPORTANT: Make sure we *ALWAYS* push values (or lack thereof)
+        # through; otherwise stale values from previous runs can linger
+        # in the bincfg.
+
         bincfg['Port'] = self._config.port
         bincfg['Auto Balance Teams'] = self._config.auto_balance_teams
         bincfg['Show Tutorial'] = self._config.show_tutorial
 
+        binkey = 'SceneV1 Host Protocol'
         if self._config.protocol_version is not None:
-            bincfg['SceneV1 Host Protocol'] = self._config.protocol_version
-        if self._config.team_names is not None:
-            bincfg['Custom Team Names'] = self._config.team_names
-        elif 'Custom Team Names' in bincfg:
-            del bincfg['Custom Team Names']
+            bincfg[binkey] = self._config.protocol_version
+        elif binkey in bincfg:
+            del bincfg[binkey]
 
+        binkey = 'Custom Team Names'
+        if self._config.team_names is not None:
+            bincfg[binkey] = self._config.team_names
+        elif binkey in bincfg:
+            del bincfg[binkey]
+
+        binkey = 'Custom Team Colors'
         if self._config.team_colors is not None:
-            bincfg['Custom Team Colors'] = self._config.team_colors
-        elif 'Custom Team Colors' in bincfg:
-            del bincfg['Custom Team Colors']
+            bincfg[binkey] = self._config.team_colors
+        elif binkey in bincfg:
+            del bincfg[binkey]
 
         bincfg['Idle Exit Minutes'] = self._config.idle_exit_minutes
+
+        binkey = 'Log Levels'
+        if self._config.log_levels is not None:
+            # Users supply us log level names like NOTSET; convert those
+            # to numeric vals which the engine expects.
+            bincfg[binkey] = {
+                key: logging.getLevelName(val)
+                for key, val in self._config.log_levels.items()
+            }
+        elif binkey in bincfg:
+            del bincfg[binkey]
+
         with open(cfgpath, 'w', encoding='utf-8') as outfile:
             outfile.write(json.dumps(bincfg))
 
