@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Annotated, override
 from threading import Thread, current_thread, Lock
 
 from efro.util import utc_now
-from efro.terminal import Clr
+from efro.terminal import Clr, color_enabled
 from efro.dataclassio import ioprepped, IOAttrs, dataclass_to_json
 
 if TYPE_CHECKING:
@@ -312,6 +312,7 @@ class LogHandler(logging.Handler):
     @override
     def emit(self, record: logging.LogRecord) -> None:
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-locals
 
         if __debug__:
             starttime = time.monotonic()
@@ -369,7 +370,19 @@ class LogHandler(logging.Handler):
                         ).strftime('%H:%M:%S')
                         + f'.{int(record.msecs):03d}'
                     )
-                preinfo = f'{Clr.WHT}{timestamp} {record.name}:{Clr.RST} '
+
+                # If color printing is disabled, show level through text
+                # instead of color.
+                lvlnameex = (
+                    ''
+                    if color_enabled
+                    else f' {logging.getLevelName(record.levelno)}'
+                )
+
+                preinfo = (
+                    f'{Clr.WHT}{timestamp} {record.name}{lvlnameex}:'
+                    f'{Clr.RST} '
+                )
                 ends = LEVELNO_COLOR_CODES.get(record.levelno)
                 if ends is not None:
                     self._echofile.write(f'{preinfo}{ends[0]}{msg}{ends[1]}\n')
