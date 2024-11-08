@@ -1506,7 +1506,8 @@ void ClassicAppMode::HandleGameQuery(const char* buffer, size_t size,
     g_base->network_writer->PushSendToCall(msg_buffer, SockAddr(*from));
 
   } else {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+    // Log invalid packets only once to avoid weaponized log spam.
+    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
                 "Got invalid game-query packet of len " + std::to_string(size)
                     + "; expected 5.");
   }

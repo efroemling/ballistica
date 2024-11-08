@@ -1,4 +1,4 @@
-### 1.7.37 (build 22082, api 9, 2024-11-07)
+### 1.7.37 (build 22086, api 9, 2024-11-08)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -145,6 +145,8 @@
 - (build 22072) Added a 'Use insecure connections' option in settings ->
   advanced. This may make it possible to play from places such as Iran where ssl
   connections are being blocked. Do not enable this if you don't need to.
+- (build 22085) Added protection against an attack consisting of spamming
+  invalid game-query packets.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these
