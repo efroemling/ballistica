@@ -709,9 +709,10 @@ class Spaz(bs.Actor):
         assert not self.expired
 
         if isinstance(msg, bs.PickedUpMessage):
-            if self.node:
-                self.node.handlemessage('hurt_sound')
-                self.node.handlemessage('picked_up')
+            if not self.node or self.node.hold_node:
+                return None
+            self.node.handlemessage('hurt_sound')
+            self.node.handlemessage('picked_up')
 
             # This counts as a hit.
             self._num_times_hit += 1
