@@ -73,6 +73,10 @@ class PrefabPlatform(Enum):
 
         if system == 'Darwin':
             if machine == 'x86_64':
+                if bool(True):
+                    raise CleanError(
+                        'Prefab builds now require an Apple Silicon mac.'
+                    )
                 return cls.MAC_X86_64
             if machine == 'arm64':
                 return cls.MAC_ARM64

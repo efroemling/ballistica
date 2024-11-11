@@ -1,4 +1,4 @@
-### 1.7.37 (build 22091, api 9, 2024-11-11)
+### 1.7.37 (build 22094, api 9, 2024-11-11)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -147,6 +147,11 @@
   connections are being blocked. Do not enable this if you don't need to.
 - (build 22085) Added protection against an attack consisting of spamming
   invalid game-query packets.
+- Using prefab builds on a Mac now requires an Apple Silicon machine (M1 or
+  newer). Mac x86 prefab builds were becoming a major bottleneck in pushing out
+  updates. Please let me know if you are making substantial use of prefab builds
+  on an x86 Mac and I can reconsider. Note that this only concerns the prefab
+  build system; regular official game builds still fully support x86 Macs.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these
