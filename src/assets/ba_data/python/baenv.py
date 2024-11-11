@@ -336,8 +336,6 @@ def _set_log_levels(app_config: dict) -> None:
             get_base_logger_control_config_client().apply()
             return
 
-        print('WTF', config)
-
         # Make sure data is expected types/values.
         valid_levels = {
             logging.NOTSET,
