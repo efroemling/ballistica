@@ -1318,6 +1318,15 @@ class Spaz(bs.Actor):
             except Exception:
                 pass
 
+            # Special case - if we're holding a flag, don't replace it
+            # (hmm - should make this customizable or more low level).
+            try:
+                held = self.node.hold_node
+                if held and held.getnodetype() == 'flag':
+                    return True
+            except Exception:
+                pass
+
             # If we're grabbing the pelvis of a non-shattered spaz, we wanna
             # grab the torso instead.
             if (
@@ -1327,10 +1336,7 @@ class Spaz(bs.Actor):
             ):
                 opposingbody = 1
 
-            # Special case - if we're holding a flag, don't replace it
-            # (hmm - should make this customizable or more low level).
-            held = self.node.hold_node
-            if held and held.getnodetype() == 'flag':
+            if self.node.hold_body and self.node.hold_node:
                 return True
 
             # Note: hold_body needs to be set before hold_node.
