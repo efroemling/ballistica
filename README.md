@@ -26,7 +26,7 @@ multiplayer action on small diorama-like environments built from real-world
 objects'. If you've got something you'd like to create that can fit within that
 box (as BombSquad itself does), give Ballistica a look. Of course, there is
 nothing preventing you from going and building a first person shooter out of
-this stuff, but I wouldn't recommend it.
+this stuff, but I wouldn't recommend it..
 
 * **Python tomfoolery**
 

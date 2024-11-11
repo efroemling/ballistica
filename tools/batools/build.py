@@ -347,6 +347,17 @@ def checkenv() -> None:
 
     print(f'{Clr.BLD}Checking environment...{Clr.RST}', flush=True)
 
+    # Make sure they've got cmake.
+    if (
+        subprocess.run(
+            ['which', 'cmake'], check=False, capture_output=True
+        ).returncode
+        != 0
+    ):
+        raise CleanError(
+            'cmake is required; please install it via apt, brew, etc.'
+        )
+
     # Make sure they've got curl.
     if (
         subprocess.run(
