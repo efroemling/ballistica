@@ -890,11 +890,17 @@ py_check_prepass: dummymodules
 #   tests/test_efro/test_message.py
 TEST_TARGET ?= tests
 
-# Run all tests. (live execution verification)
+# Run tests (live execution verification).
 test: py_check_prepass
 	@$(PCOMMANDBATCH) echo BLU Running all tests...
 	@$(PCOMMAND) tests_warm_start
 	@$(PCOMMAND) pytest -v $(TEST_TARGET)
+
+# Run tests (live execution verification). Excludes slow ones.
+test-fast: py_check_prepass
+	@$(PCOMMANDBATCH) echo BLU Running all tests \(fast\)...
+	@$(PCOMMAND) tests_warm_start
+	@BA_TEST_FAST_MODE=1 $(PCOMMAND) pytest -v $(TEST_TARGET)
 
 test-verbose: py_check_prepass
 	@$(PCOMMANDBATCH) echo BLU Running all tests...
@@ -904,6 +910,9 @@ test-verbose: py_check_prepass
 
 # Run tests with any caching disabled.
 test-full: test
+
+# Run fast tests with any caching disabled.
+test-fast-full: test-fast
 
 # Shortcut to test efro.message only.
 test-message:
@@ -935,7 +944,7 @@ preflight:
 	@$(MAKE) format
 	@$(MAKE) update
 	@$(MAKE) -j$(CPUS) py_check_prepass # Needs to be done explicitly first.
-	@$(MAKE) -j$(CPUS) cpplint pylint mypy test
+	@$(MAKE) -j$(CPUS) cpplint pylint mypy test-fast
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight' without caching (all files are visited).
@@ -943,7 +952,7 @@ preflight-full:
 	@$(MAKE) format-full
 	@$(MAKE) update
 	@$(MAKE) -j$(CPUS) py_check_prepass # Needs to be done explicitly first.
-	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-full
+	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-fast-full
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight' plus optional/slow extra checks.
@@ -951,7 +960,7 @@ preflight2:
 	@$(MAKE) format
 	@$(MAKE) update
 	@$(MAKE) -j$(CPUS) py_check_prepass # Needs to be done explicitly first.
-	@$(MAKE) -j$(CPUS) cpplint pylint mypy test
+	@$(MAKE) -j$(CPUS) cpplint pylint mypy test-fast
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight2' but without caching (all files visited).
@@ -959,7 +968,7 @@ preflight2-full:
 	@$(MAKE) format-full
 	@$(MAKE) update
 	@$(MAKE) -j$(CPUS) py_check_prepass # Needs to be done explicitly first.
-	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-full
+	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-fast-full
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Tell make which of these targets don't represent files.

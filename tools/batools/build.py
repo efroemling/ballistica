@@ -384,6 +384,19 @@ def checkenv() -> None:
             'rsync is required; please install it via apt, brew, etc.'
         )
 
+    # Disallow openrsync for now.
+    if (
+        not subprocess.run(
+            ['rsync', '--version'], check=True, capture_output=True
+        )
+        .stdout.decode()
+        .startswith('rsync ')
+    ):
+        raise CleanError(
+            'non-standard rsync detected (openrsync, etc);'
+            ' please install regular rsync via apt, brew, etc.'
+        )
+
     # Make sure rsync is version 3.1.0 or newer.
     #
     # Macs come with ancient rsync versions with significant downsides
