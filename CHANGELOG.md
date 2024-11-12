@@ -152,6 +152,10 @@
   updates. Please let me know if you are making substantial use of prefab builds
   on an x86 Mac and I can reconsider. Note that this only concerns the prefab
   build system; regular official game builds still fully support x86 Macs.
+- Added the `test-fast` Makefile target which skips some slower tests, and wired
+  up `make preflight` to use this to keep things moving a bit faster. If you are
+  not familiar with it, the `preflight` target is handy to run before committing
+  code to git.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these
