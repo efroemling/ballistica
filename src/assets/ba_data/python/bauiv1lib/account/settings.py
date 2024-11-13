@@ -98,7 +98,6 @@ class AccountSettingsWindow(bui.MainWindow):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
-                # transition=transition,
                 toolbar_visibility=(
                     'menu_minimal'
                     if uiscale is bui.UIScale.SMALL
@@ -130,10 +129,12 @@ class AccountSettingsWindow(bui.MainWindow):
                 text_scale=1.2,
                 autoselect=True,
                 label=bui.Lstr(
-                    resource='doneText' if self._modal else 'backText'
+                    resource='cancelText' if self._modal else 'backText'
                 ),
                 button_type='regular' if self._modal else 'back',
-                on_activate_call=self.main_window_back,
+                on_activate_call=(
+                    self._modal_close if self._modal else self.main_window_back
+                ),
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
             if not self._modal:
@@ -173,6 +174,18 @@ class AccountSettingsWindow(bui.MainWindow):
         self._subcontainer: bui.Widget | None = None
         self._refresh()
         self._restore_state()
+
+    def _modal_close(self) -> None:
+        assert self._modal
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
+        bui.containerwidget(
+            edit=self._root_widget,
+            transition=('out_right'),
+        )
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
