@@ -93,7 +93,7 @@ class PluginSubsystem(AppSubsystem):
         # that weren't covered by the meta stuff above, either creating
         # plugin-specs for them or clearing them out. This covers
         # plugins with api versions not matching ours, plugins without
-        # ba_meta tags, and plugins that have since disappeared.
+        # ba_*meta tags, and plugins that have since disappeared.
         assert isinstance(plugstates, dict)
         wrong_api_prefixes = [f'{m}.' for m in results.incorrect_api_modules]
 

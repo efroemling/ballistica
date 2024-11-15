@@ -1,4 +1,4 @@
-### 1.7.37 (build 22101, api 9, 2024-11-13)
+### 1.7.37 (build 22102, api 9, 2024-11-14)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -156,6 +156,14 @@
   up `make preflight` to use this to keep things moving a bit faster. If you are
   not familiar with it, the `preflight` target is handy to run before committing
   code to git.
+- The app-modes tab in the dev-console now uses the meta tag system to discover
+  testable app-modes. Previously this would simply list the `default_app_modes`
+  listed in the projectconfig.json. So now it is possible to make and explicitly
+  test new app modes via mod scripts on vanilla game builds. Note that the game
+  still uses the `default_app_modes` projectconfig.json value when selecting
+  app-modes at runtime; to change this you need to either change your
+  projectconfig and rebuild or replace `ba*.app.mode_selector` at runtime with
+  a custom selector that selects your custom app-mode(s).
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these

@@ -9,6 +9,8 @@ a more focused way.
 """
 # pylint: disable=redefined-builtin
 
+# ba_meta require api 9
+
 # The stuff we expose here at the top level is our 'public' api for use
 # from other modules/packages. Code *within* this package should import
 # things from this package's submodules directly to reduce the chance of

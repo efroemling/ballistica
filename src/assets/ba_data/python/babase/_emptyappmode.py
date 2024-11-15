@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from babase import AppIntent
 
 
+# ba_meta export babase.AppMode
 class EmptyAppMode(AppMode):
     """An AppMode that does not do much at all."""
 

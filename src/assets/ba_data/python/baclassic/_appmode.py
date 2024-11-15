@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from bauiv1 import UIV1AppSubsystem, MainWindow, MainWindowState
 
 
+# ba_meta export babase.AppMode
 class ClassicAppMode(AppMode):
     """AppMode for the classic BombSquad experience."""
 
@@ -156,7 +157,7 @@ class ClassicAppMode(AppMode):
         """Update subscriptions/etc. for a new primary account state."""
         assert in_logic_thread()
 
-        if bool(False):
+        if bool(True):
             assert app.plus is not None
             if account is None:
                 self._test_sub = None
