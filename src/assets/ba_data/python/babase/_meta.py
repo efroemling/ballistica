@@ -387,7 +387,7 @@ class DirectoryScan:
                 # Make an exception for this specific file, otherwise we
                 # get lots of warnings about ba_meta showing up in weird
                 # places here.
-                if str(subpath) not in ('babase/_meta.py',):
+                if subpath.as_posix() != 'babase/_meta.py':
                     logging.warning(
                         'metascan: %s:%d: malformed ba_meta statement.',
                         subpath,

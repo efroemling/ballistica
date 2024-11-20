@@ -930,7 +930,8 @@ test-rpc:
       tests/test_efro/test_rpc.py
 
 # Tell make which of these targets don't represent files.
-.PHONY: test test-verbose test-full test-message test-dataclassio test-rpc
+.PHONY: test test-fast test-verbose test-full test-fast-full \
+        test-message test-dataclassio test-rpc
 
 
 ################################################################################
