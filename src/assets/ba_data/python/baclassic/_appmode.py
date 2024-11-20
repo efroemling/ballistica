@@ -157,20 +157,21 @@ class ClassicAppMode(AppMode):
         """Update subscriptions/etc. for a new primary account state."""
         assert in_logic_thread()
 
-        if bool(True):
+        # Test subscription.
+        if bool(False):
             assert app.plus is not None
             if account is None:
                 self._test_sub = None
             else:
                 with account:
-                    self._test_sub = app.plus.cloud.subscribe(
-                        self._on_sub_update
+                    self._test_sub = app.plus.cloud.subscribe_test(
+                        self._on_sub_test_update
                     )
         else:
             self._test_sub = None
 
-    def _on_sub_update(self, val: Any) -> None:
-        print(f'GOT SUB UPDATE: {val}')
+    def _on_sub_test_update(self, val: int | None) -> None:
+        print(f'GOT SUB TEST UPDATE: {val}')
 
     def _root_ui_menu_press(self) -> None:
         from babase import push_back_press

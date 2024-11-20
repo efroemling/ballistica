@@ -369,3 +369,51 @@ class TestCloudSubscriptionRequest(CloudSubscriptionRequest):
     @classmethod
     def get_type_id(cls) -> CloudSubscriptionRequestTypeID:
         return CloudSubscriptionRequestTypeID.TEST
+
+
+class CloudSubscriptionValueTypeID(Enum):
+    """Type ID for each of our subclasses."""
+
+    TEST = 'test'
+
+
+class CloudSubscriptionValue(IOMultiType[CloudSubscriptionValueTypeID]):
+    """Top level class for our multitype."""
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> CloudSubscriptionValueTypeID:
+        # Require child classes to supply this themselves. If we
+        # did a full type registry/lookup here it would require us
+        # to import everything and would prevent lazy loading.
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_type(
+        cls, type_id: CloudSubscriptionValueTypeID
+    ) -> type[CloudSubscriptionValue]:
+        """Return the subclass for each of our type-ids."""
+        # pylint: disable=cyclic-import
+        out: type[CloudSubscriptionValue]
+
+        t = CloudSubscriptionValueTypeID
+        if type_id is t.TEST:
+            out = TestCloudSubscriptionValue
+        else:
+            # Important to make sure we provide all types.
+            assert_never(type_id)
+        return out
+
+
+@ioprepped
+@dataclass
+class TestCloudSubscriptionValue(CloudSubscriptionValue):
+    """Just a test."""
+
+    value: Annotated[int | None, IOAttrs('v')]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> CloudSubscriptionValueTypeID:
+        return CloudSubscriptionValueTypeID.TEST

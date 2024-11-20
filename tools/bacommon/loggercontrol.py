@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from efro.dataclassio import ioprepped, IOAttrs
 
 if TYPE_CHECKING:
-    from typing import Self
+    from typing import Self, Sequence
 
 
 @ioprepped
@@ -23,16 +23,63 @@ class LoggerControlConfig:
     set to NOTSET.
     """
 
-    # Logger names mapped to log-level values (from system logging module).
+    # Logger names mapped to log-level values (from system logging
+    # module).
     levels: Annotated[dict[str, int], IOAttrs('l', store_default=False)] = (
         field(default_factory=dict)
     )
 
-    def apply(self) -> None:
-        """Apply the config to all Python loggers."""
+    def apply(
+        self,
+        *,
+        warn_unexpected_loggers: bool = False,
+        warn_missing_loggers: bool = False,
+        ignore_log_prefixes: list[str] | None = None,
+    ) -> None:
+        """Apply the config to all Python loggers.
+
+        If 'warn_unexpected_loggers' is True, warnings will be issues for
+        any loggers not explicitly covered by the config. This is useful
+        to help ensure controls for all possible loggers are present in
+        a UI/etc.
+
+        If 'warn_missing_loggers' is True, warnings will be issued for
+        any loggers present in the config that are not found at apply time.
+        This can be useful for pruning settings for no longer used loggers.
+
+        Warnings for any log names beginning with any strings in
+        'ignore_log_prefixes' will be suppressed. This can allow
+        ignoring loggers associated with submodules for a given package
+        and instead presenting only a top level logger (or none at all).
+        """
+        if ignore_log_prefixes is None:
+            ignore_log_prefixes = []
+
         existinglognames = (
             set(['root']) | logging.root.manager.loggerDict.keys()
         )
+
+        # First issue any warnings they want.
+        if warn_unexpected_loggers:
+            for logname in sorted(existinglognames):
+                if logname not in self.levels and not any(
+                    logname.startswith(pre) for pre in ignore_log_prefixes
+                ):
+                    logging.warning(
+                        'Found a logger not covered by LoggerControlConfig:'
+                        " '%s'.",
+                        logname,
+                    )
+        if warn_missing_loggers:
+            for logname in sorted(self.levels.keys()):
+                if logname not in existinglognames and not any(
+                    logname.startswith(pre) for pre in ignore_log_prefixes
+                ):
+                    logging.warning(
+                        'Logger covered by LoggerControlConfig does not exist:'
+                        ' %s.',
+                        logname,
+                    )
 
         # First, update levels for all existing loggers.
         for logname in existinglognames:
@@ -46,6 +93,48 @@ class LoggerControlConfig:
         for logname, level in self.levels.items():
             if logname not in existinglognames:
                 logging.getLogger(logname).setLevel(level)
+
+    def sanity_check_effective_levels(self) -> None:
+        """Checks existing loggers to make sure they line up with us.
+
+        This can be called periodically to ensure that a control-config
+        is properly driving log levels and that nothing else is changing
+        them behind our back.
+        """
+
+        existinglognames = (
+            set(['root']) | logging.root.manager.loggerDict.keys()
+        )
+        for logname in existinglognames:
+            logger = logging.getLogger(logname)
+            if logger.getEffectiveLevel() != self.get_effective_level(logname):
+                logging.error(
+                    'loggercontrol effective-level sanity check failed;'
+                    ' expected logger %s to have effective level %s'
+                    ' but it has %s.',
+                    logname,
+                    logging.getLevelName(self.get_effective_level(logname)),
+                    logging.getLevelName(logger.getEffectiveLevel()),
+                )
+
+    def get_effective_level(self, logname: str) -> int:
+        """Given a log name, predict its level if this config is applied."""
+        splits = logname.split('.')
+
+        splen = len(splits)
+        for i in range(splen):
+            subname = '.'.join(splits[: splen - i])
+            thisval = self.levels.get(subname)
+            if thisval is not None and thisval != logging.NOTSET:
+                return thisval
+
+        # Haven't found anything; just return root value.
+        thisval = self.levels.get('root')
+        return (
+            logging.DEBUG
+            if thisval is None
+            else logging.DEBUG if thisval == logging.NOTSET else thisval
+        )
 
     def would_make_changes(self) -> bool:
         """Return whether calling apply would change anything."""
@@ -94,7 +183,12 @@ class LoggerControlConfig:
     def apply_diff(
         self, diffconfig: LoggerControlConfig
     ) -> LoggerControlConfig:
-        """Apply a diff config to ourself."""
+        """Apply a diff config to ourself.
+
+        Note that values that resolve to NOTSET are left intact in the
+        output config. This is so all loggers expected by either the
+        base or diff config to exist can be created if desired/etc.
+        """
         cls = type(self)
 
         # Create a new config (with an indepenent levels dict copy).
