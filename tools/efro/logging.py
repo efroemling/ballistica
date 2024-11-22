@@ -380,7 +380,7 @@ class LogHandler(logging.Handler):
                 )
 
                 preinfo = (
-                    f'{Clr.WHT}{timestamp} {record.name}{lvlnameex}:'
+                    f'{Clr.WHT}{timestamp}{lvlnameex} {record.name}:'
                     f'{Clr.RST} '
                 )
                 ends = LEVELNO_COLOR_CODES.get(record.levelno)

@@ -206,10 +206,10 @@ void BaseFeatureSet::StartApp() {
   called_start_app_ = true;
   assert(!app_started_);  // Shouldn't be possible.
 
+  LogVersionInfo_();
+
   g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
               "start-app begin (main thread)");
-
-  LogVersionInfo_();
 
   // The logic thread (or maybe other things) need to run Python as
   // we're bringing them up, so let it go for the duration of this call.
@@ -424,13 +424,14 @@ void BaseFeatureSet::OnAppShutdownComplete() {
 void BaseFeatureSet::LogVersionInfo_() {
   char buffer[256];
   if (g_buildconfig.headless_build()) {
-    snprintf(buffer, sizeof(buffer), "BallisticaKit Headless %s build %d.",
-             kEngineVersion, kEngineBuildNumber);
+    snprintf(buffer, sizeof(buffer),
+             "BallisticaKit Headless %s build %d starting...", kEngineVersion,
+             kEngineBuildNumber);
   } else {
-    snprintf(buffer, sizeof(buffer), "BallisticaKit %s build %d.",
+    snprintf(buffer, sizeof(buffer), "BallisticaKit %s build %d starting...",
              kEngineVersion, kEngineBuildNumber);
   }
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, buffer);
+  g_core->Log(LogName::kBaApp, LogLevel::kInfo, buffer);
 }
 
 void BaseFeatureSet::set_app_mode(AppMode* mode) {

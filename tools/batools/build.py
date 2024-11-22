@@ -508,7 +508,7 @@ def _get_server_config_template_toml(projroot: str) -> str:
     cfg.team_colors = ((0.1, 0.25, 1.0), (1.0, 0.25, 0.2))
     cfg.public_ipv4_address = '123.123.123.123'
     cfg.public_ipv6_address = '123A::A123:23A1:A312:12A3:A213:2A13'
-    cfg.log_levels = {'ba.lifecycle': 'DEBUG', 'ba.assets': 'INFO'}
+    cfg.log_levels = {'ba.lifecycle': 'INFO', 'ba.assets': 'INFO'}
 
     lines_in = _get_server_config_raw_contents(projroot).splitlines()
 
