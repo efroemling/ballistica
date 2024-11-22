@@ -187,6 +187,8 @@ void CorePython::EnablePythonLoggingCalls() {
   assert(objs().Exists(ObjID::kLoggerRootLogCall));
   assert(objs().Exists(ObjID::kLoggerBa));
   assert(objs().Exists(ObjID::kLoggerBaLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaApp));
+  assert(objs().Exists(ObjID::kLoggerBaAppLogCall));
   assert(objs().Exists(ObjID::kLoggerBaAudio));
   assert(objs().Exists(ObjID::kLoggerBaAudioLogCall));
   assert(objs().Exists(ObjID::kLoggerBaDisplayTime));
@@ -260,6 +262,7 @@ void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
   std::pair<LogName, ObjID> pairs[] = {
       {LogName::kRoot, ObjID::kLoggerRoot},
       {LogName::kBa, ObjID::kLoggerBa},
+      {LogName::kBaApp, ObjID::kLoggerBaApp},
       {LogName::kBaAudio, ObjID::kLoggerBaAudio},
       {LogName::kBaGraphics, ObjID::kLoggerBaGraphics},
       {LogName::kBaDisplayTime, ObjID::kLoggerBaDisplayTime},
@@ -331,7 +334,8 @@ void CorePython::VerifyPythonEnvironment() {
 void CorePython::MonolithicModeBaEnvConfigure() {
   assert(g_buildconfig.monolithic_build());
   assert(g_core);
-  g_core->LifecycleLog("baenv.configure() begin");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "baenv.configure() begin");
 
   auto gil{Python::ScopedInterpreterLock()};
 
@@ -389,7 +393,7 @@ void CorePython::MonolithicModeBaEnvConfigure() {
   if (result.ValueIsString()) {
     FatalError("Environment setup failed:\n" + result.ValueAsString());
   }
-  g_core->LifecycleLog("baenv.configure() end");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "baenv.configure() end");
 }
 
 void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
@@ -432,6 +436,10 @@ void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
       break;
     case LogName::kBa:
       logcallobj = ObjID::kLoggerBaLogCall;
+      handled = true;
+      break;
+    case LogName::kBaApp:
+      logcallobj = ObjID::kLoggerBaAppLogCall;
       handled = true;
       break;
     case LogName::kBaAudio:

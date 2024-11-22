@@ -53,7 +53,7 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22105
+TARGET_BALLISTICA_BUILD = 22106
 TARGET_BALLISTICA_VERSION = '1.7.37'
 
 
@@ -216,7 +216,7 @@ def configure(
     # (including cached history) to the os-specific output location.
     # This means anything printed or logged at this point forward should
     # be visible on all platforms.
-    log_handler = _setup_logging(launch_time) if setup_logging else None
+    log_handler = _create_log_handler(launch_time) if setup_logging else None
 
     # Load the raw app-config dict.
     app_config = _read_app_config(os.path.join(config_dir, 'config.json'))
@@ -311,7 +311,7 @@ def _calc_data_dir(data_dir: str | None) -> str:
     return data_dir
 
 
-def _setup_logging(launch_time: float) -> LogHandler:
+def _create_log_handler(launch_time: float) -> LogHandler:
     from efro.logging import setup_logging, LogLevel
 
     log_handler = setup_logging(
@@ -336,7 +336,8 @@ def _set_log_levels(app_config: dict) -> None:
             get_base_logger_control_config_client().apply()
             return
 
-        # Make sure data is expected types/values.
+        # Make sure data is expected types/values since this is user
+        # editable.
         valid_levels = {
             logging.NOTSET,
             logging.DEBUG,

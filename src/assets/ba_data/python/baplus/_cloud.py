@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import logging
-from functools import partial
 from typing import TYPE_CHECKING, overload
 
 import babase
@@ -179,35 +178,6 @@ class CloudSubsystem(babase.AppSubsystem):
         self, updatecall: Callable[[int | None], None]
     ) -> babase.CloudSubscription:
         """Subscribe to some data."""
-        from bacommon.cloud import TestCloudSubscriptionRequest
-
-        assert babase.in_logic_thread()
-
-        return self._subscribe(
-            TestCloudSubscriptionRequest(),
-            partial(self._on_sub_value_test, updatecall),
-        )
-
-    @staticmethod
-    def _on_sub_value_test(
-        cb: Callable[[int | None], None],
-        invalue: bacommon.cloud.CloudSubscriptionValue,
-    ) -> None:
-        from bacommon.cloud import TestCloudSubscriptionValue
-
-        assert babase.in_logic_thread()
-
-        # Make sure we got the type we expected for this sub and pass it
-        # to the user callback.
-        assert isinstance(invalue, TestCloudSubscriptionValue)
-        cb(invalue.value)
-
-    def _subscribe(
-        self,
-        request: bacommon.cloud.CloudSubscriptionRequest,
-        updatecall: Callable[[Any], None],
-    ) -> babase.CloudSubscription:
-        """Subscribe to some cloud data."""
         raise NotImplementedError(
             'Cloud functionality is not present in this build.'
         )

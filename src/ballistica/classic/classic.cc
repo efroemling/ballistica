@@ -30,7 +30,7 @@ void ClassicFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->LifecycleLog("_baclassic exec begin");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_baclassic exec begin");
 
   // Create our feature-set's C++ front-end.
   assert(g_classic == nullptr);
@@ -54,7 +54,7 @@ void ClassicFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_scene_v1 == nullptr);
   g_scene_v1 = scene_v1::SceneV1FeatureSet::Import();
 
-  g_core->LifecycleLog("_baclassic exec end");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_baclassic exec end");
 }
 
 ClassicFeatureSet::ClassicFeatureSet()

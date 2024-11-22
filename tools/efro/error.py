@@ -251,6 +251,11 @@ def is_asyncio_streams_communication_error(exc: BaseException) -> bool:
         if 'SSL: WRONG_VERSION_NUMBER' in excstr:
             return True
 
+        # Also getting this sometimes which sounds like corrupt SSL data
+        # or something.
+        if 'SSL: BAD_RECORD_TYPE' in excstr:
+            return True
+
         # And seeing this very rarely; assuming its just data corruption?
         if 'SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC' in excstr:
             return True

@@ -20,8 +20,8 @@ def get_base_logger_control_config_client() -> LoggerControlConfig:
     """
 
     # By default, go with WARNING on everything to keep things mostly
-    # clean but show INFO for ba.lifecycle to get basic app
-    # startup/shutdown messages.
+    # clean but show INFO for ba.app to get basic app startup messages
+    # and whatnot.
     return LoggerControlConfig(
-        levels={'root': logging.WARNING, 'ba.lifecycle': logging.INFO}
+        levels={'root': logging.WARNING, 'ba.app': logging.INFO}
     )

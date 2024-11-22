@@ -855,31 +855,31 @@ static PyMethodDef PyEmitLogDef = {
 
 // ------------------------------ lifecyclelog ---------------------------------
 
-static auto PyLifecycleLog(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  static const char* kwlist[] = {"message", nullptr};
-  const char* message;
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char**>(kwlist), &message)) {
-    return nullptr;
-  }
+// static auto PyLifecycleLog(PyObject* self, PyObject* args, PyObject* keywds)
+//     -> PyObject* {
+//   BA_PYTHON_TRY;
+//   static const char* kwlist[] = {"message", nullptr};
+//   const char* message;
+//   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+//                                    const_cast<char**>(kwlist), &message)) {
+//     return nullptr;
+//   }
 
-  g_core->LifecycleLog(message);
+//   g_core->LifecycleLog(message);
 
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
+//   Py_RETURN_NONE;
+//   BA_PYTHON_CATCH;
+// }
 
-static PyMethodDef PyLifecycleLogDef = {
-    "lifecyclelog",                // name
-    (PyCFunction)PyLifecycleLog,   // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
+// static PyMethodDef PyLifecycleLogDef = {
+//     "lifecyclelog",                // name
+//     (PyCFunction)PyLifecycleLog,   // method
+//     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "lifecyclelog(message: str) -> None\n"
-    "\n"
-    "(internal)",
-};
+//     "lifecyclelog(message: str) -> None\n"
+//     "\n"
+//     "(internal)",
+// };
 
 // ----------------------------- v1_cloud_log ----------------------------------
 
@@ -1722,7 +1722,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyMacMusicAppPlayPlaylistDef,
       PyMacMusicAppGetPlaylistsDef,
       PyIsOSPlayingMusicDef,
-      PyLifecycleLogDef,
+      // PyLifecycleLogDef,
       PyExecArgDef,
       PyOnAppRunningDef,
       PyOnInitialAppModeSetDef,

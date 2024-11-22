@@ -14,6 +14,7 @@ from bacommon.login import LoginType
 import bacommon.cloud
 import bauiv1 as bui
 
+from bauiv1lib.connectivity import wait_for_connectivity
 
 # These days we're directing people to the web based account settings
 # for V2 account linking and trying to get them to disconnect remaining
@@ -1180,18 +1181,16 @@ class AccountSettingsWindow(bui.MainWindow):
         self._do_manage_account_press(WebLocation.ACCOUNT_DELETE_SECTION)
 
     def _do_manage_account_press(self, weblocation: WebLocation) -> None:
+        # If we're still waiting for our master-server connection,
+        # keep the user informed of this instead of rushing in and
+        # failing immediately.
+        wait_for_connectivity(
+            on_connected=lambda: self._do_manage_account(weblocation)
+        )
+
+    def _do_manage_account(self, weblocation: WebLocation) -> None:
         plus = bui.app.plus
         assert plus is not None
-
-        # Preemptively fail if it looks like we won't be able to talk to
-        # the server anyway.
-        if not plus.cloud.connected:
-            bui.screenmessage(
-                bui.Lstr(resource='internal.unavailableNoConnectionText'),
-                color=(1, 0, 0),
-            )
-            bui.getsound('error').play()
-            return
 
         bui.screenmessage(bui.Lstr(resource='oneMomentText'))
 
@@ -1427,8 +1426,6 @@ class AccountSettingsWindow(bui.MainWindow):
         bui.apptimer(0.1, bui.WeakCall(self._update))
 
     def _sign_in_press(self, login_type: str | LoginType) -> None:
-        from bauiv1lib.connectivity import wait_for_connectivity
-
         # If we're still waiting for our master-server connection,
         # keep the user informed of this instead of rushing in and
         # failing immediately.
@@ -1522,9 +1519,6 @@ class AccountSettingsWindow(bui.MainWindow):
         bui.apptimer(0.1, bui.WeakCall(self._update))
 
     def _v2_proxy_sign_in_press(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.connectivity import wait_for_connectivity
-
         # If we're still waiting for our master-server connection, keep
         # the user informed of this instead of rushing in and failing
         # immediately.

@@ -89,7 +89,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->LifecycleLog("_babase exec begin");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_babase exec begin");
 
   // This locks in a baenv configuration.
   g_core->ApplyBaEnvConfig();
@@ -133,7 +133,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   assert(!g_base->base_native_import_completed_);
   g_base->base_native_import_completed_ = true;
 
-  g_core->LifecycleLog("_babase exec end");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_babase exec end");
 }
 
 void BaseFeatureSet::OnReachedEndOfBaBaseImport() {
@@ -206,7 +206,8 @@ void BaseFeatureSet::StartApp() {
   called_start_app_ = true;
   assert(!app_started_);  // Shouldn't be possible.
 
-  g_core->LifecycleLog("start-app begin (main thread)");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "start-app begin (main thread)");
 
   LogVersionInfo_();
 
@@ -246,7 +247,8 @@ void BaseFeatureSet::StartApp() {
     python->objs().Get(BasePython::ObjID::kAppPushApplyAppConfigCall).Call();
   }
 
-  g_core->LifecycleLog("start-app end (main thread)");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "start-app end (main thread)");
 
   // Make some noise if this takes more than a few seconds. If we pass 5
   // seconds or so we start to trigger App-Not-Responding reports which
@@ -410,7 +412,8 @@ void BaseFeatureSet::OnAppShutdownComplete() {
   assert(g_base);
 
   // Flag our own event loop to exit (or ask the OS to if they're managing).
-  g_core->LifecycleLog("app exiting (main thread)");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "app exiting (main thread)");
   if (app_adapter->ManagesMainThreadEventLoop()) {
     app_adapter->DoExitMainThreadEventLoop();
   } else {

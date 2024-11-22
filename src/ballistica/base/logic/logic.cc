@@ -37,7 +37,8 @@ void Logic::OnMainThreadStartApp() {
 
 void Logic::OnAppStart() {
   assert(g_base->InLogicThread());
-  g_core->LifecycleLog("on-app-start begin (logic thread)");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "on-app-start begin (logic thread)");
 
   // Our thread should not be holding the GIL here at the start (and
   // probably will not have any Python state at all). So here we set both
@@ -73,7 +74,8 @@ void Logic::OnAppStart() {
   }
   g_base->python->OnAppStart();
 
-  g_core->LifecycleLog("on-app-start end (logic thread)");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "on-app-start end (logic thread)");
 }
 
 void Logic::OnGraphicsReady() {
@@ -118,7 +120,8 @@ void Logic::CompleteAppBootstrapping_() {
   assert(!app_bootstrapping_complete_);
   app_bootstrapping_complete_ = true;
 
-  g_core->LifecycleLog("app native bootstrapping complete");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "app native bootstrapping complete");
 
   // Let the assets system know it can start loading stuff now that
   // we have a screen and thus know texture formats/etc.

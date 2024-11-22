@@ -169,21 +169,26 @@ def data_size_str(bytecount: int, compact: bool = False) -> str:
 
 
 class DirtyBit:
-    """Manages whether a thing is dirty and regulates attempts to clean it.
+    """Manages whether a thing is dirty and regulates cleaning it.
 
-    To use, simply set the 'dirty' value on this object to True when some
-    action is needed, and then check the 'should_update' value to regulate
-    when attempts to clean it should be made. Set 'dirty' back to False after
-    a successful update.
-    If 'use_lock' is True, an asyncio Lock will be created and incorporated
-    into update attempts to prevent simultaneous updates (should_update will
-    only return True when the lock is unlocked). Note that It is up to the user
-    to lock/unlock the lock during the actual update attempt.
-    If a value is passed for 'auto_dirty_seconds', the dirtybit will flip
-    itself back to dirty after being clean for the given amount of time.
+    To use, simply set the 'dirty' value on this object to True when
+    some update is needed, and then check the 'should_update' value to
+    regulate when the actual update should occur. Set 'dirty' back to
+    False after a successful update.
+
+    If 'use_lock' is True, an asyncio Lock will be created and
+    incorporated into update attempts to prevent simultaneous updates
+    (should_update will only return True when the lock is unlocked).
+    Note that It is up to the user to lock/unlock the lock during the
+    actual update attempt.
+
+    If a value is passed for 'auto_dirty_seconds', the dirtybit will
+    flip itself back to dirty after being clean for the given amount of
+    time.
+
     'min_update_interval' can be used to enforce a minimum update
-    interval even when updates are successful (retry_interval only applies
-    when updates fail)
+    interval even when updates are successful (retry_interval only
+    applies when updates fail)
     """
 
     def __init__(

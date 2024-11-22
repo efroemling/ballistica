@@ -185,6 +185,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_general.py \
   $(BUILD_DIR)/ba_data/python/babase/_hooks.py \
   $(BUILD_DIR)/ba_data/python/babase/_language.py \
+  $(BUILD_DIR)/ba_data/python/babase/_logging.py \
   $(BUILD_DIR)/ba_data/python/babase/_login.py \
   $(BUILD_DIR)/ba_data/python/babase/_math.py \
   $(BUILD_DIR)/ba_data/python/babase/_meta.py \
@@ -464,6 +465,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_general.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_hooks.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_language.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_logging.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_login.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_math.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_meta.cpython-312.opt-1.pyc \

@@ -24,6 +24,7 @@ from babase._appintent import AppIntentDefault, AppIntentExec
 from babase._stringedit import StringEditSubsystem
 from babase._devconsole import DevConsoleSubsystem
 from babase._appconfig import AppConfig
+from babase._logging import lifecyclelog
 
 if TYPE_CHECKING:
     import asyncio
@@ -871,7 +872,7 @@ class App:
     def _apply_app_config(self) -> None:
         assert _babase.in_logic_thread()
 
-        _babase.lifecyclelog('apply-app-config')
+        lifecyclelog.info('apply-app-config')
 
         # If multiple apply calls have been made, only actually apply
         # once.
@@ -903,7 +904,7 @@ class App:
         if self._native_shutdown_complete_called:
             if self.state is not self.State.SHUTDOWN_COMPLETE:
                 self.state = self.State.SHUTDOWN_COMPLETE
-                _babase.lifecyclelog(f'app-state is now {self.state.name}')
+                lifecyclelog.info('app-state is now %s', self.state.name)
                 self._on_shutdown_complete()
 
         # Shutdown trumps all. Though we can't start shutting down until
@@ -913,7 +914,7 @@ class App:
             # Entering shutdown state:
             if self.state is not self.State.SHUTTING_DOWN:
                 self.state = self.State.SHUTTING_DOWN
-                _babase.lifecyclelog(f'app-state is now {self.state.name}')
+                lifecyclelog.info('app-state is now %s', self.state.name)
                 self._on_shutting_down()
 
         elif self._native_suspended:
@@ -930,7 +931,7 @@ class App:
             if self._initial_sign_in_completed and self._meta_scan_completed:
                 if self.state != self.State.RUNNING:
                     self.state = self.State.RUNNING
-                    _babase.lifecyclelog(f'app-state is now {self.state.name}')
+                    lifecyclelog.info('app-state is now %s', self.state.name)
                     if not self._called_on_running:
                         self._called_on_running = True
                         self._on_running()
@@ -939,7 +940,7 @@ class App:
             elif self._init_completed:
                 if self.state is not self.State.LOADING:
                     self.state = self.State.LOADING
-                    _babase.lifecyclelog(f'app-state is now {self.state.name}')
+                    lifecyclelog.info('app-state is now %s', self.state.name)
                     if not self._called_on_loading:
                         self._called_on_loading = True
                         self._on_loading()
@@ -948,7 +949,7 @@ class App:
             elif self._native_bootstrapping_completed:
                 if self.state is not self.State.INITING:
                     self.state = self.State.INITING
-                    _babase.lifecyclelog(f'app-state is now {self.state.name}')
+                    lifecyclelog.info('app-state is now %s', self.state.name)
                     if not self._called_on_initing:
                         self._called_on_initing = True
                         self._on_initing()
@@ -957,7 +958,7 @@ class App:
             elif self._native_start_called:
                 if self.state is not self.State.NATIVE_BOOTSTRAPPING:
                     self.state = self.State.NATIVE_BOOTSTRAPPING
-                    _babase.lifecyclelog(f'app-state is now {self.state.name}')
+                    lifecyclelog.info('app-state is now %s', self.state.name)
             else:
                 # Only logical possibility left is NOT_STARTED, in which
                 # case we should not be getting called.
@@ -1068,10 +1069,10 @@ class App:
 
         # Spin and wait for anything blocking shutdown to complete.
         starttime = _babase.apptime()
-        _babase.lifecyclelog('shutdown-suppress-wait begin')
+        lifecyclelog.info('shutdown-suppress-wait begin')
         while _babase.shutdown_suppress_count() > 0:
             await asyncio.sleep(0.001)
-        _babase.lifecyclelog('shutdown-suppress-wait end')
+        lifecyclelog.info('shutdown-suppress-wait end')
         duration = _babase.apptime() - starttime
         if duration > 1.0:
             logging.warning(
@@ -1084,7 +1085,7 @@ class App:
         import asyncio
 
         # Kick off a short fade and give it time to complete.
-        _babase.lifecyclelog('fade-and-shutdown-graphics begin')
+        lifecyclelog.info('fade-and-shutdown-graphics begin')
         _babase.fade_screen(False, time=0.15)
         await asyncio.sleep(0.15)
 
@@ -1093,19 +1094,19 @@ class App:
         _babase.graphics_shutdown_begin()
         while not _babase.graphics_shutdown_is_complete():
             await asyncio.sleep(0.01)
-        _babase.lifecyclelog('fade-and-shutdown-graphics end')
+        lifecyclelog.info('fade-and-shutdown-graphics end')
 
     async def _fade_and_shutdown_audio(self) -> None:
         import asyncio
 
         # Tell the audio system to go down and give it a bit of
         # time to do so gracefully.
-        _babase.lifecyclelog('fade-and-shutdown-audio begin')
+        lifecyclelog.info('fade-and-shutdown-audio begin')
         _babase.audio_shutdown_begin()
         await asyncio.sleep(0.15)
         while not _babase.audio_shutdown_is_complete():
             await asyncio.sleep(0.01)
-        _babase.lifecyclelog('fade-and-shutdown-audio end')
+        lifecyclelog.info('fade-and-shutdown-audio end')
 
     def _threadpool_no_wait_done(self, fut: Future) -> None:
         try:

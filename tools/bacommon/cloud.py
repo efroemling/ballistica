@@ -325,12 +325,14 @@ class BSPrivatePartyResponse(Response):
     datacode: Annotated[str | None, IOAttrs('d')]
 
 
+# MOVE THIS
 class CloudSubscriptionRequestTypeID(Enum):
     """Type ID for each of our subclasses."""
 
     TEST = 'test'
 
 
+# MOVE THIS
 class CloudSubscriptionRequest(IOMultiType[CloudSubscriptionRequestTypeID]):
     """Top level class for our multitype."""
 
@@ -360,6 +362,7 @@ class CloudSubscriptionRequest(IOMultiType[CloudSubscriptionRequestTypeID]):
         return out
 
 
+# MOVE THIS
 @ioprepped
 @dataclass
 class TestCloudSubscriptionRequest(CloudSubscriptionRequest):
@@ -371,14 +374,16 @@ class TestCloudSubscriptionRequest(CloudSubscriptionRequest):
         return CloudSubscriptionRequestTypeID.TEST
 
 
+# MOVE THIS
 class CloudSubscriptionValueTypeID(Enum):
     """Type ID for each of our subclasses."""
 
     TEST = 'test'
 
 
+# MOVE THIS
 class CloudSubscriptionValue(IOMultiType[CloudSubscriptionValueTypeID]):
-    """Top level class for our multitype."""
+    """Top level class for subscription values."""
 
     @override
     @classmethod

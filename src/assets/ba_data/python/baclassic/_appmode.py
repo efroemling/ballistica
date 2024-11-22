@@ -3,6 +3,7 @@
 """Contains ClassicAppMode."""
 from __future__ import annotations
 
+import os
 import logging
 from functools import partial
 from typing import TYPE_CHECKING, override
@@ -157,8 +158,8 @@ class ClassicAppMode(AppMode):
         """Update subscriptions/etc. for a new primary account state."""
         assert in_logic_thread()
 
-        # Test subscription.
-        if bool(False):
+        # For testing subscription functionality.
+        if os.environ.get('BA_SUBSCRIPTION_TEST') == '1':
             assert app.plus is not None
             if account is None:
                 self._test_sub = None
