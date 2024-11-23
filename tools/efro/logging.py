@@ -428,7 +428,7 @@ class LogHandler(logging.Handler):
                     partial(
                         logging.warning,
                         'efro.logging.LogHandler emit took too long'
-                        ' (%.2fs total; %.2fs format, %.2fs echo,'
+                        ' (%.3fs total; %.3fs format, %.3fs echo,'
                         ' fast_path=%s).',
                         duration,
                         format_duration,

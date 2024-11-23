@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from typing import Callable, Any
 
     from efro.call import CallbackRegistration
+    from bacommon.cloud import ClassicAccountData
     from babase import AppIntent, AccountV2Handle, CloudSubscription
     from bauiv1 import UIV1AppSubsystem, MainWindow, MainWindowState
 
@@ -38,6 +39,7 @@ class ClassicAppMode(AppMode):
             CallbackRegistration | None
         ) = None
         self._test_sub: CloudSubscription | None = None
+        self._account_data_sub: CloudSubscription | None = None
 
     @override
     @classmethod
@@ -122,7 +124,7 @@ class ClassicAppMode(AppMode):
 
         # We want to be informed when primary account changes.
         self._on_primary_account_changed_callback = (
-            app.plus.accounts.on_primary_account_changed_callbacks.add(
+            app.plus.accounts.on_primary_account_changed_callbacks.register(
                 self.update_for_primary_account
             )
         )
@@ -135,7 +137,7 @@ class ClassicAppMode(AppMode):
         # Stop being informed of account changes.
         self._on_primary_account_changed_callback = None
 
-        # Remove any listeners for any current primary account.
+        # Remove anything following any current account.
         self.update_for_primary_account(None)
 
         # Save where we were in the UI so we return there next time.
@@ -157,10 +159,10 @@ class ClassicAppMode(AppMode):
     ) -> None:
         """Update subscriptions/etc. for a new primary account state."""
         assert in_logic_thread()
+        assert app.plus is not None
 
         # For testing subscription functionality.
         if os.environ.get('BA_SUBSCRIPTION_TEST') == '1':
-            assert app.plus is not None
             if account is None:
                 self._test_sub = None
             else:
@@ -171,8 +173,21 @@ class ClassicAppMode(AppMode):
         else:
             self._test_sub = None
 
+        if account is None or bool(True):
+            self._account_data_sub = None
+        else:
+            with account:
+                self._account_data_sub = (
+                    app.plus.cloud.subscribe_classic_account_data(
+                        self._on_classic_account_data_change
+                    )
+                )
+
     def _on_sub_test_update(self, val: int | None) -> None:
         print(f'GOT SUB TEST UPDATE: {val}')
+
+    def _on_classic_account_data_change(self, val: ClassicAccountData) -> None:
+        print(f'GOT CLASSIC ACCOUNT DATA: {val}')
 
     def _root_ui_menu_press(self) -> None:
         from babase import push_back_press
@@ -184,7 +199,6 @@ class ClassicAppMode(AppMode):
         if old_window is not None:
 
             classic = app.classic
-
             assert classic is not None
             classic.resume()
 
@@ -230,7 +244,13 @@ class ClassicAppMode(AppMode):
         win_type: type[MainWindow],
         win_create_call: Callable[[], MainWindow],
     ) -> None:
-        """Navigate to or away from a particular type of Auxiliary window."""
+        """Navigate to or away from an Auxiliary window.
+
+        Auxiliary windows can be thought of as 'side quests' in the
+        window hierarchy; places such as settings windows or league
+        ranking windows that the user might want to visit without losing
+        their place in the regular hierarchy.
+        """
         # pylint: disable=unidiomatic-typecheck
 
         ui = app.ui_v1
@@ -286,8 +306,8 @@ class ClassicAppMode(AppMode):
             )
             return
 
-        # Ok, no auxiliary states found. Now if current window is auxiliary
-        # and the type matches, simply do a back.
+        # Ok, no auxiliary states found. Now if current window is
+        # auxiliary and the type matches, simply do a back.
         if (
             current_main_window.main_window_is_auxiliary
             and type(current_main_window) is win_type

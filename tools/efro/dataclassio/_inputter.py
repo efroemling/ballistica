@@ -190,7 +190,16 @@ class _Inputter:
             )
 
         if issubclass(origin, Enum):
-            return origin(value)
+            try:
+                return origin(value)
+            except ValueError:
+                # If a fallback enum was provided in ioattrs, return
+                # that for unrecognized values.
+                if ioattrs is not None and ioattrs.enum_fallback is not None:
+                    assert type(ioattrs.enum_fallback) is origin
+                    return ioattrs.enum_fallback
+                # Otherwise the error stands.
+                raise
 
         if issubclass(origin, datetime.datetime):
             return self._datetime_from_input(cls, fieldpath, value, ioattrs)

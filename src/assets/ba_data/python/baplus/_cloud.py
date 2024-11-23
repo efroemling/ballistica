@@ -177,7 +177,15 @@ class CloudSubsystem(babase.AppSubsystem):
     def subscribe_test(
         self, updatecall: Callable[[int | None], None]
     ) -> babase.CloudSubscription:
-        """Subscribe to some data."""
+        """Subscribe to some test data."""
+        raise NotImplementedError(
+            'Cloud functionality is not present in this build.'
+        )
+
+    def subscribe_classic_account_data(
+        self, updatecall: Callable[[bacommon.cloud.ClassicAccountData], None]
+    ) -> babase.CloudSubscription:
+        """Subscribe to classic account data."""
         raise NotImplementedError(
             'Cloud functionality is not present in this build.'
         )

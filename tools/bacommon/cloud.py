@@ -323,3 +323,12 @@ class BSPrivatePartyResponse(Response):
     tokens: Annotated[int, IOAttrs('t')]
     gold_pass: Annotated[bool, IOAttrs('g')]
     datacode: Annotated[str | None, IOAttrs('d')]
+
+
+@ioprepped
+@dataclass
+class ClassicAccountData:
+    """Account related data for classic app mode."""
+
+    tokens: Annotated[int, IOAttrs('t')]
+    gold_pass: Annotated[bool, IOAttrs('g')]

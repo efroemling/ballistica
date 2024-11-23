@@ -160,6 +160,8 @@ class IOAttrs:
         fields; it should be used instead of 'soft_default' for mutable types
         such as lists to prevent a single default object from unintentionally
         changing over time.
+    'enum_fallback', if provided, specifies an enum value to be substituted
+        in the case of unrecognized enum values.
     """
 
     # A sentinel object to detect if a parameter is supplied or not.  Use
@@ -176,6 +178,7 @@ class IOAttrs:
     whole_minutes: bool = False
     soft_default: Any = MISSING
     soft_default_factory: Callable[[], Any] | _MissingType = MISSING
+    enum_fallback: Enum | None = None
 
     def __init__(
         self,
@@ -187,6 +190,7 @@ class IOAttrs:
         whole_minutes: bool = whole_minutes,
         soft_default: Any = MISSING,
         soft_default_factory: Callable[[], Any] | _MissingType = MISSING,
+        enum_fallback: Enum | None = None,
     ):
         # Only store values that differ from class defaults to keep
         # our instances nice and lean.
@@ -216,6 +220,8 @@ class IOAttrs:
                 raise ValueError(
                     'Cannot set both soft_default and soft_default_factory'
                 )
+        if enum_fallback is not cls.enum_fallback:
+            self.enum_fallback = enum_fallback
 
     def validate_for_field(self, cls: type, field: dataclasses.Field) -> None:
         """Ensure the IOAttrs instance is ok to use with the provided field."""
