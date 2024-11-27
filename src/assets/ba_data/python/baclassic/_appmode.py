@@ -9,15 +9,7 @@ from functools import partial
 from typing import TYPE_CHECKING, override
 
 from bacommon.app import AppExperience
-from babase import (
-    app,
-    AppMode,
-    AppIntentExec,
-    AppIntentDefault,
-    invoke_main_menu,
-    in_logic_thread,
-    screenmessage,
-)
+import babase
 
 import _baclassic
 
@@ -25,21 +17,20 @@ if TYPE_CHECKING:
     from typing import Callable, Any
 
     from efro.call import CallbackRegistration
-    from bacommon.cloud import ClassicAccountData
-    from babase import AppIntent, AccountV2Handle, CloudSubscription
-    from bauiv1 import UIV1AppSubsystem, MainWindow, MainWindowState
+    import bacommon.cloud
+    import bauiv1
 
 
 # ba_meta export babase.AppMode
-class ClassicAppMode(AppMode):
+class ClassicAppMode(babase.AppMode):
     """AppMode for the classic BombSquad experience."""
 
     def __init__(self) -> None:
         self._on_primary_account_changed_callback: (
             CallbackRegistration | None
         ) = None
-        self._test_sub: CloudSubscription | None = None
-        self._account_data_sub: CloudSubscription | None = None
+        self._test_sub: babase.CloudSubscription | None = None
+        self._account_data_sub: babase.CloudSubscription | None = None
 
     @override
     @classmethod
@@ -48,16 +39,18 @@ class ClassicAppMode(AppMode):
 
     @override
     @classmethod
-    def _supports_intent(cls, intent: AppIntent) -> bool:
+    def _supports_intent(cls, intent: babase.AppIntent) -> bool:
         # We support default and exec intents currently.
-        return isinstance(intent, AppIntentExec | AppIntentDefault)
+        return isinstance(
+            intent, babase.AppIntentExec | babase.AppIntentDefault
+        )
 
     @override
-    def handle_intent(self, intent: AppIntent) -> None:
-        if isinstance(intent, AppIntentExec):
+    def handle_intent(self, intent: babase.AppIntent) -> None:
+        if isinstance(intent, babase.AppIntentExec):
             _baclassic.classic_app_mode_handle_app_intent_exec(intent.code)
             return
-        assert isinstance(intent, AppIntentDefault)
+        assert isinstance(intent, babase.AppIntentDefault)
         _baclassic.classic_app_mode_handle_app_intent_default()
 
     @override
@@ -66,7 +59,9 @@ class ClassicAppMode(AppMode):
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_activate()
 
-        assert app.plus is not None
+        app = babase.app
+        plus = app.plus
+        assert plus is not None
 
         # Wire up the root ui to do what we want.
         ui = app.ui_v1
@@ -124,15 +119,17 @@ class ClassicAppMode(AppMode):
 
         # We want to be informed when primary account changes.
         self._on_primary_account_changed_callback = (
-            app.plus.accounts.on_primary_account_changed_callbacks.register(
+            plus.accounts.on_primary_account_changed_callbacks.register(
                 self.update_for_primary_account
             )
         )
         # Establish subscriptions/etc. for any current primary account.
-        self.update_for_primary_account(app.plus.accounts.primary)
+        self.update_for_primary_account(plus.accounts.primary)
 
     @override
     def on_deactivate(self) -> None:
+
+        classic = babase.app.classic
 
         # Stop being informed of account changes.
         self._on_primary_account_changed_callback = None
@@ -141,8 +138,8 @@ class ClassicAppMode(AppMode):
         self.update_for_primary_account(None)
 
         # Save where we were in the UI so we return there next time.
-        if app.classic is not None:
-            app.classic.save_ui_state()
+        if classic is not None:
+            classic.save_ui_state()
 
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_deactivate()
@@ -151,15 +148,22 @@ class ClassicAppMode(AppMode):
     def on_app_active_changed(self) -> None:
         # If we've gone inactive, bring up the main menu, which has the
         # side effect of pausing the action (when possible).
-        if not app.active:
-            invoke_main_menu()
+        if not babase.app.active:
+            babase.invoke_main_menu()
 
     def update_for_primary_account(
-        self, account: AccountV2Handle | None
+        self, account: babase.AccountV2Handle | None
     ) -> None:
         """Update subscriptions/etc. for a new primary account state."""
-        assert in_logic_thread()
-        assert app.plus is not None
+        assert babase.in_logic_thread()
+        plus = babase.app.plus
+
+        assert plus is not None
+
+        if account is not None:
+            babase.set_ui_account_state(True, account.tag)
+        else:
+            babase.set_ui_account_state(False)
 
         # For testing subscription functionality.
         if os.environ.get('BA_SUBSCRIPTION_TEST') == '1':
@@ -167,18 +171,18 @@ class ClassicAppMode(AppMode):
                 self._test_sub = None
             else:
                 with account:
-                    self._test_sub = app.plus.cloud.subscribe_test(
+                    self._test_sub = plus.cloud.subscribe_test(
                         self._on_sub_test_update
                     )
         else:
             self._test_sub = None
 
-        if account is None or bool(True):
+        if account is None:
             self._account_data_sub = None
         else:
             with account:
                 self._account_data_sub = (
-                    app.plus.cloud.subscribe_classic_account_data(
+                    plus.cloud.subscribe_classic_account_data(
                         self._on_classic_account_data_change
                     )
                 )
@@ -186,19 +190,22 @@ class ClassicAppMode(AppMode):
     def _on_sub_test_update(self, val: int | None) -> None:
         print(f'GOT SUB TEST UPDATE: {val}')
 
-    def _on_classic_account_data_change(self, val: ClassicAccountData) -> None:
-        print(f'GOT CLASSIC ACCOUNT DATA: {val}')
+    def _on_classic_account_data_change(
+        self, val: bacommon.cloud.ClassicAccountLiveData
+    ) -> None:
+        pass
+        # print(f'GOT CLASSIC ACCOUNT DATA: {val}')
 
     def _root_ui_menu_press(self) -> None:
         from babase import push_back_press
 
-        ui = app.ui_v1
+        ui = babase.app.ui_v1
 
         # If *any* main-window is up, kill it and resume play.
         old_window = ui.get_main_window()
         if old_window is not None:
 
-            classic = app.classic
+            classic = babase.app.classic
             assert classic is not None
             classic.resume()
 
@@ -241,8 +248,8 @@ class ClassicAppMode(AppMode):
 
     def _auxiliary_window_nav(
         self,
-        win_type: type[MainWindow],
-        win_create_call: Callable[[], MainWindow],
+        win_type: type[bauiv1.MainWindow],
+        win_create_call: Callable[[], bauiv1.MainWindow],
     ) -> None:
         """Navigate to or away from an Auxiliary window.
 
@@ -253,14 +260,14 @@ class ClassicAppMode(AppMode):
         """
         # pylint: disable=unidiomatic-typecheck
 
-        ui = app.ui_v1
+        ui = babase.app.ui_v1
 
         current_main_window = ui.get_main_window()
 
         # Scan our ancestors for auxiliary states matching our type as
         # well as auxiliary states in general.
-        aux_matching_state: MainWindowState | None = None
-        aux_state: MainWindowState | None = None
+        aux_matching_state: bauiv1.MainWindowState | None = None
+        aux_state: bauiv1.MainWindowState | None = None
 
         if current_main_window is None:
             raise RuntimeError(
@@ -433,4 +440,4 @@ class ClassicAppMode(AppMode):
 
     def _root_ui_chest_slot_pressed(self, index: int) -> None:
         print(f'CHEST {index} PRESSED')
-        screenmessage('UNDER CONSTRUCTION.')
+        babase.screenmessage('UNDER CONSTRUCTION.')

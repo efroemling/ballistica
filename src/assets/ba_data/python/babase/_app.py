@@ -9,8 +9,9 @@ import logging
 from enum import Enum
 from functools import partial
 from typing import TYPE_CHECKING, TypeVar, override
-from concurrent.futures import ThreadPoolExecutor
 from threading import RLock
+
+from efro.threadpool import ThreadPoolExecutorPlus
 
 import _babase
 from babase._language import LanguageSubsystem
@@ -178,7 +179,7 @@ class App:
         # processing. It should also be passed to any additional asyncio
         # loops we create so that everything shares the same single set
         # of worker threads.
-        self.threadpool = ThreadPoolExecutor(
+        self.threadpool = ThreadPoolExecutorPlus(
             thread_name_prefix='baworker',
             initializer=self._thread_pool_thread_init,
         )
@@ -482,18 +483,6 @@ class App:
         """
         _babase.run_app()
 
-    def threadpool_submit_no_wait(self, call: Callable[[], Any]) -> None:
-        """Submit a call to the app threadpool where result is not needed.
-
-        Normally, doing work in a thread-pool involves creating a future
-        and waiting for its result, which is an important step because it
-        propagates any Exceptions raised by the submitted work. When the
-        result in not important, however, this call can be used. The app
-        will log any exceptions that occur.
-        """
-        fut = self.threadpool.submit(call)
-        fut.add_done_callback(self._threadpool_no_wait_done)
-
     def set_intent(self, intent: AppIntent) -> None:
         """Set the intent for the app.
 
@@ -511,7 +500,7 @@ class App:
 
         # Do the actual work of calcing our app-mode/etc. in a bg thread
         # since it may block for a moment to load modules/etc.
-        self.threadpool_submit_no_wait(partial(self._set_intent, intent))
+        self.threadpool.submit_no_wait(self._set_intent, intent)
 
     def push_apply_app_config(self) -> None:
         """Internal. Use app.config.apply() to apply app config changes."""
@@ -1107,14 +1096,6 @@ class App:
         while not _babase.audio_shutdown_is_complete():
             await asyncio.sleep(0.01)
         lifecyclelog.info('fade-and-shutdown-audio end')
-
-    def _threadpool_no_wait_done(self, fut: Future) -> None:
-        try:
-            fut.result()
-        except Exception:
-            logging.exception(
-                'Error in work submitted via threadpool_submit_no_wait()'
-            )
 
     def _thread_pool_thread_init(self) -> None:
         # Help keep things clear in profiling tools/etc.

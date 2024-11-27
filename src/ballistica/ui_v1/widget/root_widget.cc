@@ -1261,14 +1261,22 @@ auto RootWidget::GetSpecialWidget(const std::string& s) const -> Widget* {
 void RootWidget::SetAccountState(bool signed_in, const std::string& name) {
   if (account_name_text_) {
     auto* w{account_name_text_->widget.Get()};
+    auto* wb{account_button_->widget.Get()};
     assert(w);
+    assert(wb);
 
     if (signed_in) {
       w->SetText(name);
-      w->set_color(0.0f, 1.0f, 0.0f, 1.0f);
+      w->set_color(0.0f, 0.4f, 0.1f, 1.0f);
+      w->set_shadow(0.2f);
+      w->set_flatness(1.0f);
+      wb->SetColor(0.8f, 1.2f, 0.8f);
     } else {
-      w->SetText("NOT SIGNED IN");
+      w->SetText("{\"r\":\"notSignedInText\"}");
       w->set_color(1.0f, 0.2f, 0.2f, 1.0f);
+      w->set_shadow(0.5f);
+      w->set_flatness(1.0f);
+      wb->SetColor(0.45f, 0.4f, 0.4f);
     }
   }
 }

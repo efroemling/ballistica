@@ -4,14 +4,14 @@
 
 from __future__ import annotations
 
-import threading
 import weakref
+import threading
 from typing import TYPE_CHECKING, TypeVar, Generic
 
 T = TypeVar('T')
 
 if TYPE_CHECKING:
-    pass
+    from typing import Callable
 
 
 class CallbackSet(Generic[T]):

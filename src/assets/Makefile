@@ -770,6 +770,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/efro/message/_sender.py \
   $(BUILD_DIR)/ba_data/python/efro/rpc.py \
   $(BUILD_DIR)/ba_data/python/efro/terminal.py \
+  $(BUILD_DIR)/ba_data/python/efro/threadpool.py \
   $(BUILD_DIR)/ba_data/python/efro/util.py
 
 SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
@@ -809,6 +810,7 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/_sender.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/rpc.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/terminal.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/__pycache__/threadpool.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/util.cpython-312.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.

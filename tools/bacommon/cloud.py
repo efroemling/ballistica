@@ -327,8 +327,31 @@ class BSPrivatePartyResponse(Response):
 
 @ioprepped
 @dataclass
-class ClassicAccountData:
-    """Account related data for classic app mode."""
+class ClassicAccountLiveData:
+    """Account related data kept up to date live for classic app mode."""
 
-    tokens: Annotated[int, IOAttrs('t')]
+    class LeagueType(Enum):
+        """Type of league we are in."""
+
+        BRONZE = 'b'
+        SILVER = 's'
+        GOLD = 'g'
+        DIAMOND = 'd'
+
+    tickets: Annotated[int, IOAttrs('ti')]
+
+    tokens: Annotated[int, IOAttrs('to')]
     gold_pass: Annotated[bool, IOAttrs('g')]
+
+    achievements: Annotated[int, IOAttrs('a')]
+    achievements_total: Annotated[int, IOAttrs('at')]
+
+    league_type: Annotated[LeagueType | None, IOAttrs('lt')]
+    league_num: Annotated[int | None, IOAttrs('ln')]
+    league_rank: Annotated[int | None, IOAttrs('lr')]
+
+    level: Annotated[int, IOAttrs('lv')]
+    xp: Annotated[int, IOAttrs('xp')]
+    xpmax: Annotated[int, IOAttrs('xpm')]
+
+    inbox_count: Annotated[int, IOAttrs('ibc')]

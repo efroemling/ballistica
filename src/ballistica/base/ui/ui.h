@@ -63,7 +63,13 @@ class UI {
   auto PartyWindowOpen() -> bool;
   void ActivatePartyIcon();
 
+  /// Set persistent squad size label; will be provided to current and
+  /// future delegates.
   void SetSquadSizeLabel(int val);
+
+  /// Set persistent account state info; will be provided to current and
+  /// future delegates.
+  void SetAccountState(bool signed_in, const std::string& name);
 
   auto HandleMouseDown(int button, float x, float y, bool double_click) -> bool;
   void HandleMouseUp(int button, float x, float y);
@@ -154,6 +160,7 @@ class UI {
 
   Object::Ref<TextGroup> dev_console_button_txt_;
   Object::WeakRef<InputDevice> ui_input_device_;
+  std::string account_state_name_;
   OperationContext* operation_context_{};
   base::UIDelegateInterface* delegate_{};
   DevConsole* dev_console_{};
@@ -162,6 +169,8 @@ class UI {
   millisecs_t last_input_device_use_time_{};
   millisecs_t last_widget_input_reject_err_sound_time_{};
   UIScale scale_{UIScale::kLarge};
+  int squad_size_label_{};
+  bool account_state_signed_in_{};
   bool force_scale_{};
   bool show_dev_console_button_{};
   bool dev_console_button_pressed_{};

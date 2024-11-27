@@ -590,6 +590,7 @@
  "ba_data/python/efro/__pycache__/logging.cpython-312.opt-1.pyc",
  "ba_data/python/efro/__pycache__/rpc.cpython-312.opt-1.pyc",
  "ba_data/python/efro/__pycache__/terminal.cpython-312.opt-1.pyc",
+ "ba_data/python/efro/__pycache__/threadpool.cpython-312.opt-1.pyc",
  "ba_data/python/efro/__pycache__/util.cpython-312.opt-1.pyc",
  "ba_data/python/efro/call.py",
  "ba_data/python/efro/cloudshell.py",
@@ -626,6 +627,7 @@
  "ba_data/python/efro/message/_sender.py",
  "ba_data/python/efro/rpc.py",
  "ba_data/python/efro/terminal.py",
+ "ba_data/python/efro/threadpool.py",
  "ba_data/python/efro/util.py",
  "server_package/__pycache__/ballisticakit_server.cpython-312.opt-1.pyc",
  "server_package/ballisticakit_server.py"

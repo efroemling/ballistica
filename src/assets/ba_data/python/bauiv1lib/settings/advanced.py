@@ -32,7 +32,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
 
         # Preload some modules we use in a background thread so we won't
         # have a visual hitch when the user taps them.
-        bui.app.threadpool_submit_no_wait(self._preload_modules)
+        bui.app.threadpool.submit_no_wait(self._preload_modules)
 
         app = bui.app
         assert app.classic is not None

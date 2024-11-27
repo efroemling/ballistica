@@ -81,21 +81,24 @@ bool UIV1FeatureSet::PartyIconVisible() {
   // Currently this is always visible.
   return true;
 }
+
 void UIV1FeatureSet::SetAccountState(bool signed_in, const std::string& name) {
+  assert(root_widget_.Exists());
   // Store the value and plug it in if we've got a live widget.
-  account_signed_in_ = signed_in;
-  account_name_ = name;
-  if (auto* r = root_widget()) {
-    root_widget_->SetAccountState(signed_in, name);
-  }
+  // account_signed_in_ = signed_in;
+  // account_name_ = name;
+  // if (auto* r = root_widget()) {
+  root_widget_->SetAccountState(signed_in, name);
+  // }
 }
 
 void UIV1FeatureSet::SetSquadSizeLabel(int num) {
+  assert(root_widget_.Exists());
   // Store the value and plug it in if we've got a live widget.
-  party_icon_number_ = num;
-  if (auto* r = root_widget()) {
-    root_widget_->SetSquadSizeLabel(num);
-  }
+  // party_icon_number_ = num;
+  // if (auto* r = root_widget()) {
+  root_widget_->SetSquadSizeLabel(num);
+  // }
 }
 
 void UIV1FeatureSet::ActivatePartyIcon() {
@@ -185,9 +188,9 @@ void UIV1FeatureSet::OnActivate() {
   rw->Setup();
   rw->SetOverlayWidget(ow.Get());
 
-  // Plug in current values for everything.
-  rw->SetSquadSizeLabel(party_icon_number_);
-  rw->SetAccountState(account_signed_in_, account_name_);
+  // Plug in all values we're storing.
+  // rw->SetSquadSizeLabel(party_icon_number_);
+  // rw->SetAccountState(account_signed_in_, account_name_);
 
   sw->GlobalSelect();
 }
@@ -198,11 +201,6 @@ void UIV1FeatureSet::OnDeactivate() {
   root_widget_.Clear();
   screen_root_widget_.Clear();
 }
-
-// void UIV1FeatureSet::Reset() {
-//   printf("UIV1::Reset()\n");
-
-// }
 
 void UIV1FeatureSet::AddWidget(Widget* w, ContainerWidget* parent) {
   assert(g_base->InLogicThread());

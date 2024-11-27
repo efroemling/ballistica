@@ -929,6 +929,11 @@ test-rpc:
 	@$(PCOMMAND) pytest -o log_cli=true -o log_cli_level=debug -s -vv \
       tests/test_efro/test_rpc.py
 
+# Shortcut to test efro.threadpool only.
+test-threadpool:
+	@$(PCOMMAND) pytest -o log_cli=true -o log_cli_level=debug -s -vv \
+      tests/test_efro/test_threadpool.py
+
 # Tell make which of these targets don't represent files.
 .PHONY: test test-fast test-verbose test-full test-fast-full \
         test-message test-dataclassio test-rpc

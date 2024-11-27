@@ -7,9 +7,10 @@ from __future__ import annotations
 import os
 import time
 import weakref
+import functools
 import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, cast, TypeVar, Generic, overload
+from typing import TYPE_CHECKING, cast, TypeVar, Generic, overload, ParamSpec
 
 if TYPE_CHECKING:
     import asyncio
@@ -22,6 +23,8 @@ SelfT = TypeVar('SelfT')
 RetT = TypeVar('RetT')
 EnumT = TypeVar('EnumT', bound=Enum)
 
+P = ParamSpec('P')
+
 
 class _EmptyObj:
     pass
@@ -31,6 +34,36 @@ class _EmptyObj:
 # one and return it for all cases that need an empty weak-ref.
 _g_empty_weak_ref = weakref.ref(_EmptyObj())
 assert _g_empty_weak_ref() is None
+
+# Note to self: adding a special form of partial for when we don't need
+# to pass further args/kwargs (which I think is most cases). Even though
+# partial is now type-checked in Mypy (as of Nov 2024) there are still some
+# pitfalls that this avoids (see func docs below). Perhaps it would make
+# sense to simply define a Call class for this purpose; it might be more
+# efficient than wrapping partial anyway (should test this).
+if TYPE_CHECKING:
+
+    def strict_partial(
+        func: Callable[P, T], *args: P.args, **kwargs: P.kwargs
+    ) -> Callable[[], T]:
+        """A version of functools.partial requiring all args to be passed.
+
+        This helps avoid pitfalls where a function is wrapped in a
+        partial but then an extra required arg is added to the function
+        but no type checking error is triggered at usage sites because
+        vanilla partial assumes that extra arg will be provided at call
+        time.
+
+        Note: it would seem like this pitfall could also be avoided on
+        the back end by ensuring that the thing accepting the partial
+        asks for Callable[[], None] instead of just Callable, but as of
+        Nov 2024 it seems that Mypy does not support this; it in fact
+        allows partials to be passed for any callable signature(!).
+        """
+        ...
+
+else:
+    strict_partial = functools.partial
 
 
 def explicit_bool(val: bool) -> bool:

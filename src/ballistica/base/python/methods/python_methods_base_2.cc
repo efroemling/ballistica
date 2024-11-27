@@ -928,6 +928,43 @@ static PyMethodDef PyShowProgressBarDef = {
     "Category: **General Utility Functions**",
 };
 
+// ------------------------- set_ui_account_state ------------------------------
+
+static auto PySetUIAccountState(PyObject* self, PyObject* args,
+                                PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  int signed_in{};
+  PyObject* name_obj{Py_None};
+  static const char* kwlist[] = {"signed_in", "name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p|O",
+                                   const_cast<char**>(kwlist), &signed_in,
+                                   &name_obj)) {
+    return nullptr;
+  }
+
+  if (signed_in) {
+    auto name = Python::GetPyString(name_obj);
+    g_base->ui->SetAccountState(true, name);
+  } else {
+    g_base->ui->SetAccountState(false, "");
+  }
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetUIAccountStateDef = {
+    "set_ui_account_state",            // name
+    (PyCFunction)PySetUIAccountState,  // method
+    METH_VARARGS | METH_KEYWORDS,      // flags
+
+    "set_ui_account_state(signed_in: bool, name: str | None = None) -> None\n"
+    "\n"
+    "(internal)\n",
+};
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
@@ -961,6 +998,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyFullscreenControlKeyShortcutDef,
       PyFullscreenControlGetDef,
       PyFullscreenControlSetDef,
+      PySetUIAccountStateDef,
   };
 }
 

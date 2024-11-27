@@ -1,4 +1,4 @@
-### 1.7.37 (build 22112, api 9, 2024-11-23)
+### 1.7.37 (build 22113, api 9, 2024-11-26)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -164,6 +164,8 @@
   app-modes at runtime; to change this you need to either change your
   projectconfig and rebuild or replace `ba*.app.mode_selector` at runtime with
   a custom selector that selects your custom app-mode(s).
+- The `ba*.app.threadpool_submit_no_wait()` method has been merged into the
+  `threadpool` object, so it now is `ba*.app.threadpool.submit_no_wait()`.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these

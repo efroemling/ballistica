@@ -46,7 +46,8 @@
     "daemon",
     "jinja2",
     "jinja2.Environment",
-    "tomlkit"
+    "tomlkit",
+    "urllib3.exceptions"
   ],
   "python_paths": [
     "src/assets/ba_data/python",
