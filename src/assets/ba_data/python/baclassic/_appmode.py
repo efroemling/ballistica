@@ -183,6 +183,9 @@ class ClassicAppMode(babase.AppMode):
                 tickets_text='-',
                 tokens_text='-',
                 league_rank_text='-',
+                achievements_percent_text='-',
+                level_text='-',
+                xp_text='-',
             )
 
         else:
@@ -199,14 +202,16 @@ class ClassicAppMode(babase.AppMode):
     def _on_classic_account_data_change(
         self, val: bacommon.cloud.ClassicAccountLiveData
     ) -> None:
-        # pass
-        # print(f'GOT CLASSIC ACCOUNT DATA: {val}')
+        achp = round(val.achievements / max(val.achievements_total, 1) * 100.0)
         _baclassic.set_root_ui_values(
             tickets_text=str(val.tickets),
             tokens_text=str(val.tokens),
             league_rank_text=(
                 '-' if val.league_rank is None else f'#{val.league_rank}'
             ),
+            achievements_percent_text=f'{achp}%',
+            level_text=str(val.level),
+            xp_text=f'{val.xp}/{val.xpmax}',
         )
 
     def _root_ui_menu_press(self) -> None:

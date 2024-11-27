@@ -216,6 +216,9 @@ class ClassicAppMode : public base::AppMode {
   void SetRootUITicketsMeterText(const std::string text);
   void SetRootUITokensMeterText(const std::string text);
   void SetRootUILeagueRankText(const std::string text);
+  void SetRootUIAchievementsPercentText(const std::string text);
+  void SetRootUILevelText(const std::string text);
+  void SetRootUIXPText(const std::string text);
 
  private:
   ClassicAppMode();
@@ -292,6 +295,9 @@ class ClassicAppMode : public base::AppMode {
   std::string root_ui_tickets_meter_text_;
   std::string root_ui_tokens_meter_text_;
   std::string root_ui_league_rank_text_;
+  std::string root_ui_achievement_percent_text_;
+  std::string root_ui_level_text_;
+  std::string root_ui_xp_text_;
   std::list<std::pair<millisecs_t, scene_v1::PlayerSpec> > banned_players_;
   std::optional<float> idle_exit_minutes_{};
   std::optional<uint32_t> internal_music_play_id_{};

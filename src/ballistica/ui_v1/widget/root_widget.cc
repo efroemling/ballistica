@@ -279,6 +279,9 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
         case MeterType::kTrophy:
           league_rank_text_ = text;
           break;
+        case MeterType::kLevel:
+          xp_text_ = text;
+          break;
         default:
           break;
       }
@@ -330,7 +333,7 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
         td.color_r = 1.0f;
         td.color_g = 1.0f;
         td.color_b = 1.0f;
-        AddText_(td);
+        level_text_ = AddText_(td);
       }
     }
   }
@@ -513,7 +516,7 @@ void RootWidget::Setup() {
       account_name_text_ = AddText_(td);
     }
   }
-  AddMeter_(MeterType::kLevel, 0.0f, 1.0f, 1.0f, 1.0f, false, "456/1000");
+  AddMeter_(MeterType::kLevel, 0.0f, 1.0f, 1.0f, 1.0f, false, "");
   AddMeter_(MeterType::kTrophy, 0.0f, 1.0f, 1.0f, 1.0f, false, "");
 
   // Menu button (only shows up when we're not in a menu)
@@ -655,7 +658,7 @@ void RootWidget::Setup() {
       td.color_r = 0.8f;
       td.color_g = 0.75f;
       td.color_b = 0.9f;
-      AddText_(td);
+      achievement_percent_text_ = AddText_(td);
     }
   }
 
@@ -1320,6 +1323,21 @@ void RootWidget::SetTokensMeterText(const std::string& val) {
 void RootWidget::SetLeagueRankText(const std::string& val) {
   assert(league_rank_text_);
   league_rank_text_->widget->SetText(val);
+}
+
+void RootWidget::SetAchievementPercentText(const std::string& val) {
+  assert(achievement_percent_text_);
+  achievement_percent_text_->widget->SetText(val);
+}
+
+void RootWidget::SetLevelText(const std::string& val) {
+  assert(level_text_);
+  level_text_->widget->SetText(val);
+}
+
+void RootWidget::SetXPText(const std::string& val) {
+  assert(xp_text_);
+  xp_text_->widget->SetText(val);
 }
 
 }  // namespace ballistica::ui_v1

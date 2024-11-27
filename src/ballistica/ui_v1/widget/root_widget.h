@@ -42,6 +42,9 @@ class RootWidget : public ContainerWidget {
   void SetTicketsMeterText(const std::string& val);
   void SetTokensMeterText(const std::string& val);
   void SetLeagueRankText(const std::string& val);
+  void SetAchievementPercentText(const std::string& val);
+  void SetLevelText(const std::string& val);
+  void SetXPText(const std::string& val);
 
  private:
   struct ButtonDef;
@@ -94,6 +97,9 @@ class RootWidget : public ContainerWidget {
   Text* tickets_meter_text_{};
   Text* tokens_meter_text_{};
   Text* league_rank_text_{};
+  Text* achievement_percent_text_{};
+  Text* level_text_{};
+  Text* xp_text_{};
 };
 
 }  // namespace ballistica::ui_v1
