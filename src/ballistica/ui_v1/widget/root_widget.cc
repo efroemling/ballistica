@@ -648,7 +648,7 @@ void RootWidget::Setup() {
       TextDef td;
       td.button = achievements_button_;
       td.width = 26.0f;
-      td.text = "34%";
+      td.text = "";
       td.x = centerx;
       td.y = centery;
       td.scale = 0.6f;
