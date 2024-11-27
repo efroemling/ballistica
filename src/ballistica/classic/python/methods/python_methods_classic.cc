@@ -16,7 +16,6 @@
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
 #include "ballistica/shared/python/python_sys.h"
-#include "ballistica/ui_v1/widget/root_widget.h"
 
 namespace ballistica::classic {
 
@@ -299,6 +298,7 @@ static auto PySetRootUIValues(PyObject* self, PyObject* args, PyObject* keywds)
   const char* tickets_text;
   const char* tokens_text;
   const char* league_rank_text;
+  const char* league_type;
   const char* achievements_percent_text;
   const char* level_text;
   const char* xp_text;
@@ -306,14 +306,15 @@ static auto PySetRootUIValues(PyObject* self, PyObject* args, PyObject* keywds)
   static const char* kwlist[] = {"tickets_text",
                                  "tokens_text",
                                  "league_rank_text",
+                                 "league_type",
                                  "achievements_percent_text",
                                  "level_text",
                                  "xp_text",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "ssssss", const_cast<char**>(kwlist), &tickets_text,
-          &tokens_text, &league_rank_text, &achievements_percent_text,
-          &level_text, &xp_text)) {
+          args, keywds, "sssssss", const_cast<char**>(kwlist), &tickets_text,
+          &tokens_text, &league_rank_text, &league_type,
+          &achievements_percent_text, &level_text, &xp_text)) {
     return nullptr;
   }
   BA_PRECONDITION(g_base->InLogicThread());
@@ -323,6 +324,7 @@ static auto PySetRootUIValues(PyObject* self, PyObject* args, PyObject* keywds)
   appmode->SetRootUITicketsMeterText(tickets_text);
   appmode->SetRootUITokensMeterText(tokens_text);
   appmode->SetRootUILeagueRankText(league_rank_text);
+  appmode->SetRootUILeagueType(league_type);
   appmode->SetRootUIAchievementsPercentText(achievements_percent_text);
   appmode->SetRootUILevelText(level_text);
   appmode->SetRootUIXPText(xp_text);
@@ -339,6 +341,7 @@ static PyMethodDef PySetRootUIValuesDef = {
     "set_root_ui_values(tickets_text: str,\n"
     "      tokens_text: str,\n"
     "      league_rank_text: str,\n"
+    "      league_type: str,\n"
     "      achievements_percent_text: str,\n"
     "      level_text: str,\n"
     "      xp_text: str,\n"

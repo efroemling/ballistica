@@ -183,6 +183,7 @@ class ClassicAppMode(babase.AppMode):
                 tickets_text='-',
                 tokens_text='-',
                 league_rank_text='-',
+                league_type='',
                 achievements_percent_text='-',
                 level_text='-',
                 xp_text='-',
@@ -208,6 +209,9 @@ class ClassicAppMode(babase.AppMode):
             tokens_text=str(val.tokens),
             league_rank_text=(
                 '-' if val.league_rank is None else f'#{val.league_rank}'
+            ),
+            league_type=(
+                '' if val.league_type is None else val.league_type.value
             ),
             achievements_percent_text=f'{achp}%',
             level_text=str(val.level),

@@ -3,6 +3,7 @@
 #include "ballistica/ui_v1/widget/root_widget.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <string>
 
 #include "ballistica/base/app_mode/app_mode.h"
@@ -316,7 +317,13 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
           break;
       }
       imgd.depth_min = 0.3f;
-      AddImage_(imgd);
+      auto* img = AddImage_(imgd);
+      switch (type) {
+        case MeterType::kTrophy:
+          trophy_icon_ = img;
+        default:
+          break;
+      }
 
       // Level num.
       if (type == MeterType::kLevel) {
@@ -1323,6 +1330,27 @@ void RootWidget::SetTokensMeterText(const std::string& val) {
 void RootWidget::SetLeagueRankText(const std::string& val) {
   assert(league_rank_text_);
   league_rank_text_->widget->SetText(val);
+}
+
+void RootWidget::SetLeagueType(const std::string& val) {
+  Vector3f color{};
+
+  if (val == "") {
+    color = {0.5f, 0.5f, 0.5f};
+  } else if (val == "b") {
+    color = {1.0f, 0.7f, 0.5f};
+  } else if (val == "s") {
+    color = {1.0f, 1.0f, 1.0f};
+  } else if (val == "g") {
+    color = {1.4f, 0.8f, 0.2f};
+  } else if (val == "d") {
+    color = {1.2f, 0.8f, 1.5f};
+  } else {
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "RootWidget: Invalid league type '" + val + "'.");
+  }
+  assert(trophy_icon_);
+  trophy_icon_->widget->set_color(color.x, color.y, color.z);
 }
 
 void RootWidget::SetAchievementPercentText(const std::string& val) {

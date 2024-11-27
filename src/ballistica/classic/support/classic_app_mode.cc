@@ -151,6 +151,7 @@ void ClassicAppMode::Reset_() {
       root_widget->SetTicketsMeterText(root_ui_tickets_meter_text_);
       root_widget->SetTokensMeterText(root_ui_tokens_meter_text_);
       root_widget->SetLeagueRankText(root_ui_league_rank_text_);
+      root_widget->SetLeagueType(root_ui_league_type_);
       root_widget->SetAchievementPercentText(root_ui_achievement_percent_text_);
       root_widget->SetLevelText(root_ui_level_text_);
       root_widget->SetXPText(root_ui_xp_text_);
@@ -1586,6 +1587,22 @@ void ClassicAppMode::SetRootUILeagueRankText(const std::string text) {
   if (uiv1_) {
     if (auto* root_widget = uiv1_->root_widget()) {
       root_widget->SetLeagueRankText(root_ui_league_rank_text_);
+    }
+  }
+}
+
+void ClassicAppMode::SetRootUILeagueType(const std::string text) {
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (text == root_ui_league_type_) {
+    return;
+  }
+  // Store the value.
+  root_ui_league_type_ = text;
+
+  // Apply it to any existing UI.
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->SetLeagueType(root_ui_league_type_);
     }
   }
 }
