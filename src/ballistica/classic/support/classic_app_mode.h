@@ -17,6 +17,7 @@
 #include "ballistica/classic/classic.h"
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/shared/foundation/object.h"
+#include "ballistica/ui_v1/ui_v1.h"
 
 namespace ballistica::classic {
 
@@ -212,6 +213,10 @@ class ClassicAppMode : public base::AppMode {
     public_party_public_address_ipv6_ = val;
   }
 
+  void SetRootUITicketsMeterText(const std::string text);
+  void SetRootUITokensMeterText(const std::string text);
+  void SetRootUILeagueRankText(const std::string text);
+
  private:
   ClassicAppMode();
   void OnGameRosterChanged_();
@@ -250,6 +255,7 @@ class ClassicAppMode : public base::AppMode {
   bool kick_voting_enabled_{true};
   bool replay_paused_{false};
 
+  ui_v1::UIV1FeatureSet* uiv1_{};
   cJSON* game_roster_{};
   millisecs_t last_game_roster_send_time_{};
   std::unique_ptr<scene_v1::ConnectionSet> connections_;
@@ -283,6 +289,9 @@ class ClassicAppMode : public base::AppMode {
   std::string public_party_name_;
   std::string public_party_min_league_;
   std::string public_party_stats_url_;
+  std::string root_ui_tickets_meter_text_;
+  std::string root_ui_tokens_meter_text_;
+  std::string root_ui_league_rank_text_;
   std::list<std::pair<millisecs_t, scene_v1::PlayerSpec> > banned_players_;
   std::optional<float> idle_exit_minutes_{};
   std::optional<uint32_t> internal_music_play_id_{};

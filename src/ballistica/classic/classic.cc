@@ -12,6 +12,7 @@
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/player_spec.h"
 #include "ballistica/shared/generic/utils.h"
+#include "ballistica/ui_v1/ui_v1.h"
 
 namespace ballistica::classic {
 
@@ -19,6 +20,7 @@ core::CoreFeatureSet* g_core{};
 base::BaseFeatureSet* g_base{};
 ClassicFeatureSet* g_classic{};
 scene_v1::SceneV1FeatureSet* g_scene_v1{};
+ui_v1::UIV1FeatureSet* g_ui_v1{};
 
 void ClassicFeatureSet::OnModuleExec(PyObject* module) {
   // Ok, our feature-set's Python module is getting imported.
@@ -53,6 +55,9 @@ void ClassicFeatureSet::OnModuleExec(PyObject* module) {
 
   assert(g_scene_v1 == nullptr);
   g_scene_v1 = scene_v1::SceneV1FeatureSet::Import();
+
+  assert(g_ui_v1 == nullptr);
+  g_ui_v1 = ui_v1::UIV1FeatureSet::Import();
 
   g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_baclassic exec end");
 }

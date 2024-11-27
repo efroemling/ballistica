@@ -16,6 +16,7 @@
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
 #include "ballistica/shared/python/python_sys.h"
+#include "ballistica/ui_v1/widget/root_widget.h"
 
 namespace ballistica::classic {
 
@@ -289,6 +290,47 @@ static PyMethodDef PyClassicAppModeDeactivateDef = {
     "(internal)\n",
 };
 
+// -------------------------- set_root_ui_values -------------------------------
+
+static auto PySetRootUIValues(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+  const char* tickets_text;
+  const char* tokens_text;
+  const char* league_rank_text;
+  static const char* kwlist[] = {"tickets_text", "tokens_text",
+                                 "league_rank_text", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "sss",
+                                   const_cast<char**>(kwlist), &tickets_text,
+                                   &tokens_text, &league_rank_text)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  auto* appmode = ClassicAppMode::GetActiveOrThrow();
+
+  appmode->SetRootUITicketsMeterText(tickets_text);
+  appmode->SetRootUITokensMeterText(tokens_text);
+  appmode->SetRootUILeagueRankText(league_rank_text);
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetRootUIValuesDef = {
+    "set_root_ui_values",            // name
+    (PyCFunction)PySetRootUIValues,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
+
+    "set_root_ui_values(tickets_text: str,\n"
+    "      tokens_text: str,\n"
+    "      league_rank_text: str,\n"
+    ") -> None\n"
+    "\n"
+    "(internal)",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
@@ -299,6 +341,7 @@ auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
       PyClassicAppModeHandleAppIntentDefaultDef,
       PyClassicAppModeActivateDef,
       PyClassicAppModeDeactivateDef,
+      PySetRootUIValuesDef,
   };
 }
 

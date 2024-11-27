@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, override
 
 from bacommon.app import AppExperience
 import babase
+import bauiv1
 
 import _baclassic
 
@@ -18,7 +19,6 @@ if TYPE_CHECKING:
 
     from efro.call import CallbackRegistration
     import bacommon.cloud
-    import bauiv1
 
 
 # ba_meta export babase.AppMode
@@ -179,6 +179,12 @@ class ClassicAppMode(babase.AppMode):
 
         if account is None:
             self._account_data_sub = None
+            _baclassic.set_root_ui_values(
+                tickets_text='-',
+                tokens_text='-',
+                league_rank_text='-',
+            )
+
         else:
             with account:
                 self._account_data_sub = (
@@ -193,8 +199,15 @@ class ClassicAppMode(babase.AppMode):
     def _on_classic_account_data_change(
         self, val: bacommon.cloud.ClassicAccountLiveData
     ) -> None:
-        pass
+        # pass
         # print(f'GOT CLASSIC ACCOUNT DATA: {val}')
+        _baclassic.set_root_ui_values(
+            tickets_text=str(val.tickets),
+            tokens_text=str(val.tokens),
+            league_rank_text=(
+                '-' if val.league_rank is None else f'#{val.league_rank}'
+            ),
+        )
 
     def _root_ui_menu_press(self) -> None:
         from babase import push_back_press
@@ -215,7 +228,6 @@ class ClassicAppMode(babase.AppMode):
         push_back_press()
 
     def _root_ui_account_press(self) -> None:
-        import bauiv1
         from bauiv1lib.account.settings import AccountSettingsWindow
 
         self._auxiliary_window_nav(
@@ -226,8 +238,6 @@ class ClassicAppMode(babase.AppMode):
         )
 
     def _root_ui_squad_press(self) -> None:
-        import bauiv1
-
         btn = bauiv1.get_special_widget('squad_button')
         center = btn.get_screen_space_center()
         if bauiv1.app.classic is not None:
@@ -236,7 +246,6 @@ class ClassicAppMode(babase.AppMode):
             logging.warning('party_icon_activate: no classic.')
 
     def _root_ui_settings_press(self) -> None:
-        import bauiv1
         from bauiv1lib.settings.allsettings import AllSettingsWindow
 
         self._auxiliary_window_nav(
@@ -342,7 +351,6 @@ class ClassicAppMode(babase.AppMode):
         )
 
     def _root_ui_achievements_press(self) -> None:
-        import bauiv1
         from bauiv1lib.achievements import AchievementsWindow
 
         self._auxiliary_window_nav(
@@ -353,7 +361,6 @@ class ClassicAppMode(babase.AppMode):
         )
 
     def _root_ui_inbox_press(self) -> None:
-        import bauiv1
         from bauiv1lib.inbox import InboxWindow
 
         self._auxiliary_window_nav(
@@ -364,7 +371,6 @@ class ClassicAppMode(babase.AppMode):
         )
 
     def _root_ui_store_press(self) -> None:
-        import bauiv1
         from bauiv1lib.store.browser import StoreBrowserWindow
 
         self._auxiliary_window_nav(
@@ -375,7 +381,6 @@ class ClassicAppMode(babase.AppMode):
         )
 
     def _root_ui_tickets_meter_press(self) -> None:
-        import bauiv1
         from bauiv1lib.resourcetypeinfo import ResourceTypeInfoWindow
 
         ResourceTypeInfoWindow(
@@ -383,7 +388,6 @@ class ClassicAppMode(babase.AppMode):
         )
 
     def _root_ui_tokens_meter_press(self) -> None:
-        import bauiv1
         from bauiv1lib.resourcetypeinfo import ResourceTypeInfoWindow
 
         ResourceTypeInfoWindow(
@@ -391,7 +395,6 @@ class ClassicAppMode(babase.AppMode):
         )
 
     def _root_ui_trophy_meter_press(self) -> None:
-        import bauiv1
         from bauiv1lib.account import show_sign_in_prompt
         from bauiv1lib.league.rankwindow import LeagueRankWindow
 
@@ -409,7 +412,6 @@ class ClassicAppMode(babase.AppMode):
         )
 
     def _root_ui_level_meter_press(self) -> None:
-        import bauiv1
         from bauiv1lib.resourcetypeinfo import ResourceTypeInfoWindow
 
         ResourceTypeInfoWindow(
@@ -417,7 +419,6 @@ class ClassicAppMode(babase.AppMode):
         )
 
     def _root_ui_inventory_press(self) -> None:
-        import bauiv1
         from bauiv1lib.inventory import InventoryWindow
 
         self._auxiliary_window_nav(
@@ -428,7 +429,6 @@ class ClassicAppMode(babase.AppMode):
         )
 
     def _root_ui_get_tokens_press(self) -> None:
-        import bauiv1
         from bauiv1lib.gettokens import GetTokensWindow
 
         self._auxiliary_window_nav(

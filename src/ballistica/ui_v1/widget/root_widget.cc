@@ -268,7 +268,20 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
       td.flatness = 1.0f;
       td.shadow = 1.0f;
       td.depth_min = 0.3f;
-      AddText_(td);
+      auto* text = AddText_(td);
+      switch (type) {
+        case MeterType::kTickets:
+          tickets_meter_text_ = text;
+          break;
+        case MeterType::kTokens:
+          tokens_meter_text_ = text;
+          break;
+        case MeterType::kTrophy:
+          league_rank_text_ = text;
+          break;
+        default:
+          break;
+      }
     }
     // Icon on side.
     {
@@ -501,7 +514,7 @@ void RootWidget::Setup() {
     }
   }
   AddMeter_(MeterType::kLevel, 0.0f, 1.0f, 1.0f, 1.0f, false, "456/1000");
-  AddMeter_(MeterType::kTrophy, 0.0f, 1.0f, 1.0f, 1.0f, false, "#123");
+  AddMeter_(MeterType::kTrophy, 0.0f, 1.0f, 1.0f, 1.0f, false, "");
 
   // Menu button (only shows up when we're not in a menu)
   // FIXME - this should never be visible on TV or VR UI modes
@@ -579,8 +592,8 @@ void RootWidget::Setup() {
     }
   }
 
-  AddMeter_(MeterType::kTokens, 1.0f, 1.0f, 1.0f, 1.0f, true, "123");
-  AddMeter_(MeterType::kTickets, 1.0f, 1.0f, 1.0f, 1.0f, false, "12345");
+  AddMeter_(MeterType::kTokens, 1.0f, 1.0f, 1.0f, 1.0f, true, "");
+  AddMeter_(MeterType::kTickets, 1.0f, 1.0f, 1.0f, 1.0f, false, "");
 
   // Inbox button.
   {
@@ -1292,6 +1305,21 @@ void RootWidget::SetSquadSizeLabel(int val) {
       w->set_color(0.0f, 1.0f, 0.0f, 0.5f);
     }
   }
+}
+
+void RootWidget::SetTicketsMeterText(const std::string& val) {
+  assert(tickets_meter_text_);
+  tickets_meter_text_->widget->SetText(val);
+}
+
+void RootWidget::SetTokensMeterText(const std::string& val) {
+  assert(tokens_meter_text_);
+  tokens_meter_text_->widget->SetText(val);
+}
+
+void RootWidget::SetLeagueRankText(const std::string& val) {
+  assert(league_rank_text_);
+  league_rank_text_->widget->SetText(val);
 }
 
 }  // namespace ballistica::ui_v1

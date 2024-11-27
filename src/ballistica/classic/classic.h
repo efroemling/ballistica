@@ -25,6 +25,9 @@ class BaseFeatureSet;
 namespace ballistica::scene_v1 {
 class SceneV1FeatureSet;
 }
+namespace ballistica::ui_v1 {
+class UIV1FeatureSet;
+}
 
 namespace ballistica::classic {
 
@@ -64,6 +67,7 @@ extern core::CoreFeatureSet* g_core;
 extern base::BaseFeatureSet* g_base;
 extern ClassicFeatureSet* g_classic;
 extern scene_v1::SceneV1FeatureSet* g_scene_v1;
+extern ui_v1::UIV1FeatureSet* g_ui_v1;
 
 /// Our C++ front-end to our feature set. This is what other C++
 /// feature-sets can 'Import' from us.
