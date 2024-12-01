@@ -377,6 +377,11 @@ class AccountSettingsWindow(bui.MainWindow):
         )
         link_accounts_button_space = 70.0
 
+        show_v1_obsolete_note = self._v1_signed_in and (
+            primary_v2_account is None
+        )
+        v1_obsolete_note_space = 80.0
+
         show_unlink_accounts_button = show_link_accounts_button
         unlink_accounts_button_space = 90.0
 
@@ -434,6 +439,8 @@ class AccountSettingsWindow(bui.MainWindow):
             self._sub_height += manage_account_button_space
         if show_link_accounts_button:
             self._sub_height += link_accounts_button_space
+        if show_v1_obsolete_note:
+            self._sub_height += v1_obsolete_note_space
         if show_unlink_accounts_button:
             self._sub_height += unlink_accounts_button_space
         if show_v2_link_info:
@@ -799,6 +806,26 @@ class AccountSettingsWindow(bui.MainWindow):
             bui.widget(edit=btn, left_widget=bbtn)
             bui.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
+
+        if show_v1_obsolete_note:
+            v -= v1_obsolete_note_space
+            bui.textwidget(
+                parent=self._subcontainer,
+                h_align='center',
+                v_align='center',
+                size=(0, 0),
+                position=(self._sub_width * 0.5, v + 35.0),
+                text=(
+                    'YOU ARE SIGNED IN WITH A V1 ACCOUNT.\n'
+                    'THESE ARE NO LONGER SUPPORTED AND MANY\n'
+                    'FEATURES WILL NOT WORK. PLEASE SWITCH TO\n'
+                    'A V2 ACCOUNT OR UPGRADE THIS ONE.'
+                ),
+                maxwidth=self._sub_width * 0.8,
+                color=(1, 0, 0),
+                shadow=1.0,
+                flatness=1.0,
+            )
 
         if show_manage_account_button:
             button_width = 300
@@ -1233,8 +1260,8 @@ class AccountSettingsWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        # if this is not present, we haven't had contact from the server so
-        # let's not proceed..
+        # If this is not present, we haven't had contact from the server
+        # so let's not proceed.
         if plus.get_v1_account_public_login_id() is None:
             return False
         accounts = plus.get_v1_account_misc_read_val_2('linkedAccounts', [])
@@ -1251,7 +1278,8 @@ class AccountSettingsWindow(bui.MainWindow):
 
     def _should_show_legacy_unlink_button(self) -> bool:
         plus = bui.app.plus
-        assert plus is not None
+        if plus is None:
+            return False
 
         # Only show this when fully signed in to a v2 account.
         if not self._v1_signed_in or plus.accounts.primary is None:

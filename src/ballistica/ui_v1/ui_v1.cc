@@ -84,21 +84,12 @@ bool UIV1FeatureSet::PartyIconVisible() {
 
 void UIV1FeatureSet::SetAccountState(bool signed_in, const std::string& name) {
   assert(root_widget_.Exists());
-  // Store the value and plug it in if we've got a live widget.
-  // account_signed_in_ = signed_in;
-  // account_name_ = name;
-  // if (auto* r = root_widget()) {
   root_widget_->SetAccountState(signed_in, name);
-  // }
 }
 
 void UIV1FeatureSet::SetSquadSizeLabel(int num) {
   assert(root_widget_.Exists());
-  // Store the value and plug it in if we've got a live widget.
-  // party_icon_number_ = num;
-  // if (auto* r = root_widget()) {
   root_widget_->SetSquadSizeLabel(num);
-  // }
 }
 
 void UIV1FeatureSet::ActivatePartyIcon() {

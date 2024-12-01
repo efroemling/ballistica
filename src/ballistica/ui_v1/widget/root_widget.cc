@@ -1289,7 +1289,7 @@ void RootWidget::SetAccountState(bool signed_in, const std::string& name) {
     assert(wb);
 
     if (signed_in) {
-      w->SetText(name);
+      w->SetText(g_base->assets->CharStr(SpecialChar::kV2Logo) + name);
       w->set_color(0.0f, 0.4f, 0.1f, 1.0f);
       w->set_shadow(0.2f);
       w->set_flatness(1.0f);
@@ -1336,15 +1336,15 @@ void RootWidget::SetLeagueType(const std::string& val) {
   Vector3f color{};
 
   if (val == "") {
-    color = {0.5f, 0.5f, 0.5f};
+    color = {0.4f, 0.4f, 0.4f};
   } else if (val == "b") {
     color = {1.0f, 0.7f, 0.5f};
   } else if (val == "s") {
-    color = {1.0f, 1.0f, 1.0f};
+    color = {1.0f, 1.0f, 1.4f};
   } else if (val == "g") {
-    color = {1.4f, 0.8f, 0.2f};
+    color = {1.4f, 1.0f, 0.4f};
   } else if (val == "d") {
-    color = {1.2f, 0.8f, 1.5f};
+    color = {1.0f, 0.8f, 2.0f};
   } else {
     g_core->Log(LogName::kBa, LogLevel::kError,
                 "RootWidget: Invalid league type '" + val + "'.");
