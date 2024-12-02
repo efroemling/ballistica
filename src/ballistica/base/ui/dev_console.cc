@@ -805,7 +805,7 @@ auto DevConsole::HandleMouseUp(int button, float x, float y) -> bool {
   assert(g_base->InLogicThread());
   float bottom{Bottom_()};
 
- * if (button == 1) {
+  if (button == 1) {
     // Make sure we don't muck with our UI while we're in here.
     auto lock = ScopedUILock_(this);
 
