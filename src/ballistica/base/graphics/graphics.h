@@ -1,5 +1,3 @@
-// Released under the MIT License. See LICENSE for details.
-
 #ifndef BALLISTICA_BASE_GRAPHICS_GRAPHICS_H_
 #define BALLISTICA_BASE_GRAPHICS_GRAPHICS_H_
 
@@ -366,6 +364,8 @@ class Graphics {
   void set_draw_ui_bounds(bool val) { draw_ui_bounds_ = val; }
 
   ScreenMessages* const screenmessages;
+
+  void EnableImprovedGraphics(bool enable);
 
  protected:
   void UpdateScreen_();
