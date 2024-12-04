@@ -90,8 +90,8 @@ class AccountSettingsWindow(bui.MainWindow):
         # Always want to show our web-based v2 login option.
         self._show_sign_in_buttons.append('V2Proxy')
 
-        # Legacy v1 device accounts available only if the user
-        # has explicitly enabled deprecated login types.
+        # Legacy v1 device accounts available only if the user has
+        # explicitly enabled deprecated login types.
         if bui.app.config.resolve('Show Deprecated Login Types'):
             self._show_sign_in_buttons.append('Device')
 
@@ -212,8 +212,8 @@ class AccountSettingsWindow(bui.MainWindow):
             return
 
         # Hmm should update this to use get_account_state_num.
-        # Theoretically if we switch from one signed-in account to another
-        # in the background this would break.
+        # Theoretically if we switch from one signed-in account to
+        # another in the background this would break.
         v1_account_state_num = plus.get_v1_account_state_num()
         v1_account_state = plus.get_v1_account_state()
         show_legacy_unlink_button = self._should_show_legacy_unlink_button()
@@ -228,8 +228,8 @@ class AccountSettingsWindow(bui.MainWindow):
             self._show_legacy_unlink_button = show_legacy_unlink_button
             self._refresh()
 
-        # Go ahead and refresh some individual things
-        # that may change under us.
+        # Go ahead and refresh some individual things that may change
+        # under us.
         self._update_linked_accounts_text()
         self._update_unlink_accounts_button()
         self._refresh_campaign_progress_text()

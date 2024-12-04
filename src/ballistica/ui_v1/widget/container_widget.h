@@ -38,7 +38,7 @@ class ContainerWidget : public Widget {
 
   // Set a widget to selected (must already have been added to dialog). Pass
   // nullptr to deselect widgets.
-  void SelectWidget(Widget* w, SelectionCause s = SelectionCause::NONE);
+  void SelectWidget(Widget* w, SelectionCause s = SelectionCause::kNone);
   void ReselectLastSelectedWidget();
   void ShowWidget(Widget* w);
   void set_background(bool enable) { background_ = enable; }

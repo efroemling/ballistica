@@ -14,7 +14,7 @@ class ClientInputDeviceDelegate : public SceneV1InputDeviceDelegate {
   void AttachToLocalPlayer(Player* player) override;
   void DetachFromPlayer() override;
   auto connection_to_client() const -> ConnectionToClient* {
-    return connection_to_client_.Get();
+    return connection_to_client_.get();
   }
 
   void StoreClientDeviceInfo(ClientInputDevice* device);

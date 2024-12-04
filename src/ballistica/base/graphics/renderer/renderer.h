@@ -71,38 +71,38 @@ class Renderer {
 
   void OnScreenSizeChange();
   auto has_camera_render_target() const -> bool {
-    return camera_render_target_.Exists();
+    return camera_render_target_.exists();
   }
   auto has_camera_msaa_render_target() const -> bool {
-    return camera_msaa_render_target_.Exists();
+    return camera_msaa_render_target_.exists();
   }
   auto camera_render_target() -> RenderTarget* {
-    assert(camera_render_target_.Exists());
-    return camera_render_target_.Get();
+    assert(camera_render_target_.exists());
+    return camera_render_target_.get();
   }
   auto camera_msaa_render_target() -> RenderTarget* {
-    assert(camera_msaa_render_target_.Exists());
-    return camera_msaa_render_target_.Get();
+    assert(camera_msaa_render_target_.exists());
+    return camera_msaa_render_target_.get();
   }
   auto backing_render_target() -> RenderTarget* {
-    assert(backing_render_target_.Exists());
-    return backing_render_target_.Get();
+    assert(backing_render_target_.exists());
+    return backing_render_target_.get();
   }
   auto screen_render_target() -> RenderTarget* {
-    assert(screen_render_target_.Exists());
-    return screen_render_target_.Get();
+    assert(screen_render_target_.exists());
+    return screen_render_target_.get();
   }
   auto light_render_target() -> RenderTarget* {
-    assert(light_render_target_.Exists());
-    return light_render_target_.Get();
+    assert(light_render_target_.exists());
+    return light_render_target_.get();
   }
   auto light_shadow_render_target() -> RenderTarget* {
-    assert(light_shadow_render_target_.Exists());
-    return light_shadow_render_target_.Get();
+    assert(light_shadow_render_target_.exists());
+    return light_shadow_render_target_.get();
   }
   auto vr_overlay_flat_render_target() -> RenderTarget* {
-    assert(vr_overlay_flat_render_target_.Exists());
-    return vr_overlay_flat_render_target_.Get();
+    assert(vr_overlay_flat_render_target_.exists());
+    return vr_overlay_flat_render_target_.get();
   }
   auto shadow_res() const -> int { return shadow_res_; }
   auto blur_res_count() const -> int { return blur_res_count_; }

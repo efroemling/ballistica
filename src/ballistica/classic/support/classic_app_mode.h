@@ -89,13 +89,13 @@ class ClassicAppMode : public base::AppMode {
 
   // Return whichever session is front and center.
   auto GetForegroundSession() const -> scene_v1::Session* {
-    return foreground_session_.Get();
+    return foreground_session_.get();
   }
 
   // Used to know which globals is in control currently/etc.
   auto GetForegroundScene() const -> scene_v1::Scene* {
     assert(g_base->InLogicThread());
-    return foreground_scene_.Get();
+    return foreground_scene_.get();
   }
   auto GetForegroundContext() -> base::ContextRef override;
   auto debug_speed_mult() const -> float { return debug_speed_mult_; }
@@ -220,6 +220,7 @@ class ClassicAppMode : public base::AppMode {
   void SetRootUIAchievementsPercentText(const std::string text);
   void SetRootUILevelText(const std::string text);
   void SetRootUIXPText(const std::string text);
+  void SetRootUIInboxCountText(const std::string text);
 
  private:
   ClassicAppMode();
@@ -300,6 +301,7 @@ class ClassicAppMode : public base::AppMode {
   std::string root_ui_achievement_percent_text_;
   std::string root_ui_level_text_;
   std::string root_ui_xp_text_;
+  std::string root_ui_inbox_count_text_;
   std::list<std::pair<millisecs_t, scene_v1::PlayerSpec> > banned_players_;
   std::optional<float> idle_exit_minutes_{};
   std::optional<uint32_t> internal_music_play_id_{};

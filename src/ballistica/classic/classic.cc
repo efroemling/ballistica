@@ -206,7 +206,7 @@ void ClassicFeatureSet::SetV1DeviceAccount(const std::string& name) {
 auto ClassicFeatureSet::GetClientInfoQueryResponseCall() -> PyObject* {
   return g_scene_v1->python->objs()
       .Get(scene_v1::SceneV1Python::ObjID::kClientInfoQueryResponseCall)
-      .Get();
+      .get();
 }
 
 auto ClassicFeatureSet::BuildPublicPartyStateVal() -> PyObject* {

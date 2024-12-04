@@ -24,7 +24,7 @@ class SceneDataAsset : public SceneAsset {
   // return the DataData currently associated with this data
   // note that a data's data can change over time as different
   // versions are spooled in/out/etc.
-  auto data_data() const -> base::DataAsset* { return data_data_.Get(); }
+  auto data_data() const -> base::DataAsset* { return data_data_.get(); }
   auto GetAssetTypeName() const -> std::string override { return "Data"; }
   void MarkDead();
 

@@ -103,16 +103,16 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   // Return the root widget containing all windows & dialogs. Whenever this
   // contains children, the UI is considered to be in focus
   auto screen_root_widget() -> ui_v1::ContainerWidget* {
-    return screen_root_widget_.Get();
+    return screen_root_widget_.get();
   }
 
   auto overlay_root_widget() -> ui_v1::ContainerWidget* {
-    return overlay_root_widget_.Get();
+    return overlay_root_widget_.get();
   }
 
   // Return the absolute root widget; this includes persistent UI bits such
   // as the top/bottom bars
-  auto root_widget() -> ui_v1::RootWidget* { return root_widget_.Get(); }
+  auto root_widget() -> ui_v1::RootWidget* { return root_widget_.get(); }
   // void Reset() override;
 
   // Add a widget to a container. If a parent is provided, the widget is

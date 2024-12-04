@@ -19,7 +19,7 @@ class ButtonWidget : public Widget {
   void set_height(float height) { height_ = height; }
   auto GetWidth() -> float override;
   auto GetHeight() -> float override;
-  void SetColor(float r, float g, float b) {
+  void set_color(float r, float g, float b) {
     color_set_ = true;
     color_red_ = r;
     color_green_ = g;
@@ -58,10 +58,10 @@ class ButtonWidget : public Widget {
   auto set_text_scale(float val) { text_scale_ = val; }
   void SetTexture(base::TextureAsset* t);
   void SetMaskTexture(base::TextureAsset* t);
-  void SetTintTexture(base::TextureAsset* val);
+  void SetTintTexture(base::TextureAsset* t);
   void SetIcon(base::TextureAsset* t);
-  auto icon() const -> base::TextureAsset* { return icon_.Get(); }
-  void set_on_activate_call(PyObject* call_obj);
+  auto icon() const { return icon_.get(); }
+  void SetOnActivateCall(PyObject* call_obj);
   void Activate() override;
   auto IsSelectable() -> bool override { return selectable_; }
   auto GetWidgetTypeName() -> std::string override { return "button"; }

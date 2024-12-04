@@ -187,6 +187,7 @@ class ClassicAppMode(babase.AppMode):
                 achievements_percent_text='-',
                 level_text='-',
                 xp_text='-',
+                inbox_count_text='',
             )
 
         else:
@@ -216,6 +217,7 @@ class ClassicAppMode(babase.AppMode):
             achievements_percent_text=f'{achp}%',
             level_text=str(val.level),
             xp_text=f'{val.xp}/{val.xpmax}',
+            inbox_count_text=str(val.inbox_count),
         )
 
     def _root_ui_menu_press(self) -> None:

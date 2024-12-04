@@ -4,6 +4,7 @@
 
 #include <string>
 
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/scene_v1/python/class/python_class_scene_collision_mesh.h"
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/session_stream.h"
@@ -22,7 +23,7 @@ SceneCollisionMesh::SceneCollisionMesh(const std::string& name, Scene* scene)
     base::Assets::AssetListLock lock;
     collision_mesh_data_ = g_base->assets->GetCollisionMesh(name);
   }
-  assert(collision_mesh_data_.Exists());
+  assert(collision_mesh_data_.exists());
 }
 
 SceneCollisionMesh::~SceneCollisionMesh() { MarkDead(); }

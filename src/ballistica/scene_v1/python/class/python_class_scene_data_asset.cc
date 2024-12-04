@@ -16,7 +16,7 @@ auto PythonClassSceneDataAsset::tp_repr(PythonClassSceneDataAsset* self)
   auto&& m = *self->data_;
   return Py_BuildValue(
       "s", (std::string("<ba.Data ")
-            + (m.Exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
+            + (m.exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
                .c_str());
   BA_PYTHON_CATCH;
 }
@@ -54,7 +54,7 @@ auto PythonClassSceneDataAsset::Create(SceneDataAsset* data) -> PyObject* {
 }
 
 auto PythonClassSceneDataAsset::GetData(bool doraise) const -> SceneDataAsset* {
-  SceneDataAsset* data = data_->Get();
+  SceneDataAsset* data = data_->get();
   if (!data && doraise) {
     throw Exception("Invalid Data.", PyExcType::kNotFound);
   }
@@ -108,7 +108,7 @@ void PythonClassSceneDataAsset::tp_dealloc(PythonClassSceneDataAsset* self) {
 auto PythonClassSceneDataAsset::GetValue(PythonClassSceneDataAsset* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  SceneDataAsset* data = self->data_->Get();
+  SceneDataAsset* data = self->data_->get();
   if (data == nullptr) {
     throw Exception("Invalid data object.", PyExcType::kNotFound);
   }
@@ -116,7 +116,7 @@ auto PythonClassSceneDataAsset::GetValue(PythonClassSceneDataAsset* self)
   base::DataAsset* datadata = data->data_data();
   datadata->Load();
   datadata->set_last_used_time(g_core->GetAppTimeMillisecs());
-  PyObject* obj = datadata->object().Get();
+  PyObject* obj = datadata->object().get();
   assert(obj);
   Py_INCREF(obj);
   return obj;

@@ -17,7 +17,7 @@ class SceneMesh : public SceneAsset {
   SceneMesh(const std::string& name, Scene* scene);
   ~SceneMesh() override;
 
-  auto mesh_data() const -> base::MeshAsset* { return mesh_data_.Get(); }
+  auto mesh_data() const -> base::MeshAsset* { return mesh_data_.get(); }
   auto GetAssetTypeName() const -> std::string override { return "Mesh"; }
   void MarkDead();
 

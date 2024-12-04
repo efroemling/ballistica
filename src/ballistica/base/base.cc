@@ -121,7 +121,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   bool success = g_base->python->objs()
                      .Get(BasePython::ObjID::kEnvOnNativeModuleImportCall)
                      .Call()
-                     .Exists();
+                     .exists();
   if (!success) {
     FatalError("babase._env.on_native_module_import() call failed.");
   }
@@ -177,7 +177,7 @@ auto BaseFeatureSet::GetV2AccountID() -> std::optional<std::string> {
   auto gil = Python::ScopedInterpreterLock();
   auto result =
       python->objs().Get(BasePython::ObjID::kGetV2AccountIdCall).Call();
-  if (result.Exists()) {
+  if (result.exists()) {
     if (result.ValueIsNone()) {
       return {};
     }
@@ -561,7 +561,7 @@ auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
       Python::ScopedInterpreterLock gil;
       auto uuid =
           g_base->python->objs().Get(BasePython::ObjID::kUUIDStrCall).Call();
-      if (uuid.Exists()) {
+      if (uuid.exists()) {
         app_instance_uuid = uuid.ValueAsString();
         have_app_instance_uuid = true;
       }
@@ -736,31 +736,31 @@ void BaseFeatureSet::PushDevConsolePrintCall(const std::string& msg,
 PyObject* BaseFeatureSet::GetPyExceptionType(PyExcType exctype) {
   switch (exctype) {
     case PyExcType::kContext:
-      return python->objs().Get(BasePython::ObjID::kContextError).Get();
+      return python->objs().Get(BasePython::ObjID::kContextError).get();
     case PyExcType::kNotFound:
-      return python->objs().Get(BasePython::ObjID::kNotFoundError).Get();
+      return python->objs().Get(BasePython::ObjID::kNotFoundError).get();
     case PyExcType::kNodeNotFound:
-      return python->objs().Get(BasePython::ObjID::kNodeNotFoundError).Get();
+      return python->objs().Get(BasePython::ObjID::kNodeNotFoundError).get();
     case PyExcType::kSessionPlayerNotFound:
       return python->objs()
           .Get(BasePython::ObjID::kSessionPlayerNotFoundError)
-          .Get();
+          .get();
     case PyExcType::kInputDeviceNotFound:
       return python->objs()
           .Get(BasePython::ObjID::kInputDeviceNotFoundError)
-          .Get();
+          .get();
     case PyExcType::kDelegateNotFound:
       return python->objs()
           .Get(BasePython::ObjID::kDelegateNotFoundError)
-          .Get();
+          .get();
     case PyExcType::kWidgetNotFound:
-      return python->objs().Get(BasePython::ObjID::kWidgetNotFoundError).Get();
+      return python->objs().Get(BasePython::ObjID::kWidgetNotFoundError).get();
     case PyExcType::kActivityNotFound:
       return python->objs()
           .Get(BasePython::ObjID::kActivityNotFoundError)
-          .Get();
+          .get();
     case PyExcType::kSessionNotFound:
-      return python->objs().Get(BasePython::ObjID::kSessionNotFoundError).Get();
+      return python->objs().Get(BasePython::ObjID::kSessionNotFoundError).get();
     default:
       return nullptr;
   }

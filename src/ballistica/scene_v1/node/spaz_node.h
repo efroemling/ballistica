@@ -54,19 +54,19 @@ class SpazNode : public Node {
   auto counter_text() const -> std::string { return counter_text_; }
   void set_counter_text(const std::string& val) { counter_text_ = val; }
   auto mini_billboard_1_texture() const -> SceneTexture* {
-    return mini_billboard_1_texture_.Get();
+    return mini_billboard_1_texture_.get();
   }
   void set_mini_billboard_1_texture(SceneTexture* val) {
     mini_billboard_1_texture_ = val;
   }
   auto mini_billboard_2_texture() const -> SceneTexture* {
-    return mini_billboard_2_texture_.Get();
+    return mini_billboard_2_texture_.get();
   }
   void set_mini_billboard_2_texture(SceneTexture* val) {
     mini_billboard_2_texture_ = val;
   }
   auto mini_billboard_3_texture() const -> SceneTexture* {
-    return mini_billboard_3_texture_.Get();
+    return mini_billboard_3_texture_.get();
   }
   void set_mini_billboard_3_texture(SceneTexture* val) {
     mini_billboard_3_texture_ = val;
@@ -108,13 +108,13 @@ class SpazNode : public Node {
     mini_billboard_3_end_time_ = val;
   }
   auto billboard_texture() const -> SceneTexture* {
-    return billboard_texture_.Get();
+    return billboard_texture_.get();
   }
   void set_billboard_texture(SceneTexture* val) { billboard_texture_ = val; }
   auto billboard_opacity() const -> float { return billboard_opacity_; }
   void set_billboard_opacity(float val) { billboard_opacity_ = val; }
   auto counter_texture() const -> SceneTexture* {
-    return counter_texture_.Get();
+    return counter_texture_.get();
   }
   void set_counter_texture(SceneTexture* val) { counter_texture_ = val; }
   auto invincible() const -> bool { return invincible_; }
@@ -131,7 +131,7 @@ class SpazNode : public Node {
     return boxing_gloves_flashing_;
   }
   void set_boxing_gloves_flashing(bool val) { boxing_gloves_flashing_ = val; }
-  auto source_player() const -> Player* { return source_player_.Get(); }
+  auto source_player() const -> Player* { return source_player_.get(); }
   void set_source_player(Player* val) { source_player_ = val; }
   auto frozen() const -> bool { return frozen_; }
   void SetFrozen(bool val);
@@ -168,7 +168,7 @@ class SpazNode : public Node {
   auto GetPosition() const -> std::vector<float>;
   auto hold_body() const -> int { return hold_body_; }
   void set_hold_body(int val) { hold_body_ = val; }
-  auto hold_node() const -> Node* { return hold_node_.Get(); }
+  auto hold_node() const -> Node* { return hold_node_.get(); }
   void SetHoldNode(Node* val);
   auto GetJumpSounds() const -> std::vector<SceneSound*>;
   void SetJumpSounds(const std::vector<SceneSound*>& vals);
@@ -184,29 +184,29 @@ class SpazNode : public Node {
     return RefsToPointers(fall_sounds_);
   }
   void SetFallSounds(const std::vector<SceneSound*>& vals);
-  auto color_texture() const -> SceneTexture* { return color_texture_.Get(); }
+  auto color_texture() const -> SceneTexture* { return color_texture_.get(); }
   void set_color_texture(SceneTexture* val) { color_texture_ = val; }
   auto color_mask_texture() const -> SceneTexture* {
-    return color_mask_texture_.Get();
+    return color_mask_texture_.get();
   }
   void set_color_mask_texture(SceneTexture* val) { color_mask_texture_ = val; }
-  auto head_mesh() const -> SceneMesh* { return head_mesh_.Get(); }
+  auto head_mesh() const -> SceneMesh* { return head_mesh_.get(); }
   void set_head_mesh(SceneMesh* val) { head_mesh_ = val; }
-  auto torso_mesh() const -> SceneMesh* { return torso_mesh_.Get(); }
+  auto torso_mesh() const -> SceneMesh* { return torso_mesh_.get(); }
   void set_torso_mesh(SceneMesh* val) { torso_mesh_ = val; }
-  auto pelvis_mesh() const -> SceneMesh* { return pelvis_mesh_.Get(); }
+  auto pelvis_mesh() const -> SceneMesh* { return pelvis_mesh_.get(); }
   void set_pelvis_mesh(SceneMesh* val) { pelvis_mesh_ = val; }
-  auto upper_arm_mesh() const -> SceneMesh* { return upper_arm_mesh_.Get(); }
+  auto upper_arm_mesh() const -> SceneMesh* { return upper_arm_mesh_.get(); }
   void set_upper_arm_mesh(SceneMesh* val) { upper_arm_mesh_ = val; }
-  auto forearm_mesh() const -> SceneMesh* { return forearm_mesh_.Get(); }
+  auto forearm_mesh() const -> SceneMesh* { return forearm_mesh_.get(); }
   void set_forearm_mesh(SceneMesh* val) { forearm_mesh_ = val; }
-  auto hand_mesh() const -> SceneMesh* { return hand_mesh_.Get(); }
+  auto hand_mesh() const -> SceneMesh* { return hand_mesh_.get(); }
   void set_hand_mesh(SceneMesh* val) { hand_mesh_ = val; }
-  auto upper_leg_mesh() const -> SceneMesh* { return upper_leg_mesh_.Get(); }
+  auto upper_leg_mesh() const -> SceneMesh* { return upper_leg_mesh_.get(); }
   void set_upper_leg_mesh(SceneMesh* val) { upper_leg_mesh_ = val; }
-  auto lower_leg_mesh() const -> SceneMesh* { return lower_leg_mesh_.Get(); }
+  auto lower_leg_mesh() const -> SceneMesh* { return lower_leg_mesh_.get(); }
   void set_lower_leg_mesh(SceneMesh* val) { lower_leg_mesh_ = val; }
-  auto toes_mesh() const -> SceneMesh* { return toes_mesh_.Get(); }
+  auto toes_mesh() const -> SceneMesh* { return toes_mesh_.get(); }
   void set_toes_mesh(SceneMesh* val) { toes_mesh_ = val; }
   auto billboard_cross_out() const -> bool { return billboard_cross_out_; }
   void set_billboard_cross_out(bool val) { billboard_cross_out_ = val; }

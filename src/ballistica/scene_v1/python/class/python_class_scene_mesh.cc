@@ -15,7 +15,7 @@ auto PythonClassSceneMesh::tp_repr(PythonClassSceneMesh* self) -> PyObject* {
   auto&& m = *(self->mesh_);
   return Py_BuildValue(
       "s", (std::string("<bascenev1.Mesh ")
-            + (m.Exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
+            + (m.exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
                .c_str());
   BA_PYTHON_CATCH;
 }
@@ -53,7 +53,7 @@ auto PythonClassSceneMesh::Create(SceneMesh* mesh) -> PyObject* {
 }
 
 auto PythonClassSceneMesh::GetMesh(bool doraise) const -> SceneMesh* {
-  SceneMesh* mesh = mesh_->Get();
+  SceneMesh* mesh = mesh_->get();
   if (!mesh && doraise) {
     throw Exception("Invalid mesh.", PyExcType::kNotFound);
   }

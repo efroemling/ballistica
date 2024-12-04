@@ -121,7 +121,7 @@ class InputDevice : public Object {
   auto delegate() -> InputDeviceDelegate& {
     // TEMP - Tracking down a crash in the wild.
     // Delegate should always exist any time we're accessing it.
-    if (!delegate_.Exists()) {
+    if (!delegate_.exists()) {
       FatalError("Input-device delegate unexpectedly invalid.");
     }
     return *delegate_;

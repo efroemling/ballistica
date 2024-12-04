@@ -113,7 +113,7 @@ void MeshAsset::DoPreload() {
 }
 
 void MeshAsset::DoLoad() {
-  assert(!renderer_data_.Exists());
+  assert(!renderer_data_.exists());
   renderer_data_ = g_base->graphics_server->renderer()->NewMeshAssetData(*this);
 
   // once we're loaded lets free up our vert data memory
@@ -125,7 +125,7 @@ void MeshAsset::DoLoad() {
 
 void MeshAsset::DoUnload() {
   assert(valid_);
-  assert(renderer_data_.Exists());
+  assert(renderer_data_.exists());
   std::vector<VertexObjectFull>().swap(vertices_);
   std::vector<uint8_t>().swap(indices8_);
   std::vector<uint16_t>().swap(indices16_);

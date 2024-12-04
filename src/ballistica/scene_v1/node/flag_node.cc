@@ -17,6 +17,8 @@
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
+#include "ode/ode_collision.h"
+#include "ode/ode_rotation.h"
 
 namespace ballistica::scene_v1 {
 
@@ -319,7 +321,7 @@ void FlagNode::Draw(base::FrameDef* frame_def) {
       dBodyID b = body_->body();
       assert(b);
       dVector3 p;
-      if (FullShadowSet* full_shadows = full_shadow_set_.Get()) {
+      if (FullShadowSet* full_shadows = full_shadow_set_.get()) {
         full_shadows->shadow_flag_.SetPosition(
             flag_points_[kFlagSizeX * (kFlagSizeY / 2) + (kFlagSizeX / 2)]);
         dBodyGetRelPointPos(b, 0, 0, kFlagHeight * -0.4f, p);
@@ -360,7 +362,7 @@ void FlagNode::Draw(base::FrameDef* frame_def) {
                                        s_density * 0.3f);
         }
 
-      } else if (SimpleShadowSet* simple_shadows = simple_shadow_set_.Get()) {
+      } else if (SimpleShadowSet* simple_shadows = simple_shadow_set_.get()) {
         dBodyGetRelPointPos(b, 0, 0, kFlagHeight * -0.3f, p);
         simple_shadows->shadow_.SetPosition(Vector3f(p));
         simple_shadows->shadow_.GetValues(&s_scale, &s_density);
@@ -390,14 +392,14 @@ void FlagNode::Draw(base::FrameDef* frame_def) {
 void FlagNode::UpdateAreaOfInterest() {
   base::AreaOfInterest* aoi = area_of_interest_;
   if (!aoi) return;
-  assert(body_.Exists());
+  assert(body_.exists());
   aoi->set_position(Vector3f(dGeomGetPosition(body_->geom())));
   aoi->SetRadius(5.0f);
 }
 
 void FlagNode::Step() {
   // On happy thoughts, keep us on the 2d plane.
-  if (g_base->graphics->camera()->happy_thoughts_mode() && body_.Exists()) {
+  if (g_base->graphics->camera()->happy_thoughts_mode() && body_.exists()) {
     dBodyID b;
     const dReal *p, *v;
     b = body_->body();
@@ -494,7 +496,7 @@ void FlagNode::Step() {
   UpdateFlagMesh();
 }
 
-auto FlagNode::GetRigidBody(int id) -> RigidBody* { return body_.Get(); }
+auto FlagNode::GetRigidBody(int id) -> RigidBody* { return body_.get(); }
 
 static auto FlagPointIndex(int x, int y) -> int {
   return kFlagSizeX * (y) + (x);

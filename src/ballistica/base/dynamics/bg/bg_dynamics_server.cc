@@ -85,7 +85,7 @@ class BGDynamicsServer::Terrain {
   }
 
   auto GetCollisionMesh() const -> CollisionMeshAsset* {
-    return collision_mesh_->Get();
+    return collision_mesh_->get();
   }
 
   ~Terrain() {

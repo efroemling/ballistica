@@ -18,8 +18,8 @@ namespace ballistica::ui_v1 {
 CheckBoxWidget::CheckBoxWidget() {
   SetText("CheckBox");
   text_.set_owner_widget(this);
-  text_.set_valign(TextWidget::VAlign::kCenter);
-  text_.set_halign(TextWidget::HAlign::kLeft);
+  text_.SetVAlign(TextWidget::VAlign::kCenter);
+  text_.SetHAlign(TextWidget::HAlign::kLeft);
 }
 
 CheckBoxWidget::~CheckBoxWidget() = default;
@@ -246,7 +246,7 @@ void CheckBoxWidget::Activate() {
   checked_ = !checked_;
   check_dirty_ = true;
   last_change_time_ = g_core->GetAppTimeMillisecs();
-  if (auto* call = on_value_change_call_.Get()) {
+  if (auto* call = on_value_change_call_.get()) {
     PythonRef args(Py_BuildValue("(O)", checked_ ? Py_True : Py_False),
                    PythonRef::kSteal);
 

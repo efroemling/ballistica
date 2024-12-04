@@ -104,7 +104,7 @@ void Logic::OnGraphicsReady() {
     // variety of rates anyway. NOTE: This length is currently milliseconds.
     headless_display_time_step_timer_ = event_loop()->NewTimer(
         kHeadlessMinDisplayTimeStep, true,
-        NewLambdaRunnable([this] { StepDisplayTime_(); }).Get());
+        NewLambdaRunnable([this] { StepDisplayTime_(); }).get());
   } else {
     // In gui mode, push an initial frame to the graphics server. From this
     // point it will be self-sustaining, sending us a frame request each
@@ -138,7 +138,7 @@ void Logic::CompleteAppBootstrapping_() {
 
   // Set up our timers.
   process_pending_work_timer_ = event_loop()->NewTimer(
-      0, true, NewLambdaRunnable([this] { ProcessPendingWork_(); }).Get());
+      0, true, NewLambdaRunnable([this] { ProcessPendingWork_(); }).get());
   // asset_prune_timer_ = event_loop()->NewTimer(
   //     2345 * 1000, true, NewLambdaRunnable([] { g_base->assets->Prune();
   //     }).Get());

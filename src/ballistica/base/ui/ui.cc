@@ -418,7 +418,7 @@ void UI::LanguageChanged() {
 
 auto UI::GetUIInputDevice() const -> InputDevice* {
   assert(g_base->InLogicThread());
-  return ui_input_device_.Get();
+  return ui_input_device_.get();
 }
 
 auto UI::GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget* {
@@ -557,7 +557,7 @@ auto UI::InDevConsoleButton_(float x, float y) const -> bool {
 }
 
 void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
-  if (!dev_console_button_txt_.Exists()) {
+  if (!dev_console_button_txt_.exists()) {
     dev_console_button_txt_ = Object::New<TextGroup>();
     dev_console_button_txt_->SetText("dev");
   }

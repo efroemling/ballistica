@@ -18,7 +18,7 @@ class Repeater : public Object {
   static auto New(seconds_t initial_delay, seconds_t repeat_delay,
                   const F& lambda) {
     auto&& rep = Object::New<Repeater>(initial_delay, repeat_delay,
-                                       NewLambdaRunnable<F>(lambda).Get());
+                                       NewLambdaRunnable<F>(lambda).get());
     // We need to run this bit *after* constructing our obj since it creates
     // a strong ref.
     rep->PostInit_();

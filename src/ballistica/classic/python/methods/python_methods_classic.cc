@@ -302,6 +302,7 @@ static auto PySetRootUIValues(PyObject* self, PyObject* args, PyObject* keywds)
   const char* achievements_percent_text;
   const char* level_text;
   const char* xp_text;
+  const char* inbox_count_text;
 
   static const char* kwlist[] = {"tickets_text",
                                  "tokens_text",
@@ -310,17 +311,21 @@ static auto PySetRootUIValues(PyObject* self, PyObject* args, PyObject* keywds)
                                  "achievements_percent_text",
                                  "level_text",
                                  "xp_text",
+                                 "inbox_count_text",
                                  nullptr};
-  if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "sssssss", const_cast<char**>(kwlist), &tickets_text,
-          &tokens_text, &league_rank_text, &league_type,
-          &achievements_percent_text, &level_text, &xp_text)) {
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ssssssss",
+                                   const_cast<char**>(kwlist), &tickets_text,
+                                   &tokens_text, &league_rank_text,
+                                   &league_type, &achievements_percent_text,
+                                   &level_text, &xp_text, &inbox_count_text)) {
     return nullptr;
   }
   BA_PRECONDITION(g_base->InLogicThread());
 
   auto* appmode = ClassicAppMode::GetActiveOrThrow();
 
+  // Pass these all along to the app-mode which will store them and forward
+  // them to any existing UI.
   appmode->SetRootUITicketsMeterText(tickets_text);
   appmode->SetRootUITokensMeterText(tokens_text);
   appmode->SetRootUILeagueRankText(league_rank_text);
@@ -328,6 +333,7 @@ static auto PySetRootUIValues(PyObject* self, PyObject* args, PyObject* keywds)
   appmode->SetRootUIAchievementsPercentText(achievements_percent_text);
   appmode->SetRootUILevelText(level_text);
   appmode->SetRootUIXPText(xp_text);
+  appmode->SetRootUIInboxCountText(inbox_count_text);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -345,6 +351,7 @@ static PyMethodDef PySetRootUIValuesDef = {
     "      achievements_percent_text: str,\n"
     "      level_text: str,\n"
     "      xp_text: str,\n"
+    "      inbox_count_text: str,\n"
     ") -> None\n"
     "\n"
     "(internal)",

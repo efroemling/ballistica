@@ -215,6 +215,7 @@ class MainWindowState:
         self.is_top_level: bool | None = None
         self.is_auxiliary: bool | None = None
         self.window_type: type[MainWindow] | None = None
+        self.selection: str | None = None
 
     def create_window(
         self,

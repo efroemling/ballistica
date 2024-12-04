@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_SHARED_PYTHON_PYTHON_OBJECT_SET_H_
 #define BALLISTICA_SHARED_PYTHON_PYTHON_OBJECT_SET_H_
 
+#include <Python.h>
+
 #include <string>
 #include <vector>
 
@@ -24,7 +26,7 @@ class PythonObjectSetBase {
   auto Obj(int id) const -> const PythonRef& {
     assert(id >= 0);
     assert(id < static_cast<int>(objs_.size()));
-    assert(objs_[id].Exists());
+    assert(objs_[id].exists());
     return objs_[id];
   }
 
@@ -32,7 +34,7 @@ class PythonObjectSetBase {
   auto ObjExists(int id) const -> bool {
     assert(id >= 0);
     assert(id < static_cast<int>(objs_.size()));
-    return objs_[static_cast<int>(id)].Exists();
+    return objs_[static_cast<int>(id)].exists();
   }
 
   /// Push a call to a preset obj to the logic thread.

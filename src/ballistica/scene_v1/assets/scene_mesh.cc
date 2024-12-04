@@ -24,7 +24,7 @@ SceneMesh::SceneMesh(const std::string& name, Scene* scene)
     base::Assets::AssetListLock lock;
     mesh_data_ = g_base->assets->GetMesh(name);
   }
-  assert(mesh_data_.Exists());
+  assert(mesh_data_.exists());
 }
 
 SceneMesh::~SceneMesh() { MarkDead(); }

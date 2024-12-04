@@ -113,7 +113,7 @@ class AudioServer::ThreadSource_ : public Object {
   auto GetDefaultOwnerThread() const -> EventLoopID override;
   auto client_source() const -> AudioSource* { return client_source_.get(); }
   auto source_sound() const -> SoundAsset* {
-    return source_sound_ ? source_sound_->Get() : nullptr;
+    return source_sound_ ? source_sound_->get() : nullptr;
   }
 
   void UpdatePitch();
@@ -228,7 +228,7 @@ void AudioServer::OnAppStartInThread_() {
   // Get our thread to give us periodic processing time.
   process_timer_ =
       event_loop()->NewTimer(kAudioProcessIntervalNormal, true,
-                             NewLambdaRunnable([this] { Process_(); }).Get());
+                             NewLambdaRunnable([this] { Process_(); }).get());
 
 #if BA_ENABLE_AUDIO
 
@@ -1248,7 +1248,7 @@ void AudioServer::ThreadSource_::UpdateAvailability() {
   // off, stuttering, etc.). If it's non-looping, we check its play state and
   // snatch it if it's not playing.
   bool busy;
-  if (looping_ || (is_streamed_ && streamer_.Exists() && streamer_->loops())) {
+  if (looping_ || (is_streamed_ && streamer_.exists() && streamer_->loops())) {
     busy = want_to_play_;
   } else {
     // If our context is suspended, we know nothing is playing
@@ -1380,7 +1380,7 @@ auto AudioServer::ThreadSource_::Play(const Object::Ref<SoundAsset>* sound)
 #if BA_ENABLE_AUDIO
 
   assert(g_base->InAudioThread());
-  assert(sound->Exists());
+  assert(sound->exists());
 
   // Stop whatever we were doing.
   Stop();
@@ -1430,7 +1430,7 @@ void AudioServer::ThreadSource_::ExecPlay() {
 #if BA_ENABLE_AUDIO
 
   assert(g_core);
-  assert(source_sound_->Exists());
+  assert(source_sound_->exists());
   assert((**source_sound_).valid());
   assert((**source_sound_).loaded());
   assert(!is_actually_playing_);
@@ -1502,7 +1502,7 @@ void AudioServer::ThreadSource_::Stop() {
     if (is_actually_playing_) {
       ExecStop();
     }
-    if (streamer_.Exists()) {
+    if (streamer_.exists()) {
       streamer_.Clear();
     }
     // If we've got an attached sound, toss it back to the main thread
@@ -1523,7 +1523,7 @@ void AudioServer::ThreadSource_::ExecStop() {
   assert(g_base->InAudioThread());
   assert(!g_base->audio_server->suspended_);
   assert(is_actually_playing_);
-  if (streamer_.Exists()) {
+  if (streamer_.exists()) {
     assert(is_streamed_);
     streamer_->Stop();
     for (auto i = audio_server_->streaming_sources_.begin();

@@ -637,7 +637,7 @@ auto SceneV1Python::IsPyHostActivity(PyObject* o) -> bool {
   int result =
       PyObject_IsInstance(o, g_scene_v1->python->objs()
                                  .Get(SceneV1Python::ObjID::kActivityClass)
-                                 .Get());
+                                 .get());
   if (result == -1) {
     result = 0;
     PyErr_Clear();
@@ -702,9 +702,9 @@ auto SceneV1Python::GetPyNodes(PyObject* o) -> std::vector<Node*> {
     throw Exception("Object is not a sequence.", PyExcType::kType);
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());
-  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.Get()));
-  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.Get());
+  assert(sequence.exists());
+  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.get()));
+  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.get());
   std::vector<Node*> vals(size);
   assert(vals.size() == size);
   for (size_t i = 0; i < size; i++) {
@@ -743,9 +743,9 @@ auto SceneV1Python::GetPyMaterials(PyObject* o) -> std::vector<Material*> {
     throw Exception("Object is not a sequence.", PyExcType::kType);
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());
-  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.Get()));
-  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.Get());
+  assert(sequence.exists());
+  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.get()));
+  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.get());
   std::vector<Material*> vals(size);
   assert(vals.size() == size);
   for (size_t i = 0; i < size; i++) {
@@ -785,9 +785,9 @@ auto SceneV1Python::GetPySceneTextures(PyObject* o)
     throw Exception("Object is not a sequence.", PyExcType::kType);
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());
-  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.Get()));
-  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.Get());
+  assert(sequence.exists());
+  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.get()));
+  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.get());
   std::vector<SceneTexture*> vals(size);
   assert(vals.size() == size);
   for (size_t i = 0; i < size; i++) {
@@ -827,9 +827,9 @@ auto SceneV1Python::GetPySceneMeshes(PyObject* o) -> std::vector<SceneMesh*> {
     throw Exception("Object is not a sequence.", PyExcType::kType);
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());
-  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.Get()));
-  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.Get());
+  assert(sequence.exists());
+  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.get()));
+  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.get());
   std::vector<SceneMesh*> vals(size);
   assert(vals.size() == size);
   for (size_t i = 0; i < size; i++) {
@@ -844,7 +844,7 @@ auto SceneV1Python::IsPyPlayer(PyObject* o) -> bool {
 
   int result = PyObject_IsInstance(
       o,
-      g_scene_v1->python->objs().Get(SceneV1Python::ObjID::kPlayerClass).Get());
+      g_scene_v1->python->objs().Get(SceneV1Python::ObjID::kPlayerClass).get());
   if (result == -1) {
     result = 0;
     PyErr_Clear();
@@ -897,7 +897,7 @@ auto SceneV1Python::ValidatedPackageAssetName(PyObject* package,
   if (!PyObject_IsInstance(package,
                            g_scene_v1->python->objs()
                                .Get(SceneV1Python::ObjID::kAssetPackageClass)
-                               .Get())) {
+                               .get())) {
     throw Exception("Object is not an AssetPackage.", PyExcType::kType);
   }
 
@@ -905,15 +905,15 @@ auto SceneV1Python::ValidatedPackageAssetName(PyObject* package,
   // Now validate that its context is current...
   PythonRef context_obj(PyObject_GetAttrString(package, "context_ref"),
                         PythonRef::kSteal);
-  if (!context_obj.Exists()
-      || !(PyObject_IsInstance(context_obj.Get(),
+  if (!context_obj.exists()
+      || !(PyObject_IsInstance(context_obj.get(),
                                reinterpret_cast<PyObject*>(
                                    &base::PythonClassContextRef::type_obj)))) {
     throw Exception("Asset package context_ref not found.",
                     PyExcType::kNotFound);
   }
   auto* pycontext =
-      reinterpret_cast<base::PythonClassContextRef*>(context_obj.Get());
+      reinterpret_cast<base::PythonClassContextRef*>(context_obj.get());
   auto* ctargetref = pycontext->context_ref().Get();
   if (!ctargetref) {
     throw Exception("Asset package context_ref does not exist.",
@@ -928,14 +928,14 @@ auto SceneV1Python::ValidatedPackageAssetName(PyObject* package,
   // Ok; now pull the package id...
   PythonRef package_id(PyObject_GetAttrString(package, "package_id"),
                        PythonRef::kSteal);
-  if (!PyUnicode_Check(package_id.Get())) {
+  if (!PyUnicode_Check(package_id.get())) {
     throw Exception("Got non-string AssetPackage ID.", PyExcType::kType);
   }
 
   // TODO(ericf): make sure the package is valid for this context,
   // and return a fully qualified name with the package included.
 
-  printf("would give %s:%s\n", PyUnicode_AsUTF8(package_id.Get()), name);
+  printf("would give %s:%s\n", PyUnicode_AsUTF8(package_id.get()), name);
   return name;
 }
 
@@ -969,9 +969,9 @@ auto SceneV1Python::GetPySceneSounds(PyObject* o) -> std::vector<SceneSound*> {
     throw Exception("Object is not a sequence.", PyExcType::kType);
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());
-  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.Get()));
-  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.Get());
+  assert(sequence.exists());
+  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.get()));
+  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.get());
   std::vector<SceneSound*> vals(size);
   assert(vals.size() == size);
   for (size_t i = 0; i < size; i++) {
@@ -1012,9 +1012,9 @@ auto SceneV1Python::GetPySceneCollisionMeshes(PyObject* o)
     throw Exception("Object is not a sequence.", PyExcType::kType);
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());
-  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.Get()));
-  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.Get());
+  assert(sequence.exists());
+  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.get()));
+  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.get());
   std::vector<SceneCollisionMesh*> vals(size);
   assert(vals.size() == size);
   for (size_t i = 0; i < size; i++) {
@@ -1030,7 +1030,7 @@ auto SceneV1Python::IsPySession(PyObject* o) -> bool {
   int result = PyObject_IsInstance(
       o, g_scene_v1->python->objs()
              .Get(SceneV1Python::ObjID::kSceneV1SessionClass)
-             .Get());
+             .get());
   if (result == -1) {
     PyErr_Clear();
     result = 0;
@@ -1128,18 +1128,18 @@ auto SceneV1Python::FilterChatMessage(std::string* message, int client_id)
   PythonRef result = objs().Get(ObjID::kFilterChatMessageCall).Call(args);
 
   // If something went wrong, just allow all messages through verbatim.
-  if (!result.Exists()) {
+  if (!result.exists()) {
     return true;
   }
 
   // If they returned None, they want to ignore the message.
-  if (result.Get() == Py_None) {
+  if (result.get() == Py_None) {
     return false;
   }
 
   // Replace the message string with whatever they gave us.
   try {
-    *message = g_base->python->GetPyLString(result.Get());
+    *message = g_base->python->GetPyLString(result.get());
   } catch (const std::exception& e) {
     g_core->Log(
         LogName::kBa, LogLevel::kError,
@@ -1384,7 +1384,7 @@ auto SceneV1Python::HandleCapturedKeyReleaseCall(const SDL_Keysym& keysym)
 
 auto SceneV1Python::HandleCapturedKeyPress(const SDL_Keysym& keysym) -> bool {
   assert(g_base->InLogicThread());
-  if (!keyboard_capture_call_.Exists()) {
+  if (!keyboard_capture_call_.exists()) {
     return false;
   }
   base::ScopedSetContext ssc(nullptr);
@@ -1409,7 +1409,7 @@ auto SceneV1Python::HandleCapturedKeyPress(const SDL_Keysym& keysym) -> bool {
 }
 auto SceneV1Python::HandleCapturedKeyRelease(const SDL_Keysym& keysym) -> bool {
   assert(g_base->InLogicThread());
-  if (!keyboard_capture_call_.Exists()) {
+  if (!keyboard_capture_call_.exists()) {
     return false;
   }
   base::ScopedSetContext ssc(nullptr);
@@ -1438,7 +1438,7 @@ auto SceneV1Python::HandleCapturedJoystickEvent(const SDL_Event& event,
     -> bool {
   assert(g_base->InLogicThread());
   assert(input_device != nullptr);
-  if (!joystick_capture_call_.Exists()) {
+  if (!joystick_capture_call_.exists()) {
     return false;
   }
   // This currently only works with the scene_v1 input-device classes.

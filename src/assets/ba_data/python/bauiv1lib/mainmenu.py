@@ -70,11 +70,7 @@ class MainMenuWindow(bui.MainWindow):
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
-        return self.do_get_main_window_state()
-
-    @classmethod
-    def do_get_main_window_state(cls) -> bui.MainWindowState:
-        """Classmethod to gen a windowstate for the main menu."""
+        cls = type(self)
         return bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
                 transition=transition, origin_widget=origin_widget
@@ -100,6 +96,7 @@ class MainMenuWindow(bui.MainWindow):
     def _show_remote_app_info_on_first_launch(self) -> None:
         app = bui.app
         assert app.classic is not None
+
         # The first time the non-in-game menu pops up, we might wanna
         # show a 'get-remote-app' dialog in front of it.
         if app.classic.first_main_menu:
@@ -270,6 +267,7 @@ class MainMenuWindow(bui.MainWindow):
             demo_menu_delay = 0.0
             self._demo_menu_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id='demo',
                 position=(self._width * 0.5 - this_b_width * 0.5, v + 90),
                 size=(this_b_width, 45),
                 autoselect=True,
@@ -338,7 +336,6 @@ class MainMenuWindow(bui.MainWindow):
             texture=bui.gettexture('usersButton'),
         )
         thistdelay = self._tdelay + td1 * self._t_delay_inc
-        # self._tdelay += self._t_delay_inc
 
         h -= (
             side_button_width * side_button_scale * 0.5
@@ -349,6 +346,7 @@ class MainMenuWindow(bui.MainWindow):
 
         btn = bui.buttonwidget(
             parent=self._root_widget,
+            id='howtoplay',
             position=(h, v),
             autoselect=self._use_autoselect,
             size=(side_button_2_width, side_button_2_height * 2.0),

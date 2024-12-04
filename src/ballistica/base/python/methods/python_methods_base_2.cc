@@ -434,15 +434,15 @@ static auto PySafeColor(PyObject* self, PyObject* args, PyObject* keywds)
   PythonRef red_obj(PySequence_GetItem(color_obj, 0), PythonRef::kSteal);
   PythonRef green_obj(PySequence_GetItem(color_obj, 1), PythonRef::kSteal);
   PythonRef blue_obj(PySequence_GetItem(color_obj, 2), PythonRef::kSteal);
-  red = Python::GetPyFloat(red_obj.Get());
-  green = Python::GetPyFloat(green_obj.Get());
-  blue = Python::GetPyFloat(blue_obj.Get());
+  red = Python::GetPyFloat(red_obj.get());
+  green = Python::GetPyFloat(green_obj.get());
+  blue = Python::GetPyFloat(blue_obj.get());
   Graphics::GetSafeColor(&red, &green, &blue, target_intensity);
   if (len == 3) {
     return Py_BuildValue("(fff)", red, green, blue);
   } else {
     PythonRef alpha_obj(PySequence_GetItem(color_obj, 3), PythonRef::kSteal);
-    float alpha = Python::GetPyFloat(alpha_obj.Get());
+    float alpha = Python::GetPyFloat(alpha_obj.get());
     return Py_BuildValue("(ffff)", red, green, blue, alpha);
   }
   BA_PYTHON_CATCH;

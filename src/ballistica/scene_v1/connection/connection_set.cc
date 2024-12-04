@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_writer.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/scene_v1/connection/connection_to_client_udp.h"
@@ -23,7 +24,7 @@ namespace ballistica::scene_v1 {
 ConnectionSet::ConnectionSet() = default;
 
 auto ConnectionSet::GetConnectionToHostUDP() -> ConnectionToHostUDP* {
-  ConnectionToHost* h = connection_to_host_.Get();
+  ConnectionToHost* h = connection_to_host_.get();
   return h ? h->GetAsUDP() : nullptr;
 }
 
@@ -35,7 +36,7 @@ void ConnectionSet::RegisterClientController(ClientControllerInterface* c) {
                 "RegisterClientController() called "
                 "but already have a controller; bad.");
     for (auto&& i : connections_to_clients_) {
-      assert(i.second.Exists());
+      assert(i.second.exists());
       i.second->SetController(nullptr);
     }
   }
@@ -44,7 +45,7 @@ void ConnectionSet::RegisterClientController(ClientControllerInterface* c) {
   client_controller_ = c;
   if (client_controller_) {
     for (auto&& i : connections_to_clients_) {
-      assert(i.second.Exists());
+      assert(i.second.exists());
       if (i.second->can_communicate()) {
         i.second->SetController(client_controller_);
       }
@@ -59,10 +60,10 @@ void ConnectionSet::Update() {
     i.second->Update();
 
     // Make sure the connection didn't kill itself in the update.
-    assert(test_ref.Exists());
+    assert(test_ref.exists());
   }
 
-  if (connection_to_host_.Exists()) {
+  if (connection_to_host_.exists()) {
     connection_to_host_->Update();
   }
 }
@@ -71,7 +72,7 @@ auto ConnectionSet::GetConnectedClientCount() const -> int {
   assert(g_base->InLogicThread());
   int count = 0;
   for (auto&& i : connections_to_clients_) {
-    if (i.second.Exists() && i.second->can_communicate()) {
+    if (i.second.exists() && i.second->can_communicate()) {
       count++;
     }
   }
@@ -211,8 +212,8 @@ auto ConnectionSet::GetConnectionsToClients()
   std::vector<ConnectionToClient*> connections;
   connections.reserve(connections_to_clients_.size());
   for (auto& connections_to_client : connections_to_clients_) {
-    if (connections_to_client.second.Exists()) {
-      connections.push_back(connections_to_client.second.Get());
+    if (connections_to_client.second.exists()) {
+      connections.push_back(connections_to_client.second.get());
     } else {
       g_core->Log(LogName::kBaNetworking, LogLevel::kError,
                   "HAVE NONEXISTENT CONNECTION_TO_CLIENT IN LIST; UNEXPECTED");
@@ -227,7 +228,7 @@ void ConnectionSet::Shutdown() {
   for (auto& connection : connections_to_clients_) {
     connection.second->RequestDisconnect();
   }
-  if (connection_to_host_.Exists()) {
+  if (connection_to_host_.exists()) {
     connection_to_host_->RequestDisconnect();
   }
 }
@@ -235,7 +236,7 @@ void ConnectionSet::Shutdown() {
 void ConnectionSet::SendScreenMessageToClients(const std::string& s, float r,
                                                float g, float b) {
   for (auto&& i : connections_to_clients_) {
-    if (i.second.Exists() && i.second->can_communicate()) {
+    if (i.second.exists() && i.second->can_communicate()) {
       i.second->SendScreenMessage(s, r, g, b);
     }
   }
@@ -245,7 +246,7 @@ void ConnectionSet::SendScreenMessageToSpecificClients(
     const std::string& s, float r, float g, float b,
     const std::vector<int>& clients) {
   for (auto&& i : connections_to_clients_) {
-    if (i.second.Exists() && i.second->can_communicate()) {
+    if (i.second.exists() && i.second->can_communicate()) {
       // Only send if this client is in our list.
       for (auto c : clients) {
         if (c == i.second->id()) {
@@ -273,7 +274,7 @@ void ConnectionSet::SendScreenMessageToAll(const std::string& s, float r,
 
 void ConnectionSet::PrepareForLaunchHostSession() {
   // If for some reason we're still attached to a host, kill the connection.
-  if (connection_to_host_.Exists()) {
+  if (connection_to_host_.exists()) {
     g_core->Log(
         LogName::kBaNetworking, LogLevel::kError,
         "Had host-connection during LaunchHostSession(); shouldn't happen.");
@@ -315,7 +316,7 @@ void ConnectionSet::HandleClientDisconnected(int id) {
 auto ConnectionSet::DisconnectClient(int client_id, int ban_seconds) -> bool {
   assert(g_base->InLogicThread());
 
-  if (connection_to_host_.Exists()) {
+  if (connection_to_host_.exists()) {
     // Kick-votes first appeared in 14248
     if (connection_to_host_->build_number() < 14248) {
       return false;
@@ -362,7 +363,7 @@ void ConnectionSet::PushClientDisconnectedCall(int id) {
 
 void ConnectionSet::PushDisconnectedFromHostCall() {
   g_base->logic->event_loop()->PushCall([this] {
-    if (connection_to_host_.Exists()) {
+    if (connection_to_host_.exists()) {
       bool was_connected = connection_to_host_->can_communicate();
       connection_to_host_.Clear();
       has_connection_to_host_ = false;
@@ -400,7 +401,7 @@ void ConnectionSet::PushHostConnectedUDPCall(const SockAddr& addr,
 
 void ConnectionSet::PushDisconnectFromHostCall() {
   g_base->logic->event_loop()->PushCall([this] {
-    if (connection_to_host_.Exists()) {
+    if (connection_to_host_.exists()) {
       connection_to_host_->RequestDisconnect();
     }
   });
@@ -428,7 +429,7 @@ void ConnectionSet::UnregisterClientController(ClientControllerInterface* c) {
 
 void ConnectionSet::ForceDisconnectClients() {
   for (auto&& i : connections_to_clients_) {
-    if (ConnectionToClient* client = i.second.Get()) {
+    if (ConnectionToClient* client = i.second.get()) {
       client->RequestDisconnect();
     }
   }
@@ -637,7 +638,7 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
           g_base->network_writer->PushSendToCall(
               {BA_PACKET_CLIENT_DENY, request_id}, addr);
 
-        } else if (connection_to_host_.Exists()) {
+        } else if (connection_to_host_.exists()) {
           // If we're connected to someone else, we can't have clients.
           g_base->network_writer->PushSendToCall(
               {BA_PACKET_CLIENT_DENY_ALREADY_IN_PARTY, request_id}, addr);
@@ -655,7 +656,7 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
               }
             }
           }
-          if (!connection_to_client.Exists()) {
+          if (!connection_to_client.exists()) {
             // Create them a client object.
             // Try to find an unused client-id in the range 0-255.
             int client_id = 0;

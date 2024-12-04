@@ -10,7 +10,7 @@ void SpriteComponent::WriteConfig() {
   // if they didn't give us a texture, just use a blank white texture;
   // this is not a common case and easier than forking all our shaders
   // to create non-textured versions.
-  if (!texture_.Exists()) {
+  if (!texture_.exists()) {
     texture_ = g_base->assets->SysTexture(SysTextureID::kWhite);
   }
   if (exponent_ == 1) {

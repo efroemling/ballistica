@@ -264,7 +264,7 @@ void BasePlatform::InvokeStringEditor(PyObject* string_edit_adapter) {
 void BasePlatform::StringEditorApply(const std::string& val) {
   BA_PRECONDITION(HaveStringEditor());
   BA_PRECONDITION(g_base->InLogicThread());
-  BA_PRECONDITION(string_edit_adapter_.Exists());
+  BA_PRECONDITION(string_edit_adapter_.exists());
   auto args = PythonRef::Stolen(Py_BuildValue("(s)", val.c_str()));
   string_edit_adapter_.GetAttr("apply").Call(args);
   string_edit_adapter_.Release();
@@ -274,7 +274,7 @@ void BasePlatform::StringEditorApply(const std::string& val) {
 void BasePlatform::StringEditorCancel() {
   BA_PRECONDITION(HaveStringEditor());
   BA_PRECONDITION(g_base->InLogicThread());
-  BA_PRECONDITION(string_edit_adapter_.Exists());
+  BA_PRECONDITION(string_edit_adapter_.exists());
   string_edit_adapter_.GetAttr("cancel").Call();
   string_edit_adapter_.Release();
 }

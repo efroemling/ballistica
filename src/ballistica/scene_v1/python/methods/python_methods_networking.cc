@@ -539,11 +539,11 @@ static auto PyGetConnectionToHostInfo2(PyObject* self, PyObject* args,
         g_core->python->objs().Get(core::CorePython::ObjID::kEmptyTuple);
     auto keywds = PythonRef::Stolen(Py_BuildValue(
         "{sssisOsO}", "name", hc->party_name().c_str(), "build_number",
-        hc->build_number(), "address", addr_obj.Get(), "port", port_obj.Get()));
+        hc->build_number(), "address", addr_obj.get(), "port", port_obj.get()));
     auto result = g_scene_v1->python->objs()
                       .Get(SceneV1Python::ObjID::kHostInfoClass)
                       .Call(args, keywds);
-    if (!result.Exists()) {
+    if (!result.exists()) {
       throw Exception("Failed to instantiate HostInfo.", PyExcType::kRuntime);
     }
     return result.HandOver();
@@ -650,7 +650,7 @@ static auto PyGetClientPublicDeviceUUID(PyObject* self, PyObject* args,
   }
 
   // Connections should always be valid refs.
-  assert(connection->second.Exists());
+  assert(connection->second.exists());
 
   // Old clients don't assign this; it will be empty.
   if (connection->second->public_device_id().empty()) {

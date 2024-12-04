@@ -5,6 +5,7 @@
 #include <string>
 
 #include "ballistica/base/input/device/input_device.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -110,7 +111,7 @@ auto PythonClassInputDevice::Create(SceneV1InputDeviceDelegate* input_device)
 
 auto PythonClassInputDevice::GetInputDevice() const
     -> SceneV1InputDeviceDelegate* {
-  SceneV1InputDeviceDelegate* input_device = input_device_delegate_->Get();
+  SceneV1InputDeviceDelegate* input_device = input_device_delegate_->get();
   if (!input_device) {
     throw Exception(PyExcType::kInputDeviceNotFound);
   }
@@ -120,7 +121,7 @@ auto PythonClassInputDevice::GetInputDevice() const
 auto PythonClassInputDevice::tp_repr(PythonClassInputDevice* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  SceneV1InputDeviceDelegate* d = self->input_device_delegate_->Get();
+  SceneV1InputDeviceDelegate* d = self->input_device_delegate_->get();
   int input_device_id = d ? d->input_device().index() : -1;
   std::string dname = d ? d->input_device().GetDeviceName() : "invalid device";
   return Py_BuildValue("s",
@@ -131,7 +132,7 @@ auto PythonClassInputDevice::tp_repr(PythonClassInputDevice* self)
 }
 
 auto PythonClassInputDevice::nb_bool(PythonClassInputDevice* self) -> int {
-  return self->input_device_delegate_->Exists();
+  return self->input_device_delegate_->exists();
 }
 
 PyNumberMethods PythonClassInputDevice::as_number_;
@@ -179,7 +180,7 @@ auto PythonClassInputDevice::tp_getattro(PythonClassInputDevice* self,
   assert(PyUnicode_Check(attr));  // NOLINT (signed bitwise ops)
   const char* s = PyUnicode_AsUTF8(attr);
   if (!strcmp(s, "player")) {
-    auto* d = self->input_device_delegate_->Get();
+    auto* d = self->input_device_delegate_->get();
     if (!d) {
       throw Exception(PyExcType::kInputDeviceNotFound);
     }
@@ -189,7 +190,7 @@ auto PythonClassInputDevice::tp_getattro(PythonClassInputDevice* self,
     }
     Py_RETURN_NONE;
   } else if (!strcmp(s, "allows_configuring")) {
-    auto* d = self->input_device_delegate_->Get();
+    auto* d = self->input_device_delegate_->get();
     if (!d) {
       throw Exception(PyExcType::kInputDeviceNotFound);
     }
@@ -199,7 +200,7 @@ auto PythonClassInputDevice::tp_getattro(PythonClassInputDevice* self,
       Py_RETURN_FALSE;
     }
   } else if (!strcmp(s, "allows_configuring_in_system_settings")) {
-    auto* d = self->input_device_delegate_->Get();
+    auto* d = self->input_device_delegate_->get();
     if (!d) {
       throw Exception(PyExcType::kInputDeviceNotFound);
     }
@@ -209,7 +210,7 @@ auto PythonClassInputDevice::tp_getattro(PythonClassInputDevice* self,
       Py_RETURN_FALSE;
     }
   } else if (!strcmp(s, "has_meaningful_button_names")) {
-    auto* d = self->input_device_delegate_->Get();
+    auto* d = self->input_device_delegate_->get();
     if (!d) {
       throw Exception(PyExcType::kInputDeviceNotFound);
     }
@@ -219,38 +220,38 @@ auto PythonClassInputDevice::tp_getattro(PythonClassInputDevice* self,
       Py_RETURN_FALSE;
     }
   } else if (!strcmp(s, "client_id")) {
-    auto* d = self->input_device_delegate_->Get();
+    auto* d = self->input_device_delegate_->get();
     if (!d) {
       throw Exception(PyExcType::kInputDeviceNotFound);
     }
     return PyLong_FromLong(d->GetClientID());
   } else if (!strcmp(s, "name")) {
-    auto* d = self->input_device_delegate_->Get();
+    auto* d = self->input_device_delegate_->get();
     if (!d) {
       throw Exception(PyExcType::kInputDeviceNotFound);
     }
     return PyUnicode_FromString(d->input_device().GetDeviceName().c_str());
   } else if (!strcmp(s, "unique_identifier")) {
-    auto* d = self->input_device_delegate_->Get();
+    auto* d = self->input_device_delegate_->get();
     if (!d) {
       throw Exception(PyExcType::kInputDeviceNotFound);
     }
     return PyUnicode_FromString(
         d->input_device().GetPersistentIdentifier().c_str());
   } else if (!strcmp(s, "id")) {
-    auto* d = self->input_device_delegate_->Get();
+    auto* d = self->input_device_delegate_->get();
     if (!d) {
       throw Exception(PyExcType::kInputDeviceNotFound);
     }
     return PyLong_FromLong(d->input_device().index());
   } else if (!strcmp(s, "instance_number")) {
-    auto* d = self->input_device_delegate_->Get();
+    auto* d = self->input_device_delegate_->get();
     if (!d) {
       throw Exception(PyExcType::kInputDeviceNotFound);
     }
     return PyLong_FromLong(d->input_device().device_number());
   } else if (!strcmp(s, "is_controller_app")) {
-    auto* d = self->input_device_delegate_->Get();
+    auto* d = self->input_device_delegate_->get();
     if (!d) {
       throw Exception(PyExcType::kInputDeviceNotFound);
     }
@@ -260,7 +261,7 @@ auto PythonClassInputDevice::tp_getattro(PythonClassInputDevice* self,
       Py_RETURN_FALSE;
     }
   } else if (!strcmp(s, "is_remote_client")) {
-    auto* delegate = self->input_device_delegate_->Get();
+    auto* delegate = self->input_device_delegate_->get();
     if (!delegate) {
       throw Exception(PyExcType::kInputDeviceNotFound);
     }
@@ -270,7 +271,7 @@ auto PythonClassInputDevice::tp_getattro(PythonClassInputDevice* self,
       Py_RETURN_FALSE;
     }
   } else if (!strcmp(s, "is_test_input")) {
-    auto* delegate = self->input_device_delegate_->Get();
+    auto* delegate = self->input_device_delegate_->get();
     if (!delegate) {
       throw Exception(PyExcType::kInputDeviceNotFound);
     }
@@ -308,7 +309,7 @@ auto PythonClassInputDevice::tp_setattro(PythonClassInputDevice* self,
 auto PythonClassInputDevice::DetachFromPlayer(PythonClassInputDevice* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  SceneV1InputDeviceDelegate* d = self->input_device_delegate_->Get();
+  SceneV1InputDeviceDelegate* d = self->input_device_delegate_->get();
   if (!d) {
     throw Exception(PyExcType::kInputDeviceNotFound);
   }
@@ -320,7 +321,7 @@ auto PythonClassInputDevice::DetachFromPlayer(PythonClassInputDevice* self)
 auto PythonClassInputDevice::GetDefaultPlayerName(PythonClassInputDevice* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  SceneV1InputDeviceDelegate* d = self->input_device_delegate_->Get();
+  SceneV1InputDeviceDelegate* d = self->input_device_delegate_->get();
   if (!d) {
     throw Exception(PyExcType::kInputDeviceNotFound);
   }
@@ -331,7 +332,7 @@ auto PythonClassInputDevice::GetDefaultPlayerName(PythonClassInputDevice* self)
 auto PythonClassInputDevice::GetPlayerProfiles(PythonClassInputDevice* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  SceneV1InputDeviceDelegate* d = self->input_device_delegate_->Get();
+  SceneV1InputDeviceDelegate* d = self->input_device_delegate_->get();
   if (!d) {
     throw Exception(PyExcType::kInputDeviceNotFound);
   }
@@ -354,7 +355,7 @@ auto PythonClassInputDevice::GetV1AccountName(PythonClassInputDevice* self,
                                    const_cast<char**>(kwlist), &full)) {
     return nullptr;
   }
-  SceneV1InputDeviceDelegate* d = self->input_device_delegate_->Get();
+  SceneV1InputDeviceDelegate* d = self->input_device_delegate_->get();
   if (!d) {
     throw Exception(PyExcType::kInputDeviceNotFound);
   }
@@ -367,7 +368,7 @@ auto PythonClassInputDevice::IsAttachedToPlayer(PythonClassInputDevice* self)
     -> PyObject* {
   BA_PYTHON_TRY;
   SceneV1InputDeviceDelegate* input_device =
-      self->input_device_delegate_->Get();
+      self->input_device_delegate_->get();
   if (!input_device) {
     throw Exception(PyExcType::kInputDeviceNotFound);
   }
@@ -381,7 +382,7 @@ auto PythonClassInputDevice::IsAttachedToPlayer(PythonClassInputDevice* self)
 
 auto PythonClassInputDevice::Exists(PythonClassInputDevice* self) -> PyObject* {
   BA_PYTHON_TRY;
-  if (self->input_device_delegate_->Exists()) {
+  if (self->input_device_delegate_->exists()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -400,7 +401,7 @@ auto PythonClassInputDevice::GetAxisName(PythonClassInputDevice* self,
     return nullptr;
   }
   SceneV1InputDeviceDelegate* input_device =
-      self->input_device_delegate_->Get();
+      self->input_device_delegate_->get();
   if (!input_device) {
     throw Exception(PyExcType::kInputDeviceNotFound);
   }
@@ -420,7 +421,7 @@ auto PythonClassInputDevice::GetButtonName(PythonClassInputDevice* self,
                                    const_cast<char**>(kwlist), &id)) {
     return nullptr;
   }
-  SceneV1InputDeviceDelegate* d = self->input_device_delegate_->Get();
+  SceneV1InputDeviceDelegate* d = self->input_device_delegate_->get();
   if (!d) {
     throw Exception(PyExcType::kInputDeviceNotFound);
   }
@@ -437,7 +438,7 @@ auto PythonClassInputDevice::GetButtonName(PythonClassInputDevice* self,
   PythonRef results = g_base->python->objs()
                           .Get(base::BasePython::ObjID::kLstrFromJsonCall)
                           .Call(args2);
-  if (!results.Exists()) {
+  if (!results.exists()) {
     g_core->Log(LogName::kBa, LogLevel::kError,
                 "Error creating Lstr from raw button name: '" + bname + "'");
     PythonRef args3(Py_BuildValue("(s)", "?"), PythonRef::kSteal);
@@ -445,7 +446,7 @@ auto PythonClassInputDevice::GetButtonName(PythonClassInputDevice* self,
                   .Get(base::BasePython::ObjID::kLstrFromJsonCall)
                   .Call(args3);
   }
-  if (!results.Exists()) {
+  if (!results.exists()) {
     throw Exception("Internal error creating Lstr.");
   }
   return results.NewRef();

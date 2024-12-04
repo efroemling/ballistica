@@ -6,9 +6,8 @@
 #include <vector>
 
 #include "ballistica/base/assets/texture_asset.h"
-#include "ballistica/base/graphics/mesh/mesh.h"
+#include "ballistica/base/graphics/mesh/mesh_data.h"
 #include "ballistica/base/graphics/support/frame_def.h"
-#include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/math/matrix44f.h"
 
 namespace ballistica::base {
@@ -269,8 +268,8 @@ class RenderCommandBuffer {
   }
 
   void PutTexture(const Object::Ref<TextureAsset>& texture) {
-    assert(texture.Exists());
-    PutTexture(texture.Get());
+    assert(texture.exists());
+    PutTexture(texture.get());
   }
 
   void PutCubeMapTexture(TextureAsset* texture) {

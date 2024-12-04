@@ -259,7 +259,7 @@ auto Dynamics::GetCollision(Part* p1_in, Part* p2_in, MaterialContext** cc1,
   // If it didnt exist, go ahead and set up the collision.
   if (i.second) {
     i.first->second = Object::New<Collision>(scene_);
-    new_collision = i.first->second.Get();
+    new_collision = i.first->second.get();
   } else {
     new_collision = nullptr;
   }
@@ -333,8 +333,8 @@ void Dynamics::Impl_::HandleDisconnect(
     // Add the contexts' disconnect commands to be executed.
     for (auto m = l->second->src_context.disconnect_actions.begin();
          m != l->second->src_context.disconnect_actions.end(); m++) {
-      Part* src_part = l->second->src_part.Get();
-      Part* dst_part = l->second->dst_part.Get();
+      Part* src_part = l->second->src_part.get();
+      Part* dst_part = l->second->dst_part.get();
       dynamics_->collision_events_.emplace_back(
           src_part ? src_part->node() : nullptr,
           dst_part ? dst_part->node() : nullptr, *m, l->second);
@@ -342,8 +342,8 @@ void Dynamics::Impl_::HandleDisconnect(
 
     for (auto m = l->second->dst_context.disconnect_actions.begin();
          m != l->second->dst_context.disconnect_actions.end(); m++) {
-      Part* src_part = l->second->src_part.Get();
-      Part* dst_part = l->second->dst_part.Get();
+      Part* src_part = l->second->src_part.get();
+      Part* dst_part = l->second->dst_part.get();
       dynamics_->collision_events_.emplace_back(
           dst_part ? dst_part->node() : nullptr,
           src_part ? src_part->node() : nullptr, *m, l->second);
@@ -353,14 +353,14 @@ void Dynamics::Impl_::HandleDisconnect(
     // tell them they're no longer colliding with the other.
     bool physical =
         l->second->src_context.physical && l->second->dst_context.physical;
-    Part* p1 = l->second->dst_part.Get();
-    Part* p2 = l->second->src_part.Get();
+    Part* p1 = l->second->dst_part.get();
+    Part* p2 = l->second->src_part.get();
     if (p1) {
-      assert(p1 == l->second->dst_part.Get());
+      assert(p1 == l->second->dst_part.get());
       p1->SetCollidingWith(i->first, k->first, false, physical);  // NOLINT
     }
     if (p2) {
-      assert(p2 == l->second->src_part.Get());
+      assert(p2 == l->second->src_part.get());
     }
     if (p2 && (p2 != p1)) {
       p2->SetCollidingWith(j->first, l->first, false, physical);  // NOLINT
@@ -502,10 +502,10 @@ void Dynamics::ProcessCollision_() {
 
   // Execute all events that we built up due to collisions.
   for (auto&& i : collision_events_) {
-    active_collision_ = i.collision.Get();
+    active_collision_ = i.collision.get();
     active_collide_src_node_ = i.node1;
     active_collide_dst_node_ = i.node2;
-    i.action->Execute(i.node1.Get(), i.node2.Get(), scene_);
+    i.action->Execute(i.node1.get(), i.node2.get(), scene_);
   }
   active_collision_ = nullptr;
   collision_events_.clear();
@@ -874,7 +874,7 @@ void Dynamics::CollideCallback_(dGeomID o1, dGeomID o2) {
                                    : 1.0f;
 
                 if (volume > 1) volume = 1;
-                assert(i.sound.Exists());
+                assert(i.sound.exists());
                 if (base::AudioSource* source =
                         g_base->audio->SourceBeginNew()) {
                   source->SetGain(volume * i.volume);
@@ -918,7 +918,7 @@ void Dynamics::CollideCallback_(dGeomID o1, dGeomID o2) {
                   }
                 } else if (real_time - p1->last_skid_sound_time() >= 250
                            || real_time - p2->last_skid_sound_time() > 250) {
-                  assert(i.sound.Exists());
+                  assert(i.sound.exists());
                   if (base::AudioSource* source =
                           g_base->audio->SourceBeginNew()) {
                     source->SetLooping(true);
@@ -970,7 +970,7 @@ void Dynamics::CollideCallback_(dGeomID o1, dGeomID o2) {
                   }
                 } else if (real_time - p1->last_roll_sound_time() >= 250
                            || real_time - p2->last_roll_sound_time() > 250) {
-                  assert(i.sound.Exists());
+                  assert(i.sound.exists());
                   if (base::AudioSource* source =
                           g_base->audio->SourceBeginNew()) {
                     source->SetLooping(true);
@@ -1017,7 +1017,7 @@ void Dynamics::CollideCallback_(dGeomID o1, dGeomID o2) {
 
     if (play_collide_sounds) {
       for (auto&& i : cc1->connect_sounds) {
-        assert(i.sound.Exists());
+        assert(i.sound.exists());
         if (base::AudioSource* source = g_base->audio->SourceBeginNew()) {
           source->SetPosition(apx, apy, apz);
           source->SetGain(i.volume);
@@ -1026,7 +1026,7 @@ void Dynamics::CollideCallback_(dGeomID o1, dGeomID o2) {
         }
       }
       for (auto&& i : cc2->connect_sounds) {
-        assert(i.sound.Exists());
+        assert(i.sound.exists());
         if (base::AudioSource* source = g_base->audio->SourceBeginNew()) {
           source->SetPosition(apx, apy, apz);
           source->SetGain(i.volume);

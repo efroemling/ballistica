@@ -144,7 +144,7 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
   // Ask baenv for the config we should use.
   auto envcfg =
       python->objs().Get(core::CorePython::ObjID::kBaEnvGetConfigCall).Call();
-  BA_PRECONDITION_FATAL(envcfg.Exists());
+  BA_PRECONDITION_FATAL(envcfg.exists());
 
   assert(!have_ba_env_vals_);
   have_ba_env_vals_ = true;

@@ -243,10 +243,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         window_weakref = weakref.ref(window)
         window_widget = window.get_root_widget()
 
-        if isinstance(from_window, MainWindow):
-            # from_window_widget = from_window.get_root_widget()
-            pass
-        else:
+        if not isinstance(from_window, MainWindow):
             if from_window is not None and not isinstance(from_window, bool):
                 raise RuntimeError(
                     f'set_main_window() now takes a MainWindow or bool or None'
@@ -267,6 +264,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                     'Provided back_state is incomplete.'
                     ' Make sure to only pass fully-filled-out MainWindowStates.'
                 )
+
         # If a top-level main-window is being set, complain if there already
         # is a main-window.
         if is_top_level:
@@ -278,8 +276,8 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                     existing,
                 )
         else:
-            # In other cases, sanity-check that the window ordering this
-            # switch is the one we're switching away from.
+            # In other cases, sanity-check that the window asking for
+            # this switch is the one we're switching away from.
             try:
                 if isinstance(from_window, bool):
                     # For default val True we warn that the arg wasn't
@@ -391,7 +389,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
     def save_main_window_state(self, window: MainWindow) -> MainWindowState:
         """Fully initialize a window-state from a window.
 
-        Use this to get a state for later restoration purposes.
+        Use this to get a complete state for later restoration purposes.
         Calling the window's get_main_window_state() directly is
         insufficient.
         """

@@ -6,9 +6,9 @@ mypy==1.13.0
 pbxproj==4.2.1
 pdoc==15.0.0
 pur==7.3.2
-pylint==3.3.1
+pylint==3.3.2
 pylsp-mypy==0.6.9
-pytest==8.3.3
+pytest==8.3.4
 python-daemon==3.1.0
 python-lsp-black==2.0.0
 python-lsp-server==1.12.0

@@ -330,7 +330,7 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           claimed = true;
         }
       }
-      if (!claimed && start_button_.Exists()) {
+      if (!claimed && start_button_.exists()) {
         claimed = true;
         start_button_->Activate();
       }
@@ -344,10 +344,10 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         }
       }
       if (!claimed) {
-        if (cancel_button_.Exists()) {
+        if (cancel_button_.exists()) {
           claimed = true;
           cancel_button_->Activate();
-        } else if (auto* call = on_cancel_call_.Get()) {
+        } else if (auto* call = on_cancel_call_.get()) {
           claimed = true;
 
           // Schedule this to run immediately after any current UI
@@ -630,7 +630,7 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         }
 
         // Call our outside-click callback if unclaimed.
-        if (!claimed && on_outside_click_call_.Exists()) {
+        if (!claimed && on_outside_click_call_.exists()) {
           // Schedule this to run immediately after any current UI traversal.
           on_outside_click_call_->ScheduleInUIOperation();
         }
@@ -822,7 +822,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             // the draw loop, but we can push a call to do it.
             Object::WeakRef<Widget> weakref(this);
             g_base->logic->event_loop()->PushCall([weakref] {
-              Widget* w = weakref.Get();
+              Widget* w = weakref.get();
               if (w) {
                 g_ui_v1->DeleteWidget(w);
               }
@@ -879,7 +879,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                   // draw loop, but we can set up an event to do it.
                   Object::WeakRef<Widget> weakref(this);
                   g_base->logic->event_loop()->PushCall([weakref] {
-                    Widget* w = weakref.Get();
+                    Widget* w = weakref.get();
                     if (w) {
                       g_ui_v1->DeleteWidget(w);
                     }
@@ -989,7 +989,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         s = std::min((1.0f - amt) * 4.0f, 2.5f) + amt * 1.0f;
       }
       c.SetColor(red_ * s, green_ * s, blue_ * s, alpha_);
-      c.SetTexture(tex_.Get());
+      c.SetTexture(tex_.get());
       {
         auto xf = c.ScopedTransform();
         c.Translate(bg_center_x_, bg_center_y_);
@@ -1069,7 +1069,7 @@ void ContainerWidget::TransformPointFromChild(float* x, float* y,
 void ContainerWidget::Activate() {
   last_activate_time_millisecs_ =
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
-  if (auto* call = on_activate_call_.Get()) {
+  if (auto* call = on_activate_call_.get()) {
     // Schedule this to run immediately after any current UI traversal.
     call->ScheduleInUIOperation();
   }
@@ -1111,7 +1111,7 @@ void ContainerWidget::AddWidget(Widget* w) {
   }
 
   // Select actions we run above may trigger user code which may kill us.
-  if (!weakthis.Exists()) {
+  if (!weakthis.exists()) {
     return;
   }
 
@@ -1134,7 +1134,7 @@ void ContainerWidget::SetCancelButton(ButtonWidget* button) {
   assert(button);
 
   if (!button->is_color_set()) {
-    button->SetColor(0.7f, 0.4f, 0.34f);
+    button->set_color(0.7f, 0.4f, 0.34f);
     button->set_text_color(0.9f, 0.9f, 1.0f, 1.0f);
   }
   cancel_button_ = button;
@@ -1149,7 +1149,7 @@ void ContainerWidget::SetCancelButton(ButtonWidget* button) {
 void ContainerWidget::SetStartButton(ButtonWidget* button) {
   assert(button);
   if (!button->is_color_set()) {
-    button->SetColor(0.2f, 0.8f, 0.55f);
+    button->set_color(0.2f, 0.8f, 0.55f);
   }
   start_button_ = button;
 
@@ -1397,7 +1397,7 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
   if (w == nullptr) {
     if (selected_widget_) {
       prev_selected_widget_ = selected_widget_;
-      selected_widget_->SetSelected(false, SelectionCause::NONE);
+      selected_widget_->SetSelected(false, SelectionCause::kNone);
       selected_widget_ = nullptr;
     }
   } else {
@@ -1408,16 +1408,16 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
       return;
     }
     for (auto& widget : widgets_) {
-      if (&(*widget) == w) {
+      if (widget.get() == w) {
         Widget* prev_selected_widget = selected_widget_;
 
         // Deactivate old selected widget.
         if (selected_widget_) {
-          selected_widget_->SetSelected(false, SelectionCause::NONE);
+          selected_widget_->SetSelected(false, SelectionCause::kNone);
           selected_widget_ = nullptr;
         }
-        if ((*widget).IsSelectable()) {
-          (*widget).SetSelected(true, c);
+        if (widget->IsSelectable()) {
+          widget->SetSelected(true, c);
           selected_widget_ = &(*widget);
 
           // Store the old one as prev-selected if its not the one we're
@@ -1451,7 +1451,7 @@ void ContainerWidget::SetSelected(bool s, SelectionCause cause) {
   // next/prev snaps our sub-selection to our first or last widget.
   if (s) {
     if (selection_loops_to_parent()) {
-      if (cause == SelectionCause::NEXT_SELECTED) {
+      if (cause == SelectionCause::kNextSelected) {
         for (auto& widget : widgets_) {
           if ((*widget).IsSelectable()) {
             ShowWidget(&(*widget));
@@ -1459,7 +1459,7 @@ void ContainerWidget::SetSelected(bool s, SelectionCause cause) {
             break;
           }
         }
-      } else if (cause == SelectionCause::PREV_SELECTED) {
+      } else if (cause == SelectionCause::kPrevSelected) {
         for (auto i = widgets_.rbegin(); i != widgets_.rend(); i++) {
           if ((**i).IsSelectable()) {
             ShowWidget(&(**i));
@@ -1482,14 +1482,14 @@ auto ContainerWidget::GetClosestLeftWidget(float our_x, float our_y,
   float x, y;
   float closest_val = 9999.0f;
   for (auto i = widgets_.begin(); i != widgets_.end(); i++) {
-    assert(i->Exists());
+    assert(i->exists());
     (**i).GetCenter(&x, &y);
     float slope = std::abs(x - our_x) / (std::max(0.001f, std::abs(y - our_y)));
     slope = std::min(
         slope, AUTO_SELECT_SLOPE_CLAMP);  // Beyond this, just go by distance.
     float slope_weighted = AUTO_SELECT_SLOPE_WEIGHT * slope
                            + (1.0f - AUTO_SELECT_SLOPE_WEIGHT) * 1.0f;
-    if (i->Get() != ignore_widget && x < our_x && slope > AUTO_SELECT_MIN_SLOPE
+    if (i->get() != ignore_widget && x < our_x && slope > AUTO_SELECT_MIN_SLOPE
         && (**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
       // Take distance diff and multiply by our slope.
       float xdist = x - our_x;
@@ -1499,7 +1499,7 @@ auto ContainerWidget::GetClosestLeftWidget(float our_x, float our_y,
           dist / std::max(0.001f, slope_weighted + AUTO_SELECT_SLOPE_OFFSET);
       if (val < closest_val || w == nullptr) {
         closest_val = val;
-        w = i->Get();
+        w = i->get();
       }
     }
   }
@@ -1512,14 +1512,14 @@ auto ContainerWidget::GetClosestRightWidget(float our_x, float our_y,
   float x, y;
   float closest_val = 9999.0f;
   for (auto i = widgets_.begin(); i != widgets_.end(); i++) {
-    assert(i->Exists());
+    assert(i->exists());
     (**i).GetCenter(&x, &y);
     float slope = std::abs(x - our_x) / (std::max(0.001f, std::abs(y - our_y)));
     slope = std::min(
         slope, AUTO_SELECT_SLOPE_CLAMP);  // beyond this, just go by distance
     float slopeWeighted = AUTO_SELECT_SLOPE_WEIGHT * slope
                           + (1.0f - AUTO_SELECT_SLOPE_WEIGHT) * 1.0f;
-    if (i->Get() != ignore_widget && x > our_x && slope > AUTO_SELECT_MIN_SLOPE
+    if (i->get() != ignore_widget && x > our_x && slope > AUTO_SELECT_MIN_SLOPE
         && (**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
       // Take distance diff and multiply by our slope.
       float xDist = x - our_x;
@@ -1529,7 +1529,7 @@ auto ContainerWidget::GetClosestRightWidget(float our_x, float our_y,
           dist / std::max(0.001f, slopeWeighted + AUTO_SELECT_SLOPE_OFFSET);
       if (val < closest_val || w == nullptr) {
         closest_val = val;
-        w = i->Get();
+        w = i->get();
       }
     }
   }
@@ -1542,14 +1542,14 @@ auto ContainerWidget::GetClosestUpWidget(float our_x, float our_y,
   float x, y;
   float closest_val = 9999.0f;
   for (auto i = widgets_.begin(); i != widgets_.end(); i++) {
-    assert(i->Exists());
+    assert(i->exists());
     (**i).GetCenter(&x, &y);
     float slope = std::abs(y - our_y) / (std::max(0.001f, std::abs(x - our_x)));
     slope = std::min(
         slope, AUTO_SELECT_SLOPE_CLAMP);  // Beyond this, just go by distance.
     float slopeWeighted = AUTO_SELECT_SLOPE_WEIGHT * slope
                           + (1.0f - AUTO_SELECT_SLOPE_WEIGHT) * 1.0f;
-    if (i->Get() != ignoreWidget && y > our_y && slope > AUTO_SELECT_MIN_SLOPE
+    if (i->get() != ignoreWidget && y > our_y && slope > AUTO_SELECT_MIN_SLOPE
         && (**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
       // Take distance diff and multiply by our slope.
       float xDist = x - our_x;
@@ -1559,7 +1559,7 @@ auto ContainerWidget::GetClosestUpWidget(float our_x, float our_y,
           dist / std::max(0.001f, slopeWeighted + AUTO_SELECT_SLOPE_OFFSET);
       if (val < closest_val || w == nullptr) {
         closest_val = val;
-        w = i->Get();
+        w = i->get();
       }
     }
   }
@@ -1572,14 +1572,14 @@ auto ContainerWidget::GetClosestDownWidget(float our_x, float our_y,
   float x, y;
   float closest_val = 9999.0f;
   for (auto i = widgets_.begin(); i != widgets_.end(); i++) {
-    assert(i->Exists());
+    assert(i->exists());
     (**i).GetCenter(&x, &y);
     float slope = std::abs(y - our_y) / (std::max(0.001f, std::abs(x - our_x)));
     slope = std::min(
         slope, AUTO_SELECT_SLOPE_CLAMP);  // Beyond this, just go by distance.
     float slopeWeighted = AUTO_SELECT_SLOPE_WEIGHT * slope
                           + (1.0f - AUTO_SELECT_SLOPE_WEIGHT) * 1.0f;
-    if (i->Get() != ignoreWidget && y < our_y && slope > AUTO_SELECT_MIN_SLOPE
+    if (i->get() != ignoreWidget && y < our_y && slope > AUTO_SELECT_MIN_SLOPE
         && (**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
       // Take distance diff and multiply by our slope.
       float xDist = x - our_x;
@@ -1589,7 +1589,7 @@ auto ContainerWidget::GetClosestDownWidget(float our_x, float our_y,
           dist / std::max(0.001f, slopeWeighted + AUTO_SELECT_SLOPE_OFFSET);
       if (val < closest_val || w == nullptr) {
         closest_val = val;
-        w = i->Get();
+        w = i->get();
       }
     }
   }
@@ -1897,7 +1897,7 @@ void ContainerWidget::SelectNextWidget() {
       return;
     }
     if ((**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
-      SelectWidget(&(**i), SelectionCause::NEXT_SELECTED);
+      SelectWidget(&(**i), SelectionCause::kNextSelected);
       g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
       return;
     }
@@ -1985,7 +1985,7 @@ void ContainerWidget::SelectPrevWidget() {
     }
 
     if ((**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
-      SelectWidget(&(**i), SelectionCause::PREV_SELECTED);
+      SelectWidget(&(**i), SelectionCause::kPrevSelected);
       g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
       return;
     }
@@ -1995,7 +1995,7 @@ void ContainerWidget::SelectPrevWidget() {
 
 auto ContainerWidget::HasKeySelectableChild() const -> bool {
   for (auto i = widgets_.begin(); i != widgets_.end(); i++) {
-    assert(i->Exists());
+    assert(i->exists());
     if ((**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
       return true;
     }
@@ -2025,7 +2025,7 @@ void ContainerWidget::MarkForUpdate() {
 
 void ContainerWidget::OnLanguageChange() {
   for (auto&& widget : widgets_) {
-    if (widget.Exists()) {
+    if (widget.exists()) {
       widget->OnLanguageChange();
     }
   }

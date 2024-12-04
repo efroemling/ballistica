@@ -252,7 +252,7 @@ auto PythonClassEnv::Dir(PythonClassEnv* self) -> PyObject* {
   for (auto&& env : *g_entries_) {
     PyList_Append(dir_list, PythonRef(PyUnicode_FromString(env.first.c_str()),
                                       PythonRef::kSteal)
-                                .Get());
+                                .get());
   }
   PyList_Sort(dir_list);
   return dir_list;

@@ -3,8 +3,8 @@
 #ifndef BALLISTICA_SCENE_V1_DYNAMICS_MATERIAL_MATERIAL_CONDITION_NODE_H_
 #define BALLISTICA_SCENE_V1_DYNAMICS_MATERIAL_MATERIAL_CONDITION_NODE_H_
 
+#include "ballistica/scene_v1/dynamics/material/material.h"
 #include "ballistica/scene_v1/scene_v1.h"
-#include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::scene_v1 {

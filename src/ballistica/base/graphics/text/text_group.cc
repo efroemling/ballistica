@@ -108,16 +108,16 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
       }
 
       entry->mesh.SetText(text, alignment_h, alignment_v, false, min, max,
-                          entry->type, packer.Get());
+                          entry->type, packer.get());
 
-      if (packer.Exists()) {
+      if (packer.exists()) {
         // If we made a text-packer, we need to fetch/generate a texture
         // that matches it.
         // There should only ever be one of these.
-        assert(!os_texture_.Exists());
+        assert(!os_texture_.exists());
         {
           Assets::AssetListLock lock;
-          os_texture_ = g_base->assets->GetTexture(packer.Get());
+          os_texture_ = g_base->assets->GetTexture(packer.get());
         }
 
         // We also need to know what uv-scales to use for shadows/etc.

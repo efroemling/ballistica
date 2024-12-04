@@ -11,7 +11,7 @@
 
 namespace ballistica::ui_v1 {
 
-// widget for drawing static text as well as text input
+/// Widget for drawing static text as well as text input.
 class TextWidget : public Widget {
  public:
   TextWidget();
@@ -28,18 +28,8 @@ class TextWidget : public Widget {
   auto IsSelectable() -> bool override {
     return (enabled_ && (editable_ || selectable_));
   }
-  void set_halign(HAlign a) {
-    if (alignment_h_ != a) {
-      text_group_dirty_ = true;
-    }
-    alignment_h_ = a;
-  }
-  void set_valign(VAlign a) {
-    if (alignment_v_ != a) {
-      text_group_dirty_ = true;
-    }
-    alignment_v_ = a;
-  }
+  void SetHAlign(HAlign a);
+  void SetVAlign(VAlign a);
   void set_max_width(float m) { max_width_ = m; }
   void set_max_height(float m) { max_height_ = m; }
   void set_rotate(float val) { rotate_ = val; }
@@ -60,8 +50,8 @@ class TextWidget : public Widget {
   auto always_show_carat() const -> bool { return always_show_carat_; }
   void set_always_show_carat(bool val) { always_show_carat_ = val; }
   void set_click_activate(bool enabled) { click_activate_ = enabled; }
-  void set_on_return_press_call(PyObject* call_tuple);
-  void set_on_activate_call(PyObject* call_tuple);
+  void SetOnReturnPressCall(PyObject* call_tuple);
+  void SetOnActivateCall(PyObject* call_tuple);
   void set_center_scale(float val) { center_scale_ = val; }
   auto editable() const -> bool { return editable_; }
   void Activate() override;
@@ -89,13 +79,7 @@ class TextWidget : public Widget {
   void set_extra_touch_border_scale(float scale) {
     extra_touch_border_scale_ = scale;
   }
-  void set_glow_type(GlowType glow_type) {
-    if (glow_type == glow_type_) {
-      return;
-    }
-    glow_type_ = glow_type;
-    highlight_dirty_ = true;
-  }
+  void SetGlowType(GlowType glow_type);
 
  private:
   auto ScaleAdjustedX_(float x) -> float;

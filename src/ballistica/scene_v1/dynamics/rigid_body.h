@@ -10,8 +10,8 @@
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/math/matrix44f.h"
-#include "ode/ode.h"
 #include "ode/ode_joint.h"
+#include "ode/ode_objects.h"
 
 namespace ballistica::scene_v1 {
 
@@ -93,8 +93,8 @@ class RigidBody : public Object {
   // Draw a representation of the rigid body for debugging.
   void Draw(base::RenderPass* pass, bool shaded = true);
   auto part() const -> Part* {
-    assert(part_.Exists());
-    return part_.Get();
+    assert(part_.exists());
+    return part_.get();
   }
   void Wake() {
     if (body_) {

@@ -11,6 +11,7 @@
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/frame_def.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_writer.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/support/app_config.h"
@@ -155,6 +156,7 @@ void ClassicAppMode::Reset_() {
       root_widget->SetAchievementPercentText(root_ui_achievement_percent_text_);
       root_widget->SetLevelText(root_ui_level_text_);
       root_widget->SetXPText(root_ui_xp_text_);
+      root_widget->SetInboxCountText(root_ui_inbox_count_text_);
     }
   }
 
@@ -490,7 +492,7 @@ auto ClassicAppMode::GetPartySize() const -> int {
 auto ClassicAppMode::GetHeadlessNextDisplayTimeStep() -> microsecs_t {
   std::optional<microsecs_t> min_time_to_next;
   for (auto&& i : sessions_) {
-    if (!i.Exists()) {
+    if (!i.exists()) {
       continue;
     }
     auto this_time_to_next = i->TimeToNextEvent();
@@ -566,7 +568,7 @@ void ClassicAppMode::StepDisplayTime() {
 
   // Update all of our sessions.
   for (auto&& i : sessions_) {
-    if (!i.Exists()) {
+    if (!i.exists()) {
       continue;
     }
     // Pass our old int milliseconds time vals for legacy purposes
@@ -710,7 +712,7 @@ void ClassicAppMode::UpdateGameRoster() {
                 client_delegate->connection_to_client();
 
             // Add some basic info for each remote player.
-            if (ctc != nullptr && ctc == i.second.Get()) {
+            if (ctc != nullptr && ctc == i.second.get()) {
               cJSON* player_dict = cJSON_CreateObject();
               cJSON_AddItemToObject(player_dict, "n",
                                     cJSON_CreateString(p->GetName().c_str()));
@@ -747,8 +749,8 @@ void ClassicAppMode::UpdateKickVote_() {
   if (!kick_vote_in_progress_) {
     return;
   }
-  scene_v1::ConnectionToClient* kick_vote_starter = kick_vote_starter_.Get();
-  scene_v1::ConnectionToClient* kick_vote_target = kick_vote_target_.Get();
+  scene_v1::ConnectionToClient* kick_vote_starter = kick_vote_starter_.get();
+  scene_v1::ConnectionToClient* kick_vote_target = kick_vote_target_.get();
 
   // If the target is no longer with us, silently end.
   if (kick_vote_target == nullptr) {
@@ -950,7 +952,7 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
 
 void ClassicAppMode::SetForegroundScene(scene_v1::Scene* sg) {
   assert(g_base->InLogicThread());
-  if (foreground_scene_.Get() != sg) {
+  if (foreground_scene_.get() != sg) {
     foreground_scene_ = sg;
 
     // If this scene has a globals-node, put it in charge of stuff.
@@ -987,7 +989,7 @@ auto ClassicAppMode::GetNetworkDebugString() -> std::string {
   } else {
     int connected_count = 0;
     for (auto&& i : connections()->connections_to_clients()) {
-      scene_v1::ConnectionToClient* client = i.second.Get();
+      scene_v1::ConnectionToClient* client = i.second.get();
       if (client->can_communicate()) {
         show = true;
         connected_count += 1;
@@ -1071,7 +1073,7 @@ void ClassicAppMode::LaunchHostSession(PyObject* session_type_obj,
   } catch (const std::exception& e) {
     // If it failed, restore the previous session context and re-throw the
     // exception.
-    SetForegroundSession(old_foreground_session.Get());
+    SetForegroundSession(old_foreground_session.get());
     throw Exception(std::string("HostSession failed: ") + e.what());
   }
 }
@@ -1103,7 +1105,7 @@ void ClassicAppMode::LaunchReplaySession(const std::string& file_name) {
   } catch (const std::exception& e) {
     // If it failed, restore the previous current session and re-throw the
     // exception.
-    SetForegroundSession(old_foreground_session.Get());
+    SetForegroundSession(old_foreground_session.get());
     throw Exception(std::string("HostSession failed: ") + e.what());
   }
 }
@@ -1133,7 +1135,7 @@ void ClassicAppMode::LaunchClientSession() {
     assert(foreground_session_ == s);
   } catch (const std::exception& e) {
     // If it failed, restore the previous current session and re-throw.
-    SetForegroundSession(old_foreground_session.Get());
+    SetForegroundSession(old_foreground_session.get());
     throw Exception(std::string("HostSession failed: ") + e.what());
   }
 }
@@ -1223,7 +1225,7 @@ void ClassicAppMode::LocalDisplayChatMessage(
 void ClassicAppMode::DoApplyAppConfig() {
   // Kick-idle-players setting (hmm is this still relevant?).
   auto* host_session =
-      dynamic_cast<scene_v1::HostSession*>(foreground_session_.Get());
+      dynamic_cast<scene_v1::HostSession*>(foreground_session_.get());
   kick_idle_players_ =
       g_base->app_config->Resolve(base::AppConfig::BoolID::kKickIdlePlayers);
   if (host_session) {
@@ -1240,9 +1242,9 @@ void ClassicAppMode::DoApplyAppConfig() {
 void ClassicAppMode::PruneSessions_() {
   bool have_dead_session = false;
   for (auto&& i : sessions_) {
-    if (i.Exists()) {
+    if (i.exists()) {
       // If this session is no longer foreground and is ready to die, kill it.
-      if (i.Exists() && i.Get() != foreground_session_.Get()) {
+      if (i.exists() && i.get() != foreground_session_.get()) {
         try {
           i.Clear();
         } catch (const std::exception& e) {
@@ -1258,7 +1260,7 @@ void ClassicAppMode::PruneSessions_() {
   if (have_dead_session) {
     std::vector<Object::Ref<scene_v1::Session> > live_list;
     for (auto&& i : sessions_) {
-      if (i.Exists()) {
+      if (i.exists()) {
         live_list.push_back(i);
       }
     }
@@ -1538,7 +1540,7 @@ void ClassicAppMode::RunMainMenu() {
       g_scene_v1->python->objs()
           .Get(scene_v1::SceneV1Python::ObjID::kLaunchMainMenuSessionCall)
           .Call();
-  if (!result.Exists()) {
+  if (!result.exists()) {
     throw Exception("Error running scene_v1 main menu.");
   }
 }
@@ -1653,6 +1655,23 @@ void ClassicAppMode::SetRootUIXPText(const std::string text) {
   if (uiv1_) {
     if (auto* root_widget = uiv1_->root_widget()) {
       root_widget->SetXPText(root_ui_xp_text_);
+    }
+  }
+}
+
+void ClassicAppMode::SetRootUIInboxCountText(const std::string text) {
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (text == root_ui_inbox_count_text_) {
+    return;
+  }
+
+  // Store the value.
+  root_ui_inbox_count_text_ = text;
+
+  // Apply it to any existing UI.
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->SetInboxCountText(root_ui_inbox_count_text_);
     }
   }
 }

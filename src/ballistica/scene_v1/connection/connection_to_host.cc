@@ -253,7 +253,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
             g_core->Log(LogName::kBaNetworking, LogLevel::kError,
                         "No profiles found; sending empty list to host");
             empty_dict.Steal(PyDict_New());
-            profiles = empty_dict.Get();
+            profiles = empty_dict.get();
           }
           if (profiles != nullptr) {
             // Dump them to a json string.
@@ -264,7 +264,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
                 g_core->python->objs()
                     .Get(core::CorePython::ObjID::kJsonDumpsCall)
                     .Call(args, keywds);
-            if (!results.Exists()) {
+            if (!results.exists()) {
               g_core->Log(LogName::kBaNetworking, LogLevel::kError,
                           "Error getting json dump of local profiles");
             } else {
@@ -556,7 +556,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
     case BA_MESSAGE_SESSION_RESET:
     case BA_MESSAGE_SESSION_DYNAMICS_CORRECTION: {
       // These commands are consumed directly by the session.
-      if (client_session_.Exists()) {
+      if (client_session_.exists()) {
         client_session_->HandleSessionMessage(buffer);
       }
       break;

@@ -3,7 +3,6 @@
 #include "ballistica/ui_v1/widget/root_widget.h"
 
 #include <algorithm>
-#include <cstdio>
 #include <string>
 
 #include "ballistica/base/app_mode/app_mode.h"
@@ -106,6 +105,7 @@ struct RootWidget::Text {
   Object::Ref<TextWidget> widget;
   float x{};
   float y{};
+  bool visible{true};
 };
 
 struct RootWidget::ImageDef {
@@ -116,6 +116,9 @@ struct RootWidget::ImageDef {
   float height{32.0f};
   float depth_min{};
   float depth_max{1.0f};
+  float color_r{1.0f};
+  float color_g{1.0f};
+  float color_b{1.0f};
   std::string img;
 };
 
@@ -124,6 +127,7 @@ struct RootWidget::Image {
   Object::Ref<ImageWidget> widget;
   float x{};
   float y{};
+  bool visible{true};
 };
 
 RootWidget::RootWidget() {
@@ -287,6 +291,7 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
           break;
       }
     }
+
     // Icon on side.
     {
       ImageDef imgd;
@@ -625,7 +630,42 @@ void RootWidget::Setup() {
     b.pre_buffer = 25.0f;
     b.allow_in_game = false;
     inbox_button_ = AddButton_(b);
+
     bottom_left_buttons_.push_back(inbox_button_);
+
+    // Inbox count circle backing.
+    {
+      ImageDef imgd;
+      imgd.button = inbox_button_;
+      imgd.x = 18.0f;
+      imgd.y = 24.0f;
+      imgd.width = 32.0f;
+      imgd.height = 32.0f;
+      imgd.img = "circle";
+      imgd.depth_min = 0.3f;
+      imgd.color_r = 1.0f;
+      imgd.color_g = 0.0f;
+      imgd.color_b = 0.0f;
+      auto* img = AddImage_(imgd);
+      inbox_count_backing_ = img;
+    }
+    // Inbox count number.
+    {
+      TextDef td;
+      td.button = inbox_button_;
+      td.width = 24.0f;
+      td.text = "2";
+      td.x = 17.0f;
+      td.y = 24.0f;
+      td.scale = 0.8f;
+      td.flatness = 1.0f;
+      td.shadow = 0.0f;
+      td.depth_min = 0.3f;
+      td.color_r = 1.0f;
+      td.color_g = 1.0f;
+      td.color_b = 1.0f;
+      inbox_count_text_ = AddText_(td);
+    }
   }
 
   // Achievements button.
@@ -846,7 +886,7 @@ void RootWidget::Draw(base::RenderPass* pass, bool transparent) {
     millisecs_t time_diff =
         std::min(millisecs_t{100}, current_time - update_time_);
 
-    StepPositions_(static_cast<float>(time_diff));
+    StepChildWidgets_(static_cast<float>(time_diff));
     update_time_ = current_time;
   }
   ContainerWidget::Draw(pass, transparent);
@@ -872,7 +912,7 @@ auto RootWidget::AddButton_(const ButtonDef& def) -> RootWidget::Button* {
   b.allow_in_game = def.allow_in_game;
   b.allow_in_main_menu = def.allow_in_main_menu;
   b.widget = Object::New<ButtonWidget>();
-  b.widget->SetColor(def.color_r, def.color_g, def.color_b);
+  b.widget->set_color(def.color_r, def.color_g, def.color_b);
   b.widget->set_opacity(def.opacity);
   b.widget->set_auto_select(true);
   b.widget->set_text(def.label);
@@ -888,9 +928,9 @@ auto RootWidget::AddButton_(const ButtonDef& def) -> RootWidget::Button* {
   assert(screen_stack_widget_ != nullptr);
   assert(b.v_align != VAlign::kCenter);
   if (b.v_align == VAlign::kTop) {
-    b.widget->set_down_widget(screen_stack_widget_);
+    b.widget->SetDownWidget(screen_stack_widget_);
   } else {
-    b.widget->set_up_widget(screen_stack_widget_);
+    b.widget->SetUpWidget(screen_stack_widget_);
   }
   // We wanna prevent anyone from redirecting these to point to outside
   // widgets since we'll probably outlive those outside widgets.
@@ -898,21 +938,21 @@ auto RootWidget::AddButton_(const ButtonDef& def) -> RootWidget::Button* {
 
   if (!def.img.empty()) {
     base::Assets::AssetListLock lock;
-    b.widget->SetTexture(g_base->assets->GetTexture(def.img).Get());
+    b.widget->SetTexture(g_base->assets->GetTexture(def.img).get());
   }
   if (!def.mesh_transparent.empty()) {
     base::Assets::AssetListLock lock;
     b.widget->SetMeshTransparent(
-        g_base->assets->GetMesh(def.mesh_transparent).Get());
+        g_base->assets->GetMesh(def.mesh_transparent).get());
   }
   if (!def.mesh_opaque.empty()) {
     base::Assets::AssetListLock lock;
-    b.widget->SetMeshOpaque(g_base->assets->GetMesh(def.mesh_opaque).Get());
+    b.widget->SetMeshOpaque(g_base->assets->GetMesh(def.mesh_opaque).get());
   }
   if (def.call != UIV1Python::ObjID::kEmptyCall) {
-    b.widget->set_on_activate_call(g_ui_v1->python->objs().Get(def.call).Get());
+    b.widget->SetOnActivateCall(g_ui_v1->python->objs().Get(def.call).get());
   }
-  AddWidget(b.widget.Get());
+  AddWidget(b.widget.get());
   return &b;
 }
 
@@ -924,8 +964,8 @@ auto RootWidget::AddText_(const TextDef& def) -> RootWidget::Text* {
   t.widget = Object::New<TextWidget>();
   t.widget->SetWidth(0.0f);
   t.widget->SetHeight(0.0f);
-  t.widget->set_halign(TextWidget::HAlign::kCenter);
-  t.widget->set_valign(TextWidget::VAlign::kCenter);
+  t.widget->SetHAlign(TextWidget::HAlign::kCenter);
+  t.widget->SetVAlign(TextWidget::VAlign::kCenter);
   t.widget->SetText(def.text);
   t.widget->set_max_width(def.width);
   t.widget->set_center_scale(def.scale);
@@ -933,11 +973,11 @@ auto RootWidget::AddText_(const TextDef& def) -> RootWidget::Text* {
   t.widget->set_shadow(def.shadow);
   t.widget->set_flatness(def.flatness);
   t.widget->set_depth_range(def.depth_min, def.depth_max);
-  assert(def.button->widget.Exists());
-  t.widget->set_draw_control_parent(def.button->widget.Get());
+  assert(def.button->widget.exists());
+  t.widget->set_draw_control_parent(def.button->widget.get());
   t.x = def.x;
   t.y = def.y;
-  AddWidget(t.widget.Get());
+  AddWidget(t.widget.get());
   return &t;
 }
 
@@ -952,13 +992,14 @@ auto RootWidget::AddImage_(const ImageDef& def) -> RootWidget::Image* {
   img.widget->set_depth_range(def.depth_min, def.depth_max);
   if (!def.img.empty()) {
     base::Assets::AssetListLock lock;
-    img.widget->SetTexture(g_base->assets->GetTexture(def.img).Get());
+    img.widget->SetTexture(g_base->assets->GetTexture(def.img).get());
   }
-  assert(def.button->widget.Exists());
-  img.widget->set_draw_control_parent(def.button->widget.Get());
+  img.widget->set_color(def.color_r, def.color_g, def.color_b);
+  assert(def.button->widget.exists());
+  img.widget->set_draw_control_parent(def.button->widget.get());
   img.x = def.x - def.width * 0.5f;
   img.y = def.y - def.height * 0.5f;
-  AddWidget(img.widget.Get());
+  AddWidget(img.widget.get());
   return &img;
 }
 
@@ -981,13 +1022,13 @@ void RootWidget::UpdateForFocusedWindow_(Widget* widget) {
   MarkForUpdate();
 }
 
-void RootWidget::StepPositions_(float dt) {
+void RootWidget::StepChildWidgets_(float dt) {
   // Hitches tend to break our math and cause buttons to overshoot on
   // their transitions in and then back up. So let's limit our max dt
   // to about what ~30fps would give us.
   dt = std::min(dt, 1000.0f / 30.0f);
 
-  if (!positions_dirty_) {
+  if (!child_widgets_dirty_) {
     return;
   }
 
@@ -1085,9 +1126,9 @@ void RootWidget::StepPositions_(float dt) {
     if (&b == back_button_) {
       // Whenever back button is enabled, left on account button should go
       // to it; otherwise it goes nowhere.
-      Widget* ab = account_button_->widget.Get();
+      Widget* ab = account_button_->widget.get();
       ab->set_neighbors_locked(false);
-      ab->set_left_widget(b.enabled ? back_button_->widget.Get() : ab);
+      ab->SetLeftWidget(b.enabled ? back_button_->widget.get() : ab);
       account_button_->widget->set_neighbors_locked(true);
     }
 
@@ -1153,7 +1194,7 @@ void RootWidget::StepPositions_(float dt) {
         b->widget->ty() + base_scale_ * b->scale * (b->height * 0.5f + t.y);
     t.widget->set_translate(x, y);
     t.widget->set_scale(base_scale_ * b->scale);
-    t.widget->set_visible_in_container(!b->fully_offscreen);
+    t.widget->set_visible_in_container(!b->fully_offscreen && t.visible);
   }
 
   for (Image& img : images_) {
@@ -1165,10 +1206,10 @@ void RootWidget::StepPositions_(float dt) {
         b->widget->ty() + base_scale_ * b->scale * (b->height * 0.5f + img.y);
     img.widget->set_translate(x, y);
     img.widget->set_scale(base_scale_ * b->scale);
-    img.widget->set_visible_in_container(!b->fully_offscreen);
+    img.widget->set_visible_in_container(!b->fully_offscreen && img.visible);
   }
 
-  positions_dirty_ = have_dirty;
+  child_widgets_dirty_ = have_dirty;
 }
 
 void RootWidget::UpdateLayout() {
@@ -1198,11 +1239,11 @@ void RootWidget::UpdateLayout() {
     overlay_stack_widget_->SetWidth(width());
     overlay_stack_widget_->SetHeight(height());
   }
-  positions_dirty_ = true;
+  child_widgets_dirty_ = true;
 
   // Run an immediate step to update things; (avoids jumpy positions if
   // resizing game window))
-  StepPositions_(0.0f);
+  StepChildWidgets_(0.0f);
 }
 
 void RootWidget::OnUIScaleChange() { MarkForUpdate(); }
@@ -1249,32 +1290,32 @@ void RootWidget::SetOverlayWidget(StackWidget* w) {
 
 auto RootWidget::GetSpecialWidget(const std::string& s) const -> Widget* {
   if (s == "squad_button") {
-    return squad_button_ ? squad_button_->widget.Get() : nullptr;
+    return squad_button_ ? squad_button_->widget.get() : nullptr;
   } else if (s == "back_button") {
-    return back_button_ ? back_button_->widget.Get() : nullptr;
+    return back_button_ ? back_button_->widget.get() : nullptr;
   } else if (s == "account_button") {
-    return account_button_ ? account_button_->widget.Get() : nullptr;
+    return account_button_ ? account_button_->widget.get() : nullptr;
   } else if (s == "achievements_button") {
-    return achievements_button_ ? achievements_button_->widget.Get() : nullptr;
+    return achievements_button_ ? achievements_button_->widget.get() : nullptr;
   } else if (s == "inbox_button") {
-    return inbox_button_ ? inbox_button_->widget.Get() : nullptr;
+    return inbox_button_ ? inbox_button_->widget.get() : nullptr;
   } else if (s == "settings_button") {
-    return settings_button_ ? settings_button_->widget.Get() : nullptr;
+    return settings_button_ ? settings_button_->widget.get() : nullptr;
   } else if (s == "store_button") {
-    return store_button_ ? store_button_->widget.Get() : nullptr;
+    return store_button_ ? store_button_->widget.get() : nullptr;
   } else if (s == "get_tokens_button") {
-    return get_tokens_button_ ? get_tokens_button_->widget.Get() : nullptr;
+    return get_tokens_button_ ? get_tokens_button_->widget.get() : nullptr;
   } else if (s == "inventory_button") {
-    return inventory_button_ ? inventory_button_->widget.Get() : nullptr;
+    return inventory_button_ ? inventory_button_->widget.get() : nullptr;
   } else if (s == "tickets_meter") {
-    return tickets_meter_button_ ? tickets_meter_button_->widget.Get()
+    return tickets_meter_button_ ? tickets_meter_button_->widget.get()
                                  : nullptr;
   } else if (s == "tokens_meter") {
-    return tokens_meter_button_ ? tokens_meter_button_->widget.Get() : nullptr;
+    return tokens_meter_button_ ? tokens_meter_button_->widget.get() : nullptr;
   } else if (s == "trophy_meter") {
-    return trophy_meter_button_ ? trophy_meter_button_->widget.Get() : nullptr;
+    return trophy_meter_button_ ? trophy_meter_button_->widget.get() : nullptr;
   } else if (s == "level_meter") {
-    return level_meter_button_ ? level_meter_button_->widget.Get() : nullptr;
+    return level_meter_button_ ? level_meter_button_->widget.get() : nullptr;
   } else if (s == "overlay_stack") {
     return overlay_stack_widget_;
   }
@@ -1283,8 +1324,8 @@ auto RootWidget::GetSpecialWidget(const std::string& s) const -> Widget* {
 
 void RootWidget::SetAccountState(bool signed_in, const std::string& name) {
   if (account_name_text_) {
-    auto* w{account_name_text_->widget.Get()};
-    auto* wb{account_button_->widget.Get()};
+    auto* w{account_name_text_->widget.get()};
+    auto* wb{account_button_->widget.get()};
     assert(w);
     assert(wb);
 
@@ -1293,20 +1334,20 @@ void RootWidget::SetAccountState(bool signed_in, const std::string& name) {
       w->set_color(0.0f, 0.4f, 0.1f, 1.0f);
       w->set_shadow(0.2f);
       w->set_flatness(1.0f);
-      wb->SetColor(0.8f, 1.2f, 0.8f);
+      wb->set_color(0.8f, 1.2f, 0.8f);
     } else {
       w->SetText("{\"r\":\"notSignedInText\"}");
       w->set_color(1.0f, 0.2f, 0.2f, 1.0f);
       w->set_shadow(0.5f);
       w->set_flatness(1.0f);
-      wb->SetColor(0.45f, 0.4f, 0.4f);
+      wb->set_color(0.45f, 0.4f, 0.4f);
     }
   }
 }
 
 void RootWidget::SetSquadSizeLabel(int val) {
   if (squad_size_text_) {
-    auto* w{squad_size_text_->widget.Get()};
+    auto* w{squad_size_text_->widget.get()};
     assert(w);
     w->SetText(std::to_string(val));
     if (val > 0) {
@@ -1366,6 +1407,21 @@ void RootWidget::SetLevelText(const std::string& val) {
 void RootWidget::SetXPText(const std::string& val) {
   assert(xp_text_);
   xp_text_->widget->SetText(val);
+}
+
+void RootWidget::SetInboxCountText(const std::string& val) {
+  assert(inbox_count_text_);
+
+  inbox_count_text_->widget->SetText(val);
+
+  auto backing_was_visible{inbox_count_backing_->visible};
+  auto backing_is_visible = (val != "" && val != "0");
+
+  if (backing_was_visible != backing_is_visible) {
+    inbox_count_backing_->visible = backing_is_visible;
+    inbox_count_text_->visible = backing_is_visible;
+    child_widgets_dirty_ = true;
+  }
 }
 
 }  // namespace ballistica::ui_v1
