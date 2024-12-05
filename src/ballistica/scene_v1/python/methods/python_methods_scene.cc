@@ -99,7 +99,7 @@ static auto PyTimer(PyObject* self, PyObject* args, PyObject* keywds)
   SceneV1Context::Current().NewTimer(
       TimeType::kSim, static_cast<millisecs_t>(length * 1000.0),
       static_cast<bool>(repeat),
-      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj).Get());
+      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj).get());
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -208,7 +208,7 @@ static auto PyBaseTimer(PyObject* self, PyObject* args, PyObject* keywds)
   SceneV1Context::Current().NewTimer(
       TimeType::kBase, static_cast<millisecs_t>(length * 1000.0),
       static_cast<bool>(repeat),
-      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj).Get());
+      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj).get());
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -541,7 +541,7 @@ static auto PyNewActivity(PyObject* self, PyObject* args, PyObject* keywds)
     settings = g_core->python->objs()
                    .Get(core::CorePython::ObjID::kShallowCopyCall)
                    .Call(args2);
-    if (!settings.Exists()) {
+    if (!settings.exists()) {
       throw Exception("Unable to shallow-copy settings.");
     }
   } else {
@@ -552,7 +552,7 @@ static auto PyNewActivity(PyObject* self, PyObject* args, PyObject* keywds)
   if (!hs) {
     throw Exception("No HostSession found.", PyExcType::kContext);
   }
-  return hs->NewHostActivity(activity_type_obj, settings.Get());
+  return hs->NewHostActivity(activity_type_obj, settings.get());
 
   BA_PYTHON_CATCH;
 }
@@ -1347,7 +1347,7 @@ static auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
                     "id", id_val),
                 PythonRef::kSteal);
             // This increments ref.
-            PyList_Append(py_player_list.Get(), py_player.Get());
+            PyList_Append(py_player_list.get(), py_player.get());
           }
         }
       }
@@ -1393,11 +1393,11 @@ static auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
                 ? PlayerSpec(spec->valuestring).GetDisplayString().c_str()
                 : "",
             "spec_string", (spec && spec->valuestring) ? spec->valuestring : "",
-            "players", py_player_list.Get(), "client_id", client_id_ref.Get(),
-            "account_id", account_id_ref.Get()),
+            "players", py_player_list.get(), "client_id", client_id_ref.get(),
+            "account_id", account_id_ref.get()),
         PythonRef::kSteal);
-    PyList_Append(py_client_list.Get(),
-                  py_client.Get());  // this increments ref
+    PyList_Append(py_client_list.get(),
+                  py_client.get());  // this increments ref
   }
   return py_client_list.NewRef();
   BA_PYTHON_CATCH;

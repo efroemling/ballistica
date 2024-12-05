@@ -279,7 +279,7 @@ class DirectoryScan:
                 except Exception:
                     logging.exception("metascan: Error scanning '%s'.", subpath)
 
-        # Sort our results
+        # Sort our results.
         for exportlist in self.results.exports.values():
             exportlist.sort()
 
@@ -384,12 +384,16 @@ class DirectoryScan:
             # meta_lines is just anything containing '# ba_meta '; make sure
             # the ba_meta is in the right place.
             if mline[0] != 'ba_meta':
-                logging.warning(
-                    'metascan: %s:%d: malformed ba_meta statement.',
-                    subpath,
-                    lindex + 1,
-                )
-                self.results.announce_errors_occurred = True
+                # Make an exception for this specific file, otherwise we
+                # get lots of warnings about ba_meta showing up in weird
+                # places here.
+                if subpath.as_posix() != 'babase/_meta.py':
+                    logging.warning(
+                        'metascan: %s:%d: malformed ba_meta statement.',
+                        subpath,
+                        lindex + 1,
+                    )
+                    self.results.announce_errors_occurred = True
             elif (
                 len(mline) == 4 and mline[1] == 'require' and mline[2] == 'api'
             ):

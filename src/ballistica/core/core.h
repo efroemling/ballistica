@@ -97,7 +97,7 @@ class CoreFeatureSet {
   }
 
   /// Log a boot-related message (only if core_config.lifecycle_log is true).
-  void LifecycleLog(const char* msg, double offset_seconds = 0.0);
+  // void LifecycleLog(const char* msg, double offset_seconds = 0.0);
 
   /// Base path of build src dir so we can attempt to remove it from any
   /// source file paths we print.

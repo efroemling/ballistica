@@ -78,15 +78,8 @@ void CoreFeatureSet::DoImport_(const CoreConfig& config) {
   g_core = new CoreFeatureSet(config);
   g_core->PostInit_();
 
-  // Slightly hacky: have to report our begin time after the fact since core
-  // didn't exist before. Can at least add an offset to give an accurate
-  // time though.
-  auto seconds_since_actual_start =
-      static_cast<seconds_t>(CorePlatform::GetCurrentMillisecs()
-                             - start_millisecs)
-      / 1000.0;
-  g_core->LifecycleLog("core import begin", -seconds_since_actual_start);
-  g_core->LifecycleLog("core import end");
+  // We can't report core import begin since core didn't exist at that point.
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "core import end");
 }
 
 CoreFeatureSet::CoreFeatureSet(CoreConfig config)
@@ -151,7 +144,7 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
   // Ask baenv for the config we should use.
   auto envcfg =
       python->objs().Get(core::CorePython::ObjID::kBaEnvGetConfigCall).Call();
-  BA_PRECONDITION_FATAL(envcfg.Exists());
+  BA_PRECONDITION_FATAL(envcfg.exists());
 
   assert(!have_ba_env_vals_);
   have_ba_env_vals_ = true;
@@ -308,24 +301,24 @@ auto CoreFeatureSet::SoftImportBase() -> BaseSoftInterface* {
   return g_base_soft;
 }
 
-void CoreFeatureSet::LifecycleLog(const char* msg, double offset_seconds) {
-  // Early out to avoid work if we won't show anyway.
-  if (!LogLevelEnabled(LogName::kBaLifecycle, LogLevel::kDebug)) {
-    return;
-  }
+// void CoreFeatureSet::LifecycleLog(const char* msg, double offset_seconds) {
+//   // Early out to avoid work if we won't show anyway.
+//   if (!LogLevelEnabled(LogName::kBaLifecycle, LogLevel::kDebug)) {
+//     return;
+//   }
 
-  // We're now showing relative timestamps in more places so trying without
-  // adding that to the message...
-  if (explicit_bool(false)) {
-    // We include time-since-start as part of the message here.
-    char buffer[128];
-    snprintf(buffer, sizeof(buffer), "%s @ %.3fs.", msg,
-             g_core->GetAppTimeSeconds() + offset_seconds);
-    Log(LogName::kBaLifecycle, LogLevel::kDebug, buffer);
-  } else {
-    Log(LogName::kBaLifecycle, LogLevel::kDebug, msg);
-  }
-}
+//   // We're now showing relative timestamps in more places so trying without
+//   // adding that to the message...
+//   if (explicit_bool(false)) {
+//     // We include time-since-start as part of the message here.
+//     char buffer[128];
+//     snprintf(buffer, sizeof(buffer), "%s @ %.3fs.", msg,
+//              g_core->GetAppTimeSeconds() + offset_seconds);
+//     Log(LogName::kBaLifecycle, LogLevel::kDebug, buffer);
+//   } else {
+//     Log(LogName::kBaLifecycle, LogLevel::kDebug, msg);
+//   }
+// }
 
 void CoreFeatureSet::Log(LogName name, LogLevel level, char* msg) {
   // Avoid touching the Python layer if the log will get ignored there

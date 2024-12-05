@@ -16,6 +16,7 @@
 #include "ballistica/base/dynamics/collision_cache.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/core/platform/core_platform.h"  // IWYU pragma: keep.
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -84,7 +85,7 @@ class BGDynamicsServer::Terrain {
   }
 
   auto GetCollisionMesh() const -> CollisionMeshAsset* {
-    return collision_mesh_->Get();
+    return collision_mesh_->get();
   }
 
   ~Terrain() {

@@ -285,7 +285,7 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
         for (auto&& i : appmode->connections()->connections_to_clients()) {
           // Also send a 'party-member-joined' notification to all clients
           // *except* the new one.
-          if (i.second.Exists() && i.second.Get() != this
+          if (i.second.exists() && i.second.get() != this
               && appmode->ShouldAnnouncePartyJoinsAndLeaves()) {
             i.second->SendReliableMessage(join_msg);
           }
@@ -384,7 +384,7 @@ void ConnectionToClient::HandleMessagePacket(
     case BA_MESSAGE_KICK_VOTE: {
       if (buffer.size() == 2) {
         for (auto&& i : appmode->connections()->connections_to_clients()) {
-          ConnectionToClient* client = i.second.Get();
+          ConnectionToClient* client = i.second.get();
           if (client->id() == static_cast<int>(buffer[1])) {
             appmode->StartKickVote(this, client);
             break;
@@ -461,7 +461,7 @@ void ConnectionToClient::HandleMessagePacket(
         PythonRef results = g_core->python->objs()
                                 .Get(core::CorePython::ObjID::kJsonLoadsCall)
                                 .Call(args);
-        if (results.Exists()) {
+        if (results.exists()) {
           player_profiles_ = results;
         }
       }

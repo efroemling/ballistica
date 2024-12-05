@@ -14,6 +14,7 @@ from bacommon.login import LoginType
 import bacommon.cloud
 import bauiv1 as bui
 
+from bauiv1lib.connectivity import wait_for_connectivity
 
 # These days we're directing people to the web based account settings
 # for V2 account linking and trying to get them to disconnect remaining
@@ -89,8 +90,8 @@ class AccountSettingsWindow(bui.MainWindow):
         # Always want to show our web-based v2 login option.
         self._show_sign_in_buttons.append('V2Proxy')
 
-        # Legacy v1 device accounts available only if the user
-        # has explicitly enabled deprecated login types.
+        # Legacy v1 device accounts available only if the user has
+        # explicitly enabled deprecated login types.
         if bui.app.config.resolve('Show Deprecated Login Types'):
             self._show_sign_in_buttons.append('Device')
 
@@ -98,7 +99,6 @@ class AccountSettingsWindow(bui.MainWindow):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
-                # transition=transition,
                 toolbar_visibility=(
                     'menu_minimal'
                     if uiscale is bui.UIScale.SMALL
@@ -130,10 +130,12 @@ class AccountSettingsWindow(bui.MainWindow):
                 text_scale=1.2,
                 autoselect=True,
                 label=bui.Lstr(
-                    resource='doneText' if self._modal else 'backText'
+                    resource='cancelText' if self._modal else 'backText'
                 ),
                 button_type='regular' if self._modal else 'back',
-                on_activate_call=self.main_window_back,
+                on_activate_call=(
+                    self._modal_close if self._modal else self.main_window_back
+                ),
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
             if not self._modal:
@@ -174,6 +176,18 @@ class AccountSettingsWindow(bui.MainWindow):
         self._refresh()
         self._restore_state()
 
+    def _modal_close(self) -> None:
+        assert self._modal
+
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+
+        bui.containerwidget(
+            edit=self._root_widget,
+            transition=('out_right'),
+        )
+
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
@@ -198,8 +212,8 @@ class AccountSettingsWindow(bui.MainWindow):
             return
 
         # Hmm should update this to use get_account_state_num.
-        # Theoretically if we switch from one signed-in account to another
-        # in the background this would break.
+        # Theoretically if we switch from one signed-in account to
+        # another in the background this would break.
         v1_account_state_num = plus.get_v1_account_state_num()
         v1_account_state = plus.get_v1_account_state()
         show_legacy_unlink_button = self._should_show_legacy_unlink_button()
@@ -214,8 +228,8 @@ class AccountSettingsWindow(bui.MainWindow):
             self._show_legacy_unlink_button = show_legacy_unlink_button
             self._refresh()
 
-        # Go ahead and refresh some individual things
-        # that may change under us.
+        # Go ahead and refresh some individual things that may change
+        # under us.
         self._update_linked_accounts_text()
         self._update_unlink_accounts_button()
         self._refresh_campaign_progress_text()
@@ -363,6 +377,11 @@ class AccountSettingsWindow(bui.MainWindow):
         )
         link_accounts_button_space = 70.0
 
+        show_v1_obsolete_note = self._v1_signed_in and (
+            primary_v2_account is None
+        )
+        v1_obsolete_note_space = 80.0
+
         show_unlink_accounts_button = show_link_accounts_button
         unlink_accounts_button_space = 90.0
 
@@ -420,6 +439,8 @@ class AccountSettingsWindow(bui.MainWindow):
             self._sub_height += manage_account_button_space
         if show_link_accounts_button:
             self._sub_height += link_accounts_button_space
+        if show_v1_obsolete_note:
+            self._sub_height += v1_obsolete_note_space
         if show_unlink_accounts_button:
             self._sub_height += unlink_accounts_button_space
         if show_v2_link_info:
@@ -785,6 +806,26 @@ class AccountSettingsWindow(bui.MainWindow):
             bui.widget(edit=btn, left_widget=bbtn)
             bui.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
+
+        if show_v1_obsolete_note:
+            v -= v1_obsolete_note_space
+            bui.textwidget(
+                parent=self._subcontainer,
+                h_align='center',
+                v_align='center',
+                size=(0, 0),
+                position=(self._sub_width * 0.5, v + 35.0),
+                text=(
+                    'YOU ARE SIGNED IN WITH A V1 ACCOUNT.\n'
+                    'THESE ARE NO LONGER SUPPORTED AND MANY\n'
+                    'FEATURES WILL NOT WORK. PLEASE SWITCH TO\n'
+                    'A V2 ACCOUNT OR UPGRADE THIS ONE.'
+                ),
+                maxwidth=self._sub_width * 0.8,
+                color=(1, 0, 0),
+                shadow=1.0,
+                flatness=1.0,
+            )
 
         if show_manage_account_button:
             button_width = 300
@@ -1167,18 +1208,16 @@ class AccountSettingsWindow(bui.MainWindow):
         self._do_manage_account_press(WebLocation.ACCOUNT_DELETE_SECTION)
 
     def _do_manage_account_press(self, weblocation: WebLocation) -> None:
+        # If we're still waiting for our master-server connection,
+        # keep the user informed of this instead of rushing in and
+        # failing immediately.
+        wait_for_connectivity(
+            on_connected=lambda: self._do_manage_account(weblocation)
+        )
+
+    def _do_manage_account(self, weblocation: WebLocation) -> None:
         plus = bui.app.plus
         assert plus is not None
-
-        # Preemptively fail if it looks like we won't be able to talk to
-        # the server anyway.
-        if not plus.cloud.connected:
-            bui.screenmessage(
-                bui.Lstr(resource='internal.unavailableNoConnectionText'),
-                color=(1, 0, 0),
-            )
-            bui.getsound('error').play()
-            return
 
         bui.screenmessage(bui.Lstr(resource='oneMomentText'))
 
@@ -1221,8 +1260,8 @@ class AccountSettingsWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        # if this is not present, we haven't had contact from the server so
-        # let's not proceed..
+        # If this is not present, we haven't had contact from the server
+        # so let's not proceed.
         if plus.get_v1_account_public_login_id() is None:
             return False
         accounts = plus.get_v1_account_misc_read_val_2('linkedAccounts', [])
@@ -1239,7 +1278,8 @@ class AccountSettingsWindow(bui.MainWindow):
 
     def _should_show_legacy_unlink_button(self) -> bool:
         plus = bui.app.plus
-        assert plus is not None
+        if plus is None:
+            return False
 
         # Only show this when fully signed in to a v2 account.
         if not self._v1_signed_in or plus.accounts.primary is None:
@@ -1414,8 +1454,6 @@ class AccountSettingsWindow(bui.MainWindow):
         bui.apptimer(0.1, bui.WeakCall(self._update))
 
     def _sign_in_press(self, login_type: str | LoginType) -> None:
-        from bauiv1lib.connectivity import wait_for_connectivity
-
         # If we're still waiting for our master-server connection,
         # keep the user informed of this instead of rushing in and
         # failing immediately.
@@ -1509,9 +1547,6 @@ class AccountSettingsWindow(bui.MainWindow):
         bui.apptimer(0.1, bui.WeakCall(self._update))
 
     def _v2_proxy_sign_in_press(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.connectivity import wait_for_connectivity
-
         # If we're still waiting for our master-server connection, keep
         # the user informed of this instead of rushing in and failing
         # immediately.

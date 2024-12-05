@@ -36,7 +36,7 @@ HostActivity::HostActivity(HostSession* host_session) {
 
     // If there's an output stream, add to it.
     if (SessionStream* out = host_session->GetSceneStream()) {
-      out->AddScene(scene_.Get());
+      out->AddScene(scene_.get());
     }
   }
 }
@@ -52,41 +52,41 @@ HostActivity::~HostActivity() {
   // (should wipe out refs to our activity and prevent them from running without
   // a valid activity context)
   for (auto&& i : context_calls_) {
-    if (i.Exists()) {
+    if (i.exists()) {
       i->MarkDead();
     }
   }
 
   // Mark all our media dead to clear it out of our output-stream cleanly
   for (auto&& i : textures_) {
-    if (i.second.Exists()) {
+    if (i.second.exists()) {
       i.second->MarkDead();
     }
   }
   for (auto&& i : meshes_) {
-    if (i.second.Exists()) {
+    if (i.second.exists()) {
       i.second->MarkDead();
     }
   }
   for (auto&& i : sounds_) {
-    if (i.second.Exists()) {
+    if (i.second.exists()) {
       i.second->MarkDead();
     }
   }
   for (auto&& i : collision_meshes_) {
-    if (i.second.Exists()) {
+    if (i.second.exists()) {
       i.second->MarkDead();
     }
   }
   for (auto&& i : materials_) {
-    if (i.Exists()) {
+    if (i.exists()) {
       i->MarkDead();
     }
   }
 
   // If the host-session is outliving us, kill all the base-timers we created
   // in it.
-  if (auto* host_session = host_session_.Get()) {
+  if (auto* host_session = host_session_.get()) {
     for (auto timer_id : session_base_timer_ids_) {
       host_session->DeleteTimer(TimeType::kBase, timer_id);
     }
@@ -117,7 +117,7 @@ HostActivity::~HostActivity() {
 }
 
 auto HostActivity::GetSceneStream() const -> SessionStream* {
-  if (!host_session_.Exists()) return nullptr;
+  if (!host_session_.exists()) return nullptr;
   return host_session_->GetSceneStream();
 }
 
@@ -134,9 +134,9 @@ void HostActivity::StepScene() {
 
     // Clear our player-positions for this step.
     // FIXME: Move this to scene and/or player node.
-    assert(host_session_.Exists());
+    assert(host_session_.exists());
     for (auto&& player : host_session_->players()) {
-      assert(player.Exists());
+      assert(player.exists());
       player->set_have_position(false);
     }
 
@@ -176,7 +176,7 @@ void HostActivity::Start() {
                 "HostActivity::Start() called for shutting-down activity.");
     return;
   }
-  auto* host_session = host_session_.Get();
+  auto* host_session = host_session_.get();
   if (!host_session) {
     g_core->Log(LogName::kBa, LogLevel::kError,
                 "HostActivity::Start() called with dead session.");
@@ -185,7 +185,7 @@ void HostActivity::Start() {
   // Create our step timer - gets called whenever scene should step.
   step_scene_timer_id_ =
       host_session->NewTimer(TimeType::kBase, kGameStepMilliseconds, true,
-                             NewLambdaRunnable([this] { StepScene(); }).Get());
+                             NewLambdaRunnable([this] { StepScene(); }).get());
   session_base_timer_ids_.push_back(step_scene_timer_id_);
   UpdateStepTimerLength();
 }
@@ -267,7 +267,7 @@ void HostActivity::UpdateStepTimerLength() {
     return;
   }
   auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
-  auto* host_session = host_session_.Get();
+  auto* host_session = host_session_.get();
   if (!host_session) {
     return;
   }
@@ -297,7 +297,7 @@ void HostActivity::HandleOutOfBoundsNodes() {
     int j = 0;
     for (auto&& i : scene()->out_of_bounds_nodes()) {
       j++;
-      Node* n = i.Get();
+      Node* n = i.get();
       if (n) {
         std::string dstr;
         PyObject* delegate = n->GetDelegate();
@@ -307,7 +307,7 @@ void HostActivity::HandleOutOfBoundsNodes() {
         g_core->Log(LogName::kBa, LogLevel::kWarning,
                     "   node #" + std::to_string(j) + ": type='"
                         + n->type()->name()
-                        + "' addr=" + Utils::PtrToString(i.Get()) + " name='"
+                        + "' addr=" + Utils::PtrToString(i.get()) + " name='"
                         + n->label() + "' delegate=" + dstr);
       }
     }
@@ -316,7 +316,7 @@ void HostActivity::HandleOutOfBoundsNodes() {
 
   // Send out-of-bounds messages to newly out-of-bounds nodes.
   for (auto&& i : scene()->out_of_bounds_nodes()) {
-    Node* n = i.Get();
+    Node* n = i.get();
     if (n) {
       n->DispatchOutOfBoundsMessage();
     }
@@ -325,14 +325,14 @@ void HostActivity::HandleOutOfBoundsNodes() {
 
 void HostActivity::RegisterPyActivity(PyObject* pyActivityObj) {
   assert(pyActivityObj && pyActivityObj != Py_None);
-  assert(!py_activity_weak_ref_.Exists());
+  assert(!py_activity_weak_ref_.exists());
 
   // Store a python weak-ref to this activity.
   py_activity_weak_ref_.Steal(PyWeakref_NewRef(pyActivityObj, nullptr));
 }
 
 auto HostActivity::GetPyActivity() const -> PyObject* {
-  PyObject* obj = py_activity_weak_ref_.Get();
+  PyObject* obj = py_activity_weak_ref_.get();
   if (!obj) {
     return Py_None;
   }
@@ -340,11 +340,11 @@ auto HostActivity::GetPyActivity() const -> PyObject* {
 }
 
 auto HostActivity::GetHostSession() -> HostSession* {
-  return host_session_.Get();
+  return host_session_.get();
 }
 
 auto HostActivity::GetMutableScene() -> Scene* {
-  Scene* sg = scene_.Get();
+  Scene* sg = scene_.get();
   assert(sg);
   return sg;
 }
@@ -361,13 +361,13 @@ void HostActivity::SetIsForeground(bool val) {
 
     // Also push it to clients.
     if (SessionStream* out = GetSceneStream()) {
-      out->SetForegroundScene(scene_.Get());
+      out->SetForegroundScene(scene_.get());
     }
   }
 }
 
 auto HostActivity::globals_node() const -> GlobalsNode* {
-  return globals_node_.Get();
+  return globals_node_.get();
 }
 
 auto HostActivity::NewSimTimer(millisecs_t length, bool repeat,
@@ -404,7 +404,7 @@ auto HostActivity::NewBaseTimer(millisecs_t length, bool repeat,
   if (length < 0) {
     throw Exception("Timer length cannot be < 0");
   }
-  auto* host_session = host_session_.Get();
+  auto* host_session = host_session_.get();
   if (!host_session) {
     BA_LOG_PYTHON_TRACE_ONCE(
         "WARNING: Creating session-time timer in activity but host is dead.");
@@ -431,7 +431,7 @@ void HostActivity::DeleteBaseTimer(int timer_id) {
   if (shutting_down_) {
     return;
   }
-  if (auto* host_session = host_session_.Get()) {
+  if (auto* host_session = host_session_.get()) {
     host_session->DeleteTimer(TimeType::kBase, timer_id);
   }
 }
@@ -460,7 +460,7 @@ void HostActivity::StepDisplayTime(millisecs_t time_advance) {
 }
 
 void HostActivity::PruneSessionBaseTimers() {
-  auto* host_session = host_session_.Get();
+  auto* host_session = host_session_.get();
   if (!host_session) {
     return;
   }
@@ -501,7 +501,7 @@ void HostActivity::Draw(base::FrameDef* frame_def) {
 
 void HostActivity::DumpFullState(SessionStream* out) {
   // Add our scene.
-  if (scene_.Exists()) {
+  if (scene_.exists()) {
     scene_->Dump(out);
   }
 
@@ -509,42 +509,42 @@ void HostActivity::DumpFullState(SessionStream* out) {
   // (but *not* their components, which may reference the nodes that we haven't
   // made yet)
   for (auto&& i : materials_) {
-    if (Material* m = i.Get()) {
+    if (Material* m = i.get()) {
       out->AddMaterial(m);
     }
   }
 
   // Add our media.
   for (auto&& i : textures_) {
-    if (SceneTexture* t = i.second.Get()) {
+    if (SceneTexture* t = i.second.get()) {
       out->AddTexture(t);
     }
   }
   for (auto&& i : sounds_) {
-    if (SceneSound* s = i.second.Get()) {
+    if (SceneSound* s = i.second.get()) {
       out->AddSound(s);
     }
   }
   for (auto&& i : meshes_) {
-    if (SceneMesh* s = i.second.Get()) {
+    if (SceneMesh* s = i.second.get()) {
       out->AddMesh(s);
     }
   }
   for (auto&& i : collision_meshes_) {
-    if (SceneCollisionMesh* m = i.second.Get()) {
+    if (SceneCollisionMesh* m = i.second.get()) {
       out->AddCollisionMesh(m);
     }
   }
 
   // Add scene's nodes.
-  if (scene_.Exists()) {
+  if (scene_.exists()) {
     scene_->DumpNodes(out);
   }
 
   // Ok, now we can fill out our materials since nodes/etc they reference
   // exists.
   for (auto&& i : materials_) {
-    if (Material* m = i.Get()) {
+    if (Material* m = i.get()) {
       m->DumpComponents(out);
     }
   }

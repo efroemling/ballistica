@@ -33,13 +33,43 @@ class DevConsoleTabPython(DevConsoleTab):
 class DevConsoleTabAppModes(DevConsoleTab):
     """Tab to switch app modes."""
 
+    def __init__(self) -> None:
+        self._app_modes: list[type[AppMode]] | None = None
+        self._app_modes_loading = False
+
+    def _on_app_modes_loaded(self, modes: list[type[AppMode]]) -> None:
+        from babase._appintent import AppIntentDefault
+
+        intent = AppIntentDefault()
+
+        # Limit to modes that can handle default intents since that's
+        # what we use.
+        self._app_modes = [
+            mode for mode in modes if mode.can_handle_intent(intent)
+        ]
+        self.request_refresh()
+
     @override
     def refresh(self) -> None:
+        from babase import AppMode
+
+        # Kick off a load if applicable.
+        if self._app_modes is None and not self._app_modes_loading:
+            _babase.app.meta.load_exported_classes(
+                AppMode, self._on_app_modes_loaded
+            )
+
+        # Just say 'loading' if we don't have app-modes yet.
+        if self._app_modes is None:
+            self.text(
+                'Loading...', pos=(0, 30), h_anchor='center', h_align='center'
+            )
+            return
 
         bwidth = 260
         bpadding = 5
-        modes = _babase.app.mode_selector.testable_app_modes()
-        xoffs = -0.5 * bwidth * len(modes)
+
+        xoffs = -0.5 * bwidth * len(self._app_modes)
 
         self.text(
             'Available AppModes:',
@@ -49,7 +79,7 @@ class DevConsoleTabAppModes(DevConsoleTab):
             v_align='center',
         )
         # pylint: disable=protected-access
-        for i, mode in enumerate(modes):
+        for i, mode in enumerate(self._app_modes):
             self.button(
                 f'{mode.__module__}.{mode.__qualname__}',
                 pos=(xoffs + i * bwidth + bpadding, 10),
@@ -78,7 +108,8 @@ class DevConsoleTabAppModes(DevConsoleTab):
         _babase.app.set_intent(intent)
 
         # Slight hackish: need to wait a moment before refreshing to
-        # pick up the new mode, as mode switches are asynchronous.
+        # pick up the newly current mode, as mode switches are
+        # asynchronous.
         _babase.apptimer(0.1, self.request_refresh)
 
 
@@ -506,7 +537,7 @@ class DevConsoleTabLogging(DevConsoleTab):
             size=(bwidth - 2.0, height - 10),
             label_scale=btextscale,
             style=(
-                'blue_bright'
+                'white_bright'
                 if level == logging.DEBUG
                 else 'blue' if effectivelevel <= logging.DEBUG else 'black'
             ),
@@ -536,7 +567,7 @@ class DevConsoleTabLogging(DevConsoleTab):
             size=(bwidth - 2.0, height - 10),
             label_scale=btextscale,
             style=(
-                'yellow_bright'
+                'white_bright'
                 if level == logging.WARNING
                 else 'yellow' if effectivelevel <= logging.WARNING else 'black'
             ),
@@ -551,7 +582,7 @@ class DevConsoleTabLogging(DevConsoleTab):
             size=(bwidth - 2.0, height - 10),
             label_scale=btextscale,
             style=(
-                'red_bright'
+                'white_bright'
                 if level == logging.ERROR
                 else 'red' if effectivelevel <= logging.ERROR else 'black'
             ),
@@ -566,7 +597,7 @@ class DevConsoleTabLogging(DevConsoleTab):
             size=(bwidth - 2.0, height - 10),
             label_scale=btextscale,
             style=(
-                'purple_bright'
+                'white_bright'
                 if level == logging.CRITICAL
                 else (
                     'purple' if effectivelevel <= logging.CRITICAL else 'black'

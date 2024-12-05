@@ -1,12 +1,12 @@
-### 1.7.37 (build 22071, api 9, 2024-11-04)
-- I am pleased to announce that after years of hard work from many members of
-  the community, PirateSpeak is now complete and available as a language choice.
-  This changes everything.
+### 1.7.37 (build 22123, api 9, 2024-12-03)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
   I'm hopeful that api version won't need to be bumped again for along time (if
   ever).
+- I am pleased to announce that after years of hard work from many members of
+  the community, PirateSpeak is now complete and available as a language choice.
+  This changes everything.
 - Heavily reworked and cleaned up the logging system. There is now a 'ba' Python
   logger and various logger categories under it such as 'ba.lifecycle',
   'ba.connectivity' or 'ba.v2transport'. By setting these individual loggers to
@@ -16,9 +16,10 @@
 - Added a 'Logging' tab to the dev-console. This allows easily setting log
   levels for all existing Python loggers, as well as resetting them all to
   defaults. Levels set here are restored on startup, so it is possible to debug
-  app startup behavior this way. Previously this sort of thing would generally
-  require setting cryptic environment variables which was not feasable on all
-  platforms, but this new system should work everywhere.
+  app startup behavior by setting log levels and then relaunching the app.
+  Previously this sort of thing would generally require setting cryptic
+  environment variables which was not feasable on all platforms, but this new
+  system should work everywhere.
 - Log messages printed to both the command line and the in-app console now
   include timestamps and logger names, and are color coded for severity
   (DEBUG=blue, INFO=default, WARNING=orange/yellow, ERROR=red, CRITICAL=purple).
@@ -70,15 +71,15 @@
   UI states easier, but I now plan to use `WindowState` classes to accomplish
   much of that in a more backward-compatible way. More on that below.
 - Removed touch-specific button target-area adjustements. If you find any
-  buttons that are hard to hit accurately on a touchscreen, please holler.
+  buttons that are now hard to hit accurately on a touchscreen, please holler.
 - Added a new `bauiv1.Window` subclass called `bauiv1.MainWindow` which handles
   what was previously called the 'main-menu-window' system which was a bit
   ad-hoc and messy. MainMenuWindows have a built-in stack system so things like
   back-button handling are more automatic and windows don't have to hard-code
-  where they came from. There are also other benefits such as better state
-  saving/restoring. When writing a MainWindow, pretty much all navigation should
-  only need too use methods: `main_window_has_control()`, `main_window_back()`,
-  and `main_window_replace()`.
+  where their back button goes to. There are also other benefits such as better
+  state saving/restoring. When writing a MainWindow, pretty much all navigation
+  should only need too use methods: `main_window_has_control()`,
+  `main_window_back()`, and `main_window_replace()`.
 - Finally got things updated so language testing works again, and made it a bit
   spiffier while at it. You now simply point the game at your test language and
   it will update dynamically as you make edits; no need to download any files.
@@ -120,7 +121,7 @@
   use `babase.get_ui_scale()` to get it now.
 - Removed the UIScale control from the devtools window, which was only partially
   wired up (it did not affect native layer bits). For now the official ways to
-  test UIScales are by using the UI panel in the dev-console or by setting the
+  test UIScales are by using the UI tab in the dev-console or by setting the
   `BA_UI_SCALE` env var. If we can get UIScale switches to feel seamless enough
   at some point, it may be worth adding to display settings.
 - There is now a `ba*.app.classic.save_ui_state()` method that should be called
@@ -141,6 +142,35 @@
   dev-console. Note that this will copy all cached log history; not just what is
   displayed in the dev-console. This should be handy for diagnosing problems in
   the future.
+- (build 22072) Added a 'Use insecure connections' option in settings ->
+  advanced. This may make it possible to play from places such as Iran where ssl
+  connections are being blocked. Do not enable this if you don't need to.
+- (build 22085) Added protection against an attack consisting of spamming
+  invalid game-query packets.
+- Using prefab builds on a Mac now requires an Apple Silicon machine (M1 or
+  newer). Mac x86 prefab builds were becoming a major bottleneck in pushing out
+  updates. Please let me know if you are making substantial use of prefab builds
+  on an x86 Mac and I can reconsider. Note that this only concerns the prefab
+  build system; regular official game builds still fully support x86 Macs.
+- Added the `test-fast` Makefile target which skips some slower tests, and wired
+  up `make preflight` to use this to keep things moving a bit faster. If you are
+  not familiar with it, the `preflight` target is handy to run before committing
+  code to git.
+- The app-modes tab in the dev-console now uses the meta tag system to discover
+  testable app-modes. Previously this would simply list the `default_app_modes`
+  listed in the projectconfig.json. So now it is possible to make and explicitly
+  test new app modes via mod scripts on vanilla game builds. Note that the game
+  still uses the `default_app_modes` projectconfig.json value when selecting
+  app-modes at runtime; to change this you need to either change your
+  projectconfig and rebuild or replace `ba*.app.mode_selector` at runtime with
+  a custom selector that selects your custom app-mode(s).
+- The `ba*.app.threadpool_submit_no_wait()` method has been merged into the
+  `threadpool` object, so it now is `ba*.app.threadpool.submit_no_wait()`.
+- Clarified project rules for `snake_case` methods in C++ and updated various
+  methods accordingly such as `Object::Ref::get()` and `Object::Ref::exists()`.
+  See 'Getter/Setter Function Names' in
+  https://github.com/efroemling/ballistica/wiki/Coding-Style-Guide for more
+  info.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these

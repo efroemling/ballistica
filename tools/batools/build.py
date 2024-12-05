@@ -73,6 +73,10 @@ class PrefabPlatform(Enum):
 
         if system == 'Darwin':
             if machine == 'x86_64':
+                if bool(True):
+                    raise CleanError(
+                        'Prefab builds now require an Apple Silicon mac.'
+                    )
                 return cls.MAC_X86_64
             if machine == 'arm64':
                 return cls.MAC_ARM64
@@ -347,6 +351,21 @@ def checkenv() -> None:
 
     print(f'{Clr.BLD}Checking environment...{Clr.RST}', flush=True)
 
+    # Make sure they've got cmake.
+    #
+    # UPDATE - don't want to do this since they might just be using
+    # prefab builds.
+    if bool(False):
+        if (
+            subprocess.run(
+                ['which', 'cmake'], check=False, capture_output=True
+            ).returncode
+            != 0
+        ):
+            raise CleanError(
+                'cmake is required; please install it via apt, brew, etc.'
+            )
+
     # Make sure they've got curl.
     if (
         subprocess.run(
@@ -367,6 +386,19 @@ def checkenv() -> None:
     ):
         raise CleanError(
             'rsync is required; please install it via apt, brew, etc.'
+        )
+
+    # Disallow openrsync for now.
+    if (
+        not subprocess.run(
+            ['rsync', '--version'], check=True, capture_output=True
+        )
+        .stdout.decode()
+        .startswith('rsync ')
+    ):
+        raise CleanError(
+            'non-standard rsync detected (openrsync, etc);'
+            ' please install regular rsync via apt, brew, etc.'
         )
 
     # Make sure rsync is version 3.1.0 or newer.
@@ -461,8 +493,8 @@ def _get_server_config_template_toml(projroot: str) -> str:
 
     cfg = ServerConfig()
 
-    # Override some defaults with values we want to display commented
-    # out instead.
+    # Override some defaults with dummy values we want to display
+    # commented out instead.
     cfg.playlist_code = 12345
     cfg.stats_url = 'https://mystatssite.com/showstats?player=${ACCOUNT}'
     cfg.clean_exit_minutes = 60
@@ -476,6 +508,7 @@ def _get_server_config_template_toml(projroot: str) -> str:
     cfg.team_colors = ((0.1, 0.25, 1.0), (1.0, 0.25, 0.2))
     cfg.public_ipv4_address = '123.123.123.123'
     cfg.public_ipv6_address = '123A::A123:23A1:A312:12A3:A213:2A13'
+    cfg.log_levels = {'ba.lifecycle': 'INFO', 'ba.assets': 'INFO'}
 
     lines_in = _get_server_config_raw_contents(projroot).splitlines()
 

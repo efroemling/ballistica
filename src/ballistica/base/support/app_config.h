@@ -64,6 +64,7 @@ class AppConfig {
     kFullscreen,
     kKickIdlePlayers,
     kAlwaysUseInternalKeyboard,
+    kUseInsecureConnections,
     kShowFPS,
     kShowPing,
     kShowDevConsoleButton,

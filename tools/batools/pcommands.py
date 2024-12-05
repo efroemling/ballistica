@@ -735,6 +735,7 @@ def make_prefab() -> None:
 
     if len(sys.argv) != 3:
         raise RuntimeError('Expected one argument')
+
     targetstr = PrefabTarget(sys.argv[2]).value
     platformstr = PrefabPlatform.get_current().value
 

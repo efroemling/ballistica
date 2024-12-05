@@ -22,7 +22,7 @@ class MeshIndexed : public MeshIndexedBase {
   auto data() const -> const Object::Ref<MeshBuffer<DATA>>& { return data_; }
 
   auto IsValid() const -> bool override {
-    if (!data_.Exists() || data_->elements.empty()
+    if (!data_.exists() || data_->elements.empty()
         || !MeshIndexedBase::IsValid()) {
       return false;
     }

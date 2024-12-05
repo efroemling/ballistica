@@ -224,9 +224,9 @@ auto Python::GetPyFloats(PyObject* o) -> std::vector<float> {
     throw Exception("Object is not a sequence.", PyExcType::kType);
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());
-  Py_ssize_t size = PySequence_Fast_GET_SIZE(sequence.Get());
-  PyObject** py_objects = PySequence_Fast_ITEMS(sequence.Get());
+  assert(sequence.exists());
+  Py_ssize_t size = PySequence_Fast_GET_SIZE(sequence.get());
+  PyObject** py_objects = PySequence_Fast_ITEMS(sequence.get());
   std::vector<float> vals(static_cast<size_t>(size));
   assert(vals.size() == size);
   for (Py_ssize_t i = 0; i < size; i++) {
@@ -243,9 +243,9 @@ auto Python::GetPyStringSequence(PyObject* o) -> std::list<std::string> {
     throw Exception("Object is not a sequence.", PyExcType::kType);
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());
-  Py_ssize_t size = PySequence_Fast_GET_SIZE(sequence.Get());
-  PyObject** py_objects = PySequence_Fast_ITEMS(sequence.Get());
+  assert(sequence.exists());
+  Py_ssize_t size = PySequence_Fast_GET_SIZE(sequence.get());
+  PyObject** py_objects = PySequence_Fast_ITEMS(sequence.get());
   std::list<std::string> vals;
   for (Py_ssize_t i = 0; i < size; i++) {
     vals.emplace_back(Python::GetPyString(py_objects[i]));
@@ -262,9 +262,9 @@ auto GetPyIntsT(PyObject* o) -> std::vector<T> {
     throw Exception("Object is not a sequence.", PyExcType::kType);
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());
-  Py_ssize_t size = PySequence_Fast_GET_SIZE(sequence.Get());
-  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.Get());
+  assert(sequence.exists());
+  Py_ssize_t size = PySequence_Fast_GET_SIZE(sequence.get());
+  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.get());
   std::vector<T> vals(static_cast<size_t>(size));
   assert(vals.size() == size);
   for (Py_ssize_t i = 0; i < size; i++) {
@@ -307,7 +307,7 @@ auto Python::StringList(const std::list<std::string>& values) -> PythonRef {
   for (auto&& value : values) {
     PyObject* item{PyUnicode_FromString(value.c_str())};
     assert(item);
-    PyList_SET_ITEM(pylist.Get(), i, item);
+    PyList_SET_ITEM(pylist.get(), i, item);
     ++i;
   }
   return pylist;
@@ -324,7 +324,7 @@ auto Python::GetPythonFileLocation(bool pretty) -> std::string {
     const char* path;
     auto code_obj =
         PythonRef::Stolen(reinterpret_cast<PyObject*>(PyFrame_GetCode(f)));
-    auto* code = reinterpret_cast<PyCodeObject*>(code_obj.Get());
+    auto* code = reinterpret_cast<PyCodeObject*>(code_obj.get());
     assert(code);
     if (code && code->co_filename) {
       assert(PyUnicode_Check(code->co_filename));

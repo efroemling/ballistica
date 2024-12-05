@@ -24,7 +24,7 @@
 namespace ballistica::scene_v1 {
 
 auto Scene::GetSceneStream() const -> SessionStream* {
-  return output_stream_.Get();
+  return output_stream_.get();
 }
 
 void Scene::SetMapBounds(float xmin, float ymin, float zmin, float xmax,
@@ -64,21 +64,21 @@ Scene::~Scene() {
   dynamics_.Clear();
 
   // If we were associated with an output-stream, inform it of our demise.
-  if (output_stream_.Exists()) {
+  if (output_stream_.exists()) {
     output_stream_->RemoveScene(this);
   }
 }
 
 void Scene::PlaySoundAtPosition(SceneSound* sound, float volume, float x,
                                 float y, float z, bool host_only) {
-  if (output_stream_.Exists() && !host_only) {
+  if (output_stream_.exists() && !host_only) {
     output_stream_->PlaySoundAtPosition(sound, volume, x, y, z);
   }
   g_base->audio->PlaySoundAtPosition(sound->GetSoundData(), volume, x, y, z);
 }
 
 void Scene::PlaySound(SceneSound* sound, float volume, bool host_only) {
-  if (output_stream_.Exists() && !host_only) {
+  if (output_stream_.exists() && !host_only) {
     output_stream_->PlaySound(sound, volume);
   }
   g_base->audio->PlaySound(sound->GetSoundData(), volume);
@@ -132,7 +132,7 @@ void Scene::SetPlayerNode(int id, PlayerNode* n) { player_nodes_[id] = n; }
 auto Scene::GetPlayerNode(int id) -> PlayerNode* {
   auto i = player_nodes_.find(id);
   if (i != player_nodes_.end()) {
-    return i->second.Get();
+    return i->second.get();
   }
   return nullptr;
 }
@@ -147,7 +147,7 @@ void Scene::Step() {
     in_step_ = true;
     last_step_real_time_ = g_core->GetAppTimeMillisecs();
     for (auto&& i : nodes_) {
-      Node* node = i.Get();
+      Node* node = i.get();
       node->Step();
 
       // Now that it's stepped, pump new values to any nodes it's connected to.
@@ -158,7 +158,7 @@ void Scene::Step() {
   bool is_foreground = (appmode->GetForegroundScene() == this);
 
   // Add a step command to the output stream.
-  if (output_stream_.Exists()) {
+  if (output_stream_.exists()) {
     output_stream_->StepScene(this);
   }
 
@@ -203,7 +203,7 @@ void Scene::DeleteNode(Node* node) {
   // Sanity test to make sure it dies when we ask.
 #if BA_DEBUG_BUILD
   Object::WeakRef<Node> temp_weak_ref(node);
-  BA_PRECONDITION(temp_weak_ref.Exists());
+  BA_PRECONDITION(temp_weak_ref.exists());
 #endif
 
   // Copy a strong ref to this node to keep it alive until we've wiped it from
@@ -215,7 +215,7 @@ void Scene::DeleteNode(Node* node) {
 
   // Sanity test: at this point the node should be dead.
 #if BA_DEBUG_BUILD
-  if (temp_weak_ref.Exists()) {
+  if (temp_weak_ref.exists()) {
     g_core->Log(LogName::kBa, LogLevel::kError,
                 "Node still exists after ref release!!");
   }
@@ -227,7 +227,7 @@ void Scene::DeleteNode(Node* node) {
       i->Run();
     }
     for (auto&& i : dependent_nodes) {
-      Node* node2 = i.Get();
+      Node* node2 = i.get();
       if (node2) {
         node2->scene()->DeleteNode(node2);
       }
@@ -280,11 +280,11 @@ auto Scene::NewNode(const std::string& type_string, const std::string& name,
     throw Exception("Invalid node type: '" + type_string + "'");
   }
   auto node = Object::CompleteDeferred<Node>(i->second->Create(this));
-  assert(node.Exists());
+  assert(node.exists());
   node->AddToScene(this);
   node->set_label(name);
   node->SetDelegate(delegate);
-  return node.Get();  // NOLINT
+  return node.get();  // NOLINT
 }
 
 void Scene::Dump(SessionStream* stream) {
@@ -306,7 +306,7 @@ void Scene::DumpNodes(SessionStream* out) {
   // We have to do this all at once before setting attrs since any node
   // can refer to any other in an attr set.
   for (auto&& i : nodes_) {
-    Node* node = i.Get();
+    Node* node = i.get();
     assert(node);
 
     // Add the node.
@@ -317,7 +317,7 @@ void Scene::DumpNodes(SessionStream* out) {
 
   // Now go through and set *most* node attr values.
   for (auto&& i1 : nodes_) {
-    Node* node = i1.Get();
+    Node* node = i1.get();
     assert(node);
 
     // Now we need to set *all* of its attrs in order.
@@ -413,7 +413,7 @@ void Scene::DumpNodes(SessionStream* out) {
   // Now run through all nodes once more and add an OnCreate() call
   // so they can do any post-create setup they need to.
   for (auto&& i : nodes_) {
-    Node* node = i.Get();
+    Node* node = i.get();
     assert(node);
     out->NodeOnCreate(node);
   }
@@ -425,13 +425,13 @@ void Scene::DumpNodes(SessionStream* out) {
 
   // And lastly re-establish node attribute-connections.
   for (auto&& i : nodes_) {
-    Node* node = i.Get();
+    Node* node = i.get();
     assert(node);
     for (auto&& j : node->attribute_connections()) {
-      assert(j.Exists());
-      Node* src_node = j->src_node.Get();
+      assert(j.exists());
+      Node* src_node = j->src_node.get();
       assert(src_node);
-      Node* dst_node = j->dst_node.Get();
+      Node* dst_node = j->dst_node.get();
       assert(dst_node);
       NodeAttributeUnbound* src_attr =
           src_node->type()->GetAttribute(j->src_attr_index);
@@ -457,7 +457,7 @@ auto Scene::GetCorrectionMessage(bool blended) -> std::vector<uint8_t> {
   std::vector<RigidBody*> dynamic_bodies;
 
   for (auto&& i : nodes_) {
-    Node* n = i.Get();
+    Node* n = i.get();
     assert(n);
     if (n && !n->parts().empty()) {
       dynamic_bodies.clear();

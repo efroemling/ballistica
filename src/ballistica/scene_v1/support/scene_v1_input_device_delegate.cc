@@ -24,7 +24,7 @@ SceneV1InputDeviceDelegate::SceneV1InputDeviceDelegate() = default;
 
 SceneV1InputDeviceDelegate::~SceneV1InputDeviceDelegate() {
   assert(g_base->InLogicThread());
-  assert(!player_.Exists());
+  assert(!player_.exists());
   // Release our Python ref to ourself if we have one.
   if (py_ref_) {
     Py_DECREF(py_ref_);
@@ -55,7 +55,7 @@ std::optional<Vector3f> SceneV1InputDeviceDelegate::GetPlayerPosition() {
 }
 
 auto SceneV1InputDeviceDelegate::AttachedToPlayer() const -> bool {
-  return player_.Exists() || remote_player_.Exists();
+  return player_.exists() || remote_player_.exists();
 }
 
 void SceneV1InputDeviceDelegate::RequestPlayer() {
@@ -64,13 +64,13 @@ void SceneV1InputDeviceDelegate::RequestPlayer() {
   auto* appmode = classic::ClassicAppMode::GetActive();
   BA_PRECONDITION_FATAL(appmode);
 
-  if (player_.Exists()) {
+  if (player_.exists()) {
     g_core->Log(LogName::kBa, LogLevel::kError,
                 "InputDevice::RequestPlayer()"
                 " called with already-existing player");
     return;
   }
-  if (remote_player_.Exists()) {
+  if (remote_player_.exists()) {
     g_core->Log(LogName::kBa, LogLevel::kError,
                 "InputDevice::RequestPlayer() called with already-existing "
                 "remote-player");
@@ -100,14 +100,14 @@ void SceneV1InputDeviceDelegate::RequestPlayer() {
 
 // When the host-session tells us to attach to a player
 void SceneV1InputDeviceDelegate::AttachToLocalPlayer(Player* player) {
-  if (player_.Exists()) {
+  if (player_.exists()) {
     g_core->Log(LogName::kBa, LogLevel::kError,
                 "InputDevice::AttachToLocalPlayer() called with already "
                 "existing "
                 "player");
     return;
   }
-  if (remote_player_.Exists()) {
+  if (remote_player_.exists()) {
     g_core->Log(LogName::kBa, LogLevel::kError,
                 "InputDevice::AttachToLocalPlayer() called with already "
                 "existing "
@@ -121,14 +121,14 @@ void SceneV1InputDeviceDelegate::AttachToLocalPlayer(Player* player) {
 void SceneV1InputDeviceDelegate::AttachToRemotePlayer(
     ConnectionToHost* connection_to_host, int remote_player_id) {
   assert(connection_to_host);
-  if (player_.Exists()) {
+  if (player_.exists()) {
     g_core->Log(LogName::kBa, LogLevel::kError,
                 "InputDevice::AttachToRemotePlayer()"
                 " called with already existing "
                 "player");
     return;
   }
-  if (remote_player_.Exists()) {
+  if (remote_player_.exists()) {
     g_core->Log(LogName::kBa, LogLevel::kError,
                 "InputDevice::AttachToRemotePlayer()"
                 " called with already existing "
@@ -141,7 +141,7 @@ void SceneV1InputDeviceDelegate::AttachToRemotePlayer(
 
 void SceneV1InputDeviceDelegate::DetachFromPlayer() {
   // Handle local player.
-  if (auto* player = player_.Get()) {
+  if (auto* player = player_.get()) {
     // NOTE: we now remove the player instantly instead of pushing
     // a call to do it; otherwise its possible that someone tries
     // to access the player's inputdevice before the call goes
@@ -154,7 +154,7 @@ void SceneV1InputDeviceDelegate::DetachFromPlayer() {
   }
 
   // Handle remote player.
-  if (auto* connection_to_host = remote_player_.Get()) {
+  if (auto* connection_to_host = remote_player_.get()) {
     std::vector<uint8_t> data(2);
     data[0] = BA_MESSAGE_REMOVE_REMOTE_PLAYER;
     data[1] = static_cast_check_fit<unsigned char>(input_device().index());
@@ -170,9 +170,9 @@ std::string SceneV1InputDeviceDelegate::DescribeAttachedTo() const {
 }
 
 void SceneV1InputDeviceDelegate::InputCommand(InputType type, float value) {
-  if (Player* p = player_.Get()) {
+  if (Player* p = player_.get()) {
     p->InputCommand(type, value);
-  } else if (remote_player_.Exists()) {
+  } else if (remote_player_.exists()) {
     // Add to existing buffer of input-commands.
     {
       size_t size = remote_input_commands_buffer_.size();
@@ -195,10 +195,10 @@ void SceneV1InputDeviceDelegate::InputCommand(InputType type, float value) {
 }
 
 void SceneV1InputDeviceDelegate::ShipBufferIfFull() {
-  assert(remote_player_.Exists());
+  assert(remote_player_.exists());
   auto* appmode = classic::ClassicAppMode::GetSingleton();
 
-  ConnectionToHost* hc = remote_player_.Get();
+  ConnectionToHost* hc = remote_player_.get();
 
   // Ship the buffer once it gets big enough or once enough time has passed.
   millisecs_t real_time = g_core->GetAppTimeMillisecs();
@@ -217,13 +217,13 @@ void SceneV1InputDeviceDelegate::ShipBufferIfFull() {
 auto SceneV1InputDeviceDelegate::GetClientID() const -> int { return -1; }
 
 void SceneV1InputDeviceDelegate::Update() {
-  if (remote_player_.Exists()) {
+  if (remote_player_.exists()) {
     ShipBufferIfFull();
   }
 }
 
 auto SceneV1InputDeviceDelegate::GetRemotePlayer() const -> ConnectionToHost* {
-  return remote_player_.Get();
+  return remote_player_.get();
 }
 
 auto SceneV1InputDeviceDelegate::GetPyInputDevice(bool new_ref) -> PyObject* {

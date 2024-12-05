@@ -61,12 +61,12 @@ auto ClassicPython::GetControllerValue(base::InputDevice* device,
     Python::ScopedCallLabel label("get_device_value");
     ret_val = objs().Get(ObjID::kGetInputDeviceMappedValueCall).Call(args);
   }
-  BA_PRECONDITION(ret_val.Exists());
-  if (!PyLong_Check(ret_val.Get())) {
+  BA_PRECONDITION(ret_val.exists());
+  if (!PyLong_Check(ret_val.get())) {
     throw Exception("Non-int returned from get_device_value call.",
                     PyExcType::kType);
   }
-  return static_cast<int>(PyLong_AsLong(ret_val.Get()));
+  return static_cast<int>(PyLong_AsLong(ret_val.get()));
 }
 
 auto ClassicPython::GetControllerFloatValue(base::InputDevice* device,
@@ -81,17 +81,17 @@ auto ClassicPython::GetControllerFloatValue(base::InputDevice* device,
                  PythonRef::kSteal);
   PythonRef ret_val =
       objs().Get(ObjID::kGetInputDeviceMappedValueCall).Call(args);
-  BA_PRECONDITION(ret_val.Exists());
-  if (!PyFloat_Check(ret_val.Get())) {
-    if (PyLong_Check(ret_val.Get())) {
-      return static_cast<float>(PyLong_AsLong(ret_val.Get()));
+  BA_PRECONDITION(ret_val.exists());
+  if (!PyFloat_Check(ret_val.get())) {
+    if (PyLong_Check(ret_val.get())) {
+      return static_cast<float>(PyLong_AsLong(ret_val.get()));
     } else {
       throw Exception(
           "Non float/int returned from GetControllerFloatValue call.",
           PyExcType::kType);
     }
   }
-  return static_cast<float>(PyFloat_AsDouble(ret_val.Get()));
+  return static_cast<float>(PyFloat_AsDouble(ret_val.get()));
 }
 
 auto ClassicPython::BuildPublicPartyStateVal() -> PyObject* {

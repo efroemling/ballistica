@@ -91,7 +91,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   void Draw(base::FrameDef* frame_def) override;
 
   void SetSquadSizeLabel(int num) override;
-  void SetAccountState(bool signed_in, const std::string& name);
+  void SetAccountState(bool signed_in, const std::string& name) override;
 
   UIV1Python* const python;
 
@@ -103,16 +103,16 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   // Return the root widget containing all windows & dialogs. Whenever this
   // contains children, the UI is considered to be in focus
   auto screen_root_widget() -> ui_v1::ContainerWidget* {
-    return screen_root_widget_.Get();
+    return screen_root_widget_.get();
   }
 
   auto overlay_root_widget() -> ui_v1::ContainerWidget* {
-    return overlay_root_widget_.Get();
+    return overlay_root_widget_.get();
   }
 
   // Return the absolute root widget; this includes persistent UI bits such
   // as the top/bottom bars
-  auto root_widget() -> ui_v1::RootWidget* { return root_widget_.Get(); }
+  auto root_widget() -> ui_v1::RootWidget* { return root_widget_.get(); }
   // void Reset() override;
 
   // Add a widget to a container. If a parent is provided, the widget is
@@ -143,11 +143,11 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   Object::Ref<RootWidget> root_widget_;
   int ui_lock_count_{};
   int language_state_{};
-  int party_icon_number_{};
+  // int party_icon_number_{};
   bool always_use_internal_on_screen_keyboard_{};
   bool party_window_open_{};
-  bool account_signed_in_{};
-  std::string account_name_{};
+  // bool account_signed_in_{};
+  // std::string account_name_{};
 };
 
 }  // namespace ballistica::ui_v1

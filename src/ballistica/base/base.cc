@@ -31,6 +31,7 @@
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/support/stdio_console.h"
 #include "ballistica/base/ui/ui_delegate.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/logging.h"
 #include "ballistica/shared/generic/utils.h"
@@ -88,7 +89,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->LifecycleLog("_babase exec begin");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_babase exec begin");
 
   // This locks in a baenv configuration.
   g_core->ApplyBaEnvConfig();
@@ -120,7 +121,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   bool success = g_base->python->objs()
                      .Get(BasePython::ObjID::kEnvOnNativeModuleImportCall)
                      .Call()
-                     .Exists();
+                     .exists();
   if (!success) {
     FatalError("babase._env.on_native_module_import() call failed.");
   }
@@ -132,7 +133,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   assert(!g_base->base_native_import_completed_);
   g_base->base_native_import_completed_ = true;
 
-  g_core->LifecycleLog("_babase exec end");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_babase exec end");
 }
 
 void BaseFeatureSet::OnReachedEndOfBaBaseImport() {
@@ -176,7 +177,7 @@ auto BaseFeatureSet::GetV2AccountID() -> std::optional<std::string> {
   auto gil = Python::ScopedInterpreterLock();
   auto result =
       python->objs().Get(BasePython::ObjID::kGetV2AccountIdCall).Call();
-  if (result.Exists()) {
+  if (result.exists()) {
     if (result.ValueIsNone()) {
       return {};
     }
@@ -205,9 +206,10 @@ void BaseFeatureSet::StartApp() {
   called_start_app_ = true;
   assert(!app_started_);  // Shouldn't be possible.
 
-  g_core->LifecycleLog("start-app begin (main thread)");
-
   LogVersionInfo_();
+
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "start-app begin (main thread)");
 
   // The logic thread (or maybe other things) need to run Python as
   // we're bringing them up, so let it go for the duration of this call.
@@ -245,7 +247,8 @@ void BaseFeatureSet::StartApp() {
     python->objs().Get(BasePython::ObjID::kAppPushApplyAppConfigCall).Call();
   }
 
-  g_core->LifecycleLog("start-app end (main thread)");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "start-app end (main thread)");
 
   // Make some noise if this takes more than a few seconds. If we pass 5
   // seconds or so we start to trigger App-Not-Responding reports which
@@ -409,7 +412,8 @@ void BaseFeatureSet::OnAppShutdownComplete() {
   assert(g_base);
 
   // Flag our own event loop to exit (or ask the OS to if they're managing).
-  g_core->LifecycleLog("app exiting (main thread)");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "app exiting (main thread)");
   if (app_adapter->ManagesMainThreadEventLoop()) {
     app_adapter->DoExitMainThreadEventLoop();
   } else {
@@ -420,13 +424,14 @@ void BaseFeatureSet::OnAppShutdownComplete() {
 void BaseFeatureSet::LogVersionInfo_() {
   char buffer[256];
   if (g_buildconfig.headless_build()) {
-    snprintf(buffer, sizeof(buffer), "BallisticaKit Headless %s build %d.",
-             kEngineVersion, kEngineBuildNumber);
+    snprintf(buffer, sizeof(buffer),
+             "BallisticaKit Headless %s build %d starting...", kEngineVersion,
+             kEngineBuildNumber);
   } else {
-    snprintf(buffer, sizeof(buffer), "BallisticaKit %s build %d.",
+    snprintf(buffer, sizeof(buffer), "BallisticaKit %s build %d starting...",
              kEngineVersion, kEngineBuildNumber);
   }
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, buffer);
+  g_core->Log(LogName::kBaApp, LogLevel::kInfo, buffer);
 }
 
 void BaseFeatureSet::set_app_mode(AppMode* mode) {
@@ -556,7 +561,7 @@ auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
       Python::ScopedInterpreterLock gil;
       auto uuid =
           g_base->python->objs().Get(BasePython::ObjID::kUUIDStrCall).Call();
-      if (uuid.Exists()) {
+      if (uuid.exists()) {
         app_instance_uuid = uuid.ValueAsString();
         have_app_instance_uuid = true;
       }
@@ -731,31 +736,31 @@ void BaseFeatureSet::PushDevConsolePrintCall(const std::string& msg,
 PyObject* BaseFeatureSet::GetPyExceptionType(PyExcType exctype) {
   switch (exctype) {
     case PyExcType::kContext:
-      return python->objs().Get(BasePython::ObjID::kContextError).Get();
+      return python->objs().Get(BasePython::ObjID::kContextError).get();
     case PyExcType::kNotFound:
-      return python->objs().Get(BasePython::ObjID::kNotFoundError).Get();
+      return python->objs().Get(BasePython::ObjID::kNotFoundError).get();
     case PyExcType::kNodeNotFound:
-      return python->objs().Get(BasePython::ObjID::kNodeNotFoundError).Get();
+      return python->objs().Get(BasePython::ObjID::kNodeNotFoundError).get();
     case PyExcType::kSessionPlayerNotFound:
       return python->objs()
           .Get(BasePython::ObjID::kSessionPlayerNotFoundError)
-          .Get();
+          .get();
     case PyExcType::kInputDeviceNotFound:
       return python->objs()
           .Get(BasePython::ObjID::kInputDeviceNotFoundError)
-          .Get();
+          .get();
     case PyExcType::kDelegateNotFound:
       return python->objs()
           .Get(BasePython::ObjID::kDelegateNotFoundError)
-          .Get();
+          .get();
     case PyExcType::kWidgetNotFound:
-      return python->objs().Get(BasePython::ObjID::kWidgetNotFoundError).Get();
+      return python->objs().Get(BasePython::ObjID::kWidgetNotFoundError).get();
     case PyExcType::kActivityNotFound:
       return python->objs()
           .Get(BasePython::ObjID::kActivityNotFoundError)
-          .Get();
+          .get();
     case PyExcType::kSessionNotFound:
-      return python->objs().Get(BasePython::ObjID::kSessionNotFoundError).Get();
+      return python->objs().Get(BasePython::ObjID::kSessionNotFoundError).get();
     default:
       return nullptr;
   }

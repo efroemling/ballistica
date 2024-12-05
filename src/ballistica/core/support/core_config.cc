@@ -82,11 +82,6 @@ void CoreConfig::ApplyEnvVars() {
   // controlling log-levels via env-vars we should come up with a unified
   // system for that.
 
-  // if (auto* envval = getenv("BA_LIFECYCLE_LOG")) {
-  //   if (!strcmp(envval, "1")) {
-  //     lifecycle_log = true;
-  //   }
-  // }
   if (auto* envval = getenv("BA_DEBUGGER_ATTACHED")) {
     if (!strcmp(envval, "1")) {
       debugger_attached = true;

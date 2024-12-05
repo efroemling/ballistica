@@ -24,7 +24,7 @@ SceneSound::SceneSound(const std::string& name, Scene* scene)
     base::Assets::AssetListLock lock;
     sound_data_ = g_base->assets->GetSound(name);
   }
-  assert(sound_data_.Exists());
+  assert(sound_data_.exists());
 }
 
 SceneSound::~SceneSound() { MarkDead(); }

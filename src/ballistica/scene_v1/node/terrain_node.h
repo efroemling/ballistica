@@ -47,12 +47,12 @@ class TerrainNode : public Node {
   void setLighting(bool val) { lighting_ = val; }
   auto color() const -> const std::vector<float>& { return color_; }
   void SetColor(const std::vector<float>& vals);
-  auto mesh() const -> SceneMesh* { return mesh_.Get(); }
+  auto mesh() const -> SceneMesh* { return mesh_.get(); }
   void set_mesh(SceneMesh* m);
-  auto color_texture() const -> SceneTexture* { return color_texture_.Get(); }
+  auto color_texture() const -> SceneTexture* { return color_texture_.get(); }
   void SetColorTexture(SceneTexture* val);
   auto collision_mesh() const -> SceneCollisionMesh* {
-    return collision_mesh_.Get();
+    return collision_mesh_.get();
   }
   void set_collision_mesh(SceneCollisionMesh* val);
   auto materials() const -> std::vector<Material*>;

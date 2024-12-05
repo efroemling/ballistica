@@ -15,7 +15,7 @@ class Snapshot : public Object {
  public:
   explicit Snapshot(T* data) : data_{data} { assert(data); }
   ~Snapshot() { delete data_; }
-  auto* Get() const { return data_; }
+  auto* get() const { return data_; }
 
  private:
   const T* data_;

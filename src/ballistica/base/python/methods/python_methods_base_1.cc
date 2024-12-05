@@ -16,6 +16,7 @@
 #include "ballistica/base/python/support/python_context_call_runnable.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/logging.h"
 #include "ballistica/shared/python/python.h"
@@ -395,7 +396,7 @@ static auto PyAppTimer(PyObject* self, PyObject* args, PyObject* keywds)
   }
   g_base->logic->NewAppTimer(
       static_cast<microsecs_t>(length * 1000000.0), false,
-      Object::New<Runnable, PythonContextCallRunnable>(call_obj).Get());
+      Object::New<Runnable, PythonContextCallRunnable>(call_obj).get());
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -488,7 +489,7 @@ static auto PyDisplayTimer(PyObject* self, PyObject* args, PyObject* keywds)
   }
   g_base->logic->NewDisplayTimer(
       static_cast<microsecs_t>(length * 1000000.0), false,
-      Object::New<Runnable, PythonContextCallRunnable>(call_obj).Get());
+      Object::New<Runnable, PythonContextCallRunnable>(call_obj).get());
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -854,31 +855,31 @@ static PyMethodDef PyEmitLogDef = {
 
 // ------------------------------ lifecyclelog ---------------------------------
 
-static auto PyLifecycleLog(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  static const char* kwlist[] = {"message", nullptr};
-  const char* message;
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char**>(kwlist), &message)) {
-    return nullptr;
-  }
+// static auto PyLifecycleLog(PyObject* self, PyObject* args, PyObject* keywds)
+//     -> PyObject* {
+//   BA_PYTHON_TRY;
+//   static const char* kwlist[] = {"message", nullptr};
+//   const char* message;
+//   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+//                                    const_cast<char**>(kwlist), &message)) {
+//     return nullptr;
+//   }
 
-  g_core->LifecycleLog(message);
+//   g_core->LifecycleLog(message);
 
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
+//   Py_RETURN_NONE;
+//   BA_PYTHON_CATCH;
+// }
 
-static PyMethodDef PyLifecycleLogDef = {
-    "lifecyclelog",                // name
-    (PyCFunction)PyLifecycleLog,   // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
+// static PyMethodDef PyLifecycleLogDef = {
+//     "lifecyclelog",                // name
+//     (PyCFunction)PyLifecycleLog,   // method
+//     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "lifecyclelog(message: str) -> None\n"
-    "\n"
-    "(internal)",
-};
+//     "lifecyclelog(message: str) -> None\n"
+//     "\n"
+//     "(internal)",
+// };
 
 // ----------------------------- v1_cloud_log ----------------------------------
 
@@ -1721,7 +1722,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyMacMusicAppPlayPlaylistDef,
       PyMacMusicAppGetPlaylistsDef,
       PyIsOSPlayingMusicDef,
-      PyLifecycleLogDef,
+      // PyLifecycleLogDef,
       PyExecArgDef,
       PyOnAppRunningDef,
       PyOnInitialAppModeSetDef,

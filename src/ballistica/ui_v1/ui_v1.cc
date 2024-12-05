@@ -32,7 +32,7 @@ void UIV1FeatureSet::OnModuleExec(PyObject* module) {
   // Various ballistica functionality will fail if this has not been done.
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->LifecycleLog("_bauiv1 exec begin");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_bauiv1 exec begin");
 
   // Create our feature-set's C++ front-end.
   assert(g_ui_v1 == nullptr);
@@ -52,7 +52,7 @@ void UIV1FeatureSet::OnModuleExec(PyObject* module) {
   assert(g_base == nullptr);  // Should be getting set once here.
   g_base = base::BaseFeatureSet::Import();
 
-  g_core->LifecycleLog("_bauiv1 exec end");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_bauiv1 exec end");
 }
 
 auto UIV1FeatureSet::Import() -> UIV1FeatureSet* {
@@ -81,21 +81,15 @@ bool UIV1FeatureSet::PartyIconVisible() {
   // Currently this is always visible.
   return true;
 }
+
 void UIV1FeatureSet::SetAccountState(bool signed_in, const std::string& name) {
-  // Store the value and plug it in if we've got a live widget.
-  account_signed_in_ = signed_in;
-  account_name_ = name;
-  if (auto* r = root_widget()) {
-    root_widget_->SetAccountState(signed_in, name);
-  }
+  assert(root_widget_.exists());
+  root_widget_->SetAccountState(signed_in, name);
 }
 
 void UIV1FeatureSet::SetSquadSizeLabel(int num) {
-  // Store the value and plug it in if we've got a live widget.
-  party_icon_number_ = num;
-  if (auto* r = root_widget()) {
-    root_widget_->SetSquadSizeLabel(num);
-  }
+  assert(root_widget_.exists());
+  root_widget_->SetSquadSizeLabel(num);
 }
 
 void UIV1FeatureSet::ActivatePartyIcon() {
@@ -110,7 +104,7 @@ void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
   base::RenderPass* overlay_flat_pass = frame_def->GetOverlayFlatPass();
 
   // Draw interface elements.
-  auto* root_widget = root_widget_.Get();
+  auto* root_widget = root_widget_.get();
 
   if (root_widget && root_widget->HasChildren()) {
     // Draw our opaque and transparent parts separately. This way we can
@@ -181,13 +175,13 @@ void UIV1FeatureSet::OnActivate() {
   root_widget_ = rw;
   rw->SetWidth(g_base->graphics->screen_virtual_width());
   rw->SetHeight(g_base->graphics->screen_virtual_height());
-  rw->SetScreenWidget(sw.Get());
+  rw->SetScreenWidget(sw.get());
   rw->Setup();
-  rw->SetOverlayWidget(ow.Get());
+  rw->SetOverlayWidget(ow.get());
 
-  // Plug in current values for everything.
-  rw->SetSquadSizeLabel(party_icon_number_);
-  rw->SetAccountState(account_signed_in_, account_name_);
+  // Plug in all values we're storing.
+  // rw->SetSquadSizeLabel(party_icon_number_);
+  // rw->SetAccountState(account_signed_in_, account_name_);
 
   sw->GlobalSelect();
 }
@@ -199,11 +193,6 @@ void UIV1FeatureSet::OnDeactivate() {
   screen_root_widget_.Clear();
 }
 
-// void UIV1FeatureSet::Reset() {
-//   printf("UIV1::Reset()\n");
-
-// }
-
 void UIV1FeatureSet::AddWidget(Widget* w, ContainerWidget* parent) {
   assert(g_base->InLogicThread());
 
@@ -214,8 +203,8 @@ void UIV1FeatureSet::AddWidget(Widget* w, ContainerWidget* parent) {
   // have lost focus will not get stuck running or whatnot. We should come
   // up with a more generalized way to track this sort of focus as this is a
   // bit hacky, but it works for now.
-  auto* screen_root_widget = screen_root_widget_.Get();
-  auto* overlay_root_widget = overlay_root_widget_.Get();
+  auto* screen_root_widget = screen_root_widget_.get();
+  auto* overlay_root_widget = overlay_root_widget_.get();
   if ((screen_root_widget && !screen_root_widget->HasChildren()
        && parent == screen_root_widget)
       || (overlay_root_widget && !overlay_root_widget->HasChildren()
@@ -228,7 +217,7 @@ void UIV1FeatureSet::AddWidget(Widget* w, ContainerWidget* parent) {
 
 void UIV1FeatureSet::OnScreenSizeChange() {
   // This gets called by the native layer as window is resized/etc.
-  if (root_widget_.Exists()) {
+  if (root_widget_.exists()) {
     root_widget_->SetWidth(g_base->graphics->screen_virtual_width());
     root_widget_->SetHeight(g_base->graphics->screen_virtual_height());
   }
@@ -241,7 +230,7 @@ void UIV1FeatureSet::OnScreenChange() {
 
   // We allow OnScreenSizeChange() to handle size changes but *do* handle
   // UIScale changes here.
-  if (auto* root_widget = root_widget_.Get()) {
+  if (auto* root_widget = root_widget_.get()) {
     root_widget->OnUIScaleChange();
   }
 }
@@ -262,7 +251,7 @@ void UIV1FeatureSet::OnLanguageChange() {
 Widget* UIV1FeatureSet::GetRootWidget() { return root_widget(); }
 
 auto UIV1FeatureSet::SendWidgetMessage(const base::WidgetMessage& m) -> int {
-  if (!root_widget_.Exists()) {
+  if (!root_widget_.exists()) {
     return false;
   }
   return root_widget_->HandleMessage(m);

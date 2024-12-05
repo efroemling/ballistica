@@ -9,21 +9,22 @@ a more focused way.
 """
 # pylint: disable=redefined-builtin
 
+# ba_meta require api 9
+
 # The stuff we expose here at the top level is our 'public' api for use
 # from other modules/packages. Code *within* this package should import
 # things from this package's submodules directly to reduce the chance of
 # dependency loops. The exception is TYPE_CHECKING blocks and
 # annotations since those aren't evaluated at runtime.
 
-import logging
 from efro.util import set_canonical_module_names
-
 
 import _babase
 from _babase import (
     add_clean_frame_callback,
     allows_ticket_sales,
     android_get_external_files_dir,
+    app_instance_uuid,
     appname,
     appnameupper,
     apptime,
@@ -100,6 +101,7 @@ from _babase import (
     set_analytics_screen,
     set_low_level_config_value,
     set_thread_name,
+    set_ui_account_state,
     set_ui_input_device,
     set_ui_scale,
     show_progress_bar,
@@ -112,6 +114,7 @@ from _babase import (
     unlock_all_input,
     update_internal_logger_levels,
     user_agent_string,
+    user_ran_commands,
     Vec3,
     workspaces_in_use,
 )
@@ -170,10 +173,9 @@ from babase._general import (
     get_type_name,
 )
 from babase._language import Lstr, LanguageSubsystem
+from babase._logging import balog, lifecyclelog
 from babase._login import LoginAdapter, LoginInfo
 
-# noinspection PyProtectedMember
-# (PyCharm inspection bug?)
 from babase._mgen.enums import (
     Permission,
     SpecialChar,
@@ -188,8 +190,6 @@ from babase._plugin import PluginSpec, Plugin, PluginSubsystem
 from babase._stringedit import StringEditAdapter, StringEditSubsystem
 from babase._text import timestring
 
-# Our standard set of loggers.
-balog = logging.getLogger('ba')
 
 _babase.app = app = App()
 app.postinit()
@@ -211,6 +211,7 @@ __all__ = [
     'AppIntentDefault',
     'AppIntentExec',
     'AppMode',
+    'app_instance_uuid',
     'appname',
     'appnameupper',
     'AppModeSelector',
@@ -285,6 +286,7 @@ __all__ = [
     'is_point_in_box',
     'is_xcode_build',
     'LanguageSubsystem',
+    'lifecyclelog',
     'lock_all_input',
     'LoginAdapter',
     'LoginInfo',
@@ -335,6 +337,7 @@ __all__ = [
     'set_analytics_screen',
     'set_low_level_config_value',
     'set_thread_name',
+    'set_ui_account_state',
     'set_ui_input_device',
     'set_ui_scale',
     'show_progress_bar',
@@ -354,6 +357,7 @@ __all__ = [
     'unlock_all_input',
     'update_internal_logger_levels',
     'user_agent_string',
+    'user_ran_commands',
     'utf8_all',
     'Vec3',
     'vec3validate',

@@ -6,6 +6,7 @@
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/platform/core_platform.h"  // IWYU pragma: keep.
 #include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {

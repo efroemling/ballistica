@@ -3,8 +3,9 @@
 #include "ballistica/scene_v1/node/bomb_node.h"
 
 #include "ballistica/base/graphics/graphics.h"
-#include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/support/scene.h"
+#include "ode/ode_collision.h"
+#include "ode/ode_common.h"
 
 namespace ballistica::scene_v1 {
 
@@ -48,7 +49,7 @@ void BombNode::OnCreate() {
 
 void BombNode::Step() {
   PropNode::Step();
-  if (body_.Exists()) {
+  if (body_.exists()) {
     // Update our fuse and light position.
     dVector3 fuse_tip_pos;
     dGeomGetRelPointPos(body_->geom(), 0, (fuse_length_ + kFuseOffset), 0,

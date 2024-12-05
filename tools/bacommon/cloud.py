@@ -4,11 +4,11 @@
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Annotated, override, assert_never
+from typing import TYPE_CHECKING, Annotated, override
 from enum import Enum
 
 from efro.message import Message, Response
-from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
+from efro.dataclassio import ioprepped, IOAttrs
 from bacommon.transfer import DirectoryManifest
 from bacommon.login import LoginType
 
@@ -325,47 +325,33 @@ class BSPrivatePartyResponse(Response):
     datacode: Annotated[str | None, IOAttrs('d')]
 
 
-class CloudSubscriptionRequestTypeID(Enum):
-    """Type ID for each of our subclasses."""
-
-    TEST = 'test'
-
-
-class CloudSubscriptionRequest(IOMultiType[CloudSubscriptionRequestTypeID]):
-    """Top level class for our multitype."""
-
-    @override
-    @classmethod
-    def get_type_id(cls) -> CloudSubscriptionRequestTypeID:
-        # Require child classes to supply this themselves. If we
-        # did a full type registry/lookup here it would require us
-        # to import everything and would prevent lazy loading.
-        raise NotImplementedError()
-
-    @override
-    @classmethod
-    def get_type(
-        cls, type_id: CloudSubscriptionRequestTypeID
-    ) -> type[CloudSubscriptionRequest]:
-        """Return the subclass for each of our type-ids."""
-        # pylint: disable=cyclic-import
-        out: type[CloudSubscriptionRequest]
-
-        t = CloudSubscriptionRequestTypeID
-        if type_id is t.TEST:
-            out = TestCloudSubscriptionRequest
-        else:
-            # Important to make sure we provide all types.
-            assert_never(type_id)
-        return out
-
-
 @ioprepped
 @dataclass
-class TestCloudSubscriptionRequest(CloudSubscriptionRequest):
-    """Just a test."""
+class ClassicAccountLiveData:
+    """Account related data kept up to date live for classic app mode."""
 
-    @override
-    @classmethod
-    def get_type_id(cls) -> CloudSubscriptionRequestTypeID:
-        return CloudSubscriptionRequestTypeID.TEST
+    class LeagueType(Enum):
+        """Type of league we are in."""
+
+        BRONZE = 'b'
+        SILVER = 's'
+        GOLD = 'g'
+        DIAMOND = 'd'
+
+    tickets: Annotated[int, IOAttrs('ti')]
+
+    tokens: Annotated[int, IOAttrs('to')]
+    gold_pass: Annotated[bool, IOAttrs('g')]
+
+    achievements: Annotated[int, IOAttrs('a')]
+    achievements_total: Annotated[int, IOAttrs('at')]
+
+    league_type: Annotated[LeagueType | None, IOAttrs('lt')]
+    league_num: Annotated[int | None, IOAttrs('ln')]
+    league_rank: Annotated[int | None, IOAttrs('lr')]
+
+    level: Annotated[int, IOAttrs('lv')]
+    xp: Annotated[int, IOAttrs('xp')]
+    xpmax: Annotated[int, IOAttrs('xpm')]
+
+    inbox_count: Annotated[int, IOAttrs('ibc')]

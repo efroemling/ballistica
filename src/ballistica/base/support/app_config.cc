@@ -220,6 +220,8 @@ void AppConfig::SetupEntries() {
 
   bool_entries_[BoolID::kAlwaysUseInternalKeyboard] =
       BoolEntry("Always Use Internal Keyboard", false);
+  bool_entries_[BoolID::kUseInsecureConnections] =
+      BoolEntry("Use Insecure Connections", false);
   bool_entries_[BoolID::kShowFPS] = BoolEntry("Show FPS", false);
   bool_entries_[BoolID::kShowPing] = BoolEntry("Show Ping", false);
   bool_entries_[BoolID::kShowDevConsoleButton] =

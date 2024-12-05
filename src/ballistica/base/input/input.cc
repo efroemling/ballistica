@@ -18,6 +18,7 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -67,16 +68,16 @@ auto Input::GetInputDevice(int id) -> InputDevice* {
   if (id < 0 || id >= static_cast<int>(input_devices_.size())) {
     return nullptr;
   }
-  return input_devices_[id].Get();
+  return input_devices_[id].get();
 }
 
 auto Input::GetInputDevice(const std::string& name,
                            const std::string& unique_id) -> InputDevice* {
   assert(g_base->InLogicThread());
   for (auto&& i : input_devices_) {
-    if (i.Exists() && (i->GetDeviceName() == name)
+    if (i.exists() && (i->GetDeviceName() == name)
         && i->GetPersistentIdentifier() == unique_id) {
-      return i.Get();
+      return i.get();
     }
   }
   return nullptr;
@@ -108,7 +109,7 @@ auto Input::GetNewNumberedIdentifier_(const std::string& name,
     // Scan other devices with the same device-name and find the first number
     // suffix that's not taken.
     for (auto&& i : input_devices_) {
-      if (i.Exists()) {
+      if (i.exists()) {
         if ((i->GetRawDeviceName() == name) && i->number() == num) {
           in_use = true;
           break;
@@ -244,7 +245,7 @@ void Input::ShowStandardInputDeviceConnectedMessage_(InputDevice* j) {
   }
   connect_print_timer_id_ = g_base->logic->NewAppTimer(
       500 * 1000, false,
-      NewLambdaRunnable([this] { AnnounceConnects_(); }).Get());
+      NewLambdaRunnable([this] { AnnounceConnects_(); }).get());
 }
 
 void Input::ShowStandardInputDeviceDisconnectedMessage_(InputDevice* j) {
@@ -260,7 +261,7 @@ void Input::ShowStandardInputDeviceDisconnectedMessage_(InputDevice* j) {
   }
   disconnect_print_timer_id_ = g_base->logic->NewAppTimer(
       250 * 1000, false,
-      NewLambdaRunnable([this] { AnnounceDisconnects_(); }).Get());
+      NewLambdaRunnable([this] { AnnounceDisconnects_(); }).get());
 }
 
 void Input::PushAddInputDeviceCall(InputDevice* input_device,
@@ -274,7 +275,7 @@ void Input::PushAddInputDeviceCall(InputDevice* input_device,
 void Input::RebuildInputDeviceDelegates() {
   assert(g_base->InLogicThread());
   for (auto&& device_ref : input_devices_) {
-    if (auto* device = device_ref.Get()) {
+    if (auto* device = device_ref.get()) {
       auto delegate = Object::CompleteDeferred(
           g_base->app_mode()->CreateInputDeviceDelegate(device));
       device->set_delegate(delegate);
@@ -297,7 +298,7 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
   int index = 0;
   bool found_slot = false;
   for (auto& input_device : input_devices_) {
-    if (!input_device.Exists()) {
+    if (!input_device.exists()) {
       input_device = Object::CompleteDeferred(device);
       found_slot = true;
       device->set_index(index);
@@ -356,7 +357,7 @@ void Input::RemoveInputDevice(InputDevice* input, bool standard_message) {
   // Just look for it in our list.. if we find it, simply clear the ref (we
   // need to keep the ref around so our list indices don't change).
   for (auto& input_device : input_devices_) {
-    if (input_device.Exists() && (input_device.Get() == input)) {
+    if (input_device.exists() && (input_device.get() == input)) {
       // Pull it off the list before killing it (in case it tries to trigger
       // another kill itself).
       auto device = Object::Ref<InputDevice>(input_device);
@@ -392,7 +393,7 @@ void Input::UpdateInputDeviceCounts_() {
     // have been active recently.. (we're starting to get lots of virtual
     // devices and other cruft on android; don't wanna show controller UIs
     // just due to those)
-    if (input_device.Exists()
+    if (input_device.exists()
         && ((*input_device).IsTouchScreen() || (*input_device).IsKeyboard()
             || ((*input_device).last_active_time_millisecs() != 0
                 && current_time_millisecs
@@ -440,7 +441,7 @@ auto Input::GetLocalActiveInputDeviceCount() -> int {
     for (auto& input_device : input_devices_) {
       // Tally up local non-keyboard, non-touchscreen devices that have been
       // used in the last minute.
-      if (input_device.Exists() && !input_device->IsKeyboard()
+      if (input_device.exists() && !input_device->IsKeyboard()
           && !input_device->IsTouchScreen() && !input_device->IsUIOnly()
           && input_device->IsLocal()
           && (input_device->last_active_time_millisecs() != 0
@@ -458,7 +459,7 @@ auto Input::GetLocalActiveInputDeviceCount() -> int {
 auto Input::HaveControllerWithPlayer() -> bool {
   assert(g_base->InLogicThread());
   for (auto& input_device : input_devices_) {
-    if (input_device.Exists() && (*input_device).IsController()
+    if (input_device.exists() && (*input_device).IsController()
         && (*input_device).AttachedToPlayer()) {
       return true;
     }
@@ -469,7 +470,7 @@ auto Input::HaveControllerWithPlayer() -> bool {
 auto Input::HaveRemoteAppController() -> bool {
   assert(g_base->InLogicThread());
   for (auto& input_device : input_devices_) {
-    if (input_device.Exists() && (*input_device).IsRemoteApp()) {
+    if (input_device.exists() && (*input_device).IsRemoteApp()) {
       return true;
     }
   }
@@ -481,8 +482,8 @@ auto Input::GetInputDevicesWithName(const std::string& name)
   std::vector<InputDevice*> vals;
   if (!g_core->HeadlessMode()) {
     for (auto& input_device : input_devices_) {
-      if (input_device.Exists()) {
-        auto* js = dynamic_cast<JoystickInput*>(input_device.Get());
+      if (input_device.exists()) {
+        auto* js = dynamic_cast<JoystickInput*>(input_device.get());
         if (js && js->GetDeviceName() == name) {
           vals.push_back(js);
         }
@@ -497,8 +498,8 @@ auto Input::GetConfigurableGamePads() -> std::vector<InputDevice*> {
   std::vector<InputDevice*> vals;
   if (!g_core->HeadlessMode()) {
     for (auto& input_device : input_devices_) {
-      if (input_device.Exists()) {
-        auto* js = dynamic_cast<JoystickInput*>(input_device.Get());
+      if (input_device.exists()) {
+        auto* js = dynamic_cast<JoystickInput*>(input_device.get());
         if (js && js->GetAllowsConfiguring() && !js->ShouldBeHiddenFromUser()) {
           vals.push_back(js);
         }
@@ -539,7 +540,7 @@ void Input::DoApplyAppConfig() {
   // with a copy of it.
   std::vector<Object::Ref<InputDevice> > input_devices = input_devices_;
   for (auto& input_device : input_devices) {
-    if (input_device.Exists()) {
+    if (input_device.exists()) {
       input_device->UpdateMapping();
     }
   }
@@ -590,7 +591,7 @@ void Input::StepDisplayTime() {
   }
 
   for (auto& input_device : input_devices_) {
-    if (input_device.Exists()) {
+    if (input_device.exists()) {
       (*input_device).Update();
     }
   }
@@ -601,7 +602,7 @@ void Input::Reset() {
 
   // Detach all inputs from players.
   for (auto& input_device : input_devices_) {
-    if (input_device.Exists()) {
+    if (input_device.exists()) {
       input_device->DetachFromPlayer();
     }
   }
@@ -1487,7 +1488,7 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
 
 void Input::ResetJoyStickHeldButtons() {
   for (auto&& i : input_devices_) {
-    if (i.Exists()) {
+    if (i.exists()) {
       i->ResetHeldStates();
     }
   }

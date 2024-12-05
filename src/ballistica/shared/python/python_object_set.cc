@@ -31,7 +31,7 @@ void PythonObjectSetBase::StoreObj(int id, PyObject* pyobj) {
   if (g_buildconfig.debug_build()) {
     // Assuming we're setting everything once
     // (make sure we don't accidentally overwrite things we don't intend to).
-    if (objs_[id].Exists()) {
+    if (objs_[id].exists()) {
       throw Exception("Python::StoreObj() called twice for id '"
                       + std::to_string(id) + "' (existing val: '"
                       + objs_[id].Str() + "').");
@@ -39,7 +39,7 @@ void PythonObjectSetBase::StoreObj(int id, PyObject* pyobj) {
 
     // Also make sure we're not storing an object that's already been stored.
     for (auto&& i : objs_) {
-      if (i.Get() != nullptr && i.Get() == pyobj) {
+      if (i.get() != nullptr && i.get() == pyobj) {
         g_core->Log(LogName::kBa, LogLevel::kWarning,
                     "Python::StoreObj() called twice for same ptr; id="
                         + std::to_string(id) + ".");
@@ -65,19 +65,19 @@ void PythonObjectSetBase::StoreObjCallable(int id, PyObject* pyobj) {
 void PythonObjectSetBase::StoreObj(int id, const char* expr,
                                    PyObject* context) {
   auto obj = PythonCommand(expr, "<PyObj Set>").Eval(false, context, context);
-  if (!obj.Exists()) {
+  if (!obj.exists()) {
     FatalError("Unable to get value: '" + std::string(expr) + "'.");
   }
-  StoreObj(id, obj.Get());
+  StoreObj(id, obj.get());
 }
 
 void PythonObjectSetBase::StoreObjCallable(int id, const char* expr,
                                            PyObject* context) {
   auto obj = PythonCommand(expr, "<PyObj Set>").Eval(false, context, context);
-  if (!obj.Exists()) {
+  if (!obj.exists()) {
     throw Exception("Unable to get value: '" + std::string(expr) + "'.");
   }
-  StoreObjCallable(id, obj.Get());
+  StoreObjCallable(id, obj.get());
 }
 
 void PythonObjectSetBase::PushObjCall(int id) const {

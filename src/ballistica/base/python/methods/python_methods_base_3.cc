@@ -18,8 +18,9 @@
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/macros.h"
-#include "ballistica/shared/generic/native_stack_trace.h"
+#include "ballistica/shared/generic/native_stack_trace.h"  // IWYU pragma: keep.
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
@@ -794,7 +795,7 @@ static auto PyAppConfigGetBuiltinKeys(PyObject* self, PyObject* args,
   }
   PythonRef list(PyList_New(0), PythonRef::kSteal);
   for (auto&& i : g_base->app_config->entries_by_name()) {
-    PyList_Append(list.Get(), PyUnicode_FromString(i.first.c_str()));
+    PyList_Append(list.get(), PyUnicode_FromString(i.first.c_str()));
   }
   return list.HandOver();
   BA_PYTHON_CATCH;

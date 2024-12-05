@@ -7,9 +7,10 @@ from __future__ import annotations
 import os
 import time
 import weakref
+import functools
 import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, cast, TypeVar, Generic, overload
+from typing import TYPE_CHECKING, cast, TypeVar, Generic, overload, ParamSpec
 
 if TYPE_CHECKING:
     import asyncio
@@ -22,6 +23,8 @@ SelfT = TypeVar('SelfT')
 RetT = TypeVar('RetT')
 EnumT = TypeVar('EnumT', bound=Enum)
 
+P = ParamSpec('P')
+
 
 class _EmptyObj:
     pass
@@ -31,6 +34,36 @@ class _EmptyObj:
 # one and return it for all cases that need an empty weak-ref.
 _g_empty_weak_ref = weakref.ref(_EmptyObj())
 assert _g_empty_weak_ref() is None
+
+# Note to self: adding a special form of partial for when we don't need
+# to pass further args/kwargs (which I think is most cases). Even though
+# partial is now type-checked in Mypy (as of Nov 2024) there are still some
+# pitfalls that this avoids (see func docs below). Perhaps it would make
+# sense to simply define a Call class for this purpose; it might be more
+# efficient than wrapping partial anyway (should test this).
+if TYPE_CHECKING:
+
+    def strict_partial(
+        func: Callable[P, T], *args: P.args, **kwargs: P.kwargs
+    ) -> Callable[[], T]:
+        """A version of functools.partial requiring all args to be passed.
+
+        This helps avoid pitfalls where a function is wrapped in a
+        partial but then an extra required arg is added to the function
+        but no type checking error is triggered at usage sites because
+        vanilla partial assumes that extra arg will be provided at call
+        time.
+
+        Note: it would seem like this pitfall could also be avoided on
+        the back end by ensuring that the thing accepting the partial
+        asks for Callable[[], None] instead of just Callable, but as of
+        Nov 2024 it seems that Mypy does not support this; it in fact
+        allows partials to be passed for any callable signature(!).
+        """
+        ...
+
+else:
+    strict_partial = functools.partial
 
 
 def explicit_bool(val: bool) -> bool:
@@ -169,21 +202,26 @@ def data_size_str(bytecount: int, compact: bool = False) -> str:
 
 
 class DirtyBit:
-    """Manages whether a thing is dirty and regulates attempts to clean it.
+    """Manages whether a thing is dirty and regulates cleaning it.
 
-    To use, simply set the 'dirty' value on this object to True when some
-    action is needed, and then check the 'should_update' value to regulate
-    when attempts to clean it should be made. Set 'dirty' back to False after
-    a successful update.
-    If 'use_lock' is True, an asyncio Lock will be created and incorporated
-    into update attempts to prevent simultaneous updates (should_update will
-    only return True when the lock is unlocked). Note that It is up to the user
-    to lock/unlock the lock during the actual update attempt.
-    If a value is passed for 'auto_dirty_seconds', the dirtybit will flip
-    itself back to dirty after being clean for the given amount of time.
+    To use, simply set the 'dirty' value on this object to True when
+    some update is needed, and then check the 'should_update' value to
+    regulate when the actual update should occur. Set 'dirty' back to
+    False after a successful update.
+
+    If 'use_lock' is True, an asyncio Lock will be created and
+    incorporated into update attempts to prevent simultaneous updates
+    (should_update will only return True when the lock is unlocked).
+    Note that It is up to the user to lock/unlock the lock during the
+    actual update attempt.
+
+    If a value is passed for 'auto_dirty_seconds', the dirtybit will
+    flip itself back to dirty after being clean for the given amount of
+    time.
+
     'min_update_interval' can be used to enforce a minimum update
-    interval even when updates are successful (retry_interval only applies
-    when updates fail)
+    interval even when updates are successful (retry_interval only
+    applies when updates fail)
     """
 
     def __init__(

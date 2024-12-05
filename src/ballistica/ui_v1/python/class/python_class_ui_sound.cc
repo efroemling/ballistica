@@ -44,7 +44,7 @@ auto PythonClassUISound::Create(const Object::Ref<base::SoundAsset>& sound)
 
 auto PythonClassUISound::tp_repr(PythonClassUISound* self) -> PyObject* {
   BA_PYTHON_TRY;
-  base::SoundAsset* s = self->sound_->Get();
+  base::SoundAsset* s = self->sound_->get();
   return Py_BuildValue(
       "s", (std::string("<bauiv1.Sound '") + (s->GetName()) + "'>").c_str());
   BA_PYTHON_CATCH;
@@ -91,7 +91,7 @@ auto PythonClassUISound::Play(PythonClassUISound* self, PyObject* args,
                                    const_cast<char**>(kwlist), &volume)) {
     return nullptr;
   }
-  base::SoundAsset* s = self->sound_->Get();
+  base::SoundAsset* s = self->sound_->get();
   auto play_id = g_base->audio->PlaySound(s, volume);
   if (play_id) {
     self->playing_ = true;

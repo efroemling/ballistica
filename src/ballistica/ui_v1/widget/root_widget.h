@@ -39,6 +39,15 @@ class RootWidget : public ContainerWidget {
   void SetSquadSizeLabel(int val);
   void SetAccountState(bool signed_in, const std::string& name);
 
+  void SetTicketsMeterText(const std::string& val);
+  void SetTokensMeterText(const std::string& val);
+  void SetLeagueRankText(const std::string& val);
+  void SetLeagueType(const std::string& val);
+  void SetAchievementPercentText(const std::string& val);
+  void SetLevelText(const std::string& val);
+  void SetXPText(const std::string& val);
+  void SetInboxCountText(const std::string& val);
+
  private:
   struct ButtonDef;
   struct Button;
@@ -52,7 +61,7 @@ class RootWidget : public ContainerWidget {
   auto AddButton_(const ButtonDef& def) -> Button*;
   auto AddText_(const TextDef& def) -> Text*;
   auto AddImage_(const ImageDef& def) -> Image*;
-  void StepPositions_(float dt);
+  void StepChildWidgets_(float dt);
   void AddMeter_(MeterType type, float h_align, float r, float g, float b,
                  bool plus, const std::string& s);
   ToolbarVisibility toolbar_visibility_{ToolbarVisibility::kInGame};
@@ -67,7 +76,7 @@ class RootWidget : public ContainerWidget {
   std::vector<Button*> top_right_buttons_;
   std::vector<Button*> bottom_left_buttons_;
   std::vector<Button*> bottom_right_buttons_;
-  bool positions_dirty_{true};
+  bool child_widgets_dirty_{true};
   bool in_main_menu_{};
   Button* back_button_{};
   Button* account_button_{};
@@ -82,11 +91,18 @@ class RootWidget : public ContainerWidget {
   Button* inventory_button_{};
   Button* menu_button_{};
   Button* squad_button_{};
-  Button* level_icon_{};
   Button* level_meter_button_{};
-  Button* trophy_icon_{};
+  Image* trophy_icon_{};
+  Image* inbox_count_backing_{};
   Text* squad_size_text_{};
   Text* account_name_text_{};
+  Text* tickets_meter_text_{};
+  Text* tokens_meter_text_{};
+  Text* league_rank_text_{};
+  Text* achievement_percent_text_{};
+  Text* level_text_{};
+  Text* xp_text_{};
+  Text* inbox_count_text_{};
 };
 
 }  // namespace ballistica::ui_v1

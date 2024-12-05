@@ -11,8 +11,8 @@
 namespace ballistica::scene_v1 {
 
 void NodeAttributeConnection::Update() {
-  assert(src_node.Exists() && dst_node.Exists());
-  auto* src_node_p{src_node.Get()};
+  assert(src_node.exists() && dst_node.exists());
+  auto* src_node_p{src_node.get()};
 
   // We no longer update after errors now.
   // (the constant stream of exceptions slows things down too much)
@@ -30,58 +30,58 @@ void NodeAttributeConnection::Update() {
     assert(dst_attr);
     switch (dst_attr->type()) {
       case NodeAttributeType::kFloat:
-        dst_attr->Set(dst_node.Get(), src_attr->GetAsFloat(src_node_p));
+        dst_attr->Set(dst_node.get(), src_attr->GetAsFloat(src_node_p));
         break;
       case NodeAttributeType::kInt:
-        dst_attr->Set(dst_node.Get(), src_attr->GetAsInt(src_node_p));
+        dst_attr->Set(dst_node.get(), src_attr->GetAsInt(src_node_p));
         break;
       case NodeAttributeType::kBool:
-        dst_attr->Set(dst_node.Get(), src_attr->GetAsBool(src_node_p));
+        dst_attr->Set(dst_node.get(), src_attr->GetAsBool(src_node_p));
         break;
       case NodeAttributeType::kString:
-        dst_attr->Set(dst_node.Get(), src_attr->GetAsString(src_node_p));
+        dst_attr->Set(dst_node.get(), src_attr->GetAsString(src_node_p));
         break;
       case NodeAttributeType::kIntArray:
-        dst_attr->Set(dst_node.Get(), src_attr->GetAsInts(src_node_p));
+        dst_attr->Set(dst_node.get(), src_attr->GetAsInts(src_node_p));
         break;
       case NodeAttributeType::kFloatArray:
-        dst_attr->Set(dst_node.Get(), src_attr->GetAsFloats(src_node_p));
+        dst_attr->Set(dst_node.get(), src_attr->GetAsFloats(src_node_p));
         break;
       case NodeAttributeType::kNode:
-        dst_attr->Set(dst_node.Get(), src_attr->GetAsNode(src_node_p));
+        dst_attr->Set(dst_node.get(), src_attr->GetAsNode(src_node_p));
         break;
       case NodeAttributeType::kNodeArray:
-        dst_attr->Set(dst_node.Get(), src_attr->GetAsNodes(src_node_p));
+        dst_attr->Set(dst_node.get(), src_attr->GetAsNodes(src_node_p));
         break;
       case NodeAttributeType::kPlayer:
-        dst_attr->Set(dst_node.Get(), src_attr->GetAsPlayer(src_node_p));
+        dst_attr->Set(dst_node.get(), src_attr->GetAsPlayer(src_node_p));
         break;
       case NodeAttributeType::kMaterialArray:
-        dst_attr->Set(dst_node.Get(), src_attr->GetAsMaterials(src_node_p));
+        dst_attr->Set(dst_node.get(), src_attr->GetAsMaterials(src_node_p));
         break;
       case NodeAttributeType::kTexture:
-        dst_attr->Set(dst_node.Get(), src_attr->GetAsTexture(src_node_p));
+        dst_attr->Set(dst_node.get(), src_attr->GetAsTexture(src_node_p));
         break;
       case NodeAttributeType::kTextureArray:
-        dst_attr->Set(dst_node.Get(), src_attr->GetAsTextures(src_node_p));
+        dst_attr->Set(dst_node.get(), src_attr->GetAsTextures(src_node_p));
         break;
       case NodeAttributeType::kSound:
-        dst_attr->Set(dst_node.Get(), src_attr->GetAsSound(src_node_p));
+        dst_attr->Set(dst_node.get(), src_attr->GetAsSound(src_node_p));
         break;
       case NodeAttributeType::kSoundArray:
-        dst_attr->Set(dst_node.Get(), src_attr->GetAsSounds(src_node_p));
+        dst_attr->Set(dst_node.get(), src_attr->GetAsSounds(src_node_p));
         break;
       case NodeAttributeType::kMesh:
-        dst_attr->Set(dst_node.Get(), src_attr->GetAsMesh(src_node_p));
+        dst_attr->Set(dst_node.get(), src_attr->GetAsMesh(src_node_p));
         break;
       case NodeAttributeType::kMeshArray:
-        dst_attr->Set(dst_node.Get(), src_attr->GetAsMeshes(src_node_p));
+        dst_attr->Set(dst_node.get(), src_attr->GetAsMeshes(src_node_p));
         break;
       case NodeAttributeType::kCollisionMesh:
-        dst_attr->Set(dst_node.Get(), src_attr->GetAsCollisionMesh(src_node_p));
+        dst_attr->Set(dst_node.get(), src_attr->GetAsCollisionMesh(src_node_p));
         break;
       case NodeAttributeType::kCollisionMeshArray:
-        dst_attr->Set(dst_node.Get(),
+        dst_attr->Set(dst_node.get(),
                       src_attr->GetAsCollisionMeshes(src_node_p));
         break;
       default:

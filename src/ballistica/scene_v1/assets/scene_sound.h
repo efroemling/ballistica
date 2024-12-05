@@ -19,7 +19,7 @@ class SceneSound : public SceneAsset {
   // Return the SoundData currently associated with this sound.
   // Note that a sound's data can change over time as different
   // versions are spooled in/out/etc.
-  auto GetSoundData() const -> base::SoundAsset* { return sound_data_.Get(); }
+  auto GetSoundData() const -> base::SoundAsset* { return sound_data_.get(); }
   auto GetAssetTypeName() const -> std::string override { return "Sound"; }
   void MarkDead();
 

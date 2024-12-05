@@ -287,6 +287,7 @@ enum class PyExcType : uint8_t {
 enum class LogName : uint8_t {
   kRoot,
   kBa,
+  kBaApp,
   kBaDisplayTime,
   kBaLifecycle,
   kBaAudio,

@@ -30,7 +30,7 @@ void Material::MarkDead() {
   components_.clear();
 
   // If we're in a scene with an output-stream, inform them of our demise.
-  Scene* scene = scene_.Get();
+  Scene* scene = scene_.get();
   if (scene) {
     if (SessionStream* os = scene->GetSceneStream()) {
       os->RemoveMaterial(this);
@@ -65,15 +65,15 @@ void Material::Apply(MaterialContext* s, const Part* src_part,
 void Material::AddComponent(const Object::Ref<MaterialComponent>& c) {
   // If there's an output stream, push this to that first
   if (SessionStream* output_stream = scene()->GetSceneStream()) {
-    output_stream->AddMaterialComponent(this, c.Get());
+    output_stream->AddMaterialComponent(this, c.get());
   }
   components_.push_back(c);
 }
 
 void Material::DumpComponents(SessionStream* out) {
   for (auto& i : components_) {
-    assert(i.Exists());
-    out->AddMaterialComponent(this, i.Get());
+    assert(i.exists());
+    out->AddMaterialComponent(this, i.get());
   }
 }
 

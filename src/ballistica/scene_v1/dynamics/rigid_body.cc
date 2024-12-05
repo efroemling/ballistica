@@ -52,7 +52,7 @@ RigidBody::RigidBody(int id_in, Part* part_in, Type type_in, Shape shape_in,
   }
 #endif  // BA_DEBUG_BUILD
 
-  assert(part_.Exists());
+  assert(part_.exists());
   birth_time_ = part_->node()->scene()->stepnum();
   dynamics_ = part_->node()->scene()->dynamics();
 
@@ -114,7 +114,7 @@ RigidBody::RigidBody(int id_in, Part* part_in, Type type_in, Shape shape_in,
       // NOTE - we don't add trimeshes do the collision space - we handle them
       // specially..
       dimensions_[0] = dimensions_[1] = dimensions_[2] = 0.6f;
-      assert(collision_mesh_.Exists());
+      assert(collision_mesh_.exists());
       collision_mesh_->collision_mesh_data()->Load();
       dGeomID g = dCreateTriMesh(
           nullptr, collision_mesh_->collision_mesh_data()->GetMeshData(),
@@ -234,7 +234,7 @@ RigidBody::~RigidBody() {
   KillConstraints();
 
   // remove ourself from our parent part if we have one
-  if (part_.Exists()) {
+  if (part_.exists()) {
     part_->RemoveBody(this);
   }
   if (type_ == Type::kBody) {

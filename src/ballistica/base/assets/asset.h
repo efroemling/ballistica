@@ -7,7 +7,6 @@
 #include <string>
 
 #include "ballistica/base/base.h"
-#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::base {
@@ -19,9 +18,13 @@ namespace ballistica::base {
 class Asset : public Object {
  public:
   Asset();
+  void ObjectPostInit() override;
   ~Asset() override;
 
   virtual auto GetAssetType() const -> AssetType = 0;
+
+  /// Get a human readable name for an AssetType.
+  static auto AssetTypeName(AssetType assettype) -> const char*;
 
   void Preload(bool already_locked = false);
   void Load(bool already_locked = false);

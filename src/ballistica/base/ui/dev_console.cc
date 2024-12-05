@@ -305,8 +305,8 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
     if (pressed) {
       pressed = false;
       if (InUs(mx, my)) {
-        if (call.Exists()) {
-          call.Get()->Run();
+        if (call.exists()) {
+          call.get()->Run();
         }
       }
     }
@@ -372,9 +372,9 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
         break;
       case DevButtonStyle_::kWhiteBright:
         fgcolor =
-            pressed ? Vector3f{1.0f, 1.0f, 1.0f} : Vector3f{0.0f, 0.0f, 0.0f};
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.0f, 0.0f, 0.0f};
         bgcolor =
-            pressed ? Vector3f{0.4f, 0.4f, 0.4f} : Vector3f{0.8, 0.7f, 0.8f};
+            pressed ? Vector3f{1.0f, 1.0f, 1.0f} : Vector3f{0.9, 0.85f, 0.95f};
         break;
       case DevButtonStyle_::kBlack:
         fgcolor =
@@ -465,8 +465,8 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
       if (InUs(mx, my)) {
         on = !on;
         auto&& call = on ? on_call : off_call;
-        if (call.Exists()) {
-          call.Get()->Run();
+        if (call.exists()) {
+          call.get()->Run();
         }
       }
     }
@@ -546,8 +546,8 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
         // unselected for a frame before the deferred call runs.
         selected = true;
 
-        if (call.Exists()) {
-          call.Get()->Run();
+        if (call.exists()) {
+          call.get()->Run();
         }
       }
     }
@@ -579,7 +579,7 @@ class DevConsole::OutputLine_ {
   float scale;
   Vector4f color;
   auto GetText() -> TextGroup& {
-    if (!s_mesh_.Exists()) {
+    if (!s_mesh_.exists()) {
       s_mesh_ = Object::New<TextGroup>();
       s_mesh_->SetText(s);
     }
@@ -721,7 +721,7 @@ void DevConsole::AddButton(const char* label, float x, float y, float width,
   widgets_.emplace_back(std::make_unique<Button_>(
       label, label_scale, h_anchor, x, y, width, height, corner_radius, style,
       disabled, [this, callref = PythonRef::Acquired(call)] {
-        if (callref.Get() != Py_None) {
+        if (callref.get() != Py_None) {
           callref.Call();
         }
       }));
@@ -838,9 +838,9 @@ void DevConsole::HandleMouseUp(int button, float x, float y) {
 
 void DevConsole::InvokeStringEditor_() {
   // If there's already a valid edit-adapter attached to us, do nothing.
-  if (string_edit_adapter_.Exists()
+  if (string_edit_adapter_.exists()
       && !g_base->python->CanPyStringEditAdapterBeReplaced(
-          string_edit_adapter_.Get())) {
+          string_edit_adapter_.get())) {
     return;
   }
 
@@ -849,7 +849,7 @@ void DevConsole::InvokeStringEditor_() {
   auto result = g_base->python->objs()
                     .Get(BasePython::ObjID::kDevConsoleStringEditAdapterClass)
                     .Call();
-  if (!result.Exists()) {
+  if (!result.exists()) {
     g_core->Log(LogName::kBa, LogLevel::kError,
                 "Error invoking string edit dialog.");
     return;
@@ -857,14 +857,14 @@ void DevConsole::InvokeStringEditor_() {
 
   // If this new one is already marked replacable, it means it wasn't able
   // to register as the active one, so we can ignore it.
-  if (g_base->python->CanPyStringEditAdapterBeReplaced(result.Get())) {
+  if (g_base->python->CanPyStringEditAdapterBeReplaced(result.get())) {
     return;
   }
 
   // Ok looks like we're good; store the adapter as our active one.
   string_edit_adapter_ = result;
 
-  g_base->platform->InvokeStringEditor(string_edit_adapter_.Get());
+  g_base->platform->InvokeStringEditor(string_edit_adapter_.get());
 }
 
 void DevConsole::set_input_string(const std::string& val) {
@@ -1256,7 +1256,7 @@ void DevConsole::SubmitPythonCommand_(const std::string& command) {
     }
     if (cmd.CanEval()) {
       auto obj = cmd.Eval(true, nullptr, nullptr);
-      if (obj.Exists() && obj.Get() != Py_None) {
+      if (obj.exists() && obj.get() != Py_None) {
         Print(obj.Repr(), 1.0f, kVector4f1);
       }
     } else {
@@ -1522,7 +1522,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
     }
 
     // Carat.
-    if (!carat_mesh_.Exists() || carat_dirty_) {
+    if (!carat_mesh_.exists() || carat_dirty_) {
       // Note: we explicitly update here if carat is dirty because
       // that updates last_carat_change_time_ which affects whether
       // we draw or not. GetCaratX_() only updates it *if* we draw.
@@ -1541,7 +1541,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
         c.Translate(15.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
         c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
         c.Translate(carat_x, 0.0f, 0.0f);
-        c.DrawMesh(carat_glow_mesh_.Get());
+        c.DrawMesh(carat_glow_mesh_.get());
       }
       c.SetTexture(g_base->assets->SysTexture(SysTextureID::kShadowSharp));
       c.SetColor(1.0, 1.0, 1.0, 1.0f);
@@ -1551,7 +1551,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
         c.Translate(15.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
         c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
         c.Translate(carat_x, 0.0f, 0.0f);
-        c.DrawMesh(carat_mesh_.Get());
+        c.DrawMesh(carat_mesh_.get());
       }
     }
 

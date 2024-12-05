@@ -187,6 +187,8 @@ void CorePython::EnablePythonLoggingCalls() {
   assert(objs().Exists(ObjID::kLoggerRootLogCall));
   assert(objs().Exists(ObjID::kLoggerBa));
   assert(objs().Exists(ObjID::kLoggerBaLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaApp));
+  assert(objs().Exists(ObjID::kLoggerBaAppLogCall));
   assert(objs().Exists(ObjID::kLoggerBaAudio));
   assert(objs().Exists(ObjID::kLoggerBaAudioLogCall));
   assert(objs().Exists(ObjID::kLoggerBaDisplayTime));
@@ -260,6 +262,7 @@ void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
   std::pair<LogName, ObjID> pairs[] = {
       {LogName::kRoot, ObjID::kLoggerRoot},
       {LogName::kBa, ObjID::kLoggerBa},
+      {LogName::kBaApp, ObjID::kLoggerBaApp},
       {LogName::kBaAudio, ObjID::kLoggerBaAudio},
       {LogName::kBaGraphics, ObjID::kLoggerBaGraphics},
       {LogName::kBaDisplayTime, ObjID::kLoggerBaDisplayTime},
@@ -275,7 +278,7 @@ void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
     auto logname{pair.first};
     auto objid{pair.second};
     auto out{objs().Get(objid).GetAttr("getEffectiveLevel").Call()};
-    assert(out.Exists());
+    assert(out.exists());
     auto outval{static_cast<int>(out.ValueAsInt())};
 
     switch (outval) {
@@ -313,7 +316,7 @@ void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
 void CorePython::SoftImportBase() {
   auto gil{Python::ScopedInterpreterLock()};
   auto result = PythonRef::StolenSoft(PyImport_ImportModule("_babase"));
-  if (!result.Exists()) {
+  if (!result.exists()) {
     // Ignore any errors here for now. All that will matter is whether base
     // gave us its interface.
     PyErr_Clear();
@@ -331,7 +334,8 @@ void CorePython::VerifyPythonEnvironment() {
 void CorePython::MonolithicModeBaEnvConfigure() {
   assert(g_buildconfig.monolithic_build());
   assert(g_core);
-  g_core->LifecycleLog("baenv.configure() begin");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "baenv.configure() begin");
 
   auto gil{Python::ScopedInterpreterLock()};
 
@@ -383,13 +387,13 @@ void CorePython::MonolithicModeBaEnvConfigure() {
   auto result = objs()
                     .Get(ObjID::kBaEnvConfigureCall)
                     .Call(objs().Get(ObjID::kEmptyTuple), kwargs);
-  if (!result.Exists()) {
+  if (!result.exists()) {
     FatalError("Environment setup failed (no error info available).");
   }
   if (result.ValueIsString()) {
     FatalError("Environment setup failed:\n" + result.ValueAsString());
   }
-  g_core->LifecycleLog("baenv.configure() end");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "baenv.configure() end");
 }
 
 void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
@@ -432,6 +436,10 @@ void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
       break;
     case LogName::kBa:
       logcallobj = ObjID::kLoggerBaLogCall;
+      handled = true;
+      break;
+    case LogName::kBaApp:
+      logcallobj = ObjID::kLoggerBaAppLogCall;
       handled = true;
       break;
     case LogName::kBaAudio:
@@ -496,7 +504,7 @@ void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
       break;
   }
   PythonRef args(
-      Py_BuildValue("(Os)", objs().Get(loglevelobjid).Get(), msg.c_str()),
+      Py_BuildValue("(Os)", objs().Get(loglevelobjid).get(), msg.c_str()),
       PythonRef::kSteal);
   objs().Get(logcallobj).Call(args);
 }

@@ -13,7 +13,7 @@ class RendererGL::RenderTargetGL : public RenderTarget {
  public:
   void Bind() {
     if (type_ == Type::kFramebuffer) {
-      assert(framebuffer_.Exists());
+      assert(framebuffer_.exists());
       framebuffer_->Bind();
     } else {
       assert(type_ == Type::kScreen);
@@ -79,7 +79,7 @@ class RendererGL::RenderTargetGL : public RenderTarget {
 
   auto GetFramebufferID() -> GLuint {
     if (type_ == Type::kFramebuffer) {
-      assert(framebuffer_.Exists());
+      assert(framebuffer_.exists());
       return framebuffer_->id();
     } else {
       return 0;  // screen
@@ -88,7 +88,7 @@ class RendererGL::RenderTargetGL : public RenderTarget {
 
   auto framebuffer() -> FramebufferObjectGL* {
     assert(type_ == Type::kFramebuffer);
-    return framebuffer_.Get();
+    return framebuffer_.get();
   }
 
   // Screen constructor.

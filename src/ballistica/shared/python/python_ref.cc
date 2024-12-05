@@ -140,15 +140,15 @@ auto PythonRef::Str() const -> std::string {
   }
   auto s = PythonRef::Stolen(str_obj);
   assert(PyUnicode_Check(str_obj));  // NOLINT (signed with bitwise)
-  return PyUnicode_AsUTF8(s.Get());
+  return PyUnicode_AsUTF8(s.get());
 }
 
 auto PythonRef::Repr() const -> std::string {
   assert(Python::HaveGIL());
   ThrowIfUnset();
   auto s = PythonRef::Stolen(PyObject_Repr(obj_));
-  assert(PyUnicode_Check(s.Get()));  // NOLINT (signed with bitwise)
-  return PyUnicode_AsUTF8(s.Get());
+  assert(PyUnicode_Check(s.get()));  // NOLINT (signed with bitwise)
+  return PyUnicode_AsUTF8(s.get());
 }
 
 auto PythonRef::Type() const -> PythonRef {
@@ -239,7 +239,7 @@ auto PythonRef::ValueAsDouble() const -> double {
 auto PythonRef::GetAttr(const char* name) const -> PythonRef {
   assert(Python::HaveGIL());
   ThrowIfUnset();
-  PyObject* val = PyObject_GetAttrString(Get(), name);
+  PyObject* val = PyObject_GetAttrString(get(), name);
   if (!val) {
     PyErr_Clear();
     throw Exception("Attribute not found: '" + std::string(name) + "'.",
@@ -335,7 +335,7 @@ auto PythonRef::Call(const Vector2f& val, bool print_errors) const
     -> PythonRef {
   assert(Python::HaveGIL());
   PythonRef args(Py_BuildValue("((ff))", val.x, val.y), PythonRef::kSteal);
-  return Call(args.Get(), nullptr, print_errors);
+  return Call(args.get(), nullptr, print_errors);
 }
 
 PythonRef::~PythonRef() { Release(); }

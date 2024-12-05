@@ -158,7 +158,7 @@ class Graphics {
   // Enable progress bar drawing locally.
   void EnableProgressBar(bool fade_in);
 
-  auto* camera() { return camera_.Get(); }
+  auto* camera() { return camera_.get(); }
   void ToggleManualCamera();
   void LocalCameraShake(float intensity);
   void ToggleDebugDraw();
@@ -316,8 +316,8 @@ class Graphics {
 
   auto* settings() const {
     assert(g_base->InLogicThread());
-    assert(settings_snapshot_.Exists());
-    return settings_snapshot_.Get()->Get();
+    assert(settings_snapshot_.exists());
+    return settings_snapshot_.get()->get();
   }
 
   auto GetGraphicsSettingsSnapshot() -> Snapshot<GraphicsSettings>*;
@@ -328,13 +328,13 @@ class Graphics {
   void UpdatePlaceholderSettings();
 
   auto has_client_context() -> bool {
-    return client_context_snapshot_.Exists();
+    return client_context_snapshot_.exists();
   }
 
   auto client_context() const -> const GraphicsClientContext* {
     assert(g_base->InLogicThread());
-    assert(client_context_snapshot_.Exists());
-    return client_context_snapshot_.Get()->Get();
+    assert(client_context_snapshot_.exists());
+    return client_context_snapshot_.get()->get();
   }
 
   static auto GraphicsQualityFromRequest(GraphicsQualityRequest request,
@@ -348,7 +348,7 @@ class Graphics {
   /// possible and replaced with proper safe thread-specific access patterns
   /// (so we can support switching renderers/etc.).
   auto placeholder_texture_quality() const {
-    assert(client_context_snapshot_.Exists());
+    assert(client_context_snapshot_.exists());
     return texture_quality_placeholder_;
   }
 
@@ -359,8 +359,8 @@ class Graphics {
     // Using this from arbitrary threads is currently ok currently since
     // context never changes once set. Will need to kill this call once that
     // can happen though.
-    assert(client_context_snapshot_.Exists());
-    return client_context_snapshot_.Get()->Get();
+    assert(client_context_snapshot_.exists());
+    return client_context_snapshot_.get()->get();
   }
   auto draw_ui_bounds() const { return draw_ui_bounds_; }
   void set_draw_ui_bounds(bool val) { draw_ui_bounds_ = val; }

@@ -22,11 +22,7 @@ DataAsset::DataAsset(const std::string& file_name_in)
 auto DataAsset::GetAssetType() const -> AssetType { return AssetType::kData; }
 
 auto DataAsset::GetName() const -> std::string {
-  if (!file_name_full_.empty()) {
-    return file_name_full_;
-  } else {
-    return "invalid data";
-  }
+  return (!file_name_.empty()) ? file_name_ : "invalid data";
 }
 
 void DataAsset::DoPreload() {
@@ -53,7 +49,7 @@ void DataAsset::DoLoad() {
   object_ = g_core->python->objs()
                 .Get(core::CorePython::ObjID::kJsonLoadsCall)
                 .Call(args);
-  if (!object_.Exists()) {
+  if (!object_.exists()) {
     throw Exception("Unable to load data: '" + file_name_ + "'.");
   }
 }

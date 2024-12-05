@@ -3,7 +3,6 @@
 #ifndef BALLISTICA_SCENE_V1_ASSETS_SCENE_ASSET_H_
 #define BALLISTICA_SCENE_V1_ASSETS_SCENE_ASSET_H_
 
-#include <list>
 #include <string>
 #include <unordered_map>
 
@@ -23,8 +22,8 @@ static auto GetAsset(std::unordered_map<std::string, Object::WeakRef<T> >* list,
 
   // If we have an entry pointing to a live component, just return a new ref
   // to it.
-  if (i != list->end() && i->second.Exists()) {
-    return Object::Ref<T>(i->second.Get());
+  if (i != list->end() && i->second.exists()) {
+    return Object::Ref<T>(i->second.get());
   } else {
     // Otherwise make a new one, pop a weak-ref on our list, and return a
     // strong-ref to it.
@@ -44,7 +43,7 @@ class SceneAsset : public Object {
   auto NewPyRef() -> PyObject* { return GetPyRef(true); }
   auto BorrowPyRef() -> PyObject* { return GetPyRef(false); }
   auto GetObjectDescription() const -> std::string override;
-  auto scene() const -> Scene* { return scene_.Get(); }
+  auto scene() const -> Scene* { return scene_.get(); }
 
   auto stream_id() const -> int64_t { return stream_id_; }
   void set_stream_id(int64_t val) {

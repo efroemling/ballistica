@@ -4,23 +4,24 @@
 
 from __future__ import annotations
 
-import threading
 import weakref
+import threading
 from typing import TYPE_CHECKING, TypeVar, Generic
 
 T = TypeVar('T')
 
 if TYPE_CHECKING:
-    pass
+    from typing import Callable
 
 
 class CallbackSet(Generic[T]):
     """A simple way to manage a set of callbacks.
 
-    Any number of calls can be added to a callback set. Each add results
-    in an entry that can be used to remove the call from the set later.
-    Callbacks are also implicitly removed when an entry is deallocated,
-    so make sure to hold on to the return value when adding.
+    Any number of calls can be registered with a callback set. Each
+    registration results in a Registration object that can be used to
+    deregister the call from the set later. Callbacks are also
+    implicitly deregistered when an entry is deallocated, so make sure
+    to hold on to the return value when adding.
 
     CallbackSet instances should be used from a single thread only
     (this will be checked in debug mode).
@@ -32,8 +33,8 @@ class CallbackSet(Generic[T]):
         if __debug__:
             self.thread = threading.current_thread()
 
-    def add(self, call: T) -> CallbackRegistration[T]:
-        """Add a callback."""
+    def register(self, call: T) -> CallbackRegistration[T]:
+        """Register a new callback."""
         assert threading.current_thread() == self.thread
 
         self._prune()
@@ -53,7 +54,8 @@ class CallbackSet(Generic[T]):
 
         self._prune()
 
-        # Ignore calls that have been deallocated or explicitly cleared.
+        # Ignore calls that have been deallocated or explicitly
+        # deregistered.
         entries = [e() for e in self._entries]
         return [e.call for e in entries if e is not None and e.call is not None]
 
@@ -69,6 +71,7 @@ class CallbackSet(Generic[T]):
         if not needs_prune:
             return
 
+        # Ok; something needs pruning. Rebuild the entries list.
         newentries: list[weakref.ref[CallbackRegistration[T]]] = []
         for entry in self._entries:
             entrytarget = entry()
@@ -84,7 +87,7 @@ class CallbackRegistration(Generic[T]):
         self.call: T | None = call
         self.callbackset: CallbackSet[T] | None = callbackset
 
-    def clear(self) -> None:
+    def deregister(self) -> None:
         """Explicitly remove a callback from a CallbackSet."""
         assert (
             self.callbackset is None

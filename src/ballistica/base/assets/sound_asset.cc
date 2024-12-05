@@ -19,6 +19,7 @@
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/platform/core_platform.h"
 
 // Need to move away from OpenAL on Apple stuff.
 #if __clang__
@@ -260,11 +261,7 @@ SoundAsset::SoundAsset(const std::string& file_name_in)
 auto SoundAsset::GetAssetType() const -> AssetType { return AssetType::kSound; }
 
 auto SoundAsset::GetName() const -> std::string {
-  if (!file_name_full_.empty()) {
-    return file_name_full_;
-  } else {
-    return "invalid sound";
-  }
+  return (!file_name_.empty()) ? file_name_ : "invalid sound";
 }
 
 void SoundAsset::DoPreload() {

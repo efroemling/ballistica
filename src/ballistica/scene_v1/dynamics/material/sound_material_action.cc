@@ -13,14 +13,14 @@ void SoundMaterialAction::Apply(MaterialContext* context, const Part* src_part,
                                 const Part* dst_part,
                                 const Object::Ref<MaterialAction>& p) {
   assert(context && src_part && dst_part);
-  context->connect_sounds.emplace_back(sound_.Get(), volume_);
+  context->connect_sounds.emplace_back(sound_.get(), volume_);
 }
 
 auto SoundMaterialAction::GetFlattenedSize() -> size_t { return 4 + 2; }
 
 void SoundMaterialAction::Flatten(char** buffer, SessionStream* output_stream) {
   Utils::EmbedInt32NBO(buffer, static_cast_check_fit<int32_t>(
-                                   output_stream->GetSoundID(sound_.Get())));
+                                   output_stream->GetSoundID(sound_.get())));
   Utils::EmbedFloat16NBO(buffer, volume_);
 }
 

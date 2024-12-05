@@ -19,7 +19,7 @@ class PythonClassMaterial : public PythonClass {
   static PyTypeObject type_obj;
 
   auto GetMaterial(bool doraise = true) const -> Material* {
-    Material* m = material_->Get();
+    Material* m = material_->get();
     if ((!m) && doraise) throw Exception("Invalid Material");
     return m;
   }

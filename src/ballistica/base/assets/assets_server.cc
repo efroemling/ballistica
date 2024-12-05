@@ -10,6 +10,7 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/support/huffman.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
@@ -21,23 +22,23 @@ void AssetsServer::OnMainThreadStartApp() {
   event_loop_ = new EventLoop(EventLoopID::kAssets);
   g_core->suspendable_event_loops.push_back(event_loop_);
 
-  event_loop_->PushCallSynchronous([this] { OnAppStartInThread(); });
+  event_loop_->PushCallSynchronous([this] { OnAppStartInThread_(); });
 }
 
-void AssetsServer::OnAppStartInThread() {
+void AssetsServer::OnAppStartInThread_() {
   assert(g_base->InAssetsThread());
-  // Ask our thread to give us periodic processing time (close to but
-  // not *exactly* one second; try to avoid aliasing with similar updates).
+  // Ask our thread to give us periodic processing time (close to but not
+  // *exactly* one second; try to avoid aliasing with similar updates).
   process_timer_ = event_loop()->NewTimer(
-      987 * 1000, true, NewLambdaRunnable([this] { Process(); }).Get());
+      987 * 1000, true, NewLambdaRunnable([this] { Process_(); }).get());
 }
 
 void AssetsServer::PushPendingPreload(Object::Ref<Asset>* asset_ref_ptr) {
   event_loop()->PushCall([this, asset_ref_ptr] {
     assert(g_base->InAssetsThread());
 
-    // Add our pointer to one of the preload lists and shake our preload thread
-    // to wake it up
+    // Add our pointer to one of the preload lists and shake our preload
+    // thread to wake it up
     if ((**asset_ref_ptr).GetAssetType() == AssetType::kSound) {
       pending_preloads_audio_.push_back(asset_ref_ptr);
     } else {
@@ -59,7 +60,7 @@ void AssetsServer::PushBeginWriteReplayCall(uint16_t protocol_version) {
       g_core->Log(
           LogName::kBaAssets, LogLevel::kError,
           "AssetsServer got BeginWriteReplayCall while already writing");
-      WriteReplayMessages();
+      WriteReplayMessages_();
       if (replay_out_file_) {
         fclose(replay_out_file_);
       }
@@ -96,8 +97,8 @@ void AssetsServer::PushBeginWriteReplayCall(uint16_t protocol_version) {
       replay_bytes_written_ = 5;
     }
 
-    // Trigger our process timer to go off immediately
-    // (we may need to wake it up).
+    // Trigger our process timer to go off immediately (we may need to wake
+    // it up).
     g_base->assets_server->process_timer_->SetLength(0);
   });
 }
@@ -150,7 +151,7 @@ void AssetsServer::PushEndWriteReplayCall() {
       replays_broken_ = true;
       return;
     }
-    WriteReplayMessages();
+    WriteReplayMessages_();
 
     // Whether or not we actually have a file has no impact on our
     // writing_replay_ status.
@@ -162,7 +163,7 @@ void AssetsServer::PushEndWriteReplayCall() {
   });
 }
 
-void AssetsServer::WriteReplayMessages() {
+void AssetsServer::WriteReplayMessages_() {
   if (replay_out_file_) {
     for (auto&& i : replay_messages_) {
       std::vector<uint8_t> data_compressed = g_base->huffman->compress(i);
@@ -189,7 +190,7 @@ void AssetsServer::WriteReplayMessages() {
           return;
         }
       }
-      // write 16 bit val if need be..
+      // write 16 bit val if need be.
       if (len32 >= 254) {
         if (len32 <= 65535) {
           auto len16 = static_cast_check_fit<uint16_t>(len32);
@@ -230,20 +231,20 @@ void AssetsServer::WriteReplayMessages() {
   }
 }
 
-void AssetsServer::Process() {
+void AssetsServer::Process_() {
   // Make sure we don't do any loading until we know what kind/quality of
   // textures we'll be loading.
 
-  // FIXME - we'll need to revisit this when adding support for
-  // renderer switches, since this is not especially thread-safe.
+  // FIXME - we'll need to revisit this when adding support for renderer
+  // switches, since this is not especially thread-safe.
 
   if (!g_base->graphics->has_client_context()) {
     return;
   }
 
   // Process exactly 1 preload item. Empty out our non-audio list first
-  // (audio is less likely to cause noticeable hitches if it needs to be loaded
-  // on-demand, so that's a lower priority for us).
+  // (audio is less likely to cause noticeable hitches if it needs to be
+  // loaded on-demand, so that's a lower priority for us).
   if (!pending_preloads_.empty()) {
     (**pending_preloads_.back()).Preload();
     // Pass the ref-pointer along to the load queue.
@@ -258,11 +259,11 @@ void AssetsServer::Process() {
 
   // If we're writing a replay, dump anything we've got built up.
   if (writing_replay_) {
-    WriteReplayMessages();
+    WriteReplayMessages_();
   }
 
-  // If we've got nothing left, set our timer to go off every now and then if
-  // we're writing a replay.. otherwise just sleep indefinitely.
+  // If we've got nothing left, set our timer to go off every now and then
+  // if we're writing a replay.. otherwise just sleep indefinitely.
   if (pending_preloads_.empty() && pending_preloads_audio_.empty()) {
     if (writing_replay_) {
       process_timer_->SetLength(1000 * 1000);

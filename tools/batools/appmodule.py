@@ -226,24 +226,27 @@ def generate_app_module(
         keep_markers=True,
     )
 
-    contents = (
-        '# Return all our default_app_modes as testable.\n'
-        "# (generated from 'default_app_modes' in projectconfig).\n"
-    )
-    for mode in default_app_modes:
-        contents += f'import {_module_for_app_mode(mode)}\n'
-    contents += '\n'
-    contents += 'return [\n'
-    for mode in default_app_modes:
-        contents += f'    {mode},\n'
-    contents += ']'
-    out = replace_section(
-        out,
-        f'{indent}# __DEFAULT_TESTABLE_APP_MODES_BEGIN__\n',
-        f'{indent}# __DEFAULT_TESTABLE_APP_MODES_END__\n',
-        textwrap.indent(f'{info}\n\n{contents}\n', indent),
-        keep_markers=True,
-    )
+    # Disabling this for now; will probably remove permanently. Testable
+    # app mode discovery now uses meta discovery system.
+    if bool(False):
+        contents = (
+            '# Return all our default_app_modes as testable.\n'
+            "# (generated from 'default_app_modes' in projectconfig).\n"
+        )
+        for mode in default_app_modes:
+            contents += f'import {_module_for_app_mode(mode)}\n'
+        contents += '\n'
+        contents += 'return [\n'
+        for mode in default_app_modes:
+            contents += f'    {mode},\n'
+        contents += ']'
+        out = replace_section(
+            out,
+            f'{indent}# __DEFAULT_TESTABLE_APP_MODES_BEGIN__\n',
+            f'{indent}# __DEFAULT_TESTABLE_APP_MODES_END__\n',
+            textwrap.indent(f'{info}\n\n{contents}\n', indent),
+            keep_markers=True,
+        )
 
     # Note: we *should* format this string, but because this code
     # runs with every project update I'm just gonna try to keep the

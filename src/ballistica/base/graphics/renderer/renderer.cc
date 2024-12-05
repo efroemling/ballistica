@@ -114,7 +114,7 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
   // In higher-quality modes we draw the world into the camera buffer
   // which we'll later render into the backing buffer with depth-of-field
   // and other stuff added.
-  if (camera_render_target_.Exists()) {
+  if (camera_render_target_.exists()) {
     DrawWorldToCameraBuffer(frame_def);
   }
 
@@ -124,7 +124,7 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
   SetDepthWriting(true);
   SetDepthTesting(true);
   RenderTarget* backing;
-  if (backing_render_target_.Exists()) {
+  if (backing_render_target_.exists()) {
     backing = backing_render_target();
   } else {
     backing = screen_render_target();
@@ -163,7 +163,7 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
     frame_def->overlay_pass()->Render(backing, false);
     frame_def->overlay_fixed_pass()->Render(backing, false);
   }
-  if (camera_render_target_.Exists()) {
+  if (camera_render_target_.exists()) {
     UpdateDOFParams(frame_def);
     // We've already drawn the world.
     // Now just draw our blit shapes (opaque shapes which blit portions of the
@@ -187,7 +187,7 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
   SetDrawAtEqualDepth(true);
 
   // Now draw transparent stuff back to front.
-  if (camera_render_target_.Exists()) {
+  if (camera_render_target_.exists()) {
     // When copying camera buffer to the backing there's nothing transparent
     // to draw.
   } else {
@@ -219,7 +219,7 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
   PopGroupMarker();
 
   // If we've been drawing to a backing buffer, blit it to the screen.
-  if (backing_render_target_.Exists()) {
+  if (backing_render_target_.exists()) {
     // FIXME - should we just be discarding both depth and color
     //  after the blit?.. (of course, this code path shouldn't be used on
     //  mobile/slow-stuff so maybe it doesn't matter)
@@ -255,7 +255,7 @@ void Renderer::VRPreprocess(FrameDef* frame_def) {
   }
 
   // if we're in VR mode, make sure we've got our VR overlay target
-  if (!vr_overlay_flat_render_target_.Exists()) {
+  if (!vr_overlay_flat_render_target_.exists()) {
     // find this res to be ideal on current gen equipment
     // (2017-ish, 1st gen rift/gear-vr/etc)
     // ..can revisit once higher-res stuff is commonplace
@@ -466,8 +466,8 @@ void Renderer::UpdateSizesQualitiesAndColors(FrameDef* frame_def) {
 }
 
 void Renderer::UpdateLightAndShadowBuffers(FrameDef* frame_def) {
-  if (!light_render_target_.Exists() || !light_shadow_render_target_.Exists()) {
-    assert(screen_render_target_.Exists());
+  if (!light_render_target_.exists() || !light_shadow_render_target_.exists()) {
+    assert(screen_render_target_.exists());
 
     // Base shadow res on quality.
     if (frame_def->quality() >= GraphicsQuality::kHigher) {
@@ -535,7 +535,7 @@ void Renderer::UpdateCameraRenderTargets(FrameDef* frame_def) {
   // In higher-quality modes we render the world into a buffer
   // so we can do depth-of-field filtering and whatnot.
   if (frame_def->quality() >= GraphicsQuality::kHigh) {
-    if (!camera_render_target_.Exists()) {
+    if (!camera_render_target_.exists()) {
       float pixel_scale_fin = std::min(1.0f, std::max(0.1f, pixel_scale_));
       int w = static_cast<int>(screen_render_target_->physical_width()
                                * pixel_scale_fin);
@@ -622,7 +622,7 @@ void Renderer::UpdatePixelScaleAndBackingBuffer(FrameDef* frame_def) {
   // We need our backing buffer for non-1.0 pixel-scales.
   if (pixel_scale_requested_ != 1.0f) {
     if (pixel_scale_requested_ != pixel_scale_
-        || !backing_render_target_.Exists()) {
+        || !backing_render_target_.exists()) {
       float pixel_scale_fin =
           std::min(1.0f, std::max(0.1f, pixel_scale_requested_));
       int w = static_cast<int>(screen_render_target_->physical_width()
@@ -642,7 +642,7 @@ void Renderer::UpdatePixelScaleAndBackingBuffer(FrameDef* frame_def) {
     }
   } else {
     // Otherwise we don't need backing buffer. Kill it if it exists.
-    if (backing_render_target_.Exists()) {
+    if (backing_render_target_.exists()) {
       backing_render_target_.Clear();
     }
   }
@@ -652,7 +652,7 @@ void Renderer::UpdatePixelScaleAndBackingBuffer(FrameDef* frame_def) {
 void Renderer::LoadMedia(FrameDef* frame_def) {
   millisecs_t t = g_core->GetAppTimeMillisecs();
   for (auto&& i : frame_def->media_components()) {
-    Asset* mc = i.Get();
+    Asset* mc = i.get();
     assert(mc);
     mc->Load();
 

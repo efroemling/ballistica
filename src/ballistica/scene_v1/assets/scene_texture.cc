@@ -25,7 +25,7 @@ SceneTexture::SceneTexture(const std::string& name, Scene* scene)
     base::Assets::AssetListLock lock;
     texture_data_ = g_base->assets->GetTexture(name);
   }
-  assert(texture_data_.Exists());
+  assert(texture_data_.exists());
 }
 
 // qrcode version
@@ -36,7 +36,7 @@ SceneTexture::SceneTexture(const std::string& qr_url)
     base::Assets::AssetListLock lock;
     texture_data_ = g_base->assets->GetQRCodeTexture(qr_url);
   }
-  assert(texture_data_.Exists());
+  assert(texture_data_.exists());
 }
 
 SceneTexture::~SceneTexture() { MarkDead(); }

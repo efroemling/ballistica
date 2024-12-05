@@ -85,6 +85,14 @@ Object::~Object() {
   }
 }
 
+void Object::ObjectPostInit() {
+#if BA_DEBUG_BUILD
+  // Flag this here in the top level post-init so we can ensure that classes
+  // are properly calling parent class post-inits.
+  object_is_post_inited_ = true;
+#endif
+}
+
 auto Object::GetObjectTypeName() const -> std::string {
   // Default implementation just returns type name.
   if (g_core) {

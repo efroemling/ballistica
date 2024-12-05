@@ -15,6 +15,7 @@
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui_delegate.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/utils.h"
@@ -222,8 +223,37 @@ void UI::ActivatePartyIcon() {
 }
 
 void UI::SetSquadSizeLabel(int val) {
+  assert(g_base->InLogicThread());
+
+  // No-op if this exactly matches what we already have.
+  if (val == squad_size_label_) {
+    return;
+  }
+
+  // Store the val so we'll have it for future delegates.
+  squad_size_label_ = val;
+
+  // Pass it to any current delegate.
   if (auto* ui_delegate = g_base->ui->delegate()) {
-    ui_delegate->SetSquadSizeLabel(val);
+    ui_delegate->SetSquadSizeLabel(squad_size_label_);
+  }
+}
+
+void UI::SetAccountState(bool signed_in, const std::string& name) {
+  assert(g_base->InLogicThread());
+
+  // No-op if this exactly matches what we already have.
+  if (account_state_signed_in_ == signed_in && account_state_name_ == name) {
+    return;
+  }
+
+  // Store the val so we'll have it for future delegates.
+  account_state_signed_in_ = signed_in;
+  account_state_name_ = name;
+
+  // Pass it to any current delegate.
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    ui_delegate->SetAccountState(account_state_signed_in_, account_state_name_);
   }
 }
 
@@ -305,10 +335,6 @@ auto UI::UIHasDirectKeyboardInput() const -> bool {
 void UI::HandleMouseMotion(float x, float y) {
   SendWidgetMessage(
       WidgetMessage(WidgetMessage::Type::kMouseMove, nullptr, x, y));
-
-  // if (auto* ui_delegate = g_base->ui->delegate()) {
-  //   ui_delegate->HandleLegacyRootUIMouseMotion(x, y);
-  // }
 }
 
 void UI::PushBackButtonCall(InputDevice* input_device) {
@@ -392,7 +418,7 @@ void UI::LanguageChanged() {
 
 auto UI::GetUIInputDevice() const -> InputDevice* {
   assert(g_base->InLogicThread());
-  return ui_input_device_.Get();
+  return ui_input_device_.get();
 }
 
 auto UI::GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget* {
@@ -531,7 +557,7 @@ auto UI::InDevConsoleButton_(float x, float y) const -> bool {
 }
 
 void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
-  if (!dev_console_button_txt_.Exists()) {
+  if (!dev_console_button_txt_.exists()) {
     dev_console_button_txt_ = Object::New<TextGroup>();
     dev_console_button_txt_->SetText("dev");
   }
@@ -611,12 +637,13 @@ void UI::SetUIDelegate(base::UIDelegateInterface* delegate) {
     if (delegate_) {
       delegate_->OnActivate();
 
-      // Inform them that a few things changed, since they might have since
-      // the last time they were active (these callbacks only go to the
-      // *active* ui delegate).
+      // Push values to them and trigger various 'changed' callbacks so they
+      // pick up the latest state of the world.
       delegate_->DoApplyAppConfig();
       delegate_->OnScreenSizeChange();
       delegate_->OnLanguageChange();
+      delegate_->SetSquadSizeLabel(squad_size_label_);
+      delegate_->SetAccountState(account_state_signed_in_, account_state_name_);
     }
   } catch (const Exception& exc) {
     // Switching UI delegates is a big deal; don't try to continue if

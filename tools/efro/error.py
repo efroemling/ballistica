@@ -9,6 +9,7 @@ import errno
 if TYPE_CHECKING:
     from typing import Any
 
+    import urllib3.response
     from efro.terminal import ClrBase
 
 
@@ -103,6 +104,71 @@ class AuthenticationError(Exception):
     client-supplied credentials, if an invalid password is supplied
     for a sign-in attempt, etc.
     """
+
+
+class _Urllib3HttpError(Exception):
+    """Exception raised for non-200 html codes."""
+
+    def __init__(self, code: int) -> None:
+        self.code = code
+
+    # So we can see code in tracebacks.
+    @override
+    def __str__(self) -> str:
+        from http import HTTPStatus
+
+        try:
+            desc = HTTPStatus(self.code).description
+        except ValueError:
+            desc = 'Unknown HTTP Status Code'
+        return f'{self.code}: {desc}'
+
+
+def raise_for_urllib3_status(
+    response: urllib3.response.BaseHTTPResponse,
+) -> None:
+    """Raise an exception for html error codes aside from 200."""
+    if response.status != 200:
+        raise _Urllib3HttpError(code=response.status)
+
+
+def is_urllib3_communication_error(exc: BaseException, url: str | None) -> bool:
+    """Is the provided exception from urllib3 a communication-related error?
+
+    Url, if provided, can provide extra context for when to treat an error
+    as such an error.
+
+    This should be passed an exception which resulted from making
+    requests with urllib3. It returns True for any errors that could
+    conceivably arise due to unavailable/poor network connections,
+    firewall/connectivity issues, or other issues out of our control.
+    These errors can often be safely ignored or presented to the user as
+    general 'network-unavailable' states.
+    """
+    # Need to start building these up. For now treat everything as a
+    # real error.
+    import urllib3.exceptions
+
+    if isinstance(exc, _Urllib3HttpError):
+        # Special sub-case: appspot.com hosting seems to give 403 errors
+        # (forbidden) to some countries. I'm assuming for legal reasons?..
+        # Let's consider that a communication error since its out of our
+        # control so we don't fill up logs with it.
+        if exc.code == 403 and url is not None and '.appspot.com' in url:
+            return True
+
+    elif isinstance(exc, urllib3.exceptions.ReadTimeoutError):
+        return True
+
+    elif isinstance(exc, urllib3.exceptions.ProtocolError):
+        # Most protocol errors quality as CommunicationErrors, but some
+        # may be due to server misconfigurations or whatnot so let's
+        # take it on a case by case basis.
+        excstr = str(exc)
+        if 'Connection aborted.' in excstr:
+            return True
+
+    return False
 
 
 def is_urllib_communication_error(exc: BaseException, url: str | None) -> bool:
@@ -249,6 +315,11 @@ def is_asyncio_streams_communication_error(exc: BaseException) -> bool:
         # Assuming this just means client is attempting to connect from some
         # outdated browser or whatnot.
         if 'SSL: WRONG_VERSION_NUMBER' in excstr:
+            return True
+
+        # Also getting this sometimes which sounds like corrupt SSL data
+        # or something.
+        if 'SSL: BAD_RECORD_TYPE' in excstr:
             return True
 
         # And seeing this very rarely; assuming its just data corruption?

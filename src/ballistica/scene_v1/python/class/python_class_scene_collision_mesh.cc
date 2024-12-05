@@ -17,7 +17,7 @@ auto PythonClassSceneCollisionMesh::tp_repr(PythonClassSceneCollisionMesh* self)
   auto&& m = *self->collision_mesh_;
   return Py_BuildValue(
       "s", (std::string("<bascenev1.CollisionMesh ")
-            + (m.Exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
+            + (m.exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
                .c_str());
   BA_PYTHON_CATCH;
 }
@@ -58,7 +58,7 @@ auto PythonClassSceneCollisionMesh::Create(SceneCollisionMesh* collision_mesh)
 
 auto PythonClassSceneCollisionMesh::GetCollisionMesh(bool doraise) const
     -> SceneCollisionMesh* {
-  SceneCollisionMesh* collision_mesh = collision_mesh_->Get();
+  SceneCollisionMesh* collision_mesh = collision_mesh_->get();
   if (!collision_mesh && doraise) {
     throw Exception("Invalid CollisionMesh.", PyExcType::kNotFound);
   }

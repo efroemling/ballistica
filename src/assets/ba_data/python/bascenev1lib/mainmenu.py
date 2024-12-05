@@ -581,25 +581,20 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             if custom_texture is not None
             else bs.getmesh('logoTransparent')
         )
-        logo = bs.NodeActor(
-            bs.newnode(
-                'image',
-                attrs={
-                    'position': (x, y),
-                    'texture': ltex,
-                    'mesh_opaque': mopaque,
-                    'mesh_transparent': mtrans,
-                    'vr_depth': -10 + vr_depth_offset,
-                    'rotate': rotate,
-                    'attach': 'center',
-                    'tilt_translate': 0.21,
-                    'absolute_scale': True,
-                    'scale': (
-                        (2000.0, 2000.0) if custom_texture is None else None
-                    ),
-                },
-            )
-        )
+        logo_attrs = {
+            'position': (x, y),
+            'texture': ltex,
+            'mesh_opaque': mopaque,
+            'mesh_transparent': mtrans,
+            'vr_depth': -10 + vr_depth_offset,
+            'rotate': rotate,
+            'attach': 'center',
+            'tilt_translate': 0.21,
+            'absolute_scale': True,
+        }
+        if custom_texture is None:
+            logo_attrs['scale'] = (2000.0, 2000.0)
+        logo = bs.NodeActor(bs.newnode('image', attrs=logo_attrs))
         self._logo_node = logo.node
         self._word_actors.append(logo)
 

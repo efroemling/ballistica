@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -36,7 +37,7 @@ auto PythonClassSceneSound::tp_repr(PythonClassSceneSound* self) -> PyObject* {
   auto&& m = *(self->sound_);
   return Py_BuildValue(
       "s", (std::string("<bascenev1.Sound ")
-            + (m.Exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
+            + (m.exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
                .c_str());
   BA_PYTHON_CATCH;
 }
@@ -55,7 +56,7 @@ auto PythonClassSceneSound::Create(SceneSound* sound) -> PyObject* {
 }
 
 auto PythonClassSceneSound::GetSound(bool doraise) const -> SceneSound* {
-  SceneSound* sound = sound_->Get();
+  SceneSound* sound = sound_->get();
   if (!sound && doraise) {
     throw Exception("Invalid Sound.", PyExcType::kNotFound);
   }

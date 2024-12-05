@@ -588,7 +588,8 @@ def test_dict() -> None:
 
     obj = _TestClass(dval={})
 
-    # 'Any' dicts should only support values directly compatible with json.
+    # 'Any' dicts should only support values directly compatible with
+    # json.
     obj.dval['foo'] = 5
     dataclass_to_dict(obj)
     with pytest.raises(TypeError):
@@ -598,8 +599,8 @@ def test_dict() -> None:
         obj.dval['foo'] = _GoodEnum.VAL1
         dataclass_to_dict(obj)
 
-    # Int dict-keys should actually be stored as strings internally
-    # (for json compatibility).
+    # Int dict-keys should actually be stored as strings internally (for
+    # json compatibility).
     @ioprepped
     @dataclass
     class _TestClass2:
@@ -753,8 +754,8 @@ def test_any() -> None:
 
     obj = _TestClass(anyval=b'bytes')
 
-    # JSON output doesn't allow bytes or datetime objects
-    # included in 'Any' data.
+    # JSON output doesn't allow bytes or datetime objects included in
+    # 'Any' data.
     with pytest.raises(TypeError):
         dataclass_validate(obj, codec=Codec.JSON)
 
@@ -831,8 +832,8 @@ def test_datetime_limits() -> None:
 def test_field_paths() -> None:
     """Test type-safe field path evaluations."""
 
-    # Define a few nested dataclass types, some of which
-    # have storage names differing from their field names.
+    # Define a few nested dataclass types, some of which have storage
+    # names differing from their field names.
     @ioprepped
     @dataclass
     class _TestClass:
@@ -856,13 +857,13 @@ def test_field_paths() -> None:
     assert lookup.path(lambda obj: obj.sub2.val1) == 's2.val1'
     assert lookup.path(lambda obj: obj.sub2.val2) == 's2.v2'
 
-    # Attempting to return fields that aren't there should fail
-    # in both type-checking and runtime.
+    # Attempting to return fields that aren't there should fail in both
+    # type-checking and runtime.
     with pytest.raises(AttributeError):
         lookup.path(lambda obj: obj.sub1.val3)  # type: ignore
 
-    # Returning non-field objects will fail at runtime
-    # even if type-checking evaluates them as valid values.
+    # Returning non-field objects will fail at runtime even if
+    # type-checking evaluates them as valid values.
     with pytest.raises(TypeError):
         lookup.path(lambda obj: 1)
 
@@ -905,8 +906,8 @@ def test_extended_data() -> None:
     with pytest.raises(ValueError):
         _obj = dataclass_from_dict(_TestClass, indata)
 
-    # Now define the same data but give it an adapter
-    # so it can work with our incorrectly-formatted data.
+    # Now define the same data but give it an adapter so it can work
+    # with our incorrectly-formatted data.
     @ioprepped
     @dataclass
     class _TestClass2(IOExtendedData):
@@ -978,8 +979,8 @@ def test_soft_default() -> None:
     with pytest.raises(ValueError):
         dataclass_from_dict(_TestClassA2, {})
 
-    # These should succeed because it has a soft-default value to
-    # fall back on.
+    # These should succeed because it has a soft-default value to fall
+    # back on.
     dataclass_from_dict(_TestClassB, {})
     dataclass_from_dict(_TestClassB2, {})
     dataclass_from_dict(_TestClassB3, {})
@@ -1020,8 +1021,8 @@ def test_soft_default() -> None:
 
     assert dataclass_to_dict(_TestClassC3b(0)) == {}
 
-    # We disallow passing a few mutable types as soft_defaults
-    # just as dataclass does with regular defaults.
+    # We disallow passing a few mutable types as soft_defaults just as
+    # dataclass does with regular defaults.
     with pytest.raises(TypeError):
 
         @ioprepped
@@ -1044,9 +1045,9 @@ def test_soft_default() -> None:
         class _TestClassD3:
             lval: Annotated[dict, IOAttrs(soft_default={})]
 
-    # soft_defaults are not static-type-checked, but we do try to
-    # catch basic type mismatches at prep time. Make sure that's working.
-    # (we also do full value validation during input, but the more we catch
+    # soft_defaults are not static-type-checked, but we do try to catch
+    # basic type mismatches at prep time. Make sure that's working. (we
+    # also do full value validation during input, but the more we catch
     # early the better)
     with pytest.raises(TypeError):
 
@@ -1069,9 +1070,9 @@ def test_soft_default() -> None:
         class _TestClassE3:
             lval: Annotated[list, IOAttrs(soft_default_factory=set)]
 
-    # Make sure Unions/Optionals go through ok.
-    # (note that mismatches currently aren't caught at prep time; just
-    # checking the negative case here).
+    # Make sure Unions/Optionals go through ok. Note that mismatches
+    # currently aren't caught at prep time; just checking the negative
+    # case here.
     @ioprepped
     @dataclass
     class _TestClassE4:
@@ -1083,7 +1084,8 @@ def test_soft_default() -> None:
         lval: Annotated[str | None, IOAttrs(soft_default='foo')]
 
     # Now try more in-depth examples: nested type mismatches like this
-    # are currently not caught at prep-time but ARE caught during inputting.
+    # are currently not caught at prep-time but ARE caught during
+    # inputting.
     @ioprepped
     @dataclass
     class _TestClassE6:
@@ -1100,9 +1102,9 @@ def test_soft_default() -> None:
     with pytest.raises(TypeError):
         dataclass_from_dict(_TestClassE7, {})
 
-    # If both a soft_default and regular field default are present,
-    # make sure soft_default takes precedence (it applies before
-    # data even hits the dataclass constructor).
+    # If both a soft_default and regular field default are present, make
+    # sure soft_default takes precedence (it applies before data even
+    # hits the dataclass constructor).
 
     @ioprepped
     @dataclass
@@ -1111,8 +1113,8 @@ def test_soft_default() -> None:
 
     assert dataclass_from_dict(_TestClassE8, {}).ival == 1
 
-    # Make sure soft_default gets used both when determining when
-    # to omit values from output and what to recreate missing values as.
+    # Make sure soft_default gets used both when determining when to
+    # omit values from output and what to recreate missing values as.
     orig = _TestClassE8(ival=1)
     todict = dataclass_to_dict(orig)
     assert todict == {}
@@ -1168,11 +1170,10 @@ class MTTestBase(IOMultiType[MTTestTypeID]):
     @classmethod
     def get_type_id(cls) -> MTTestTypeID:
         """Provide the type-id for this subclass."""
-        # If we wanted, we could just maintain a static mapping
-        # of types-to-ids here, but there are benefits to letting
-        # each child class speak for itself. Namely that we can
-        # do lazy-loading and don't need to have all types present
-        # here.
+        # If we wanted, we could just maintain a static mapping of
+        # types-to-ids here, but there are benefits to letting each
+        # child class speak for itself. Namely that we can do
+        # lazy-loading and don't need to have all types present here.
 
         # So we'll let all our child classes override this.
         raise NotImplementedError()
@@ -1457,3 +1458,58 @@ def test_multi_type_2() -> None:
     indict3 = {'type': 'm3'}
     with pytest.raises(RuntimeError):
         val3 = dataclass_from_dict(MTTest2Base, indict3)
+
+
+def test_enum_fallback() -> None:
+    """Test enum_fallback IOAttr values."""
+    # pylint: disable=missing-class-docstring
+    # pylint: disable=unused-variable
+
+    @ioprepped
+    @dataclass
+    class TestClass:
+
+        class TestEnum1(Enum):
+            VAL1 = 'val1'
+            VAL2 = 'val2'
+            VAL3 = 'val3'
+
+        class TestEnum2(Enum):
+            VAL1 = 'val1'
+            VAL2 = 'val2'
+            VAL3 = 'val3'
+
+        enum1val: Annotated[TestEnum1, IOAttrs('e1')]
+        enum2val: Annotated[
+            TestEnum2, IOAttrs('e2', enum_fallback=TestEnum2.VAL1)
+        ]
+
+    # All valid values; should work.
+    _obj = dataclass_from_dict(TestClass, {'e1': 'val1', 'e2': 'val1'})
+
+    # Bad Enum1 value; should fail since there's no fallback.
+    with pytest.raises(ValueError):
+        _obj = dataclass_from_dict(TestClass, {'e1': 'val4', 'e2': 'val1'})
+
+    # Bad Enum2 value; should substitute our fallback value.
+    obj = dataclass_from_dict(TestClass, {'e1': 'val1', 'e2': 'val4'})
+    assert obj.enum2val is obj.TestEnum2.VAL1
+
+    # Using wrong type as enum_fallback should fail.
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class TestClass2:
+
+            class TestEnum1(Enum):
+                VAL1 = 'val1'
+                VAL2 = 'val2'
+
+            class TestEnum2(Enum):
+                VAL1 = 'val1'
+                VAL2 = 'val2'
+
+            enum1val: Annotated[
+                TestEnum1, IOAttrs('e1', enum_fallback=TestEnum2.VAL1)
+            ]

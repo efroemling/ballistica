@@ -135,12 +135,12 @@ void StdioConsole::PushCommand_(const std::string& command) {
     // Eval this if possible (so we can possibly print return value).
     if (cmd.CanEval()) {
       auto obj = cmd.Eval(true, nullptr, nullptr);
-      if (obj.Exists()) {
+      if (obj.exists()) {
         // Print the value if we're running directly from a terminal
         // (or being run under the server-manager)
         if ((g_core->platform->is_stdin_a_terminal()
              || g_base->server_wrapper_managed())
-            && obj.Get() != Py_None) {
+            && obj.get() != Py_None) {
           printf("%s\n", obj.Repr().c_str());
           fflush(stdout);
         }

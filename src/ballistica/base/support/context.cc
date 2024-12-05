@@ -17,8 +17,8 @@ auto ContextRef::operator==(const ContextRef& other) const -> bool {
   // we're equal. The one exception to this is if we're both pointing to
   // targets that have died; in that case we have no way of knowing so
   // we say we're unequal.
-  if (target_.Get() == other.target_.Get() && empty_ == other.empty_) {
-    if (!empty_ && target_.Get() == nullptr) {
+  if (target_.get() == other.target_.get() && empty_ == other.empty_) {
+    if (!empty_ && target_.get() == nullptr) {
       return false;
     }
     return true;
@@ -30,7 +30,7 @@ ContextRef::ContextRef(Context* target_in)
     : target_(target_in), empty_(target_in == nullptr) {}
 
 auto ContextRef::GetDescription() const -> std::string {
-  if (auto* c = target_.Get()) {
+  if (auto* c = target_.get()) {
     return c->GetContextDescription();
   }
   return "empty";
@@ -45,7 +45,7 @@ auto Context::ContextAllowsDefaultTimerTypes() -> bool { return true; }
 
 ScopedSetContext::ScopedSetContext(const Object::Ref<Context>& target)
     : context_prev_(g_base->CurrentContext()) {
-  g_base->context_ref->SetTarget(target.Get());
+  g_base->context_ref->SetTarget(target.get());
 }
 
 ScopedSetContext::ScopedSetContext(Context* target)

@@ -21,6 +21,7 @@
 #include "ballistica/base/support/stdio_console.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
@@ -36,7 +37,8 @@ void Logic::OnMainThreadStartApp() {
 
 void Logic::OnAppStart() {
   assert(g_base->InLogicThread());
-  g_core->LifecycleLog("on-app-start begin (logic thread)");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "on-app-start begin (logic thread)");
 
   // Our thread should not be holding the GIL here at the start (and
   // probably will not have any Python state at all). So here we set both
@@ -72,7 +74,8 @@ void Logic::OnAppStart() {
   }
   g_base->python->OnAppStart();
 
-  g_core->LifecycleLog("on-app-start end (logic thread)");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "on-app-start end (logic thread)");
 }
 
 void Logic::OnGraphicsReady() {
@@ -101,7 +104,7 @@ void Logic::OnGraphicsReady() {
     // variety of rates anyway. NOTE: This length is currently milliseconds.
     headless_display_time_step_timer_ = event_loop()->NewTimer(
         kHeadlessMinDisplayTimeStep, true,
-        NewLambdaRunnable([this] { StepDisplayTime_(); }).Get());
+        NewLambdaRunnable([this] { StepDisplayTime_(); }).get());
   } else {
     // In gui mode, push an initial frame to the graphics server. From this
     // point it will be self-sustaining, sending us a frame request each
@@ -117,7 +120,8 @@ void Logic::CompleteAppBootstrapping_() {
   assert(!app_bootstrapping_complete_);
   app_bootstrapping_complete_ = true;
 
-  g_core->LifecycleLog("app native bootstrapping complete");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "app native bootstrapping complete");
 
   // Let the assets system know it can start loading stuff now that
   // we have a screen and thus know texture formats/etc.
@@ -134,7 +138,7 @@ void Logic::CompleteAppBootstrapping_() {
 
   // Set up our timers.
   process_pending_work_timer_ = event_loop()->NewTimer(
-      0, true, NewLambdaRunnable([this] { ProcessPendingWork_(); }).Get());
+      0, true, NewLambdaRunnable([this] { ProcessPendingWork_(); }).get());
   // asset_prune_timer_ = event_loop()->NewTimer(
   //     2345 * 1000, true, NewLambdaRunnable([] { g_base->assets->Prune();
   //     }).Get());

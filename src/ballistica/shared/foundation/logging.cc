@@ -55,6 +55,7 @@ void Logging::EmitLog(const std::string& name, LogLevel level, double timestamp,
           break;
       }
       char prestr[256];
+
       snprintf(prestr, sizeof(prestr), "%.3f  %s", rel_time, name.c_str());
       g_base_soft->PushDevConsolePrintCall("", 0.3f, kVector4f1);
       g_base_soft->PushDevConsolePrintCall(

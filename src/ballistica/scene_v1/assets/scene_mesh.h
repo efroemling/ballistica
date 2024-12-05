@@ -4,14 +4,9 @@
 #define BALLISTICA_SCENE_V1_ASSETS_SCENE_MESH_H_
 
 #include <string>
-#include <vector>
 
-#include "ballistica/base/assets/asset.h"
-#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/mesh_asset.h"
-#include "ballistica/base/assets/mesh_asset_renderer_data.h"
 #include "ballistica/scene_v1/assets/scene_asset.h"
-#include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::scene_v1 {
@@ -22,7 +17,7 @@ class SceneMesh : public SceneAsset {
   SceneMesh(const std::string& name, Scene* scene);
   ~SceneMesh() override;
 
-  auto mesh_data() const -> base::MeshAsset* { return mesh_data_.Get(); }
+  auto mesh_data() const -> base::MeshAsset* { return mesh_data_.get(); }
   auto GetAssetTypeName() const -> std::string override { return "Mesh"; }
   void MarkDead();
 
