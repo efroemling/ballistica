@@ -23,6 +23,7 @@
     "babase.EmptyAppMode"
   ],
   "efrocache_repository_url": "https://files.ballistica.net/cache/ba1",
+  "log_levels": {},
   "name": "BallisticaKit",
   "public": true,
   "pylint_ignored_untracked_deps": [
@@ -47,7 +48,8 @@
     "jinja2",
     "jinja2.Environment",
     "tomlkit",
-    "urllib3.exceptions"
+    "urllib3.exceptions",
+    "efro.dataclassio"
   ],
   "python_paths": [
     "src/assets/ba_data/python",
