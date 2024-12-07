@@ -1,5 +1,3 @@
-// Released under the MIT License. See LICENSE for details.
-
 #include "ballistica/base/ui/ui.h"
 
 #include <exception>
@@ -283,6 +281,9 @@ auto UI::HandleMouseDown(int button, float x, float y, bool double_click)
   // Dev console itself.
   if (!handled && dev_console_ && dev_console_->IsActive()) {
     handled = dev_console_->HandleMouseDown(button, x, y);
+    if (handled) {
+      return true;
+    }
   }
 
   if (!handled) {
@@ -300,7 +301,9 @@ void UI::HandleMouseUp(int button, float x, float y) {
       WidgetMessage(WidgetMessage::Type::kMouseUp, nullptr, x, y));
 
   if (dev_console_) {
-    dev_console_->HandleMouseUp(button, x, y);
+    if (dev_console_->HandleMouseUp(button, x, y)) {
+      return;
+    }
   }
 
   if (dev_console_button_pressed_ && button == 1) {

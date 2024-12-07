@@ -190,3 +190,18 @@ class DevConsoleSubsystem:
             tab.refresh()
         finally:
             self.is_refreshing = False
+
+    def add_customization_option(self, name: str, value: Any) -> None:
+        """Add a customization option to the dev console."""
+        # Implement the logic to add customization options
+        pass
+
+    def add_command(self, name: str, command: Callable[[], Any]) -> None:
+        """Add a command to the dev console."""
+        # Implement the logic to add commands
+        pass
+
+    def handle_error(self, error: Exception) -> None:
+        """Handle errors in the dev console."""
+        # Implement the logic to handle errors
+        pass

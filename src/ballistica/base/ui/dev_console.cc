@@ -1,5 +1,3 @@
-// Released under the MIT License. See LICENSE for details.
-
 #include "ballistica/base/ui/dev_console.h"
 
 #include <Python.h>
@@ -803,7 +801,7 @@ auto DevConsole::Height() -> float {
          * kDevConsoleFullSizeCoverage;
 }
 
-void DevConsole::HandleMouseUp(int button, float x, float y) {
+auto DevConsole::HandleMouseUp(int button, float x, float y) -> bool {
   assert(g_base->InLogicThread());
   float bottom{Bottom_()};
 
@@ -834,6 +832,8 @@ void DevConsole::HandleMouseUp(int button, float x, float y) {
       }
     }
   }
+
+  return true;
 }
 
 void DevConsole::InvokeStringEditor_() {
