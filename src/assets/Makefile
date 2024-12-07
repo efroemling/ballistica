@@ -5713,6 +5713,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/buttonPickUp.dds \
   $(BUILD_DIR)/ba_data/textures/buttonPunch.dds \
   $(BUILD_DIR)/ba_data/textures/buttonSquare.dds \
+  $(BUILD_DIR)/ba_data/textures/buttonSquareWide.dds \
   $(BUILD_DIR)/ba_data/textures/chTitleChar1.dds \
   $(BUILD_DIR)/ba_data/textures/chTitleChar2.dds \
   $(BUILD_DIR)/ba_data/textures/chTitleChar3.dds \
@@ -6124,6 +6125,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/buttonPickUp.pvr \
   $(BUILD_DIR)/ba_data/textures/buttonPunch.pvr \
   $(BUILD_DIR)/ba_data/textures/buttonSquare.pvr \
+  $(BUILD_DIR)/ba_data/textures/buttonSquareWide.pvr \
   $(BUILD_DIR)/ba_data/textures/chTitleChar1.pvr \
   $(BUILD_DIR)/ba_data/textures/chTitleChar2.pvr \
   $(BUILD_DIR)/ba_data/textures/chTitleChar3.pvr \
@@ -6535,6 +6537,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/buttonPickUp.ktx \
   $(BUILD_DIR)/ba_data/textures/buttonPunch.ktx \
   $(BUILD_DIR)/ba_data/textures/buttonSquare.ktx \
+  $(BUILD_DIR)/ba_data/textures/buttonSquareWide.ktx \
   $(BUILD_DIR)/ba_data/textures/chTitleChar1.ktx \
   $(BUILD_DIR)/ba_data/textures/chTitleChar2.ktx \
   $(BUILD_DIR)/ba_data/textures/chTitleChar3.ktx \
@@ -6945,6 +6948,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/buttonJump_preview.png \
   $(BUILD_DIR)/ba_data/textures/buttonPickUp_preview.png \
   $(BUILD_DIR)/ba_data/textures/buttonPunch_preview.png \
+  $(BUILD_DIR)/ba_data/textures/buttonSquareWide_preview.png \
   $(BUILD_DIR)/ba_data/textures/buttonSquare_preview.png \
   $(BUILD_DIR)/ba_data/textures/chTitleChar1_preview.png \
   $(BUILD_DIR)/ba_data/textures/chTitleChar2_preview.png \
