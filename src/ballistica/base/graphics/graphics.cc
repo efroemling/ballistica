@@ -1,5 +1,3 @@
-// Released under the MIT License. See LICENSE for details.
-
 #include "ballistica/base/graphics/graphics.h"
 
 #include <algorithm>
@@ -1775,6 +1773,10 @@ void Graphics::DrawUIBounds(RenderPass* pass) {
     }
     c.Submit();
   }
+}
+
+void Graphics::EnableImprovedGraphics(bool enable) {
+  g_base->graphics_server->EnableImprovedGraphics(enable);
 }
 
 }  // namespace ballistica::base
