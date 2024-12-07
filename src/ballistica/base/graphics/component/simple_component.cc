@@ -2,6 +2,8 @@
 
 #include "ballistica/base/graphics/component/simple_component.h"
 
+#include "ballistica/base/assets/assets.h"
+
 namespace ballistica::base {
 
 void SimpleComponent::WriteConfig() {
@@ -9,15 +11,15 @@ void SimpleComponent::WriteConfig() {
   // swapping (ie: when color is 1). This is because it can affect draw
   // order, which is important unlike with opaque stuff.
   if (transparent_) {
-    if (texture_.Exists()) {
-      if (colorize_texture_.Exists()) {
+    if (texture_.exists()) {
+      if (colorize_texture_.exists()) {
         assert(flatness_ == 0.0f);            // unimplemented combo
         assert(glow_amount_ == 0.0f);         // unimplemented combo
         assert(shadow_opacity_ == 0.0f);      // unimplemented combo
         assert(!double_sided_);               // unimplemented combo
-        assert(!mask_uv2_texture_.Exists());  // unimplemented combo
+        assert(!mask_uv2_texture_.exists());  // unimplemented combo
         if (do_colorize_2_) {
-          if (mask_texture_.Exists()) {
+          if (mask_texture_.exists()) {
             ConfigForShading(
                 ShadingType::
                     kSimpleTextureModulatedTransparentColorized2Masked);
@@ -41,7 +43,7 @@ void SimpleComponent::WriteConfig() {
             cmd_buffer_->PutTexture(colorize_texture_);
           }
         } else {
-          assert(!mask_texture_.Exists());  // unimplemented combo
+          assert(!mask_texture_.exists());  // unimplemented combo
           ConfigForShading(
               ShadingType::kSimpleTextureModulatedTransparentColorized);
           cmd_buffer_->PutInt(premultiplied_);
@@ -54,12 +56,12 @@ void SimpleComponent::WriteConfig() {
       } else {
         // Non-colorized with texture.
         if (double_sided_) {
-          assert(!mask_texture_.Exists());      // unimplemented combo
+          assert(!mask_texture_.exists());      // unimplemented combo
           assert(flatness_ == 0.0f);            // unimplemented combo
           assert(glow_amount_ == 0.0f);         // unimplemented combo
           assert(shadow_opacity_ == 0.0f);      // unimplemented combo
-          assert(!mask_texture_.Exists());      // unimplemented combo
-          assert(!mask_uv2_texture_.Exists());  // unimplemented combo
+          assert(!mask_texture_.exists());      // unimplemented combo
+          assert(!mask_uv2_texture_.exists());  // unimplemented combo
           ConfigForShading(
               ShadingType::kSimpleTextureModulatedTransparentDoubleSided);
           cmd_buffer_->PutInt(premultiplied_);
@@ -67,9 +69,9 @@ void SimpleComponent::WriteConfig() {
           cmd_buffer_->PutTexture(texture_);
         } else {
           if (shadow_opacity_ > 0.0f) {
-            assert(!mask_texture_.Exists());  // unimplemented combo
+            assert(!mask_texture_.exists());  // unimplemented combo
             assert(glow_amount_ == 0.0f);     // unimplemented combo
-            assert(mask_uv2_texture_.Exists());
+            assert(mask_uv2_texture_.exists());
             if (flatness_ != 0.0f) {
               ConfigForShading(
                   ShadingType::kSimpleTexModulatedTransShadowFlatness);
@@ -91,9 +93,9 @@ void SimpleComponent::WriteConfig() {
             }
           } else {
             if (glow_amount_ > 0.0f) {
-              assert(!mask_texture_.Exists());  // unimplemented combo
+              assert(!mask_texture_.exists());  // unimplemented combo
               assert(flatness_ == 0.0f);        // unimplemented combo
-              if (mask_uv2_texture_.Exists()) {
+              if (mask_uv2_texture_.exists()) {
                 ConfigForShading(
                     ShadingType::kSimpleTextureModulatedTransparentGlowMaskUV2);
                 cmd_buffer_->PutInt(premultiplied_);
@@ -111,7 +113,7 @@ void SimpleComponent::WriteConfig() {
               }
             } else {
               if (flatness_ != 0.0f) {
-                assert(!mask_texture_.Exists());  // unimplemented combo
+                assert(!mask_texture_.exists());  // unimplemented combo
                 ConfigForShading(
                     ShadingType::kSimpleTextureModulatedTransFlatness);
                 cmd_buffer_->PutInt(premultiplied_);
@@ -119,7 +121,7 @@ void SimpleComponent::WriteConfig() {
                                        flatness_);
                 cmd_buffer_->PutTexture(texture_);
               } else {
-                if (mask_texture_.Exists()) {
+                if (mask_texture_.exists()) {
                   // Currently mask functionality requires colorize too, so
                   // just send a black texture for that.
                   ConfigForShading(
@@ -151,9 +153,9 @@ void SimpleComponent::WriteConfig() {
       assert(flatness_ == 0.0f);            // unimplemented combo
       assert(glow_amount_ == 0.0f);         // unimplemented combo
       assert(shadow_opacity_ == 0.0f);      // unimplemented combo
-      assert(!colorize_texture_.Exists());  // unimplemented combo
-      assert(!mask_texture_.Exists());      // unimplemented combo
-      assert(!mask_uv2_texture_.Exists());  // unimplemented combo
+      assert(!colorize_texture_.exists());  // unimplemented combo
+      assert(!mask_texture_.exists());      // unimplemented combo
+      assert(!mask_uv2_texture_.exists());  // unimplemented combo
       if (double_sided_) {
         ConfigForShading(ShadingType::kSimpleColorTransparentDoubleSided);
         cmd_buffer_->PutInt(premultiplied_);
@@ -171,10 +173,10 @@ void SimpleComponent::WriteConfig() {
     assert(glow_amount_ == 0.0f);         // unimplemented combo
     assert(shadow_opacity_ == 0.0f);      // unimplemented combo
     assert(!double_sided_);               // unimplemented combo
-    assert(!mask_uv2_texture_.Exists());  // unimplemented combo
-    if (texture_.Exists()) {
-      if (colorize_texture_.Exists()) {
-        assert(!mask_texture_.Exists());  // unimplemented combo
+    assert(!mask_uv2_texture_.exists());  // unimplemented combo
+    if (texture_.exists()) {
+      if (colorize_texture_.exists()) {
+        assert(!mask_texture_.exists());  // unimplemented combo
         if (do_colorize_2_) {
           ConfigForShading(ShadingType::kSimpleTextureModulatedColorized2);
           cmd_buffer_->PutFloats(color_r_, color_g_, color_b_,
@@ -193,7 +195,7 @@ void SimpleComponent::WriteConfig() {
         }
       } else {
         assert(!do_colorize_2_);  // unsupported combo
-        if (mask_texture_.Exists()) {
+        if (mask_texture_.exists()) {
           // Currently mask functionality requires colorize too, so
           // we have to send a black texture along for that.
           ConfigForShading(
@@ -219,8 +221,8 @@ void SimpleComponent::WriteConfig() {
         }
       }
     } else {
-      assert(!mask_texture_.Exists());      // unimplemented combo
-      assert(!colorize_texture_.Exists());  // unsupported here
+      assert(!mask_texture_.exists());      // unimplemented combo
+      assert(!colorize_texture_.exists());  // unsupported here
       ConfigForShading(ShadingType::kSimpleColor);
       cmd_buffer_->PutFloats(color_r_, color_g_, color_b_);
     }

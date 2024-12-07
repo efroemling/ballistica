@@ -2,12 +2,16 @@
 
 #include "ballistica/shared/foundation/event_loop.h"
 
+#include <Python.h>
+
+#include <list>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include "ballistica/core/platform/core_platform.h"
-#include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/fatal_error.h"
-#include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica {
 
@@ -541,7 +545,7 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
 
   // Now log anything we accumulated safely outside of the locked section.
   for (auto&& log_entry : log_entries) {
-    Log(log_entry.first, log_entry.second);
+    g_core->Log(LogName::kBa, log_entry.first, log_entry.second);
   }
 }
 
@@ -575,8 +579,8 @@ auto EventLoop::AreEventLoopsSuspended() -> bool {
   return g_core->event_loops_suspended();
 }
 
-auto EventLoop::NewTimer(microsecs_t length, bool repeat,
-                         Runnable* runnable) -> Timer* {
+auto EventLoop::NewTimer(microsecs_t length, bool repeat, Runnable* runnable)
+    -> Timer* {
   assert(g_core);
   assert(ThreadIsCurrent());
   assert(Object::IsValidManagedObject(runnable));
@@ -724,8 +728,9 @@ void EventLoop::AcquireGIL_() {
   if (debug_timing) {
     auto duration{core::CorePlatform::GetCurrentMillisecs() - startmillisecs};
     if (duration > (1000 / 120)) {
-      Log(LogLevel::kInfo, "GIL acquire took too long ("
-                               + std::to_string(duration) + " millisecs).");
+      g_core->Log(LogName::kBa, LogLevel::kInfo,
+                  "GIL acquire took too long (" + std::to_string(duration)
+                      + " millisecs).");
     }
   }
 }

@@ -2,8 +2,12 @@
 
 #include "ballistica/base/python/class/python_class_env.h"
 
+#include <map>
+#include <string>
+
 #include "ballistica/base/base.h"
 #include "ballistica/core/platform/core_platform.h"
+
 namespace ballistica::base {
 
 struct EnvEntry_ {
@@ -58,14 +62,14 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
   envs["android"] = BoolEntry_(g_buildconfig.ostype_android(),
                                "Is this build targeting an Android based OS?");
 
-  envs["build_number"] = IntEntry_(
+  envs["engine_build_number"] = IntEntry_(
       kEngineBuildNumber,
       "Integer build number for the engine.\n"
       "\n"
       "This value increases by at least 1 with each release of the engine.\n"
       "It is independent of the human readable `version` string.");
 
-  envs["version"] = StrEntry_(
+  envs["engine_version"] = StrEntry_(
       kEngineVersion,
       "Human-readable version string for the engine; something like '1.3.24'.\n"
       "\n"
@@ -214,8 +218,8 @@ void PythonClassEnv::tp_dealloc(PythonClassEnv* self) {
   Py_TYPE(self)->tp_free(reinterpret_cast<PyObject*>(self));
 }
 
-auto PythonClassEnv::tp_getattro(PythonClassEnv* self,
-                                 PyObject* attr) -> PyObject* {
+auto PythonClassEnv::tp_getattro(PythonClassEnv* self, PyObject* attr)
+    -> PyObject* {
   BA_PYTHON_TRY;
 
   // Do we need to support other attr types?
@@ -248,7 +252,7 @@ auto PythonClassEnv::Dir(PythonClassEnv* self) -> PyObject* {
   for (auto&& env : *g_entries_) {
     PyList_Append(dir_list, PythonRef(PyUnicode_FromString(env.first.c_str()),
                                       PythonRef::kSteal)
-                                .Get());
+                                .get());
   }
   PyList_Sort(dir_list);
   return dir_list;

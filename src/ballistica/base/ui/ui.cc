@@ -3,18 +3,23 @@
 #include "ballistica/base/ui/ui.h"
 
 #include <exception>
+#include <string>
+#include <vector>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/simple_component.h"
-#include "ballistica/base/input/device/keyboard_input.h"
+#include "ballistica/base/input/device/keyboard_input.h"  // IWYU pragma: keep
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui_delegate.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/utils.h"
+#include "ballistica/shared/math/vector4f.h"
 
 namespace ballistica::base {
 
@@ -54,11 +59,11 @@ UI::OperationContext::~OperationContext() {
     assert(runnables_.empty());
   }
 
-  // Complain if our Finish() call was never run (unless we're being torn
-  // down due to an exception).
-  if (!ran_finish_ && !std::current_exception()) {
+  // Complain if our Finish() call was never run (unless it seems we're being
+  // torn down as part of stack-unwinding due to an exception).
+  if (!ran_finish_ && !std::uncaught_exceptions()) {
     BA_LOG_ERROR_NATIVE_TRACE_ONCE(
-        "UI::InteractionContext_ being torn down without Complete called.");
+        "UI::InteractionContext_ being torn down without Finish() called.");
   }
 
   // Our runnables are raw unmanaged pointers; need to explicitly kill them.
@@ -83,10 +88,11 @@ void UI::OperationContext::Finish() {
   assert(!ran_finish_);
   ran_finish_ = true;
 
-  // Run pent up runnaables. It's possible that the payload of something
+  // Run pent up runnables. It's possible that the payload of something
   // scheduled here will itself schedule something here, so we need to do
   // this in a loop (and watch for infinite ones).
   int cycle_count{};
+  auto initial_runnable_count(runnables_.size());
   while (!runnables_.empty()) {
     std::vector<Runnable*> runnables;
     runnables.swap(runnables_);
@@ -97,10 +103,14 @@ void UI::OperationContext::Finish() {
       delete runnable;
     }
     cycle_count += 1;
-    if (cycle_count >= 10) {
+    auto max_count = 10;
+    if (cycle_count >= max_count) {
+      auto current_runnable_count(runnables_.size());
       BA_LOG_ERROR_NATIVE_TRACE(
-          "UIOperationCount cycle-count hit max; you probably have an infinite "
-          "loop.");
+          "UIOperationCount cycle-count hit max " + std::to_string(max_count)
+          + " (initial " + std::to_string(initial_runnable_count) + ", current "
+          + std::to_string(current_runnable_count) + ");"
+          + " you probably have an infinite loop.");
       break;
     }
   }
@@ -135,6 +145,13 @@ UI::UI() {
     }
   }
 }
+void UI::SetScale(UIScale val) {
+  BA_PRECONDITION(g_base->InLogicThread());
+  scale_ = val;
+  if (dev_console_ != nullptr) {
+    dev_console_->OnUIScaleChanged();
+  }
+}
 
 void UI::StepDisplayTime() {
   assert(g_base->InLogicThread());
@@ -150,13 +167,16 @@ void UI::OnAppStart() {
   if (force_scale_) {
     if (scale_ == UIScale::kSmall) {
       ScreenMessage("FORCING SMALL UI FOR TESTING", Vector3f(1, 0, 0));
-      Log(LogLevel::kInfo, "FORCING SMALL UI FOR TESTING");
+      g_core->Log(LogName::kBa, LogLevel::kInfo,
+                  "FORCING SMALL UI FOR TESTING");
     } else if (scale_ == UIScale::kMedium) {
       ScreenMessage("FORCING MEDIUM UI FOR TESTING", Vector3f(1, 0, 0));
-      Log(LogLevel::kInfo, "FORCING MEDIUM UI FOR TESTING");
+      g_core->Log(LogName::kBa, LogLevel::kInfo,
+                  "FORCING MEDIUM UI FOR TESTING");
     } else if (scale_ == UIScale::kLarge) {
       ScreenMessage("FORCING LARGE UI FOR TESTING", Vector3f(1, 0, 0));
-      Log(LogLevel::kInfo, "FORCING LARGE UI FOR TESTING");
+      g_core->Log(LogName::kBa, LogLevel::kInfo,
+                  "FORCING LARGE UI FOR TESTING");
     } else {
       FatalError("Unhandled scale.");
     }
@@ -202,6 +222,41 @@ void UI::ActivatePartyIcon() {
   }
 }
 
+void UI::SetSquadSizeLabel(int val) {
+  assert(g_base->InLogicThread());
+
+  // No-op if this exactly matches what we already have.
+  if (val == squad_size_label_) {
+    return;
+  }
+
+  // Store the val so we'll have it for future delegates.
+  squad_size_label_ = val;
+
+  // Pass it to any current delegate.
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    ui_delegate->SetSquadSizeLabel(squad_size_label_);
+  }
+}
+
+void UI::SetAccountState(bool signed_in, const std::string& name) {
+  assert(g_base->InLogicThread());
+
+  // No-op if this exactly matches what we already have.
+  if (account_state_signed_in_ == signed_in && account_state_name_ == name) {
+    return;
+  }
+
+  // Store the val so we'll have it for future delegates.
+  account_state_signed_in_ = signed_in;
+  account_state_name_ = name;
+
+  // Pass it to any current delegate.
+  if (auto* ui_delegate = g_base->ui->delegate()) {
+    ui_delegate->SetAccountState(account_state_signed_in_, account_state_name_);
+  }
+}
+
 auto UI::PartyWindowOpen() -> bool {
   if (auto* ui_delegate = g_base->ui->delegate()) {
     return ui_delegate->PartyWindowOpen();
@@ -209,8 +264,8 @@ auto UI::PartyWindowOpen() -> bool {
   return false;
 }
 
-auto UI::HandleMouseDown(int button, float x, float y,
-                         bool double_click) -> bool {
+auto UI::HandleMouseDown(int button, float x, float y, bool double_click)
+    -> bool {
   assert(g_base->InLogicThread());
 
   bool handled{};
@@ -228,12 +283,6 @@ auto UI::HandleMouseDown(int button, float x, float y,
   // Dev console itself.
   if (!handled && dev_console_ && dev_console_->IsActive()) {
     handled = dev_console_->HandleMouseDown(button, x, y);
-  }
-
-  if (!handled) {
-    if (auto* ui_delegate = g_base->ui->delegate()) {
-      handled = ui_delegate->HandleLegacyRootUIMouseDown(x, y);
-    }
   }
 
   if (!handled) {
@@ -262,10 +311,6 @@ void UI::HandleMouseUp(int button, float x, float y) {
       }
     }
   }
-
-  if (auto* ui_delegate = g_base->ui->delegate()) {
-    ui_delegate->HandleLegacyRootUIMouseUp(x, y);
-  }
 }
 
 auto UI::UIHasDirectKeyboardInput() const -> bool {
@@ -290,10 +335,6 @@ auto UI::UIHasDirectKeyboardInput() const -> bool {
 void UI::HandleMouseMotion(float x, float y) {
   SendWidgetMessage(
       WidgetMessage(WidgetMessage::Type::kMouseMove, nullptr, x, y));
-
-  if (auto* ui_delegate = g_base->ui->delegate()) {
-    ui_delegate->HandleLegacyRootUIMouseMotion(x, y);
-  }
 }
 
 void UI::PushBackButtonCall(InputDevice* input_device) {
@@ -333,8 +374,10 @@ void UI::SetUIInputDevice(InputDevice* input_device) {
 }
 
 void UI::Reset() {
+  assert(g_base->InLogicThread());
+  // Deactivate any current delegate.
   if (auto* ui_delegate = g_base->ui->delegate()) {
-    ui_delegate->Reset();
+    SetUIDelegate(nullptr);
   }
 }
 
@@ -343,10 +386,6 @@ auto UI::ShouldHighlightWidgets() const -> bool {
   // only when the main UI is visible (dont want a selection highlight for
   // toolbar buttons during a game).
   return g_base->input->have_non_touch_inputs() && MainMenuVisible();
-}
-
-auto UI::ShouldShowButtonShortcuts() const -> bool {
-  return g_base->input->have_non_touch_inputs();
 }
 
 auto UI::SendWidgetMessage(const WidgetMessage& m) -> bool {
@@ -379,7 +418,7 @@ void UI::LanguageChanged() {
 
 auto UI::GetUIInputDevice() const -> InputDevice* {
   assert(g_base->InLogicThread());
-  return ui_input_device_.Get();
+  return ui_input_device_.get();
 }
 
 auto UI::GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget* {
@@ -518,7 +557,7 @@ auto UI::InDevConsoleButton_(float x, float y) const -> bool {
 }
 
 void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
-  if (!dev_console_button_txt_.Exists()) {
+  if (!dev_console_button_txt_.exists()) {
     dev_console_button_txt_ = Object::New<TextGroup>();
     dev_console_button_txt_->SetText("dev");
   }
@@ -562,17 +601,30 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
 
 void UI::ShowURL(const std::string& url) {
   if (auto* ui_delegate = g_base->ui->delegate()) {
-    ui_delegate->DoShowURL(url);
+    // We can be called from any thread but DoShowURL expects to be run in
+    // the logic thread.
+    g_base->logic->event_loop()->PushCall(
+        [ui_delegate, url] { ui_delegate->DoShowURL(url); });
   } else {
-    Log(LogLevel::kWarning, "UI::ShowURL called without ui_delegate present.");
+    g_core->Log(LogName::kBa, LogLevel::kWarning,
+                "UI::ShowURL called without ui_delegate present.");
   }
 }
 
-void UI::set_ui_delegate(base::UIDelegateInterface* delegate) {
+void UI::SetUIDelegate(base::UIDelegateInterface* delegate) {
   assert(g_base->InLogicThread());
 
-  if (delegate == delegate_) {
-    return;
+  // We should always be either setting or clearing delegate; never setting
+  // redundantly.
+  if (delegate_) {
+    if (delegate) {
+      FatalError(
+          "Can\'t set UI Delegate when one is already set. Reset base first.");
+    }
+  } else {
+    if (!delegate) {
+      FatalError("Can\'t clear UI Delegate when already cleared.");
+    }
   }
 
   try {
@@ -585,12 +637,13 @@ void UI::set_ui_delegate(base::UIDelegateInterface* delegate) {
     if (delegate_) {
       delegate_->OnActivate();
 
-      // Inform them that a few things changed, since they might have since
-      // the last time they were active (these callbacks only go to the *active*
-      // ui delegate).
+      // Push values to them and trigger various 'changed' callbacks so they
+      // pick up the latest state of the world.
       delegate_->DoApplyAppConfig();
       delegate_->OnScreenSizeChange();
       delegate_->OnLanguageChange();
+      delegate_->SetSquadSizeLabel(squad_size_label_);
+      delegate_->SetAccountState(account_state_signed_in_, account_state_name_);
     }
   } catch (const Exception& exc) {
     // Switching UI delegates is a big deal; don't try to continue if
@@ -600,21 +653,24 @@ void UI::set_ui_delegate(base::UIDelegateInterface* delegate) {
   }
 }
 
-void UI::PushDevConsolePrintCall(const std::string& msg) {
+void UI::PushDevConsolePrintCall(const std::string& msg, float scale,
+                                 Vector4f color) {
   // Completely ignore this stuff in headless mode.
   if (g_core->HeadlessMode()) {
     return;
   }
-  // If our event loop AND console are up and running, ship it off to
-  // be printed. Otherwise store it for the console to grab when it's ready.
+  // If our event loop AND console are up and running, ship it off to be
+  // printed. Otherwise store it for the console to grab when it's ready.
   if (auto* event_loop = g_base->logic->event_loop()) {
     if (dev_console_ != nullptr) {
-      event_loop->PushCall([this, msg] { dev_console_->Print(msg); });
+      event_loop->PushCall([this, msg, scale, color] {
+        dev_console_->Print(msg, scale, color);
+      });
       return;
     }
   }
   // Didn't send a print; store for later.
-  dev_console_startup_messages_ += msg;
+  dev_console_startup_messages_.emplace_back(msg, scale, color);
 }
 
 void UI::OnAssetsAvailable() {
@@ -627,7 +683,10 @@ void UI::OnAssetsAvailable() {
 
     // Print any messages that have built up.
     if (!dev_console_startup_messages_.empty()) {
-      dev_console_->Print(dev_console_startup_messages_);
+      for (auto&& entry : dev_console_startup_messages_) {
+        dev_console_->Print(std::get<0>(entry), std::get<1>(entry),
+                            std::get<2>(entry));
+      }
       dev_console_startup_messages_.clear();
     }
   }
@@ -637,19 +696,27 @@ void UI::PushUIOperationRunnable(Runnable* runnable) {
   assert(g_base->InLogicThread());
 
   if (operation_context_ != nullptr) {
+    // Once we're finishing the context, nothing else should be adding calls
+    // to it.
+    //
+    // UPDATE - this is actually ok. Things like widget-select commands can
+    // happen as part of user callbacks which themselves add additional
+    // callbacks to the current ui-operation.
+    //
+    // if (operation_context_->ran_finish()) {
+    //   auto trace = g_core->platform->GetNativeStackTrace();
+    //   BA_LOG_ERROR_NATIVE_TRACE(
+    //       "UI::PushUIOperationRunnable() called during UI operation
+    //       finish.");
+    //   return;
+    // }
+
     operation_context_->AddRunnable(runnable);
     return;
+  } else {
+    BA_LOG_ERROR_NATIVE_TRACE(
+        "UI::PushUIOperationRunnable() called outside of UI operation.");
   }
-
-  // For now, gracefully fall back to pushing an event if there's no current
-  // operation. Once we've got any bugs cleared out, can leave this as just
-  // an error log.
-
-  auto trace = g_core->platform->GetNativeStackTrace();
-  BA_LOG_ERROR_NATIVE_TRACE_ONCE(
-      "UI::PushUIOperationRunnable() called outside of UI operation.");
-
-  g_base->logic->event_loop()->PushRunnable(runnable);
 }
 
 auto UI::InUIOperation() -> bool {

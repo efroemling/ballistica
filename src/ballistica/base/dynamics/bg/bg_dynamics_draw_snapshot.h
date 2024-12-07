@@ -5,7 +5,10 @@
 
 #include <vector>
 
-#include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/base/graphics/mesh/mesh_buffer_vertex_simple_full.h"
+#include "ballistica/base/graphics/mesh/mesh_buffer_vertex_smoke_full.h"
+#include "ballistica/base/graphics/mesh/mesh_buffer_vertex_sprite.h"
+#include "ballistica/base/graphics/mesh/mesh_index_buffer_16.h"
 
 namespace ballistica::base {
 
@@ -25,16 +28,16 @@ class BGDynamicsDrawSnapshot {
   // over or else the debug thread-access-checks will error.
   void SetLogicThreadOwnership() {
     if (g_buildconfig.debug_build()) {
-      for (Object* o : {static_cast<Object*>(tendril_indices.Get()),
-                        static_cast<Object*>(tendril_vertices.Get()),
-                        static_cast<Object*>(fuse_indices.Get()),
-                        static_cast<Object*>(fuse_vertices.Get()),
-                        static_cast<Object*>(shadow_indices.Get()),
-                        static_cast<Object*>(shadow_vertices.Get()),
-                        static_cast<Object*>(light_indices.Get()),
-                        static_cast<Object*>(light_vertices.Get()),
-                        static_cast<Object*>(spark_indices.Get()),
-                        static_cast<Object*>(spark_vertices.Get())}) {
+      for (Object* o : {static_cast<Object*>(tendril_indices.get()),
+                        static_cast<Object*>(tendril_vertices.get()),
+                        static_cast<Object*>(fuse_indices.get()),
+                        static_cast<Object*>(fuse_vertices.get()),
+                        static_cast<Object*>(shadow_indices.get()),
+                        static_cast<Object*>(shadow_vertices.get()),
+                        static_cast<Object*>(light_indices.get()),
+                        static_cast<Object*>(light_vertices.get()),
+                        static_cast<Object*>(spark_indices.get()),
+                        static_cast<Object*>(spark_vertices.get())}) {
         if (o) {
           o->SetThreadOwnership(Object::ThreadOwnership::kClassDefault);
         }

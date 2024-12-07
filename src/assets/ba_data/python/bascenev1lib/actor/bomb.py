@@ -333,6 +333,7 @@ class Blast(bs.Actor):
 
     def __init__(
         self,
+        *,
         position: Sequence[float] = (0.0, 1.0, 0.0),
         velocity: Sequence[float] = (0.0, 0.0, 0.0),
         blast_radius: float = 2.0,
@@ -715,6 +716,7 @@ class Bomb(bs.Actor):
 
     def __init__(
         self,
+        *,
         position: Sequence[float] = (0.0, 1.0, 0.0),
         velocity: Sequence[float] = (0.0, 0.0, 0.0),
         bomb_type: str = 'normal',

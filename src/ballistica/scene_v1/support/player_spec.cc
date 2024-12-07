@@ -2,9 +2,11 @@
 
 #include "ballistica/scene_v1/support/player_spec.h"
 
+#include <string>
+
 #include "ballistica/base/support/classic_soft.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/platform/core_platform.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -37,7 +39,8 @@ PlayerSpec::PlayerSpec(const std::string& s) {
     cJSON_Delete(root_obj);
   }
   if (!success) {
-    Log(LogLevel::kError, "Error creating PlayerSpec from string: '" + s + "'");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Error creating PlayerSpec from string: '" + s + "'");
     name_ = "<error>";
     short_name_ = "";
     // account_type_ = classic::V1AccountType::kInvalid;
@@ -90,7 +93,7 @@ auto PlayerSpec::GetSpecString() const -> std::string {
 }
 
 auto PlayerSpec::GetAccountPlayerSpec() -> PlayerSpec {
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   PlayerSpec spec;
   if (g_base->HaveClassic() && g_base->classic()->IsV1AccountSignedIn()) {
     spec.v1_account_type_ = g_base->classic()->GetV1AccountType();
@@ -111,7 +114,8 @@ auto PlayerSpec::GetAccountPlayerSpec() -> PlayerSpec {
   }
   if (spec.name_.size() > 100) {
     // FIXME should perhaps clamp this in unicode space
-    Log(LogLevel::kError, "account name size too long: '" + spec.name_ + "'");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "account name size too long: '" + spec.name_ + "'");
     spec.name_.resize(100);
     spec.name_ = Utils::GetValidUTF8(spec.name_.c_str(), "bsgaps3");
   }
@@ -123,8 +127,8 @@ auto PlayerSpec::GetDummyPlayerSpec(const std::string& name) -> PlayerSpec {
   spec.name_ = Utils::GetValidUTF8(name.c_str(), "bsgdps1");
   if (spec.name_.size() > 100) {
     // FIXME should perhaps clamp this in unicode space
-    Log(LogLevel::kError,
-        "dummy player spec name too long: '" + spec.name_ + "'");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "dummy player spec name too long: '" + spec.name_ + "'");
     spec.name_.resize(100);
     spec.name_ = Utils::GetValidUTF8(spec.name_.c_str(), "bsgdps2");
   }

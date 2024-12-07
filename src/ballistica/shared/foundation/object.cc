@@ -2,8 +2,11 @@
 
 #include "ballistica/shared/foundation/object.h"
 
+#include <algorithm>
 #include <mutex>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
@@ -82,6 +85,14 @@ Object::~Object() {
   }
 }
 
+void Object::ObjectPostInit() {
+#if BA_DEBUG_BUILD
+  // Flag this here in the top level post-init so we can ensure that classes
+  // are properly calling parent class post-inits.
+  object_is_post_inited_ = true;
+#endif
+}
+
 auto Object::GetObjectTypeName() const -> std::string {
   // Default implementation just returns type name.
   if (g_core) {
@@ -152,9 +163,10 @@ void Object::LsObjects() {
       assert(count == g_core->object_count);
     }
   }
-  Log(LogLevel::kInfo, s);
+  g_core->Log(LogName::kBa, LogLevel::kInfo, s);
 #else
-  Log(LogLevel::kInfo, "LsObjects() only functions in debug builds.");
+  g_core->Log(LogName::kBa, LogLevel::kInfo,
+              "LsObjects() only functions in debug builds.");
 #endif  // BA_DEBUG_BUILD
 }
 

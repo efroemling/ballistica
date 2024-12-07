@@ -2,6 +2,9 @@
 
 #include "ballistica/base/input/support/remote_app_server.h"
 
+#include <cstdio>
+#include <string>
+
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/graphics.h"
@@ -10,7 +13,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/core/platform/core_platform.h"
-#include "ballistica/core/platform/support/min_sdl.h"
+#include "ballistica/core/platform/support/min_sdl.h"  // IWYU pragma: keep.
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -70,7 +73,7 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
     }
     case BA_PACKET_REMOTE_ID_REQUEST: {
       if (amt < 5 || amt > 127) {
-        BA_LOG_ONCE(LogLevel::kError,
+        BA_LOG_ONCE(LogName::kBaInput, LogLevel::kError,
                     "Received invalid BA_PACKET_REMOTE_ID_REQUEST of length "
                         + std::to_string(amt));
         break;
@@ -211,7 +214,8 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
 
       // Each state is 2 bytes. So make sure our length adds up.
       if (amt != 4 + state_count * 3) {
-        BA_LOG_ONCE(LogLevel::kError, "Invalid state packet");
+        BA_LOG_ONCE(LogName::kBaInput, LogLevel::kError,
+                    "Invalid state packet");
         return;
       }
       RemoteAppClient* client = clients_ + joystick_id;

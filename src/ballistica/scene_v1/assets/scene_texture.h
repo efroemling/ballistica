@@ -21,7 +21,7 @@ class SceneTexture : public SceneAsset {
   // Note that a texture's data can change over time as different
   // versions are spooled in/out/etc.
   auto texture_data() const -> base::TextureAsset* {
-    return texture_data_.Get();
+    return texture_data_.get();
   }
   auto GetAssetTypeName() const -> std::string override { return "Texture"; }
   void MarkDead();

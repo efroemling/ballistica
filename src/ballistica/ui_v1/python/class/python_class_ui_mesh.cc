@@ -2,6 +2,8 @@
 
 #include "ballistica/ui_v1/python/class/python_class_ui_mesh.h"
 
+#include <string>
+
 #include "ballistica/base/assets/mesh_asset.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -41,7 +43,7 @@ auto PythonClassUIMesh::Create(const Object::Ref<base::MeshAsset>& mesh)
 
 auto PythonClassUIMesh::tp_repr(PythonClassUIMesh* self) -> PyObject* {
   BA_PYTHON_TRY;
-  base::MeshAsset* s = self->mesh_->Get();
+  base::MeshAsset* s = self->mesh_->get();
   return Py_BuildValue(
       "s", (std::string("<bauiv1.Mesh '") + (s->GetName()) + "'>").c_str());
   BA_PYTHON_CATCH;

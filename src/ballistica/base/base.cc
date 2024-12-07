@@ -2,12 +2,18 @@
 
 #include "ballistica/base/base.h"
 
+#include <cstdio>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
-#include "ballistica/base/app_mode/app_mode_empty.h"
+#include "ballistica/base/app_mode/empty_app_mode.h"
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_server.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
@@ -24,12 +30,12 @@
 #include "ballistica/base/support/huffman.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/support/stdio_console.h"
-#include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui_delegate.h"
-#include "ballistica/core/python/core_python.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/logging.h"
 #include "ballistica/shared/generic/utils.h"
+#include "ballistica/shared/math/vector4f.h"
 #include "ballistica/shared/python/python_command.h"
 
 namespace ballistica::base {
@@ -40,7 +46,7 @@ BaseFeatureSet* g_base{};
 BaseFeatureSet::BaseFeatureSet()
     : app_adapter{BaseBuildSwitches::CreateAppAdapter()},
       app_config{new AppConfig()},
-      app_mode_{AppModeEmpty::GetSingleton()},
+      app_mode_{EmptyAppMode::GetSingleton()},
       assets{new Assets()},
       assets_server{new AssetsServer()},
       audio{new Audio()},
@@ -83,7 +89,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->LifecycleLog("_babase exec begin");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_babase exec begin");
 
   // This locks in a baenv configuration.
   g_core->ApplyBaEnvConfig();
@@ -115,15 +121,10 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   bool success = g_base->python->objs()
                      .Get(BasePython::ObjID::kEnvOnNativeModuleImportCall)
                      .Call()
-                     .Exists();
+                     .exists();
   if (!success) {
     FatalError("babase._env.on_native_module_import() call failed.");
   }
-
-  // ..and because Python is now feeding us logs, we can push any logs
-  // through that we've been holding on to and start forwarding log calls as
-  // they happen.
-  g_core->python->EnablePythonLoggingCalls();
 
   // A marker we pop down at the very end so other modules can run sanity
   // checks to make sure we aren't importing them reciprocally when they
@@ -132,7 +133,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   assert(!g_base->base_native_import_completed_);
   g_base->base_native_import_completed_ = true;
 
-  g_core->LifecycleLog("_babase exec end");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_babase exec end");
 }
 
 void BaseFeatureSet::OnReachedEndOfBaBaseImport() {
@@ -155,7 +156,8 @@ void BaseFeatureSet::SuccessScreenMessage() {
       python->objs().Get(BasePython::ObjID::kSuccessMessageCall).Call();
     });
   } else {
-    Log(LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "SuccessScreenMessage called without logic event_loop in place.");
   }
 }
@@ -166,8 +168,8 @@ void BaseFeatureSet::ErrorScreenMessage() {
       python->objs().Get(BasePython::ObjID::kErrorMessageCall).Call();
     });
   } else {
-    Log(LogLevel::kError,
-        "ErrorScreenMessage called without logic event_loop in place.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "ErrorScreenMessage called without logic event_loop in place.");
   }
 }
 
@@ -175,13 +177,14 @@ auto BaseFeatureSet::GetV2AccountID() -> std::optional<std::string> {
   auto gil = Python::ScopedInterpreterLock();
   auto result =
       python->objs().Get(BasePython::ObjID::kGetV2AccountIdCall).Call();
-  if (result.Exists()) {
+  if (result.exists()) {
     if (result.ValueIsNone()) {
       return {};
     }
     return result.ValueAsString();
   } else {
-    Log(LogLevel::kError, "GetV2AccountID() py call errored.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "GetV2AccountID() py call errored.");
     return {};
   }
 }
@@ -193,12 +196,6 @@ void BaseFeatureSet::OnAssetsAvailable() {
 }
 
 void BaseFeatureSet::StartApp() {
-  // {
-  //   // TEST - recreate the ID python dumps in its thread tracebacks.
-  //   auto val = PyThread_get_thread_ident();
-  //   printf("MAIN THREAD IS %#018lx\n", val);
-  // }
-
   BA_PRECONDITION(g_core->InMainThread());
   BA_PRECONDITION(g_base);
 
@@ -209,18 +206,15 @@ void BaseFeatureSet::StartApp() {
   called_start_app_ = true;
   assert(!app_started_);  // Shouldn't be possible.
 
-  g_core->LifecycleLog("start-app begin (main thread)");
-
   LogVersionInfo_();
+
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "start-app begin (main thread)");
 
   // The logic thread (or maybe other things) need to run Python as
   // we're bringing them up, so let it go for the duration of this call.
   // We'll explicitly grab it if/when we need it.
   Python::ScopedInterpreterLockRelease gil_release;
-
-  // Read in ba.app.config for anyone who wants to start looking at it
-  // (though we don't explicitly ask anyone to apply it until later).
-  python->ReadConfig();
 
   // Allow our subsystems to start doing work in their own threads and
   // communicating with other subsystems. Note that we may still want to run
@@ -253,7 +247,8 @@ void BaseFeatureSet::StartApp() {
     python->objs().Get(BasePython::ObjID::kAppPushApplyAppConfigCall).Call();
   }
 
-  g_core->LifecycleLog("start-app end (main thread)");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "start-app end (main thread)");
 
   // Make some noise if this takes more than a few seconds. If we pass 5
   // seconds or so we start to trigger App-Not-Responding reports which
@@ -263,7 +258,7 @@ void BaseFeatureSet::StartApp() {
     char buffer[128];
     snprintf(buffer, sizeof(buffer),
              "StartApp() took too long (%.2lf seconds).", duration);
-    Log(LogLevel::kWarning, buffer);
+    g_core->Log(LogName::kBa, LogLevel::kWarning, buffer);
   }
 }
 
@@ -272,8 +267,8 @@ void BaseFeatureSet::SuspendApp() {
   assert(g_core->InMainThread());
 
   if (app_suspended_) {
-    Log(LogLevel::kWarning,
-        "AppAdapter::SuspendApp() called with app already suspended.");
+    g_core->Log(LogName::kBa, LogLevel::kWarning,
+                "AppAdapter::SuspendApp() called with app already suspended.");
     return;
   }
 
@@ -314,7 +309,8 @@ void BaseFeatureSet::SuspendApp() {
     // running_loop_count = loops.size();
     if (running_loops.empty()) {
       if (g_buildconfig.debug_build()) {
-        Log(LogLevel::kDebug,
+        g_core->Log(
+            LogName::kBa, LogLevel::kDebug,
             "SuspendApp() completed in "
                 + std::to_string(core::CorePlatform::GetCurrentMillisecs()
                                  - start_time)
@@ -375,7 +371,7 @@ void BaseFeatureSet::SuspendApp() {
   }
   msg += ").";
 
-  Log(LogLevel::kError, msg);
+  g_core->Log(LogName::kBa, LogLevel::kError, msg);
 }
 
 void BaseFeatureSet::UnsuspendApp() {
@@ -383,7 +379,8 @@ void BaseFeatureSet::UnsuspendApp() {
   assert(g_core->InMainThread());
 
   if (!app_suspended_) {
-    Log(LogLevel::kWarning,
+    g_core->Log(
+        LogName::kBa, LogLevel::kWarning,
         "AppAdapter::UnsuspendApp() called with app not in suspendedstate.");
     return;
   }
@@ -401,11 +398,11 @@ void BaseFeatureSet::UnsuspendApp() {
   g_base->networking->OnAppUnsuspend();
 
   if (g_buildconfig.debug_build()) {
-    Log(LogLevel::kDebug,
-        "UnsuspendApp() completed in "
-            + std::to_string(core::CorePlatform::GetCurrentMillisecs()
-                             - start_time)
-            + "ms.");
+    g_core->Log(LogName::kBa, LogLevel::kDebug,
+                "UnsuspendApp() completed in "
+                    + std::to_string(core::CorePlatform::GetCurrentMillisecs()
+                                     - start_time)
+                    + "ms.");
   }
 }
 
@@ -414,9 +411,9 @@ void BaseFeatureSet::OnAppShutdownComplete() {
   assert(g_core);
   assert(g_base);
 
-  g_core->LifecycleLog("app exiting (main thread)");
-
   // Flag our own event loop to exit (or ask the OS to if they're managing).
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "app exiting (main thread)");
   if (app_adapter->ManagesMainThreadEventLoop()) {
     app_adapter->DoExitMainThreadEventLoop();
   } else {
@@ -427,13 +424,14 @@ void BaseFeatureSet::OnAppShutdownComplete() {
 void BaseFeatureSet::LogVersionInfo_() {
   char buffer[256];
   if (g_buildconfig.headless_build()) {
-    snprintf(buffer, sizeof(buffer), "BallisticaKit Headless %s build %d.",
-             kEngineVersion, kEngineBuildNumber);
+    snprintf(buffer, sizeof(buffer),
+             "BallisticaKit Headless %s build %d starting...", kEngineVersion,
+             kEngineBuildNumber);
   } else {
-    snprintf(buffer, sizeof(buffer), "BallisticaKit %s build %d.",
+    snprintf(buffer, sizeof(buffer), "BallisticaKit %s build %d starting...",
              kEngineVersion, kEngineBuildNumber);
   }
-  Log(LogLevel::kInfo, buffer);
+  g_core->Log(LogName::kBaApp, LogLevel::kInfo, buffer);
 }
 
 void BaseFeatureSet::set_app_mode(AppMode* mode) {
@@ -441,8 +439,9 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
 
   // Redundant sets should not happen (make an exception here for empty mode
   // since that's in place before any app mode is officially set).
-  if (mode == app_mode_ && mode != AppModeEmpty::GetSingleton()) {
-    Log(LogLevel::kWarning,
+  if (mode == app_mode_ && mode != EmptyAppMode::GetSingleton()) {
+    g_core->Log(
+        LogName::kBa, LogLevel::kWarning,
         "set_app_mode called with already-current app-mode; unexpected.");
   }
 
@@ -562,7 +561,7 @@ auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
       Python::ScopedInterpreterLock gil;
       auto uuid =
           g_base->python->objs().Get(BasePython::ObjID::kUUIDStrCall).Call();
-      if (uuid.Exists()) {
+      if (uuid.exists()) {
         app_instance_uuid = uuid.ValueAsString();
         have_app_instance_uuid = true;
       }
@@ -570,7 +569,8 @@ auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
     if (!have_app_instance_uuid) {
       // As an emergency fallback simply use a single random number. We
       // should probably simply disallow this before Python is up.
-      Log(LogLevel::kWarning, "GetSessionUUID() using rand fallback.");
+      g_core->Log(LogName::kBa, LogLevel::kWarning,
+                  "GetSessionUUID() using rand fallback.");
       srand(static_cast<unsigned int>(
           core::CorePlatform::GetCurrentMillisecs()));  // NOLINT
       app_instance_uuid =
@@ -578,7 +578,8 @@ auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
       have_app_instance_uuid = true;
     }
     if (app_instance_uuid.size() >= 100) {
-      Log(LogLevel::kWarning, "session id longer than it should be.");
+      g_core->Log(LogName::kBa, LogLevel::kWarning,
+                  "session id longer than it should be.");
     }
   }
   return app_instance_uuid;
@@ -727,38 +728,39 @@ void BaseFeatureSet::DoV1CloudLog(const std::string& msg) {
   plus()->DirectSendV1CloudLogs(logprefix, logsuffix, false, nullptr);
 }
 
-void BaseFeatureSet::PushDevConsolePrintCall(const std::string& msg) {
-  ui->PushDevConsolePrintCall(msg);
+void BaseFeatureSet::PushDevConsolePrintCall(const std::string& msg,
+                                             float scale, Vector4f color) {
+  ui->PushDevConsolePrintCall(msg, scale, color);
 }
 
 PyObject* BaseFeatureSet::GetPyExceptionType(PyExcType exctype) {
   switch (exctype) {
     case PyExcType::kContext:
-      return python->objs().Get(BasePython::ObjID::kContextError).Get();
+      return python->objs().Get(BasePython::ObjID::kContextError).get();
     case PyExcType::kNotFound:
-      return python->objs().Get(BasePython::ObjID::kNotFoundError).Get();
+      return python->objs().Get(BasePython::ObjID::kNotFoundError).get();
     case PyExcType::kNodeNotFound:
-      return python->objs().Get(BasePython::ObjID::kNodeNotFoundError).Get();
+      return python->objs().Get(BasePython::ObjID::kNodeNotFoundError).get();
     case PyExcType::kSessionPlayerNotFound:
       return python->objs()
           .Get(BasePython::ObjID::kSessionPlayerNotFoundError)
-          .Get();
+          .get();
     case PyExcType::kInputDeviceNotFound:
       return python->objs()
           .Get(BasePython::ObjID::kInputDeviceNotFoundError)
-          .Get();
+          .get();
     case PyExcType::kDelegateNotFound:
       return python->objs()
           .Get(BasePython::ObjID::kDelegateNotFoundError)
-          .Get();
+          .get();
     case PyExcType::kWidgetNotFound:
-      return python->objs().Get(BasePython::ObjID::kWidgetNotFoundError).Get();
+      return python->objs().Get(BasePython::ObjID::kWidgetNotFoundError).get();
     case PyExcType::kActivityNotFound:
       return python->objs()
           .Get(BasePython::ObjID::kActivityNotFoundError)
-          .Get();
+          .get();
     case PyExcType::kSessionNotFound:
-      return python->objs().Get(BasePython::ObjID::kSessionNotFoundError).Get();
+      return python->objs().Get(BasePython::ObjID::kSessionNotFoundError).get();
     default:
       return nullptr;
   }
@@ -835,7 +837,7 @@ void BaseFeatureSet::DoPushObjCall(const PythonObjectSetBase* objset, int id) {
     });
   } else {
     BA_LOG_ONCE(
-        LogLevel::kError,
+        LogName::kBa, LogLevel::kError,
         "BaseFeatureSet::DoPushObjCall called before event loop created.");
   }
 }
@@ -955,13 +957,13 @@ auto BaseFeatureSet::ClipboardGetText() -> std::string {
 void BaseFeatureSet::SetAppActive(bool active) {
   assert(InMainThread());
 
-  // Note: in some cases I'm seeing repeat active/inactive sets; for example
+  // Note: in some cases I'm seeing repeat active/inactive sets. For example
   // on Mac SDL if I hide the app and then click on it in the dock I get a
   // 'inactive' for the hide followed by a 'active', 'inactive', 'active' on
   // the dock click. So our strategy here to filter that out is just to tell
-  // the logic thread that it has changed but have them directly read the
-  // shared atomic value, so they should generally skip over flip-flops like
-  // that and will just read the final value a few times in a row.
+  // the logic thread that the value has changed but have them directly read
+  // the shared atomic value, so they should generally skip over flip-flops
+  // like that and instead just read the final value a few times in a row.
 
   g_core->platform->LowLevelDebugLog(
       "SetAppActive(" + std::to_string(active) + ")@"
@@ -970,14 +972,33 @@ void BaseFeatureSet::SetAppActive(bool active) {
   // Issue a gentle warning if they are feeding us the same state twice in a
   // row; might imply faulty logic on an app-adapter or whatnot.
   if (app_active_set_ && app_active_ == active) {
-    Log(LogLevel::kWarning, "SetAppActive called with state "
-                                + std::to_string(active) + " twice in a row.");
+    g_core->Log(LogName::kBa, LogLevel::kWarning,
+                "SetAppActive called with state " + std::to_string(active)
+                    + " twice in a row.");
   }
   app_active_set_ = true;
   app_active_ = active;
 
   g_base->logic->event_loop()->PushCall(
       [] { g_base->logic->OnAppActiveChanged(); });
+}
+
+void BaseFeatureSet::Reset() {
+  ui->Reset();
+  input->Reset();
+  graphics->Reset();
+  python->Reset();
+  audio->Reset();
+}
+
+void BaseFeatureSet::SetUIScale(UIScale scale) {
+  assert(InLogicThread());
+
+  // Store the canonical value in UI.
+  ui->SetScale(scale);
+
+  // Let interested parties know that it has changed.
+  graphics->OnUIScaleChange();
 }
 
 }  // namespace ballistica::base

@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 import logging
 
 import bauiv1 as bui
@@ -13,12 +13,12 @@ if TYPE_CHECKING:
     pass
 
 
-class AudioSettingsWindow(bui.Window):
+class AudioSettingsWindow(bui.MainWindow):
     """Window for editing audio settings."""
 
     def __init__(
         self,
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=too-many-statements
@@ -29,16 +29,6 @@ class AudioSettingsWindow(bui.Window):
 
         assert bui.app.classic is not None
         music = bui.app.classic.music
-
-        # If they provided an origin-widget, scale up from that.
-        scale_origin: tuple[float, float] | None
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
-        else:
-            self._transition_out = 'out_right'
-            scale_origin = None
 
         self._r = 'audioSettingsWindow'
 
@@ -70,13 +60,16 @@ class AudioSettingsWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),
-                transition=transition,
                 scale=base_scale,
-                scale_origin_stack_offset=scale_origin,
                 stack_offset=(
                     (0, -20) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+                toolbar_visibility=(
+                    None if uiscale is bui.UIScale.SMALL else 'menu_full'
+                ),
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         self._back_button = back_button = btn = bui.buttonwidget(
@@ -87,7 +80,7 @@ class AudioSettingsWindow(bui.Window):
             text_scale=1.2,
             label=bui.Lstr(resource='backText'),
             button_type='back',
-            on_activate_call=self._back,
+            on_activate_call=self.main_window_back,
             autoselect=True,
         )
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)
@@ -97,7 +90,7 @@ class AudioSettingsWindow(bui.Window):
             parent=self._root_widget,
             position=(width * 0.5, height - 32),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=bui.app.ui_v1.title_color,
             maxwidth=180,
             h_align='center',
@@ -116,24 +109,23 @@ class AudioSettingsWindow(bui.Window):
             position=(40, v),
             xoffset=10,
             configkey='Sound Volume',
-            displayname=bui.Lstr(resource=self._r + '.soundVolumeText'),
+            displayname=bui.Lstr(resource=f'{self._r}.soundVolumeText'),
             minval=0.0,
             maxval=1.0,
             increment=0.05,
             as_percent=True,
         )
-        if bui.app.ui_v1.use_toolbars:
-            bui.widget(
-                edit=svne.plusbutton,
-                right_widget=bui.get_special_widget('party_button'),
-            )
+        bui.widget(
+            edit=svne.plusbutton,
+            right_widget=bui.get_special_widget('squad_button'),
+        )
         v -= spacing
         self._music_volume_numedit = ConfigNumberEdit(
             parent=self._root_widget,
             position=(40, v),
             xoffset=10,
             configkey='Music Volume',
-            displayname=bui.Lstr(resource=self._r + '.musicVolumeText'),
+            displayname=bui.Lstr(resource=f'{self._r}.musicVolumeText'),
             minval=0.0,
             maxval=1.0,
             increment=0.05,
@@ -151,7 +143,7 @@ class AudioSettingsWindow(bui.Window):
                 parent=self._root_widget,
                 position=(40, v + 24),
                 size=(0, 0),
-                text=bui.Lstr(resource=self._r + '.headRelativeVRAudioText'),
+                text=bui.Lstr(resource=f'{self._r}.headRelativeVRAudioText'),
                 color=(0.8, 0.8, 0.8),
                 maxwidth=230,
                 h_align='left',
@@ -179,7 +171,7 @@ class AudioSettingsWindow(bui.Window):
                 position=(width * 0.5, v - 11),
                 size=(0, 0),
                 text=bui.Lstr(
-                    resource=self._r + '.headRelativeVRAudioInfoText'
+                    resource=f'{self._r}.headRelativeVRAudioInfoText'
                 ),
                 scale=0.5,
                 color=(0.7, 0.8, 0.7),
@@ -200,7 +192,7 @@ class AudioSettingsWindow(bui.Window):
                 position=((width - 310) / 2, v),
                 size=(310, 50),
                 autoselect=True,
-                label=bui.Lstr(resource=self._r + '.soundtrackButtonText'),
+                label=bui.Lstr(resource=f'{self._r}.soundtrackButtonText'),
                 on_activate_call=self._do_soundtracks,
             )
             v -= spacing * 0.5
@@ -208,7 +200,7 @@ class AudioSettingsWindow(bui.Window):
                 parent=self._root_widget,
                 position=(0, v),
                 size=(width, 20),
-                text=bui.Lstr(resource=self._r + '.soundtrackDescriptionText'),
+                text=bui.Lstr(resource=f'{self._r}.soundtrackDescriptionText'),
                 flatness=1.0,
                 h_align='center',
                 scale=0.5,
@@ -226,6 +218,20 @@ class AudioSettingsWindow(bui.Window):
 
         self._restore_state()
 
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
+
+    @override
+    def on_main_window_close(self) -> None:
+        self._save_state()
+
     def _set_vr_head_relative_audio(self, val: str) -> None:
         cfg = bui.app.config
         cfg['VR Head Relative Audio'] = val
@@ -233,14 +239,14 @@ class AudioSettingsWindow(bui.Window):
 
     def _do_soundtracks(self) -> None:
         # pylint: disable=cyclic-import
-        from bauiv1lib.soundtrack import browser as stb
+        from bauiv1lib.soundtrack.browser import SoundtrackBrowserWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        # We require disk access for soundtracks;
-        # if we don't have it, request it.
+        # We require disk access for soundtracks; request it if we don't
+        # have it.
         if not bui.have_permission(bui.Permission.STORAGE):
             bui.getsound('ding').play()
             bui.screenmessage(
@@ -252,34 +258,8 @@ class AudioSettingsWindow(bui.Window):
             )
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            stb.SoundtrackBrowserWindow(
-                origin_widget=self._soundtrack_button
-            ).get_root_widget(),
-            from_window=self._root_widget,
-        )
-
-    def _back(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.settings import allsettings
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        self._save_state()
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            allsettings.AllSettingsWindow(
-                transition='in_left'
-            ).get_root_widget(),
-            from_window=self._root_widget,
+        self.main_window_replace(
+            SoundtrackBrowserWindow(origin_widget=self._soundtrack_button)
         )
 
     def _save_state(self) -> None:

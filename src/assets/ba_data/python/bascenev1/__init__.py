@@ -1,8 +1,8 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Ballistica scene api version 1. Basically all gameplay related code."""
+"""Gameplay-centric api for classic BombSquad."""
 
-# ba_meta require api 8
+# ba_meta require api 9
 
 # The stuff we expose here at the top level is our 'public' api for use
 # from other modules/packages. Code *within* this package should import
@@ -18,6 +18,7 @@ import logging
 
 from efro.util import set_canonical_module_names
 from babase import (
+    add_clean_frame_callback,
     app,
     AppIntent,
     AppIntentDefault,
@@ -134,6 +135,8 @@ from _bascenev1 import (
     set_public_party_enabled,
     set_public_party_max_size,
     set_public_party_name,
+    set_public_party_public_address_ipv4,
+    set_public_party_public_address_ipv6,
     set_public_party_queue_enabled,
     set_public_party_stats_url,
     set_replay_speed_exponent,
@@ -147,7 +150,6 @@ from _bascenev1 import (
 from bascenev1._activity import Activity
 from bascenev1._activitytypes import JoinActivity, ScoreScreenActivity
 from bascenev1._actor import Actor
-from bascenev1._appmode import SceneV1AppMode
 from bascenev1._campaign import init_campaigns, Campaign
 from bascenev1._collision import Collision, getcollision
 from bascenev1._coopgame import CoopGameActivity
@@ -247,6 +249,7 @@ __all__ = [
     'Actor',
     'animate',
     'animate_array',
+    'add_clean_frame_callback',
     'app',
     'AppIntent',
     'AppIntentDefault',
@@ -408,7 +411,6 @@ __all__ = [
     'seek_replay',
     'safecolor',
     'screenmessage',
-    'SceneV1AppMode',
     'ScoreConfig',
     'ScoreScreenActivity',
     'ScoreType',
@@ -429,6 +431,8 @@ __all__ = [
     'set_public_party_enabled',
     'set_public_party_max_size',
     'set_public_party_name',
+    'set_public_party_public_address_ipv4',
+    'set_public_party_public_address_ipv6',
     'set_public_party_queue_enabled',
     'set_public_party_stats_url',
     'set_player_rejoin_cooldown',

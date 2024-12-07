@@ -2,17 +2,19 @@
 
 #include "ballistica/ui_v1/python/class/python_class_widget.h"
 
+#include <string>
+
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/python/python.h"
 #include "ballistica/ui_v1/widget/container_widget.h"
 
 namespace ballistica::ui_v1 {
 
 auto PythonClassWidget::nb_bool(PythonClassWidget* self) -> int {
-  return self->widget_->Exists();
+  return self->widget_->exists();
 }
 
 PyNumberMethods PythonClassWidget::as_number_;
@@ -66,7 +68,7 @@ void PythonClassWidget::SetupType(PyTypeObject* cls) {
 auto PythonClassWidget::Create(Widget* widget) -> PyObject* {
   // Make sure we only have one Python ref per Widget.
   if (widget) {
-    assert(!widget->has_py_ref());
+    assert(!widget->HasPyRef());
   }
 
   assert(TypeIsSetUp(&type_obj));
@@ -83,15 +85,15 @@ auto PythonClassWidget::Create(Widget* widget) -> PyObject* {
 }
 
 auto PythonClassWidget::GetWidget() const -> Widget* {
-  Widget* w = widget_->Get();
+  Widget* w = widget_->get();
   if (!w) {
     throw Exception("Invalid Widget", PyExcType::kReference);
   }
   return w;
 }
 
-auto PythonClassWidget::tp_getattro(PythonClassWidget* self,
-                                    PyObject* attr) -> PyObject* {
+auto PythonClassWidget::tp_getattro(PythonClassWidget* self, PyObject* attr)
+    -> PyObject* {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());
@@ -101,7 +103,7 @@ auto PythonClassWidget::tp_getattro(PythonClassWidget* self,
 
   const char* s = PyUnicode_AsUTF8(attr);
   if (!strcmp(s, ATTR_TRANSITIONING_OUT)) {
-    Widget* w = self->widget_->Get();
+    Widget* w = self->widget_->get();
     if (!w) {
       throw Exception("Invalid Widget", PyExcType::kReference);
     }
@@ -126,7 +128,6 @@ auto PythonClassWidget::tp_setattro(PythonClassWidget* self, PyObject* attr,
 
   // Assuming this will always be a str?
   assert(PyUnicode_Check(attr));
-  const char* s = PyUnicode_AsUTF8(attr);
 
   throw Exception("Attr '" + std::string(PyUnicode_AsUTF8(attr))
                       + "' is not settable on SessionPlayer objects.",
@@ -136,7 +137,7 @@ auto PythonClassWidget::tp_setattro(PythonClassWidget* self, PyObject* attr,
 
 auto PythonClassWidget::tp_repr(PythonClassWidget* self) -> PyObject* {
   BA_PYTHON_TRY;
-  Widget* w = self->widget_->Get();
+  Widget* w = self->widget_->get();
   return Py_BuildValue("s", (std::string("<bauiv1 '")
                              + (w ? w->GetWidgetTypeName() : "<invalid>")
                              + "' widget " + Utils::PtrToString(w) + ">")
@@ -178,7 +179,8 @@ void PythonClassWidget::tp_dealloc(PythonClassWidget* self) {
 
 auto PythonClassWidget::Exists(PythonClassWidget* self) -> PyObject* {
   BA_PYTHON_TRY;
-  Widget* w = self->widget_->Get();
+  BA_PRECONDITION(g_base->InLogicThread());
+  Widget* w = self->widget_->get();
   if (w) {
     Py_RETURN_TRUE;
   } else {
@@ -189,7 +191,8 @@ auto PythonClassWidget::Exists(PythonClassWidget* self) -> PyObject* {
 
 auto PythonClassWidget::GetWidgetType(PythonClassWidget* self) -> PyObject* {
   BA_PYTHON_TRY;
-  Widget* w = self->widget_->Get();
+  BA_PRECONDITION(g_base->InLogicThread());
+  Widget* w = self->widget_->get();
   if (!w) {
     throw Exception(PyExcType::kWidgetNotFound);
   }
@@ -199,7 +202,8 @@ auto PythonClassWidget::GetWidgetType(PythonClassWidget* self) -> PyObject* {
 
 auto PythonClassWidget::Activate(PythonClassWidget* self) -> PyObject* {
   BA_PYTHON_TRY;
-  Widget* w = self->widget_->Get();
+  BA_PRECONDITION(g_base->InLogicThread());
+  Widget* w = self->widget_->get();
   if (!w) {
     throw Exception(PyExcType::kWidgetNotFound);
   }
@@ -210,7 +214,8 @@ auto PythonClassWidget::Activate(PythonClassWidget* self) -> PyObject* {
 
 auto PythonClassWidget::GetChildren(PythonClassWidget* self) -> PyObject* {
   BA_PYTHON_TRY;
-  Widget* w = self->widget_->Get();
+  BA_PRECONDITION(g_base->InLogicThread());
+  Widget* w = self->widget_->get();
   if (!w) {
     throw Exception(PyExcType::kWidgetNotFound);
   }
@@ -224,7 +229,7 @@ auto PythonClassWidget::GetChildren(PythonClassWidget* self) -> PyObject* {
   if (cw) {
 #pragma clang diagnostic pop
     for (auto&& i : cw->widgets()) {
-      assert(i.Exists());
+      assert(i.exists());
       PyList_Append(py_list, i->BorrowPyRef());
     }
   }
@@ -234,20 +239,15 @@ auto PythonClassWidget::GetChildren(PythonClassWidget* self) -> PyObject* {
 
 auto PythonClassWidget::GetSelectedChild(PythonClassWidget* self) -> PyObject* {
   BA_PYTHON_TRY;
-  Widget* w = self->widget_->Get();
+  BA_PRECONDITION(g_base->InLogicThread());
+  Widget* w = self->widget_->get();
   if (!w) {
     throw Exception(PyExcType::kWidgetNotFound);
   }
-  auto* cw = dynamic_cast<ContainerWidget*>(w);
-
-  // Clion seems to think dynamic_casting a Widget* to a ContainerWidget*
-  // will always succeed. Go home Clion; you're drunk.
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "ConstantConditionsOC"
-  if (cw) {
-#pragma clang diagnostic pop
-    Widget* selected_widget = cw->selected_widget();
-    if (selected_widget) return selected_widget->NewPyRef();
+  if (auto* cw = dynamic_cast<ContainerWidget*>(w)) {
+    if (Widget* selected_widget = cw->selected_widget()) {
+      return selected_widget->NewPyRef();
+    }
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -256,7 +256,8 @@ auto PythonClassWidget::GetSelectedChild(PythonClassWidget* self) -> PyObject* {
 auto PythonClassWidget::GetScreenSpaceCenter(PythonClassWidget* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Widget* w = self->widget_->Get();
+  BA_PRECONDITION(g_base->InLogicThread());
+  Widget* w = self->widget_->get();
   if (!w) {
     throw Exception(PyExcType::kWidgetNotFound);
   }
@@ -281,6 +282,7 @@ auto PythonClassWidget::GetScreenSpaceCenter(PythonClassWidget* self)
 auto PythonClassWidget::Delete(PythonClassWidget* self, PyObject* args,
                                PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
   int ignore_missing = true;
   static const char* kwlist[] = {"ignore_missing", nullptr};
   if (!PyArg_ParseTupleAndKeywords(
@@ -291,7 +293,7 @@ auto PythonClassWidget::Delete(PythonClassWidget* self, PyObject* args,
   // Defer any user code triggered by selects/etc until the end.
   base::UI::OperationContext ui_op_context;
 
-  Widget* w = self->widget_->Get();
+  Widget* w = self->widget_->get();
   if (!w) {
     if (!ignore_missing) {
       throw Exception(PyExcType::kWidgetNotFound);
@@ -301,7 +303,8 @@ auto PythonClassWidget::Delete(PythonClassWidget* self, PyObject* args,
     if (p) {
       p->DeleteWidget(w);
     } else {
-      Log(LogLevel::kError, "Can't delete widget: no parent.");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "Can't delete widget: no parent.");
     }
   }
 
@@ -312,21 +315,41 @@ auto PythonClassWidget::Delete(PythonClassWidget* self, PyObject* args,
 }
 
 auto PythonClassWidget::AddDeleteCallback(PythonClassWidget* self,
-                                          PyObject* args,
-                                          PyObject* keywds) -> PyObject* {
+                                          PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
   PyObject* call_obj;
   static const char* kwlist[] = {"call", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
                                    const_cast<char**>(kwlist), &call_obj)) {
     return nullptr;
   }
-  Widget* w = self->widget_->Get();
+  Widget* w = self->widget_->get();
   if (!w) {
     throw Exception(PyExcType::kWidgetNotFound);
   }
   w->AddOnDeleteCall(call_obj);
   Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+auto PythonClassWidget::Dir(PythonClassWidget* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  // Start with the standard Python dir listing.
+  PyObject* dir_list = Python::generic_dir(reinterpret_cast<PyObject*>(self));
+  assert(PyList_Check(dir_list));
+
+  // ..and add in our custom attr names.
+  for (const char** name = extra_dir_attrs; *name != nullptr; name++) {
+    PyList_Append(
+        dir_list,
+        PythonRef(PyUnicode_FromString(*name), PythonRef::kSteal).get());
+  }
+  PyList_Sort(dir_list);
+  return dir_list;
+
   BA_PYTHON_CATCH;
 }
 
@@ -376,6 +399,8 @@ PyMethodDef PythonClassWidget::tp_methods[] = {
      "add_delete_callback(call: Callable) -> None\n"
      "\n"
      "Add a call to be run immediately after this widget is destroyed."},
+    {"__dir__", (PyCFunction)Dir, METH_NOARGS,
+     "allows inclusion of our custom attrs in standard python dir()"},
     {nullptr}};
 
 }  // namespace ballistica::ui_v1

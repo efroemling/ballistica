@@ -27,12 +27,12 @@ class Logging {
   /// ever made will be routed through the app, visible in in-app consoles,
   /// etc. Note that direct Python logging calls or prints occurring before
   /// babase is imported may not be visible in the app for that same reason.
-  static void Log(LogLevel level, const std::string& msg);
+  static void Log(LogName name, LogLevel level, const std::string& msg);
 
   /// Send a log message to the in-app console, platform-specific logs, etc.
   /// This generally should not be called directly but instead wired up to
   /// log messages coming through the Python logging system.
-  static void EmitLog(const std::string& name, LogLevel level,
+  static void EmitLog(const std::string& name, LogLevel level, double timestamp,
                       const std::string& msg);
 
   /// Write a message to the v1 cloud log. This is considered legacy and

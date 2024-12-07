@@ -4,9 +4,9 @@
 
 from __future__ import annotations
 
-from enum import Enum
 import logging
-from typing import TYPE_CHECKING, assert_never
+from enum import Enum
+from typing import TYPE_CHECKING, assert_never, override
 
 import bauiv1 as bui
 from bauiv1lib import popup
@@ -28,77 +28,73 @@ class Category(Enum):
         return f'{self.value}Text'
 
 
-class PluginWindow(bui.Window):
+class PluginWindow(bui.MainWindow):
     """Window for configuring plugins."""
 
     def __init__(
         self,
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-statements
         app = bui.app
 
         self._category = Category.ALL
-
-        # If they provided an origin-widget, scale up from that.
-        scale_origin: tuple[float, float] | None
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
-        else:
-            self._transition_out = 'out_right'
-            scale_origin = None
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         self._width = 870.0 if uiscale is bui.UIScale.SMALL else 670.0
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
+        yoffs = -55.0 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            390.0
+            450.0
             if uiscale is bui.UIScale.SMALL
             else 450.0 if uiscale is bui.UIScale.MEDIUM else 520.0
         )
-        top_extra = 10 if uiscale is bui.UIScale.SMALL else 0
+        top_extra = 0 if uiscale is bui.UIScale.SMALL else 0
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
-                transition=transition,
-                toolbar_visibility='menu_minimal',
-                scale_origin_stack_offset=scale_origin,
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
+                ),
                 scale=(
-                    2.06
+                    1.9
                     if uiscale is bui.UIScale.SMALL
                     else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -25) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         self._scroll_width = self._width - (100 + 2 * x_inset)
-        self._scroll_height = self._height - 115.0
+        self._scroll_height = self._height - (
+            200.0 if uiscale is bui.UIScale.SMALL else 115.0
+        )
         self._sub_width = self._scroll_width * 0.95
         self._sub_height = 724.0
 
         assert app.classic is not None
-        if app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self._do_back
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
             self._back_button = None
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(53 + x_inset, self._height - 60),
+                position=(53 + x_inset, self._height - 60 + yoffs),
                 size=(140, 60),
                 scale=0.8,
                 autoselect=True,
                 label=bui.Lstr(resource='backText'),
                 button_type='back',
-                on_activate_call=self._do_back,
+                on_activate_call=self.main_window_back,
             )
             bui.containerwidget(
                 edit=self._root_widget, cancel_button=self._back_button
@@ -106,7 +102,7 @@ class PluginWindow(bui.Window):
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 41),
+            position=(self._width * 0.5, self._height - 41 + yoffs),
             size=(0, 0),
             text=bui.Lstr(resource='pluginsText'),
             color=app.ui_v1.title_color,
@@ -127,7 +123,7 @@ class PluginWindow(bui.Window):
 
         self._num_plugins_text = bui.textwidget(
             parent=self._root_widget,
-            position=(settings_button_x - 130, self._height - 41),
+            position=(settings_button_x - 130, self._height - 41 + yoffs),
             size=(0, 0),
             text='',
             h_align='center',
@@ -137,7 +133,7 @@ class PluginWindow(bui.Window):
         self._category_button = bui.buttonwidget(
             parent=self._root_widget,
             scale=0.7,
-            position=(settings_button_x - 105, self._height - 60),
+            position=(settings_button_x - 105, self._height - 60 + yoffs),
             size=(130, 60),
             label=bui.Lstr(resource='allText'),
             autoselect=True,
@@ -148,7 +144,7 @@ class PluginWindow(bui.Window):
 
         self._settings_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(settings_button_x, self._height - 58),
+            position=(settings_button_x, self._height - 58 + yoffs),
             size=(40, 40),
             label='',
             on_activate_call=self._open_settings,
@@ -156,7 +152,7 @@ class PluginWindow(bui.Window):
 
         bui.imagewidget(
             parent=self._root_widget,
-            position=(settings_button_x + 3, self._height - 57),
+            position=(settings_button_x + 3, self._height - 57 + yoffs),
             draw_controller=self._settings_button,
             size=(35, 35),
             texture=bui.gettexture('settingsIcon'),
@@ -170,7 +166,10 @@ class PluginWindow(bui.Window):
 
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
-            position=(50 + x_inset, 50),
+            position=(
+                50 + x_inset,
+                (135 if uiscale is bui.UIScale.SMALL else 50) + yoffs,
+            ),
             simple_culling_v=20.0,
             highlight=False,
             size=(self._scroll_width, self._scroll_height),
@@ -213,6 +212,20 @@ class PluginWindow(bui.Window):
         )
         self._restore_state()
 
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
+
+    @override
+    def on_main_window_close(self) -> None:
+        self._save_state()
+
     def _check_value_changed(self, plug: bui.PluginSpec, value: bool) -> None:
         bui.screenmessage(
             bui.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
@@ -228,17 +241,11 @@ class PluginWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.pluginsettings import PluginSettingsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we don't have control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            PluginSettingsWindow(transition='in_right').get_root_widget(),
-            from_window=self._root_widget,
-        )
+        self.main_window_replace(PluginSettingsWindow(transition='in_right'))
 
     def _show_category_options(self) -> None:
         uiscale = bui.app.ui_v1.uiscale
@@ -339,7 +346,6 @@ class PluginWindow(bui.Window):
                 show = not enabled
             else:
                 assert_never(self._category)
-                # show = False
 
             if not show:
                 continue
@@ -350,7 +356,12 @@ class PluginWindow(bui.Window):
                 text=bui.Lstr(value=classpath),
                 autoselect=True,
                 value=enabled,
-                maxwidth=self._scroll_width - 200,
+                maxwidth=self._scroll_width
+                - (
+                    200
+                    if plugin is not None and plugin.has_settings_ui()
+                    else 80
+                ),
                 position=(10, item_y),
                 size=(self._scroll_width - 40, 50),
                 on_value_change_call=bui.Call(
@@ -389,7 +400,9 @@ class PluginWindow(bui.Window):
                     edit=check,
                     up_widget=self._back_button,
                     left_widget=self._back_button,
-                    right_widget=self._settings_button,
+                    right_widget=(
+                        self._settings_button if button is None else button
+                    ),
                 )
                 if button is not None:
                     bui.widget(edit=button, up_widget=self._back_button)
@@ -445,21 +458,3 @@ class PluginWindow(bui.Window):
                 bui.containerwidget(edit=self._root_widget, selected_child=sel)
         except Exception:
             logging.exception('Error restoring state for %s.', self)
-
-    def _do_back(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.settings.advanced import AdvancedSettingsWindow
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        self._save_state()
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            AdvancedSettingsWindow(transition='in_left').get_root_widget(),
-            from_window=self._root_widget,
-        )

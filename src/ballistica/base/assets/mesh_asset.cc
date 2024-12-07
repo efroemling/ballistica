@@ -2,9 +2,15 @@
 
 #include "ballistica/base/assets/mesh_asset.h"
 
+#include <cstdio>
+#include <string>
+#include <vector>
+
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/platform/core_platform.h"
 
 namespace ballistica::base {
 
@@ -18,11 +24,7 @@ MeshAsset::MeshAsset(const std::string& file_name_in)
 auto MeshAsset::GetAssetType() const -> AssetType { return AssetType::kMesh; }
 
 auto MeshAsset::GetName() const -> std::string {
-  if (!file_name_full_.empty()) {
-    return file_name_full_;
-  } else {
-    return "invalid mesh";
-  }
+  return (!file_name_.empty()) ? file_name_ : "invalid mesh";
 }
 
 void MeshAsset::DoPreload() {
@@ -111,7 +113,7 @@ void MeshAsset::DoPreload() {
 }
 
 void MeshAsset::DoLoad() {
-  assert(!renderer_data_.Exists());
+  assert(!renderer_data_.exists());
   renderer_data_ = g_base->graphics_server->renderer()->NewMeshAssetData(*this);
 
   // once we're loaded lets free up our vert data memory
@@ -123,7 +125,7 @@ void MeshAsset::DoLoad() {
 
 void MeshAsset::DoUnload() {
   assert(valid_);
-  assert(renderer_data_.Exists());
+  assert(renderer_data_.exists());
   std::vector<VertexObjectFull>().swap(vertices_);
   std::vector<uint8_t>().swap(indices8_);
   std::vector<uint16_t>().swap(indices16_);

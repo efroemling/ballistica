@@ -22,8 +22,8 @@ class PythonClassSceneCollisionMesh : public PythonClass {
   auto GetCollisionMesh(bool doraise = true) const -> SceneCollisionMesh*;
 
  private:
-  static auto tp_new(PyTypeObject* type, PyObject* args,
-                     PyObject* kwds) -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
+      -> PyObject*;
   static void tp_dealloc(PythonClassSceneCollisionMesh* self);
   static bool s_create_empty_;
   Object::Ref<SceneCollisionMesh>* collision_mesh_;

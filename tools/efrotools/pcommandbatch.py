@@ -117,11 +117,15 @@ def build_pcommandbatch(inpaths: list[str], outpath: str) -> None:
         if require:
             raise CleanError('pcommandbatch build failed.') from exc
 
+        if verbose:
+            traceback.print_exc()
+
         # No biggie; we'll just use regular pcommand.
         print(
             f'{Clr.YLW}Warning: Unable to build pcommandbatch executable;'
-            f' falling back to regular pcommand. Build with env var'
-            f' BA_PCOMMANDBATCH_BUILD_VERBOSE=1 to see what went wrong.'
+            f' symlinking to regular pcommand. Build with env var'
+            f' BA_PCOMMANDBATCH_BUILD_VERBOSE=1 to see'
+            f' what went wrong.'
             f'{Clr.RST}',
             file=sys.stderr,
         )

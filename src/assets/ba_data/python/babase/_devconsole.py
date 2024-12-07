@@ -4,9 +4,9 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, override
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import _babase
 
@@ -30,10 +30,27 @@ class DevConsoleTab:
         pos: tuple[float, float],
         size: tuple[float, float],
         call: Callable[[], Any] | None = None,
+        *,
         h_anchor: Literal['left', 'center', 'right'] = 'center',
         label_scale: float = 1.0,
         corner_radius: float = 8.0,
-        style: Literal['normal', 'dark'] = 'normal',
+        style: Literal[
+            'normal',
+            'bright',
+            'red',
+            'red_bright',
+            'purple',
+            'purple_bright',
+            'yellow',
+            'yellow_bright',
+            'blue',
+            'blue_bright',
+            'white',
+            'white_bright',
+            'black',
+            'black_bright',
+        ] = 'normal',
+        disabled: bool = False,
     ) -> None:
         """Add a button to the tab being refreshed."""
         assert _babase.app.devconsole.is_refreshing
@@ -48,12 +65,14 @@ class DevConsoleTab:
             label_scale,
             corner_radius,
             style,
+            disabled,
         )
 
     def text(
         self,
         text: str,
         pos: tuple[float, float],
+        *,
         h_anchor: Literal['left', 'center', 'right'] = 'center',
         h_align: Literal['left', 'center', 'right'] = 'center',
         v_align: Literal['top', 'center', 'bottom', 'none'] = 'center',
@@ -93,47 +112,6 @@ class DevConsoleTab:
         return _babase.dev_console_base_scale()
 
 
-class DevConsoleTabPython(DevConsoleTab):
-    """The Python dev-console tab."""
-
-    @override
-    def refresh(self) -> None:
-        self.python_terminal()
-
-
-class DevConsoleTabTest(DevConsoleTab):
-    """Test dev-console tab."""
-
-    @override
-    def refresh(self) -> None:
-        import random
-
-        self.button(
-            f'FLOOP-{random.randrange(200)}',
-            pos=(10, 10),
-            size=(100, 30),
-            h_anchor='left',
-            label_scale=0.6,
-            call=self.request_refresh,
-        )
-        self.button(
-            f'FLOOP2-{random.randrange(200)}',
-            pos=(120, 10),
-            size=(100, 30),
-            h_anchor='left',
-            label_scale=0.6,
-            style='dark',
-        )
-        self.text(
-            'TestText',
-            scale=0.8,
-            pos=(15, 50),
-            h_anchor='left',
-            h_align='left',
-            v_align='none',
-        )
-
-
 @dataclass
 class DevConsoleTabEntry:
     """Represents a distinct tab in the dev-console."""
@@ -154,26 +132,50 @@ class DevConsoleSubsystem:
     """
 
     def __init__(self) -> None:
+        # pylint: disable=cyclic-import
+        from babase._devconsoletabs import (
+            DevConsoleTabPython,
+            DevConsoleTabAppModes,
+            DevConsoleTabUI,
+            DevConsoleTabLogging,
+            DevConsoleTabTest,
+        )
+
         # All tabs in the dev-console. Add your own stuff here via
         # plugins or whatnot.
         self.tabs: list[DevConsoleTabEntry] = [
-            DevConsoleTabEntry('Python', DevConsoleTabPython)
+            DevConsoleTabEntry('Python', DevConsoleTabPython),
+            DevConsoleTabEntry('AppModes', DevConsoleTabAppModes),
+            DevConsoleTabEntry('UI', DevConsoleTabUI),
+            DevConsoleTabEntry('Logging', DevConsoleTabLogging),
         ]
         if os.environ.get('BA_DEV_CONSOLE_TEST_TAB', '0') == '1':
             self.tabs.append(DevConsoleTabEntry('Test', DevConsoleTabTest))
         self.is_refreshing = False
+        self._tab_instances: dict[str, DevConsoleTab] = {}
 
     def do_refresh_tab(self, tabname: str) -> None:
         """Called by the C++ layer when a tab should be filled out."""
         assert _babase.in_logic_thread()
 
-        # FIXME: We currently won't handle multiple tabs with the same
-        # name. We should give a clean error or something in that case.
-        tab: DevConsoleTab | None = None
-        for tabentry in self.tabs:
-            if tabentry.name == tabname:
-                tab = tabentry.factory()
-                break
+        # Make noise if we have repeating tab names, as that breaks our
+        # logic.
+        if __debug__:
+            alltabnames = set[str](tabentry.name for tabentry in self.tabs)
+            if len(alltabnames) != len(self.tabs):
+                logging.error(
+                    'Duplicate dev-console tab names found;'
+                    ' tabs may behave unpredictably.'
+                )
+
+        tab: DevConsoleTab | None = self._tab_instances.get(tabname)
+
+        # If we haven't instantiated this tab yet, do so.
+        if tab is None:
+            for tabentry in self.tabs:
+                if tabentry.name == tabname:
+                    tab = self._tab_instances[tabname] = tabentry.factory()
+                    break
 
         if tab is None:
             logging.error(

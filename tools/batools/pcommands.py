@@ -9,6 +9,8 @@ import sys
 
 from efrotools import pcommand
 
+# pylint: disable=too-many-lines
+
 
 def prune_includes() -> None:
     """Check for unnecessary includes in C++ files.
@@ -126,7 +128,7 @@ def lazy_increment_build() -> None:
     import subprocess
     from efro.terminal import Clr
     from efro.error import CleanError
-    from efrotools import get_files_hash
+    from efrotools.util import get_files_hash
     from efrotools.code import get_code_filenames
 
     pcommand.disallow_in_batch()
@@ -221,7 +223,7 @@ def androidaddr() -> None:
 def push_ipa() -> None:
     """Construct and push ios IPA for testing."""
 
-    from efrotools import extract_arg
+    from efro.util import extract_arg
     import efrotools.ios
 
     pcommand.disallow_in_batch()
@@ -493,7 +495,7 @@ def warm_start_asset_build() -> None:
     import subprocess
     from pathlib import Path
 
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
     from efro.error import CleanError
 
     pcommand.disallow_in_batch()
@@ -635,6 +637,8 @@ def prefab_binary_path() -> None:
 
     platform = PrefabPlatform.get_current()
 
+    binpath = None
+
     if platform is PrefabPlatform.WINDOWS_X86:
         if buildtype == 'gui':
             binpath = 'BallisticaKit.exe'
@@ -658,10 +662,67 @@ def prefab_binary_path() -> None:
         # Make sure we're covering all options.
         assert_never(platform)
 
+    assert binpath is not None
     print(
         f'build/prefab/full/{platform.value}_{buildtype}/{buildmode}/{binpath}',
         end='',
     )
+
+
+def build_docker_gui_release() -> None:
+    """Build the docker image with bombsquad cmake gui."""
+    import batools.docker
+
+    batools.docker.docker_build(headless_build=False)
+
+
+def build_docker_gui_debug() -> None:
+    """Build the docker image with bombsquad debug cmake gui."""
+    import batools.docker
+
+    batools.docker.docker_build(headless_build=False, build_type='Debug')
+
+
+def build_docker_server_release() -> None:
+    """Build the docker image with bombsquad cmake server."""
+    import batools.docker
+
+    batools.docker.docker_build()
+
+
+def build_docker_server_debug() -> None:
+    """Build the docker image with bombsquad debug cmake server."""
+    import batools.docker
+
+    batools.docker.docker_build(build_type='Debug')
+
+
+def build_docker_arm64_gui_release() -> None:
+    """Build the docker image with bombsquad cmake for arm64."""
+    import batools.docker
+
+    batools.docker.docker_build(headless_build=False, platform='linux/arm64')
+
+
+def build_docker_arm64_server_release() -> None:
+    """Build the docker image with bombsquad cmake server for arm64."""
+    import batools.docker
+
+    batools.docker.docker_build(platform='linux/arm64')
+
+
+def save_docker_images() -> None:
+    """Saves bombsquad images loaded into docker."""
+    import batools.docker
+
+    batools.docker.docker_save_images()
+
+
+def remove_docker_images() -> None:
+    """Remove the bombsquad images loaded in docker."""
+    import batools.docker
+
+    batools.docker.docker_remove_images()
 
 
 def make_prefab() -> None:
@@ -674,6 +735,7 @@ def make_prefab() -> None:
 
     if len(sys.argv) != 3:
         raise RuntimeError('Expected one argument')
+
     targetstr = PrefabTarget(sys.argv[2]).value
     platformstr = PrefabPlatform.get_current().value
 
@@ -916,7 +978,7 @@ def android_sdk_utils() -> None:
 
 def gen_python_enums_module() -> None:
     """Update our procedurally generated python enums."""
-    from batools.pythonenumsmodule import generate
+    from batools.enumspython import generate
 
     pcommand.disallow_in_batch()
 

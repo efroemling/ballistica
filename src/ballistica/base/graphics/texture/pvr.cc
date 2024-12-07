@@ -2,6 +2,10 @@
 
 #include "ballistica/base/graphics/texture/pvr.h"
 
+#include <algorithm>
+#include <cstdio>
+#include <string>
+
 #include "ballistica/core/platform/core_platform.h"
 
 namespace ballistica::base {

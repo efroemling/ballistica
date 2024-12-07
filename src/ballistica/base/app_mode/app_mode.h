@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_APP_MODE_APP_MODE_H_
 #define BALLISTICA_BASE_APP_MODE_APP_MODE_H_
 
+#include <string>
 #include <vector>
 
 #include "ballistica/base/base.h"
@@ -68,8 +69,8 @@ class AppMode {
   /// Called when language changes.
   virtual void LanguageChanged();
 
-  /// Are we currently in a classic 'main menu' session?
-  virtual auto InClassicMainMenuSession() const -> bool;
+  /// Are we currently in a 'main menu' situation (as opposed to gameplay)?
+  virtual auto IsInMainMenu() const -> bool;
 
   /// Get current party size (for legacy parties).
   virtual auto GetPartySize() const -> int;

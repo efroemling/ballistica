@@ -85,6 +85,7 @@ def open_url_with_webbrowser_module(url: str) -> None:
     import webbrowser
     from babase._language import Lstr
 
+    assert _babase.in_logic_thread()
     try:
         webbrowser.open(url)
     except Exception:
@@ -384,7 +385,7 @@ def show_client_too_old_error() -> None:
     # a newer build.
     if (
         _babase.app.config.get('SuppressClientTooOldErrorForBuild')
-        == _babase.app.env.build_number
+        == _babase.app.env.engine_build_number
     ):
         return
 
@@ -429,3 +430,40 @@ def unsupported_controller_message(name: str) -> None:
         Lstr(resource='unsupportedControllerText', subs=[('${NAME}', name)]),
         color=(1, 0, 0),
     )
+
+
+def copy_dev_console_history() -> None:
+    """Copy log history from the dev console."""
+    import baenv
+    from babase._language import Lstr
+
+    if not _babase.clipboard_is_supported():
+        _babase.getsimplesound('error').play()
+        _babase.screenmessage(
+            'Clipboard not supported on this build.',
+            color=(1, 0, 0),
+        )
+        return
+
+    # This requires us to be running with a log-handler set up.
+    envconfig = baenv.get_config()
+    if envconfig.log_handler is None:
+        _babase.getsimplesound('error').play()
+        _babase.screenmessage(
+            'Not available; standard engine logging is not enabled.',
+            color=(1, 0, 0),
+        )
+        return
+
+    # Just dump everything that's in the log-handler's cache.
+    archive = envconfig.log_handler.get_cached()
+    lines: list[str] = []
+    stdnames = ('stdout', 'stderr')
+    for entry in archive.entries:
+        reltime = entry.time.timestamp() - envconfig.launch_time
+        level_ex = '' if entry.name in stdnames else f' {entry.level.name}'
+        lines.append(f'{reltime:.3f}{level_ex} {entry.name}: {entry.message}')
+
+    _babase.clipboard_set_text('\n'.join(lines))
+    _babase.screenmessage(Lstr(resource='copyConfirmText'), color=(0, 1, 0))
+    _babase.getsimplesound('gunCocking').play()

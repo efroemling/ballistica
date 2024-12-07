@@ -2,6 +2,9 @@
 
 #include "ballistica/scene_v1/python/class/python_class_material.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/scene_v1/dynamics/material/impact_sound_material_action.h"
 #include "ballistica/scene_v1/dynamics/material/material.h"
@@ -144,7 +147,7 @@ void PythonClassMaterial::Delete(Object::Ref<Material>* m) {
   assert(g_base->InLogicThread());
 
   // If we're the py-object for a material, clear them out.
-  if (m->Exists()) {
+  if (m->exists()) {
     assert((*m)->py_object() != nullptr);
     (*m)->set_py_object(nullptr);
   }
@@ -174,8 +177,8 @@ auto PythonClassMaterial::tp_repr(PythonClassMaterial* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-auto PythonClassMaterial::tp_getattro(PythonClassMaterial* self,
-                                      PyObject* attr) -> PyObject* {
+auto PythonClassMaterial::tp_getattro(PythonClassMaterial* self, PyObject* attr)
+    -> PyObject* {
   BA_PYTHON_TRY;
 
   // Assuming this will always be a str?
@@ -184,7 +187,7 @@ auto PythonClassMaterial::tp_getattro(PythonClassMaterial* self,
   const char* s = PyUnicode_AsUTF8(attr);
 
   if (!strcmp(s, ATTR_LABEL)) {
-    Material* material = self->material_->Get();
+    Material* material = self->material_->get();
     if (!material) {
       throw Exception("Invalid Material.", PyExcType::kNotFound);
     }
@@ -229,7 +232,7 @@ auto PythonClassMaterial::Dir(PythonClassMaterial* self) -> PyObject* {
   for (const char** name = extra_dir_attrs; *name != nullptr; name++) {
     PyList_Append(
         dir_list,
-        PythonRef(PyUnicode_FromString(*name), PythonRef::kSteal).Get());
+        PythonRef(PyUnicode_FromString(*name), PythonRef::kSteal).get());
   }
   PyList_Sort(dir_list);
   return dir_list;
@@ -255,7 +258,7 @@ auto PythonClassMaterial::AddActions(PythonClassMaterial* self, PyObject* args,
     DoAddConditions(conditions_obj, &conditions);
   }
 
-  Material* m = self->material_->Get();
+  Material* m = self->material_->get();
   if (!m) {
     throw Exception("Invalid Material.", PyExcType::kNotFound);
   }
@@ -538,7 +541,7 @@ void DoAddConditions(PyObject* cond_obj,
       Object::Ref<MaterialConditionNode> c2_prev;
       for (Py_ssize_t i = 0; i < (size - 1); i += 2) {
         c2 = Object::New<MaterialConditionNode>();
-        if (c2_prev.Exists()) {
+        if (c2_prev.exists()) {
           c2->left_child = c2_prev;
         } else {
           DoAddConditions(PyTuple_GET_ITEM(cond_obj, i), &c2->left_child);

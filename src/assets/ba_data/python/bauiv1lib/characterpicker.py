@@ -14,6 +14,18 @@ if TYPE_CHECKING:
     from typing import Any, Sequence
 
 
+class CharacterPickerDelegate:
+    """Delegate for character-picker."""
+
+    def on_character_picker_pick(self, character: str) -> None:
+        """Called when a character is selected."""
+        raise NotImplementedError()
+
+    def on_character_picker_get_more_press(self) -> None:
+        """Called when the 'get more characters' button is pressed."""
+        raise NotImplementedError()
+
+
 class CharacterPicker(PopupWindow):
     """Popup window for selecting characters."""
 
@@ -21,7 +33,7 @@ class CharacterPicker(PopupWindow):
         self,
         parent: bui.Widget,
         position: tuple[float, float] = (0.0, 0.0),
-        delegate: Any = None,
+        delegate: CharacterPickerDelegate | None = None,
         scale: float | None = None,
         offset: tuple[float, float] = (0.0, 0.0),
         tint_color: Sequence[float] = (1.0, 1.0, 1.0),
@@ -29,6 +41,7 @@ class CharacterPicker(PopupWindow):
         selected_character: str | None = None,
     ):
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-positional-arguments
         from bascenev1lib.actor import spazappearance
 
         assert bui.app.classic is not None
@@ -181,7 +194,6 @@ class CharacterPicker(PopupWindow):
 
     def _on_store_press(self) -> None:
         from bauiv1lib.account import show_sign_in_prompt
-        from bauiv1lib.store.browser import StoreBrowserWindow
 
         plus = bui.app.plus
         assert plus is not None
@@ -189,12 +201,11 @@ class CharacterPicker(PopupWindow):
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
+
+        if self._delegate is not None:
+            self._delegate.on_character_picker_get_more_press()
+
         self._transition_out()
-        StoreBrowserWindow(
-            modal=True,
-            show_tab=StoreBrowserWindow.TabID.CHARACTERS,
-            origin_widget=self._get_more_characters_button,
-        )
 
     def _select_character(self, character: str) -> None:
         if self._delegate is not None:

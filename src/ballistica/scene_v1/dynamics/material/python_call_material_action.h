@@ -5,7 +5,6 @@
 
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/scene_v1/dynamics/material/material_action.h"
-#include "ballistica/shared/ballistica.h"
 
 namespace ballistica::scene_v1 {
 

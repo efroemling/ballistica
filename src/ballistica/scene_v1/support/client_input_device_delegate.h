@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_SCENE_V1_SUPPORT_CLIENT_INPUT_DEVICE_DELEGATE_H_
 #define BALLISTICA_SCENE_V1_SUPPORT_CLIENT_INPUT_DEVICE_DELEGATE_H_
 
+#include <string>
+
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 
 namespace ballistica::scene_v1 {
@@ -12,7 +14,7 @@ class ClientInputDeviceDelegate : public SceneV1InputDeviceDelegate {
   void AttachToLocalPlayer(Player* player) override;
   void DetachFromPlayer() override;
   auto connection_to_client() const -> ConnectionToClient* {
-    return connection_to_client_.Get();
+    return connection_to_client_.get();
   }
 
   void StoreClientDeviceInfo(ClientInputDevice* device);

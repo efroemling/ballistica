@@ -5,7 +5,6 @@
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
-#include "ballistica/scene_v1/dynamics/material/material_action.h"
 #include "ballistica/scene_v1/support/scene.h"
 
 namespace ballistica::scene_v1 {
@@ -39,7 +38,7 @@ MaterialContext::SkidSoundEntry::SkidSoundEntry(
   *this = other;
   assert(context);
 #if BA_DEBUG_BUILD
-  assert(context->dynamics.Exists());
+  assert(context->dynamics.exists());
 #endif
   assert(context->dynamics->in_process());
   context->dynamics->IncrementSkidSoundCount();
@@ -55,14 +54,14 @@ MaterialContext::SkidSoundEntry::SkidSoundEntry(MaterialContext* context_in,
       volume(volume_in),
       playing(false) {
   assert(context);
-  assert(context->dynamics.Exists());
+  assert(context->dynamics.exists());
   assert(context->dynamics->in_process());
   context->dynamics->IncrementSkidSoundCount();
 }
 
 MaterialContext::SkidSoundEntry::~SkidSoundEntry() {
   assert(context);
-  assert(context->dynamics.Exists());
+  assert(context->dynamics.exists());
   context->dynamics->DecrementSkidSoundCount();
   if (playing) {
     g_base->audio->PushSourceFadeOutCall(play_id, 200);
@@ -79,7 +78,7 @@ MaterialContext::RollSoundEntry::RollSoundEntry(MaterialContext* context_in,
       volume(volume_in),
       playing(false) {
   assert(context);
-  assert(context->dynamics.Exists());
+  assert(context->dynamics.exists());
   assert(context->dynamics->in_process());
   context->dynamics->IncrementRollSoundCount();
 }
@@ -88,14 +87,14 @@ MaterialContext::RollSoundEntry::RollSoundEntry(
     const MaterialContext::RollSoundEntry& other) {
   *this = other;
   assert(context);
-  assert(context->dynamics.Exists());
+  assert(context->dynamics.exists());
   assert(context->dynamics->in_process());
   context->dynamics->IncrementRollSoundCount();
 }
 
 MaterialContext::RollSoundEntry::~RollSoundEntry() {
   assert(context);
-  assert(context->dynamics.Exists());
+  assert(context->dynamics.exists());
   context->dynamics->DecrementRollSoundCount();
   if (playing) {
     g_base->audio->PushSourceFadeOutCall(play_id, 200);

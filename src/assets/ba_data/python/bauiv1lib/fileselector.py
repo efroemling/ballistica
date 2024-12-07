@@ -16,23 +16,26 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
 
 
-class FileSelectorWindow(bui.Window):
+class FileSelectorWindow(bui.MainWindow):
     """Window for selecting files."""
 
     def __init__(
         self,
         path: str,
         callback: Callable[[str | None], Any] | None = None,
+        *,
         show_base_path: bool = True,
         valid_file_extensions: Sequence[str] | None = None,
         allow_folders: bool = False,
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
     ):
         if valid_file_extensions is None:
             valid_file_extensions = []
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 700 if uiscale is bui.UIScale.SMALL else 600
-        self._x_inset = x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 850 if uiscale is bui.UIScale.SMALL else 600
+        self._x_inset = x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = 365 if uiscale is bui.UIScale.SMALL else 418
         self._callback = callback
         self._base_path = path
@@ -51,16 +54,17 @@ class FileSelectorWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                transition='in_right',
                 scale=(
-                    2.23
+                    1.93
                     if uiscale is bui.UIScale.SMALL
                     else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
                     (0, -35) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
         bui.textwidget(
             parent=self._root_widget,
@@ -70,12 +74,12 @@ class FileSelectorWindow(bui.Window):
             h_align='center',
             v_align='center',
             text=(
-                bui.Lstr(resource=self._r + '.titleFolderText')
+                bui.Lstr(resource=f'{self._r}.titleFolderText')
                 if (allow_folders and not valid_file_extensions)
                 else (
-                    bui.Lstr(resource=self._r + '.titleFileText')
+                    bui.Lstr(resource=f'{self._r}.titleFileText')
                     if not allow_folders
-                    else bui.Lstr(resource=self._r + '.titleFileFolderText')
+                    else bui.Lstr(resource=f'{self._r}.titleFileFolderText')
                 )
             ),
             maxwidth=210,
@@ -135,6 +139,31 @@ class FileSelectorWindow(bui.Window):
         )
         self._set_path(path)
 
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Pull everything out of self here. If we do it below in the lambda,
+        # we'll keep self alive which is bad.
+        path = self._base_path
+        callback = self._callback
+        show_base_path = self._show_base_path
+        valid_file_extensions = self._valid_file_extensions
+        allow_folders = self._allow_folders
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition,
+                origin_widget=origin_widget,
+                path=path,
+                callback=callback,
+                show_base_path=show_base_path,
+                valid_file_extensions=valid_file_extensions,
+                allow_folders=allow_folders,
+            )
+        )
+
     def _on_up_press(self) -> None:
         self._on_entry_activated('..')
 
@@ -147,7 +176,6 @@ class FileSelectorWindow(bui.Window):
             bui.getsound('error').play()
 
     def _on_folder_entry_activated(self) -> None:
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
         if self._callback is not None:
             assert self._path is not None
             self._callback(self._path)
@@ -176,9 +204,6 @@ class FileSelectorWindow(bui.Window):
                 elif os.path.isfile(test_path):
                     if self._is_valid_file_path(test_path):
                         bui.getsound('swish').play()
-                        bui.containerwidget(
-                            edit=self._root_widget, transition='out_right'
-                        )
                         if self._callback is not None:
                             self._callback(test_path)
                     else:
@@ -382,7 +407,7 @@ class FileSelectorWindow(bui.Window):
                     ),
                     size=(self._button_width, 50),
                     label=bui.Lstr(
-                        resource=self._r + '.useThisFolderButtonText'
+                        resource=f'{self._r}.useThisFolderButtonText'
                     ),
                     on_activate_call=self._on_folder_entry_activated,
                 )
@@ -458,6 +483,6 @@ class FileSelectorWindow(bui.Window):
         )
 
     def _cancel(self) -> None:
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
+        self.main_window_back()
         if self._callback is not None:
             self._callback(None)

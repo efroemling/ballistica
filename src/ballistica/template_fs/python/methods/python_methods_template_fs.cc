@@ -2,15 +2,16 @@
 
 #include "ballistica/template_fs/python/methods/python_methods_template_fs.h"
 
-#include "ballistica/shared/python/python.h"
+#include <vector>
+
 #include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::template_fs {
 
 // -------------------------- hello_again_world --------------------------------
 
-static auto PyHelloAgainWorld(PyObject* self, PyObject* args,
-                              PyObject* keywds) -> PyObject* {
+static auto PyHelloAgainWorld(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
   static const char* kwlist[] = {nullptr};
@@ -18,7 +19,7 @@ static auto PyHelloAgainWorld(PyObject* self, PyObject* args,
                                    &name)) {
     return nullptr;
   }
-  Log(LogLevel::kInfo, "HELLO AGAIN WORLD!");
+  g_core->Log(LogName::kBa, LogLevel::kInfo, "HELLO AGAIN WORLD!");
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

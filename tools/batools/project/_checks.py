@@ -587,7 +587,7 @@ def check_sync_states(self: ProjectUpdater) -> None:
 
 def check_misc(self: ProjectUpdater) -> None:
     """Check misc project stuff."""
-    from efrotools import readfile, replace_exact
+    from efrotools.util import readfile, replace_exact
 
     # Make sure we're set to prod master server. (but ONLY when
     # checking; still want to be able to run updates).
@@ -601,7 +601,11 @@ def check_misc(self: ProjectUpdater) -> None:
         ) as infile:
             msconfig = infile.read()
             if (
-                '// V2 Master Server:\n' '\n' '// PROD\n' '#if 1\n'
+                '// V2 Master Server ------------------------'
+                '------------------------------------\n'
+                '\n'
+                '// PROD\n'
+                '#if 1\n'
             ) not in msconfig:
                 if (
                     os.environ.get('BA_ALLOW_NON_PROD_V2_MASTER_SERVER', '0')

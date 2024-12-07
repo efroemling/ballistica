@@ -6,54 +6,70 @@ from __future__ import annotations
 
 from typing import override
 
-from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
 
 
-class AchievementsWindow(PopupWindow):
+class AchievementsWindow(bui.MainWindow):
     """Popup window to view achievements."""
 
     def __init__(
-        self, position: tuple[float, float], scale: float | None = None
+        self,
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=too-many-locals
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        if scale is None:
-            scale = (
-                2.3
-                if uiscale is bui.UIScale.SMALL
-                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
-            )
-        self._transitioning_out = False
-        self._width = 450
+        self._width = 600 if uiscale is bui.UIScale.SMALL else 450
         self._height = (
-            300
+            380
             if uiscale is bui.UIScale.SMALL
             else 370 if uiscale is bui.UIScale.MEDIUM else 450
         )
-        bg_color = (0.5, 0.4, 0.6)
+        yoffs = -45 if uiscale is bui.UIScale.SMALL else 0
 
-        # creates our _root_widget
         super().__init__(
-            position=position,
-            size=(self._width, self._height),
-            scale=scale,
-            bg_color=bg_color,
+            root_widget=bui.containerwidget(
+                size=(self._width, self._height),
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
+                ),
+                scale=(
+                    2.3
+                    if uiscale is bui.UIScale.SMALL
+                    else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
+                ),
+                stack_offset=(
+                    (0, 0)
+                    if uiscale is bui.UIScale.SMALL
+                    else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
+                ),
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
-        self._cancel_button = bui.buttonwidget(
-            parent=self.root_widget,
-            position=(50, self._height - 30),
-            size=(50, 50),
-            scale=0.5,
-            label='',
-            color=bg_color,
-            on_activate_call=self._on_cancel_press,
-            autoselect=True,
-            icon=bui.gettexture('crossOut'),
-            iconscale=1.2,
-        )
+        if uiscale is bui.UIScale.SMALL:
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self.main_window_back
+            )
+            self._back_button = None
+        else:
+            self._back_button = bui.buttonwidget(
+                parent=self._root_widget,
+                autoselect=True,
+                position=(50, self._height - 38 + yoffs),
+                size=(60, 60),
+                scale=0.6,
+                label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
+                on_activate_call=self.main_window_back,
+            )
+            bui.containerwidget(
+                edit=self._root_widget, cancel_button=self._back_button
+            )
 
         achievements = bui.app.classic.ach.achievements
         num_complete = len([a for a in achievements if a.complete])
@@ -66,28 +82,44 @@ class AchievementsWindow(PopupWindow):
             ],
         )
         self._title_text = bui.textwidget(
-            parent=self.root_widget,
-            position=(self._width * 0.5, self._height - 20),
+            parent=self._root_widget,
+            position=(
+                self._width * 0.5,
+                self._height
+                - (27 if uiscale is bui.UIScale.SMALL else 20)
+                + yoffs,
+            ),
             size=(0, 0),
             h_align='center',
             v_align='center',
             scale=0.6,
             text=txt_final,
             maxwidth=200,
-            color=(1, 1, 1, 0.4),
+            color=bui.app.ui_v1.title_color,
         )
 
         self._scrollwidget = bui.scrollwidget(
-            parent=self.root_widget,
-            size=(self._width - 60, self._height - 70),
-            position=(30, 30),
+            parent=self._root_widget,
+            size=(
+                self._width - 60,
+                self._height - (150 if uiscale is bui.UIScale.SMALL else 70),
+            ),
+            position=(
+                30,
+                (110 if uiscale is bui.UIScale.SMALL else 30) + yoffs,
+            ),
             capture_arrows=True,
             simple_culling_v=10,
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
+        if uiscale is bui.UIScale.SMALL:
+            bui.widget(
+                edit=self._scrollwidget,
+                left_widget=bui.get_special_widget('back_button'),
+            )
 
         bui.containerwidget(
-            edit=self.root_widget, cancel_button=self._cancel_button
+            edit=self._root_widget, cancel_button=self._back_button
         )
 
         incr = 36
@@ -223,15 +255,12 @@ class AchievementsWindow(PopupWindow):
             v_align='center',
         )
 
-    def _on_cancel_press(self) -> None:
-        self._transition_out()
-
-    def _transition_out(self) -> None:
-        if not self._transitioning_out:
-            self._transitioning_out = True
-            bui.containerwidget(edit=self.root_widget, transition='out_scale')
-
     @override
-    def on_popup_cancel(self) -> None:
-        bui.getsound('swish').play()
-        self._transition_out()
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )

@@ -15,9 +15,8 @@
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/foundation/types.h"
 #include "ballistica/shared/generic/snapshot.h"
-#include "ballistica/shared/math/matrix44f.h"
-#include "ballistica/shared/math/rect.h"
 #include "ballistica/shared/math/vector2f.h"
+#include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {
 
@@ -63,9 +62,12 @@ class Graphics {
   void OnScreenSizeChange();
   void DoApplyAppConfig();
 
-  /// Should be called by the app-adapter to keep the engine informed
-  /// on the drawable area it has to work with (in pixels).
+  /// Should be called by the app-adapter to keep the engine informed on the
+  /// drawable area it has to work with (in pixels).
   void SetScreenResolution(float x, float y);
+
+  /// Should be called when UIScale changes.
+  void OnUIScaleChange();
 
   void StepDisplayTime();
 
@@ -150,10 +152,13 @@ class Graphics {
                  r, g, b, a);
   }
 
+  void DrawUIBounds(RenderPass* pass);
+  static void GetBaseVirtualRes(float* x, float* y);
+
   // Enable progress bar drawing locally.
   void EnableProgressBar(bool fade_in);
 
-  auto* camera() { return camera_.Get(); }
+  auto* camera() { return camera_.get(); }
   void ToggleManualCamera();
   void LocalCameraShake(float intensity);
   void ToggleDebugDraw();
@@ -311,8 +316,8 @@ class Graphics {
 
   auto* settings() const {
     assert(g_base->InLogicThread());
-    assert(settings_snapshot_.Exists());
-    return settings_snapshot_.Get()->Get();
+    assert(settings_snapshot_.exists());
+    return settings_snapshot_.get()->get();
   }
 
   auto GetGraphicsSettingsSnapshot() -> Snapshot<GraphicsSettings>*;
@@ -323,26 +328,27 @@ class Graphics {
   void UpdatePlaceholderSettings();
 
   auto has_client_context() -> bool {
-    return client_context_snapshot_.Exists();
+    return client_context_snapshot_.exists();
   }
 
   auto client_context() const -> const GraphicsClientContext* {
     assert(g_base->InLogicThread());
-    assert(client_context_snapshot_.Exists());
-    return client_context_snapshot_.Get()->Get();
+    assert(client_context_snapshot_.exists());
+    return client_context_snapshot_.get()->get();
   }
 
   static auto GraphicsQualityFromRequest(GraphicsQualityRequest request,
                                          GraphicsQuality auto_val)
       -> GraphicsQuality;
-  static auto TextureQualityFromRequest(
-      TextureQualityRequest request, TextureQuality auto_val) -> TextureQuality;
+  static auto TextureQualityFromRequest(TextureQualityRequest request,
+                                        TextureQuality auto_val)
+      -> TextureQuality;
 
   /// For temporary use from arbitrary threads. This should be removed when
   /// possible and replaced with proper safe thread-specific access patterns
   /// (so we can support switching renderers/etc.).
   auto placeholder_texture_quality() const {
-    assert(client_context_snapshot_.Exists());
+    assert(client_context_snapshot_.exists());
     return texture_quality_placeholder_;
   }
 
@@ -353,13 +359,16 @@ class Graphics {
     // Using this from arbitrary threads is currently ok currently since
     // context never changes once set. Will need to kill this call once that
     // can happen though.
-    assert(client_context_snapshot_.Exists());
-    return client_context_snapshot_.Get()->Get();
+    assert(client_context_snapshot_.exists());
+    return client_context_snapshot_.get()->get();
   }
+  auto draw_ui_bounds() const { return draw_ui_bounds_; }
+  void set_draw_ui_bounds(bool val) { draw_ui_bounds_ = val; }
 
   ScreenMessages* const screenmessages;
 
  protected:
+  void UpdateScreen_();
   virtual ~Graphics();
   virtual void DoDrawFade(FrameDef* frame_def, float amt);
   static void CalcVirtualRes_(float* x, float* y);
@@ -415,6 +424,7 @@ class Graphics {
   bool applied_app_config_{};
   bool sent_initial_graphics_settings_{};
   bool got_screen_resolution_{};
+  bool draw_ui_bounds_{};
   Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
   Vector2f shadow_scale_{1.0f, 1.0f};
   Vector3f tint_{1.0f, 1.0f, 1.0f};

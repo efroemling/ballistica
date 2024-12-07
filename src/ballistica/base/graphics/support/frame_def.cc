@@ -2,9 +2,15 @@
 
 #include "ballistica/base/graphics/support/frame_def.h"
 
-#include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/graphics.h"
+#include "ballistica/base/graphics/mesh/mesh.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_dual_texture_full.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_object_split.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_simple_split.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_smoke_full.h"
+#include "ballistica/base/graphics/mesh/sprite_mesh.h"
 #include "ballistica/base/graphics/renderer/render_pass.h"
-#include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/core/core.h"
 
@@ -53,7 +59,7 @@ void FrameDef::Reset() {
   // Update & grab the current settings.
   settings_snapshot_ = g_base->graphics->GetGraphicsSettingsSnapshot();
 
-  auto* settings = settings_snapshot_->Get();
+  auto* settings = settings_snapshot_->get();
   auto* client_context = g_base->graphics->client_context();
 
   app_time_microsecs_ = 0;

@@ -5,6 +5,8 @@
 
 #include <vector>
 
+#include "ballistica/scene_v1/assets/scene_sound.h"
+#include "ballistica/scene_v1/dynamics/material/material_action.h"
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/shared/foundation/object.h"
 

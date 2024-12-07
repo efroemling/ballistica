@@ -2,9 +2,8 @@
 
 #include "ballistica/base/assets/texture_asset_preload_data.h"
 
-#if BA_OSTYPE_LINUX
+#include <algorithm>
 #include <cstring>
-#endif
 
 #include "ballistica/base/assets/texture_asset.h"
 #include "ballistica/base/graphics/texture/ktx.h"

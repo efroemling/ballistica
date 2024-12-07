@@ -7,25 +7,14 @@ from __future__ import annotations
 import os
 import time
 import weakref
-import datetime
 import functools
+import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, cast, TypeVar, Generic
-
-_pytz_utc: Any
-
-# We don't *require* pytz, but we want to support it for tzinfos if available.
-try:
-    import pytz
-
-    _pytz_utc = pytz.utc
-except ModuleNotFoundError:
-    _pytz_utc = None  # pylint: disable=invalid-name
+from typing import TYPE_CHECKING, cast, TypeVar, Generic, overload, ParamSpec
 
 if TYPE_CHECKING:
     import asyncio
-    from efro.call import Call as Call  # 'as Call' so we re-export.
-    from typing import Any, Callable
+    from typing import Any, Callable, Literal
 
 T = TypeVar('T')
 ValT = TypeVar('ValT')
@@ -33,6 +22,8 @@ ArgT = TypeVar('ArgT')
 SelfT = TypeVar('SelfT')
 RetT = TypeVar('RetT')
 EnumT = TypeVar('EnumT', bound=Enum)
+
+P = ParamSpec('P')
 
 
 class _EmptyObj:
@@ -44,12 +35,35 @@ class _EmptyObj:
 _g_empty_weak_ref = weakref.ref(_EmptyObj())
 assert _g_empty_weak_ref() is None
 
-
-# TODO: kill this and just use efro.call.tpartial
+# Note to self: adding a special form of partial for when we don't need
+# to pass further args/kwargs (which I think is most cases). Even though
+# partial is now type-checked in Mypy (as of Nov 2024) there are still some
+# pitfalls that this avoids (see func docs below). Perhaps it would make
+# sense to simply define a Call class for this purpose; it might be more
+# efficient than wrapping partial anyway (should test this).
 if TYPE_CHECKING:
-    Call = Call
+
+    def strict_partial(
+        func: Callable[P, T], *args: P.args, **kwargs: P.kwargs
+    ) -> Callable[[], T]:
+        """A version of functools.partial requiring all args to be passed.
+
+        This helps avoid pitfalls where a function is wrapped in a
+        partial but then an extra required arg is added to the function
+        but no type checking error is triggered at usage sites because
+        vanilla partial assumes that extra arg will be provided at call
+        time.
+
+        Note: it would seem like this pitfall could also be avoided on
+        the back end by ensuring that the thing accepting the partial
+        asks for Callable[[], None] instead of just Callable, but as of
+        Nov 2024 it seems that Mypy does not support this; it in fact
+        allows partials to be passed for any callable signature(!).
+        """
+        ...
+
 else:
-    Call = functools.partial
+    strict_partial = functools.partial
 
 
 def explicit_bool(val: bool) -> bool:
@@ -81,60 +95,37 @@ def snake_case_to_camel_case(val: str) -> str:
     return val.replace('_', ' ').title().replace(' ', '')
 
 
-def enum_by_value(cls: type[EnumT], value: Any) -> EnumT:
-    """Create an enum from a value.
-
-    This is basically the same as doing 'obj = EnumType(value)' except
-    that it works around an issue where a reference loop is created
-    if an exception is thrown due to an invalid value. Since we disable
-    the cyclic garbage collector for most of the time, such loops can lead
-    to our objects sticking around longer than we want.
-    This issue has been submitted to Python as a bug so hopefully we can
-    remove this eventually if it gets fixed: https://bugs.python.org/issue42248
-    UPDATE: This has been fixed as of later 3.8 builds, so we can kill this
-    off once we are 3.9+ across the board.
-    """
-
-    # Note: we don't recreate *ALL* the functionality of the Enum constructor
-    # such as the _missing_ hook; but this should cover our basic needs.
-    value2member_map = getattr(cls, '_value2member_map_')
-    assert value2member_map is not None
-    try:
-        out = value2member_map[value]
-        assert isinstance(out, cls)
-        return out
-    except KeyError:
-        # pylint: disable=consider-using-f-string
-        raise ValueError(
-            '%r is not a valid %s' % (value, cls.__name__)
-        ) from None
-
-
 def check_utc(value: datetime.datetime) -> None:
     """Ensure a datetime value is timezone-aware utc."""
-    if value.tzinfo is not datetime.timezone.utc and (
-        _pytz_utc is None or value.tzinfo is not _pytz_utc
-    ):
+    if value.tzinfo is not datetime.UTC:
         raise ValueError(
-            'datetime value does not have timezone set as'
-            ' datetime.timezone.utc'
+            'datetime value does not have timezone set as datetime.UTC'
         )
 
 
 def utc_now() -> datetime.datetime:
-    """Get offset-aware current utc time.
+    """Get timezone-aware current utc time.
 
-    This should be used for all datetimes getting sent over the network,
-    used with the entity system, etc.
-    (datetime.utcnow() gives a utc time value, but it is not timezone-aware
-    which makes it less safe to use)
+    Just a shortcut for datetime.datetime.now(datetime.UTC).
+    Avoid datetime.datetime.utcnow() which is deprecated and gives naive
+    times.
     """
-    return datetime.datetime.now(datetime.timezone.utc)
+    return datetime.datetime.now(datetime.UTC)
+
+
+def utc_now_naive() -> datetime.datetime:
+    """Get naive utc time.
+
+    This can be used to replace datetime.utcnow(), which is now deprecated.
+    Most all code should migrate to use timezone-aware times instead of
+    this.
+    """
+    return datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
 
 
 def utc_today() -> datetime.datetime:
     """Get offset-aware midnight in the utc time zone."""
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     return datetime.datetime(
         year=now.year, month=now.month, day=now.day, tzinfo=now.tzinfo
     )
@@ -142,7 +133,7 @@ def utc_today() -> datetime.datetime:
 
 def utc_this_hour() -> datetime.datetime:
     """Get offset-aware beginning of the current hour in the utc time zone."""
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     return datetime.datetime(
         year=now.year,
         month=now.month,
@@ -154,7 +145,7 @@ def utc_this_hour() -> datetime.datetime:
 
 def utc_this_minute() -> datetime.datetime:
     """Get offset-aware beginning of current minute in the utc time zone."""
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = datetime.datetime.now(datetime.UTC)
     return datetime.datetime(
         year=now.year,
         month=now.month,
@@ -211,27 +202,33 @@ def data_size_str(bytecount: int, compact: bool = False) -> str:
 
 
 class DirtyBit:
-    """Manages whether a thing is dirty and regulates attempts to clean it.
+    """Manages whether a thing is dirty and regulates cleaning it.
 
-    To use, simply set the 'dirty' value on this object to True when some
-    action is needed, and then check the 'should_update' value to regulate
-    when attempts to clean it should be made. Set 'dirty' back to False after
-    a successful update.
-    If 'use_lock' is True, an asyncio Lock will be created and incorporated
-    into update attempts to prevent simultaneous updates (should_update will
-    only return True when the lock is unlocked). Note that It is up to the user
-    to lock/unlock the lock during the actual update attempt.
-    If a value is passed for 'auto_dirty_seconds', the dirtybit will flip
-    itself back to dirty after being clean for the given amount of time.
+    To use, simply set the 'dirty' value on this object to True when
+    some update is needed, and then check the 'should_update' value to
+    regulate when the actual update should occur. Set 'dirty' back to
+    False after a successful update.
+
+    If 'use_lock' is True, an asyncio Lock will be created and
+    incorporated into update attempts to prevent simultaneous updates
+    (should_update will only return True when the lock is unlocked).
+    Note that It is up to the user to lock/unlock the lock during the
+    actual update attempt.
+
+    If a value is passed for 'auto_dirty_seconds', the dirtybit will
+    flip itself back to dirty after being clean for the given amount of
+    time.
+
     'min_update_interval' can be used to enforce a minimum update
-    interval even when updates are successful (retry_interval only applies
-    when updates fail)
+    interval even when updates are successful (retry_interval only
+    applies when updates fail)
     """
 
     def __init__(
         self,
         dirty: bool = False,
         retry_interval: float = 5.0,
+        *,
         use_lock: bool = False,
         auto_dirty_seconds: float | None = None,
         min_update_interval: float | None = None,
@@ -540,6 +537,21 @@ def make_hash(obj: Any) -> int:
     return hash(tuple(frozenset(sorted(new_obj.items()))))
 
 
+def float_hash_from_string(s: str) -> float:
+    """Given a string value, returns a float between 0 and 1.
+
+    If consistent across processes. Can be useful for assigning db ids
+    shard values for efficient parallel processing.
+    """
+    import hashlib
+
+    hash_bytes = hashlib.md5(s.encode()).digest()
+
+    # Generate a random 64 bit int from hash digest bytes.
+    ival = int.from_bytes(hash_bytes[:8])
+    return ival / ((1 << 64) - 1)
+
+
 def asserttype(obj: Any, typ: type[T]) -> T:
     """Return an object typed as a given type.
 
@@ -715,6 +727,27 @@ def compact_id(num: int) -> str:
     )
 
 
+def caller_source_location() -> str:
+    """Returns source file name and line of the code calling us.
+
+    Example: 'mymodule.py:23'
+    """
+    try:
+        import inspect
+
+        frame = inspect.currentframe()
+        for _i in range(2):
+            if frame is None:
+                raise RuntimeError()
+            frame = frame.f_back
+        if frame is None:
+            raise RuntimeError()
+        fname = os.path.basename(frame.f_code.co_filename)
+        return f'{fname}:{frame.f_lineno}'
+    except Exception:
+        return '<unknown source location>'
+
+
 def unchanging_hostname() -> str:
     """Return an unchanging name for the local device.
 
@@ -881,3 +914,58 @@ def split_list(input_list: list[T], max_length: int) -> list[list[T]]:
         input_list[i : i + max_length]
         for i in range(0, len(input_list), max_length)
     ]
+
+
+def extract_flag(args: list[str], name: str) -> bool:
+    """Given a list of args and a flag name, returns whether it is present.
+
+    The arg flag, if present, is removed from the arg list.
+    """
+    from efro.error import CleanError
+
+    count = args.count(name)
+    if count > 1:
+        raise CleanError(f'Flag {name} passed multiple times.')
+    if not count:
+        return False
+    args.remove(name)
+    return True
+
+
+@overload
+def extract_arg(
+    args: list[str], name: str, required: Literal[False] = False
+) -> str | None: ...
+
+
+@overload
+def extract_arg(args: list[str], name: str, required: Literal[True]) -> str: ...
+
+
+def extract_arg(
+    args: list[str], name: str, required: bool = False
+) -> str | None:
+    """Given a list of args and an arg name, returns a value.
+
+    The arg flag and value are removed from the arg list.
+    raises CleanErrors on any problems.
+    """
+    from efro.error import CleanError
+
+    count = args.count(name)
+    if not count:
+        if required:
+            raise CleanError(f'Required argument {name} not passed.')
+        return None
+
+    if count > 1:
+        raise CleanError(f'Arg {name} passed multiple times.')
+
+    argindex = args.index(name)
+    if argindex + 1 >= len(args):
+        raise CleanError(f'No value passed after {name} arg.')
+
+    val = args[argindex + 1]
+    del args[argindex : argindex + 2]
+
+    return val

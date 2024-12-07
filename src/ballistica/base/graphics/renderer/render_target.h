@@ -24,7 +24,7 @@ class RenderTarget : public Object {
   void DrawBegin(bool clear,
                  const Vector4f& clear_color = {0.0f, 0.0f, 0.0f, 1.0f}) {
     DrawBegin(clear, clear_color.x, clear_color.y, clear_color.z,
-              clear_color.w);
+              clear_color.a);
   }
 
   void OnScreenSizeChange();

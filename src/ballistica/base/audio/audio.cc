@@ -8,6 +8,7 @@
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/support/app_config.h"
+#include "ballistica/core/platform/core_platform.h"  // IWYU pragma: keep.
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
@@ -124,8 +125,8 @@ auto Audio::IsSoundPlaying(uint32_t play_id) -> bool {
   return result;
 }
 
-auto Audio::SourceBeginExisting(uint32_t play_id,
-                                int debug_id) -> AudioSource* {
+auto Audio::SourceBeginExisting(uint32_t play_id, int debug_id)
+    -> AudioSource* {
   BA_DEBUG_FUNCTION_TIMER_BEGIN();
   uint32_t source_id = AudioServer::SourceIdFromPlayId(play_id);
 
@@ -166,28 +167,28 @@ auto Audio::SafePlaySysSound(SysSoundID sound_id) -> std::optional<uint32_t> {
     return {};
   }
   if (!g_base->InLogicThread()) {
-    Log(LogLevel::kError,
-        "Audio::SafePlaySysSound called from non-logic thread. id="
-            + std::to_string(static_cast<int>(sound_id)));
+    g_core->Log(LogName::kBaAudio, LogLevel::kError,
+                "Audio::SafePlaySysSound called from non-logic thread. id="
+                    + std::to_string(static_cast<int>(sound_id)));
     return {};
   }
   if (!g_base->assets->sys_assets_loaded()) {
-    Log(LogLevel::kWarning,
-        "Audio::SafePlaySysSound called before sys assets loaded. id="
-            + std::to_string(static_cast<int>(sound_id)));
+    g_core->Log(LogName::kBaAudio, LogLevel::kWarning,
+                "Audio::SafePlaySysSound called before sys assets loaded. id="
+                    + std::to_string(static_cast<int>(sound_id)));
     return {};
   }
   if (!g_base->assets->IsValidSysSound(sound_id)) {
-    Log(LogLevel::kWarning,
-        "Audio::SafePlaySysSound called with invalid sound_id. id="
-            + std::to_string(static_cast<int>(sound_id)));
+    g_core->Log(LogName::kBaAudio, LogLevel::kWarning,
+                "Audio::SafePlaySysSound called with invalid sound_id. id="
+                    + std::to_string(static_cast<int>(sound_id)));
     return {};
   }
   return PlaySound(g_base->assets->SysSound(sound_id));
 }
 
-auto Audio::PlaySound(SoundAsset* sound,
-                      float volume) -> std::optional<uint32_t> {
+auto Audio::PlaySound(SoundAsset* sound, float volume)
+    -> std::optional<uint32_t> {
   assert(g_core);
   assert(g_base->InLogicThread());
   BA_DEBUG_FUNCTION_TIMER_BEGIN();

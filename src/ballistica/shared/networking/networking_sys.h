@@ -26,7 +26,5 @@
 #include <ifaddrs.h>
 #endif
 #endif
-#include <cerrno>
-#include <cstdio>
 
 #endif  // BALLISTICA_SHARED_NETWORKING_NETWORKING_SYS_H_

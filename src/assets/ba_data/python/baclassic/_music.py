@@ -16,6 +16,8 @@ from bascenev1 import MusicType
 if TYPE_CHECKING:
     from typing import Callable, Any
 
+    import bauiv1
+
 
 class MusicPlayMode(Enum):
     """Influences behavior when playing music.
@@ -389,7 +391,7 @@ class MusicPlayer:
         callback: Callable[[Any], None],
         current_entry: Any,
         selection_target_name: str,
-    ) -> Any:
+    ) -> bauiv1.MainWindow:
         """Summons a UI to select a new soundtrack entry."""
         return self.on_select_entry(
             callback, current_entry, selection_target_name
@@ -432,11 +434,12 @@ class MusicPlayer:
         callback: Callable[[Any], None],
         current_entry: Any,
         selection_target_name: str,
-    ) -> Any:
+    ) -> bauiv1.MainWindow:
         """Present a GUI to select an entry.
 
         The callback should be called with a valid entry or None to
         signify that the default soundtrack should be used.."""
+        raise NotImplementedError()
 
     # Subclasses should override the following:
 

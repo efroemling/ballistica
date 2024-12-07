@@ -2,6 +2,9 @@
 
 #include "ballistica/scene_v1/node/scorch_node.h"
 
+#include <vector>
+
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"

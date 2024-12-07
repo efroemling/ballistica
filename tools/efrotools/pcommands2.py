@@ -31,7 +31,7 @@ def with_build_lock() -> None:
         raise CleanError(
             'Expected one lock-name arg and at least one command arg'
         )
-    with BuildLock(args[0]):
+    with BuildLock(args[0], projroot=str(pcommand.PROJROOT)):
         subprocess.run(' '.join(args[1:]), check=True, shell=True)
 
 
@@ -121,8 +121,8 @@ def build_pcommandbatch() -> None:
 def batchserver() -> None:
     """Run a server for handling pcommands."""
     from efro.error import CleanError
+    from efro.util import extract_arg
 
-    from efrotools import extract_arg
     import efrotools.pcommandbatch as pcb
 
     pcommand.disallow_in_batch()

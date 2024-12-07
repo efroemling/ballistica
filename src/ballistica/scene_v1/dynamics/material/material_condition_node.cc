@@ -2,7 +2,6 @@
 
 #include "ballistica/scene_v1/dynamics/material/material_condition_node.h"
 
-#include "ballistica/scene_v1/dynamics/material/material.h"
 #include "ballistica/scene_v1/support/client_session.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/generic/utils.h"
@@ -37,7 +36,7 @@ void MaterialConditionNode::Flatten(char** buffer,
             || cond == MaterialCondition::kDstNotMaterial) {
           Utils::EmbedInt32NBO(
               buffer, static_cast_check_fit<int32_t>(
-                          output_stream->GetMaterialID(val1_material.Get())));
+                          output_stream->GetMaterialID(val1_material.get())));
         } else {
           Utils::EmbedInt32NBO(buffer, val1);
         }

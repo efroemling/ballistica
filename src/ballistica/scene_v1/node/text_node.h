@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/base/graphics/text/text_group.h"
 #include "ballistica/scene_v1/node/node.h"
 
 namespace ballistica::scene_v1 {

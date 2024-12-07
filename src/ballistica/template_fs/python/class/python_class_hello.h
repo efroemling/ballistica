@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_TEMPLATE_FS_PYTHON_CLASS_PYTHON_CLASS_HELLO_H_
 #define BALLISTICA_TEMPLATE_FS_PYTHON_CLASS_PYTHON_CLASS_HELLO_H_
 
+#include <string>
+
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_class.h"
 
@@ -33,8 +35,8 @@ class PythonClassHello : public PythonClass {
   PythonClassHello();
   ~PythonClassHello();
   static PyMethodDef tp_methods[];
-  static auto tp_new(PyTypeObject* type, PyObject* args,
-                     PyObject* keywds) -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
+      -> PyObject*;
   static void tp_dealloc(PythonClassHello* self);
   static auto TestMethod(PythonClassHello* self, PyObject* args,
                          PyObject* keywds) -> PyObject*;

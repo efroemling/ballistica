@@ -4,6 +4,8 @@
 #define BALLISTICA_CORE_PLATFORM_WINDOWS_CORE_PLATFORM_WINDOWS_H_
 #if BA_OSTYPE_WINDOWS
 
+#include <cstdio>
+#include <list>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -31,8 +33,8 @@ class CorePlatformWindows : public CorePlatform {
   auto Remove(const char* path) -> int;
   auto Stat(const char* path, struct BA_STAT* buffer) -> int;
   auto Rename(const char* oldname, const char* newname) -> int;
-  auto DoAbsPath(const std::string& path,
-                 std::string* outpath) -> bool override;
+  auto DoAbsPath(const std::string& path, std::string* outpath)
+      -> bool override;
   auto FOpen(const char* path, const char* mode) -> FILE* override;
   auto GetErrnoString() -> std::string override;
   auto GetSocketErrorString() -> std::string override;

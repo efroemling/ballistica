@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_SCENE_V1_SUPPORT_CLIENT_SESSION_REPLAY_H_
 #define BALLISTICA_SCENE_V1_SUPPORT_CLIENT_SESSION_REPLAY_H_
 
+#include <cstdio>
 #include <string>
 #include <vector>
 

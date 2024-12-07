@@ -2,9 +2,13 @@
 
 #include "ballistica/ui_v1/widget/scroll_widget.h"
 
+#include <algorithm>
+
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/support/app_timer.h"
+#include "ballistica/core/platform/core_platform.h"
 
 namespace ballistica::ui_v1 {
 
@@ -24,8 +28,8 @@ void ScrollWidget::OnTouchDelayTimerExpired() {
   if (touch_held_) {
     // Pass a mouse-down event if we haven't moved.
     if (!touch_is_scrolling_ && !touch_down_sent_) {
-      // Gather up any user code triggered by this stuff and run it at the end
-      // before we return.
+      // Gather up any user code triggered by this stuff and run it at the
+      // end before we return.
       base::UI::OperationContext ui_op_context;
 
       ContainerWidget::HandleMessage(base::WidgetMessage(
@@ -42,7 +46,7 @@ void ScrollWidget::OnTouchDelayTimerExpired() {
   touch_delay_timer_.Clear();
 }
 
-void ScrollWidget::ClampThumb(bool velocity_clamp, bool position_clamp) {
+void ScrollWidget::ClampThumb_(bool velocity_clamp, bool position_clamp) {
   BA_DEBUG_UI_READ_LOCK;
 
   bool is_scrolling;
@@ -118,7 +122,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
         child_offset_v_ -= (60);
         MarkForUpdate();
-        ClampThumb(false, true);
+        ClampThumb_(false, true);
       }
       break;
 
@@ -127,7 +131,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
         child_offset_v_ += (60);
         MarkForUpdate();
-        ClampThumb(false, true);
+        ClampThumb_(false, true);
       }
       break;
 
@@ -187,8 +191,8 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if (ContainerWidget::HandleMessage(m)) {
         claimed = true;
 
-        // Keep track of the average scrolling going on. (only update when we
-        // get non-momentum events)
+        // Keep track of the average scrolling going on. (only update when
+        // we get non-momentum events)
         if (std::abs(m.fval3) > 0.001f && !has_momentum_) {
           float smoothing = 0.8f;
           avg_scroll_speed_h_ =
@@ -207,8 +211,8 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float x = m.fval1;
       float y = m.fval2;
 
-      // Keep track of the average scrolling going on. (only update when we get
-      // non-momentum events).
+      // Keep track of the average scrolling going on. (only update when we
+      // get non-momentum events).
       if (std::abs(m.fval3) > 0.001f && !has_momentum_) {
         float smoothing = 0.8f;
         avg_scroll_speed_v_ =
@@ -219,9 +223,9 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             smoothing * avg_scroll_speed_h_ + (1.0f - smoothing) * 0.0f;
       }
 
-      // If a child appears to be looking at horizontal scroll events and we're
-      // scrolling more horizontally than vertically in general, ignore vertical
-      // scrolling (should probably make this less fuzzy).
+      // If a child appears to be looking at horizontal scroll events and
+      // we're scrolling more horizontally than vertically in general,
+      // ignore vertical scrolling (should probably make this less fuzzy).
       bool ignore_regular_scrolling = false;
       bool child_claimed_h_scroll_recently =
           (g_core->GetAppTimeMillisecs() - last_sub_widget_h_scroll_claim_time_
@@ -301,8 +305,8 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float y = m.fval2;
       if ((x >= 0.0f) && (x < width() + right_overlap) && (y >= 0.0f)
           && (y < height())) {
-        // On touch devices, touches begin scrolling, (and eventually can count
-        // as clicks if they don't move).
+        // On touch devices, touches begin scrolling, (and eventually can
+        // count as clicks if they don't move).
         if (touch_mode_) {
           touch_held_ = true;
           auto click_count = static_cast<int>(m.fval3);
@@ -318,8 +322,8 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           child_is_scrolling_ = false;
           child_disowned_scroll_ = false;
 
-          // If there's already significant scrolling happening, we handle all
-          // these ourself as scroll events.
+          // If there's already significant scrolling happening, we handle
+          // all these ourself as scroll events.
           if (std::abs(inertia_scroll_rate_) > 0.05f) {
             touch_is_scrolling_ = true;
           }
@@ -361,19 +365,18 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               smoothing_amount_ = 1.0f;
               child_offset_v_ -= (height() - 2 * (border_height_ + V_MARGIN));
               MarkForUpdate();
-              ClampThumb(false, true);
+              ClampThumb_(false, true);
             } else if (y >= sb_thumb_top - sb_thumb_height) {
               // On thumb.
               mouse_held_thumb_ = true;
               thumb_click_start_v_ = y;
               thumb_click_start_child_offset_v_ = child_offset_v_;
             } else if (y >= s_bottom) {
-              // Below thumb (page down).
-              // So we can see the transition.
+              // Below thumb (page down). So we can see the transition.
               smoothing_amount_ = 1.0f;
               child_offset_v_ += (height() - 2 * (border_height_ + V_MARGIN));
               MarkForUpdate();
-              ClampThumb(false, true);
+              ClampThumb_(false, true);
             }
           }
         }
@@ -388,12 +391,13 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float y = m.fval2;
       bool was_claimed = (m.fval3 > 0.0f);
 
-      // If coords are outside of our bounds we don't want to pass mouse-moved
-      // events through the standard container logic. (otherwise, if we mouse
-      // down over a button that doesn't overlap the scroll area but overlaps
-      // some widget in the scroll area, the widget would claim the move and the
-      // button would lose its mouse-over-highlight; ew.) There may be some
-      // case where we *would* want to pass this though.
+      // If coords are outside of our bounds we don't want to pass
+      // mouse-moved events through the standard container logic.
+      // (otherwise, if we mouse down over a button that doesn't overlap the
+      // scroll area but overlaps some widget in the scroll area, the widget
+      // would claim the move and the button would lose its
+      // mouse-over-highlight; ew.) There may be some case where we *would*
+      // want to pass this though.
       if (!((x >= 0.0f) && (x < width() + right_overlap) && (y >= 0.0f)
             && (y < height()))) {
         pass = false;
@@ -404,14 +408,15 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       } else {
         if (touch_mode_) {
           if (touch_held_) {
-            // If we have a child claiming this scrolling action for themselves,
-            // just keep passing them the events as long as they get claimed.
+            // If we have a child claiming this scrolling action for
+            // themselves, just keep passing them the events as long as they
+            // get claimed.
             if (child_is_scrolling_ && !child_disowned_scroll_) {
               bool move_claimed = ContainerWidget::HandleMessage(
                   base::WidgetMessage(base::WidgetMessage::Type::kMouseMove,
                                       nullptr, m.fval1, m.fval2, m.fval3));
-              // If they stopped claiming them, send a scroll-mouse-up to tie
-              // things up.
+              // If they stopped claiming them, send a scroll-mouse-up to
+              // tie things up.
               if (!move_claimed) {
                 ContainerWidget::HandleMessage(
                     base::WidgetMessage(base::WidgetMessage::Type::kMouseUp,
@@ -419,12 +424,13 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                 child_disowned_scroll_ = true;
               }
             } else {
-              // If no child is scrolling; this touch motion is ours to handle.
+              // If no child is scrolling; this touch motion is ours to
+              // handle.
               touch_x_ = x;
               touch_y_ = y;
 
-              // If we move more than a slight amount it means our touch isn't a
-              // click.
+              // If we move more than a slight amount it means our touch
+              // isn't a click.
               if (!touch_is_scrolling_
                   && ((std::abs(touch_x_ - touch_start_x_) > 10.0f)
                       || (std::abs(touch_y_ - touch_start_y_) > 10.0f))) {
@@ -476,7 +482,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             / ((1.0f - ((s_top - s_bottom) / child_h)) * (s_top - s_bottom));
         child_offset_v_ = thumb_click_start_child_offset_v_
                           - rate * (y - thumb_click_start_v_);
-        ClampThumb(false, true);
+        ClampThumb_(false, true);
         MarkForUpdate();
       }
       break;
@@ -491,8 +497,8 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         if (touch_held_) {
           touch_held_ = false;
 
-          // If we moved at all, we mark it as claimed to keep
-          // sub-widgets from acting on it (since we used it for scrolling)
+          // If we moved at all, we mark it as claimed to keep sub-widgets
+          // from acting on it (since we used it for scrolling)
           bool claimed2 = touch_is_scrolling_ || child_is_scrolling_;
 
           // if a child is still scrolling, send them a scroll-mouse-up
@@ -502,8 +508,8 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                                     nullptr, m.fval1, m.fval2, false));
           }
 
-          // If we're not claiming it and we haven't sent a mouse_down yet due
-          // to our delay, send that first..
+          // If we're not claiming it and we haven't sent a mouse_down yet
+          // due to our delay, send that first..
           if (!claimed2 && !touch_down_sent_) {
             ContainerWidget::HandleMessage(base::WidgetMessage(
                 base::WidgetMessage::Type::kMouseDown, nullptr, m.fval1,
@@ -521,9 +527,9 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         }
       }
 
-      // If coords are outside of our bounds, pass a mouse-up along for anyone
-      // tracking a drag, but mark it as claimed so it doesn't actually get
-      // acted on.
+      // If coords are outside of our bounds, pass a mouse-up along for
+      // anyone tracking a drag, but mark it as claimed so it doesn't
+      // actually get acted on.
       float x = m.fval1;
       float y = m.fval2;
       if (!((x >= 0.0f) && (x < width() + right_overlap) && (y >= 0.0f)
@@ -558,7 +564,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 void ScrollWidget::UpdateLayout() {
   BA_DEBUG_UI_READ_LOCK;
 
-  // move everything based on our offset
+  // Move everything based on our offset.
   auto i = widgets().begin();
   if (i == widgets().end()) {
     amount_visible_ = 0;
@@ -600,11 +606,11 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   millisecs_t current_time = pass->frame_def()->display_time_millisecs();
   float prev_child_offset_v_smoothed = child_offset_v_smoothed_;
 
-  // ok lets update our inertial scrolling during the opaque pass
-  // (we really should have some sort of update() function for this but widgets
-  // don't have that)
+  // Ok, lets update our inertial scrolling during the opaque pass (we
+  // really should have some sort of update() function for this but widgets
+  // don't have that).
   if (!draw_transparent) {
-    // (skip huge differences)
+    // Skip huge differences.
     if (current_time - inertia_scroll_update_time_ > 1000) {
       inertia_scroll_update_time_ = current_time - 1000;
     }
@@ -623,16 +629,17 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       } else {
         inertia_scroll_rate_ *= 0.98f;
       }
-      ClampThumb(true, mouse_held_thumb_);
+      ClampThumb_(true, mouse_held_thumb_);
       child_offset_v_ += inertia_scroll_rate_;
       if (!has_momentum_
           && (current_time - last_velocity_event_time_millisecs_ > 1000 / 30))
         inertia_scroll_rate_ = 0;
 
-      // lastly we apply smoothing so that if we're snapping to a specific place
-      // we don't go instantly there we blend between smoothed and non-smoothed
-      // depending on whats driving us (we dont want to add smoothing on top of
-      // inertial scrolling for example or it'll feel muddy)
+      // Lastly we apply smoothing so that if we're snapping to a specific
+      // place we don't go instantly there we blend between smoothed and
+      // non-smoothed depending on whats driving us (we dont want to add
+      // smoothing on top of inertial scrolling for example or it'll feel
+      // muddy).
       float diff = child_offset_v_ - child_offset_v_smoothed_;
       if (std::abs(diff) < 1.0f) {
         child_offset_v_smoothed_ = child_offset_v_;
@@ -641,7 +648,8 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
       smoothing_amount_ = std::max(0.0f, smoothing_amount_ - 0.005f);
     }
-    // only re-layout our widgets if we've moved a significant amount
+
+    // Only re-layout our widgets if we've moved a significant amount.
     if (std::abs(prev_child_offset_v_smoothed - child_offset_v_smoothed_)
         > 0.01f) {
       MarkForUpdate();
@@ -675,7 +683,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                  1.0f);
   }
 
-  // scroll trough (depth 0.7f to 0.8f)
+  // Scroll trough (depth 0.7 to 0.8).
   if (draw_transparent) {
     if (trough_dirty_) {
       float r2 = l + width();
@@ -709,9 +717,9 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.Submit();
   }
 
-  // scroll bars
+  // Scroll bars.
   if (amount_visible_ > 0 && amount_visible_ < 1) {
-    // scroll thumb at depth 0.8f-0.9
+    // Scroll thumb at depth 0.8 - 0.9.
     {
       float sb_thumb_height = amount_visible_ * (height() - 2 * border_height_);
       if (thumb_dirty_) {
@@ -777,7 +785,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     }
   }
 
-  // outline shadow (depth 0.9f to 1.0f)
+  // Outline shadow (depth 0.9 to 1.0).
   if (draw_transparent) {
     if (shadow_dirty_) {
       float r2 = l + width();
@@ -811,7 +819,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     }
   }
 
-  // if selected, do glow at depth 0.9f-1.0
+  // If selected, do glow at depth 0.9 - 1.0.
   if (draw_transparent && IsHierarchySelected()
       && g_base->ui->ShouldHighlightWidgets() && highlight_) {
     float m = 0.8f

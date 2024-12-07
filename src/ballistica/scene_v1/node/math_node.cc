@@ -2,7 +2,10 @@
 
 #include "ballistica/scene_v1/node/math_node.h"
 
+#include <algorithm>
 #include <cmath>
+#include <string>
+#include <vector>
 
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"

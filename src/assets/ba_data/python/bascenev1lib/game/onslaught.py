@@ -5,7 +5,7 @@
 # Yes this is a long one..
 # pylint: disable=too-many-lines
 
-# ba_meta require api 8
+# ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
 from __future__ import annotations
@@ -805,6 +805,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         max_level: int,
     ) -> list[list[tuple[int, int]]]:
         """Calculate a distribution of bad guys given some params."""
+        # pylint: disable=too-many-positional-arguments
         max_iterations = 10 + max_dudes * 2
 
         groups: list[list[tuple[int, int]]] = []
@@ -1194,7 +1195,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
     def _respawn_players_for_wave(self) -> None:
         # Respawn applicable players.
-        if self._wavenum > 1 and not self.is_waiting_for_continue():
+        if self._wavenum > 1:
             for player in self.players:
                 if (
                     not player.is_alive()
@@ -1641,19 +1642,9 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         self.do_end('defeat', delay=2.0)
         bs.setmusic(None)
 
-    @override
-    def on_continue(self) -> None:
-        for player in self.players:
-            if not player.is_alive():
-                self.spawn_player(player)
-
     def _checkroundover(self) -> None:
         """Potentially end the round based on the state of the game."""
         if self.has_ended():
             return
         if not any(player.is_alive() for player in self.teams[0].players):
-            # Allow continuing after wave 1.
-            if self._wavenum > 1:
-                self.continue_or_end_game()
-            else:
-                self.end_game()
+            self.end_game()

@@ -96,6 +96,7 @@ class Session:
     def __init__(
         self,
         depsets: Sequence[bascenev1.DependencySet],
+        *,
         team_names: Sequence[str] | None = None,
         team_colors: Sequence[Sequence[float]] | None = None,
         min_players: int = 1,

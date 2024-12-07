@@ -7,7 +7,7 @@
 #include <optional>
 #include <string>
 
-#include "ballistica/shared/ballistica.h"
+#include "ballistica/shared/ballistica.h"  // IWYU pragma: keep.
 
 namespace ballistica {
 
@@ -75,8 +75,8 @@ class PythonRef {
   /// reference of ours is cleared to match.
   auto operator=(const PythonRef& other) -> PythonRef& {
     assert(this != &other);  // Shouldn't be self-assigning.
-    if (other.Exists()) {
-      Acquire(other.Get());
+    if (other.exists()) {
+      Acquire(other.get());
     } else {
       Release();
     }
@@ -87,7 +87,7 @@ class PythonRef {
   /// (so basically the 'is' keyword in Python).
   /// Note that two unreferenced PythonRefs will be equal.
   auto operator==(const PythonRef& other) const -> bool {
-    return (Get() == other.Get());
+    return (get() == other.get());
   }
   auto operator!=(const PythonRef& other) const -> bool {
     return !(*this == other);
@@ -129,7 +129,7 @@ class PythonRef {
   }
 
   /// Return the underlying PyObject pointer.
-  auto Get() const -> PyObject* { return obj_; }
+  auto get() const -> PyObject* { return obj_; }
 
   /// Return the underlying PyObject pointer. Throws an Exception if not set.
   auto operator*() const -> PyObject* {
@@ -144,7 +144,7 @@ class PythonRef {
   auto NewRef() const -> PyObject*;
 
   /// Return whether we are pointing to a PyObject.
-  auto Exists() const -> bool { return obj_ != nullptr; }
+  auto exists() const -> bool { return obj_ != nullptr; }
 
   /// Return a ref to an attribute on our PyObject or throw an Exception.
   auto GetAttr(const char* name) const -> PythonRef;
@@ -179,6 +179,7 @@ class PythonRef {
       -> std::optional<std::list<std::string>>;
 
   auto ValueAsInt() const -> int64_t;
+  auto ValueAsDouble() const -> double;
   auto ValueAsOptionalInt() const -> std::optional<int64_t>;
 
   /// Returns whether the underlying PyObject is callable.
@@ -195,7 +196,7 @@ class PythonRef {
             bool print_errors = true) const -> PythonRef;
   auto Call(const PythonRef& args, const PythonRef& keywds = PythonRef(),
             bool print_errors = true) const -> PythonRef {
-    return Call(args.Get(), keywds.Get(), print_errors);
+    return Call(args.get(), keywds.get(), print_errors);
   }
   auto Call(bool print_errors = true) const -> PythonRef;
 

@@ -2,6 +2,8 @@
 
 #include "ballistica/base/networking/networking.h"
 
+#include <vector>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/base/support/app_config.h"

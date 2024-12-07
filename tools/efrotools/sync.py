@@ -71,7 +71,7 @@ def run_standard_syncs(
     a src subpath, and optionally a dst subpath (src will be used by default).
     """
     # pylint: disable=too-many-locals
-    from efrotools import getlocalconfig
+    from efrotools.project import getlocalconfig
 
     localconfig = getlocalconfig(projectroot)
     total_count = 0
@@ -98,7 +98,10 @@ def run_standard_syncs(
 
             # Actual syncs require localconfig entries.
             if link_entry not in localconfig:
-                print(f'No link entry for {src_project}; skipping sync entry.')
+                print(
+                    f'No link entry for {src_project}'
+                    f' in project {projectroot}; skipping sync entry.'
+                )
                 continue
             src = Path(localconfig[link_entry], src_subpath)
             if verbose:

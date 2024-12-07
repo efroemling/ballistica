@@ -5,9 +5,10 @@
 
 #if BA_ENABLE_OPENGL
 
+#include <string>
+
 #include "ballistica/base/graphics/gl/program/program_gl.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
-#include "ballistica/base/graphics/graphics_server.h"
 
 namespace ballistica::base {
 
@@ -157,8 +158,8 @@ class RendererGL::ProgramPostProcessGL : public RendererGL::ProgramGL {
     s += "}";
 
     if (flags & SHD_DEBUG_PRINT)
-      Log(LogLevel::kInfo,
-          "\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
+      g_core->Log(LogName::kBaGraphics, LogLevel::kInfo,
+                  "\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }
 
@@ -305,7 +306,8 @@ class RendererGL::ProgramPostProcessGL : public RendererGL::ProgramGL {
     s += "}";
 
     if (flags & SHD_DEBUG_PRINT)
-      Log(LogLevel::kInfo,
+      g_core->Log(
+          LogName::kBaGraphics, LogLevel::kInfo,
           "\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }

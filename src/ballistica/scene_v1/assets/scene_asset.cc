@@ -2,8 +2,12 @@
 
 #include "ballistica/scene_v1/assets/scene_asset.h"
 
+#include <Python.h>
+
+#include <string>
+#include <utility>
+
 #include "ballistica/scene_v1/support/scene.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::scene_v1 {
 

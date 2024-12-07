@@ -161,8 +161,8 @@ inline auto Matrix44fTranslate(const Vector3f& trans) -> Matrix44f {
   return translate;
 }
 
-inline auto Matrix44fTranslate(const float x, const float y,
-                               const float z) -> Matrix44f {
+inline auto Matrix44fTranslate(const float x, const float y, const float z)
+    -> Matrix44f {
   Matrix44f translate{kMatrix44fIdentity};
   translate.set(3, 0, x);
   translate.set(3, 1, y);
@@ -188,12 +188,12 @@ inline auto Matrix44fScale(const Vector3f& sf) -> Matrix44f {
 
 auto Matrix44fRotate(const Vector3f& axis, float angle) -> Matrix44f;
 auto Matrix44fRotate(float azimuth, float elevation) -> Matrix44f;
-auto Matrix44fOrient(const Vector3f& x, const Vector3f& y,
-                     const Vector3f& z) -> Matrix44f;
+auto Matrix44fOrient(const Vector3f& x, const Vector3f& y, const Vector3f& z)
+    -> Matrix44f;
 
 // Note: direction and up need to be perpendicular and normalized here.
-auto Matrix44fOrient(const Vector3f& direction,
-                     const Vector3f& up) -> Matrix44f;
+auto Matrix44fOrient(const Vector3f& direction, const Vector3f& up)
+    -> Matrix44f;
 auto Matrix44fFrustum(float left, float right, float bottom, float top,
                       float near, float far) -> Matrix44f;
 

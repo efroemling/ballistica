@@ -2,6 +2,9 @@
 
 #include "ballistica/scene_v1/node/light_node.h"
 
+#include <algorithm>
+#include <vector>
+
 #include "ballistica/base/dynamics/bg/bg_dynamics_volume_light.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
@@ -49,13 +52,13 @@ void LightNode::Step() {
 #if !BA_HEADLESS_BUILD
   // create or destroy our light-volume as needed
   // (minimize redundant create/destroy/sets this way)
-  if (lights_volumes_ && !volume_light_.Exists()) {
+  if (lights_volumes_ && !volume_light_.exists()) {
     volume_light_ = Object::New<base::BGDynamicsVolumeLight>();
     float i = GetVolumeLightIntensity();
     volume_light_->SetColor(color_[0] * i, color_[1] * i, color_[2] * i);
     volume_light_->SetPosition(
         Vector3f(position_[0], position_[1], position_[2]));
-  } else if (!lights_volumes_ && volume_light_.Exists()) {
+  } else if (!lights_volumes_ && volume_light_.exists()) {
     volume_light_.Clear();
   }
 #endif  // BA_HEADLESS_BUILD
@@ -64,7 +67,7 @@ void LightNode::Step() {
 void LightNode::SetRadius(float val) {
   radius_ = std::max(0.0f, val);
 #if !BA_HEADLESS_BUILD
-  if (volume_light_.Exists()) {
+  if (volume_light_.exists()) {
     volume_light_->SetRadius(radius_);
   }
 #endif  // BA_HEADLESS_BUILD
@@ -76,7 +79,7 @@ void LightNode::SetColor(const std::vector<float>& vals) {
   }
   color_ = vals;
 #if !BA_HEADLESS_BUILD
-  if (volume_light_.Exists()) {
+  if (volume_light_.exists()) {
     float i = GetVolumeLightIntensity();
     volume_light_->SetColor(color_[0] * i, color_[1] * i, color_[2] * i);
   }
@@ -91,7 +94,7 @@ void LightNode::SetPosition(const std::vector<float>& vals) {
 
 #if !BA_HEADLESS_BUILD
   shadow_.SetPosition(Vector3f(position_[0], position_[1], position_[2]));
-  if (volume_light_.Exists()) {
+  if (volume_light_.exists()) {
     volume_light_->SetPosition(
         Vector3f(position_[0], position_[1], position_[2]));
   }
@@ -101,7 +104,7 @@ void LightNode::SetPosition(const std::vector<float>& vals) {
 void LightNode::SetIntensity(float val) {
   intensity_ = std::max(0.0f, val);
 #if !BA_HEADLESS_BUILD
-  if (volume_light_.Exists()) {
+  if (volume_light_.exists()) {
     float i = GetVolumeLightIntensity();
     volume_light_->SetColor(color_[0] * i, color_[1] * i, color_[2] * i);
   }
@@ -112,7 +115,7 @@ void LightNode::SetVolumeIntensityScale(float val) {
   volume_intensity_scale_ = std::max(0.0f, val);
 
 #if !BA_HEADLESS_BUILD
-  if (volume_light_.Exists()) {
+  if (volume_light_.exists()) {
     float i = GetVolumeLightIntensity();
     volume_light_->SetColor(color_[0] * i, color_[1] * i, color_[2] * i);
   }

@@ -185,7 +185,7 @@ class PrepSession:
             # which allows us to pick up nested classes, etc.
             resolved_annotations = get_type_hints(
                 cls,
-                localns=vars(cls),  # type: ignore[arg-type]
+                localns=vars(cls),
                 globalns=self.globalns,
                 include_extras=True,
             )
@@ -261,6 +261,7 @@ class PrepSession:
         recursion_level: int,
     ) -> None:
         """Run prep on a dataclass."""
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
@@ -361,7 +362,7 @@ class PrepSession:
                 pass
             elif issubclass(childtypes[0], Enum):
                 # Allow our usual str or int enum types as keys.
-                self.prep_enum(childtypes[0])
+                self.prep_enum(childtypes[0], ioattrs=None)
             else:
                 raise TypeError(
                     f'Dict key type {childtypes[0]} for \'{attrname}\''
@@ -411,13 +412,17 @@ class PrepSession:
             return
 
         if issubclass(origin, Enum):
-            self.prep_enum(origin)
+            self.prep_enum(origin, ioattrs=ioattrs)
             return
 
         # We allow datetime objects (and google's extended subclass of
         # them used in firestore, which is why we don't look for exact
         # type here).
         if issubclass(origin, datetime.datetime):
+            return
+
+        # We support datetime.timedelta.
+        if issubclass(origin, datetime.timedelta):
             return
 
         if dataclasses.is_dataclass(origin):
@@ -457,7 +462,11 @@ class PrepSession:
                 recursion_level=recursion_level + 1,
             )
 
-    def prep_enum(self, enumtype: type[Enum]) -> None:
+    def prep_enum(
+        self,
+        enumtype: type[Enum],
+        ioattrs: IOAttrs | None,
+    ) -> None:
         """Run prep on an enum type."""
 
         valtype: Any = None
@@ -479,4 +488,14 @@ class PrepSession:
                         f'Enum type {enumtype} has multiple'
                         f' value types; dataclassio requires'
                         f' them to be uniform.'
+                    )
+
+        if ioattrs is not None:
+            # If they provided a fallback enum value, make sure it
+            # is the correct type.
+            if ioattrs.enum_fallback is not None:
+                if type(ioattrs.enum_fallback) is not enumtype:
+                    raise TypeError(
+                        f'enum_fallback {ioattrs.enum_fallback} does not'
+                        f' match the field type ({enumtype}.'
                     )

@@ -28,12 +28,12 @@ PCOMMAND = $(TOOLS_DIR)/pcommand
 # pcommand. See tools/efrotools/pcommandbatch.py for more info on when to use
 # which.
 PCOMMANDBATCHBIN = $(PROJ_DIR)/.cache/pcommandbatch/pcommandbatch
-ifeq ($(BA_PCOMMANDBATCH_DISABLE),1)
- PCOMMANDBATCH = $(TOOLS_DIR)/pcommand
- PCOMMANDBATCHFROMROOT = tools/pcommand
-else
+ifeq ($(BA_PCOMMANDBATCH_ENABLE),0)
  PCOMMANDBATCH = $(PCOMMANDBATCHBIN)
  PCOMMANDBATCHFROMROOT = .cache/pcommandbatch/pcommandbatch
+else
+ PCOMMANDBATCH = $(TOOLS_DIR)/pcommand
+ PCOMMANDBATCHFROMROOT = tools/pcommand
 endif
 
 # High level targets: generally these are what should be used here.
@@ -149,6 +149,11 @@ endif
 ASSET_TARGETS_WIN_WIN32 += $(EXTRAS_TARGETS_WIN_WIN32)
 ASSET_TARGETS_WIN_X64 += $(EXTRAS_TARGETS_WIN_X64)
 
+# Asset Packages
+ASSET_TARGETS_CMAKE += $(PROJ_DIR)/.cache/assetmanifests/gui_desktop_v2dev1
+ASSET_TARGETS_WIN_WIN32 += $(PROJ_DIR)/.cache/assetmanifests/gui_desktop_v2dev1
+ASSET_TARGETS_WIN_X64 += $(PROJ_DIR)/.cache/assetmanifests/gui_desktop_v2dev1
+
 # Note: Code below needs updating when Python version changes (currently 3.11)
 define make-opt-pyc-target
 $1: $$(subst /__pycache__,,$$(subst .cpython-312.opt-1.pyc,.py,$1))
@@ -171,13 +176,16 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_apputils.py \
   $(BUILD_DIR)/ba_data/python/babase/_assetmanager.py \
   $(BUILD_DIR)/ba_data/python/babase/_asyncio.py \
+  $(BUILD_DIR)/ba_data/python/babase/_cloud.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsole.py \
+  $(BUILD_DIR)/ba_data/python/babase/_devconsoletabs.py \
   $(BUILD_DIR)/ba_data/python/babase/_emptyappmode.py \
   $(BUILD_DIR)/ba_data/python/babase/_env.py \
   $(BUILD_DIR)/ba_data/python/babase/_error.py \
   $(BUILD_DIR)/ba_data/python/babase/_general.py \
   $(BUILD_DIR)/ba_data/python/babase/_hooks.py \
   $(BUILD_DIR)/ba_data/python/babase/_language.py \
+  $(BUILD_DIR)/ba_data/python/babase/_logging.py \
   $(BUILD_DIR)/ba_data/python/babase/_login.py \
   $(BUILD_DIR)/ba_data/python/babase/_math.py \
   $(BUILD_DIR)/ba_data/python/babase/_meta.py \
@@ -195,28 +203,27 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/_achievement.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_ads.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_analytics.py \
-  $(BUILD_DIR)/ba_data/python/baclassic/_appdelegate.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_appmode.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_benchmark.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_input.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_music.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_net.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_servermode.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_store.py \
-  $(BUILD_DIR)/ba_data/python/baclassic/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_tips.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_tournament.py \
   $(BUILD_DIR)/ba_data/python/baclassic/macmusicapp.py \
   $(BUILD_DIR)/ba_data/python/baclassic/osmusic.py \
   $(BUILD_DIR)/ba_data/python/baenv.py \
   $(BUILD_DIR)/ba_data/python/baplus/__init__.py \
+  $(BUILD_DIR)/ba_data/python/baplus/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/baplus/_cloud.py \
   $(BUILD_DIR)/ba_data/python/baplus/_hooks.py \
-  $(BUILD_DIR)/ba_data/python/baplus/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activity.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activitytypes.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_actor.py \
-  $(BUILD_DIR)/ba_data/python/bascenev1/_appmode.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_campaign.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_collision.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_coopgame.py \
@@ -322,12 +329,12 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/session/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/tutorial.py \
   $(BUILD_DIR)/ba_data/python/batemplatefs/__init__.py \
+  $(BUILD_DIR)/ba_data/python/batemplatefs/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/batemplatefs/_hooks.py \
-  $(BUILD_DIR)/ba_data/python/batemplatefs/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_keyboard.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__init__.py \
@@ -343,14 +350,13 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/colorpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/config.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/confirm.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/continues.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/connectivity.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/browser.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/gamebutton.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/level.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/tournamentbutton.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/creditslist.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/debug.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/credits.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/discord.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/feedback.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/fileselector.py \
@@ -360,10 +366,13 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/nearbytab.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/privatetab.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/publictab.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/getcurrency.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/getremote.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/helpui.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/gettokens.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/help.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/iconpicker.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/inbox.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/ingamemenu.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/inventory.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/englishkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/kiosk.py \
@@ -389,24 +398,25 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/browser.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/edit.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/upgrade.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/promocode.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/purchase.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/qrcode.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/radiogroup.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/report.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/resourcetypeinfo.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/sendinfo.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/serverdialog.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/advanced.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/allsettings.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/audio.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/benchmarks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/controls.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/devtools.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/gamepad.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/gamepadadvanced.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/gamepadselect.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/graphics.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/keyboard.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/moddingtools.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/nettesting.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/plugins.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/pluginsettings.py \
@@ -419,7 +429,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/edit.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/entrytypeselect.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/macmusicapp.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/specialoffer.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/browser.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/button.py \
@@ -447,13 +456,16 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_apputils.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_assetmanager.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_asyncio.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_cloud.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_devconsole.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_devconsoletabs.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_emptyappmode.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_env.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_error.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_general.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_hooks.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_language.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_logging.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_login.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_math.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_meta.cpython-312.opt-1.pyc \
@@ -471,28 +483,27 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_achievement.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_ads.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_analytics.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_appdelegate.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_appmode.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_appsubsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_benchmark.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_input.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_music.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_net.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_servermode.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_store.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_subsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_tips.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_tournament.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/macmusicapp.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/osmusic.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/__pycache__/baenv.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baplus/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_appsubsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_cloud.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_hooks.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_subsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_activity.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_activitytypes.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_actor.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_appmode.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_campaign.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_collision.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_coopgame.cpython-312.opt-1.pyc \
@@ -598,12 +609,12 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/session/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/__pycache__/tutorial.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/_appsubsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/_hooks.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/_subsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_appsubsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_hooks.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_keyboard.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_subsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_uitypes.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/onscreenkeyboard.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/__init__.cpython-312.opt-1.pyc \
@@ -619,14 +630,13 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/colorpicker.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/config.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/confirm.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/continues.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/connectivity.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/browser.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/gamebutton.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/level.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/tournamentbutton.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/creditslist.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/debug.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/credits.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/discord.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/feedback.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/fileselector.cpython-312.opt-1.pyc \
@@ -636,10 +646,13 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/nearbytab.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/privatetab.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/publictab.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/getcurrency.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/getremote.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/helpui.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/gettokens.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/help.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/iconpicker.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/inbox.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/ingamemenu.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/inventory.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/__pycache__/englishkeyboard.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/kiosk.cpython-312.opt-1.pyc \
@@ -665,24 +678,25 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/__pycache__/browser.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/__pycache__/edit.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/__pycache__/upgrade.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/promocode.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/purchase.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/qrcode.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/radiogroup.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/report.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/resourcetypeinfo.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/sendinfo.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/serverdialog.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/advanced.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/allsettings.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/audio.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/benchmarks.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/controls.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/devtools.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/gamepad.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/gamepadadvanced.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/gamepadselect.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/graphics.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/keyboard.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/moddingtools.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/nettesting.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/plugins.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/pluginsettings.cpython-312.opt-1.pyc \
@@ -695,7 +709,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/__pycache__/edit.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/__pycache__/entrytypeselect.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/__pycache__/macmusicapp.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/specialoffer.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/browser.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/button.cpython-312.opt-1.pyc \
@@ -727,10 +740,14 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/bacloud.py \
   $(BUILD_DIR)/ba_data/python/bacommon/build.py \
   $(BUILD_DIR)/ba_data/python/bacommon/cloud.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/loggercontrol.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/logging.py \
   $(BUILD_DIR)/ba_data/python/bacommon/login.py \
   $(BUILD_DIR)/ba_data/python/bacommon/net.py \
   $(BUILD_DIR)/ba_data/python/bacommon/servermanager.py \
   $(BUILD_DIR)/ba_data/python/bacommon/transfer.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/workspace/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/workspace/assetsv1.py \
   $(BUILD_DIR)/ba_data/python/efro/__init__.py \
   $(BUILD_DIR)/ba_data/python/efro/call.py \
   $(BUILD_DIR)/ba_data/python/efro/cloudshell.py \
@@ -744,7 +761,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/efro/dataclassio/extras.py \
   $(BUILD_DIR)/ba_data/python/efro/debug.py \
   $(BUILD_DIR)/ba_data/python/efro/error.py \
-  $(BUILD_DIR)/ba_data/python/efro/log.py \
+  $(BUILD_DIR)/ba_data/python/efro/logging.py \
   $(BUILD_DIR)/ba_data/python/efro/message/__init__.py \
   $(BUILD_DIR)/ba_data/python/efro/message/_message.py \
   $(BUILD_DIR)/ba_data/python/efro/message/_module.py \
@@ -753,6 +770,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/efro/message/_sender.py \
   $(BUILD_DIR)/ba_data/python/efro/rpc.py \
   $(BUILD_DIR)/ba_data/python/efro/terminal.py \
+  $(BUILD_DIR)/ba_data/python/efro/threadpool.py \
   $(BUILD_DIR)/ba_data/python/efro/util.py
 
 SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
@@ -762,10 +780,14 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/bacloud.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/build.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/cloud.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/loggercontrol.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/logging.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/login.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/net.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/servermanager.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/transfer.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/workspace/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/workspace/__pycache__/assetsv1.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/call.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/cloudshell.cpython-312.opt-1.pyc \
@@ -779,7 +801,7 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/extras.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/debug.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/error.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/__pycache__/log.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/__pycache__/logging.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/_message.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/_module.cpython-312.opt-1.pyc \
@@ -788,6 +810,7 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/_sender.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/rpc.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/terminal.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/__pycache__/threadpool.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/util.cpython-312.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
@@ -2691,53 +2714,89 @@ $(foreach element,$(SCRIPT_TARGETS_PYC_PRIVATE_ANDROID),\
 $(eval $(call make-opt-pyc-target,$(element))))
 
 SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
-  $(BUILD_DIR)/ba_data/python-site-packages/_yaml/__init__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__init__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__main__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/core.py \
   $(BUILD_DIR)/ba_data/python-site-packages/typing_extensions.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__init__.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/composer.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/constructor.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/cyaml.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/dumper.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/emitter.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/error.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/events.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/loader.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/nodes.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/parser.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/reader.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/representer.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/resolver.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/scanner.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/serializer.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/tokens.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/_base_connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/_collections.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/_request_methods.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/_version.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/connectionpool.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/fetch.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/request.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/response.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/pyopenssl.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/socks.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/exceptions.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/fields.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/filepost.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/probe.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/poolmanager.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/response.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/proxy.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/request.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/response.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/retry.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/ssl_.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/ssl_match_hostname.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/ssltransport.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/timeout.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/url.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/util.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/wait.py \
   $(BUILD_DIR)/sphinx/static/conf.py
 
 SCRIPT_TARGETS_PYC_PRIVATE_COMMON = \
-  $(BUILD_DIR)/ba_data/python-site-packages/_yaml/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__pycache__/__main__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__pycache__/core.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python-site-packages/__pycache__/typing_extensions.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/__init__.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/composer.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/constructor.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/cyaml.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/dumper.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/emitter.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/error.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/events.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/loader.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/nodes.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/parser.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/reader.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/representer.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/resolver.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/scanner.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/serializer.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/tokens.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/_base_connection.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/_collections.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/_request_methods.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/_version.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/connection.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/connectionpool.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__pycache__/connection.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__pycache__/fetch.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__pycache__/request.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__pycache__/response.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/__pycache__/pyopenssl.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/__pycache__/socks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/exceptions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/fields.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/filepost.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/__pycache__/connection.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/__pycache__/probe.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/poolmanager.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/response.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/connection.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/proxy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/request.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/response.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/retry.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/ssl_.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/ssl_match_hostname.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/ssltransport.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/timeout.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/url.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/util.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/wait.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/sphinx/static/__pycache__/conf.cpython-312.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
@@ -5113,6 +5172,7 @@ DATA_TARGETS = \
   $(BUILD_DIR)/ba_data/data/languages/korean.json \
   $(BUILD_DIR)/ba_data/data/languages/malay.json \
   $(BUILD_DIR)/ba_data/data/languages/persian.json \
+  $(BUILD_DIR)/ba_data/data/languages/piratespeak.json \
   $(BUILD_DIR)/ba_data/data/languages/polish.json \
   $(BUILD_DIR)/ba_data/data/languages/portuguese.json \
   $(BUILD_DIR)/ba_data/data/languages/romanian.json \
@@ -5653,6 +5713,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/buttonPickUp.dds \
   $(BUILD_DIR)/ba_data/textures/buttonPunch.dds \
   $(BUILD_DIR)/ba_data/textures/buttonSquare.dds \
+  $(BUILD_DIR)/ba_data/textures/buttonSquareWide.dds \
   $(BUILD_DIR)/ba_data/textures/chTitleChar1.dds \
   $(BUILD_DIR)/ba_data/textures/chTitleChar2.dds \
   $(BUILD_DIR)/ba_data/textures/chTitleChar3.dds \
@@ -5738,6 +5799,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/gladiatorIcon.dds \
   $(BUILD_DIR)/ba_data/textures/gladiatorIconColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/glow.dds \
+  $(BUILD_DIR)/ba_data/textures/goldPass.dds \
   $(BUILD_DIR)/ba_data/textures/googlePlayAchievementsIcon.dds \
   $(BUILD_DIR)/ba_data/textures/googlePlayGamesIcon.dds \
   $(BUILD_DIR)/ba_data/textures/googlePlayLeaderboardsIcon.dds \
@@ -5934,6 +5996,10 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/tipTopLevelColor.dds \
   $(BUILD_DIR)/ba_data/textures/tipTopPreview.dds \
   $(BUILD_DIR)/ba_data/textures/tnt.dds \
+  $(BUILD_DIR)/ba_data/textures/tokens1.dds \
+  $(BUILD_DIR)/ba_data/textures/tokens2.dds \
+  $(BUILD_DIR)/ba_data/textures/tokens3.dds \
+  $(BUILD_DIR)/ba_data/textures/tokens4.dds \
   $(BUILD_DIR)/ba_data/textures/touchArrows.dds \
   $(BUILD_DIR)/ba_data/textures/touchArrowsActions.dds \
   $(BUILD_DIR)/ba_data/textures/towerDLevelColor.dds \
@@ -5951,6 +6017,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/warriorIcon.dds \
   $(BUILD_DIR)/ba_data/textures/warriorIconColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/white.dds \
+  $(BUILD_DIR)/ba_data/textures/windowBottomCap.dds \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVMed.dds \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVSmall.dds \
   $(BUILD_DIR)/ba_data/textures/wings.dds \
@@ -6058,6 +6125,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/buttonPickUp.pvr \
   $(BUILD_DIR)/ba_data/textures/buttonPunch.pvr \
   $(BUILD_DIR)/ba_data/textures/buttonSquare.pvr \
+  $(BUILD_DIR)/ba_data/textures/buttonSquareWide.pvr \
   $(BUILD_DIR)/ba_data/textures/chTitleChar1.pvr \
   $(BUILD_DIR)/ba_data/textures/chTitleChar2.pvr \
   $(BUILD_DIR)/ba_data/textures/chTitleChar3.pvr \
@@ -6143,6 +6211,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/gladiatorIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/gladiatorIconColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/glow.pvr \
+  $(BUILD_DIR)/ba_data/textures/goldPass.pvr \
   $(BUILD_DIR)/ba_data/textures/googlePlayAchievementsIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/googlePlayGamesIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/googlePlayLeaderboardsIcon.pvr \
@@ -6339,6 +6408,10 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/tipTopLevelColor.pvr \
   $(BUILD_DIR)/ba_data/textures/tipTopPreview.pvr \
   $(BUILD_DIR)/ba_data/textures/tnt.pvr \
+  $(BUILD_DIR)/ba_data/textures/tokens1.pvr \
+  $(BUILD_DIR)/ba_data/textures/tokens2.pvr \
+  $(BUILD_DIR)/ba_data/textures/tokens3.pvr \
+  $(BUILD_DIR)/ba_data/textures/tokens4.pvr \
   $(BUILD_DIR)/ba_data/textures/touchArrows.pvr \
   $(BUILD_DIR)/ba_data/textures/touchArrowsActions.pvr \
   $(BUILD_DIR)/ba_data/textures/towerDLevelColor.pvr \
@@ -6356,6 +6429,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/warriorIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/warriorIconColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/white.pvr \
+  $(BUILD_DIR)/ba_data/textures/windowBottomCap.pvr \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVMed.pvr \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVSmall.pvr \
   $(BUILD_DIR)/ba_data/textures/wings.pvr \
@@ -6463,6 +6537,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/buttonPickUp.ktx \
   $(BUILD_DIR)/ba_data/textures/buttonPunch.ktx \
   $(BUILD_DIR)/ba_data/textures/buttonSquare.ktx \
+  $(BUILD_DIR)/ba_data/textures/buttonSquareWide.ktx \
   $(BUILD_DIR)/ba_data/textures/chTitleChar1.ktx \
   $(BUILD_DIR)/ba_data/textures/chTitleChar2.ktx \
   $(BUILD_DIR)/ba_data/textures/chTitleChar3.ktx \
@@ -6548,6 +6623,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/gladiatorIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/gladiatorIconColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/glow.ktx \
+  $(BUILD_DIR)/ba_data/textures/goldPass.ktx \
   $(BUILD_DIR)/ba_data/textures/googlePlayAchievementsIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/googlePlayGamesIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/googlePlayLeaderboardsIcon.ktx \
@@ -6744,6 +6820,10 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/tipTopLevelColor.ktx \
   $(BUILD_DIR)/ba_data/textures/tipTopPreview.ktx \
   $(BUILD_DIR)/ba_data/textures/tnt.ktx \
+  $(BUILD_DIR)/ba_data/textures/tokens1.ktx \
+  $(BUILD_DIR)/ba_data/textures/tokens2.ktx \
+  $(BUILD_DIR)/ba_data/textures/tokens3.ktx \
+  $(BUILD_DIR)/ba_data/textures/tokens4.ktx \
   $(BUILD_DIR)/ba_data/textures/touchArrows.ktx \
   $(BUILD_DIR)/ba_data/textures/touchArrowsActions.ktx \
   $(BUILD_DIR)/ba_data/textures/towerDLevelColor.ktx \
@@ -6761,6 +6841,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/warriorIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/warriorIconColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/white.ktx \
+  $(BUILD_DIR)/ba_data/textures/windowBottomCap.ktx \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVMed.ktx \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVSmall.ktx \
   $(BUILD_DIR)/ba_data/textures/wings.ktx \
@@ -6867,6 +6948,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/buttonJump_preview.png \
   $(BUILD_DIR)/ba_data/textures/buttonPickUp_preview.png \
   $(BUILD_DIR)/ba_data/textures/buttonPunch_preview.png \
+  $(BUILD_DIR)/ba_data/textures/buttonSquareWide_preview.png \
   $(BUILD_DIR)/ba_data/textures/buttonSquare_preview.png \
   $(BUILD_DIR)/ba_data/textures/chTitleChar1_preview.png \
   $(BUILD_DIR)/ba_data/textures/chTitleChar2_preview.png \
@@ -6953,6 +7035,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/gladiatorIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/gladiatorIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/glow_preview.png \
+  $(BUILD_DIR)/ba_data/textures/goldPass_preview.png \
   $(BUILD_DIR)/ba_data/textures/googlePlayAchievementsIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/googlePlayGamesIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/googlePlayLeaderboardsIcon_preview.png \
@@ -7149,6 +7232,10 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/tipTopLevelColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/tipTopPreview_preview.png \
   $(BUILD_DIR)/ba_data/textures/tnt_preview.png \
+  $(BUILD_DIR)/ba_data/textures/tokens1_preview.png \
+  $(BUILD_DIR)/ba_data/textures/tokens2_preview.png \
+  $(BUILD_DIR)/ba_data/textures/tokens3_preview.png \
+  $(BUILD_DIR)/ba_data/textures/tokens4_preview.png \
   $(BUILD_DIR)/ba_data/textures/touchArrowsActions_preview.png \
   $(BUILD_DIR)/ba_data/textures/touchArrows_preview.png \
   $(BUILD_DIR)/ba_data/textures/towerDLevelColor_preview.png \
@@ -7166,6 +7253,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/warriorIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/warriorIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/white_preview.png \
+  $(BUILD_DIR)/ba_data/textures/windowBottomCap_preview.png \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVMed_preview.png \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVSmall_preview.png \
   $(BUILD_DIR)/ba_data/textures/wings_preview.png \
@@ -7528,6 +7616,19 @@ assets-android: $(ASSET_TARGETS_ANDROID) $(ASSET_TARGETS_COMMON_GUI)
 assets: assets-cmake assets-win-Win32
 clean:
 	@rm -rf $(BUILD_DIR)
+
+# Modern AssetPackage bits.
+
+# Extract the asset-package version from project-config and stuff it into
+# a 'resolved' file. If we are using dev version, clear the file which
+# will force an explicit check each time through.
+$(PROJ_DIR)/.cache/asset_package_resolved: $(PROJ_DIR)/config/projectconfig.json
+	@$(PCOMMAND) asset_package_resolve $@
+
+$(PROJ_DIR)/.cache/assetmanifests/gui_desktop_v2dev1:	\
+      $(PROJ_DIR)/.cache/asset_package_resolved
+	@$(PCOMMAND) asset_package_assemble \
+$(PROJ_DIR)/.cache/asset_package_resolved	gui_desktop_v2dev1
 
 # These targets don't correspond to actual files; make sure make knows that.
 .PHONY: cmake win mac ios android audio audio-clean fonts fonts-clean data	\

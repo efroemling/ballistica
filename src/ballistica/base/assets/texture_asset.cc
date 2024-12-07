@@ -2,15 +2,24 @@
 
 #include "ballistica/base/assets/texture_asset.h"
 
+#include <algorithm>
+#include <cstdio>
+#include <list>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/texture_asset_preload_data.h"
 #include "ballistica/base/assets/texture_asset_renderer_data.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/graphics/text/text_packer.h"
 #include "ballistica/base/graphics/texture/dds.h"
 #include "ballistica/base/graphics/texture/ktx.h"
 #include "ballistica/base/graphics/texture/pvr.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "external/qr_code_generator/QrCode.hpp"
 
 namespace ballistica::base {
@@ -74,13 +83,13 @@ TextureAsset::TextureAsset(const std::string& qr_url) : is_qr_code_(true) {
              "QR code url byte length %zu exceeds soft-limit of %zu;"
              " please use shorter urls. (url=%s)",
              qr_url.size(), soft_limit, qr_url.c_str());
-    Log(LogLevel::kWarning, buffer);
+    g_core->Log(LogName::kBaAssets, LogLevel::kWarning, buffer);
   }
   file_name_ = qr_url;
   valid_ = true;
 }
 
-TextureAsset::~TextureAsset() = default;
+TextureAsset::~TextureAsset() {}
 
 auto TextureAsset::GetName() const -> std::string {
   return (!file_name_.empty()) ? file_name_ : "invalid texture";
@@ -103,7 +112,7 @@ void TextureAsset::DoPreload() {
   auto texture_quality = g_base->graphics->placeholder_texture_quality();
 
   // If we're a text-texture.
-  if (packer_.Exists()) {
+  if (packer_.exists()) {
     assert(type_ == TextureType::k2D);
 
     int width = packer_->texture_width();
@@ -439,9 +448,9 @@ void TextureAsset::DoPreload() {
 
 void TextureAsset::DoLoad() {
   assert(g_base->app_adapter->InGraphicsContext());
-  assert(!renderer_data_.Exists());
+  assert(!renderer_data_.exists());
   renderer_data_ = g_base->graphics_server->renderer()->NewTextureData(*this);
-  assert(renderer_data_.Exists());
+  assert(renderer_data_.exists());
   renderer_data_->Load();
 
   // Store our base-level from the preload-data so we know if we're lower than
@@ -456,7 +465,7 @@ void TextureAsset::DoLoad() {
 void TextureAsset::DoUnload() {
   assert(g_base->app_adapter->InGraphicsContext());
   assert(valid_);
-  assert(renderer_data_.Exists());
+  assert(renderer_data_.exists());
   renderer_data_.Clear();
   base_level_ = 0;
 }

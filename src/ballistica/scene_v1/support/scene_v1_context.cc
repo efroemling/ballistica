@@ -2,10 +2,13 @@
 
 #include "ballistica/scene_v1/support/scene_v1_context.h"
 
+#include <Python.h>
+
+#include <string>
+
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/shared/generic/runnable.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::scene_v1 {
 
@@ -42,7 +45,7 @@ auto SceneV1Context::GetContextDescription() -> std::string {
   if (HostActivity* ha = GetAsHostActivity()) {
     // Return our Python activity class description if possible.
     PythonRef ha_obj(ha->GetPyActivity(), PythonRef::kAcquire);
-    if (ha_obj.Get() != Py_None) {
+    if (ha_obj.get() != Py_None) {
       return ha_obj.Str();
     }
   }
@@ -74,7 +77,8 @@ auto SceneV1Context::NewTimer(TimeType timetype, TimerMedium length,
 void SceneV1Context::DeleteTimer(TimeType timetype, int timer_id) {
   // We throw on NewTimer; lets just ignore anything that comes
   // through here to avoid messing up destructors.
-  Log(LogLevel::kError, "ContextTarget::DeleteTimer() called; unexpected.");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "ContextTarget::DeleteTimer() called; unexpected.");
 }
 
 auto SceneV1Context::GetTime(TimeType timetype) -> millisecs_t {

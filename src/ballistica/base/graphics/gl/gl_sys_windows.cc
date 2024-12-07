@@ -3,6 +3,8 @@
 #if BA_ENABLE_OPENGL && BA_OSTYPE_WINDOWS
 #include "ballistica/base/graphics/gl/gl_sys_windows.h"
 
+#include <string>
+
 #include "SDL.h"
 #include "ballistica/base/graphics/gl/gl_sys.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"

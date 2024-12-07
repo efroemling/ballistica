@@ -43,7 +43,7 @@ class Player : public Object {
   /// The player node for the current activity.
   auto node() const -> Node* {
     assert(g_base->InLogicThread());
-    return node_.Get();
+    return node_.get();
   }
   /// Set the player node for the current activity.
   void set_node(Node* node) {
@@ -70,7 +70,7 @@ class Player : public Object {
   void set_has_py_data(bool has) { has_py_data_ = has; }
 
   auto input_device_delegate() const -> SceneV1InputDeviceDelegate* {
-    return input_device_delegate_.Get();
+    return input_device_delegate_.get();
   }
   void set_input_device_delegate(SceneV1InputDeviceDelegate* input_device);
 
@@ -87,7 +87,7 @@ class Player : public Object {
   void SetHostActivity(HostActivity* host_activity);
   auto GetHostActivity() const -> HostActivity*;
 
-  auto has_py_ref() -> bool { return (py_ref_ != nullptr); }
+  auto HasPyRef() -> bool { return (py_ref_ != nullptr); }
 
   void SetIcon(const std::string& tex_name, const std::string& tint_tex_name,
                const std::vector<float>& tint_color,

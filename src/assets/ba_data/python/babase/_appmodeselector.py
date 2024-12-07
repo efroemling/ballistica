@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class AppModeSelector:
-    """Defines which AppModes to use to handle given AppIntents.
+    """Defines which AppModes are available or used to handle given AppIntents.
 
     Category: **App Classes**
 
@@ -29,4 +29,4 @@ class AppModeSelector:
         This may be called in a background thread, so avoid any calls
         limited to logic thread use/etc.
         """
-        raise NotImplementedError('app_mode_for_intent() should be overridden.')
+        raise NotImplementedError()

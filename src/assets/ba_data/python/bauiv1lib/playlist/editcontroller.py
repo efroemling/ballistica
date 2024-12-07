@@ -11,7 +11,7 @@ import bascenev1 as bs
 import bauiv1 as bui
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Callable
 
 
 class PlaylistEditController:
@@ -20,8 +20,9 @@ class PlaylistEditController:
     def __init__(
         self,
         sessiontype: type[bs.Session],
+        from_window: bui.MainWindow,
+        *,
         existing_playlist_name: str | None = None,
-        transition: str = 'in_right',
         playlist: list[dict[str, Any]] | None = None,
         playlist_name: str | None = None,
     ):
@@ -43,6 +44,9 @@ class PlaylistEditController:
         self._pvars = PlaylistTypeVars(sessiontype)
         self._existing_playlist_name = existing_playlist_name
         self._config_name_full = self._pvars.config_name + ' Playlists'
+
+        self._pre_game_add_state: bui.MainWindowState | None = None
+        self._pre_game_edit_state: bui.MainWindowState | None = None
 
         # Make sure config exists.
         if self._config_name_full not in appconfig:
@@ -88,13 +92,12 @@ class PlaylistEditController:
             # and that's all they can do.
             self._edit_ui_selection = 'add_button'
 
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            PlaylistEditWindow(
-                editcontroller=self, transition=transition
-            ).get_root_widget(),
-            from_window=False,  # Disable this check.
-        )
+        editwindow = PlaylistEditWindow(editcontroller=self)
+        from_window.main_window_replace(editwindow)
+
+        # Once we've set our start window, store the back state. We'll
+        # skip back to there once we're fully done.
+        self._back_state = editwindow.main_window_back_state
 
     def get_config_name(self) -> str:
         """(internal)"""
@@ -144,83 +147,88 @@ class PlaylistEditController:
         """Sets the selected playlist index."""
         self._selected_index = index
 
-    def add_game_pressed(self) -> None:
+    def add_game_pressed(self, from_window: bui.MainWindow) -> None:
         """(internal)"""
         from bauiv1lib.playlist.addgame import PlaylistAddGameWindow
 
-        assert bui.app.classic is not None
-        bui.app.ui_v1.clear_main_menu_window(transition='out_left')
-        bui.app.ui_v1.set_main_menu_window(
-            PlaylistAddGameWindow(editcontroller=self).get_root_widget(),
-            from_window=None,
-        )
+        # assert bui.app.classic is not None
 
-    def edit_game_pressed(self) -> None:
+        # No op if we're not in control.
+        if not from_window.main_window_has_control():
+            return
+
+        addwindow = PlaylistAddGameWindow(editcontroller=self)
+        from_window.main_window_replace(addwindow)
+
+        # Once we're there, store the back state. We'll use that to jump
+        # back to our current location once the edit is done.
+        assert self._pre_game_add_state is None
+        self._pre_game_add_state = addwindow.main_window_back_state
+
+    def edit_game_pressed(self, from_window: bui.MainWindow) -> None:
         """Should be called by supplemental UIs when a game is to be edited."""
 
         if not self._playlist:
             return
+
         self._show_edit_ui(
             gametype=bui.getclass(
                 self._playlist[self._selected_index]['type'],
                 subclassof=bs.GameActivity,
             ),
             settings=self._playlist[self._selected_index],
-        )
-
-    def add_game_cancelled(self) -> None:
-        """(internal)"""
-        from bauiv1lib.playlist.edit import PlaylistEditWindow
-
-        assert bui.app.classic is not None
-        bui.app.ui_v1.clear_main_menu_window(transition='out_right')
-        bui.app.ui_v1.set_main_menu_window(
-            PlaylistEditWindow(
-                editcontroller=self, transition='in_left'
-            ).get_root_widget(),
-            from_window=None,
+            from_window=from_window,
         )
 
     def _show_edit_ui(
-        self, gametype: type[bs.GameActivity], settings: dict[str, Any] | None
+        self,
+        gametype: type[bs.GameActivity],
+        settings: dict[str, Any] | None,
+        from_window: bui.MainWindow,
     ) -> None:
+        # pylint: disable=cyclic-import
+        from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
+
+        if not from_window.main_window_has_control():
+            return
+
         self._editing_game = settings is not None
         self._editing_game_type = gametype
         assert self._sessiontype is not None
-        gametype.create_settings_ui(
-            self._sessiontype, copy.deepcopy(settings), self._edit_game_done
+
+        # Jump into an edit window.
+        editwindow = PlaylistEditGameWindow(
+            gametype,
+            self._sessiontype,
+            copy.deepcopy(settings),
+            completion_call=self._edit_game_done,
+        )
+        from_window.main_window_replace(editwindow)
+
+        # Once we're there, store the back state. We'll use that to jump
+        # back to our current location once the edit is done.
+        assert self._pre_game_edit_state is None
+        self._pre_game_edit_state = editwindow.main_window_back_state
+
+    def add_game_type_selected(
+        self, gametype: type[bs.GameActivity], from_window: bui.MainWindow
+    ) -> None:
+        """(internal)"""
+        self._show_edit_ui(
+            gametype=gametype, settings=None, from_window=from_window
         )
 
-    def add_game_type_selected(self, gametype: type[bs.GameActivity]) -> None:
-        """(internal)"""
-        self._show_edit_ui(gametype=gametype, settings=None)
+    def _edit_game_done(
+        self, config: dict[str, Any] | None, from_window: bui.MainWindow
+    ) -> None:
 
-    def _edit_game_done(self, config: dict[str, Any] | None) -> None:
-        from bauiv1lib.playlist.edit import PlaylistEditWindow
-        from bauiv1lib.playlist.addgame import PlaylistAddGameWindow
+        # No-op if provided window isn't in charge.
+        if not from_window.main_window_has_control():
+            return
 
         assert bui.app.classic is not None
         if config is None:
-            # If we were editing, go back to our list.
-            if self._editing_game:
-                bui.getsound('powerdown01').play()
-                bui.app.ui_v1.clear_main_menu_window(transition='out_right')
-                bui.app.ui_v1.set_main_menu_window(
-                    PlaylistEditWindow(
-                        editcontroller=self, transition='in_left'
-                    ).get_root_widget(),
-                    from_window=None,
-                )
-
-            # Otherwise we were adding; go back to the add type choice list.
-            else:
-                bui.app.ui_v1.clear_main_menu_window(transition='out_right')
-                bui.app.ui_v1.set_main_menu_window(
-                    PlaylistAddGameWindow(
-                        editcontroller=self, transition='in_left'
-                    ).get_root_widget(),
-                    from_window=None,
-                )
+            bui.getsound('powerdown01').play()
         else:
             # Make sure type is in there.
             assert self._editing_game_type is not None
@@ -237,10 +245,17 @@ class PlaylistEditController:
                 self._selected_index = insert_index
 
             bui.getsound('gunCocking').play()
-            bui.app.ui_v1.clear_main_menu_window(transition='out_right')
-            bui.app.ui_v1.set_main_menu_window(
-                PlaylistEditWindow(
-                    editcontroller=self, transition='in_left'
-                ).get_root_widget(),
-                from_window=None,
-            )
+
+        # If we're adding, jump to before the add started.
+        # Otherwise jump to before the edit started.
+        assert (
+            self._pre_game_edit_state is not None
+            or self._pre_game_add_state is not None
+        )
+        if self._pre_game_add_state is not None:
+            from_window.main_window_back_state = self._pre_game_add_state
+        elif self._pre_game_edit_state is not None:
+            from_window.main_window_back_state = self._pre_game_edit_state
+        from_window.main_window_back()
+        self._pre_game_edit_state = None
+        self._pre_game_add_state = None

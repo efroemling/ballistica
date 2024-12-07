@@ -15,6 +15,7 @@ class TextureAsset : public Asset {
  public:
   TextureAsset();
   ~TextureAsset() override;
+
   // Pass a newly allocated TextPacker pointer here; TextureData takes ownership
   // and handles cleaning it up.
   explicit TextureAsset(TextPacker* packer);
@@ -37,8 +38,8 @@ class TextureAsset : public Asset {
     return preload_datas_;
   }
   auto renderer_data() const -> TextureAssetRendererData* {
-    assert(renderer_data_.Exists());
-    return renderer_data_.Get();
+    assert(renderer_data_.exists());
+    return renderer_data_.get();
   }
   auto base_level() const -> int { return base_level_; }
 

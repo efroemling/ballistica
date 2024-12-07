@@ -28,6 +28,7 @@ from efro.dataclassio import (
 )
 from efro.terminal import Clr
 
+
 if TYPE_CHECKING:
     import efro.terminal
 
@@ -74,10 +75,9 @@ def get_local_cache_dir() -> str:
 
 def get_repository_base_url() -> str:
     """Return the base repository url (assumes cwd is project root)."""
-    # from efrotools import getprojectconfig
-    import efrotools
+    from efrotools.project import getprojectconfig
 
-    pconfig = efrotools.getprojectconfig('.')
+    pconfig = getprojectconfig('.')
     name = 'efrocache_repository_url'
     val = pconfig.get(name)
     if not isinstance(val, str):
@@ -659,13 +659,32 @@ def _write_cache_file(staging_dir: str, fname: str) -> tuple[str, str, str]:
 
 def _cache_prefix_for_file(fname: str) -> bytes:
     # pylint: disable=global-statement
+    from efrotools.util import is_wsl_windows_build_path
+
     global g_cache_prefix_exec
     global g_cache_prefix_noexec
 
     # We'll be calling this a lot when checking existing files, so we
     # want it to be efficient. Let's cache the two options there are at
     # the moment.
+
     executable = os.access(fname, os.X_OK)
+
+    if is_wsl_windows_build_path(os.getcwd()):
+        # Currently the filesystem during wsl windows builds tells us
+        # everything is executable. Normally this causes us to
+        # re-extract most everything which is all non-executable in the
+        # cache. So as a band-aid let's just hard-code everything to
+        # give a non-executable result here instead so we only have to
+        # redundantly extract the few things that ARE executable instead
+        # of all the things that aren't.
+
+        # Make ourself aware if this situation ever changes.
+        if not executable:
+            print('GOT WSL PATH NON-EXECUTABLE; NOT EXPECTED')
+
+        executable = False
+
     if executable:
         if g_cache_prefix_exec is None:
             metadata = dataclass_to_json(
@@ -772,10 +791,16 @@ def warm_start_cache(cachetype: str) -> None:
     # Python process for each and every file we need to touch. In that
     # case, this optimization would probably be unnecessary.
     #
-    # UPDATE - we now have that lightweight build system (pcommandbatch)
+    # UPDATE - We now have that lightweight build system (pcommandbatch)
     # which means individual refreshes are now much less expensive than
     # before, so disabling this for now.
-    if bool(False):
+    #
+    # UPDATE 2 - I've disabled pcommandbatch by default so flipping this
+    # back on for now since it really helps in some cases such as WSL
+    # Windows builds which are painfully slow otherwise. Can consider
+    # turning the back off again once asset builds have migrated to
+    # the cloud asset-package system.
+    if bool(True):
         cachemap: dict[str, str]
         with open(CACHE_MAP_NAME, encoding='utf-8') as infile:
             cachemap = json.loads(infile.read())

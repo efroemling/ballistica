@@ -2,12 +2,16 @@
 
 #include "ballistica/scene_v1/support/player.h"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/input/device/joystick_input.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/scene_v1/python/class/python_class_session_player.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -25,7 +29,7 @@ Player::~Player() {
   assert(g_base->InLogicThread());
 
   // If we have an input-device driving us, detach it.
-  if (auto* delegate = input_device_delegate_.Get()) {
+  if (auto* delegate = input_device_delegate_.get()) {
     delegate->DetachFromPlayer();
   }
 
@@ -56,7 +60,7 @@ auto Player::GetName(bool full, bool icon) const -> std::string {
 }
 
 auto Player::GetHostActivity() const -> HostActivity* {
-  return host_activity_.Get();
+  return host_activity_.get();
 }
 
 void Player::SetHostActivity(HostActivity* a) {
@@ -65,7 +69,7 @@ void Player::SetHostActivity(HostActivity* a) {
   // Make sure we get pulled out of one activity before being added to another.
   if (a && in_activity_) {
     std::string old_name =
-        host_activity_.Exists()
+        host_activity_.exists()
             ? PythonRef(host_activity_->GetPyActivity(), PythonRef::kAcquire)
                   .Str()
             : "<nullptr>";
@@ -108,7 +112,7 @@ void Player::SetPyTeam(PyObject* team) {
 }
 
 auto Player::GetPyTeam() -> PyObject* {
-  PyObject* obj = py_team_weak_ref_.Get();
+  PyObject* obj = py_team_weak_ref_.get();
   if (!obj) {
     return Py_None;
   }
@@ -124,22 +128,22 @@ void Player::SetPyCharacter(PyObject* character) {
 }
 
 auto Player::GetPyCharacter() -> PyObject* {
-  return py_character_.Exists() ? py_character_.Get() : Py_None;
+  return py_character_.exists() ? py_character_.get() : Py_None;
 }
 
 void Player::SetPyColor(PyObject* c) { py_color_.Acquire(c); }
 auto Player::GetPyColor() -> PyObject* {
-  return py_color_.Exists() ? py_color_.Get() : Py_None;
+  return py_color_.exists() ? py_color_.get() : Py_None;
 }
 
 void Player::SetPyHighlight(PyObject* c) { py_highlight_.Acquire(c); }
 auto Player::GetPyHighlight() -> PyObject* {
-  return py_highlight_.Exists() ? py_highlight_.Get() : Py_None;
+  return py_highlight_.exists() ? py_highlight_.get() : Py_None;
 }
 
 void Player::SetPyActivityPlayer(PyObject* c) { py_activityplayer_.Acquire(c); }
 auto Player::GetPyActivityPlayer() -> PyObject* {
-  return py_activityplayer_.Exists() ? py_activityplayer_.Get() : Py_None;
+  return py_activityplayer_.exists() ? py_activityplayer_.get() : Py_None;
 }
 
 auto Player::GetPyRef(bool new_ref) -> PyObject* {
@@ -341,17 +345,17 @@ void Player::RunInput(InputType type, float value) {
   }
 
   auto j = calls_.find(static_cast<int>(type));
-  if (j != calls_.end() && j->second.Exists()) {
+  if (j != calls_.end() && j->second.exists()) {
     if (type == InputType::kRun) {
       PythonRef args(
           Py_BuildValue("(f)", std::min(1.0f, std::max(0.0f, value))),
           PythonRef::kSteal);
-      j->second->Run(args.Get());
+      j->second->Run(args.get());
     } else if (type == InputType::kLeftRight || type == InputType::kUpDown) {
       PythonRef args(
           Py_BuildValue("(f)", std::min(1.0f, std::max(-1.0f, value))),
           PythonRef::kSteal);
-      j->second->Run(args.Get());
+      j->second->Run(args.get());
     } else {
       j->second->Run();
     }
@@ -359,7 +363,7 @@ void Player::RunInput(InputType type, float value) {
 }
 
 auto Player::GetHostSession() const -> HostSession* {
-  return host_session_.Get();
+  return host_session_.get();
 }
 
 void Player::SetName(const std::string& name, const std::string& full_name,
@@ -374,7 +378,7 @@ void Player::SetName(const std::string& name, const std::string& full_name,
   // If we're already in the game and our name is changing, we need to update
   // the roster.
   if (accepted_) {
-    if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+    if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
       appmode->UpdateGameRoster();
     }
   }
@@ -404,7 +408,7 @@ void Player::set_input_device_delegate(
 
 auto Player::GetPublicV1AccountID() const -> std::string {
   assert(g_base->InLogicThread());
-  if (input_device_delegate_.Exists()) {
+  if (input_device_delegate_.exists()) {
     return input_device_delegate_->GetPublicV1AccountID();
   }
   return "";

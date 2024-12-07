@@ -2,6 +2,11 @@
 
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 
+#include <memory>
+#include <utility>
+#include <vector>
+
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/collision_mesh_asset.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_draw_snapshot.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_fuse_data.h"
@@ -10,6 +15,10 @@
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/base/graphics/component/smoke_component.h"
 #include "ballistica/base/graphics/component/sprite_component.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_smoke_full.h"
+#include "ballistica/base/graphics/mesh/sprite_mesh.h"
+#include "ballistica/core/platform/core_platform.h"  // IWYU pragma: keep.
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
@@ -64,8 +73,8 @@ void BGDynamics::Step(const Vector3f& cam_pos, int step_millisecs) {
     return;
   }
 
-  // Pass a newly allocated raw pointer to the bg-dynamics thread; it takes care
-  // of disposing it when done.
+  // Pass a newly allocated raw pointer to the bg-dynamics thread; it takes
+  // care of disposing it when done.
   auto d = Object::NewDeferred<BGDynamicsServer::StepData>();
   d->graphics_quality = Graphics::GraphicsQualityFromRequest(
       g_base->graphics->settings()->graphics_quality,
@@ -174,8 +183,8 @@ void BGDynamics::Draw(FrameDef* frame_def) {
   }
 
   // Draw sparks.
-  if (ds->spark_vertices.Exists()) {
-    if (!sparks_mesh_.Exists()) sparks_mesh_ = Object::New<SpriteMesh>();
+  if (ds->spark_vertices.exists()) {
+    if (!sparks_mesh_.exists()) sparks_mesh_ = Object::New<SpriteMesh>();
     sparks_mesh_->SetIndexData(ds->spark_indices);
     sparks_mesh_->SetData(
         Object::Ref<MeshBuffer<VertexSprite>>(ds->spark_vertices));
@@ -189,29 +198,29 @@ void BGDynamics::Draw(FrameDef* frame_def) {
     c.SetColor(2.0f, 2.0f, 2.0f, 1.0f);
     c.SetOverlay(draw_in_overlay);
     c.SetTexture(g_base->assets->SysTexture(SysTextureID::kSparks));
-    c.DrawMesh(sparks_mesh_.Get(), kMeshDrawFlagNoReflection);
+    c.DrawMesh(sparks_mesh_.get(), kMeshDrawFlagNoReflection);
     c.Submit();
   }
 
   // Draw lights.
-  if (ds->light_vertices.Exists()) {
-    assert(ds->light_indices.Exists());
+  if (ds->light_vertices.exists()) {
+    assert(ds->light_indices.exists());
     assert(!ds->light_indices->elements.empty());
     assert(!ds->light_vertices->elements.empty());
-    if (!lights_mesh_.Exists()) lights_mesh_ = Object::New<SpriteMesh>();
+    if (!lights_mesh_.exists()) lights_mesh_ = Object::New<SpriteMesh>();
     lights_mesh_->SetIndexData(ds->light_indices);
     lights_mesh_->SetData(
         Object::Ref<MeshBuffer<VertexSprite>>(ds->light_vertices));
     SpriteComponent c(frame_def->light_shadow_pass());
     c.SetTexture(g_base->assets->SysTexture(SysTextureID::kLightSoft));
-    c.DrawMesh(lights_mesh_.Get());
+    c.DrawMesh(lights_mesh_.get());
     c.Submit();
   }
 
   // Draw shadows.
-  if (ds->shadow_vertices.Exists()) {
-    assert(ds->shadow_indices.Exists());
-    if (!shadows_mesh_.Exists()) {
+  if (ds->shadow_vertices.exists()) {
+    assert(ds->shadow_indices.exists());
+    if (!shadows_mesh_.exists()) {
       shadows_mesh_ = Object::New<SpriteMesh>();
     }
     shadows_mesh_->SetIndexData(ds->shadow_indices);
@@ -219,7 +228,7 @@ void BGDynamics::Draw(FrameDef* frame_def) {
         Object::Ref<MeshBuffer<VertexSprite>>(ds->shadow_vertices));
     SpriteComponent c(frame_def->light_shadow_pass());
     c.SetTexture(g_base->assets->SysTexture(SysTextureID::kLight));
-    c.DrawMesh(shadows_mesh_.Get());
+    c.DrawMesh(shadows_mesh_.get());
     c.Submit();
   }
 
@@ -234,8 +243,8 @@ void BGDynamics::Draw(FrameDef* frame_def) {
   DrawChunks(frame_def, &ds->flag_stands, BGDynamicsChunkType::kFlagStand);
 
   // Draw tendrils.
-  if (ds->tendril_vertices.Exists()) {
-    if (!tendrils_mesh_.Exists())
+  if (ds->tendril_vertices.exists()) {
+    if (!tendrils_mesh_.exists())
       tendrils_mesh_ = Object::New<MeshIndexedSmokeFull>();
     tendrils_mesh_->SetIndexData(ds->tendril_indices);
     tendrils_mesh_->SetData(
@@ -245,7 +254,7 @@ void BGDynamics::Draw(FrameDef* frame_def) {
                                      : frame_def->beauty_pass());
     c.SetOverlay(draw_in_overlay);
     c.SetColor(1.0f, 1.0f, 1.0f, 1.0f);
-    c.DrawMesh(tendrils_mesh_.Get(), kMeshDrawFlagNoReflection);
+    c.DrawMesh(tendrils_mesh_.get(), kMeshDrawFlagNoReflection);
     c.Submit();
 
     // Shadows.
@@ -261,9 +270,9 @@ void BGDynamics::Draw(FrameDef* frame_def) {
   }
 
   // Draw fuses.
-  if (ds->fuse_vertices.Exists()) {
+  if (ds->fuse_vertices.exists()) {
     // Update our mesh with this data.
-    if (!fuses_mesh_.Exists())
+    if (!fuses_mesh_.exists())
       fuses_mesh_ = Object::New<MeshIndexedSimpleFull>();
     fuses_mesh_->SetIndexData(ds->fuse_indices);
     fuses_mesh_->SetData(
@@ -271,7 +280,7 @@ void BGDynamics::Draw(FrameDef* frame_def) {
     {  // Draw!
       ObjectComponent c(frame_def->beauty_pass());
       c.SetTexture(g_base->assets->SysTexture(SysTextureID::kFuse));
-      c.DrawMesh(fuses_mesh_.Get(), kMeshDrawFlagNoReflection);
+      c.DrawMesh(fuses_mesh_.get(), kMeshDrawFlagNoReflection);
       c.Submit();
     }
   }

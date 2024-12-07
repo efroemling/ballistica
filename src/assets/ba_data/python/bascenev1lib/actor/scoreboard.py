@@ -22,14 +22,18 @@ class _Entry:
         scale: float,
         label: bs.Lstr | None,
         flash_length: float,
+        width: float | None = None,
+        height: float | None = None,
     ):
+        # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-positional-arguments
         self._scoreboard = weakref.ref(scoreboard)
         self._do_cover = do_cover
         self._scale = scale
         self._flash_length = flash_length
-        self._width = 140.0 * self._scale
-        self._height = 32.0 * self._scale
+        self._width = (140.0 if width is None else width) * self._scale
+        self._height = (32.0 if height is None else height) * self._scale
         self._bar_width = 2.0 * self._scale
         self._bar_height = 32.0 * self._scale
         self._bar_tex = self._backing_tex = bs.gettexture('bar')
@@ -277,6 +281,7 @@ class _Entry:
     def set_value(
         self,
         score: float,
+        *,
         max_score: float | None = None,
         countdown: bool = False,
         flash: bool = True,
@@ -368,16 +373,26 @@ class Scoreboard:
 
     _ENTRYSTORENAME = bs.storagename('entry')
 
-    def __init__(self, label: bs.Lstr | None = None, score_split: float = 0.7):
+    def __init__(
+        self,
+        label: bs.Lstr | None = None,
+        score_split: float = 0.7,
+        pos: Sequence[float] | None = None,
+        width: float | None = None,
+        height: float | None = None,
+    ):
         """Instantiate a scoreboard.
 
         Label can be something like 'points' and will
         show up on boards if provided.
         """
+        # pylint: disable=too-many-positional-arguments
         self._flat_tex = bs.gettexture('null')
         self._entries: dict[int, _Entry] = {}
         self._label = label
         self.score_split = score_split
+        self._width = width
+        self._height = height
 
         # For free-for-all we go simpler since we have one per player.
         self._pos: Sequence[float]
@@ -393,12 +408,14 @@ class Scoreboard:
             self._pos = (20.0, -70.0)
             self._scale = 1.0
             self._flash_length = 1.0
+        self._pos = self._pos if pos is None else pos
 
     def set_team_value(
         self,
         team: bs.Team,
         score: float,
         max_score: float | None = None,
+        *,
         countdown: bool = False,
         flash: bool = True,
         show_value: bool = True,
@@ -430,6 +447,8 @@ class Scoreboard:
             do_cover=self._do_cover,
             scale=self._scale,
             label=self._label,
+            width=self._width,
+            height=self._height,
             flash_length=self._flash_length,
         )
         self._update_teams()

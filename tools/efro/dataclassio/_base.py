@@ -61,6 +61,29 @@ class IOExtendedData:
         type-safe form.
         """
 
+    # pylint: disable=useless-return
+
+    @classmethod
+    def handle_input_error(cls, exc: Exception) -> Self | None:
+        """Called when an error occurs during input decoding.
+
+        This allows a type to optionally return substitute data
+        to be used in place of the failed decode. If it returns
+        None, the original exception is re-raised.
+
+        It is generally a bad idea to apply catch-alls such as this,
+        as it can lead to silent data loss. This should only be used
+        in specific cases such as user settings where an occasional
+        reset is harmless and is preferable to keeping all contained
+        enums and other values backward compatible indefinitely.
+        """
+        del exc  # Unused.
+
+        # By default we let things fail.
+        return None
+
+    # pylint: enable=useless-return
+
 
 EnumT = TypeVar('EnumT', bound=Enum)
 
@@ -137,6 +160,8 @@ class IOAttrs:
         fields; it should be used instead of 'soft_default' for mutable types
         such as lists to prevent a single default object from unintentionally
         changing over time.
+    'enum_fallback', if provided, specifies an enum value to be substituted
+        in the case of unrecognized enum values.
     """
 
     # A sentinel object to detect if a parameter is supplied or not.  Use
@@ -153,16 +178,19 @@ class IOAttrs:
     whole_minutes: bool = False
     soft_default: Any = MISSING
     soft_default_factory: Callable[[], Any] | _MissingType = MISSING
+    enum_fallback: Enum | None = None
 
     def __init__(
         self,
         storagename: str | None = storagename,
+        *,
         store_default: bool = store_default,
         whole_days: bool = whole_days,
         whole_hours: bool = whole_hours,
         whole_minutes: bool = whole_minutes,
         soft_default: Any = MISSING,
         soft_default_factory: Callable[[], Any] | _MissingType = MISSING,
+        enum_fallback: Enum | None = None,
     ):
         # Only store values that differ from class defaults to keep
         # our instances nice and lean.
@@ -192,6 +220,8 @@ class IOAttrs:
                 raise ValueError(
                     'Cannot set both soft_default and soft_default_factory'
                 )
+        if enum_fallback is not cls.enum_fallback:
+            self.enum_fallback = enum_fallback
 
     def validate_for_field(self, cls: type, field: dataclasses.Field) -> None:
         """Ensure the IOAttrs instance is ok to use with the provided field."""

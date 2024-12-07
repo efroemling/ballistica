@@ -1,37 +1,45 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Classic ballistica components.
+"""Components for the classic BombSquad experience.
 
-This package is used as a 'dumping ground' for functionality that is
-necessary to keep legacy parts of the app working, but which may no
-longer be the best way to do things going forward.
+This package is used as a dumping ground for functionality that is
+necessary to keep classic BombSquad working, but which may no longer be
+the best way to do things going forward.
 
 New code should try to avoid using code from here when possible.
 
 Functionality in this package should be exposed through the
-ClassicSubsystem. This allows type-checked code to go through the
+ClassicAppSubsystem. This allows type-checked code to go through the
 babase.app.classic singleton which forces it to explicitly handle the
 possibility of babase.app.classic being None. When code instead imports
 classic submodules directly, it is much harder to make it cleanly handle
 classic not being present.
 """
 
-# ba_meta require api 8
+# ba_meta require api 9
 
 # Note: Code relying on classic should import things from here *only*
-# for type-checking and use the versions in app.classic at runtime; that
-# way type-checking will cleanly cover the classic-not-present case
-# (app.classic being None).
+# for type-checking and use the versions in ba*.app.classic at runtime;
+# that way type-checking will cleanly cover the classic-not-present case
+# (ba*.app.classic being None).
 import logging
 
-from baclassic._subsystem import ClassicSubsystem
+from efro.util import set_canonical_module_names
+
+from baclassic._appmode import ClassicAppMode
+from baclassic._appsubsystem import ClassicAppSubsystem
 from baclassic._achievement import Achievement, AchievementSubsystem
 
 __all__ = [
-    'ClassicSubsystem',
+    'ClassicAppMode',
+    'ClassicAppSubsystem',
     'Achievement',
     'AchievementSubsystem',
 ]
+
+# We want stuff here to show up as packagename.Foo instead of
+# packagename._submodule.Foo.
+set_canonical_module_names(globals())
 
 # Sanity check: we want to keep ballistica's dependencies and
 # bootstrapping order clearly defined; let's check a few particular

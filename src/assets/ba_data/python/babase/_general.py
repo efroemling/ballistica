@@ -3,6 +3,7 @@
 """Utility snippets applying to generic Python code."""
 from __future__ import annotations
 
+import sys
 import types
 import weakref
 import random
@@ -15,8 +16,8 @@ from efro.terminal import Clr
 import _babase
 
 if TYPE_CHECKING:
+    import functools
     from typing import Any
-    from efro.call import Call as Call  # 'as Call' so we re-export.
 
 
 # Declare distinct types for different time measurements we use so the
@@ -66,7 +67,9 @@ def existing(obj: ExistableT | None) -> ExistableT | None:
     return obj if obj is not None and obj.exists() else None
 
 
-def getclass(name: str, subclassof: type[T]) -> type[T]:
+def getclass(
+    name: str, subclassof: type[T], check_sdlib_modulename_clash: bool = False
+) -> type[T]:
     """Given a full class name such as foo.bar.MyClass, return the class.
 
     Category: **General Utility Functions**
@@ -79,6 +82,8 @@ def getclass(name: str, subclassof: type[T]) -> type[T]:
     splits = name.split('.')
     modulename = '.'.join(splits[:-1])
     classname = splits[-1]
+    if modulename in sys.stdlib_module_names and check_sdlib_modulename_clash:
+        raise Exception(f'{modulename} is an inbuilt module.')
     module = importlib.import_module(modulename)
     cls: type = getattr(module, classname)
 
@@ -166,7 +171,7 @@ class _WeakCall:
             if not self._did_invalid_call_warning:
                 logging.warning(
                     'Warning: callable passed to babase.WeakCall() is not'
-                    ' weak-referencable (%s); use babase.Call() instead'
+                    ' weak-referencable (%s); use functools.partial instead'
                     ' to avoid this warning.',
                     stack_info=True,
                 )
@@ -199,9 +204,13 @@ class _Call:
     The callable is strong-referenced so it won't die until this
     object does.
 
+    WARNING: This is exactly the same as Python's built in functools.partial().
+    Use functools.partial instead of this for new code, as this will probably
+    be deprecated at some point.
+
     Note that a bound method (ex: ``myobj.dosomething``) contains a reference
     to ``self`` (``myobj`` in that case), so you will be keeping that object
-    alive too. Use babase.WeakCall if you want to pass a method to callback
+    alive too. Use babase.WeakCall if you want to pass a method to a callback
     without keeping its object alive.
     """
 
@@ -239,12 +248,24 @@ class _Call:
 
 
 if TYPE_CHECKING:
-    # Some interaction between our ballistica pylint plugin
-    # and this code is crashing starting on pylint 2.15.0.
-    # This seems to fix things for now.
+    # For type-checking, point at functools.partial which gives us full
+    # type checking on both positional and keyword arguments (as of mypy
+    # 1.11).
+
+    # FIXME: Actually, currently (as of Dec 2024) mypy doesn't fully
+    # type check partial. The partial() call itself is checked, but the
+    # resulting callable seems to be essentially untyped. We should
+    # probably revise this stuff so that Call and WeakCall are for 100%
+    # complete calls so we can fully type check them using ParamSpecs or
+    # whatnot. We could then write a weak_partial() call if we actually
+    # need that particular combination of functionality.
+
+    # Note: Something here is wonky with pylint, possibly related to our
+    # custom pylint plugin. Disabling all checks seems to fix it.
     # pylint: disable=all
-    WeakCall = Call
-    Call = Call
+
+    WeakCall = functools.partial
+    Call = functools.partial
 else:
     WeakCall = _WeakCall
     WeakCall.__name__ = 'WeakCall'

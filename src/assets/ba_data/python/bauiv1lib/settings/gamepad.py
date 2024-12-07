@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupMenuWindow
 import bascenev1 as bs
@@ -14,29 +14,32 @@ import bauiv1 as bui
 
 if TYPE_CHECKING:
     from typing import Any, Callable
+
     from bauiv1lib.popup import PopupWindow
 
 
-class GamepadSettingsWindow(bui.Window):
+class GamepadSettingsWindow(bui.MainWindow):
     """Window for configuring a gamepad."""
 
     # pylint: disable=too-many-public-methods
 
     def __init__(
         self,
-        gamepad: bs.InputDevice,
-        is_main_menu: bool = True,
-        transition: str = 'in_right',
+        inputdevice: bs.InputDevice,
+        *,
+        modal: bool = False,
+        transition: str | None = 'in_right',
         transition_out: str = 'out_right',
+        origin_widget: bui.Widget | None = None,
         settings: dict | None = None,
     ):
-        self._input = gamepad
+        self._inputdevice = inputdevice
 
         # If our input-device went away, just return an empty zombie.
-        if not self._input:
+        if not self._inputdevice:
             return
 
-        self._name = self._input.name
+        self._name = self._inputdevice.name
 
         self._r = 'configGamepadWindow'
         self._transition_out = transition_out
@@ -44,7 +47,7 @@ class GamepadSettingsWindow(bui.Window):
         # We're a secondary gamepad if supplied with settings.
         self._is_secondary = settings is not None
         self._ext = '_B' if self._is_secondary else ''
-        self._is_main_menu = is_main_menu
+        self._modal = modal
         self._displayname = self._name
         self._width = 700 if self._is_secondary else 730
         self._height = 440 if self._is_secondary else 450
@@ -55,22 +58,44 @@ class GamepadSettingsWindow(bui.Window):
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
                 scale=(
-                    1.63
+                    1.4
                     if uiscale is bui.UIScale.SMALL
-                    else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
+                    else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (-20, -16) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, -10) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-                transition=transition,
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         self._settings: dict[str, int] = {}
         if not self._is_secondary:
             self._get_config_mapping()
+
         # Don't ask to config joysticks while we're in here.
         self._rebuild_ui()
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Pull stuff out of self here; if we do it in the lambda we keep
+        # self alive which we don't want.
+        assert not self._is_secondary
+        assert not self._modal
+
+        inputdevice = self._inputdevice
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                inputdevice=inputdevice,
+                transition=transition,
+                origin_widget=origin_widget,
+            )
+        )
 
     def _get_config_mapping(self, default: bool = False) -> None:
         for button in [
@@ -134,7 +159,7 @@ class GamepadSettingsWindow(bui.Window):
         ]:
             assert bui.app.classic is not None
             val = bui.app.classic.get_input_device_mapped_value(
-                self._input, button, default
+                self._inputdevice, button, default
             )
             if val != -1:
                 self._settings[button] = val
@@ -205,7 +230,7 @@ class GamepadSettingsWindow(bui.Window):
                 parent=self._root_widget,
                 position=(0, v + 5),
                 size=(self._width, 25),
-                text=bui.Lstr(resource=self._r + '.titleText'),
+                text=bui.Lstr(resource=f'{self._r}.titleText'),
                 color=bui.app.ui_v1.title_color,
                 maxwidth=310,
                 h_align='center',
@@ -229,7 +254,7 @@ class GamepadSettingsWindow(bui.Window):
                 parent=self._root_widget,
                 position=(50, v + 10),
                 size=(self._width - 100, 30),
-                text=bui.Lstr(resource=self._r + '.appliesToAllText'),
+                text=bui.Lstr(resource=f'{self._r}.appliesToAllText'),
                 maxwidth=330,
                 scale=0.65,
                 color=(0.5, 0.6, 0.5, 1.0),
@@ -244,7 +269,7 @@ class GamepadSettingsWindow(bui.Window):
                 parent=self._root_widget,
                 position=(0, v + 5),
                 size=(self._width, 25),
-                text=bui.Lstr(resource=self._r + '.secondaryText'),
+                text=bui.Lstr(resource=f'{self._r}.secondaryText'),
                 color=bui.app.ui_v1.title_color,
                 maxwidth=300,
                 h_align='center',
@@ -256,7 +281,7 @@ class GamepadSettingsWindow(bui.Window):
                 parent=self._root_widget,
                 position=(50, v + 10),
                 size=(self._width - 100, 30),
-                text=bui.Lstr(resource=self._r + '.secondHalfText'),
+                text=bui.Lstr(resource=f'{self._r}.secondHalfText'),
                 maxwidth=300,
                 scale=0.65,
                 color=(0.6, 0.8, 0.6, 1.0),
@@ -269,7 +294,7 @@ class GamepadSettingsWindow(bui.Window):
                 autoselect=True,
                 on_value_change_call=self._enable_check_box_changed,
                 size=(200, 30),
-                text=bui.Lstr(resource=self._r + '.secondaryEnableText'),
+                text=bui.Lstr(resource=f'{self._r}.secondaryEnableText'),
                 scale=1.2,
             )
             v = self._height - 205
@@ -279,8 +304,8 @@ class GamepadSettingsWindow(bui.Window):
         d_color = (0.4, 0.4, 0.8)
         sclx = 1.2
         scly = 0.98
-        dpm = bui.Lstr(resource=self._r + '.pressAnyButtonOrDpadText')
-        dpm2 = bui.Lstr(resource=self._r + '.ifNothingHappensTryAnalogText')
+        dpm = bui.Lstr(resource=f'{self._r}.pressAnyButtonOrDpadText')
+        dpm2 = bui.Lstr(resource=f'{self._r}.ifNothingHappensTryAnalogText')
         self._capture_button(
             pos=(h_offs, v + scly * dist),
             color=d_color,
@@ -318,7 +343,7 @@ class GamepadSettingsWindow(bui.Window):
             message2=dpm2,
         )
 
-        dpm3 = bui.Lstr(resource=self._r + '.ifNothingHappensTryDpadText')
+        dpm3 = bui.Lstr(resource=f'{self._r}.ifNothingHappensTryDpadText')
         self._capture_button(
             pos=(h_offs + 130, v - 125),
             color=(0.4, 0.4, 0.6),
@@ -326,7 +351,7 @@ class GamepadSettingsWindow(bui.Window):
             maxwidth=140,
             texture=bui.gettexture('analogStick'),
             scale=1.2,
-            message=bui.Lstr(resource=self._r + '.pressLeftRightText'),
+            message=bui.Lstr(resource=f'{self._r}.pressLeftRightText'),
             message2=dpm3,
         )
 
@@ -416,7 +441,7 @@ class GamepadSettingsWindow(bui.Window):
 
     def get_input(self) -> bs.InputDevice:
         """(internal)"""
-        return self._input
+        return self._inputdevice
 
     def _do_advanced(self) -> None:
         # pylint: disable=cyclic-import
@@ -532,8 +557,8 @@ class GamepadSettingsWindow(bui.Window):
     def show_secondary_editor(self) -> None:
         """(internal)"""
         GamepadSettingsWindow(
-            self._input,
-            is_main_menu=False,
+            self._inputdevice,
+            modal=True,
             settings=self._settings,
             transition='in_scale',
             transition_out='out_scale',
@@ -559,17 +584,17 @@ class GamepadSettingsWindow(bui.Window):
             assert isinstance(sval2, (int, type(None)))
             if sval1 is not None and sval2 is not None:
                 return (
-                    self._input.get_axis_name(sval1)
+                    self._inputdevice.get_axis_name(sval1)
                     + ' / '
-                    + self._input.get_axis_name(sval2)
+                    + self._inputdevice.get_axis_name(sval2)
                 )
-            return bui.Lstr(resource=self._r + '.unsetText')
+            return bui.Lstr(resource=f'{self._r}.unsetText')
 
         # If they're looking for triggers.
         if control in ['triggerRun1' + self._ext, 'triggerRun2' + self._ext]:
             if control in self._settings:
-                return self._input.get_axis_name(self._settings[control])
-            return bui.Lstr(resource=self._r + '.unsetText')
+                return self._inputdevice.get_axis_name(self._settings[control])
+            return bui.Lstr(resource=f'{self._r}.unsetText')
 
         # Dead-zone.
         if control == 'analogStickDeadZone' + self._ext:
@@ -589,8 +614,10 @@ class GamepadSettingsWindow(bui.Window):
             # If *any* dpad buttons are assigned, show only button assignments.
             if any(b in self._settings for b in dpad_buttons):
                 if control in self._settings:
-                    return self._input.get_button_name(self._settings[control])
-                return bui.Lstr(resource=self._r + '.unsetText')
+                    return self._inputdevice.get_button_name(
+                        self._settings[control]
+                    )
+                return bui.Lstr(resource=f'{self._r}.unsetText')
 
             # No dpad buttons - show the dpad number for all 4.
             dpadnum = (
@@ -603,19 +630,19 @@ class GamepadSettingsWindow(bui.Window):
                 return bui.Lstr(
                     value='${A} ${B}',
                     subs=[
-                        ('${A}', bui.Lstr(resource=self._r + '.dpadText')),
+                        ('${A}', bui.Lstr(resource=f'{self._r}.dpadText')),
                         (
                             '${B}',
                             str(dpadnum),
                         ),
                     ],
                 )
-            return bui.Lstr(resource=self._r + '.unsetText')
+            return bui.Lstr(resource=f'{self._r}.unsetText')
 
         # Other buttons.
         if control in self._settings:
-            return self._input.get_button_name(self._settings[control])
-        return bui.Lstr(resource=self._r + '.unsetText')
+            return self._inputdevice.get_button_name(self._settings[control])
+        return bui.Lstr(resource=f'{self._r}.unsetText')
 
     def _gamepad_event(
         self,
@@ -691,10 +718,10 @@ class GamepadSettingsWindow(bui.Window):
 
                     # Now launch the up/down listener.
                     AwaitGamepadInputWindow(
-                        self._input,
+                        self._inputdevice,
                         'analogStickUD' + ext,
                         self._gamepad_event,
-                        bui.Lstr(resource=self._r + '.pressUpDownText'),
+                        bui.Lstr(resource=f'{self._r}.pressUpDownText'),
                     )
 
         elif control == 'analogStickUD' + ext:
@@ -739,13 +766,14 @@ class GamepadSettingsWindow(bui.Window):
         color: tuple[float, float, float],
         texture: bui.Texture,
         button: str,
+        *,
         scale: float = 1.0,
         message: bui.Lstr | None = None,
         message2: bui.Lstr | None = None,
         maxwidth: float = 80.0,
     ) -> bui.Widget:
         if message is None:
-            message = bui.Lstr(resource=self._r + '.pressAnyButtonText')
+            message = bui.Lstr(resource=f'{self._r}.pressAnyButtonText')
         base_size = 79
         btn = bui.buttonwidget(
             parent=self._root_widget,
@@ -780,7 +808,7 @@ class GamepadSettingsWindow(bui.Window):
                 edit=btn,
                 on_activate_call=bui.Call(
                     AwaitGamepadInputWindow,
-                    self._input,
+                    self._inputdevice,
                     button,
                     self._gamepad_event,
                     message,
@@ -792,21 +820,16 @@ class GamepadSettingsWindow(bui.Window):
         return btn
 
     def _cancel(self) -> None:
-        from bauiv1lib.settings.controls import ControlsSettingsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        if self._is_main_menu:
-            assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_menu_window(
-                ControlsSettingsWindow(transition='in_left').get_root_widget(),
-                from_window=self._root_widget,
+        if self._modal:
+            # no-op if our underlying widget is dead or on its way out.
+            if not self._root_widget or self._root_widget.transitioning_out:
+                return
+            bui.containerwidget(
+                edit=self._root_widget, transition=self._transition_out
             )
+        else:
+            self.main_window_back()
 
     def _reset(self) -> None:
         from bauiv1lib.confirm import ConfirmWindow
@@ -852,7 +875,7 @@ class GamepadSettingsWindow(bui.Window):
             'reset',
         ]
         choices_display: list[bui.Lstr] = [
-            bui.Lstr(resource=self._r + '.advancedText'),
+            bui.Lstr(resource=f'{self._r}.advancedText'),
             bui.Lstr(resource='settingsWindowAdvanced.resetText'),
         ]
 
@@ -894,18 +917,20 @@ class GamepadSettingsWindow(bui.Window):
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-
         # If we're a secondary editor we just go away (we were editing our
         # parent's settings dict).
         if self._is_secondary:
+            assert self._modal
+            bui.containerwidget(
+                edit=self._root_widget, transition=self._transition_out
+            )
             return
 
         assert self._settings is not None
-        if self._input:
-            dst = classic.get_input_device_config(self._input, default=True)
+        if self._inputdevice:
+            dst = classic.get_input_device_config(
+                self._inputdevice, default=True
+            )
             dst2: dict[str, Any] = dst[0][dst[1]]
             dst2.clear()
 
@@ -916,12 +941,12 @@ class GamepadSettingsWindow(bui.Window):
 
             # If we're allowed to phone home, send this config so we can
             # generate more defaults in the future.
-            inputhash = classic.get_input_device_map_hash(self._input)
+            inputhash = classic.get_input_device_map_hash(self._inputdevice)
             classic.master_server_v1_post(
                 'controllerConfig',
                 {
                     'ua': classic.legacy_user_agent_string,
-                    'b': bui.app.env.build_number,
+                    'b': bui.app.env.engine_build_number,
                     'name': self._name,
                     'inputMapHash': inputhash,
                     'config': dst2,
@@ -933,14 +958,13 @@ class GamepadSettingsWindow(bui.Window):
         else:
             bui.getsound('error').play()
 
-        if self._is_main_menu:
-            from bauiv1lib.settings.controls import ControlsSettingsWindow
-
-            assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_menu_window(
-                ControlsSettingsWindow(transition='in_left').get_root_widget(),
-                from_window=self._root_widget,
+        if self._modal:
+            bui.containerwidget(
+                edit=self._root_widget, transition=self._transition_out
             )
+        else:
+            assert self.main_window_has_control()
+            self.main_window_back()
 
 
 class AwaitGamepadInputWindow(bui.Window):
@@ -954,6 +978,7 @@ class AwaitGamepadInputWindow(bui.Window):
         message: bui.Lstr | None = None,
         message2: bui.Lstr | None = None,
     ):
+        # pylint: disable=too-many-positional-arguments
         if message is None:
             print('AwaitGamepadInputWindow message is None!')
             # Shouldn't get here.

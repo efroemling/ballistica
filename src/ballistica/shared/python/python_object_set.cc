@@ -2,17 +2,20 @@
 
 #include "ballistica/shared/python/python_object_set.h"
 
+#include <Python.h>
+
 #include <string>
 
+#include "ballistica/core/core.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/python/python_command.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica {
 
 // Using core stuff implicitly here. Our behavior is undefined if core
 // has not yet been imported by anyone.
 using core::g_base_soft;
+using core::g_core;
 
 PythonObjectSetBase::~PythonObjectSetBase() {
   // We make assumptions that ids remain valid once established.
@@ -28,7 +31,7 @@ void PythonObjectSetBase::StoreObj(int id, PyObject* pyobj) {
   if (g_buildconfig.debug_build()) {
     // Assuming we're setting everything once
     // (make sure we don't accidentally overwrite things we don't intend to).
-    if (objs_[id].Exists()) {
+    if (objs_[id].exists()) {
       throw Exception("Python::StoreObj() called twice for id '"
                       + std::to_string(id) + "' (existing val: '"
                       + objs_[id].Str() + "').");
@@ -36,10 +39,10 @@ void PythonObjectSetBase::StoreObj(int id, PyObject* pyobj) {
 
     // Also make sure we're not storing an object that's already been stored.
     for (auto&& i : objs_) {
-      if (i.Get() != nullptr && i.Get() == pyobj) {
-        Log(LogLevel::kWarning,
-            "Python::StoreObj() called twice for same ptr; id="
-                + std::to_string(id) + ".");
+      if (i.get() != nullptr && i.get() == pyobj) {
+        g_core->Log(LogName::kBa, LogLevel::kWarning,
+                    "Python::StoreObj() called twice for same ptr; id="
+                        + std::to_string(id) + ".");
       }
     }
   }
@@ -62,19 +65,19 @@ void PythonObjectSetBase::StoreObjCallable(int id, PyObject* pyobj) {
 void PythonObjectSetBase::StoreObj(int id, const char* expr,
                                    PyObject* context) {
   auto obj = PythonCommand(expr, "<PyObj Set>").Eval(false, context, context);
-  if (!obj.Exists()) {
+  if (!obj.exists()) {
     FatalError("Unable to get value: '" + std::string(expr) + "'.");
   }
-  StoreObj(id, obj.Get());
+  StoreObj(id, obj.get());
 }
 
 void PythonObjectSetBase::StoreObjCallable(int id, const char* expr,
                                            PyObject* context) {
   auto obj = PythonCommand(expr, "<PyObj Set>").Eval(false, context, context);
-  if (!obj.Exists()) {
+  if (!obj.exists()) {
     throw Exception("Unable to get value: '" + std::string(expr) + "'.");
   }
-  StoreObjCallable(id, obj.Get());
+  StoreObjCallable(id, obj.get());
 }
 
 void PythonObjectSetBase::PushObjCall(int id) const {

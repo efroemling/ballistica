@@ -50,6 +50,12 @@ class Object {
 
 #endif
 
+  /// Called on newly constructed objects by the various New() methods. This
+  /// allows classes to run code after their full class heirarchy has been
+  /// constructed, meaning things like virtual functions will work as
+  /// expected.
+  virtual void ObjectPostInit();
+
   /// Called by the default ObjectThreadCheck() to determine ownership for
   /// an Object. By default, an object is owned by a specific thread,
   /// defaulting to the logic thread.
@@ -182,7 +188,7 @@ class Object {
       }
     }
 
-    auto Exists() const -> bool { return (obj_ != nullptr); }
+    auto exists() const -> bool { return obj_ != nullptr; }
 
     void Clear() { Release(); }
 
@@ -199,7 +205,7 @@ class Object {
    public:
     /// Convenience wrapper for Object::IsValidManagedObject.
     auto IsValidManagedObject() const -> bool {
-      if (auto* obj = Get()) {
+      if (auto* obj = get()) {
         return Object::IsValidManagedObject(obj);
       }
       return false;
@@ -207,17 +213,16 @@ class Object {
 
     /// Convenience wrapper for Object::IsValidUnmanagedObject.
     auto IsValidUnmanagedObject() const -> bool {
-      if (auto* obj = Get()) {
+      if (auto* obj = get()) {
         return Object::IsValidUnmanagedObject(obj);
       }
       return false;
     }
 
     // Return a pointer or nullptr.
-    auto Get() const -> T* {
-      // Yes, reinterpret_cast is evil, but we make sure
-      // we only operate on cases where this is valid
-      // (see Acquire()).
+    auto get() const -> T* {
+      // Yes, reinterpret_cast is evil, but we make sure we only operate on
+      // cases where this is valid (see Acquire()).
       return reinterpret_cast<T*>(obj_);
     }
 
@@ -252,37 +257,37 @@ class Object {
     /// Compare to a pointer of any compatible type.
     template <typename U>
     auto operator==(U* ptr) -> bool {
-      return (Get() == ptr);
+      return (get() == ptr);
     }
 
     /// Compare to a pointer of any compatible type.
     template <typename U>
     auto operator!=(U* ptr) -> bool {
-      return (Get() != ptr);
+      return (get() != ptr);
     }
 
     /// Compare to a strong ref of any compatible type.
     template <typename U>
     auto operator==(const Ref<U>& ref) -> bool {
-      return (Get() == ref.Get());
+      return (get() == ref.get());
     }
 
     /// Compare to a strong ref to a compatible type.
     template <typename U>
     auto operator!=(const Ref<U>& ref) -> bool {
-      return (Get() != ref.Get());
+      return (get() != ref.get());
     }
 
     /// Compare to a weak ref of any compatible type.
     template <typename U>
     auto operator==(const WeakRef<U>& ref) -> bool {
-      return (Get() == ref.Get());
+      return (get() == ref.get());
     }
 
     /// Compare to a weak ref of any compatible type.
     template <typename U>
     auto operator!=(const WeakRef<U>& ref) -> bool {
-      return (Get() != ref.Get());
+      return (get() != ref.get());
     }
 
     /// Assign from our exact type. Note: it might seem like our template
@@ -291,7 +296,7 @@ class Object {
     /// piecewise assignment operator gets selected as the best match for
     /// our exact type and we crash horrifically.
     auto operator=(const WeakRef<T>& ref) -> WeakRef<T>& {
-      *this = ref.Get();
+      *this = ref.get();
       return *this;
     }
 
@@ -315,7 +320,7 @@ class Object {
     /// Assign from a strong ref of any compatible type.
     template <typename U>
     auto operator=(const Ref<U>& ref) -> WeakRef<T>& {
-      *this = ref.Get();
+      *this = ref.get();
       return *this;
     }
 
@@ -323,7 +328,7 @@ class Object {
     /// type which has its own overload).
     template <typename U>
     auto operator=(const WeakRef<U>& ref) -> WeakRef<T>& {
-      *this = ref.Get();
+      *this = ref.get();
       return *this;
     }
 
@@ -339,7 +344,7 @@ class Object {
     /// this extra verbosity is good; we're tossing around a mix of pointers
     /// and strong-refs and weak-refs so it's good to be aware exactly where
     /// refs are being added/etc.
-    explicit WeakRef(const WeakRef<T>& ref) { *this = ref.Get(); }
+    explicit WeakRef(const WeakRef<T>& ref) { *this = ref.get(); }
 
     /// Create from a pointer of any compatible type.
     template <typename U>
@@ -402,15 +407,15 @@ class Object {
   class Ref {
    public:
     ~Ref() { Release(); }
-    auto Get() const -> T* { return obj_; }
+    auto get() const -> T* { return obj_; }
 
-    auto Exists() const -> bool { return (obj_ != nullptr); }
+    auto exists() const -> bool { return obj_ != nullptr; }
 
     void Clear() { Release(); }
 
     /// Convenience wrapper for Object::IsValidManagedObject.
     auto IsValidManagedObject() const -> bool {
-      if (auto* obj = Get()) {
+      if (auto* obj = get()) {
         return Object::IsValidManagedObject(obj);
       }
       return false;
@@ -441,25 +446,25 @@ class Object {
     /// Compare to a pointer of any compatible type.
     template <typename U>
     auto operator==(U* ptr) -> bool {
-      return (Get() == ptr);
+      return (get() == ptr);
     }
 
     /// Compare to a pointer of any compatible type.
     template <typename U>
     auto operator!=(U* ptr) -> bool {
-      return (Get() != ptr);
+      return (get() != ptr);
     }
 
     /// Compare to a strong ref of any compatible type.
     template <typename U>
     auto operator==(const Ref<U>& ref) -> bool {
-      return (Get() == ref.Get());
+      return (get() == ref.get());
     }
 
     /// Compare to a strong ref of any compatible type.
     template <typename U>
     auto operator!=(const Ref<U>& ref) -> bool {
-      return (Get() != ref.Get());
+      return (get() != ref.get());
     }
 
     // Note: we don't need to include comparisons to weak-refs because that
@@ -472,7 +477,7 @@ class Object {
     /// piecewise assignment operator gets selected as the best match for
     /// our exact type and we crash horrifically.
     auto operator=(const Ref<T>& ref) -> Ref<T>& {
-      *this = ref.Get();
+      *this = ref.get();
       return *this;
     }
 
@@ -490,14 +495,14 @@ class Object {
     /// type which has its own overload).
     template <typename U>
     auto operator=(const Ref<U>& ref) -> Ref<T>& {
-      *this = ref.Get();
+      *this = ref.get();
       return *this;
     }
 
     /// Assign from a weak ref to any compatible type.
     template <typename U>
     auto operator=(const WeakRef<U>& ref) -> Ref<T>& {
-      *this = ref.Get();
+      *this = ref.get();
       return *this;
     }
 
@@ -513,7 +518,7 @@ class Object {
     /// verbosity is good; we're tossing around a mix of pointers and
     /// strong-refs and weak-refs so it's good to be aware exactly where
     /// refs are being added/etc.
-    explicit Ref(const Ref<T>& ref) { *this = ref.Get(); }
+    explicit Ref(const Ref<T>& ref) { *this = ref.get(); }
 
     /// Create from a compatible pointer.
     template <typename U>
@@ -567,6 +572,7 @@ class Object {
   template <typename TRETURN, typename TALLOC = TRETURN, typename... ARGS>
   [[nodiscard]] static auto New(ARGS&&... args) -> Object::Ref<TRETURN> {
     auto* ptr = new TALLOC(std::forward<ARGS>(args)...);
+
 #if BA_DEBUG_BUILD
     /// Objects assume they are statically allocated by default; it's up
     /// to us to tell them when they're not.
@@ -579,7 +585,16 @@ class Object {
                  + ptr->GetObjectDescription());
     }
     ptr->object_is_ref_counted_ = true;
+    assert(!ptr->object_is_post_inited_);
 #endif
+
+    ptr->ObjectPostInit();
+
+#if BA_DEBUG_BUILD
+    // Make sure top level post-init was called.
+    assert(ptr->object_is_post_inited_);
+#endif
+
     return Object::Ref<TRETURN>(ptr);
   }
 
@@ -595,6 +610,7 @@ class Object {
   template <typename T, typename... ARGS>
   [[nodiscard]] static auto NewDeferred(ARGS&&... args) -> T* {
     T* ptr = new T(std::forward<ARGS>(args)...);
+
 #if BA_DEBUG_BUILD
     /// Objects assume they are statically allocated by default; it's up
     /// to us to tell them when they're not.
@@ -608,7 +624,16 @@ class Object {
           + ptr->GetObjectDescription());
     }
     ptr->object_is_pending_deferred_ = true;
+    assert(!ptr->object_is_post_inited_);
 #endif
+
+    ptr->ObjectPostInit();
+
+#if BA_DEBUG_BUILD
+    // Make sure top level post-init was called.
+    assert(ptr->object_is_post_inited_);
+#endif
+
     return ptr;
   }
 
@@ -636,6 +661,7 @@ class Object {
           "deferred: "
           + ptr->GetObjectDescription());
     }
+    assert(ptr->object_is_post_inited_);
     ptr->object_is_pending_deferred_ = false;
     ptr->object_is_ref_counted_ = true;
 #endif
@@ -645,17 +671,28 @@ class Object {
 
   /// Allocate an Object with no ref-counting; for use when an object
   /// will be manually managed/deleted.
+  ///
   /// In debug builds, these objects will complain if attempts are made to
   /// create strong references to them.
   template <typename T, typename... ARGS>
   [[nodiscard]] static auto NewUnmanaged(ARGS&&... args) -> T* {
     T* ptr = new T(std::forward<ARGS>(args)...);
+
 #if BA_DEBUG_BUILD
     /// Objects assume they are statically allocated by default; it's up
     /// to us to tell them when they're not.
     ptr->object_is_static_allocated_ = false;
     ptr->object_is_unmanaged_ = true;
+    assert(!ptr->object_is_post_inited_);
 #endif
+
+    ptr->ObjectPostInit();
+
+#if BA_DEBUG_BUILD
+    // Make sure top level post-init was called.
+    assert(ptr->object_is_post_inited_);
+#endif
+
     return ptr;
   }
 
@@ -675,6 +712,7 @@ class Object {
   bool object_is_static_allocated_{true};
   bool object_has_been_strong_reffed_{};
   bool object_is_ref_counted_{};
+  bool object_is_post_inited_{};
   bool object_is_pending_deferred_{};
   bool object_is_unmanaged_{};
   bool object_is_dead_{};
@@ -729,7 +767,7 @@ auto RefsToPointers(const std::vector<Object::Ref<T> >& refs)
     // Let's just access the memory directly; potentially faster?
     T** p = &(ptrs[0]);
     for (size_t i = 0; i < refs_size; i++) {
-      p[i] = refs[i].Get();
+      p[i] = refs[i].get();
     }
   }
   return ptrs;
@@ -739,7 +777,7 @@ auto RefsToPointers(const std::vector<Object::Ref<T> >& refs)
 template <typename T>
 void PruneDeadRefs(T* list) {
   for (typename T::iterator i = list->begin(); i != list->end();) {
-    if (!i->Exists()) {
+    if (!i->exists()) {
       i = list->erase(i);
     } else {
       i++;
@@ -751,7 +789,7 @@ void PruneDeadRefs(T* list) {
 template <typename T>
 void PruneDeadMapRefs(T* map) {
   for (typename T::iterator i = map->begin(); i != map->end();) {
-    if (!i->second.Exists()) {
+    if (!i->second.exists()) {
       typename T::iterator i_next = i;
       i_next++;
       map->erase(i);

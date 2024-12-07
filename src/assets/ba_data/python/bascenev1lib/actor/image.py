@@ -37,6 +37,7 @@ class Image(bs.Actor):
     def __init__(
         self,
         texture: bs.Texture | dict[str, Any],
+        *,
         position: tuple[float, float] = (0, 0),
         transition: Transition | None = None,
         transition_delay: float = 0.0,

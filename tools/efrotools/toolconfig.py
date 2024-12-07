@@ -23,15 +23,15 @@ def install_tool_config(projroot: Path, src: Path, dst: Path) -> None:
     """Install a config."""
     print(f'Creating tool config: {Clr.BLD}{dst}{Clr.RST}')
 
-    # Special case: if we've got a src .yaml and a dst .json, convert.
+    # Special case: if we've got a src .toml and a dst .json, convert.
     # This can be handy to add annotations/etc. in the src which isn't
     # possible with json.
-    if src.suffix == '.yaml' and dst.suffix == '.json':
-        import yaml
+    if src.suffix == '.toml' and dst.suffix == '.json':
+        import tomllib
         import json
 
         with src.open(encoding='utf-8') as infile:
-            contents = yaml.safe_load(infile.read())
+            contents = tomllib.loads(infile.read())
         cfg = json.dumps(contents, indent=2, sort_keys=True)
 
     # In normal cases we just push the source file straight through.
@@ -52,6 +52,7 @@ def install_tool_config(projroot: Path, src: Path, dst: Path) -> None:
         '.style.yapf',
         '.clang-format',
         '.editorconfig',
+        '.rgignore',
     ]:
         comment = '#'
     if comment is not None:
@@ -68,7 +69,7 @@ def _filter_tool_config(projroot: Path, cfg: str) -> str:
     # pylint: disable=too-many-locals
     import textwrap
 
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
     from efrotools.pyver import PYVER
 
     # Emacs dir-locals defaults. Note that these contain other

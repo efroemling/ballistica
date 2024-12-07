@@ -2,13 +2,13 @@
 
 #include "ballistica/shared/ballistica.h"
 
+#include <string>
+
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/platform/support/min_sdl.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"
-#include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/fatal_error.h"
-#include "ballistica/shared/foundation/logging.h"
 #include "ballistica/shared/math/vector3f.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
@@ -39,9 +39,9 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 21801;
-const char* kEngineVersion = "1.7.34";
-const int kEngineApiVersion = 8;
+const int kEngineBuildNumber = 22130;
+const char* kEngineVersion = "1.7.37";
+const int kEngineApiVersion = 9;
 
 #if BA_MONOLITHIC_BUILD
 
@@ -79,6 +79,10 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
       bool success = PythonCommand(*l_core->core_config().call_command,
                                    "<ballistica app 'command' arg>")
                          .Exec(true, nullptr, nullptr);
+
+      // Let anyone interested know we're trying to go down NOW.
+      l_core->set_engine_done();
+
       exit(success ? 0 : 1);
     }
 
@@ -129,18 +133,21 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
       auto env_config_duration = time3 - time2;
       auto base_import_duration = time4 - time3;
       auto start_app_duration = time5 - time4;
-      Log(LogLevel::kWarning,
-          "MonolithicMain took too long (" + std::to_string(total_duration)
-              + " ms; " + std::to_string(core_import_duration)
-              + " core-import, " + std::to_string(env_config_duration)
-              + " env-config, " + std::to_string(base_import_duration)
-              + " base-import, " + std::to_string(start_app_duration)
-              + " start-app).");
+      core::g_core->Log(LogName::kBa, LogLevel::kWarning, [=] {
+        return "MonolithicMain took too long (" + std::to_string(total_duration)
+               + " ms; " + std::to_string(core_import_duration)
+               + " core-import, " + std::to_string(env_config_duration)
+               + " env-config, " + std::to_string(base_import_duration)
+               + " base-import, " + std::to_string(start_app_duration)
+               + " start-app).";
+      });
     }
 
     if (l_base->AppManagesMainThreadEventLoop()) {
       // In environments where we control the event loop, do that.
       l_base->RunAppToCompletion();
+      // Let anyone interested know we're trying to go down NOW.
+      l_core->set_engine_done();
     } else {
       // If the environment is managing events, we now simply return and let
       // it feed us those events.
@@ -171,6 +178,10 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
 
     // If it's not been handled, take the app down ourself.
     if (!handled) {
+      // Let anyone interested know we're trying to go down NOW.
+      if (l_core) {
+        l_core->set_engine_done();
+      }
       if (try_to_exit_cleanly) {
         exit(1);
       } else {
@@ -273,13 +284,20 @@ void FatalError(const std::string& message) {
   FatalError::DoFatalError(message);
 }
 
-void Log(LogLevel level, const std::string& msg) { Logging::Log(level, msg); }
+// void Log(LogName name, LogLevel level, const std::string& msg) {
+//   Logging::Log(name, level, msg);
+// }
+
+// void Log(LogName name, LogLevel level, std::string (*msg_generator)()) {
+//   Logging::Log(name, level, msg_generator());
+// }
 
 void ScreenMessage(const std::string& s, const Vector3f& color) {
   if (core::g_base_soft) {
     core::g_base_soft->ScreenMessage(s, color);
   } else {
-    Log(LogLevel::kError,
+    core::g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "ScreenMessage called without base feature-set loaded (will be lost): '"
             + s + "'");
   }

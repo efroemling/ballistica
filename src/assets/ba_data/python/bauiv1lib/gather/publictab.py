@@ -96,6 +96,7 @@ class UIRow:
     ) -> None:
         """Update for the given data."""
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-positional-arguments
 
         plus = bui.app.plus
         assert plus is not None
@@ -404,6 +405,7 @@ class PublicGatherTab(GatherTab):
         region_left: float,
         region_bottom: float,
     ) -> bui.Widget:
+        # pylint: disable=too-many-positional-arguments
         c_width = region_width
         c_height = region_height - 20
         self._container = bui.containerwidget(
@@ -584,7 +586,7 @@ class PublicGatherTab(GatherTab):
             parent=self._container,
             text=self._filter_value,
             size=(350, 45),
-            position=(290, v - 10),
+            position=(c_width * 0.5 - 150, v - 10),
             h_align='left',
             v_align='center',
             editable=True,
@@ -596,7 +598,7 @@ class PublicGatherTab(GatherTab):
             text=filter_txt,
             parent=self._container,
             size=(0, 0),
-            position=(270, v + 13),
+            position=(c_width * 0.5 - 170, v + 13),
             maxwidth=150,
             scale=0.8,
             color=(0.5, 0.46, 0.5),
@@ -609,7 +611,7 @@ class PublicGatherTab(GatherTab):
             text=bui.Lstr(resource='nameText'),
             parent=self._container,
             size=(0, 0),
-            position=(90, v - 8),
+            position=((c_width - sub_scroll_width) * 0.5 + 50, v - 8),
             maxwidth=60,
             scale=0.6,
             color=(0.5, 0.46, 0.5),
@@ -621,7 +623,10 @@ class PublicGatherTab(GatherTab):
             text=bui.Lstr(resource='gatherWindow.partySizeText'),
             parent=self._container,
             size=(0, 0),
-            position=(755, v - 8),
+            position=(
+                c_width * 0.5 + sub_scroll_width * 0.5 - 110,
+                v - 8,
+            ),
             maxwidth=60,
             scale=0.6,
             color=(0.5, 0.46, 0.5),
@@ -633,7 +638,10 @@ class PublicGatherTab(GatherTab):
             text=bui.Lstr(resource='gatherWindow.pingText'),
             parent=self._container,
             size=(0, 0),
-            position=(825, v - 8),
+            position=(
+                c_width * 0.5 + sub_scroll_width * 0.5 - 30,
+                v - 8,
+            ),
             maxwidth=60,
             scale=0.6,
             color=(0.5, 0.46, 0.5),
@@ -811,6 +819,7 @@ class PublicGatherTab(GatherTab):
         bui.widget(edit=self._host_name_text, down_widget=btn2)
         bui.widget(edit=btn2, up_widget=self._host_name_text)
         bui.widget(edit=btn1, up_widget=self._host_name_text)
+        assert self._join_text is not None
         bui.widget(edit=self._join_text, down_widget=self._host_name_text)
         v -= 10
         self._host_status_text = bui.textwidget(
@@ -896,11 +905,6 @@ class PublicGatherTab(GatherTab):
 
         plus = bui.app.plus
         assert plus is not None
-
-        # Special case: if a party-queue window is up, don't do any of this
-        # (keeps things smoother).
-        # if bui.app.ui.have_party_queue_window:
-        #     return
 
         if self._sub_tab is SubTabType.JOIN:
             # Keep our filter-text up to date from the UI.
@@ -1366,7 +1370,7 @@ class PublicGatherTab(GatherTab):
         )
         bui.app.classic.master_server_v1_get(
             'bsAccessCheck',
-            {'b': bui.app.env.build_number},
+            {'b': bui.app.env.engine_build_number},
             callback=bui.WeakCall(self._on_public_party_accessible_response),
         )
 
@@ -1445,6 +1449,10 @@ class PublicGatherTab(GatherTab):
         else:
             address = party.address
             port = party.port
+
+            # Store UI location to return to when done.
+            if bs.app.classic is not None:
+                bs.app.classic.save_ui_state()
 
             # Rate limit this a bit.
             now = time.time()

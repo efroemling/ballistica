@@ -24,7 +24,8 @@ def generate_app_module(
     # pylint: disable=too-many-statements
     import textwrap
 
-    from efrotools import replace_section, getprojectconfig
+    from efrotools.util import replace_section
+    from efrotools.project import getprojectconfig
 
     out = ''
 
@@ -40,7 +41,7 @@ def generate_app_module(
     for _fsname, fset in sorted(fsets.items()):
         if fset.has_python_app_subsystem:
             modname = fset.name_python_package
-            classname = f'{fset.name_camel}Subsystem'
+            classname = f'{fset.name_camel}AppSubsystem'
             contents += f'from {modname} import {classname}\n'
     out = replace_section(
         out,
@@ -68,11 +69,10 @@ def generate_app_module(
     contents = ''
 
     for fsetname in sorted(all_fset_names):
-        # for _fsname, fset in sorted(fsets.items()):
         if fsetname in missing_soft_fset_names:
             contents += (
                 f'\n'
-                f'@cached_property\n'
+                f'@property\n'
                 f'def {fsetname}(self) -> Any | None:\n'
                 f'    """Our {fsetname} subsystem (not available'
                 f' in this project)."""\n'
@@ -83,7 +83,7 @@ def generate_app_module(
             fset = fsets[fsetname]
             if fset.has_python_app_subsystem:
                 modname = fset.name_python_package
-                classname = f'{fset.name_camel}Subsystem'
+                classname = f'{fset.name_camel}AppSubsystem'
                 # If they are allowed as a soft requirement, *everyone*
                 # has to access them as TYPE | None. Originally I planned to
                 # add the '| None' *only* if another present feature set was
@@ -94,11 +94,18 @@ def generate_app_module(
                 if fset.allow_as_soft_requirement:
                     contents += (
                         f'\n'
-                        f'@cached_property\n'
+                        f'@property\n'
                         f'def {fset.name}(self) -> {classname} | None:\n'
                         f'    """Our {fset.name} subsystem (if available)."""\n'
-                        f'    # pylint: disable=cyclic-import\n'
+                        f'    return self._get_subsystem_property(\n'
+                        f"        '{fset.name}', "
+                        f'self._create_{fset.name}_subsystem\n'
+                        f'    )  # type: ignore\n'
                         f'\n'
+                        f'@staticmethod\n'
+                        f'def _create_{fset.name}_subsystem()'
+                        f' -> {classname} | None:\n'
+                        f'    # pylint: disable=cyclic-import\n'
                         f'    try:\n'
                         f'        from {modname} import {classname}\n'
                         f'\n'
@@ -113,10 +120,18 @@ def generate_app_module(
                 else:
                     contents += (
                         f'\n'
-                        f'@cached_property\n'
+                        '@property\n'
                         f'def {fset.name}(self) -> {classname}:\n'
                         f'    """Our {fset.name} subsystem'
                         ' (always available)."""\n'
+                        f'    return self._get_subsystem_property(\n'
+                        f"        '{fset.name}', "
+                        f'self._create_{fset.name}_subsystem\n'
+                        f'    )  # type: ignore\n'
+                        f'\n'
+                        f'@staticmethod\n'
+                        f'def _create_{fset.name}_subsystem()'
+                        f' -> {classname}:\n'
                         f'    # pylint: disable=cyclic-import\n'
                         f'\n'
                         f'    from {modname} import {classname}\n'
@@ -210,6 +225,28 @@ def generate_app_module(
         textwrap.indent(f'{info}\n\n{contents}\n', indent),
         keep_markers=True,
     )
+
+    # Disabling this for now; will probably remove permanently. Testable
+    # app mode discovery now uses meta discovery system.
+    if bool(False):
+        contents = (
+            '# Return all our default_app_modes as testable.\n'
+            "# (generated from 'default_app_modes' in projectconfig).\n"
+        )
+        for mode in default_app_modes:
+            contents += f'import {_module_for_app_mode(mode)}\n'
+        contents += '\n'
+        contents += 'return [\n'
+        for mode in default_app_modes:
+            contents += f'    {mode},\n'
+        contents += ']'
+        out = replace_section(
+            out,
+            f'{indent}# __DEFAULT_TESTABLE_APP_MODES_BEGIN__\n',
+            f'{indent}# __DEFAULT_TESTABLE_APP_MODES_END__\n',
+            textwrap.indent(f'{info}\n\n{contents}\n', indent),
+            keep_markers=True,
+        )
 
     # Note: we *should* format this string, but because this code
     # runs with every project update I'm just gonna try to keep the

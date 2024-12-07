@@ -2,6 +2,7 @@
 
 #include "ballistica/scene_v1/node/anim_curve_node.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include "ballistica/scene_v1/node/node_attribute.h"

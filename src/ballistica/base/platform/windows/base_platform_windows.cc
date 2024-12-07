@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <sysinfoapi.h>
 
+#include <string>
+
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/core/platform/windows/core_platform_windows.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -34,8 +36,8 @@ void BasePlatformWindows::DoOpenURL(const std::string& url) {
 
     // This should return > 32 on success.
     if (r <= 32) {
-      Log(LogLevel::kError,
-          "Error " + std::to_string(r) + " opening URL '" + url + "'");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "Error " + std::to_string(r) + " opening URL '" + url + "'");
     }
   }
 }
@@ -47,7 +49,8 @@ BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
         g_base->logic->event_loop()->PushCall(
             [] { g_base->logic->HandleInterruptSignal(); });
       } else {
-        Log(LogLevel::kError, "SigInt handler called before g_logic exists.");
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    "SigInt handler called before g_logic exists.");
       }
       return TRUE;
 
@@ -59,7 +62,8 @@ BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
 void BasePlatformWindows::SetupInterruptHandling() {
   // Set up Ctrl-C handling.
   if (!SetConsoleCtrlHandler(CtrlHandler, TRUE)) {
-    Log(LogLevel::kError, "Error on SetConsoleCtrlHandler()");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Error on SetConsoleCtrlHandler()");
   }
 }
 
@@ -71,8 +75,9 @@ void BasePlatformWindows::OpenDirExternally(const std::string& path) {
                    core::CorePlatformWindows::UTF8Decode(path).c_str(), nullptr,
                    SW_SHOWNORMAL));
   if (r <= 32) {
-    Log(LogLevel::kError, "Error " + std::to_string(r)
-                              + " on open_dir_externally for '" + path + "'");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Error " + std::to_string(r) + " on open_dir_externally for '"
+                    + path + "'");
   }
 }
 
@@ -82,8 +87,9 @@ void BasePlatformWindows::OpenFileExternally(const std::string& path) {
                    core::CorePlatformWindows::UTF8Decode(path).c_str(), nullptr,
                    SW_SHOWNORMAL));
   if (r <= 32) {
-    Log(LogLevel::kError, "Error " + std::to_string(r)
-                              + " on open_file_externally for '" + path + "'");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Error " + std::to_string(r) + " on open_file_externally for '"
+                    + path + "'");
   }
 }
 

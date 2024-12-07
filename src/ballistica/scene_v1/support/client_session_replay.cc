@@ -3,14 +3,18 @@
 #include "ballistica/scene_v1/support/client_session_replay.h"
 
 #include <algorithm>
+#include <cstdio>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/support/huffman.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/math/vector3f.h"
 
@@ -28,7 +32,7 @@ auto ClientSessionReplay::GetActualTimeAdvanceMillisecs(
     }
     is_fast_forwarding_ = false;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrFatal();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
   if (appmode->is_replay_paused()) {
     // FIXME: seeking a replay results in black screen here
     return 0;
@@ -38,7 +42,7 @@ auto ClientSessionReplay::GetActualTimeAdvanceMillisecs(
 
 ClientSessionReplay::ClientSessionReplay(std::string filename)
     : file_name_(std::move(filename)) {
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   // take responsibility for feeding all clients to this device..
   appmode->connections()->RegisterClientController(this);
@@ -48,7 +52,7 @@ ClientSessionReplay::ClientSessionReplay(std::string filename)
 }
 
 ClientSessionReplay::~ClientSessionReplay() {
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   // we no longer are responsible for feeding clients to this device..
   appmode->connections()->UnregisterClientController(this);
@@ -65,17 +69,17 @@ void ClientSessionReplay::OnClientConnected(ConnectionToClient* c) {
   // sanity check - abort if its on either of our lists already
   for (ConnectionToClient* i : connections_to_clients_) {
     if (i == c) {
-      Log(LogLevel::kError,
-          "ReplayClientSession::OnClientConnected()"
-          " got duplicate connection");
+      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                  "ReplayClientSession::OnClientConnected()"
+                  " got duplicate connection");
       return;
     }
   }
   for (ConnectionToClient* i : connections_to_clients_ignored_) {
     if (i == c) {
-      Log(LogLevel::kError,
-          "ReplayClientSession::OnClientConnected()"
-          " got duplicate connection");
+      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                  "ReplayClientSession::OnClientConnected()"
+                  " got duplicate connection");
       return;
     }
   }
@@ -135,9 +139,9 @@ void ClientSessionReplay::OnClientDisconnected(ConnectionToClient* c) {
       return;
     }
   }
-  Log(LogLevel::kError,
-      "ReplayClientSession::OnClientDisconnected()"
-      " called for connection not on lists");
+  g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+              "ReplayClientSession::OnClientDisconnected()"
+              " called for connection not on lists");
 }
 
 void ClientSessionReplay::FetchMessages() {

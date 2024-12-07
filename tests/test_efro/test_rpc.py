@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 import random
 import asyncio
@@ -20,6 +21,8 @@ from efro.dataclassio import ioprepped, dataclass_from_json, dataclass_to_json
 
 if TYPE_CHECKING:
     from typing import Awaitable
+
+FAST_MODE = os.environ.get('BA_TEST_FAST_MODE') == '1'
 
 ADDR = '127.0.0.1'
 # Randomize this a bit to avoid failing on parallel testing.
@@ -278,6 +281,7 @@ class _Tester:
         await self.server.listener.wait_closed()
 
 
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
 def test_keepalive_fail() -> None:
     """Test keepalive timeout."""
     kinterval = 0.05
@@ -302,6 +306,7 @@ def test_keepalive_fail() -> None:
     tester.run(_do_it())
 
 
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
 def test_keepalive_success() -> None:
     """Test keepalive non-timeout."""
     kinterval = 0.05
@@ -317,6 +322,7 @@ def test_keepalive_success() -> None:
     tester.run(_do_it())
 
 
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
 def test_simple_messages() -> None:
     """Test basic messages and responses."""
     tester = _Tester()
@@ -356,6 +362,7 @@ def test_simple_messages() -> None:
     tester.run(_do_it())
 
 
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
 def test_simultaneous_messages() -> None:
     """Test basic messages and responses."""
     tester = _Tester()
@@ -385,6 +392,7 @@ def test_simultaneous_messages() -> None:
     tester.run(_do_it())
 
 
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
 def test_message_timeout() -> None:
     """Test sends timing out."""
     tester = _Tester()
@@ -417,6 +425,7 @@ def test_message_timeout() -> None:
     tester.run(_do_it())
 
 
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
 def test_server_interrupt() -> None:
     """Test server dying during message send."""
     tester = _Tester()
@@ -433,6 +442,7 @@ def test_server_interrupt() -> None:
     tester.run(_do_it())
 
 
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
 def test_client_interrupt() -> None:
     """Test client dying during message send."""
     tester = _Tester()

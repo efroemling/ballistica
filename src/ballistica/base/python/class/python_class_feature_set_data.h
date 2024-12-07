@@ -3,7 +3,8 @@
 #ifndef BALLISTICA_BASE_PYTHON_CLASS_PYTHON_CLASS_FEATURE_SET_DATA_H_
 #define BALLISTICA_BASE_PYTHON_CLASS_PYTHON_CLASS_FEATURE_SET_DATA_H_
 
-#include "ballistica/shared/foundation/object.h"
+#include <string>
+
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_class.h"
 
@@ -40,8 +41,8 @@ class PythonClassFeatureSetData : public PythonClass {
 
  private:
   static PyMethodDef tp_methods[];
-  static auto tp_new(PyTypeObject* type, PyObject* args,
-                     PyObject* keywds) -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
+      -> PyObject*;
   static void tp_dealloc(PythonClassFeatureSetData* self);
   FeatureSetNativeComponent* feature_set_{};
   static auto Play(PythonClassFeatureSetData* self, PyObject* args,

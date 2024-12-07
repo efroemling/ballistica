@@ -16,6 +16,8 @@ from baclassic._music import MusicPlayer
 if TYPE_CHECKING:
     from typing import Callable, Any
 
+    import bauiv1
+
 
 class OSMusicPlayer(MusicPlayer):
     """Music player that talks to internal C++ layer for functionality.
@@ -39,7 +41,7 @@ class OSMusicPlayer(MusicPlayer):
         callback: Callable[[Any], None],
         current_entry: Any,
         selection_target_name: str,
-    ) -> Any:
+    ) -> bauiv1.MainWindow:
         # pylint: disable=cyclic-import
         from bauiv1lib.soundtrack.entrytypeselect import (
             SoundtrackEntryTypeSelectWindow,

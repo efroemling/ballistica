@@ -241,6 +241,7 @@ class HitMessage:
 
     def __init__(
         self,
+        *,
         srcnode: bascenev1.Node | None = None,
         pos: Sequence[float] | None = None,
         velocity: Sequence[float] | None = None,

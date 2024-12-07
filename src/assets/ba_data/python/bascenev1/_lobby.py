@@ -588,10 +588,11 @@ class Chooser:
         # Handle '_edit' as a special case.
         if profilename == '_edit' and ready:
             with babase.ContextRef.empty():
-                classic.profile_browser_window(in_main_menu=False)
 
-                # Give their input-device UI ownership too
-                # (prevent someone else from snatching it in crowded games)
+                classic.profile_browser_window()
+
+                # Give their input-device UI ownership too (prevent
+                # someone else from snatching it in crowded games).
                 babase.set_ui_input_device(self._sessionplayer.inputdevice.id)
             return
 

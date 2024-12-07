@@ -126,10 +126,12 @@ class AccountLinkWindow(bui.Window):
         plus.run_v1_account_transactions()
 
     def _enter_code_press(self) -> None:
-        from bauiv1lib import promocode
+        from bauiv1lib.sendinfo import SendInfoWindow
 
-        promocode.PromoCodeWindow(
-            modal=True, origin_widget=self._enter_code_button
+        SendInfoWindow(
+            modal=True,
+            legacy_code_mode=True,
+            origin_widget=self._enter_code_button,
         )
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out

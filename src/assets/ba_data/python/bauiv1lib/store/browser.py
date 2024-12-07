@@ -13,8 +13,9 @@ import weakref
 import datetime
 from enum import Enum
 from threading import Thread
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
+from efro.util import utc_now
 from efro.error import CommunicationError
 import bacommon.cloud
 import bauiv1 as bui
@@ -25,7 +26,7 @@ if TYPE_CHECKING:
 MERCH_LINK_KEY = 'Merch Link'
 
 
-class StoreBrowserWindow(bui.Window):
+class StoreBrowserWindow(bui.MainWindow):
     """Window for browsing the store."""
 
     class TabID(Enum):
@@ -39,12 +40,10 @@ class StoreBrowserWindow(bui.Window):
 
     def __init__(
         self,
-        transition: str = 'in_right',
-        modal: bool = False,
-        show_tab: StoreBrowserWindow.TabID | None = None,
-        on_close_call: Callable[[], Any] | None = None,
-        back_location: str | None = None,
+        transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
+        show_tab: StoreBrowserWindow.TabID | None = None,
+        minimal_toolbars: bool = False,
     ):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
@@ -57,29 +56,15 @@ class StoreBrowserWindow(bui.Window):
 
         bui.set_analytics_screen('Store Window')
 
-        scale_origin: tuple[float, float] | None
-
-        # If they provided an origin-widget, scale up from that.
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
-        else:
-            self._transition_out = 'out_right'
-            scale_origin = None
-
         self.button_infos: dict[str, dict[str, Any]] | None = None
         self.update_buttons_timer: bui.AppTimer | None = None
         self._status_textwidget_update_timer = None
 
-        self._back_location = back_location
-        self._on_close_call = on_close_call
         self._show_tab = show_tab
-        self._modal = modal
-        self._width = 1440 if uiscale is bui.UIScale.SMALL else 1040
-        self._x_inset = x_inset = 200 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 1670 if uiscale is bui.UIScale.SMALL else 1040
+        self._x_inset = x_inset = 310 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            578
+            538
             if uiscale is bui.UIScale.SMALL
             else 645 if uiscale is bui.UIScale.MEDIUM else 800
         )
@@ -93,20 +78,24 @@ class StoreBrowserWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + extra_top),
-                transition=transition,
-                toolbar_visibility='menu_full',
+                toolbar_visibility=(
+                    'menu_store'
+                    if (uiscale is bui.UIScale.SMALL or minimal_toolbars)
+                    else 'menu_full'
+                ),
                 scale=(
                     1.3
                     if uiscale is bui.UIScale.SMALL
                     else 0.9 if uiscale is bui.UIScale.MEDIUM else 0.8
                 ),
-                scale_origin_stack_offset=scale_origin,
                 stack_offset=(
-                    (0, -5)
+                    (0, 10)
                     if uiscale is bui.UIScale.SMALL
                     else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         self._back_button = btn = bui.buttonwidget(
@@ -115,52 +104,20 @@ class StoreBrowserWindow(bui.Window):
             size=(140, 60),
             scale=1.1,
             autoselect=True,
-            label=bui.Lstr(resource='doneText' if self._modal else 'backText'),
-            button_type=None if self._modal else 'back',
-            on_activate_call=self._back,
+            label=bui.Lstr(resource='backText'),
+            button_type='back',
+            on_activate_call=self.main_window_back,
         )
-        bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
-        self._ticket_count_text: bui.Widget | None = None
-        self._get_tickets_button: bui.Widget | None = None
-
-        if app.classic.allow_ticket_purchases:
-            self._get_tickets_button = bui.buttonwidget(
-                parent=self._root_widget,
-                size=(210, 65),
-                on_activate_call=self._on_get_more_tickets_press,
-                autoselect=True,
-                scale=0.9,
-                text_scale=1.4,
-                left_widget=self._back_button,
-                color=(0.7, 0.5, 0.85),
-                textcolor=(0.2, 1.0, 0.2),
-                label=bui.Lstr(resource='getTicketsWindow.titleText'),
+        if uiscale is bui.UIScale.SMALL:
+            self._back_button.delete()
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
+            backbuttonspecial = True
         else:
-            self._ticket_count_text = bui.textwidget(
-                parent=self._root_widget,
-                size=(210, 64),
-                color=(0.2, 1.0, 0.2),
-                h_align='center',
-                v_align='center',
-            )
-
-        # Move this dynamically to keep it out of the way of the party icon.
-        self._update_get_tickets_button_pos()
-        self._get_ticket_pos_update_timer = bui.AppTimer(
-            1.0,
-            bui.WeakCall(self._update_get_tickets_button_pos),
-            repeat=True,
-        )
-        if self._get_tickets_button:
-            bui.widget(
-                edit=self._back_button, right_widget=self._get_tickets_button
-            )
-        self._ticket_text_update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update_tickets_text), repeat=True
-        )
-        self._update_tickets_text()
+            bui.containerwidget(edit=self._root_widget, cancel_button=btn)
+            backbuttonspecial = False
 
         if (
             app.classic.platform in ['mac', 'ios']
@@ -182,17 +139,20 @@ class StoreBrowserWindow(bui.Window):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 44),
+            position=(
+                self._width * 0.5,
+                self._height - (53 if uiscale is bui.UIScale.SMALL else 44),
+            ),
             size=(0, 0),
             color=app.ui_v1.title_color,
             scale=1.5,
             h_align='center',
             v_align='center',
             text=bui.Lstr(resource='storeText'),
-            maxwidth=420,
+            maxwidth=290,
         )
 
-        if not self._modal:
+        if not backbuttonspecial:
             bui.buttonwidget(
                 edit=self._back_button,
                 button_type='backSmall',
@@ -204,17 +164,17 @@ class StoreBrowserWindow(bui.Window):
         tab_buffer_h = 250 + 2 * x_inset
 
         tabs_def = [
-            (self.TabID.EXTRAS, bui.Lstr(resource=self._r + '.extrasText')),
-            (self.TabID.MAPS, bui.Lstr(resource=self._r + '.mapsText')),
+            (self.TabID.EXTRAS, bui.Lstr(resource=f'{self._r}.extrasText')),
+            (self.TabID.MAPS, bui.Lstr(resource=f'{self._r}.mapsText')),
             (
                 self.TabID.MINIGAMES,
-                bui.Lstr(resource=self._r + '.miniGamesText'),
+                bui.Lstr(resource=f'{self._r}.miniGamesText'),
             ),
             (
                 self.TabID.CHARACTERS,
-                bui.Lstr(resource=self._r + '.charactersText'),
+                bui.Lstr(resource=f'{self._r}.charactersText'),
             ),
-            (self.TabID.ICONS, bui.Lstr(resource=self._r + '.iconsText')),
+            (self.TabID.ICONS, bui.Lstr(resource=f'{self._r}.iconsText')),
         ]
 
         self._tab_row = TabRow(
@@ -301,15 +261,16 @@ class StoreBrowserWindow(bui.Window):
         )
         self._update_tabs()
 
-        if self._get_tickets_button:
+        if uiscale is bui.UIScale.SMALL:
+            first_tab_button = self._tab_row.tabs[tabs_def[0][0]].button
             last_tab_button = self._tab_row.tabs[tabs_def[-1][0]].button
             bui.widget(
-                edit=self._get_tickets_button, down_widget=last_tab_button
+                edit=first_tab_button,
+                left_widget=bui.get_special_widget('back_button'),
             )
             bui.widget(
                 edit=last_tab_button,
-                up_widget=self._get_tickets_button,
-                right_widget=self._get_tickets_button,
+                right_widget=bui.get_special_widget('squad_button'),
             )
 
         self._scroll_width = self._width - scroll_buffer_h
@@ -318,28 +279,6 @@ class StoreBrowserWindow(bui.Window):
         self._scrollwidget: bui.Widget | None = None
         self._status_textwidget: bui.Widget | None = None
         self._restore_state()
-
-    def _update_get_tickets_button_pos(self) -> None:
-        assert bui.app.classic is not None
-        uiscale = bui.app.ui_v1.uiscale
-        pos = (
-            self._width
-            - 252
-            - (
-                self._x_inset
-                + (
-                    47
-                    if uiscale is bui.UIScale.SMALL
-                    and bui.is_party_icon_visible()
-                    else 0
-                )
-            ),
-            self._height - 70,
-        )
-        if self._get_tickets_button:
-            bui.buttonwidget(edit=self._get_tickets_button, position=pos)
-        if self._ticket_count_text:
-            bui.textwidget(edit=self._ticket_count_text, position=pos)
 
     def _restore_purchases(self) -> None:
         from bauiv1lib import account
@@ -383,25 +322,6 @@ class StoreBrowserWindow(bui.Window):
             else:
                 bui.textwidget(edit=tab_data['text'], text='')
                 bui.imagewidget(edit=tab_data['img'], opacity=0.0)
-
-    def _update_tickets_text(self) -> None:
-        from bauiv1 import SpecialChar
-
-        if not self._root_widget:
-            return
-        plus = bui.app.plus
-        assert plus is not None
-        sval: str | bui.Lstr
-        if plus.get_v1_account_state() == 'signed_in':
-            sval = bui.charstr(SpecialChar.TICKET) + str(
-                plus.get_v1_account_ticket_count()
-            )
-        else:
-            sval = bui.Lstr(resource='getTicketsWindow.titleText')
-        if self._get_tickets_button:
-            bui.buttonwidget(edit=self._get_tickets_button, label=sval)
-        if self._ticket_count_text:
-            bui.textwidget(edit=self._ticket_count_text, text=sval)
 
     def _set_tab(self, tab_id: TabID) -> None:
         if self._current_tab is tab_id:
@@ -448,7 +368,7 @@ class StoreBrowserWindow(bui.Window):
             color=(1, 0.7, 1, 0.5),
             h_align='center',
             v_align='center',
-            text=bui.Lstr(resource=self._r + '.loadingText'),
+            text=bui.Lstr(resource=f'{self._r}.loadingText'),
             maxwidth=self._scroll_width * 0.9,
         )
 
@@ -464,7 +384,6 @@ class StoreBrowserWindow(bui.Window):
                 window = self._window()
                 if window is not None and (window.request is self):
                     window.request = None
-                    # noinspection PyProtectedMember
                     window._on_response(data)
 
         # Kick off a server request.
@@ -560,8 +479,8 @@ class StoreBrowserWindow(bui.Window):
                 'item': item,
                 'platform': app.classic.platform,
                 'subplatform': app.classic.subplatform,
-                'version': app.env.version,
-                'buildNumber': app.env.build_number,
+                'version': app.env.engine_version,
+                'buildNumber': app.env.engine_build_number,
                 'purchaseType': 'ticket' if is_ticket_purchase else 'real',
             },
             callback=bui.WeakCall(
@@ -573,7 +492,6 @@ class StoreBrowserWindow(bui.Window):
         """Attempt to purchase the provided item."""
         from bauiv1lib import account
         from bauiv1lib.confirm import ConfirmWindow
-        from bauiv1lib import getcurrency
 
         assert bui.app.classic is not None
         store = bui.app.classic.store
@@ -619,7 +537,8 @@ class StoreBrowserWindow(bui.Window):
                     our_tickets = plus.get_v1_account_ticket_count()
                     if price is not None and our_tickets < price:
                         bui.getsound('error').play()
-                        getcurrency.show_get_tickets_prompt()
+                        print('FIXME - show not-enough-tickets info.')
+                        # gettickets.show_get_tickets_prompt()
                     else:
 
                         def do_it() -> None:
@@ -652,7 +571,7 @@ class StoreBrowserWindow(bui.Window):
     def _print_already_own(self, charname: str) -> None:
         bui.screenmessage(
             bui.Lstr(
-                resource=self._r + '.alreadyOwnText',
+                resource=f'{self._r}.alreadyOwnText',
                 subs=[('${NAME}', charname)],
             ),
             color=(1, 0, 0),
@@ -681,8 +600,10 @@ class StoreBrowserWindow(bui.Window):
             # Look at the current set of sales; filter any with time remaining.
             for sale_item, sale_info in list(sales_raw.items()):
                 to_end = (
-                    datetime.datetime.utcfromtimestamp(sale_info['e'])
-                    - datetime.datetime.utcnow()
+                    datetime.datetime.fromtimestamp(
+                        sale_info['e'], datetime.UTC
+                    )
+                    - utc_now()
                 ).total_seconds()
                 if to_end > 0:
                     sales[sale_item] = {
@@ -700,12 +621,13 @@ class StoreBrowserWindow(bui.Window):
                 assert bui.app.classic is not None
                 purchased = bui.app.classic.accounts.have_pro()
             else:
-                purchased = plus.get_purchased(b_type)
+                purchased = plus.get_v1_account_product_purchased(b_type)
 
             sale_opacity = 0.0
             sale_title_text: str | bui.Lstr = ''
             sale_time_text: str | bui.Lstr = ''
 
+            call: Callable | None
             if purchased:
                 title_color = (0.8, 0.7, 0.9, 1.0)
                 color = (0.63, 0.55, 0.78)
@@ -865,7 +787,7 @@ class StoreBrowserWindow(bui.Window):
                 color=(1, 0.3, 0.3, 1.0),
                 h_align='center',
                 v_align='center',
-                text=bui.Lstr(resource=self._r + '.loadErrorText'),
+                text=bui.Lstr(resource=f'{self._r}.loadErrorText'),
                 maxwidth=self._scroll_width * 0.9,
             )
         else:
@@ -1235,9 +1157,23 @@ class StoreBrowserWindow(bui.Window):
                     color=(1, 1, 0.3, 1.0),
                     h_align='center',
                     v_align='center',
-                    text=bui.Lstr(resource=self._r + '.comingSoonText'),
+                    text=bui.Lstr(resource=f'{self._r}.comingSoonText'),
                     maxwidth=self._scroll_width * 0.9,
                 )
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
+
+    @override
+    def on_main_window_close(self) -> None:
+        self._save_state()
 
     def _save_state(self) -> None:
         try:
@@ -1247,9 +1183,7 @@ class StoreBrowserWindow(bui.Window):
                 for tab_id, tab in self._tab_row.tabs.items()
                 if sel == tab.button
             ]
-            if sel == self._get_tickets_button:
-                sel_name = 'GetTickets'
-            elif sel == self._scrollwidget:
+            if sel == self._scrollwidget:
                 sel_name = 'Scroll'
             elif sel == self._back_button:
                 sel_name = 'Back'
@@ -1266,7 +1200,6 @@ class StoreBrowserWindow(bui.Window):
             logging.exception('Error saving state for %s.', self)
 
     def _restore_state(self) -> None:
-        from efro.util import enum_by_value
 
         try:
             sel: bui.Widget | None
@@ -1277,32 +1210,26 @@ class StoreBrowserWindow(bui.Window):
             assert isinstance(sel_name, (str, type(None)))
 
             try:
-                current_tab = enum_by_value(
-                    self.TabID, bui.app.config.get('Store Tab')
-                )
+                current_tab = self.TabID(bui.app.config.get('Store Tab'))
             except ValueError:
                 current_tab = self.TabID.CHARACTERS
 
             if self._show_tab is not None:
                 current_tab = self._show_tab
-            if sel_name == 'GetTickets' and self._get_tickets_button:
-                sel = self._get_tickets_button
-            elif sel_name == 'Back':
+            if sel_name == 'Back':
                 sel = self._back_button
             elif sel_name == 'Scroll':
                 sel = self._scrollwidget
             elif isinstance(sel_name, str) and sel_name.startswith('Tab:'):
                 try:
-                    sel_tab_id = enum_by_value(
-                        self.TabID, sel_name.split(':')[-1]
-                    )
+                    sel_tab_id = self.TabID(sel_name.split(':')[-1])
                 except ValueError:
                     sel_tab_id = self.TabID.CHARACTERS
                 sel = self._tab_row.tabs[sel_tab_id].button
             else:
                 sel = self._tab_row.tabs[current_tab].button
 
-            # If we were requested to show a tab, select it too..
+            # If we were requested to show a tab, select it too.
             if (
                 self._show_tab is not None
                 and self._show_tab in self._tab_row.tabs
@@ -1314,68 +1241,13 @@ class StoreBrowserWindow(bui.Window):
         except Exception:
             logging.exception('Error restoring state for %s.', self)
 
-    def _on_get_more_tickets_press(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.account import show_sign_in_prompt
-        from bauiv1lib.getcurrency import GetCurrencyWindow
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        plus = bui.app.plus
-        assert plus is not None
-
-        if plus.get_v1_account_state() != 'signed_in':
-            show_sign_in_prompt()
-            return
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        window = GetCurrencyWindow(
-            from_modal_store=self._modal,
-            store_back_location=self._back_location,
-        ).get_root_widget()
-        if not self._modal:
-            assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_menu_window(
-                window, from_window=self._root_widget
-            )
-
-    def _back(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.coop.browser import CoopBrowserWindow
-        from bauiv1lib.mainmenu import MainMenuWindow
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        self._save_state()
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        if not self._modal:
-            assert bui.app.classic is not None
-            if self._back_location == 'CoopBrowserWindow':
-                bui.app.ui_v1.set_main_menu_window(
-                    CoopBrowserWindow(transition='in_left').get_root_widget(),
-                    from_window=self._root_widget,
-                )
-            else:
-                bui.app.ui_v1.set_main_menu_window(
-                    MainMenuWindow(transition='in_left').get_root_widget(),
-                    from_window=self._root_widget,
-                )
-        if self._on_close_call is not None:
-            self._on_close_call()
-
 
 def _check_merch_availability_in_bg_thread() -> None:
     # pylint: disable=cell-var-from-loop
 
-    # Merch is available from some countries only.
-    # Make a reasonable check to ask the master-server about this at
-    # launch and store the results.
+    # Merch is available from some countries only. Make a reasonable
+    # check to ask the master-server about this at launch and store the
+    # results.
     plus = bui.app.plus
     assert plus is not None
 
@@ -1388,7 +1260,7 @@ def _check_merch_availability_in_bg_thread() -> None:
 
                 def _store_in_logic_thread() -> None:
                     cfg = bui.app.config
-                    current: str | None = cfg.get(MERCH_LINK_KEY)
+                    current = cfg.get(MERCH_LINK_KEY)
                     if not isinstance(current, str | None):
                         current = None
                     if current != response.url:
@@ -1411,6 +1283,9 @@ def _check_merch_availability_in_bg_thread() -> None:
 # Slight hack; start checking merch availability in the bg (but only if
 # it looks like we've been imported for use in a running app; don't want
 # to do this during docs generation/etc.)
+
+# TODO: Should wire this up explicitly to app bootstrapping; not good to
+# be kicking off work at module import time.
 if (
     os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') != '1'
     and bui.app.state is not bui.app.State.NOT_STARTED

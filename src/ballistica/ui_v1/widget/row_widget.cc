@@ -2,6 +2,8 @@
 
 #include "ballistica/ui_v1/widget/row_widget.h"
 
+#include <string>
+
 namespace ballistica::ui_v1 {
 
 RowWidget::RowWidget() {

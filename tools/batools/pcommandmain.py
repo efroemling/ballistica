@@ -55,7 +55,7 @@ from efrotools.pcommands import (
     tweak_empty_py_files,
     make_ensure,
     make_target_debug,
-    pur,
+    requirements_upgrade,
 )
 from efrotools.pcommands2 import (
     with_build_lock,
@@ -104,6 +104,14 @@ from batools.pcommands import (
     ensure_prefab_platform,
     prefab_run_var,
     prefab_binary_path,
+    build_docker_gui_release,
+    build_docker_gui_debug,
+    build_docker_server_release,
+    build_docker_server_debug,
+    build_docker_arm64_gui_release,
+    build_docker_arm64_server_release,
+    save_docker_images,
+    remove_docker_images,
     make_prefab,
     lazybuild,
     efro_gradle,
@@ -134,6 +142,8 @@ from batools.pcommands2 import (
     wsl_path_to_win,
     wsl_build_check_win_drive,
     get_modern_make,
+    asset_package_resolve,
+    asset_package_assemble,
 )
 
 # pylint: enable=unused-import

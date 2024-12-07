@@ -87,6 +87,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             extrascale: float,
             flash: bool = False,
         ) -> Text:
+            # pylint: disable=too-many-positional-arguments
             return Text(
                 text,
                 position=(

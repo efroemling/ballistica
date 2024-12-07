@@ -142,42 +142,9 @@ typedef int64_t TimerMedium;
 ///    content needs to be presented as large and clear in order to remain
 ///    readable from an average distance.
 enum class UIScale : uint8_t {
-  kLarge,
-  kMedium,
   kSmall,
-  kLast  // Sentinel.
-};
-
-// BA_EXPORT_PYTHON_ENUM
-/// Specifies the type of time for various operations to target/use.
-///
-/// Category: Enums
-///
-/// 'sim' time is the local simulation time for an activity or session.
-///    It can proceed at different rates depending on game speed, stops
-///    for pauses, etc.
-///
-/// 'base' is the baseline time for an activity or session.  It proceeds
-///    consistently regardless of game speed or pausing, but may stop during
-///    occurrences such as network outages.
-///
-/// 'real' time is mostly based on clock time, with a few exceptions.  It may
-///    not advance while the app is backgrounded for instance.  (the engine
-///    attempts to prevent single large time jumps from occurring)
-enum class TimeType : uint8_t {
-  kSim,
-  kBase,
-  kReal,
-  kLast  // Sentinel.
-};
-
-// BA_EXPORT_PYTHON_ENUM
-/// Specifies the format time values are provided in.
-///
-/// Category: Enums
-enum class TimeFormat : uint8_t {
-  kSeconds,
-  kMilliseconds,
+  kMedium,
+  kLarge,
   kLast  // Sentinel.
 };
 
@@ -221,7 +188,7 @@ enum class SpecialChar : uint8_t {
   kOuyaButtonU,
   kOuyaButtonY,
   kOuyaButtonA,
-  kOuyaLogo,
+  kToken,
   kLogo,
   kTicket,
   kGooglePlayGamesLogo,
@@ -295,6 +262,9 @@ enum class SpecialChar : uint8_t {
   kLast  // Sentinel
 };
 
+// NOTE: When adding exception types here, add a corresponding
+// handler in Python::SetPythonException.
+
 /// Python exception types we can raise from our own exceptions.
 enum class PyExcType : uint8_t {
   kRuntime,
@@ -312,6 +282,20 @@ enum class PyExcType : uint8_t {
   kInputDeviceNotFound,
   kDelegateNotFound,
   kWidgetNotFound
+};
+
+enum class LogName : uint8_t {
+  kRoot,
+  kBa,
+  kBaApp,
+  kBaDisplayTime,
+  kBaLifecycle,
+  kBaAudio,
+  kBaGraphics,
+  kBaAssets,
+  kBaInput,
+  kBaNetworking,
+  kLast  // Sentinel
 };
 
 enum class LogLevel : uint8_t {

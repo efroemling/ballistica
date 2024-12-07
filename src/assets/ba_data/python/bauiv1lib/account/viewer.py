@@ -23,6 +23,7 @@ class AccountViewerWindow(PopupWindow):
     def __init__(
         self,
         account_id: str,
+        *,
         profile_id: str | None = None,
         position: tuple[float, float] = (0.0, 0.0),
         scale: float | None = None,
@@ -138,7 +139,7 @@ class AccountViewerWindow(PopupWindow):
         bui.app.classic.master_server_v1_get(
             'bsAccountInfo',
             {
-                'buildNumber': bui.app.env.build_number,
+                'buildNumber': bui.app.env.engine_build_number,
                 'accountID': self._account_id,
                 'profileID': self._profile_id,
             },

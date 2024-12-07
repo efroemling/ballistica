@@ -35,6 +35,8 @@ class MasterServerV1CallThread(threading.Thread):
         callback: MasterServerCallback | None,
         response_type: MasterServerResponseType,
     ):
+        # pylint: disable=too-many-positional-arguments
+
         # Set daemon=True so long-running requests don't keep us from
         # quitting the app.
         super().__init__(daemon=True)
@@ -52,8 +54,9 @@ class MasterServerV1CallThread(threading.Thread):
         self._activity = weakref.ref(activity) if activity is not None else None
 
     def _run_callback(self, arg: None | dict[str, Any]) -> None:
-        # If we were created in an activity context and that activity has
-        # since died, do nothing.
+        # If we were created in an activity context and that activity
+        # has since died, do nothing.
+
         # FIXME: Should we just be using a ContextCall instead of doing
         # this check manually?
         if self._activity is not None:
@@ -96,13 +99,9 @@ class MasterServerV1CallThread(threading.Thread):
             self._data = babase.utf8_all(self._data)
             babase.set_thread_name('BA_ServerCallThread')
             if self._request_type == 'get':
-                url = (
-                    plus.get_master_server_address()
-                    + '/'
-                    + self._request
-                    + '?'
-                    + urllib.parse.urlencode(self._data)
-                )
+                msaddr = plus.get_master_server_address()
+                dataenc = urllib.parse.urlencode(self._data)
+                url = f'{msaddr}/{self._request}?{dataenc}'
                 assert url is not None
                 response = urllib.request.urlopen(
                     urllib.request.Request(
@@ -114,7 +113,7 @@ class MasterServerV1CallThread(threading.Thread):
                     timeout=babase.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 )
             elif self._request_type == 'post':
-                url = plus.get_master_server_address() + '/' + self._request
+                url = f'{plus.get_master_server_address()}/{self._request}'
                 assert url is not None
                 response = urllib.request.urlopen(
                     urllib.request.Request(

@@ -15,7 +15,7 @@ import types
 import datetime
 from typing import TYPE_CHECKING
 
-from efro.util import enum_by_value, check_utc
+from efro.util import check_utc
 from efro.dataclassio._base import (
     Codec,
     _parse_annotated,
@@ -41,6 +41,7 @@ class _Inputter:
     def __init__(
         self,
         cls: type[Any],
+        *,
         codec: Codec,
         coerce_to_float: bool,
         allow_unknown_attrs: bool = True,
@@ -110,6 +111,7 @@ class _Inputter:
         ioattrs: IOAttrs | None,
     ) -> Any:
         """Convert an assigned value to what a dataclass field expects."""
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
 
@@ -188,10 +190,22 @@ class _Inputter:
             )
 
         if issubclass(origin, Enum):
-            return enum_by_value(origin, value)
+            try:
+                return origin(value)
+            except ValueError:
+                # If a fallback enum was provided in ioattrs, return
+                # that for unrecognized values.
+                if ioattrs is not None and ioattrs.enum_fallback is not None:
+                    assert type(ioattrs.enum_fallback) is origin
+                    return ioattrs.enum_fallback
+                # Otherwise the error stands.
+                raise
 
         if issubclass(origin, datetime.datetime):
             return self._datetime_from_input(cls, fieldpath, value, ioattrs)
+
+        if issubclass(origin, datetime.timedelta):
+            return self._timedelta_from_input(cls, fieldpath, value, ioattrs)
 
         if origin is bytes:
             return self._bytes_from_input(origin, fieldpath, value)
@@ -233,6 +247,28 @@ class _Inputter:
         sets should be passed as lists, enums should be passed as their
         associated values, and nested dataclasses should be passed as dicts.
         """
+        try:
+            return self._do_dataclass_from_input(cls, fieldpath, values)
+        except Exception as exc:
+            # Extended data types can choose to sub default data in case
+            # of failures (generally not a good idea but occasionally
+            # useful).
+            if issubclass(cls, IOExtendedData):
+                fallback = cls.handle_input_error(exc)
+                if fallback is None:
+                    raise
+                # Make sure fallback gave us the right type.
+                if not isinstance(fallback, cls):
+                    raise RuntimeError(
+                        f'handle_input_error() was expected to return a {cls}'
+                        f' but returned a {type(fallback)}.'
+                    ) from exc
+                return fallback
+            raise
+
+    def _do_dataclass_from_input(
+        self, cls: type, fieldpath: str, values: dict
+    ) -> Any:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
@@ -374,6 +410,7 @@ class _Inputter:
                 create=False,
                 codec=self._codec,
                 coerce_to_float=self._coerce_to_float,
+                discard_extra_attrs=False,
             )
         self._soft_default_validator.soft_default_check(
             value=value, anntype=anntype, fieldpath=fieldpath
@@ -387,6 +424,7 @@ class _Inputter:
         value: Any,
         ioattrs: IOAttrs | None,
     ) -> Any:
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
 
@@ -465,7 +503,7 @@ class _Inputter:
                 if enumvaltype is str:
                     for key, val in value.items():
                         try:
-                            enumval = enum_by_value(keyanntype, key)
+                            enumval = keyanntype(key)
                         except ValueError as exc:
                             raise ValueError(
                                 f'Got invalid key value {key} for'
@@ -480,7 +518,7 @@ class _Inputter:
                 else:
                     for key, val in value.items():
                         try:
-                            enumval = enum_by_value(keyanntype, int(key))
+                            enumval = keyanntype(int(key))
                         except (ValueError, TypeError) as exc:
                             raise ValueError(
                                 f'Got invalid key value {key} for'
@@ -507,6 +545,7 @@ class _Inputter:
         seqtype: type,
         ioattrs: IOAttrs | None,
     ) -> Any:
+        # pylint: disable=too-many-positional-arguments
         # Because we are json-centric, we expect a list for all sequences.
         if type(value) is not list:
             raise TypeError(
@@ -556,6 +595,7 @@ class _Inputter:
         value: Any,
         ioattrs: IOAttrs | None,
     ) -> Any:
+        # pylint: disable=too-many-positional-arguments
         out: list = []
 
         # Because we are json-centric, we expect a list for all sequences.
@@ -633,4 +673,24 @@ class _Inputter:
         )
         if ioattrs is not None:
             ioattrs.validate_datetime(out, fieldpath)
+        return out
+
+    def _timedelta_from_input(
+        self, cls: type, fieldpath: str, value: Any, ioattrs: IOAttrs | None
+    ) -> Any:
+        del ioattrs  # Unused.
+        # We expect a list of 3 ints.
+        if type(value) is not list:
+            raise TypeError(
+                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
+                f' expected a list, got a {type(value).__name__}'
+            )
+        if len(value) != 3 or not all(isinstance(x, int) for x in value):
+            raise ValueError(
+                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
+                f' expected a list of 3 ints, got {[type(v) for v in value]}.'
+            )
+        out = datetime.timedelta(
+            days=value[0], seconds=value[1], microseconds=value[2]
+        )
         return out

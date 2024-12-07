@@ -10,19 +10,22 @@ import subprocess
 from enum import Enum
 from dataclasses import dataclass
 
-from efrotools import readfile, writefile, replace_exact
+from efrotools.util import readfile, writefile, replace_exact
+
+# Slowly testing new setup which is significantly different.
+APPLE_NEW = False
 
 # Python version we build here (not necessarily same as we use in repo).
 PY_VER_ANDROID = '3.12'
-PY_VER_EXACT_ANDROID = '3.12.3'
+PY_VER_EXACT_ANDROID = '3.12.4'
 PY_VER_APPLE = '3.12'
-PY_VER_EXACT_APPLE = '3.12.0'
+PY_VER_EXACT_APPLE = '3.12.4' if APPLE_NEW else '3.12.0'
 
 # Can bump these up to whatever the min we need is. Though perhaps
 # leaving them at what the repo uses would lead to fewer build issues.
 VERSION_MIN_MACOS = '11.0'
-VERSION_MIN_IOS = '12.0'
-VERSION_MIN_TVOS = '9.0'
+VERSION_MIN_IOS = '13.0' if APPLE_NEW else '12.0'
+VERSION_MIN_TVOS = '12.0' if APPLE_NEW else '9.0'
 
 # I occasionally run into openssl problems (particularly on arm systems)
 # so keeping exact control of the versions we're building here to try
@@ -38,23 +41,24 @@ VERSION_MIN_TVOS = '9.0'
 #
 # For now will try to ride out this 3.0 LTS version as long as possible.
 OPENSSL_VER_APPLE = '3.0.12-1'
-OPENSSL_VER_ANDROID = '3.0.13'
+OPENSSL_VER_ANDROID = '3.0.14'
 
-LIBFFI_VER_APPLE = '3.4.4-1'
+LIBFFI_VER_APPLE = '3.4.6-1' if APPLE_NEW else '3.4.4-1'
 BZIP2_VER_APPLE = '1.0.8-1'
-XZ_VER_APPLE = '5.4.4-1'
+XZ_VER_APPLE = '5.4.7-1' if APPLE_NEW else '5.4.4-1'
 
 # Android repo doesn't seem to be getting updated much so manually
 # bumping various versions to keep things up to date.
+ANDROID_API_VER = 23
 ZLIB_VER_ANDROID = '1.3.1'
-XZ_VER_ANDROID = '5.4.4'
+XZ_VER_ANDROID = '5.6.2'
 BZIP2_VER_ANDROID = '1.0.8'
 GDBM_VER_ANDROID = '1.23'
 LIBFFI_VER_ANDROID = '3.4.6'
 LIBUUID_VER_ANDROID = ('2.39', '2.39.3')
 NCURSES_VER_ANDROID = '6.4'
 READLINE_VER_ANDROID = '8.2'
-SQLITE_VER_ANDROID = ('2024', '3450200')
+SQLITE_VER_ANDROID = ('2024', '3460000')
 
 # Filenames we prune from Python lib dirs in source repo to cut down on
 # size.
@@ -92,6 +96,7 @@ PRUNE_DLL_NAMES = ['*.ico', '*.pdb']
 
 def build_apple(arch: str, debug: bool = False) -> None:
     """Run a build for the provided apple arch (mac, ios, or tvos)."""
+    # pylint: disable=too-many-branches
     import platform
     from efro.error import CleanError
 
@@ -136,9 +141,9 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # re-test things and probably make adjustments. Holding off for now.
     # Might just do this when I update everything to 3.12 which will be
     # a bit of work anyway.
-    if bool(False):
+    if not APPLE_NEW:
         subprocess.run(
-            ['git', 'checkout', 'a8c93fed2bdf0122fc2ca663faa1e46e5cf28d69'],
+            ['git', 'checkout', 'c6808e53640de86d520fe39849b8f15d40ac589a'],
             check=True,
         )
     else:
@@ -188,58 +193,68 @@ def build_apple(arch: str, debug: bool = False) -> None:
     )
     txt = replace_exact(
         txt,
-        'VERSION_MIN-iOS=12.0\n',
+        'VERSION_MIN-iOS=' + ('13.0' if APPLE_NEW else '12.0') + '\n',
         f'VERSION_MIN-iOS={VERSION_MIN_IOS}\n',
     )
     txt = replace_exact(
         txt,
-        'VERSION_MIN-tvOS=9.0\n',
+        'VERSION_MIN-tvOS=' + ('12.0' if APPLE_NEW else '9.0') + '\n',
         f'VERSION_MIN-tvOS={VERSION_MIN_TVOS}\n',
     )
     txt = replace_exact(
         txt,
-        'OPENSSL_VERSION=3.0.12-1\n',
+        'OPENSSL_VERSION=' + ('3.0.14-1' if APPLE_NEW else '3.0.12-1') + '\n',
         f'OPENSSL_VERSION={OPENSSL_VER_APPLE}\n',
     )
 
     # Don't copy in lib-dynload; we don't build it so it errors if we try.
-    txt = replace_exact(
-        txt,
-        '\t$$(foreach sdk,$$(SDKS-$(os)),cp $$(PYTHON_STDLIB-$$(sdk))/'
-        'lib-dynload/*',
-        '\t# (ericf disabled) $$(foreach sdk,$$(SDKS-$(os)),'
-        'cp $$(PYTHON_STDLIB-$$(sdk))/lib-dynload/*',
-    )
+    if not APPLE_NEW:
+        txt = replace_exact(
+            txt,
+            '\t$$(foreach sdk,$$(SDKS-$(os)),cp $$(PYTHON_STDLIB-$$(sdk))/'
+            'lib-dynload/*',
+            '\t# (ericf disabled) $$(foreach sdk,$$(SDKS-$(os)),'
+            'cp $$(PYTHON_STDLIB-$$(sdk))/lib-dynload/*',
+        )
 
     assert '--with-pydebug' not in txt
     if debug:
         # Add debug build flag
+        dbgafter = '--with-system-libmpdec' if APPLE_NEW else '--enable-ipv6'
         txt = replace_exact(
             txt,
-            '\t\t\t--enable-ipv6 \\\n',
-            '\t\t\t--enable-ipv6 \\\n\t\t\t--with-pydebug \\\n',
-            count=2,
+            f'\t\t\t{dbgafter} \\\n',
+            f'\t\t\t{dbgafter} \\\n\t\t\t--with-pydebug \\\n',
+            count=1 if APPLE_NEW else 2,
         )
 
         # Debug lib has a different name.
-        txt = replace_exact(
-            txt,
-            '))/lib/libpython$(PYTHON_VER).a',
-            '))/lib/libpython$(PYTHON_VER)d.a',
-            count=2,
-        )
+        if not APPLE_NEW:
+            txt = replace_exact(
+                txt,
+                '))/lib/libpython$(PYTHON_VER).a',
+                '))/lib/libpython$(PYTHON_VER)d.a',
+                count=2,
+            )
 
         txt = replace_exact(
             txt,
             '/include/python$(PYTHON_VER)',
             '/include/python$(PYTHON_VER)d',
-            count=3,
+            count=2 if APPLE_NEW else 3,
         )
+        if not APPLE_NEW:
+            txt = replace_exact(
+                txt,
+                '/config-$(PYTHON_VER)-',
+                '/config-$(PYTHON_VER)d-',
+                count=2,
+            )
         txt = replace_exact(
-            txt, '/config-$(PYTHON_VER)-', '/config-$(PYTHON_VER)d-', count=2
-        )
-        txt = replace_exact(
-            txt, '/_sysconfigdata__', '/_sysconfigdata_d_', count=3
+            txt,
+            '/_sysconfigdata__',
+            '/_sysconfigdata_d_',
+            count=1 if APPLE_NEW else 3,
         )
 
         # Rename the patch files corresponding to these as well.
@@ -259,24 +274,24 @@ def build_apple(arch: str, debug: bool = False) -> None:
             )
 
     # Add our bit of patching right after standard patching.
-    for tword in ('target', 'sdk'):
-        txt = replace_exact(
-            txt,
-            (
-                '\t# Apply target Python patches\n'
-                f'\tcd $$(PYTHON_SRCDIR-$({tword})) && '
-                'patch -p1 < $(PROJECT_DIR)/patch/Python/Python.patch\n'
-            ),
-            (
-                '\t# Apply target Python patches\n'
-                f'\tcd $$(PYTHON_SRCDIR-$({tword})) && '
-                'patch -p1 < $(PROJECT_DIR)/patch/Python/Python.patch\n'
-                f'\t/opt/homebrew/opt/python@3.12/bin/python3.12'
-                ' ../../tools/pcommand python_apple_patch'
-                f' $$(PYTHON_SRCDIR-$({tword}))\n'
-            ),
-            count=1,
-        )
+    if not APPLE_NEW:
+        for tword in ['target', 'sdk']:
+            txt = replace_exact(
+                txt,
+                (
+                    '\t# Apply target Python patches\n'
+                    f'\tcd $$(PYTHON_SRCDIR-$({tword})) && '
+                    'patch -p1 < $(PROJECT_DIR)/patch/Python/Python.patch\n'
+                ),
+                (
+                    '\t# Apply target Python patches\n'
+                    f'\tcd $$(PYTHON_SRCDIR-$({tword})) && '
+                    'patch -p1 < $(PROJECT_DIR)/patch/Python/Python.patch\n'
+                    f'\t../../tools/pcommand python_apple_patch'
+                    f' $$(PYTHON_SRCDIR-$({tword}))\n'
+                ),
+                count=1,
+            )
     writefile('Makefile', txt)
 
     # Ok; let 'er rip.
@@ -324,13 +339,17 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         subprocess.run(['git', 'checkout', PY_VER_EXACT_ANDROID], check=True)
 
     # These builds require ANDROID_NDK to be set; make sure that's the case.
-    os.environ['ANDROID_NDK'] = (
+    ndkpath = (
         subprocess.check_output(
             [f'{rootdir}/tools/pcommand', 'android_sdk_utils', 'get-ndk-path']
         )
         .decode()
         .strip()
     )
+    if not os.path.isdir(ndkpath):
+        raise RuntimeError(f'NDK path does not exist: "{ndkpath}".')
+
+    os.environ['ANDROID_NDK'] = ndkpath
 
     # TEMP - hard coding old ndk for the moment; looks like libffi needs to
     # be fixed to build with it. I *think* this has already been done; we just
@@ -350,7 +369,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Set specific OpenSSL version.
     ftxt = replace_exact(
         ftxt,
-        "source = 'https://www.openssl.org/source/openssl-3.0.7.tar.gz'",
+        "source = 'https://www.openssl.org/source/openssl-3.0.12.tar.gz'",
         f"source = 'https://www.openssl.org/"
         f"source/openssl-{OPENSSL_VER_ANDROID}.tar.gz'",
         count=1,
@@ -359,7 +378,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Set specific ZLib version.
     ftxt = replace_exact(
         ftxt,
-        "source = 'https://www.zlib.net/zlib-1.2.13.tar.gz'",
+        "source = 'https://www.zlib.net/zlib-1.3.1.tar.gz'",
         f"source = 'https://www.zlib.net/zlib-{ZLIB_VER_ANDROID}.tar.gz'",
         count=1,
     )
@@ -367,7 +386,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Set specific XZ version.
     ftxt = replace_exact(
         ftxt,
-        "source = 'https://tukaani.org/xz/xz-5.2.7.tar.xz'",
+        "source = 'https://tukaani.org/xz/xz-5.6.2.tar.xz'",
         f"source = 'https://tukaani.org/xz/xz-{XZ_VER_ANDROID}.tar.xz'",
         count=1,
     )
@@ -403,7 +422,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     ftxt = replace_exact(
         ftxt,
         "source = 'https://mirrors.edge.kernel.org/pub/linux/utils/"
-        "util-linux/v2.38/util-linux-2.38.1.tar.xz'",
+        "util-linux/v2.39/util-linux-2.39.2.tar.xz'",
         "source = 'https://mirrors.edge.kernel.org/pub/linux/utils/"
         f'util-linux/v{LIBUUID_VER_ANDROID[0]}/'
         f"util-linux-{LIBUUID_VER_ANDROID[1]}.tar.xz'",
@@ -413,7 +432,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Set specific NCurses version.
     ftxt = replace_exact(
         ftxt,
-        "source = 'https://ftp.gnu.org/gnu/ncurses/ncurses-6.3.tar.gz'",
+        "source = 'https://ftp.gnu.org/gnu/ncurses/ncurses-6.4.tar.gz'",
         "source = 'https://ftp.gnu.org/gnu/ncurses/"
         f"ncurses-{NCURSES_VER_ANDROID}.tar.gz'",
         count=1,
@@ -431,7 +450,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Set specific SQLite version.
     ftxt = replace_exact(
         ftxt,
-        "source = 'https://sqlite.org/2022/sqlite-autoconf-3390400.tar.gz'",
+        "source = 'https://sqlite.org/2024/sqlite-autoconf-3460000.tar.gz'",
         "source = 'https://sqlite.org/"
         f'{SQLITE_VER_ANDROID[0]}/'
         f"sqlite-autoconf-{SQLITE_VER_ANDROID[1]}.tar.gz'",
@@ -450,12 +469,29 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 
     writefile('Android/build_deps.py', ftxt)
 
+    ftxt = readfile('Android/util.py')
+
+    ftxt = replace_exact(
+        ftxt,
+        "choices=range(30, 40), dest='android_api_level'",
+        "choices=range(23, 40), dest='android_api_level'",
+    )
+    writefile('Android/util.py', ftxt)
+
     # Tweak some things in the base build script; grab the right version
     # of Python and also inject some code to modify bits of python
     # after it is extracted.
     ftxt = readfile('build.sh')
 
-    ftxt = replace_exact(ftxt, 'PYVER=3.11.0', f'PYVER={PY_VER_EXACT_ANDROID}')
+    # Repo has gone 30+, but we currently want our own which is lower.
+    ftxt = replace_exact(
+        ftxt,
+        'COMMON_ARGS="--arch ${ARCH:-arm} --api ${ANDROID_API:-30}"',
+        'COMMON_ARGS="--arch ${ARCH:-arm} --api ${ANDROID_API:-'
+        + str(ANDROID_API_VER)
+        + '}"',
+    )
+    ftxt = replace_exact(ftxt, 'PYVER=3.12.4', f'PYVER={PY_VER_EXACT_ANDROID}')
     ftxt = replace_exact(
         ftxt,
         '    popd\n',
@@ -480,6 +516,17 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
 def apple_patch(python_dir: str) -> None:
     """New test."""
     patch_modules_setup(python_dir, 'apple')
+
+    # Filter an instance of 'itms-services' that appeared in Python3.12
+    # and which was getting me rejected from the app store.
+    fname = os.path.join(python_dir, 'Lib', 'urllib', 'parse.py')
+    ftxt = readfile(fname)
+    ftxt = replace_exact(
+        ftxt,
+        "'wss', 'itms-services']",
+        "'wss', 'i!t!m!s!-!s!e!r!v!i!c!e!s'.replace('!', '')]",
+    )
+    writefile(fname, ftxt)
 
 
 def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
@@ -957,12 +1004,6 @@ def gather(do_android: bool, do_apple: bool) -> None:
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
 
-    # Currently need to avoid using nested identical quotes in fstrings
-    # because black chokes on them, even though pylint wants us to.
-    #
-    # https://github.com/psf/black/issues/3746
-    # pylint: disable=inconsistent-quotes
-
     class CompileArch(Enum):
         """The exhaustive set of single architectures we build for.
 
@@ -1048,22 +1089,22 @@ def gather(do_android: bool, do_apple: bool) -> None:
         # things.
         bases2 = {
             # 'mac': f'{bases["mac"]}/merge/macOS/macosx',
-            'mac': f'{bases["mac"]}/install/macOS/macosx',
+            'mac': f'{bases['mac']}/install/macOS/macosx',
             # 'ios': f'{bases["ios"]}/merge/iOS/iphoneos',
-            'ios': f'{bases["ios"]}/install/iOS/iphoneos.arm64',
+            'ios': f'{bases['ios']}/install/iOS/iphoneos.arm64',
             # 'ios_simulator': (
             #     f'{bases["ios_simulator"]}/merge/iOS/iphonesimulator'
             # ),
             'ios_simulator': (
-                f'{bases["ios_simulator"]}/install/iOS/iphonesimulator.arm64'
+                f'{bases['ios_simulator']}/install/iOS/iphonesimulator.arm64'
             ),
             # 'tvos': f'{bases["tvos"]}/merge/tvOS/appletvos',
-            'tvos': f'{bases["tvos"]}/install/tvOS/appletvos.arm64',
+            'tvos': f'{bases['tvos']}/install/tvOS/appletvos.arm64',
             # 'tvos_simulator': (
             #     f'{bases["tvos_simulator"]}/merge/tvOS/appletvsimulator'
             # ),
             'tvos_simulator': (
-                f'{bases["tvos_simulator"]}/install/tvOS/appletvsimulator.arm64'
+                f'{bases['tvos_simulator']}/install/tvOS/appletvsimulator.arm64'
             ),
             'android_arm': f'build/python_android_arm{bsuffix}/{apost2}',
             'android_arm64': f'build/python_android_arm64{bsuffix}/{apost2}',
@@ -1080,42 +1121,42 @@ def gather(do_android: bool, do_apple: bool) -> None:
         groups: dict[str, GroupDef] = {
             'apple': GroupDef(
                 baseheaders=[
-                    f'{bases["mac"]}/build/macOS/macosx/'
+                    f'{bases['mac']}/build/macOS/macosx/'
                     f'python-{PY_VER_EXACT_APPLE}/Include',
-                    f'{bases["ios"]}/build/iOS/iphoneos.arm64/'
+                    f'{bases['ios']}/build/iOS/iphoneos.arm64/'
                     f'python-{PY_VER_EXACT_APPLE}/Include',
-                    f'{bases["ios_simulator"]}'
+                    f'{bases['ios_simulator']}'
                     f'/build/iOS/iphonesimulator.arm64/'
                     f'python-{PY_VER_EXACT_APPLE}/Include',
-                    f'{bases["ios_simulator"]}'
+                    f'{bases['ios_simulator']}'
                     f'/build/iOS/iphonesimulator.x86_64/'
                     f'python-{PY_VER_EXACT_APPLE}/Include',
-                    f'{bases["tvos"]}/build/tvOS/appletvos.arm64/'
+                    f'{bases['tvos']}/build/tvOS/appletvos.arm64/'
                     f'python-{PY_VER_EXACT_APPLE}/Include',
-                    f'{bases["tvos_simulator"]}'
+                    f'{bases['tvos_simulator']}'
                     f'/build/tvOS/appletvsimulator.arm64/'
                     f'python-{PY_VER_EXACT_APPLE}/Include',
-                    f'{bases["tvos_simulator"]}'
+                    f'{bases['tvos_simulator']}'
                     f'/build/tvOS/appletvsimulator.x86_64/'
                     f'python-{PY_VER_EXACT_APPLE}/Include',
                 ],
                 basepylib=[
-                    f'{bases["mac"]}/build/macOS/macosx/'
+                    f'{bases['mac']}/build/macOS/macosx/'
                     f'python-{PY_VER_EXACT_APPLE}/Lib',
-                    f'{bases["ios"]}/build/iOS/iphoneos.arm64/'
+                    f'{bases['ios']}/build/iOS/iphoneos.arm64/'
                     f'python-{PY_VER_EXACT_APPLE}/Lib',
-                    f'{bases["ios_simulator"]}'
+                    f'{bases['ios_simulator']}'
                     f'/build/iOS/iphonesimulator.arm64/'
                     f'python-{PY_VER_EXACT_APPLE}/Lib',
-                    f'{bases["ios_simulator"]}'
+                    f'{bases['ios_simulator']}'
                     f'/build/iOS/iphonesimulator.x86_64/'
                     f'python-{PY_VER_EXACT_APPLE}/Lib',
-                    f'{bases["tvos"]}/build/tvOS/appletvos.arm64/'
+                    f'{bases['tvos']}/build/tvOS/appletvos.arm64/'
                     f'python-{PY_VER_EXACT_APPLE}/Lib',
-                    f'{bases["tvos_simulator"]}'
+                    f'{bases['tvos_simulator']}'
                     f'/build/tvOS/appletvsimulator.arm64/'
                     f'python-{PY_VER_EXACT_APPLE}/Lib',
-                    f'{bases["tvos_simulator"]}'
+                    f'{bases['tvos_simulator']}'
                     f'/build/tvOS/appletvsimulator.x86_64/'
                     f'python-{PY_VER_EXACT_APPLE}/Lib',
                 ],
@@ -1292,22 +1333,6 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 libs=_apple_libs('tvos_simulator'),
             ),
             BuildDef(
-                name='android_arm',
-                group=groups['android'],
-                config_headers={
-                    CompileArch.ANDROID_ARM: bases['android_arm']
-                    + f'/usr/include/{alibname}/pyconfig.h'
-                },
-                sys_config_scripts=[
-                    bases['android_arm']
-                    + f'/usr/lib/python{PY_VER_ANDROID}/'
-                    # f'_sysconfigdata_{debug_d}_linux_arm-linux-androideabi.py'
-                    f'_sysconfigdata_{debug_d}_linux_.py'
-                ],
-                libs=_android_libs('android_arm'),
-                libinst='android_armeabi-v7a',
-            ),
-            BuildDef(
                 name='android_arm64',
                 group=groups['android'],
                 config_headers={
@@ -1324,20 +1349,20 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 libinst='android_arm64-v8a',
             ),
             BuildDef(
-                name='android_x86',
+                name='android_arm',
                 group=groups['android'],
                 config_headers={
-                    CompileArch.ANDROID_X86: bases['android_x86']
+                    CompileArch.ANDROID_ARM: bases['android_arm']
                     + f'/usr/include/{alibname}/pyconfig.h'
                 },
                 sys_config_scripts=[
-                    bases['android_x86'] + f'/usr/lib/python{PY_VER_ANDROID}/'
-                    f'_sysconfigdata_{debug_d}'
-                    # f'_linux_i686-linux-android.py'
-                    f'_linux_.py'
+                    bases['android_arm']
+                    + f'/usr/lib/python{PY_VER_ANDROID}/'
+                    # f'_sysconfigdata_{debug_d}_linux_arm-linux-androideabi.py'
+                    f'_sysconfigdata_{debug_d}_linux_.py'
                 ],
-                libs=_android_libs('android_x86'),
-                libinst='android_x86',
+                libs=_android_libs('android_arm'),
+                libinst='android_armeabi-v7a',
             ),
             BuildDef(
                 name='android_x86_64',
@@ -1355,6 +1380,22 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 ],
                 libs=_android_libs('android_x86_64'),
                 libinst='android_x86_64',
+            ),
+            BuildDef(
+                name='android_x86',
+                group=groups['android'],
+                config_headers={
+                    CompileArch.ANDROID_X86: bases['android_x86']
+                    + f'/usr/include/{alibname}/pyconfig.h'
+                },
+                sys_config_scripts=[
+                    bases['android_x86'] + f'/usr/lib/python{PY_VER_ANDROID}/'
+                    f'_sysconfigdata_{debug_d}'
+                    # f'_linux_i686-linux-android.py'
+                    f'_linux_.py'
+                ],
+                libs=_android_libs('android_x86'),
+                libinst='android_x86',
             ),
         ]
 
@@ -1561,9 +1602,20 @@ def gather(do_android: bool, do_apple: bool) -> None:
                         scriptdst = os.path.join(
                             pylib_dst, os.path.basename(script)
                         )
+                        # Note to self: Python 3.12 seemed to change
+                        # something where the sys_config_scripts for
+                        # each of the architectures has the same name
+                        # whereas it did not before. We could patch this
+                        # by hand to split them out again, but for now
+                        # just going to hope it gets fixed in 3.13 (when
+                        # Android Python becomes an officially supported
+                        # target; yay!). Hopefully nobody is using stuff
+                        # from sysconfig anyway. But if they are, I
+                        # rearranged the order so x86 is the actual one
+                        # which will hopefully make errors obvious.
                         if os.path.exists(scriptdst):
                             print(
-                                'WARNING TEMPORARILY ALLOWING'
+                                'WARNING: TEMPORARILY ALLOWING'
                                 ' REPEAT SYS CONFIG SCRIPTS'
                             )
                             # raise RuntimeError(

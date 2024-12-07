@@ -176,7 +176,9 @@ class AccountV1Subsystem:
             else {}
         )
         for item_name, item in list(store_items.items()):
-            if item_name.startswith('icons.') and plus.get_purchased(item_name):
+            if item_name.startswith(
+                'icons.'
+            ) and plus.get_v1_account_product_purchased(item_name):
                 icons.append(item['icon'])
         return icons
 
@@ -230,9 +232,9 @@ class AccountV1Subsystem:
         # Check our tickets-based pro upgrade and our two real-IAP based
         # upgrades. Also always unlock this stuff in ballistica-core builds.
         return bool(
-            plus.get_purchased('upgrades.pro')
-            or plus.get_purchased('static.pro')
-            or plus.get_purchased('static.pro_sale')
+            plus.get_v1_account_product_purchased('upgrades.pro')
+            or plus.get_v1_account_product_purchased('static.pro')
+            or plus.get_v1_account_product_purchased('static.pro_sale')
             or 'ballistica' + 'kit' == babase.appname()
         )
 
@@ -271,7 +273,10 @@ class AccountV1Subsystem:
                 ),
                 color=(0, 1, 0),
             )
-            babase.getsimplesound('click01').play()
+            # Ick; this can get called early in the bootstrapping process
+            # before we're allowed to load assets. Guard against that.
+            if babase.asset_loads_allowed():
+                babase.getsimplesound('click01').play()
 
     def on_account_state_changed(self) -> None:
         """(internal)"""

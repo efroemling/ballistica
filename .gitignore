@@ -33,6 +33,7 @@ _fulltest_buildfile_*
 ballistica_files/
 tools/pcommand
 tools/cloudshell
+tools/bacloud
 **/.#*
 
 # Environment files
@@ -42,6 +43,7 @@ tools/cloudshell
 config/localconfig.json
 config/.*
 .dir-locals.el
+.rgignore
 .spinoffdata
 flycheck_*
 

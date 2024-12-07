@@ -2,8 +2,8 @@
 
 #include "ballistica/base/input/device/input_device.h"
 
-#include <list>
-#include <unordered_map>
+#include <cstdio>
+#include <string>
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/input/input.h"
@@ -46,7 +46,14 @@ auto InputDevice::GetPersistentIdentifier() const -> std::string {
   return buffer;
 }
 
-InputDevice::~InputDevice() { assert(g_base->InLogicThread()); }
+InputDevice::~InputDevice() {
+  // Once we've been added in the logic thread and given an index we
+  // should only be going down in the logic thread. If our constructor
+  // throws an exception its possible and valid to go down elsewhere.
+  if (index_ != -1) {
+    assert(g_base->InLogicThread());
+  }
+}
 
 // Called to let the current host/client-session know that we'd like to
 // control something please.

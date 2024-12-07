@@ -34,7 +34,7 @@ class Dynamics : public Object {
     assert(active_collision_);
     return (collide_message_reverse_order_ ? active_collide_dst_node_
                                            : active_collide_src_node_)
-        .Get();
+        .get();
   }
 
   // Used by collision callbacks - internal.
@@ -42,7 +42,7 @@ class Dynamics : public Object {
     assert(active_collision_);
     return (collide_message_reverse_order_ ? active_collide_src_node_
                                            : active_collide_dst_node_)
-        .Get();
+        .get();
   }
   auto GetCollideMessageReverseOrder() const -> bool {
     return collide_message_reverse_order_;

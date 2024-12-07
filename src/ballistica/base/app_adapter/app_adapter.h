@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_BASE_APP_ADAPTER_APP_ADAPTER_H_
 #define BALLISTICA_BASE_APP_ADAPTER_APP_ADAPTER_H_
 
+#include <string>
+
 #include "ballistica/base/base.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
 
@@ -221,6 +223,8 @@ class AppAdapter {
   virtual auto DoClipboardHasText() -> bool;
   virtual void DoClipboardSetText(const std::string& text);
   virtual auto DoClipboardGetText() -> std::string;
+
+  virtual auto SupportsPurchases() -> bool;
 
  protected:
   virtual ~AppAdapter();

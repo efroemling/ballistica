@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, NewType
 
@@ -111,6 +112,7 @@ def animate_array(
     attr: str,
     size: int,
     keys: dict[float, Sequence[float]],
+    *,
     loop: bool = False,
     offset: float = 0,
 ) -> None:
@@ -243,7 +245,6 @@ def cameraflash(duration: float = 999.0) -> None:
     Duration is in seconds.
     """
     # pylint: disable=too-many-locals
-    import random
     from bascenev1._nodeactor import NodeActor
 
     x_spread = 10

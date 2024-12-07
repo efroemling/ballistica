@@ -2,11 +2,13 @@
 
 #include "ballistica/base/support/app_config.h"
 
+#include <string>
+#include <utility>
+
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/ballistica.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::base {
 
@@ -218,6 +220,8 @@ void AppConfig::SetupEntries() {
 
   bool_entries_[BoolID::kAlwaysUseInternalKeyboard] =
       BoolEntry("Always Use Internal Keyboard", false);
+  bool_entries_[BoolID::kUseInsecureConnections] =
+      BoolEntry("Use Insecure Connections", false);
   bool_entries_[BoolID::kShowFPS] = BoolEntry("Show FPS", false);
   bool_entries_[BoolID::kShowPing] = BoolEntry("Show Ping", false);
   bool_entries_[BoolID::kShowDevConsoleButton] =
@@ -237,6 +241,8 @@ void AppConfig::SetupEntries() {
       BoolEntry("Disable Camera Gyro", false);
   bool_entries_[BoolID::kShowDemosWhenIdle] =
       BoolEntry("Show Demos When Idle", false);
+  bool_entries_[BoolID::kShowDeprecatedLoginTypes] =
+      BoolEntry("Show Deprecated Login Types", false);
 
   // Now add everything to our name map and make sure all is kosher.
   CompleteMap(float_entries_);

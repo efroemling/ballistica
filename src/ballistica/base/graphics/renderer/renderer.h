@@ -3,42 +3,17 @@
 #ifndef BALLISTICA_BASE_GRAPHICS_RENDERER_RENDERER_H_
 #define BALLISTICA_BASE_GRAPHICS_RENDERER_RENDERER_H_
 
-#include <memory>
 #include <string>
 #include <vector>
 
-#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/mesh_asset.h"
-#include "ballistica/base/graphics/graphics.h"
-#include "ballistica/base/graphics/mesh/image_mesh.h"
-#include "ballistica/base/graphics/mesh/mesh.h"
-#include "ballistica/base/graphics/mesh/mesh_buffer.h"
 #include "ballistica/base/graphics/mesh/mesh_buffer_base.h"
-#include "ballistica/base/graphics/mesh/mesh_buffer_vertex_simple_full.h"
-#include "ballistica/base/graphics/mesh/mesh_buffer_vertex_smoke_full.h"
-#include "ballistica/base/graphics/mesh/mesh_buffer_vertex_sprite.h"
-#include "ballistica/base/graphics/mesh/mesh_data.h"
 #include "ballistica/base/graphics/mesh/mesh_data_client_handle.h"
-#include "ballistica/base/graphics/mesh/mesh_index_buffer_16.h"
-#include "ballistica/base/graphics/mesh/mesh_index_buffer_32.h"
-#include "ballistica/base/graphics/mesh/mesh_indexed.h"
-#include "ballistica/base/graphics/mesh/mesh_indexed_dual_texture_full.h"
-#include "ballistica/base/graphics/mesh/mesh_indexed_object_split.h"
-#include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
-#include "ballistica/base/graphics/mesh/mesh_indexed_simple_split.h"
-#include "ballistica/base/graphics/mesh/mesh_indexed_smoke_full.h"
-#include "ballistica/base/graphics/mesh/mesh_indexed_static_dynamic.h"
-#include "ballistica/base/graphics/mesh/mesh_non_indexed.h"
-#include "ballistica/base/graphics/mesh/sprite_mesh.h"
-#include "ballistica/base/graphics/mesh/text_mesh.h"
-#include "ballistica/base/graphics/renderer/framebuffer.h"
 #include "ballistica/base/graphics/renderer/render_pass.h"
 #include "ballistica/base/graphics/renderer/render_target.h"
 #include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/base/graphics/support/render_command_buffer.h"
-#include "ballistica/base/graphics/text/text_group.h"
 #include "ballistica/shared/foundation/object.h"
-#include "ballistica/shared/math/matrix44f.h"
 #include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {
@@ -96,38 +71,38 @@ class Renderer {
 
   void OnScreenSizeChange();
   auto has_camera_render_target() const -> bool {
-    return camera_render_target_.Exists();
+    return camera_render_target_.exists();
   }
   auto has_camera_msaa_render_target() const -> bool {
-    return camera_msaa_render_target_.Exists();
+    return camera_msaa_render_target_.exists();
   }
   auto camera_render_target() -> RenderTarget* {
-    assert(camera_render_target_.Exists());
-    return camera_render_target_.Get();
+    assert(camera_render_target_.exists());
+    return camera_render_target_.get();
   }
   auto camera_msaa_render_target() -> RenderTarget* {
-    assert(camera_msaa_render_target_.Exists());
-    return camera_msaa_render_target_.Get();
+    assert(camera_msaa_render_target_.exists());
+    return camera_msaa_render_target_.get();
   }
   auto backing_render_target() -> RenderTarget* {
-    assert(backing_render_target_.Exists());
-    return backing_render_target_.Get();
+    assert(backing_render_target_.exists());
+    return backing_render_target_.get();
   }
   auto screen_render_target() -> RenderTarget* {
-    assert(screen_render_target_.Exists());
-    return screen_render_target_.Get();
+    assert(screen_render_target_.exists());
+    return screen_render_target_.get();
   }
   auto light_render_target() -> RenderTarget* {
-    assert(light_render_target_.Exists());
-    return light_render_target_.Get();
+    assert(light_render_target_.exists());
+    return light_render_target_.get();
   }
   auto light_shadow_render_target() -> RenderTarget* {
-    assert(light_shadow_render_target_.Exists());
-    return light_shadow_render_target_.Get();
+    assert(light_shadow_render_target_.exists());
+    return light_shadow_render_target_.get();
   }
   auto vr_overlay_flat_render_target() -> RenderTarget* {
-    assert(vr_overlay_flat_render_target_.Exists());
-    return vr_overlay_flat_render_target_.Get();
+    assert(vr_overlay_flat_render_target_.exists());
+    return vr_overlay_flat_render_target_.get();
   }
   auto shadow_res() const -> int { return shadow_res_; }
   auto blur_res_count() const -> int { return blur_res_count_; }
@@ -152,8 +127,8 @@ class Renderer {
       -> Object::Ref<MeshAssetRendererData> = 0;
   virtual auto NewTextureData(const TextureAsset& texture)
       -> Object::Ref<TextureAssetRendererData> = 0;
-  virtual auto NewMeshData(MeshDataType t,
-                           MeshDrawType drawType) -> MeshRendererData* = 0;
+  virtual auto NewMeshData(MeshDataType t, MeshDrawType drawType)
+      -> MeshRendererData* = 0;
   virtual void DeleteMeshData(MeshRendererData* data, MeshDataType t) = 0;
   virtual void ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
                                           const RenderPass& pass,
@@ -176,10 +151,12 @@ class Renderer {
   virtual void InvalidateFramebuffer(bool color, bool depth,
                                      bool target_read_framebuffer) = 0;
   virtual auto NewScreenRenderTarget() -> RenderTarget* = 0;
-  virtual auto NewFramebufferRenderTarget(
-      int width, int height, bool linear_interp, bool depth, bool texture,
-      bool depth_texture, bool high_quality, bool msaa,
-      bool alpha) -> Object::Ref<RenderTarget> = 0;
+  virtual auto NewFramebufferRenderTarget(int width, int height,
+                                          bool linear_interp, bool depth,
+                                          bool texture, bool depth_texture,
+                                          bool high_quality, bool msaa,
+                                          bool alpha)
+      -> Object::Ref<RenderTarget> = 0;
   virtual void PushGroupMarker(const char* label) = 0;
   virtual void PopGroupMarker() = 0;
   virtual void BlitBuffer(RenderTarget* src, RenderTarget* dst, bool depth,

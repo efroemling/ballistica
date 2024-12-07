@@ -12,6 +12,7 @@
          (project-vc-ignores . ("docs"
                                 "submodules"
                                 "src/external"
+                                "ballisticakit-android/BallisticaKit/src/main/cpp/src"
                                 "src/assets/ba_data/python-site-packages"
                                 "src/assets/pylib-android"
                                 "src/assets/pylib-apple"

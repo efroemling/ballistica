@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_BASE_PYTHON_CLASS_PYTHON_CLASS_ENV_H_
 #define BALLISTICA_BASE_PYTHON_CLASS_PYTHON_CLASS_ENV_H_
 
+#include <string>
+
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_class.h"
 
@@ -34,8 +36,8 @@ class PythonClassEnv : public PythonClass {
   PythonClassEnv();
   ~PythonClassEnv();
   static PyMethodDef tp_methods[];
-  static auto tp_new(PyTypeObject* type, PyObject* args,
-                     PyObject* keywds) -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
+      -> PyObject*;
   static void tp_dealloc(PythonClassEnv* self);
   static auto Dir(PythonClassEnv* self) -> PyObject*;
 };

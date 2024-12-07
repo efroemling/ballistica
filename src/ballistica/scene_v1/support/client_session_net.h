@@ -15,7 +15,7 @@ class ClientSessionNet : public ClientSession {
   ClientSessionNet();
   ~ClientSessionNet() override;
   auto connection_to_host() const -> ConnectionToHost* {
-    return connection_to_host_.Get();
+    return connection_to_host_.get();
   }
   void SetConnectionToHost(ConnectionToHost* c);
   void HandleSessionMessage(const std::vector<uint8_t>& buffer) override;

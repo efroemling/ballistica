@@ -9,6 +9,7 @@ import asyncio
 import logging
 import weakref
 from enum import Enum
+from functools import partial
 from collections import deque
 from dataclasses import dataclass
 from threading import current_thread
@@ -84,7 +85,6 @@ def ssl_stream_writer_underlying_transport_info(
 
 def ssl_stream_writer_force_close_check(writer: asyncio.StreamWriter) -> None:
     """Ensure a writer is closed; hacky workaround for odd hang."""
-    from efro.call import tpartial
     from threading import Thread
 
     # Disabling for now..
@@ -100,9 +100,8 @@ def ssl_stream_writer_force_close_check(writer: asyncio.StreamWriter) -> None:
             raw_transport = getattr(sslproto, '_transport', None)
             if raw_transport is not None:
                 Thread(
-                    target=tpartial(
-                        _do_writer_force_close_check,
-                        weakref.ref(raw_transport),
+                    target=partial(
+                        _do_writer_force_close_check, weakref.ref(raw_transport)
                     ),
                     daemon=True,
                 ).start()
@@ -181,6 +180,7 @@ class RPCEndpoint:
         reader: asyncio.StreamReader,
         writer: asyncio.StreamWriter,
         label: str,
+        *,
         debug_print: bool = False,
         debug_print_io: bool = False,
         debug_print_call: Callable[[str], None] | None = None,
@@ -427,6 +427,7 @@ class RPCEndpoint:
         bytes_awaitable: asyncio.Task[bytes],
         message_id: int,
     ) -> bytes:
+        # pylint: disable=too-many-positional-arguments
         # We need to know their protocol, so if we haven't gotten a handshake
         # from them yet, just wait.
         while self._peer_info is None:

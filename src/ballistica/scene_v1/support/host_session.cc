@@ -2,21 +2,27 @@
 
 #include "ballistica/scene_v1/support/host_session.h"
 
+#include <Python.h>
+
+#include <cstdio>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/scene_v1/assets/scene_data_asset.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/support/host_activity.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::scene_v1 {
 
@@ -26,7 +32,7 @@ HostSession::HostSession(PyObject* session_type_obj)
   assert(g_base->InLogicThread());
   assert(session_type_obj != nullptr);
 
-  auto* appmode = SceneV1AppMode::GetActiveOrFatal();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
   base::ScopedSetContext ssc(this);
 
   // FIXME: Should be an attr of the session class, not hard-coded.
@@ -40,7 +46,7 @@ HostSession::HostSession(PyObject* session_type_obj)
   // Create a timer to step our session scene.
   step_scene_timer_ =
       base_timers_.NewTimer(base_time_millisecs_, kGameStepMilliseconds, 0, -1,
-                            NewLambdaRunnable([this] { StepScene(); }).Get());
+                            NewLambdaRunnable([this] { StepScene(); }).get());
 
   // Set up our output-stream, which will go to a replay and/or the network.
   // We don't dump to a replay if we're doing the main menu; that replay
@@ -56,12 +62,12 @@ HostSession::HostSession(PyObject* session_type_obj)
 
   // Make a scene for our session-level nodes, etc.
   scene_ = Object::New<Scene>(0);
-  if (output_stream_.Exists()) {
-    output_stream_->AddScene(scene_.Get());
+  if (output_stream_.exists()) {
+    output_stream_->AddScene(scene_.get());
   }
 
   // Fade in from our current blackness.
-  g_base->graphics->FadeScreen(true, 250, nullptr);
+  // g_base->graphics->FadeScreen(true, 250, nullptr);
 
   // Start by showing the progress bar instead of hitching.
   g_base->graphics->EnableProgressBar(true);
@@ -80,7 +86,7 @@ HostSession::HostSession(PyObject* session_type_obj)
     Python::ScopedCallLabel label("Session instantiation");
     obj = session_type.Call();
   }
-  if (!obj.Exists()) {
+  if (!obj.exists()) {
     throw Exception("Error creating game session: '" + session_type.Str()
                     + "'");
   }
@@ -101,13 +107,13 @@ auto HostSession::GetHostSession() -> HostSession* { return this; }
 void HostSession::DestroyHostActivity(HostActivity* a) {
   BA_PRECONDITION(a);
   BA_PRECONDITION(a->GetHostSession() == this);
-  if (a == foreground_host_activity_.Get()) {
+  if (a == foreground_host_activity_.get()) {
     foreground_host_activity_.Clear();
   }
 
   // Clear it from our activities list if its still on there.
   for (auto i = host_activities_.begin(); i < host_activities_.end(); i++) {
-    if (i->Get() == a) {
+    if (i->get() == a) {
       host_activities_.erase(i);
       return;
     }
@@ -120,8 +126,8 @@ void HostSession::DestroyHostActivity(HostActivity* a) {
 }
 
 auto HostSession::GetMutableScene() -> Scene* {
-  assert(scene_.Exists());
-  return scene_.Get();
+  assert(scene_.exists());
+  return scene_.get();
 }
 
 void HostSession::DebugSpeedMultChanged() {
@@ -200,7 +206,7 @@ auto HostSession::GetMesh(const std::string& name) -> Object::Ref<SceneMesh> {
 }
 
 auto HostSession::GetForegroundContext() -> base::ContextRef {
-  HostActivity* a = foreground_host_activity_.Get();
+  HostActivity* a = foreground_host_activity_.get();
   if (a) {
     return base::ContextRef(a);
   }
@@ -209,12 +215,12 @@ auto HostSession::GetForegroundContext() -> base::ContextRef {
 
 void HostSession::RequestPlayer(SceneV1InputDeviceDelegate* device) {
   assert(g_base->InLogicThread());
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   // Ignore if we have no Python session Obj.
   if (!GetSessionPyObj()) {
-    Log(LogLevel::kError,
-        "HostSession::RequestPlayer() called w/no session_py_obj_.");
+    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                "HostSession::RequestPlayer() called w/no session_py_obj_.");
     return;
   }
 
@@ -223,7 +229,7 @@ void HostSession::RequestPlayer(SceneV1InputDeviceDelegate* device) {
   int player_id = next_player_id_++;
   auto player(Object::New<Player>(player_id, this));
   players_.push_back(player);
-  device->AttachToLocalPlayer(player.Get());
+  device->AttachToLocalPlayer(player.get());
 
   // Ask the python layer to accept/deny this guy.
   bool accept;
@@ -238,7 +244,7 @@ void HostSession::RequestPlayer(SceneV1InputDeviceDelegate* device) {
     if (accept) {
       player->set_accepted(true);
     } else {
-      RemovePlayer(player.Get());
+      RemovePlayer(player.get());
     }
   }
 
@@ -254,7 +260,7 @@ void HostSession::RequestPlayer(SceneV1InputDeviceDelegate* device) {
 
 void HostSession::RemovePlayer(Player* player) {
   assert(player);
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   // If we find the player amongst our ranks, remove them.
   // Note that it is expected to get redundant calls for this that
@@ -262,7 +268,7 @@ void HostSession::RemovePlayer(Player* player) {
   // then the player will still try to remove themself from their session
   // as they are going down).
   for (auto i = players_.begin(); i != players_.end(); ++i) {
-    if (i->Get() == player) {
+    if (i->get() == player) {
       // Grab a ref to keep the player alive, pull him off the list, then call
       // his leaving callback.
       auto player2 = Object::Ref<Player>(*i);
@@ -274,7 +280,7 @@ void HostSession::RemovePlayer(Player* player) {
 
       // Only make the callback for this player if they were accepted.
       if (player2->accepted()) {
-        IssuePlayerLeft(player2.Get());
+        IssuePlayerLeft(player2.get());
       }
 
       // Update our game roster with the departure.
@@ -307,13 +313,13 @@ void HostSession::IssuePlayerLeft(Player* player) {
         BA_LOG_PYTHON_TRACE_ONCE("missing player on IssuePlayerLeft");
       }
     } else {
-      Log(LogLevel::kWarning,
-          "HostSession: IssuePlayerLeft caled with no "
-          "session_py_obj_");
+      g_core->Log(LogName::kBaNetworking, LogLevel::kWarning,
+                  "HostSession: IssuePlayerLeft caled with no "
+                  "session_py_obj_");
     }
   } catch (const std::exception& e) {
-    Log(LogLevel::kError,
-        std::string("Error calling on_player_leave(): ") + e.what());
+    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                std::string("Error calling on_player_leave(): ") + e.what());
   }
 }
 
@@ -330,12 +336,12 @@ void HostSession::SetForegroundHostActivity(HostActivity* a) {
   assert(a);
   assert(g_base->InLogicThread());
 
-  auto* appmode = SceneV1AppMode::GetActiveOrFatal();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
 
   if (shutting_down_) {
-    Log(LogLevel::kWarning,
-        "SetForegroundHostActivity called during session shutdown; "
-        "ignoring.");
+    g_core->Log(LogName::kBa, LogLevel::kWarning,
+                "SetForegroundHostActivity called during session shutdown; "
+                "ignoring.");
     return;
   }
 
@@ -381,9 +387,9 @@ auto HostSession::NewHostActivity(PyObject* activity_type_obj,
 
   // First generate our C++ activity instance and point the context at it.
   auto activity(Object::New<HostActivity>(this));
-  AddHostActivity(activity.Get());
+  AddHostActivity(activity.get());
 
-  base::ScopedSetContext ssc(activity.Get());
+  base::ScopedSetContext ssc(activity.get());
 
   // Now instantiate the Python instance.. pass args if some were provided, or
   // an empty dict otherwise.
@@ -395,18 +401,18 @@ auto HostSession::NewHostActivity(PyObject* activity_type_obj,
   }
 
   PythonRef result = activity_type.Call(args);
-  if (!result.Exists()) {
+  if (!result.exists()) {
     throw Exception("HostActivity creation failed");
   }
 
   // If all went well, the python activity constructor should have called
   // register_activity(), so we should be able to get at the same python
   // activity we just instantiated through the c++ class.
-  if (activity->GetPyActivity() != result.Get()) {
+  if (activity->GetPyActivity() != result.get()) {
     throw Exception("Error on HostActivity construction");
   }
 
-  PyObject* obj = result.Get();
+  PyObject* obj = result.get();
   Py_INCREF(obj);
   return obj;
 }
@@ -425,7 +431,7 @@ auto HostSession::RegisterPyActivity(PyObject* activity_obj) -> HostActivity* {
 
 void HostSession::DecrementPlayerTimeOuts(millisecs_t millisecs) {
   for (auto&& i : players_) {
-    Player* player = i.Get();
+    Player* player = i.get();
     assert(player);
     if (player->time_out() < millisecs) {
       std::string kick_str =
@@ -452,7 +458,7 @@ void HostSession::DecrementPlayerTimeOuts(millisecs_t millisecs) {
 void HostSession::ProcessPlayerTimeOuts() {
   millisecs_t real_time = g_core->GetAppTimeMillisecs();
 
-  if (foreground_host_activity_.Exists()
+  if (foreground_host_activity_.exists()
       && foreground_host_activity_->game_speed() > 0.0
       && !foreground_host_activity_->paused()
       && foreground_host_activity_->getAllowKickIdlePlayers()
@@ -504,17 +510,26 @@ void HostSession::Update(int time_advance_millisecs, double time_advance) {
     }
   }
 
+  // We shouldn't be getting *huge* steps coming through here. Warn if that
+  // ever happens so we can fix it at the source.
+  if (time_advance_millisecs > 500 || time_advance > 0.5) {
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                "HostSession::Update() got excessive time_advance ("
+                    + std::to_string(time_advance_millisecs) + " ms, "
+                    + std::to_string(time_advance) + " s); should not happen.");
+  }
+
   // We can be killed at any time, so let's keep an eye out for that.
   WeakRef<HostSession> test_ref(this);
-  assert(test_ref.Exists());
+  assert(test_ref.exists());
 
   ProcessPlayerTimeOuts();
 
   SessionStream* output_stream = GetSceneStream();
   auto too_slow{false};
 
-  // Try to advance our base time by the provided amount,
-  // firing all timers along the way.
+  // Try to advance our base time by the provided amount, firing all timers
+  // along the way.
   millisecs_t target_base_time_millisecs =
       base_time_millisecs_ + time_advance_millisecs;
   while (!base_timers_.Empty()
@@ -545,17 +560,17 @@ void HostSession::Update(int time_advance_millisecs, double time_advance) {
       output_stream->SetTime(base_time_millisecs_);
     }
   }
-  assert(test_ref.Exists());
+  assert(test_ref.exists());
 
   // Let our activities update too (iterate via weak-refs as this list may
   // change under us at any time).
   for (auto&& i : PointersToWeakRefs(RefsToPointers(host_activities_))) {
-    if (i.Exists()) {
+    if (i.exists()) {
       i->StepDisplayTime(time_advance_millisecs);
-      assert(test_ref.Exists());
+      assert(test_ref.exists());
     }
   }
-  assert(test_ref.Exists());
+  assert(test_ref.exists());
 
   // Periodically prune various dead refs.
   if (base_time_millisecs_ > next_prune_time_) {
@@ -565,7 +580,7 @@ void HostSession::Update(int time_advance_millisecs, double time_advance) {
     PruneDeadRefs(&python_calls_);
     next_prune_time_ = base_time_millisecs_ + 5000;
   }
-  assert(test_ref.Exists());
+  assert(test_ref.exists());
 }
 
 auto HostSession::TimeToNextEvent() -> std::optional<microsecs_t> {
@@ -594,24 +609,24 @@ HostSession::~HostSession() {
     // (should wipe out refs to our session and prevent them from running
     // without a valid session context).
     for (auto&& i : python_calls_) {
-      if (auto* j = i.Get()) {
+      if (auto* j = i.get()) {
         j->MarkDead();
       }
     }
 
     // Mark all our media dead to clear it out of our output-stream cleanly.
     for (auto&& i : textures_) {
-      if (auto* j = i.second.Get()) {
+      if (auto* j = i.second.get()) {
         j->MarkDead();
       }
     }
     for (auto&& i : meshes_) {
-      if (auto* j = i.second.Get()) {
+      if (auto* j = i.second.get()) {
         j->MarkDead();
       }
     }
     for (auto&& i : sounds_) {
-      if (auto* j = i.second.Get()) {
+      if (auto* j = i.second.get()) {
         j->MarkDead();
       }
     }
@@ -651,11 +666,12 @@ HostSession::~HostSession() {
           s += ("\n  " + std::to_string(count++) + ": "
                 + i->GetObjectDescription());
         }
-        Log(LogLevel::kWarning, s);
+        g_core->Log(LogName::kBa, LogLevel::kWarning, s);
       }
     }
   } catch (const std::exception& e) {
-    Log(LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "Exception in HostSession destructor: " + std::string(e.what()));
   }
 }
@@ -673,9 +689,9 @@ void HostSession::RegisterContextCall(base::PythonContextCall* call) {
   // If we're shutting down, just kill the call immediately.
   // (we turn all of our calls to no-ops as we shut down).
   if (shutting_down_) {
-    Log(LogLevel::kWarning,
-        "Adding call to expired session; call will not function: "
-            + call->GetObjectDescription());
+    g_core->Log(LogName::kBa, LogLevel::kWarning,
+                "Adding call to expired session; call will not function: "
+                    + call->GetObjectDescription());
     call->MarkDead();
   }
 }
@@ -693,7 +709,7 @@ auto HostSession::GetUnusedPlayerName(Player* p, const std::string& base_name)
     }
     bool name_found = false;
     for (auto&& j : players_) {
-      if ((j->GetName() == name_test) && (j.Get() != p)) {
+      if ((j->GetName() == name_test) && (j.get() != p)) {
         name_found = true;
         break;
       }
@@ -706,29 +722,29 @@ auto HostSession::GetUnusedPlayerName(Player* p, const std::string& base_name)
 
 void HostSession::DumpFullState(SessionStream* out) {
   // Add session-scene.
-  if (scene_.Exists()) {
+  if (scene_.exists()) {
     scene_->Dump(out);
   }
 
   // Dump media associated with session-scene.
   for (auto&& i : textures_) {
-    if (SceneTexture* t = i.second.Get()) {
+    if (SceneTexture* t = i.second.get()) {
       out->AddTexture(t);
     }
   }
   for (auto&& i : sounds_) {
-    if (SceneSound* s = i.second.Get()) {
+    if (SceneSound* s = i.second.get()) {
       out->AddSound(s);
     }
   }
   for (auto&& i : meshes_) {
-    if (SceneMesh* s = i.second.Get()) {
+    if (SceneMesh* s = i.second.get()) {
       out->AddMesh(s);
     }
   }
 
   // Dump session-scene's nodes.
-  if (scene_.Exists()) {
+  if (scene_.exists()) {
     scene_->DumpNodes(out);
   }
 
@@ -743,7 +759,7 @@ void HostSession::GetCorrectionMessages(
   std::vector<uint8_t> message;
 
   // Grab correction for session scene (though there shouldn't be one).
-  if (scene_.Exists()) {
+  if (scene_.exists()) {
     message = scene_->GetCorrectionMessage(blend);
     if (message.size() > 4) {
       // A correction packet of size 4 is empty; ignore it.
@@ -753,7 +769,7 @@ void HostSession::GetCorrectionMessages(
 
   // Now do same for activity scenes.
   for (auto&& i : host_activities_) {
-    if (HostActivity* ha = i.Get()) {
+    if (HostActivity* ha = i.get()) {
       if (Scene* sg = ha->scene()) {
         message = sg->GetCorrectionMessage(blend);
         if (message.size() > 4) {

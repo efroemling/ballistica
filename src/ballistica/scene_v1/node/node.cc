@@ -2,6 +2,9 @@
 
 #include "ballistica/scene_v1/node/node.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/scene_v1/dynamics/part.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
@@ -15,8 +18,8 @@
 namespace ballistica::scene_v1 {
 
 NodeType::~NodeType() {
-  Log(LogLevel::kError,
-      "SHOULD NOT BE DESTRUCTING A TYPE type=(" + name_ + ")");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "SHOULD NOT BE DESTRUCTING A TYPE type=(" + name_ + ")");
 }
 
 Node::Node(Scene* scene_in, NodeType* node_type)
@@ -40,8 +43,8 @@ void Node::AddToScene(Scene* scene) {
 Node::~Node() {
   // Kill any incoming/outgoing attr connections.
   for (auto& i : attribute_connections_incoming_) {
-    NodeAttributeConnection* a = i.second.Get();
-    assert(a && a->src_node.Exists());
+    NodeAttributeConnection* a = i.second.get();
+    assert(a && a->src_node.exists());
 
     // Remove from src node's outgoing list.
     a->src_node->attribute_connections_.erase(a->src_iterator);
@@ -50,8 +53,8 @@ Node::~Node() {
   // Kill all refs on our side; this should kill the connections.
   attribute_connections_incoming_.clear();
   for (auto& attribute_connection : attribute_connections_) {
-    NodeAttributeConnection* a = attribute_connection.Get();
-    assert(a && a->dst_node.Exists());
+    NodeAttributeConnection* a = attribute_connection.get();
+    assert(a && a->dst_node.exists());
 
     // Remove from dst node's incoming list.
     auto j =
@@ -184,8 +187,8 @@ void Node::UpdateConnections() {
   for (auto& attribute_connection : attribute_connections_) {
     // Connections should go away when either node dies; make sure that's
     // working.
-    assert(attribute_connection->src_node.Exists()
-           && attribute_connection->dst_node.Exists());
+    assert(attribute_connection->src_node.exists()
+           && attribute_connection->dst_node.exists());
     attribute_connection->Update();
   }
 }
@@ -206,7 +209,7 @@ void Node::AddDependentNode(Node* node) {
   if (!dependent_nodes_.empty()) {
     std::vector<Object::WeakRef<Node> > live_nodes;
     for (auto& dependent_node : dependent_nodes_) {
-      if (dependent_node.Exists()) live_nodes.push_back(dependent_node);
+      if (dependent_node.exists()) live_nodes.push_back(dependent_node);
     }
     dependent_nodes_.swap(live_nodes);
   }
@@ -233,7 +236,7 @@ auto Node::GetPyRef(bool new_ref) -> PyObject* {
 }
 
 auto Node::GetDelegate() -> PyObject* {
-  PyObject* ref = delegate_.Get();
+  PyObject* ref = delegate_.get();
   if (!ref) {
     return nullptr;
   }
@@ -259,10 +262,11 @@ void Node::DispatchOutOfBoundsMessage() {
                    .Get(SceneV1Python::ObjID::kOutOfBoundsMessageClass)
                    .Call();
   }
-  if (instance.Exists()) {
-    DispatchUserMessage(instance.Get(), "Node OutOfBoundsMessage dispatch");
+  if (instance.exists()) {
+    DispatchUserMessage(instance.get(), "Node OutOfBoundsMessage dispatch");
   } else {
-    Log(LogLevel::kError, "Error creating OutOfBoundsMessage");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Error creating OutOfBoundsMessage");
   }
 }
 
@@ -276,10 +280,10 @@ void Node::DispatchPickUpMessage(Node* node) {
                    .Get(SceneV1Python::ObjID::kPickUpMessageClass)
                    .Call(args);
   }
-  if (instance.Exists()) {
-    DispatchUserMessage(instance.Get(), "Node PickUpMessage dispatch");
+  if (instance.exists()) {
+    DispatchUserMessage(instance.get(), "Node PickUpMessage dispatch");
   } else {
-    Log(LogLevel::kError, "Error creating PickUpMessage");
+    g_core->Log(LogName::kBa, LogLevel::kError, "Error creating PickUpMessage");
   }
 }
 
@@ -291,10 +295,10 @@ void Node::DispatchDropMessage() {
                    .Get(SceneV1Python::ObjID::kDropMessageClass)
                    .Call();
   }
-  if (instance.Exists()) {
-    DispatchUserMessage(instance.Get(), "Node DropMessage dispatch");
+  if (instance.exists()) {
+    DispatchUserMessage(instance.get(), "Node DropMessage dispatch");
   } else {
-    Log(LogLevel::kError, "Error creating DropMessage");
+    g_core->Log(LogName::kBa, LogLevel::kError, "Error creating DropMessage");
   }
 }
 
@@ -309,10 +313,11 @@ void Node::DispatchPickedUpMessage(Node* by_node) {
                    .Get(SceneV1Python::ObjID::kPickedUpMessageClass)
                    .Call(args);
   }
-  if (instance.Exists()) {
-    DispatchUserMessage(instance.Get(), "Node PickedUpMessage dispatch");
+  if (instance.exists()) {
+    DispatchUserMessage(instance.get(), "Node PickedUpMessage dispatch");
   } else {
-    Log(LogLevel::kError, "Error creating PickedUpMessage");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Error creating PickedUpMessage");
   }
 }
 
@@ -327,10 +332,11 @@ void Node::DispatchDroppedMessage(Node* by_node) {
                    .Get(SceneV1Python::ObjID::kDroppedMessageClass)
                    .Call(args);
   }
-  if (instance.Exists()) {
-    DispatchUserMessage(instance.Get(), "Node DroppedMessage dispatch");
+  if (instance.exists()) {
+    DispatchUserMessage(instance.get(), "Node DroppedMessage dispatch");
   } else {
-    Log(LogLevel::kError, "Error creating DroppedMessage");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Error creating DroppedMessage");
   }
 }
 
@@ -342,10 +348,11 @@ void Node::DispatchShouldShatterMessage() {
                    .Get(SceneV1Python::ObjID::kShouldShatterMessageClass)
                    .Call();
   }
-  if (instance.Exists()) {
-    DispatchUserMessage(instance.Get(), "Node ShouldShatterMessage dispatch");
+  if (instance.exists()) {
+    DispatchUserMessage(instance.get(), "Node ShouldShatterMessage dispatch");
   } else {
-    Log(LogLevel::kError, "Error creating ShouldShatterMessage");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Error creating ShouldShatterMessage");
   }
 }
 
@@ -358,10 +365,11 @@ void Node::DispatchImpactDamageMessage(float intensity) {
                    .Get(SceneV1Python::ObjID::kImpactDamageMessageClass)
                    .Call(args);
   }
-  if (instance.Exists()) {
-    DispatchUserMessage(instance.Get(), "Node ImpactDamageMessage dispatch");
+  if (instance.exists()) {
+    DispatchUserMessage(instance.get(), "Node ImpactDamageMessage dispatch");
   } else {
-    Log(LogLevel::kError, "Error creating ImpactDamageMessage");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Error creating ImpactDamageMessage");
   }
 }
 
@@ -389,10 +397,10 @@ void Node::DispatchUserMessage(PyObject* obj, const char* label) {
         c.Call(PythonRef(Py_BuildValue("(O)", obj), PythonRef::kSteal));
       }
     } catch (const std::exception& e) {
-      Log(LogLevel::kError,
-          std::string("Error in handlemessage() with message ")
-              + PythonRef(obj, PythonRef::kAcquire).Str() + ": '" + e.what()
-              + "'");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  std::string("Error in handlemessage() with message ")
+                      + PythonRef(obj, PythonRef::kAcquire).Str() + ": '"
+                      + e.what() + "'");
     }
   }
 }

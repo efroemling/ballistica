@@ -2,6 +2,8 @@
 
 #include "ballistica/base/input/device/keyboard_input.h"
 
+#include <string>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/base/support/repeater.h"

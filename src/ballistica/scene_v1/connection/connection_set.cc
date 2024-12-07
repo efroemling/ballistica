@@ -2,24 +2,29 @@
 
 #include "ballistica/scene_v1/connection/connection_set.h"
 
+#include <Python.h>
+
+#include <string>
+#include <vector>
+
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_writer.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/scene_v1/connection/connection_to_client_udp.h"
 #include "ballistica/scene_v1/connection/connection_to_host_udp.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/host_session.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::scene_v1 {
 
 ConnectionSet::ConnectionSet() = default;
 
 auto ConnectionSet::GetConnectionToHostUDP() -> ConnectionToHostUDP* {
-  ConnectionToHost* h = connection_to_host_.Get();
+  ConnectionToHost* h = connection_to_host_.get();
   return h ? h->GetAsUDP() : nullptr;
 }
 
@@ -27,11 +32,11 @@ void ConnectionSet::RegisterClientController(ClientControllerInterface* c) {
   // This shouldn't happen, but if there's already a controller registered,
   // detach all clients from it.
   if (client_controller_) {
-    Log(LogLevel::kError,
-        "RegisterClientController() called "
-        "but already have a controller; bad.");
+    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                "RegisterClientController() called "
+                "but already have a controller; bad.");
     for (auto&& i : connections_to_clients_) {
-      assert(i.second.Exists());
+      assert(i.second.exists());
       i.second->SetController(nullptr);
     }
   }
@@ -40,7 +45,7 @@ void ConnectionSet::RegisterClientController(ClientControllerInterface* c) {
   client_controller_ = c;
   if (client_controller_) {
     for (auto&& i : connections_to_clients_) {
-      assert(i.second.Exists());
+      assert(i.second.exists());
       if (i.second->can_communicate()) {
         i.second->SetController(client_controller_);
       }
@@ -55,10 +60,10 @@ void ConnectionSet::Update() {
     i.second->Update();
 
     // Make sure the connection didn't kill itself in the update.
-    assert(test_ref.Exists());
+    assert(test_ref.exists());
   }
 
-  if (connection_to_host_.Exists()) {
+  if (connection_to_host_.exists()) {
     connection_to_host_->Update();
   }
 }
@@ -67,7 +72,7 @@ auto ConnectionSet::GetConnectedClientCount() const -> int {
   assert(g_base->InLogicThread());
   int count = 0;
   for (auto&& i : connections_to_clients_) {
-    if (i.second.Exists() && i.second->can_communicate()) {
+    if (i.second.exists() && i.second->can_communicate()) {
       count++;
     }
   }
@@ -88,14 +93,14 @@ void ConnectionSet::SendChatMessage(const std::string& message,
         "Can't send chat message with sender_override as a client.");
   }
 
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   std::string our_spec_string;
 
   if (sender_override != nullptr) {
     std::string override_final = *sender_override;
-    if (override_final.size() > kMaxPartyNameCombinedSize) {
-      override_final.resize(kMaxPartyNameCombinedSize);
+    if (override_final.size() > classic::kMaxPartyNameCombinedSize) {
+      override_final.resize(classic::kMaxPartyNameCombinedSize);
       override_final += "...";
     }
     our_spec_string =
@@ -129,8 +134,8 @@ void ConnectionSet::SendChatMessage(const std::string& message,
           }
         }
       }
-      if (p_name_combined.size() > kMaxPartyNameCombinedSize) {
-        p_name_combined.resize(kMaxPartyNameCombinedSize);
+      if (p_name_combined.size() > classic::kMaxPartyNameCombinedSize) {
+        p_name_combined.resize(classic::kMaxPartyNameCombinedSize);
         p_name_combined += "...";
       }
       if (!p_name_combined.empty()) {
@@ -207,11 +212,11 @@ auto ConnectionSet::GetConnectionsToClients()
   std::vector<ConnectionToClient*> connections;
   connections.reserve(connections_to_clients_.size());
   for (auto& connections_to_client : connections_to_clients_) {
-    if (connections_to_client.second.Exists()) {
-      connections.push_back(connections_to_client.second.Get());
+    if (connections_to_client.second.exists()) {
+      connections.push_back(connections_to_client.second.get());
     } else {
-      Log(LogLevel::kError,
-          "HAVE NONEXISTENT CONNECTION_TO_CLIENT IN LIST; UNEXPECTED");
+      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                  "HAVE NONEXISTENT CONNECTION_TO_CLIENT IN LIST; UNEXPECTED");
     }
   }
   return connections;
@@ -223,7 +228,7 @@ void ConnectionSet::Shutdown() {
   for (auto& connection : connections_to_clients_) {
     connection.second->RequestDisconnect();
   }
-  if (connection_to_host_.Exists()) {
+  if (connection_to_host_.exists()) {
     connection_to_host_->RequestDisconnect();
   }
 }
@@ -231,7 +236,7 @@ void ConnectionSet::Shutdown() {
 void ConnectionSet::SendScreenMessageToClients(const std::string& s, float r,
                                                float g, float b) {
   for (auto&& i : connections_to_clients_) {
-    if (i.second.Exists() && i.second->can_communicate()) {
+    if (i.second.exists() && i.second->can_communicate()) {
       i.second->SendScreenMessage(s, r, g, b);
     }
   }
@@ -241,7 +246,7 @@ void ConnectionSet::SendScreenMessageToSpecificClients(
     const std::string& s, float r, float g, float b,
     const std::vector<int>& clients) {
   for (auto&& i : connections_to_clients_) {
-    if (i.second.Exists() && i.second->can_communicate()) {
+    if (i.second.exists() && i.second->can_communicate()) {
       // Only send if this client is in our list.
       for (auto c : clients) {
         if (c == i.second->id()) {
@@ -269,20 +274,21 @@ void ConnectionSet::SendScreenMessageToAll(const std::string& s, float r,
 
 void ConnectionSet::PrepareForLaunchHostSession() {
   // If for some reason we're still attached to a host, kill the connection.
-  if (connection_to_host_.Exists()) {
-    Log(LogLevel::kError,
+  if (connection_to_host_.exists()) {
+    g_core->Log(
+        LogName::kBaNetworking, LogLevel::kError,
         "Had host-connection during LaunchHostSession(); shouldn't happen.");
     connection_to_host_->RequestDisconnect();
     connection_to_host_.Clear();
     has_connection_to_host_ = false;
-    if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+    if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
       appmode->UpdateGameRoster();
     }
   }
 }
 
 void ConnectionSet::HandleClientDisconnected(int id) {
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   auto i = connections_to_clients_.find(id);
   if (i != connections_to_clients_.end()) {
     bool was_connected = i->second->can_communicate();
@@ -310,14 +316,15 @@ void ConnectionSet::HandleClientDisconnected(int id) {
 auto ConnectionSet::DisconnectClient(int client_id, int ban_seconds) -> bool {
   assert(g_base->InLogicThread());
 
-  if (connection_to_host_.Exists()) {
+  if (connection_to_host_.exists()) {
     // Kick-votes first appeared in 14248
     if (connection_to_host_->build_number() < 14248) {
       return false;
     }
     if (client_id > 255) {
-      Log(LogLevel::kError, "DisconnectClient got client_id > 255 ("
-                                + std::to_string(client_id) + ")");
+      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                  "DisconnectClient got client_id > 255 ("
+                      + std::to_string(client_id) + ")");
     } else {
       std::vector<uint8_t> msg_out(2);
       msg_out[0] = BA_MESSAGE_KICK_VOTE;
@@ -333,7 +340,7 @@ auto ConnectionSet::DisconnectClient(int client_id, int ban_seconds) -> bool {
       // If this is considered a kick, add an entry to our banned list so we
       // know not to let them back in for a while.
       if (ban_seconds > 0) {
-        if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+        if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
           appmode->BanPlayer(i->second->peer_spec(), 1000 * ban_seconds);
         }
       }
@@ -356,14 +363,14 @@ void ConnectionSet::PushClientDisconnectedCall(int id) {
 
 void ConnectionSet::PushDisconnectedFromHostCall() {
   g_base->logic->event_loop()->PushCall([this] {
-    if (connection_to_host_.Exists()) {
+    if (connection_to_host_.exists()) {
       bool was_connected = connection_to_host_->can_communicate();
       connection_to_host_.Clear();
       has_connection_to_host_ = false;
 
       // Clear out our party roster.
 
-      if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+      if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
         appmode->UpdateGameRoster();
 
         // Go back to main menu *if* the connection was fully connected.
@@ -382,7 +389,7 @@ void ConnectionSet::PushHostConnectedUDPCall(const SockAddr& addr,
   g_base->logic->event_loop()->PushCall([this, addr, print_connect_progress] {
     // Attempt to disconnect any clients we have, turn off public-party
     // advertising, etc.
-    if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+    if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
       appmode->CleanUpBeforeConnectingToHost();
     }
     print_udp_connect_progress_ = print_connect_progress;
@@ -394,7 +401,7 @@ void ConnectionSet::PushHostConnectedUDPCall(const SockAddr& addr,
 
 void ConnectionSet::PushDisconnectFromHostCall() {
   g_base->logic->event_loop()->PushCall([this] {
-    if (connection_to_host_.Exists()) {
+    if (connection_to_host_.exists()) {
       connection_to_host_->RequestDisconnect();
     }
   });
@@ -405,9 +412,9 @@ void ConnectionSet::UnregisterClientController(ClientControllerInterface* c) {
 
   // This shouldn't happen.
   if (client_controller_ != c) {
-    Log(LogLevel::kError,
-        "UnregisterClientController() called with a non-registered "
-        "controller");
+    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                "UnregisterClientController() called with a non-registered "
+                "controller");
     return;
   }
 
@@ -422,7 +429,7 @@ void ConnectionSet::UnregisterClientController(ClientControllerInterface* c) {
 
 void ConnectionSet::ForceDisconnectClients() {
   for (auto&& i : connections_to_clients_) {
-    if (ConnectionToClient* client = i.second.Get()) {
+    if (ConnectionToClient* client = i.second.get()) {
       client->RequestDisconnect();
     }
   }
@@ -434,7 +441,7 @@ void ConnectionSet::ForceDisconnectClients() {
 void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
                                             const SockAddr& addr) {
   assert(!data_in.empty());
-  auto* appmode = SceneV1AppMode::GetActiveOrFatal();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
 
   const uint8_t* data = &(data_in[0]);
   auto data_size = static_cast<size_t>(data_in.size());
@@ -631,7 +638,7 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
           g_base->network_writer->PushSendToCall(
               {BA_PACKET_CLIENT_DENY, request_id}, addr);
 
-        } else if (connection_to_host_.Exists()) {
+        } else if (connection_to_host_.exists()) {
           // If we're connected to someone else, we can't have clients.
           g_base->network_writer->PushSendToCall(
               {BA_PACKET_CLIENT_DENY_ALREADY_IN_PARTY, request_id}, addr);
@@ -649,7 +656,7 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
               }
             }
           }
-          if (!connection_to_client.Exists()) {
+          if (!connection_to_client.exists()) {
             // Create them a client object.
             // Try to find an unused client-id in the range 0-255.
             int client_id = 0;
@@ -671,7 +678,8 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
               msg_out[0] = BA_PACKET_CLIENT_DENY;
               msg_out[1] = request_id;
               g_base->network_writer->PushSendToCall(msg_out, addr);
-              Log(LogLevel::kError, "All client slots full; really?..");
+              g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                          "All client slots full; really?..");
               break;
             }
             connection_to_client = Object::New<ConnectionToClientUDP>(
@@ -700,8 +708,8 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
   }
 }
 
-auto ConnectionSet::VerifyClientAddr(uint8_t client_id,
-                                     const SockAddr& addr) -> bool {
+auto ConnectionSet::VerifyClientAddr(uint8_t client_id, const SockAddr& addr)
+    -> bool {
   auto connection_to_client = connections_to_clients_.find(client_id);
 
   if (connection_to_client != connections_to_clients_.end()) {
@@ -713,7 +721,7 @@ auto ConnectionSet::VerifyClientAddr(uint8_t client_id,
     if (addr == connection_to_client_udp->addr()) {
       return true;
     }
-    BA_LOG_ONCE(LogLevel::kError,
+    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
                 "VerifyClientAddr() found mismatch for client "
                     + std::to_string(client_id) + ".");
     return false;
@@ -726,9 +734,9 @@ void ConnectionSet::SetClientInfoFromMasterServer(
     const std::string& client_token, PyObject* info_obj) {
   // NOLINTNEXTLINE  (python doing bitwise math on signed int)
   if (!PyDict_Check(info_obj)) {
-    Log(LogLevel::kError,
-        "got non-dict for master-server client info for token " + client_token
-            + ": " + Python::ObjToString(info_obj));
+    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                "got non-dict for master-server client info for token "
+                    + client_token + ": " + Python::ObjToString(info_obj));
     return;
   }
   for (ConnectionToClient* client : GetConnectionsToClients()) {
@@ -736,7 +744,7 @@ void ConnectionSet::SetClientInfoFromMasterServer(
       client->HandleMasterServerClientInfo(info_obj);
 
       // Roster will now include account-id...
-      if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+      if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
         appmode->MarkGameRosterDirty();
       }
       break;

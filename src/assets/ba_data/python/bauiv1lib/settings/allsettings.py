@@ -4,8 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-from threading import Thread
+from typing import TYPE_CHECKING, override
 import logging
 
 import bauiv1 as bui
@@ -14,12 +13,12 @@ if TYPE_CHECKING:
     pass
 
 
-class AllSettingsWindow(bui.Window):
+class AllSettingsWindow(bui.MainWindow):
     """Window for selecting a settings category."""
 
     def __init__(
         self,
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=too-many-statements
@@ -27,67 +26,64 @@ class AllSettingsWindow(bui.Window):
 
         # Preload some modules we use in a background thread so we won't
         # have a visual hitch when the user taps them.
-        Thread(target=self._preload_modules).start()
+        bui.app.threadpool.submit_no_wait(self._preload_modules)
 
         bui.set_analytics_screen('Settings Window')
-        scale_origin: tuple[float, float] | None
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
-        else:
-            self._transition_out = 'out_right'
-            scale_origin = None
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         width = 1000 if uiscale is bui.UIScale.SMALL else 580
         x_inset = 125 if uiscale is bui.UIScale.SMALL else 0
-        height = 435
+        height = 500 if uiscale is bui.UIScale.SMALL else 435
         self._r = 'settingsWindow'
         top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
+        yoffs = -30 if uiscale is bui.UIScale.SMALL else 0
 
         uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height + top_extra),
-                transition=transition,
-                toolbar_visibility='menu_minimal',
-                scale_origin_stack_offset=scale_origin,
-                scale=(
-                    1.75
+                toolbar_visibility=(
+                    'menu_minimal'
                     if uiscale is bui.UIScale.SMALL
-                    else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
+                    else 'menu_full'
+                ),
+                scale=(
+                    1.5
+                    if uiscale is bui.UIScale.SMALL
+                    else 1.25 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -8) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
-        if bui.app.ui_v1.use_toolbars and uiscale is bui.UIScale.SMALL:
+        if uiscale is bui.UIScale.SMALL:
             self._back_button = None
             bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self._do_back
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
         else:
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
                 autoselect=True,
-                position=(40 + x_inset, height - 55),
+                position=(40 + x_inset, height - 55 + yoffs),
                 size=(130, 60),
                 scale=0.8,
                 text_scale=1.2,
                 label=bui.Lstr(resource='backText'),
                 button_type='back',
-                on_activate_call=self._do_back,
+                on_activate_call=self.main_window_back,
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(0, height - 44),
+            position=(0, height - 44 + yoffs),
             size=(width, 25),
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
@@ -102,7 +98,7 @@ class AllSettingsWindow(bui.Window):
                 label=bui.charstr(bui.SpecialChar.BACK),
             )
 
-        v = height - 80
+        v = height - 80 + yoffs
         v -= 145
 
         basew = 280 if uiscale is bui.UIScale.SMALL else 230
@@ -139,11 +135,11 @@ class AllSettingsWindow(bui.Window):
             label='',
             on_activate_call=self._do_controllers,
         )
-        if bui.app.ui_v1.use_toolbars and self._back_button is None:
+        if self._back_button is None:
             bbtn = bui.get_special_widget('back_button')
             bui.widget(edit=ctb, left_widget=bbtn)
         _b_title(
-            x_offs2, v, ctb, bui.Lstr(resource=self._r + '.controllersText')
+            x_offs2, v, ctb, bui.Lstr(resource=f'{self._r}.controllersText')
         )
         imgw = imgh = 130
         bui.imagewidget(
@@ -163,10 +159,9 @@ class AllSettingsWindow(bui.Window):
             label='',
             on_activate_call=self._do_graphics,
         )
-        if bui.app.ui_v1.use_toolbars:
-            pbtn = bui.get_special_widget('party_button')
-            bui.widget(edit=gfxb, up_widget=pbtn, right_widget=pbtn)
-        _b_title(x_offs3, v, gfxb, bui.Lstr(resource=self._r + '.graphicsText'))
+        pbtn = bui.get_special_widget('squad_button')
+        bui.widget(edit=gfxb, up_widget=pbtn, right_widget=pbtn)
+        _b_title(x_offs3, v, gfxb, bui.Lstr(resource=f'{self._r}.graphicsText'))
         imgw = imgh = 110
         bui.imagewidget(
             parent=self._root_widget,
@@ -187,7 +182,7 @@ class AllSettingsWindow(bui.Window):
             label='',
             on_activate_call=self._do_audio,
         )
-        _b_title(x_offs4, v, abtn, bui.Lstr(resource=self._r + '.audioText'))
+        _b_title(x_offs4, v, abtn, bui.Lstr(resource=f'{self._r}.audioText'))
         imgw = imgh = 120
         bui.imagewidget(
             parent=self._root_widget,
@@ -207,7 +202,7 @@ class AllSettingsWindow(bui.Window):
             label='',
             on_activate_call=self._do_advanced,
         )
-        _b_title(x_offs5, v, avb, bui.Lstr(resource=self._r + '.advancedText'))
+        _b_title(x_offs5, v, avb, bui.Lstr(resource=f'{self._r}.advancedText'))
         imgw = imgh = 120
         bui.imagewidget(
             parent=self._root_widget,
@@ -219,7 +214,20 @@ class AllSettingsWindow(bui.Window):
         )
         self._restore_state()
 
-    # noinspection PyUnresolvedReferences
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
+
+    @override
+    def on_main_window_close(self) -> None:
+        self._save_state()
+
     @staticmethod
     def _preload_modules() -> None:
         """Preload modules we use; avoids hitches (called in bg thread)."""
@@ -229,94 +237,52 @@ class AllSettingsWindow(bui.Window):
         import bauiv1lib.settings.audio as _unused4
         import bauiv1lib.settings.advanced as _unused5
 
-    def _do_back(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.mainmenu import MainMenuWindow
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        self._save_state()
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            MainMenuWindow(transition='in_left').get_root_widget(),
-            from_window=self._root_widget,
-        )
-
     def _do_controllers(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.controls import ControlsSettingsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            ControlsSettingsWindow(
-                origin_widget=self._controllers_button
-            ).get_root_widget(),
-            from_window=self._root_widget,
+        self.main_window_replace(
+            ControlsSettingsWindow(origin_widget=self._controllers_button)
         )
 
     def _do_graphics(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.graphics import GraphicsSettingsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            GraphicsSettingsWindow(
-                origin_widget=self._graphics_button
-            ).get_root_widget(),
-            from_window=self._root_widget,
+        self.main_window_replace(
+            GraphicsSettingsWindow(origin_widget=self._graphics_button)
         )
 
     def _do_audio(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.audio import AudioSettingsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            AudioSettingsWindow(
-                origin_widget=self._audio_button
-            ).get_root_widget(),
-            from_window=self._root_widget,
+        self.main_window_replace(
+            AudioSettingsWindow(origin_widget=self._audio_button)
         )
 
     def _do_advanced(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.advanced import AdvancedSettingsWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            AdvancedSettingsWindow(
-                origin_widget=self._advanced_button
-            ).get_root_widget(),
-            from_window=self._root_widget,
+        self.main_window_replace(
+            AdvancedSettingsWindow(origin_widget=self._advanced_button)
         )
 
     def _save_state(self) -> None:

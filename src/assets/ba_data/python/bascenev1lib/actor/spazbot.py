@@ -947,9 +947,9 @@ class SpazBotSet:
         on_spawn_call: Callable[[SpazBot], Any] | None = None,
     ) -> None:
         """Spawn a bot from this set."""
-        from bascenev1lib.actor import spawner
+        from bascenev1lib.actor.spawner import Spawner
 
-        spawner.Spawner(
+        Spawner(
             pt=pos,
             spawn_time=spawn_time,
             send_spawn_message=False,

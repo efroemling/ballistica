@@ -11,14 +11,14 @@
 
 namespace ballistica::ui_v1 {
 
-// widget for drawing static text as well as text input
+/// Widget for drawing static text as well as text input.
 class TextWidget : public Widget {
  public:
   TextWidget();
   ~TextWidget() override;
   void Draw(base::RenderPass* pass, bool transparent) override;
-  void SetWidth(float widthIn);
-  void SetHeight(float heightIn);
+  void SetWidth(float width);
+  void SetHeight(float height);
   auto GetWidth() -> float override;
   auto GetHeight() -> float override;
   enum class HAlign : uint8_t { kLeft, kCenter, kRight };
@@ -28,40 +28,30 @@ class TextWidget : public Widget {
   auto IsSelectable() -> bool override {
     return (enabled_ && (editable_ || selectable_));
   }
-  void set_halign(HAlign a) {
-    if (alignment_h_ != a) {
-      text_group_dirty_ = true;
-    }
-    alignment_h_ = a;
-  }
-  void set_valign(VAlign a) {
-    if (alignment_v_ != a) {
-      text_group_dirty_ = true;
-    }
-    alignment_v_ = a;
-  }
+  void SetHAlign(HAlign a);
+  void SetVAlign(VAlign a);
   void set_max_width(float m) { max_width_ = m; }
   void set_max_height(float m) { max_height_ = m; }
   void set_rotate(float val) { rotate_ = val; }
   void SetText(const std::string& text_in);
-  void set_color(float rIn, float gIn, float bIn, float aIn) {
-    color_r_ = rIn;
-    color_g_ = gIn;
-    color_b_ = bIn;
-    color_a_ = aIn;
+  void set_color(float r, float g, float b, float a) {
+    color_r_ = r;
+    color_g_ = g;
+    color_b_ = b;
+    color_a_ = a;
   }
   auto text_raw() const -> const std::string& { return text_raw_; }
   void SetEditable(bool e);
   void set_selectable(bool s) { selectable_ = s; }
   void SetEnabled(bool val);
   void set_padding(float padding_in) { padding_ = padding_in; }
-  void set_max_chars(int max_chars_in) { max_chars_ = max_chars_in; }
+  void set_max_chars(int max_chars) { max_chars_ = max_chars; }
   auto max_chars() const -> int { return max_chars_; }
   auto always_show_carat() const -> bool { return always_show_carat_; }
   void set_always_show_carat(bool val) { always_show_carat_ = val; }
   void set_click_activate(bool enabled) { click_activate_ = enabled; }
-  void set_on_return_press_call(PyObject* call_tuple);
-  void set_on_activate_call(PyObject* call_tuple);
+  void SetOnReturnPressCall(PyObject* call_tuple);
+  void SetOnActivateCall(PyObject* call_tuple);
   void set_center_scale(float val) { center_scale_ = val; }
   auto editable() const -> bool { return editable_; }
   void Activate() override;
@@ -89,13 +79,7 @@ class TextWidget : public Widget {
   void set_extra_touch_border_scale(float scale) {
     extra_touch_border_scale_ = scale;
   }
-  void set_glow_type(GlowType glow_type) {
-    if (glow_type == glow_type_) {
-      return;
-    }
-    glow_type_ = glow_type;
-    highlight_dirty_ = true;
-  }
+  void SetGlowType(GlowType glow_type);
 
  private:
   auto ScaleAdjustedX_(float x) -> float;

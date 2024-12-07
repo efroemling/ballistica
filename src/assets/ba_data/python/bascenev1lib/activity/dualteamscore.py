@@ -145,6 +145,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         kill_delay: float,
         shiftdelay: float,
     ) -> None:
+        # pylint: disable=too-many-positional-arguments
         del kill_delay  # Unused arg.
         ZoomText(
             str(sessionteam.customdata['score']),

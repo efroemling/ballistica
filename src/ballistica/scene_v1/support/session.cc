@@ -2,14 +2,14 @@
 
 #include "ballistica/scene_v1/support/session.h"
 
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 
 namespace ballistica::scene_v1 {
 
 Session::Session() {
   g_scene_v1->session_count++;
 
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   // New sessions immediately become foreground.
   appmode->SetForegroundSession(this);
@@ -20,7 +20,7 @@ Session::~Session() { g_scene_v1->session_count--; }
 void Session::Update(int time_advance_millisecs, double time_advance) {}
 
 auto Session::TimeToNextEvent() -> std::optional<microsecs_t> {
-  BA_LOG_ONCE(LogLevel::kError,
+  BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
               "Session::TimeToNextEvent() being called; should not happen.");
   return 5000000;
 }
@@ -36,8 +36,8 @@ void Session::LanguageChanged() {}
 void Session::DebugSpeedMultChanged() {}
 
 void Session::DumpFullState(SessionStream* out) {
-  Log(LogLevel::kError,
-      "Session::DumpFullState() being called; shouldn't happen.");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "Session::DumpFullState() being called; shouldn't happen.");
 }
 
 }  // namespace ballistica::scene_v1

@@ -18,7 +18,7 @@ class SceneCubeMapTexture : public SceneAsset {
   // note that a texture's data can change over time as different
   // versions are spooled in/out/etc
   auto GetTextureData() const -> base::TextureAsset* {
-    return texture_data_.Get();
+    return texture_data_.get();
   }
   auto GetAssetTypeName() const -> std::string override {
     return "CubeMapTexture";
