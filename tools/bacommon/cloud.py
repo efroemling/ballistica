@@ -3,9 +3,11 @@
 """Functionality related to cloud functionality."""
 
 from __future__ import annotations
+
+import datetime
+from enum import Enum
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Annotated, override
-from enum import Enum
 
 from efro.message import Message, Response
 from efro.dataclassio import ioprepped, IOAttrs
@@ -355,3 +357,85 @@ class ClassicAccountLiveData:
     xpmax: Annotated[int, IOAttrs('xpm')]
 
     inbox_count: Annotated[int, IOAttrs('ibc')]
+    inbox_count_is_max: Annotated[bool, IOAttrs('ibcm')]
+
+
+class BSInboxEntryType(Enum):
+    """Types of entries that can be in an inbox."""
+
+    UNKNOWN = 'u'  # Entry types we don't support will be this.
+    SIMPLE = 's'
+    CLAIM = 'c'
+    CLAIM_DISCARD = 'cd'
+
+
+@ioprepped
+@dataclass
+class BSInboxEntry:
+    """Single message in an inbox."""
+
+    type: Annotated[
+        BSInboxEntryType, IOAttrs('t', enum_fallback=BSInboxEntryType.UNKNOWN)
+    ]
+    id: Annotated[str, IOAttrs('i')]
+    createtime: Annotated[datetime.datetime, IOAttrs('c')]
+
+    # If clients don't support format_version of a message they will
+    # display 'app needs to be updated to show this'.
+    format_version: Annotated[int, IOAttrs('f', soft_default=1)]
+
+    # These have soft defaults so can be removed in the future if desired.
+    message: Annotated[str, IOAttrs('m', soft_default='(invalid message)')]
+    subs: Annotated[list[str], IOAttrs('s', soft_default_factory=list)]
+
+
+@ioprepped
+@dataclass
+class BSInboxRequestMessage(Message):
+    """Message requesting our inbox."""
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [BSInboxRequestResponse]
+
+
+@ioprepped
+@dataclass
+class BSInboxRequestResponse(Response):
+    """Here's that inbox contents you asked for, boss."""
+
+    entries: Annotated[list[BSInboxEntry], IOAttrs('m')]
+
+    # Printable error if something goes wrong.
+    error: Annotated[str | None, IOAttrs('e')] = None
+
+
+class BSInboxEntryProcessType(Enum):
+    """Types of processing we can ask for."""
+
+    POSITIVE = 'p'
+    NEGATIVE = 'n'
+
+
+@ioprepped
+@dataclass
+class BSInboxEntryProcessMessage(Message):
+    """Do something to an inbox entry."""
+
+    id: Annotated[str, IOAttrs('i')]
+    process_type: Annotated[BSInboxEntryProcessType, IOAttrs('t')]
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [BSInboxEntryProcessResponse]
+
+
+@ioprepped
+@dataclass
+class BSInboxEntryProcessResponse(Response):
+    """Did something to that inbox entry, boss."""
+
+    # Printable error if something goes wrong.
+    error: Annotated[str | None, IOAttrs('e')] = None

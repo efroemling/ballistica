@@ -1115,6 +1115,7 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* click_activate_obj{Py_None};
   PyObject* always_highlight_obj{Py_None};
   PyObject* parent_obj{Py_None};
+  PyObject* id_obj{Py_None};
   ContainerWidget* parent_widget;
   PyObject* edit_obj{Py_None};
   PyObject* selectable_obj{Py_None};
@@ -1124,6 +1125,7 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   static const char* kwlist[] = {"edit",
                                  "parent",
+                                 "id",
                                  "size",
                                  "position",
                                  "background",
@@ -1156,16 +1158,16 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
-          const_cast<char**>(kwlist), &edit_obj, &parent_obj, &size_obj,
-          &pos_obj, &background_obj, &selected_child_obj, &transition_obj,
-          &cancel_button_obj, &start_button_obj, &root_selectable_obj,
-          &on_activate_call_obj, &claims_left_right_obj, &claims_tab_obj,
-          &selection_loops_obj, &selection_loops_to_parent_obj, &scale_obj,
-          &on_outside_click_call_obj, &single_depth_obj, &visible_child_obj,
-          &stack_offset_obj, &color_obj, &on_cancel_call_obj,
-          &print_list_exit_instructions_obj, &click_activate_obj,
-          &always_highlight_obj, &selectable_obj,
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
+          &size_obj, &pos_obj, &background_obj, &selected_child_obj,
+          &transition_obj, &cancel_button_obj, &start_button_obj,
+          &root_selectable_obj, &on_activate_call_obj, &claims_left_right_obj,
+          &claims_tab_obj, &selection_loops_obj, &selection_loops_to_parent_obj,
+          &scale_obj, &on_outside_click_call_obj, &single_depth_obj,
+          &visible_child_obj, &stack_offset_obj, &color_obj,
+          &on_cancel_call_obj, &print_list_exit_instructions_obj,
+          &click_activate_obj, &always_highlight_obj, &selectable_obj,
           &scale_origin_stack_offset_obj, &toolbar_visibility_obj,
           &on_select_call_obj, &claim_outside_clicks_obj,
           &claims_up_down_obj)) {
@@ -1187,6 +1189,9 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
       throw Exception("Invalid or nonexistent widget.",
                       PyExcType::kWidgetNotFound);
     }
+    if (id_obj != Py_None) {
+      throw Exception("ID can only be set when creating.");
+    }
   } else {
     if (parent_obj == Py_None) {
       BA_PRECONDITION(g_ui_v1 && g_ui_v1->screen_root_widget() != nullptr);
@@ -1200,6 +1205,12 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
                       PyExcType::kWidgetNotFound);
     }
     widget = Object::New<ContainerWidget>();
+
+    // Id needs to be set before adding to parent.
+    if (id_obj != Py_None) {
+      widget->set_id(Python::GetPyString(id_obj));
+    }
+
     g_ui_v1->AddWidget(widget.get(), parent_widget);
   }
 
@@ -1386,6 +1397,7 @@ static PyMethodDef PyContainerWidgetDef = {
     "containerwidget(*,\n"
     "  edit: bauiv1.Widget | None = None,\n"
     "  parent: bauiv1.Widget | None = None,\n"
+    "  id: str | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
     "  background: bool | None = None,\n"
@@ -2347,6 +2359,7 @@ static auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* show_buffer_bottom_obj{Py_None};
   PyObject* show_buffer_left_obj{Py_None};
   PyObject* show_buffer_right_obj{Py_None};
+  PyObject* depth_range_obj{Py_None};
   PyObject* autoselect_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
@@ -2358,13 +2371,14 @@ static auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
                                  "show_buffer_bottom",
                                  "show_buffer_left",
                                  "show_buffer_right",
+                                 "depth_range",
                                  "autoselect",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "O|OOOOOOOOO", const_cast<char**>(kwlist), &edit_obj,
+          args, keywds, "O|OOOOOOOOOO", const_cast<char**>(kwlist), &edit_obj,
           &up_widget_obj, &down_widget_obj, &left_widget_obj, &right_widget_obj,
           &show_buffer_top_obj, &show_buffer_bottom_obj, &show_buffer_left_obj,
-          &show_buffer_right_obj, &autoselect_obj))
+          &show_buffer_right_obj, &depth_range_obj, &autoselect_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2424,6 +2438,21 @@ static auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
   if (show_buffer_right_obj != Py_None) {
     widget->set_show_buffer_right(Python::GetPyFloat(show_buffer_right_obj));
   }
+  if (depth_range_obj != Py_None) {
+    auto depth_range = Python::GetPyFloats(depth_range_obj);
+    if (depth_range.size() != 2) {
+      throw Exception("Expected 2 float values.", PyExcType::kValue);
+    }
+    if (depth_range[0] < 0.0 || depth_range[1] > 1.0
+        || depth_range[1] <= depth_range[0]) {
+      throw Exception(
+          "Invalid depth range values;"
+          " values must be between 0 and 1 and second value must be larger "
+          "than first.",
+          PyExcType::kValue);
+    }
+    widget->set_depth_range(depth_range[0], depth_range[1]);
+  }
   if (autoselect_obj != Py_None) {
     widget->set_auto_select(Python::GetPyBool(autoselect_obj));
   }
@@ -2450,6 +2479,7 @@ static PyMethodDef PyWidgetDef = {
     "  show_buffer_bottom: float | None = None,\n"
     "  show_buffer_left: float | None = None,\n"
     "  show_buffer_right: float | None = None,\n"
+    "  depth_range: tuple[float, float] | None = None,\n"
     "  autoselect: bool | None = None) -> None\n"
     "\n"
     "Edit common attributes of any widget.\n"

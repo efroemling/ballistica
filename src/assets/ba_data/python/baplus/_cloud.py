@@ -117,6 +117,24 @@ class CloudSubsystem(babase.AppSubsystem):
         ],
     ) -> None: ...
 
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.cloud.BSInboxRequestMessage,
+        on_response: Callable[
+            [bacommon.cloud.BSInboxRequestResponse | Exception], None
+        ],
+    ) -> None: ...
+
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.cloud.BSInboxEntryProcessMessage,
+        on_response: Callable[
+            [bacommon.cloud.BSInboxEntryProcessResponse | Exception], None
+        ],
+    ) -> None: ...
+
     def send_message_cb(
         self,
         msg: Message,

@@ -205,6 +205,9 @@ class ClassicAppMode(babase.AppMode):
         self, val: bacommon.cloud.ClassicAccountLiveData
     ) -> None:
         achp = round(val.achievements / max(val.achievements_total, 1) * 100.0)
+        ibc = str(val.inbox_count)
+        if val.inbox_count_is_max:
+            ibc += '+'
         _baclassic.set_root_ui_values(
             tickets_text=str(val.tickets),
             tokens_text=str(val.tokens),
@@ -217,7 +220,7 @@ class ClassicAppMode(babase.AppMode):
             achievements_percent_text=f'{achp}%',
             level_text=str(val.level),
             xp_text=f'{val.xp}/{val.xpmax}',
-            inbox_count_text=str(val.inbox_count),
+            inbox_count_text=ibc,
         )
 
     def _root_ui_menu_press(self) -> None:
@@ -372,13 +375,16 @@ class ClassicAppMode(babase.AppMode):
         )
 
     def _root_ui_inbox_press(self) -> None:
+        from bauiv1lib.connectivity import wait_for_connectivity
         from bauiv1lib.inbox import InboxWindow
 
-        self._auxiliary_window_nav(
-            win_type=InboxWindow,
-            win_create_call=lambda: InboxWindow(
-                origin_widget=bauiv1.get_special_widget('inbox_button')
-            ),
+        wait_for_connectivity(
+            on_connected=lambda: self._auxiliary_window_nav(
+                win_type=InboxWindow,
+                win_create_call=lambda: InboxWindow(
+                    origin_widget=bauiv1.get_special_widget('inbox_button')
+                ),
+            )
         )
 
     def _root_ui_store_press(self) -> None:

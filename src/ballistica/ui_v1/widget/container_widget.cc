@@ -61,18 +61,18 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
 
   // We're expected to fill z space 0..1 when we draw... so we need to divide
   // that space between our child widgets plus our bg layer.
-  float layer_thickness = 0.0f;
-  float layer_spacing = 0.0f;
-  float base_offset = 0.0f;
-  float layer_thickness1 = 0.0f;
-  float layer_thickness2 = 0.0f;
-  float layer_thickness3 = 0.0f;
-  float layer_spacing1 = 0.0f;
-  float layer_spacing2 = 0.0f;
-  float layer_spacing3 = 0.0f;
-  float base_offset1 = 0.0f;
-  float base_offset2 = 0.0f;
-  float base_offset3 = 0.0f;
+  float layer_thickness{};
+  float layer_spacing{};
+  float base_offset{};
+  float layer_thickness1{};
+  float layer_thickness2{};
+  float layer_thickness3{};
+  float layer_spacing1{};
+  float layer_spacing2{};
+  float layer_spacing3{};
+  float base_offset1{};
+  float base_offset2{};
+  float base_offset3{};
 
   // In single-depth mode we draw all widgets at the same depth so they each get
   // our full depth resolution. however they may overlap incorrectly.
@@ -203,12 +203,17 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
         // Widgets can opt to use a subset of their allotted depth slice.
         float d_min = w.depth_range_min();
         float d_max = w.depth_range_max();
+        float this_z_offs;
+        float this_layer_thickness;
         if (d_min != 0.0f || d_max != 1.0f) {
-          z_offs += layer_thickness * d_min;
-          layer_thickness *= (d_max - d_min);
+          this_z_offs = z_offs + layer_thickness * d_min;
+          this_layer_thickness = layer_thickness * (d_max - d_min);
+        } else {
+          this_z_offs = z_offs;
+          this_layer_thickness = layer_thickness;
         }
-        c.Translate(x_offset + tx, y_offset + ty, z_offs);
-        c.Scale(s, s, layer_thickness);
+        c.Translate(x_offset + tx, y_offset + ty, this_z_offs);
+        c.Scale(s, s, this_layer_thickness);
         c.Submit();
         w.Draw(pass, draw_transparent);
       }
@@ -276,12 +281,17 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
         // Widgets can opt to use a subset of their allotted depth slice.
         float d_min = w.depth_range_min();
         float d_max = w.depth_range_max();
+        float this_z_offs;
+        float this_layer_thickness;
         if (d_min != 0.0f || d_max != 1.0f) {
-          z_offs += layer_thickness * d_min;
-          layer_thickness *= (d_max - d_min);
+          this_z_offs = z_offs + layer_thickness * d_min;
+          this_layer_thickness = layer_thickness * (d_max - d_min);
+        } else {
+          this_z_offs = z_offs;
+          this_layer_thickness = layer_thickness;
         }
-        c.Translate(x_offset + tx, y_offset + ty, z_offs);
-        c.Scale(s, s, layer_thickness);
+        c.Translate(x_offset + tx, y_offset + ty, this_z_offs);
+        c.Scale(s, s, this_layer_thickness);
         c.Submit();
         w.Draw(pass, draw_transparent);
       }

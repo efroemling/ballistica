@@ -252,6 +252,14 @@ if TYPE_CHECKING:
     # type checking on both positional and keyword arguments (as of mypy
     # 1.11).
 
+    # FIXME: Actually, currently (as of Dec 2024) mypy doesn't fully
+    # type check partial. The partial() call itself is checked, but the
+    # resulting callable seems to be essentially untyped. We should
+    # probably revise this stuff so that Call and WeakCall are for 100%
+    # complete calls so we can fully type check them using ParamSpecs or
+    # whatnot. We could then write a weak_partial() call if we actually
+    # need that particular combination of functionality.
+
     # Note: Something here is wonky with pylint, possibly related to our
     # custom pylint plugin. Disabling all checks seems to fix it.
     # pylint: disable=all
