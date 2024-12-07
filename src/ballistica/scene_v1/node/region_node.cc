@@ -2,10 +2,14 @@
 
 #include "ballistica/scene_v1/node/region_node.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
+#include "ode/ode_collision.h"
 
 namespace ballistica::scene_v1 {
 
@@ -40,7 +44,7 @@ RegionNode::RegionNode(Scene* scene)
 void RegionNode::Draw(base::FrameDef* frame_def) {
   if (g_base->graphics_server->renderer()->debug_draw_mode()) {
     // if (frame_def->renderer()->debug_draw_mode()) {
-    if (body_.Exists()) {
+    if (body_.exists()) {
       body_->Draw(frame_def->beauty_pass(), false);
     }
   }
@@ -82,14 +86,14 @@ void RegionNode::SetScale(const std::vector<float>& vals) {
 
 void RegionNode::Step() {
   // create our body if we have none
-  if (!body_.Exists()) {
+  if (!body_.exists()) {
     if (region_type_ == "sphere") {
       body_ = Object::New<RigidBody>(
           0, &part_, RigidBody::Type::kGeomOnly, RigidBody::Shape::kSphere,
           RigidBody::kCollideRegion, RigidBody::kCollideActive);
     } else {
       if (region_type_ != "box") {
-        BA_LOG_ONCE(LogLevel::kError,
+        BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                     "Got unexpected region type: " + region_type_);
       }
       body_ = Object::New<RigidBody>(

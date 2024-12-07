@@ -32,15 +32,16 @@ class ProfileUpgradeWindow(bui.Window):
 
         self._r = 'editProfileWindow'
 
-        self._width = 680
-        self._height = 350
-        assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
+        self._width = 750 if uiscale is bui.UIScale.SMALL else 680
+        self._height = 450 if uiscale is bui.UIScale.SMALL else 350
+        assert bui.app.classic is not None
         self._base_scale = (
-            2.05
+            1.9
             if uiscale is bui.UIScale.SMALL
             else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.2
         )
+        yoffs = -60.0 if uiscale is bui.UIScale.SMALL else 0
         self._upgrade_start_time: float | None = None
         self._name = edit_profile_window.getname()
         self._edit_profile_window = weakref.ref(edit_profile_window)
@@ -49,17 +50,17 @@ class ProfileUpgradeWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
-                toolbar_visibility='menu_currency',
+                toolbar_visibility='menu_store_no_back',
                 transition=transition,
                 scale=self._base_scale,
                 stack_offset=(
-                    (0, 15) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
             )
         )
         cancel_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(52, 30),
+            position=(52, self._height - 290 + yoffs),
             size=(155, 60),
             scale=0.8,
             autoselect=True,
@@ -68,7 +69,7 @@ class ProfileUpgradeWindow(bui.Window):
         )
         self._upgrade_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(self._width - 190, 30),
+            position=(self._width - 190, self._height - 290 + yoffs),
             size=(155, 60),
             scale=0.8,
             autoselect=True,
@@ -85,9 +86,9 @@ class ProfileUpgradeWindow(bui.Window):
         assert bui.app.classic is not None
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 38),
+            position=(self._width * 0.5, self._height - 38 + yoffs),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.upgradeToGlobalProfileText'),
+            text=bui.Lstr(resource=f'{self._r}.upgradeToGlobalProfileText'),
             color=bui.app.ui_v1.title_color,
             maxwidth=self._width * 0.45,
             scale=1.0,
@@ -98,9 +99,9 @@ class ProfileUpgradeWindow(bui.Window):
         assert bui.app.classic is not None
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 100),
+            position=(self._width * 0.5, self._height - 100 + yoffs),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.upgradeProfileInfoText'),
+            text=bui.Lstr(resource=f'{self._r}.upgradeProfileInfoText'),
             color=bui.app.ui_v1.infotextcolor,
             maxwidth=self._width * 0.8,
             scale=0.7,
@@ -110,10 +111,10 @@ class ProfileUpgradeWindow(bui.Window):
 
         self._status_text = bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 160),
+            position=(self._width * 0.5, self._height - 160 + yoffs),
             size=(0, 0),
             text=bui.Lstr(
-                resource=self._r + '.checkingAvailabilityText',
+                resource=f'{self._r}.checkingAvailabilityText',
                 subs=[('${NAME}', self._name)],
             ),
             color=(0.8, 0.4, 0.0),
@@ -125,7 +126,7 @@ class ProfileUpgradeWindow(bui.Window):
 
         self._price_text = bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 230),
+            position=(self._width * 0.5, self._height - 230 + yoffs),
             size=(0, 0),
             text='',
             color=(0.2, 1, 0.2),
@@ -135,25 +136,9 @@ class ProfileUpgradeWindow(bui.Window):
             v_align='center',
         )
 
-        self._tickets_text: bui.Widget | None
-        if not bui.app.ui_v1.use_toolbars:
-            self._tickets_text = bui.textwidget(
-                parent=self._root_widget,
-                position=(self._width * 0.9 - 5, self._height - 30),
-                size=(0, 0),
-                text=bui.charstr(bui.SpecialChar.TICKET) + '123',
-                color=(0.2, 1, 0.2),
-                maxwidth=100,
-                scale=0.5,
-                h_align='right',
-                v_align='center',
-            )
-        else:
-            self._tickets_text = None
-
         bui.app.classic.master_server_v1_get(
             'bsGlobalProfileCheck',
-            {'name': self._name, 'b': bui.app.env.build_number},
+            {'name': self._name, 'b': bui.app.env.engine_build_number},
             callback=bui.WeakCall(self._profile_check_result),
         )
         self._cost = plus.get_v1_account_misc_read_val(
@@ -161,7 +146,7 @@ class ProfileUpgradeWindow(bui.Window):
         )
         self._status: str | None = 'waiting'
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update), repeat=True
+            1.023, bui.WeakCall(self._update), repeat=True
         )
         self._update()
 
@@ -183,7 +168,7 @@ class ProfileUpgradeWindow(bui.Window):
                 bui.textwidget(
                     edit=self._status_text,
                     text=bui.Lstr(
-                        resource=self._r + '.availableText',
+                        resource=f'{self._r}.availableText',
                         subs=[('${NAME}', self._name)],
                     ),
                     color=(0, 1, 0),
@@ -197,7 +182,7 @@ class ProfileUpgradeWindow(bui.Window):
                 bui.textwidget(
                     edit=self._status_text,
                     text=bui.Lstr(
-                        resource=self._r + '.unavailableText',
+                        resource=f'{self._r}.unavailableText',
                         subs=[('${NAME}', self._name)],
                     ),
                     color=(1, 0, 0),
@@ -210,7 +195,7 @@ class ProfileUpgradeWindow(bui.Window):
                 )
 
     def _on_upgrade_press(self) -> None:
-        from bauiv1lib import getcurrency
+        # from bauiv1lib import gettickets
 
         if self._status is None:
             plus = bui.app.plus
@@ -220,7 +205,8 @@ class ProfileUpgradeWindow(bui.Window):
             tickets = plus.get_v1_account_ticket_count()
             if tickets < self._cost:
                 bui.getsound('error').play()
-                getcurrency.show_get_tickets_prompt()
+                print('FIXME - show not-enough-tickets msg.')
+                # gettickets.show_get_tickets_prompt()
                 return
             bui.screenmessage(
                 bui.Lstr(resource='purchasingText'), color=(0, 1, 0)
@@ -255,23 +241,11 @@ class ProfileUpgradeWindow(bui.Window):
         plus = bui.app.plus
         assert plus is not None
 
-        try:
-            t_str = str(plus.get_v1_account_ticket_count())
-        except Exception:
-            t_str = '?'
-        if self._tickets_text is not None:
-            bui.textwidget(
-                edit=self._tickets_text,
-                text=bui.Lstr(
-                    resource='getTicketsWindow.youHaveShortText',
-                    subs=[
-                        (
-                            '${COUNT}',
-                            bui.charstr(bui.SpecialChar.TICKET) + t_str,
-                        )
-                    ],
-                ),
-            )
+        # If our originating window dies at any point, cancel.
+        edit_profile_window = self._edit_profile_window()
+        if edit_profile_window is None:
+            self._cancel()
+            return
 
         # Once we've kicked off an upgrade attempt and all transactions go
         # through, we're done.

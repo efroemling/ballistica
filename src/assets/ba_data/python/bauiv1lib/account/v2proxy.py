@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import time
 import logging
 
 from efro.error import CommunicationError
@@ -21,6 +22,7 @@ class V2ProxySignInWindow(bui.Window):
         self._height = 550
         self._proxyid: str | None = None
         self._proxykey: str | None = None
+        self._overlay_web_browser_open = False
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
@@ -39,17 +41,39 @@ class V2ProxySignInWindow(bui.Window):
             )
         )
 
-        self._loading_text = bui.textwidget(
+        self._state_text = bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height * 0.5),
+            position=(self._width * 0.5, self._height * 0.6),
             h_align='center',
             v_align='center',
             size=(0, 0),
+            scale=1.4,
             maxwidth=0.9 * self._width,
             text=bui.Lstr(
                 value='${A}...',
                 subs=[('${A}', bui.Lstr(resource='loadingText'))],
             ),
+            color=(1, 1, 1),
+        )
+        self._sub_state_text = bui.textwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, self._height * 0.55),
+            h_align='center',
+            v_align='top',
+            scale=0.85,
+            size=(0, 0),
+            maxwidth=0.9 * self._width,
+            text='',
+        )
+        self._sub_state_text2 = bui.textwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.1, self._height * 0.3),
+            h_align='left',
+            v_align='top',
+            scale=0.7,
+            size=(0, 0),
+            maxwidth=0.9 * self._width,
+            text='',
         )
 
         self._cancel_button = bui.buttonwidget(
@@ -66,13 +90,82 @@ class V2ProxySignInWindow(bui.Window):
             edit=self._root_widget, cancel_button=self._cancel_button
         )
 
-        self._update_timer: bui.AppTimer | None = None
+        self._message_in_flight = False
+        self._complete = False
+        self._connection_wait_timeout_time = time.monotonic() + 10.0
 
-        # Ask the cloud for a proxy login id.
-        assert bui.app.plus is not None
-        bui.app.plus.cloud.send_message_cb(
+        self._update_timer = bui.AppTimer(
+            0.371, bui.WeakCall(self._update), repeat=True
+        )
+        bui.pushcall(bui.WeakCall(self._update))
+
+    def _update(self) -> None:
+
+        plus = bui.app.plus
+        assert plus is not None
+
+        # If we've opened an overlay web browser, all we do is kill
+        # ourselves when it closes.
+        if self._overlay_web_browser_open:
+            if not bui.overlay_web_browser_is_open():
+                self._overlay_web_browser_open = False
+                self._done()
+            return
+
+        if self._message_in_flight or self._complete:
+            return
+
+        now = time.monotonic()
+
+        # Spin for a moment if it looks like we have no server
+        # connection; it might still be getting on its feet.
+        if (
+            not plus.cloud.connected
+            and now < self._connection_wait_timeout_time
+        ):
+            return
+
+        plus.cloud.send_message_cb(
             bacommon.cloud.LoginProxyRequestMessage(),
             on_response=bui.WeakCall(self._on_proxy_request_response),
+        )
+        self._message_in_flight = True
+
+    def _get_server_address(self) -> str:
+        plus = bui.app.plus
+        assert plus is not None
+        out = plus.get_master_server_address(version=2)
+        assert isinstance(out, str)
+        return out
+
+    def _set_error_state(self, error_location: str) -> None:
+        msaddress = self._get_server_address()
+        addr = msaddress.removeprefix('https://')
+        bui.textwidget(
+            edit=self._state_text,
+            text=f'Unable to connect to {addr}.',
+            color=(1, 0, 0),
+        )
+        support_email = 'support@froemling.net'
+        bui.textwidget(
+            edit=self._sub_state_text,
+            text=(
+                f'Usually this means your internet is down.\n'
+                f'Please contact {support_email} if this is not the case.'
+            ),
+            color=(1, 0, 0),
+        )
+        bui.textwidget(
+            edit=self._sub_state_text2,
+            text=(
+                f'debug-info:\n'
+                f'  error-location: {error_location}\n'
+                f'  connectivity: {bui.app.net.connectivity_state}\n'
+                f'  transport: {bui.app.net.transport_state}'
+            ),
+            color=(0.8, 0.2, 0.3),
+            flatness=1.0,
+            shadow=0.0,
         )
 
     def _on_proxy_request_response(
@@ -81,17 +174,60 @@ class V2ProxySignInWindow(bui.Window):
         plus = bui.app.plus
         assert plus is not None
 
-        # Something went wrong. Show an error message and that's it.
-        if isinstance(response, Exception):
-            bui.textwidget(
-                edit=self._loading_text,
-                text=bui.Lstr(resource='internal.unavailableNoConnectionText'),
-                color=(1, 0, 0),
+        if not self._message_in_flight:
+            logging.warning(
+                'v2proxy got _on_proxy_request_response'
+                ' without _message_in_flight set; unexpected.'
             )
+        self._message_in_flight = False
+
+        # Something went wrong. Show an error message and schedule retry.
+        if isinstance(response, Exception):
+            self._set_error_state(f'response exc ({type(response).__name__})')
+            self._complete = True
             return
 
+        self._complete = True
+
+        # Clear out stuff we use to show progress/errors.
+        self._sub_state_text.delete()
+        self._sub_state_text2.delete()
+
+        # If we have overlay-web-browser functionality, bring up
+        # an inline sign-in dialog.
+        if bui.overlay_web_browser_is_supported():
+            bui.textwidget(
+                edit=self._state_text,
+                text=bui.Lstr(resource='pleaseWaitText'),
+            )
+            self._show_overlay_sign_in_ui(response)
+            self._overlay_web_browser_open = True
+        else:
+            # Otherwise just show link-button/qr-code for the sign-in.
+            self._state_text.delete()
+            self._show_standard_sign_in_ui(response)
+
+        # In either case, start querying for results now.
+        self._proxyid = response.proxyid
+        self._proxykey = response.proxykey
+        bui.apptimer(
+            STATUS_CHECK_INTERVAL_SECONDS, bui.WeakCall(self._ask_for_status)
+        )
+
+    def _show_overlay_sign_in_ui(
+        self, response: bacommon.cloud.LoginProxyRequestResponse
+    ) -> None:
+        msaddress = self._get_server_address()
+        address = msaddress + response.url_overlay
+        bui.overlay_web_browser_open_url(address)
+
+    def _show_standard_sign_in_ui(
+        self, response: bacommon.cloud.LoginProxyRequestResponse
+    ) -> None:
+        msaddress = self._get_server_address()
+
         # Show link(s) the user can use to sign in.
-        address = plus.get_master_server_address(version=2) + response.url
+        address = msaddress + response.url
         address_pretty = address.removeprefix('https://')
 
         assert bui.app.classic is not None
@@ -151,13 +287,6 @@ class V2ProxySignInWindow(bui.Window):
             texture=bui.get_qrcode_texture(address),
         )
 
-        # Start querying for results.
-        self._proxyid = response.proxyid
-        self._proxykey = response.proxykey
-        bui.apptimer(
-            STATUS_CHECK_INTERVAL_SECONDS, bui.WeakCall(self._ask_for_status)
-        )
-
     def _ask_for_status(self) -> None:
         assert self._proxyid is not None
         assert self._proxykey is not None
@@ -172,12 +301,11 @@ class V2ProxySignInWindow(bui.Window):
     def _got_status(
         self, response: bacommon.cloud.LoginProxyStateQueryResponse | Exception
     ) -> None:
-        # For now, if anything goes wrong on the server-side, just abort
-        # with a vague error message. Can be more verbose later if need be.
         if (
             isinstance(response, bacommon.cloud.LoginProxyStateQueryResponse)
             and response.state is response.State.FAIL
         ):
+            logging.info('LoginProxy failed.')
             bui.getsound('error').play()
             bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
             self._done()
@@ -240,4 +368,9 @@ class V2ProxySignInWindow(bui.Window):
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
             return
+
+        # If we've got an inline browser up, tell it to close.
+        if self._overlay_web_browser_open:
+            bui.overlay_web_browser_close()
+
         bui.containerwidget(edit=self._root_widget, transition='out_scale')

@@ -6,9 +6,9 @@
 #include <list>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "ballistica/base/base.h"
-#include "ballistica/base/support/context.h"
 #include "ballistica/scene_v1/support/scene_v1_context.h"
 #include "ballistica/shared/generic/timer_list.h"
 #include "ballistica/shared/python/python_ref.h"
@@ -45,8 +45,8 @@ class HostActivity : public SceneV1Context {
   void StepDisplayTime(millisecs_t time_advance);
   auto base_time() const -> millisecs_t { return base_time_; }
   auto scene() -> Scene* {
-    assert(scene_.Exists());
-    return scene_.Get();
+    assert(scene_.exists());
+    return scene_.get();
   }
   void Start();
 

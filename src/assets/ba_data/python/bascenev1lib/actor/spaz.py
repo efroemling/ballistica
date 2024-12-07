@@ -7,9 +7,8 @@ from __future__ import annotations
 
 import random
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.actor.bomb import Bomb, Blast
@@ -68,9 +67,11 @@ class Spaz(bs.Actor):
     default_bomb_type = 'normal'
     default_boxing_gloves = False
     default_shields = False
+    default_hitpoints = 1000
 
     def __init__(
         self,
+        *,
         color: Sequence[float] = (1.0, 1.0, 1.0),
         highlight: Sequence[float] = (0.5, 0.5, 0.5),
         character: str = 'Spaz',
@@ -174,8 +175,8 @@ class Spaz(bs.Actor):
                     setattr(node, attr, val)
 
             bs.timer(1.0, bs.Call(_safesetattr, self.node, 'invincible', False))
-        self.hitpoints = 1000
-        self.hitpoints_max = 1000
+        self.hitpoints = self.default_hitpoints
+        self.hitpoints_max = self.default_hitpoints
         self.shield_hitpoints: int | None = None
         self.shield_hitpoints_max = 650
         self.shield_decay_rate = 0
@@ -1195,11 +1196,12 @@ class Spaz(bs.Actor):
                 if self.node:
                     self.node.delete()
             elif self.node:
-                self.node.hurt = 1.0
-                if self.play_big_death_sound and not wasdead:
-                    SpazFactory.get().single_player_death_sound.play()
-                self.node.dead = True
-                bs.timer(2.0, self.node.delete)
+                if not wasdead:
+                    self.node.hurt = 1.0
+                    if self.play_big_death_sound:
+                        SpazFactory.get().single_player_death_sound.play()
+                    self.node.dead = True
+                    bs.timer(2.0, self.node.delete)
 
         elif isinstance(msg, bs.OutOfBoundsMessage):
             # By default we just die here.

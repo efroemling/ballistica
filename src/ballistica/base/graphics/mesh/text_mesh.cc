@@ -2,6 +2,10 @@
 
 #include "ballistica/base/graphics/mesh/text_mesh.h"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/graphics/text/text_packer.h"
 #include "ballistica/shared/generic/utils.h"
@@ -57,8 +61,8 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
   }
   auto vertices(Object::New<MeshBuffer<VertexDualTextureFull>>(4 * text_size));
 
-  uint16_t* index16 = indices16.Exists() ? indices16->elements.data() : nullptr;
-  uint32_t* index32 = indices32.Exists() ? indices32->elements.data() : nullptr;
+  uint16_t* index16 = indices16.exists() ? indices16->elements.data() : nullptr;
+  uint32_t* index32 = indices32.exists() ? indices32->elements.data() : nullptr;
 
   VertexDualTextureFull* v = &vertices->elements[0];
   uint32_t index_offset = 0;

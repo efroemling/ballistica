@@ -155,7 +155,9 @@ def run(projroot: str, args: list[str]) -> None:
         ver = lines[0].strip().replace("'", '').replace('"', '').split()[-1]
         path = os.path.join(sdk_dir, 'ndk', ver)
         if not os.path.isdir(path):
-            raise RuntimeError(f'NDK listed in gradle not found: {path}.')
+            raise RuntimeError(
+                f'NDK path listed in gradle file not found: {path}.'
+            )
         print(path)
 
     if command == 'get-adb-path':

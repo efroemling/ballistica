@@ -5,7 +5,6 @@
 
 #include <string>
 
-#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/collision_mesh_asset.h"
 #include "ballistica/scene_v1/assets/scene_asset.h"
 
@@ -18,7 +17,7 @@ class SceneCollisionMesh : public SceneAsset {
   ~SceneCollisionMesh() override;
 
   auto collision_mesh_data() const -> base::CollisionMeshAsset* {
-    return collision_mesh_data_.Get();
+    return collision_mesh_data_.get();
   }
   auto GetAssetTypeName() const -> std::string override {
     return "CollisionMesh";

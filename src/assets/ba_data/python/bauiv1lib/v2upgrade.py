@@ -11,7 +11,6 @@ class V2UpgradeWindow(bui.Window):
     """A window presenting a URL to the user visually."""
 
     def __init__(self, login_name: str, code: str):
-        from bauiv1lib.account.settings import show_what_is_v2_page
 
         app = bui.app
         assert app.classic is not None
@@ -116,3 +115,12 @@ class V2UpgradeWindow(bui.Window):
 
     def _done(self) -> None:
         bui.containerwidget(edit=self._root_widget, transition='out_left')
+
+
+def show_what_is_v2_page() -> None:
+    """Show the webpage describing V2 accounts."""
+    plus = bui.app.plus
+    assert plus is not None
+
+    bamasteraddr = plus.get_master_server_address(version=2)
+    bui.open_url(f'{bamasteraddr}/whatisv2')

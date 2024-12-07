@@ -5,9 +5,12 @@
 
 #if BA_ENABLE_OPENGL
 
+#include <algorithm>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/renderer/framebuffer.h"
 
 namespace ballistica::base {
 

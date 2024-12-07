@@ -2,13 +2,15 @@
 
 #include "ballistica/base/graphics/component/sprite_component.h"
 
+#include "ballistica/base/assets/assets.h"
+
 namespace ballistica::base {
 
 void SpriteComponent::WriteConfig() {
   // if they didn't give us a texture, just use a blank white texture;
   // this is not a common case and easier than forking all our shaders
   // to create non-textured versions.
-  if (!texture_.Exists()) {
+  if (!texture_.exists()) {
     texture_ = g_base->assets->SysTexture(SysTextureID::kWhite);
   }
   if (exponent_ == 1) {

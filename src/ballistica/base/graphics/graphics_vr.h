@@ -71,7 +71,6 @@ class GraphicsVR : public Graphics {
   auto CalcVROverlayMatrix(const Vector3f& cam_pt,
                            const Vector3f& cam_target_pt) const -> Matrix44f;
   void DrawVROverlay(FrameDef* frame_def);
-  void DrawOverlayBounds(RenderPass* pass);
   void DrawVRControllers(FrameDef* frame_def);
 
   float vr_overlay_scale_{1.0f};
@@ -84,7 +83,6 @@ class GraphicsVR : public Graphics {
   Vector3f vr_overlay_center_{0.0f, 0.0f, 0.0f};
   bool vr_overlay_center_enabled_{};
   bool lock_vr_overlay_{};
-  bool draw_overlay_bounds_{};
   float vr_test_head_scale_{kDefaultVRHeadScale};
   VRHandsState vr_hands_state_;
 };

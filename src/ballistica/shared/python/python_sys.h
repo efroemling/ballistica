@@ -7,12 +7,15 @@
 // This header pulls in the actual Python includes and also defines some handy
 // macros and functions for working with Python objects.
 
-// This is the ONE place we actually include Python.
+// UPDATE (September 2024): We now include Python.h directly in some places;
+// this causes less friction with include-what-you-use checks.
 #include <Python.h>
 #include <frameobject.h>
 #include <weakrefobject.h>
 
-#include <string>
+#include <string>  // IWYU pragma: keep. (macros below use this)
+
+#include "ballistica/shared/python/python.h"  // IWYU pragma: keep.
 
 // Saving/restoring Python error state; useful when function PyObject_Str()
 // or other functionality is needed during error reporting; by default it
@@ -64,12 +67,13 @@
   ((void)0)
 
 // For use in tp_dealloc; simply prints the error.
-#define BA_PYTHON_DEALLOC_CATCH                                   \
-  }                                                               \
-  catch (const std::exception& e) {                               \
-    Log(LogLevel::kError, std::string("tp_dealloc exception: ")   \
-                              + GetShortExceptionDescription(e)); \
-  }                                                               \
+#define BA_PYTHON_DEALLOC_CATCH                         \
+  }                                                     \
+  catch (const std::exception& e) {                     \
+    g_core->Log(LogName::kBa, LogLevel::kError,         \
+                std::string("tp_dealloc exception: ")   \
+                    + GetShortExceptionDescription(e)); \
+  }                                                     \
   ((void)0)
 
 // Sets Python error and returns -1.

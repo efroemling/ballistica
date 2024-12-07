@@ -13,7 +13,7 @@ from typing import assert_never, TYPE_CHECKING
 
 from efro.error import CleanError
 from efro.terminal import Clr
-from efrotools import replace_exact
+from efrotools.util import replace_exact
 
 from batools.spinoff._context import SpinoffContext
 
@@ -65,19 +65,8 @@ def _main() -> None:
         _print_available_commands()
         return
 
-    dst_root = os.path.abspath(os.path.join(os.path.dirname(sys.argv[0]), '..'))
-
-    # Determine our src project based on our tools/spinoff symlink.
-    # If its not a link it means we ARE a src project.
-    dst_spinoff_path = os.path.join(dst_root, 'tools', 'spinoff')
-    if os.path.islink(dst_spinoff_path):
-        src_root = os.path.abspath(
-            os.path.join(
-                os.path.dirname(os.path.realpath(dst_spinoff_path)), '..'
-            )
-        )
-    else:
-        src_root = None
+    src_root = os.environ['BA_SPINOFF_SRC_ROOT']
+    dst_root = os.environ.get('BA_SPINOFF_DST_ROOT')
 
     single_run_mode: SpinoffContext.Mode | None = None
 
@@ -102,14 +91,14 @@ def _main() -> None:
     elif cmd is Command.BACKPORT:
         _do_backport(src_root, dst_root)
     elif cmd is Command.FEATURE_SET_LIST:
-        _do_featuresets(dst_root)
+        _do_featuresets(src_root)
     elif cmd is Command.CREATE:
         _do_create(src_root, dst_root)
     elif cmd is Command.ADD_SUBMODULE_PARENT:
-        from efrotools import getprojectconfig
+        from efrotools.project import getprojectconfig
 
-        public = getprojectconfig(Path(dst_root))['public']
-        _do_add_submodule_parent(dst_root, is_new=False, public=public)
+        public = getprojectconfig(Path(src_root))['public']
+        _do_add_submodule_parent(src_root, is_new=False, public=public)
     elif cmd is Command.FEATURE_SET_COPY:
         _do_featureset_copy()
     elif cmd is Command.FEATURE_SET_DELETE:
@@ -118,13 +107,13 @@ def _main() -> None:
         assert_never(cmd)
 
     if single_run_mode is not None:
-        from efrotools import extract_flag
+        from efro.util import extract_flag
 
         args = sys.argv[2:]
         force = extract_flag(args, '--force')
         verbose = extract_flag(args, '--verbose')
         print_full_lists = extract_flag(args, '--full')
-        if src_root is None:
+        if dst_root is None:
             if '--soft' in sys.argv:
                 return
             raise CleanError(
@@ -155,16 +144,14 @@ def _main() -> None:
         ).run()
 
 
-def _do_create(src_root: str | None, dst_root: str) -> None:
+def _do_create(src_root: str, dst_root: str | None) -> None:
     # pylint: disable=too-many-locals, cyclic-import
-    from efrotools import extract_arg, extract_flag
+    from efro.util import extract_arg, extract_flag
     from efrotools.code import format_python_str
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
     import batools.spinoff
 
-    # Note: in our case dst_root is actually what becomes the src project
-    # should clean up these var names to make that clearer.
-    if src_root is not None:
+    if dst_root is not None:
         raise CleanError('This only works on src projects.')
 
     args = sys.argv[2:]
@@ -223,7 +210,9 @@ def _do_create(src_root: str | None, dst_root: str) -> None:
     template = replace_exact(
         template,
         '# __SRC_FEATURE_SETS__',
-        format_python_str(f'ctx.src_feature_sets = {featuresets!r}'),
+        format_python_str(
+            projroot=src_root, code=f'ctx.src_feature_sets = {featuresets!r}'
+        ),
     )
 
     with open(
@@ -235,7 +224,7 @@ def _do_create(src_root: str | None, dst_root: str) -> None:
     # on git so its best to always do this.
     subprocess.run(['git', 'init'], cwd=path, check=True, capture_output=True)
 
-    public = getprojectconfig(Path(dst_root))['public']
+    public = getprojectconfig(Path(src_root))['public']
 
     if submodule_parent:
         _do_add_submodule_parent(path, is_new=True, public=public)
@@ -244,7 +233,7 @@ def _do_create(src_root: str | None, dst_root: str) -> None:
             [
                 'ln',
                 '-s',
-                os.path.join(dst_root, 'tools', 'spinoff'),
+                os.path.join(src_root, 'tools', 'spinoff'),
                 os.path.join(path, 'tools'),
             ],
             check=True,
@@ -328,7 +317,7 @@ def _do_featureset_delete() -> None:
 
 def _do_featureset_copy() -> None:
     # pylint: disable=too-many-locals
-    from efrotools import extract_flag
+    from efro.util import extract_flag
 
     from batools.featureset import FeatureSet
 
@@ -512,9 +501,10 @@ def _do_featureset_copy_dir(
     )
 
 
-def _do_override(src_root: str | None, dst_root: str) -> None:
-    if src_root is None:
+def _do_override(src_root: str, dst_root: str | None) -> None:
+    if dst_root is None:
         raise CleanError('This only works on dst projects.')
+
     override_paths = [os.path.abspath(p) for p in sys.argv[2:]]
     if not override_paths:
         raise RuntimeError('Expected at least one path arg.')
@@ -547,8 +537,8 @@ def _do_override(src_root: str | None, dst_root: str) -> None:
     SpinoffContext(src_root, dst_root, SpinoffContext.Mode.UPDATE).run()
 
 
-def _do_backport(src_root: str | None, dst_root: str) -> None:
-    if src_root is None:
+def _do_backport(src_root: str, dst_root: str | None) -> None:
+    if dst_root is None:
         raise CleanError('This only works on dst projects.')
     args = sys.argv[2:]
     auto = '--auto' in args

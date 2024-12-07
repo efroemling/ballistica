@@ -2,6 +2,9 @@
 
 #include "ballistica/base/app_mode/app_mode.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/input/device/input_device_delegate.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/support/context.h"
@@ -66,6 +69,6 @@ void AppMode::LanguageChanged() {}
 
 auto AppMode::LastClientJoinTime() const -> millisecs_t { return -1; }
 
-auto AppMode::InClassicMainMenuSession() const -> bool { return false; }
+auto AppMode::IsInMainMenu() const -> bool { return false; }
 
 }  // namespace ballistica::base

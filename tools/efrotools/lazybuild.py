@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 # pylint: disable=wrong-import-order
 from efro.terminal import Clr
 from efrotools.buildlock import BuildLock
-from efrotools import get_string_hash
+from efrotools.util import get_string_hash
 
 # pylint: enable=wrong-import-order
 # pylint: enable=useless-suppression
@@ -48,15 +48,18 @@ class LazyBuildContext:
         target: str,
         srcpaths: list[str],
         command: str,
+        *,
         buildlockname: str | None = None,
         dirfilter: Callable[[str, str], bool] | None = None,
         filefilter: Callable[[str, str], bool] | None = None,
         srcpaths_fullclean: list[str] | None = None,
+        srcpaths_exist: list[str] | None = None,
         manifest_file: str | None = None,
         command_fullclean: str | None = None,
     ) -> None:
         self.target = target
         self.srcpaths = srcpaths
+        self.srcpaths_exist = srcpaths_exist
         self.command = command
         self.dirfilter = dirfilter
         self.filefilter = filefilter
@@ -106,7 +109,7 @@ class LazyBuildContext:
             # sure that only one build for some given purpose is being run at
             # once.
             if self.buildlockname is not None:
-                with BuildLock(self.buildlockname):
+                with BuildLock(self.buildlockname, projroot='.'):
                     self._run_commands_and_update_target()
             else:
                 self._run_commands_and_update_target()
@@ -158,6 +161,7 @@ class LazyBuildContext:
         Path(self.target).touch()
 
     def _check_for_changes(self) -> None:
+        # pylint: disable=too-many-branches
         manfile = self.manifest_file
         # If we're watching for file adds/removes/renames in addition
         # to just modtimes, build a set of all files we come across.
@@ -186,6 +190,7 @@ class LazyBuildContext:
             src_did_change, src_unchanged_count = self._check_path(
                 srcpath, man_input_paths
             )
+
             if src_did_change:
                 self.have_changes = True
                 # If we're *not* building a manifest
@@ -193,6 +198,13 @@ class LazyBuildContext:
                 if manfile is None:
                     return
             self.total_unchanged_count += src_unchanged_count
+
+        # Check our exist-only paths; we simply look to see if these exist
+        # and build if not.
+        if self.srcpaths_exist is not None:
+            for srcpath in self.srcpaths_exist:
+                if not os.path.exists(srcpath):
+                    self.have_changes = True
 
         # If we built a manifest, check/write it and kick off
         # a full-clean if anything differed.

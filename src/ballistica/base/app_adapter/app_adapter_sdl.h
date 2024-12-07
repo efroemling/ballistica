@@ -6,6 +6,7 @@
 #include "ballistica/base/base.h"
 #if BA_SDL_BUILD
 
+#include <string>
 #include <vector>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
@@ -79,7 +80,6 @@ class AppAdapterSDL : public AppAdapter {
   bool done_{};
   bool fullscreen_{};
   bool vsync_actually_enabled_{};
-  bool debug_log_sdl_frame_timing_{};
   bool hidden_{};
 
   /// With this off, graphics call pushes simply get pushed to the main

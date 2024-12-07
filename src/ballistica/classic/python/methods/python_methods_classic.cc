@@ -2,14 +2,19 @@
 
 #include "ballistica/classic/python/methods/python_methods_classic.h"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/classic/support/stress_test.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
+#include "ballistica/shared/python/python_command.h"
 #include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::classic {
@@ -21,8 +26,8 @@ namespace ballistica::classic {
 
 // -------------------------------- value_test ---------------------------------
 
-static auto PyValueTest(PyObject* self, PyObject* args,
-                        PyObject* keywds) -> PyObject* {
+static auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* arg;
   double change = 0.0f;
@@ -50,7 +55,7 @@ static auto PyValueTest(PyObject* self, PyObject* args,
   }
   double return_val = 0.0f;
   if (!strcmp(arg, "bufferTime")) {
-    auto* appmode = scene_v1::SceneV1AppMode::GetSingleton();
+    auto* appmode = ClassicAppMode::GetSingleton();
 
     if (have_change) {
       appmode->set_buffer_time(appmode->buffer_time()
@@ -62,7 +67,7 @@ static auto PyValueTest(PyObject* self, PyObject* args,
     appmode->set_buffer_time(std::max(0, appmode->buffer_time()));
     return_val = appmode->buffer_time();
   } else if (!strcmp(arg, "delaySampling")) {
-    auto* appmode = scene_v1::SceneV1AppMode::GetSingleton();
+    auto* appmode = ClassicAppMode::GetSingleton();
     if (have_change) {
       appmode->set_delay_bucket_samples(appmode->delay_bucket_samples()
                                         + static_cast<int>(change));
@@ -74,7 +79,7 @@ static auto PyValueTest(PyObject* self, PyObject* args,
         std::max(1, appmode->delay_bucket_samples()));
     return_val = appmode->delay_bucket_samples();
   } else if (!strcmp(arg, "dynamicsSyncTime")) {
-    auto* appmode = scene_v1::SceneV1AppMode::GetSingleton();
+    auto* appmode = ClassicAppMode::GetSingleton();
     if (have_change) {
       appmode->set_dynamics_sync_time(appmode->dynamics_sync_time()
                                       + static_cast<int>(change));
@@ -179,12 +184,190 @@ static PyMethodDef PySetStressTestingDef = {
     "(internal)",
 };
 
+// --------------- classic_app_mode_handle_app_intent_exec ---------------------
+
+static auto PyClassicAppModeHandleAppIntentExec(PyObject* self, PyObject* args,
+                                                PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* command;
+  static const char* kwlist[] = {"command", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &command)) {
+    return nullptr;
+  }
+  auto* appmode = ClassicAppMode::GetActiveOrThrow();
+
+  // Run the command.
+  if (g_core->core_config().exec_command.has_value()) {
+    bool success = PythonCommand(*g_core->core_config().exec_command,
+                                 BA_BUILD_COMMAND_FILENAME)
+                       .Exec(true, nullptr, nullptr);
+    if (!success) {
+      // TODO(ericf): what should we do in this case?
+      //  Obviously if we add return/success values for intents we should set
+      //  that here.
+    }
+  }
+  //  If the stuff we just ran didn't result in a session, create a default
+  //  one.
+  if (!appmode->GetForegroundSession()) {
+    appmode->RunMainMenu();
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyClassicAppModeHandleAppIntentExecDef = {
+    "classic_app_mode_handle_app_intent_exec",         // name
+    (PyCFunction)PyClassicAppModeHandleAppIntentExec,  // method
+    METH_VARARGS | METH_KEYWORDS,                      // flags
+
+    "classic_app_mode_handle_app_intent_exec(command: str) -> None\n"
+    "\n"
+    "(internal)",
+};
+
+// -------------- classic_app_mode_handle_app_intent_default ------------------
+
+static auto PyClassicAppModeHandleAppIntentDefault(PyObject* self)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* appmode = ClassicAppMode::GetActiveOrThrow();
+  appmode->RunMainMenu();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyClassicAppModeHandleAppIntentDefaultDef = {
+    "classic_app_mode_handle_app_intent_default",         // name
+    (PyCFunction)PyClassicAppModeHandleAppIntentDefault,  // method
+    METH_NOARGS,                                          // flags
+
+    "classic_app_mode_handle_app_intent_default() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// ------------------------ classic_app_mode_activate --------------------------
+
+static auto PyClassicAppModeActivate(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  g_base->set_app_mode(ClassicAppMode::GetSingleton());
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyClassicAppModeActivateDef = {
+    "classic_app_mode_activate",            // name
+    (PyCFunction)PyClassicAppModeActivate,  // method
+    METH_NOARGS,                            // flags
+
+    "classic_app_mode_activate() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// ---------------------- classic_app_mode_deactivate --------------------------
+
+static auto PyClassicAppModeDeactivate(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  // Currently doing nothing.
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyClassicAppModeDeactivateDef = {
+    "classic_app_mode_deactivate",            // name
+    (PyCFunction)PyClassicAppModeDeactivate,  // method
+    METH_NOARGS,                              // flags
+
+    "classic_app_mode_deactivate() -> None\n"
+    "\n"
+    "(internal)\n",
+};
+
+// -------------------------- set_root_ui_values -------------------------------
+
+static auto PySetRootUIValues(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+  const char* tickets_text;
+  const char* tokens_text;
+  const char* league_rank_text;
+  const char* league_type;
+  const char* achievements_percent_text;
+  const char* level_text;
+  const char* xp_text;
+  const char* inbox_count_text;
+
+  static const char* kwlist[] = {"tickets_text",
+                                 "tokens_text",
+                                 "league_rank_text",
+                                 "league_type",
+                                 "achievements_percent_text",
+                                 "level_text",
+                                 "xp_text",
+                                 "inbox_count_text",
+                                 nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ssssssss",
+                                   const_cast<char**>(kwlist), &tickets_text,
+                                   &tokens_text, &league_rank_text,
+                                   &league_type, &achievements_percent_text,
+                                   &level_text, &xp_text, &inbox_count_text)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  auto* appmode = ClassicAppMode::GetActiveOrThrow();
+
+  // Pass these all along to the app-mode which will store them and forward
+  // them to any existing UI.
+  appmode->SetRootUITicketsMeterText(tickets_text);
+  appmode->SetRootUITokensMeterText(tokens_text);
+  appmode->SetRootUILeagueRankText(league_rank_text);
+  appmode->SetRootUILeagueType(league_type);
+  appmode->SetRootUIAchievementsPercentText(achievements_percent_text);
+  appmode->SetRootUILevelText(level_text);
+  appmode->SetRootUIXPText(xp_text);
+  appmode->SetRootUIInboxCountText(inbox_count_text);
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetRootUIValuesDef = {
+    "set_root_ui_values",            // name
+    (PyCFunction)PySetRootUIValues,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
+
+    "set_root_ui_values(tickets_text: str,\n"
+    "      tokens_text: str,\n"
+    "      league_rank_text: str,\n"
+    "      league_type: str,\n"
+    "      achievements_percent_text: str,\n"
+    "      level_text: str,\n"
+    "      xp_text: str,\n"
+    "      inbox_count_text: str,\n"
+    ") -> None\n"
+    "\n"
+    "(internal)",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
   return {
       PyValueTestDef,
       PySetStressTestingDef,
+      PyClassicAppModeHandleAppIntentExecDef,
+      PyClassicAppModeHandleAppIntentDefaultDef,
+      PyClassicAppModeActivateDef,
+      PyClassicAppModeDeactivateDef,
+      PySetRootUIValuesDef,
   };
 }
 

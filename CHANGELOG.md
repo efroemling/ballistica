@@ -1,6 +1,353 @@
-### 1.7.34 (build 21800, api 8, 2024-04-10)
-- `_bascenev1.protocol_version()` now properly throw an exception if called
+### 1.7.37 (build 22130, api 9, 2024-12-06)
+- Bumping api version to 9. As you'll see below, there's some UI changes that
+  will require a bit of work for any UI mods to adapt to. If your mods don't
+  touch UI stuff at all you can simply bump your api version and call it a day.
+  I'm hopeful that api version won't need to be bumped again for along time (if
+  ever).
+- I am pleased to announce that after years of hard work from many members of
+  the community, PirateSpeak is now complete and available as a language choice.
+  This changes everything.
+- Heavily reworked and cleaned up the logging system. There is now a 'ba' Python
+  logger and various logger categories under it such as 'ba.lifecycle',
+  'ba.connectivity' or 'ba.v2transport'. By setting these individual loggers to
+  different levels such as 'debug', one can easily observe and debug specific
+  parts of app behavior. Over time I will better organize the logger hierarchy
+  and wire up more functionality to be logged this way.
+- Added a 'Logging' tab to the dev-console. This allows easily setting log
+  levels for all existing Python loggers, as well as resetting them all to
+  defaults. Levels set here are restored on startup, so it is possible to debug
+  app startup behavior by setting log levels and then relaunching the app.
+  Previously this sort of thing would generally require setting cryptic
+  environment variables which was not feasable on all platforms, but this new
+  system should work everywhere.
+- Log messages printed to both the command line and the in-app console now
+  include timestamps and logger names, and are color coded for severity
+  (DEBUG=blue, INFO=default, WARNING=orange/yellow, ERROR=red, CRITICAL=purple).
+- `efro.log` is now `efro.logging` which better lines up with other logging
+  module names. It was originally named `log` to work around a mypy bug.
+- Went ahead and fully removed `efro.call.tpartial` (since we're breaking
+  compatibility anyway by bumping api version). If you are using
+  `efro.call.tpartial` anywhere, simply replace it with `functools.partial`.
+- The newest Pylint update (3.3) added a check for
+  'too-many-positional-arguments'. This seems like a good idea, so I updated
+  various functions to conform to it and set some others to ignore it. Basically
+  if you see a function like `def dothing(a, b, *, c, d)` then everything after
+  the `*` needs to be passed as a keyword. So you can't do `dothing(val1, val2,
+  val3, val4)`; you need to do `dothing(val1, val2, c=val3, d=val4)`. Requiring
+  keywords for complex functions generally leads to more readable code and less
+  breakage if arguments are added or removed from the function.
+- Playlist customization no longer requires pro.
+- Soundtrack customization no longer requires pro.
+- Campaign hard mode no longer requires pro.
+- Full player profile color customization no longer requires pro.
+- Removed nag screens for purchasing pro or bundle offers.
+- Removed continue logic. Continues have been disabled server-side for a while
+  but now removing the client code to clean things up a bit.
+- Switching over to the new 'toolbar mode' UI that has been in the works for
+  several years. This includes a number of handy things such as consistent
+  buttons and widgets for league status, currencies, inventory, and the store.
+  It also adds a fixed back button on phones that should be easier to hit and a
+  dock for earned treasure chests at the bottom of the screen (will finally use
+  those treasure chest textures!). This is a substantial change so please holler
+  if you run into anything that looks broken or doesn't behave as you think it
+  should.
+- When running in 'small' UI mode (phones) the engine now uses 1300x600 as its
+  virtual resolution. This gives a wider 19.5:9 aspect ratio which lines up with
+  most modern smartphones, so people with such phones should no longer see
+  wasted space on the sides of their screen. The virtual resolution on 'medium'
+  and 'large' is now 1280x720. This gives the same 16:9 aspect ratio as the old
+  resolution (1207x680) but is a cleaner number. The 16:9 aspect ratio still
+  works well for tablets monitors, and TVs. When writing a UI, always be sure to
+  test it on 'small', 'medium', and 'large' modes to make sure it fits on screen
+  and feels similar in scale to the rest of the UI. Ideally when 'ui_v2' rolls
+  around we can make it possible to build UIs that adapt better to screen sizes
+  so things like fixed aspect ratios will no longer be necessary.
+- Split the main menu UI into two classes: `bauiv1.mainmenu.MainMenuWindow` and
+  `bauiv1.ingamemenu.InGameMenuWindow`.
+- Removed some bits of `bauiv1` which were never fully implemented and which I
+  feel were a flawed/outdated design. This includes `UILocation`,
+  `UILocationWindow`, `UIEntry`, and `UIController`. The whole purpose of these
+  was to add a higher level layer to the UI to make things like saving/restoring
+  UI states easier, but I now plan to use `WindowState` classes to accomplish
+  much of that in a more backward-compatible way. More on that below.
+- Removed touch-specific button target-area adjustements. If you find any
+  buttons that are now hard to hit accurately on a touchscreen, please holler.
+- Added a new `bauiv1.Window` subclass called `bauiv1.MainWindow` which handles
+  what was previously called the 'main-menu-window' system which was a bit
+  ad-hoc and messy. MainMenuWindows have a built-in stack system so things like
+  back-button handling are more automatic and windows don't have to hard-code
+  where their back button goes to. There are also other benefits such as better
+  state saving/restoring. When writing a MainWindow, pretty much all navigation
+  should only need too use methods: `main_window_has_control()`,
+  `main_window_back()`, and `main_window_replace()`.
+- Finally got things updated so language testing works again, and made it a bit
+  spiffier while at it. You now simply point the game at your test language and
+  it will update dynamically as you make edits; no need to download any files.
+  Example: if you are editing PirateSpeak, you should see an id such as
+  'PirateSpeak_2248' in the website url. You can then go to the game and run
+  `import babase; babase.app.lang.testlanguage('PirateSpeak_2248')` and you
+  should instantly see some lovely pirate-speak. Also, any changes you make on
+  the website should show up in the game within a few seconds. Enjoy!
+- Added `urllib3` to our bundled third party Python modules. The engine will be
+  doing more heavy downloading with Asset Packages coming online so its time to
+  upgrade to a more modern web client library than Python's basic built in
+  urllib stuff.
+- Pasting a single line of text followed by newlines to the dev console now
+  works. Previously it would complain that multiple lines of text aren't
+  supported, but now it just ignores the trailing newlines.
+- Added an 'AppModes' tab to the dev console, allowing switching between any
+  AppModes defined in the current build for testing. Currently this is just
+  SceneV1AppMode and EmptyAppMode. This will become more useful in the future
+  when things like SquadsAppMode (Squads mode) or RemoteAppMode (the revamped
+  BSRemote app) happen.
+- Added a 'UI' tab to the dev console allowing debugging virtual screen bounds
+  and testing different UI scales dynamically.
+- Renamed `SceneV1AppMode` to `ClassicAppMode` and relocated it from the
+  `scene_v1` featureset to the `classic` one. This makes more logical sense
+  since `classic` is more about app operation and `scene_v1` is more about
+  gameplay, though realistically it doesn't matter since those two featuresets
+  are hopelessly entangled. Future parallels such as `squads` and `scene_v2`
+  featuresets should be more independent of eachother.
+- Removed the warning when calling `ba*.screenmessage` in a game context.
+  Hopefully most code has been ported at this point and it has done its job. As
+  a final reminder, `ba*.screenmessage()` will only show messages locally now;
+  you need to use something like `bascenev1.broadcastmessage()` to show things
+  to everyone in a game.
+- Removed `efro.util.enum_by_value()` which was a workaround for a Python bug
+  that has been fixed for a few versions now. Instaed of
+  `enum_by_value(MyEnumType, foo)` you can simply do `MyEnumType(foo)`.
+- Removed `bauiv1.is_party_icon_visible()` as it is now always visible.
+- 'ui_scale' is no longer available in _babase.env() since it can now change;
+  use `babase.get_ui_scale()` to get it now.
+- Removed the UIScale control from the devtools window, which was only partially
+  wired up (it did not affect native layer bits). For now the official ways to
+  test UIScales are by using the UI tab in the dev-console or by setting the
+  `BA_UI_SCALE` env var. If we can get UIScale switches to feel seamless enough
+  at some point, it may be worth adding to display settings.
+- There is now a `ba*.app.classic.save_ui_state()` method that should be called
+  right before jumping into a game/replay/etc. This will save a state that will
+  automatically be restored the next time the main menu activity is entered.
+- (build 22010) Added the concept of 'auxiliary' windows and used them to make
+  various window navigation more intuitive. Example: previously, if you were on
+  the co-op screen and pressed the trophy toolbar icon to see your league rank
+  and then pressed back, you would be taken back to the top level main menu. Now
+  it will take you back to the co-op screen.
+- (build 22018) Hardened SDL joystick handling code so the app won't crash if
+  SDL_JoystickOpen() returns nullptr for whatever reason.
+- (build 22028) Fixed a longstanding issue that could cause logic thread
+  bg-dynamics message overflows.
+- Added a close button to the dev-console as an alternate to using key presses
+  to close it.
+- (build 22063) Added a 'Copy History' button in the Python tab in the
+  dev-console. Note that this will copy all cached log history; not just what is
+  displayed in the dev-console. This should be handy for diagnosing problems in
+  the future.
+- (build 22072) Added a 'Use insecure connections' option in settings ->
+  advanced. This may make it possible to play from places such as Iran where ssl
+  connections are being blocked. Do not enable this if you don't need to.
+- (build 22085) Added protection against an attack consisting of spamming
+  invalid game-query packets.
+- Using prefab builds on a Mac now requires an Apple Silicon machine (M1 or
+  newer). Mac x86 prefab builds were becoming a major bottleneck in pushing out
+  updates. Please let me know if you are making substantial use of prefab builds
+  on an x86 Mac and I can reconsider. Note that this only concerns the prefab
+  build system; regular official game builds still fully support x86 Macs.
+- Added the `test-fast` Makefile target which skips some slower tests, and wired
+  up `make preflight` to use this to keep things moving a bit faster. If you are
+  not familiar with it, the `preflight` target is handy to run before committing
+  code to git.
+- The app-modes tab in the dev-console now uses the meta tag system to discover
+  testable app-modes. Previously this would simply list the `default_app_modes`
+  listed in the projectconfig.json. So now it is possible to make and explicitly
+  test new app modes via mod scripts on vanilla game builds. Note that the game
+  still uses the `default_app_modes` projectconfig.json value when selecting
+  app-modes at runtime; to change this you need to either change your
+  projectconfig and rebuild or replace `ba*.app.mode_selector` at runtime with
+  a custom selector that selects your custom app-mode(s).
+- The `ba*.app.threadpool_submit_no_wait()` method has been merged into the
+  `threadpool` object, so it now is `ba*.app.threadpool.submit_no_wait()`.
+- Clarified project rules for `snake_case` methods in C++ and updated various
+  methods accordingly such as `Object::Ref::get()` and `Object::Ref::exists()`.
+  See 'Getter/Setter Function Names' in
+  https://github.com/efroemling/ballistica/wiki/Coding-Style-Guide for more
+  info.
+
+### 1.7.36 (build 21944, api 8, 2024-07-26)
+- Wired up Tokens, BombSquad's new purchasable currency. The first thing these
+  can be used for is storage packs on ballistica.net, but this will expand to
+  other places in the game soon. For a full explanation on why these were added,
+  see https://ballistica.net/whataretokens
+- Paid private hosting now uses tokens instead of tickets.
+- Wired up initial support for using asset-packages for bundled assets.
+- bacloud workspace commands are now a bit smarter; you can now do things like 
+  `bacloud workspace put .` or even just `bacloud workspace put` and it will
+  work. Previously such cases required explicitly passing the workspace name
+  as a second argument. Both `workspace get` and `workspace put` now also have
+  an optional `--workspace` arg if you want to sync with a workspace different
+  than the local directory name.
+- Cleaned up look and feel on horizontal scrollbars, especially when and how
+  they fade in and out.
+- Fixed an issue where ConfigNumberEdit objects would draw incorrectly with
+  textscale set to non-1.0 values.
+- Fixed a nasty bug with the new stdin handling from 1.7.35 which could cause
+  the stdin thread to spin at 100% cpu usage in some cases (such as when
+  launching the Mac build from the Finder and not a terminal).
+- Added a `draw_controller_mult` arg to `bauiv1.imagewidget()` to control how
+  brightly the image pulses when its controller widget is selected (can prevent
+  brightly colored images from blowing out too much).
+- The Mac version is now correctly rendering to a sRGB colorspace instead of P3.
+  This was causing some bright colors to render extra-eye-destroying bright.
+- Fixed an issue with the Repeater() class which could cause key presses in UIs
+  to get lost if many were happening in short succession. An easy way to observe
+  this (at least on my machine) was to press left and right repeatedly in the
+  main menu - some presses would be lost and the selection would 'drift' one
+  direction.
+- Replaced all `efro.call.tpartial` calls with Python's built in
+  `functools.partial`. Mypy's 1.11 update added full type checking for
+  `functools.partial` so there's no benefit to maintaining our own special
+  version anymore. This also applies to `ba*.Call` which is redundant in the
+  same way. Both `efro.call.tpartial` and `ba*.Call` will probably be marked
+  deprecated and go away at some point (or more likely simply not included in
+  newer apis such as bauiv2).
+- Added a `Delete Account` button directly to the account section in-game.
+- The app now includes build number when looking for custom sys scripts in the
+  mods dir. Previously it would have looked for something like `sys/1.7.36` but
+  now it will look for something like `sys/1.7.36_21940`. I was seeing a lot of
+  crash reports from people creating sys scripts using early builds of some
+  version and then upgrading to later builds of the same version containing
+  incompatibilities with the older sys scripts. This should help with that
+  problem.
+  
+### 1.7.35 (build 21889, api 8, 2024-06-20)
+- Fixed an issue where the engine would block at exit on some version of Linux
+  until Ctrl-D was pressed in the calling terminal.
+- V2 accounts have been around for a while now, so the old V1 device login
+  button is no longer visible in the account panel. It is currently possible to
+  bring it back by checking 'Show Deprecated Login Types' in advanced settings,
+  but please consider this a warning to upgrade/migrate your account to V2 if
+  you have not done so yet.
+- The 'Sign in with a BombSquad account' option is now simply 'Sign In' when
+  that is the only option. So nice and tidy! When other options such as Google
+  Play or Game Center are available it is now called 'Sign in with an email
+  address'.
+- The engine now supports signing in or creating email/password accounts in a
+  pop-up web dialog to avoid taking users out of the app. This currently works
+  on the native (not cmake) Mac build but will probably expand to others in the
+  future.
+- The `ba*.app.env.version` and `ba*.app.env.build_number` values are now
+  `ba*.app.env.engine_version` and `ba*.app.env.engine_build_number`. At this
+  point any functionality that cares about versions should be looking at engine
+  version anyway. In the future we can add separate `app_version` and
+  `app_build_number` values for spinoff apps, but in the case of `BombSquad` the
+  app version/build is currently the same as the engine's so we don't need that
+  just yet.
+- Reworked the 'Enter Code' dialog into a 'Send Info' dialog. The `sendinfo`
+  command is 99% of the reason for 'Enter Code' existing, so this simplifies
+  things for that use case and hopefully clarifies its purpose so I can spend
+  less time responding to app reviewers and more time improving the game.
+- The `Network Testing` panel no longer requires being signed in (it just skips
+  one test if not signed in).
+- Took a pass through the engine and its servers to make things more ipv6
+  friendly and prep for an eventual ipv6-only world (though ipv4 won't be going
+  anywhere for a long time). The existing half-hearted state of ipv6 support was
+  starting to cause problems when testing in certain ipv6-only environments, so
+  it was time to clean it up.
+- The engine will now establish its persistent v2-transport connections to
+  regional servers using ipv6 when that is the fastest option based on ping
+  tests.
+- Improved the efficiency of the `connectivity` system which determines which
+  regional ballistica server to establish a connection to (All V2 server
+  communication goes through this connection). It now takes geography into
+  account, so if it gets a low ping to a server in South America it won't try
+  pinging Warsaw, etc. Set the env var `BA_DEBUG_LOG_CONNECTIVITY=1` if you want
+  to watch it do it's thing and holler if you see any bad results.
+- Servers can now provide their public ipv4 and ipv6 addresses in their configs.
+  Previously, a server's address was always determined automatically based on
+  how it connected to the master server, but this would only provide one of the
+  two forms. Now it is possible to provide both.
+- Spaz classes now have a `default_hitpoints` which makes customizing that
+  easier (Thanks rabbitboom!)
+- Added `docker-gui-release`, `docker-gui-debug`, `docker-server-release`, `docker-server-debug`, `docker-clean` and `docker-save` targets
+  to Makefile.
+- Fixed an issue in Assault where being teleported back to base with a sticky
+  bomb stuck to you would do some crazy rubber-band-launching thing (Thanks
+  vishal332008!)
+- The `windows-debug` and `windows-release` Makefile targets should properly run
+  the game again (these build the Windows version of the game from a WSL
+  environment).
+- WSL Windows builds are now more strict about their locations. Currently this
+  means they must exist somewhere under /mnt/c/. It is turning out that a
+  significant number of behavior workarounds (for file permission quirks, etc.)
+  need to happen to keep these builds behaving, so I'd like to enforce as
+  limited a set of conditions as possible to give us the best chance at
+  succeeding there.
+- Added a workaround for WSL Windows builds giving permission errors when staging asset
+  files that already exist. Please holler if you are building with WSL and still
+  running into any sort of errors, as I would love to make that path as reliable
+  as possible.
+- Fixed an issue where WSL Windows builds would re-extract everything from
+  efrocache when anything in the cache-map changed (which is the case for most
+  commits). Please holler if you are still seeing lots more 'Extracting:' lines
+  when running builds after pulling small updates from git.
+- Added github workflow for making docker image and sphinx docs nightly
+- Added github workflow for making build release on tag creation
+  
+### 1.7.34 (build 21823, api 8, 2024-04-26)
+- Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
+  of the things this means is that we can use `typing.override` instead of the
+  `typing_extensions.override` version so the annoying requirement of installing
+  `typing_extensions` first thing when setting up the repo introduced a few
+  versions back is finally no longer a thing. I'll try to be careful to avoid
+  falling back into that situation in the future.
+- The project now maintains its own Python virtual environment in `.venv` where
+  it automatically installs whatever Python packages it needs instead of asking
+  the user to do so in their own environment. This should greatly simplify
+  working with the project and keep tool versions more consistent for people.
+  There will likely be some bugs related to this needing to be shaken out, so
+  please holler if you run into any. Namely, most all Makefile targets will now
+  need to depend on the `prereqs` target which ensures the virtual env is set
+  up. A target that does not do so may error if run on a freshly cloned/cleaned
+  repo, so holler if you run into such a thing.
+- There is now a `config/requirements.txt` file which controls which pip
+  packages are made available in the project's internal virtual environment.
+  Note that this is only for tooling; the actual engine bundles a different
+  minimal set of pip packages.
+- Since `config/requirements.txt` now exists and pip stuff is handled
+  automatically, stripped out the old manual pip requirement management stuff.
+  This includes the `list_pip_reqs` and `get_pip_reqs` pcommands and the
+  requirements list in `batools.build`.
+- Some executable scripts such as `tools/pcommand` and `tools/bacloud` are now
+  generated dynamically so that they always use the shiny new internal Python
+  virtual-environment. This generation should happen automagically when you
+  build `make` targets, but please holler if you run into a situation where it
+  does not and you get errors.
+- `_bascenev1.protocol_version()` now properly throws an exception if called
   while scene-v1 is not active.
+- The `efro.dataclassio` system now supports `datetime.timedelta` values.
+- Usage of `pcommandbatch` is now disabled by default. To enable it, set the env
+  var `BA_PCOMMANDBATCH_ENABLE=1`. This is primarily due to rare sporadic
+  failures I have observed or have been informed of, possibly involving socket
+  exhaustion or other hard-to-debug OS conditions. For now I am still
+  considering `pcommandbatch` supported and may continue to use it myself, but
+  its speed gains may not be worth its added complexity indefinitely. As core
+  counts keep increasing in the future, the time expense of spinning up a new
+  Python process per pcommand decreases, making pcommandbatch less of a win.
+  Please holler if you have any thoughts on this.
+- Renamed the `prereqs` Makefile target to `env`. This is more concise and feels
+  more accurate now that the target sets up things such as the Python virtual
+  environment and generally gets the project environment ready to use.
+- (build 21810) Fixed an issue where AppSubsystems could get inited multiple
+  times (due to functools.cached_property no longer being thread-safe in Python
+  3.12).
+- The server config file is now in `toml` format instead of `yaml`. Python has
+  built in support for reading `toml` as of 3.11 which means we don't have to
+  bundle extra packages, and `toml` has more of a clean minimal design that
+  works well for config files. Also I plan to use it for AssetPackage
+  configuration stuff so this keeps things consistent.
+- The server config can now be set to a `.json` file as an alternative to the
+  default `.toml`. This can be handy when procedurally generating server
+  configs. If no `--config` path is explicitly passed, it will look for
+  `config.json` and `config.toml` in the same dir as the script in that order.
   
 ### 1.7.33 (build 21795, api 8, 2024-03-24)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
@@ -1173,7 +1520,7 @@
   before to determine if a browser was available but this seemed to be flaky.
   Holler if this is not working well on your device/situation.
 - The internal 'fallback' `ba.open_url()` window which shows a url string when a
-  system browser is not available now has a qrcode and a copy button (where
+  web browser is not available now has a qrcode and a copy button (where
   copy/paste is supported).
 - Added a 'force_internal' arg to `ba.open_url()` if you would like to always
   use the internal window instead of attempting to open a browser. Now that we

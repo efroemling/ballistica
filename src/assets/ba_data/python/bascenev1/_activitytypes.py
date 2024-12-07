@@ -3,17 +3,15 @@
 """Some handy base class and special purpose Activity types."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import babase
 
 import _bascenev1
 from bascenev1._activity import Activity
 
-# False-positive from pylint due to our class-generics-filter.
-from bascenev1._player import EmptyPlayer  # pylint: disable=W0611
-from bascenev1._team import EmptyTeam  # pylint: disable=W0611
+from bascenev1._player import EmptyPlayer
+from bascenev1._team import EmptyTeam
 from bascenev1._music import MusicType, setmusic
 
 

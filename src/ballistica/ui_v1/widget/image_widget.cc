@@ -2,7 +2,9 @@
 
 #include "ballistica/ui_v1/widget/image_widget.h"
 
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
 #include "ballistica/base/logic/logic.h"
 
 namespace ballistica::ui_v1 {
@@ -41,10 +43,10 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   float b = 0;
   float t = b + height_;
 
-  if (texture_.Exists()) {
+  if (texture_.exists()) {
     if (texture_->loaded()
-        && ((!tint_texture_.Exists()) || tint_texture_->loaded())
-        && ((!mask_texture_.Exists()) || mask_texture_->loaded())) {
+        && ((!tint_texture_.exists()) || tint_texture_->loaded())
+        && ((!mask_texture_.exists()) || mask_texture_->loaded())) {
       if (image_dirty_) {
         image_width_ = r - l;
         image_height_ = t - b;
@@ -54,11 +56,11 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
 
       Object::Ref<base::MeshAsset> mesh_opaque_used;
-      if (mesh_opaque_.Exists()) {
+      if (mesh_opaque_.exists()) {
         mesh_opaque_used = mesh_opaque_;
       }
       Object::Ref<base::MeshAsset> mesh_transparent_used;
-      if (mesh_transparent_.Exists()) {
+      if (mesh_transparent_.exists()) {
         mesh_transparent_used = mesh_transparent_;
       }
 
@@ -66,7 +68,7 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       bool draw_radial_transparent = false;
 
       // If no meshes were provided, use default image meshes.
-      if ((!mesh_opaque_.Exists()) && (!mesh_transparent_.Exists())) {
+      if ((!mesh_opaque_.exists()) && (!mesh_transparent_.exists())) {
         if (has_alpha_channel_) {
           if (radial_amount_ < 1.0f) {
             draw_radial_transparent = true;
@@ -87,12 +89,14 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       // Draw brightness.
       float db = 1.0f;
       if (Widget* draw_controller = draw_control_parent()) {
-        db *= draw_controller->GetDrawBrightness(current_time);
+        db *= (draw_controller_mult_
+               * draw_controller->GetDrawBrightness(current_time))
+              + (1.0f - draw_controller_mult_) * 1.0f;
       }
 
       // Opaque portion may get drawn transparent or opaque depending on our
       // global opacity.
-      if (mesh_opaque_used.Exists() || draw_radial_opaque) {
+      if (mesh_opaque_used.exists() || draw_radial_opaque) {
         bool should_draw = false;
         bool should_draw_transparent = false;
 
@@ -112,29 +116,29 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           c.SetColor(color_red_ * db, color_green_ * db, color_blue_ * db,
                      opacity_);
           c.SetTexture(texture_);
-          if (tint_texture_.Exists()) {
-            c.SetColorizeTexture(tint_texture_.Get());
+          if (tint_texture_.exists()) {
+            c.SetColorizeTexture(tint_texture_.get());
             c.SetColorizeColor(tint_color_red_, tint_color_green_,
                                tint_color_blue_);
             c.SetColorizeColor2(tint2_color_red_, tint2_color_green_,
                                 tint2_color_blue_);
           }
-          c.SetMaskTexture(mask_texture_.Get());
+          c.SetMaskTexture(mask_texture_.get());
           {
             auto xf = c.ScopedTransform();
             c.Translate(image_center_x_ + extra_offs_x,
                         image_center_y_ + extra_offs_y);
             c.Scale(image_width_, image_height_, 1.0f);
             if (draw_radial_opaque) {
-              if (!radial_mesh_.Exists()) {
+              if (!radial_mesh_.exists()) {
                 radial_mesh_ =
                     Object::NewDeferred<base::MeshIndexedSimpleFull>();
               }
               base::Graphics::DrawRadialMeter(&(*radial_mesh_), radial_amount_);
               c.Scale(0.5f, 0.5f, 1.0f);
-              c.DrawMesh(radial_mesh_.Get());
+              c.DrawMesh(radial_mesh_.get());
             } else {
-              c.DrawMeshAsset(mesh_opaque_used.Get());
+              c.DrawMeshAsset(mesh_opaque_used.get());
             }
           }
           c.Submit();
@@ -142,35 +146,35 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
 
       // Always-transparent portion.
-      if ((mesh_transparent_used.Exists() || draw_radial_transparent)
+      if ((mesh_transparent_used.exists() || draw_radial_transparent)
           && draw_transparent) {
         base::SimpleComponent c(pass);
         c.SetTransparent(true);
         c.SetColor(color_red_ * db, color_green_ * db, color_blue_ * db,
                    opacity_);
         c.SetTexture(texture_);
-        if (tint_texture_.Exists()) {
-          c.SetColorizeTexture(tint_texture_.Get());
+        if (tint_texture_.exists()) {
+          c.SetColorizeTexture(tint_texture_.get());
           c.SetColorizeColor(tint_color_red_, tint_color_green_,
                              tint_color_blue_);
           c.SetColorizeColor2(tint2_color_red_, tint2_color_green_,
                               tint2_color_blue_);
         }
-        c.SetMaskTexture(mask_texture_.Get());
+        c.SetMaskTexture(mask_texture_.get());
         {
           auto xf = c.ScopedTransform();
           c.Translate(image_center_x_ + extra_offs_x,
                       image_center_y_ + extra_offs_y);
           c.Scale(image_width_, image_height_, 1.0f);
           if (draw_radial_transparent) {
-            if (!radial_mesh_.Exists()) {
+            if (!radial_mesh_.exists()) {
               radial_mesh_ = Object::New<base::MeshIndexedSimpleFull>();
             }
             base::Graphics::DrawRadialMeter(&(*radial_mesh_), radial_amount_);
             c.Scale(0.5f, 0.5f, 1.0f);
-            c.DrawMesh(radial_mesh_.Get());
+            c.DrawMesh(radial_mesh_.get());
           } else {
-            c.DrawMeshAsset(mesh_transparent_used.Get());
+            c.DrawMeshAsset(mesh_transparent_used.get());
           }
         }
         c.Submit();

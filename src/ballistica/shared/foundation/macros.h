@@ -4,7 +4,6 @@
 #define BALLISTICA_SHARED_FOUNDATION_MACROS_H_
 
 #ifdef __cplusplus
-#include <cassert>
 #include <string>
 #endif
 
@@ -105,14 +104,14 @@
   }                                                                            \
   ((void)0)  // (see 'Trailing-semicolon note' at top)
 
-#define BA_LOG_ONCE(lvl, msg)      \
-  {                                \
-    static bool did_log_here{};    \
-    if (!did_log_here) {           \
-      ::ballistica::Log(lvl, msg); \
-      did_log_here = true;         \
-    }                              \
-  }                                \
+#define BA_LOG_ONCE(nm, lvl, msg) \
+  {                               \
+    static bool did_log_here{};   \
+    if (!did_log_here) {          \
+      g_core->Log(nm, lvl, msg);  \
+      did_log_here = true;        \
+    }                             \
+  }                               \
   ((void)0)  // (see 'Trailing-semicolon note' at top)
 
 #define BA_LOG_PYTHON_TRACE(msg) ::ballistica::MacroLogPythonTrace(g_core, msg)
@@ -173,8 +172,8 @@ namespace ballistica {
 
 // Support functions used by some of our macros; not intended to be used
 // directly.
-auto MacroPathFilter(core::CoreFeatureSet* corefs,
-                     const char* filename) -> const char*;
+auto MacroPathFilter(core::CoreFeatureSet* corefs, const char* filename)
+    -> const char*;
 void MacroFunctionTimerEnd(core::CoreFeatureSet* corefs, millisecs_t starttime,
                            millisecs_t time, const char* funcname);
 void MacroFunctionTimerEndThread(core::CoreFeatureSet* corefs,

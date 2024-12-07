@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from typing import Any, Callable
 
 
-class SoundtrackEntryTypeSelectWindow(bui.Window):
+class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
     """Window for selecting a soundtrack entry type."""
 
     def __init__(
@@ -20,12 +20,16 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
         callback: Callable[[Any], Any],
         current_entry: Any,
         selection_target_name: str,
-        transition: str = 'in_right',
+        *,
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
     ):
+        # pylint: disable=too-many-locals
         assert bui.app.classic is not None
         music = bui.app.classic.music
         self._r = 'editSoundtrackWindow'
 
+        self._selection_target_name = selection_target_name
         self._callback = callback
         self._current_entry = copy.deepcopy(current_entry)
 
@@ -53,13 +57,12 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
 
         # NOTE: When something is selected, we close our UI and kick off
         # another window which then calls us back when its done, so the
-        # standard UI-cleanup-check complains that something is holding on
-        # to our instance after its ui is gone. Should restructure in a
-        # cleaner way, but just disabling that check for now.
+        # standard UI-cleanup-check complains that something is holding
+        # on to our instance after its ui is gone. Should restructure in
+        # a cleaner way, but just disabling that check for now.
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                transition=transition,
                 scale=(
                     1.7
                     if uiscale is bui.UIScale.SMALL
@@ -67,6 +70,8 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
                 ),
             ),
             cleanupcheck=False,
+            transition=transition,
+            origin_widget=origin_widget,
         )
         btn = bui.buttonwidget(
             parent=self._root_widget,
@@ -82,7 +87,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 32),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.selectASourceText'),
+            text=bui.Lstr(resource=f'{self._r}.selectASourceText'),
             color=bui.app.ui_v1.title_color,
             maxwidth=230,
             h_align='center',
@@ -110,7 +115,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
                 parent=self._root_widget,
                 size=(self._width - 100, 60),
                 position=(50, v),
-                label=bui.Lstr(resource=self._r + '.useDefaultGameMusicText'),
+                label=bui.Lstr(resource=f'{self._r}.useDefaultGameMusicText'),
                 on_activate_call=self._on_default_press,
             )
             if current_entry_type == 'default':
@@ -122,7 +127,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
                 parent=self._root_widget,
                 size=(self._width - 100, 60),
                 position=(50, v),
-                label=bui.Lstr(resource=self._r + '.useITunesPlaylistText'),
+                label=bui.Lstr(resource=f'{self._r}.useITunesPlaylistText'),
                 on_activate_call=self._on_mac_music_app_playlist_press,
                 icon=None,
             )
@@ -135,7 +140,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
                 parent=self._root_widget,
                 size=(self._width - 100, 60),
                 position=(50, v),
-                label=bui.Lstr(resource=self._r + '.useMusicFileText'),
+                label=bui.Lstr(resource=f'{self._r}.useMusicFileText'),
                 on_activate_call=self._on_music_file_press,
                 icon=bui.gettexture('file'),
             )
@@ -148,7 +153,7 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
                 parent=self._root_widget,
                 size=(self._width - 100, 60),
                 position=(50, v),
-                label=bui.Lstr(resource=self._r + '.useMusicFolderText'),
+                label=bui.Lstr(resource=f'{self._r}.useMusicFolderText'),
                 on_activate_call=self._on_music_folder_press,
                 icon=bui.gettexture('folder'),
                 icon_color=(1.1, 0.8, 0.2),
@@ -157,6 +162,27 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
                 bui.containerwidget(edit=self._root_widget, selected_child=btn)
             v -= spacing
 
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Pull these out of self here; if we reference self in the
+        # lambda we'll keep our window alive which is bad.
+        current_entry = self._current_entry
+        callback = self._callback
+        selection_target_name = self._selection_target_name
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition,
+                origin_widget=origin_widget,
+                current_entry=current_entry,
+                callback=callback,
+                selection_target_name=selection_target_name,
+            )
+        )
+
     def _on_mac_music_app_playlist_press(self) -> None:
         assert bui.app.classic is not None
         music = bui.app.classic.music
@@ -164,11 +190,9 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
             MacMusicAppPlaylistSelectWindow,
         )
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
-
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
 
         current_playlist_entry: str | None
         if (
@@ -180,11 +204,11 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
             )
         else:
             current_playlist_entry = None
-        bui.app.ui_v1.set_main_menu_window(
+
+        self.main_window_replace(
             MacMusicAppPlaylistSelectWindow(
                 self._callback, current_playlist_entry, self._current_entry
-            ).get_root_widget(),
-            from_window=self._root_widget,
+            )
         )
 
     def _on_music_file_press(self) -> None:
@@ -192,14 +216,14 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
         from baclassic.osmusic import OSMusicPlayer
         from bauiv1lib.fileselector import FileSelectorWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
         base_path = android_get_external_files_dir()
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
+
+        self.main_window_replace(
             FileSelectorWindow(
                 base_path,
                 callback=self._music_file_selector_cb,
@@ -208,30 +232,28 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
                     OSMusicPlayer.get_valid_music_file_extensions()
                 ),
                 allow_folders=False,
-            ).get_root_widget(),
-            from_window=self._root_widget,
+            ),
         )
 
     def _on_music_folder_press(self) -> None:
         from bauiv1lib.fileselector import FileSelectorWindow
         from babase import android_get_external_files_dir
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
         base_path = android_get_external_files_dir()
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
+
+        self.main_window_replace(
             FileSelectorWindow(
                 base_path,
                 callback=self._music_folder_selector_cb,
                 show_base_path=False,
                 valid_file_extensions=[],
                 allow_folders=True,
-            ).get_root_widget(),
-            from_window=self._root_widget,
+            ),
         )
 
     def _music_file_selector_cb(self, result: str | None) -> None:
@@ -247,9 +269,9 @@ class SoundtrackEntryTypeSelectWindow(bui.Window):
             self._callback({'type': 'musicFolder', 'name': result})
 
     def _on_default_press(self) -> None:
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
+        self.main_window_back()
         self._callback(None)
 
     def _on_cancel_press(self) -> None:
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
+        self.main_window_back()
         self._callback(self._current_entry)

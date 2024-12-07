@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 # pylint: disable=useless-suppression
 # pylint: disable=wrong-import-order
 from efro.terminal import Clr
-from efrotools import get_files_hash
+from efrotools.util import get_files_hash
 
 # pylint: enable=wrong-import-order
 # pylint: enable=useless-suppression

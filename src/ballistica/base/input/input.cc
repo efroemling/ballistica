@@ -2,9 +2,14 @@
 
 #include "ballistica/base/input/input.h"
 
+#include <cstdio>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/input/device/joystick_input.h"
 #include "ballistica/base/input/device/keyboard_input.h"
@@ -13,6 +18,7 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -29,8 +35,8 @@ void Input::PushCreateKeyboardInputDevices() {
 void Input::CreateKeyboardInputDevices_() {
   assert(g_base->InLogicThread());
   if (keyboard_input_ != nullptr || keyboard_input_2_ != nullptr) {
-    Log(LogLevel::kError,
-        "CreateKeyboardInputDevices called with existing kbs.");
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                "CreateKeyboardInputDevices called with existing kbs.");
     return;
   }
   keyboard_input_ = Object::NewDeferred<KeyboardInput>(nullptr);
@@ -48,8 +54,8 @@ void Input::PushDestroyKeyboardInputDevices() {
 void Input::DestroyKeyboardInputDevices_() {
   assert(g_base->InLogicThread());
   if (keyboard_input_ == nullptr || keyboard_input_2_ == nullptr) {
-    Log(LogLevel::kError,
-        "DestroyKeyboardInputDevices called with null kb(s).");
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                "DestroyKeyboardInputDevices called with null kb(s).");
     return;
   }
   RemoveInputDevice(keyboard_input_, false);
@@ -62,16 +68,16 @@ auto Input::GetInputDevice(int id) -> InputDevice* {
   if (id < 0 || id >= static_cast<int>(input_devices_.size())) {
     return nullptr;
   }
-  return input_devices_[id].Get();
+  return input_devices_[id].get();
 }
 
 auto Input::GetInputDevice(const std::string& name,
                            const std::string& unique_id) -> InputDevice* {
   assert(g_base->InLogicThread());
   for (auto&& i : input_devices_) {
-    if (i.Exists() && (i->GetDeviceName() == name)
+    if (i.exists() && (i->GetDeviceName() == name)
         && i->GetPersistentIdentifier() == unique_id) {
-      return i.Get();
+      return i.get();
     }
   }
   return nullptr;
@@ -103,7 +109,7 @@ auto Input::GetNewNumberedIdentifier_(const std::string& name,
     // Scan other devices with the same device-name and find the first number
     // suffix that's not taken.
     for (auto&& i : input_devices_) {
-      if (i.Exists()) {
+      if (i.exists()) {
         if ((i->GetRawDeviceName() == name) && i->number() == num) {
           in_use = true;
           break;
@@ -239,7 +245,7 @@ void Input::ShowStandardInputDeviceConnectedMessage_(InputDevice* j) {
   }
   connect_print_timer_id_ = g_base->logic->NewAppTimer(
       500 * 1000, false,
-      NewLambdaRunnable([this] { AnnounceConnects_(); }).Get());
+      NewLambdaRunnable([this] { AnnounceConnects_(); }).get());
 }
 
 void Input::ShowStandardInputDeviceDisconnectedMessage_(InputDevice* j) {
@@ -255,7 +261,7 @@ void Input::ShowStandardInputDeviceDisconnectedMessage_(InputDevice* j) {
   }
   disconnect_print_timer_id_ = g_base->logic->NewAppTimer(
       250 * 1000, false,
-      NewLambdaRunnable([this] { AnnounceDisconnects_(); }).Get());
+      NewLambdaRunnable([this] { AnnounceDisconnects_(); }).get());
 }
 
 void Input::PushAddInputDeviceCall(InputDevice* input_device,
@@ -269,7 +275,7 @@ void Input::PushAddInputDeviceCall(InputDevice* input_device,
 void Input::RebuildInputDeviceDelegates() {
   assert(g_base->InLogicThread());
   for (auto&& device_ref : input_devices_) {
-    if (auto* device = device_ref.Get()) {
+    if (auto* device = device_ref.get()) {
       auto delegate = Object::CompleteDeferred(
           g_base->app_mode()->CreateInputDeviceDelegate(device));
       device->set_delegate(delegate);
@@ -292,7 +298,7 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
   int index = 0;
   bool found_slot = false;
   for (auto& input_device : input_devices_) {
-    if (!input_device.Exists()) {
+    if (!input_device.exists()) {
       input_device = Object::CompleteDeferred(device);
       found_slot = true;
       device->set_index(index);
@@ -351,7 +357,7 @@ void Input::RemoveInputDevice(InputDevice* input, bool standard_message) {
   // Just look for it in our list.. if we find it, simply clear the ref (we
   // need to keep the ref around so our list indices don't change).
   for (auto& input_device : input_devices_) {
-    if (input_device.Exists() && (input_device.Get() == input)) {
+    if (input_device.exists() && (input_device.get() == input)) {
       // Pull it off the list before killing it (in case it tries to trigger
       // another kill itself).
       auto device = Object::Ref<InputDevice>(input_device);
@@ -387,7 +393,7 @@ void Input::UpdateInputDeviceCounts_() {
     // have been active recently.. (we're starting to get lots of virtual
     // devices and other cruft on android; don't wanna show controller UIs
     // just due to those)
-    if (input_device.Exists()
+    if (input_device.exists()
         && ((*input_device).IsTouchScreen() || (*input_device).IsKeyboard()
             || ((*input_device).last_active_time_millisecs() != 0
                 && current_time_millisecs
@@ -435,7 +441,7 @@ auto Input::GetLocalActiveInputDeviceCount() -> int {
     for (auto& input_device : input_devices_) {
       // Tally up local non-keyboard, non-touchscreen devices that have been
       // used in the last minute.
-      if (input_device.Exists() && !input_device->IsKeyboard()
+      if (input_device.exists() && !input_device->IsKeyboard()
           && !input_device->IsTouchScreen() && !input_device->IsUIOnly()
           && input_device->IsLocal()
           && (input_device->last_active_time_millisecs() != 0
@@ -453,7 +459,7 @@ auto Input::GetLocalActiveInputDeviceCount() -> int {
 auto Input::HaveControllerWithPlayer() -> bool {
   assert(g_base->InLogicThread());
   for (auto& input_device : input_devices_) {
-    if (input_device.Exists() && (*input_device).IsController()
+    if (input_device.exists() && (*input_device).IsController()
         && (*input_device).AttachedToPlayer()) {
       return true;
     }
@@ -464,7 +470,7 @@ auto Input::HaveControllerWithPlayer() -> bool {
 auto Input::HaveRemoteAppController() -> bool {
   assert(g_base->InLogicThread());
   for (auto& input_device : input_devices_) {
-    if (input_device.Exists() && (*input_device).IsRemoteApp()) {
+    if (input_device.exists() && (*input_device).IsRemoteApp()) {
       return true;
     }
   }
@@ -476,8 +482,8 @@ auto Input::GetInputDevicesWithName(const std::string& name)
   std::vector<InputDevice*> vals;
   if (!g_core->HeadlessMode()) {
     for (auto& input_device : input_devices_) {
-      if (input_device.Exists()) {
-        auto* js = dynamic_cast<JoystickInput*>(input_device.Get());
+      if (input_device.exists()) {
+        auto* js = dynamic_cast<JoystickInput*>(input_device.get());
         if (js && js->GetDeviceName() == name) {
           vals.push_back(js);
         }
@@ -492,8 +498,8 @@ auto Input::GetConfigurableGamePads() -> std::vector<InputDevice*> {
   std::vector<InputDevice*> vals;
   if (!g_core->HeadlessMode()) {
     for (auto& input_device : input_devices_) {
-      if (input_device.Exists()) {
-        auto* js = dynamic_cast<JoystickInput*>(input_device.Get());
+      if (input_device.exists()) {
+        auto* js = dynamic_cast<JoystickInput*>(input_device.get());
         if (js && js->GetAllowsConfiguring() && !js->ShouldBeHiddenFromUser()) {
           vals.push_back(js);
         }
@@ -534,7 +540,7 @@ void Input::DoApplyAppConfig() {
   // with a copy of it.
   std::vector<Object::Ref<InputDevice> > input_devices = input_devices_;
   for (auto& input_device : input_devices) {
-    if (input_device.Exists()) {
+    if (input_device.exists()) {
       input_device->UpdateMapping();
     }
   }
@@ -553,8 +559,8 @@ void Input::StepDisplayTime() {
   // If input has been locked an excessively long amount of time, unlock it.
   if (input_lock_count_temp_) {
     if (real_time - last_input_temp_lock_time_ > 10000) {
-      Log(LogLevel::kError,
-          "Input has been temp-locked for 10 seconds; unlocking.");
+      g_core->Log(LogName::kBaInput, LogLevel::kError,
+                  "Input has been temp-locked for 10 seconds; unlocking.");
       input_lock_count_temp_ = 0;
       PrintLockLabels_();
       input_lock_temp_labels_.clear();
@@ -585,7 +591,7 @@ void Input::StepDisplayTime() {
   }
 
   for (auto& input_device : input_devices_) {
-    if (input_device.Exists()) {
+    if (input_device.exists()) {
       (*input_device).Update();
     }
   }
@@ -596,7 +602,7 @@ void Input::Reset() {
 
   // Detach all inputs from players.
   for (auto& input_device : input_devices_) {
-    if (input_device.Exists()) {
+    if (input_device.exists()) {
       input_device->DetachFromPlayer();
     }
   }
@@ -659,10 +665,10 @@ void Input::UnlockAllInput(bool permanent, const std::string& label) {
     input_lock_count_temp_--;
     input_unlock_temp_labels_.push_back(label);
     if (input_lock_count_temp_ < 0) {
-      Log(LogLevel::kWarning,
-          "temp input unlock at time "
-              + std::to_string(g_core->GetAppTimeMillisecs())
-              + " with no active lock: '" + label + "'");
+      g_core->Log(LogName::kBaInput, LogLevel::kWarning,
+                  "temp input unlock at time "
+                      + std::to_string(g_core->GetAppTimeMillisecs())
+                      + " with no active lock: '" + label + "'");
       // This is to be expected since we can reset this to 0.
       input_lock_count_temp_ = 0;
     }
@@ -714,7 +720,7 @@ void Input::PrintLockLabels_() {
     s += "\n   " + std::to_string(num++) + ": " + recent_input_locks_unlock;
   }
 
-  Log(LogLevel::kError, s);
+  g_core->Log(LogName::kBaInput, LogLevel::kError, s);
 }
 
 void Input::PushTextInputEvent(const std::string& text) {
@@ -752,7 +758,8 @@ void Input::PushTextInputEvent(const std::string& text) {
     // platforms) but make a stink if they sent us something that we can't
     // at least translate to unicode.
     if (!Utils::IsValidUTF8(text)) {
-      Log(LogLevel::kWarning, "PushTextInputEvent passed invalid utf-8 text.");
+      g_core->Log(LogName::kBaInput, LogLevel::kWarning,
+                  "PushTextInputEvent passed invalid utf-8 text.");
       return;
     }
 
@@ -839,7 +846,8 @@ void Input::CaptureKeyboardInput(HandleKeyPressCall* press_call,
                                  HandleKeyReleaseCall* release_call) {
   assert(g_base->InLogicThread());
   if (keyboard_input_capture_press_ || keyboard_input_capture_release_) {
-    Log(LogLevel::kError, "Setting key capture redundantly.");
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                "Setting key capture redundantly.");
   }
   keyboard_input_capture_press_ = press_call;
   keyboard_input_capture_release_ = release_call;
@@ -854,7 +862,8 @@ void Input::ReleaseKeyboardInput() {
 void Input::CaptureJoystickInput(HandleJoystickEventCall* call) {
   assert(g_base->InLogicThread());
   if (joystick_input_capture_) {
-    Log(LogLevel::kError, "Setting joystick capture redundantly.");
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                "Setting joystick capture redundantly.");
   }
   joystick_input_capture_ = call;
 }
@@ -925,7 +934,7 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
       count++;
       if (count > 10) {
         BA_LOG_ONCE(
-            LogLevel::kWarning,
+            LogName::kBaInput, LogLevel::kWarning,
             "Input::HandleKeyPress_ seems to be getting passed repeat key"
             " press events. Only initial press events should be passed.");
       }
@@ -1437,7 +1446,7 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
     // overall multitouch gesture, it should always be winding up as our
     // single_touch_.
     if (e.type == TouchEvent::Type::kDown && single_touch_ != nullptr) {
-      BA_LOG_ONCE(LogLevel::kError,
+      BA_LOG_ONCE(LogName::kBaInput, LogLevel::kError,
                   "Got touch labeled first but will not be our single.");
     }
 
@@ -1447,7 +1456,7 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
     if ((e.type == TouchEvent::Type::kUp
          || e.type == TouchEvent::Type::kCanceled)
         && single_touch_ != nullptr && single_touch_ != e.touch) {
-      BA_LOG_ONCE(LogLevel::kError,
+      BA_LOG_ONCE(LogName::kBaInput, LogLevel::kError,
                   "Last touch coming up is not single touch!");
     }
   }
@@ -1479,7 +1488,7 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
 
 void Input::ResetJoyStickHeldButtons() {
   for (auto&& i : input_devices_) {
-    if (i.Exists()) {
+    if (i.exists()) {
       i->ResetHeldStates();
     }
   }
@@ -1562,7 +1571,7 @@ void Input::LsInputDevices() {
     ++index;
   }
 
-  Log(LogLevel::kInfo, out);
+  g_core->Log(LogName::kBaInput, LogLevel::kInfo, out);
 }
 
 auto Input::ShouldAllowInputInAttractMode_(InputDevice* device) const -> bool {

@@ -40,3 +40,15 @@ class LoginType(Enum):
                 return 'Google Play Games'
             case cls.GAME_CENTER:
                 return 'Game Center'
+
+    @property
+    def displaynameshort(self) -> str:
+        """Human readable name for this value."""
+        cls = type(self)
+        match self:
+            case cls.EMAIL:
+                return 'Email'
+            case cls.GPGS:
+                return 'GPGS'
+            case cls.GAME_CENTER:
+                return 'Game Center'

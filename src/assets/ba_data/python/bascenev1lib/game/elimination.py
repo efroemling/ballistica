@@ -2,15 +2,14 @@
 #
 """Elimination mini-game."""
 
-# ba_meta require api 8
+# ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.actor.spazfactory import SpazFactory
@@ -28,6 +27,7 @@ class Icon(bs.Actor):
         player: Player,
         position: tuple[float, float],
         scale: float,
+        *,
         show_lives: bool = True,
         show_death: bool = True,
         name_scale: float = 1.0,

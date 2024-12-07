@@ -4,9 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from typing_extensions import override
+from typing import TYPE_CHECKING, override
 
 from bauiv1lib.gather import GatherTab
 import bauiv1 as bui
@@ -29,6 +27,7 @@ class AboutGatherTab(GatherTab):
         region_bottom: float,
     ) -> bui.Widget:
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-positional-arguments
 
         plus = bui.app.plus
         assert plus is not None
@@ -159,6 +158,7 @@ class AboutGatherTab(GatherTab):
                 autoselect=True,
                 on_activate_call=bui.WeakCall(self._invite_to_try_press),
                 up_widget=tab_button,
+                show_buffer_top=500,
             )
             y -= invite_height
         else:

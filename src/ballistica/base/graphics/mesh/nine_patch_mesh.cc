@@ -13,7 +13,8 @@ NinePatchMesh::NinePatchMesh(float x, float y, float z, float width,
          || (border_bottom + border_top) > 1.0f)
         || (border_left < 0.0f || border_right < 0.0f
             || (border_left + border_right) > 1.0f)) {
-      BA_LOG_ONCE(LogLevel::kWarning, "Invalid nine-patch values provided.");
+      BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kWarning,
+                  "Invalid nine-patch values provided.");
     }
   }
   // Statically allocate enough for a full 9 patches even though we may

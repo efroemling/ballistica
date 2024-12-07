@@ -4,7 +4,6 @@
 #define BALLISTICA_BASE_INPUT_DEVICE_INPUT_DEVICE_H_
 
 #include <string>
-#include <vector>
 
 #include "ballistica/base/input/device/input_device_delegate.h"
 #include "ballistica/shared/foundation/object.h"
@@ -122,7 +121,7 @@ class InputDevice : public Object {
   auto delegate() -> InputDeviceDelegate& {
     // TEMP - Tracking down a crash in the wild.
     // Delegate should always exist any time we're accessing it.
-    if (!delegate_.Exists()) {
+    if (!delegate_.exists()) {
       FatalError("Input-device delegate unexpectedly invalid.");
     }
     return *delegate_;

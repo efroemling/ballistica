@@ -3,9 +3,9 @@
 #ifndef BALLISTICA_SCENE_V1_DYNAMICS_MATERIAL_MATERIAL_COMPONENT_H_
 #define BALLISTICA_SCENE_V1_DYNAMICS_MATERIAL_MATERIAL_COMPONENT_H_
 
-#include <utility>
 #include <vector>
 
+#include "ballistica/scene_v1/dynamics/material/material_action.h"
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/shared/foundation/object.h"
 
@@ -29,8 +29,8 @@ class MaterialComponent : public Object {
   Object::Ref<MaterialConditionNode> conditions;
   auto eval_conditions(const Object::Ref<MaterialConditionNode>& condition,
                        const Material& c, const Part* part,
-                       const Part* opposing_part,
-                       const MaterialContext& s) -> bool;
+                       const Part* opposing_part, const MaterialContext& s)
+      -> bool;
 
   // Apply the component to a context.
   void Apply(MaterialContext* c, const Part* src_part, const Part* dst_part);

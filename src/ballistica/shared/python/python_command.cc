@@ -2,6 +2,9 @@
 
 #include "ballistica/shared/python/python_command.h"
 
+#include <string>
+#include <utility>
+
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_sys.h"
@@ -51,7 +54,7 @@ auto PythonCommand::operator=(const std::string& src) -> PythonCommand& {
 
 void PythonCommand::CompileForExec() {
   assert(Python::HaveGIL());
-  assert(file_code_obj_.Get() == nullptr);
+  assert(file_code_obj_.get() == nullptr);
   PyObject* o =
       Py_CompileString(command_.c_str(), file_name_.c_str(), Py_file_input);
   if (o == nullptr) {
@@ -66,7 +69,7 @@ void PythonCommand::CompileForExec() {
 
 void PythonCommand::CompileForEval(bool print_errors) {
   assert(Python::HaveGIL());
-  assert(eval_code_obj_.Get() == nullptr);
+  assert(eval_code_obj_.get() == nullptr);
   PyObject* o =
       Py_CompileString(command_.c_str(), file_name_.c_str(), Py_eval_input);
   if (o == nullptr) {
@@ -86,10 +89,10 @@ PythonCommand::~PythonCommand() { dead_ = true; }
 
 auto PythonCommand::CanEval() -> bool {
   assert(Python::HaveGIL());
-  if (!eval_code_obj_.Get()) {
+  if (!eval_code_obj_.get()) {
     CompileForEval(false);
   }
-  if (!eval_code_obj_.Get()) {
+  if (!eval_code_obj_.get()) {
     PyErr_Clear();
     return false;
   }
@@ -97,8 +100,8 @@ auto PythonCommand::CanEval() -> bool {
   return true;
 }
 
-auto PythonCommand::Exec(bool print_errors, PyObject* globals,
-                         PyObject* locals) -> bool {
+auto PythonCommand::Exec(bool print_errors, PyObject* globals, PyObject* locals)
+    -> bool {
   assert(Python::HaveGIL());
 
   // If we're being used before core is up, we need both global and
@@ -111,21 +114,21 @@ auto PythonCommand::Exec(bool print_errors, PyObject* globals,
   if (globals == nullptr) {
     globals = core::g_core->python->objs()
                   .Get(core::CorePython::ObjID::kMainDict)
-                  .Get();
+                  .get();
   }
   if (locals == nullptr) {
     locals = core::g_core->python->objs()
                  .Get(core::CorePython::ObjID::kMainDict)
-                 .Get();
+                 .get();
   }
 
-  if (!file_code_obj_.Get()) {
+  if (!file_code_obj_.get()) {
     CompileForExec();
     assert(!dead_);
   }
-  if (file_code_obj_.Get()) {
+  if (file_code_obj_.get()) {
     PUSH_PYCOMMAND(this);
-    PyObject* v = PyEval_EvalCode(file_code_obj_.Get(), globals, locals);
+    PyObject* v = PyEval_EvalCode(file_code_obj_.get(), globals, locals);
     POP_PYCOMMAND();
 
     // Technically the Python call could have killed us;
@@ -163,8 +166,8 @@ auto PythonCommand::Exec(bool print_errors, PyObject* globals,
   return false;
 }
 
-auto PythonCommand::Eval(bool print_errors, PyObject* globals,
-                         PyObject* locals) -> PythonRef {
+auto PythonCommand::Eval(bool print_errors, PyObject* globals, PyObject* locals)
+    -> PythonRef {
   assert(Python::HaveGIL());
   assert(!dead_);
 
@@ -172,25 +175,25 @@ auto PythonCommand::Eval(bool print_errors, PyObject* globals,
     assert(core::g_core);
     globals = core::g_core->python->objs()
                   .Get(core::CorePython::ObjID::kMainDict)
-                  .Get();
+                  .get();
   }
   if (locals == nullptr) {
     assert(core::g_core);
     locals = core::g_core->python->objs()
                  .Get(core::CorePython::ObjID::kMainDict)
-                 .Get();
+                 .get();
   }
 
   assert(PyDict_Check(globals));
   assert(PyDict_Check(locals));
 
-  if (!eval_code_obj_.Get()) {
+  if (!eval_code_obj_.get()) {
     CompileForEval(print_errors);
     assert(!dead_);
   }
 
   // Attempt to compile for eval if necessary.
-  if (!eval_code_obj_.Get()) {
+  if (!eval_code_obj_.get()) {
     if (print_errors) {
       // Save/restore error or it can mess with context print calls.
       BA_PYTHON_ERROR_SAVE;
@@ -210,7 +213,7 @@ auto PythonCommand::Eval(bool print_errors, PyObject* globals,
     return {};
   }
   PUSH_PYCOMMAND(this);
-  PyObject* v = PyEval_EvalCode(eval_code_obj_.Get(), globals, locals);
+  PyObject* v = PyEval_EvalCode(eval_code_obj_.get(), globals, locals);
   POP_PYCOMMAND();
   assert(!dead_);
   if (v == nullptr) {

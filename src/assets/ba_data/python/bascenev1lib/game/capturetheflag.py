@@ -2,15 +2,14 @@
 #
 """Defines a capture-the-flag game."""
 
-# ba_meta require api 8
+# ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
@@ -33,6 +32,7 @@ class CTFFlag(Flag):
     activity: CaptureTheFlagGame
 
     def __init__(self, team: Team):
+
         assert team.flagmaterial is not None
         super().__init__(
             materials=[team.flagmaterial],
@@ -74,6 +74,7 @@ class Team(bs.Team[Player]):
 
     def __init__(
         self,
+        *,
         base_pos: Sequence[float],
         base_region_material: bs.Material,
         base_region: bs.Node,

@@ -2,9 +2,15 @@
 
 #include "ballistica/base/graphics/support/screen_messages.h"
 
+#include <algorithm>
+#include <string>
+#include <utility>
+
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
+#include "ballistica/base/graphics/text/text_group.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -146,7 +152,7 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
 
           if (i->translation_dirty) {
             BA_LOG_ONCE(
-                LogLevel::kWarning,
+                LogName::kBaGraphics, LogLevel::kWarning,
                 "Found dirty translation on screenmessage draw pass 1; raw="
                     + i->s_raw);
           }
@@ -215,8 +221,8 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
               c.Translate(0, 0.5f, 0);
             }
             // c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
-            assert(i->shadow_mesh_.Exists());
-            c.DrawMesh(i->shadow_mesh_.Get());
+            assert(i->shadow_mesh_.exists());
+            c.DrawMesh(i->shadow_mesh_.get());
           }
 
           v += scale * (36 + str_height);
@@ -255,7 +261,7 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
           }
           if (i->translation_dirty) {
             BA_LOG_ONCE(
-                LogLevel::kWarning,
+                LogName::kBaGraphics, LogLevel::kWarning,
                 "Found dirty translation on screenmessage draw pass 2; raw="
                     + i->s_raw);
           }
@@ -378,14 +384,14 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
         last_v = i->v_smoothed;
 
         // Draw the image if they provided one.
-        if (i->texture.Exists()) {
+        if (i->texture.exists()) {
           c.Submit();
 
           SimpleComponent c2(pass);
           c2.SetTransparent(true);
           c2.SetTexture(i->texture);
-          if (i->tint_texture.Exists()) {
-            c2.SetColorizeTexture(i->tint_texture.Get());
+          if (i->tint_texture.exists()) {
+            c2.SetColorizeTexture(i->tint_texture.get());
             c2.SetColorizeColor(i->tint.x, i->tint.y, i->tint.z);
             c2.SetColorizeColor2(i->tint2.x, i->tint2.y, i->tint2.z);
             c2.SetMaskTexture(
@@ -489,10 +495,10 @@ void ScreenMessages::ClearScreenMessageTranslations() {
 auto ScreenMessages::ScreenMessageEntry::GetText() -> TextGroup& {
   if (translation_dirty) {
     BA_LOG_ONCE(
-        LogLevel::kWarning,
+        LogName::kBaGraphics, LogLevel::kWarning,
         "Found dirty translation on screenmessage GetText; raw=" + s_raw);
   }
-  if (!s_mesh_.Exists()) {
+  if (!s_mesh_.exists()) {
     s_mesh_ = Object::New<TextGroup>();
     mesh_dirty = true;
   }

@@ -6,15 +6,16 @@ from __future__ import annotations
 import logging
 import threading
 from collections import deque
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import babase
 
 from baclassic._music import MusicPlayer
 
 if TYPE_CHECKING:
     from typing import Callable, Any
+
+    import bauiv1
 
 
 class MacMusicAppMusicPlayer(MusicPlayer):
@@ -34,7 +35,7 @@ class MacMusicAppMusicPlayer(MusicPlayer):
         callback: Callable[[Any], None],
         current_entry: Any,
         selection_target_name: str,
-    ) -> Any:
+    ) -> bauiv1.MainWindow:
         # pylint: disable=cyclic-import
         from bauiv1lib.soundtrack import entrytypeselect as etsel
 

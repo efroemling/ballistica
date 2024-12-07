@@ -3,7 +3,6 @@
 """Provides the AppConfig class."""
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 import _babase
@@ -101,43 +100,6 @@ class AppConfig(dict):
         self.commit()
 
 
-def read_app_config() -> AppConfig:
-    """Read the app config."""
-    import os
-    import json
-
-    # NOTE: it is assumed that this only gets called once and the config
-    # object will not change from here on out
-    config_file_path = _babase.app.env.config_file_path
-    config_contents = ''
-    try:
-        if os.path.exists(config_file_path):
-            with open(config_file_path, encoding='utf-8') as infile:
-                config_contents = infile.read()
-            config = AppConfig(json.loads(config_contents))
-        else:
-            config = AppConfig()
-
-    except Exception:
-        logging.exception(
-            "Error reading config file '%s' at time %.3f.\n"
-            "Backing up broken config to'%s.broken'.",
-            config_file_path,
-            _babase.apptime(),
-            config_file_path,
-        )
-
-        try:
-            import shutil
-
-            shutil.copyfile(config_file_path, config_file_path + '.broken')
-        except Exception:
-            logging.exception('Error copying broken config.')
-        config = AppConfig()
-
-    return config
-
-
 def commit_app_config() -> None:
     """Commit the config to persistent storage.
 
@@ -145,6 +107,7 @@ def commit_app_config() -> None:
 
     (internal)
     """
+    # FIXME - this should not require plus.
     plus = _babase.app.plus
     assert plus is not None
 

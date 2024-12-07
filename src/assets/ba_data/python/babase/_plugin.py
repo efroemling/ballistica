@@ -6,9 +6,7 @@ from __future__ import annotations
 
 import logging
 import importlib.util
-from typing import TYPE_CHECKING
-
-from typing_extensions import override
+from typing import TYPE_CHECKING, override
 
 import _babase
 from babase._appsubsystem import AppSubsystem
@@ -95,7 +93,7 @@ class PluginSubsystem(AppSubsystem):
         # that weren't covered by the meta stuff above, either creating
         # plugin-specs for them or clearing them out. This covers
         # plugins with api versions not matching ours, plugins without
-        # ba_meta tags, and plugins that have since disappeared.
+        # ba_*meta tags, and plugins that have since disappeared.
         assert isinstance(plugstates, dict)
         wrong_api_prefixes = [f'{m}.' for m in results.incorrect_api_modules]
 
@@ -280,7 +278,7 @@ class PluginSpec:
         if not self.loadable:
             return None
         try:
-            cls = getclass(self.class_path, Plugin)
+            cls = getclass(self.class_path, Plugin, True)
         except Exception as exc:
             _babase.getsimplesound('error').play()
             _babase.screenmessage(

@@ -7,19 +7,18 @@ import gc
 import os
 import logging
 from threading import Thread
+from functools import partial
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
-from efro.call import tpartial
-from efro.log import LogLevel
+from efro.logging import LogLevel
 from efro.dataclassio import ioprepped, dataclass_to_json, dataclass_from_json
 
 import _babase
 from babase._appsubsystem import AppSubsystem
 
 if TYPE_CHECKING:
-    from typing import Any, TextIO
+    from typing import Any, TextIO, Callable
 
     import babase
 
@@ -107,8 +106,8 @@ def handle_v1_cloud_log() -> None:
 
             info = {
                 'log': _babase.get_v1_cloud_log(),
-                'version': app.env.version,
-                'build': app.env.build_number,
+                'version': app.env.engine_version,
+                'build': app.env.engine_build_number,
                 'userAgentString': classic.legacy_user_agent_string,
                 'session': sessionname,
                 'activity': activityname,
@@ -116,7 +115,7 @@ def handle_v1_cloud_log() -> None:
                 'userRanCommands': _babase.has_user_run_commands(),
                 'time': _babase.apptime(),
                 'userModded': _babase.workspaces_in_use(),
-                'newsShow': plus.get_news_show(),
+                'newsShow': plus.get_classic_news_show(),
             }
 
             def response(data: Any) -> None:
@@ -321,7 +320,7 @@ def dump_app_state(
     # We want this to work from any thread, so need to kick this part
     # over to the logic thread so timer works.
     _babase.pushcall(
-        tpartial(_babase.apptimer, delay + 1.0, log_dumped_app_state),
+        partial(_babase.apptimer, delay + 1.0, log_dumped_app_state),
         from_other_thread=True,
         suppress_other_thread_warning=True,
     )

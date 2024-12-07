@@ -30,7 +30,7 @@ class Material : public Object {
   auto NewPyRef() -> PyObject* { return GetPyRef(true); }
   auto BorrowPyRef() -> PyObject* { return GetPyRef(false); }
   void MarkDead();
-  auto scene() const -> Scene* { return scene_.Get(); }
+  auto scene() const -> Scene* { return scene_.get(); }
   void DumpComponents(SessionStream* out);
   auto stream_id() const -> int64_t { return stream_id_; }
   void set_stream_id(int64_t val) {

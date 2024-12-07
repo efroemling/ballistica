@@ -4,9 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from typing_extensions import override
+from typing import TYPE_CHECKING, override
 
 from bauiv1lib import popup
 import bauiv1 as bui
@@ -136,6 +134,7 @@ class TrophiesWindow(popup.PopupWindow):
         sub_width: int,
         trophy_types: list[list[str]],
     ) -> int:
+        # pylint: disable=too-many-positional-arguments
         from bascenev1 import get_trophy_string
 
         total_pts = 0

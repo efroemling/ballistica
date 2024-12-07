@@ -1,0 +1,8 @@
+# Stuff we want ripgrep to ignore.
+docs
+submodules
+src/external
+src/assets/ba_data/python-site-packages
+src/assets/pylib-android
+src/assets/pylib-apple
+src/assets/windows

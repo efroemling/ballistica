@@ -30,14 +30,7 @@ class CoreConfig {
   bool vr_mode{};
 
   /// Log various stages/times in the bootstrapping process.
-  bool lifecycle_log{};
-
-  /// Normally early C++ Log() calls are held until babase has been imported
-  /// so that when they are pushed out to the Python logging calls they are
-  /// properly routed through the full engine. If you are not using babase
-  /// or are trying to debug early issues you can flip this off to push
-  /// things to Python as soon as technically possible.
-  bool hold_early_logs{true};
+  // bool lifecycle_log{};
 
   /// Let the engine know there's a debugger attached so it should do things
   /// like abort() instead of exiting with error codes.

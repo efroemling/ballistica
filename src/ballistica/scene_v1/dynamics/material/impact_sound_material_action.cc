@@ -24,7 +24,7 @@ void ImpactSoundMaterialAction::Flatten(char** buffer,
   for (int i = 0; i < sound_count; i++) {
     Utils::EmbedInt32NBO(buffer,
                          static_cast_check_fit<int32_t>(
-                             output_stream->GetSoundID(sounds[i].Get())));
+                             output_stream->GetSoundID(sounds[i].get())));
   }
   Utils::EmbedFloat16NBO(buffer, target_impulse_);
   Utils::EmbedFloat16NBO(buffer, volume_);
@@ -47,7 +47,7 @@ void ImpactSoundMaterialAction::Apply(MaterialContext* context,
                                       const Part* dst_part,
                                       const Object::Ref<MaterialAction>& p) {
   assert(context && src_part && dst_part);
-  assert(context->dynamics.Exists());
+  assert(context->dynamics.exists());
   assert(context->dynamics->in_process());
 
   // Avoid this if we're cutting corners.
@@ -62,7 +62,7 @@ void ImpactSoundMaterialAction::Apply(MaterialContext* context,
       > 100) {
     assert(!sounds.empty());
     context->impact_sounds.emplace_back(
-        context, sounds[rand() % sounds.size()].Get(),  // NOLINT
+        context, sounds[rand() % sounds.size()].get(),  // NOLINT
         target_impulse_, volume_);
     context->complex_sound = true;
   }

@@ -2,7 +2,10 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 
-#include "ballistica/base/graphics/renderer/renderer.h"
+#include <string>
+
+#include "ballistica/base/graphics/support/graphics_client_context.h"
+#include "ballistica/base/graphics/support/graphics_settings.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
@@ -133,7 +136,7 @@ auto AppAdapter::DoClipboardGetText() -> std::string {
 }
 
 auto AppAdapter::GetKeyName(int keycode) -> std::string {
-  BA_LOG_ONCE(LogLevel::kWarning,
+  BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
               "CorePlatform::GetKeyName not implemented here.");
   return "?";
 }
@@ -148,5 +151,6 @@ void AppAdapter::NativeReviewRequest() {
 void AppAdapter::DoNativeReviewRequest() { FatalError("Fixme unimplemented."); }
 
 auto AppAdapter::ShouldSilenceAudioForInactive() -> bool const { return false; }
+auto AppAdapter::SupportsPurchases() -> bool { return false; }
 
 }  // namespace ballistica::base

@@ -2,9 +2,12 @@
 
 #include "ballistica/shared/foundation/feature_set_native_component.h"
 
+#include <Python.h>
+
+#include <string>
+
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica {
 
@@ -38,7 +41,7 @@ auto FeatureSetNativeComponent::BaseImportThroughPythonModule(
   // Grab the wrapper to our C++ pointer from the module.
   auto fs_data_obj = PythonRef::StolenSoft(
       PyObject_GetAttrString(module, kFeatureSetDataAttrName));
-  if (!fs_data_obj.Exists()) {
+  if (!fs_data_obj.exists()) {
     FatalError("Did not find expected feature-set data in module "
                + std::string(modulename));
   }

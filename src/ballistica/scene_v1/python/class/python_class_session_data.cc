@@ -2,17 +2,18 @@
 
 #include "ballistica/scene_v1/python/class/python_class_session_data.h"
 
+#include <string>
+
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/class/python_class_context_ref.h"
 #include "ballistica/scene_v1/support/session.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::scene_v1 {
 
 auto PythonClassSessionData::nb_bool(PythonClassSessionData* self) -> int {
-  return self->session_->Exists();
+  return self->session_->exists();
 }
 
 PyNumberMethods PythonClassSessionData::as_number_;
@@ -48,7 +49,7 @@ auto PythonClassSessionData::Create(Session* session) -> PyObject* {
 }
 
 auto PythonClassSessionData::GetSession() const -> Session* {
-  Session* session = session_->Get();
+  Session* session = session_->get();
   if (!session) {
     throw Exception("Invalid SessionData.", PyExcType::kSessionNotFound);
   }
@@ -59,7 +60,7 @@ auto PythonClassSessionData::Context(PythonClassSessionData* self)
     -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
-  Session* s = self->session_->Get();
+  Session* s = self->session_->get();
   if (!s) {
     throw Exception("Session is not valid.");
   }
@@ -72,7 +73,7 @@ auto PythonClassSessionData::tp_repr(PythonClassSessionData* self)
     -> PyObject* {
   BA_PYTHON_TRY;
   return Py_BuildValue("s", (std::string("<Ballistica SessionData ")
-                             + Utils::PtrToString(self->session_->Get()) + " >")
+                             + Utils::PtrToString(self->session_->get()) + " >")
                                 .c_str());
   BA_PYTHON_CATCH;
 }
@@ -114,7 +115,7 @@ void PythonClassSessionData::tp_dealloc(PythonClassSessionData* self) {
 
 auto PythonClassSessionData::Exists(PythonClassSessionData* self) -> PyObject* {
   BA_PYTHON_TRY;
-  Session* sgc = self->session_->Get();
+  Session* sgc = self->session_->get();
   if (sgc) {
     Py_RETURN_TRUE;
   } else {

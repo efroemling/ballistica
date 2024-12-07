@@ -4,6 +4,8 @@
 #define BALLISTICA_BASE_APP_ADAPTER_APP_ADAPTER_HEADLESS_H_
 #if BA_HEADLESS_BUILD
 
+#include <string>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/shared/foundation/event_loop.h"
 

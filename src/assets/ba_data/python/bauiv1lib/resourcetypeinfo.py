@@ -4,22 +4,29 @@
 
 from __future__ import annotations
 
-from typing_extensions import override
+from typing import override, TYPE_CHECKING, assert_never
 
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
+
+if TYPE_CHECKING:
+    from typing import Literal
 
 
 class ResourceTypeInfoWindow(PopupWindow):
     """Popup window providing info about resource types."""
 
-    def __init__(self, origin_widget: bui.Widget):
+    def __init__(
+        self,
+        resource_type: Literal['tickets', 'tokens', 'trophies', 'xp'],
+        origin_widget: bui.Widget,
+    ):
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         scale = (
-            2.3
+            2.0
             if uiscale is bui.UIScale.SMALL
-            else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
+            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
         self._transitioning_out = False
         self._width = 570
@@ -31,18 +38,39 @@ class ResourceTypeInfoWindow(PopupWindow):
             scale=scale,
             bg_color=bg_color,
             position=origin_widget.get_screen_space_center(),
+            edge_buffer_scale=4.0,
         )
         self._cancel_button = bui.buttonwidget(
             parent=self.root_widget,
-            position=(50, self._height - 30),
+            position=(40, self._height - 40),
             size=(50, 50),
-            scale=0.5,
+            scale=0.7,
             label='',
             color=bg_color,
             on_activate_call=self._on_cancel_press,
             autoselect=True,
             icon=bui.gettexture('crossOut'),
             iconscale=1.2,
+        )
+
+        if resource_type == 'tickets':
+            rdesc = 'Will describe tickets.'
+        elif resource_type == 'tokens':
+            rdesc = 'Will describe tokens.'
+        elif resource_type == 'trophies':
+            rdesc = 'Will show trophies & league rankings.'
+        elif resource_type == 'xp':
+            rdesc = 'Will describe xp/levels.'
+        else:
+            assert_never(resource_type)
+
+        bui.textwidget(
+            parent=self.root_widget,
+            h_align='center',
+            v_align='center',
+            size=(0, 0),
+            position=(self._width * 0.5, self._height * 0.5),
+            text=(f'UNDER CONSTRUCTION.\n({rdesc})'),
         )
 
     def _on_cancel_press(self) -> None:

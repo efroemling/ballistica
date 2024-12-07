@@ -3,11 +3,13 @@
 
 #include "ballistica/base/app_adapter/app_adapter_apple.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/base/platform/apple/apple_utils.h"
 #include "ballistica/base/platform/apple/from_swift.h"
 #include "ballistica/base/platform/support/min_sdl_key_names.h"
 #include "ballistica/base/support/app_config.h"
@@ -167,7 +169,7 @@ auto AppAdapterApple::InGraphicsContext() -> bool {
 void AppAdapterApple::DoPushGraphicsContextRunnable(Runnable* runnable) {
   auto lock = std::scoped_lock(graphics_calls_mutex_);
   if (graphics_calls_.size() > 1000) {
-    BA_LOG_ONCE(LogLevel::kError, "graphics_calls_ got too big.");
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError, "graphics_calls_ got too big.");
   }
   graphics_calls_.push_back(runnable);
 }

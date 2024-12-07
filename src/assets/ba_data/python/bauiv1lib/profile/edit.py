@@ -5,49 +5,54 @@
 from __future__ import annotations
 
 import random
-from typing import cast
+from typing import cast, override
 
 from bauiv1lib.colorpicker import ColorPicker
+from bauiv1lib.characterpicker import CharacterPickerDelegate
+from bauiv1lib.iconpicker import IconPickerDelegate
 import bauiv1 as bui
 import bascenev1 as bs
 
 
-class EditProfileWindow(bui.Window):
+class EditProfileWindow(
+    bui.MainWindow, CharacterPickerDelegate, IconPickerDelegate
+):
     """Window for editing a player profile."""
 
-    # FIXME: WILL NEED TO CHANGE THIS FOR UILOCATION.
     def reload_window(self) -> None:
         """Transitions out and recreates ourself."""
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            EditProfileWindow(
-                self.getname(), self._in_main_menu
-            ).get_root_widget(),
-            from_window=self._root_widget,
+        # Replace ourself with ourself, but keep the same back location.
+        assert self.main_window_back_state is not None
+        self.main_window_replace(
+            EditProfileWindow(self.getname()),
+            back_state=self.main_window_back_state,
         )
+
+    # def __del__(self) -> None:
+    #     print(f'~EditProfileWindow({id(self)})')
 
     def __init__(
         self,
         existing_profile: str | None,
-        in_main_menu: bool,
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
     ):
         # FIXME: Tidy this up a bit.
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
+
         assert bui.app.classic is not None
+        # print(f'EditProfileWindow({id(self)})')
 
         plus = bui.app.plus
         assert plus is not None
 
-        self._in_main_menu = in_main_menu
         self._existing_profile = existing_profile
         self._r = 'editProfileWindow'
         self._spazzes: list[str] = []
@@ -63,30 +68,35 @@ class EditProfileWindow(bui.Window):
         self._width = width = 880.0 if uiscale is bui.UIScale.SMALL else 680.0
         self._x_inset = x_inset = 100.0 if uiscale is bui.UIScale.SMALL else 0.0
         self._height = height = (
-            350.0
+            500.0
             if uiscale is bui.UIScale.SMALL
             else 400.0 if uiscale is bui.UIScale.MEDIUM else 450.0
         )
+        yoffs = -42 if uiscale is bui.UIScale.SMALL else 0
         spacing = 40
         self._base_scale = (
-            2.05
+            1.6
             if uiscale is bui.UIScale.SMALL
-            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
+            else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
-        top_extra = 15 if uiscale is bui.UIScale.SMALL else 15
+        top_extra = 70 if uiscale is bui.UIScale.SMALL else 15
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height + top_extra),
-                transition=transition,
                 scale=self._base_scale,
                 stack_offset=(
-                    (0, 15) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+                toolbar_visibility=(
+                    None if uiscale is bui.UIScale.SMALL else 'menu_full'
+                ),
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
         cancel_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(52 + x_inset, height - 60),
+            position=(52 + x_inset, height - 60 + yoffs),
             size=(155, 60),
             scale=0.8,
             autoselect=True,
@@ -96,7 +106,7 @@ class EditProfileWindow(bui.Window):
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)
         save_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(width - (177 + x_inset), height - 60),
+            position=(width - (177 + x_inset), height - 60 + yoffs),
             size=(155, 60),
             autoselect=True,
             scale=0.8,
@@ -107,12 +117,12 @@ class EditProfileWindow(bui.Window):
         bui.containerwidget(edit=self._root_widget, start_button=btn)
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, height - 38),
+            position=(self._width * 0.5, height - 38 + yoffs),
             size=(0, 0),
             text=(
-                bui.Lstr(resource=self._r + '.titleNewText')
+                bui.Lstr(resource=f'{self._r}.titleNewText')
                 if existing_profile is None
-                else bui.Lstr(resource=self._r + '.titleEditText')
+                else bui.Lstr(resource=f'{self._r}.titleEditText')
             ),
             color=bui.app.ui_v1.title_color,
             maxwidth=290,
@@ -157,7 +167,7 @@ class EditProfileWindow(bui.Window):
         self._icon_index = icon_index
         bui.buttonwidget(edit=save_button, on_activate_call=self.save)
 
-        v = height - 115.0
+        v = height - 115.0 + yoffs
         self._name = (
             '' if self._existing_profile is None else self._existing_profile
         )
@@ -200,7 +210,7 @@ class EditProfileWindow(bui.Window):
         if not self._is_account_profile and not self._global:
             bui.textwidget(
                 parent=self._root_widget,
-                text=bui.Lstr(resource=self._r + '.nameText'),
+                text=bui.Lstr(resource=f'{self._r}.nameText'),
                 position=(200 + x_inset, v - 6),
                 size=(0, 0),
                 h_align='right',
@@ -286,7 +296,7 @@ class EditProfileWindow(bui.Window):
                 position=(self._width * 0.5 - 160, v - 55 - 15),
                 size=(0, 0),
                 draw_controller=btn,
-                text=bui.Lstr(resource=self._r + '.iconText'),
+                text=bui.Lstr(resource=f'{self._r}.iconText'),
                 scale=0.7,
                 color=bui.app.ui_v1.title_color,
                 maxwidth=120,
@@ -343,7 +353,7 @@ class EditProfileWindow(bui.Window):
                 h_align='left',
                 v_align='center',
                 max_chars=16,
-                description=bui.Lstr(resource=self._r + '.nameDescriptionText'),
+                description=bui.Lstr(resource=f'{self._r}.nameDescriptionText'),
                 autoselect=True,
                 editable=True,
                 padding=4,
@@ -433,7 +443,7 @@ class EditProfileWindow(bui.Window):
             position=(self._width * 0.5 - b_offs, v - 65),
             size=(0, 0),
             draw_controller=btn,
-            text=bui.Lstr(resource=self._r + '.colorText'),
+            text=bui.Lstr(resource=f'{self._r}.colorText'),
             scale=0.7,
             color=bui.app.ui_v1.title_color,
             maxwidth=120,
@@ -461,7 +471,7 @@ class EditProfileWindow(bui.Window):
             position=(self._width * 0.5, v - 80),
             size=(0, 0),
             draw_controller=btn,
-            text=bui.Lstr(resource=self._r + '.characterText'),
+            text=bui.Lstr(resource=f'{self._r}.characterText'),
             scale=0.7,
             color=bui.app.ui_v1.title_color,
             maxwidth=130,
@@ -505,12 +515,29 @@ class EditProfileWindow(bui.Window):
             position=(self._width * 0.5 + b_offs, v - 65),
             size=(0, 0),
             draw_controller=btn,
-            text=bui.Lstr(resource=self._r + '.highlightText'),
+            text=bui.Lstr(resource=f'{self._r}.highlightText'),
             scale=0.7,
             color=bui.app.ui_v1.title_color,
             maxwidth=120,
         )
         self._update_character()
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Pull things out of self here; if we do it within the lambda
+        # we'll keep ourself alive which is bad.
+
+        existing_profile = self._existing_profile
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition,
+                origin_widget=origin_widget,
+                existing_profile=existing_profile,
+            )
+        )
 
     def assign_random_name(self) -> None:
         """Assigning a random name to the player."""
@@ -525,6 +552,15 @@ class EditProfileWindow(bui.Window):
         """Attempt to upgrade the profile to global."""
         from bauiv1lib import account
         from bauiv1lib.profile import upgrade as pupgrade
+
+        new_name = self.getname().strip()
+
+        if self._existing_profile and self._existing_profile != new_name:
+            bui.screenmessage(
+                'Unsaved changes found; you must save first.', color=(1, 0, 0)
+            )
+            bui.getsound('error').play()
+            return
 
         plus = bui.app.plus
         assert plus is not None
@@ -545,8 +581,6 @@ class EditProfileWindow(bui.Window):
                 for n in [
                     bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO,
                     bui.SpecialChar.GAME_CENTER_LOGO,
-                    bui.SpecialChar.GAME_CIRCLE_LOGO,
-                    bui.SpecialChar.OUYA_LOGO,
                     bui.SpecialChar.LOCAL_ACCOUNT,
                     bui.SpecialChar.OCULUS_LOGO,
                     bui.SpecialChar.NVIDIA_LOGO,
@@ -611,22 +645,54 @@ class EditProfileWindow(bui.Window):
             for s in self._spazzes
         ]
 
+    @override
     def on_icon_picker_pick(self, icon: str) -> None:
         """An icon has been selected by the picker."""
         self._icon = icon
         self._update_icon()
 
+    @override
+    def on_icon_picker_get_more_press(self) -> None:
+        """User wants to get more icons."""
+        from bauiv1lib.store.browser import StoreBrowserWindow
+
+        if not self.main_window_has_control():
+            return
+
+        self.main_window_replace(
+            StoreBrowserWindow(
+                minimal_toolbars=True,
+                show_tab=StoreBrowserWindow.TabID.ICONS,
+            )
+        )
+
+    @override
     def on_character_picker_pick(self, character: str) -> None:
         """A character has been selected by the picker."""
         if not self._root_widget:
             return
 
-        # The player could have bought a new one while the picker was up.
+        # The player could have bought a new one while the picker was
+        # up.
         self.refresh_characters()
         self._icon_index = (
             self._spazzes.index(character) if character in self._spazzes else 0
         )
         self._update_character()
+
+    @override
+    def on_character_picker_get_more_press(self) -> None:
+        from bauiv1lib.store.browser import StoreBrowserWindow
+
+        if not self.main_window_has_control():
+            return
+
+        self.main_window_replace(
+            StoreBrowserWindow(
+                minimal_toolbars=True,
+                show_tab=StoreBrowserWindow.TabID.CHARACTERS,
+            )
+        )
 
     def _on_character_press(self) -> None:
         from bauiv1lib import characterpicker
@@ -674,22 +740,7 @@ class EditProfileWindow(bui.Window):
         )
 
     def _cancel(self) -> None:
-        from bauiv1lib.profile.browser import ProfileBrowserWindow
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            ProfileBrowserWindow(
-                'in_left',
-                selected_profile=self._existing_profile,
-                in_main_menu=self._in_main_menu,
-            ).get_root_widget(),
-            from_window=self._root_widget,
-        )
+        self.main_window_back()
 
     def _set_color(self, color: tuple[float, float, float]) -> None:
         self._color = color
@@ -785,7 +836,6 @@ class EditProfileWindow(bui.Window):
 
     def save(self, transition_out: bool = True) -> bool:
         """Save has been selected."""
-        from bauiv1lib.profile.browser import ProfileBrowserWindow
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -822,8 +872,8 @@ class EditProfileWindow(bui.Window):
                 }
             )
 
-            # Also lets be aware we're no longer global if we're taking a
-            # new name (will need to re-request it).
+            # Also lets be aware we're no longer global if we're taking
+            # a new name (will need to re-request it).
             self._global = False
 
         plus.add_v1_account_transaction(
@@ -842,14 +892,6 @@ class EditProfileWindow(bui.Window):
 
         if transition_out:
             plus.run_v1_account_transactions()
-            bui.containerwidget(edit=self._root_widget, transition='out_right')
-            assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_menu_window(
-                ProfileBrowserWindow(
-                    'in_left',
-                    selected_profile=new_name,
-                    in_main_menu=self._in_main_menu,
-                ).get_root_widget(),
-                from_window=self._root_widget,
-            )
+            self.main_window_back()
+
         return True

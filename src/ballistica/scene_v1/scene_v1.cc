@@ -2,6 +2,10 @@
 
 #include "ballistica/scene_v1/scene_v1.h"
 
+#include <list>
+#include <string>
+#include <unordered_map>
+
 #include "ballistica/scene_v1/node/anim_curve_node.h"
 #include "ballistica/scene_v1/node/bomb_node.h"
 #include "ballistica/scene_v1/node/combine_node.h"
@@ -44,7 +48,7 @@ void SceneV1FeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->LifecycleLog("_bascenev1 exec begin");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_bascenev1 exec begin");
 
   // Create our feature-set's C++ front-end.
   assert(g_scene_v1 == nullptr);
@@ -64,7 +68,7 @@ void SceneV1FeatureSet::OnModuleExec(PyObject* module) {
   assert(g_base == nullptr);
   g_base = base::BaseFeatureSet::Import();
 
-  g_core->LifecycleLog("_bascenev1 exec end");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_bascenev1 exec end");
 }
 
 SceneV1FeatureSet::SceneV1FeatureSet() : python{new SceneV1Python()} {

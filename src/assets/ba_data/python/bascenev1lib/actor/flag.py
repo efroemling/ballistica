@@ -5,9 +5,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.gameutils import SharedObjects
@@ -170,6 +169,7 @@ class Flag(bs.Actor):
 
     def __init__(
         self,
+        *,
         position: Sequence[float] = (0.0, 1.0, 0.0),
         color: Sequence[float] = (1.0, 1.0, 1.0),
         materials: Sequence[bs.Material] | None = None,

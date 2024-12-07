@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_BASE_PYTHON_CLASS_PYTHON_CLASS_SIMPLE_SOUND_H_
 #define BALLISTICA_BASE_PYTHON_CLASS_PYTHON_CLASS_SIMPLE_SOUND_H_
 
+#include <string>
+
 #include "ballistica/base/base.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/python/python.h"
@@ -42,8 +44,8 @@ class PythonClassSimpleSound : public PythonClass {
  private:
   static PyMethodDef tp_methods[];
   static auto tp_repr(PythonClassSimpleSound* self) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args,
-                     PyObject* keywds) -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
+      -> PyObject*;
   static void tp_dealloc(PythonClassSimpleSound* self);
   Object::Ref<SoundAsset>* sound_;
   static auto Play(PythonClassSimpleSound* self, PyObject* args,

@@ -2,29 +2,31 @@
 
 #include "ballistica/base/logic/logic.h"
 
+#include <Python.h>
+
+#include <algorithm>
+#include <cstdio>
+#include <string>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/context.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/support/stdio_console.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::base {
 
-Logic::Logic() : display_timers_(new TimerList()) {
-  // Enable display-time debug logs via env var.
-  auto val = g_core->platform->GetEnv("BA_DEBUG_LOG_DISPLAY_TIME");
-  if (val && *val == "1") {
-    debug_log_display_time_ = true;
-  }
-}
+Logic::Logic() : display_timers_(new TimerList()) {}
 
 void Logic::OnMainThreadStartApp() {
   // Spin up our logic thread and sit and wait for it to init.
@@ -35,7 +37,8 @@ void Logic::OnMainThreadStartApp() {
 
 void Logic::OnAppStart() {
   assert(g_base->InLogicThread());
-  g_core->LifecycleLog("on-app-start begin (logic thread)");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "on-app-start begin (logic thread)");
 
   // Our thread should not be holding the GIL here at the start (and
   // probably will not have any Python state at all). So here we set both
@@ -71,7 +74,8 @@ void Logic::OnAppStart() {
   }
   g_base->python->OnAppStart();
 
-  g_core->LifecycleLog("on-app-start end (logic thread)");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "on-app-start end (logic thread)");
 }
 
 void Logic::OnGraphicsReady() {
@@ -100,7 +104,7 @@ void Logic::OnGraphicsReady() {
     // variety of rates anyway. NOTE: This length is currently milliseconds.
     headless_display_time_step_timer_ = event_loop()->NewTimer(
         kHeadlessMinDisplayTimeStep, true,
-        NewLambdaRunnable([this] { StepDisplayTime_(); }).Get());
+        NewLambdaRunnable([this] { StepDisplayTime_(); }).get());
   } else {
     // In gui mode, push an initial frame to the graphics server. From this
     // point it will be self-sustaining, sending us a frame request each
@@ -116,7 +120,8 @@ void Logic::CompleteAppBootstrapping_() {
   assert(!app_bootstrapping_complete_);
   app_bootstrapping_complete_ = true;
 
-  g_core->LifecycleLog("app native bootstrapping complete");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "app native bootstrapping complete");
 
   // Let the assets system know it can start loading stuff now that
   // we have a screen and thus know texture formats/etc.
@@ -133,7 +138,7 @@ void Logic::CompleteAppBootstrapping_() {
 
   // Set up our timers.
   process_pending_work_timer_ = event_loop()->NewTimer(
-      0, true, NewLambdaRunnable([this] { ProcessPendingWork_(); }).Get());
+      0, true, NewLambdaRunnable([this] { ProcessPendingWork_(); }).get());
   // asset_prune_timer_ = event_loop()->NewTimer(
   //     2345 * 1000, true, NewLambdaRunnable([] { g_base->assets->Prune();
   //     }).Get());
@@ -377,8 +382,9 @@ void Logic::OnAppModeChanged() {
   // Kick our headless stepping into high gear; this will snap us out of any
   // long sleep we're currently in the middle of.
   if (g_core->HeadlessMode()) {
-    if (debug_log_display_time_) {
-      Log(LogLevel::kDebug,
+    if (g_core->LogLevelEnabled(LogName::kBaDisplayTime, LogLevel::kDebug)) {
+      g_core->Log(
+          LogName::kBaDisplayTime, LogLevel::kDebug,
           "Resetting headless display step timer due to app-mode change.");
     }
     assert(headless_display_time_step_timer_);
@@ -392,7 +398,7 @@ void Logic::UpdateDisplayTimeForHeadlessMode_() {
   // don't care about keeping the increments smooth or consistent.
 
   // The one thing we *do* try to do, however, is keep our timer length
-  // updated so that we fire exactly when the next app-mode event is
+  // updated so that we'll fire exactly when the next app-mode event is
   // scheduled (or at least close enough so we can fudge it and tell them
   // its that exact time).
 
@@ -409,12 +415,12 @@ void Logic::UpdateDisplayTimeForHeadlessMode_() {
   display_time_increment_ =
       static_cast<double>(display_time_increment_microsecs_) / 1000000.0;
 
-  if (debug_log_display_time_) {
+  g_core->Log(LogName::kBaDisplayTime, LogLevel::kDebug, [app_time_microsecs] {
     char buffer[256];
     snprintf(buffer, sizeof(buffer), "stepping display-time at app-time %.4f",
              static_cast<double>(app_time_microsecs) / 1000000.0);
-    Log(LogLevel::kDebug, buffer);
-  }
+    return std::string(buffer);
+  });
 }
 
 void Logic::PostUpdateDisplayTimeForHeadlessMode_() {
@@ -427,16 +433,18 @@ void Logic::PostUpdateDisplayTimeForHeadlessMode_() {
                         kHeadlessMaxDisplayTimeStep),
                kHeadlessMinDisplayTimeStep);
 
-  if (debug_log_display_time_) {
-    auto sleepsecs =
-        static_cast<double>(headless_display_step_microsecs) / 1000000.0;
-    auto apptimesecs = g_core->GetAppTimeSeconds();
-    char buffer[256];
-    snprintf(buffer, sizeof(buffer),
-             "will try to sleep for %.4f at app-time %.4f (until %.4f)",
-             sleepsecs, apptimesecs, apptimesecs + sleepsecs);
-    Log(LogLevel::kDebug, buffer);
-  }
+  g_core->Log(
+      LogName::kBaDisplayTime, LogLevel::kDebug,
+      [headless_display_step_microsecs] {
+        auto sleepsecs =
+            static_cast<double>(headless_display_step_microsecs) / 1000000.0;
+        auto apptimesecs = g_core->GetAppTimeSeconds();
+        char buffer[256];
+        snprintf(buffer, sizeof(buffer),
+                 "will try to sleep for %.4f at app-time %.4f (until %.4f)",
+                 sleepsecs, apptimesecs, apptimesecs + sleepsecs);
+        return std::string(buffer);
+      });
 
   auto sleep_microsecs = headless_display_step_microsecs;
   headless_display_time_step_timer_->SetLength(sleep_microsecs);
@@ -537,24 +545,33 @@ void Logic::UpdateDisplayTimeForFrameDraw_() {
     if (trailing_dist > trail_buffer) {
       auto offs =
           (trailing_dist - trail_buffer) * (trailing_diff > 0.0 ? 1.0 : -1.0);
-      if (debug_log_display_time_) {
-        char buffer[256];
-        snprintf(buffer, sizeof(buffer),
-                 "trailing_dist %.6f > trail_buffer %.6f; will offset %.6f).",
-                 trailing_dist, trail_buffer, offs);
-        Log(LogLevel::kDebug, buffer);
-      }
+      g_core->Log(
+          LogName::kBaDisplayTime, LogLevel::kDebug,
+          [trailing_dist, trail_buffer, offs] {
+            char buffer[256];
+            snprintf(
+                buffer, sizeof(buffer),
+                "trailing_dist %.6f > trail_buffer %.6f; will offset %.6f).",
+                trailing_dist, trail_buffer, offs);
+            return std::string(buffer);
+          });
       display_time_increment_ = display_time_increment_ + offs;
     }
 
-    if (debug_log_display_time_) {
-      char buffer[256];
-      snprintf(buffer, sizeof(buffer),
-               "final %.5f current(%s) %.5f sample %.5f chaos %.5f",
-               display_time_increment_, use_avg ? "avg" : "sample", used,
-               this_increment, chaos);
-      Log(LogLevel::kDebug, buffer);
-    }
+    // After all is said and done, clamp our increment size to some sane
+    // amount. Trying to push too much through in a single instant can
+    // overflow thread message lists and whatnot.
+    display_time_increment_ = std::min(display_time_increment_, 0.25);
+
+    g_core->Log(LogName::kBaDisplayTime, LogLevel::kDebug,
+                [this, use_avg, this_increment, chaos, used] {
+                  char buffer[256];
+                  snprintf(buffer, sizeof(buffer),
+                           "final %.5f current(%s) %.5f sample %.5f chaos %.5f",
+                           display_time_increment_, use_avg ? "avg" : "sample",
+                           used, this_increment, chaos);
+                  return std::string(buffer);
+                });
   }
 
   // Lastly, apply our updated increment value to our time.
@@ -634,8 +651,8 @@ void Logic::NotifyOfPendingAssetLoads() {
   UpdatePendingWorkTimer_();
 }
 
-auto Logic::NewAppTimer(microsecs_t length, bool repeat,
-                        Runnable* runnable) -> int {
+auto Logic::NewAppTimer(microsecs_t length, bool repeat, Runnable* runnable)
+    -> int {
   // App-Timers simply get injected into our loop and run alongside our own
   // stuff.
   assert(g_base->InLogicThread());
@@ -654,13 +671,13 @@ void Logic::SetAppTimerLength(int timer_id, microsecs_t length) {
   if (t) {
     t->SetLength(length);
   } else {
-    Log(LogLevel::kError,
-        "Logic::SetAppTimerLength() called on nonexistent timer.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Logic::SetAppTimerLength() called on nonexistent timer.");
   }
 }
 
-auto Logic::NewDisplayTimer(microsecs_t length, bool repeat,
-                            Runnable* runnable) -> int {
+auto Logic::NewDisplayTimer(microsecs_t length, bool repeat, Runnable* runnable)
+    -> int {
   // Display-Timers go into a timer-list that we exec explicitly when we
   // step display-time.
   assert(g_base->InLogicThread());
@@ -681,8 +698,8 @@ void Logic::SetDisplayTimerLength(int timer_id, microsecs_t length) {
   if (t) {
     t->SetLength(length);
   } else {
-    Log(LogLevel::kError,
-        "Logic::SetDisplayTimerLength() called on nonexistent timer.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Logic::SetDisplayTimerLength() called on nonexistent timer.");
   }
 }
 

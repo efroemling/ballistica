@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_UI_V1_PYTHON_CLASS_PYTHON_CLASS_UI_SOUND_H_
 #define BALLISTICA_UI_V1_PYTHON_CLASS_PYTHON_CLASS_UI_SOUND_H_
 
+#include <string>
+
 #include "ballistica/base/base.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/python/python.h"
@@ -39,13 +41,13 @@ class PythonClassUISound : public PythonClass {
  private:
   static PyMethodDef tp_methods[];
   static auto tp_repr(PythonClassUISound* self) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args,
-                     PyObject* keywds) -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
+      -> PyObject*;
   static void tp_dealloc(PythonClassUISound* self);
-  static auto Play(PythonClassUISound* self, PyObject* args,
-                   PyObject* keywds) -> PyObject*;
-  static auto Stop(PythonClassUISound* self, PyObject* args,
-                   PyObject* keywds) -> PyObject*;
+  static auto Play(PythonClassUISound* self, PyObject* args, PyObject* keywds)
+      -> PyObject*;
+  static auto Stop(PythonClassUISound* self, PyObject* args, PyObject* keywds)
+      -> PyObject*;
 
   Object::Ref<base::SoundAsset>* sound_;
   bool playing_;

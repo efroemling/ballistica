@@ -2,6 +2,11 @@
 
 #include "ballistica/base/dynamics/bg/bg_dynamics_server.h"
 
+#include <algorithm>
+#include <list>
+#include <memory>
+#include <vector>
+
 #include "ballistica/base/assets/collision_mesh_asset.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_draw_snapshot.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_fuse_data.h"
@@ -9,8 +14,9 @@
 #include "ballistica/base/dynamics/bg/bg_dynamics_shadow_data.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_volume_light_data.h"
 #include "ballistica/base/dynamics/collision_cache.h"
-#include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/core/platform/core_platform.h"  // IWYU pragma: keep.
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -79,7 +85,7 @@ class BGDynamicsServer::Terrain {
   }
 
   auto GetCollisionMesh() const -> CollisionMeshAsset* {
-    return collision_mesh_->Get();
+    return collision_mesh_->get();
   }
 
   ~Terrain() {
@@ -1367,7 +1373,7 @@ void BGDynamicsServer::Emit(const BGDynamicsEmission& def) {
     }
     default: {
       int t = static_cast<int>(def.emit_type);
-      BA_LOG_ONCE(LogLevel::kError,
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                   "Invalid bg-dynamics emit type: " + std::to_string(t));
       break;
     }
@@ -2356,9 +2362,9 @@ void BGDynamicsServer::Step(StepData* step_data) {
 
   // Math sanity check.
   if (step_count_ < 0) {
-    BA_LOG_ONCE(LogLevel::kWarning, "BGDynamics step_count too low ("
-                                        + std::to_string(step_count_)
-                                        + "); should not happen.");
+    BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kWarning,
+                "BGDynamics step_count too low (" + std::to_string(step_count_)
+                    + "); should not happen.");
   }
 }
 
@@ -2371,9 +2377,9 @@ void BGDynamicsServer::PushStep(StepData* data) {
 
   // Client thread should stop feeding us if we get clogged up.
   if (step_count_ > 5) {
-    BA_LOG_ONCE(LogLevel::kWarning, "BGDynamics step_count too high ("
-                                        + std::to_string(step_count_)
-                                        + "); should not happen.");
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
+                "BGDynamics step_count too high (" + std::to_string(step_count_)
+                    + "); should not happen.");
   }
 
   event_loop()->PushCall([this, data] { Step(data); });

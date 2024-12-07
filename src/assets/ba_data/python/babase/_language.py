@@ -6,9 +6,8 @@ from __future__ import annotations
 import os
 import json
 import logging
-from typing import TYPE_CHECKING, overload
-
-from typing_extensions import override
+from functools import partial
+from typing import TYPE_CHECKING, overload, override
 
 import _babase
 from babase._appsubsystem import AppSubsystem
@@ -34,6 +33,7 @@ class LanguageSubsystem(AppSubsystem):
         self._language: str | None = None
         self._language_target: AttrDict | None = None
         self._language_merged: AttrDict | None = None
+        self._test_timer: babase.AppTimer | None = None
 
     @property
     def locale(self) -> str:
@@ -83,6 +83,8 @@ class LanguageSubsystem(AppSubsystem):
             for i, name in enumerate(names):
                 if name == 'Chinesetraditional':
                     names[i] = 'ChineseTraditional'
+                elif name == 'Piratespeak':
+                    names[i] = 'PirateSpeak'
         except Exception:
             from babase import _error
 
@@ -95,9 +97,44 @@ class LanguageSubsystem(AppSubsystem):
             name for name in names if self._can_display_language(name)
         )
 
+    def testlanguage(self, langid: str) -> None:
+        """Set the app to test an in-progress language.
+
+        Pass a language id from the translation editor website as 'langid';
+        something like 'Gibberish_3263'. Once set to testing, the engine
+        will repeatedly download and apply that same test language, so
+        changes can be made to it and observed live.
+        """
+        print(
+            f'Language test mode enabled.'
+            f' Will fetch and apply \'{langid}\' every 5 seconds,'
+            f' so you can see your changes live.'
+        )
+        self._test_timer = _babase.AppTimer(
+            5.0, partial(self._update_test_language, langid), repeat=True
+        )
+        self._update_test_language(langid)
+
+    def _on_test_lang_response(
+        self, langid: str, response: None | dict[str, Any]
+    ) -> None:
+        if response is None:
+            return
+        self.setlanguage(response)
+        print(f'Fetched and applied {langid}.')
+
+    def _update_test_language(self, langid: str) -> None:
+        if _babase.app.classic is None:
+            raise RuntimeError('This requires classic.')
+        _babase.app.classic.master_server_v1_get(
+            'bsLangGet',
+            {'lang': langid, 'format': 'json'},
+            partial(self._on_test_lang_response, langid),
+        )
+
     def setlanguage(
         self,
-        language: str | None,
+        language: str | dict | None,
         print_change: bool = True,
         store_to_config: bool = True,
     ) -> None:
@@ -112,18 +149,6 @@ class LanguageSubsystem(AppSubsystem):
         cfg = _babase.app.config
         cur_language = cfg.get('Lang', None)
 
-        # Store this in the config if its changing.
-        if language != cur_language and store_to_config:
-            if language is None:
-                if 'Lang' in cfg:
-                    del cfg['Lang']  # Clear it out for default.
-            else:
-                cfg['Lang'] = language
-            cfg.commit()
-            switched = True
-        else:
-            switched = False
-
         with open(
             os.path.join(
                 _babase.app.env.data_directory,
@@ -136,32 +161,55 @@ class LanguageSubsystem(AppSubsystem):
         ) as infile:
             lenglishvalues = json.loads(infile.read())
 
-        # None implies default.
-        if language is None:
-            language = self.default_language
-        try:
-            if language == 'English':
-                lmodvalues = None
-            else:
-                lmodfile = os.path.join(
-                    _babase.app.env.data_directory,
-                    'ba_data',
-                    'data',
-                    'languages',
-                    language.lower() + '.json',
-                )
-                with open(lmodfile, encoding='utf-8') as infile:
-                    lmodvalues = json.loads(infile.read())
-        except Exception:
-            logging.exception("Error importing language '%s'.", language)
-            _babase.screenmessage(
-                f"Error setting language to '{language}'; see log for details.",
-                color=(1, 0, 0),
-            )
+        # Special case - passing a complete dict for testing.
+        if isinstance(language, dict):
+            self._language = 'Custom'
+            lmodvalues = language
             switched = False
-            lmodvalues = None
+            print_change = False
+            store_to_config = False
+        else:
+            # Ok, we're setting a real language.
 
-        self._language = language
+            # Store this in the config if its changing.
+            if language != cur_language and store_to_config:
+                if language is None:
+                    if 'Lang' in cfg:
+                        del cfg['Lang']  # Clear it out for default.
+                else:
+                    cfg['Lang'] = language
+                cfg.commit()
+                switched = True
+            else:
+                switched = False
+
+            # None implies default.
+            if language is None:
+                language = self.default_language
+            try:
+                if language == 'English':
+                    lmodvalues = None
+                else:
+                    lmodfile = os.path.join(
+                        _babase.app.env.data_directory,
+                        'ba_data',
+                        'data',
+                        'languages',
+                        language.lower() + '.json',
+                    )
+                    with open(lmodfile, encoding='utf-8') as infile:
+                        lmodvalues = json.loads(infile.read())
+            except Exception:
+                logging.exception("Error importing language '%s'.", language)
+                _babase.screenmessage(
+                    f"Error setting language to '{language}';"
+                    f' see log for details.',
+                    color=(1, 0, 0),
+                )
+                switched = False
+                lmodvalues = None
+
+            self._language = language
 
         # Create an attrdict of *just* our target language.
         self._language_target = AttrDict()
@@ -209,6 +257,7 @@ class LanguageSubsystem(AppSubsystem):
         random_names = [n for n in random_names if n != '']
         _babase.set_internal_language_keys(internal_vals, random_names)
         if switched and print_change:
+            assert isinstance(language, str)
             _babase.screenmessage(
                 Lstr(
                     resource='languageSetText',

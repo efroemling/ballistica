@@ -6,6 +6,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from efro.util import utc_now
+
 import bauiv1 as bui
 
 if TYPE_CHECKING:
@@ -21,6 +23,7 @@ class StoreButton:
         position: Sequence[float],
         size: Sequence[float],
         scale: float,
+        *,
         on_activate_call: Callable[[], Any] | None = None,
         transition_delay: float | None = None,
         color: Sequence[float] | None = None,
@@ -227,14 +230,18 @@ class StoreButton:
     def _default_on_activate_call(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.account import show_sign_in_prompt
-        from bauiv1lib.store.browser import StoreBrowserWindow
+
+        # from bauiv1lib.store.browser import StoreBrowserWindow
 
         plus = bui.app.plus
         assert plus is not None
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
-        StoreBrowserWindow(modal=True, origin_widget=self._button)
+
+        raise RuntimeError('no longer wired up')
+
+        # StoreBrowserWindow(modal=True, origin_widget=self._button)
 
     def get_button(self) -> bui.Widget:
         """Return the underlying button widget."""
@@ -276,10 +283,12 @@ class StoreButton:
                 # Look at the current set of sales; filter any with time
                 # remaining that we don't own.
                 for sale_item, sale_info in list(sales_raw.items()):
-                    if not plus.get_purchased(sale_item):
+                    if not plus.get_v1_account_product_purchased(sale_item):
                         to_end = (
-                            datetime.datetime.utcfromtimestamp(sale_info['e'])
-                            - datetime.datetime.utcnow()
+                            datetime.datetime.fromtimestamp(
+                                sale_info['e'], datetime.UTC
+                            )
+                            - utc_now()
                         ).total_seconds()
                         if to_end > 0:
                             sale_times.append(to_end)

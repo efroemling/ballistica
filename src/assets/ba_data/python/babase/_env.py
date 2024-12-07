@@ -7,14 +7,13 @@ import sys
 import signal
 import logging
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
-from efro.log import LogLevel
+from efro.logging import LogLevel
 
 if TYPE_CHECKING:
     from typing import Any
-    from efro.log import LogEntry, LogHandler
+    from efro.logging import LogEntry, LogHandler
 
 _g_babase_imported = False  # pylint: disable=invalid-name
 _g_babase_app_started = False  # pylint: disable=invalid-name
@@ -187,7 +186,10 @@ def _feed_logs_to_babase(log_handler: LogHandler) -> None:
         # Forward this along to the engine to display in the in-app
         # console, in the Android log, etc.
         _babase.emit_log(
-            name=entry.name, level=entry.level.name, message=entry.message
+            name=entry.name,
+            level=entry.level.name,
+            timestamp=entry.time.timestamp(),
+            message=entry.message,
         )
 
         # We also want to feed some logs to the old v1-cloud-log system.

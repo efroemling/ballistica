@@ -2,6 +2,8 @@
 
 #include "ballistica/scene_v1/node/sound_node.h"
 
+#include <vector>
+
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
@@ -82,13 +84,13 @@ void SoundNode::SetLoop(bool val) {
 
   // We don't actually update looping on a playing sound.
   if (playing_) {
-    BA_LOG_ONCE(LogLevel::kError,
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                 "Can't set 'loop' attr on already-playing sound.");
   }
 }
 
 void SoundNode::SetSound(SceneSound* s) {
-  if (s == sound_.Get()) {
+  if (s == sound_.get()) {
     return;
   }
   sound_ = s;
@@ -104,7 +106,7 @@ void SoundNode::SetPositional(bool val) {
   }
   positional_ = val;
   if (playing_) {
-    BA_LOG_ONCE(LogLevel::kError,
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                 "Can't set 'positional' attr on already-playing sound");
   }
 }
@@ -125,7 +127,7 @@ void SoundNode::SetMusic(bool val) {
 
 void SoundNode::Step() {
   // If we want to start playing, do so.
-  if (!playing_ && sound_.Exists()) {
+  if (!playing_ && sound_.exists()) {
     base::AudioSource* s = g_base->audio->SourceBeginNew();
     if (s) {
       assert(position_.size() == 3);

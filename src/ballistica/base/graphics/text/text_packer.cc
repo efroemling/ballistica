@@ -2,6 +2,9 @@
 
 #include "ballistica/base/graphics/text/text_packer.h"
 
+#include <cstdio>
+#include <string>
+
 namespace ballistica::base {
 
 TextPacker::TextPacker(float resolution_scale)

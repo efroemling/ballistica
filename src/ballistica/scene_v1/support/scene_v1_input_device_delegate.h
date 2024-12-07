@@ -3,6 +3,9 @@
 #ifndef BALLISTICA_SCENE_V1_SUPPORT_SCENE_V1_INPUT_DEVICE_DELEGATE_H_
 #define BALLISTICA_SCENE_V1_SUPPORT_SCENE_V1_INPUT_DEVICE_DELEGATE_H_
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/input/device/input_device_delegate.h"
 #include "ballistica/scene_v1/support/player.h"
 
@@ -24,7 +27,7 @@ class SceneV1InputDeviceDelegate : public base::InputDeviceDelegate {
   void DetachFromPlayer() override;
 
   void Update() override;
-  auto GetPlayer() const -> Player* { return player_.Get(); }
+  auto GetPlayer() const -> Player* { return player_.get(); }
   auto GetRemotePlayer() const -> ConnectionToHost*;
   auto remote_player_id() const -> int { return remote_player_id_; }
 

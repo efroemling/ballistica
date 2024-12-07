@@ -2,6 +2,10 @@
 
 #include "ballistica/shared/python/python_ref.h"
 
+#include <list>
+#include <string>
+
+#include "ballistica/core/core.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/math/vector2f.h"
 #include "ballistica/shared/python/python.h"
@@ -12,6 +16,7 @@ namespace ballistica {
 // Note: implicitly using core globals here; our behavior is undefined
 // if core has not been imported by anyone yet.
 using core::g_base_soft;
+using core::g_core;
 
 // Ignore a few things that python macros do.
 #pragma clang diagnostic push
@@ -25,7 +30,8 @@ static void ClearPythonExceptionAndWarnIfUnset() {
   // avoid that situation because it opens up the possibility of us clearing
   // exceptions that aren't related to our nullptr.
   if (!PyErr_Occurred()) {
-    Log(LogLevel::kWarning,
+    g_core->Log(
+        LogName::kBa, LogLevel::kWarning,
         "A PythonRef acquire/steal call was passed nullptr but no Python "
         "exception is set. This situation should be avoided; only pass "
         "acquire/steal if it is directly due to a Python exception.");
@@ -134,15 +140,15 @@ auto PythonRef::Str() const -> std::string {
   }
   auto s = PythonRef::Stolen(str_obj);
   assert(PyUnicode_Check(str_obj));  // NOLINT (signed with bitwise)
-  return PyUnicode_AsUTF8(s.Get());
+  return PyUnicode_AsUTF8(s.get());
 }
 
 auto PythonRef::Repr() const -> std::string {
   assert(Python::HaveGIL());
   ThrowIfUnset();
   auto s = PythonRef::Stolen(PyObject_Repr(obj_));
-  assert(PyUnicode_Check(s.Get()));  // NOLINT (signed with bitwise)
-  return PyUnicode_AsUTF8(s.Get());
+  assert(PyUnicode_Check(s.get()));  // NOLINT (signed with bitwise)
+  return PyUnicode_AsUTF8(s.get());
 }
 
 auto PythonRef::Type() const -> PythonRef {
@@ -224,10 +230,16 @@ auto PythonRef::ValueAsInt() const -> int64_t {
   return Python::GetPyInt64(obj_);
 }
 
+auto PythonRef::ValueAsDouble() const -> double {
+  assert(Python::HaveGIL());
+  ThrowIfUnset();
+  return Python::GetPyDouble(obj_);
+}
+
 auto PythonRef::GetAttr(const char* name) const -> PythonRef {
   assert(Python::HaveGIL());
   ThrowIfUnset();
-  PyObject* val = PyObject_GetAttrString(Get(), name);
+  PyObject* val = PyObject_GetAttrString(get(), name);
   if (!val) {
     PyErr_Clear();
     throw Exception("Attribute not found: '" + std::string(name) + "'.",
@@ -277,8 +289,8 @@ auto PythonRef::UnicodeCheck() const -> bool {
   return static_cast<bool>(PyUnicode_Check(obj_));
 }
 
-static inline auto _HandleCallResults(PyObject* out,
-                                      bool print_errors) -> PyObject* {
+static inline auto _HandleCallResults(PyObject* out, bool print_errors)
+    -> PyObject* {
   if (!out) {
     if (print_errors) {
       // Save/restore error or it can mess with context print calls.
@@ -297,8 +309,8 @@ static inline auto _HandleCallResults(PyObject* out,
   return out;
 }
 
-auto PythonRef::Call(PyObject* args, PyObject* keywds,
-                     bool print_errors) const -> PythonRef {
+auto PythonRef::Call(PyObject* args, PyObject* keywds, bool print_errors) const
+    -> PythonRef {
   assert(obj_);
   assert(Python::HaveGIL());
   assert(CallableCheck());
@@ -319,11 +331,11 @@ auto PythonRef::Call(bool print_errors) const -> PythonRef {
   return out ? PythonRef(out, PythonRef::kSteal) : PythonRef();
 }
 
-auto PythonRef::Call(const Vector2f& val,
-                     bool print_errors) const -> PythonRef {
+auto PythonRef::Call(const Vector2f& val, bool print_errors) const
+    -> PythonRef {
   assert(Python::HaveGIL());
   PythonRef args(Py_BuildValue("((ff))", val.x, val.y), PythonRef::kSteal);
-  return Call(args.Get(), nullptr, print_errors);
+  return Call(args.get(), nullptr, print_errors);
 }
 
 PythonRef::~PythonRef() { Release(); }

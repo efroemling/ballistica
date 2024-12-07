@@ -2,6 +2,10 @@
 
 #include "ballistica/scene_v1/node/text_node.h"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
@@ -116,11 +120,12 @@ void TextNode::SetText(const std::string& val) {
       g_base->assets->CompileResourceString(val, "setText format check",
                                             &valid);
       if (!valid) {
-        BA_LOG_ONCE(LogLevel::kError, "Invalid resource string: '" + val
-                                          + "' on node '" + label() + "'");
+        BA_LOG_ONCE(
+            LogName::kBa, LogLevel::kError,
+            "Invalid resource string: '" + val + "' on node '" + label() + "'");
         Python::PrintStackTrace();
       } else if (print_false_positives) {
-        BA_LOG_ONCE(LogLevel::kError,
+        BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                     "Got false positive for json check on '" + val + "'");
         Python::PrintStackTrace();
       }

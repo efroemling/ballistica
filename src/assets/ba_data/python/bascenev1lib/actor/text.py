@@ -5,9 +5,8 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -57,6 +56,7 @@ class Text(bs.Actor):
     def __init__(
         self,
         text: str | bs.Lstr,
+        *,
         position: tuple[float, float] = (0.0, 0.0),
         h_align: HAlign = HAlign.LEFT,
         v_align: VAlign = VAlign.NONE,

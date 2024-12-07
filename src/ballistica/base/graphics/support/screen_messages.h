@@ -3,6 +3,9 @@
 #ifndef BALLISTICA_BASE_GRAPHICS_SUPPORT_SCREEN_MESSAGES_H_
 #define BALLISTICA_BASE_GRAPHICS_SUPPORT_SCREEN_MESSAGES_H_
 
+#include <list>
+#include <string>
+
 #include "ballistica/base/base.h"
 #include "ballistica/shared/math/vector3f.h"
 

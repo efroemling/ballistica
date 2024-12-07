@@ -2,7 +2,10 @@
 
 #include "ballistica/scene_v1/node/time_display_node.h"
 
+#include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <string>
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/scene_v1/node/node_attribute.h"

@@ -5,7 +5,6 @@
 
 #include <atomic>
 #include <mutex>
-#include <set>
 #include <string>
 
 #include "ballistica/core/support/base_soft.h"
@@ -588,10 +587,12 @@ enum class SysMeshID : uint8_t {
 };
 
 // Our feature-set's globals.
-// Feature-sets should NEVER directly access globals in another feature-set's
-// namespace. All functionality we need from other feature-sets should be
-// imported into globals in our own namespace. Generally we do this when we
-// are initially imported (just as regular Python modules do).
+//
+// Feature-sets should NEVER directly access globals in another
+// feature-set's namespace. All functionality we need from other
+// feature-sets should be imported into globals in our own namespace.
+// Generally we do this when we are initially imported (just as regular
+// Python modules do).
 extern core::CoreFeatureSet* g_core;
 extern base::BaseFeatureSet* g_base;
 
@@ -653,8 +654,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// their own event loop).
   void RunAppToCompletion() override;
 
-  // void PrimeAppMainThreadEventPump() override;
-
   auto CurrentContext() -> const ContextRef& {
     assert(InLogicThread());  // Up to caller to ensure this.
     return *context_ref;
@@ -663,6 +662,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// Utility call to print 'Success!' with a happy sound.
   /// Safe to call from any thread.
   void SuccessScreenMessage();
+
   /// Utility call to print 'Error.' with a beep sound.
   /// Safe to call from any thread.
   void ErrorScreenMessage();
@@ -712,17 +712,17 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// High level screen-message call usable from any thread.
   void ScreenMessage(const std::string& s, const Vector3f& color) override;
 
+  /// Has the app bootstrapping phase completed? The bootstrapping phase
+  /// involves initial screen/graphics setup. Asset loading is not allowed
+  /// until it is complete.
+  auto IsAppBootstrapped() const -> bool override;
+
   /// Has StartApp been called (and completely finished its work)? Code that
   /// sends calls/messages to other threads or otherwise uses app
   /// functionality may want to check this to avoid crashes. Note that some
   /// app functionality such as loading assets is not available until
   /// IsAppBootstrapped returns true. This call is thread safe.
   auto IsAppStarted() const -> bool override;
-
-  /// Has the app bootstrapping phase completed? The bootstrapping phase
-  /// involves initial screen/graphics setup. Asset loading is not allowed
-  /// until it is complete.
-  auto IsAppBootstrapped() const -> bool override;
 
   void PlusDirectSendV1CloudLogs(const std::string& prefix,
                                  const std::string& suffix, bool instant,
@@ -731,7 +731,8 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
       -> PyObject* override;
   auto FeatureSetFromData(PyObject* obj) -> FeatureSetNativeComponent* override;
   void DoV1CloudLog(const std::string& msg) override;
-  void PushDevConsolePrintCall(const std::string& msg) override;
+  void PushDevConsolePrintCall(const std::string& msg, float scale,
+                               Vector4f color) override;
   auto GetPyExceptionType(PyExcType exctype) -> PyObject* override;
   auto PrintPythonStackTrace() -> bool override;
   auto GetPyLString(PyObject* obj) -> std::string override;
@@ -772,13 +773,16 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// Return whether there is currently text on the clipboard.
   auto ClipboardHasText() -> bool;
 
+  /// Return current text from the clipboard. Raises an Exception if
+  /// clipboard is unsupported or if there's no text on the clipboard.
+  auto ClipboardGetText() -> std::string;
+
   /// Set current clipboard text. Raises an Exception if clipboard is
   /// unsupported.
   void ClipboardSetText(const std::string& text);
 
-  /// Return current text from the clipboard. Raises an Exception if
-  /// clipboard is unsupported or if there's no text on the clipboard.
-  auto ClipboardGetText() -> std::string;
+  /// Set overall ui scale for the app.
+  void SetUIScale(UIScale scale);
 
   // Const subsystems.
   AppAdapter* const app_adapter;
@@ -817,6 +821,10 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   TouchInput* touch_input{};
 
   auto app_active() -> bool const { return app_active_; }
+
+  /// Reset the engine to a default state. App-modes generally call this
+  /// when activating.
+  void Reset();
 
  private:
   BaseFeatureSet();

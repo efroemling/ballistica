@@ -2,7 +2,7 @@
 #
 """Ballistica user interface api version 1"""
 
-# ba_meta require api 8
+# ba_meta require api 9
 
 # The stuff we expose here at the top level is our 'public' api.
 # It should only be imported by code outside of this package or
@@ -19,6 +19,7 @@ import logging
 from efro.util import set_canonical_module_names
 from babase import (
     add_clean_frame_callback,
+    allows_ticket_sales,
     app,
     AppIntent,
     AppIntentDefault,
@@ -59,6 +60,7 @@ from babase import (
     getclass,
     have_permission,
     in_logic_thread,
+    in_main_menu,
     increment_analytics_count,
     is_browser_likely_available,
     is_xcode_build,
@@ -70,6 +72,11 @@ from babase import (
     native_review_request_supported,
     NotFoundError,
     open_file_externally,
+    open_url,
+    overlay_web_browser_close,
+    overlay_web_browser_is_open,
+    overlay_web_browser_is_supported,
+    overlay_web_browser_open_url,
     Permission,
     Plugin,
     PluginSpec,
@@ -104,12 +111,9 @@ from _bauiv1 import (
     gettexture,
     hscrollwidget,
     imagewidget,
-    is_party_icon_visible,
     Mesh,
-    open_url,
     rowwidget,
     scrollwidget,
-    set_party_icon_always_visible,
     set_party_window_open,
     Sound,
     Texture,
@@ -119,11 +123,18 @@ from _bauiv1 import (
     widget,
 )
 from bauiv1._keyboard import Keyboard
-from bauiv1._uitypes import Window, uicleanupcheck
-from bauiv1._subsystem import UIV1Subsystem
+from bauiv1._uitypes import (
+    Window,
+    MainWindowState,
+    BasicMainWindowState,
+    uicleanupcheck,
+    MainWindow,
+)
+from bauiv1._appsubsystem import UIV1AppSubsystem
 
 __all__ = [
     'add_clean_frame_callback',
+    'allows_ticket_sales',
     'app',
     'AppIntent',
     'AppIntentDefault',
@@ -136,6 +147,7 @@ __all__ = [
     'AppTime',
     'apptimer',
     'AppTimer',
+    'BasicMainWindowState',
     'buttonwidget',
     'Call',
     'fullscreen_control_available',
@@ -176,21 +188,27 @@ __all__ = [
     'hscrollwidget',
     'imagewidget',
     'in_logic_thread',
+    'in_main_menu',
     'increment_analytics_count',
     'is_browser_likely_available',
-    'is_party_icon_visible',
     'is_xcode_build',
     'Keyboard',
     'lock_all_input',
     'LoginAdapter',
     'LoginInfo',
     'Lstr',
+    'MainWindow',
+    'MainWindowState',
     'Mesh',
     'native_review_request',
     'native_review_request_supported',
     'NotFoundError',
     'open_file_externally',
     'open_url',
+    'overlay_web_browser_close',
+    'overlay_web_browser_is_open',
+    'overlay_web_browser_is_supported',
+    'overlay_web_browser_open_url',
     'Permission',
     'Plugin',
     'PluginSpec',
@@ -204,7 +222,6 @@ __all__ = [
     'scrollwidget',
     'set_analytics_screen',
     'set_low_level_config_value',
-    'set_party_icon_always_visible',
     'set_party_window_open',
     'set_ui_input_device',
     'Sound',
@@ -217,7 +234,7 @@ __all__ = [
     'uibounds',
     'uicleanupcheck',
     'UIScale',
-    'UIV1Subsystem',
+    'UIV1AppSubsystem',
     'unlock_all_input',
     'WeakCall',
     'widget',

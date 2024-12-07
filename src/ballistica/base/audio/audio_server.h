@@ -4,7 +4,9 @@
 #define BALLISTICA_BASE_AUDIO_AUDIO_SERVER_H_
 
 #include <map>
+#include <memory>
 #include <mutex>
+#include <string>
 #include <vector>
 
 #include "ballistica/base/base.h"

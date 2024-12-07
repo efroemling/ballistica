@@ -2,9 +2,14 @@
 
 #include "ballistica/core/python/core_python.h"
 
+#include <cstdio>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "ballistica/core/mgen/python_modules_monolithic.h"
 #include "ballistica/core/platform/core_platform.h"
-#include "ballistica/core/support/base_soft.h"
+#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
 
@@ -171,18 +176,41 @@ void CorePython::EnablePythonLoggingCalls() {
   }
   auto gil{Python::ScopedInterpreterLock()};
 
-  assert(objs().Exists(ObjID::kLoggingDebugCall));
-  assert(objs().Exists(ObjID::kLoggingInfoCall));
-  assert(objs().Exists(ObjID::kLoggingWarningCall));
-  assert(objs().Exists(ObjID::kLoggingErrorCall));
-  assert(objs().Exists(ObjID::kLoggingCriticalCall));
+  // Make sure we've got all our logging Python bits we need.
+  assert(objs().Exists(ObjID::kLoggingLevelNotSet));
+  assert(objs().Exists(ObjID::kLoggingLevelDebug));
+  assert(objs().Exists(ObjID::kLoggingLevelInfo));
+  assert(objs().Exists(ObjID::kLoggingLevelWarning));
+  assert(objs().Exists(ObjID::kLoggingLevelError));
+  assert(objs().Exists(ObjID::kLoggingLevelCritical));
+  assert(objs().Exists(ObjID::kLoggerRoot));
+  assert(objs().Exists(ObjID::kLoggerRootLogCall));
+  assert(objs().Exists(ObjID::kLoggerBa));
+  assert(objs().Exists(ObjID::kLoggerBaLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaApp));
+  assert(objs().Exists(ObjID::kLoggerBaAppLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaAudio));
+  assert(objs().Exists(ObjID::kLoggerBaAudioLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaDisplayTime));
+  assert(objs().Exists(ObjID::kLoggerBaDisplayTimeLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaGraphics));
+  assert(objs().Exists(ObjID::kLoggerBaGraphicsLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaLifecycle));
+  assert(objs().Exists(ObjID::kLoggerBaLifecycleLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaAssets));
+  assert(objs().Exists(ObjID::kLoggerBaAssetsLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaInput));
+  assert(objs().Exists(ObjID::kLoggerBaInputLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaNetworking));
+  assert(objs().Exists(ObjID::kLoggerBaNetworkingLogCall));
 
   // Push any early log calls we've been holding on to along to Python.
   {
     std::scoped_lock lock(early_log_lock_);
     python_logging_calls_enabled_ = true;
     for (auto&& entry : early_logs_) {
-      LoggingCall(entry.first, "[HELD] " + entry.second);
+      LoggingCall(std::get<0>(entry), std::get<1>(entry),
+                  "[HELD] " + std::get<2>(entry));
     }
     early_logs_.clear();
   }
@@ -211,10 +239,84 @@ void CorePython::ImportPythonObjs() {
   }
 }
 
+void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
+  assert(python_logging_calls_enabled_);
+  assert(Python::HaveGIL());
+
+  const int log_level_not_set{0};
+  const int log_level_debug{10};
+  const int log_level_info{20};
+  const int log_level_warning{30};
+  const int log_level_error{40};
+  const int log_level_critical{50};
+  assert(log_level_not_set
+         == objs().Get(ObjID::kLoggingLevelNotSet).ValueAsInt());
+  assert(log_level_debug == objs().Get(ObjID::kLoggingLevelDebug).ValueAsInt());
+  assert(log_level_info == objs().Get(ObjID::kLoggingLevelInfo).ValueAsInt());
+  assert(log_level_warning
+         == objs().Get(ObjID::kLoggingLevelWarning).ValueAsInt());
+  assert(log_level_error == objs().Get(ObjID::kLoggingLevelError).ValueAsInt());
+  assert(log_level_critical
+         == objs().Get(ObjID::kLoggingLevelCritical).ValueAsInt());
+
+  std::pair<LogName, ObjID> pairs[] = {
+      {LogName::kRoot, ObjID::kLoggerRoot},
+      {LogName::kBa, ObjID::kLoggerBa},
+      {LogName::kBaApp, ObjID::kLoggerBaApp},
+      {LogName::kBaAudio, ObjID::kLoggerBaAudio},
+      {LogName::kBaGraphics, ObjID::kLoggerBaGraphics},
+      {LogName::kBaDisplayTime, ObjID::kLoggerBaDisplayTime},
+      {LogName::kBaLifecycle, ObjID::kLoggerBaLifecycle},
+      {LogName::kBaAssets, ObjID::kLoggerBaAssets},
+      {LogName::kBaInput, ObjID::kLoggerBaInput},
+      {LogName::kBaNetworking, ObjID::kLoggerBaNetworking},
+  };
+
+  int count{};
+  for (const auto& pair : pairs) {
+    count++;
+    auto logname{pair.first};
+    auto objid{pair.second};
+    auto out{objs().Get(objid).GetAttr("getEffectiveLevel").Call()};
+    assert(out.exists());
+    auto outval{static_cast<int>(out.ValueAsInt())};
+
+    switch (outval) {
+      // We ask for resolved level here so we normally shouldn't get NOTSET;
+      // however if the root logger is set to that then we do. It means
+      // don't apply filtering, so effectively its the same as debug for us.
+      case log_level_not_set:
+      case log_level_debug:
+        log_levels[static_cast<int>(logname)] = LogLevel::kDebug;
+        break;
+      case log_level_info:
+        log_levels[static_cast<int>(logname)] = LogLevel::kInfo;
+        break;
+      case log_level_warning:
+        log_levels[static_cast<int>(logname)] = LogLevel::kWarning;
+        break;
+      case log_level_error:
+        log_levels[static_cast<int>(logname)] = LogLevel::kError;
+        break;
+      case log_level_critical:
+        log_levels[static_cast<int>(logname)] = LogLevel::kCritical;
+        break;
+      default:
+        fprintf(stderr, "Found unexpected resolved logging level %d\n", outval);
+    }
+  }
+  // Sanity check: Make sure we covered our full set of LogNames.
+  if (count != static_cast<int>(LogName::kLast)) {
+    fprintf(stderr,
+            "WARNING: UpdateInternalLoggerLevels does not seem to be covering "
+            "all log names.\n");
+  }
+}
+
 void CorePython::SoftImportBase() {
   auto gil{Python::ScopedInterpreterLock()};
   auto result = PythonRef::StolenSoft(PyImport_ImportModule("_babase"));
-  if (!result.Exists()) {
+  if (!result.exists()) {
     // Ignore any errors here for now. All that will matter is whether base
     // gave us its interface.
     PyErr_Clear();
@@ -224,15 +326,16 @@ void CorePython::SoftImportBase() {
 void CorePython::VerifyPythonEnvironment() {
   // Make sure we're running the Python version we require.
   const char* ver = Py_GetVersion();
-  if (strncmp(ver, "3.11", 4) != 0) {
-    FatalError("We require Python 3.11.x; instead found " + std::string(ver));
+  if (strncmp(ver, "3.12", 4) != 0) {
+    FatalError("We require Python 3.12.x; instead found " + std::string(ver));
   }
 }
 
 void CorePython::MonolithicModeBaEnvConfigure() {
   assert(g_buildconfig.monolithic_build());
   assert(g_core);
-  g_core->LifecycleLog("baenv.configure() begin");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "baenv.configure() begin");
 
   auto gil{Python::ScopedInterpreterLock()};
 
@@ -284,32 +387,34 @@ void CorePython::MonolithicModeBaEnvConfigure() {
   auto result = objs()
                     .Get(ObjID::kBaEnvConfigureCall)
                     .Call(objs().Get(ObjID::kEmptyTuple), kwargs);
-  if (!result.Exists()) {
+  if (!result.exists()) {
     FatalError("Environment setup failed (no error info available).");
   }
   if (result.ValueIsString()) {
     FatalError("Environment setup failed:\n" + result.ValueAsString());
   }
-  g_core->LifecycleLog("baenv.configure() end");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "baenv.configure() end");
 }
 
-void CorePython::LoggingCall(LogLevel loglevel, const std::string& msg) {
-  // If we're not yet sending logs to Python, store this one away until we are.
+void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
+                             const std::string& msg) {
+  // If we're not yet sending logs to Python, store this one away until we
+  // are.
   if (!python_logging_calls_enabled_) {
     std::scoped_lock lock(early_log_lock_);
-    early_logs_.emplace_back(loglevel, msg);
+    early_logs_.emplace_back(logname, loglevel, msg);
 
-    // UPDATE - trying to disable this for now to make the concept of delayed
-    // logs a bit less scary. Perhaps we can update fatal-error to dump these or
-    // have a mode to immediate-print them as needed.
+    // UPDATE - trying to disable this for now to make the concept of
+    // delayed logs a bit less scary. Perhaps we can update fatal-error to
+    // dump these or have a mode to immediate-print them as needed.
     if (explicit_bool(false)) {
-      // There's a chance that we're going down in flames and this log
-      // might be useful to see even if we never get a chance to chip it to
+      // There's a chance that we're going down in flames and this log might
+      // be useful to see even if we never get a chance to chip it to
       // Python. So let's make an attempt to get it at least seen now in
       // whatever way we can. (platform display-log call and stderr).
       const char* errmsg{
-          "CorePython::LoggingCall() called before Python"
-          " logging available."};
+          "CorePython::LoggingCall() called before Python logging "
+          "available."};
       if (g_core->platform) {
         g_core->platform->EmitPlatformLog("root", LogLevel::kError, errmsg);
         g_core->platform->EmitPlatformLog("root", loglevel, msg);
@@ -319,42 +424,97 @@ void CorePython::LoggingCall(LogLevel loglevel, const std::string& msg) {
     return;
   }
 
-  // Ok; seems we've got Python calls. Run the right one for our log level.
-  ObjID logcallobj;
-  switch (loglevel) {
-    case LogLevel::kDebug:
-      logcallobj = ObjID::kLoggingDebugCall;
-      break;
-    case LogLevel::kInfo:
-      logcallobj = ObjID::kLoggingInfoCall;
-      break;
-    case LogLevel::kWarning:
-      logcallobj = ObjID::kLoggingWarningCall;
-      break;
-    case LogLevel::kError:
-      logcallobj = ObjID::kLoggingErrorCall;
-      break;
-    case LogLevel::kCritical:
-      logcallobj = ObjID::kLoggingCriticalCall;
-      break;
-    default:
-      logcallobj = ObjID::kLoggingInfoCall;
-      fprintf(stderr, "Unexpected LogLevel %d\n", static_cast<int>(loglevel));
-      break;
-  }
-
   // Make sure we're good to go from any thread.
   Python::ScopedInterpreterLock lock;
 
-  PythonRef args(Py_BuildValue("(s)", msg.c_str()), PythonRef::kSteal);
+  ObjID logcallobj;
+  bool handled{};
+  switch (logname) {
+    case LogName::kRoot:
+      logcallobj = ObjID::kLoggerRootLogCall;
+      handled = true;
+      break;
+    case LogName::kBa:
+      logcallobj = ObjID::kLoggerBaLogCall;
+      handled = true;
+      break;
+    case LogName::kBaApp:
+      logcallobj = ObjID::kLoggerBaAppLogCall;
+      handled = true;
+      break;
+    case LogName::kBaAudio:
+      logcallobj = ObjID::kLoggerBaAudioLogCall;
+      handled = true;
+      break;
+    case LogName::kBaGraphics:
+      logcallobj = ObjID::kLoggerBaGraphicsLogCall;
+      handled = true;
+      break;
+    case LogName::kBaDisplayTime:
+      logcallobj = ObjID::kLoggerBaDisplayTimeLogCall;
+      handled = true;
+      break;
+    case LogName::kBaAssets:
+      logcallobj = ObjID::kLoggerBaAssetsLogCall;
+      handled = true;
+      break;
+    case LogName::kBaInput:
+      logcallobj = ObjID::kLoggerBaInputLogCall;
+      handled = true;
+      break;
+    case LogName::kBaNetworking:
+      logcallobj = ObjID::kLoggerBaNetworkingLogCall;
+      handled = true;
+      break;
+    case LogName::kBaLifecycle:
+      logcallobj = ObjID::kLoggerBaLifecycleLogCall;
+      handled = true;
+      break;
+    case LogName::kLast:
+      logcallobj = ObjID::kLoggerRootLogCall;
+      break;
+  }
+  // Handle this here instead of via default clause so we get warnings about
+  // new unhandled enum values.
+  if (!handled) {
+    logcallobj = ObjID::kLoggerRootLogCall;
+    fprintf(stderr, "Unexpected LogName %d\n", static_cast<int>(logname));
+  }
+
+  ObjID loglevelobjid;
+  switch (loglevel) {
+    case LogLevel::kDebug:
+      loglevelobjid = ObjID::kLoggingLevelDebug;
+      break;
+    case LogLevel::kInfo:
+      loglevelobjid = ObjID::kLoggingLevelInfo;
+      break;
+    case LogLevel::kWarning:
+      loglevelobjid = ObjID::kLoggingLevelWarning;
+      break;
+    case LogLevel::kError:
+      loglevelobjid = ObjID::kLoggingLevelError;
+      break;
+    case LogLevel::kCritical:
+      loglevelobjid = ObjID::kLoggingLevelCritical;
+      break;
+    default:
+      loglevelobjid = ObjID::kLoggingLevelInfo;
+      fprintf(stderr, "Unexpected LogLevel %d\n", static_cast<int>(loglevel));
+      break;
+  }
+  PythonRef args(
+      Py_BuildValue("(Os)", objs().Get(loglevelobjid).get(), msg.c_str()),
+      PythonRef::kSteal);
   objs().Get(logcallobj).Call(args);
 }
 
 auto CorePython::WasModularMainCalled() -> bool {
   assert(!g_buildconfig.monolithic_build());
 
-  // This gets called in modular builds before anything is inited, so we need to
-  // avoid using anything from g_core or whatnot here; only raw Python stuff.
+  // This gets called in modular builds before anything is inited, so we need
+  // to avoid using anything from g_core or whatnot here; only raw Python
+  // stuff.
 
   PyObject* baenv = PyImport_ImportModule("baenv");
   if (!baenv) {
@@ -391,8 +551,9 @@ auto CorePython::WasModularMainCalled() -> bool {
 
 auto CorePython::FetchPythonArgs(std::vector<std::string>* buffer)
     -> std::vector<char*> {
-  // This gets called in modular builds before anything is inited, so we need to
-  // avoid using anything from g_core or whatnot here; only raw Python stuff.
+  // This gets called in modular builds before anything is inited, so we need
+  // to avoid using anything from g_core or whatnot here; only raw Python
+  // stuff.
 
   assert(buffer && buffer->empty());
   PyObject* sys = PyImport_ImportModule("sys");

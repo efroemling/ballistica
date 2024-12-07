@@ -42,8 +42,8 @@ class Part : public Object {
     }
   }
   auto node() const -> Node* {
-    assert(node_.Exists());
-    return node_.Get();
+    assert(node_.exists());
+    return node_.get();
   }
 
   // Apply a set of materials to the part.

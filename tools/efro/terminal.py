@@ -72,6 +72,7 @@ def _default_color_enabled() -> bool:
     import platform
 
     # If our stdout is not attached to a terminal, go with no-color.
+    assert sys.__stdout__ is not None
     if not sys.__stdout__.isatty():
         return False
 

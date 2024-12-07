@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_CLASSIC_PYTHON_CLASSIC_PYTHON_H_
 #define BALLISTICA_CLASSIC_PYTHON_CLASSIC_PYTHON_H_
 
+#include <string>
+
 #include "ballistica/base/base.h"
 #include "ballistica/classic/classic.h"
 #include "ballistica/shared/python/python_object_set.h"

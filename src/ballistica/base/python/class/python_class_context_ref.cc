@@ -2,9 +2,10 @@
 
 #include "ballistica/base/python/class/python_class_context_ref.h"
 
+#include <string>
+
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::base {
 
@@ -151,8 +152,8 @@ auto PythonClassContextRef::Enter(PythonClassContextRef* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-auto PythonClassContextRef::Exit(PythonClassContextRef* self,
-                                 PyObject* args) -> PyObject* {
+auto PythonClassContextRef::Exit(PythonClassContextRef* self, PyObject* args)
+    -> PyObject* {
   BA_PYTHON_TRY;
   g_base->SetCurrentContext(*self->context_ref_prev_);
   Py_RETURN_NONE;

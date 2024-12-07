@@ -8,11 +8,12 @@ import json
 import os
 from typing import TYPE_CHECKING
 
+from efrotools.pyver import PYVERNODOT
+
 if TYPE_CHECKING:
     pass
 
-# Note: code below needs updating when Python version changes (currently 3.11)
-PYC_SUFFIX = '.cpython-311.opt-1.pyc'
+PYC_SUFFIX = f'.cpython-{PYVERNODOT}.opt-1.pyc'
 
 ASSETS_SRC = 'src/assets'
 BUILD_DIR = 'build/assets'
@@ -28,6 +29,7 @@ def _get_targets(
 ) -> str:
     """Generic function to map source extension to dst files."""
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-positional-arguments
 
     src = ASSETS_SRC
     dst = BUILD_DIR
@@ -65,6 +67,7 @@ def _get_py_targets(
     all_targets: set[str],
     subset: str,
 ) -> None:
+    # pylint: disable=too-many-positional-arguments
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
@@ -212,6 +215,7 @@ def _get_py_targets_subset(
     suffix: str,
 ) -> str:
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-positional-arguments
     if subset == 'public_tools':
         src = 'tools'
         dst = f'{BUILD_DIR}/ba_data/python'
@@ -414,7 +418,7 @@ def generate_assets_makefile(
 ) -> dict[str, str]:
     """Main script entry point."""
     # pylint: disable=too-many-locals
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
     from pathlib import Path
 
     public = getprojectconfig(Path(projroot))['public']

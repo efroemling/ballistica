@@ -5,6 +5,9 @@
 
 #include <ballistica/base/input/device/input_device.h>
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
 
@@ -22,10 +25,14 @@ class BaseFeatureSet;
 namespace ballistica::scene_v1 {
 class SceneV1FeatureSet;
 }
+namespace ballistica::ui_v1 {
+class UIV1FeatureSet;
+}
 
 namespace ballistica::classic {
 
 // Predeclared types our feature-set provides.
+class ClassicAppMode;
 class ClassicFeatureSet;
 class ClassicPython;
 class StressTest;
@@ -60,6 +67,7 @@ extern core::CoreFeatureSet* g_core;
 extern base::BaseFeatureSet* g_base;
 extern ClassicFeatureSet* g_classic;
 extern scene_v1::SceneV1FeatureSet* g_scene_v1;
+extern ui_v1::UIV1FeatureSet* g_ui_v1;
 
 /// Our C++ front-end to our feature set. This is what other C++
 /// feature-sets can 'Import' from us.

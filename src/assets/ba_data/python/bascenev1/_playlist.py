@@ -21,6 +21,7 @@ PlaylistType = list[dict[str, Any]]
 def filter_playlist(
     playlist: PlaylistType,
     sessiontype: type[Session],
+    *,
     add_resolved_type: bool = False,
     remove_unowned: bool = True,
     mark_unowned: bool = False,

@@ -6,6 +6,7 @@
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/platform/core_platform.h"  // IWYU pragma: keep.
 #include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {
@@ -42,7 +43,8 @@ void AudioSource::SetPosition(float x, float y, float z) {
   assert(client_queue_size_ > 0);
 #if BA_DEBUG_BUILD
   if (std::isnan(x) || std::isnan(y) || std::isnan(z)) {
-    Log(LogLevel::kError, "Got nan value in AudioSource::SetPosition.");
+    g_core->Log(LogName::kBaAudio, LogLevel::kError,
+                "Got nan value in AudioSource::SetPosition.");
   }
 #endif
   g_base->audio_server->PushSourceSetPositionCall(play_id_, Vector3f(x, y, z));

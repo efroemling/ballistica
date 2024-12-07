@@ -64,3 +64,5 @@
 
 ### Loup Garou
 - Added sphinx documentation generation
+- Added docker build system
+- Various CI/CD improvements

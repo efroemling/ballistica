@@ -2,6 +2,9 @@
 
 #include "ballistica/base/python/class/python_class_vec3.h"
 
+#include <cstdio>
+#include <string>
+
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/shared/python/python.h"
 
@@ -138,8 +141,8 @@ auto PythonClassVec3::sq_length(PythonClassVec3* self) -> Py_ssize_t {
   return kMemberCount;
 }
 
-auto PythonClassVec3::sq_item(PythonClassVec3* self,
-                              Py_ssize_t i) -> PyObject* {
+auto PythonClassVec3::sq_item(PythonClassVec3* self, Py_ssize_t i)
+    -> PyObject* {
   if (i < 0 || i >= kMemberCount) {
     PyErr_SetString(PyExc_IndexError, "Vec3 index out of range");
     return nullptr;
@@ -159,8 +162,8 @@ auto PythonClassVec3::sq_ass_item(PythonClassVec3* self, Py_ssize_t i,
   BA_PYTHON_INT_CATCH;
 }
 
-auto PythonClassVec3::nb_add(PythonClassVec3* l,
-                             PythonClassVec3* r) -> PyObject* {
+auto PythonClassVec3::nb_add(PythonClassVec3* l, PythonClassVec3* r)
+    -> PyObject* {
   BA_PYTHON_TRY;
 
   // We can add if both sides are Vec3.
@@ -175,8 +178,8 @@ auto PythonClassVec3::nb_add(PythonClassVec3* l,
   BA_PYTHON_CATCH;
 }
 
-auto PythonClassVec3::nb_subtract(PythonClassVec3* l,
-                                  PythonClassVec3* r) -> PyObject* {
+auto PythonClassVec3::nb_subtract(PythonClassVec3* l, PythonClassVec3* r)
+    -> PyObject* {
   BA_PYTHON_TRY;
 
   // We can subtract if both sides are Vec3.
@@ -240,8 +243,8 @@ auto PythonClassVec3::nb_multiply(PyObject* l, PyObject* r) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-auto PythonClassVec3::tp_richcompare(PythonClassVec3* c1, PyObject* c2,
-                                     int op) -> PyObject* {
+auto PythonClassVec3::tp_richcompare(PythonClassVec3* c1, PyObject* c2, int op)
+    -> PyObject* {
   // Always return false against other types.
   if (!Check(c2)) {
     Py_RETURN_FALSE;
@@ -283,8 +286,8 @@ auto PythonClassVec3::Dot(PythonClassVec3* self, PyObject* other) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-auto PythonClassVec3::Cross(PythonClassVec3* self,
-                            PyObject* other) -> PyObject* {
+auto PythonClassVec3::Cross(PythonClassVec3* self, PyObject* other)
+    -> PyObject* {
   BA_PYTHON_TRY;
   return Create(Vector3f::Cross(self->value, BasePython::GetPyVector3f(other)));
   BA_PYTHON_CATCH;
@@ -309,8 +312,8 @@ PyMethodDef PythonClassVec3::tp_methods[] = {
      "Returns the cross product of this vector and another."},
     {nullptr}};
 
-auto PythonClassVec3::tp_getattro(PythonClassVec3* self,
-                                  PyObject* attr) -> PyObject* {
+auto PythonClassVec3::tp_getattro(PythonClassVec3* self, PyObject* attr)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(PyUnicode_Check(attr));
 

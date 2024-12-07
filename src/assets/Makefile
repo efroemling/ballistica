@@ -28,12 +28,12 @@ PCOMMAND = $(TOOLS_DIR)/pcommand
 # pcommand. See tools/efrotools/pcommandbatch.py for more info on when to use
 # which.
 PCOMMANDBATCHBIN = $(PROJ_DIR)/.cache/pcommandbatch/pcommandbatch
-ifeq ($(BA_PCOMMANDBATCH_DISABLE),1)
- PCOMMANDBATCH = $(TOOLS_DIR)/pcommand
- PCOMMANDBATCHFROMROOT = tools/pcommand
-else
+ifeq ($(BA_PCOMMANDBATCH_ENABLE),0)
  PCOMMANDBATCH = $(PCOMMANDBATCHBIN)
  PCOMMANDBATCHFROMROOT = .cache/pcommandbatch/pcommandbatch
+else
+ PCOMMANDBATCH = $(TOOLS_DIR)/pcommand
+ PCOMMANDBATCHFROMROOT = tools/pcommand
 endif
 
 # High level targets: generally these are what should be used here.
@@ -149,9 +149,14 @@ endif
 ASSET_TARGETS_WIN_WIN32 += $(EXTRAS_TARGETS_WIN_WIN32)
 ASSET_TARGETS_WIN_X64 += $(EXTRAS_TARGETS_WIN_X64)
 
+# Asset Packages
+ASSET_TARGETS_CMAKE += $(PROJ_DIR)/.cache/assetmanifests/gui_desktop_v2dev1
+ASSET_TARGETS_WIN_WIN32 += $(PROJ_DIR)/.cache/assetmanifests/gui_desktop_v2dev1
+ASSET_TARGETS_WIN_X64 += $(PROJ_DIR)/.cache/assetmanifests/gui_desktop_v2dev1
+
 # Note: Code below needs updating when Python version changes (currently 3.11)
 define make-opt-pyc-target
-$1: $$(subst /__pycache__,,$$(subst .cpython-311.opt-1.pyc,.py,$1))
+$1: $$(subst /__pycache__,,$$(subst .cpython-312.opt-1.pyc,.py,$1))
 	@$$(PCOMMANDBATCH) compile_python_file $$^
 endef
 
@@ -171,13 +176,16 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_apputils.py \
   $(BUILD_DIR)/ba_data/python/babase/_assetmanager.py \
   $(BUILD_DIR)/ba_data/python/babase/_asyncio.py \
+  $(BUILD_DIR)/ba_data/python/babase/_cloud.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsole.py \
+  $(BUILD_DIR)/ba_data/python/babase/_devconsoletabs.py \
   $(BUILD_DIR)/ba_data/python/babase/_emptyappmode.py \
   $(BUILD_DIR)/ba_data/python/babase/_env.py \
   $(BUILD_DIR)/ba_data/python/babase/_error.py \
   $(BUILD_DIR)/ba_data/python/babase/_general.py \
   $(BUILD_DIR)/ba_data/python/babase/_hooks.py \
   $(BUILD_DIR)/ba_data/python/babase/_language.py \
+  $(BUILD_DIR)/ba_data/python/babase/_logging.py \
   $(BUILD_DIR)/ba_data/python/babase/_login.py \
   $(BUILD_DIR)/ba_data/python/babase/_math.py \
   $(BUILD_DIR)/ba_data/python/babase/_meta.py \
@@ -195,28 +203,27 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/_achievement.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_ads.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_analytics.py \
-  $(BUILD_DIR)/ba_data/python/baclassic/_appdelegate.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_appmode.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_benchmark.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_input.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_music.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_net.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_servermode.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_store.py \
-  $(BUILD_DIR)/ba_data/python/baclassic/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_tips.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_tournament.py \
   $(BUILD_DIR)/ba_data/python/baclassic/macmusicapp.py \
   $(BUILD_DIR)/ba_data/python/baclassic/osmusic.py \
   $(BUILD_DIR)/ba_data/python/baenv.py \
   $(BUILD_DIR)/ba_data/python/baplus/__init__.py \
+  $(BUILD_DIR)/ba_data/python/baplus/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/baplus/_cloud.py \
   $(BUILD_DIR)/ba_data/python/baplus/_hooks.py \
-  $(BUILD_DIR)/ba_data/python/baplus/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activity.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activitytypes.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_actor.py \
-  $(BUILD_DIR)/ba_data/python/bascenev1/_appmode.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_campaign.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_collision.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_coopgame.py \
@@ -322,12 +329,12 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/session/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/tutorial.py \
   $(BUILD_DIR)/ba_data/python/batemplatefs/__init__.py \
+  $(BUILD_DIR)/ba_data/python/batemplatefs/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/batemplatefs/_hooks.py \
-  $(BUILD_DIR)/ba_data/python/batemplatefs/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_keyboard.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/_subsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__init__.py \
@@ -343,14 +350,13 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/colorpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/config.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/confirm.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/continues.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/connectivity.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/browser.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/gamebutton.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/level.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/tournamentbutton.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/creditslist.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/debug.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/credits.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/discord.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/feedback.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/fileselector.py \
@@ -360,10 +366,13 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/nearbytab.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/privatetab.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/publictab.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/getcurrency.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/getremote.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/helpui.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/gettokens.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/help.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/iconpicker.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/inbox.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/ingamemenu.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/inventory.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/englishkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/kiosk.py \
@@ -389,24 +398,25 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/browser.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/edit.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/upgrade.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/promocode.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/purchase.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/qrcode.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/radiogroup.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/report.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/resourcetypeinfo.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/sendinfo.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/serverdialog.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/advanced.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/allsettings.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/audio.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/benchmarks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/controls.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/devtools.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/gamepad.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/gamepadadvanced.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/gamepadselect.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/graphics.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/keyboard.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/moddingtools.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/nettesting.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/plugins.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/pluginsettings.py \
@@ -419,7 +429,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/edit.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/entrytypeselect.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/macmusicapp.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/specialoffer.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/browser.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/button.py \
@@ -435,280 +444,284 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/server_package/ballisticakit_server.py
 
 SCRIPT_TARGETS_PYC_PUBLIC = \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_accountv2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_app.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appcomponent.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appconfig.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appintent.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appmode.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appmodeselector.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appsubsystem.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_apputils.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_assetmanager.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_asyncio.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_devconsole.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_emptyappmode.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_env.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_error.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_general.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_hooks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_language.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_login.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_math.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_meta.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/_mgen/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/_mgen/__pycache__/enums.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_net.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_plugin.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_stringedit.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_text.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_ui.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_workspace.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/babase/__pycache__/modutils.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_accountv1.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_achievement.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_ads.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_analytics.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_appdelegate.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_benchmark.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_input.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_music.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_net.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_servermode.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_store.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_subsystem.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_tips.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_tournament.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/macmusicapp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/osmusic.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/__pycache__/baenv.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baplus/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_cloud.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_hooks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_subsystem.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_activity.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_activitytypes.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_actor.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_appmode.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_campaign.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_collision.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_coopgame.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_coopsession.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_debug.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_dependency.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_dualteamsession.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_featureset.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_freeforallsession.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_gameactivity.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_gameresults.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_gameutils.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_hooks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_level.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_lobby.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_map.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_messages.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_multiteamsession.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_music.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_net.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_nodeactor.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_player.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_playlist.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_powerup.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_profile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_score.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_session.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_settings.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_stats.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_team.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_teamgame.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/coopjoin.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/coopscore.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/drawscore.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/dualteamscore.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/freeforallvictory.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/multiteamjoin.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/multiteamscore.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/multiteamvictory.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/background.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/bomb.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/controlsguide.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/flag.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/image.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/onscreencountdown.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/onscreentimer.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/playerspaz.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/popuptext.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/powerupbox.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/respawnicon.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/scoreboard.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/spawner.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/spaz.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/spazappearance.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/spazbot.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/spazfactory.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/text.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/tipstext.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/zoomtext.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/assault.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/capturetheflag.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/chosenone.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/conquest.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/deathmatch.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/easteregghunt.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/elimination.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/football.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/hockey.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/keepaway.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/kingofthehill.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/meteorshower.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/ninjafight.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/onslaught.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/race.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/runaround.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/targetpractice.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/thelaststand.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/__pycache__/gameutils.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/__pycache__/mainmenu.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/big_g.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/bridgit.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/courtyard.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/crag_castle.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/doom_shroom.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/football_stadium.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/happy_thoughts.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/hockey_stadium.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/lake_frigid.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/monkey_face.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/rampage.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/roundabout.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/step_right_up.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/the_pad.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/tip_top.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/tower_d.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/zig_zag.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/__pycache__/maps.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/session/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/__pycache__/tutorial.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/_hooks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/_subsystem.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_hooks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_keyboard.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_subsystem.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_uitypes.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/onscreenkeyboard.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/link.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/settings.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/unlink.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/v2proxy.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/viewer.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/achievements.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/appinvite.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/characterpicker.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/colorpicker.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/config.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/confirm.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/continues.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/browser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/gamebutton.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/level.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/tournamentbutton.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/creditslist.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/debug.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/discord.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/feedback.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/fileselector.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/abouttab.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/manualtab.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/nearbytab.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/privatetab.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/publictab.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/getcurrency.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/getremote.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/helpui.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/iconpicker.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/__pycache__/englishkeyboard.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/kiosk.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/league/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/league/__pycache__/rankbutton.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/league/__pycache__/rankwindow.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/mainmenu.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/party.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/partyqueue.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/play.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/addgame.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/browser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/customizebrowser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/edit.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/editcontroller.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/editgame.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/mapselect.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/share.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/playoptions.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/popup.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/__pycache__/browser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/__pycache__/edit.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/__pycache__/upgrade.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/promocode.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/purchase.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/qrcode.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/radiogroup.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/report.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/resourcetypeinfo.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/serverdialog.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/advanced.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/allsettings.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/audio.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/controls.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/gamepad.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/gamepadadvanced.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/gamepadselect.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/graphics.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/keyboard.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/moddingtools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/nettesting.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/plugins.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/pluginsettings.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/remoteapp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/testing.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/touchscreen.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/vrtesting.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/__pycache__/browser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/__pycache__/edit.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/__pycache__/entrytypeselect.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/__pycache__/macmusicapp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/specialoffer.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/browser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/button.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/item.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/tabs.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/teamnamescolors.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/tournamententry.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/tournamentscores.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/trophies.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/url.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/v2upgrade.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/watch.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/server_package/__pycache__/ballisticakit_server.cpython-311.opt-1.pyc
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_accountv2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_app.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appcomponent.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appconfig.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appintent.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appmode.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appmodeselector.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_appsubsystem.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_apputils.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_assetmanager.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_asyncio.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_cloud.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_devconsole.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_devconsoletabs.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_emptyappmode.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_env.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_error.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_general.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_hooks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_language.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_logging.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_login.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_math.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_meta.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/_mgen/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/_mgen/__pycache__/enums.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_net.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_plugin.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_stringedit.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_text.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_ui.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_workspace.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/modutils.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_accountv1.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_achievement.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_ads.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_analytics.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_appmode.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_appsubsystem.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_benchmark.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_input.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_music.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_net.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_servermode.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_store.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_tips.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_tournament.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/macmusicapp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/osmusic.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/__pycache__/baenv.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baplus/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_appsubsystem.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_cloud.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baplus/__pycache__/_hooks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_activity.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_activitytypes.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_actor.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_campaign.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_collision.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_coopgame.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_coopsession.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_debug.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_dependency.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_dualteamsession.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_featureset.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_freeforallsession.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_gameactivity.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_gameresults.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_gameutils.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_hooks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_level.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_lobby.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_map.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_messages.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_multiteamsession.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_music.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_net.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_nodeactor.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_player.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_playlist.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_powerup.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_profile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_score.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_session.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_settings.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_stats.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_team.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1/__pycache__/_teamgame.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/coopjoin.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/coopscore.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/drawscore.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/dualteamscore.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/freeforallvictory.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/multiteamjoin.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/multiteamscore.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__pycache__/multiteamvictory.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/background.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/bomb.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/controlsguide.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/flag.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/image.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/onscreencountdown.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/onscreentimer.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/playerspaz.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/popuptext.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/powerupbox.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/respawnicon.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/scoreboard.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/spawner.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/spaz.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/spazappearance.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/spazbot.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/spazfactory.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/text.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/tipstext.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__pycache__/zoomtext.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/assault.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/capturetheflag.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/chosenone.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/conquest.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/deathmatch.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/easteregghunt.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/elimination.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/football.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/hockey.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/keepaway.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/kingofthehill.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/meteorshower.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/ninjafight.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/onslaught.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/race.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/runaround.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/targetpractice.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__pycache__/thelaststand.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/__pycache__/gameutils.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/__pycache__/mainmenu.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/big_g.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/bridgit.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/courtyard.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/crag_castle.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/doom_shroom.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/football_stadium.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/happy_thoughts.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/hockey_stadium.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/lake_frigid.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/monkey_face.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/rampage.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/roundabout.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/step_right_up.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/the_pad.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/tip_top.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/tower_d.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__pycache__/zig_zag.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/__pycache__/maps.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/session/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/__pycache__/tutorial.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/_appsubsystem.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/batemplatefs/__pycache__/_hooks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_appsubsystem.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_hooks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_keyboard.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/_uitypes.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1/__pycache__/onscreenkeyboard.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/link.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/settings.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/unlink.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/v2proxy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/viewer.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/achievements.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/appinvite.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/characterpicker.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/colorpicker.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/config.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/confirm.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/connectivity.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/browser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/gamebutton.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/level.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/tournamentbutton.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/credits.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/discord.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/feedback.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/fileselector.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/abouttab.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/manualtab.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/nearbytab.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/privatetab.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__pycache__/publictab.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/getremote.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/gettokens.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/help.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/iconpicker.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/inbox.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/ingamemenu.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/inventory.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/__pycache__/englishkeyboard.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/kiosk.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/league/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/league/__pycache__/rankbutton.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/league/__pycache__/rankwindow.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/mainmenu.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/party.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/partyqueue.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/play.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/addgame.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/browser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/customizebrowser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/edit.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/editcontroller.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/editgame.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/mapselect.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__pycache__/share.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/playoptions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/popup.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/__pycache__/browser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/__pycache__/edit.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/__pycache__/upgrade.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/purchase.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/qrcode.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/radiogroup.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/report.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/resourcetypeinfo.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/sendinfo.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/serverdialog.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/advanced.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/allsettings.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/audio.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/benchmarks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/controls.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/devtools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/gamepad.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/gamepadadvanced.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/gamepadselect.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/graphics.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/keyboard.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/nettesting.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/plugins.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/pluginsettings.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/remoteapp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/testing.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/touchscreen.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__pycache__/vrtesting.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/__pycache__/browser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/__pycache__/edit.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/__pycache__/entrytypeselect.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/__pycache__/macmusicapp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/browser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/button.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/item.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/tabs.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/teamnamescolors.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/tournamententry.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/tournamentscores.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/trophies.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/url.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/v2upgrade.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/watch.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/server_package/__pycache__/ballisticakit_server.cpython-312.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
@@ -727,10 +740,14 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/bacloud.py \
   $(BUILD_DIR)/ba_data/python/bacommon/build.py \
   $(BUILD_DIR)/ba_data/python/bacommon/cloud.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/loggercontrol.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/logging.py \
   $(BUILD_DIR)/ba_data/python/bacommon/login.py \
   $(BUILD_DIR)/ba_data/python/bacommon/net.py \
   $(BUILD_DIR)/ba_data/python/bacommon/servermanager.py \
   $(BUILD_DIR)/ba_data/python/bacommon/transfer.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/workspace/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/workspace/assetsv1.py \
   $(BUILD_DIR)/ba_data/python/efro/__init__.py \
   $(BUILD_DIR)/ba_data/python/efro/call.py \
   $(BUILD_DIR)/ba_data/python/efro/cloudshell.py \
@@ -744,7 +761,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/efro/dataclassio/extras.py \
   $(BUILD_DIR)/ba_data/python/efro/debug.py \
   $(BUILD_DIR)/ba_data/python/efro/error.py \
-  $(BUILD_DIR)/ba_data/python/efro/log.py \
+  $(BUILD_DIR)/ba_data/python/efro/logging.py \
   $(BUILD_DIR)/ba_data/python/efro/message/__init__.py \
   $(BUILD_DIR)/ba_data/python/efro/message/_message.py \
   $(BUILD_DIR)/ba_data/python/efro/message/_module.py \
@@ -753,42 +770,48 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/efro/message/_sender.py \
   $(BUILD_DIR)/ba_data/python/efro/rpc.py \
   $(BUILD_DIR)/ba_data/python/efro/terminal.py \
+  $(BUILD_DIR)/ba_data/python/efro/threadpool.py \
   $(BUILD_DIR)/ba_data/python/efro/util.py
 
 SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
-  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/app.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/assets.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/bacloud.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/build.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/cloud.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/login.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/net.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/servermanager.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/transfer.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/__pycache__/call.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/__pycache__/cloudshell.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/_api.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/_base.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/_inputter.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/_outputter.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/_pathcapture.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/_prep.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/extras.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/__pycache__/debug.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/__pycache__/error.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/__pycache__/log.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/_message.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/_module.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/_protocol.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/_receiver.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/_sender.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/__pycache__/rpc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/__pycache__/terminal.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/efro/__pycache__/util.cpython-311.opt-1.pyc
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/app.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/assets.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/bacloud.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/build.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/cloud.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/loggercontrol.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/logging.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/login.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/net.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/servermanager.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/transfer.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/workspace/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/workspace/__pycache__/assetsv1.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/__pycache__/call.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/__pycache__/cloudshell.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/_api.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/_base.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/_inputter.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/_outputter.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/_pathcapture.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/_prep.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/extras.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/__pycache__/debug.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/__pycache__/error.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/__pycache__/logging.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/_message.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/_module.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/_protocol.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/_receiver.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/message/__pycache__/_sender.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/__pycache__/rpc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/__pycache__/terminal.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/__pycache__/threadpool.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/__pycache__/util.cpython-312.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
@@ -808,7 +831,6 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE = \
   $(BUILD_DIR)/pylib-apple/__future__.py \
   $(BUILD_DIR)/pylib-apple/__hello__.py \
   $(BUILD_DIR)/pylib-apple/_aix_support.py \
-  $(BUILD_DIR)/pylib-apple/_bootsubprocess.py \
   $(BUILD_DIR)/pylib-apple/_collections_abc.py \
   $(BUILD_DIR)/pylib-apple/_compat_pickle.py \
   $(BUILD_DIR)/pylib-apple/_compression.py \
@@ -816,32 +838,22 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE = \
   $(BUILD_DIR)/pylib-apple/_markupbase.py \
   $(BUILD_DIR)/pylib-apple/_osx_support.py \
   $(BUILD_DIR)/pylib-apple/_py_abc.py \
+  $(BUILD_DIR)/pylib-apple/_pydatetime.py \
   $(BUILD_DIR)/pylib-apple/_pydecimal.py \
   $(BUILD_DIR)/pylib-apple/_pyio.py \
+  $(BUILD_DIR)/pylib-apple/_pylong.py \
   $(BUILD_DIR)/pylib-apple/_sitebuiltins.py \
   $(BUILD_DIR)/pylib-apple/_strptime.py \
   $(BUILD_DIR)/pylib-apple/_sysconfigdata__darwin_darwin.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata__ios_iphoneos.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata__ios_iphoneos_arm64.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata__ios_iphonesimulator.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata__ios_iphonesimulator_arm64.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata__ios_iphonesimulator_x86_64.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata__tvos_appletvos.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata__tvos_appletvos_arm64.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata__tvos_appletvsimulator.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata__tvos_appletvsimulator_arm64.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata__tvos_appletvsimulator_x86_64.py \
+  $(BUILD_DIR)/pylib-apple/_sysconfigdata__ios_iphoneos-arm64.py \
+  $(BUILD_DIR)/pylib-apple/_sysconfigdata__ios_iphonesimulator-arm64.py \
+  $(BUILD_DIR)/pylib-apple/_sysconfigdata__tvos_appletvos-arm64.py \
+  $(BUILD_DIR)/pylib-apple/_sysconfigdata__tvos_appletvsimulator-arm64.py \
   $(BUILD_DIR)/pylib-apple/_sysconfigdata_d_darwin_darwin.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata_d_ios_iphoneos.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata_d_ios_iphoneos_arm64.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata_d_ios_iphonesimulator.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata_d_ios_iphonesimulator_arm64.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata_d_ios_iphonesimulator_x86_64.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata_d_tvos_appletvos.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata_d_tvos_appletvos_arm64.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata_d_tvos_appletvsimulator.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata_d_tvos_appletvsimulator_arm64.py \
-  $(BUILD_DIR)/pylib-apple/_sysconfigdata_d_tvos_appletvsimulator_x86_64.py \
+  $(BUILD_DIR)/pylib-apple/_sysconfigdata_d_ios_iphoneos-arm64.py \
+  $(BUILD_DIR)/pylib-apple/_sysconfigdata_d_ios_iphonesimulator-arm64.py \
+  $(BUILD_DIR)/pylib-apple/_sysconfigdata_d_tvos_appletvos-arm64.py \
+  $(BUILD_DIR)/pylib-apple/_sysconfigdata_d_tvos_appletvsimulator-arm64.py \
   $(BUILD_DIR)/pylib-apple/_threading_local.py \
   $(BUILD_DIR)/pylib-apple/_weakrefset.py \
   $(BUILD_DIR)/pylib-apple/abc.py \
@@ -849,7 +861,6 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE = \
   $(BUILD_DIR)/pylib-apple/antigravity.py \
   $(BUILD_DIR)/pylib-apple/argparse.py \
   $(BUILD_DIR)/pylib-apple/ast.py \
-  $(BUILD_DIR)/pylib-apple/asynchat.py \
   $(BUILD_DIR)/pylib-apple/asyncio/__init__.py \
   $(BUILD_DIR)/pylib-apple/asyncio/__main__.py \
   $(BUILD_DIR)/pylib-apple/asyncio/base_events.py \
@@ -883,7 +894,6 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE = \
   $(BUILD_DIR)/pylib-apple/asyncio/unix_events.py \
   $(BUILD_DIR)/pylib-apple/asyncio/windows_events.py \
   $(BUILD_DIR)/pylib-apple/asyncio/windows_utils.py \
-  $(BUILD_DIR)/pylib-apple/asyncore.py \
   $(BUILD_DIR)/pylib-apple/base64.py \
   $(BUILD_DIR)/pylib-apple/bdb.py \
   $(BUILD_DIR)/pylib-apple/bisect.py \
@@ -1110,7 +1120,6 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE = \
   $(BUILD_DIR)/pylib-apple/http/cookies.py \
   $(BUILD_DIR)/pylib-apple/http/server.py \
   $(BUILD_DIR)/pylib-apple/imghdr.py \
-  $(BUILD_DIR)/pylib-apple/imp.py \
   $(BUILD_DIR)/pylib-apple/importlib/__init__.py \
   $(BUILD_DIR)/pylib-apple/importlib/_abc.py \
   $(BUILD_DIR)/pylib-apple/importlib/_bootstrap.py \
@@ -1199,12 +1208,12 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE = \
   $(BUILD_DIR)/pylib-apple/shutil.py \
   $(BUILD_DIR)/pylib-apple/signal.py \
   $(BUILD_DIR)/pylib-apple/site.py \
-  $(BUILD_DIR)/pylib-apple/smtpd.py \
   $(BUILD_DIR)/pylib-apple/smtplib.py \
   $(BUILD_DIR)/pylib-apple/sndhdr.py \
   $(BUILD_DIR)/pylib-apple/socket.py \
   $(BUILD_DIR)/pylib-apple/socketserver.py \
   $(BUILD_DIR)/pylib-apple/sqlite3/__init__.py \
+  $(BUILD_DIR)/pylib-apple/sqlite3/__main__.py \
   $(BUILD_DIR)/pylib-apple/sqlite3/dbapi2.py \
   $(BUILD_DIR)/pylib-apple/sqlite3/dump.py \
   $(BUILD_DIR)/pylib-apple/sre_compile.py \
@@ -1279,7 +1288,10 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE = \
   $(BUILD_DIR)/pylib-apple/xmlrpc/client.py \
   $(BUILD_DIR)/pylib-apple/xmlrpc/server.py \
   $(BUILD_DIR)/pylib-apple/zipapp.py \
-  $(BUILD_DIR)/pylib-apple/zipfile.py \
+  $(BUILD_DIR)/pylib-apple/zipfile/__init__.py \
+  $(BUILD_DIR)/pylib-apple/zipfile/__main__.py \
+  $(BUILD_DIR)/pylib-apple/zipfile/_path/__init__.py \
+  $(BUILD_DIR)/pylib-apple/zipfile/_path/glob.py \
   $(BUILD_DIR)/pylib-apple/zipimport.py \
   $(BUILD_DIR)/pylib-apple/zoneinfo/__init__.py \
   $(BUILD_DIR)/pylib-apple/zoneinfo/_common.py \
@@ -1287,486 +1299,475 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE = \
   $(BUILD_DIR)/pylib-apple/zoneinfo/_zoneinfo.py
 
 SCRIPT_TARGETS_PYC_PRIVATE_APPLE = \
-  $(BUILD_DIR)/pylib-apple/__pycache__/__future__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/__hello__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_aix_support.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_bootsubprocess.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_collections_abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_compat_pickle.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_compression.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_ios_support.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_markupbase.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_osx_support.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_py_abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_pydecimal.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_pyio.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sitebuiltins.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_strptime.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata__darwin_darwin.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata__ios_iphoneos.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata__ios_iphoneos_arm64.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata__ios_iphonesimulator.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata__ios_iphonesimulator_arm64.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata__ios_iphonesimulator_x86_64.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata__tvos_appletvos.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata__tvos_appletvos_arm64.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata__tvos_appletvsimulator.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata__tvos_appletvsimulator_arm64.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata__tvos_appletvsimulator_x86_64.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata_d_darwin_darwin.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata_d_ios_iphoneos.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata_d_ios_iphoneos_arm64.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata_d_ios_iphonesimulator.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata_d_ios_iphonesimulator_arm64.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata_d_ios_iphonesimulator_x86_64.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata_d_tvos_appletvos.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata_d_tvos_appletvos_arm64.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata_d_tvos_appletvsimulator.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata_d_tvos_appletvsimulator_arm64.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata_d_tvos_appletvsimulator_x86_64.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_threading_local.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/_weakrefset.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/aifc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/antigravity.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/argparse.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/ast.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/asynchat.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/__main__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/base_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/base_futures.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/base_subprocess.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/base_tasks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/constants.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/coroutines.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/exceptions.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/format_helpers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/futures.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/locks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/log.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/mixins.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/proactor_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/protocols.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/queues.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/runners.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/selector_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/sslproto.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/staggered.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/streams.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/subprocess.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/taskgroups.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/tasks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/threads.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/timeouts.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/transports.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/trsock.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/unix_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/windows_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/windows_utils.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/asyncore.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/base64.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/bdb.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/bisect.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/bz2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/cProfile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/calendar.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/cgi.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/cgitb.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/chunk.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/cmd.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/code.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/codecs.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/codeop.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/collections/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/collections/__pycache__/abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/colorsys.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/compileall.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/concurrent/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/concurrent/futures/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/concurrent/futures/__pycache__/_base.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/concurrent/futures/__pycache__/process.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/concurrent/futures/__pycache__/thread.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/configparser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/contextlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/contextvars.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/copy.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/copyreg.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/crypt.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/csv.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/ctypes/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/ctypes/__pycache__/_aix.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/ctypes/__pycache__/_endian.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/ctypes/macholib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/ctypes/macholib/__pycache__/dyld.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/ctypes/macholib/__pycache__/dylib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/ctypes/macholib/__pycache__/framework.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/ctypes/__pycache__/util.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/ctypes/__pycache__/wintypes.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/curses/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/curses/__pycache__/ascii.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/curses/__pycache__/has_key.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/curses/__pycache__/panel.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/curses/__pycache__/textpad.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/dataclasses.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/datetime.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/decimal.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/difflib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/dis.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/doctest.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/_encoded_words.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/_header_value_parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/_parseaddr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/_policybase.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/base64mime.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/charset.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/contentmanager.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/encoders.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/errors.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/feedparser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/generator.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/header.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/headerregistry.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/iterators.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/message.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/application.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/audio.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/base.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/image.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/message.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/multipart.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/nonmultipart.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/text.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/policy.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/quoprimime.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/email/__pycache__/utils.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/aliases.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/ascii.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/base64_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/big5.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/big5hkscs.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/bz2_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/charmap.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp037.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1006.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1026.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1125.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1140.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1250.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1251.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1252.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1253.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1254.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1255.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1256.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1257.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1258.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp273.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp424.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp437.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp500.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp720.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp737.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp775.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp850.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp852.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp855.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp856.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp857.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp858.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp860.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp861.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp862.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp863.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp864.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp865.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp866.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp869.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp874.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp875.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp932.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp949.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp950.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/euc_jis_2004.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/euc_jisx0213.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/euc_jp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/euc_kr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/gb18030.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/gb2312.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/gbk.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/hex_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/hp_roman8.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/hz.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/idna.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso2022_jp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso2022_jp_1.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso2022_jp_2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso2022_jp_2004.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso2022_jp_3.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso2022_jp_ext.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso2022_kr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_1.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_10.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_11.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_13.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_14.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_15.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_16.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_3.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_4.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_5.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_6.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_7.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_8.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_9.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/johab.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/koi8_r.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/koi8_t.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/koi8_u.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/kz1048.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/latin_1.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_arabic.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_croatian.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_cyrillic.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_farsi.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_greek.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_iceland.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_latin2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_roman.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_romanian.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_turkish.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mbcs.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/oem.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/palmos.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/ptcp154.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/punycode.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/quopri_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/raw_unicode_escape.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/rot_13.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/shift_jis.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/shift_jis_2004.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/shift_jisx0213.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/tis_620.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/undefined.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/unicode_escape.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_16.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_16_be.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_16_le.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_32.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_32_be.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_32_le.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_7.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_8.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_8_sig.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/uu_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/zlib_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/enum.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/filecmp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/fileinput.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/fnmatch.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/fractions.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/ftplib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/functools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/genericpath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/getopt.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/getpass.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/gettext.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/glob.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/graphlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/gzip.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/hashlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/heapq.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/hmac.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/html/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/html/__pycache__/entities.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/html/__pycache__/parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/http/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/http/__pycache__/client.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/http/__pycache__/cookiejar.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/http/__pycache__/cookies.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/http/__pycache__/server.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/imghdr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/imp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/_abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/_bootstrap.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/_bootstrap_external.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/machinery.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/metadata/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/metadata/__pycache__/_adapters.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/metadata/__pycache__/_collections.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/metadata/__pycache__/_functools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/metadata/__pycache__/_itertools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/metadata/__pycache__/_meta.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/metadata/__pycache__/_text.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/readers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/resources/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/resources/__pycache__/_adapters.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/resources/__pycache__/_common.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/resources/__pycache__/_itertools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/resources/__pycache__/_legacy.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/resources/__pycache__/abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/resources/__pycache__/readers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/resources/__pycache__/simple.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/simple.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/util.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/inspect.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/io.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/ipaddress.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/json/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/json/__pycache__/decoder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/json/__pycache__/encoder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/json/__pycache__/scanner.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/json/__pycache__/tool.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/keyword.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/linecache.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/locale.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/logging/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/logging/__pycache__/config.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/logging/__pycache__/handlers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/lzma.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/mailbox.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/mailcap.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/mimetypes.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/modulefinder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/netrc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/nntplib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/ntpath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/nturl2path.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/numbers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/opcode.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/operator.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/optparse.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/os.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/pathlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/pdb.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/pickle.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/pickletools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/pipes.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/pkgutil.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/platform.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/plistlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/poplib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/posixpath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/pprint.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/profile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/pstats.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/pty.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/py_compile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/pyclbr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/pydoc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/queue.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/quopri.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/random.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/re/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/re/__pycache__/_casefix.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/re/__pycache__/_compiler.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/re/__pycache__/_constants.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/re/__pycache__/_parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/reprlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/rlcompleter.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/runpy.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/sched.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/secrets.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/selectors.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/shelve.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/shlex.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/shutil.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/signal.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/site.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/smtpd.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/smtplib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/sndhdr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/socket.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/socketserver.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/sqlite3/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/sqlite3/__pycache__/dbapi2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/sqlite3/__pycache__/dump.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/sre_compile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/sre_constants.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/sre_parse.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/ssl.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/stat.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/statistics.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/string.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/stringprep.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/struct.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/subprocess.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/sunau.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/symtable.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/sysconfig.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/tabnanny.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/tarfile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/telnetlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/tempfile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/textwrap.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/this.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/threading.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/timeit.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/token.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/tokenize.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/tomllib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/tomllib/__pycache__/_parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/tomllib/__pycache__/_re.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/tomllib/__pycache__/_types.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/trace.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/traceback.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/tracemalloc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/tty.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/types.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/typing.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/urllib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/urllib/__pycache__/error.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/urllib/__pycache__/parse.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/urllib/__pycache__/request.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/urllib/__pycache__/response.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/urllib/__pycache__/robotparser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/uu.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/uuid.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/warnings.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/wave.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/weakref.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/webbrowser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/xdrlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/dom/__pycache__/NodeFilter.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/dom/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/dom/__pycache__/domreg.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/dom/__pycache__/expatbuilder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/dom/__pycache__/minicompat.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/dom/__pycache__/minidom.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/dom/__pycache__/pulldom.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/dom/__pycache__/xmlbuilder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/etree/__pycache__/ElementInclude.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/etree/__pycache__/ElementPath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/etree/__pycache__/ElementTree.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/etree/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/etree/__pycache__/cElementTree.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/parsers/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/parsers/__pycache__/expat.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/sax/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/sax/__pycache__/_exceptions.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/sax/__pycache__/expatreader.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/sax/__pycache__/handler.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/sax/__pycache__/saxutils.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xml/sax/__pycache__/xmlreader.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xmlrpc/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xmlrpc/__pycache__/client.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/xmlrpc/__pycache__/server.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/zipapp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/zipfile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/__pycache__/zipimport.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/zoneinfo/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/zoneinfo/__pycache__/_common.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/zoneinfo/__pycache__/_tzpath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-apple/zoneinfo/__pycache__/_zoneinfo.cpython-311.opt-1.pyc
+  $(BUILD_DIR)/pylib-apple/__pycache__/__future__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/__hello__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_aix_support.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_collections_abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_compat_pickle.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_compression.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_ios_support.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_markupbase.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_osx_support.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_py_abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_pydatetime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_pydecimal.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_pyio.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_pylong.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_sitebuiltins.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_strptime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata__darwin_darwin.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata__ios_iphoneos-arm64.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata__ios_iphonesimulator-arm64.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata__tvos_appletvos-arm64.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata__tvos_appletvsimulator-arm64.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata_d_darwin_darwin.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata_d_ios_iphoneos-arm64.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata_d_ios_iphonesimulator-arm64.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata_d_tvos_appletvos-arm64.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_sysconfigdata_d_tvos_appletvsimulator-arm64.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_threading_local.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/_weakrefset.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/aifc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/antigravity.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/argparse.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/ast.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/__main__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/base_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/base_futures.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/base_subprocess.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/base_tasks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/constants.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/coroutines.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/exceptions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/format_helpers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/futures.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/locks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/log.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/mixins.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/proactor_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/protocols.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/queues.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/runners.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/selector_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/sslproto.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/staggered.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/streams.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/subprocess.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/taskgroups.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/tasks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/threads.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/timeouts.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/transports.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/trsock.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/unix_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/windows_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/asyncio/__pycache__/windows_utils.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/base64.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/bdb.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/bisect.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/bz2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/cProfile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/calendar.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/cgi.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/cgitb.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/chunk.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/cmd.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/code.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/codecs.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/codeop.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/collections/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/collections/__pycache__/abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/colorsys.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/compileall.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/concurrent/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/concurrent/futures/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/concurrent/futures/__pycache__/_base.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/concurrent/futures/__pycache__/process.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/concurrent/futures/__pycache__/thread.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/configparser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/contextlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/contextvars.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/copy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/copyreg.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/crypt.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/csv.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/ctypes/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/ctypes/__pycache__/_aix.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/ctypes/__pycache__/_endian.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/ctypes/macholib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/ctypes/macholib/__pycache__/dyld.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/ctypes/macholib/__pycache__/dylib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/ctypes/macholib/__pycache__/framework.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/ctypes/__pycache__/util.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/ctypes/__pycache__/wintypes.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/curses/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/curses/__pycache__/ascii.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/curses/__pycache__/has_key.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/curses/__pycache__/panel.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/curses/__pycache__/textpad.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/dataclasses.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/datetime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/decimal.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/difflib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/dis.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/doctest.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/_encoded_words.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/_header_value_parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/_parseaddr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/_policybase.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/base64mime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/charset.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/contentmanager.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/encoders.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/errors.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/feedparser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/generator.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/header.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/headerregistry.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/iterators.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/message.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/application.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/audio.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/base.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/image.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/message.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/multipart.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/nonmultipart.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/mime/__pycache__/text.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/policy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/quoprimime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/email/__pycache__/utils.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/aliases.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/ascii.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/base64_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/big5.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/big5hkscs.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/bz2_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/charmap.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp037.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1006.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1026.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1125.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1140.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1250.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1251.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1252.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1253.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1254.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1255.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1256.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1257.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp1258.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp273.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp424.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp437.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp500.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp720.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp737.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp775.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp850.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp852.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp855.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp856.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp857.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp858.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp860.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp861.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp862.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp863.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp864.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp865.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp866.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp869.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp874.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp875.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp932.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp949.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/cp950.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/euc_jis_2004.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/euc_jisx0213.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/euc_jp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/euc_kr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/gb18030.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/gb2312.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/gbk.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/hex_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/hp_roman8.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/hz.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/idna.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso2022_jp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso2022_jp_1.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso2022_jp_2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso2022_jp_2004.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso2022_jp_3.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso2022_jp_ext.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso2022_kr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_1.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_10.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_11.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_13.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_14.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_15.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_16.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_3.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_4.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_5.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_6.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_7.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_8.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/iso8859_9.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/johab.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/koi8_r.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/koi8_t.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/koi8_u.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/kz1048.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/latin_1.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_arabic.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_croatian.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_cyrillic.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_farsi.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_greek.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_iceland.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_latin2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_roman.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_romanian.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mac_turkish.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/mbcs.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/oem.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/palmos.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/ptcp154.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/punycode.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/quopri_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/raw_unicode_escape.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/rot_13.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/shift_jis.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/shift_jis_2004.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/shift_jisx0213.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/tis_620.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/undefined.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/unicode_escape.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_16.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_16_be.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_16_le.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_32.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_32_be.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_32_le.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_7.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_8.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/utf_8_sig.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/uu_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/encodings/__pycache__/zlib_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/enum.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/filecmp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/fileinput.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/fnmatch.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/fractions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/ftplib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/functools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/genericpath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/getopt.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/getpass.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/gettext.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/glob.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/graphlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/gzip.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/hashlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/heapq.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/hmac.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/html/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/html/__pycache__/entities.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/html/__pycache__/parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/http/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/http/__pycache__/client.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/http/__pycache__/cookiejar.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/http/__pycache__/cookies.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/http/__pycache__/server.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/imghdr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/_abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/_bootstrap.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/_bootstrap_external.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/machinery.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/metadata/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/metadata/__pycache__/_adapters.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/metadata/__pycache__/_collections.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/metadata/__pycache__/_functools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/metadata/__pycache__/_itertools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/metadata/__pycache__/_meta.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/metadata/__pycache__/_text.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/readers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/resources/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/resources/__pycache__/_adapters.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/resources/__pycache__/_common.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/resources/__pycache__/_itertools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/resources/__pycache__/_legacy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/resources/__pycache__/abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/resources/__pycache__/readers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/resources/__pycache__/simple.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/simple.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/importlib/__pycache__/util.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/inspect.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/io.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/ipaddress.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/json/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/json/__pycache__/decoder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/json/__pycache__/encoder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/json/__pycache__/scanner.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/json/__pycache__/tool.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/keyword.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/linecache.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/locale.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/logging/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/logging/__pycache__/config.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/logging/__pycache__/handlers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/lzma.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/mailbox.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/mailcap.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/mimetypes.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/modulefinder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/netrc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/nntplib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/ntpath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/nturl2path.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/numbers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/opcode.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/operator.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/optparse.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/os.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/pathlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/pdb.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/pickle.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/pickletools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/pipes.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/pkgutil.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/platform.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/plistlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/poplib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/posixpath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/pprint.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/profile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/pstats.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/pty.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/py_compile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/pyclbr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/pydoc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/queue.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/quopri.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/random.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/re/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/re/__pycache__/_casefix.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/re/__pycache__/_compiler.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/re/__pycache__/_constants.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/re/__pycache__/_parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/reprlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/rlcompleter.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/runpy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/sched.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/secrets.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/selectors.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/shelve.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/shlex.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/shutil.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/signal.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/site.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/smtplib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/sndhdr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/socket.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/socketserver.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/sqlite3/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/sqlite3/__pycache__/__main__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/sqlite3/__pycache__/dbapi2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/sqlite3/__pycache__/dump.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/sre_compile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/sre_constants.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/sre_parse.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/ssl.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/stat.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/statistics.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/string.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/stringprep.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/struct.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/subprocess.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/sunau.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/symtable.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/sysconfig.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/tabnanny.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/tarfile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/telnetlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/tempfile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/textwrap.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/this.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/threading.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/timeit.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/token.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/tokenize.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/tomllib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/tomllib/__pycache__/_parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/tomllib/__pycache__/_re.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/tomllib/__pycache__/_types.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/trace.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/traceback.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/tracemalloc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/tty.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/types.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/typing.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/urllib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/urllib/__pycache__/error.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/urllib/__pycache__/parse.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/urllib/__pycache__/request.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/urllib/__pycache__/response.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/urllib/__pycache__/robotparser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/uu.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/uuid.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/warnings.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/wave.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/weakref.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/webbrowser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/xdrlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/dom/__pycache__/NodeFilter.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/dom/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/dom/__pycache__/domreg.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/dom/__pycache__/expatbuilder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/dom/__pycache__/minicompat.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/dom/__pycache__/minidom.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/dom/__pycache__/pulldom.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/dom/__pycache__/xmlbuilder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/etree/__pycache__/ElementInclude.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/etree/__pycache__/ElementPath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/etree/__pycache__/ElementTree.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/etree/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/etree/__pycache__/cElementTree.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/parsers/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/parsers/__pycache__/expat.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/sax/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/sax/__pycache__/_exceptions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/sax/__pycache__/expatreader.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/sax/__pycache__/handler.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/sax/__pycache__/saxutils.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xml/sax/__pycache__/xmlreader.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xmlrpc/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xmlrpc/__pycache__/client.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/xmlrpc/__pycache__/server.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/zipapp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/zipfile/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/zipfile/__pycache__/__main__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/zipfile/_path/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/zipfile/_path/__pycache__/glob.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/__pycache__/zipimport.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/zoneinfo/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/zoneinfo/__pycache__/_common.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/zoneinfo/__pycache__/_tzpath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-apple/zoneinfo/__pycache__/_zoneinfo.cpython-312.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
@@ -1782,25 +1783,20 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/__future__.py \
   $(BUILD_DIR)/pylib-android/__hello__.py \
   $(BUILD_DIR)/pylib-android/_aix_support.py \
-  $(BUILD_DIR)/pylib-android/_bootsubprocess.py \
   $(BUILD_DIR)/pylib-android/_collections_abc.py \
   $(BUILD_DIR)/pylib-android/_compat_pickle.py \
   $(BUILD_DIR)/pylib-android/_compression.py \
   $(BUILD_DIR)/pylib-android/_markupbase.py \
   $(BUILD_DIR)/pylib-android/_osx_support.py \
   $(BUILD_DIR)/pylib-android/_py_abc.py \
+  $(BUILD_DIR)/pylib-android/_pydatetime.py \
   $(BUILD_DIR)/pylib-android/_pydecimal.py \
   $(BUILD_DIR)/pylib-android/_pyio.py \
+  $(BUILD_DIR)/pylib-android/_pylong.py \
   $(BUILD_DIR)/pylib-android/_sitebuiltins.py \
   $(BUILD_DIR)/pylib-android/_strptime.py \
-  $(BUILD_DIR)/pylib-android/_sysconfigdata__linux_aarch64-linux-android.py \
-  $(BUILD_DIR)/pylib-android/_sysconfigdata__linux_arm-linux-androideabi.py \
-  $(BUILD_DIR)/pylib-android/_sysconfigdata__linux_i686-linux-android.py \
-  $(BUILD_DIR)/pylib-android/_sysconfigdata__linux_x86_64-linux-android.py \
-  $(BUILD_DIR)/pylib-android/_sysconfigdata_d_linux_aarch64-linux-android.py \
-  $(BUILD_DIR)/pylib-android/_sysconfigdata_d_linux_arm-linux-androideabi.py \
-  $(BUILD_DIR)/pylib-android/_sysconfigdata_d_linux_i686-linux-android.py \
-  $(BUILD_DIR)/pylib-android/_sysconfigdata_d_linux_x86_64-linux-android.py \
+  $(BUILD_DIR)/pylib-android/_sysconfigdata__linux_.py \
+  $(BUILD_DIR)/pylib-android/_sysconfigdata_d_linux_.py \
   $(BUILD_DIR)/pylib-android/_threading_local.py \
   $(BUILD_DIR)/pylib-android/_weakrefset.py \
   $(BUILD_DIR)/pylib-android/abc.py \
@@ -1808,7 +1804,6 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/antigravity.py \
   $(BUILD_DIR)/pylib-android/argparse.py \
   $(BUILD_DIR)/pylib-android/ast.py \
-  $(BUILD_DIR)/pylib-android/asynchat.py \
   $(BUILD_DIR)/pylib-android/asyncio/__init__.py \
   $(BUILD_DIR)/pylib-android/asyncio/__main__.py \
   $(BUILD_DIR)/pylib-android/asyncio/base_events.py \
@@ -1842,7 +1837,6 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/asyncio/unix_events.py \
   $(BUILD_DIR)/pylib-android/asyncio/windows_events.py \
   $(BUILD_DIR)/pylib-android/asyncio/windows_utils.py \
-  $(BUILD_DIR)/pylib-android/asyncore.py \
   $(BUILD_DIR)/pylib-android/base64.py \
   $(BUILD_DIR)/pylib-android/bdb.py \
   $(BUILD_DIR)/pylib-android/bisect.py \
@@ -2069,7 +2063,6 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/http/cookies.py \
   $(BUILD_DIR)/pylib-android/http/server.py \
   $(BUILD_DIR)/pylib-android/imghdr.py \
-  $(BUILD_DIR)/pylib-android/imp.py \
   $(BUILD_DIR)/pylib-android/importlib/__init__.py \
   $(BUILD_DIR)/pylib-android/importlib/_abc.py \
   $(BUILD_DIR)/pylib-android/importlib/_bootstrap.py \
@@ -2158,12 +2151,12 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/shutil.py \
   $(BUILD_DIR)/pylib-android/signal.py \
   $(BUILD_DIR)/pylib-android/site.py \
-  $(BUILD_DIR)/pylib-android/smtpd.py \
   $(BUILD_DIR)/pylib-android/smtplib.py \
   $(BUILD_DIR)/pylib-android/sndhdr.py \
   $(BUILD_DIR)/pylib-android/socket.py \
   $(BUILD_DIR)/pylib-android/socketserver.py \
   $(BUILD_DIR)/pylib-android/sqlite3/__init__.py \
+  $(BUILD_DIR)/pylib-android/sqlite3/__main__.py \
   $(BUILD_DIR)/pylib-android/sqlite3/dbapi2.py \
   $(BUILD_DIR)/pylib-android/sqlite3/dump.py \
   $(BUILD_DIR)/pylib-android/sre_compile.py \
@@ -2238,7 +2231,10 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/xmlrpc/client.py \
   $(BUILD_DIR)/pylib-android/xmlrpc/server.py \
   $(BUILD_DIR)/pylib-android/zipapp.py \
-  $(BUILD_DIR)/pylib-android/zipfile.py \
+  $(BUILD_DIR)/pylib-android/zipfile/__init__.py \
+  $(BUILD_DIR)/pylib-android/zipfile/__main__.py \
+  $(BUILD_DIR)/pylib-android/zipfile/_path/__init__.py \
+  $(BUILD_DIR)/pylib-android/zipfile/_path/glob.py \
   $(BUILD_DIR)/pylib-android/zipimport.py \
   $(BUILD_DIR)/pylib-android/zoneinfo/__init__.py \
   $(BUILD_DIR)/pylib-android/zoneinfo/_common.py \
@@ -2246,471 +2242,466 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/zoneinfo/_zoneinfo.py
 
 SCRIPT_TARGETS_PYC_PRIVATE_ANDROID = \
-  $(BUILD_DIR)/pylib-android/__pycache__/__future__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/__hello__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_aix_support.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_bootsubprocess.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_collections_abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_compat_pickle.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_compression.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_markupbase.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_osx_support.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_py_abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_pydecimal.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_pyio.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_sitebuiltins.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_strptime.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_sysconfigdata__linux_aarch64-linux-android.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_sysconfigdata__linux_arm-linux-androideabi.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_sysconfigdata__linux_i686-linux-android.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_sysconfigdata__linux_x86_64-linux-android.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_sysconfigdata_d_linux_aarch64-linux-android.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_sysconfigdata_d_linux_arm-linux-androideabi.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_sysconfigdata_d_linux_i686-linux-android.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_sysconfigdata_d_linux_x86_64-linux-android.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_threading_local.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/_weakrefset.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/aifc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/antigravity.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/argparse.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/ast.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/asynchat.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/__main__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/base_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/base_futures.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/base_subprocess.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/base_tasks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/constants.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/coroutines.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/exceptions.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/format_helpers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/futures.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/locks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/log.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/mixins.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/proactor_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/protocols.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/queues.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/runners.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/selector_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/sslproto.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/staggered.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/streams.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/subprocess.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/taskgroups.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/tasks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/threads.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/timeouts.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/transports.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/trsock.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/unix_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/windows_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/windows_utils.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/asyncore.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/base64.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/bdb.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/bisect.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/bz2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/cProfile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/calendar.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/cgi.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/cgitb.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/chunk.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/cmd.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/code.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/codecs.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/codeop.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/collections/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/collections/__pycache__/abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/colorsys.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/compileall.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/concurrent/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/concurrent/futures/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/concurrent/futures/__pycache__/_base.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/concurrent/futures/__pycache__/process.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/concurrent/futures/__pycache__/thread.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/configparser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/contextlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/contextvars.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/copy.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/copyreg.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/crypt.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/csv.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/ctypes/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/ctypes/__pycache__/_aix.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/ctypes/__pycache__/_endian.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/ctypes/macholib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/ctypes/macholib/__pycache__/dyld.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/ctypes/macholib/__pycache__/dylib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/ctypes/macholib/__pycache__/framework.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/ctypes/__pycache__/util.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/ctypes/__pycache__/wintypes.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/curses/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/curses/__pycache__/ascii.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/curses/__pycache__/has_key.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/curses/__pycache__/panel.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/curses/__pycache__/textpad.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/dataclasses.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/datetime.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/decimal.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/difflib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/dis.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/doctest.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/_encoded_words.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/_header_value_parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/_parseaddr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/_policybase.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/base64mime.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/charset.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/contentmanager.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/encoders.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/errors.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/feedparser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/generator.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/header.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/headerregistry.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/iterators.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/message.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/application.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/audio.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/base.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/image.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/message.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/multipart.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/nonmultipart.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/text.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/policy.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/quoprimime.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/email/__pycache__/utils.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/aliases.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/ascii.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/base64_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/big5.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/big5hkscs.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/bz2_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/charmap.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp037.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1006.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1026.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1125.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1140.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1250.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1251.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1252.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1253.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1254.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1255.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1256.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1257.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1258.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp273.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp424.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp437.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp500.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp720.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp737.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp775.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp850.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp852.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp855.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp856.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp857.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp858.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp860.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp861.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp862.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp863.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp864.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp865.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp866.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp869.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp874.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp875.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp932.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp949.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp950.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/euc_jis_2004.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/euc_jisx0213.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/euc_jp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/euc_kr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/gb18030.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/gb2312.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/gbk.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/hex_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/hp_roman8.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/hz.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/idna.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso2022_jp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso2022_jp_1.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso2022_jp_2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso2022_jp_2004.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso2022_jp_3.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso2022_jp_ext.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso2022_kr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_1.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_10.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_11.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_13.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_14.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_15.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_16.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_3.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_4.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_5.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_6.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_7.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_8.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_9.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/johab.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/koi8_r.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/koi8_t.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/koi8_u.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/kz1048.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/latin_1.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_arabic.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_croatian.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_cyrillic.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_farsi.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_greek.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_iceland.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_latin2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_roman.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_romanian.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_turkish.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mbcs.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/oem.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/palmos.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/ptcp154.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/punycode.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/quopri_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/raw_unicode_escape.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/rot_13.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/shift_jis.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/shift_jis_2004.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/shift_jisx0213.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/tis_620.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/undefined.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/unicode_escape.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_16.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_16_be.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_16_le.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_32.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_32_be.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_32_le.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_7.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_8.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_8_sig.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/uu_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/encodings/__pycache__/zlib_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/enum.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/filecmp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/fileinput.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/fnmatch.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/fractions.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/ftplib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/functools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/genericpath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/getopt.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/getpass.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/gettext.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/glob.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/graphlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/gzip.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/hashlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/heapq.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/hmac.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/html/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/html/__pycache__/entities.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/html/__pycache__/parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/http/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/http/__pycache__/client.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/http/__pycache__/cookiejar.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/http/__pycache__/cookies.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/http/__pycache__/server.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/imghdr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/imp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/__pycache__/_abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/__pycache__/_bootstrap.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/__pycache__/_bootstrap_external.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/__pycache__/abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/__pycache__/machinery.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/metadata/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/metadata/__pycache__/_adapters.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/metadata/__pycache__/_collections.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/metadata/__pycache__/_functools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/metadata/__pycache__/_itertools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/metadata/__pycache__/_meta.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/metadata/__pycache__/_text.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/__pycache__/readers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/resources/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/resources/__pycache__/_adapters.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/resources/__pycache__/_common.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/resources/__pycache__/_itertools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/resources/__pycache__/_legacy.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/resources/__pycache__/abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/resources/__pycache__/readers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/resources/__pycache__/simple.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/__pycache__/simple.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/importlib/__pycache__/util.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/inspect.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/io.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/ipaddress.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/json/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/json/__pycache__/decoder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/json/__pycache__/encoder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/json/__pycache__/scanner.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/json/__pycache__/tool.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/keyword.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/linecache.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/locale.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/logging/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/logging/__pycache__/config.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/logging/__pycache__/handlers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/lzma.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/mailbox.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/mailcap.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/mimetypes.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/modulefinder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/netrc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/nntplib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/ntpath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/nturl2path.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/numbers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/opcode.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/operator.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/optparse.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/os.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/pathlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/pdb.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/pickle.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/pickletools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/pipes.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/pkgutil.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/platform.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/plistlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/poplib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/posixpath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/pprint.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/profile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/pstats.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/pty.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/py_compile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/pyclbr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/pydoc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/queue.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/quopri.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/random.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/re/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/re/__pycache__/_casefix.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/re/__pycache__/_compiler.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/re/__pycache__/_constants.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/re/__pycache__/_parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/reprlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/rlcompleter.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/runpy.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/sched.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/secrets.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/selectors.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/shelve.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/shlex.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/shutil.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/signal.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/site.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/smtpd.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/smtplib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/sndhdr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/socket.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/socketserver.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/sqlite3/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/sqlite3/__pycache__/dbapi2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/sqlite3/__pycache__/dump.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/sre_compile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/sre_constants.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/sre_parse.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/ssl.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/stat.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/statistics.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/string.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/stringprep.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/struct.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/subprocess.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/sunau.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/symtable.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/sysconfig.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/tabnanny.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/tarfile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/telnetlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/tempfile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/textwrap.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/this.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/threading.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/timeit.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/token.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/tokenize.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/tomllib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/tomllib/__pycache__/_parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/tomllib/__pycache__/_re.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/tomllib/__pycache__/_types.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/trace.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/traceback.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/tracemalloc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/tty.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/types.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/typing.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/urllib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/urllib/__pycache__/error.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/urllib/__pycache__/parse.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/urllib/__pycache__/request.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/urllib/__pycache__/response.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/urllib/__pycache__/robotparser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/uu.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/uuid.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/warnings.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/wave.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/weakref.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/webbrowser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/xdrlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/dom/__pycache__/NodeFilter.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/dom/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/dom/__pycache__/domreg.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/dom/__pycache__/expatbuilder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/dom/__pycache__/minicompat.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/dom/__pycache__/minidom.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/dom/__pycache__/pulldom.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/dom/__pycache__/xmlbuilder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/etree/__pycache__/ElementInclude.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/etree/__pycache__/ElementPath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/etree/__pycache__/ElementTree.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/etree/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/etree/__pycache__/cElementTree.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/parsers/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/parsers/__pycache__/expat.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/sax/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/sax/__pycache__/_exceptions.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/sax/__pycache__/expatreader.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/sax/__pycache__/handler.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/sax/__pycache__/saxutils.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xml/sax/__pycache__/xmlreader.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xmlrpc/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xmlrpc/__pycache__/client.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/xmlrpc/__pycache__/server.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/zipapp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/zipfile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/__pycache__/zipimport.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/zoneinfo/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/zoneinfo/__pycache__/_common.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/zoneinfo/__pycache__/_tzpath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/pylib-android/zoneinfo/__pycache__/_zoneinfo.cpython-311.opt-1.pyc
+  $(BUILD_DIR)/pylib-android/__pycache__/__future__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/__hello__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/_aix_support.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/_collections_abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/_compat_pickle.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/_compression.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/_markupbase.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/_osx_support.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/_py_abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/_pydatetime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/_pydecimal.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/_pyio.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/_pylong.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/_sitebuiltins.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/_strptime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/_sysconfigdata__linux_.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/_sysconfigdata_d_linux_.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/_threading_local.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/_weakrefset.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/aifc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/antigravity.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/argparse.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/ast.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/__main__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/base_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/base_futures.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/base_subprocess.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/base_tasks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/constants.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/coroutines.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/exceptions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/format_helpers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/futures.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/locks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/log.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/mixins.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/proactor_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/protocols.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/queues.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/runners.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/selector_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/sslproto.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/staggered.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/streams.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/subprocess.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/taskgroups.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/tasks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/threads.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/timeouts.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/transports.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/trsock.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/unix_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/windows_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/asyncio/__pycache__/windows_utils.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/base64.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/bdb.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/bisect.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/bz2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/cProfile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/calendar.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/cgi.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/cgitb.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/chunk.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/cmd.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/code.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/codecs.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/codeop.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/collections/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/collections/__pycache__/abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/colorsys.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/compileall.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/concurrent/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/concurrent/futures/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/concurrent/futures/__pycache__/_base.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/concurrent/futures/__pycache__/process.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/concurrent/futures/__pycache__/thread.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/configparser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/contextlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/contextvars.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/copy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/copyreg.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/crypt.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/csv.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/ctypes/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/ctypes/__pycache__/_aix.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/ctypes/__pycache__/_endian.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/ctypes/macholib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/ctypes/macholib/__pycache__/dyld.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/ctypes/macholib/__pycache__/dylib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/ctypes/macholib/__pycache__/framework.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/ctypes/__pycache__/util.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/ctypes/__pycache__/wintypes.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/curses/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/curses/__pycache__/ascii.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/curses/__pycache__/has_key.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/curses/__pycache__/panel.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/curses/__pycache__/textpad.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/dataclasses.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/datetime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/decimal.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/difflib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/dis.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/doctest.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/_encoded_words.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/_header_value_parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/_parseaddr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/_policybase.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/base64mime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/charset.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/contentmanager.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/encoders.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/errors.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/feedparser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/generator.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/header.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/headerregistry.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/iterators.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/message.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/application.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/audio.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/base.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/image.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/message.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/multipart.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/nonmultipart.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/mime/__pycache__/text.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/policy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/quoprimime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/email/__pycache__/utils.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/aliases.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/ascii.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/base64_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/big5.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/big5hkscs.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/bz2_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/charmap.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp037.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1006.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1026.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1125.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1140.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1250.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1251.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1252.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1253.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1254.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1255.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1256.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1257.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp1258.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp273.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp424.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp437.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp500.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp720.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp737.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp775.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp850.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp852.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp855.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp856.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp857.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp858.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp860.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp861.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp862.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp863.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp864.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp865.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp866.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp869.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp874.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp875.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp932.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp949.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/cp950.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/euc_jis_2004.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/euc_jisx0213.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/euc_jp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/euc_kr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/gb18030.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/gb2312.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/gbk.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/hex_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/hp_roman8.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/hz.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/idna.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso2022_jp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso2022_jp_1.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso2022_jp_2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso2022_jp_2004.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso2022_jp_3.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso2022_jp_ext.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso2022_kr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_1.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_10.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_11.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_13.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_14.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_15.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_16.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_3.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_4.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_5.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_6.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_7.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_8.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/iso8859_9.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/johab.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/koi8_r.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/koi8_t.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/koi8_u.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/kz1048.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/latin_1.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_arabic.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_croatian.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_cyrillic.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_farsi.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_greek.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_iceland.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_latin2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_roman.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_romanian.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mac_turkish.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/mbcs.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/oem.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/palmos.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/ptcp154.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/punycode.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/quopri_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/raw_unicode_escape.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/rot_13.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/shift_jis.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/shift_jis_2004.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/shift_jisx0213.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/tis_620.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/undefined.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/unicode_escape.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_16.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_16_be.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_16_le.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_32.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_32_be.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_32_le.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_7.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_8.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/utf_8_sig.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/uu_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/encodings/__pycache__/zlib_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/enum.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/filecmp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/fileinput.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/fnmatch.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/fractions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/ftplib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/functools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/genericpath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/getopt.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/getpass.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/gettext.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/glob.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/graphlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/gzip.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/hashlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/heapq.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/hmac.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/html/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/html/__pycache__/entities.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/html/__pycache__/parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/http/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/http/__pycache__/client.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/http/__pycache__/cookiejar.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/http/__pycache__/cookies.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/http/__pycache__/server.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/imghdr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/__pycache__/_abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/__pycache__/_bootstrap.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/__pycache__/_bootstrap_external.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/__pycache__/abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/__pycache__/machinery.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/metadata/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/metadata/__pycache__/_adapters.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/metadata/__pycache__/_collections.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/metadata/__pycache__/_functools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/metadata/__pycache__/_itertools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/metadata/__pycache__/_meta.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/metadata/__pycache__/_text.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/__pycache__/readers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/resources/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/resources/__pycache__/_adapters.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/resources/__pycache__/_common.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/resources/__pycache__/_itertools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/resources/__pycache__/_legacy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/resources/__pycache__/abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/resources/__pycache__/readers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/resources/__pycache__/simple.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/__pycache__/simple.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/importlib/__pycache__/util.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/inspect.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/io.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/ipaddress.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/json/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/json/__pycache__/decoder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/json/__pycache__/encoder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/json/__pycache__/scanner.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/json/__pycache__/tool.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/keyword.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/linecache.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/locale.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/logging/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/logging/__pycache__/config.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/logging/__pycache__/handlers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/lzma.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/mailbox.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/mailcap.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/mimetypes.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/modulefinder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/netrc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/nntplib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/ntpath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/nturl2path.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/numbers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/opcode.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/operator.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/optparse.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/os.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/pathlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/pdb.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/pickle.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/pickletools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/pipes.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/pkgutil.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/platform.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/plistlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/poplib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/posixpath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/pprint.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/profile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/pstats.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/pty.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/py_compile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/pyclbr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/pydoc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/queue.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/quopri.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/random.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/re/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/re/__pycache__/_casefix.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/re/__pycache__/_compiler.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/re/__pycache__/_constants.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/re/__pycache__/_parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/reprlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/rlcompleter.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/runpy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/sched.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/secrets.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/selectors.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/shelve.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/shlex.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/shutil.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/signal.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/site.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/smtplib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/sndhdr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/socket.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/socketserver.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/sqlite3/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/sqlite3/__pycache__/__main__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/sqlite3/__pycache__/dbapi2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/sqlite3/__pycache__/dump.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/sre_compile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/sre_constants.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/sre_parse.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/ssl.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/stat.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/statistics.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/string.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/stringprep.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/struct.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/subprocess.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/sunau.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/symtable.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/sysconfig.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/tabnanny.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/tarfile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/telnetlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/tempfile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/textwrap.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/this.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/threading.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/timeit.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/token.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/tokenize.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/tomllib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/tomllib/__pycache__/_parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/tomllib/__pycache__/_re.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/tomllib/__pycache__/_types.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/trace.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/traceback.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/tracemalloc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/tty.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/types.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/typing.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/urllib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/urllib/__pycache__/error.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/urllib/__pycache__/parse.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/urllib/__pycache__/request.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/urllib/__pycache__/response.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/urllib/__pycache__/robotparser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/uu.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/uuid.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/warnings.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/wave.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/weakref.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/webbrowser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/xdrlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/dom/__pycache__/NodeFilter.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/dom/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/dom/__pycache__/domreg.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/dom/__pycache__/expatbuilder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/dom/__pycache__/minicompat.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/dom/__pycache__/minidom.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/dom/__pycache__/pulldom.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/dom/__pycache__/xmlbuilder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/etree/__pycache__/ElementInclude.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/etree/__pycache__/ElementPath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/etree/__pycache__/ElementTree.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/etree/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/etree/__pycache__/cElementTree.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/parsers/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/parsers/__pycache__/expat.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/sax/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/sax/__pycache__/_exceptions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/sax/__pycache__/expatreader.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/sax/__pycache__/handler.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/sax/__pycache__/saxutils.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xml/sax/__pycache__/xmlreader.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xmlrpc/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xmlrpc/__pycache__/client.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/xmlrpc/__pycache__/server.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/zipapp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/zipfile/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/zipfile/__pycache__/__main__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/zipfile/_path/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/zipfile/_path/__pycache__/glob.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/__pycache__/zipimport.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/zoneinfo/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/zoneinfo/__pycache__/_common.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/zoneinfo/__pycache__/_tzpath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/pylib-android/zoneinfo/__pycache__/_zoneinfo.cpython-312.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
@@ -2723,54 +2714,90 @@ $(foreach element,$(SCRIPT_TARGETS_PYC_PRIVATE_ANDROID),\
 $(eval $(call make-opt-pyc-target,$(element))))
 
 SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
-  $(BUILD_DIR)/ba_data/python-site-packages/_yaml/__init__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__init__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__main__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/core.py \
   $(BUILD_DIR)/ba_data/python-site-packages/typing_extensions.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__init__.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/composer.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/constructor.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/cyaml.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/dumper.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/emitter.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/error.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/events.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/loader.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/nodes.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/parser.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/reader.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/representer.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/resolver.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/scanner.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/serializer.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/tokens.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/_base_connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/_collections.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/_request_methods.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/_version.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/connectionpool.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/fetch.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/request.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/response.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/pyopenssl.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/socks.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/exceptions.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/fields.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/filepost.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/probe.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/poolmanager.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/response.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/proxy.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/request.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/response.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/retry.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/ssl_.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/ssl_match_hostname.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/ssltransport.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/timeout.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/url.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/util.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/wait.py \
   $(BUILD_DIR)/sphinx/static/conf.py
 
 SCRIPT_TARGETS_PYC_PRIVATE_COMMON = \
-  $(BUILD_DIR)/ba_data/python-site-packages/_yaml/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/certifi/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/certifi/__pycache__/__main__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/certifi/__pycache__/core.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/__pycache__/typing_extensions.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/composer.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/constructor.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/cyaml.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/dumper.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/emitter.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/error.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/loader.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/nodes.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/reader.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/representer.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/resolver.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/scanner.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/serializer.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python-site-packages/yaml/__pycache__/tokens.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/sphinx/static/__pycache__/conf.cpython-311.opt-1.pyc
+  $(BUILD_DIR)/ba_data/python-site-packages/certifi/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/certifi/__pycache__/__main__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/certifi/__pycache__/core.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/__pycache__/typing_extensions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/_base_connection.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/_collections.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/_request_methods.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/_version.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/connection.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/connectionpool.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__pycache__/connection.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__pycache__/fetch.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__pycache__/request.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/emscripten/__pycache__/response.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/__pycache__/pyopenssl.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/contrib/__pycache__/socks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/exceptions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/fields.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/filepost.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/__pycache__/connection.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/http2/__pycache__/probe.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/poolmanager.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__pycache__/response.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/connection.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/proxy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/request.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/response.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/retry.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/ssl_.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/ssl_match_hostname.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/ssltransport.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/timeout.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/url.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/util.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/__pycache__/wait.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/sphinx/static/__pycache__/conf.cpython-312.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
@@ -2786,15 +2813,16 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/__future__.py \
   $(BUILD_DIR)/windows/Win32/Lib/__hello__.py \
   $(BUILD_DIR)/windows/Win32/Lib/_aix_support.py \
-  $(BUILD_DIR)/windows/Win32/Lib/_bootsubprocess.py \
   $(BUILD_DIR)/windows/Win32/Lib/_collections_abc.py \
   $(BUILD_DIR)/windows/Win32/Lib/_compat_pickle.py \
   $(BUILD_DIR)/windows/Win32/Lib/_compression.py \
   $(BUILD_DIR)/windows/Win32/Lib/_markupbase.py \
   $(BUILD_DIR)/windows/Win32/Lib/_osx_support.py \
   $(BUILD_DIR)/windows/Win32/Lib/_py_abc.py \
+  $(BUILD_DIR)/windows/Win32/Lib/_pydatetime.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pydecimal.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyio.py \
+  $(BUILD_DIR)/windows/Win32/Lib/_pylong.py \
   $(BUILD_DIR)/windows/Win32/Lib/_sitebuiltins.py \
   $(BUILD_DIR)/windows/Win32/Lib/_strptime.py \
   $(BUILD_DIR)/windows/Win32/Lib/_threading_local.py \
@@ -2804,7 +2832,6 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/antigravity.py \
   $(BUILD_DIR)/windows/Win32/Lib/argparse.py \
   $(BUILD_DIR)/windows/Win32/Lib/ast.py \
-  $(BUILD_DIR)/windows/Win32/Lib/asynchat.py \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/__init__.py \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/__main__.py \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/base_events.py \
@@ -2838,7 +2865,6 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/unix_events.py \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/windows_events.py \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/windows_utils.py \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncore.py \
   $(BUILD_DIR)/windows/Win32/Lib/base64.py \
   $(BUILD_DIR)/windows/Win32/Lib/bdb.py \
   $(BUILD_DIR)/windows/Win32/Lib/bisect.py \
@@ -3065,7 +3091,6 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/http/cookies.py \
   $(BUILD_DIR)/windows/Win32/Lib/http/server.py \
   $(BUILD_DIR)/windows/Win32/Lib/imghdr.py \
-  $(BUILD_DIR)/windows/Win32/Lib/imp.py \
   $(BUILD_DIR)/windows/Win32/Lib/importlib/__init__.py \
   $(BUILD_DIR)/windows/Win32/Lib/importlib/_abc.py \
   $(BUILD_DIR)/windows/Win32/Lib/importlib/_bootstrap.py \
@@ -3154,12 +3179,12 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/shutil.py \
   $(BUILD_DIR)/windows/Win32/Lib/signal.py \
   $(BUILD_DIR)/windows/Win32/Lib/site.py \
-  $(BUILD_DIR)/windows/Win32/Lib/smtpd.py \
   $(BUILD_DIR)/windows/Win32/Lib/smtplib.py \
   $(BUILD_DIR)/windows/Win32/Lib/sndhdr.py \
   $(BUILD_DIR)/windows/Win32/Lib/socket.py \
   $(BUILD_DIR)/windows/Win32/Lib/socketserver.py \
   $(BUILD_DIR)/windows/Win32/Lib/sqlite3/__init__.py \
+  $(BUILD_DIR)/windows/Win32/Lib/sqlite3/__main__.py \
   $(BUILD_DIR)/windows/Win32/Lib/sqlite3/dbapi2.py \
   $(BUILD_DIR)/windows/Win32/Lib/sqlite3/dump.py \
   $(BUILD_DIR)/windows/Win32/Lib/sre_compile.py \
@@ -3234,7 +3259,10 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/xmlrpc/client.py \
   $(BUILD_DIR)/windows/Win32/Lib/xmlrpc/server.py \
   $(BUILD_DIR)/windows/Win32/Lib/zipapp.py \
-  $(BUILD_DIR)/windows/Win32/Lib/zipfile.py \
+  $(BUILD_DIR)/windows/Win32/Lib/zipfile/__init__.py \
+  $(BUILD_DIR)/windows/Win32/Lib/zipfile/__main__.py \
+  $(BUILD_DIR)/windows/Win32/Lib/zipfile/_path/__init__.py \
+  $(BUILD_DIR)/windows/Win32/Lib/zipfile/_path/glob.py \
   $(BUILD_DIR)/windows/Win32/Lib/zipimport.py \
   $(BUILD_DIR)/windows/Win32/Lib/zoneinfo/__init__.py \
   $(BUILD_DIR)/windows/Win32/Lib/zoneinfo/_common.py \
@@ -3242,463 +3270,464 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/zoneinfo/_zoneinfo.py
 
 SCRIPT_TARGETS_PYC_PRIVATE_WIN_WIN32 = \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/__future__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/__hello__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_aix_support.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_bootsubprocess.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_collections_abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_compat_pickle.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_compression.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_markupbase.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_osx_support.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_py_abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_pydecimal.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_pyio.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_sitebuiltins.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_strptime.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_threading_local.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_weakrefset.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/aifc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/antigravity.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/argparse.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/ast.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/asynchat.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/__main__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/base_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/base_futures.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/base_subprocess.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/base_tasks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/constants.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/coroutines.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/exceptions.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/format_helpers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/futures.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/locks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/log.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/mixins.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/proactor_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/protocols.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/queues.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/runners.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/selector_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/sslproto.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/staggered.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/streams.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/subprocess.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/taskgroups.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/tasks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/threads.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/timeouts.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/transports.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/trsock.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/unix_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/windows_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/windows_utils.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/asyncore.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/base64.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/bdb.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/bisect.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/bz2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/cProfile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/calendar.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/cgi.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/cgitb.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/chunk.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/cmd.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/code.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/codecs.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/codeop.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/collections/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/collections/__pycache__/abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/colorsys.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/compileall.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/concurrent/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/concurrent/futures/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/concurrent/futures/__pycache__/_base.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/concurrent/futures/__pycache__/process.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/concurrent/futures/__pycache__/thread.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/configparser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/contextlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/contextvars.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/copy.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/copyreg.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/crypt.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/csv.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/ctypes/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/ctypes/__pycache__/_aix.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/ctypes/__pycache__/_endian.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/ctypes/macholib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/ctypes/macholib/__pycache__/dyld.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/ctypes/macholib/__pycache__/dylib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/ctypes/macholib/__pycache__/framework.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/ctypes/__pycache__/util.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/ctypes/__pycache__/wintypes.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/curses/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/curses/__pycache__/ascii.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/curses/__pycache__/has_key.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/curses/__pycache__/panel.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/curses/__pycache__/textpad.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/dataclasses.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/datetime.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/decimal.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/difflib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/dis.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/doctest.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/_encoded_words.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/_header_value_parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/_parseaddr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/_policybase.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/base64mime.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/charset.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/contentmanager.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/encoders.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/errors.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/feedparser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/generator.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/header.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/headerregistry.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/iterators.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/message.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/application.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/audio.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/base.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/image.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/message.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/multipart.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/nonmultipart.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/text.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/policy.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/quoprimime.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/utils.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/aliases.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/ascii.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/base64_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/big5.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/big5hkscs.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/bz2_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/charmap.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp037.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1006.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1026.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1125.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1140.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1250.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1251.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1252.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1253.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1254.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1255.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1256.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1257.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1258.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp273.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp424.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp437.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp500.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp720.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp737.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp775.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp850.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp852.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp855.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp856.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp857.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp858.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp860.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp861.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp862.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp863.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp864.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp865.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp866.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp869.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp874.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp875.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp932.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp949.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp950.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/euc_jis_2004.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/euc_jisx0213.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/euc_jp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/euc_kr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/gb18030.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/gb2312.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/gbk.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/hex_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/hp_roman8.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/hz.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/idna.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso2022_jp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_1.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_2004.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_3.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_ext.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso2022_kr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_1.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_10.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_11.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_13.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_14.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_15.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_16.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_3.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_4.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_5.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_6.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_7.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_8.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_9.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/johab.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/koi8_r.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/koi8_t.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/koi8_u.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/kz1048.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/latin_1.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_arabic.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_croatian.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_cyrillic.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_farsi.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_greek.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_iceland.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_latin2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_roman.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_romanian.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_turkish.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mbcs.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/oem.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/palmos.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/ptcp154.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/punycode.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/quopri_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/raw_unicode_escape.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/rot_13.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/shift_jis.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/shift_jis_2004.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/shift_jisx0213.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/tis_620.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/undefined.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/unicode_escape.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_16.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_16_be.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_16_le.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_32.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_32_be.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_32_le.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_7.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_8.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_8_sig.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/uu_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/zlib_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/enum.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/filecmp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/fileinput.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/fnmatch.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/fractions.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/ftplib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/functools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/genericpath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/getopt.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/getpass.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/gettext.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/glob.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/graphlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/gzip.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/hashlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/heapq.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/hmac.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/html/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/html/__pycache__/entities.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/html/__pycache__/parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/http/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/http/__pycache__/client.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/http/__pycache__/cookiejar.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/http/__pycache__/cookies.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/http/__pycache__/server.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/imghdr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/imp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/_abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/_bootstrap.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/_bootstrap_external.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/machinery.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/metadata/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/metadata/__pycache__/_adapters.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/metadata/__pycache__/_collections.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/metadata/__pycache__/_functools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/metadata/__pycache__/_itertools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/metadata/__pycache__/_meta.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/metadata/__pycache__/_text.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/readers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/resources/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/resources/__pycache__/_adapters.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/resources/__pycache__/_common.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/resources/__pycache__/_itertools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/resources/__pycache__/_legacy.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/resources/__pycache__/abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/resources/__pycache__/readers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/resources/__pycache__/simple.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/simple.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/util.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/inspect.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/io.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/ipaddress.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/json/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/json/__pycache__/decoder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/json/__pycache__/encoder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/json/__pycache__/scanner.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/json/__pycache__/tool.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/keyword.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/linecache.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/locale.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/logging/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/logging/__pycache__/config.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/logging/__pycache__/handlers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/lzma.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/mailbox.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/mailcap.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/mimetypes.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/modulefinder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/netrc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/nntplib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/ntpath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/nturl2path.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/numbers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/opcode.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/operator.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/optparse.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/os.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pathlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pdb.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pickle.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pickletools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pipes.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pkgutil.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/platform.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/plistlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/poplib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/posixpath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pprint.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/profile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pstats.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pty.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/py_compile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pyclbr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pydoc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/queue.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/quopri.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/random.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/re/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/re/__pycache__/_casefix.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/re/__pycache__/_compiler.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/re/__pycache__/_constants.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/re/__pycache__/_parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/reprlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/rlcompleter.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/runpy.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/sched.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/secrets.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/selectors.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/shelve.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/shlex.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/shutil.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/signal.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/site.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/smtpd.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/smtplib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/sndhdr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/socket.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/socketserver.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/sqlite3/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/sqlite3/__pycache__/dbapi2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/sqlite3/__pycache__/dump.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/sre_compile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/sre_constants.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/sre_parse.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/ssl.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/stat.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/statistics.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/string.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/stringprep.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/struct.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/subprocess.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/sunau.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/symtable.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/sysconfig.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/tabnanny.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/tarfile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/telnetlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/tempfile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/textwrap.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/this.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/threading.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/timeit.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/token.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/tokenize.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/tomllib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/tomllib/__pycache__/_parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/tomllib/__pycache__/_re.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/tomllib/__pycache__/_types.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/trace.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/traceback.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/tracemalloc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/tty.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/types.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/typing.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/urllib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/urllib/__pycache__/error.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/urllib/__pycache__/parse.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/urllib/__pycache__/request.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/urllib/__pycache__/response.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/urllib/__pycache__/robotparser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/uu.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/uuid.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/warnings.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/wave.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/weakref.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/webbrowser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/xdrlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/dom/__pycache__/NodeFilter.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/dom/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/dom/__pycache__/domreg.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/dom/__pycache__/expatbuilder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/dom/__pycache__/minicompat.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/dom/__pycache__/minidom.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/dom/__pycache__/pulldom.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/dom/__pycache__/xmlbuilder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/etree/__pycache__/ElementInclude.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/etree/__pycache__/ElementPath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/etree/__pycache__/ElementTree.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/etree/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/etree/__pycache__/cElementTree.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/parsers/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/parsers/__pycache__/expat.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/sax/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/sax/__pycache__/_exceptions.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/sax/__pycache__/expatreader.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/sax/__pycache__/handler.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/sax/__pycache__/saxutils.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xml/sax/__pycache__/xmlreader.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xmlrpc/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xmlrpc/__pycache__/client.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/xmlrpc/__pycache__/server.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/zipapp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/zipfile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/zipimport.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/zoneinfo/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/zoneinfo/__pycache__/_common.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/zoneinfo/__pycache__/_tzpath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/Win32/Lib/zoneinfo/__pycache__/_zoneinfo.cpython-311.opt-1.pyc
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/__future__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/__hello__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_aix_support.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_collections_abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_compat_pickle.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_compression.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_markupbase.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_osx_support.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_py_abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_pydatetime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_pydecimal.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_pyio.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_pylong.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_sitebuiltins.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_strptime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_threading_local.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/_weakrefset.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/aifc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/antigravity.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/argparse.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/ast.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/__main__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/base_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/base_futures.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/base_subprocess.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/base_tasks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/constants.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/coroutines.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/exceptions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/format_helpers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/futures.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/locks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/log.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/mixins.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/proactor_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/protocols.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/queues.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/runners.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/selector_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/sslproto.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/staggered.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/streams.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/subprocess.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/taskgroups.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/tasks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/threads.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/timeouts.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/transports.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/trsock.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/unix_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/windows_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/__pycache__/windows_utils.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/base64.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/bdb.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/bisect.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/bz2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/cProfile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/calendar.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/cgi.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/cgitb.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/chunk.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/cmd.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/code.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/codecs.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/codeop.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/collections/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/collections/__pycache__/abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/colorsys.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/compileall.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/concurrent/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/concurrent/futures/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/concurrent/futures/__pycache__/_base.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/concurrent/futures/__pycache__/process.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/concurrent/futures/__pycache__/thread.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/configparser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/contextlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/contextvars.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/copy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/copyreg.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/crypt.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/csv.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/ctypes/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/ctypes/__pycache__/_aix.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/ctypes/__pycache__/_endian.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/ctypes/macholib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/ctypes/macholib/__pycache__/dyld.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/ctypes/macholib/__pycache__/dylib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/ctypes/macholib/__pycache__/framework.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/ctypes/__pycache__/util.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/ctypes/__pycache__/wintypes.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/curses/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/curses/__pycache__/ascii.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/curses/__pycache__/has_key.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/curses/__pycache__/panel.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/curses/__pycache__/textpad.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/dataclasses.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/datetime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/decimal.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/difflib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/dis.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/doctest.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/_encoded_words.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/_header_value_parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/_parseaddr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/_policybase.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/base64mime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/charset.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/contentmanager.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/encoders.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/errors.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/feedparser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/generator.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/header.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/headerregistry.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/iterators.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/message.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/application.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/audio.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/base.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/image.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/message.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/multipart.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/nonmultipart.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/mime/__pycache__/text.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/policy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/quoprimime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/email/__pycache__/utils.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/aliases.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/ascii.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/base64_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/big5.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/big5hkscs.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/bz2_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/charmap.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp037.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1006.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1026.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1125.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1140.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1250.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1251.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1252.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1253.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1254.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1255.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1256.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1257.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp1258.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp273.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp424.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp437.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp500.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp720.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp737.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp775.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp850.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp852.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp855.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp856.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp857.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp858.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp860.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp861.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp862.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp863.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp864.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp865.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp866.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp869.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp874.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp875.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp932.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp949.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/cp950.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/euc_jis_2004.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/euc_jisx0213.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/euc_jp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/euc_kr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/gb18030.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/gb2312.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/gbk.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/hex_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/hp_roman8.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/hz.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/idna.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso2022_jp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_1.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_2004.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_3.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso2022_jp_ext.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso2022_kr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_1.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_10.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_11.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_13.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_14.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_15.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_16.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_3.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_4.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_5.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_6.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_7.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_8.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/iso8859_9.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/johab.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/koi8_r.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/koi8_t.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/koi8_u.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/kz1048.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/latin_1.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_arabic.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_croatian.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_cyrillic.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_farsi.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_greek.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_iceland.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_latin2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_roman.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_romanian.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mac_turkish.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/mbcs.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/oem.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/palmos.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/ptcp154.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/punycode.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/quopri_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/raw_unicode_escape.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/rot_13.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/shift_jis.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/shift_jis_2004.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/shift_jisx0213.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/tis_620.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/undefined.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/unicode_escape.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_16.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_16_be.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_16_le.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_32.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_32_be.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_32_le.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_7.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_8.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/utf_8_sig.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/uu_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/__pycache__/zlib_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/enum.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/filecmp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/fileinput.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/fnmatch.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/fractions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/ftplib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/functools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/genericpath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/getopt.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/getpass.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/gettext.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/glob.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/graphlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/gzip.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/hashlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/heapq.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/hmac.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/html/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/html/__pycache__/entities.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/html/__pycache__/parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/http/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/http/__pycache__/client.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/http/__pycache__/cookiejar.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/http/__pycache__/cookies.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/http/__pycache__/server.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/imghdr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/_abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/_bootstrap.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/_bootstrap_external.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/machinery.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/metadata/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/metadata/__pycache__/_adapters.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/metadata/__pycache__/_collections.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/metadata/__pycache__/_functools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/metadata/__pycache__/_itertools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/metadata/__pycache__/_meta.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/metadata/__pycache__/_text.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/readers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/resources/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/resources/__pycache__/_adapters.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/resources/__pycache__/_common.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/resources/__pycache__/_itertools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/resources/__pycache__/_legacy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/resources/__pycache__/abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/resources/__pycache__/readers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/resources/__pycache__/simple.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/simple.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/importlib/__pycache__/util.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/inspect.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/io.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/ipaddress.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/json/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/json/__pycache__/decoder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/json/__pycache__/encoder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/json/__pycache__/scanner.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/json/__pycache__/tool.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/keyword.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/linecache.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/locale.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/logging/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/logging/__pycache__/config.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/logging/__pycache__/handlers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/lzma.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/mailbox.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/mailcap.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/mimetypes.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/modulefinder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/netrc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/nntplib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/ntpath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/nturl2path.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/numbers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/opcode.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/operator.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/optparse.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/os.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pathlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pdb.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pickle.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pickletools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pipes.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pkgutil.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/platform.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/plistlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/poplib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/posixpath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pprint.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/profile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pstats.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pty.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/py_compile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pyclbr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/pydoc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/queue.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/quopri.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/random.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/re/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/re/__pycache__/_casefix.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/re/__pycache__/_compiler.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/re/__pycache__/_constants.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/re/__pycache__/_parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/reprlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/rlcompleter.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/runpy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/sched.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/secrets.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/selectors.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/shelve.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/shlex.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/shutil.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/signal.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/site.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/smtplib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/sndhdr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/socket.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/socketserver.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/sqlite3/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/sqlite3/__pycache__/__main__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/sqlite3/__pycache__/dbapi2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/sqlite3/__pycache__/dump.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/sre_compile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/sre_constants.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/sre_parse.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/ssl.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/stat.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/statistics.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/string.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/stringprep.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/struct.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/subprocess.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/sunau.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/symtable.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/sysconfig.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/tabnanny.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/tarfile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/telnetlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/tempfile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/textwrap.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/this.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/threading.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/timeit.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/token.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/tokenize.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/tomllib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/tomllib/__pycache__/_parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/tomllib/__pycache__/_re.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/tomllib/__pycache__/_types.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/trace.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/traceback.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/tracemalloc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/tty.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/types.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/typing.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/urllib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/urllib/__pycache__/error.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/urllib/__pycache__/parse.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/urllib/__pycache__/request.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/urllib/__pycache__/response.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/urllib/__pycache__/robotparser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/uu.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/uuid.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/warnings.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/wave.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/weakref.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/webbrowser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/xdrlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/dom/__pycache__/NodeFilter.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/dom/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/dom/__pycache__/domreg.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/dom/__pycache__/expatbuilder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/dom/__pycache__/minicompat.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/dom/__pycache__/minidom.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/dom/__pycache__/pulldom.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/dom/__pycache__/xmlbuilder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/etree/__pycache__/ElementInclude.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/etree/__pycache__/ElementPath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/etree/__pycache__/ElementTree.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/etree/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/etree/__pycache__/cElementTree.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/parsers/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/parsers/__pycache__/expat.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/sax/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/sax/__pycache__/_exceptions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/sax/__pycache__/expatreader.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/sax/__pycache__/handler.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/sax/__pycache__/saxutils.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xml/sax/__pycache__/xmlreader.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xmlrpc/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xmlrpc/__pycache__/client.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/xmlrpc/__pycache__/server.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/zipapp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/zipfile/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/zipfile/__pycache__/__main__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/zipfile/_path/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/zipfile/_path/__pycache__/glob.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/__pycache__/zipimport.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/zoneinfo/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/zoneinfo/__pycache__/_common.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/zoneinfo/__pycache__/_tzpath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/Win32/Lib/zoneinfo/__pycache__/_zoneinfo.cpython-312.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
@@ -3714,15 +3743,16 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/__future__.py \
   $(BUILD_DIR)/windows/x64/Lib/__hello__.py \
   $(BUILD_DIR)/windows/x64/Lib/_aix_support.py \
-  $(BUILD_DIR)/windows/x64/Lib/_bootsubprocess.py \
   $(BUILD_DIR)/windows/x64/Lib/_collections_abc.py \
   $(BUILD_DIR)/windows/x64/Lib/_compat_pickle.py \
   $(BUILD_DIR)/windows/x64/Lib/_compression.py \
   $(BUILD_DIR)/windows/x64/Lib/_markupbase.py \
   $(BUILD_DIR)/windows/x64/Lib/_osx_support.py \
   $(BUILD_DIR)/windows/x64/Lib/_py_abc.py \
+  $(BUILD_DIR)/windows/x64/Lib/_pydatetime.py \
   $(BUILD_DIR)/windows/x64/Lib/_pydecimal.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyio.py \
+  $(BUILD_DIR)/windows/x64/Lib/_pylong.py \
   $(BUILD_DIR)/windows/x64/Lib/_sitebuiltins.py \
   $(BUILD_DIR)/windows/x64/Lib/_strptime.py \
   $(BUILD_DIR)/windows/x64/Lib/_threading_local.py \
@@ -3732,7 +3762,6 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/antigravity.py \
   $(BUILD_DIR)/windows/x64/Lib/argparse.py \
   $(BUILD_DIR)/windows/x64/Lib/ast.py \
-  $(BUILD_DIR)/windows/x64/Lib/asynchat.py \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/__init__.py \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/__main__.py \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/base_events.py \
@@ -3766,7 +3795,6 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/unix_events.py \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/windows_events.py \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/windows_utils.py \
-  $(BUILD_DIR)/windows/x64/Lib/asyncore.py \
   $(BUILD_DIR)/windows/x64/Lib/base64.py \
   $(BUILD_DIR)/windows/x64/Lib/bdb.py \
   $(BUILD_DIR)/windows/x64/Lib/bisect.py \
@@ -3993,7 +4021,6 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/http/cookies.py \
   $(BUILD_DIR)/windows/x64/Lib/http/server.py \
   $(BUILD_DIR)/windows/x64/Lib/imghdr.py \
-  $(BUILD_DIR)/windows/x64/Lib/imp.py \
   $(BUILD_DIR)/windows/x64/Lib/importlib/__init__.py \
   $(BUILD_DIR)/windows/x64/Lib/importlib/_abc.py \
   $(BUILD_DIR)/windows/x64/Lib/importlib/_bootstrap.py \
@@ -4082,12 +4109,12 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/shutil.py \
   $(BUILD_DIR)/windows/x64/Lib/signal.py \
   $(BUILD_DIR)/windows/x64/Lib/site.py \
-  $(BUILD_DIR)/windows/x64/Lib/smtpd.py \
   $(BUILD_DIR)/windows/x64/Lib/smtplib.py \
   $(BUILD_DIR)/windows/x64/Lib/sndhdr.py \
   $(BUILD_DIR)/windows/x64/Lib/socket.py \
   $(BUILD_DIR)/windows/x64/Lib/socketserver.py \
   $(BUILD_DIR)/windows/x64/Lib/sqlite3/__init__.py \
+  $(BUILD_DIR)/windows/x64/Lib/sqlite3/__main__.py \
   $(BUILD_DIR)/windows/x64/Lib/sqlite3/dbapi2.py \
   $(BUILD_DIR)/windows/x64/Lib/sqlite3/dump.py \
   $(BUILD_DIR)/windows/x64/Lib/sre_compile.py \
@@ -4162,7 +4189,10 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/xmlrpc/client.py \
   $(BUILD_DIR)/windows/x64/Lib/xmlrpc/server.py \
   $(BUILD_DIR)/windows/x64/Lib/zipapp.py \
-  $(BUILD_DIR)/windows/x64/Lib/zipfile.py \
+  $(BUILD_DIR)/windows/x64/Lib/zipfile/__init__.py \
+  $(BUILD_DIR)/windows/x64/Lib/zipfile/__main__.py \
+  $(BUILD_DIR)/windows/x64/Lib/zipfile/_path/__init__.py \
+  $(BUILD_DIR)/windows/x64/Lib/zipfile/_path/glob.py \
   $(BUILD_DIR)/windows/x64/Lib/zipimport.py \
   $(BUILD_DIR)/windows/x64/Lib/zoneinfo/__init__.py \
   $(BUILD_DIR)/windows/x64/Lib/zoneinfo/_common.py \
@@ -4170,463 +4200,464 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/zoneinfo/_zoneinfo.py
 
 SCRIPT_TARGETS_PYC_PRIVATE_WIN_X64 = \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/__future__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/__hello__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_aix_support.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_bootsubprocess.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_collections_abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_compat_pickle.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_compression.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_markupbase.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_osx_support.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_py_abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_pydecimal.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_pyio.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_sitebuiltins.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_strptime.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_threading_local.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_weakrefset.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/aifc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/antigravity.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/argparse.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/ast.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/asynchat.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/__main__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/base_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/base_futures.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/base_subprocess.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/base_tasks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/constants.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/coroutines.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/exceptions.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/format_helpers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/futures.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/locks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/log.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/mixins.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/proactor_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/protocols.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/queues.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/runners.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/selector_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/sslproto.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/staggered.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/streams.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/subprocess.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/taskgroups.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/tasks.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/threads.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/timeouts.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/transports.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/trsock.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/unix_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/windows_events.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/windows_utils.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/asyncore.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/base64.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/bdb.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/bisect.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/bz2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/cProfile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/calendar.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/cgi.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/cgitb.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/chunk.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/cmd.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/code.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/codecs.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/codeop.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/collections/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/collections/__pycache__/abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/colorsys.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/compileall.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/concurrent/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/concurrent/futures/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/concurrent/futures/__pycache__/_base.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/concurrent/futures/__pycache__/process.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/concurrent/futures/__pycache__/thread.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/configparser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/contextlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/contextvars.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/copy.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/copyreg.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/crypt.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/csv.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/ctypes/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/ctypes/__pycache__/_aix.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/ctypes/__pycache__/_endian.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/ctypes/macholib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/ctypes/macholib/__pycache__/dyld.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/ctypes/macholib/__pycache__/dylib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/ctypes/macholib/__pycache__/framework.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/ctypes/__pycache__/util.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/ctypes/__pycache__/wintypes.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/curses/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/curses/__pycache__/ascii.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/curses/__pycache__/has_key.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/curses/__pycache__/panel.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/curses/__pycache__/textpad.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/dataclasses.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/datetime.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/decimal.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/difflib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/dis.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/doctest.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/_encoded_words.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/_header_value_parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/_parseaddr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/_policybase.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/base64mime.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/charset.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/contentmanager.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/encoders.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/errors.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/feedparser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/generator.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/header.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/headerregistry.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/iterators.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/message.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/application.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/audio.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/base.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/image.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/message.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/multipart.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/nonmultipart.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/text.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/policy.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/quoprimime.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/utils.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/aliases.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/ascii.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/base64_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/big5.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/big5hkscs.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/bz2_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/charmap.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp037.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1006.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1026.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1125.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1140.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1250.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1251.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1252.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1253.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1254.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1255.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1256.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1257.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1258.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp273.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp424.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp437.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp500.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp720.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp737.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp775.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp850.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp852.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp855.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp856.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp857.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp858.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp860.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp861.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp862.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp863.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp864.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp865.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp866.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp869.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp874.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp875.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp932.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp949.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp950.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/euc_jis_2004.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/euc_jisx0213.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/euc_jp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/euc_kr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/gb18030.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/gb2312.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/gbk.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/hex_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/hp_roman8.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/hz.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/idna.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso2022_jp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso2022_jp_1.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso2022_jp_2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso2022_jp_2004.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso2022_jp_3.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso2022_jp_ext.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso2022_kr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_1.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_10.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_11.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_13.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_14.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_15.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_16.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_3.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_4.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_5.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_6.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_7.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_8.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_9.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/johab.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/koi8_r.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/koi8_t.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/koi8_u.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/kz1048.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/latin_1.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_arabic.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_croatian.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_cyrillic.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_farsi.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_greek.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_iceland.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_latin2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_roman.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_romanian.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_turkish.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mbcs.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/oem.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/palmos.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/ptcp154.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/punycode.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/quopri_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/raw_unicode_escape.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/rot_13.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/shift_jis.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/shift_jis_2004.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/shift_jisx0213.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/tis_620.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/undefined.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/unicode_escape.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_16.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_16_be.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_16_le.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_32.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_32_be.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_32_le.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_7.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_8.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_8_sig.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/uu_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/zlib_codec.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/enum.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/filecmp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/fileinput.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/fnmatch.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/fractions.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/ftplib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/functools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/genericpath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/getopt.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/getpass.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/gettext.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/glob.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/graphlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/gzip.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/hashlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/heapq.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/hmac.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/html/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/html/__pycache__/entities.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/html/__pycache__/parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/http/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/http/__pycache__/client.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/http/__pycache__/cookiejar.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/http/__pycache__/cookies.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/http/__pycache__/server.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/imghdr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/imp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/_abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/_bootstrap.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/_bootstrap_external.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/machinery.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/metadata/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/metadata/__pycache__/_adapters.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/metadata/__pycache__/_collections.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/metadata/__pycache__/_functools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/metadata/__pycache__/_itertools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/metadata/__pycache__/_meta.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/metadata/__pycache__/_text.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/readers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/resources/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/resources/__pycache__/_adapters.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/resources/__pycache__/_common.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/resources/__pycache__/_itertools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/resources/__pycache__/_legacy.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/resources/__pycache__/abc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/resources/__pycache__/readers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/resources/__pycache__/simple.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/simple.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/util.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/inspect.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/io.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/ipaddress.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/json/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/json/__pycache__/decoder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/json/__pycache__/encoder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/json/__pycache__/scanner.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/json/__pycache__/tool.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/keyword.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/linecache.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/locale.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/logging/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/logging/__pycache__/config.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/logging/__pycache__/handlers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/lzma.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/mailbox.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/mailcap.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/mimetypes.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/modulefinder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/netrc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/nntplib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/ntpath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/nturl2path.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/numbers.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/opcode.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/operator.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/optparse.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/os.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pathlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pdb.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pickle.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pickletools.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pipes.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pkgutil.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/platform.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/plistlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/poplib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/posixpath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pprint.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/profile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pstats.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pty.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/py_compile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pyclbr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pydoc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/queue.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/quopri.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/random.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/re/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/re/__pycache__/_casefix.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/re/__pycache__/_compiler.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/re/__pycache__/_constants.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/re/__pycache__/_parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/reprlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/rlcompleter.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/runpy.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/sched.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/secrets.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/selectors.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/shelve.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/shlex.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/shutil.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/signal.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/site.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/smtpd.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/smtplib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/sndhdr.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/socket.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/socketserver.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/sqlite3/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/sqlite3/__pycache__/dbapi2.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/sqlite3/__pycache__/dump.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/sre_compile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/sre_constants.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/sre_parse.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/ssl.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/stat.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/statistics.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/string.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/stringprep.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/struct.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/subprocess.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/sunau.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/symtable.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/sysconfig.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/tabnanny.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/tarfile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/telnetlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/tempfile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/textwrap.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/this.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/threading.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/timeit.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/token.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/tokenize.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/tomllib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/tomllib/__pycache__/_parser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/tomllib/__pycache__/_re.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/tomllib/__pycache__/_types.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/trace.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/traceback.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/tracemalloc.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/tty.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/types.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/typing.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/urllib/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/urllib/__pycache__/error.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/urllib/__pycache__/parse.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/urllib/__pycache__/request.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/urllib/__pycache__/response.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/urllib/__pycache__/robotparser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/uu.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/uuid.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/warnings.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/wave.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/weakref.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/webbrowser.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/xdrlib.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/dom/__pycache__/NodeFilter.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/dom/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/dom/__pycache__/domreg.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/dom/__pycache__/expatbuilder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/dom/__pycache__/minicompat.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/dom/__pycache__/minidom.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/dom/__pycache__/pulldom.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/dom/__pycache__/xmlbuilder.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/etree/__pycache__/ElementInclude.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/etree/__pycache__/ElementPath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/etree/__pycache__/ElementTree.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/etree/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/etree/__pycache__/cElementTree.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/parsers/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/parsers/__pycache__/expat.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/sax/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/sax/__pycache__/_exceptions.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/sax/__pycache__/expatreader.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/sax/__pycache__/handler.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/sax/__pycache__/saxutils.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xml/sax/__pycache__/xmlreader.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xmlrpc/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xmlrpc/__pycache__/client.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/xmlrpc/__pycache__/server.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/zipapp.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/zipfile.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/__pycache__/zipimport.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/zoneinfo/__pycache__/__init__.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/zoneinfo/__pycache__/_common.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/zoneinfo/__pycache__/_tzpath.cpython-311.opt-1.pyc \
-  $(BUILD_DIR)/windows/x64/Lib/zoneinfo/__pycache__/_zoneinfo.cpython-311.opt-1.pyc
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/__future__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/__hello__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_aix_support.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_collections_abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_compat_pickle.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_compression.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_markupbase.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_osx_support.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_py_abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_pydatetime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_pydecimal.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_pyio.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_pylong.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_sitebuiltins.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_strptime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_threading_local.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/_weakrefset.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/aifc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/antigravity.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/argparse.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/ast.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/__main__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/base_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/base_futures.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/base_subprocess.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/base_tasks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/constants.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/coroutines.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/exceptions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/format_helpers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/futures.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/locks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/log.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/mixins.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/proactor_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/protocols.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/queues.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/runners.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/selector_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/sslproto.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/staggered.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/streams.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/subprocess.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/taskgroups.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/tasks.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/threads.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/timeouts.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/transports.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/trsock.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/unix_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/windows_events.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/__pycache__/windows_utils.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/base64.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/bdb.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/bisect.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/bz2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/cProfile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/calendar.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/cgi.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/cgitb.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/chunk.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/cmd.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/code.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/codecs.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/codeop.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/collections/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/collections/__pycache__/abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/colorsys.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/compileall.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/concurrent/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/concurrent/futures/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/concurrent/futures/__pycache__/_base.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/concurrent/futures/__pycache__/process.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/concurrent/futures/__pycache__/thread.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/configparser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/contextlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/contextvars.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/copy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/copyreg.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/crypt.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/csv.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/ctypes/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/ctypes/__pycache__/_aix.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/ctypes/__pycache__/_endian.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/ctypes/macholib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/ctypes/macholib/__pycache__/dyld.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/ctypes/macholib/__pycache__/dylib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/ctypes/macholib/__pycache__/framework.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/ctypes/__pycache__/util.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/ctypes/__pycache__/wintypes.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/curses/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/curses/__pycache__/ascii.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/curses/__pycache__/has_key.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/curses/__pycache__/panel.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/curses/__pycache__/textpad.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/dataclasses.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/datetime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/decimal.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/difflib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/dis.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/doctest.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/_encoded_words.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/_header_value_parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/_parseaddr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/_policybase.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/base64mime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/charset.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/contentmanager.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/encoders.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/errors.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/feedparser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/generator.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/header.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/headerregistry.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/iterators.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/message.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/application.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/audio.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/base.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/image.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/message.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/multipart.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/nonmultipart.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/mime/__pycache__/text.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/policy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/quoprimime.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/email/__pycache__/utils.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/aliases.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/ascii.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/base64_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/big5.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/big5hkscs.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/bz2_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/charmap.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp037.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1006.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1026.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1125.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1140.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1250.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1251.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1252.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1253.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1254.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1255.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1256.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1257.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp1258.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp273.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp424.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp437.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp500.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp720.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp737.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp775.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp850.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp852.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp855.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp856.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp857.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp858.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp860.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp861.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp862.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp863.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp864.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp865.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp866.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp869.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp874.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp875.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp932.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp949.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/cp950.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/euc_jis_2004.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/euc_jisx0213.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/euc_jp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/euc_kr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/gb18030.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/gb2312.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/gbk.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/hex_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/hp_roman8.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/hz.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/idna.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso2022_jp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso2022_jp_1.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso2022_jp_2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso2022_jp_2004.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso2022_jp_3.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso2022_jp_ext.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso2022_kr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_1.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_10.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_11.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_13.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_14.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_15.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_16.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_3.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_4.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_5.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_6.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_7.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_8.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/iso8859_9.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/johab.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/koi8_r.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/koi8_t.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/koi8_u.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/kz1048.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/latin_1.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_arabic.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_croatian.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_cyrillic.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_farsi.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_greek.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_iceland.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_latin2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_roman.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_romanian.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mac_turkish.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/mbcs.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/oem.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/palmos.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/ptcp154.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/punycode.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/quopri_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/raw_unicode_escape.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/rot_13.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/shift_jis.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/shift_jis_2004.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/shift_jisx0213.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/tis_620.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/undefined.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/unicode_escape.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_16.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_16_be.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_16_le.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_32.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_32_be.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_32_le.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_7.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_8.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/utf_8_sig.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/uu_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/__pycache__/zlib_codec.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/enum.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/filecmp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/fileinput.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/fnmatch.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/fractions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/ftplib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/functools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/genericpath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/getopt.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/getpass.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/gettext.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/glob.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/graphlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/gzip.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/hashlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/heapq.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/hmac.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/html/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/html/__pycache__/entities.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/html/__pycache__/parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/http/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/http/__pycache__/client.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/http/__pycache__/cookiejar.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/http/__pycache__/cookies.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/http/__pycache__/server.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/imghdr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/_abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/_bootstrap.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/_bootstrap_external.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/machinery.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/metadata/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/metadata/__pycache__/_adapters.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/metadata/__pycache__/_collections.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/metadata/__pycache__/_functools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/metadata/__pycache__/_itertools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/metadata/__pycache__/_meta.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/metadata/__pycache__/_text.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/readers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/resources/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/resources/__pycache__/_adapters.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/resources/__pycache__/_common.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/resources/__pycache__/_itertools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/resources/__pycache__/_legacy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/resources/__pycache__/abc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/resources/__pycache__/readers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/resources/__pycache__/simple.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/simple.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/importlib/__pycache__/util.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/inspect.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/io.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/ipaddress.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/json/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/json/__pycache__/decoder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/json/__pycache__/encoder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/json/__pycache__/scanner.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/json/__pycache__/tool.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/keyword.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/linecache.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/locale.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/logging/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/logging/__pycache__/config.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/logging/__pycache__/handlers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/lzma.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/mailbox.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/mailcap.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/mimetypes.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/modulefinder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/netrc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/nntplib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/ntpath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/nturl2path.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/numbers.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/opcode.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/operator.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/optparse.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/os.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pathlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pdb.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pickle.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pickletools.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pipes.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pkgutil.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/platform.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/plistlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/poplib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/posixpath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pprint.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/profile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pstats.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pty.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/py_compile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pyclbr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/pydoc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/queue.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/quopri.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/random.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/re/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/re/__pycache__/_casefix.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/re/__pycache__/_compiler.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/re/__pycache__/_constants.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/re/__pycache__/_parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/reprlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/rlcompleter.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/runpy.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/sched.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/secrets.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/selectors.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/shelve.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/shlex.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/shutil.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/signal.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/site.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/smtplib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/sndhdr.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/socket.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/socketserver.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/sqlite3/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/sqlite3/__pycache__/__main__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/sqlite3/__pycache__/dbapi2.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/sqlite3/__pycache__/dump.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/sre_compile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/sre_constants.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/sre_parse.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/ssl.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/stat.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/statistics.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/string.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/stringprep.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/struct.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/subprocess.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/sunau.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/symtable.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/sysconfig.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/tabnanny.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/tarfile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/telnetlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/tempfile.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/textwrap.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/this.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/threading.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/timeit.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/token.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/tokenize.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/tomllib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/tomllib/__pycache__/_parser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/tomllib/__pycache__/_re.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/tomllib/__pycache__/_types.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/trace.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/traceback.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/tracemalloc.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/tty.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/types.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/typing.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/urllib/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/urllib/__pycache__/error.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/urllib/__pycache__/parse.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/urllib/__pycache__/request.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/urllib/__pycache__/response.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/urllib/__pycache__/robotparser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/uu.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/uuid.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/warnings.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/wave.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/weakref.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/webbrowser.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/xdrlib.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/dom/__pycache__/NodeFilter.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/dom/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/dom/__pycache__/domreg.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/dom/__pycache__/expatbuilder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/dom/__pycache__/minicompat.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/dom/__pycache__/minidom.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/dom/__pycache__/pulldom.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/dom/__pycache__/xmlbuilder.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/etree/__pycache__/ElementInclude.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/etree/__pycache__/ElementPath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/etree/__pycache__/ElementTree.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/etree/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/etree/__pycache__/cElementTree.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/parsers/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/parsers/__pycache__/expat.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/sax/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/sax/__pycache__/_exceptions.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/sax/__pycache__/expatreader.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/sax/__pycache__/handler.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/sax/__pycache__/saxutils.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xml/sax/__pycache__/xmlreader.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xmlrpc/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xmlrpc/__pycache__/client.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/xmlrpc/__pycache__/server.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/zipapp.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/zipfile/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/zipfile/__pycache__/__main__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/zipfile/_path/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/zipfile/_path/__pycache__/glob.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/__pycache__/zipimport.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/zoneinfo/__pycache__/__init__.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/zoneinfo/__pycache__/_common.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/zoneinfo/__pycache__/_tzpath.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/windows/x64/Lib/zoneinfo/__pycache__/_zoneinfo.cpython-312.opt-1.pyc
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
@@ -5141,6 +5172,7 @@ DATA_TARGETS = \
   $(BUILD_DIR)/ba_data/data/languages/korean.json \
   $(BUILD_DIR)/ba_data/data/languages/malay.json \
   $(BUILD_DIR)/ba_data/data/languages/persian.json \
+  $(BUILD_DIR)/ba_data/data/languages/piratespeak.json \
   $(BUILD_DIR)/ba_data/data/languages/polish.json \
   $(BUILD_DIR)/ba_data/data/languages/portuguese.json \
   $(BUILD_DIR)/ba_data/data/languages/romanian.json \
@@ -5681,6 +5713,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/buttonPickUp.dds \
   $(BUILD_DIR)/ba_data/textures/buttonPunch.dds \
   $(BUILD_DIR)/ba_data/textures/buttonSquare.dds \
+  $(BUILD_DIR)/ba_data/textures/buttonSquareWide.dds \
   $(BUILD_DIR)/ba_data/textures/chTitleChar1.dds \
   $(BUILD_DIR)/ba_data/textures/chTitleChar2.dds \
   $(BUILD_DIR)/ba_data/textures/chTitleChar3.dds \
@@ -5766,6 +5799,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/gladiatorIcon.dds \
   $(BUILD_DIR)/ba_data/textures/gladiatorIconColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/glow.dds \
+  $(BUILD_DIR)/ba_data/textures/goldPass.dds \
   $(BUILD_DIR)/ba_data/textures/googlePlayAchievementsIcon.dds \
   $(BUILD_DIR)/ba_data/textures/googlePlayGamesIcon.dds \
   $(BUILD_DIR)/ba_data/textures/googlePlayLeaderboardsIcon.dds \
@@ -5962,6 +5996,10 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/tipTopLevelColor.dds \
   $(BUILD_DIR)/ba_data/textures/tipTopPreview.dds \
   $(BUILD_DIR)/ba_data/textures/tnt.dds \
+  $(BUILD_DIR)/ba_data/textures/tokens1.dds \
+  $(BUILD_DIR)/ba_data/textures/tokens2.dds \
+  $(BUILD_DIR)/ba_data/textures/tokens3.dds \
+  $(BUILD_DIR)/ba_data/textures/tokens4.dds \
   $(BUILD_DIR)/ba_data/textures/touchArrows.dds \
   $(BUILD_DIR)/ba_data/textures/touchArrowsActions.dds \
   $(BUILD_DIR)/ba_data/textures/towerDLevelColor.dds \
@@ -5979,6 +6017,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/warriorIcon.dds \
   $(BUILD_DIR)/ba_data/textures/warriorIconColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/white.dds \
+  $(BUILD_DIR)/ba_data/textures/windowBottomCap.dds \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVMed.dds \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVSmall.dds \
   $(BUILD_DIR)/ba_data/textures/wings.dds \
@@ -6086,6 +6125,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/buttonPickUp.pvr \
   $(BUILD_DIR)/ba_data/textures/buttonPunch.pvr \
   $(BUILD_DIR)/ba_data/textures/buttonSquare.pvr \
+  $(BUILD_DIR)/ba_data/textures/buttonSquareWide.pvr \
   $(BUILD_DIR)/ba_data/textures/chTitleChar1.pvr \
   $(BUILD_DIR)/ba_data/textures/chTitleChar2.pvr \
   $(BUILD_DIR)/ba_data/textures/chTitleChar3.pvr \
@@ -6171,6 +6211,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/gladiatorIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/gladiatorIconColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/glow.pvr \
+  $(BUILD_DIR)/ba_data/textures/goldPass.pvr \
   $(BUILD_DIR)/ba_data/textures/googlePlayAchievementsIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/googlePlayGamesIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/googlePlayLeaderboardsIcon.pvr \
@@ -6367,6 +6408,10 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/tipTopLevelColor.pvr \
   $(BUILD_DIR)/ba_data/textures/tipTopPreview.pvr \
   $(BUILD_DIR)/ba_data/textures/tnt.pvr \
+  $(BUILD_DIR)/ba_data/textures/tokens1.pvr \
+  $(BUILD_DIR)/ba_data/textures/tokens2.pvr \
+  $(BUILD_DIR)/ba_data/textures/tokens3.pvr \
+  $(BUILD_DIR)/ba_data/textures/tokens4.pvr \
   $(BUILD_DIR)/ba_data/textures/touchArrows.pvr \
   $(BUILD_DIR)/ba_data/textures/touchArrowsActions.pvr \
   $(BUILD_DIR)/ba_data/textures/towerDLevelColor.pvr \
@@ -6384,6 +6429,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/warriorIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/warriorIconColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/white.pvr \
+  $(BUILD_DIR)/ba_data/textures/windowBottomCap.pvr \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVMed.pvr \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVSmall.pvr \
   $(BUILD_DIR)/ba_data/textures/wings.pvr \
@@ -6491,6 +6537,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/buttonPickUp.ktx \
   $(BUILD_DIR)/ba_data/textures/buttonPunch.ktx \
   $(BUILD_DIR)/ba_data/textures/buttonSquare.ktx \
+  $(BUILD_DIR)/ba_data/textures/buttonSquareWide.ktx \
   $(BUILD_DIR)/ba_data/textures/chTitleChar1.ktx \
   $(BUILD_DIR)/ba_data/textures/chTitleChar2.ktx \
   $(BUILD_DIR)/ba_data/textures/chTitleChar3.ktx \
@@ -6576,6 +6623,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/gladiatorIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/gladiatorIconColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/glow.ktx \
+  $(BUILD_DIR)/ba_data/textures/goldPass.ktx \
   $(BUILD_DIR)/ba_data/textures/googlePlayAchievementsIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/googlePlayGamesIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/googlePlayLeaderboardsIcon.ktx \
@@ -6772,6 +6820,10 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/tipTopLevelColor.ktx \
   $(BUILD_DIR)/ba_data/textures/tipTopPreview.ktx \
   $(BUILD_DIR)/ba_data/textures/tnt.ktx \
+  $(BUILD_DIR)/ba_data/textures/tokens1.ktx \
+  $(BUILD_DIR)/ba_data/textures/tokens2.ktx \
+  $(BUILD_DIR)/ba_data/textures/tokens3.ktx \
+  $(BUILD_DIR)/ba_data/textures/tokens4.ktx \
   $(BUILD_DIR)/ba_data/textures/touchArrows.ktx \
   $(BUILD_DIR)/ba_data/textures/touchArrowsActions.ktx \
   $(BUILD_DIR)/ba_data/textures/towerDLevelColor.ktx \
@@ -6789,6 +6841,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/warriorIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/warriorIconColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/white.ktx \
+  $(BUILD_DIR)/ba_data/textures/windowBottomCap.ktx \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVMed.ktx \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVSmall.ktx \
   $(BUILD_DIR)/ba_data/textures/wings.ktx \
@@ -6895,6 +6948,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/buttonJump_preview.png \
   $(BUILD_DIR)/ba_data/textures/buttonPickUp_preview.png \
   $(BUILD_DIR)/ba_data/textures/buttonPunch_preview.png \
+  $(BUILD_DIR)/ba_data/textures/buttonSquareWide_preview.png \
   $(BUILD_DIR)/ba_data/textures/buttonSquare_preview.png \
   $(BUILD_DIR)/ba_data/textures/chTitleChar1_preview.png \
   $(BUILD_DIR)/ba_data/textures/chTitleChar2_preview.png \
@@ -6981,6 +7035,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/gladiatorIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/gladiatorIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/glow_preview.png \
+  $(BUILD_DIR)/ba_data/textures/goldPass_preview.png \
   $(BUILD_DIR)/ba_data/textures/googlePlayAchievementsIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/googlePlayGamesIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/googlePlayLeaderboardsIcon_preview.png \
@@ -7177,6 +7232,10 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/tipTopLevelColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/tipTopPreview_preview.png \
   $(BUILD_DIR)/ba_data/textures/tnt_preview.png \
+  $(BUILD_DIR)/ba_data/textures/tokens1_preview.png \
+  $(BUILD_DIR)/ba_data/textures/tokens2_preview.png \
+  $(BUILD_DIR)/ba_data/textures/tokens3_preview.png \
+  $(BUILD_DIR)/ba_data/textures/tokens4_preview.png \
   $(BUILD_DIR)/ba_data/textures/touchArrowsActions_preview.png \
   $(BUILD_DIR)/ba_data/textures/touchArrows_preview.png \
   $(BUILD_DIR)/ba_data/textures/towerDLevelColor_preview.png \
@@ -7194,6 +7253,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/warriorIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/warriorIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/white_preview.png \
+  $(BUILD_DIR)/ba_data/textures/windowBottomCap_preview.png \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVMed_preview.png \
   $(BUILD_DIR)/ba_data/textures/windowHSmallVSmall_preview.png \
   $(BUILD_DIR)/ba_data/textures/wings_preview.png \
@@ -7251,6 +7311,8 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/DLLs/_testbuffer_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_testcapi.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_testcapi_d.pyd \
+  $(BUILD_DIR)/windows/Win32/DLLs/_testclinic.pyd \
+  $(BUILD_DIR)/windows/Win32/DLLs/_testclinic_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_testconsole.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_testconsole_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_testimportmultiple.pyd \
@@ -7259,20 +7321,23 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/DLLs/_testinternalcapi_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_testmultiphase.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_testmultiphase_d.pyd \
+  $(BUILD_DIR)/windows/Win32/DLLs/_testsinglephase.pyd \
+  $(BUILD_DIR)/windows/Win32/DLLs/_testsinglephase_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_tkinter.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_tkinter_d.lib \
   $(BUILD_DIR)/windows/Win32/DLLs/_tkinter_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_uuid.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_uuid_d.pyd \
+  $(BUILD_DIR)/windows/Win32/DLLs/_wmi.pyd \
+  $(BUILD_DIR)/windows/Win32/DLLs/_wmi_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_zoneinfo.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_zoneinfo_d.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/libcrypto-1_1.dll \
+  $(BUILD_DIR)/windows/Win32/DLLs/libcrypto-3.dll \
   $(BUILD_DIR)/windows/Win32/DLLs/libffi-8.dll \
-  $(BUILD_DIR)/windows/Win32/DLLs/libssl-1_1.dll \
+  $(BUILD_DIR)/windows/Win32/DLLs/libssl-3.dll \
   $(BUILD_DIR)/windows/Win32/DLLs/pyexpat.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/pyexpat_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/python_lib.cat \
-  $(BUILD_DIR)/windows/Win32/DLLs/python_tools.cat \
   $(BUILD_DIR)/windows/Win32/DLLs/select.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/select_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/sqlite3.dll \
@@ -7283,6 +7348,7 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/DLLs/unicodedata_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/winsound.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/winsound_d.pyd \
+  $(BUILD_DIR)/windows/Win32/DLLs/zlib1.dll \
   $(BUILD_DIR)/windows/Win32/Lib/email/architecture.rst \
   $(BUILD_DIR)/windows/Win32/OpenAL32.dll \
   $(BUILD_DIR)/windows/Win32/SDL2.dll \
@@ -7291,8 +7357,8 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/msvcp140d.dll \
   $(BUILD_DIR)/windows/Win32/ogg.dll \
   $(BUILD_DIR)/windows/Win32/python.exe \
-  $(BUILD_DIR)/windows/Win32/python311.dll \
-  $(BUILD_DIR)/windows/Win32/python311_d.dll \
+  $(BUILD_DIR)/windows/Win32/python312.dll \
+  $(BUILD_DIR)/windows/Win32/python312_d.dll \
   $(BUILD_DIR)/windows/Win32/python_d.exe \
   $(BUILD_DIR)/windows/Win32/pythonw.exe \
   $(BUILD_DIR)/windows/Win32/pythonw_d.exe \
@@ -7340,6 +7406,8 @@ EXTRAS_TARGETS_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/DLLs/_testbuffer_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_testcapi.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_testcapi_d.pyd \
+  $(BUILD_DIR)/windows/x64/DLLs/_testclinic.pyd \
+  $(BUILD_DIR)/windows/x64/DLLs/_testclinic_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_testconsole.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_testconsole_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_testimportmultiple.pyd \
@@ -7348,20 +7416,23 @@ EXTRAS_TARGETS_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/DLLs/_testinternalcapi_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_testmultiphase.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_testmultiphase_d.pyd \
+  $(BUILD_DIR)/windows/x64/DLLs/_testsinglephase.pyd \
+  $(BUILD_DIR)/windows/x64/DLLs/_testsinglephase_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_tkinter.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_tkinter_d.lib \
   $(BUILD_DIR)/windows/x64/DLLs/_tkinter_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_uuid.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_uuid_d.pyd \
+  $(BUILD_DIR)/windows/x64/DLLs/_wmi.pyd \
+  $(BUILD_DIR)/windows/x64/DLLs/_wmi_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_zoneinfo.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_zoneinfo_d.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/libcrypto-1_1.dll \
+  $(BUILD_DIR)/windows/x64/DLLs/libcrypto-3.dll \
   $(BUILD_DIR)/windows/x64/DLLs/libffi-8.dll \
-  $(BUILD_DIR)/windows/x64/DLLs/libssl-1_1.dll \
+  $(BUILD_DIR)/windows/x64/DLLs/libssl-3.dll \
   $(BUILD_DIR)/windows/x64/DLLs/pyexpat.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/pyexpat_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/python_lib.cat \
-  $(BUILD_DIR)/windows/x64/DLLs/python_tools.cat \
   $(BUILD_DIR)/windows/x64/DLLs/select.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/select_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/sqlite3.dll \
@@ -7372,6 +7443,7 @@ EXTRAS_TARGETS_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/DLLs/unicodedata_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/winsound.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/winsound_d.pyd \
+  $(BUILD_DIR)/windows/x64/DLLs/zlib1.dll \
   $(BUILD_DIR)/windows/x64/Lib/email/architecture.rst \
   $(BUILD_DIR)/windows/x64/OpenAL32.dll \
   $(BUILD_DIR)/windows/x64/SDL2.dll \
@@ -7380,8 +7452,8 @@ EXTRAS_TARGETS_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/msvcp140d.dll \
   $(BUILD_DIR)/windows/x64/ogg.dll \
   $(BUILD_DIR)/windows/x64/python.exe \
-  $(BUILD_DIR)/windows/x64/python311.dll \
-  $(BUILD_DIR)/windows/x64/python311_d.dll \
+  $(BUILD_DIR)/windows/x64/python312.dll \
+  $(BUILD_DIR)/windows/x64/python312_d.dll \
   $(BUILD_DIR)/windows/x64/python_d.exe \
   $(BUILD_DIR)/windows/x64/pythonw.exe \
   $(BUILD_DIR)/windows/x64/pythonw_d.exe \
@@ -7544,6 +7616,19 @@ assets-android: $(ASSET_TARGETS_ANDROID) $(ASSET_TARGETS_COMMON_GUI)
 assets: assets-cmake assets-win-Win32
 clean:
 	@rm -rf $(BUILD_DIR)
+
+# Modern AssetPackage bits.
+
+# Extract the asset-package version from project-config and stuff it into
+# a 'resolved' file. If we are using dev version, clear the file which
+# will force an explicit check each time through.
+$(PROJ_DIR)/.cache/asset_package_resolved: $(PROJ_DIR)/config/projectconfig.json
+	@$(PCOMMAND) asset_package_resolve $@
+
+$(PROJ_DIR)/.cache/assetmanifests/gui_desktop_v2dev1:	\
+      $(PROJ_DIR)/.cache/asset_package_resolved
+	@$(PCOMMAND) asset_package_assemble \
+$(PROJ_DIR)/.cache/asset_package_resolved	gui_desktop_v2dev1
 
 # These targets don't correspond to actual files; make sure make knows that.
 .PHONY: cmake win mac ios android audio audio-clean fonts fonts-clean data	\

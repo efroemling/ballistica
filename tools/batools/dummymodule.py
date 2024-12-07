@@ -1,5 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
+
 """Generates dummy .py modules based on binary modules.
 
 This allows us to use code introspection tools such as pylint without spinning
@@ -14,6 +16,7 @@ import os
 import types
 import textwrap
 import subprocess
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from efro.error import CleanError
@@ -778,14 +781,15 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
 class Generator:
     """Context for a module generation pass."""
 
-    def __init__(self, modulename: str, outfilename: str):
+    def __init__(self, projroot: str, modulename: str, outfilename: str):
+        self.projroot = projroot
         self.mname = modulename
         self.outfilename = outfilename
 
     def run(self) -> None:
         """Run the actual generation from within the app context."""
 
-        from efrotools import get_public_license
+        from efrotools.project import get_public_legal_notice
         from efrotools.code import format_python_str
 
         module = __import__(self.mname)
@@ -813,12 +817,12 @@ class Generator:
         funcnames.sort()
         classnames.sort()
         typing_imports = (
-            'TYPE_CHECKING, overload, Sequence, TypeVar'
+            'TYPE_CHECKING, overload, override, Sequence, TypeVar'
             if self.mname == '_babase'
             else (
-                'TYPE_CHECKING, overload, TypeVar'
+                'TYPE_CHECKING, overload, override, TypeVar'
                 if self.mname == '_bascenev1'
-                else 'TYPE_CHECKING, TypeVar'
+                else 'TYPE_CHECKING, override, TypeVar'
             )
         )
         typing_imports_tc = (
@@ -851,7 +855,7 @@ class Generator:
             else '' if self.mname == '_bascenev1' else ''
         )
         out = (
-            get_public_license('python') + '\n'
+            get_public_legal_notice('python') + '\n'
             '#\n'
             f'"""A dummy stub module for the real {self.mname}.\n'
             '\n'
@@ -888,12 +892,12 @@ class Generator:
             '# pylint: disable=redefined-outer-name\n'
             '# pylint: disable=invalid-name\n'
             '# pylint: disable=no-value-for-parameter\n'
+            '# pylint: disable=unused-import\n'
+            '# pylint: disable=too-many-positional-arguments\n'
             '\n'
             'from __future__ import annotations\n'
             '\n'
             f'from typing import {typing_imports}\n'
-            '\n'
-            f'from typing_extensions import override\n'
             '\n'
             f'{enum_import_lines}'
             'if TYPE_CHECKING:\n'
@@ -918,7 +922,7 @@ class Generator:
         )
 
         # Lastly format it.
-        out = format_python_str(out)
+        out = format_python_str(Path(self.projroot), out)
 
         os.makedirs(os.path.dirname(self.outfilename), exist_ok=True)
         with open(self.outfilename, 'w', encoding='utf-8') as outfile:
@@ -945,10 +949,18 @@ def generate_dummy_modules(projroot: str) -> None:
         assets=True, purpose='dummy-module generation'
     )
 
+    # We need access to things like black that are installed into the project
+    # venv.
+    venvpath = '.venv/bin'
+    if not os.path.isdir(venvpath):
+        raise RuntimeError(
+            f'Expected project venv binary path not found: "{venvpath}".'
+        )
     pycmd = (
         f'import sys\n'
         f'sys.path.append("build/assets/ba_data/python")\n'
         f'sys.path.append("{toolsdir}")\n'
+        # f'sys.path.append("{venvpath}")\n'
         f'from batools import dummymodule\n'
     )
 
@@ -967,7 +979,7 @@ def generate_dummy_modules(projroot: str) -> None:
             os.path.join(projroot, builddir, f'{mname}.py')
         )
         pycmd += (
-            f'dummymodule.Generator(modulename="{mname}",'
+            f'dummymodule.Generator(projroot=".", modulename="{mname}",'
             f' outfilename="{outfilename}").run()\n'
         )
 
@@ -978,11 +990,20 @@ def generate_dummy_modules(projroot: str) -> None:
         flush=True,
     )
     try:
-        # Note: Ask Python to kindly not scatter __pycache__ files
+        # Note: Ask Python to kindly *not* scatter __pycache__ files
         # throughout our build output.
+        #
+        # Also pass our .venv path so any recursive invocations of Python
+        # will properly pick up our modules (for things like black formatting).
+
+        # pylint: disable=inconsistent-quotes
         subprocess.run(
             [binary_path, '--command', pycmd],
-            env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'),
+            env=dict(
+                os.environ,
+                PYTHONDONTWRITEBYTECODE='1',
+                PATH=f'.venv/bin:{os.environ["PATH"]}',
+            ),
             check=True,
         )
         print(
@@ -991,7 +1012,12 @@ def generate_dummy_modules(projroot: str) -> None:
             flush=True,
         )
 
-    except Exception as exc2:
+    except Exception as exc:
+        if bool(False):
+            import logging
+
+            logging.exception('ERROR')
+
         # Keep our error simple here; we want focus to be on what went
-        # wrong withing BallisticaKit.
-        raise CleanError('Dummy-module generation failed.') from exc2
+        # wrong within BallisticaKit.
+        raise CleanError('Dummy-module generation failed.') from exc

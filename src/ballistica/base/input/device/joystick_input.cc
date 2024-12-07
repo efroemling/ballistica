@@ -2,19 +2,19 @@
 
 #include "ballistica/base/input/device/joystick_input.h"
 
+#include <algorithm>
+#include <cstdio>
+#include <string>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
-#include "ballistica/base/app_mode/app_mode.h"
-#include "ballistica/base/audio/audio.h"
-#include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/base/support/repeater.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
-#include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_command.h"
+#include "ballistica/shared/foundation/macros.h"
 
 namespace ballistica::base {
 
@@ -54,7 +54,13 @@ JoystickInput::JoystickInput(int sdl_joystick_id,
     assert(g_core->InMainThread());
 
     sdl_joystick_ = SDL_JoystickOpen(sdl_joystick_id);
-    assert(sdl_joystick_);
+    if (sdl_joystick_ == nullptr) {
+      auto* err = SDL_GetError();
+      if (!err) {
+        err = "Unknown SDL error.";
+      }
+      throw Exception(std::string("Error in SDL_JoystickOpen: ") + err + ".");
+    }
 
     // In SDL2 we're passed a device-id but that's only used to open the
     // joystick; events and most everything else use an instance ID, so we store
@@ -283,7 +289,8 @@ auto JoystickInput::GetButtonName(int index) -> std::string {
 
 JoystickInput::~JoystickInput() {
   if (!g_base->InLogicThread()) {
-    Log(LogLevel::kError, "Joystick dying in wrong thread.");
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                "Joystick dying in wrong thread.");
   }
 
   // Kill our child if need be.
@@ -305,8 +312,8 @@ JoystickInput::~JoystickInput() {
         [joystick] { SDL_JoystickClose(joystick); });
     sdl_joystick_ = nullptr;
 #else
-    Log(LogLevel::kError,
-        "sdl_joystick_ set in non-sdl-joystick build destructor.");
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                "sdl_joystick_ set in non-sdl-joystick build destructor.");
 #endif  // BA_ENABLE_SDL_JOYSTICKS
   }
 }
@@ -331,8 +338,8 @@ auto JoystickInput::ShouldBeHiddenFromUser() -> bool {
   }
 }
 
-auto JoystickInput::GetCalibratedValue(float raw,
-                                       float neutral) const -> int32_t {
+auto JoystickInput::GetCalibratedValue(float raw, float neutral) const
+    -> int32_t {
   int32_t val;
   float dead_zone = 0.5f;
   float mag, target;
@@ -648,7 +655,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
         hat_held_ = true;
         break;
       default:
-        BA_LOG_ONCE(LogLevel::kError,
+        BA_LOG_ONCE(LogName::kBaInput, LogLevel::kError,
                     "Invalid hat value: "
                         + std::to_string(static_cast<int>(e->jhat.value)));
         break;
@@ -1225,8 +1232,8 @@ void JoystickInput::UpdateMapping() {
   auto* cl{g_base->HaveClassic() ? g_base->classic() : nullptr};
 
   if (!cl) {
-    Log(LogLevel::kWarning,
-        "Classic not present; can't config joystick mapping.");
+    g_core->Log(LogName::kBaInput, LogLevel::kWarning,
+                "Classic not present; can't config joystick mapping.");
   }
 
   // If we're a child, use our parent's id to search for config values and just

@@ -6,6 +6,7 @@
 #if BA_XCODE_BUILD
 
 #include <mutex>
+#include <string>
 #include <thread>
 #include <vector>
 

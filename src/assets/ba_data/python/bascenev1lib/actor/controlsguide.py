@@ -4,9 +4,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -25,6 +24,7 @@ class ControlsGuide(bs.Actor):
 
     def __init__(
         self,
+        *,
         position: tuple[float, float] = (390.0, 120.0),
         scale: float = 1.0,
         delay: float = 0.0,

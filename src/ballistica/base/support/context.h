@@ -46,7 +46,7 @@ class ContextRef {
     // Note: if it ever seems like speed is an issue here, we can
     // cache the results with std::type_index entries. There should
     // generally be a very small number of types involved.
-    return dynamic_cast<T*>(target_.Get());
+    return dynamic_cast<T*>(target_.get());
   }
 
   /// An empty context-ref was explicitly set to an empty state.
@@ -60,13 +60,13 @@ class ContextRef {
     if (empty_) {
       return false;  // Can't kill what was never alive.
     }
-    return !target_.Exists();
+    return !target_.exists();
   }
 
   /// Return the context this ref points to. This will be nullptr for empty
   /// contexts. Throws an exception if a target context was set but has expired.
   auto Get() const -> Context* {
-    auto* target = target_.Get();
+    auto* target = target_.get();
     if (target == nullptr && !empty_) {
       // We once existed but now don't.
       throw Exception("Context is expired.", PyExcType::kNotFound);

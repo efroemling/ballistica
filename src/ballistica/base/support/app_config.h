@@ -64,6 +64,7 @@ class AppConfig {
     kFullscreen,
     kKickIdlePlayers,
     kAlwaysUseInternalKeyboard,
+    kUseInsecureConnections,
     kShowFPS,
     kShowPing,
     kShowDevConsoleButton,
@@ -75,6 +76,7 @@ class AppConfig {
     kDisableCameraShake,
     kDisableCameraGyro,
     kShowDemosWhenIdle,
+    kShowDeprecatedLoginTypes,
     kLast  // Sentinel.
   };
 

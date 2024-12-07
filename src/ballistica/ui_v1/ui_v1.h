@@ -5,15 +5,14 @@
 
 #include <ballistica/base/input/device/input_device.h>
 
+#include <string>
+
 #include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
 
 // Common header that most everything using our feature-set should include.
 // It predeclares our feature-set's various types and globals and other
 // bits.
-
-// BA 2.0 UI testing.
-#define BA_UI_V1_TOOLBAR_TEST 0
 
 // UI-Locks: make sure widget-lists don't change under you. Use a read-lock
 // if you just need to ensure lists remain intact but won't be changing
@@ -83,24 +82,19 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
 
   /// Called when our associated Python module is instantiated.
   static void OnModuleExec(PyObject* module);
+
   void DoHandleDeviceMenuPress(base::InputDevice* device) override;
   void DoShowURL(const std::string& url) override;
-  // void DoQuitWindow() override;
   auto MainMenuVisible() -> bool override;
   auto PartyIconVisible() -> bool override;
   void ActivatePartyIcon() override;
-  void HandleLegacyRootUIMouseMotion(float x, float y) override;
-  auto HandleLegacyRootUIMouseDown(float x, float y) -> bool override;
-  void HandleLegacyRootUIMouseUp(float x, float y) override;
   void Draw(base::FrameDef* frame_def) override;
+
+  void SetSquadSizeLabel(int num) override;
+  void SetAccountState(bool signed_in, const std::string& name) override;
 
   UIV1Python* const python;
 
-  auto root_ui() const -> ui_v1::RootUI* {
-    assert(root_ui_);
-    return root_ui_;
-  }
-  // void OnAppStart() override;
   void OnActivate() override;
   void OnDeactivate() override;
 
@@ -109,17 +103,17 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   // Return the root widget containing all windows & dialogs. Whenever this
   // contains children, the UI is considered to be in focus
   auto screen_root_widget() -> ui_v1::ContainerWidget* {
-    return screen_root_widget_.Get();
+    return screen_root_widget_.get();
   }
 
   auto overlay_root_widget() -> ui_v1::ContainerWidget* {
-    return overlay_root_widget_.Get();
+    return overlay_root_widget_.get();
   }
 
   // Return the absolute root widget; this includes persistent UI bits such
   // as the top/bottom bars
-  auto root_widget() -> ui_v1::RootWidget* { return root_widget_.Get(); }
-  void Reset() override;
+  auto root_widget() -> ui_v1::RootWidget* { return root_widget_.get(); }
+  // void Reset() override;
 
   // Add a widget to a container. If a parent is provided, the widget is
   // added to it; otherwise it is added to the root widget.
@@ -127,6 +121,8 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   void DeleteWidget(Widget* widget);
 
   void OnScreenSizeChange() override;
+  void OnScreenChange();
+
   void OnLanguageChange() override;
   auto GetRootWidget() -> ui_v1::Widget* override;
   auto SendWidgetMessage(const base::WidgetMessage& m) -> int override;
@@ -135,19 +131,23 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   auto always_use_internal_on_screen_keyboard() const {
     return always_use_internal_on_screen_keyboard_;
   }
+  auto set_party_window_open(bool value) { party_window_open_ = value; }
 
   auto HasQuitConfirmDialog() -> bool override;
   void ConfirmQuit(QuitType quit_type) override;
 
  private:
   UIV1FeatureSet();
-  RootUI* root_ui_{};
   Object::Ref<ContainerWidget> screen_root_widget_;
   Object::Ref<ContainerWidget> overlay_root_widget_;
   Object::Ref<RootWidget> root_widget_;
-  bool always_use_internal_on_screen_keyboard_{};
   int ui_lock_count_{};
   int language_state_{};
+  // int party_icon_number_{};
+  bool always_use_internal_on_screen_keyboard_{};
+  bool party_window_open_{};
+  // bool account_signed_in_{};
+  // std::string account_name_{};
 };
 
 }  // namespace ballistica::ui_v1

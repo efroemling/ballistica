@@ -3,17 +3,25 @@
 #include "ballistica/base/platform/base_platform.h"
 
 #include <csignal>
+#include <cstdio>
+#include <list>
+#include <string>
 
+#if !BA_OSTYPE_WINDOWS
+#include <fcntl.h>
+#include <poll.h>
+#endif
+
+#include <Python.h>
+
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/base.h"
-#include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
-#include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::base {
 
@@ -58,8 +66,8 @@ auto BasePlatform::GetPublicDeviceUUID() -> std::string {
     // We used to plug version in directly here, but that caused uuids to
     // shuffle too rapidly during periods of rapid development. This
     // keeps it more constant.
-    // __last_rand_uuid_component_shuffle_date__ 2023 12 13
-    auto rand_uuid_component{"7YM96RZHN6ZCPZGTQONULZO1JU5NMMC7"};
+    // __last_rand_uuid_component_shuffle_date__ 2024 6 13
+    auto rand_uuid_component{"1URRE62C7234VP9L1BUPJ1P7QT7Q8YW3"};
 
     inputs.emplace_back(rand_uuid_component);
     auto gil{Python::ScopedInterpreterLock()};
@@ -96,30 +104,86 @@ void BasePlatform::DoPurchase(const std::string& item) {
 }
 
 void BasePlatform::RestorePurchases() {
-  Log(LogLevel::kError, "RestorePurchases() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "RestorePurchases() unimplemented");
 }
 
 void BasePlatform::PurchaseAck(const std::string& purchase,
                                const std::string& order_id) {
-  Log(LogLevel::kError, "PurchaseAck() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError, "PurchaseAck() unimplemented");
 }
 
 void BasePlatform::OpenURL(const std::string& url) {
-  // Can't open URLs in VR - just tell the Python layer to show the url in the
-  // gui.
-  if (g_core->vr_mode()) {
-    g_base->ui->ShowURL(url);
-    return;
-  }
-
-  // Otherwise fall back to our platform-specific handler.
-  g_base->platform->DoOpenURL(url);
+  // We can be called from any thread, but DoOpenURL expects to be run in
+  // the main thread.
+  g_base->app_adapter->PushMainThreadCall(
+      [url] { g_base->platform->DoOpenURL(url); });
 }
 
 void BasePlatform::DoOpenURL(const std::string& url) {
-  // Kick this over to logic thread so we're safe to call from anywhere.
+  // As a default, use Python's webbrowser module functionality.
+  // It expects to be run in the logic thread though so we need
+  // to push it over that way.
   g_base->logic->event_loop()->PushCall(
       [url] { g_base->python->OpenURLWithWebBrowserModule(url); });
+}
+
+auto BasePlatform::OverlayWebBrowserIsSupported() -> bool { return false; }
+
+void BasePlatform::OverlayWebBrowserOpenURL(const std::string& url) {
+  BA_PRECONDITION(OverlayWebBrowserIsSupported());
+
+  std::scoped_lock lock(web_overlay_mutex_);
+  if (web_overlay_open_) {
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
+        "OverlayWebBrowserOnClose called with already existing overlay.");
+    return;
+  }
+  web_overlay_open_ = true;
+
+  // We can be called from any thread, but DoOpenURL expects to be called
+  // from the main thread.
+  g_base->app_adapter->PushMainThreadCall(
+      [url] { g_base->platform->DoOverlayWebBrowserOpenURL(url); });
+}
+
+auto BasePlatform::OverlayWebBrowserIsOpen() -> bool {
+  BA_PRECONDITION(OverlayWebBrowserIsSupported());
+  // No reason to lock the mutex here I think.
+  return web_overlay_open_;
+}
+
+void BasePlatform::OverlayWebBrowserOnClose() {
+  std::scoped_lock lock(web_overlay_mutex_);
+  if (!web_overlay_open_) {
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "OverlayWebBrowserOnClose called with no known overlay.");
+  }
+  web_overlay_open_ = false;
+}
+
+void BasePlatform::OverlayWebBrowserClose() {
+  BA_PRECONDITION(OverlayWebBrowserIsSupported());
+
+  // I don't think theres any point to looking at the opened-state, is
+  // there? This call needs to gracefully handle any state.
+
+  // We can be called from any thread, but DoOverlayWebBrowserClose expects
+  // to be called from the main thread.
+  g_base->app_adapter->PushMainThreadCall(
+      [] { g_base->platform->DoOverlayWebBrowserClose(); });
+}
+
+void BasePlatform::DoOverlayWebBrowserOpenURL(const std::string& url) {
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "DoOpenURLInOverlayBrowser unimplemented");
+}
+
+void BasePlatform::DoOverlayWebBrowserClose() {
+  // As a default, use Python's webbrowser module functionality.
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "DoOverlayWebBrowserClose unimplemented");
 }
 
 #if !BA_OSTYPE_WINDOWS
@@ -128,7 +192,8 @@ static void HandleSIGINT(int s) {
     g_base->logic->event_loop()->PushCall(
         [] { g_base->logic->HandleInterruptSignal(); });
   } else {
-    Log(LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "SigInt handler called before g_base->logic->event_loop exists.");
   }
 }
@@ -137,7 +202,8 @@ static void HandleSIGTERM(int s) {
     g_base->logic->event_loop()->PushCall(
         [] { g_base->logic->HandleTerminateSignal(); });
   } else {
-    Log(LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "SigInt handler called before g_base->logic->event_loop exists.");
   }
 }
@@ -149,14 +215,14 @@ void BasePlatform::SetupInterruptHandling() {
   throw Exception();
 #else
   {
-    struct sigaction handler {};
+    struct sigaction handler{};
     handler.sa_handler = HandleSIGINT;
     sigemptyset(&handler.sa_mask);
     handler.sa_flags = 0;
     sigaction(SIGINT, &handler, nullptr);
   }
   {
-    struct sigaction handler {};
+    struct sigaction handler{};
     handler.sa_handler = HandleSIGTERM;
     sigemptyset(&handler.sa_mask);
     handler.sa_flags = 0;
@@ -198,7 +264,7 @@ void BasePlatform::InvokeStringEditor(PyObject* string_edit_adapter) {
 void BasePlatform::StringEditorApply(const std::string& val) {
   BA_PRECONDITION(HaveStringEditor());
   BA_PRECONDITION(g_base->InLogicThread());
-  BA_PRECONDITION(string_edit_adapter_.Exists());
+  BA_PRECONDITION(string_edit_adapter_.exists());
   auto args = PythonRef::Stolen(Py_BuildValue("(s)", val.c_str()));
   string_edit_adapter_.GetAttr("apply").Call(args);
   string_edit_adapter_.Release();
@@ -208,7 +274,7 @@ void BasePlatform::StringEditorApply(const std::string& val) {
 void BasePlatform::StringEditorCancel() {
   BA_PRECONDITION(HaveStringEditor());
   BA_PRECONDITION(g_base->InLogicThread());
-  BA_PRECONDITION(string_edit_adapter_.Exists());
+  BA_PRECONDITION(string_edit_adapter_.exists());
   string_edit_adapter_.GetAttr("cancel").Call();
   string_edit_adapter_.Release();
 }
@@ -216,17 +282,112 @@ void BasePlatform::StringEditorCancel() {
 void BasePlatform::DoInvokeStringEditor(const std::string& title,
                                         const std::string& value,
                                         std::optional<int> max_chars) {
-  Log(LogLevel::kError, "FIXME: DoInvokeStringEditor() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "FIXME: DoInvokeStringEditor() unimplemented");
 }
 
 auto BasePlatform::SupportsOpenDirExternally() -> bool { return false; }
 
 void BasePlatform::OpenDirExternally(const std::string& path) {
-  Log(LogLevel::kError, "OpenDirExternally() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "OpenDirExternally() unimplemented");
 }
 
 void BasePlatform::OpenFileExternally(const std::string& path) {
-  Log(LogLevel::kError, "OpenFileExternally() unimplemented");
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "OpenFileExternally() unimplemented");
+}
+
+auto BasePlatform::SafeStdinFGetS(char* s, int n, FILE* iop) -> char* {
+#if BA_OSTYPE_WINDOWS
+  // Use plain old vanilla fgets on Windows since blocking stdin reads
+  // don't seem to prevent the app from exiting there.
+  return fgets(s, n, iop);
+
+#else
+
+  // On unixy platforms, plug in a vanilla fgets() implementation (see
+  // https://stackoverflow.com/questions/16397832/fgets-implementation-kr)
+  // but replace the getc() with a custom version of our own that uses
+  // poll() to periodically check if we should bail while waiting for input.
+  int c{};
+  char* cs{};
+  cs = s;
+
+  while (--n > 0 && (c = SmartGetC_(iop)) != EOF) {
+    if ((*cs++ = c) == '\n') {
+      break;
+    }
+  }
+
+  *cs = '\0';
+  return (c == EOF && cs == s) ? NULL : s;
+#endif  // BA_OSTYPE_WINDOWS
+}
+
+int BasePlatform::SmartGetC_(FILE* stream) {
+#if BA_OSTYPE_WINDOWS
+  return -1;
+#else
+  // Refill our buffer if needed.
+  while (stdin_buffer_.empty()) {
+    struct pollfd fds[1];
+
+    // Initialize the pollfd structure for stdin
+    fds[0].fd = STDIN_FILENO;
+    fds[0].events = POLLIN;
+
+    // Let's break approximately 4 times per second to see if we should
+    // bail.
+    int ret = poll(fds, 1, 287);
+
+    if (ret == 0) {
+      // Poll timed out. Check whether we should bail and then do it again.
+
+      // If the app is working on gracefully shutting down OR the engine has
+      // died (from a fatal error or whatever else), fake an EOF.
+      if (g_base->logic->shutting_down() || g_core->engine_done()) {
+        return EOF;
+      }
+
+      continue;
+    }
+    if (ret == -1) {
+      // Error in poll
+      perror("poll");
+      return EOF;
+    }
+
+    // Need to catch these error cases and bail, oherwise we'll spin
+    // forever getting the same thing. (Noticed this happening on Mac build
+    // where we get an immediate POLLNVAL if there's no terminal attached
+    // to stdin.
+    if (fds[0].revents & (POLLERR | POLLNVAL | POLLHUP)) {
+      return EOF;
+    }
+
+    if (fds[0].revents & POLLIN) {
+      // stdin is ready for reading.
+      char buffer[256];
+
+      // Read characters from stdin
+      ssize_t bytes_read = read(STDIN_FILENO, buffer, sizeof(buffer));
+
+      if (bytes_read == -1) {
+        // Error reading from stdin
+        perror("read");
+        return EOF;
+      }
+
+      for (int i = 0; i < bytes_read; ++i) {
+        stdin_buffer_.push_back(buffer[i]);
+      }
+    }
+  }
+  auto out = stdin_buffer_.front();
+  stdin_buffer_.pop_front();
+  return out;
+#endif  // BA_OSTYPE_WINDOWS
 }
 
 }  // namespace ballistica::base

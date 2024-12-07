@@ -26,11 +26,11 @@ class PythonContextCall : public Object {
 
   /// Initialize with a callable PythonRef.
   explicit PythonContextCall(const PythonRef& ref)
-      : PythonContextCall(ref.Get()) {}
+      : PythonContextCall(ref.get()) {}
 
   void Run(PyObject* args = nullptr);
-  void Run(const PythonRef& args) { Run(args.Get()); }
-  auto Exists() const -> bool { return object_.Exists(); }
+  void Run(const PythonRef& args) { Run(args.get()); }
+  auto exists() const -> bool { return object_.exists(); }
   auto GetObjectDescription() const -> std::string override;
   void MarkDead();
   auto object() const -> const PythonRef& { return object_; }

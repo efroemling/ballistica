@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 def generate_top_level_makefile(projroot: str, existing_data: str) -> str:
     """Main script entry point."""
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
     from pathlib import Path
 
     public = getprojectconfig(Path(projroot))['public']

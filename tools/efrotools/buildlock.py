@@ -17,20 +17,22 @@ LOCK_DIR_PATH = '.cache/buildlocks'
 class BuildLock:
     """Tries to ensure a build is not getting stomped on/etc."""
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, projroot: str) -> None:
         self.name = name
+        self.projroot = projroot
         if '/' in name or '\\' in name:
             raise ValueError(f"Illegal BuildLock name: '{name}'.")
-        self.lockpath = os.path.join(LOCK_DIR_PATH, name)
+        self.lockpath = os.path.join(self.projroot, LOCK_DIR_PATH, name)
 
     def __enter__(self) -> None:
-        if not os.path.exists(LOCK_DIR_PATH):
-            os.makedirs(LOCK_DIR_PATH, exist_ok=True)
+        lockdir = os.path.dirname(self.lockpath)
+        if not os.path.exists(lockdir):
+            os.makedirs(lockdir, exist_ok=True)
 
-        # Note: we aren't doing anything super accurate/atomic here. This
-        # is more intended as a gross check to make noise on clearly broken
-        # build logic; it isn't important that it catch every corner case
-        # perfectly.
+        # Note: we aren't doing anything super accurate/atomic here.
+        # This is more intended as a gross check to make noise on
+        # clearly broken build logic; it isn't important that it catch
+        # every corner case perfectly.
         if os.path.exists(self.lockpath):
             raise RuntimeError(
                 f"Build-lock: lock '{self.name}' exists."

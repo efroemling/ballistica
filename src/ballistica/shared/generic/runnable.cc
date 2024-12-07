@@ -2,6 +2,8 @@
 
 #include "ballistica/shared/generic/runnable.h"
 
+#include <string>
+
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
 
@@ -23,7 +25,8 @@ void Runnable::RunAndLogErrors() {
     } else {
       type_name = "<type unavailable>";
     }
-    Log(LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         std::string("Error in Runnable: " + type_name + ": ") + exc.what());
   }
 }

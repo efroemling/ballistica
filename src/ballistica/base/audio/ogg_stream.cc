@@ -2,6 +2,9 @@
 
 #include "ballistica/base/audio/ogg_stream.h"
 
+#include <cstdio>
+#include <string>
+
 #include "ballistica/base/base.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
@@ -15,8 +18,8 @@ static auto CallbackRead(void* ptr, size_t size, size_t nmemb,
   return fread(ptr, size, nmemb, static_cast<FILE*>(data_source));
 }
 
-static auto CallbackSeek(void* data_source, ogg_int64_t offset,
-                         int whence) -> int {
+static auto CallbackSeek(void* data_source, ogg_int64_t offset, int whence)
+    -> int {
   return fseek(static_cast<FILE*>(data_source),
                static_cast_check_fit<long>(offset), whence);  // NOLINT
 }
@@ -90,8 +93,8 @@ void OggStream::DoStream(char* pcm, int* size, unsigned int* rate) {
         static bool reported_error = false;
         if (!reported_error) {
           reported_error = true;
-          Log(LogLevel::kError,
-              "Error streaming ogg file: '" + file_name() + "'.");
+          g_core->Log(LogName::kBaAudio, LogLevel::kError,
+                      "Error streaming ogg file: '" + file_name() + "'.");
         }
         if (loops()) {
           ov_pcm_seek(&ogg_file_, 0);

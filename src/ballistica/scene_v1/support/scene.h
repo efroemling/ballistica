@@ -7,7 +7,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "ballistica/base/logic/logic.h"
 #include "ballistica/scene_v1/node/node.h"
 #include "ballistica/shared/foundation/object.h"
 
@@ -36,8 +35,8 @@ class Scene : public Object {
   void AddOutOfBoundsNode(Node* n) { out_of_bounds_nodes_.emplace_back(n); }
   auto IsOutOfBounds(float x, float y, float z) -> bool;
   auto dynamics() const -> Dynamics* {
-    assert(dynamics_.Exists());
-    return dynamics_.Get();
+    assert(dynamics_.exists());
+    return dynamics_.get();
   }
   auto in_step() const -> bool { return in_step_; }
   void SetMapBounds(float x, float y, float z, float X, float Y, float Z);

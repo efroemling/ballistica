@@ -23,12 +23,12 @@ class PythonClassInputDevice : public PythonClass {
  private:
   static PyMethodDef tp_methods[];
   static auto tp_repr(PythonClassInputDevice* self) -> PyObject*;
-  static auto tp_getattro(PythonClassInputDevice* self,
-                          PyObject* attr) -> PyObject*;
+  static auto tp_getattro(PythonClassInputDevice* self, PyObject* attr)
+      -> PyObject*;
   static auto tp_setattro(PythonClassInputDevice* self, PyObject* attr,
                           PyObject* val) -> int;
-  static auto tp_new(PyTypeObject* type, PyObject* args,
-                     PyObject* keywds) -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
+      -> PyObject*;
   static void tp_dealloc(PythonClassInputDevice* self);
   static auto nb_bool(PythonClassInputDevice* self) -> int;
   static auto DetachFromPlayer(PythonClassInputDevice* self) -> PyObject*;

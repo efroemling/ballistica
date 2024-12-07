@@ -8,9 +8,8 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, TypeVar, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.gameutils import SharedObjects
@@ -334,6 +333,7 @@ class Blast(bs.Actor):
 
     def __init__(
         self,
+        *,
         position: Sequence[float] = (0.0, 1.0, 0.0),
         velocity: Sequence[float] = (0.0, 0.0, 0.0),
         blast_radius: float = 2.0,
@@ -716,6 +716,7 @@ class Bomb(bs.Actor):
 
     def __init__(
         self,
+        *,
         position: Sequence[float] = (0.0, 1.0, 0.0),
         velocity: Sequence[float] = (0.0, 0.0, 0.0),
         bomb_type: str = 'normal',

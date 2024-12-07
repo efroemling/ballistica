@@ -4,9 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from typing_extensions import override
+from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
@@ -23,6 +21,7 @@ class TournamentScoresWindow(PopupWindow):
     def __init__(
         self,
         tournament_id: str,
+        *,
         tournament_activity: bs.GameActivity | None = None,
         position: tuple[float, float] = (0.0, 0.0),
         scale: float | None = None,

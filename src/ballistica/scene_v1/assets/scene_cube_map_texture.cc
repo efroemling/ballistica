@@ -2,6 +2,8 @@
 
 #include "ballistica/scene_v1/assets/scene_cube_map_texture.h"
 
+#include <string>
+
 #include "ballistica/base/assets/assets.h"
 
 namespace ballistica::scene_v1 {
@@ -15,7 +17,7 @@ SceneCubeMapTexture::SceneCubeMapTexture(const std::string& name, Scene* scene)
     base::Assets::AssetListLock lock;
     texture_data_ = g_base->assets->GetCubeMapTexture(name);
   }
-  assert(texture_data_.Exists());
+  assert(texture_data_.exists());
 }
 
 }  // namespace ballistica::scene_v1

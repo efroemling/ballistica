@@ -10,10 +10,17 @@
 
 #include <uuid/uuid.h>
 
+#include <cstdio>
+#include <list>
+#include <string>
+#include <vector>
+
 #if BA_XCODE_BUILD
 #include "ballistica/base/platform/apple/from_swift.h"
 #include "ballistica/shared/math/rect.h"
 #endif
+
+#include "ballistica/shared/ballistica.h"
 
 #if BA_XCODE_BUILD
 // This needs to be below ballistica headers since it relies on

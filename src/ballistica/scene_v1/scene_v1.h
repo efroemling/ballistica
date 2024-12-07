@@ -4,12 +4,11 @@
 #define BALLISTICA_SCENE_V1_SCENE_V1_H_
 
 #include <list>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
-#include "ballistica/shared/python/python_ref.h"
 
 // Common header that most everything using our feature-set should include.
 // It predeclares our feature-set's various types and globals and other
@@ -134,12 +133,31 @@ class ClientSessionReplay;
 class RigidBody;
 class SessionStream;
 class Scene;
-class SceneV1AppMode;
 class SceneV1FeatureSet;
 class Session;
 class SceneSound;
 class SceneTexture;
 typedef Node* NodeCreateFunc(Scene* sg);
+
+/// Specifies the type of time for various operations to target/use.
+///
+/// 'sim' time is the local simulation time for an activity or session.
+///    It can proceed at different rates depending on game speed, stops
+///    for pauses, etc.
+///
+/// 'base' is the baseline time for an activity or session.  It proceeds
+///    consistently regardless of game speed or pausing, but may stop during
+///    occurrences such as network outages.
+///
+/// 'real' time is mostly based on clock time, with a few exceptions.  It may
+///    not advance while the app is backgrounded for instance.  (the engine
+///    attempts to prevent single large time jumps from occurring)
+enum class TimeType : uint8_t {
+  kSim,
+  kBase,
+  kReal,
+  kLast  // Sentinel.
+};
 
 /// Standard messages to send to nodes.
 enum class NodeMessageType {

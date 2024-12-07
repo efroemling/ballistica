@@ -2,6 +2,10 @@
 
 #include "ballistica/scene_v1/node/image_node.h"
 
+#include <string>
+#include <vector>
+
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/core/core.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
@@ -329,14 +333,14 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
     alpha = 0;
   }
   base::MeshAsset* mesh_opaque_used = nullptr;
-  if (mesh_opaque_.Exists()) mesh_opaque_used = mesh_opaque_->mesh_data();
+  if (mesh_opaque_.exists()) mesh_opaque_used = mesh_opaque_->mesh_data();
   base::MeshAsset* mesh_transparent_used = nullptr;
-  if (mesh_transparent_.Exists()) {
+  if (mesh_transparent_.exists()) {
     mesh_transparent_used = mesh_transparent_->mesh_data();
   }
 
   // If no meshes were provided, use default image meshes.
-  if (!mesh_opaque_.Exists() && !mesh_transparent_.Exists()) {
+  if (!mesh_opaque_.exists() && !mesh_transparent_.exists()) {
     if (vr && fill_screen_) {
 #if BA_VR_BUILD
       mesh_opaque_used =
@@ -367,14 +371,14 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
     // transparent to avoid that.
     c.SetTransparent(draw_transparent);
     c.SetPremultiplied(premultiplied_);
-    c.SetTexture(texture_.Exists() ? texture_->texture_data() : nullptr);
+    c.SetTexture(texture_.exists() ? texture_->texture_data() : nullptr);
     c.SetColor(red_, green_, blue_, alpha);
-    if (tint_texture_.Exists()) {
+    if (tint_texture_.exists()) {
       c.SetColorizeTexture(tint_texture_->texture_data());
       c.SetColorizeColor(tint_red_, tint_green_, tint_blue_);
       c.SetColorizeColor2(tint2_red_, tint2_green_, tint2_blue_);
     }
-    c.SetMaskTexture(mask_texture_.Exists() ? mask_texture_->texture_data()
+    c.SetMaskTexture(mask_texture_.exists() ? mask_texture_->texture_data()
                                             : nullptr);
     {
       auto xf = c.ScopedTransform();
@@ -393,14 +397,14 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
     base::SimpleComponent c(&pass);
     c.SetTransparent(true);
     c.SetPremultiplied(premultiplied_);
-    c.SetTexture(texture_.Exists() ? texture_->texture_data() : nullptr);
+    c.SetTexture(texture_.exists() ? texture_->texture_data() : nullptr);
     c.SetColor(red_, green_, blue_, alpha);
-    if (tint_texture_.Exists()) {
+    if (tint_texture_.exists()) {
       c.SetColorizeTexture(tint_texture_->texture_data());
       c.SetColorizeColor(tint_red_, tint_green_, tint_blue_);
       c.SetColorizeColor2(tint2_red_, tint2_green_, tint2_blue_);
     }
-    c.SetMaskTexture(mask_texture_.Exists() ? mask_texture_->texture_data()
+    c.SetMaskTexture(mask_texture_.exists() ? mask_texture_->texture_data()
                                             : nullptr);
     {
       auto xf = c.ScopedTransform();

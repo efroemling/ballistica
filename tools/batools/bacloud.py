@@ -50,11 +50,29 @@ class StateData:
 def get_tz_offset_seconds() -> float:
     """Return the offset between utc and local time in seconds."""
     tval = time.time()
+
+    # Compare naive current and utc times to get our offset from utc.
     utc_offset = (
         datetime.datetime.fromtimestamp(tval)
-        - datetime.datetime.utcfromtimestamp(tval)
+        - datetime.datetime.fromtimestamp(tval, datetime.UTC).replace(
+            tzinfo=None
+        )
     ).total_seconds()
+
     return utc_offset
+
+
+def run_bacloud_main() -> None:
+    """Do the thing."""
+    try:
+        App().run()
+    except KeyboardInterrupt:
+        # Let's do a clean fail on keyboard interrupt.
+        # Can make this optional if a backtrace is ever useful.
+        sys.exit(1)
+    except CleanError as clean_exc:
+        clean_exc.pretty_print()
+        sys.exit(1)
 
 
 class App:
@@ -70,30 +88,17 @@ class App:
 
         # Make sure we can locate the project bacloud is being run from.
         self._project_root = Path(sys.argv[0]).parents[1]
+        # Look for a few things we expect to have in a project.
         if not all(
-            Path(self._project_root, name).is_dir()
-            for name in ('tools', 'config', 'tests')
+            Path(self._project_root, name).exists()
+            for name in ['config/projectconfig.json', 'tools/batools']
         ):
             raise CleanError('Unable to locate project directory.')
-
-        # Also run project prereqs checks so we can hopefully inform the user
-        # of missing Python modules/etc. instead of just failing cryptically.
-        try:
-            subprocess.run(
-                ['make', '--quiet', 'prereqs'],
-                check=True,
-                cwd=self._project_root,
-            )
-        except subprocess.CalledProcessError as exc:
-            raise CleanError(
-                '"make prereqs" check failed. '
-                'Install missing requirements and try again.'
-            ) from exc
 
         self._load_state()
 
         # Simply pass all args to the server and let it do the thing.
-        self.run_interactive_command(sys.argv[1:])
+        self.run_interactive_command(cwd=os.getcwd(), args=sys.argv[1:])
 
         self._save_state()
 
@@ -193,6 +198,38 @@ class App:
 
         return response
 
+    def _download_file(
+        self, filename: str, call: str, args: dict
+    ) -> int | None:
+
+        # Fast out - for repeat batch downloads, most of the time these
+        # will already exist and we can ignore them.
+        if os.path.isfile(filename):
+            return None
+
+        dirname = os.path.dirname(filename)
+        if dirname:
+            os.makedirs(dirname, exist_ok=True)
+
+        response = self._servercmd(call, args)
+
+        # We currently expect a single 'default' entry in
+        # downloads_inline for this.
+        assert response.downloads_inline is not None
+        assert len(response.downloads_inline) == 1
+        data_zipped = response.downloads_inline.get('default')
+        assert isinstance(data_zipped, bytes)
+
+        data = zlib.decompress(data_zipped)
+
+        # Write to tmp files first and then move into place. This
+        # way crashes are less likely to lead to corrupt data.
+        fnametmp = f'{filename}.tmp'
+        with open(fnametmp, 'wb') as outfile:
+            outfile.write(data)
+        os.rename(fnametmp, filename)
+        return len(data)
+
     def _upload_file(self, filename: str, call: str, args: dict) -> None:
         import tempfile
 
@@ -249,15 +286,15 @@ class App:
 
     def _handle_downloads_inline(
         self,
-        downloads_inline: dict[str, str],
+        downloads_inline: dict[str, bytes],
     ) -> None:
         """Handle inline file data to be saved to the client."""
-        import base64
 
         for fname, fdata in downloads_inline.items():
-            # If there's a directory where we want our file to go, clear it
-            # out first. File deletes should have run before this so
-            # everything under it should be empty and thus killable via rmdir.
+            # If there's a directory where we want our file to go, clear
+            # it out first. File deletes should have run before this so
+            # everything under it should be empty and thus killable via
+            # rmdir.
             if os.path.isdir(fname):
                 for basename, dirnames, _fn in os.walk(fname, topdown=False):
                     for dirname in dirnames:
@@ -267,10 +304,47 @@ class App:
             dirname = os.path.dirname(fname)
             if dirname:
                 os.makedirs(dirname, exist_ok=True)
-            data_zipped = base64.b64decode(fdata)
+            data_zipped = fdata
             data = zlib.decompress(data_zipped)
-            with open(fname, 'wb') as outfile:
+
+            # Write to tmp files first and then move into place. This
+            # way crashes are less likely to lead to corrupt data.
+            fnametmp = f'{fname}.tmp'
+            with open(fnametmp, 'wb') as outfile:
                 outfile.write(data)
+            os.rename(fnametmp, fname)
+
+    def _handle_downloads(self, downloads: ResponseData.Downloads) -> None:
+        from efro.util import data_size_str
+        from concurrent.futures import ThreadPoolExecutor
+
+        starttime = time.monotonic()
+
+        def _do_entry(entry: ResponseData.Downloads.Entry) -> int | None:
+            allargs = downloads.baseargs | entry.args
+            fullpath = (
+                entry.path
+                if downloads.basepath is None
+                else os.path.join(downloads.basepath, entry.path)
+            )
+            return self._download_file(fullpath, downloads.cmd, allargs)
+
+        # Run several downloads simultaneously to hopefully maximize
+        # throughput.
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            # Convert the generator to a list to trigger any
+            # exceptions that occurred.
+            results = list(executor.map(_do_entry, downloads.entries))
+
+        num_dls = sum(1 for x in results if x is not None)
+        total_bytes = sum(x for x in results if x is not None)
+        duration = time.monotonic() - starttime
+        if num_dls:
+            print(
+                f'{Clr.BLU}Downloaded {num_dls} files'
+                f' ({data_size_str(total_bytes)}'
+                f' total) in {duration:.2f}s.{Clr.RST}'
+            )
 
     def _handle_dir_prune_empty(self, prunedir: str) -> None:
         """Handle pruning empty directories."""
@@ -316,11 +390,14 @@ class App:
                 print(prompt, end='', flush=True)
             self._end_command_args['input'] = input()
 
-    def run_interactive_command(self, args: list[str]) -> None:
+    def run_interactive_command(self, cwd: str, args: list[str]) -> None:
         """Run a single user command to completion."""
         # pylint: disable=too-many-branches
-
-        nextcall: tuple[str, dict] | None = ('_interactive', {'a': args})
+        assert self._project_root is not None
+        nextcall: tuple[str, dict] | None = (
+            '_interactive',
+            {'c': cwd, 'p': str(self._project_root), 'a': args},
+        )
 
         # Now talk to the server in a loop until there's nothing left to do.
         while nextcall is not None:
@@ -334,17 +411,28 @@ class App:
                 self._state.login_token = None
             if response.dir_manifest is not None:
                 self._handle_dir_manifest_response(response.dir_manifest)
-            if response.uploads_inline is not None:
-                self._handle_uploads_inline(response.uploads_inline)
             if response.uploads is not None:
                 self._handle_uploads(response.uploads)
+            if response.uploads_inline is not None:
+                self._handle_uploads_inline(response.uploads_inline)
 
             # Note: we handle file deletes *before* downloads. This
             # way our file-download code only has to worry about creating or
             # removing directories and not files, and corner cases such as
             # a file getting replaced with a directory should just work.
+            #
+            # UPDATE: that actually only applies to commands where the
+            # client uploads a manifest first and then the server
+            # responds with specific deletes and inline downloads. The
+            # newer 'downloads' command is used differently; in that
+            # case the server is just pushing a big list of hashes to
+            # the client and the client is asking for the stuff it
+            # doesn't have. So in that case the client needs to fully
+            # handle things like replacing dirs with files.
             if response.deletes:
                 self._handle_deletes(response.deletes)
+            if response.downloads:
+                self._handle_downloads(response.downloads)
             if response.downloads_inline:
                 self._handle_downloads_inline(response.downloads_inline)
             if response.dir_prune_empty:
