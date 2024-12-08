@@ -56,6 +56,7 @@ class SpinoffContext:
         DIFF = 'diff'
         BACKPORT = 'backport'
         DESCRIBE_PATH = 'describe_path'
+        MOD_T = 'mod_t'
 
     def __init__(
         self,
@@ -454,6 +455,8 @@ class SpinoffContext:
             # For clean operations, simply stuff all dst entities
             # into our purge list.
             self._purge_all_dst_entities()
+        elif self._mode == self.Mode.MOD_T:
+            print("Running in MOD_T mode")
         else:
             # For normal operations, queue up our copy ops/etc.
             self._register_sync_operations()
