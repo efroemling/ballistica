@@ -28,3 +28,16 @@ class OurDummyModuleDef(DummyModuleDef):
 
 
 fset.dummy_module_def = OurDummyModuleDef()
+
+# Add a new feature set for the new feature
+fset.requirements.add('new_feature')
+
+# Define the new feature set in the file
+class NewFeatureSet(FeatureSet):
+    def __init__(self):
+        super().__init__()
+        self.requirements = {'core', 'base', 'new_feature'}
+        self.has_python_app_subsystem = True
+        self.name_title = 'New Feature'
+
+fset.new_feature_set = NewFeatureSet()

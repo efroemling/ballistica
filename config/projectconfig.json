@@ -20,7 +20,8 @@
   ],
   "default_app_modes": [
     "baclassic.ClassicAppMode",
-    "babase.EmptyAppMode"
+    "babase.EmptyAppMode",
+    "new_feature.NewFeatureAppMode"
   ],
   "efrocache_repository_url": "https://files.ballistica.net/cache/ba1",
   "name": "BallisticaKit",
