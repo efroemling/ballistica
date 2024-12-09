@@ -7,6 +7,7 @@
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/sound_asset.h"  // IWYU pragma: keep.
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/shared/foundation/macros.h"
@@ -2561,6 +2562,31 @@ static PyMethodDef PySetPartyWindowOpenDef = {
     "(internal)",
 };
 
+// --------------------------- get_screen_size ---------------------------------
+
+static auto PyGetScreenSize(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base->graphics);
+  return Py_BuildValue(
+    "(ff)",
+    g_base->graphics->screen_pixel_width(),
+    g_base->graphics->screen_pixel_height()
+  );
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetScreenSizeDef = {
+    "get_screen_size",              // name
+    (PyCFunction)PyGetScreenSize,   // method
+    METH_NOARGS,                    // flags
+
+    "get_screen_size() -> tuple[float, float]\n"
+    "\n"
+    "Returns the current screen size in pixels.",
+};
+
 // -------------------------- get_special_widget -------------------------------
 
 static auto PyGetSpecialWidget(PyObject* self, PyObject* args, PyObject* keywds)
@@ -2689,7 +2715,7 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyScrollWidgetDef,    PyHScrollWidgetDef,    PyTextWidgetDef,
       PyWidgetDef,          PyUIBoundsDef,         PyGetSoundDef,
       PyGetTextureDef,      PyGetQRCodeTextureDef, PyGetMeshDef,
-      PyIsAvailableDef,     PyOnScreenChangeDef,
+      PyIsAvailableDef,     PyOnScreenChangeDef,   PyGetScreenSizeDef,
   };
 }
 
