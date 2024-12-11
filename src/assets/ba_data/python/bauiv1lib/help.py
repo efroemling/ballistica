@@ -393,12 +393,14 @@ class HelpWindow(bui.MainWindow):
         # icon_size_2 = 30
         hval2 = h - sep
         vval2 = v
-        bui.imagewidget(
+        bui.buttonwidget(
             parent=self._subcontainer,
+            label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
             texture=bui.gettexture('buttonPunch'),
             color=(1, 0.7, 0.3),
+            selectable=False,
         )
 
         txt_scale = getres(f'{self._r}.punchInfoTextScale')
@@ -417,12 +419,14 @@ class HelpWindow(bui.MainWindow):
 
         hval2 = h + sep
         vval2 = v
-        bui.imagewidget(
+        bui.buttonwidget(
             parent=self._subcontainer,
+            label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
             texture=bui.gettexture('buttonBomb'),
             color=(1, 0.3, 0.3),
+            selectable=False,
         )
 
         txt = bui.Lstr(resource=f'{self._r}.bombInfoText').evaluate()
@@ -442,12 +446,14 @@ class HelpWindow(bui.MainWindow):
 
         hval2 = h
         vval2 = v + sep
-        bui.imagewidget(
+        bui.buttonwidget(
             parent=self._subcontainer,
+            label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
             texture=bui.gettexture('buttonPickUp'),
             color=(0.5, 0.5, 1),
+            selectable=False,
         )
 
         txtl = bui.Lstr(resource=f'{self._r}.pickUpInfoText')
@@ -466,12 +472,14 @@ class HelpWindow(bui.MainWindow):
 
         hval2 = h
         vval2 = v - sep
-        bui.imagewidget(
+        bui.buttonwidget(
             parent=self._subcontainer,
+            label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
             texture=bui.gettexture('buttonJump'),
             color=(0.4, 1, 0.4),
+            selectable=False,
         )
 
         txt = bui.Lstr(resource=f'{self._r}.jumpInfoText').evaluate()
