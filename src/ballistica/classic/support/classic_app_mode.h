@@ -1,5 +1,3 @@
-// Released under the MIT License. See LICENSE for details.
-
 #ifndef BALLISTICA_CLASSIC_SUPPORT_CLASSIC_APP_MODE_H_
 #define BALLISTICA_CLASSIC_SUPPORT_CLASSIC_APP_MODE_H_
 
@@ -221,6 +219,8 @@ class ClassicAppMode : public base::AppMode {
   void SetRootUILevelText(const std::string text);
   void SetRootUIXPText(const std::string text);
   void SetRootUIInboxCountText(const std::string text);
+
+  void ActivateHost();
 
  private:
   ClassicAppMode();

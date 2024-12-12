@@ -1,5 +1,3 @@
-// Released under the MIT License. See LICENSE for details.
-
 #include "ballistica/classic/support/classic_app_mode.h"
 
 #include <algorithm>
@@ -103,6 +101,8 @@ void ClassicAppMode::OnActivate() {
   DoApplyAppConfig();
   LanguageChanged();
   OnGameRosterChanged_();
+
+  ActivateHost();
 }
 
 void ClassicAppMode::OnAppStart() { assert(g_base->InLogicThread()); }
@@ -1674,6 +1674,11 @@ void ClassicAppMode::SetRootUIInboxCountText(const std::string text) {
       root_widget->SetInboxCountText(root_ui_inbox_count_text_);
     }
   }
+}
+
+void ClassicAppMode::ActivateHost() {
+  // Call the LaunchHostSession method to activate the host
+  LaunchHostSession(nullptr);
 }
 
 }  // namespace ballistica::classic
