@@ -1,0 +1,7 @@
+{
+  "tasks": {
+    "test": "make test",
+    "build": "make env",
+    "launch": "make prefab-gui-debug"
+  }
+}
