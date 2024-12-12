@@ -36,16 +36,12 @@ class _MessageEntry:
 class InboxWindow(bui.MainWindow):
     """Popup window to show account messages."""
 
-    def __del__(self) -> None:
-        print('~InboxWindow()')
-
     def __init__(
         self,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
 
-        print('InboxWindow()')
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
 
@@ -63,9 +59,7 @@ class InboxWindow(bui.MainWindow):
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
                 toolbar_visibility=(
-                    'menu_minimal'
-                    if uiscale is bui.UIScale.SMALL
-                    else 'menu_full'
+                    'menu_full' if uiscale is bui.UIScale.SMALL else 'menu_full'
                 ),
                 scale=(
                     2.3
@@ -119,15 +113,29 @@ class InboxWindow(bui.MainWindow):
             color=bui.app.ui_v1.title_color,
         )
 
+        # Shows 'loading', 'no messages', etc.
+        self._infotext = bui.textwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, self._height * 0.5),
+            maxwidth=self._width * 0.7,
+            scale=0.5,
+            flatness=1.0,
+            color=(0.4, 0.4, 0.5),
+            shadow=0.0,
+            text=bui.Lstr(resource='loadingText'),
+            size=(0, 0),
+            h_align='center',
+            v_align='center',
+        )
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             size=(
                 self._width - 60,
-                self._height - (150 if uiscale is bui.UIScale.SMALL else 70),
+                self._height - (170 if uiscale is bui.UIScale.SMALL else 70),
             ),
             position=(
                 30,
-                (110 if uiscale is bui.UIScale.SMALL else 30) + yoffs,
+                (133 if uiscale is bui.UIScale.SMALL else 30) + yoffs,
             ),
             capture_arrows=True,
             simple_culling_v=200,
@@ -172,17 +180,9 @@ class InboxWindow(bui.MainWindow):
     def _error(self, errmsg: bui.Lstr | str) -> None:
         """Put ourself in a permanent error state."""
         bui.textwidget(
-            parent=self._root_widget,
-            position=(self._width * 0.5, self._height * 0.5),
-            maxwidth=self._width * 0.7,
-            scale=1.0,
-            flatness=1.0,
+            edit=self._infotext,
             color=(1, 0, 0),
-            shadow=0.0,
             text=errmsg,
-            size=(0, 0),
-            h_align='center',
-            v_align='center',
         )
 
     def _on_message_entry_press(
@@ -315,7 +315,21 @@ class InboxWindow(bui.MainWindow):
 
         # Whee; no error. Mark as done.
         if button is not None:
-            bui.buttonwidget(edit=button, label=bui.Lstr(resource='doneText'))
+            # For positive claim buttons, say 'success'.
+            # Otherwise default to 'done.'
+            if (
+                entry.type
+                in {
+                    bacommon.cloud.BSInboxEntryType.CLAIM,
+                    bacommon.cloud.BSInboxEntryType.CLAIM_DISCARD,
+                }
+                and process_type
+                is bacommon.cloud.BSInboxEntryProcessType.POSITIVE
+            ):
+                label = bui.Lstr(resource='successText')
+            else:
+                label = bui.Lstr(resource='doneText')
+            bui.buttonwidget(edit=button, label=label)
 
     def _on_inbox_request_response(
         self, response: bacommon.cloud.BSInboxRequestResponse | Exception
@@ -350,19 +364,13 @@ class InboxWindow(bui.MainWindow):
         # keyboard control working in the empty case.
         if not response.entries:
             bui.textwidget(
-                parent=self._root_widget,
-                position=(self._width * 0.5, self._height * 0.5),
-                maxwidth=self._width * 0.7,
-                scale=1.0,
-                flatness=1.0,
-                color=(0.4, 0.4, 0.4),
-                shadow=0.0,
+                edit=self._infotext,
+                color=(0.4, 0.4, 0.5),
                 text=bui.Lstr(resource='noMessagesText'),
-                size=(0, 0),
-                h_align='center',
-                v_align='center',
             )
             return
+
+        bui.textwidget(edit=self._infotext, text='')
 
         sub_width = self._width - 90
         sub_height = 0.0

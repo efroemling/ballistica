@@ -202,7 +202,7 @@ class CloudSubsystem(babase.AppSubsystem):
 
     def subscribe_classic_account_data(
         self,
-        updatecall: Callable[[bacommon.cloud.ClassicAccountLiveData], None],
+        updatecall: Callable[[bacommon.cloud.BSClassicAccountLiveData], None],
     ) -> babase.CloudSubscription:
         """Subscribe to classic account data."""
         raise NotImplementedError(

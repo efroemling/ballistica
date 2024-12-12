@@ -66,8 +66,8 @@ auto BasePlatform::GetPublicDeviceUUID() -> std::string {
     // We used to plug version in directly here, but that caused uuids to
     // shuffle too rapidly during periods of rapid development. This
     // keeps it more constant.
-    // __last_rand_uuid_component_shuffle_date__ 2024 6 13
-    auto rand_uuid_component{"1URRE62C7234VP9L1BUPJ1P7QT7Q8YW3"};
+    // __last_rand_uuid_component_shuffle_date__ 2024 12 11
+    auto rand_uuid_component{"ACIMGEQUN3F6CIUMFYO3X6GYLPTTSPOZ"};
 
     inputs.emplace_back(rand_uuid_component);
     auto gil{Python::ScopedInterpreterLock()};

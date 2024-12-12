@@ -202,8 +202,9 @@ class ClassicAppMode(babase.AppMode):
         print(f'GOT SUB TEST UPDATE: {val}')
 
     def _on_classic_account_data_change(
-        self, val: bacommon.cloud.ClassicAccountLiveData
+        self, val: bacommon.cloud.BSClassicAccountLiveData
     ) -> None:
+        # print('ACCOUNT CHANGED', val)
         achp = round(val.achievements / max(val.achievements_total, 1) * 100.0)
         ibc = str(val.inbox_count)
         if val.inbox_count_is_max:

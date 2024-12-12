@@ -327,10 +327,28 @@ class BSPrivatePartyResponse(Response):
     datacode: Annotated[str | None, IOAttrs('d')]
 
 
+class BSClassicChestAppearance(Enum):
+    """Appearances bombsquad classic chests can have."""
+
+    UNKNOWN = 'u'
+    DEFAULT = 'd'
+
+
 @ioprepped
 @dataclass
-class ClassicAccountLiveData:
+class BSClassicAccountLiveData:
     """Account related data kept up to date live for classic app mode."""
+
+    @dataclass
+    class Chest:
+        """A lovely chest."""
+
+        appearance: Annotated[
+            BSClassicChestAppearance,
+            IOAttrs('a', enum_fallback=BSClassicChestAppearance.UNKNOWN),
+        ]
+        unlock_time: Annotated[datetime.datetime, IOAttrs('t')]
+        ad_unlock_time: Annotated[datetime.datetime | None, IOAttrs('at')]
 
     class LeagueType(Enum):
         """Type of league we are in."""
@@ -358,6 +376,8 @@ class ClassicAccountLiveData:
 
     inbox_count: Annotated[int, IOAttrs('ibc')]
     inbox_count_is_max: Annotated[bool, IOAttrs('ibcm')]
+
+    chests: Annotated[dict[str, Chest], IOAttrs('c')]
 
 
 class BSInboxEntryType(Enum):

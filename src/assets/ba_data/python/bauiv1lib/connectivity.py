@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-import time
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
@@ -49,12 +48,6 @@ class WaitForConnectivityWindow(bui.Window):
         self._on_cancel = on_cancel
         self._width = 650
         self._height = 300
-        self._infos: list[str | bui.Lstr] = [
-            'This can take a few moments, especially on first launch.',
-            'Make sure your internet connection is working.',
-        ]
-        self._last_info_switch_time = time.monotonic()
-        self._info_index = 0
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -69,21 +62,23 @@ class WaitForConnectivityWindow(bui.Window):
             scale=1.2,
             h_align='center',
             v_align='center',
-            text='Locating nearest regional servers...',
+            text=bui.Lstr(resource='internal.connectingToPartyText'),
             maxwidth=self._width * 0.9,
         )
         self._info_text = bui.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height * 0.45),
             size=(0, 0),
-            color=(0.7, 0.6, 0.7),
+            color=(0.6, 0.5, 0.6),
             flatness=1.0,
-            scale=0.8,
+            shadow=0.0,
+            scale=0.75,
             h_align='center',
             v_align='center',
-            text=self._infos[0],
+            text='',
             maxwidth=self._width * 0.9,
         )
+        self._info_text_str = ''
         cancel_button = bui.buttonwidget(
             parent=self._root_widget,
             autoselect=True,
@@ -98,7 +93,6 @@ class WaitForConnectivityWindow(bui.Window):
         )
 
     def _update(self) -> None:
-        now = time.monotonic()
 
         plus = bui.app.plus
         assert plus is not None
@@ -107,12 +101,16 @@ class WaitForConnectivityWindow(bui.Window):
             self._connected()
             return
 
-        if now - self._last_info_switch_time > 5.0:
-            self._info_index = (self._info_index + 1) % len(self._infos)
-            bui.textwidget(
-                edit=self._info_text, text=self._infos[self._info_index]
-            )
-            self._last_info_switch_time = now
+        # Show what connectivity is up to if we don't have any published
+        # zone-pings yet (or if we do but there's no transport state to
+        # show yet).
+        if not bui.app.net.zone_pings or not bui.app.net.transport_state:
+            infotext = bui.app.net.connectivity_state
+        else:
+            infotext = bui.app.net.transport_state
+        if infotext != self._info_text_str:
+            self._info_text_str = infotext
+            bui.textwidget(edit=self._info_text, text=infotext)
 
     def _connected(self) -> None:
         if not self._root_widget or self._root_widget.transitioning_out:

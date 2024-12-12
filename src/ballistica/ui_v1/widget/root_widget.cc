@@ -18,11 +18,12 @@
 
 namespace ballistica::ui_v1 {
 
-#define TOOLBAR_OPACITY_2 1.0f
+static const float kBotLeftColorR{0.6f};
+static const float kBotLeftColorG{0.6f};
+static const float kBotLeftColorB{0.8f};
 
-#define BOT_LEFT_COLOR_R 0.6
-#define BOT_LEFT_COLOR_G 0.6
-#define BOT_LEFT_COLOR_B 0.8
+// Flip this to true when we're ready to use levels.
+static const bool kShowLevels{false};
 
 // For defining toolbar buttons.
 struct RootWidget::ButtonDef {
@@ -166,24 +167,30 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
     bd.color_b = 0.5f;
 
     bd.depth_min = 0.3f;
-    bd.visibility_mask =
-        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
 
-    bd.allow_in_game = false;
+    if (type == MeterType::kLevel && !kShowLevels) {
+      // Keep levels hidden always.
+    } else {
+      bd.visibility_mask =
+          (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+           | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
+           | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
 
-    // Show some in store mode.
-    if (type == MeterType::kLevel || type == MeterType::kTickets) {
-      bd.visibility_mask |=
-          static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStore)
-          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStoreNoBack);
-    }
-    // Show some in get-tokens/tokens mode
-    if (type == MeterType::kTokens) {
-      bd.visibility_mask |=
-          static_cast<uint32_t>(Widget::ToolbarVisibility::kGetTokens)
-          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuTokens);
+      bd.allow_in_game = false;
+
+      // Show some in store mode.
+      if (type == MeterType::kLevel || type == MeterType::kTickets) {
+        bd.visibility_mask |=
+            static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStore)
+            | static_cast<uint32_t>(
+                Widget::ToolbarVisibility::kMenuStoreNoBack);
+      }
+      // Show some in get-tokens/tokens mode
+      if (type == MeterType::kTokens) {
+        bd.visibility_mask |=
+            static_cast<uint32_t>(Widget::ToolbarVisibility::kGetTokens)
+            | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuTokens);
+      }
     }
 
     // Adjust buffer between neighbors.
@@ -531,7 +538,7 @@ void RootWidget::Setup() {
   AddMeter_(MeterType::kLevel, 0.0f, 1.0f, 1.0f, 1.0f, false, "");
   AddMeter_(MeterType::kTrophy, 0.0f, 1.0f, 1.0f, 1.0f, false, "");
 
-  // Menu button (only shows up when we're not in a menu)
+  // Menu button (only shows up when we're not in a menu).
   // FIXME - this should never be visible on TV or VR UI modes
   {
     ButtonDef b;
@@ -618,9 +625,9 @@ void RootWidget::Setup() {
     b.width = b.height = 60.0f;
     // b.x = bx;
     b.y = b.height * 0.5f + 2.0f;
-    b.color_r = BOT_LEFT_COLOR_R;
-    b.color_g = BOT_LEFT_COLOR_G;
-    b.color_b = BOT_LEFT_COLOR_B;
+    b.color_r = kBotLeftColorR;
+    b.color_g = kBotLeftColorG;
+    b.color_b = kBotLeftColorB;
     b.img = "logIcon";
     b.call = UIV1Python::ObjID::kRootUIInboxButtonPressCall;
     b.visibility_mask =
@@ -675,9 +682,9 @@ void RootWidget::Setup() {
     b.v_align = VAlign::kBottom;
     b.width = b.height = 60.0f;
     b.y = b.height * 0.5f + 2.0f;
-    b.color_r = BOT_LEFT_COLOR_R;
-    b.color_g = BOT_LEFT_COLOR_G;
-    b.color_b = BOT_LEFT_COLOR_B;
+    b.color_r = kBotLeftColorR;
+    b.color_g = kBotLeftColorG;
+    b.color_b = kBotLeftColorB;
     b.img = "achievementsIcon";
     b.call = UIV1Python::ObjID::kRootUIAchievementsButtonPressCall;
     b.visibility_mask =
@@ -717,9 +724,9 @@ void RootWidget::Setup() {
     b.width = b.height = 60.0f;
     // b.x = bx;
     b.y = b.height * 0.5f + 2.0f;
-    b.color_r = BOT_LEFT_COLOR_R;
-    b.color_g = BOT_LEFT_COLOR_G;
-    b.color_b = BOT_LEFT_COLOR_B;
+    b.color_r = kBotLeftColorR;
+    b.color_g = kBotLeftColorG;
+    b.color_b = kBotLeftColorB;
     b.img = "leaderboardsIcon";
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
@@ -737,9 +744,9 @@ void RootWidget::Setup() {
     b.width = b.height = 60.0f;
     // b.x = bx;
     b.y = b.height * 0.58f - 2.0f;
-    b.color_r = BOT_LEFT_COLOR_R;
-    b.color_g = BOT_LEFT_COLOR_G;
-    b.color_b = BOT_LEFT_COLOR_B;
+    b.color_r = kBotLeftColorR;
+    b.color_g = kBotLeftColorG;
+    b.color_b = kBotLeftColorB;
     b.img = "settingsIcon";
     b.call = UIV1Python::ObjID::kRootUISettingsButtonPressCall;
     b.visibility_mask =
@@ -1023,9 +1030,9 @@ void RootWidget::UpdateForFocusedWindow_(Widget* widget) {
 }
 
 void RootWidget::StepChildWidgets_(float dt) {
-  // Hitches tend to break our math and cause buttons to overshoot on
-  // their transitions in and then back up. So let's limit our max dt
-  // to about what ~30fps would give us.
+  // Hitches tend to break our math and cause buttons to overshoot on their
+  // transitions in and then back up. So let's limit our max dt to about
+  // what ~30fps would give us.
   dt = std::min(dt, 1000.0f / 30.0f);
 
   if (!child_widgets_dirty_) {

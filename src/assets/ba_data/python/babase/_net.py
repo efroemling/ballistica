@@ -33,7 +33,7 @@ class NetworkSubsystem:
         # that a nearby server has been pinged.
         self.zone_pings: dict[str, float] = {}
 
-        # For debugging.
+        # For debugging/progress.
         self.v1_test_log: str = ''
         self.v1_ctest_results: dict[int, str] = {}
         self.connectivity_state = 'uninited'

@@ -369,7 +369,15 @@ class AccountSettingsWindow(bui.MainWindow):
         show_manage_account_button = primary_v2_account is not None
         manage_account_button_space = 70.0
 
-        show_delete_account_button = primary_v2_account is not None
+        # Apple asks us to make a delete-account button directly
+        # available in the UI. Currently disabling this elsewhere
+        # however as I feel that poking 'Manage Account' and scrolling
+        # down to 'Delete Account' is not hard to find.
+        show_delete_account_button = primary_v2_account is not None and (
+            bui.app.classic is not None
+            and bui.app.classic.platform == 'mac'
+            and bui.app.classic.subplatform == 'appstore'
+        )
         delete_account_button_space = 70.0
 
         show_link_accounts_button = self._v1_signed_in and (

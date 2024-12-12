@@ -1,4 +1,4 @@
-### 1.7.37 (build 22130, api 9, 2024-12-06)
+### 1.7.37 (build 22133, api 9, 2024-12-12)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
