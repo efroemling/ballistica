@@ -347,8 +347,10 @@ class BSClassicAccountLiveData:
             BSClassicChestAppearance,
             IOAttrs('a', enum_fallback=BSClassicChestAppearance.UNKNOWN),
         ]
+        create_time: Annotated[datetime.datetime, IOAttrs('c')]
+        unlock_tokens: Annotated[int, IOAttrs('tk')]
         unlock_time: Annotated[datetime.datetime, IOAttrs('t')]
-        ad_unlock_time: Annotated[datetime.datetime | None, IOAttrs('at')]
+        ad_allow_time: Annotated[datetime.datetime | None, IOAttrs('at')]
 
     class LeagueType(Enum):
         """Type of league we are in."""

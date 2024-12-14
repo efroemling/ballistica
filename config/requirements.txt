@@ -4,7 +4,7 @@ filelock==3.16.1
 furo==2024.8.6
 mypy==1.13.0
 pbxproj==4.2.1
-pdoc==15.0.0
+pdoc==15.0.1
 pur==7.3.3
 pylint==3.3.2
 pylsp-mypy==0.6.9

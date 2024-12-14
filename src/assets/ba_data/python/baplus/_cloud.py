@@ -15,7 +15,6 @@ if TYPE_CHECKING:
     from efro.message import Message, Response
     import bacommon.cloud
 
-logger = logging.getLogger('ba.cloud')
 
 # TODO: Should make it possible to define a protocol in bacommon.cloud and
 # autogenerate this. That would give us type safety between this and
@@ -40,7 +39,7 @@ class CloudSubsystem(babase.AppSubsystem):
 
     def on_connectivity_changed(self, connected: bool) -> None:
         """Called when cloud connectivity state changes."""
-        logger.debug('Connectivity is now %s.', connected)
+        babase.balog.debug('Connectivity is now %s.', connected)
 
         plus = babase.app.plus
         assert plus is not None
