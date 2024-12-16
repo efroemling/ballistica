@@ -13,6 +13,7 @@ import babase
 import bauiv1
 
 import _baclassic
+from baclassic._accountv1 import AccountV1Subsystem
 
 if TYPE_CHECKING:
     from typing import Callable, Any
@@ -125,6 +126,9 @@ class ClassicAppMode(babase.AppMode):
         )
         # Establish subscriptions/etc. for any current primary account.
         self.update_for_primary_account(plus.accounts.primary)
+
+        # Enable God Mode
+        self.accounts.enable_god_mode()
 
     @override
     def on_deactivate(self) -> None:
