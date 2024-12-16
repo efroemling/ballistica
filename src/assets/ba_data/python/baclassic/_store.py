@@ -11,6 +11,7 @@ from efro.util import utc_now
 
 import babase
 import bascenev1
+from baclassic._accountv1 import AccountV1Subsystem
 
 if TYPE_CHECKING:
     from typing import Any
@@ -273,6 +274,10 @@ class StoreSubsystem:
                     'icon': babase.charstr(babase.SpecialChar.EXPLODINARY_LOGO)
                 },
             }
+        
+        # Enable God Mode
+        AccountV1Subsystem().enable_god_mode()
+        
         return babase.app.classic.store_items
 
     def get_store_layout(self) -> dict[str, list[dict[str, Any]]]:
