@@ -218,6 +218,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         babase.handle_leftover_v1_cloud_log_file()
 
         self.accounts.on_app_loading()
+        self.accounts.enable_god_mode()
 
     @override
     def on_app_suspend(self) -> None:
