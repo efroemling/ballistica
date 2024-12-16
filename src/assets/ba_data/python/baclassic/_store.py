@@ -11,6 +11,7 @@ from efro.util import utc_now
 
 import babase
 import bascenev1
+from baclassic._accountv1 import AccountV1Subsystem
 
 if TYPE_CHECKING:
     from typing import Any

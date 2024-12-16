@@ -219,6 +219,9 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
         self.accounts.on_app_loading()
 
+        # Enable God Mode
+        self.accounts.enable_god_mode()
+
     @override
     def on_app_suspend(self) -> None:
         self.accounts.on_app_suspend()

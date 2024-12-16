@@ -26,6 +26,7 @@ from babase._stringedit import StringEditSubsystem
 from babase._devconsole import DevConsoleSubsystem
 from babase._appconfig import AppConfig
 from babase._logging import lifecyclelog
+from babase._accountv2 import AccountV2Subsystem
 
 if TYPE_CHECKING:
     import asyncio
@@ -801,6 +802,10 @@ class App:
         # proceed on to the running state.
         if self.plus is None:
             _babase.pushcall(self.on_initial_sign_in_complete)
+
+        # Enable god mode if available
+        if self.plus is not None:
+            self.plus.accounts.enable_god_mode()
 
     def _on_meta_scan_complete(self) -> None:
         """Called when meta-scan is done doing its thing."""
