@@ -1676,4 +1676,14 @@ void ClassicAppMode::SetRootUIInboxCountText(const std::string text) {
   }
 }
 
+auto ClassicAppMode::GetBottomLeftEdgeHeight() -> float {
+  assert(g_base->InLogicThread());
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      return root_widget->bottom_left_height();
+    }
+  }
+  return 0.0f;
+}
+
 }  // namespace ballistica::classic

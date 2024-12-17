@@ -48,6 +48,8 @@ class RootWidget : public ContainerWidget {
   void SetXPText(const std::string& val);
   void SetInboxCountText(const std::string& val);
 
+  auto bottom_left_height() const { return bottom_left_height_; }
+
  private:
   struct ButtonDef;
   struct Button;
@@ -68,6 +70,7 @@ class RootWidget : public ContainerWidget {
   StackWidget* screen_stack_widget_{};
   StackWidget* overlay_stack_widget_{};
   float base_scale_{1.0f};
+  float bottom_left_height_{};
   millisecs_t update_time_{};
   std::list<Button> buttons_;
   std::list<Text> texts_;

@@ -111,8 +111,8 @@ void Graphics::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 void Graphics::DoApplyAppConfig() {
   assert(g_base->InLogicThread());
 
-  // Any time we load the config we ship a new graphics-settings to
-  // the graphics server since something likely changed.
+  // Any time we load the config we ship a new graphics-settings to the
+  // graphics server since something likely changed.
   graphics_settings_dirty_ = true;
 
   show_fps_ = g_base->app_config->Resolve(AppConfig::BoolID::kShowFPS);
@@ -373,6 +373,10 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
     last_total_frames_rendered_ = total_frames_rendered;
   }
 
+  float bot_left_offset{};
+  if (show_fps_ || show_ping_) {
+    bot_left_offset = g_base->app_mode()->GetBottomLeftEdgeHeight();
+  }
   if (show_fps_) {
     char fps_str[32];
     snprintf(fps_str, sizeof(fps_str), "%d", last_fps_);
@@ -401,7 +405,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
       c.SetFlatness(1.0f);
       {
         auto xf = c.ScopedTransform();
-        c.Translate(6.0f, 6.0f, kScreenTextZDepth);
+        c.Translate(6.0f, bot_left_offset + 6.0f, kScreenTextZDepth);
         c.DrawMesh(fps_text_group_->GetElementMesh(e));
       }
     }
@@ -436,8 +440,9 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
         c.SetFlatness(1.0f);
         {
           auto xf = c.ScopedTransform();
-          c.Translate(6.0f + 14.0f + (show_fps_ ? 35.0f : 0.0f), 6.0f + 1.0f,
-                      kScreenTextZDepth);
+          c.Translate(
+              6.0f, bot_left_offset + 6.0f + 1.0f + (show_fps_ ? 30.0f : 0.0f),
+              kScreenTextZDepth);
           c.Scale(0.7f, 0.7f);
           c.DrawMesh(ping_text_group_->GetElementMesh(e));
         }

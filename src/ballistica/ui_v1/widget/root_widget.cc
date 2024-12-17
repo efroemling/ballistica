@@ -1091,17 +1091,22 @@ void RootWidget::StepChildWidgets_(float dt) {
     }
   }
   xpos = 0.0f;
+  float bottom_left_height{};
   for (auto* btn : bottom_left_buttons_) {
     auto enabled = btn->enabled;
     float bwidthhalf = btn->width * 0.5;
     if (enabled) {
       xpos += bwidthhalf + btn->pre_buffer;
+      bottom_left_height =
+          std::max(bottom_left_height, btn->y + btn->height * 0.5f);
     }
     btn->x = xpos;
     if (enabled) {
       xpos += bwidthhalf + btn->post_buffer;
     }
   }
+  bottom_left_height_ = bottom_left_height * base_scale_;
+
   xpos = 0.0f;
   for (auto* btn : bottom_right_buttons_) {
     auto enabled = btn->enabled;

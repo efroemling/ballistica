@@ -149,6 +149,14 @@ def is_urllib3_communication_error(exc: BaseException, url: str | None) -> bool:
     # real error.
     import urllib3.exceptions
 
+    # If this error is from hitting max-retries, look at the underlying
+    # error instead.
+    if isinstance(exc, urllib3.exceptions.MaxRetryError):
+        # Hmm; will a max-retry error ever not have an underlying error?
+        if exc.reason is None:
+            return False
+        exc = exc.reason
+
     if isinstance(exc, _Urllib3HttpError):
         # Special sub-case: appspot.com hosting seems to give 403 errors
         # (forbidden) to some countries. I'm assuming for legal reasons?..

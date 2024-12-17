@@ -288,7 +288,6 @@ void BaseFeatureSet::SuspendApp() {
   // push runnables to them from here they may or may not be called before
   // their event-loop is actually paused.
 
-  // Pause all event loops.
   EventLoop::SetEventLoopsSuspended(true);
 
   if (g_base->network_reader) {

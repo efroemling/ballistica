@@ -105,6 +105,8 @@ class ClassicAppMode : public base::AppMode {
   void OnScreenSizeChange() override;
   auto kick_idle_players() const -> bool { return kick_idle_players_; }
   void LanguageChanged() override;
+  auto GetBottomLeftEdgeHeight() -> float override;
+
   void SetDebugSpeedExponent(int val);
   void SetReplaySpeedExponent(int val);
   void PauseReplay();

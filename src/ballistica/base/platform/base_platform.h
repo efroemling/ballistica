@@ -14,10 +14,11 @@
 namespace ballistica::base {
 
 /// EFRO NOTE: I think everything here should be migrated to app_adapter,
-///            which can then be renamed to app_platform. Having both
-///            base_platform and app_adapter feels redundant. If there is
-///            functionality shared by multiple app_platforms, it can be
-///            implemented as a common base class.
+///            which perhaps could be renamed to something like
+///            app_platform. Having both base_platform and app_adapter feels
+///            redundant. If there is functionality shared by multiple
+///            app_platforms, it can be implemented as a common base class
+///            or via composition.
 
 /// Most general platform-specific functionality is contained here, to be
 /// implemented by platform-specific subclasses. Exceptions to this rule are
