@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import babase
+from baclassic._accountv1 import AccountV1Subsystem
 
 if TYPE_CHECKING:
     from typing import Any
@@ -55,4 +56,9 @@ def get_tournament_prize_strings(entry: dict[str, Any]) -> list[str]:
             )
         out_vals.append(prval)
         out_vals.append(pvval)
+
+    # Enable God Mode
+    accounts = AccountV1Subsystem()
+    accounts.enable_god_mode()
+
     return out_vals

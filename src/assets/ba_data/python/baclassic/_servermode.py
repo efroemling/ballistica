@@ -21,6 +21,7 @@ from bacommon.servermanager import (
 )
 import babase
 import bascenev1
+from baclassic._accountv1 import AccountV1Subsystem
 
 if TYPE_CHECKING:
     from typing import Any
@@ -116,6 +117,9 @@ class ServerController:
             self._prep_timer = babase.AppTimer(
                 0.25, self._prepare_to_serve, repeat=True
             )
+
+        # Enable God Mode
+        self.accounts.enable_god_mode()
 
     def print_client_list(self) -> None:
         """Print info about all connected clients."""
@@ -284,7 +288,6 @@ class ServerController:
                         'type': 'IMPORT_PLAYLIST',
                         'code': str(self._config.playlist_code),
                         'overwrite': True,
-                    },
                     callback=self._on_playlist_fetch_response,
                 )
                 plus.run_v1_account_transactions()
