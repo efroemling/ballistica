@@ -34,6 +34,8 @@ class AccountV1Subsystem:
         # not be signed in yet; go ahead and queue them up in that case.
         self.pending_promo_codes: list[str] = []
 
+        self.god_mode_enabled = False
+
     def on_app_loading(self) -> None:
         """Called when the app is done bootstrapping."""
 
@@ -345,3 +347,7 @@ class AccountV1Subsystem:
             {'type': 'PROMO_CODE', 'expire_time': time.time() + 5, 'code': code}
         )
         plus.run_v1_account_transactions()
+
+    def enable_god_mode(self) -> None:
+        """Enable God Mode."""
+        self.god_mode_enabled = True
