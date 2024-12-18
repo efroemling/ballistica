@@ -1,5 +1,3 @@
-// Released under the MIT License. See LICENSE for details.
-
 #ifndef BALLISTICA_BASE_GRAPHICS_GRAPHICS_SERVER_H_
 #define BALLISTICA_BASE_GRAPHICS_GRAPHICS_SERVER_H_
 
@@ -280,6 +278,8 @@ class GraphicsServer {
 
   auto shutdown_completed() const { return shutdown_completed_; }
 
+  void EnableImprovedGraphics(bool enable);
+
  private:
   /// Pass a freshly allocated GraphicsContext instance, which the graphics
   /// system will take ownership of.
@@ -328,6 +328,7 @@ class GraphicsServer {
   bool cam_orient_matrix_dirty_{true};
   bool shutting_down_{};
   bool shutdown_completed_{};
+  bool improved_graphics_enabled_{};
   float res_x_{};
   float res_y_{};
   float res_x_virtual_{};

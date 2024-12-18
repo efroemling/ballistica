@@ -1,5 +1,3 @@
-// Released under the MIT License. See LICENSE for details.
-
 #include "ballistica/base/graphics/graphics_server.h"
 
 #include <list>
@@ -132,6 +130,9 @@ auto GraphicsServer::TryRender() -> bool {
     // Only actually render if we have a screen and aren't in a hold.
     auto target = renderer()->screen_render_target();
     if (target != nullptr && render_hold_ == 0) {
+      if (improved_graphics_enabled_) {
+        // Apply improved graphics settings here
+      }
       PreprocessRenderFrameDef(frame_def);
       DrawRenderFrameDef(frame_def);
       FinishRenderFrameDef(frame_def);
@@ -557,6 +558,10 @@ void GraphicsServer::Shutdown() {
   // that we're shutting down so we no longer wait for frames to come
   // in from the main thread.
   shutdown_completed_ = true;
+}
+
+void GraphicsServer::EnableImprovedGraphics(bool enable) {
+  improved_graphics_enabled_ = enable;
 }
 
 }  // namespace ballistica::base
