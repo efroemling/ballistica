@@ -303,6 +303,7 @@ static auto PySetRootUIValues(PyObject* self, PyObject* args, PyObject* keywds)
   const char* level_text;
   const char* xp_text;
   const char* inbox_count_text;
+  int gold_pass{};
 
   static const char* kwlist[] = {"tickets_text",
                                  "tokens_text",
@@ -312,12 +313,13 @@ static auto PySetRootUIValues(PyObject* self, PyObject* args, PyObject* keywds)
                                  "level_text",
                                  "xp_text",
                                  "inbox_count_text",
+                                 "gold_pass",
                                  nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ssssssss",
-                                   const_cast<char**>(kwlist), &tickets_text,
-                                   &tokens_text, &league_rank_text,
-                                   &league_type, &achievements_percent_text,
-                                   &level_text, &xp_text, &inbox_count_text)) {
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "ssssssssp", const_cast<char**>(kwlist), &tickets_text,
+          &tokens_text, &league_rank_text, &league_type,
+          &achievements_percent_text, &level_text, &xp_text, &inbox_count_text,
+          &gold_pass)) {
     return nullptr;
   }
   BA_PRECONDITION(g_base->InLogicThread());
@@ -334,6 +336,7 @@ static auto PySetRootUIValues(PyObject* self, PyObject* args, PyObject* keywds)
   appmode->SetRootUILevelText(level_text);
   appmode->SetRootUIXPText(xp_text);
   appmode->SetRootUIInboxCountText(inbox_count_text);
+  appmode->SetRootUIGoldPass(gold_pass);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -352,6 +355,7 @@ static PyMethodDef PySetRootUIValuesDef = {
     "      level_text: str,\n"
     "      xp_text: str,\n"
     "      inbox_count_text: str,\n"
+    "      gold_pass: bool,\n"
     ") -> None\n"
     "\n"
     "(internal)",

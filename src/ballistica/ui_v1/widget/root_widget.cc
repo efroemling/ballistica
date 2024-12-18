@@ -10,6 +10,7 @@
 #include "ballistica/base/graphics/renderer/render_pass.h"
 #include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/base/support/context.h"
+#include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/foundation/inline.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/button_widget.h"
@@ -78,6 +79,7 @@ struct RootWidget::Button {
   bool selectable{true};
   bool fully_offscreen{};
   bool enabled{};
+  bool force_hide{};
   bool allow_in_main_menu{true};
   bool allow_in_game{true};
   uint32_t visibility_mask{};
@@ -1061,6 +1063,9 @@ void RootWidget::StepChildWidgets_(float dt) {
     if (&b == back_button_ && !is_small) {
       enable_button = false;
     }
+    if (b.force_hide) {
+      enable_button = false;
+    }
     b.enabled = enable_button;
   }
 
@@ -1375,9 +1380,21 @@ void RootWidget::SetTicketsMeterText(const std::string& val) {
   tickets_meter_text_->widget->SetText(val);
 }
 
-void RootWidget::SetTokensMeterText(const std::string& val) {
+void RootWidget::SetTokensMeterText(const std::string& val, bool gold_pass) {
   assert(tokens_meter_text_);
-  tokens_meter_text_->widget->SetText(val);
+  assert(get_tokens_button_);
+  if (gold_pass) {
+    get_tokens_button_->force_hide = true;
+    // Use the infinity symbol if we have full unicode support.
+    tokens_meter_text_->widget->SetText(
+        g_buildconfig.enable_os_font_rendering() ? "\xE2\x88\x9E" : "inf");
+    tokens_meter_text_->widget->set_color(1.0f, 0.6f, 0.1f, 0.6f);
+  } else {
+    get_tokens_button_->force_hide = false;
+    tokens_meter_text_->widget->SetText(val);
+    tokens_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, 1.0f);
+  }
+  MarkForUpdate();
 }
 
 void RootWidget::SetLeagueRankText(const std::string& val) {

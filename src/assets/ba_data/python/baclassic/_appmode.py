@@ -188,6 +188,7 @@ class ClassicAppMode(babase.AppMode):
                 level_text='-',
                 xp_text='-',
                 inbox_count_text='',
+                gold_pass=False,
             )
 
         else:
@@ -222,6 +223,7 @@ class ClassicAppMode(babase.AppMode):
             level_text=str(val.level),
             xp_text=f'{val.xp}/{val.xpmax}',
             inbox_count_text=ibc,
+            gold_pass=val.gold_pass,
         )
 
     def _root_ui_menu_press(self) -> None:

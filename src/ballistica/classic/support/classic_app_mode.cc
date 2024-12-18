@@ -150,7 +150,8 @@ void ClassicAppMode::Reset_() {
     // current values for everything.
     if (auto* root_widget = uiv1_->root_widget()) {
       root_widget->SetTicketsMeterText(root_ui_tickets_meter_text_);
-      root_widget->SetTokensMeterText(root_ui_tokens_meter_text_);
+      root_widget->SetTokensMeterText(root_ui_tokens_meter_text_,
+                                      root_ui_gold_pass_);
       root_widget->SetLeagueRankText(root_ui_league_rank_text_);
       root_widget->SetLeagueType(root_ui_league_type_);
       root_widget->SetAchievementPercentText(root_ui_achievement_percent_text_);
@@ -1572,7 +1573,8 @@ void ClassicAppMode::SetRootUITokensMeterText(const std::string text) {
   // Apply it to any existing UI.
   if (uiv1_) {
     if (auto* root_widget = uiv1_->root_widget()) {
-      root_widget->SetTokensMeterText(root_ui_tokens_meter_text_);
+      root_widget->SetTokensMeterText(root_ui_tokens_meter_text_,
+                                      root_ui_gold_pass_);
     }
   }
 }
@@ -1672,6 +1674,24 @@ void ClassicAppMode::SetRootUIInboxCountText(const std::string text) {
   if (uiv1_) {
     if (auto* root_widget = uiv1_->root_widget()) {
       root_widget->SetInboxCountText(root_ui_inbox_count_text_);
+    }
+  }
+}
+
+void ClassicAppMode::SetRootUIGoldPass(bool enabled) {
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (enabled == root_ui_gold_pass_) {
+    return;
+  }
+
+  // Store the value.
+  root_ui_gold_pass_ = enabled;
+
+  // Apply it to any existing UI.
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->SetTokensMeterText(root_ui_tokens_meter_text_,
+                                      root_ui_gold_pass_);
     }
   }
 }

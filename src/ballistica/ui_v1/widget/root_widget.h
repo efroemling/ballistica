@@ -40,7 +40,7 @@ class RootWidget : public ContainerWidget {
   void SetAccountState(bool signed_in, const std::string& name);
 
   void SetTicketsMeterText(const std::string& val);
-  void SetTokensMeterText(const std::string& val);
+  void SetTokensMeterText(const std::string& val, bool gold_pass);
   void SetLeagueRankText(const std::string& val);
   void SetLeagueType(const std::string& val);
   void SetAchievementPercentText(const std::string& val);
@@ -51,6 +51,7 @@ class RootWidget : public ContainerWidget {
   auto bottom_left_height() const { return bottom_left_height_; }
 
  private:
+  void UpdateTokensMeterText_();
   struct ButtonDef;
   struct Button;
   struct TextDef;

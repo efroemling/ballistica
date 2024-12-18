@@ -223,6 +223,7 @@ class ClassicAppMode : public base::AppMode {
   void SetRootUILevelText(const std::string text);
   void SetRootUIXPText(const std::string text);
   void SetRootUIInboxCountText(const std::string text);
+  void SetRootUIGoldPass(bool enabled);
 
  private:
   ClassicAppMode();
@@ -260,7 +261,8 @@ class ClassicAppMode : public base::AppMode {
   bool game_roster_dirty_{};
   bool kick_vote_in_progress_{};
   bool kick_voting_enabled_{true};
-  bool replay_paused_{false};
+  bool replay_paused_{};
+  bool root_ui_gold_pass_{};
 
   ui_v1::UIV1FeatureSet* uiv1_{};
   cJSON* game_roster_{};

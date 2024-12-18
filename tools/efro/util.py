@@ -118,9 +118,22 @@ def utc_now_naive() -> datetime.datetime:
 
     This can be used to replace datetime.utcnow(), which is now deprecated.
     Most all code should migrate to use timezone-aware times instead of
-    this.
+    relying on this.
     """
     return datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+
+
+def utc_from_timestamp_naive(timestamp: float) -> datetime.datetime:
+    """Get a naive utc time from a timestamp.
+
+    This can be used to replace datetime.utcfromtimestamp(), which is now
+    deprecated. Most all code should migrate to use timezone-aware times
+    instead of relying on this.
+    """
+
+    return datetime.datetime.fromtimestamp(timestamp, tz=datetime.UTC).replace(
+        tzinfo=None
+    )
 
 
 def utc_today() -> datetime.datetime:
