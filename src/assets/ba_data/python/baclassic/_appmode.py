@@ -104,6 +104,9 @@ class ClassicAppMode(babase.AppMode):
         ui.root_ui_calls[ui.RootUIElement.ACHIEVEMENTS_BUTTON] = (
             self._root_ui_achievements_press
         )
+        ui.root_ui_calls[ui.RootUIElement.CHEST_SLOT_0] = partial(
+            self._root_ui_chest_slot_pressed, 0
+        )
         ui.root_ui_calls[ui.RootUIElement.CHEST_SLOT_1] = partial(
             self._root_ui_chest_slot_pressed, 1
         )
@@ -112,9 +115,6 @@ class ClassicAppMode(babase.AppMode):
         )
         ui.root_ui_calls[ui.RootUIElement.CHEST_SLOT_3] = partial(
             self._root_ui_chest_slot_pressed, 3
-        )
-        ui.root_ui_calls[ui.RootUIElement.CHEST_SLOT_4] = partial(
-            self._root_ui_chest_slot_pressed, 4
         )
 
         # We want to be informed when primary account changes.
@@ -189,6 +189,10 @@ class ClassicAppMode(babase.AppMode):
                 xp_text='-',
                 inbox_count_text='',
                 gold_pass=False,
+                chest_0_appearance='',
+                chest_1_appearance='',
+                chest_2_appearance='',
+                chest_3_appearance='',
             )
 
         else:
@@ -210,6 +214,12 @@ class ClassicAppMode(babase.AppMode):
         ibc = str(val.inbox_count)
         if val.inbox_count_is_max:
             ibc += '+'
+
+        chest0 = val.chests.get('0')
+        chest1 = val.chests.get('1')
+        chest2 = val.chests.get('2')
+        chest3 = val.chests.get('3')
+
         _baclassic.set_root_ui_values(
             tickets_text=str(val.tickets),
             tokens_text=str(val.tokens),
@@ -224,6 +234,18 @@ class ClassicAppMode(babase.AppMode):
             xp_text=f'{val.xp}/{val.xpmax}',
             inbox_count_text=ibc,
             gold_pass=val.gold_pass,
+            chest_0_appearance=(
+                '' if chest0 is None else chest0.appearance.value
+            ),
+            chest_1_appearance=(
+                '' if chest1 is None else chest1.appearance.value
+            ),
+            chest_2_appearance=(
+                '' if chest2 is None else chest2.appearance.value
+            ),
+            chest_3_appearance=(
+                '' if chest3 is None else chest3.appearance.value
+            ),
         )
 
     def _root_ui_menu_press(self) -> None:

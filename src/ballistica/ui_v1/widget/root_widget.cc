@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <string>
+#include <vector>
 
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/assets/assets.h"
@@ -27,12 +28,12 @@ static const float kBotLeftColorB{0.8f};
 static const bool kShowLevels{false};
 
 // For defining toolbar buttons.
-struct RootWidget::ButtonDef {
+struct RootWidget::ButtonDef_ {
   std::string label;
   std::string img;
   std::string mesh_transparent;
   std::string mesh_opaque;
-  VAlign v_align{VAlign::kTop};
+  VAlign_ v_align{VAlign_::kTop};
   UIV1Python::ObjID call{UIV1Python::ObjID::kEmptyCall};
   uint32_t visibility_mask{};
   bool selectable{true};
@@ -59,10 +60,10 @@ struct RootWidget::ButtonDef {
   float post_buffer{0.0f};
 };
 
-struct RootWidget::Button {
+struct RootWidget::Button_ {
   Object::Ref<ButtonWidget> widget;
   float h_align{};
-  VAlign v_align{VAlign::kTop};
+  VAlign_ v_align{VAlign_::kTop};
   float x{};             // user provided x
   float y{};             // user provided y
   float y_offs_small{};  // user provided y offset for small uiscale
@@ -86,8 +87,8 @@ struct RootWidget::Button {
 };
 
 // For adding text label decorations to buttons.
-struct RootWidget::TextDef {
-  Button* button{};
+struct RootWidget::TextDef_ {
+  Button_* button{};
   float x{};
   float y{};
   float width{-1.0f};
@@ -103,16 +104,16 @@ struct RootWidget::TextDef {
   std::string text;
 };
 
-struct RootWidget::Text {
-  Button* button{};
+struct RootWidget::Text_ {
+  Button_* button{};
   Object::Ref<TextWidget> widget;
   float x{};
   float y{};
   bool visible{true};
 };
 
-struct RootWidget::ImageDef {
-  Button* button{};
+struct RootWidget::ImageDef_ {
+  Button_* button{};
   float x{};
   float y{};
   float width{32.0f};
@@ -125,8 +126,8 @@ struct RootWidget::ImageDef {
   std::string img;
 };
 
-struct RootWidget::Image {
-  Button* button{};
+struct RootWidget::Image_ {
+  Button_* button{};
   Object::Ref<ImageWidget> widget;
   float x{};
   float y{};
@@ -144,18 +145,18 @@ RootWidget::RootWidget() {
 
 RootWidget::~RootWidget() = default;
 
-void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
+void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
                            float b, bool plus, const std::string& s) {
   float y_offs_small{7.0f};
 
-  float width = (type == MeterType::kTrophy) ? 80.0f : 110.0f;
+  float width = (type == MeterType_::kTrophy) ? 80.0f : 110.0f;
   width = 110.0f;
 
   // Bar.
   {
-    ButtonDef bd;
+    ButtonDef_ bd;
     bd.h_align = h_align;
-    bd.v_align = VAlign::kTop;
+    bd.v_align = VAlign_::kTop;
     bd.width = width;
     bd.height = 36.0f;
     bd.y = -36.0f + 10.0f - y_offs_small;
@@ -170,7 +171,7 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
 
     bd.depth_min = 0.3f;
 
-    if (type == MeterType::kLevel && !kShowLevels) {
+    if (type == MeterType_::kLevel && !kShowLevels) {
       // Keep levels hidden always.
     } else {
       bd.visibility_mask =
@@ -181,14 +182,14 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
       bd.allow_in_game = false;
 
       // Show some in store mode.
-      if (type == MeterType::kLevel || type == MeterType::kTickets) {
+      if (type == MeterType_::kLevel || type == MeterType_::kTickets) {
         bd.visibility_mask |=
             static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStore)
             | static_cast<uint32_t>(
                 Widget::ToolbarVisibility::kMenuStoreNoBack);
       }
       // Show some in get-tokens/tokens mode
-      if (type == MeterType::kTokens) {
+      if (type == MeterType_::kTokens) {
         bd.visibility_mask |=
             static_cast<uint32_t>(Widget::ToolbarVisibility::kGetTokens)
             | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuTokens);
@@ -197,16 +198,16 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
 
     // Adjust buffer between neighbors.
     switch (type) {
-      case MeterType::kLevel:
+      case MeterType_::kLevel:
         bd.pre_buffer = 50.0f;
         break;
-      case MeterType::kTrophy:
+      case MeterType_::kTrophy:
         bd.pre_buffer = 50.0f;
         break;
-      case MeterType::kTickets:
+      case MeterType_::kTickets:
         bd.pre_buffer = 50.0f;
         break;
-      case MeterType::kTokens:
+      case MeterType_::kTokens:
         bd.pre_buffer = 50.0f;
         break;
       default:
@@ -215,16 +216,16 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
 
     // Extend button target areas to cover where icon will go.
     switch (type) {
-      case MeterType::kLevel:
+      case MeterType_::kLevel:
         bd.target_extra_left = 40.0f;
         break;
-      case MeterType::kTrophy:
+      case MeterType_::kTrophy:
         bd.target_extra_left = 40.0f;
         break;
-      case MeterType::kTickets:
+      case MeterType_::kTickets:
         bd.target_extra_right = 40.0f;
         break;
-      case MeterType::kTokens:
+      case MeterType_::kTokens:
         bd.target_extra_right = 40.0f;
         break;
       default:
@@ -232,39 +233,39 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
     }
 
     switch (type) {
-      case MeterType::kLevel:
+      case MeterType_::kLevel:
         bd.call = UIV1Python::ObjID::kRootUILevelIconPressCall;
         break;
-      case MeterType::kTrophy:
+      case MeterType_::kTrophy:
         bd.call = UIV1Python::ObjID::kRootUITrophyMeterPressCall;
         break;
-      case MeterType::kTokens:
+      case MeterType_::kTokens:
         bd.call = UIV1Python::ObjID::kRootUITokensMeterPressCall;
         break;
-      case MeterType::kTickets:
+      case MeterType_::kTickets:
         bd.call = UIV1Python::ObjID::kRootUITicketIconPressCall;
         break;
       default:
         break;
     }
 
-    Button* btn = AddButton_(bd);
+    Button_* btn = AddButton_(bd);
 
     // Store the bar button in some cases.
     switch (type) {
-      case MeterType::kLevel:
+      case MeterType_::kLevel:
         level_meter_button_ = btn;
         top_left_buttons_.push_back(btn);
         break;
-      case MeterType::kTrophy:
+      case MeterType_::kTrophy:
         trophy_meter_button_ = btn;
         top_left_buttons_.push_back(btn);
         break;
-      case MeterType::kTickets:
+      case MeterType_::kTickets:
         tickets_meter_button_ = btn;
         top_right_buttons_.push_back(btn);
         break;
-      case MeterType::kTokens:
+      case MeterType_::kTokens:
         tokens_meter_button_ = btn;
         top_right_buttons_.push_back(btn);
         break;
@@ -274,7 +275,7 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
 
     // Bar value text.
     {
-      TextDef td;
+      TextDef_ td;
       td.button = btn;
       td.width = bd.width * 0.7f;
       td.text = s;
@@ -284,16 +285,16 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
       td.depth_min = 0.3f;
       auto* text = AddText_(td);
       switch (type) {
-        case MeterType::kTickets:
+        case MeterType_::kTickets:
           tickets_meter_text_ = text;
           break;
-        case MeterType::kTokens:
+        case MeterType_::kTokens:
           tokens_meter_text_ = text;
           break;
-        case MeterType::kTrophy:
+        case MeterType_::kTrophy:
           league_rank_text_ = text;
           break;
-        case MeterType::kLevel:
+        case MeterType_::kLevel:
           xp_text_ = text;
           break;
         default:
@@ -303,9 +304,9 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
 
     // Icon on side.
     {
-      ImageDef imgd;
+      ImageDef_ imgd;
       imgd.button = btn;
-      if (type == MeterType::kLevel || type == MeterType::kTrophy) {
+      if (type == MeterType_::kLevel || type == MeterType_::kTrophy) {
         imgd.x = -0.5 * width - 10.0f;
       } else {
         imgd.x = 0.5 * width + 10.0f;
@@ -315,16 +316,16 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
       imgd.width = 54.0f;
       imgd.height = 54.0f;
       switch (type) {
-        case MeterType::kLevel:
+        case MeterType_::kLevel:
           imgd.img = "levelIcon";
           break;
-        case MeterType::kTrophy:
+        case MeterType_::kTrophy:
           imgd.img = "trophy";
           break;
-        case MeterType::kTokens:
+        case MeterType_::kTokens:
           imgd.img = "coin";
           break;
-        case MeterType::kTickets:
+        case MeterType_::kTickets:
           imgd.img = "tickets";
           break;
         default:
@@ -333,15 +334,15 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
       imgd.depth_min = 0.3f;
       auto* img = AddImage_(imgd);
       switch (type) {
-        case MeterType::kTrophy:
+        case MeterType_::kTrophy:
           trophy_icon_ = img;
         default:
           break;
       }
 
       // Level num.
-      if (type == MeterType::kLevel) {
-        TextDef td;
+      if (type == MeterType_::kLevel) {
+        TextDef_ td;
         td.button = btn;
         td.width = imgd.width * 0.8f;
         td.text = "12";
@@ -361,9 +362,9 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
 
   // Plus button.
   if (plus) {
-    ButtonDef bd;
+    ButtonDef_ bd;
     bd.h_align = h_align;
-    bd.v_align = VAlign::kTop;
+    bd.v_align = VAlign_::kTop;
     bd.width = bd.height = 45.0f;
     // bd.x = x - 68;
     bd.y = -36.0f + 11.0f - y_offs_small;
@@ -375,7 +376,7 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
     bd.color_b = 0.55f;
     bd.depth_min = 0.3f;
     switch (type) {
-      case MeterType::kTokens:
+      case MeterType_::kTokens:
         bd.call = UIV1Python::ObjID::kRootUIGetTokensButtonPressCall;
         break;
       default:
@@ -387,13 +388,13 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
 
     // Show some in store mode.
-    if (type == MeterType::kLevel || type == MeterType::kTickets) {
+    if (type == MeterType_::kLevel || type == MeterType_::kTickets) {
       bd.visibility_mask |=
           static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStore)
           | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStoreNoBack);
     }
     // Show some in tokens mode.
-    if (type == MeterType::kTokens) {
+    if (type == MeterType_::kTokens) {
       bd.visibility_mask |=
           static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuTokens);
     }
@@ -401,8 +402,8 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
     bd.pre_buffer = -10.0f;
     bd.allow_in_game = false;
 
-    Button* btn = AddButton_(bd);
-    if (type == MeterType::kTokens) {
+    Button_* btn = AddButton_(bd);
+    if (type == MeterType_::kTokens) {
       get_tokens_button_ = btn;
     }
     top_right_buttons_.push_back(btn);
@@ -412,9 +413,9 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
 void RootWidget::Setup() {
   // Back button.
   {
-    ButtonDef bd;
+    ButtonDef_ bd;
     bd.h_align = 0.0f;
-    bd.v_align = VAlign::kTop;
+    bd.v_align = VAlign_::kTop;
     bd.width = bd.height = 140.0f;
     bd.color_r = 0.7f;
     bd.color_g = 0.4f;
@@ -429,11 +430,11 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kGetTokens)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuTokens));
     bd.pre_buffer = -30.0f;
-    Button* b = back_button_ = AddButton_(bd);
+    Button_* b = back_button_ = AddButton_(bd);
     top_left_buttons_.push_back(b);
 
     {
-      TextDef td;
+      TextDef_ td;
       td.button = b;
       td.x = 5.0f;
       td.y = 3.0f;
@@ -449,9 +450,9 @@ void RootWidget::Setup() {
 
   // Top bar backing (currency only).
   if (explicit_bool(false)) {
-    ButtonDef bd;
+    ButtonDef_ bd;
     bd.h_align = 0.5f;
-    bd.v_align = VAlign::kTop;
+    bd.v_align = VAlign_::kTop;
     bd.width = 370.0f;
     bd.height = 90.0f;
     bd.x = 256.0f;
@@ -472,9 +473,9 @@ void RootWidget::Setup() {
 
   // Top bar backing.
   if (explicit_bool(false)) {
-    ButtonDef bd;
+    ButtonDef_ bd;
     bd.h_align = 0.5f;
-    bd.v_align = VAlign::kTop;
+    bd.v_align = VAlign_::kTop;
     bd.width = 850.0f;
     bd.height = 90.0f;
     bd.x = 0.0f;
@@ -498,9 +499,9 @@ void RootWidget::Setup() {
 
   // Account Button
   {
-    ButtonDef bd;
+    ButtonDef_ bd;
     bd.h_align = 0.0f;
-    bd.v_align = VAlign::kTop;
+    bd.v_align = VAlign_::kTop;
     bd.width = 160.0f;
     bd.height = 60.0f;
     bd.depth_min = 0.3f;
@@ -518,12 +519,12 @@ void RootWidget::Setup() {
 
     bd.allow_in_game = false;
 
-    Button* b = account_button_ = AddButton_(bd);
+    Button_* b = account_button_ = AddButton_(bd);
     top_left_buttons_.push_back(b);
 
     // Player name.
     {
-      TextDef td;
+      TextDef_ td;
       td.button = b;
       td.y = 0.0f;
       td.width = bd.width * 0.8f;
@@ -537,15 +538,15 @@ void RootWidget::Setup() {
       account_name_text_ = AddText_(td);
     }
   }
-  AddMeter_(MeterType::kLevel, 0.0f, 1.0f, 1.0f, 1.0f, false, "");
-  AddMeter_(MeterType::kTrophy, 0.0f, 1.0f, 1.0f, 1.0f, false, "");
+  AddMeter_(MeterType_::kLevel, 0.0f, 1.0f, 1.0f, 1.0f, false, "");
+  AddMeter_(MeterType_::kTrophy, 0.0f, 1.0f, 1.0f, 1.0f, false, "");
 
   // Menu button (only shows up when we're not in a menu).
   // FIXME - this should never be visible on TV or VR UI modes
   {
-    ButtonDef b;
+    ButtonDef_ b;
     b.h_align = 1.0f;
-    b.v_align = VAlign::kTop;
+    b.v_align = VAlign_::kTop;
     b.width = b.height = 65.0f;
     // b.x = -36.0f;
     b.y = b.height * -0.48f;
@@ -573,9 +574,9 @@ void RootWidget::Setup() {
 
   // Squad button.
   {
-    ButtonDef b;
+    ButtonDef_ b;
     b.h_align = 1.0f;
-    b.v_align = VAlign::kTop;
+    b.v_align = VAlign_::kTop;
     b.width = b.height = 70.0f;
     b.y = b.height * -0.41f;
     b.img = "usersButton";
@@ -598,7 +599,7 @@ void RootWidget::Setup() {
     top_right_buttons_.push_back(squad_button_);
 
     {
-      TextDef td;
+      TextDef_ td;
       td.button = squad_button_;
       td.width = 70.0f;
       td.text = "0";
@@ -616,14 +617,14 @@ void RootWidget::Setup() {
     }
   }
 
-  AddMeter_(MeterType::kTokens, 1.0f, 1.0f, 1.0f, 1.0f, true, "");
-  AddMeter_(MeterType::kTickets, 1.0f, 1.0f, 1.0f, 1.0f, false, "");
+  AddMeter_(MeterType_::kTokens, 1.0f, 1.0f, 1.0f, 1.0f, true, "");
+  AddMeter_(MeterType_::kTickets, 1.0f, 1.0f, 1.0f, 1.0f, false, "");
 
   // Inbox button.
   {
-    ButtonDef b;
+    ButtonDef_ b;
     b.h_align = 0.0f;
-    b.v_align = VAlign::kBottom;
+    b.v_align = VAlign_::kBottom;
     b.width = b.height = 60.0f;
     // b.x = bx;
     b.y = b.height * 0.5f + 2.0f;
@@ -644,7 +645,7 @@ void RootWidget::Setup() {
 
     // Inbox count circle backing.
     {
-      ImageDef imgd;
+      ImageDef_ imgd;
       imgd.button = inbox_button_;
       imgd.x = 18.0f;
       imgd.y = 24.0f;
@@ -660,7 +661,7 @@ void RootWidget::Setup() {
     }
     // Inbox count number.
     {
-      TextDef td;
+      TextDef_ td;
       td.button = inbox_button_;
       td.width = 24.0f;
       td.text = "2";
@@ -679,9 +680,9 @@ void RootWidget::Setup() {
 
   // Achievements button.
   if (explicit_bool(true)) {
-    ButtonDef b;
+    ButtonDef_ b;
     b.h_align = 0.0f;
-    b.v_align = VAlign::kBottom;
+    b.v_align = VAlign_::kBottom;
     b.width = b.height = 60.0f;
     b.y = b.height * 0.5f + 2.0f;
     b.color_r = kBotLeftColorR;
@@ -701,7 +702,7 @@ void RootWidget::Setup() {
     auto centerx = -1.5f;
     auto centery = 8.0f;
     {
-      TextDef td;
+      TextDef_ td;
       td.button = achievements_button_;
       td.width = 26.0f;
       td.text = "";
@@ -720,9 +721,9 @@ void RootWidget::Setup() {
 
   // Leaderboards button.
   if (explicit_bool(false)) {
-    ButtonDef b;
+    ButtonDef_ b;
     b.h_align = 0.0f;
-    b.v_align = VAlign::kBottom;
+    b.v_align = VAlign_::kBottom;
     b.width = b.height = 60.0f;
     // b.x = bx;
     b.y = b.height * 0.5f + 2.0f;
@@ -740,9 +741,9 @@ void RootWidget::Setup() {
 
   // Settings button.
   {
-    ButtonDef b;
+    ButtonDef_ b;
     b.h_align = 0.0f;
-    b.v_align = VAlign::kBottom;
+    b.v_align = VAlign_::kBottom;
     b.width = b.height = 60.0f;
     // b.x = bx;
     b.y = b.height * 0.58f - 2.0f;
@@ -779,9 +780,9 @@ void RootWidget::Setup() {
 
     // Bar backing.
     {
-      ButtonDef bd;
+      ButtonDef_ bd;
       bd.h_align = 0.5f;
-      bd.v_align = VAlign::kBottom;
+      bd.v_align = VAlign_::kBottom;
       bd.width = 500.0f;
       bd.height = 100.0f;
       bd.x = 0.0f;
@@ -801,51 +802,50 @@ void RootWidget::Setup() {
            | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
            | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
       bd.allow_in_game = false;
-      AddButton_(bd);
+      chest_backing_ = AddButton_(bd);
     }
 
-    ButtonDef b;
+    ButtonDef_ b;
     b.h_align = 0.5f;
-    b.v_align = VAlign::kBottom;
-    b.width = b.height = 110.0f;
-    b.x = 0.0f;
-    b.y = b.height * 0.4f;
-    b.img = "chestIcon";
+    b.v_align = VAlign_::kBottom;
     b.depth_min = 0.3f;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     float spacing = 120.0f;
-    b.x = -1.5f * spacing;
-    b.call = UIV1Python::ObjID::kRootUIChestSlot1PressCall;
     b.allow_in_game = false;
-    AddButton_(b);
 
-    b.y = b.height * 0.4f;
-    b.x = 0.5f * spacing;
+    b.y = 44.0f;
     b.img = "chestIconEmpty";
     b.width = b.height = 80.0f;
     b.color_r = backing_cover_r;
     b.color_g = backing_cover_g;
     b.color_b = backing_cover_b;
     b.opacity = 1.0f;
-    b.call = UIV1Python::ObjID::kRootUIChestSlot2PressCall;
+
+    b.call = UIV1Python::ObjID::kRootUIChestSlot0PressCall;
+    b.x = -1.5f * spacing;
+    chest_0_button_ = AddButton_(b);
+
+    b.call = UIV1Python::ObjID::kRootUIChestSlot1PressCall;
     b.x = -0.5f * spacing;
-    AddButton_(b);
+    chest_1_button_ = AddButton_(b);
+
     b.x = 0.5f * spacing;
-    b.call = UIV1Python::ObjID::kRootUIChestSlot3PressCall;
-    AddButton_(b);
+    b.call = UIV1Python::ObjID::kRootUIChestSlot2PressCall;
+    chest_2_button_ = AddButton_(b);
+
     b.x = 1.5f * spacing;
-    b.call = UIV1Python::ObjID::kRootUIChestSlot4PressCall;
-    AddButton_(b);
+    b.call = UIV1Python::ObjID::kRootUIChestSlot3PressCall;
+    chest_3_button_ = AddButton_(b);
   }
 
   // Inventory button.
   {
-    ButtonDef b;
+    ButtonDef_ b;
     b.h_align = 1.0f;
-    b.v_align = VAlign::kBottom;
+    b.v_align = VAlign_::kBottom;
     b.width = b.height = 135.0f;
     // b.x = -80.0f;
     b.y = b.height * 0.45f;
@@ -864,9 +864,9 @@ void RootWidget::Setup() {
 
   // Store button.
   {
-    ButtonDef b;
+    ButtonDef_ b;
     b.h_align = 1.0f;
-    b.v_align = VAlign::kBottom;
+    b.v_align = VAlign_::kBottom;
     b.width = b.height = 85.0f;
     // b.x = -206.0f;
     b.y = b.height * 0.5f;
@@ -901,10 +901,10 @@ void RootWidget::Draw(base::RenderPass* pass, bool transparent) {
   ContainerWidget::Draw(pass, transparent);
 }
 
-auto RootWidget::AddButton_(const ButtonDef& def) -> RootWidget::Button* {
+auto RootWidget::AddButton_(const ButtonDef_& def) -> RootWidget::Button_* {
   base::ScopedSetContext ssc(nullptr);
   buttons_.emplace_back();
-  Button& b(buttons_.back());
+  Button_& b(buttons_.back());
   b.x = b.x_smoothed = b.x_target = def.x;
   b.y = b.y_smoothed = b.y_target = def.y;
   b.y_offs_small = def.y_offs_small;
@@ -935,8 +935,8 @@ auto RootWidget::AddButton_(const ButtonDef& def) -> RootWidget::Button* {
 
   // Make sure up/down moves focus into the main stack.
   assert(screen_stack_widget_ != nullptr);
-  assert(b.v_align != VAlign::kCenter);
-  if (b.v_align == VAlign::kTop) {
+  assert(b.v_align != VAlign_::kCenter);
+  if (b.v_align == VAlign_::kTop) {
     b.widget->SetDownWidget(screen_stack_widget_);
   } else {
     b.widget->SetUpWidget(screen_stack_widget_);
@@ -965,10 +965,10 @@ auto RootWidget::AddButton_(const ButtonDef& def) -> RootWidget::Button* {
   return &b;
 }
 
-auto RootWidget::AddText_(const TextDef& def) -> RootWidget::Text* {
+auto RootWidget::AddText_(const TextDef_& def) -> RootWidget::Text_* {
   base::ScopedSetContext ssc(nullptr);
   texts_.emplace_back();
-  Text& t(texts_.back());
+  Text_& t(texts_.back());
   t.button = def.button;
   t.widget = Object::New<TextWidget>();
   t.widget->SetWidth(0.0f);
@@ -990,10 +990,10 @@ auto RootWidget::AddText_(const TextDef& def) -> RootWidget::Text* {
   return &t;
 }
 
-auto RootWidget::AddImage_(const ImageDef& def) -> RootWidget::Image* {
+auto RootWidget::AddImage_(const ImageDef_& def) -> RootWidget::Image_* {
   base::ScopedSetContext ssc(nullptr);
   images_.emplace_back();
-  Image& img(images_.back());
+  Image_& img(images_.back());
   img.button = def.button;
   img.widget = Object::New<ImageWidget>();
   img.widget->set_width(def.width);
@@ -1044,7 +1044,7 @@ void RootWidget::StepChildWidgets_(float dt) {
   bool is_small{g_base->ui->scale() == UIScale::kSmall};
 
   // Update enabled-state for all buttons.
-  for (Button& b : buttons_) {
+  for (Button_& b : buttons_) {
     bool enable_button =
         static_cast<bool>(static_cast<uint32_t>(toolbar_visibility_)
                           & static_cast<uint32_t>(b.visibility_mask));
@@ -1128,12 +1128,12 @@ void RootWidget::StepChildWidgets_(float dt) {
   // Go through our buttons updating their target points and smooth values.
   // If everything has arrived at its target point, mark us as not dirty.
   bool have_dirty = false;
-  for (Button& b : buttons_) {
+  for (Button_& b : buttons_) {
     // Update our target position.
     b.x_target = b.x;
     b.y_target = b.y + (is_small ? b.y_offs_small : 0.0f);
     float disable_offset = b.disable_offset_scale * 110.0f
-                           * ((b.v_align == VAlign::kTop) ? 1.0f : -1.0f);
+                           * ((b.v_align == VAlign_::kTop) ? 1.0f : -1.0f);
 
     // Can turn this down to debug visibility.
     if (explicit_bool(false)) {
@@ -1183,14 +1183,14 @@ void RootWidget::StepChildWidgets_(float dt) {
     x = width() * b.h_align
         + base_scale_ * (b.x_smoothed - b.width * b.scale * 0.5f);
     switch (b.v_align) {
-      case VAlign::kTop:
+      case VAlign_::kTop:
         y = height() + base_scale_ * (b.y_smoothed - b.height * b.scale * 0.5f);
         break;
-      case VAlign::kCenter:
+      case VAlign_::kCenter:
         y = height() * 0.5f
             + base_scale_ * (b.y_smoothed - b.height * b.scale * 0.5f);
         break;
-      case VAlign::kBottom:
+      case VAlign_::kBottom:
         y = base_scale_ * (b.y_smoothed - b.height * b.scale * 0.5f);
         break;
     }
@@ -1202,9 +1202,9 @@ void RootWidget::StepChildWidgets_(float dt) {
     b.widget->set_scale(b.scale * base_scale_);
   }
 
-  for (Text& t : texts_) {
+  for (Text_& t : texts_) {
     // Move the text widget to wherever its target button is (plus offset).
-    Button* b = t.button;
+    Button_* b = t.button;
     float x =
         b->widget->tx() + base_scale_ * b->scale * (b->width * 0.5f + t.x);
     float y =
@@ -1214,9 +1214,9 @@ void RootWidget::StepChildWidgets_(float dt) {
     t.widget->set_visible_in_container(!b->fully_offscreen && t.visible);
   }
 
-  for (Image& img : images_) {
+  for (Image_& img : images_) {
     // Move the image widget to wherever its target button is (plus offset).
-    Button* b = img.button;
+    Button_* b = img.button;
     float x =
         b->widget->tx() + base_scale_ * b->scale * (b->width * 0.5f + img.x);
     float y =
@@ -1385,6 +1385,7 @@ void RootWidget::SetTokensMeterText(const std::string& val, bool gold_pass) {
   assert(get_tokens_button_);
   if (gold_pass) {
     get_tokens_button_->force_hide = true;
+
     // Use the infinity symbol if we have full unicode support.
     tokens_meter_text_->widget->SetText(
         g_buildconfig.enable_os_font_rendering() ? "\xE2\x88\x9E" : "inf");
@@ -1394,7 +1395,8 @@ void RootWidget::SetTokensMeterText(const std::string& val, bool gold_pass) {
     tokens_meter_text_->widget->SetText(val);
     tokens_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, 1.0f);
   }
-  MarkForUpdate();
+  // May need to animate in/out.
+  child_widgets_dirty_ = true;
 }
 
 void RootWidget::SetLeagueRankText(const std::string& val) {
@@ -1436,6 +1438,55 @@ void RootWidget::SetLevelText(const std::string& val) {
 void RootWidget::SetXPText(const std::string& val) {
   assert(xp_text_);
   xp_text_->widget->SetText(val);
+}
+
+void RootWidget::SetChests(const std::string& chest_0_appearance,
+                           const std::string& chest_1_appearance,
+                           const std::string& chest_2_appearance,
+                           const std::string& chest_3_appearance) {
+  std::vector<std::pair<const std::string&, Button_*>> pairs = {
+      {chest_0_appearance, chest_0_button_},
+      {chest_1_appearance, chest_1_button_},
+      {chest_2_appearance, chest_2_button_},
+      {chest_3_appearance, chest_3_button_},
+  };
+
+  auto have_chests{false};
+  for (const auto& [appearance, b] : pairs) {
+    if (appearance != "") {
+      have_chests = true;
+    }
+  }
+
+  for (const auto& [appearance, b] : pairs) {
+    assert(b);
+    if (appearance == "") {
+      b->widget->set_color(0.473f, 0.44f, 0.583f);
+      b->widget->set_opacity(0.5f);
+      b->width = b->height = 80.0f;
+      b->y = have_chests ? 44.0f : 0.0f;
+      {
+        base::Assets::AssetListLock lock;
+        b->widget->SetTexture(
+            g_base->assets->GetTexture("chestIconEmpty").get());
+      }
+    } else {
+      have_chests = true;
+      b->widget->set_color(1.0f, 1.0f, 1.0f);
+      b->widget->set_opacity(1.0f);
+      b->width = b->height = 110.0f;
+      b->y = 44.0f;
+      {
+        base::Assets::AssetListLock lock;
+        b->widget->SetTexture(g_base->assets->GetTexture("chestIcon").get());
+      }
+    }
+  }
+  assert(chest_backing_);
+  chest_backing_->y = have_chests ? 41.0f : -10.0f;
+  chest_backing_->widget->set_opacity(have_chests ? 1.0f : 0.5f);
+
+  child_widgets_dirty_ = true;
 }
 
 void RootWidget::SetInboxCountText(const std::string& val) {

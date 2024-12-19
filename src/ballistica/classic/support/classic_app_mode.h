@@ -224,6 +224,10 @@ class ClassicAppMode : public base::AppMode {
   void SetRootUIXPText(const std::string text);
   void SetRootUIInboxCountText(const std::string text);
   void SetRootUIGoldPass(bool enabled);
+  void SetRootUIChests(const std::string& chest_0_appearance,
+                       const std::string& chest_1_appearance,
+                       const std::string& chest_2_appearance,
+                       const std::string& chest_3_appearance);
 
  private:
   ClassicAppMode();
@@ -241,6 +245,10 @@ class ClassicAppMode : public base::AppMode {
   // forward declarations of their template params.
   std::map<std::string, ScanResultsEntryPriv_> scan_results_;
   std::mutex scan_results_mutex_;
+  std::string root_ui_chest_0_appearance_;
+  std::string root_ui_chest_1_appearance_;
+  std::string root_ui_chest_2_appearance_;
+  std::string root_ui_chest_3_appearance_;
   uint32_t next_scan_query_id_{};
   int scan_socket_{-1};
   int host_protocol_version_{-1};

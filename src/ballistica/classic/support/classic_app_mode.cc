@@ -158,6 +158,9 @@ void ClassicAppMode::Reset_() {
       root_widget->SetLevelText(root_ui_level_text_);
       root_widget->SetXPText(root_ui_xp_text_);
       root_widget->SetInboxCountText(root_ui_inbox_count_text_);
+      root_widget->SetChests(
+          root_ui_chest_0_appearance_, root_ui_chest_1_appearance_,
+          root_ui_chest_2_appearance_, root_ui_chest_3_appearance_);
     }
   }
 
@@ -1692,6 +1695,34 @@ void ClassicAppMode::SetRootUIGoldPass(bool enabled) {
     if (auto* root_widget = uiv1_->root_widget()) {
       root_widget->SetTokensMeterText(root_ui_tokens_meter_text_,
                                       root_ui_gold_pass_);
+    }
+  }
+}
+
+void ClassicAppMode::SetRootUIChests(const std::string& chest_0_appearance,
+                                     const std::string& chest_1_appearance,
+                                     const std::string& chest_2_appearance,
+                                     const std::string& chest_3_appearance) {
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (chest_0_appearance == root_ui_chest_0_appearance_
+      && chest_1_appearance == root_ui_chest_1_appearance_
+      && chest_2_appearance == root_ui_chest_2_appearance_
+      && chest_3_appearance == root_ui_chest_3_appearance_) {
+    return;
+  }
+
+  // Store the values.
+  root_ui_chest_0_appearance_ = chest_0_appearance;
+  root_ui_chest_1_appearance_ = chest_1_appearance;
+  root_ui_chest_2_appearance_ = chest_2_appearance;
+  root_ui_chest_3_appearance_ = chest_3_appearance;
+
+  // Apply it to any existing UI.
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->SetChests(
+          root_ui_chest_0_appearance_, root_ui_chest_1_appearance_,
+          root_ui_chest_2_appearance_, root_ui_chest_3_appearance_);
     }
   }
 }

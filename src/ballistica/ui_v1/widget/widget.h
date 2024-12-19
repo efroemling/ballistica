@@ -19,7 +19,7 @@ class Widget : public Object {
   /// Only relevant for direct children of the main stack widget. Note that
   /// these are bitmask values so that internal root elements can specific
   /// the entire set of visibilities they apply to.
-  enum class ToolbarVisibility {
+  enum class ToolbarVisibility : uint16_t {
     kInherit = 0,             // For popups and whatnot - leave toolbar as-is.
     kMenuMinimal = 1,         // Squad and back buttons.
     kMenuMinimalNoBack = 2,   // Squad button only.

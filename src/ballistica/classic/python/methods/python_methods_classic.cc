@@ -303,6 +303,10 @@ static auto PySetRootUIValues(PyObject* self, PyObject* args, PyObject* keywds)
   const char* level_text;
   const char* xp_text;
   const char* inbox_count_text;
+  const char* chest_0_appearance;
+  const char* chest_1_appearance;
+  const char* chest_2_appearance;
+  const char* chest_3_appearance;
   int gold_pass{};
 
   static const char* kwlist[] = {"tickets_text",
@@ -314,12 +318,17 @@ static auto PySetRootUIValues(PyObject* self, PyObject* args, PyObject* keywds)
                                  "xp_text",
                                  "inbox_count_text",
                                  "gold_pass",
+                                 "chest_0_appearance",
+                                 "chest_1_appearance",
+                                 "chest_2_appearance",
+                                 "chest_3_appearance",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "ssssssssp", const_cast<char**>(kwlist), &tickets_text,
-          &tokens_text, &league_rank_text, &league_type,
+          args, keywds, "sssssssspssss", const_cast<char**>(kwlist),
+          &tickets_text, &tokens_text, &league_rank_text, &league_type,
           &achievements_percent_text, &level_text, &xp_text, &inbox_count_text,
-          &gold_pass)) {
+          &gold_pass, &chest_0_appearance, &chest_1_appearance,
+          &chest_2_appearance, &chest_3_appearance)) {
     return nullptr;
   }
   BA_PRECONDITION(g_base->InLogicThread());
@@ -337,6 +346,8 @@ static auto PySetRootUIValues(PyObject* self, PyObject* args, PyObject* keywds)
   appmode->SetRootUIXPText(xp_text);
   appmode->SetRootUIInboxCountText(inbox_count_text);
   appmode->SetRootUIGoldPass(gold_pass);
+  appmode->SetRootUIChests(chest_0_appearance, chest_1_appearance,
+                           chest_2_appearance, chest_3_appearance);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -347,7 +358,8 @@ static PyMethodDef PySetRootUIValuesDef = {
     (PyCFunction)PySetRootUIValues,  // method
     METH_VARARGS | METH_KEYWORDS,    // flags
 
-    "set_root_ui_values(tickets_text: str,\n"
+    "set_root_ui_values(*,\n"
+    "      tickets_text: str,\n"
     "      tokens_text: str,\n"
     "      league_rank_text: str,\n"
     "      league_type: str,\n"
@@ -356,6 +368,10 @@ static PyMethodDef PySetRootUIValuesDef = {
     "      xp_text: str,\n"
     "      inbox_count_text: str,\n"
     "      gold_pass: bool,\n"
+    "      chest_0_appearance: str,\n"
+    "      chest_1_appearance: str,\n"
+    "      chest_2_appearance: str,\n"
+    "      chest_3_appearance: str,\n"
     ") -> None\n"
     "\n"
     "(internal)",

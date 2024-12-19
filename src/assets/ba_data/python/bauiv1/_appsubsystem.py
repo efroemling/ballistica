@@ -52,10 +52,10 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         TOKENS_METER = 'tokens_meter'
         TROPHY_METER = 'trophy_meter'
         LEVEL_METER = 'level_meter'
+        CHEST_SLOT_0 = 'chest_slot_0'
         CHEST_SLOT_1 = 'chest_slot_1'
         CHEST_SLOT_2 = 'chest_slot_2'
         CHEST_SLOT_3 = 'chest_slot_3'
-        CHEST_SLOT_4 = 'chest_slot_4'
 
     def __init__(self) -> None:
         from bauiv1._uitypes import MainWindow
