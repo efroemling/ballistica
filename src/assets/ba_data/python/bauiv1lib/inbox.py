@@ -269,6 +269,7 @@ class InboxWindow(bui.MainWindow):
         process_type: bacommon.cloud.BSInboxEntryProcessType,
         response: bacommon.cloud.BSInboxEntryProcessResponse | Exception,
     ) -> None:
+        # pylint: disable=too-many-branches
         entry = entry_weak()
         if entry is None:
             return
@@ -315,20 +316,25 @@ class InboxWindow(bui.MainWindow):
 
         # Whee; no error. Mark as done.
         if button is not None:
-            # For positive claim buttons, say 'success'.
-            # Otherwise default to 'done.'
-            if (
-                entry.type
-                in {
-                    bacommon.cloud.BSInboxEntryType.CLAIM,
-                    bacommon.cloud.BSInboxEntryType.CLAIM_DISCARD,
-                }
-                and process_type
-                is bacommon.cloud.BSInboxEntryProcessType.POSITIVE
-            ):
-                label = bui.Lstr(resource='successText')
+            # If we have full unicode, just show a checkmark in all cases.
+            label: str | bui.Lstr
+            if bui.supports_unicode_display():
+                label = '✓'
             else:
-                label = bui.Lstr(resource='doneText')
+                # For positive claim buttons, say 'success'.
+                # Otherwise default to 'done.'
+                if (
+                    entry.type
+                    in {
+                        bacommon.cloud.BSInboxEntryType.CLAIM,
+                        bacommon.cloud.BSInboxEntryType.CLAIM_DISCARD,
+                    }
+                    and process_type
+                    is bacommon.cloud.BSInboxEntryProcessType.POSITIVE
+                ):
+                    label = bui.Lstr(resource='successText')
+                else:
+                    label = bui.Lstr(resource='doneText')
             bui.buttonwidget(edit=button, label=label)
 
     def _on_inbox_request_response(

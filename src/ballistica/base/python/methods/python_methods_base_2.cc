@@ -905,6 +905,28 @@ static PyMethodDef PySupportsMaxFPSDef = {
     "(internal)\n",
 };
 
+// ---------------------- supports_unicode_display -----------------------------
+
+static auto PySupportsUnicodeDisplay(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  if (g_buildconfig.enable_os_font_rendering()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySupportsUnicodeDisplayDef = {
+    "supports_unicode_display",             // name
+    (PyCFunction)PySupportsUnicodeDisplay,  // method
+    METH_NOARGS,                            // flags
+
+    "supports_unicode_display() -> bool\n"
+    "\n"
+    "Return whether we can display all unicode characters in the gui.\n",
+};
+
 // --------------------------- show_progress_bar -------------------------------
 
 static auto PyShowProgressBar(PyObject* self, PyObject* args, PyObject* keywds)
@@ -994,6 +1016,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyAllowsTicketSalesDef,
       PySupportsVSyncDef,
       PySupportsMaxFPSDef,
+      PySupportsUnicodeDisplayDef,
       PyShowProgressBarDef,
       PyFullscreenControlKeyShortcutDef,
       PyFullscreenControlGetDef,

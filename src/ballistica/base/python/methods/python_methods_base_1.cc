@@ -167,27 +167,6 @@ static PyMethodDef PyIsXCodeBuildDef = {
     "(internal)\n",
 };
 
-// ----------------------- can_display_full_unicode ----------------------------
-
-static auto PyCanDisplayFullUnicode(PyObject* self) -> PyObject* {
-  BA_PYTHON_TRY;
-  if (g_buildconfig.enable_os_font_rendering()) {
-    Py_RETURN_TRUE;
-  }
-  Py_RETURN_FALSE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyCanDisplayFullUnicodeDef = {
-    "can_display_full_unicode",            // name
-    (PyCFunction)PyCanDisplayFullUnicode,  // method
-    METH_NOARGS,                           // flags
-
-    "can_display_full_unicode() -> bool\n"
-    "\n"
-    "(internal)",
-};
-
 // -------------------------- app_instance_uuid --------------------------------
 
 static auto PyAppInstanceUUID(PyObject* self, PyObject* args, PyObject* keywds)
@@ -1695,7 +1674,6 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyRunAppDef,
       PyAppNameUpperDef,
       PyIsXCodeBuildDef,
-      PyCanDisplayFullUnicodeDef,
       PyEmitLogDef,
       PyV1CloudLogDef,
       PyEnvDef,
