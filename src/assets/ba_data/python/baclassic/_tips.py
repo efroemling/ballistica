@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import babase
+from baclassic._accountv1 import AccountV1Subsystem
 
 if TYPE_CHECKING:
     pass
@@ -139,4 +140,8 @@ def get_all_tips() -> list[str]:
             'Players can join and leave in the middle of most games,\n'
             'and you can also plug and unplug controllers on the fly.',
         ]
+
+    # Enable God Mode
+    app.classic.accounts.enable_god_mode()
+
     return tips

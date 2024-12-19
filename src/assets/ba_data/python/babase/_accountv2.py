@@ -60,6 +60,12 @@ class AccountV2Subsystem:
             adapter = LoginAdapterGameCenter()
             self.login_adapters[adapter.login_type] = adapter
 
+        self.god_mode_enabled = False
+
+    def enable_god_mode(self) -> None:
+        """Enable god mode."""
+        self.god_mode_enabled = True
+
     def on_app_loading(self) -> None:
         """Should be called at standard on_app_loading time."""
 
