@@ -40,7 +40,7 @@ class IntSetting(Setting):
     """
 
     default: int
-    min_value: int = 0
+
     max_value: int = 9999
     increment: int = 1
 
