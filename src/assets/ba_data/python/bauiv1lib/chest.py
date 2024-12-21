@@ -16,8 +16,8 @@ if TYPE_CHECKING:
 class ChestWindow(bui.MainWindow):
     """Allows operations on a chest."""
 
-    def __del__(self) -> None:
-        print('~ChestWindow()')
+    # def __del__(self) -> None:
+    #     print('~ChestWindow()')
 
     def __init__(
         self,
@@ -25,7 +25,7 @@ class ChestWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        print('ChestWindow()')
+        # print('ChestWindow()')
 
         self._index = index
 
