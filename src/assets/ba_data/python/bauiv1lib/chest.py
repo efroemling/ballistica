@@ -272,7 +272,9 @@ class ChestWindow(bui.MainWindow):
 
         # Allow only one in-flight action at once.
         if self._action_in_flight:
-            bui.screenmessage('ERR', color=(1, 0, 0))
+            bui.screenmessage(
+                bui.Lstr(resource='pleaseWaitText'), color=(1, 0, 0)
+            )
             bui.getsound('error').play()
             return
 
