@@ -28,7 +28,7 @@ class InventoryWindow(bui.MainWindow):
             if uiscale is bui.UIScale.SMALL
             else 530 if uiscale is bui.UIScale.MEDIUM else 600
         )
-        x_offs = 70 if uiscale is bui.UIScale.SMALL else 0
+        xoffs = 70 if uiscale is bui.UIScale.SMALL else 0
         yoffs = -45 if uiscale is bui.UIScale.SMALL else 0
 
         super().__init__(
@@ -71,7 +71,7 @@ class InventoryWindow(bui.MainWindow):
         else:
             btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(x_offs + 50, height - 55 + yoffs),
+                position=(xoffs + 50, height - 55 + yoffs),
                 size=(60, 55),
                 scale=0.8,
                 label=bui.charstr(bui.SpecialChar.BACK),

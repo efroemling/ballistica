@@ -259,6 +259,12 @@ class App:
         return _babase.app_is_active()
 
     @property
+    def mode(self) -> AppMode | None:
+        """The app's current mode."""
+        assert _babase.in_logic_thread()
+        return self._mode
+
+    @property
     def asyncio_loop(self) -> asyncio.AbstractEventLoop:
         """The logic thread's asyncio event loop.
 

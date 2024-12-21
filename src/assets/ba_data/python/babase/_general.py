@@ -156,6 +156,9 @@ class _WeakCall:
     to wrap them in weakrefs manually if desired.
     """
 
+    # Optimize performance a bit; we shouldn't need to be super dynamic.
+    __slots__ = ['_call', '_args', '_keywds']
+
     _did_invalid_call_warning = False
 
     def __init__(self, *args: Any, **keywds: Any) -> None:
@@ -175,7 +178,7 @@ class _WeakCall:
                     ' to avoid this warning.',
                     stack_info=True,
                 )
-                self._did_invalid_call_warning = True
+                type(self)._did_invalid_call_warning = True
             self._call = args[0]
         self._args = args[1:]
         self._keywds = keywds
@@ -213,6 +216,9 @@ class _Call:
     alive too. Use babase.WeakCall if you want to pass a method to a callback
     without keeping its object alive.
     """
+
+    # Optimize performance a bit; we shouldn't need to be super dynamic.
+    __slots__ = ['_call', '_args', '_keywds']
 
     def __init__(self, *args: Any, **keywds: Any):
         """Instantiate a Call.
@@ -279,6 +285,9 @@ class WeakMethod:
     Wraps a bound method using weak references so that the original is
     free to die. If called with a dead target, is simply a no-op.
     """
+
+    # Optimize performance a bit; we shouldn't need to be super dynamic.
+    __slots__ = ['_func', '_obj']
 
     def __init__(self, call: types.MethodType):
         assert isinstance(call, types.MethodType)

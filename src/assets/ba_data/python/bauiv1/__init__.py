@@ -96,6 +96,7 @@ from babase import (
     timestring,
     UIScale,
     unlock_all_input,
+    utc_now_cloud,
     WeakCall,
     workspaces_in_use,
 )
@@ -238,6 +239,7 @@ __all__ = [
     'UIScale',
     'UIV1AppSubsystem',
     'unlock_all_input',
+    'utc_now_cloud',
     'WeakCall',
     'widget',
     'Widget',

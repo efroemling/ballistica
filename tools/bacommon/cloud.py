@@ -347,8 +347,6 @@ class BSClassicAccountLiveData:
             BSClassicChestAppearance,
             IOAttrs('a', enum_fallback=BSClassicChestAppearance.UNKNOWN),
         ]
-        create_time: Annotated[datetime.datetime, IOAttrs('c')]
-        unlock_tokens: Annotated[int, IOAttrs('tk')]
         unlock_time: Annotated[datetime.datetime, IOAttrs('t')]
         ad_allow_time: Annotated[datetime.datetime | None, IOAttrs('at')]
 
@@ -428,6 +426,85 @@ class BSInboxRequestResponse(Response):
     """Here's that inbox contents you asked for, boss."""
 
     entries: Annotated[list[BSInboxEntry], IOAttrs('m')]
+
+    # Printable error if something goes wrong.
+    error: Annotated[str | None, IOAttrs('e')] = None
+
+
+@ioprepped
+@dataclass
+class BSChestInfoMessage(Message):
+    """Request info about a chest."""
+
+    chest_id: Annotated[str, IOAttrs('i')]
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [BSChestInfoResponse]
+
+
+@ioprepped
+@dataclass
+class BSChestInfoResponse(Response):
+    """Here's that inbox contents you asked for, boss."""
+
+    @dataclass
+    class Chest:
+        """A lovely chest."""
+
+        appearance: Annotated[
+            BSClassicChestAppearance,
+            IOAttrs('a', enum_fallback=BSClassicChestAppearance.UNKNOWN),
+        ]
+
+        # How much to unlock *now*.
+        unlock_tokens: Annotated[int, IOAttrs('tk')]
+
+        # When unlocks on its own.
+        unlock_time: Annotated[datetime.datetime, IOAttrs('t')]
+
+        # Are ads allowed now?
+        ad_allow: Annotated[bool, IOAttrs('aa')]
+
+    chest: Annotated[Chest | None, IOAttrs('c')]
+
+
+@ioprepped
+@dataclass
+class BSChestActionMessage(Message):
+    """Request action about a chest."""
+
+    class Action(Enum):
+        """Types of actions we can request."""
+
+        # Unlocking (for free or with tokens).
+        UNLOCK = 'u'
+
+        # Watched an ad to reduce wait.
+        AD = 'ad'
+
+    action: Annotated[Action, IOAttrs('a')]
+
+    # Tokens we are paying (only applies to unlock).
+    token_payment: Annotated[int, IOAttrs('t')]
+
+    chest_id: Annotated[str, IOAttrs('i')]
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [BSChestActionResponse]
+
+
+@ioprepped
+@dataclass
+class BSChestActionResponse(Response):
+    """Here's the results of that action you asked for, boss."""
+
+    # If present, signifies the chest has been opened and we should show
+    # the user this stuff that was in it.
+    contents: Annotated[list[str] | None, IOAttrs('c')] = None
 
     # Printable error if something goes wrong.
     error: Annotated[str | None, IOAttrs('e')] = None

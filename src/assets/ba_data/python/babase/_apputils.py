@@ -11,6 +11,7 @@ from functools import partial
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
+from efro.util import utc_now
 from efro.logging import LogLevel
 from efro.dataclassio import ioprepped, dataclass_to_json, dataclass_from_json
 
@@ -18,9 +19,19 @@ import _babase
 from babase._appsubsystem import AppSubsystem
 
 if TYPE_CHECKING:
+    import datetime
     from typing import Any, TextIO, Callable
 
     import babase
+
+
+def utc_now_cloud() -> datetime.datetime:
+    """Returns estimated utc time regardless of local clock settings.
+
+    Applies offsets pulled from server communication/etc.
+    """
+    # FIXME - do something smart here.
+    return utc_now()
 
 
 def is_browser_likely_available() -> bool:

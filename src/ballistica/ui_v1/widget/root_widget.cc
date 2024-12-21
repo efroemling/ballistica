@@ -1335,6 +1335,14 @@ auto RootWidget::GetSpecialWidget(const std::string& s) const -> Widget* {
     return level_meter_button_ ? level_meter_button_->widget.get() : nullptr;
   } else if (s == "overlay_stack") {
     return overlay_stack_widget_;
+  } else if (s == "chest_0_button") {
+    return chest_0_button_->widget.get();
+  } else if (s == "chest_1_button") {
+    return chest_1_button_->widget.get();
+  } else if (s == "chest_2_button") {
+    return chest_2_button_->widget.get();
+  } else if (s == "chest_3_button") {
+    return chest_3_button_->widget.get();
   }
   return nullptr;
 }
@@ -1462,7 +1470,7 @@ void RootWidget::SetChests(const std::string& chest_0_appearance,
     assert(b);
     if (appearance == "") {
       b->widget->set_color(0.473f, 0.44f, 0.583f);
-      b->widget->set_opacity(0.5f);
+      b->widget->set_opacity(have_chests ? 1.0f : 0.5f);
       b->width = b->height = 80.0f;
       b->y = have_chests ? 44.0f : 0.0f;
       {

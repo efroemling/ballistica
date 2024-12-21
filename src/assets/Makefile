@@ -347,6 +347,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/achievements.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/appinvite.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/characterpicker.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/chest.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/colorpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/config.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/confirm.py \
@@ -627,6 +628,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/achievements.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/appinvite.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/characterpicker.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/chest.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/colorpicker.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/config.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/confirm.cpython-312.opt-1.pyc \

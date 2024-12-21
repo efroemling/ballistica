@@ -134,6 +134,24 @@ class CloudSubsystem(babase.AppSubsystem):
         ],
     ) -> None: ...
 
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.cloud.BSChestInfoMessage,
+        on_response: Callable[
+            [bacommon.cloud.BSChestInfoResponse | Exception], None
+        ],
+    ) -> None: ...
+
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.cloud.BSChestActionMessage,
+        on_response: Callable[
+            [bacommon.cloud.BSChestActionResponse | Exception], None
+        ],
+    ) -> None: ...
+
     def send_message_cb(
         self,
         msg: Message,

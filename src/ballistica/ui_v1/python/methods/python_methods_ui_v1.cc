@@ -2607,6 +2607,10 @@ static PyMethodDef PyGetSpecialWidgetDef = {
     "        'trophy_meter',"
     "        'level_meter',"
     "        'overlay_stack',"
+    "        'chest_0_button',"
+    "        'chest_1_button',"
+    "        'chest_2_button',"
+    "        'chest_3_button',"
     "    ]) -> bauiv1.Widget\n"
     "\n"
     "(internal)",

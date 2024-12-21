@@ -15,10 +15,11 @@ import bauiv1
 import _baclassic
 
 if TYPE_CHECKING:
-    from typing import Callable, Any
+    from typing import Callable, Any, Literal
 
     from efro.call import CallbackRegistration
     import bacommon.cloud
+    from bauiv1lib.chest import ChestWindow
 
 
 # ba_meta export babase.AppMode
@@ -481,5 +482,42 @@ class ClassicAppMode(babase.AppMode):
         )
 
     def _root_ui_chest_slot_pressed(self, index: int) -> None:
-        print(f'CHEST {index} PRESSED')
-        babase.screenmessage('UNDER CONSTRUCTION.')
+        from bauiv1lib.chest import (
+            ChestWindow0,
+            ChestWindow1,
+            ChestWindow2,
+            ChestWindow3,
+        )
+        from bauiv1lib.connectivity import wait_for_connectivity
+
+        widgetid: Literal[
+            'chest_0_button',
+            'chest_1_button',
+            'chest_2_button',
+            'chest_3_button',
+        ]
+        winclass: type[ChestWindow]
+        if index == 0:
+            widgetid = 'chest_0_button'
+            winclass = ChestWindow0
+        elif index == 1:
+            widgetid = 'chest_1_button'
+            winclass = ChestWindow1
+        elif index == 2:
+            widgetid = 'chest_2_button'
+            winclass = ChestWindow2
+        elif index == 3:
+            widgetid = 'chest_3_button'
+            winclass = ChestWindow3
+        else:
+            raise RuntimeError(f'Invalid index {index}')
+
+        wait_for_connectivity(
+            on_connected=lambda: self._auxiliary_window_nav(
+                win_type=winclass,
+                win_create_call=lambda: winclass(
+                    index=index,
+                    origin_widget=bauiv1.get_special_widget(widgetid),
+                ),
+            )
+        )

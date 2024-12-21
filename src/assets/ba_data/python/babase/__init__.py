@@ -134,6 +134,7 @@ from babase._apputils import (
     garbage_collect,
     get_remote_app_name,
     AppHealthMonitor,
+    utc_now_cloud,
 )
 from babase._cloud import CloudSubscription
 from babase._devconsole import (
@@ -360,6 +361,7 @@ __all__ = [
     'update_internal_logger_levels',
     'user_agent_string',
     'user_ran_commands',
+    'utc_now_cloud',
     'utf8_all',
     'Vec3',
     'vec3validate',
