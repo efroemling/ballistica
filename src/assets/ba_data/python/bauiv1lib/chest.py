@@ -65,18 +65,17 @@ class ChestWindow(bui.MainWindow):
             origin_widget=origin_widget,
         )
 
-        self._core_widgets.append(
-            bui.textwidget(
-                parent=self._root_widget,
-                position=(0, self._height - 45 + self._yoffs),
-                size=(self._width, 25),
-                text=f'Chest #{self._index + 1}',
-                color=bui.app.ui_v1.title_color,
-                maxwidth=150.0,
-                h_align='center',
-                v_align='center',
-            )
+        self._title_text = bui.textwidget(
+            parent=self._root_widget,
+            position=(0, self._height - 45 + self._yoffs),
+            size=(self._width, 25),
+            text=f'Chest Slot {self._index + 1}',
+            color=bui.app.ui_v1.title_color,
+            maxwidth=150.0,
+            h_align='center',
+            v_align='center',
         )
+        self._core_widgets.append(self._title_text)
 
         if uiscale is bui.UIScale.SMALL:
             bui.containerwidget(

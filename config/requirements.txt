@@ -19,4 +19,4 @@ types-certifi==2021.10.8.3
 types-filelock==3.2.7
 types-requests==2.32.0.20241016
 typing_extensions==4.12.2
-urllib3==2.2.3
+urllib3==2.3.0

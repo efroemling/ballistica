@@ -49,11 +49,11 @@ class InboxWindow(bui.MainWindow):
 
         self._width = 600 if uiscale is bui.UIScale.SMALL else 450
         self._height = (
-            380
+            375
             if uiscale is bui.UIScale.SMALL
             else 370 if uiscale is bui.UIScale.MEDIUM else 450
         )
-        yoffs = -45 if uiscale is bui.UIScale.SMALL else 0
+        yoffs = -47 if uiscale is bui.UIScale.SMALL else 0
 
         super().__init__(
             root_widget=bui.containerwidget(

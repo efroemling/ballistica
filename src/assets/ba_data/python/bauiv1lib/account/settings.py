@@ -63,10 +63,10 @@ class AccountSettingsWindow(bui.MainWindow):
         assert app.classic is not None
         uiscale = app.ui_v1.uiscale
 
-        self._width = 850 if uiscale is bui.UIScale.SMALL else 660
+        self._width = 980 if uiscale is bui.UIScale.SMALL else 660
         x_offs = 70 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            380
+            430
             if uiscale is bui.UIScale.SMALL
             else 430 if uiscale is bui.UIScale.MEDIUM else 490
         )
@@ -95,7 +95,7 @@ class AccountSettingsWindow(bui.MainWindow):
         if bui.app.config.resolve('Show Deprecated Login Types'):
             self._show_sign_in_buttons.append('Device')
 
-        top_extra = 15 if uiscale is bui.UIScale.SMALL else 0
+        top_extra = 26 if uiscale is bui.UIScale.SMALL else 0
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
@@ -105,7 +105,7 @@ class AccountSettingsWindow(bui.MainWindow):
                     else 'menu_full'
                 ),
                 scale=(
-                    2.07
+                    1.72
                     if uiscale is bui.UIScale.SMALL
                     else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
@@ -146,8 +146,8 @@ class AccountSettingsWindow(bui.MainWindow):
                     label=bui.charstr(bui.SpecialChar.BACK),
                 )
 
-        titleyoffs = -12 if uiscale is bui.UIScale.SMALL else 0
-        titlescale = 0.6 if uiscale is bui.UIScale.SMALL else 1.0
+        titleyoffs = -9 if uiscale is bui.UIScale.SMALL else 0
+        titlescale = 0.7 if uiscale is bui.UIScale.SMALL else 1.0
         bui.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 41 + titleyoffs),
