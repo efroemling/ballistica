@@ -44,8 +44,13 @@ class LanguageSubsystem(AppSubsystem):
         (which may differ from locale if the user sets a language, etc.)
         """
         env = _babase.env()
-        assert isinstance(env['locale'], str)
-        return env['locale']
+        locale = env.get('locale')
+        if not isinstance(locale, str):
+            logging.warning(
+                'Seem to be running in a dummy env; returning en_US locale.'
+            )
+            locale = 'en_US'
+        return locale
 
     @property
     def language(self) -> str:

@@ -455,6 +455,7 @@ def _dirty_dep_check(
             return curstate
 
         # Ok; there's no current state for this file.
+        #
         # First lets immediately mark it as clean so if a dependency of ours
         # queries it we won't loop infinitely.  (If we're actually dirty that
         # will be reflected properly once we're done).
@@ -494,7 +495,8 @@ def _dirty_dep_check(
                         dirty = True
                         break
 
-    # Cache and return our dirty state..
+    # Cache and return our dirty state.
+    #
     # Note: for fast mode we limit to recursion==0 so we only write when
     # the file itself is being directly visited.
     if recursion == 0:
@@ -526,9 +528,9 @@ def _run_pylint(
         if result != 0:
             raise CleanError(f'Pylint failed for {result} file(s).')
 
-        # Sanity check: when the linter fails we should always be failing too.
-        # If not, it means we're probably missing something and incorrectly
-        # marking a failed file as clean.
+        # Sanity check: when the linter fails we should always be
+        # failing too. If not, it means we're probably missing something
+        # and incorrectly marking a failed file as clean.
         if run.linter.msg_status != 0 and result == 0:
             raise RuntimeError(
                 'Pylint linter returned non-zero result'
@@ -562,8 +564,8 @@ def _apply_pylint_run_to_cache(
 
     from efrotools.project import getprojectconfig
 
-    # First off, build a map of dirtyfiles to module names
-    # (and the corresponding reverse map).
+    # First off, build a map of dirtyfiles to module names (and the
+    # corresponding reverse map).
     paths_to_names: dict[str, str] = {}
     names_to_paths: dict[str, str] = {}
     for fname in allfiles:
@@ -581,17 +583,19 @@ def _apply_pylint_run_to_cache(
         names_to_paths[val] = key
 
     # If there's any cyclic-import errors, just mark all deps as dirty;
-    # don't want to add the logic to figure out which ones the cycles cover
-    # since they all seems to appear as errors for the last file in the list.
+    # don't want to add the logic to figure out which ones the cycles
+    # cover since they all seems to appear as errors for the last file
+    # in the list.
     cycles: int = run.linter.stats.by_msg.get('cyclic-import', 0)
     have_dep_cycles: bool = cycles > 0
     if have_dep_cycles:
         print(f'Found {cycles} cycle-errors; keeping all dirty files dirty.')
 
     # Update dependencies for what we just ran.
-    # A run leaves us with a map of modules to a list of the modules that
-    # imports them. We want the opposite though: for each of our modules
-    # we want a list of the modules it imports.
+    #
+    # A run leaves us with a map of modules to a list of the modules
+    # that imports them. We want the opposite though: for each of our
+    # modules we want a list of the modules it imports.
     reversedeps = {}
 
     # Make sure these are all proper module names; no foo.bar.__init__ stuff.
@@ -614,10 +618,10 @@ def _apply_pylint_run_to_cache(
     # Add a few that this package itself triggers.
     ignored_untracked_deps |= {'pylint.lint', 'astroid.modutils', 'astroid'}
 
-    # EW; as of Python 3.9, suddenly I'm seeing system modules showing up
-    # here where I wasn't before. I wonder what changed. Anyway, explicitly
-    # suppressing them here but should come up with a more robust system
-    # as I feel this will get annoying fast.
+    # EW; as of Python 3.9, suddenly I'm seeing system modules showing
+    # up here where I wasn't before. I wonder what changed. Anyway,
+    # explicitly suppressing them here but should come up with a more
+    # robust system as I feel this will get annoying fast.
     ignored_untracked_deps |= {
         're',
         'importlib',
@@ -682,6 +686,7 @@ def _apply_pylint_run_to_cache(
     }
 
     # Special case:
+    #
     # Ignore generated dummy-modules (we don't directly check those anymore
     # so they'll be listed as external).
     if os.path.exists('build/dummymodules'):
@@ -719,17 +724,17 @@ def _apply_pylint_run_to_cache(
             depsval = [names_to_paths[dep] for dep in deps[fmod]]
         cache.entries[fname]['deps'] = depsval
 
-    # Let's print a list of modules with no detected deps so we can make sure
-    # this is behaving.
+    # Let's print a list of modules with no detected deps so we can make
+    # sure this is behaving.
     if no_deps_modules:
         if bool(False):
             print(
                 'NOTE: no dependencies found for:', ', '.join(no_deps_modules)
             )
 
-    # Ok, now go through all dirtyfiles involved in this run.
-    # Mark them as either errored or clean depending on whether there's
-    # error info for them in the run stats.
+    # Ok, now go through all dirtyfiles involved in this run. Mark them
+    # as either errored or clean depending on whether there's error info
+    # for them in the run stats.
 
     # Once again need to convert any foo.bar.__init__ to foo.bar.
     stats_by_module: dict[str, Any] = {
