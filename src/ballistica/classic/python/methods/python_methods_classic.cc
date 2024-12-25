@@ -3,6 +3,7 @@
 #include "ballistica/classic/python/methods/python_methods_classic.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -289,10 +290,10 @@ static PyMethodDef PyClassicAppModeDeactivateDef = {
     "(internal)\n",
 };
 
-// -------------------------- set_root_ui_values -------------------------------
+// ---------------------- set_root_ui_account_values ---------------------------
 
-static auto PySetRootUIValues(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
+                                     PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   const char* tickets_text;
@@ -353,12 +354,12 @@ static auto PySetRootUIValues(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PySetRootUIValuesDef = {
-    "set_root_ui_values",            // name
-    (PyCFunction)PySetRootUIValues,  // method
-    METH_VARARGS | METH_KEYWORDS,    // flags
+static PyMethodDef PySetRootUIAccountValuesDef = {
+    "set_root_ui_account_values",           // name
+    (PyCFunction)PySetRootUIAccountValues,  // method
+    METH_VARARGS | METH_KEYWORDS,           // flags
 
-    "set_root_ui_values(*,\n"
+    "set_root_ui_account_values(*,\n"
     "      tickets_text: str,\n"
     "      tokens_text: str,\n"
     "      league_rank_text: str,\n"
@@ -377,6 +378,38 @@ static PyMethodDef PySetRootUIValuesDef = {
     "(internal)",
 };
 
+// --------------------- set_root_ui_have_live_values --------------------------
+
+static auto PySetRootUIHaveLiveValues(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  int have_live_values{};
+
+  static const char* kwlist[] = {"have_live_values", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "p", const_cast<char**>(kwlist), &have_live_values)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  auto* appmode = ClassicAppMode::GetActiveOrThrow();
+  appmode->SetRootUIHaveLiveValues(have_live_values);
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetRootUIHaveLiveValuesDef = {
+    "set_root_ui_have_live_values",          // name
+    (PyCFunction)PySetRootUIHaveLiveValues,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
+
+    "set_root_ui_have_live_values(have_live_values: bool) -> None\n"
+    "\n"
+    "(internal)",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
@@ -387,7 +420,8 @@ auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
       PyClassicAppModeHandleAppIntentDefaultDef,
       PyClassicAppModeActivateDef,
       PyClassicAppModeDeactivateDef,
-      PySetRootUIValuesDef,
+      PySetRootUIAccountValuesDef,
+      PySetRootUIHaveLiveValuesDef,
   };
 }
 

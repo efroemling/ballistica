@@ -161,6 +161,7 @@ void ClassicAppMode::Reset_() {
       root_widget->SetChests(
           root_ui_chest_0_appearance_, root_ui_chest_1_appearance_,
           root_ui_chest_2_appearance_, root_ui_chest_3_appearance_);
+      root_widget->SetHaveLiveValues(root_ui_have_live_values_);
     }
   }
 
@@ -1695,6 +1696,22 @@ void ClassicAppMode::SetRootUIGoldPass(bool enabled) {
     if (auto* root_widget = uiv1_->root_widget()) {
       root_widget->SetTokensMeterText(root_ui_tokens_meter_text_,
                                       root_ui_gold_pass_);
+    }
+  }
+}
+
+void ClassicAppMode::SetRootUIHaveLiveValues(bool have_live_values) {
+  if (have_live_values == root_ui_have_live_values_) {
+    return;
+  }
+
+  // Store the value.
+  root_ui_have_live_values_ = have_live_values;
+
+  // Apply it to any existing UI.
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->SetHaveLiveValues(root_ui_have_live_values_);
     }
   }
 }

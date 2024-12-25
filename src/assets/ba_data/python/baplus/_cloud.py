@@ -7,6 +7,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, overload
 
+from efro.call import CallbackSet
 import babase
 
 if TYPE_CHECKING:
@@ -23,6 +24,12 @@ if TYPE_CHECKING:
 
 class CloudSubsystem(babase.AppSubsystem):
     """Manages communication with cloud components."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.on_connectivity_changed_callbacks: CallbackSet[
+            Callable[[bool], None]
+        ] = CallbackSet()
 
     @property
     def connected(self) -> bool:
@@ -44,9 +51,12 @@ class CloudSubsystem(babase.AppSubsystem):
         plus = babase.app.plus
         assert plus is not None
 
-        # Inform things that use this.
-        # (TODO: should generalize this into some sort of registration system)
-        plus.accounts.on_cloud_connectivity_changed(connected)
+        # Fire any registered callbacks for this.
+        for call in self.on_connectivity_changed_callbacks.getcalls():
+            try:
+                call(connected)
+            except Exception:
+                logging.exception('Error in connectivity-changed callback.')
 
     @overload
     def send_message_cb(

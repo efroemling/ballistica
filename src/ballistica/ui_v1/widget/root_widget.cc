@@ -3,6 +3,7 @@
 #include "ballistica/ui_v1/widget/root_widget.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -336,6 +337,13 @@ void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
       switch (type) {
         case MeterType_::kTrophy:
           trophy_icon_ = img;
+          break;
+        case MeterType_::kTickets:
+          tickets_meter_icon_ = img;
+          break;
+        case MeterType_::kTokens:
+          tokens_meter_icon_ = img;
+          break;
         default:
           break;
       }
@@ -1448,6 +1456,43 @@ void RootWidget::SetXPText(const std::string& val) {
   xp_text_->widget->SetText(val);
 }
 
+void RootWidget::SetHaveLiveValues(bool have_live_values) {
+  auto cval{have_live_values ? 1.0f : 0.4f};
+  auto oval{have_live_values ? 1.0f : 0.2f};
+  auto oval2{have_live_values ? 1.0f : 0.4f};
+
+  assert(tickets_meter_text_);
+  assert(tickets_meter_icon_);
+  tickets_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
+  tickets_meter_icon_->widget->set_color(cval, cval, cval);
+
+  assert(tokens_meter_text_);
+  assert(tokens_meter_icon_);
+  tokens_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
+  tokens_meter_icon_->widget->set_color(cval, cval, cval);
+
+  assert(inbox_button_);
+  inbox_button_->widget->set_opacity(oval2);
+
+  assert(league_rank_text_);
+  league_rank_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
+
+  // Note: We are currently driving trophy icon color based on league and
+  // opacity here based on connectivity. This keeps logic simple but is a
+  // bit different than other icons where we only drive color and keep
+  // opacity at 1.0.
+  assert(trophy_icon_);
+  trophy_icon_->widget->set_opacity(oval2);
+
+  for (auto* button :
+       {chest_0_button_, chest_1_button_, chest_2_button_, chest_3_button_}) {
+    assert(button);
+    button->widget->set_opacity(have_live_values ? 1.0f : 0.5f);
+  }
+  assert(chest_backing_);
+  chest_backing_->widget->set_opacity(have_live_values ? 1.0f : 0.5f);
+}
+
 void RootWidget::SetChests(const std::string& chest_0_appearance,
                            const std::string& chest_1_appearance,
                            const std::string& chest_2_appearance,
@@ -1470,9 +1515,8 @@ void RootWidget::SetChests(const std::string& chest_0_appearance,
     assert(b);
     if (appearance == "") {
       b->widget->set_color(0.473f, 0.44f, 0.583f);
-      b->widget->set_opacity(have_chests ? 1.0f : 0.5f);
       b->width = b->height = 80.0f;
-      b->y = have_chests ? 44.0f : 0.0f;
+      b->y = have_chests ? 44.0f : -2.0f;
       {
         base::Assets::AssetListLock lock;
         b->widget->SetTexture(
@@ -1481,7 +1525,6 @@ void RootWidget::SetChests(const std::string& chest_0_appearance,
     } else {
       have_chests = true;
       b->widget->set_color(1.0f, 1.0f, 1.0f);
-      b->widget->set_opacity(1.0f);
       b->width = b->height = 110.0f;
       b->y = 44.0f;
       {
@@ -1491,8 +1534,7 @@ void RootWidget::SetChests(const std::string& chest_0_appearance,
     }
   }
   assert(chest_backing_);
-  chest_backing_->y = have_chests ? 41.0f : -10.0f;
-  chest_backing_->widget->set_opacity(have_chests ? 1.0f : 0.5f);
+  chest_backing_->y = have_chests ? 41.0f : -15.0f;
 
   child_widgets_dirty_ = true;
 }

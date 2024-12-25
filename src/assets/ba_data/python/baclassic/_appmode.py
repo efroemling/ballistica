@@ -30,8 +30,14 @@ class ClassicAppMode(babase.AppMode):
         self._on_primary_account_changed_callback: (
             CallbackRegistration | None
         ) = None
+        self._on_connectivity_changed_callback: CallbackRegistration | None = (
+            None
+        )
         self._test_sub: babase.CloudSubscription | None = None
         self._account_data_sub: babase.CloudSubscription | None = None
+
+        self._have_account_values = False
+        self._have_connectivity = False
 
     @override
     @classmethod
@@ -40,7 +46,7 @@ class ClassicAppMode(babase.AppMode):
 
     @override
     @classmethod
-    def _supports_intent(cls, intent: babase.AppIntent) -> bool:
+    def _can_handle_intent(cls, intent: babase.AppIntent) -> bool:
         # We support default and exec intents currently.
         return isinstance(
             intent, babase.AppIntentExec | babase.AppIntentDefault
@@ -118,14 +124,22 @@ class ClassicAppMode(babase.AppMode):
             self._root_ui_chest_slot_pressed, 3
         )
 
+        # We want to be informed when connectivity changes.
+        self._on_connectivity_changed_callback = (
+            plus.cloud.on_connectivity_changed_callbacks.register(
+                self._update_for_connectivity_change
+            )
+        )
         # We want to be informed when primary account changes.
         self._on_primary_account_changed_callback = (
             plus.accounts.on_primary_account_changed_callbacks.register(
-                self.update_for_primary_account
+                self._update_for_primary_account
             )
         )
         # Establish subscriptions/etc. for any current primary account.
-        self.update_for_primary_account(plus.accounts.primary)
+        self._update_for_primary_account(plus.accounts.primary)
+        self._have_connectivity = plus.cloud.is_connected()
+        self._update_for_connectivity_change(self._have_connectivity)
 
     @override
     def on_deactivate(self) -> None:
@@ -136,7 +150,7 @@ class ClassicAppMode(babase.AppMode):
         self._on_primary_account_changed_callback = None
 
         # Remove anything following any current account.
-        self.update_for_primary_account(None)
+        self._update_for_primary_account(None)
 
         # Save where we were in the UI so we return there next time.
         if classic is not None:
@@ -152,7 +166,7 @@ class ClassicAppMode(babase.AppMode):
         if not babase.app.active:
             babase.invoke_main_menu()
 
-    def update_for_primary_account(
+    def _update_for_primary_account(
         self, account: babase.AccountV2Handle | None
     ) -> None:
         """Update subscriptions/etc. for a new primary account state."""
@@ -180,7 +194,7 @@ class ClassicAppMode(babase.AppMode):
 
         if account is None:
             self._account_data_sub = None
-            _baclassic.set_root_ui_values(
+            _baclassic.set_root_ui_account_values(
                 tickets_text='-',
                 tokens_text='-',
                 league_rank_text='-',
@@ -195,7 +209,6 @@ class ClassicAppMode(babase.AppMode):
                 chest_2_appearance='',
                 chest_3_appearance='',
             )
-
         else:
             with account:
                 self._account_data_sub = (
@@ -203,6 +216,23 @@ class ClassicAppMode(babase.AppMode):
                         self._on_classic_account_data_change
                     )
                 )
+
+    def _update_for_connectivity_change(self, connected: bool) -> None:
+        """Update when the app's connectivity state changes."""
+        self._have_connectivity = connected
+        self._update_have_live_values()
+
+    def _update_have_live_values(self) -> None:
+
+        # We want to show ui elements faded out unless we have a live
+        # connection to the master-server AND have received a set of UI
+        # values from them. If we just plug in connectivity here we get
+        # UI stuff un-fading a moment or two before values appear (since
+        # the subscriptions have not sent us any values yet) which looks
+        # odd.
+        _baclassic.set_root_ui_have_live_values(
+            self._have_connectivity and self._have_account_values
+        )
 
     def _on_sub_test_update(self, val: int | None) -> None:
         print(f'GOT SUB TEST UPDATE: {val}')
@@ -221,7 +251,7 @@ class ClassicAppMode(babase.AppMode):
         chest2 = val.chests.get('2')
         chest3 = val.chests.get('3')
 
-        _baclassic.set_root_ui_values(
+        _baclassic.set_root_ui_account_values(
             tickets_text=str(val.tickets),
             tokens_text=str(val.tokens),
             league_rank_text=(
@@ -248,6 +278,10 @@ class ClassicAppMode(babase.AppMode):
                 '' if chest3 is None else chest3.appearance.value
             ),
         )
+
+        # Note that we have values and updated faded state accordingly.
+        self._have_account_values = True
+        self._update_have_live_values()
 
     def _root_ui_menu_press(self) -> None:
         from babase import push_back_press

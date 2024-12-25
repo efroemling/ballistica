@@ -35,6 +35,16 @@ class AccountV2Subsystem:
 
         from babase._login import LoginAdapterGPGS, LoginAdapterGameCenter
 
+        # Register to be informed when connectivity changes.
+        plus = _babase.app.plus
+        self._connectivity_changed_cb = (
+            None
+            if plus is None
+            else plus.cloud.on_connectivity_changed_callbacks.register(
+                self._on_cloud_connectivity_changed
+            )
+        )
+
         # Whether or not everything related to an initial sign in (or
         # lack thereof) has completed. This includes things like
         # workspace syncing. Completion of this is what flips the app
@@ -265,7 +275,7 @@ class AccountV2Subsystem:
         # We may want to auto-sign-in based on this new state.
         self._update_auto_sign_in()
 
-    def on_cloud_connectivity_changed(self, connected: bool) -> None:
+    def _on_cloud_connectivity_changed(self, connected: bool) -> None:
         """Should be called with cloud connectivity changes."""
         del connected  # Unused.
         assert _babase.in_logic_thread()
