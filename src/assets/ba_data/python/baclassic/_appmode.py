@@ -209,6 +209,9 @@ class ClassicAppMode(babase.AppMode):
                 chest_2_appearance='',
                 chest_3_appearance='',
             )
+            self._have_account_values = False
+            self._update_ui_live_state()
+
         else:
             with account:
                 self._account_data_sub = (
@@ -220,16 +223,15 @@ class ClassicAppMode(babase.AppMode):
     def _update_for_connectivity_change(self, connected: bool) -> None:
         """Update when the app's connectivity state changes."""
         self._have_connectivity = connected
-        self._update_have_live_values()
+        self._update_ui_live_state()
 
-    def _update_have_live_values(self) -> None:
-
-        # We want to show ui elements faded out unless we have a live
-        # connection to the master-server AND have received a set of UI
-        # values from them. If we just plug in connectivity here we get
-        # UI stuff un-fading a moment or two before values appear (since
-        # the subscriptions have not sent us any values yet) which looks
-        # odd.
+    def _update_ui_live_state(self) -> None:
+        # We want to show ui elements faded if we don't have a live
+        # connection to the master-server OR if we haven't received a
+        # set of account values from them yet. If we just plug in raw
+        # connectivity state here we get UI stuff un-fading a moment or
+        # two before values appear (since the subscriptions have not
+        # sent us any values yet) which looks odd.
         _baclassic.set_root_ui_have_live_values(
             self._have_connectivity and self._have_account_values
         )
@@ -281,7 +283,7 @@ class ClassicAppMode(babase.AppMode):
 
         # Note that we have values and updated faded state accordingly.
         self._have_account_values = True
-        self._update_have_live_values()
+        self._update_ui_live_state()
 
     def _root_ui_menu_press(self) -> None:
         from babase import push_back_press
