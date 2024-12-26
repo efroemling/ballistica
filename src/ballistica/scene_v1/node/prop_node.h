@@ -73,6 +73,8 @@ class PropNode : public Node {
   void set_damping(float val) { damping_ = val; }
   auto max_speed() const -> float { return max_speed_; }
   void set_max_speed(float val) { max_speed_ = val; }
+  auto angular_velocity() const -> std::vector<float> { return angular_velocity_; }
+  void set_angular_velocity(const std::vector<float>& vals) { angular_velocity_ = vals; }
   auto gravity_scale() const -> float { return gravity_scale_; }
   void set_gravity_scale(float val) { gravity_scale_ = val; }
 
@@ -101,6 +103,7 @@ class PropNode : public Node {
   float max_speed_{20.0f};
   std::vector<float> velocity_{0.0f, 0.0f, 0.0f};
   std::vector<float> position_{0.0f, 0.0f, 0.0f};
+  std::vector<float> angular_velocity_{0.0f, 0.0f, 0.0f};
   std::vector<float> extra_acceleration_{0.0, 0.0, 0.0};
   float extra_mesh_scale_{1.0f};  // For use by subclasses.
   bool sticky_{};
@@ -149,6 +152,7 @@ class PropNodeType : public NodeType {
   BA_FLOAT_ATTR(damping, damping, set_damping);
   BA_FLOAT_ATTR(body_scale, body_scale, SetBodyScale);
   BA_FLOAT_ATTR(max_speed, max_speed, set_max_speed);
+  BA_FLOAT_ARRAY_ATTR(angular_velocity, angular_velocity, set_angular_velocity);
   BA_FLOAT_ARRAY_ATTR(extra_acceleration, extra_acceleration,
                       SetExtraAcceleration);
   BA_FLOAT_ATTR(gravity_scale, gravity_scale, set_gravity_scale);
@@ -177,6 +181,7 @@ class PropNodeType : public NodeType {
         density(this),
         damping(this),
         max_speed(this),
+        angular_velocity(this),
         body_scale(this),
         body(this),
         extra_acceleration(this),

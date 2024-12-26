@@ -66,3 +66,6 @@
 - Added sphinx documentation generation
 - Added docker build system
 - Various CI/CD improvements
+
+### Dhextras
+- Added Small feature for modders

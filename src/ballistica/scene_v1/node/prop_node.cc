@@ -499,6 +499,16 @@ void PropNode::Step() {
     }
   }
 
+  // adding new attribute as angularvel for angular velocity which is actually rotation force
+  if (body_.exists()) {
+    if (angular_velocity_.size() != 3) {
+    throw Exception("Expected float array of size 3 for velocity",
+                    PyExcType::kValue);
+    } else {
+      dBodySetAngularVel(body_->body(), angular_velocity_[0], angular_velocity_[1], angular_velocity_[2]);
+    }
+  }
+
   // apply damping force
   float rotationalDampingX = 0.02f;
   float rotationalDampingY = 0.02f;
