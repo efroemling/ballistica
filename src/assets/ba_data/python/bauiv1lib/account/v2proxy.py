@@ -34,9 +34,9 @@ class V2ProxySignInWindow(bui.Window):
                     origin_widget.get_screen_space_center()
                 ),
                 scale=(
-                    1.25
+                    1.16
                     if uiscale is bui.UIScale.SMALL
-                    else 1.05 if uiscale is bui.UIScale.MEDIUM else 0.9
+                    else 1.0 if uiscale is bui.UIScale.MEDIUM else 0.9
                 ),
             )
         )

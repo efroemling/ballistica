@@ -1375,7 +1375,7 @@ class PublicGatherTab(GatherTab):
         )
 
     def _on_start_advertizing_press(self) -> None:
-        from bauiv1lib.account import show_sign_in_prompt
+        from bauiv1lib.account.signin import show_sign_in_prompt
 
         plus = bui.app.plus
         assert plus is not None

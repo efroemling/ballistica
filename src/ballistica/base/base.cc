@@ -206,7 +206,7 @@ void BaseFeatureSet::StartApp() {
   called_start_app_ = true;
   assert(!app_started_);  // Shouldn't be possible.
 
-  LogVersionInfo_();
+  LogStartupMessage_();
 
   g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
               "start-app begin (main thread)");
@@ -420,7 +420,7 @@ void BaseFeatureSet::OnAppShutdownComplete() {
   }
 }
 
-void BaseFeatureSet::LogVersionInfo_() {
+void BaseFeatureSet::LogStartupMessage_() {
   char buffer[256];
   if (g_buildconfig.headless_build()) {
     snprintf(buffer, sizeof(buffer),

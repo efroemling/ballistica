@@ -28,7 +28,6 @@ class AccountSettingsWindow(bui.MainWindow):
     def __init__(
         self,
         transition: str | None = 'in_right',
-        modal: bool = False,
         origin_widget: bui.Widget | None = None,
         close_once_signed_in: bool = False,
     ):
@@ -49,7 +48,6 @@ class AccountSettingsWindow(bui.MainWindow):
         self._explicitly_signed_out_of_gpgs = False
 
         self._r = 'accountSettingsWindow'
-        self._modal = modal
         self._needs_refresh = False
         self._v1_signed_in = plus.get_v1_account_state() == 'signed_in'
         self._v1_account_state_num = plus.get_v1_account_state_num()
@@ -129,22 +127,17 @@ class AccountSettingsWindow(bui.MainWindow):
                 scale=0.8,
                 text_scale=1.2,
                 autoselect=True,
-                label=bui.Lstr(
-                    resource='cancelText' if self._modal else 'backText'
-                ),
-                button_type='regular' if self._modal else 'back',
-                on_activate_call=(
-                    self._modal_close if self._modal else self.main_window_back
-                ),
+                label=bui.Lstr(resource='backText'),
+                button_type='back',
+                on_activate_call=self.main_window_back,
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
-            if not self._modal:
-                bui.buttonwidget(
-                    edit=btn,
-                    button_type='backSmall',
-                    size=(60, 56),
-                    label=bui.charstr(bui.SpecialChar.BACK),
-                )
+            bui.buttonwidget(
+                edit=btn,
+                button_type='backSmall',
+                size=(60, 56),
+                label=bui.charstr(bui.SpecialChar.BACK),
+            )
 
         titleyoffs = -9 if uiscale is bui.UIScale.SMALL else 0
         titlescale = 0.7 if uiscale is bui.UIScale.SMALL else 1.0
@@ -175,18 +168,6 @@ class AccountSettingsWindow(bui.MainWindow):
         self._subcontainer: bui.Widget | None = None
         self._refresh()
         self._restore_state()
-
-    def _modal_close(self) -> None:
-        assert self._modal
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        bui.containerwidget(
-            edit=self._root_widget,
-            transition=('out_right'),
-        )
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:

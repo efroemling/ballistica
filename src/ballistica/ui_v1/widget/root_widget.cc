@@ -3,7 +3,6 @@
 #include "ballistica/ui_v1/widget/root_widget.h"
 
 #include <algorithm>
-#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -1457,30 +1456,51 @@ void RootWidget::SetXPText(const std::string& val) {
 }
 
 void RootWidget::SetHaveLiveValues(bool have_live_values) {
-  auto cval{have_live_values ? 1.0f : 0.4f};
-  auto oval{have_live_values ? 1.0f : 0.2f};
+  // auto cval{have_live_values ? 1.0f : 0.4f};
+  auto oval{have_live_values ? 1.0f : 0.4f};
   auto oval2{have_live_values ? 1.0f : 0.4f};
 
   assert(tickets_meter_text_);
   assert(tickets_meter_icon_);
   tickets_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
-  tickets_meter_icon_->widget->set_color(cval, cval, cval);
+  // tickets_meter_icon_->widget->set_color(cval, cval, cval);
+  tickets_meter_icon_->widget->set_opacity(oval2);
 
   assert(tokens_meter_text_);
   assert(tokens_meter_icon_);
   tokens_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
-  tokens_meter_icon_->widget->set_color(cval, cval, cval);
+  // tokens_meter_icon_->widget->set_color(cval, cval, cval);
+  tokens_meter_icon_->widget->set_opacity(oval2);
 
   assert(inbox_button_);
   inbox_button_->widget->set_opacity(oval2);
 
+  assert(achievements_button_);
+  achievements_button_->widget->set_opacity(oval2);
+  assert(achievement_percent_text_);
+  achievement_percent_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
+
+  assert(store_button_);
+  store_button_->widget->set_opacity(oval2);
+
+  assert(inventory_button_);
+  inventory_button_->widget->set_opacity(oval2);
+
+  assert(get_tokens_button_);
+  get_tokens_button_->widget->set_opacity(oval2);
+
   assert(league_rank_text_);
   league_rank_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
 
-  // Note: We are currently driving trophy icon color based on league and
-  // opacity here based on connectivity. This keeps logic simple but is a
-  // bit different than other icons where we only drive color and keep
-  // opacity at 1.0.
+  assert(tickets_meter_button_);
+  tickets_meter_button_->widget->set_opacity(oval2);
+
+  assert(tokens_meter_button_);
+  tokens_meter_button_->widget->set_opacity(oval2);
+
+  assert(trophy_meter_button_);
+  trophy_meter_button_->widget->set_opacity(oval2);
+
   assert(trophy_icon_);
   trophy_icon_->widget->set_opacity(oval2);
 

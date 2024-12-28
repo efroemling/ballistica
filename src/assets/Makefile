@@ -341,6 +341,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/link.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/settings.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/account/signin.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/unlink.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/v2proxy.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/viewer.py \
@@ -378,7 +379,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/englishkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/kiosk.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/league/__init__.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/league/rankbutton.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/league/rankwindow.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/mainmenu.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/party.py \
@@ -432,7 +432,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/macmusicapp.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/browser.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/store/button.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/item.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/tabs.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/teamnamescolors.py \
@@ -622,6 +621,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/link.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/settings.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/signin.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/unlink.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/v2proxy.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__pycache__/viewer.cpython-312.opt-1.pyc \
@@ -659,7 +659,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/__pycache__/englishkeyboard.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/kiosk.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/league/__pycache__/__init__.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/league/__pycache__/rankbutton.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/league/__pycache__/rankwindow.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/mainmenu.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/party.cpython-312.opt-1.pyc \
@@ -713,7 +712,6 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/__pycache__/macmusicapp.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/browser.cpython-312.opt-1.pyc \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/button.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__pycache__/item.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/tabs.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/teamnamescolors.cpython-312.opt-1.pyc \

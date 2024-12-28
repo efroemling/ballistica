@@ -572,7 +572,7 @@ class PlayWindow(bui.MainWindow):
 
     def _coop(self) -> None:
         # pylint: disable=cyclic-import
-        from bauiv1lib.account import show_sign_in_prompt
+        from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.coop.browser import CoopBrowserWindow
 
         # no-op if we're not currently in control.
