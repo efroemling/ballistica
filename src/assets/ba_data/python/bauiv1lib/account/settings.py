@@ -350,6 +350,9 @@ class AccountSettingsWindow(bui.MainWindow):
         show_manage_account_button = primary_v2_account is not None
         manage_account_button_space = 70.0
 
+        show_create_account_button = show_v2_proxy_sign_in_button
+        create_account_button_space = 70.0
+
         # Apple asks us to make a delete-account button directly
         # available in the UI. Currently disabling this elsewhere
         # however as I feel that poking 'Manage Account' and scrolling
@@ -426,6 +429,8 @@ class AccountSettingsWindow(bui.MainWindow):
             self._sub_height += sign_in_benefits_space
         if show_manage_account_button:
             self._sub_height += manage_account_button_space
+        if show_create_account_button:
+            self._sub_height += create_account_button_space
         if show_link_accounts_button:
             self._sub_height += link_accounts_button_space
         if show_v1_obsolete_note:
@@ -837,6 +842,28 @@ class AccountSettingsWindow(bui.MainWindow):
             )
             bui.widget(edit=btn, left_widget=bbtn)
 
+        if show_create_account_button:
+            button_width = 300
+            v -= create_account_button_space
+            self._create_button = btn = bui.buttonwidget(
+                parent=self._subcontainer,
+                position=((self._sub_width - button_width) * 0.5, v - 30),
+                autoselect=True,
+                size=(button_width, 60),
+                # label=bui.Lstr(resource=f'{self._r}.createAccountText'),
+                label='Create an Account',
+                color=(0.55, 0.5, 0.6),
+                # icon=bui.gettexture('settingsIcon'),
+                textcolor=(0.75, 0.7, 0.8),
+                on_activate_call=bui.WeakCall(self._on_create_account_press),
+            )
+            if first_selectable is None:
+                first_selectable = btn
+            bui.widget(
+                edit=btn, right_widget=bui.get_special_widget('squad_button')
+            )
+            bui.widget(edit=btn, left_widget=bbtn)
+
         # the button to go to OS-Specific leaderboards/high-score-lists/etc.
         if show_game_service_button:
             button_width = 300
@@ -1192,6 +1219,9 @@ class AccountSettingsWindow(bui.MainWindow):
 
     def _on_manage_account_press(self) -> None:
         self._do_manage_account_press(WebLocation.ACCOUNT_EDITOR)
+
+    def _on_create_account_press(self) -> None:
+        bui.open_url('https://ballistica.net/createaccount')
 
     def _on_delete_account_press(self) -> None:
         self._do_manage_account_press(WebLocation.ACCOUNT_DELETE_SECTION)

@@ -197,13 +197,13 @@ class ClassicAppMode(babase.AppMode):
         if account is None:
             self._account_data_sub = None
             _baclassic.set_root_ui_account_values(
-                tickets_text='-',
-                tokens_text='-',
-                league_rank_text='-',
+                tickets_text='',
+                tokens_text='',
+                league_rank_text='',
                 league_type='',
-                achievements_percent_text='-',
-                level_text='-',
-                xp_text='-',
+                achievements_percent_text='',
+                level_text='',
+                xp_text='',
                 inbox_count_text='',
                 gold_pass=False,
                 chest_0_appearance='',
