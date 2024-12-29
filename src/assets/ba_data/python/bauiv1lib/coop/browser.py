@@ -1032,7 +1032,7 @@ class CoopBrowserWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.confirm import ConfirmWindow
         from bauiv1lib.purchase import PurchaseWindow
-        from bauiv1lib.account import show_sign_in_prompt
+        from bauiv1lib.account.signin import show_sign_in_prompt
 
         plus = bui.app.plus
         assert plus is not None
@@ -1106,7 +1106,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
     def run_tournament(self, tournament_button: TournamentButton) -> None:
         """Run the provided tournament game."""
-        from bauiv1lib.account import show_sign_in_prompt
+        from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.tournamententry import TournamentEntryWindow
 
         plus = bui.app.plus

@@ -283,7 +283,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             )
 
     def _on_store_press(self) -> None:
-        from bauiv1lib import account
+        from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.store.browser import StoreBrowserWindow
 
         # No-op if we're not in control.
@@ -294,7 +294,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         assert plus is not None
 
         if plus.get_v1_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
 
         self._selected_get_more_maps = True

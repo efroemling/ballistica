@@ -83,7 +83,6 @@ class MainMenuWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         import bauiv1lib.getremote as _unused
         import bauiv1lib.confirm as _unused2
-        import bauiv1lib.store.button as _unused3
         import bauiv1lib.account.settings as _unused5
         import bauiv1lib.store.browser as _unused6
         import bauiv1lib.credits as _unused7
@@ -153,30 +152,31 @@ class MainMenuWindow(bui.MainWindow):
         uiscale = app.ui_v1.uiscale
 
         # Temp note about UI changes.
-        bui.textwidget(
-            parent=self._root_widget,
-            position=(
-                (-400, 400)
-                if uiscale is bui.UIScale.LARGE
-                else (
-                    (-270, 320)
-                    if uiscale is bui.UIScale.MEDIUM
-                    else (-280, 280)
-                )
-            ),
-            size=(0, 0),
-            scale=0.4,
-            flatness=1.0,
-            text=(
-                'WARNING: This build contains a revamped UI\n'
-                'which is still a work-in-progress. A number\n'
-                'of features are not currently functional or\n'
-                'contain bugs. To go back to the stable legacy UI,\n'
-                'grab version 1.7.36 from ballistica.net'
-            ),
-            h_align='left',
-            v_align='top',
-        )
+        if bool(False):
+            bui.textwidget(
+                parent=self._root_widget,
+                position=(
+                    (-400, 400)
+                    if uiscale is bui.UIScale.LARGE
+                    else (
+                        (-270, 320)
+                        if uiscale is bui.UIScale.MEDIUM
+                        else (-280, 280)
+                    )
+                ),
+                size=(0, 0),
+                scale=0.4,
+                flatness=1.0,
+                text=(
+                    'WARNING: This build contains a revamped UI\n'
+                    'which is still a work-in-progress. A number\n'
+                    'of features are not currently functional or\n'
+                    'contain bugs. To go back to the stable legacy UI,\n'
+                    'grab version 1.7.36 from ballistica.net'
+                ),
+                h_align='left',
+                v_align='top',
+            )
 
         self._have_quit_button = app.classic.platform in (
             'windows',

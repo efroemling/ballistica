@@ -550,7 +550,7 @@ class EditProfileWindow(
 
     def upgrade_profile(self) -> None:
         """Attempt to upgrade the profile to global."""
-        from bauiv1lib import account
+        from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.profile import upgrade as pupgrade
 
         new_name = self.getname().strip()
@@ -566,7 +566,7 @@ class EditProfileWindow(
         assert plus is not None
 
         if plus.get_v1_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
 
         pupgrade.ProfileUpgradeWindow(self)

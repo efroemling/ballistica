@@ -228,6 +228,7 @@ class ClassicAppMode : public base::AppMode {
                        const std::string& chest_1_appearance,
                        const std::string& chest_2_appearance,
                        const std::string& chest_3_appearance);
+  void SetRootUIHaveLiveValues(bool val);
 
  private:
   ClassicAppMode();
@@ -271,6 +272,7 @@ class ClassicAppMode : public base::AppMode {
   bool kick_voting_enabled_{true};
   bool replay_paused_{};
   bool root_ui_gold_pass_{};
+  bool root_ui_have_live_values_{};
 
   ui_v1::UIV1FeatureSet* uiv1_{};
   cJSON* game_roster_{};

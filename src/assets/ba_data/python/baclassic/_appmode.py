@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING, override
 from bacommon.app import AppExperience
 import babase
 import bauiv1
+from bauiv1lib.connectivity import wait_for_connectivity
+from bauiv1lib.account.signin import show_sign_in_prompt
 
 import _baclassic
 
@@ -30,8 +32,14 @@ class ClassicAppMode(babase.AppMode):
         self._on_primary_account_changed_callback: (
             CallbackRegistration | None
         ) = None
+        self._on_connectivity_changed_callback: CallbackRegistration | None = (
+            None
+        )
         self._test_sub: babase.CloudSubscription | None = None
         self._account_data_sub: babase.CloudSubscription | None = None
+
+        self._have_account_values = False
+        self._have_connectivity = False
 
     @override
     @classmethod
@@ -40,7 +48,7 @@ class ClassicAppMode(babase.AppMode):
 
     @override
     @classmethod
-    def _supports_intent(cls, intent: babase.AppIntent) -> bool:
+    def _can_handle_intent(cls, intent: babase.AppIntent) -> bool:
         # We support default and exec intents currently.
         return isinstance(
             intent, babase.AppIntentExec | babase.AppIntentDefault
@@ -118,14 +126,22 @@ class ClassicAppMode(babase.AppMode):
             self._root_ui_chest_slot_pressed, 3
         )
 
+        # We want to be informed when connectivity changes.
+        self._on_connectivity_changed_callback = (
+            plus.cloud.on_connectivity_changed_callbacks.register(
+                self._update_for_connectivity_change
+            )
+        )
         # We want to be informed when primary account changes.
         self._on_primary_account_changed_callback = (
             plus.accounts.on_primary_account_changed_callbacks.register(
-                self.update_for_primary_account
+                self._update_for_primary_account
             )
         )
         # Establish subscriptions/etc. for any current primary account.
-        self.update_for_primary_account(plus.accounts.primary)
+        self._update_for_primary_account(plus.accounts.primary)
+        self._have_connectivity = plus.cloud.is_connected()
+        self._update_for_connectivity_change(self._have_connectivity)
 
     @override
     def on_deactivate(self) -> None:
@@ -136,7 +152,7 @@ class ClassicAppMode(babase.AppMode):
         self._on_primary_account_changed_callback = None
 
         # Remove anything following any current account.
-        self.update_for_primary_account(None)
+        self._update_for_primary_account(None)
 
         # Save where we were in the UI so we return there next time.
         if classic is not None:
@@ -152,7 +168,7 @@ class ClassicAppMode(babase.AppMode):
         if not babase.app.active:
             babase.invoke_main_menu()
 
-    def update_for_primary_account(
+    def _update_for_primary_account(
         self, account: babase.AccountV2Handle | None
     ) -> None:
         """Update subscriptions/etc. for a new primary account state."""
@@ -180,14 +196,14 @@ class ClassicAppMode(babase.AppMode):
 
         if account is None:
             self._account_data_sub = None
-            _baclassic.set_root_ui_values(
-                tickets_text='-',
-                tokens_text='-',
-                league_rank_text='-',
+            _baclassic.set_root_ui_account_values(
+                tickets_text='',
+                tokens_text='',
+                league_rank_text='',
                 league_type='',
-                achievements_percent_text='-',
-                level_text='-',
-                xp_text='-',
+                achievements_percent_text='',
+                level_text='',
+                xp_text='',
                 inbox_count_text='',
                 gold_pass=False,
                 chest_0_appearance='',
@@ -195,6 +211,8 @@ class ClassicAppMode(babase.AppMode):
                 chest_2_appearance='',
                 chest_3_appearance='',
             )
+            self._have_account_values = False
+            self._update_ui_live_state()
 
         else:
             with account:
@@ -203,6 +221,22 @@ class ClassicAppMode(babase.AppMode):
                         self._on_classic_account_data_change
                     )
                 )
+
+    def _update_for_connectivity_change(self, connected: bool) -> None:
+        """Update when the app's connectivity state changes."""
+        self._have_connectivity = connected
+        self._update_ui_live_state()
+
+    def _update_ui_live_state(self) -> None:
+        # We want to show ui elements faded if we don't have a live
+        # connection to the master-server OR if we haven't received a
+        # set of account values from them yet. If we just plug in raw
+        # connectivity state here we get UI stuff un-fading a moment or
+        # two before values appear (since the subscriptions have not
+        # sent us any values yet) which looks odd.
+        _baclassic.set_root_ui_have_live_values(
+            self._have_connectivity and self._have_account_values
+        )
 
     def _on_sub_test_update(self, val: int | None) -> None:
         print(f'GOT SUB TEST UPDATE: {val}')
@@ -221,7 +255,7 @@ class ClassicAppMode(babase.AppMode):
         chest2 = val.chests.get('2')
         chest3 = val.chests.get('3')
 
-        _baclassic.set_root_ui_values(
+        _baclassic.set_root_ui_account_values(
             tickets_text=str(val.tickets),
             tokens_text=str(val.tokens),
             league_rank_text=(
@@ -249,6 +283,10 @@ class ClassicAppMode(babase.AppMode):
             ),
         )
 
+        # Note that we have values and updated faded state accordingly.
+        self._have_account_values = True
+        self._update_ui_live_state()
+
     def _root_ui_menu_press(self) -> None:
         from babase import push_back_press
 
@@ -265,6 +303,7 @@ class ClassicAppMode(babase.AppMode):
             ui.clear_main_window()
             return
 
+        # Otherwise
         push_back_press()
 
     def _root_ui_account_press(self) -> None:
@@ -393,16 +432,25 @@ class ClassicAppMode(babase.AppMode):
     def _root_ui_achievements_press(self) -> None:
         from bauiv1lib.achievements import AchievementsWindow
 
-        self._auxiliary_window_nav(
-            win_type=AchievementsWindow,
-            win_create_call=lambda: AchievementsWindow(
-                origin_widget=bauiv1.get_special_widget('achievements_button')
-            ),
+        if not self._ensure_signed_in_v1():
+            return
+
+        wait_for_connectivity(
+            on_connected=lambda: self._auxiliary_window_nav(
+                win_type=AchievementsWindow,
+                win_create_call=lambda: AchievementsWindow(
+                    origin_widget=bauiv1.get_special_widget(
+                        'achievements_button'
+                    )
+                ),
+            )
         )
 
     def _root_ui_inbox_press(self) -> None:
-        from bauiv1lib.connectivity import wait_for_connectivity
         from bauiv1lib.inbox import InboxWindow
+
+        if not self._ensure_signed_in():
+            return
 
         wait_for_connectivity(
             on_connected=lambda: self._auxiliary_window_nav(
@@ -416,11 +464,16 @@ class ClassicAppMode(babase.AppMode):
     def _root_ui_store_press(self) -> None:
         from bauiv1lib.store.browser import StoreBrowserWindow
 
-        self._auxiliary_window_nav(
-            win_type=StoreBrowserWindow,
-            win_create_call=lambda: StoreBrowserWindow(
-                origin_widget=bauiv1.get_special_widget('store_button')
-            ),
+        if not self._ensure_signed_in_v1():
+            return
+
+        wait_for_connectivity(
+            on_connected=lambda: self._auxiliary_window_nav(
+                win_type=StoreBrowserWindow,
+                win_create_call=lambda: StoreBrowserWindow(
+                    origin_widget=bauiv1.get_special_widget('store_button')
+                ),
+            )
         )
 
     def _root_ui_tickets_meter_press(self) -> None:
@@ -438,13 +491,9 @@ class ClassicAppMode(babase.AppMode):
         )
 
     def _root_ui_trophy_meter_press(self) -> None:
-        from bauiv1lib.account import show_sign_in_prompt
         from bauiv1lib.league.rankwindow import LeagueRankWindow
 
-        plus = bauiv1.app.plus
-        assert plus is not None
-        if plus.get_v1_account_state() != 'signed_in':
-            show_sign_in_prompt()
+        if not self._ensure_signed_in_v1():
             return
 
         self._auxiliary_window_nav(
@@ -464,6 +513,9 @@ class ClassicAppMode(babase.AppMode):
     def _root_ui_inventory_press(self) -> None:
         from bauiv1lib.inventory import InventoryWindow
 
+        if not self._ensure_signed_in_v1():
+            return
+
         self._auxiliary_window_nav(
             win_type=InventoryWindow,
             win_create_call=lambda: InventoryWindow(
@@ -471,8 +523,35 @@ class ClassicAppMode(babase.AppMode):
             ),
         )
 
+    def _ensure_signed_in(self) -> bool:
+        """Make sure we're signed in (requiring modern v2 accounts)."""
+        plus = bauiv1.app.plus
+        if plus is None:
+            bauiv1.screenmessage('This requires plus.', color=(1, 0, 0))
+            bauiv1.getsound('error').play()
+            return False
+        if plus.accounts.primary is None:
+            show_sign_in_prompt()
+            return False
+        return True
+
+    def _ensure_signed_in_v1(self) -> bool:
+        """Make sure we're signed in (allowing legacy v1-only accounts)."""
+        plus = bauiv1.app.plus
+        if plus is None:
+            bauiv1.screenmessage('This requires plus.', color=(1, 0, 0))
+            bauiv1.getsound('error').play()
+            return False
+        if plus.get_v1_account_state() != 'signed_in':
+            show_sign_in_prompt()
+            return False
+        return True
+
     def _root_ui_get_tokens_press(self) -> None:
         from bauiv1lib.gettokens import GetTokensWindow
+
+        if not self._ensure_signed_in():
+            return
 
         self._auxiliary_window_nav(
             win_type=GetTokensWindow,
@@ -488,7 +567,6 @@ class ClassicAppMode(babase.AppMode):
             ChestWindow2,
             ChestWindow3,
         )
-        from bauiv1lib.connectivity import wait_for_connectivity
 
         widgetid: Literal[
             'chest_0_button',

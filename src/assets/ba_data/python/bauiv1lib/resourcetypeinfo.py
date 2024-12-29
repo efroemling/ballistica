@@ -53,24 +53,52 @@ class ResourceTypeInfoWindow(PopupWindow):
             iconscale=1.2,
         )
 
+        yoffs = self._height - 150
+
         if resource_type == 'tickets':
-            rdesc = 'Will describe tickets.'
+            rdesc = (
+                'Use tickets to unlock characters, maps,\n'
+                'minigames, and more in the store.\n'
+                '\n'
+                'Earn tickets by completing achievements or\n'
+                'by opening chests won in the game.'
+            )
+            texname = 'tickets'
         elif resource_type == 'tokens':
-            rdesc = 'Will describe tokens.'
+            rdesc = (
+                'Tokens can be used to speed up chest unlocks\n'
+                'and skip other waits.\n'
+                '\n'
+                'You can buy packs of tokens or buy a Gold Pass\n'
+                'to get infinite tokens forever.\n'
+            )
+            texname = 'coin'
         elif resource_type == 'trophies':
-            rdesc = 'Will show trophies & league rankings.'
+            rdesc = 'TODO: Will show trophies & league rankings.'
+            texname = 'crossOut'
         elif resource_type == 'xp':
-            rdesc = 'Will describe xp/levels.'
+            rdesc = 'TODO: Will describe xp/levels.'
+            texname = 'crossOut'
         else:
             assert_never(resource_type)
+
+        imgsize = 100.0
+        bui.imagewidget(
+            parent=self.root_widget,
+            position=(self._width * 0.5 - imgsize * 0.5, yoffs + 5.0),
+            size=(imgsize, imgsize),
+            texture=bui.gettexture(texname),
+        )
 
         bui.textwidget(
             parent=self.root_widget,
             h_align='center',
-            v_align='center',
+            v_align='top',
             size=(0, 0),
-            position=(self._width * 0.5, self._height * 0.5),
-            text=(f'UNDER CONSTRUCTION.\n({rdesc})'),
+            maxwidth=self._width * 0.8,
+            position=(self._width * 0.5, yoffs - 5.0),
+            text=rdesc,
+            scale=0.8,
         )
 
     def _on_cancel_press(self) -> None:

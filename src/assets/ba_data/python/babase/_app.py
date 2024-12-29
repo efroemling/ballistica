@@ -25,7 +25,7 @@ from babase._appintent import AppIntentDefault, AppIntentExec
 from babase._stringedit import StringEditSubsystem
 from babase._devconsole import DevConsoleSubsystem
 from babase._appconfig import AppConfig
-from babase._logging import lifecyclelog
+from babase._logging import lifecyclelog, applog
 
 if TYPE_CHECKING:
     import asyncio
@@ -909,6 +909,7 @@ class App:
             # Entering shutdown state:
             if self.state is not self.State.SHUTTING_DOWN:
                 self.state = self.State.SHUTTING_DOWN
+                applog.info('Shutting down...')
                 lifecyclelog.info('app-state is now %s', self.state.name)
                 self._on_shutting_down()
 

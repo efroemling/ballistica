@@ -175,7 +175,7 @@ from babase._general import (
     get_type_name,
 )
 from babase._language import Lstr, LanguageSubsystem
-from babase._logging import balog, lifecyclelog
+from babase._logging import balog, applog, lifecyclelog
 from babase._login import LoginAdapter, LoginInfo
 
 from babase._mgen.enums import (
@@ -214,6 +214,7 @@ __all__ = [
     'AppIntentExec',
     'AppMode',
     'app_instance_uuid',
+    'applog',
     'appname',
     'appnameupper',
     'AppModeSelector',

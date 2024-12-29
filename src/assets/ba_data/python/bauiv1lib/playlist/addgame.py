@@ -255,7 +255,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
             )
 
     def _on_get_more_games_press(self) -> None:
-        from bauiv1lib.account import show_sign_in_prompt
+        from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.store.browser import StoreBrowserWindow
 
         # No-op if we're not in control.
@@ -271,16 +271,11 @@ class PlaylistAddGameWindow(bui.MainWindow):
 
         self.main_window_replace(
             StoreBrowserWindow(
-                # modal=True,
                 show_tab=StoreBrowserWindow.TabID.MINIGAMES,
-                # on_close_call=self._on_store_close,
                 origin_widget=self._get_more_games_button,
                 minimal_toolbars=True,
             )
         )
-
-    # def _on_store_close(self) -> None:
-    #     self._refresh(select_get_more_games_button=True)
 
     def _add(self) -> None:
         bui.lock_all_input()  # Make sure no more commands happen.

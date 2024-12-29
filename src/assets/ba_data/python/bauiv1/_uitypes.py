@@ -46,7 +46,14 @@ class Window:
 
 
 class MainWindow(Window):
-    """A special window that can be used as a main window."""
+    """A special type of window that can be set as 'main'.
+
+    The UI system has at most one main window at any given time.
+    MainWindows support high level functionality such as saving and
+    restoring states, allowing them to be automatically recreated when
+    navigating back from other locations or when something like ui-scale
+    changes.
+    """
 
     def __init__(
         self,
@@ -146,11 +153,33 @@ class MainWindow(Window):
         if not self.main_window_has_control():
             return
 
+        uiv1 = babase.app.ui_v1
+
+        # Get the 'back' window coming in.
         if not self.main_window_is_top_level:
 
-            # Get the 'back' window coming in.
-            babase.app.ui_v1.auto_set_back_window(self)
+            back_state = self.main_window_back_state
+            if back_state is None:
+                raise RuntimeError(
+                    f'Main window {self} provides no back-state.'
+                )
 
+            # Valid states should have values here.
+            assert back_state.is_top_level is not None
+            assert back_state.is_auxiliary is not None
+            assert back_state.window_type is not None
+
+            backwin = back_state.create_window(transition='in_left')
+
+            uiv1.set_main_window(
+                backwin,
+                from_window=self,
+                is_back=True,
+                back_state=back_state,
+                suppress_warning=True,
+            )
+
+        # Transition ourself out.
         self.main_window_close()
 
     def main_window_replace(
@@ -203,7 +232,7 @@ class MainWindow(Window):
 
 
 class MainWindowState:
-    """Persistent state for a specific main-window and its ancestors.
+    """Persistent state for a specific MainWindow.
 
     This allows MainWindows to be automatically recreated for back-button
     purposes, when switching app-modes, etc.

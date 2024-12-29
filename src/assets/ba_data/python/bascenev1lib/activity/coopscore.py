@@ -19,9 +19,6 @@ from bascenev1lib.actor.zoomtext import ZoomText
 if TYPE_CHECKING:
     from typing import Any, Sequence
 
-    from bauiv1lib.store.button import StoreButton
-    from bauiv1lib.league.rankbutton import LeagueRankButton
-
 
 class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
     """Score screen showing the results of a cooperative game."""
@@ -105,10 +102,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
         # Ui bits.
         self._corner_button_offs: tuple[float, float] | None = None
-        self._league_rank_button: LeagueRankButton | None = None
-        self._store_button_instance: StoreButton | None = None
         self._restart_button: bui.Widget | None = None
-        self._update_corner_button_positions_timer: bui.AppTimer | None = None
         self._next_level_error: bs.Actor | None = None
 
         # Score/gameplay bits.
@@ -207,22 +201,12 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         )
 
     def _ui_menu(self) -> None:
-        # from bauiv1lib import specialoffer
-
-        # if specialoffer.show_offer():
-        #     return
-
         bui.containerwidget(edit=self._root_ui, transition='out_left')
         with self.context:
             bs.timer(0.1, bs.Call(bs.WeakCall(self.session.end)))
 
     def _ui_restart(self) -> None:
         from bauiv1lib.tournamententry import TournamentEntryWindow
-
-        # from bauiv1lib import specialoffer
-
-        # if specialoffer.show_offer():
-        #     return
 
         # If we're in a tournament and it looks like there's no time left,
         # disallow.
@@ -270,10 +254,6 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 self.end({'outcome': 'restart'})
 
     def _ui_next(self) -> None:
-        # from bauiv1lib.specialoffer import show_offer
-
-        # if show_offer():
-        #     return
 
         # If we didn't just complete this level but are choosing to play the
         # next one, set it as current (this won't happen otherwise).
@@ -333,6 +313,12 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             )
 
     def _should_show_worlds_best_button(self) -> bool:
+
+        # Old high score lists webpage for tourneys seems broken
+        # (looking at meteor shower at least).
+        if self.session.tournament_id is not None:
+            return False
+
         # Link is too complicated to display with no browser.
         return bui.is_browser_likely_available()
 
@@ -349,8 +335,8 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
     def show_ui(self) -> None:
         """Show the UI for restarting, playing the next Level, etc."""
         # pylint: disable=too-many-locals
-        from bauiv1lib.store.button import StoreButton
-        from bauiv1lib.league.rankbutton import LeagueRankButton
+        # pylint: disable=too-many-statements
+        # pylint: disable=too-many-branches
 
         assert bui.app.classic is not None
 
@@ -364,7 +350,9 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             return
 
         rootc = self._root_ui = bui.containerwidget(
-            size=(0, 0), transition='in_right'
+            size=(0, 0),
+            transition='in_right',
+            toolbar_visibility='no_menu_minimal',
         )
 
         h_offs = 7.0
@@ -420,38 +408,83 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         if not show_next_button:
             h_offs += 70
 
-        menu_button = bui.buttonwidget(
-            parent=rootc,
-            autoselect=True,
-            position=(h_offs - 130 - 60, v_offs),
-            size=(110, 85),
-            label='',
-            on_activate_call=bui.WeakCall(self._ui_menu),
-        )
-        bui.imagewidget(
-            parent=rootc,
-            draw_controller=menu_button,
-            position=(h_offs - 130 - 60 + 22, v_offs + 14),
-            size=(60, 60),
-            texture=self._menu_icon_texture,
-            opacity=0.8,
-        )
-        self._restart_button = restart_button = bui.buttonwidget(
-            parent=rootc,
-            autoselect=True,
-            position=(h_offs - 60, v_offs),
-            size=(110, 85),
-            label='',
-            on_activate_call=bui.WeakCall(self._ui_restart),
-        )
-        bui.imagewidget(
-            parent=rootc,
-            draw_controller=restart_button,
-            position=(h_offs - 60 + 19, v_offs + 7),
-            size=(70, 70),
-            texture=self._replay_icon_texture,
-            opacity=0.8,
-        )
+        # Due to virtual-bounds changes, have to squish buttons a bit to
+        # avoid overlapping with tips at bottom. Could look nicer to
+        # rework things in the middle to get more space, but would
+        # rather not touch this old code more than necessary.
+        small_buttons = True
+
+        if small_buttons:
+            menu_button = bui.buttonwidget(
+                parent=rootc,
+                autoselect=True,
+                position=(h_offs - 130 - 45, v_offs + 40),
+                size=(100, 50),
+                label='',
+                button_type='square',
+                on_activate_call=bui.WeakCall(self._ui_menu),
+            )
+            bui.imagewidget(
+                parent=rootc,
+                draw_controller=menu_button,
+                position=(h_offs - 130 - 60 + 43, v_offs + 43),
+                size=(45, 45),
+                texture=self._menu_icon_texture,
+                opacity=0.8,
+            )
+        else:
+            menu_button = bui.buttonwidget(
+                parent=rootc,
+                autoselect=True,
+                position=(h_offs - 130 - 60, v_offs),
+                size=(110, 85),
+                label='',
+                on_activate_call=bui.WeakCall(self._ui_menu),
+            )
+            bui.imagewidget(
+                parent=rootc,
+                draw_controller=menu_button,
+                position=(h_offs - 130 - 60 + 22, v_offs + 14),
+                size=(60, 60),
+                texture=self._menu_icon_texture,
+                opacity=0.8,
+            )
+
+        if small_buttons:
+            self._restart_button = restart_button = bui.buttonwidget(
+                parent=rootc,
+                autoselect=True,
+                position=(h_offs - 60, v_offs + 40),
+                size=(100, 50),
+                label='',
+                button_type='square',
+                on_activate_call=bui.WeakCall(self._ui_restart),
+            )
+            bui.imagewidget(
+                parent=rootc,
+                draw_controller=restart_button,
+                position=(h_offs - 60 + 25, v_offs + 42),
+                size=(47, 47),
+                texture=self._replay_icon_texture,
+                opacity=0.8,
+            )
+        else:
+            self._restart_button = restart_button = bui.buttonwidget(
+                parent=rootc,
+                autoselect=True,
+                position=(h_offs - 60, v_offs),
+                size=(110, 85),
+                label='',
+                on_activate_call=bui.WeakCall(self._ui_restart),
+            )
+            bui.imagewidget(
+                parent=rootc,
+                draw_controller=restart_button,
+                position=(h_offs - 60 + 19, v_offs + 7),
+                size=(70, 70),
+                texture=self._replay_icon_texture,
+                opacity=0.8,
+            )
 
         next_button: bui.Widget | None = None
 
@@ -468,57 +501,52 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 button_sound = False
                 image_opacity = 0.2
                 color = (0.3, 0.3, 0.3)
-            next_button = bui.buttonwidget(
-                parent=rootc,
-                autoselect=True,
-                position=(h_offs + 130 - 60, v_offs),
-                size=(110, 85),
-                label='',
-                on_activate_call=call,
-                color=color,
-                enable_sound=button_sound,
-            )
-            bui.imagewidget(
-                parent=rootc,
-                draw_controller=next_button,
-                position=(h_offs + 130 - 60 + 12, v_offs + 5),
-                size=(80, 80),
-                texture=self._next_level_icon_texture,
-                opacity=image_opacity,
-            )
+
+            if small_buttons:
+                next_button = bui.buttonwidget(
+                    parent=rootc,
+                    autoselect=True,
+                    position=(h_offs + 130 - 75, v_offs + 40),
+                    size=(100, 50),
+                    label='',
+                    button_type='square',
+                    on_activate_call=call,
+                    color=color,
+                    enable_sound=button_sound,
+                )
+                bui.imagewidget(
+                    parent=rootc,
+                    draw_controller=next_button,
+                    position=(h_offs + 130 - 60 + 12, v_offs + 40),
+                    size=(50, 50),
+                    texture=self._next_level_icon_texture,
+                    opacity=image_opacity,
+                )
+            else:
+                next_button = bui.buttonwidget(
+                    parent=rootc,
+                    autoselect=True,
+                    position=(h_offs + 130 - 60, v_offs),
+                    size=(110, 85),
+                    label='',
+                    on_activate_call=call,
+                    color=color,
+                    enable_sound=button_sound,
+                )
+                bui.imagewidget(
+                    parent=rootc,
+                    draw_controller=next_button,
+                    position=(h_offs + 130 - 60 + 12, v_offs + 5),
+                    size=(80, 80),
+                    texture=self._next_level_icon_texture,
+                    opacity=image_opacity,
+                )
 
         x_offs_extra = 0 if show_next_button else -100
         self._corner_button_offs = (
             h_offs + 300.0 + x_offs_extra,
             v_offs + 519.0,
         )
-
-        if env.demo or env.arcade:
-            self._league_rank_button = None
-            self._store_button_instance = None
-        else:
-            self._league_rank_button = LeagueRankButton(
-                parent=rootc,
-                position=(h_offs + 300 + x_offs_extra, v_offs + 519),
-                size=(100, 60),
-                scale=0.9,
-                color=(0.4, 0.4, 0.9),
-                textcolor=(0.9, 0.9, 2.0),
-                transition_delay=0.0,
-                smooth_update_delay=5.0,
-            )
-            self._store_button_instance = StoreButton(
-                parent=rootc,
-                position=(h_offs + 400 + x_offs_extra, v_offs + 519),
-                show_tickets=True,
-                sale_scale=0.85,
-                size=(100, 60),
-                scale=0.9,
-                button_type='square',
-                color=(0.35, 0.25, 0.45),
-                textcolor=(0.9, 0.7, 1.0),
-                transition_delay=0.0,
-            )
 
         bui.containerwidget(
             edit=rootc,
@@ -530,25 +558,12 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             on_cancel_call=menu_button.activate,
         )
 
-        self._update_corner_button_positions()
-        self._update_corner_button_positions_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update_corner_button_positions), repeat=True
-        )
-
-    def _update_corner_button_positions(self) -> None:
-        assert self._corner_button_offs is not None
-        pos_x = self._corner_button_offs[0]
-        pos_y = self._corner_button_offs[1]
-        if self._league_rank_button is not None:
-            self._league_rank_button.set_position((pos_x, pos_y))
-        if self._store_button_instance is not None:
-            self._store_button_instance.set_position((pos_x + 100, pos_y))
-
     def _player_press(self) -> None:
         # (Only for headless builds).
 
-        # If this activity is a good 'end point', ask server-mode just once if
-        # it wants to do anything special like switch sessions or kill the app.
+        # If this activity is a good 'end point', ask server-mode just
+        # once if it wants to do anything special like switch sessions
+        # or kill the app.
         if (
             self._allow_server_transition
             and bs.app.classic is not None
@@ -715,7 +730,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             color=(0.5, 1, 0.5, 1),
             h_align='center',
             scale=0.4,
-            position=(0, 255),
+            position=(0, 260),
             jitter=1.0,
         ).autoretain()
         Text(

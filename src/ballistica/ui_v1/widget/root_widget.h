@@ -51,6 +51,7 @@ class RootWidget : public ContainerWidget {
                  const std::string& chest_1_appearance,
                  const std::string& chest_2_appearance,
                  const std::string& chest_3_appearance);
+  void SetHaveLiveValues(bool have_live_values);
 
   auto bottom_left_height() const { return bottom_left_height_; }
 
@@ -102,6 +103,8 @@ class RootWidget : public ContainerWidget {
   Button_* chest_3_button_{};
   Button_* chest_backing_{};
   Image_* trophy_icon_{};
+  Image_* tickets_meter_icon_{};
+  Image_* tokens_meter_icon_{};
   Image_* inbox_count_backing_{};
   Text_* squad_size_text_{};
   Text_* account_name_text_{};
