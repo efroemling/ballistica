@@ -1370,6 +1370,8 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
       val = Widget::ToolbarVisibility::kInherit;
     } else if (sval == "get_tokens") {
       val = Widget::ToolbarVisibility::kGetTokens;
+    } else if (sval == "no_menu_minimal") {
+      val = Widget::ToolbarVisibility::kNoMenuMinimal;
     } else {
       throw Exception("Invalid toolbar_visibility: '" + sval + "'.",
                       PyExcType::kValue);
@@ -1432,6 +1434,7 @@ static PyMethodDef PyContainerWidgetDef = {
     "                              'menu_in_game',\n"
     "                              'menu_tokens',\n"
     "                              'get_tokens',\n"
+    "                              'no_menu_minimal',\n"
     "                              'inherit',\n"
     "                             ] | None = None,\n"
     "  on_select_call: Callable[[], None] | None = None,\n"

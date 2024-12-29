@@ -548,14 +548,11 @@ void RootWidget::Setup() {
   AddMeter_(MeterType_::kLevel, 0.0f, 1.0f, 1.0f, 1.0f, false, "");
   AddMeter_(MeterType_::kTrophy, 0.0f, 1.0f, 1.0f, 1.0f, false, "");
 
-  // Menu button (only shows up when we're not in a menu).
-  // FIXME - this should never be visible on TV or VR UI modes
   {
     ButtonDef_ b;
     b.h_align = 1.0f;
     b.v_align = VAlign_::kTop;
     b.width = b.height = 65.0f;
-    // b.x = -36.0f;
     b.y = b.height * -0.48f;
     b.img = "menuButton";
     b.call = UIV1Python::ObjID::kRootUIMenuButtonPressCall;
@@ -599,7 +596,8 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kGetTokens)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuTokens));
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuTokens)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kNoMenuMinimal));
     b.pre_buffer = 5.0f;
     b.enable_sound = false;
     squad_button_ = AddButton_(b);

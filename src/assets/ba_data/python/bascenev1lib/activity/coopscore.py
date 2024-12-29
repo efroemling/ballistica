@@ -350,7 +350,9 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             return
 
         rootc = self._root_ui = bui.containerwidget(
-            size=(0, 0), transition='in_right'
+            size=(0, 0),
+            transition='in_right',
+            toolbar_visibility='no_menu_minimal',
         )
 
         h_offs = 7.0

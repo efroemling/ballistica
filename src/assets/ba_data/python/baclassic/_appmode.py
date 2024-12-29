@@ -303,6 +303,7 @@ class ClassicAppMode(babase.AppMode):
             ui.clear_main_window()
             return
 
+        # Otherwise
         push_back_press()
 
     def _root_ui_account_press(self) -> None:
