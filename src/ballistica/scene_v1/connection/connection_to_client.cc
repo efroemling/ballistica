@@ -191,6 +191,17 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
         string_buffer[string_buffer.size() - 1] = 0;
         set_peer_spec(PlayerSpec(&(string_buffer[0])));
       }
+
+      // If they sent us a garbage player-spec, kick them right out.
+      if (!peer_spec().valid()) {
+        g_core->Log(LogName::kBaNetworking, LogLevel::kDebug, [] {
+          return std::string(
+              "Rejecting client for submitting invalid player-spec.");
+        });
+        Error("");
+        return;
+      }
+
       // FIXME: We should maybe set some sort of 'pending' peer-spec
       //  and fetch their actual info from the master-server.
       //  (or at least make that an option for internet servers)
@@ -198,6 +209,9 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
       // Compare this against our blocked specs.. if there's a match, reject
       // them.
       if (appmode->IsPlayerBanned(peer_spec())) {
+        g_core->Log(LogName::kBaNetworking, LogLevel::kDebug, [] {
+          return std::string("Rejecting join attempt by banned player.");
+        });
         Error("");
         return;
       }
