@@ -57,20 +57,20 @@ class ResourceTypeInfoWindow(PopupWindow):
 
         if resource_type == 'tickets':
             rdesc = (
-                'Use tickets to unlock characters, maps,\n'
-                'minigames, and more in the store.\n'
+                'Tickets can be used to unlock characters,\n'
+                'maps, minigames, and more in the store.\n'
                 '\n'
-                'Earn tickets by completing achievements or\n'
-                'by opening chests won in the game.'
+                'Earn tickets by completing achievements\n'
+                'or by opening chests won in the game.'
             )
             texname = 'tickets'
         elif resource_type == 'tokens':
             rdesc = (
-                'Tokens can be used to speed up chest unlocks\n'
-                'and skip other waits.\n'
+                'Tokens have various uses in the game such as\n'
+                'speeding up chest unlocks.\n'
                 '\n'
-                'You can buy packs of tokens or buy a Gold Pass\n'
-                'to get infinite tokens forever.\n'
+                'You can buy packs of tokens or you can buy a\n'
+                'Gold Pass to get unlimited tokens.\n'
             )
             texname = 'coin'
         elif resource_type == 'trophies':

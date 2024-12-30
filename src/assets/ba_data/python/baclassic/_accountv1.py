@@ -230,13 +230,12 @@ class AccountV1Subsystem:
         if plus is None:
             return False
 
-        # Check our tickets-based pro upgrade and our two real-IAP based
-        # upgrades. Also always unlock this stuff in ballistica-core builds.
+        # Check various server-side purchases that mean we have pro.
         return bool(
-            plus.get_v1_account_product_purchased('upgrades.pro')
+            plus.get_v1_account_product_purchased('gold_pass')
+            or plus.get_v1_account_product_purchased('upgrades.pro')
             or plus.get_v1_account_product_purchased('static.pro')
             or plus.get_v1_account_product_purchased('static.pro_sale')
-            or 'ballistica' + 'kit' == babase.appname()
         )
 
     def have_pro_options(self) -> bool:

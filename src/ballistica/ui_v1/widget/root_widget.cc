@@ -1396,20 +1396,29 @@ void RootWidget::SetTicketsMeterText(const std::string& val) {
 void RootWidget::SetTokensMeterText(const std::string& val, bool gold_pass) {
   assert(tokens_meter_text_);
   assert(get_tokens_button_);
-  if (gold_pass) {
+  gold_pass_ = gold_pass;
+  if (gold_pass_) {
     get_tokens_button_->force_hide = true;
 
     // Use the infinity symbol if we have full unicode support.
     tokens_meter_text_->widget->SetText(
         g_buildconfig.enable_os_font_rendering() ? "\xE2\x88\x9E" : "inf");
-    tokens_meter_text_->widget->set_color(1.0f, 0.6f, 0.1f, 0.6f);
   } else {
     get_tokens_button_->force_hide = false;
     tokens_meter_text_->widget->SetText(val);
-    tokens_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, 1.0f);
   }
+  UpdateTokensMeterTextColor_();
   // May need to animate in/out.
   child_widgets_dirty_ = true;
+}
+
+void RootWidget::UpdateTokensMeterTextColor_() {
+  auto oval{have_live_values_ ? 1.0f : 0.4f};
+  if (gold_pass_ && have_live_values_) {
+    tokens_meter_text_->widget->set_color(1.0f, 0.6f, 0.1f, 0.6f);
+  } else {
+    tokens_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
+  }
 }
 
 void RootWidget::SetLeagueRankText(const std::string& val) {
@@ -1454,6 +1463,7 @@ void RootWidget::SetXPText(const std::string& val) {
 }
 
 void RootWidget::SetHaveLiveValues(bool have_live_values) {
+  have_live_values_ = have_live_values;
   // auto cval{have_live_values ? 1.0f : 0.4f};
   auto oval{have_live_values ? 1.0f : 0.4f};
   auto oval2{have_live_values ? 1.0f : 0.4f};
@@ -1466,7 +1476,8 @@ void RootWidget::SetHaveLiveValues(bool have_live_values) {
 
   assert(tokens_meter_text_);
   assert(tokens_meter_icon_);
-  tokens_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
+  UpdateTokensMeterTextColor_();
+  // tokens_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
   // tokens_meter_icon_->widget->set_color(cval, cval, cval);
   tokens_meter_icon_->widget->set_opacity(oval2);
 

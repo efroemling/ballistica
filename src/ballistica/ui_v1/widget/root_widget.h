@@ -73,6 +73,7 @@ class RootWidget : public ContainerWidget {
   void StepChildWidgets_(float dt);
   void AddMeter_(MeterType_ type, float h_align, float r, float g, float b,
                  bool plus, const std::string& s);
+  void UpdateTokensMeterTextColor_();
 
   std::list<Button_> buttons_;
   std::list<Text_> texts_;
@@ -121,6 +122,8 @@ class RootWidget : public ContainerWidget {
   ToolbarVisibility toolbar_visibility_{ToolbarVisibility::kInGame};
   bool child_widgets_dirty_{true};
   bool in_main_menu_{};
+  bool gold_pass_{};
+  bool have_live_values_{};
 };
 
 }  // namespace ballistica::ui_v1
