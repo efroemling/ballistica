@@ -368,12 +368,9 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       break;
     }
 
-    case base::WidgetMessage::Type::kTabNext:
+    // case base::WidgetMessage::Type::kTabNext:
     case base::WidgetMessage::Type::kMoveRight:
     case base::WidgetMessage::Type::kMoveDown: {
-      if (m.type == base::WidgetMessage::Type::kTabNext && !claims_tab_) {
-        break;
-      }
       if (m.type == base::WidgetMessage::Type::kMoveRight
           && !claims_left_right_) {
         break;
@@ -404,12 +401,9 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       break;
     }
 
-    case base::WidgetMessage::Type::kTabPrev:
+    // case base::WidgetMessage::Type::kTabPrev:
     case base::WidgetMessage::Type::kMoveLeft:
     case base::WidgetMessage::Type::kMoveUp: {
-      if (m.type == base::WidgetMessage::Type::kTabPrev && !claims_tab_) {
-        break;
-      }
       if (m.type == base::WidgetMessage::Type::kMoveLeft
           && !claims_left_right_) {
         break;

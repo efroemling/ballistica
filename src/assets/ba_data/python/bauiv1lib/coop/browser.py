@@ -273,7 +273,6 @@ class CoopBrowserWindow(bui.MainWindow):
             size=(self._scroll_width, self._scroll_height),
             simple_culling_v=10.0,
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
         self._subcontainer: bui.Widget | None = None
@@ -717,7 +716,6 @@ class CoopBrowserWindow(bui.MainWindow):
             size=(self._subcontainerwidth, self._subcontainerheight),
             background=False,
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
 

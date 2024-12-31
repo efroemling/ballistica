@@ -1,4 +1,4 @@
-### 1.7.37 (build 22152, api 9, 2024-12-30)
+### 1.7.37 (build 22155, api 9, 2024-12-31)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -171,6 +171,11 @@
   See 'Getter/Setter Function Names' in
   https://github.com/efroemling/ballistica/wiki/Coding-Style-Guide for more
   info.
+- Removed support for tab key navigation. This has been largely ignored for
+  years and behaved in a mostly broken way in all recent UIs. Keyboard users
+  should use arrow keys for navigation. To update any old UI code, search for
+  and remove any 'claims_tab' arguments to UI calls since that argument no
+  longer exists.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these

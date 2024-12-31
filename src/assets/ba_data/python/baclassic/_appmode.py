@@ -210,6 +210,14 @@ class ClassicAppMode(babase.AppMode):
                 chest_1_appearance='',
                 chest_2_appearance='',
                 chest_3_appearance='',
+                chest_0_unlock_time=-1.0,
+                chest_1_unlock_time=-1.0,
+                chest_2_unlock_time=-1.0,
+                chest_3_unlock_time=-1.0,
+                chest_0_ad_allow_time=-1.0,
+                chest_1_ad_allow_time=-1.0,
+                chest_2_ad_allow_time=-1.0,
+                chest_3_ad_allow_time=-1.0,
             )
             self._have_account_values = False
             self._update_ui_live_state()
@@ -281,6 +289,20 @@ class ClassicAppMode(babase.AppMode):
             chest_3_appearance=(
                 '' if chest3 is None else chest3.appearance.value
             ),
+            chest_0_unlock_time=(
+                -1.0 if chest0 is None else chest0.unlock_time.timestamp()
+            ),
+            chest_1_unlock_time=-1.0,
+            chest_2_unlock_time=-1.0,
+            chest_3_unlock_time=-1.0,
+            chest_0_ad_allow_time=(
+                -1.0
+                if chest0 is None or chest0.ad_allow_time is None
+                else chest0.ad_allow_time.timestamp()
+            ),
+            chest_1_ad_allow_time=-1.0,
+            chest_2_ad_allow_time=-1.0,
+            chest_3_ad_allow_time=-1.0,
         )
 
         # Note that we have values and updated faded state accordingly.

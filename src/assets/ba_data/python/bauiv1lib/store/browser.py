@@ -349,7 +349,6 @@ class StoreBrowserWindow(bui.MainWindow):
             ),
             size=(self._scroll_width, self._scroll_height),
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
 
@@ -904,7 +903,6 @@ class StoreBrowserWindow(bui.MainWindow):
                         size=(self._width, self._height),
                         background=False,
                         claims_left_right=True,
-                        claims_tab=True,
                         selection_loops_to_parent=True,
                     )
                     v = self._height - 20
@@ -1142,7 +1140,6 @@ class StoreBrowserWindow(bui.MainWindow):
                     size=(self._scroll_width, self._scroll_height * 0.95),
                     background=False,
                     claims_left_right=True,
-                    claims_tab=True,
                     selection_loops_to_parent=True,
                 )
                 self._status_textwidget = bui.textwidget(

@@ -308,6 +308,14 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
   const char* chest_1_appearance;
   const char* chest_2_appearance;
   const char* chest_3_appearance;
+  float chest_0_unlock_time;
+  float chest_1_unlock_time;
+  float chest_2_unlock_time;
+  float chest_3_unlock_time;
+  float chest_0_ad_allow_time;
+  float chest_1_ad_allow_time;
+  float chest_2_ad_allow_time;
+  float chest_3_ad_allow_time;
   int gold_pass{};
 
   static const char* kwlist[] = {"tickets_text",
@@ -323,13 +331,24 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
                                  "chest_1_appearance",
                                  "chest_2_appearance",
                                  "chest_3_appearance",
+                                 "chest_0_unlock_time",
+                                 "chest_1_unlock_time",
+                                 "chest_2_unlock_time",
+                                 "chest_3_unlock_time",
+                                 "chest_0_ad_allow_time",
+                                 "chest_1_ad_allow_time",
+                                 "chest_2_ad_allow_time",
+                                 "chest_3_ad_allow_time",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "sssssssspssss", const_cast<char**>(kwlist),
+          args, keywds, "sssssssspssssffffffff", const_cast<char**>(kwlist),
           &tickets_text, &tokens_text, &league_rank_text, &league_type,
           &achievements_percent_text, &level_text, &xp_text, &inbox_count_text,
           &gold_pass, &chest_0_appearance, &chest_1_appearance,
-          &chest_2_appearance, &chest_3_appearance)) {
+          &chest_2_appearance, &chest_3_appearance, &chest_0_unlock_time,
+          &chest_1_unlock_time, &chest_2_unlock_time, &chest_3_unlock_time,
+          &chest_0_ad_allow_time, &chest_1_ad_allow_time,
+          &chest_2_ad_allow_time, &chest_3_ad_allow_time)) {
     return nullptr;
   }
   BA_PRECONDITION(g_base->InLogicThread());
@@ -350,6 +369,8 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
   appmode->SetRootUIChests(chest_0_appearance, chest_1_appearance,
                            chest_2_appearance, chest_3_appearance);
 
+  printf("WOULD SET TIMES TO %.2f %.2f\n", chest_0_unlock_time,
+         chest_0_ad_allow_time);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -373,6 +394,14 @@ static PyMethodDef PySetRootUIAccountValuesDef = {
     "      chest_1_appearance: str,\n"
     "      chest_2_appearance: str,\n"
     "      chest_3_appearance: str,\n"
+    "      chest_0_unlock_time: float,\n"
+    "      chest_1_unlock_time: float,\n"
+    "      chest_2_unlock_time: float,\n"
+    "      chest_3_unlock_time: float,\n"
+    "      chest_0_ad_allow_time: float,\n"
+    "      chest_1_ad_allow_time: float,\n"
+    "      chest_2_ad_allow_time: float,\n"
+    "      chest_3_ad_allow_time: float,\n"
     ") -> None\n"
     "\n"
     "(internal)",

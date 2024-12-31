@@ -137,7 +137,6 @@ class HelpWindow(bui.MainWindow):
             size=(self._sub_width, self._sub_height),
             background=False,
             claims_left_right=False,
-            claims_tab=False,
         )
 
         spacing = 1.0

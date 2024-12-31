@@ -19,7 +19,6 @@ HScrollWidget::HScrollWidget()
     : touch_mode_(!g_core->platform->IsRunningOnDesktop()) {
   set_draggable(false);
   set_claims_left_right(false);
-  set_claims_tab(false);
 }
 
 HScrollWidget::~HScrollWidget() = default;
