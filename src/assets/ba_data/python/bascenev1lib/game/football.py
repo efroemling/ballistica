@@ -331,7 +331,10 @@ class FootballTeamGame(bs.TeamGameActivity[Player, Team]):
         # Respawn dead flags.
         elif isinstance(msg, FlagDiedMessage):
             if not self.has_ended():
-                self._flag_respawn_timer = bs.Timer(3.0, self._spawn_flag)
+                if msg.self_kill:
+                    self._spawn_flag()
+                else:
+                    self._flag_respawn_timer = bs.Timer(3.0, self._spawn_flag)
                 self._flag_respawn_light = bs.NodeActor(
                     bs.newnode(
                         'light',
@@ -879,8 +882,7 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
                         )
                         self._time_text_input.node.timemax = self._final_time_ms
 
-                        # FIXME: Does this still need to be deferred?
-                        bs.pushcall(bs.Call(self.do_end, 'victory'))
+                        self.do_end('victory')
 
     def do_end(self, outcome: str) -> None:
         """End the game with the specified outcome."""
@@ -931,7 +933,10 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
         # Respawn dead flags.
         elif isinstance(msg, FlagDiedMessage):
             assert isinstance(msg.flag, FootballFlag)
-            msg.flag.respawn_timer = bs.Timer(3.0, self._spawn_flag)
+            if msg.self_kill:
+                self._spawn_flag()
+            else:
+                msg.flag.respawn_timer = bs.Timer(3.0, self._spawn_flag)
             self._flag_respawn_light = bs.NodeActor(
                 bs.newnode(
                     'light',
@@ -948,7 +953,7 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
                 self._flag_respawn_light.node,
                 'intensity',
                 {0: 0, 0.25: 0.15, 0.5: 0},
-                loop=True,
+                loop=(not msg.self_kill),
             )
             bs.timer(3.0, self._flag_respawn_light.node.delete)
         else:
