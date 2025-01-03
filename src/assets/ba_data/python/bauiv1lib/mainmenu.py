@@ -244,7 +244,7 @@ class MainMenuWindow(bui.MainWindow):
             text=(
                 f'{app.env.engine_version}'
                 f' build {app.env.engine_build_number}.'
-                f' Copyright 2024 Eric Froemling.'
+                f' Copyright 2025 Eric Froemling.'
             ),
             h_align='center',
             v_align='center',
