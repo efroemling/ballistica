@@ -432,7 +432,7 @@ class PlayOptionsWindow(PopupWindow):
         self._update()
 
     def _custom_colors_names_press(self) -> None:
-        from bauiv1lib.account import show_sign_in_prompt
+        from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.teamnamescolors import TeamNamesColorsWindow
         from bauiv1lib.purchase import PurchaseWindow
 

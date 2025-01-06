@@ -387,12 +387,10 @@ class FileSelectorWindow(bui.MainWindow):
             bui.containerwidget(
                 edit=self._scrollwidget,
                 claims_left_right=False,
-                claims_tab=False,
             )
             bui.containerwidget(
                 edit=self._subcontainer,
                 claims_left_right=False,
-                claims_tab=False,
                 selection_loops=False,
                 print_list_exit_instructions=False,
             )

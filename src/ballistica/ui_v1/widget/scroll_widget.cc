@@ -19,7 +19,6 @@ ScrollWidget::ScrollWidget()
   set_background(false);  // Influences default event handling.
   set_draggable(false);
   set_claims_left_right(false);
-  set_claims_tab(false);
 }
 
 ScrollWidget::~ScrollWidget() = default;

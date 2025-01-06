@@ -28,7 +28,6 @@ class AccountSettingsWindow(bui.MainWindow):
     def __init__(
         self,
         transition: str | None = 'in_right',
-        modal: bool = False,
         origin_widget: bui.Widget | None = None,
         close_once_signed_in: bool = False,
     ):
@@ -49,7 +48,6 @@ class AccountSettingsWindow(bui.MainWindow):
         self._explicitly_signed_out_of_gpgs = False
 
         self._r = 'accountSettingsWindow'
-        self._modal = modal
         self._needs_refresh = False
         self._v1_signed_in = plus.get_v1_account_state() == 'signed_in'
         self._v1_account_state_num = plus.get_v1_account_state_num()
@@ -129,22 +127,17 @@ class AccountSettingsWindow(bui.MainWindow):
                 scale=0.8,
                 text_scale=1.2,
                 autoselect=True,
-                label=bui.Lstr(
-                    resource='cancelText' if self._modal else 'backText'
-                ),
-                button_type='regular' if self._modal else 'back',
-                on_activate_call=(
-                    self._modal_close if self._modal else self.main_window_back
-                ),
+                label=bui.Lstr(resource='backText'),
+                button_type='back',
+                on_activate_call=self.main_window_back,
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
-            if not self._modal:
-                bui.buttonwidget(
-                    edit=btn,
-                    button_type='backSmall',
-                    size=(60, 56),
-                    label=bui.charstr(bui.SpecialChar.BACK),
-                )
+            bui.buttonwidget(
+                edit=btn,
+                button_type='backSmall',
+                size=(60, 56),
+                label=bui.charstr(bui.SpecialChar.BACK),
+            )
 
         titleyoffs = -9 if uiscale is bui.UIScale.SMALL else 0
         titlescale = 0.7 if uiscale is bui.UIScale.SMALL else 1.0
@@ -169,24 +162,11 @@ class AccountSettingsWindow(bui.MainWindow):
             ),
             size=(self._scroll_width, self._scroll_height),
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
         self._subcontainer: bui.Widget | None = None
         self._refresh()
         self._restore_state()
-
-    def _modal_close(self) -> None:
-        assert self._modal
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        bui.containerwidget(
-            edit=self._root_widget,
-            transition=('out_right'),
-        )
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
@@ -369,6 +349,9 @@ class AccountSettingsWindow(bui.MainWindow):
         show_manage_account_button = primary_v2_account is not None
         manage_account_button_space = 70.0
 
+        show_create_account_button = show_v2_proxy_sign_in_button
+        create_account_button_space = 70.0
+
         # Apple asks us to make a delete-account button directly
         # available in the UI. Currently disabling this elsewhere
         # however as I feel that poking 'Manage Account' and scrolling
@@ -445,6 +428,8 @@ class AccountSettingsWindow(bui.MainWindow):
             self._sub_height += sign_in_benefits_space
         if show_manage_account_button:
             self._sub_height += manage_account_button_space
+        if show_create_account_button:
+            self._sub_height += create_account_button_space
         if show_link_accounts_button:
             self._sub_height += link_accounts_button_space
         if show_v1_obsolete_note:
@@ -466,7 +451,6 @@ class AccountSettingsWindow(bui.MainWindow):
             size=(self._sub_width, self._sub_height),
             background=False,
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
 
@@ -856,6 +840,28 @@ class AccountSettingsWindow(bui.MainWindow):
             )
             bui.widget(edit=btn, left_widget=bbtn)
 
+        if show_create_account_button:
+            button_width = 300
+            v -= create_account_button_space
+            self._create_button = btn = bui.buttonwidget(
+                parent=self._subcontainer,
+                position=((self._sub_width - button_width) * 0.5, v - 30),
+                autoselect=True,
+                size=(button_width, 60),
+                # label=bui.Lstr(resource=f'{self._r}.createAccountText'),
+                label='Create an Account',
+                color=(0.55, 0.5, 0.6),
+                # icon=bui.gettexture('settingsIcon'),
+                textcolor=(0.75, 0.7, 0.8),
+                on_activate_call=bui.WeakCall(self._on_create_account_press),
+            )
+            if first_selectable is None:
+                first_selectable = btn
+            bui.widget(
+                edit=btn, right_widget=bui.get_special_widget('squad_button')
+            )
+            bui.widget(edit=btn, left_widget=bbtn)
+
         # the button to go to OS-Specific leaderboards/high-score-lists/etc.
         if show_game_service_button:
             button_width = 300
@@ -1211,6 +1217,9 @@ class AccountSettingsWindow(bui.MainWindow):
 
     def _on_manage_account_press(self) -> None:
         self._do_manage_account_press(WebLocation.ACCOUNT_EDITOR)
+
+    def _on_create_account_press(self) -> None:
+        bui.open_url('https://ballistica.net/createaccount')
 
     def _on_delete_account_press(self) -> None:
         self._do_manage_account_press(WebLocation.ACCOUNT_DELETE_SECTION)

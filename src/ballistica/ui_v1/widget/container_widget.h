@@ -127,8 +127,8 @@ class ContainerWidget : public Widget {
 
   void set_draggable(bool d) { draggable_ = d; }
 
-  auto claims_tab() const -> bool { return claims_tab_; }
-  void set_claims_tab(bool c) { claims_tab_ = c; }
+  // auto claims_tab() const -> bool { return claims_tab_; }
+  // void set_claims_tab(bool c) { claims_tab_ = c; }
 
   auto claims_left_right() const -> bool { return claims_left_right_; }
   void set_claims_left_right(bool c) { claims_left_right_ = c; }

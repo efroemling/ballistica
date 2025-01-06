@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import os
+import json
 import logging
 from typing import TYPE_CHECKING, override
 
@@ -24,7 +25,6 @@ class CreditsWindow(bui.MainWindow):
     ):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
-        import json
 
         bui.set_analytics_screen('Credits Window')
 
@@ -332,7 +332,6 @@ class CreditsWindow(bui.MainWindow):
             size=(self._sub_width, self._sub_height),
             background=False,
             claims_left_right=False,
-            claims_tab=False,
         )
 
         voffs = 0

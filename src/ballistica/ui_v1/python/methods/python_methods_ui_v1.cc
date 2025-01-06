@@ -924,7 +924,6 @@ static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* border_obj{Py_None};
   PyObject* margin_obj{Py_None};
   PyObject* claims_left_right_obj{Py_None};
-  PyObject* claims_tab_obj{Py_None};
   static const char* kwlist[] = {"edit",
                                  "parent",
                                  "size",
@@ -941,15 +940,14 @@ static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "border",
                                  "margin",
                                  "claims_left_right",
-                                 "claims_tab",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          args, keywds, "|OOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &size_obj, &pos_obj, &background_obj,
           &selected_child_obj, &visible_child_obj, &single_depth_obj,
           &print_list_exit_instructions_obj, &left_border_obj, &top_border_obj,
           &bottom_border_obj, &selection_loops_to_parent_obj, &border_obj,
-          &margin_obj, &claims_left_right_obj, &claims_tab_obj))
+          &margin_obj, &claims_left_right_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -1034,9 +1032,6 @@ static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (claims_left_right_obj != Py_None) {
     widget->set_claims_left_right(Python::GetPyBool(claims_left_right_obj));
   }
-  if (claims_tab_obj != Py_None) {
-    widget->set_claims_tab(Python::GetPyBool(claims_tab_obj));
-  }
 
   // If making a new widget, add it at the end.
   if (edit_obj == Py_None) {
@@ -1072,8 +1067,7 @@ static PyMethodDef PyColumnWidgetDef = {
     "  selection_loops_to_parent: bool | None = None,\n"
     "  border: float | None = None,\n"
     "  margin: float | None = None,\n"
-    "  claims_left_right: bool | None = None,\n"
-    "  claims_tab: bool | None = None) -> bauiv1.Widget\n"
+    "  claims_left_right: bool | None = None) -> bauiv1.Widget\n"
     "\n"
     "Create or edit a column widget.\n"
     "\n"
@@ -1100,7 +1094,6 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* on_activate_call_obj{Py_None};
   PyObject* claims_left_right_obj{Py_None};
   PyObject* claims_up_down_obj{Py_None};
-  PyObject* claims_tab_obj{Py_None};
   PyObject* selection_loops_obj{Py_None};
   PyObject* selection_loops_to_parent_obj{Py_None};
   PyObject* scale_obj{Py_None};
@@ -1136,7 +1129,6 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "root_selectable",
                                  "on_activate_call",
                                  "claims_left_right",
-                                 "claims_tab",
                                  "selection_loops",
                                  "selection_loops_to_parent",
                                  "scale",
@@ -1158,16 +1150,16 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &background_obj, &selected_child_obj,
           &transition_obj, &cancel_button_obj, &start_button_obj,
           &root_selectable_obj, &on_activate_call_obj, &claims_left_right_obj,
-          &claims_tab_obj, &selection_loops_obj, &selection_loops_to_parent_obj,
-          &scale_obj, &on_outside_click_call_obj, &single_depth_obj,
-          &visible_child_obj, &stack_offset_obj, &color_obj,
-          &on_cancel_call_obj, &print_list_exit_instructions_obj,
-          &click_activate_obj, &always_highlight_obj, &selectable_obj,
+          &selection_loops_obj, &selection_loops_to_parent_obj, &scale_obj,
+          &on_outside_click_call_obj, &single_depth_obj, &visible_child_obj,
+          &stack_offset_obj, &color_obj, &on_cancel_call_obj,
+          &print_list_exit_instructions_obj, &click_activate_obj,
+          &always_highlight_obj, &selectable_obj,
           &scale_origin_stack_offset_obj, &toolbar_visibility_obj,
           &on_select_call_obj, &claim_outside_clicks_obj,
           &claims_up_down_obj)) {
@@ -1325,9 +1317,6 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (claims_up_down_obj != Py_None) {
     widget->set_claims_up_down(Python::GetPyBool(claims_up_down_obj));
   }
-  if (claims_tab_obj != Py_None) {
-    widget->set_claims_tab(Python::GetPyBool(claims_tab_obj));
-  }
   if (selection_loops_obj != Py_None) {
     widget->set_selection_loops(Python::GetPyBool(selection_loops_obj));
   }
@@ -1370,6 +1359,8 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
       val = Widget::ToolbarVisibility::kInherit;
     } else if (sval == "get_tokens") {
       val = Widget::ToolbarVisibility::kGetTokens;
+    } else if (sval == "no_menu_minimal") {
+      val = Widget::ToolbarVisibility::kNoMenuMinimal;
     } else {
       throw Exception("Invalid toolbar_visibility: '" + sval + "'.",
                       PyExcType::kValue);
@@ -1408,7 +1399,6 @@ static PyMethodDef PyContainerWidgetDef = {
     "  root_selectable: bool | None = None,\n"
     "  on_activate_call: Callable[[], None] | None = None,\n"
     "  claims_left_right: bool | None = None,\n"
-    "  claims_tab: bool | None = None,\n"
     "  selection_loops: bool | None = None,\n"
     "  selection_loops_to_parent: bool | None = None,\n"
     "  scale: float | None = None,\n"
@@ -1432,6 +1422,7 @@ static PyMethodDef PyContainerWidgetDef = {
     "                              'menu_in_game',\n"
     "                              'menu_tokens',\n"
     "                              'get_tokens',\n"
+    "                              'no_menu_minimal',\n"
     "                              'inherit',\n"
     "                             ] | None = None,\n"
     "  on_select_call: Callable[[], None] | None = None,\n"
@@ -1462,21 +1453,24 @@ static auto PyRowWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* edit_obj{Py_None};
   ContainerWidget* parent_widget{};
   PyObject* claims_left_right_obj{Py_None};
-  PyObject* claims_tab_obj{Py_None};
   PyObject* selection_loops_to_parent_obj{Py_None};
 
-  static const char* kwlist[] = {"edit",          "parent",
-                                 "size",          "position",
-                                 "background",    "selected_child",
-                                 "visible_child", "claims_left_right",
-                                 "claims_tab",    "selection_loops_to_parent",
+  static const char* kwlist[] = {"edit",
+                                 "parent",
+                                 "size",
+                                 "position",
+                                 "background",
+                                 "selected_child",
+                                 "visible_child",
+                                 "claims_left_right",
+                                 "selection_loops_to_parent",
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOO", const_cast<char**>(kwlist), &edit_obj,
+          args, keywds, "|OOOOOOOOO", const_cast<char**>(kwlist), &edit_obj,
           &parent_obj, &size_obj, &pos_obj, &background_obj,
           &selected_child_obj, &visible_child_obj, &claims_left_right_obj,
-          &claims_tab_obj, &selection_loops_to_parent_obj))
+          &selection_loops_to_parent_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -1530,9 +1524,6 @@ static auto PyRowWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (claims_left_right_obj != Py_None) {
     widget->set_claims_left_right(Python::GetPyBool(claims_left_right_obj));
   }
-  if (claims_tab_obj != Py_None) {
-    widget->set_claims_tab(Python::GetPyBool(claims_tab_obj));
-  }
   if (selection_loops_to_parent_obj != Py_None) {
     widget->set_selection_loops_to_parent(
         Python::GetPyBool(selection_loops_to_parent_obj));
@@ -1564,7 +1555,6 @@ static PyMethodDef PyRowWidgetDef = {
     "  selected_child: bauiv1.Widget | None = None,\n"
     "  visible_child: bauiv1.Widget | None = None,\n"
     "  claims_left_right: bool | None = None,\n"
-    "  claims_tab: bool | None = None,\n"
     "  selection_loops_to_parent: bool | None = None) -> bauiv1.Widget\n"
     "\n"
     "Create or edit a row widget.\n"
@@ -1598,7 +1588,6 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* selection_loops_to_parent_obj{Py_None};
   PyObject* claims_left_right_obj{Py_None};
   PyObject* claims_up_down_obj{Py_None};
-  PyObject* claims_tab_obj{Py_None};
   PyObject* autoselect_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
@@ -1617,18 +1606,17 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "selection_loops_to_parent",
                                  "claims_left_right",
                                  "claims_up_down",
-                                 "claims_tab",
                                  "autoselect",
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          args, keywds, "|OOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &size_obj, &pos_obj, &background_obj,
           &selected_child_obj, &capture_arrows_obj, &on_select_call_obj,
           &center_small_content_obj, &color_obj, &highlight_obj,
           &border_opacity_obj, &simple_culling_v_obj,
           &selection_loops_to_parent_obj, &claims_left_right_obj,
-          &claims_up_down_obj, &claims_tab_obj, &autoselect_obj))
+          &claims_up_down_obj, &autoselect_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -1711,9 +1699,6 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (claims_up_down_obj != Py_None) {
     widget->set_claims_up_down(Python::GetPyBool(claims_up_down_obj));
   }
-  if (claims_tab_obj != Py_None) {
-    widget->set_claims_tab(Python::GetPyBool(claims_tab_obj));
-  }
   if (autoselect_obj != Py_None) {
     widget->set_auto_select(Python::GetPyBool(autoselect_obj));
   }
@@ -1753,7 +1738,6 @@ static PyMethodDef PyScrollWidgetDef = {
     "  selection_loops_to_parent: bool | None = None,\n"
     "  claims_left_right: bool | None = None,\n"
     "  claims_up_down: bool | None = None,\n"
-    "  claims_tab: bool | None = None,\n"
     "  autoselect: bool | None = None) -> bauiv1.Widget\n"
     "\n"
     "Create or edit a scroll widget.\n"
@@ -1787,7 +1771,6 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* simple_culling_h_obj{Py_None};
   PyObject* claims_left_right_obj{Py_None};
   PyObject* claims_up_down_obj{Py_None};
-  PyObject* claims_tab_obj{Py_None};
   PyObject* autoselect_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
@@ -1805,17 +1788,16 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "simple_culling_h",
                                  "claims_left_right",
                                  "claims_up_down",
-                                 "claims_tab",
                                  "autoselect",
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          args, keywds, "|OOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &size_obj, &pos_obj, &background_obj,
           &selected_child_obj, &capture_arrows_obj, &on_select_call_obj,
           &center_small_content_obj, &color_obj, &highlight_obj,
           &border_opacity_obj, &simple_culling_h_obj, &claims_left_right_obj,
-          &claims_up_down_obj, &claims_tab_obj, &autoselect_obj))
+          &claims_up_down_obj, &autoselect_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -1893,9 +1875,6 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (claims_up_down_obj != Py_None) {
     widget->set_claims_up_down(Python::GetPyBool(claims_up_down_obj));
   }
-  if (claims_tab_obj != Py_None) {
-    widget->set_claims_tab(Python::GetPyBool(claims_tab_obj));
-  }
   if (autoselect_obj != Py_None) {
     widget->set_auto_select(Python::GetPyBool(autoselect_obj));
   }
@@ -1933,8 +1912,7 @@ static PyMethodDef PyHScrollWidgetDef = {
     "  border_opacity: float | None = None,\n"
     "  simple_culling_h: float | None = None,\n"
     "  claims_left_right: bool | None = None,\n"
-    "  claims_up_down: bool | None = None,\n"
-    "  claims_tab: bool | None = None)  -> bauiv1.Widget\n"
+    "  claims_up_down: bool | None = None)  -> bauiv1.Widget\n"
     "\n"
     "Create or edit a horizontal scroll widget.\n"
     "\n"

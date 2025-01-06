@@ -21,19 +21,20 @@ class Widget : public Object {
   /// the entire set of visibilities they apply to.
   enum class ToolbarVisibility : uint16_t {
     kInherit = 0,             // For popups and whatnot - leave toolbar as-is.
-    kMenuMinimal = 1,         // Squad and back buttons.
-    kMenuMinimalNoBack = 2,   // Squad button only.
-    kMenuStore = 4,           // Squad, level, and soft currency buttons.
-    kMenuStoreNoBack = 8,     // Squad, level, and soft currency buttons.
-    kMenuReduced = 16,        // Squad, account, inbox, settings, back.
-    kMenuReducedNoBack = 32,  // Squad, account, inbox, settings.
+    kMenuMinimal = 1,         // Menu, squad, back.
+    kMenuMinimalNoBack = 2,   // Menu, squad.
+    kMenuStore = 4,           // Menu, squad, level, and soft currency.
+    kMenuStoreNoBack = 8,     // Menu, squad, level, and soft currency.
+    kMenuReduced = 16,        // Menu, squad, account, inbox, settings, back.
+    kMenuReducedNoBack = 32,  // Menu, squad, account, inbox, settings.
     kMenuFull = 64,           // Everything.
-    kMenuFullNoBack = 128,    // Everything.
+    kMenuFullNoBack = 128,    // Everything minus back.
     kMenuFullRoot = 256,      // Obsolete.
     kInGame = 512,            // Menu, squad.
     kGetTokens = 1024,        // Squad, tokens without plus.
     kMenuInGame = 2048,       // Squad, settings.
-    kMenuTokens = 4096        // Squad, tokens.
+    kMenuTokens = 4096,       // Squad, tokens.
+    kNoMenuMinimal = 8192,    // Squad.
   };
 
   Widget();

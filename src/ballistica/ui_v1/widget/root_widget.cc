@@ -3,7 +3,6 @@
 #include "ballistica/ui_v1/widget/root_widget.h"
 
 #include <algorithm>
-#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -549,14 +548,11 @@ void RootWidget::Setup() {
   AddMeter_(MeterType_::kLevel, 0.0f, 1.0f, 1.0f, 1.0f, false, "");
   AddMeter_(MeterType_::kTrophy, 0.0f, 1.0f, 1.0f, 1.0f, false, "");
 
-  // Menu button (only shows up when we're not in a menu).
-  // FIXME - this should never be visible on TV or VR UI modes
   {
     ButtonDef_ b;
     b.h_align = 1.0f;
     b.v_align = VAlign_::kTop;
     b.width = b.height = 65.0f;
-    // b.x = -36.0f;
     b.y = b.height * -0.48f;
     b.img = "menuButton";
     b.call = UIV1Python::ObjID::kRootUIMenuButtonPressCall;
@@ -600,7 +596,8 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kGetTokens)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuTokens));
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuTokens)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kNoMenuMinimal));
     b.pre_buffer = 5.0f;
     b.enable_sound = false;
     squad_button_ = AddButton_(b);
@@ -733,7 +730,6 @@ void RootWidget::Setup() {
     b.h_align = 0.0f;
     b.v_align = VAlign_::kBottom;
     b.width = b.height = 60.0f;
-    // b.x = bx;
     b.y = b.height * 0.5f + 2.0f;
     b.color_r = kBotLeftColorR;
     b.color_g = kBotLeftColorG;
@@ -744,7 +740,6 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     AddButton_(b);
-    // bx += 70.0f;
   }
 
   // Settings button.
@@ -753,7 +748,6 @@ void RootWidget::Setup() {
     b.h_align = 0.0f;
     b.v_align = VAlign_::kBottom;
     b.width = b.height = 60.0f;
-    // b.x = bx;
     b.y = b.height * 0.58f - 2.0f;
     b.color_r = kBotLeftColorR;
     b.color_g = kBotLeftColorG;
@@ -770,22 +764,8 @@ void RootWidget::Setup() {
     bottom_left_buttons_.push_back(settings_button_);
   }
 
-  // Chests.
+  // Chest slots.
   {
-    float backing_r = 0.43f;
-    float backing_g = 0.40f;
-    float backing_b = 0.53f;
-    float backing_cover_r = backing_r;
-    float backing_cover_g = backing_g;
-    float backing_cover_b = backing_b;
-    float backing_a = 1.0f;
-    backing_r *= 1.1f;
-    backing_g *= 1.1f;
-    backing_b *= 1.1f;
-    backing_cover_r *= 1.1f;
-    backing_cover_g *= 1.1f;
-    backing_cover_b *= 1.1f;
-
     // Bar backing.
     {
       ButtonDef_ bd;
@@ -798,10 +778,10 @@ void RootWidget::Setup() {
       bd.img = "uiAtlas2";
       bd.mesh_transparent = "toolbarBackingBottom2";
       bd.selectable = false;
-      bd.color_r = backing_r;
-      bd.color_g = backing_g;
-      bd.color_b = backing_b;
-      bd.opacity = backing_a;
+      bd.color_r = 0.473f;
+      bd.color_g = 0.44f;
+      bd.color_b = 0.583f;
+      bd.opacity = 1.0f;
 
       bd.depth_min = 0.2f;
       bd.call = UIV1Python::ObjID::kEmptyCall;
@@ -813,6 +793,7 @@ void RootWidget::Setup() {
       chest_backing_ = AddButton_(bd);
     }
 
+    // Chest/Slot buttons.
     ButtonDef_ b;
     b.h_align = 0.5f;
     b.v_align = VAlign_::kBottom;
@@ -827,9 +808,6 @@ void RootWidget::Setup() {
     b.y = 44.0f;
     b.img = "chestIconEmpty";
     b.width = b.height = 80.0f;
-    b.color_r = backing_cover_r;
-    b.color_g = backing_cover_g;
-    b.color_b = backing_cover_b;
     b.opacity = 1.0f;
 
     b.call = UIV1Python::ObjID::kRootUIChestSlot0PressCall;
@@ -847,6 +825,57 @@ void RootWidget::Setup() {
     b.x = 1.5f * spacing;
     b.call = UIV1Python::ObjID::kRootUIChestSlot3PressCall;
     chest_3_button_ = AddButton_(b);
+
+    // Lock icons.
+    {
+      ImageDef_ imgd;
+      imgd.x = -45.0f;
+      imgd.y = -23.0f;
+      imgd.width = 32.0f;
+      imgd.height = 32.0f;
+      imgd.img = "lock";
+      imgd.depth_min = 0.3f;
+
+      imgd.button = chest_0_button_;
+      chest_0_lock_icon_ = AddImage_(imgd);
+
+      imgd.button = chest_1_button_;
+      chest_1_lock_icon_ = AddImage_(imgd);
+
+      imgd.button = chest_2_button_;
+      chest_2_lock_icon_ = AddImage_(imgd);
+
+      imgd.button = chest_3_button_;
+      chest_3_lock_icon_ = AddImage_(imgd);
+    }
+
+    // Lock times.
+    {
+      TextDef_ td;
+      // td.width = 0.0f;
+      td.text = "3h 2m";
+      td.x = 0.0f;
+      td.y = 55.0f;
+      td.scale = 0.7f;
+      td.flatness = 1.0f;
+      td.shadow = 1.0f;
+      td.depth_min = 0.3f;
+      td.color_r = 0.6f;
+      td.color_g = 1.0f;
+      td.color_b = 0.6f;
+
+      td.button = chest_0_button_;
+      chest_0_time_text_ = AddText_(td);
+
+      td.button = chest_1_button_;
+      chest_1_time_text_ = AddText_(td);
+
+      td.button = chest_2_button_;
+      chest_2_time_text_ = AddText_(td);
+
+      td.button = chest_3_button_;
+      chest_3_time_text_ = AddText_(td);
+    }
   }
 
   // Inventory button.
@@ -876,7 +905,6 @@ void RootWidget::Setup() {
     b.h_align = 1.0f;
     b.v_align = VAlign_::kBottom;
     b.width = b.height = 85.0f;
-    // b.x = -206.0f;
     b.y = b.height * 0.5f;
     b.img = "storeIcon";
     b.call = UIV1Python::ObjID::kRootUIStoreButtonPressCall;
@@ -1399,20 +1427,29 @@ void RootWidget::SetTicketsMeterText(const std::string& val) {
 void RootWidget::SetTokensMeterText(const std::string& val, bool gold_pass) {
   assert(tokens_meter_text_);
   assert(get_tokens_button_);
-  if (gold_pass) {
+  gold_pass_ = gold_pass;
+  if (gold_pass_) {
     get_tokens_button_->force_hide = true;
 
     // Use the infinity symbol if we have full unicode support.
     tokens_meter_text_->widget->SetText(
         g_buildconfig.enable_os_font_rendering() ? "\xE2\x88\x9E" : "inf");
-    tokens_meter_text_->widget->set_color(1.0f, 0.6f, 0.1f, 0.6f);
   } else {
     get_tokens_button_->force_hide = false;
     tokens_meter_text_->widget->SetText(val);
-    tokens_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, 1.0f);
   }
+  UpdateTokensMeterTextColor_();
   // May need to animate in/out.
   child_widgets_dirty_ = true;
+}
+
+void RootWidget::UpdateTokensMeterTextColor_() {
+  auto oval{have_live_values_ ? 1.0f : 0.4f};
+  if (gold_pass_ && have_live_values_) {
+    tokens_meter_text_->widget->set_color(1.0f, 0.6f, 0.1f, 0.6f);
+  } else {
+    tokens_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
+  }
 }
 
 void RootWidget::SetLeagueRankText(const std::string& val) {
@@ -1457,30 +1494,53 @@ void RootWidget::SetXPText(const std::string& val) {
 }
 
 void RootWidget::SetHaveLiveValues(bool have_live_values) {
-  auto cval{have_live_values ? 1.0f : 0.4f};
-  auto oval{have_live_values ? 1.0f : 0.2f};
+  have_live_values_ = have_live_values;
+  // auto cval{have_live_values ? 1.0f : 0.4f};
+  auto oval{have_live_values ? 1.0f : 0.4f};
   auto oval2{have_live_values ? 1.0f : 0.4f};
 
   assert(tickets_meter_text_);
   assert(tickets_meter_icon_);
   tickets_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
-  tickets_meter_icon_->widget->set_color(cval, cval, cval);
+  // tickets_meter_icon_->widget->set_color(cval, cval, cval);
+  tickets_meter_icon_->widget->set_opacity(oval2);
 
   assert(tokens_meter_text_);
   assert(tokens_meter_icon_);
-  tokens_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
-  tokens_meter_icon_->widget->set_color(cval, cval, cval);
+  UpdateTokensMeterTextColor_();
+  // tokens_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
+  // tokens_meter_icon_->widget->set_color(cval, cval, cval);
+  tokens_meter_icon_->widget->set_opacity(oval2);
 
   assert(inbox_button_);
   inbox_button_->widget->set_opacity(oval2);
 
+  assert(achievements_button_);
+  achievements_button_->widget->set_opacity(oval2);
+  assert(achievement_percent_text_);
+  achievement_percent_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
+
+  assert(store_button_);
+  store_button_->widget->set_opacity(oval2);
+
+  assert(inventory_button_);
+  inventory_button_->widget->set_opacity(oval2);
+
+  assert(get_tokens_button_);
+  get_tokens_button_->widget->set_opacity(oval2);
+
   assert(league_rank_text_);
   league_rank_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
 
-  // Note: We are currently driving trophy icon color based on league and
-  // opacity here based on connectivity. This keeps logic simple but is a
-  // bit different than other icons where we only drive color and keep
-  // opacity at 1.0.
+  assert(tickets_meter_button_);
+  tickets_meter_button_->widget->set_opacity(oval2);
+
+  assert(tokens_meter_button_);
+  tokens_meter_button_->widget->set_opacity(oval2);
+
+  assert(trophy_meter_button_);
+  trophy_meter_button_->widget->set_opacity(oval2);
+
   assert(trophy_icon_);
   trophy_icon_->widget->set_opacity(oval2);
 
@@ -1497,42 +1557,66 @@ void RootWidget::SetChests(const std::string& chest_0_appearance,
                            const std::string& chest_1_appearance,
                            const std::string& chest_2_appearance,
                            const std::string& chest_3_appearance) {
-  std::vector<std::pair<const std::string&, Button_*>> pairs = {
-      {chest_0_appearance, chest_0_button_},
-      {chest_1_appearance, chest_1_button_},
-      {chest_2_appearance, chest_2_button_},
-      {chest_3_appearance, chest_3_button_},
-  };
+  chest_0_appearance_ = chest_0_appearance;
+  chest_1_appearance_ = chest_1_appearance;
+  chest_2_appearance_ = chest_2_appearance;
+  chest_3_appearance_ = chest_3_appearance;
+  UpdateChests_();
+}
 
+void RootWidget::UpdateChests_() {
+  std::vector<std::tuple<const std::string&, Button_*, Image_*, Text_*>> slots =
+      // NOLINTNEXTLINE (clang-format's formatting here upsets cpplint).
+      {
+          {chest_0_appearance_, chest_0_button_, chest_0_lock_icon_,
+           chest_0_time_text_},
+          {chest_1_appearance_, chest_1_button_, chest_1_lock_icon_,
+           chest_1_time_text_},
+          {chest_2_appearance_, chest_2_button_, chest_2_lock_icon_,
+           chest_2_time_text_},
+          {chest_3_appearance_, chest_3_button_, chest_3_lock_icon_,
+           chest_3_time_text_},
+      };
+
+  // We drop the backing/slots down a bit if we have no chests.
   auto have_chests{false};
-  for (const auto& [appearance, b] : pairs) {
+  for (const auto& [appearance, b, l, t] : slots) {
     if (appearance != "") {
       have_chests = true;
     }
   }
 
-  for (const auto& [appearance, b] : pairs) {
+  for (const auto& [appearance, b, l, t] : slots) {
     assert(b);
+    assert(l);
+    Object::Ref<base::TextureAsset> tex;
     if (appearance == "") {
+      // Empty slot.
       b->widget->set_color(0.473f, 0.44f, 0.583f);
       b->width = b->height = 80.0f;
       b->y = have_chests ? 44.0f : -2.0f;
       {
         base::Assets::AssetListLock lock;
-        b->widget->SetTexture(
-            g_base->assets->GetTexture("chestIconEmpty").get());
+        tex = g_base->assets->GetTexture("chestIconEmpty");
       }
+      l->visible = false;
+      t->visible = false;
     } else {
+      // Chest in slot.
       have_chests = true;
       b->widget->set_color(1.0f, 1.0f, 1.0f);
       b->width = b->height = 110.0f;
       b->y = 44.0f;
       {
         base::Assets::AssetListLock lock;
-        b->widget->SetTexture(g_base->assets->GetTexture("chestIcon").get());
+        tex = g_base->assets->GetTexture("chestIcon");
       }
+      l->visible = true;
+      t->visible = true;
     }
+    b->widget->SetTexture(tex.get());
   }
+
   assert(chest_backing_);
   chest_backing_->y = have_chests ? 41.0f : -15.0f;
 

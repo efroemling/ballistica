@@ -787,13 +787,13 @@ class AdvancedSettingsWindow(bui.MainWindow):
 
     def _on_friend_promo_code_press(self) -> None:
         from bauiv1lib import appinvite
-        from bauiv1lib import account
+        from bauiv1lib.account.signin import show_sign_in_prompt
 
         plus = bui.app.plus
         assert plus is not None
 
         if plus.get_v1_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
         appinvite.handle_app_invites_press()
 

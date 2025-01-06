@@ -10,7 +10,6 @@ RowWidget::RowWidget() {
   set_background(false);  // Influences default event handling.
   set_draggable(false);
   set_claims_left_right(false);
-  set_claims_tab(false);
   set_selection_loops_to_parent(true);
   set_selection_loops(false);
 }

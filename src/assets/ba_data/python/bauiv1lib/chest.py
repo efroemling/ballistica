@@ -148,7 +148,7 @@ class ChestWindow(bui.MainWindow):
             return
 
         if response.chest is None:
-            self._error('Would show general info about chests.')
+            self._show_about_chest_slots()
             return
 
         self.show_chest_actions(response.chest)
@@ -309,6 +309,14 @@ class ChestWindow(bui.MainWindow):
         """Put ourself in an error state with a visible error message."""
         self._reset()
         bui.textwidget(edit=self._infotext, text=msg, color=(1, 0, 0))
+
+    def _show_about_chest_slots(self) -> None:
+        self._reset()
+        msg = (
+            'This empty slot can hold a treasure chest.\n'
+            'Treasure chests are earned through gameplay.'
+        )
+        bui.textwidget(edit=self._infotext, text=msg, color=(1, 1, 1))
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:

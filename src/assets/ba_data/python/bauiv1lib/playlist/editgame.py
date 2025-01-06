@@ -205,7 +205,6 @@ class PlaylistEditGameWindow(bui.MainWindow):
             ),
             highlight=False,
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
         self._subcontainer = bui.containerwidget(
@@ -213,7 +212,6 @@ class PlaylistEditGameWindow(bui.MainWindow):
             size=(scroll_width, scroll_height),
             background=False,
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
 

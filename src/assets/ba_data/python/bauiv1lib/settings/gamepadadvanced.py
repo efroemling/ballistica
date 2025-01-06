@@ -99,7 +99,6 @@ class GamepadAdvancedSettingsWindow(bui.Window):
             ),
             size=(self._scroll_width, self._scroll_height),
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
         self._subcontainer = bui.containerwidget(
@@ -107,7 +106,6 @@ class GamepadAdvancedSettingsWindow(bui.Window):
             size=(self._sub_width, self._sub_height),
             background=False,
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
         bui.containerwidget(

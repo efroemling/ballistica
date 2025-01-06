@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING, override
 from bacommon.app import AppExperience
 import babase
 import bauiv1
+from bauiv1lib.connectivity import wait_for_connectivity
+from bauiv1lib.account.signin import show_sign_in_prompt
 
 import _baclassic
 
@@ -195,19 +197,27 @@ class ClassicAppMode(babase.AppMode):
         if account is None:
             self._account_data_sub = None
             _baclassic.set_root_ui_account_values(
-                tickets_text='-',
-                tokens_text='-',
-                league_rank_text='-',
+                tickets_text='',
+                tokens_text='',
+                league_rank_text='',
                 league_type='',
-                achievements_percent_text='-',
-                level_text='-',
-                xp_text='-',
+                achievements_percent_text='',
+                level_text='',
+                xp_text='',
                 inbox_count_text='',
                 gold_pass=False,
                 chest_0_appearance='',
                 chest_1_appearance='',
                 chest_2_appearance='',
                 chest_3_appearance='',
+                chest_0_unlock_time=-1.0,
+                chest_1_unlock_time=-1.0,
+                chest_2_unlock_time=-1.0,
+                chest_3_unlock_time=-1.0,
+                chest_0_ad_allow_time=-1.0,
+                chest_1_ad_allow_time=-1.0,
+                chest_2_ad_allow_time=-1.0,
+                chest_3_ad_allow_time=-1.0,
             )
             self._have_account_values = False
             self._update_ui_live_state()
@@ -279,6 +289,20 @@ class ClassicAppMode(babase.AppMode):
             chest_3_appearance=(
                 '' if chest3 is None else chest3.appearance.value
             ),
+            chest_0_unlock_time=(
+                -1.0 if chest0 is None else chest0.unlock_time.timestamp()
+            ),
+            chest_1_unlock_time=-1.0,
+            chest_2_unlock_time=-1.0,
+            chest_3_unlock_time=-1.0,
+            chest_0_ad_allow_time=(
+                -1.0
+                if chest0 is None or chest0.ad_allow_time is None
+                else chest0.ad_allow_time.timestamp()
+            ),
+            chest_1_ad_allow_time=-1.0,
+            chest_2_ad_allow_time=-1.0,
+            chest_3_ad_allow_time=-1.0,
         )
 
         # Note that we have values and updated faded state accordingly.
@@ -301,6 +325,7 @@ class ClassicAppMode(babase.AppMode):
             ui.clear_main_window()
             return
 
+        # Otherwise
         push_back_press()
 
     def _root_ui_account_press(self) -> None:
@@ -429,16 +454,25 @@ class ClassicAppMode(babase.AppMode):
     def _root_ui_achievements_press(self) -> None:
         from bauiv1lib.achievements import AchievementsWindow
 
-        self._auxiliary_window_nav(
-            win_type=AchievementsWindow,
-            win_create_call=lambda: AchievementsWindow(
-                origin_widget=bauiv1.get_special_widget('achievements_button')
-            ),
+        if not self._ensure_signed_in_v1():
+            return
+
+        wait_for_connectivity(
+            on_connected=lambda: self._auxiliary_window_nav(
+                win_type=AchievementsWindow,
+                win_create_call=lambda: AchievementsWindow(
+                    origin_widget=bauiv1.get_special_widget(
+                        'achievements_button'
+                    )
+                ),
+            )
         )
 
     def _root_ui_inbox_press(self) -> None:
-        from bauiv1lib.connectivity import wait_for_connectivity
         from bauiv1lib.inbox import InboxWindow
+
+        if not self._ensure_signed_in():
+            return
 
         wait_for_connectivity(
             on_connected=lambda: self._auxiliary_window_nav(
@@ -452,11 +486,16 @@ class ClassicAppMode(babase.AppMode):
     def _root_ui_store_press(self) -> None:
         from bauiv1lib.store.browser import StoreBrowserWindow
 
-        self._auxiliary_window_nav(
-            win_type=StoreBrowserWindow,
-            win_create_call=lambda: StoreBrowserWindow(
-                origin_widget=bauiv1.get_special_widget('store_button')
-            ),
+        if not self._ensure_signed_in_v1():
+            return
+
+        wait_for_connectivity(
+            on_connected=lambda: self._auxiliary_window_nav(
+                win_type=StoreBrowserWindow,
+                win_create_call=lambda: StoreBrowserWindow(
+                    origin_widget=bauiv1.get_special_widget('store_button')
+                ),
+            )
         )
 
     def _root_ui_tickets_meter_press(self) -> None:
@@ -474,13 +513,9 @@ class ClassicAppMode(babase.AppMode):
         )
 
     def _root_ui_trophy_meter_press(self) -> None:
-        from bauiv1lib.account import show_sign_in_prompt
         from bauiv1lib.league.rankwindow import LeagueRankWindow
 
-        plus = bauiv1.app.plus
-        assert plus is not None
-        if plus.get_v1_account_state() != 'signed_in':
-            show_sign_in_prompt()
+        if not self._ensure_signed_in_v1():
             return
 
         self._auxiliary_window_nav(
@@ -500,6 +535,9 @@ class ClassicAppMode(babase.AppMode):
     def _root_ui_inventory_press(self) -> None:
         from bauiv1lib.inventory import InventoryWindow
 
+        if not self._ensure_signed_in_v1():
+            return
+
         self._auxiliary_window_nav(
             win_type=InventoryWindow,
             win_create_call=lambda: InventoryWindow(
@@ -507,8 +545,35 @@ class ClassicAppMode(babase.AppMode):
             ),
         )
 
+    def _ensure_signed_in(self) -> bool:
+        """Make sure we're signed in (requiring modern v2 accounts)."""
+        plus = bauiv1.app.plus
+        if plus is None:
+            bauiv1.screenmessage('This requires plus.', color=(1, 0, 0))
+            bauiv1.getsound('error').play()
+            return False
+        if plus.accounts.primary is None:
+            show_sign_in_prompt()
+            return False
+        return True
+
+    def _ensure_signed_in_v1(self) -> bool:
+        """Make sure we're signed in (allowing legacy v1-only accounts)."""
+        plus = bauiv1.app.plus
+        if plus is None:
+            bauiv1.screenmessage('This requires plus.', color=(1, 0, 0))
+            bauiv1.getsound('error').play()
+            return False
+        if plus.get_v1_account_state() != 'signed_in':
+            show_sign_in_prompt()
+            return False
+        return True
+
     def _root_ui_get_tokens_press(self) -> None:
         from bauiv1lib.gettokens import GetTokensWindow
+
+        if not self._ensure_signed_in():
+            return
 
         self._auxiliary_window_nav(
             win_type=GetTokensWindow,
@@ -524,7 +589,6 @@ class ClassicAppMode(babase.AppMode):
             ChestWindow2,
             ChestWindow3,
         )
-        from bauiv1lib.connectivity import wait_for_connectivity
 
         widgetid: Literal[
             'chest_0_button',

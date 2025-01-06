@@ -2,7 +2,7 @@ cpplint==2.0.0
 dmgbuild==1.6.2
 filelock==3.16.1
 furo==2024.8.6
-mypy==1.14.0
+mypy==1.14.1
 pbxproj==4.2.1
 pdoc==15.0.1
 pur==7.3.3

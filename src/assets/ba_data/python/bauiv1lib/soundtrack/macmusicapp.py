@@ -65,13 +65,11 @@ class MacMusicAppPlaylistSelectWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(40, v - 340),
             size=(self._width - 80, 400),
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
         bui.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
         self._column = bui.columnwidget(
             parent=self._scrollwidget,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
 

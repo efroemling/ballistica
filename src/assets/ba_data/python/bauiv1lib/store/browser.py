@@ -281,12 +281,12 @@ class StoreBrowserWindow(bui.MainWindow):
         self._restore_state()
 
     def _restore_purchases(self) -> None:
-        from bauiv1lib import account
+        from bauiv1lib.account.signin import show_sign_in_prompt
 
         plus = bui.app.plus
         assert plus is not None
         if plus.accounts.primary is None:
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
         else:
             plus.restore_purchases()
 
@@ -349,7 +349,6 @@ class StoreBrowserWindow(bui.MainWindow):
             ),
             size=(self._scroll_width, self._scroll_height),
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
 
@@ -490,7 +489,7 @@ class StoreBrowserWindow(bui.MainWindow):
 
     def buy(self, item: str) -> None:
         """Attempt to purchase the provided item."""
-        from bauiv1lib import account
+        from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.confirm import ConfirmWindow
 
         assert bui.app.classic is not None
@@ -509,7 +508,7 @@ class StoreBrowserWindow(bui.MainWindow):
             bui.getsound('error').play()
         else:
             if plus.get_v1_account_state() != 'signed_in':
-                account.show_sign_in_prompt()
+                show_sign_in_prompt()
             else:
                 self._last_buy_time = curtime
 
@@ -904,7 +903,6 @@ class StoreBrowserWindow(bui.MainWindow):
                         size=(self._width, self._height),
                         background=False,
                         claims_left_right=True,
-                        claims_tab=True,
                         selection_loops_to_parent=True,
                     )
                     v = self._height - 20
@@ -1142,7 +1140,6 @@ class StoreBrowserWindow(bui.MainWindow):
                     size=(self._scroll_width, self._scroll_height * 0.95),
                     background=False,
                     claims_left_right=True,
-                    claims_tab=True,
                     selection_loops_to_parent=True,
                 )
                 self._status_textwidget = bui.textwidget(

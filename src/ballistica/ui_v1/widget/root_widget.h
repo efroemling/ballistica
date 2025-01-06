@@ -65,6 +65,7 @@ class RootWidget : public ContainerWidget {
   enum class MeterType_ { kLevel, kTrophy, kTickets, kTokens };
   enum class VAlign_ { kTop, kCenter, kBottom };
 
+  void UpdateChests_();
   void UpdateTokensMeterText_();
   void UpdateForFocusedWindow_(Widget* widget);
   auto AddButton_(const ButtonDef_& def) -> Button_*;
@@ -73,7 +74,12 @@ class RootWidget : public ContainerWidget {
   void StepChildWidgets_(float dt);
   void AddMeter_(MeterType_ type, float h_align, float r, float g, float b,
                  bool plus, const std::string& s);
+  void UpdateTokensMeterTextColor_();
 
+  std::string chest_0_appearance_;
+  std::string chest_1_appearance_;
+  std::string chest_2_appearance_;
+  std::string chest_3_appearance_;
   std::list<Button_> buttons_;
   std::list<Text_> texts_;
   std::list<Image_> images_;
@@ -106,6 +112,10 @@ class RootWidget : public ContainerWidget {
   Image_* tickets_meter_icon_{};
   Image_* tokens_meter_icon_{};
   Image_* inbox_count_backing_{};
+  Image_* chest_0_lock_icon_{};
+  Image_* chest_1_lock_icon_{};
+  Image_* chest_2_lock_icon_{};
+  Image_* chest_3_lock_icon_{};
   Text_* squad_size_text_{};
   Text_* account_name_text_{};
   Text_* tickets_meter_text_{};
@@ -115,12 +125,18 @@ class RootWidget : public ContainerWidget {
   Text_* level_text_{};
   Text_* xp_text_{};
   Text_* inbox_count_text_{};
+  Text_* chest_0_time_text_{};
+  Text_* chest_1_time_text_{};
+  Text_* chest_2_time_text_{};
+  Text_* chest_3_time_text_{};
   float base_scale_{1.0f};
   float bottom_left_height_{};
   millisecs_t update_time_{};
   ToolbarVisibility toolbar_visibility_{ToolbarVisibility::kInGame};
   bool child_widgets_dirty_{true};
   bool in_main_menu_{};
+  bool gold_pass_{};
+  bool have_live_values_{};
 };
 
 }  // namespace ballistica::ui_v1

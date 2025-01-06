@@ -177,14 +177,12 @@ class SoundtrackEditWindow(bui.MainWindow):
             size=(self._width - (80 + 2 * x_inset), scroll_height),
             simple_culling_v=10,
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
         bui.widget(edit=self._text_field, down_widget=self._scrollwidget)
         self._col = bui.columnwidget(
             parent=scrollwidget,
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
 
@@ -256,7 +254,6 @@ class SoundtrackEditWindow(bui.MainWindow):
                 parent=self._col,
                 size=(self._width - 40, 40),
                 claims_left_right=True,
-                claims_tab=True,
                 selection_loops_to_parent=True,
             )
             type_name = type_names_translated.get(song_type, song_type)

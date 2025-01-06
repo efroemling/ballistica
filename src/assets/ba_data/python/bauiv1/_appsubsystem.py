@@ -162,40 +162,6 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # checks.
         self.upkeeptimer = babase.AppTimer(2.6543, ui_upkeep, repeat=True)
 
-    def auto_set_back_window(self, from_window: MainWindow) -> None:
-        """Sets the main menu window automatically from a parent WindowState."""
-
-        main_window = self._main_window()
-
-        # This should never get called for top-level main-windows.
-        assert (
-            main_window is None or main_window.main_window_is_top_level is False
-        )
-
-        back_state = (
-            None if main_window is None else main_window.main_window_back_state
-        )
-        if back_state is None:
-            raise RuntimeError(
-                f'Main window {main_window} provides no back-state;'
-                f' cannot use auto-back.'
-            )
-
-        # Valid states should have values here.
-        assert back_state.is_top_level is not None
-        assert back_state.is_auxiliary is not None
-        assert back_state.window_type is not None
-
-        backwin = back_state.create_window(transition='in_left')
-
-        self.set_main_window(
-            backwin,
-            from_window=from_window,
-            is_back=True,
-            back_state=back_state,
-            suppress_warning=True,
-        )
-
     def get_main_window(self) -> bauiv1.MainWindow | None:
         """Return main window, if any."""
         return self._main_window()
@@ -211,11 +177,14 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         back_state: MainWindowState | None = None,
         suppress_warning: bool = False,
     ) -> None:
-        """Set the current 'main' window, replacing any existing.
+        """Set the current 'main' window.
 
         Generally this should not be called directly; The high level
         MainWindow methods main_window_replace() and main_window_back()
-        should be used when possible for navigation.
+        should be used whenever possible to implement navigation.
+
+        The caller is responsible for cleaning up any previous main
+        window.
         """
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
