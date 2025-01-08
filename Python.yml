@@ -1,0 +1,190 @@
+Hogar
+Saltar al final
+ 
+Vishal editó esta páginael 16 de octubre de 2024 · 127 revisiones
+¡Bienvenido a Ballistica Wiki!
+Intentaré mantener este sitio bastante libre y abierto al público, así que siéntete libre de agregar tus propios documentos aquí o mejorar los existentes. Veremos cómo resulta. Lo cambiaré a privado si se abusa de él, así que no seas esa persona.
+
+Si eres nuevo en Ballistica, consulta el archivo README para obtener una introducción. De lo contrario, estás en el lugar correcto.
+
+Noticias:
+Python 3.12 y la magia de venv
+23 de abril de 2024
+
+Como parte de la próxima actualización 1.7.34, el proyecto se ha actualizado oficialmente para usar Python 3.12 . Cualquiera que haya estado en el proyecto durante un tiempo sabe lo que hay que hacer: asegúrese de tener un python3.12disponible en su ruta/etc. y debería poder compilar la última versión. Es posible que deba hacer un make cleano clonar el repositorio si tiene problemas.
+
+Sin embargo, una cosa que no tendrás que hacer esta vez es reinstalar un montón de paquetes Pip. Una característica divertida que agregué para que coincida con la actualización de Python 3.12 es un entorno virtual Python administrado por el proyecto. Esto significa que el proyecto ya no te molestará para que instales un montón de cosas de Pip como mypy, pylint, etc. Ahora simplemente lo hace por sí mismo y lo mantiene envuelto en su propio pequeño entorno virtual privado (en .venvcaso de que tengas curiosidad). Esto debería facilitar la puesta en marcha y hacer que las cosas sean más consistentes para las personas.
+
+Lanzamiento de la versión 1.7.20 (¡Modders, tomen nota!)
+22 de junio de 2023
+
+La actualización 1.7.20 de BombSquad se está implementando para todos los usuarios de Google Play a partir de hoy. Aunque el número de versión hace que parezca una actualización menor, contiene algunos cambios muy importantes que forman la base de las características que vienen en la versión 1.8. Si has escrito mods, tendrás que actualizarlos, ya que la versión de la API ha pasado de la 7 a la 8.
+
+Básicamente, la versión 1.7.20 divide el juego/motor en "conjuntos de características" con versiones independientes. Esto significa que si estás escribiendo código de juego, obtendrás las cosas que necesitas de un paquete "bascenev1" (Ballistica Scene Version 1), o si estás escribiendo código de interfaz de usuario, puedes usar "bauiv1" (Ballistica User Interface Version 1). Anteriormente, todo esto se encontraba en el módulo "ba".
+
+Básicamente, para actualizar mods, tendrás que reemplazar el uso de 'ba' o 'bastd' por los paquetes de nuevos conjuntos de características. Sí, esto es molesto, pero la ventaja es que una vez que las cosas estén usando el nuevo sistema, debería ser más fácil evitar que se rompan en el futuro, ya que podemos agregar nuevos conjuntos de características como 'bascenev2' para hacer evolucionar la API hacia adelante mientras dejamos intactas las API más antiguas. Para ver un ejemplo de actualización de un script de juego de la API 7 a la 8, mira esta demostración en un episodio reciente de 'Coffee With Eric'. También revisa el registro de cambios y únete al Discord de Ballistica si tienes alguna pregunta o encuentras algún error.
+
+Hay muchas más mejoras de arquitectura en esta actualización, incluidos los "modos de aplicación", el sistema de proyectos "Spinoff" y una actualización a Python 3.11. Estén atentos para obtener más detalles sobre todo esto... ¡ahora avanzamos hacia la versión 1.8!
+
+El negro es el nuevo Yapf
+10 de octubre de 2022
+
+Me encanta el formato automático . Ballistica ha estado usando yapf para formatear su código Python durante años y, en general, ha funcionado bien. Sin embargo, ayer descubrí que yapf se bloquea en la nueva declaración de coincidencia en Python 3.10 con la que estaba experimentando por primera vez. Esto me desconcertó, ya que Python 3.10 ya ha estado disponible durante casi un año, lo que es tiempo suficiente para que las herramientas adopten nuevas características, y me llevó a investigar el estado de los formateadores automáticos de Python. Después de investigar un poco, parece que el proyecto yapf está en gran parte inactivo y algunos podrían decir que está muriendo, mientras que black se ve extremadamente animado y saludable. Había analizado black cuando estaba configurando originalmente el formato automático, pero me decidí por yapf debido a su gran conjunto de opciones de estilo en comparación con la falta "absoluta" de black. Pero al mirarlo ahora de nuevo, encuentro que el estilo de Black es bastante aceptable y se siente más "curado por humanos" y consistente en comparación con los algoritmos más difusos de Yapf, que generalmente se ven geniales pero ocasionalmente arrojan resultados desconcertantemente feos.
+
+Ahora utilizaremos el color negro, pero con algunas salvedades:
+
+Vamos a utilizar longitudes de línea de 80 caracteres. El valor predeterminado para el negro es 88, pero como queremos que sea lo más utilizable posible en dispositivos móviles con pantallas pequeñas, nos quedaremos con 80, que también es un estándar muy utilizado. Tenga en cuenta que, en realidad, estoy aumentando este valor desde los 79 que estábamos utilizando antes y que es recomendado por Pep-8, pero creo que la motivación de Pep-8 para 79 en lugar de 80 (los editores muestran glifos de marcadores en la última columna) no es algo muy común, así que derrochemos y usemos los 80 completos.
+También estoy desactivando la "normalización de cadenas" de Black, que convierte todas las comillas simples en dobles. No estoy listo para deshacerme de las comillas simples; personalmente, las encuentro más elegantes y legibles. Tal vez lo reconsidere más adelante.
+Para usar el nuevo formato, no deberías necesitar hacer nada más que asegurarte de que esté instalado el formato negro. ( pip install black). Los objetivos de compilación de Ballistica deberían molestarte si no lo está. Luego, simplemente ejecuta las cosas estándar como make formato make preflight. También puedes usar efrotools.code.format_python_str()para ejecutar explícitamente algún código a través del formato con nuestra configuración o efrotools.code.black_base_args()para obtener los argumentos de la línea de comandos que usamos para invocar la herramienta.
+
+Ahora volvamos a probar esa matchafirmación...
+
+Consola en la nube
+18 de septiembre de 2022
+
+La actualización 1.7.7 ya está comenzando a implementarse y agrega soporte para la nueva página de dispositivos ballistica.net ; específicamente la función de consola. Esto te permite ver la salida de la aplicación y ejecutar comandos en cualquier dispositivo en el que hayas iniciado sesión con tu cuenta V2. Esto debería ser de gran ayuda para los modders que usan teléfonos u otros dispositivos donde puede ser difícil acceder a los registros del dispositivo/aplicación de otra manera. También puede ser de utilidad para todos los modders, ya que te permite escribir código de prueba de varias líneas y ejecutarlo fácilmente de manera repetida después de reiniciar la aplicación. Cuando se combina con espacios de trabajo , esto debería comenzar a permitir una modificación bastante efectiva usando nada más que un navegador web. A continuación, planeo habilitar las funciones de la cuenta V2 para Google Play y otros tipos de cuentas ampliamente utilizados y luego planeo escribir algunos tutoriales de modders que usen estas herramientas. Mantente atento.
+
+Servidor de Discord
+4 de agosto de 2022
+
+He recibido muchas solicitudes para esto, así que por fin hay un servidor oficial de Discord de BombSquad/Ballistica . Muchos modders y miembros de la comunidad ya se han unido y participaré periódicamente (incluso en el horario de oficina semanal programado), por lo que es un gran recurso para hacer preguntas o compartir cosas divertidas que hayas creado.
+
+¡¡¡BombSquad 1.7 ya está aquí!!!
+13 de julio de 2022
+
+🚀 ¡Allá vamos! (ver la discusión )
+
+Espacios de trabajo
+1 de julio de 2022
+
+La nueva funcionalidad de los espacios de trabajo de la versión 1.7 ya está disponible. Esto incluye tanto la interfaz de edición web sencilla como la herramienta de línea de comandos de bacloud para interactuar con ellos desde una computadora. No dude en avisarnos si tiene algún problema o desea hacer algún comentario. Mi próxima prioridad será publicar las compilaciones de la versión 1.7 en Google Play, etc., para que la gente no tenga que descargar compilaciones de prueba para jugar con estas cosas.
+
+Documentación de espacios de trabajo
+
+Python 3.10
+1 de junio de 2022
+
+Para acompañar el inminente lanzamiento de la versión 1.7, Ballistica se ha actualizado de Python 3.9 a 3.10. Esto significa que estamos usando la última y mejor versión disponible. También he mejorado mi canal de back-end para que dependa menos de las versiones Python del sistema operativo, lo que significa que somos libres de actualizar la versión Python de Ballistica anualmente en sincronía con Python en sí mismo en lugar de esperar actualizaciones de Ubuntu LTS o lo que sea (aunque espero que todavía esperemos unos meses después de los nuevos lanzamientos de Python para permitir que el soporte de las herramientas madure, etc.).
+
+En consecuencia, actualizaré la sección de introducción con más información sobre la instalación de versiones de Python distintas a las que vienen con el sistema operativo. Por ejemplo, Homebrew para Mac todavía instala Python 3.9 de forma predeterminada, pero necesitarás instalar 3.10 para compilar el material de Ballistica.
+
+Aquí está la lista de novedades de Python 3.10. No hay nada que nos resulte demasiado relevante, pero hay algunas cosas con las que podría ser divertido jugar. Originalmente, la versión 3.10 habría significado que podríamos eliminar todas las from __future__ import annotationslíneas, pero ese cambio se ha pospuesto .
+
+En el lado de la verificación de tipos, aquí hay una mejora de sintaxis agradable: typing.Optionaly typing.Unionya no son necesarios.
+
+En lugar de un código como este:
+
+from typing import Union, Optional
+possibly_str: Optional[str] = 'HELLO' if random.random() > 0.5 else None
+assert isinstance(possibly_str, (str, type(None)))
+str_or_int: Union[str, int] = 'HELLO' if random.random() > 0.5 else 123
+Ahora podemos hacer esto:
+
+possibly_str: str | None = 'HELLO' if random.random() > 0.5 else None
+assert isinstance(possibly_str, str | None)
+str_or_int: str | int = 'HELLO' if random.random() > 0.5 else 123
+Por favor, avise o envíe correcciones si encuentra algo roto, documentos desactualizados, etc.
+
+Python 3.9
+23 de octubre de 2021
+
+Ballistica/Bombsquad 1.6.5 se ha actualizado de Python 3.8 a 3.9. Voy a cambiar a una Mac basada en Arm como mi máquina de desarrollo principal, y 3.9 es la primera versión oficialmente compatible allí, por lo que parecía un buen momento para actualizar. 3.10 acaba de lanzarse, pero aún no está ampliamente disponible, así que llegaremos a ella más adelante en su ciclo de vida.
+
+Python 3.9 debería ser relativamente fácil de instalar en la mayoría de las plataformas; en Ubuntu 20 (incluido WSL en Windows) sí sudo apt update; sudo apt install python3.9-dev, y en las configuraciones homebrew de Mac sí brew install python@3.9. Consulta la sección de introducción para obtener más detalles.
+
+Estas son las novedades de Python 3.9. Para nosotros, la mejora más notable será la simplificación de las anotaciones de tipos en muchos casos; ahora se pueden utilizar los objetos de tipos estándar en lugar de los especiales del módulo de tipificación.
+
+En lugar de un código como este:
+
+from typing import Dict, Tuple
+my_obj_vals: Dict[str, Tuple[int]] = {'obj1': (1, 2, 3)}
+Ahora podemos hacer esto:
+
+my_obj_vals: dict[str, tuple[int]] = {'obj1': (1, 2, 3)}
+Por favor, avise o envíe correcciones si encuentra algo roto, documentos desactualizados, etc.
+
+Compilación en Windows
+6 de junio de 2021
+
+Durante un tiempo ha sido posible compilar la mayor parte del juego desde el código fuente en Linux y Mac, y me complace decir que ahora también es posible en Windows. Consulta la documentación aquí . Si tienes algún comentario o te surge algún problema, por favor contribuye a la discusión aquí . ¡Disfrútalo!
+
+¡Escuadrón de bombas 1.6!
+5 de mayo de 2021
+
+Las versiones 1.6 de BombSquad están empezando a llegar a varias plataformas (así como las versiones equivalentes de ballisticacore aquí). La gran novedad es el alojamiento privado, que te permite crear un juego en un servidor en la nube y compartir un código simple con amigos para que se unan. Esto representa el primer uso de mi nueva configuración de alojamiento en la nube mundial en la que he estado trabajando durante muchos meses, que formará la base de muchas cosas divertidas en las próximas versiones (torneos multijugador, emparejamiento, etc.). Consulta el REGISTRO DE CAMBIOS para ver la lista completa de cambios. Como siempre, ¡avísanos si tienes algún problema y disfruta!
+
+Compatibilidad nativa con M1 para Mac
+25 de noviembre de 2020
+
+Ballistica ahora es compatible con compilaciones nativas de Arm-64 en las nuevas Mac M1 (tanto a través de los objetivos "Prefab" como compilando desde la fuente). Consulta la sección de introducción actualizada para obtener más detalles. Una compilación completa desde la fuente en una M1 demora aproximadamente 19 segundos 😎.
+
+La capa C++ ahora es (en su mayor parte) de código abierto
+13 de octubre de 2020
+
+Finalmente me tomé un tiempo y logré subir la mayor parte del código C++ del motor aquí, por lo que ahora es posible compilar desde fuentes en lugar de usar solo binarios precompilados. Por lo tanto, si alguien desea experimentar con código de bajo nivel, como los motores de renderizado o física, ahora es posible. Consulte Descripción general de la capa nativa para obtener más detalles.
+
+Python 3.8
+1 de agosto de 2020
+
+Ballistica/Bombsquad 1.5.24 se ha actualizado de Python 3.7 a 3.8, que es (al momento de esta publicación) la versión más nueva disponible. Este no es un cambio tan grande como lo fue la actualización de 2.7 -> 3.7 (todo el código Python que funcionaba en 3.7 debería seguir funcionando en 3.8), pero puede requerir ajustes en su entorno de desarrollo si no tiene Python 3.8 disponible actualmente, ya que las herramientas de compilación son muy específicas al buscar esa versión exacta. Intentaré mantener Ballistica actualizado en general con la última versión de Python, por lo que esta transición se realizará una vez cada uno o dos años. Actualizaré los documentos de "primeros pasos" y cualquier otro lugar que mencione Python 3.7, y avíseme si encuentra información desactualizada en otro lugar (o siéntase libre de corregirla usted mismo).
+
+Nuevo sistema de complementos en la versión 1.5.23
+23 de julio de 2020
+
+Una solicitud común desde la versión 1.5 ha sido la capacidad de que los mods se ejecuten automáticamente al iniciarse (la versión 1.4 ejecutaba todo lo que estaba en la carpeta de mods al iniciarse, pero la 1.5 no). Por eso, me complace anunciar que a partir de la versión 1.5.23 es posible nuevamente ejecutar código al iniciarse a través del nuevo sistema de "complementos". Obtenga más información .
+
+Lanzamiento completo de BombSquad 1.5
+Ha sido un largo proceso de corrección de errores y mejoras, pero me alegra decir que, a partir de la versión 1.5.22, he activado el interruptor para que Google Play entregue la versión 1.5.x al 100 % de los usuarios (no más la versión 1.4). Continúen informando sobre errores o imperfecciones y ahora podemos pasar a las cosas divertidas de la versión 1.6+...
+
+¡¡¡BombSquad 1.5 ya está aquí!!!
+Después de varias semanas de limpieza y pruebas, me complace decir que BombSquad 1.5, la primera versión del juego que utiliza este código base de Ballistica, está aquí.
+
+Obtenga versiones de prueba en https://files.ballistica.net/bombsquad/builds/
+
+Como se mencionó en la hoja de ruta , el objetivo con la versión 1.5 es hacer la transición del juego existente a la nueva arquitectura. La mayoría de las nuevas y emocionantes características llegarán en las próximas versiones y se basarán en esta base. Pero por ahora, por favor, avísanos si algo parece estar roto o funcionalmente diferente de lo que era en la versión 1.4. Cuanto antes podamos solucionar los errores, antes podremos pasar a las cosas divertidas...
+
+Notas:
+
+Actualización: las compilaciones de prueba genéricas de Android también están disponibles ahora (a partir de la versión 1.5.6)
+Ya se encuentran disponibles pruebas abiertas para la versión Android de Google Play. Para participar en las pruebas, haz clic aquí o busca la opción "Unirse a la versión beta" en la tienda Google Play.
+Comenzaré a implementarlas lentamente en Google Play, Mac App Store, etc. pronto de manera escalonada.
+Estas versiones oficiales de BombSquad son básicamente idénticas a lo que obtienes si ejecutas las compilaciones prefabricadas actuales de Ballistica desde aquí. La principal diferencia es que las cosas se llaman "BombSquad" en lugar de "BallisticaCore" y los torneos deberían funcionar (los puntajes de torneos enviados desde las compilaciones de BallisticaCore se rechazan).
+ballistica.net • discordia • blog • soporte
+
+Páginas21
+Hogar
+
+Empezando
+
+Guía de modificación
+
+Contribuyendo
+
+Hoja de ruta
+
+Documentos de diseño
+Principios básicos de diseño
+
+Documentos técnicos
+Espacios de trabajo
+
+Descripción general de Python
+
+API de Python
+
+Descripción general de la capa nativa
+
+Configuración del editor
+
+Guía de estilo de codificación
+
+Sistema de dependencia
+
+Sistema de metaetiquetas
+
+Pepitas de conocimiento
+
+Registro de cambios
+
+Clonar esta wiki localmente
+https://github.com/efroemling/ballistica.wiki.git
