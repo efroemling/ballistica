@@ -1,0 +1,63 @@
+Documentación de GitHub
+Seguridad de código/Seguridad de la cadena de suministro/Entender tu cadena de suministro/Gráfico de dependencias
+Acerca del gráfico de dependencias
+Puedes utilizar la gráfica de dependencias para identificar todas las dependencias de tus proyectos. La gráfica de dependencias es compatible con una variedad de ecosistemas de paquetes populares.
+
+¿Quién puede utilizar esta característica?
+El gráfico de dependencias está disponible para los siguientes tipos de repositorio:
+
+Repositorios públicos (activado de manera predeterminada)
+Los repositorios privados
+Horquillas
+En este artículo
+Acerca del gráfico de dependencias
+Disponibilidad de la gráfica de dependencias
+Dependencias que se incluyen
+Dependientes incluídos
+Utiizar la gráfica de dependencias
+Información adicional
+Acerca del gráfico de dependencias
+El gráfico de dependencias es un resumen de los archivos de manifiesto y de bloqueo almacenados en un repositorio y las dependencias que se envían para el repositorio mediante API de envío de dependencias. Para cada repositorio, muestra:
+
+Las dependencias, ecosistemas y paquetes de los cuales depende
+Dependientes, los repositorios y paquetes que dependen de él
+Puedes ver la información de la licencia y la gravedad de la vulnerabilidad para cada dependencia. También puedes buscar una dependencia específica mediante la barra de búsqueda. Las dependencias se ordenan automáticamente por gravedad de la vulnerabilidad.
+
+Al insertar una confirmación en GitHub que cambie o agregue un archivo de bloqueo o de manifiesto admitido a la rama predeterminada, el gráfico de dependencias se actualizará de forma automática. Además, el gráfico se actualiza cuando alguien inserte un cambio en el repositorio de una de las dependencias.
+
+Para más información sobre los ecosistemas y archivos de manifiesto compatibles, consulta Ecosistemas de paquetes admitidos para el gráfico de dependencias.
+
+De manera adicional, puede usar API de envío de dependencias para enviar dependencias desde el administrador de paquetes o el ecosistema que prefiera, incluso si el ecosistema no es compatible con el gráfico de dependencias para el análisis del archivo de manifiesto o de bloqueo. Las dependencias enviadas a un proyecto mediante API de envío de dependencias mostrarán qué detector se ha usado para su envío y cuándo se han enviado. Para más información sobre API de envío de dependencias, consulta Uso de la Dependency submission API.
+
+Cuando creas una solicitud de cambios que contenga los cambios de las dependencias que apuntan a la rama predeterminada, GitHub utiliza la gráfica de dependencias para agregar revisiones de dependencia a la solicitud de cambios. Estas indican si las dependencias contendrán vulnerabilidades y, si es el caso, la versión de la dependencia en la cual se arregló la vulnerabilidad. Para más información, consulta Acerca de la revisión de dependencias.
+
+Si tienes al menos acceso de lectura al repositorio, puedes exportar el gráfico de dependencias del repositorio como una la lista de materiales de software (SBOM) compatible con SPDX, a través de la interfaz de usuario de GitHub o la API REST de GitHub. Para más información, consulta Exportación de una lista de materiales de software para el repositorio.
+
+Disponibilidad de la gráfica de dependencias
+El gráfico de dependencias se genera automáticamente para todos los repositorios públicos. Puedes optar por habilitarlo para bifurcaciones y repositorios privados. Para obtener más información, consulta Administración de la configuración de seguridad y análisis para el repositorio.
+
+Los administradores de repositorio también pueden configurar la gráfica de dependencias para los repositorios privados. Para más información, consulta Configuración del gráfico de dependencias.
+
+Dependencias que se incluyen
+El gráfico de dependencias incluye todas las dependencias de un repositorio que se detallan en los archivos de manifiesto y bloqueo, o su equivalente, para los ecosistemas admitidos, así como las dependencias que se envían mediante la API de envío de dependencias. Esto incluye:
+
+Las dependencias directas, que se definen explícitamente en un archivo de manifiesto o bloqueo o se han enviado mediante API de envío de dependencias
+Las dependencias indirectas de estas dependencias directas, también conocidas como dependencias transitorias o sub-dependencias
+El gráfico de dependencias identifica dependencias indirectas solo si se definen en un archivo de bloqueo o se han enviado mediante API de envío de dependencias. Para la gráfica más confiable, debes utilizar archivos de bloqueo (o su equivalente), ya que estos definen exactamente qué versiones de las dependencias directas e indirectas estás utilizando actualmente. Si utilizas archivos de bloqueo, también te aseguras de que todos los contribuyentes del repositorio están utilizando las mismas versiones, lo cual te facilitará el probar y depurar el código. Si el ecosistema no tiene archivos de bloqueo, puede usar acciones realizadas previamente que resuelven dependencias transitivas para muchos ecosistemas. Para más información, consulta Uso de la Dependency submission API.
+
+Para obtener más información sobre cómo GitHub te ayuda a comprender las dependencias de tu entorno, consulta Acerca de la seguridad de la cadena de suministro.
+
+Dependientes incluídos
+Para los repositorios públicos, únicamente se reportan los repositorios públicos que dependen de éste o de los paquetes que publicas. Esta información no se reporta para los repositorios privados.
+
+Utiizar la gráfica de dependencias
+Puedes utilizar la gráfica de dependencias para:
+
+Explore los repositorios de los que depende el código en y los que dependen de él. Para más información, consulta Explorar las dependencias de un repositorio.
+Ver y actualizar las dependencias vulnerables de tu repositorio. Para más información, consulta Acerca de las alertas Dependabot.
+Consulta la información sobre las dependencias vulnerables en las solicitudes de cambios. Para más información, consulta Revisar los cambios de las dependencias en una solicitud de cambios.
+Información adicional
+Gráfico de dependencias en Wikipedia
+Explorar las dependencias de un repositorio
+Visualización y actualización de alertas de Dependabot
+Solucionar problemas en la detección de dependencias vulnerables
