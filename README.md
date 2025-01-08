@@ -1,6 +1,6 @@
 <img
 src="https://files.ballistica.net/ballistica_media/ballistica_logo_half.png"
-height="50" alt="logo">
+height="50" alt="logo"> 
 
 ***bal·lis·tic***: physics of an object in motion; behaving like a projectile.
 
