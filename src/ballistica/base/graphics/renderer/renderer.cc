@@ -650,7 +650,7 @@ void Renderer::UpdatePixelScaleAndBackingBuffer(FrameDef* frame_def) {
 }
 
 void Renderer::LoadMedia(FrameDef* frame_def) {
-  millisecs_t t = g_core->GetAppTimeMillisecs();
+  millisecs_t t = g_core->AppTimeMillisecs();
   for (auto&& i : frame_def->media_components()) {
     Asset* mc = i.get();
     assert(mc);
@@ -667,7 +667,7 @@ void Renderer::LoadMedia(FrameDef* frame_def) {
 //   //  default about 1 second after a res change, etc...
 //   //  so if we're using a non-1.0 gamma, lets keep setting it periodically
 //   //  to force the issue
-//   millisecs_t t = g_core->GetAppTimeMillisecs();
+//   millisecs_t t = g_core->AppTimeMillisecs();
 //   if (screen_gamma_requested_ != screen_gamma_
 //       || (t - last_screen_gamma_update_time_ > 300 && screen_gamma_ != 1.0f))
 //       {

@@ -231,11 +231,11 @@ class CoopBrowserWindow(bui.MainWindow):
         # Don't want initial construction affecting our last-selected.
         self._do_selection_callbacks = False
         v = self._height - 95
-        txt = bui.textwidget(
+        bui.textwidget(
             parent=self._root_widget,
             position=(
                 self._width * 0.5,
-                v + 40 - (0 if uiscale is bui.UIScale.SMALL else 0),
+                v + 40 - (25 if uiscale is bui.UIScale.SMALL else 0),
             ),
             size=(0, 0),
             text=bui.Lstr(
@@ -244,13 +244,10 @@ class CoopBrowserWindow(bui.MainWindow):
             ),
             h_align='center',
             color=app.ui_v1.title_color,
-            scale=1.5,
-            maxwidth=500,
+            scale=0.85 if uiscale is bui.UIScale.SMALL else 1.5,
+            maxwidth=280 if uiscale is bui.UIScale.SMALL else 500,
             v_align='center',
         )
-
-        if uiscale is bui.UIScale.SMALL:
-            bui.textwidget(edit=txt, text='')
 
         self._selected_row = cfg.get('Selected Coop Row', None)
 

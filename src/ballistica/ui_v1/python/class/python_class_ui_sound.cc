@@ -124,7 +124,7 @@ PyTypeObject PythonClassUISound::type_obj;
 PyMethodDef PythonClassUISound::tp_methods[] = {
     {"play", (PyCFunction)PythonClassUISound::Play,
      METH_VARARGS | METH_KEYWORDS,
-     "play() -> None\n"
+     "play(volume: float = 1.0) -> None\n"
      "\n"
      "Play the sound locally.\n"
      ""},

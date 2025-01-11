@@ -367,6 +367,7 @@ class PublicGatherTab(GatherTab):
         self._last_server_list_query_time: float | None = None
         self._join_list_column: bui.Widget | None = None
         self._join_status_text: bui.Widget | None = None
+        self._join_status_spinner: bui.Widget | None = None
         self._no_servers_found_text: bui.Widget | None = None
         self._host_max_party_size_value: bui.Widget | None = None
         self._host_max_party_size_minus_button: bui.Widget | None = None
@@ -665,6 +666,9 @@ class PublicGatherTab(GatherTab):
             size=(400, 400),
             claims_left_right=True,
         )
+
+        # Create join status text and join spinner. Always make sure to
+        # update both of these together.
         self._join_status_text = bui.textwidget(
             parent=self._container,
             text='',
@@ -678,6 +682,10 @@ class PublicGatherTab(GatherTab):
             color=(0.6, 0.6, 0.6),
             position=(c_width * 0.5, c_height * 0.5),
         )
+        self._join_status_spinner = bui.spinnerwidget(
+            parent=self._container, position=(c_width * 0.5, c_height * 0.5)
+        )
+
         self._no_servers_found_text = bui.textwidget(
             parent=self._container,
             text='',
@@ -944,37 +952,51 @@ class PublicGatherTab(GatherTab):
             name = cast(str, bui.textwidget(query=self._host_name_text))
             bs.set_public_party_name(name)
 
-        # Update status text.
-        status_text = self._join_status_text
-        if status_text:
+        # Update status text and loading spinner.
+        if self._join_status_text:
+            assert self._join_status_spinner
             if not signed_in:
                 bui.textwidget(
-                    edit=status_text, text=bui.Lstr(resource='notSignedInText')
+                    edit=self._join_status_text,
+                    text=bui.Lstr(resource='notSignedInText'),
                 )
+                bui.spinnerwidget(edit=self._join_status_spinner, visible=False)
             else:
                 # If we have a valid list, show no status; just the list.
                 # Otherwise show either 'loading...' or 'error' depending
                 # on whether this is our first go-round.
                 if self._have_valid_server_list:
-                    bui.textwidget(edit=status_text, text='')
+                    bui.textwidget(edit=self._join_status_text, text='')
+                    bui.spinnerwidget(
+                        edit=self._join_status_spinner, visible=False
+                    )
                 else:
                     if self._have_server_list_response:
                         bui.textwidget(
-                            edit=status_text,
+                            edit=self._join_status_text,
                             text=bui.Lstr(resource='errorText'),
                         )
+                        bui.spinnerwidget(
+                            edit=self._join_status_spinner, visible=False
+                        )
                     else:
-                        bui.textwidget(
-                            edit=status_text,
-                            text=bui.Lstr(
-                                value='${A}...',
-                                subs=[
-                                    (
-                                        '${A}',
-                                        bui.Lstr(resource='store.loadingText'),
-                                    )
-                                ],
-                            ),
+                        # Show our loading spinner.
+                        bui.textwidget(edit=self._join_status_text, text='')
+                        # bui.textwidget(
+                        #     edit=self._join_status_text,
+                        #     text=bui.Lstr(
+                        #         value='${A}...',
+                        #         subs=[
+                        #             (
+                        #                 '${A}',
+                        #
+                        # bui.Lstr(resource='store.loadingText'),
+                        #             )
+                        #         ],
+                        #     ),
+                        # )
+                        bui.spinnerwidget(
+                            edit=self._join_status_spinner, visible=True
                         )
 
         self._update_party_rows()
@@ -1005,16 +1027,11 @@ class PublicGatherTab(GatherTab):
             self._ui_rows = self._ui_rows[:-clipcount]
 
         # If we have no parties to show, we're done.
-        if not self._parties_displayed:
-            text = self._join_status_text
-            if (
-                plus.get_v1_account_state() == 'signed_in'
-                and cast(str, bui.textwidget(query=text)) == ''
-            ):
-                bui.textwidget(
-                    edit=self._no_servers_found_text,
-                    text=bui.Lstr(resource='noServersFoundText'),
-                )
+        if self._have_valid_server_list and not self._parties_displayed:
+            bui.textwidget(
+                edit=self._no_servers_found_text,
+                text=bui.Lstr(resource='noServersFoundText'),
+            )
             return
 
         sub_scroll_width = 830

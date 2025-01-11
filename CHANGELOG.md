@@ -1,4 +1,4 @@
-### 1.7.37 (build 22155, api 9, 2024-12-31)
+### 1.7.37 (build 22178, api 9, 2025-01-11)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -176,6 +176,21 @@
   should use arrow keys for navigation. To update any old UI code, search for
   and remove any 'claims_tab' arguments to UI calls since that argument no
   longer exists.
+- Added a `get_unknown_type_fallback()` method to `dataclassio.IOMultiType`.
+  This be defined to allow multi-type data to be loadable even in the presence
+  of new types it doesn't recognize.
+- Added a `lossy` arg to `dataclassio.dataclass_from_dict()` and
+  `dataclassio.dataclass_from_json()`. Enum value fallbacks and the new
+  multitype fallbacks are now only applied when `lossy` is True. This also flags
+  the returned dataclass to prevent it from being serialized back out. Fallbacks
+  are useful for forward compatibility, but they are also dangerous in that they
+  can silently modify/destroy data, so this mechanism will hopefully help keep
+  them used safely.
+- Added a spinner widget (creatable via `bauiv1.spinnerwidget()`). This should
+  help things look more alive than the static 'loading...' text I've been using
+  in various places.
+- Tournament now award chests instead of tickets.
+- Tournaments are now free to enter if you are running this build or newer.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these

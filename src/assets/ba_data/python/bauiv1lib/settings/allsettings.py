@@ -10,7 +10,7 @@ import logging
 import bauiv1 as bui
 
 if TYPE_CHECKING:
-    pass
+    from typing import Callable
 
 
 class AllSettingsWindow(bui.MainWindow):
@@ -21,7 +21,6 @@ class AllSettingsWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
 
         # Preload some modules we use in a background thread so we won't
@@ -31,12 +30,12 @@ class AllSettingsWindow(bui.MainWindow):
         bui.set_analytics_screen('Settings Window')
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        width = 1000 if uiscale is bui.UIScale.SMALL else 580
+        width = 1000 if uiscale is bui.UIScale.SMALL else 900
         x_inset = 125 if uiscale is bui.UIScale.SMALL else 0
-        height = 500 if uiscale is bui.UIScale.SMALL else 435
+        height = 500 if uiscale is bui.UIScale.SMALL else 450
         self._r = 'settingsWindow'
         top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
-        yoffs = -30 if uiscale is bui.UIScale.SMALL else 0
+        yoffs = -30 if uiscale is bui.UIScale.SMALL else -30
 
         uiscale = bui.app.ui_v1.uiscale
         super().__init__(
@@ -50,10 +49,7 @@ class AllSettingsWindow(bui.MainWindow):
                 scale=(
                     1.5
                     if uiscale is bui.UIScale.SMALL
-                    else 1.25 if uiscale is bui.UIScale.MEDIUM else 1.0
-                ),
-                stack_offset=(
-                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    else 1.1 if uiscale is bui.UIScale.MEDIUM else 0.8
                 ),
             ),
             transition=transition,
@@ -69,12 +65,12 @@ class AllSettingsWindow(bui.MainWindow):
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
                 autoselect=True,
-                position=(40 + x_inset, height - 55 + yoffs),
-                size=(130, 60),
+                position=(40 + x_inset, height - 60 + yoffs),
+                size=(70, 70),
                 scale=0.8,
                 text_scale=1.2,
-                label=bui.Lstr(resource='backText'),
-                button_type='back',
+                label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
                 on_activate_call=self.main_window_back,
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
@@ -87,131 +83,116 @@ class AllSettingsWindow(bui.MainWindow):
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
+            scale=1.1,
             maxwidth=130,
         )
 
-        if self._back_button is not None:
-            bui.buttonwidget(
-                edit=self._back_button,
-                button_type='backSmall',
-                size=(60, 60),
-                label=bui.charstr(bui.SpecialChar.BACK),
+        bwidth = 200
+        bheight = 230
+        margin = 1
+        all_buttons_width = 4.0 * bwidth + 3.0 * margin
+
+        x = width * 0.5 - all_buttons_width * 0.5
+        y = height + yoffs - 320.0
+
+        def _button(
+            position: tuple[float, float],
+            label: bui.Lstr,
+            call: Callable[[], None],
+            texture: bui.Texture,
+            imgsize: float,
+            *,
+            color: tuple[float, float, float] = (1.0, 1.0, 1.0),
+            imgoffs: tuple[float, float] = (0.0, 0.0),
+        ) -> bui.Widget:
+            x, y = position
+            btn = bui.buttonwidget(
+                parent=self._root_widget,
+                autoselect=True,
+                position=(x, y),
+                size=(bwidth, bheight),
+                button_type='square',
+                label='',
+                on_activate_call=call,
             )
-
-        v = height - 80 + yoffs
-        v -= 145
-
-        basew = 280 if uiscale is bui.UIScale.SMALL else 230
-        baseh = 170
-        x_offs = (
-            x_inset + (105 if uiscale is bui.UIScale.SMALL else 72) - basew
-        )  # now unused
-        x_offs2 = x_offs + basew - 7
-        x_offs3 = x_offs + 2 * (basew - 7)
-        x_offs4 = x_offs2
-        x_offs5 = x_offs3
-
-        def _b_title(
-            x: float, y: float, button: bui.Widget, text: str | bui.Lstr
-        ) -> None:
             bui.textwidget(
                 parent=self._root_widget,
-                text=text,
-                position=(x + basew * 0.47, y + baseh * 0.22),
-                maxwidth=basew * 0.7,
+                text=label,
+                position=(x + bwidth * 0.5, y + bheight * 0.25),
+                maxwidth=bwidth * 0.7,
                 size=(0, 0),
                 h_align='center',
                 v_align='center',
-                draw_controller=button,
+                draw_controller=btn,
                 color=(0.7, 0.9, 0.7, 1.0),
             )
+            bui.imagewidget(
+                parent=self._root_widget,
+                position=(
+                    x + bwidth * 0.5 - imgsize * 0.5 + imgoffs[0],
+                    y + bheight * 0.56 - imgsize * 0.5 + imgoffs[1],
+                ),
+                size=(imgsize, imgsize),
+                texture=texture,
+                draw_controller=btn,
+                color=color,
+            )
+            return btn
 
-        ctb = self._controllers_button = bui.buttonwidget(
-            parent=self._root_widget,
-            autoselect=True,
-            position=(x_offs2, v),
-            size=(basew, baseh),
-            button_type='square',
-            label='',
-            on_activate_call=self._do_controllers,
-        )
-        if self._back_button is None:
-            bbtn = bui.get_special_widget('back_button')
-            bui.widget(edit=ctb, left_widget=bbtn)
-        _b_title(
-            x_offs2, v, ctb, bui.Lstr(resource=f'{self._r}.controllersText')
-        )
-        imgw = imgh = 130
-        bui.imagewidget(
-            parent=self._root_widget,
-            position=(x_offs2 + basew * 0.49 - imgw * 0.5, v + 35),
-            size=(imgw, imgh),
+        self._controllers_button = _button(
+            position=(x, y),
+            label=bui.Lstr(resource=f'{self._r}.controllersText'),
+            call=self._do_controllers,
             texture=bui.gettexture('controllerIcon'),
-            draw_controller=ctb,
+            imgsize=150,
+            imgoffs=(-2.0, 2.0),
         )
+        x += bwidth + margin
 
-        gfxb = self._graphics_button = bui.buttonwidget(
-            parent=self._root_widget,
-            autoselect=True,
-            position=(x_offs3, v),
-            size=(basew, baseh),
-            button_type='square',
-            label='',
-            on_activate_call=self._do_graphics,
-        )
-        pbtn = bui.get_special_widget('squad_button')
-        bui.widget(edit=gfxb, up_widget=pbtn, right_widget=pbtn)
-        _b_title(x_offs3, v, gfxb, bui.Lstr(resource=f'{self._r}.graphicsText'))
-        imgw = imgh = 110
-        bui.imagewidget(
-            parent=self._root_widget,
-            position=(x_offs3 + basew * 0.49 - imgw * 0.5, v + 42),
-            size=(imgw, imgh),
+        self._graphics_button = _button(
+            position=(x, y),
+            label=bui.Lstr(resource=f'{self._r}.graphicsText'),
+            call=self._do_graphics,
             texture=bui.gettexture('graphicsIcon'),
-            draw_controller=gfxb,
+            imgsize=135,
+            imgoffs=(0, 4.0),
         )
+        x += bwidth + margin
 
-        v -= baseh - 5
-
-        abtn = self._audio_button = bui.buttonwidget(
-            parent=self._root_widget,
-            autoselect=True,
-            position=(x_offs4, v),
-            size=(basew, baseh),
-            button_type='square',
-            label='',
-            on_activate_call=self._do_audio,
-        )
-        _b_title(x_offs4, v, abtn, bui.Lstr(resource=f'{self._r}.audioText'))
-        imgw = imgh = 120
-        bui.imagewidget(
-            parent=self._root_widget,
-            position=(x_offs4 + basew * 0.49 - imgw * 0.5 + 5, v + 35),
-            size=(imgw, imgh),
-            color=(1, 1, 0),
+        self._audio_button = _button(
+            position=(x, y),
+            label=bui.Lstr(resource=f'{self._r}.audioText'),
+            call=self._do_audio,
             texture=bui.gettexture('audioIcon'),
-            draw_controller=abtn,
+            imgsize=150,
+            color=(1, 1, 0),
+        )
+        x += bwidth + margin
+
+        self._advanced_button = _button(
+            position=(x, y),
+            label=bui.Lstr(resource=f'{self._r}.advancedText'),
+            call=self._do_advanced,
+            texture=bui.gettexture('advancedIcon'),
+            imgsize=150,
+            color=(0.8, 0.95, 1),
+            imgoffs=(0, 5.0),
         )
 
-        avb = self._advanced_button = bui.buttonwidget(
-            parent=self._root_widget,
-            autoselect=True,
-            position=(x_offs5, v),
-            size=(basew, baseh),
-            button_type='square',
-            label='',
-            on_activate_call=self._do_advanced,
-        )
-        _b_title(x_offs5, v, avb, bui.Lstr(resource=f'{self._r}.advancedText'))
-        imgw = imgh = 120
-        bui.imagewidget(
-            parent=self._root_widget,
-            position=(x_offs5 + basew * 0.49 - imgw * 0.5 + 5, v + 35),
-            size=(imgw, imgh),
-            color=(0.8, 0.95, 1),
-            texture=bui.gettexture('advancedIcon'),
-            draw_controller=avb,
-        )
+        # Hmm; we're now wide enough that being limited to pressing up
+        # might be ok.
+        if bool(False):
+            # Left from our leftmost button should go to back button.
+            if self._back_button is None:
+                bbtn = bui.get_special_widget('back_button')
+                bui.widget(edit=self._controllers_button, left_widget=bbtn)
+
+            # Right from our rightmost widget should go to squad button.
+            bui.widget(
+                edit=self._advanced_button,
+                right_widget=bui.get_special_widget('squad_button'),
+            )
+
         self._restore_state()
 
     @override

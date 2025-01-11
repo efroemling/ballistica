@@ -6,6 +6,7 @@
 #include <list>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "ballistica/shared/ballistica.h"  // IWYU pragma: keep.
 
@@ -152,6 +153,9 @@ class PythonRef {
   /// Return an item from a dict obj. Returns empty ref if nonexistent.
   /// Throws Exception if an error occurs.
   auto DictGetItem(const char* name) const -> PythonRef;
+
+  /// Return all items in a dict as C++ structures.
+  auto DictItems() const -> std::vector<std::pair<PythonRef, PythonRef>>;
 
   /// The equivalent of calling Python str() on the contained PyObject, and
   /// gracefully handles invalid refs. To throw exceptions on invalid refs,

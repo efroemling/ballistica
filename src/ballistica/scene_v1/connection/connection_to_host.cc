@@ -58,7 +58,7 @@ ConnectionToHost::~ConnectionToHost() {
 }
 
 void ConnectionToHost::Update() {
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   // Send out null messages occasionally for ping measurement purposes.
   // Note that we currently only do this from the client since we might not

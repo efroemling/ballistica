@@ -68,9 +68,10 @@ class App:
     health_monitor: AppHealthMonitor
 
     # How long we allow shutdown tasks to run before killing them.
-    # Currently the entire app hard-exits if shutdown takes 10 seconds,
-    # so we need to keep it under that.
-    SHUTDOWN_TASK_TIMEOUT_SECONDS = 5
+    # Currently the entire app hard-exits if shutdown takes 15 seconds,
+    # so we need to keep it under that. Staying above 10 should allow
+    # 10 second network timeouts to happen though.
+    SHUTDOWN_TASK_TIMEOUT_SECONDS = 12
 
     class State(Enum):
         """High level state the app can be in."""

@@ -201,7 +201,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           avg_scroll_speed_v_ =
               smoothing * avg_scroll_speed_v_ + (1.0f - smoothing) * 0.0f;
         }
-        last_sub_widget_h_scroll_claim_time_ = g_core->GetAppTimeMillisecs();
+        last_sub_widget_h_scroll_claim_time_ = g_core->AppTimeMillisecs();
       }
       pass = false;
       break;
@@ -227,7 +227,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       // ignore vertical scrolling (should probably make this less fuzzy).
       bool ignore_regular_scrolling = false;
       bool child_claimed_h_scroll_recently =
-          (g_core->GetAppTimeMillisecs() - last_sub_widget_h_scroll_claim_time_
+          (g_core->AppTimeMillisecs() - last_sub_widget_h_scroll_claim_time_
            < 100);
       if (child_claimed_h_scroll_recently
           && std::abs(avg_scroll_speed_h_) > std::abs(avg_scroll_speed_v_))
@@ -569,9 +569,21 @@ void ScrollWidget::UpdateLayout() {
     amount_visible_ = 0;
     return;
   }
-  float child_h = (**i).GetHeight();
-  child_max_offset_ = child_h - (height() - 2 * (border_height_ + V_MARGIN));
-  amount_visible_ = (height() - 2 * (border_height_ + V_MARGIN)) / child_h;
+
+  float extra_border_x{4.0};  // Whee arbitrary hard coded values.
+  float xoffs;
+  if (center_small_content_horizontally_) {
+    float our_width{width()};
+    float child_width = (**i).GetWidth();
+    xoffs = (our_width - child_width) * 0.5 - border_width_ - extra_border_x;
+  } else {
+    xoffs = extra_border_x + border_width_;
+  }
+
+  float child_height = (**i).GetHeight();
+  child_max_offset_ =
+      child_height - (height() - 2 * (border_height_ + V_MARGIN));
+  amount_visible_ = (height() - 2 * (border_height_ + V_MARGIN)) / child_height;
   if (amount_visible_ > 1) {
     amount_visible_ = 1;
     if (center_small_content_) {
@@ -585,8 +597,9 @@ void ScrollWidget::UpdateLayout() {
 
   if (mouse_held_thumb_) {
     if (child_offset_v_
-        > child_h - (height() - 2 * (border_height_ + V_MARGIN))) {
-      child_offset_v_ = child_h - (height() - 2 * (border_height_ + V_MARGIN));
+        > child_height - (height() - 2 * (border_height_ + V_MARGIN))) {
+      child_offset_v_ =
+          child_height - (height() - 2 * (border_height_ + V_MARGIN));
       inertia_scroll_rate_ = 0;
     }
     if (child_offset_v_ < 0) {
@@ -594,9 +607,9 @@ void ScrollWidget::UpdateLayout() {
       inertia_scroll_rate_ = 0;
     }
   }
-  (**i).set_translate(4 + border_width_, height() - (border_height_ + V_MARGIN)
-                                             + child_offset_v_smoothed_
-                                             - child_h + center_offset_y_);
+  (**i).set_translate(xoffs, height() - (border_height_ + V_MARGIN)
+                                 + child_offset_v_smoothed_ - child_height
+                                 + center_offset_y_);
   thumb_dirty_ = true;
 }
 

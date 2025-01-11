@@ -53,24 +53,25 @@ class ResourceTypeInfoWindow(PopupWindow):
             iconscale=1.2,
         )
 
-        yoffs = self._height - 150
+        yoffs = self._height - 145
 
         if resource_type == 'tickets':
             rdesc = (
                 'Tickets can be used to unlock characters,\n'
                 'maps, minigames, and more in the store.\n'
                 '\n'
-                'Earn tickets by completing achievements\n'
-                'or by opening chests won in the game.'
+                'Tickets can be found in chests won through\n'
+                'campaigns, tournaments, and achievements.'
             )
             texname = 'tickets'
         elif resource_type == 'tokens':
             rdesc = (
-                'Tokens have various uses in the game such as\n'
-                'speeding up chest unlocks.\n'
+                'Tokens are used to speed up chest unlocks\n'
+                'and for other game and account features.\n'
                 '\n'
-                'You can buy packs of tokens or you can buy a\n'
-                'Gold Pass to get unlimited tokens.\n'
+                'You can win tokens in the game or buy them\n'
+                'in packs. Or buy a Gold Pass to get infinite\n'
+                'tokens forever and never hear of them again.'
             )
             texname = 'coin'
         elif resource_type == 'trophies':

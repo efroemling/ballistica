@@ -24,6 +24,11 @@ SIMPLE_TYPES = {int, bool, str, float, type(None)}
 # present.
 EXTRA_ATTRS_ATTR = '_DCIOEXATTRS'
 
+# Attr name for a bool attr for flagging data as lossy, which means it
+# may have been modified in some way during load and should generally not
+# be written back out.
+LOSSY_ATTR = '_DCIOLOSSY'
+
 
 class Codec(Enum):
     """Specifies expected data format exported to or imported from."""
@@ -127,44 +132,68 @@ class IOMultiType(Generic[EnumT]):
 
         The default is an obscure value so that it does not conflict
         with members of individual type attrs, but in some cases one
-        might prefer to serialize it to something simpler like 'type'
-        by overriding this call. One just needs to make sure that no
+        might prefer to serialize it to something simpler like 'type' by
+        overriding this call. One just needs to make sure that no
         encompassed types serialize anything to 'type' themself.
         """
         return '_dciotype'
+
+    # NOTE: Currently (Jan 2025) mypy complains if overrides annotate
+    # return type of 'Self | None'. Substituting their own explicit type
+    # works though (see test_dataclassio).
+    @classmethod
+    def get_unknown_type_fallback(cls) -> Self | None:
+        """Return a fallback object in cases of unrecognized types.
+
+        This can allow newer data to remain readable in older
+        environments. Use caution with this option, however, as it
+        effectively modifies data.
+        """
+        return None
 
 
 class IOAttrs:
     """For specifying io behavior in annotations.
 
     'storagename', if passed, is the name used when storing to json/etc.
-    'store_default' can be set to False to avoid writing values when equal
-        to the default value. Note that this requires the dataclass field
-        to define a default or default_factory or for its IOAttrs to
-        define a soft_default value.
+
+    'store_default' can be set to False to avoid writing values when
+        equal to the default value. Note that this requires the
+        dataclass field to define a default or default_factory or for
+        its IOAttrs to define a soft_default value.
+
     'whole_days', if True, requires datetime values to be exactly on day
         boundaries (see efro.util.utc_today()).
-    'whole_hours', if True, requires datetime values to lie exactly on hour
-        boundaries (see efro.util.utc_this_hour()).
-    'whole_minutes', if True, requires datetime values to lie exactly on minute
-        boundaries (see efro.util.utc_this_minute()).
+
+    'whole_hours', if True, requires datetime values to lie exactly on
+        hour boundaries (see efro.util.utc_this_hour()).
+
+    'whole_minutes', if True, requires datetime values to lie exactly on
+        minute boundaries (see efro.util.utc_this_minute()).
+
     'soft_default', if passed, injects a default value into dataclass
         instantiation when the field is not present in the input data.
         This allows dataclasses to add new non-optional fields while
-        gracefully 'upgrading' old data. Note that when a soft_default is
-        present it will take precedence over field defaults when determining
-        whether to store a value for a field with store_default=False
-        (since the soft_default value is what we'll get when reading that
-        same data back in when the field is omitted).
+        gracefully 'upgrading' old data. Note that when a soft_default
+        is present it will take precedence over field defaults when
+        determining whether to store a value for a field with
+        store_default=False (since the soft_default value is what we'll
+        get when reading that same data back in when the field is
+        omitted).
+
     'soft_default_factory' is similar to 'default_factory' in dataclass
-        fields; it should be used instead of 'soft_default' for mutable types
-        such as lists to prevent a single default object from unintentionally
-        changing over time.
-    'enum_fallback', if provided, specifies an enum value to be substituted
-        in the case of unrecognized enum values.
+        fields; it should be used instead of 'soft_default' for mutable
+        types such as lists to prevent a single default object from
+        unintentionally changing over time.
+
+    'enum_fallback', if provided, specifies an enum value that can be
+        substituted in the case of unrecognized input values. This can
+        allow newer data to remain loadable in older environments. Note
+        that 'lossy' must be enabled in the top level load call for this
+        to apply, since it can fundamentally modify data.
     """
 
-    # A sentinel object to detect if a parameter is supplied or not.  Use
+    # A sentinel object to detect if a parameter is supplied or not. Use
     # a class to give it a better repr.
     class _MissingType:
         pass

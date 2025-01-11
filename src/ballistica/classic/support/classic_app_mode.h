@@ -215,19 +215,24 @@ class ClassicAppMode : public base::AppMode {
     public_party_public_address_ipv6_ = val;
   }
 
-  void SetRootUITicketsMeterText(const std::string text);
-  void SetRootUITokensMeterText(const std::string text);
-  void SetRootUILeagueRankText(const std::string text);
+  void SetRootUITicketsMeterValue(int value);
+  void SetRootUITokensMeterValue(int value);
+  void SetRootUILeagueRankValue(int value);
   void SetRootUILeagueType(const std::string text);
   void SetRootUIAchievementsPercentText(const std::string text);
   void SetRootUILevelText(const std::string text);
   void SetRootUIXPText(const std::string text);
   void SetRootUIInboxCountText(const std::string text);
   void SetRootUIGoldPass(bool enabled);
-  void SetRootUIChests(const std::string& chest_0_appearance,
-                       const std::string& chest_1_appearance,
-                       const std::string& chest_2_appearance,
-                       const std::string& chest_3_appearance);
+  void SetRootUIChests(
+      const std::string& chest_0_appearance,
+      const std::string& chest_1_appearance,
+      const std::string& chest_2_appearance,
+      const std::string& chest_3_appearance, seconds_t chest_0_unlock_time,
+      seconds_t chest_1_unlock_time, seconds_t chest_2_unlock_time,
+      seconds_t chest_3_unlock_time, seconds_t chest_0_ad_allow_time,
+      seconds_t chest_1_ad_allow_time, seconds_t chest_2_ad_allow_time,
+      seconds_t chest_3_ad_allow_time);
   void SetRootUIHaveLiveValues(bool val);
 
  private:
@@ -250,6 +255,15 @@ class ClassicAppMode : public base::AppMode {
   std::string root_ui_chest_1_appearance_;
   std::string root_ui_chest_2_appearance_;
   std::string root_ui_chest_3_appearance_;
+  seconds_t root_ui_chest_0_unlock_time_;
+  seconds_t root_ui_chest_1_unlock_time_;
+  seconds_t root_ui_chest_2_unlock_time_;
+  seconds_t root_ui_chest_3_unlock_time_;
+  seconds_t root_ui_chest_0_ad_allow_time_;
+  seconds_t root_ui_chest_1_ad_allow_time_;
+  seconds_t root_ui_chest_2_ad_allow_time_;
+  seconds_t root_ui_chest_3_ad_allow_time_;
+
   uint32_t next_scan_query_id_{};
   int scan_socket_{-1};
   int host_protocol_version_{-1};
@@ -301,6 +315,9 @@ class ClassicAppMode : public base::AppMode {
   int public_party_max_size_{8};
   int public_party_player_count_{0};
   int public_party_max_player_count_{8};
+  int root_ui_tickets_meter_value_;
+  int root_ui_tokens_meter_value_;
+  int root_ui_league_rank_value_;
   float debug_speed_mult_{1.0f};
   float replay_speed_mult_{1.0f};
   std::set<std::string> admin_public_ids_;
@@ -308,9 +325,6 @@ class ClassicAppMode : public base::AppMode {
   std::string public_party_name_;
   std::string public_party_min_league_;
   std::string public_party_stats_url_;
-  std::string root_ui_tickets_meter_text_;
-  std::string root_ui_tokens_meter_text_;
-  std::string root_ui_league_rank_text_;
   std::string root_ui_league_type_;
   std::string root_ui_achievement_percent_text_;
   std::string root_ui_level_text_;

@@ -104,14 +104,15 @@ def dataclass_from_dict(
     coerce_to_float: bool = True,
     allow_unknown_attrs: bool = True,
     discard_unknown_attrs: bool = False,
+    lossy: bool = False,
 ) -> T:
     """Given a dict, return a dataclass of a given type.
 
     The dict must be formatted to match the specified codec (generally
     json-friendly object types). This means that sequence values such as
     tuples or sets should be passed as lists, enums should be passed as
-    their associated values, nested dataclasses should be passed as dicts,
-    etc.
+    their associated values, nested dataclasses should be passed as
+    dicts, etc.
 
     All values are checked to ensure their types/values are valid.
 
@@ -121,14 +122,22 @@ def dataclass_from_dict(
     (as this would break the ability to do a lossless round-trip with
     data).
 
-    If coerce_to_float is True, int values passed for float typed fields
-    will be converted to float values. Otherwise, a TypeError is raised.
+    If `coerce_to_float` is True, int values passed for float typed
+    fields will be converted to float values. Otherwise, a TypeError is
+    raised.
 
-    If `allow_unknown_attrs` is False, AttributeErrors will be raised for
-    attributes present in the dict but not on the data class. Otherwise,
-    they will be preserved as part of the instance and included if it is
-    exported back to a dict, unless `discard_unknown_attrs` is True, in
-    which case they will simply be discarded.
+    If 'allow_unknown_attrs' is False, AttributeErrors will be raised
+    for attributes present in the dict but not on the data class.
+    Otherwise, they will be preserved as part of the instance and
+    included if it is exported back to a dict, unless
+    `discard_unknown_attrs` is True, in which case they will simply be
+    discarded.
+
+    If `lossy` is True, Enum attrs and IOMultiType types are allowed to
+    use any fallbacks defined for them. This can allow older schemas to
+    successfully load newer data, but this can fundamentally modify the
+    data, so the resulting object is flagged as 'lossy' and prevented
+    from being serialized back out by default.
     """
     val = _Inputter(
         cls,
@@ -136,6 +145,7 @@ def dataclass_from_dict(
         coerce_to_float=coerce_to_float,
         allow_unknown_attrs=allow_unknown_attrs,
         discard_unknown_attrs=discard_unknown_attrs,
+        lossy=lossy,
     ).run(values)
     assert isinstance(val, cls)
     return val
@@ -144,9 +154,11 @@ def dataclass_from_dict(
 def dataclass_from_json(
     cls: type[T],
     json_str: str,
+    *,
     coerce_to_float: bool = True,
     allow_unknown_attrs: bool = True,
     discard_unknown_attrs: bool = False,
+    lossy: bool = False,
 ) -> T:
     """Return a dataclass instance given a json string.
 
@@ -159,6 +171,7 @@ def dataclass_from_json(
         coerce_to_float=coerce_to_float,
         allow_unknown_attrs=allow_unknown_attrs,
         discard_unknown_attrs=discard_unknown_attrs,
+        lossy=lossy,
     )
 
 

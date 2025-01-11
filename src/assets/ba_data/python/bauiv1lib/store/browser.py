@@ -141,11 +141,11 @@ class StoreBrowserWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(
                 self._width * 0.5,
-                self._height - (53 if uiscale is bui.UIScale.SMALL else 44),
+                self._height - (55 if uiscale is bui.UIScale.SMALL else 44),
             ),
             size=(0, 0),
             color=app.ui_v1.title_color,
-            scale=1.5,
+            scale=1.1 if uiscale is bui.UIScale.SMALL else 1.5,
             h_align='center',
             v_align='center',
             text=bui.Lstr(resource='storeText'),
@@ -536,7 +536,10 @@ class StoreBrowserWindow(bui.MainWindow):
                     our_tickets = plus.get_v1_account_ticket_count()
                     if price is not None and our_tickets < price:
                         bui.getsound('error').play()
-                        print('FIXME - show not-enough-tickets info.')
+                        bui.screenmessage(
+                            bui.Lstr(resource='notEnoughTicketsText'),
+                            color=(1, 0, 0),
+                        )
                         # gettickets.show_get_tickets_prompt()
                     else:
 

@@ -108,6 +108,9 @@ class ClassicFeatureSet : public FeatureSetNativeComponent,
   auto GetV1AccountTypeIconString(int account_type) -> std::string override;
   auto V1AccountTypeToString(int account_type) -> std::string override;
   auto GetV1AccountType() -> int override;
+  void GetClassicChestDisplayInfo(const std::string& id, std::string* texclosed,
+                                  std::string* texclosedtint, Vector3f* color,
+                                  Vector3f* tint, Vector3f* tint2) override;
 
   ClassicPython* const python;
   V1Account* const v1_account;

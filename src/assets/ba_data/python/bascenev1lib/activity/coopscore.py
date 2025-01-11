@@ -357,6 +357,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
         h_offs = 7.0
         v_offs = -280.0
+        v_offs2 = -236.0
 
         # We wanna prevent controllers users from popping up browsers
         # or game-center widgets in cases where they can't easily get back
@@ -384,7 +385,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             bui.buttonwidget(
                 parent=rootc,
                 color=(0.45, 0.4, 0.5),
-                position=(160, v_offs + 439),
+                position=(240, v_offs2 + 439),
                 size=(350, 62),
                 label=(
                     bui.Lstr(resource='tournamentStandingsText')
@@ -406,7 +407,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         show_next_button = self._is_more_levels and not (env.demo or env.arcade)
 
         if not show_next_button:
-            h_offs += 70
+            h_offs += 60
 
         # Due to virtual-bounds changes, have to squish buttons a bit to
         # avoid overlapping with tips at bottom. Could look nicer to
@@ -614,7 +615,6 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
     @override
     def on_begin(self) -> None:
-        # FIXME: Clean this up.
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
@@ -882,7 +882,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         # If we're not doing the world's-best button, just show a title
         # instead.
         ts_height = 300
-        ts_h_offs = 210
+        ts_h_offs = 290
         v_offs = 40
         txt = Text(
             (
@@ -956,7 +956,6 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 if display_scores[i][1] is None:
                     name_str = '-'
                 else:
-                    # noinspection PyUnresolvedReferences
                     name_str = ', '.join(
                         [p['name'] for p in display_scores[i][1]['players']]
                     )
@@ -1025,9 +1024,8 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         ts_h_offs = -480
         v_offs = 40
 
-        # Only make this if we don't have the button
-        # (never want clients to see it so no need for client-only
-        # version, etc).
+        # Only make this if we don't have the button (never want clients
+        # to see it so no need for client-only version, etc).
         if self._have_achievements:
             if not self._account_has_achievements:
                 Text(
@@ -1069,7 +1067,6 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         ).autoretain()
 
     def _got_friend_score_results(self, results: list[Any] | None) -> None:
-        # FIXME: tidy this up
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
@@ -1205,7 +1202,6 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             ).autoretain()
 
     def _got_score_results(self, results: dict[str, Any] | None) -> None:
-        # FIXME: tidy this up
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
@@ -1222,11 +1218,12 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             # Delay a bit if results come in too fast.
             assert self._begin_time is not None
             base_delay = max(0, 2.7 - (bs.time() - self._begin_time))
-            v_offs = 20
+            # v_offs = 20
+            v_offs = 64
             if results is None:
                 self._score_loading_status = Text(
                     bs.Lstr(resource='worldScoresUnavailableText'),
-                    position=(230, 150 + v_offs),
+                    position=(280, 130 + v_offs),
                     color=(1, 1, 1, 0.4),
                     transition=Text.Transition.FADE_IN,
                     transition_delay=base_delay + 0.3,
@@ -1271,7 +1268,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     (1.5 + base_delay),
                     bs.WeakCall(self._show_world_rank, offs_x),
                 )
-            ts_h_offs = 200
+            ts_h_offs = 280
             ts_height = 300
 
             # Show world tops.
@@ -1299,7 +1296,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                         transition_delay=base_delay + 0.3,
                     ).autoretain()
                 else:
-                    v_offs += 20
+                    v_offs += 40
 
                 h_offs_extra = 0
                 v_offs_names = 0
@@ -1326,6 +1323,37 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                         random.randrange(0, len(times) + 1),
                         (base_delay + i * 0.05, base_delay + 0.4 + i * 0.05),
                     )
+
+                # Conundrum: We want to place line numbers to the
+                # left of our score column based on the largest
+                # score width. However scores may use Lstrs and thus
+                # may have different widths in different languages.
+                # We don't want to bake down the Lstrs we display
+                # because then clients can't view scores in their
+                # own language. So as a compromise lets measure
+                # max-width based on baked down Lstrs but then
+                # display regular Lstrs with max-width set based on
+                # that. Hopefully that'll look reasonable for most
+                # languages.
+                max_score_width = 10.0
+                for tval in self._show_info['tops']:
+                    score = int(tval[0])
+                    name_str = tval[1]
+                    if name_str != '-':
+                        max_score_width = max(
+                            max_score_width,
+                            bui.get_string_width(
+                                (
+                                    str(score)
+                                    if self._score_type == 'points'
+                                    else bs.timestring(
+                                        (score * 10) / 1000.0
+                                    ).evaluate()
+                                ),
+                                suppress_warning=True,
+                            ),
+                        )
+
                 for i, tval in enumerate(self._show_info['tops']):
                     score = int(tval[0])
                     name_str = tval[1]
@@ -1347,12 +1375,37 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                         tdelay2 = times[i][1]
 
                     if name_str != '-':
+                        sstr = (
+                            str(score)
+                            if self._score_type == 'points'
+                            else bs.timestring((score * 10) / 1000.0)
+                        )
+
+                        # Line number.
                         Text(
-                            (
-                                str(score)
-                                if self._score_type == 'points'
-                                else bs.timestring((score * 10) / 1000.0)
+                            str(i + 1),
+                            position=(
+                                ts_h_offs
+                                + 20
+                                + h_offs_extra
+                                - max_score_width
+                                - 8.0,
+                                ts_height / 2
+                                + -ts_height * (i + 1) / 10
+                                + v_offs
+                                - 30.0,
                             ),
+                            scale=0.5,
+                            h_align=Text.HAlign.RIGHT,
+                            v_align=Text.VAlign.CENTER,
+                            color=(0.3, 0.3, 0.3),
+                            transition=Text.Transition.IN_LEFT,
+                            transition_delay=tdelay1,
+                        ).autoretain()
+
+                        # Score.
+                        Text(
+                            sstr,
                             position=(
                                 ts_h_offs + 20 + h_offs_extra,
                                 ts_height / 2
@@ -1360,6 +1413,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                                 + v_offs
                                 - 30.0,
                             ),
+                            maxwidth=max_score_width,
                             h_align=Text.HAlign.RIGHT,
                             v_align=Text.VAlign.CENTER,
                             color=color0,
@@ -1367,6 +1421,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                             transition=Text.Transition.IN_LEFT,
                             transition_delay=tdelay1,
                         ).autoretain()
+                    # Player name.
                     Text(
                         bs.Lstr(value=name_str),
                         position=(
@@ -1470,16 +1525,12 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     ]
                     # pylint: disable=useless-suppression
                     # pylint: disable=unbalanced-tuple-unpacking
-                    (
-                        pr1,
-                        pv1,
-                        pr2,
-                        pv2,
-                        pr3,
-                        pv3,
-                    ) = bs.app.classic.get_tournament_prize_strings(
-                        tourney_info
+                    (pr1, pv1, pr2, pv2, pr3, pv3) = (
+                        bs.app.classic.get_tournament_prize_strings(
+                            tourney_info, include_tickets=False
+                        )
                     )
+
                     # pylint: enable=unbalanced-tuple-unpacking
                     # pylint: enable=useless-suppression
 
@@ -1495,10 +1546,14 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                         transition_delay=2.0,
                     ).autoretain()
                     vval = -107 + 70
-                    for rng, val in ((pr1, pv1), (pr2, pv2), (pr3, pv3)):
+                    for i, rng, val in (
+                        (0, pr1, pv1),
+                        (1, pr2, pv2),
+                        (2, pr3, pv3),
+                    ):
                         Text(
                             rng,
-                            position=(-410 + 10, vval),
+                            position=(-430 + 10, vval),
                             color=(1, 1, 1, 0.7),
                             h_align=Text.HAlign.RIGHT,
                             v_align=Text.VAlign.CENTER,
@@ -1509,7 +1564,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                         ).autoretain()
                         Text(
                             val,
-                            position=(-390 + 10, vval),
+                            position=(-410 + 10, vval),
                             color=(0.7, 0.7, 0.7, 1.0),
                             h_align=Text.HAlign.LEFT,
                             v_align=Text.VAlign.CENTER,
@@ -1518,6 +1573,9 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                             maxwidth=300,
                             transition_delay=2.0,
                         ).autoretain()
+                        bs.app.classic.create_in_game_tournament_prize_image(
+                            tourney_info, i, (-410 + 70, vval)
+                        )
                         vval -= 35
         except Exception:
             logging.exception('Error showing prize ranges.')

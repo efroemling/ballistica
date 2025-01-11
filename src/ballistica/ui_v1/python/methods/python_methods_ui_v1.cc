@@ -22,6 +22,7 @@
 #include "ballistica/ui_v1/widget/root_widget.h"
 #include "ballistica/ui_v1/widget/row_widget.h"
 #include "ballistica/ui_v1/widget/scroll_widget.h"
+#include "ballistica/ui_v1/widget/spinner_widget.h"
 
 namespace ballistica::ui_v1 {
 
@@ -901,6 +902,98 @@ static PyMethodDef PyImageWidgetDef = {
     "are applied to the Widget.",
 };
 
+// ----------------------------- imagewidget -----------------------------------
+
+static auto PySpinnerWidget(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* edit_obj{Py_None};
+  PyObject* parent_obj{Py_None};
+  ContainerWidget* parent_widget{};
+  PyObject* size_obj{Py_None};
+  PyObject* pos_obj{Py_None};
+  PyObject* visible_obj{Py_None};
+
+  static const char* kwlist[] = {"edit",     "parent",  "size",
+                                 "position", "visible", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "|OOOOO", const_cast<char**>(kwlist), &edit_obj,
+          &parent_obj, &size_obj, &pos_obj, &visible_obj))
+    return nullptr;
+
+  if (!g_base->CurrentContext().IsEmpty()) {
+    throw Exception("UI functions must be called with no context set.");
+  }
+
+  // Gather up any user code triggered by this stuff and run it at the end
+  // before we return.
+  base::UI::OperationContext ui_op_context;
+
+  // Grab the edited widget or create a new one.
+  Object::Ref<SpinnerWidget> b;
+  if (edit_obj != Py_None) {
+    b = dynamic_cast<SpinnerWidget*>(UIV1Python::GetPyWidget(edit_obj));
+    if (!b.exists())
+      throw Exception("Invalid or nonexistent widget.",
+                      PyExcType::kWidgetNotFound);
+  } else {
+    parent_widget = parent_obj == Py_None
+                        ? g_ui_v1->screen_root_widget()
+                        : dynamic_cast<ContainerWidget*>(
+                              UIV1Python::GetPyWidget(parent_obj));
+    if (parent_widget == nullptr) {
+      throw Exception("Parent widget nonexistent or not a container.",
+                      PyExcType::kWidgetNotFound);
+    }
+    b = Object::New<SpinnerWidget>();
+  }
+  if (size_obj != Py_None) {
+    auto size{Python::GetPyFloat(size_obj)};
+    b->set_size(size);
+  }
+  if (pos_obj != Py_None) {
+    Point2D p = Python::GetPyPoint2D(pos_obj);
+    b->set_translate(p.x, p.y);
+  }
+  if (visible_obj != Py_None) {
+    b->set_visible(Python::GetPyBool(visible_obj));
+  }
+
+  // If making a new widget, add it at the end.
+  if (edit_obj == Py_None) {
+    g_ui_v1->AddWidget(b.get(), parent_widget);
+  }
+
+  // Run any calls built up by UI callbacks.
+  ui_op_context.Finish();
+
+  return b->NewPyRef();
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySpinnerWidgetDef = {
+    "spinnerwidget",               // name
+    (PyCFunction)PySpinnerWidget,  // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "spinnerwidget(*,\n"
+    "  edit: bauiv1.Widget | None = None,\n"
+    "  parent: bauiv1.Widget | None = None,\n"
+    "  size: float | None = None,\n"
+    "  position: Sequence[float] | None = None,\n"
+    "  visible: bool | None = None,\n"
+    ")\n"
+    "  -> bauiv1.Widget\n"
+    "\n"
+    "Create or edit a spinner widget.\n"
+    "\n"
+    "Category: **User Interface Functions**\n"
+    "\n"
+    "Pass a valid existing bauiv1.Widget as 'edit' to modify it; otherwise\n"
+    "a new one is created and returned. Arguments that are not set to None\n"
+    "are applied to the Widget.",
+};
+
 // ----------------------------- columnwidget ----------------------------------
 
 static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
@@ -1580,6 +1673,7 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* parent_obj{Py_None};
   PyObject* edit_obj{Py_None};
   PyObject* center_small_content_obj{Py_None};
+  PyObject* center_small_content_horizontally_obj{Py_None};
   ContainerWidget* parent_widget{};
   PyObject* color_obj{Py_None};
   PyObject* highlight_obj{Py_None};
@@ -1599,6 +1693,7 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "capture_arrows",
                                  "on_select_call",
                                  "center_small_content",
+                                 "center_small_content_horizontally",
                                  "color",
                                  "highlight",
                                  "border_opacity",
@@ -1610,13 +1705,13 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          args, keywds, "|OOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &size_obj, &pos_obj, &background_obj,
           &selected_child_obj, &capture_arrows_obj, &on_select_call_obj,
-          &center_small_content_obj, &color_obj, &highlight_obj,
-          &border_opacity_obj, &simple_culling_v_obj,
-          &selection_loops_to_parent_obj, &claims_left_right_obj,
-          &claims_up_down_obj, &autoselect_obj))
+          &center_small_content_obj, &center_small_content_horizontally_obj,
+          &color_obj, &highlight_obj, &border_opacity_obj,
+          &simple_culling_v_obj, &selection_loops_to_parent_obj,
+          &claims_left_right_obj, &claims_up_down_obj, &autoselect_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -1669,6 +1764,10 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (center_small_content_obj != Py_None) {
     widget->set_center_small_content(
         Python::GetPyBool(center_small_content_obj));
+  }
+  if (center_small_content_horizontally_obj != Py_None) {
+    widget->set_center_small_content_horizontally(
+        Python::GetPyBool(center_small_content_horizontally_obj));
   }
   if (color_obj != Py_None) {
     std::vector<float> c = Python::GetPyFloats(color_obj);
@@ -1731,6 +1830,7 @@ static PyMethodDef PyScrollWidgetDef = {
     "  capture_arrows: bool = False,\n"
     "  on_select_call: Callable | None = None,\n"
     "  center_small_content: bool | None = None,\n"
+    "  center_small_content_horizontally: bool | None = None,\n"
     "  color: Sequence[float] | None = None,\n"
     "  highlight: bool | None = None,\n"
     "  border_opacity: float | None = None,\n"
@@ -2101,7 +2201,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
     //  we should probably extend TextWidget to handle this internally, but
     //  punting on that for now.
     widget->set_description(g_base->assets->CompileResourceString(
-        g_base->python->GetPyLString(description_obj), "textwidget set desc"));
+        g_base->python->GetPyLString(description_obj)));
   }
   if (autoselect_obj != Py_None) {
     widget->set_auto_select(Python::GetPyBool(autoselect_obj));
@@ -2661,18 +2761,80 @@ static PyMethodDef PyOnScreenChangeDef = {
     "(internal)",
 };
 
+// ------------------------ root_ui_pause_updates ------------------------------
+
+static auto PyRootUIPauseUpdates(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  auto* root_widget = g_ui_v1->root_widget();
+  BA_PRECONDITION(root_widget);
+  root_widget->PauseUpdates();
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyRootUIPauseUpdatesDef = {
+    "root_ui_pause_updates",            // name
+    (PyCFunction)PyRootUIPauseUpdates,  // method
+    METH_NOARGS,                        // flags
+
+    "root_ui_pause_updates() -> None\n"
+    "\n"
+    "Temporarily pause updates to the root ui for animation purposes.",
+};
+
+// ------------------------ root_ui_resume_updates -----------------------------
+
+static auto PyRootUIResumeUpdates(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  auto* root_widget = g_ui_v1->root_widget();
+  BA_PRECONDITION(root_widget);
+  root_widget->ResumeUpdates();
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyRootUIResumeUpdatesDef = {
+    "root_ui_resume_updates",            // name
+    (PyCFunction)PyRootUIResumeUpdates,  // method
+    METH_NOARGS,                         // flags
+
+    "root_ui_resume_updates() -> None\n"
+    "\n"
+    "Temporarily resume updates to the root ui for animation purposes.",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
-  return {
-      PyRootUIBackPressDef, PyGetSpecialWidgetDef, PySetPartyWindowOpenDef,
-      PyButtonWidgetDef,    PyCheckBoxWidgetDef,   PyImageWidgetDef,
-      PyColumnWidgetDef,    PyContainerWidgetDef,  PyRowWidgetDef,
-      PyScrollWidgetDef,    PyHScrollWidgetDef,    PyTextWidgetDef,
-      PyWidgetDef,          PyUIBoundsDef,         PyGetSoundDef,
-      PyGetTextureDef,      PyGetQRCodeTextureDef, PyGetMeshDef,
-      PyIsAvailableDef,     PyOnScreenChangeDef,
-  };
+  return {PyRootUIBackPressDef,
+          PyGetSpecialWidgetDef,
+          PySetPartyWindowOpenDef,
+          PyButtonWidgetDef,
+          PyCheckBoxWidgetDef,
+          PyImageWidgetDef,
+          PySpinnerWidgetDef,
+          PyColumnWidgetDef,
+          PyContainerWidgetDef,
+          PyRowWidgetDef,
+          PyScrollWidgetDef,
+          PyHScrollWidgetDef,
+          PyTextWidgetDef,
+          PyWidgetDef,
+          PyUIBoundsDef,
+          PyGetSoundDef,
+          PyGetTextureDef,
+          PyGetQRCodeTextureDef,
+          PyGetMeshDef,
+          PyIsAvailableDef,
+          PyOnScreenChangeDef,
+          PyRootUIPauseUpdatesDef,
+          PyRootUIResumeUpdatesDef};
 }
 
 #pragma clang diagnostic pop

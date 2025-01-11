@@ -149,10 +149,10 @@ void ClassicAppMode::Reset_() {
     // At this point uiv1 is in a reset-to-default state. Now plug in our
     // current values for everything.
     if (auto* root_widget = uiv1_->root_widget()) {
-      root_widget->SetTicketsMeterText(root_ui_tickets_meter_text_);
-      root_widget->SetTokensMeterText(root_ui_tokens_meter_text_,
-                                      root_ui_gold_pass_);
-      root_widget->SetLeagueRankText(root_ui_league_rank_text_);
+      root_widget->SetTicketsMeterValue(root_ui_tickets_meter_value_);
+      root_widget->SetTokensMeterValue(root_ui_tokens_meter_value_,
+                                       root_ui_gold_pass_);
+      root_widget->SetLeagueRankValue(root_ui_league_rank_value_);
       root_widget->SetLeagueType(root_ui_league_type_);
       root_widget->SetAchievementPercentText(root_ui_achievement_percent_text_);
       root_widget->SetLevelText(root_ui_level_text_);
@@ -160,7 +160,11 @@ void ClassicAppMode::Reset_() {
       root_widget->SetInboxCountText(root_ui_inbox_count_text_);
       root_widget->SetChests(
           root_ui_chest_0_appearance_, root_ui_chest_1_appearance_,
-          root_ui_chest_2_appearance_, root_ui_chest_3_appearance_);
+          root_ui_chest_2_appearance_, root_ui_chest_3_appearance_,
+          root_ui_chest_0_unlock_time_, root_ui_chest_1_unlock_time_,
+          root_ui_chest_2_unlock_time_, root_ui_chest_3_unlock_time_,
+          root_ui_chest_0_ad_allow_time_, root_ui_chest_1_ad_allow_time_,
+          root_ui_chest_2_ad_allow_time_, root_ui_chest_3_ad_allow_time_);
       root_widget->SetHaveLiveValues(root_ui_have_live_values_);
     }
   }
@@ -332,7 +336,7 @@ void ClassicAppMode::HostScanCycle() {
                     &((reinterpret_cast<sockaddr_in*>(&from))->sin_addr),
                     buffer2, sizeof(buffer2));
                 entry.last_query_id = query_id;
-                entry.last_contact_time = g_core->GetAppTimeMillisecs();
+                entry.last_contact_time = g_core->AppTimeMillisecs();
               }
             }
             PruneScanResults_();
@@ -357,7 +361,7 @@ void ClassicAppMode::EndHostScanning() {
 }
 
 void ClassicAppMode::PruneScanResults_() {
-  millisecs_t t = g_core->GetAppTimeMillisecs();
+  millisecs_t t = g_core->AppTimeMillisecs();
   auto i = scan_results_.begin();
   while (i != scan_results_.end()) {
     auto i_next = i;
@@ -516,8 +520,8 @@ auto ClassicAppMode::GetHeadlessNextDisplayTimeStep() -> microsecs_t {
 void ClassicAppMode::StepDisplayTime() {
   assert(g_base->InLogicThread());
 
-  auto startms{core::CorePlatform::GetCurrentMillisecs()};
-  millisecs_t app_time = g_core->GetAppTimeMillisecs();
+  auto startms{core::CorePlatform::TimeMonotonicMillisecs()};
+  millisecs_t app_time = g_core->AppTimeMillisecs();
   g_core->platform->SetDebugKey("LastUpdateTime", std::to_string(startms));
   in_update_ = true;
 
@@ -592,7 +596,7 @@ void ClassicAppMode::StepDisplayTime() {
   // Report excessively long updates.
   if (g_core->core_config().debug_timing
       && app_time >= next_long_update_report_time_) {
-    auto duration{core::CorePlatform::GetCurrentMillisecs() - startms};
+    auto duration{core::CorePlatform::TimeMonotonicMillisecs() - startms};
 
     // Complain when our full update takes longer than 1/60th second.
     if (duration > (1000 / 60)) {
@@ -762,7 +766,7 @@ void ClassicAppMode::UpdateKickVote_() {
     kick_vote_in_progress_ = false;
     return;
   }
-  millisecs_t current_time{g_core->GetAppTimeMillisecs()};
+  millisecs_t current_time{g_core->AppTimeMillisecs()};
   int total_client_count = 0;
   int yes_votes = 0;
   int no_votes = 0;
@@ -859,7 +863,7 @@ void ClassicAppMode::UpdateKickVote_() {
 void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
                                    scene_v1::ConnectionToClient* target) {
   // Restrict votes per client.
-  millisecs_t current_time = g_core->GetAppTimeMillisecs();
+  millisecs_t current_time = g_core->AppTimeMillisecs();
 
   if (starter == target) {
     // Don't let anyone kick themselves.
@@ -1413,7 +1417,7 @@ auto ClassicAppMode::ShouldAnnouncePartyJoinsAndLeaves() -> bool {
 }
 
 auto ClassicAppMode::IsPlayerBanned(const scene_v1::PlayerSpec& spec) -> bool {
-  millisecs_t current_time = g_core->GetAppTimeMillisecs();
+  millisecs_t current_time = g_core->AppTimeMillisecs();
 
   // Now is a good time to prune no-longer-banned specs.
   while (!banned_players_.empty()
@@ -1431,7 +1435,7 @@ auto ClassicAppMode::IsPlayerBanned(const scene_v1::PlayerSpec& spec) -> bool {
 
 void ClassicAppMode::BanPlayer(const scene_v1::PlayerSpec& spec,
                                millisecs_t duration) {
-  banned_players_.emplace_back(g_core->GetAppTimeMillisecs() + duration, spec);
+  banned_players_.emplace_back(g_core->AppTimeMillisecs() + duration, spec);
 }
 
 void ClassicAppMode::HandleQuitOnIdle_() {
@@ -1550,51 +1554,51 @@ void ClassicAppMode::RunMainMenu() {
   }
 }
 
-void ClassicAppMode::SetRootUITicketsMeterText(const std::string text) {
+void ClassicAppMode::SetRootUITicketsMeterValue(int value) {
   BA_PRECONDITION(g_base->InLogicThread());
-  if (text == root_ui_tickets_meter_text_) {
+  if (value == root_ui_tickets_meter_value_) {
     return;
   }
   // Store the value.
-  root_ui_tickets_meter_text_ = text;
+  root_ui_tickets_meter_value_ = value;
 
   // Apply it to any existing UI.
   if (uiv1_) {
     if (auto* root_widget = uiv1_->root_widget()) {
-      root_widget->SetTicketsMeterText(root_ui_tickets_meter_text_);
+      root_widget->SetTicketsMeterValue(root_ui_tickets_meter_value_);
     }
   }
 }
 
-void ClassicAppMode::SetRootUITokensMeterText(const std::string text) {
+void ClassicAppMode::SetRootUITokensMeterValue(int value) {
   BA_PRECONDITION(g_base->InLogicThread());
-  if (text == root_ui_tokens_meter_text_) {
+  if (value == root_ui_tokens_meter_value_) {
     return;
   }
   // Store the value.
-  root_ui_tokens_meter_text_ = text;
+  root_ui_tokens_meter_value_ = value;
 
   // Apply it to any existing UI.
   if (uiv1_) {
     if (auto* root_widget = uiv1_->root_widget()) {
-      root_widget->SetTokensMeterText(root_ui_tokens_meter_text_,
-                                      root_ui_gold_pass_);
+      root_widget->SetTokensMeterValue(root_ui_tokens_meter_value_,
+                                       root_ui_gold_pass_);
     }
   }
 }
 
-void ClassicAppMode::SetRootUILeagueRankText(const std::string text) {
+void ClassicAppMode::SetRootUILeagueRankValue(int value) {
   BA_PRECONDITION(g_base->InLogicThread());
-  if (text == root_ui_league_rank_text_) {
+  if (value == root_ui_league_rank_value_) {
     return;
   }
   // Store the value.
-  root_ui_league_rank_text_ = text;
+  root_ui_league_rank_value_ = value;
 
   // Apply it to any existing UI.
   if (uiv1_) {
     if (auto* root_widget = uiv1_->root_widget()) {
-      root_widget->SetLeagueRankText(root_ui_league_rank_text_);
+      root_widget->SetLeagueRankValue(root_ui_league_rank_value_);
     }
   }
 }
@@ -1694,8 +1698,8 @@ void ClassicAppMode::SetRootUIGoldPass(bool enabled) {
   // Apply it to any existing UI.
   if (uiv1_) {
     if (auto* root_widget = uiv1_->root_widget()) {
-      root_widget->SetTokensMeterText(root_ui_tokens_meter_text_,
-                                      root_ui_gold_pass_);
+      root_widget->SetTokensMeterValue(root_ui_tokens_meter_value_,
+                                       root_ui_gold_pass_);
     }
   }
 }
@@ -1716,15 +1720,28 @@ void ClassicAppMode::SetRootUIHaveLiveValues(bool have_live_values) {
   }
 }
 
-void ClassicAppMode::SetRootUIChests(const std::string& chest_0_appearance,
-                                     const std::string& chest_1_appearance,
-                                     const std::string& chest_2_appearance,
-                                     const std::string& chest_3_appearance) {
+void ClassicAppMode::SetRootUIChests(
+    const std::string& chest_0_appearance,
+    const std::string& chest_1_appearance,
+    const std::string& chest_2_appearance,
+    const std::string& chest_3_appearance, seconds_t chest_0_unlock_time,
+    seconds_t chest_1_unlock_time, seconds_t chest_2_unlock_time,
+    seconds_t chest_3_unlock_time, seconds_t chest_0_ad_allow_time,
+    seconds_t chest_1_ad_allow_time, seconds_t chest_2_ad_allow_time,
+    seconds_t chest_3_ad_allow_time) {
   BA_PRECONDITION(g_base->InLogicThread());
   if (chest_0_appearance == root_ui_chest_0_appearance_
       && chest_1_appearance == root_ui_chest_1_appearance_
       && chest_2_appearance == root_ui_chest_2_appearance_
-      && chest_3_appearance == root_ui_chest_3_appearance_) {
+      && chest_3_appearance == root_ui_chest_3_appearance_
+      && chest_0_unlock_time == root_ui_chest_0_unlock_time_
+      && chest_1_unlock_time == root_ui_chest_1_unlock_time_
+      && chest_2_unlock_time == root_ui_chest_2_unlock_time_
+      && chest_3_unlock_time == root_ui_chest_3_unlock_time_
+      && chest_0_ad_allow_time == root_ui_chest_0_ad_allow_time_
+      && chest_1_ad_allow_time == root_ui_chest_1_ad_allow_time_
+      && chest_2_ad_allow_time == root_ui_chest_2_ad_allow_time_
+      && chest_3_ad_allow_time == root_ui_chest_3_ad_allow_time_) {
     return;
   }
 
@@ -1733,13 +1750,25 @@ void ClassicAppMode::SetRootUIChests(const std::string& chest_0_appearance,
   root_ui_chest_1_appearance_ = chest_1_appearance;
   root_ui_chest_2_appearance_ = chest_2_appearance;
   root_ui_chest_3_appearance_ = chest_3_appearance;
+  root_ui_chest_0_unlock_time_ = chest_0_unlock_time;
+  root_ui_chest_1_unlock_time_ = chest_1_unlock_time;
+  root_ui_chest_2_unlock_time_ = chest_2_unlock_time;
+  root_ui_chest_3_unlock_time_ = chest_3_unlock_time;
+  root_ui_chest_0_ad_allow_time_ = chest_0_ad_allow_time;
+  root_ui_chest_1_ad_allow_time_ = chest_1_ad_allow_time;
+  root_ui_chest_2_ad_allow_time_ = chest_2_ad_allow_time;
+  root_ui_chest_3_ad_allow_time_ = chest_3_ad_allow_time;
 
   // Apply it to any existing UI.
   if (uiv1_) {
     if (auto* root_widget = uiv1_->root_widget()) {
       root_widget->SetChests(
           root_ui_chest_0_appearance_, root_ui_chest_1_appearance_,
-          root_ui_chest_2_appearance_, root_ui_chest_3_appearance_);
+          root_ui_chest_2_appearance_, root_ui_chest_3_appearance_,
+          root_ui_chest_0_unlock_time_, root_ui_chest_1_unlock_time_,
+          root_ui_chest_2_unlock_time_, root_ui_chest_3_unlock_time_,
+          root_ui_chest_0_ad_allow_time_, root_ui_chest_1_ad_allow_time_,
+          root_ui_chest_2_ad_allow_time_, root_ui_chest_3_ad_allow_time_);
     }
   }
 }

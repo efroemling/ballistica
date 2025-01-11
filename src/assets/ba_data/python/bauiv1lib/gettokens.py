@@ -863,7 +863,7 @@ def show_get_tokens_prompt() -> None:
     if bool(True):
         ConfirmWindow(
             bui.Lstr(resource='tokens.notEnoughTokensText'),
-            GetTokensWindow,
+            _show_get_tokens,
             ok_text=bui.Lstr(resource='tokens.getTokensText'),
             width=460,
             height=130,
@@ -875,3 +875,30 @@ def show_get_tokens_prompt() -> None:
             width=460,
             height=130,
         )
+
+
+def _show_get_tokens() -> None:
+
+    # NOTE TO USERS: The code below is not the proper way to do things;
+    # whenever possible one should use a MainWindow's
+    # main_window_replace() or main_window_back() methods. We just need
+    # to do things a bit more manually in this case.
+
+    prev_main_window = bui.app.ui_v1.get_main_window()
+
+    # Special-case: If it seems we're already in the account window, do
+    # nothing.
+    if isinstance(prev_main_window, GetTokensWindow):
+        return
+
+    # Set our new main window.
+    bui.app.ui_v1.set_main_window(
+        GetTokensWindow(),
+        from_window=False,
+        is_auxiliary=True,
+        suppress_warning=True,
+    )
+
+    # Transition out any previous main window.
+    if prev_main_window is not None:
+        prev_main_window.main_window_close()

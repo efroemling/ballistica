@@ -205,7 +205,10 @@ class ProfileUpgradeWindow(bui.Window):
             tickets = plus.get_v1_account_ticket_count()
             if tickets < self._cost:
                 bui.getsound('error').play()
-                print('FIXME - show not-enough-tickets msg.')
+                bui.screenmessage(
+                    bui.Lstr(resource='notEnoughTicketsText'),
+                    color=(1, 0, 0),
+                )
                 # gettickets.show_get_tickets_prompt()
                 return
             bui.screenmessage(

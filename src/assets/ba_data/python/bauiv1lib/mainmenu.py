@@ -431,7 +431,6 @@ class MainMenuWindow(bui.MainWindow):
         )
 
         # Credits button.
-        # self._tdelay += self._t_delay_inc
         thistdelay = self._tdelay + td5 * self._t_delay_inc
 
         h += side_button_width * side_button_scale * 0.5 + hspace2
@@ -454,15 +453,16 @@ class MainMenuWindow(bui.MainWindow):
             transition_delay=thistdelay,
             on_activate_call=self._credits,
         )
-        # self._tdelay += self._t_delay_inc
 
         self._quit_button: bui.Widget | None
         if self._have_quit_button:
             v -= 1.1 * side_button_2_height * side_button_2_scale
+            # Nudge this a tiny bit right so we can press right from the
+            # credits button to get to it.
             self._quit_button = quit_button = bui.buttonwidget(
                 parent=self._root_widget,
                 autoselect=self._use_autoselect,
-                position=(h, v),
+                position=(h + 4.0, v),
                 size=(side_button_2_width, side_button_2_height),
                 scale=side_button_2_scale,
                 label=bui.Lstr(

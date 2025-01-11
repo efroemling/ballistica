@@ -12,6 +12,11 @@ import bauiv1 as bui
 if TYPE_CHECKING:
     from typing import Any, Callable
 
+# As of 1.7.37, no longer charging entry fees for tourneys (tourneys now
+# reward chests and the game now makes its money from tokens/ads used to
+# speed up chest openings).
+USE_ENTRY_FEES = False
+
 
 class TournamentButton:
     """Button showing a tournament in coop window."""
@@ -25,6 +30,7 @@ class TournamentButton:
         on_pressed: Callable[[TournamentButton], None],
     ) -> None:
         # pylint: disable=too-many-positional-arguments
+        # pylint: disable=too-many-statements
         self._r = 'coopSelectWindow'
         sclx = 300
         scly = 195.0
@@ -37,6 +43,7 @@ class TournamentButton:
         self.has_time_remaining: bool = False
         self.leader: Any = None
         self.required_league: str | None = None
+        self._base_x_offs = 0 if USE_ENTRY_FEES else -45.0
         self.button = btn = bui.buttonwidget(
             parent=parent,
             position=(x + 23, y + 4),
@@ -96,69 +103,72 @@ class TournamentButton:
         header_color = (0.43, 0.4, 0.5, 1)
         value_color = (0.6, 0.6, 0.6, 1)
 
-        x_offs = 0
-        bui.textwidget(
-            parent=parent,
-            draw_controller=btn,
-            position=(x + 360, y + scly - 20),
-            size=(0, 0),
-            h_align='center',
-            text=bui.Lstr(resource=f'{self._r}.entryFeeText'),
-            v_align='center',
-            maxwidth=100,
-            scale=0.9,
-            color=header_color,
-            flatness=1.0,
-        )
+        x_offs = self._base_x_offs
 
-        self.entry_fee_text_top = bui.textwidget(
-            parent=parent,
-            draw_controller=btn,
-            position=(x + 360, y + scly - 60),
-            size=(0, 0),
-            h_align='center',
-            text='-',
-            v_align='center',
-            maxwidth=60,
-            scale=1.3,
-            color=value_color,
-            flatness=1.0,
-        )
-        self.entry_fee_text_or = bui.textwidget(
-            parent=parent,
-            draw_controller=btn,
-            position=(x + 360, y + scly - 90),
-            size=(0, 0),
-            h_align='center',
-            text='',
-            v_align='center',
-            maxwidth=60,
-            scale=0.5,
-            color=value_color,
-            flatness=1.0,
-        )
-        self.entry_fee_text_remaining = bui.textwidget(
-            parent=parent,
-            draw_controller=btn,
-            position=(x + 360, y + scly - 90),
-            size=(0, 0),
-            h_align='center',
-            text='',
-            v_align='center',
-            maxwidth=60,
-            scale=0.5,
-            color=value_color,
-            flatness=1.0,
-        )
+        # No longer using entry fees.
+        if USE_ENTRY_FEES:
+            bui.textwidget(
+                parent=parent,
+                draw_controller=btn,
+                position=(x + 360, y + scly - 20),
+                size=(0, 0),
+                h_align='center',
+                text=bui.Lstr(resource=f'{self._r}.entryFeeText'),
+                v_align='center',
+                maxwidth=100,
+                scale=0.9,
+                color=header_color,
+                flatness=1.0,
+            )
 
-        self.entry_fee_ad_image = bui.imagewidget(
-            parent=parent,
-            size=(40, 40),
-            draw_controller=btn,
-            position=(x + 360 - 20, y + scly - 140),
-            opacity=0.0,
-            texture=bui.gettexture('tv'),
-        )
+            self.entry_fee_text_top = bui.textwidget(
+                parent=parent,
+                draw_controller=btn,
+                position=(x + 360, y + scly - 60),
+                size=(0, 0),
+                h_align='center',
+                text='-',
+                v_align='center',
+                maxwidth=60,
+                scale=1.3,
+                color=value_color,
+                flatness=1.0,
+            )
+            self.entry_fee_text_or = bui.textwidget(
+                parent=parent,
+                draw_controller=btn,
+                position=(x + 360, y + scly - 90),
+                size=(0, 0),
+                h_align='center',
+                text='',
+                v_align='center',
+                maxwidth=60,
+                scale=0.5,
+                color=value_color,
+                flatness=1.0,
+            )
+            self.entry_fee_text_remaining = bui.textwidget(
+                parent=parent,
+                draw_controller=btn,
+                position=(x + 360, y + scly - 90),
+                size=(0, 0),
+                h_align='center',
+                text='',
+                v_align='center',
+                maxwidth=60,
+                scale=0.5,
+                color=value_color,
+                flatness=1.0,
+            )
+
+            self.entry_fee_ad_image = bui.imagewidget(
+                parent=parent,
+                size=(40, 40),
+                draw_controller=btn,
+                position=(x + 360 - 20, y + scly - 140),
+                opacity=0.0,
+                texture=bui.gettexture('tv'),
+            )
 
         x_offs += 50
 
@@ -180,8 +190,8 @@ class TournamentButton:
         self.button_y = y
         self.button_scale_y = scly
 
-        xo2 = 0
-        prize_value_scale = 1.5
+        # Offset for prize range/values.
+        xo2 = 0.0
 
         self.prize_range_1_text = bui.textwidget(
             parent=parent,
@@ -191,7 +201,7 @@ class TournamentButton:
             h_align='right',
             v_align='center',
             maxwidth=50,
-            text='-',
+            text='',
             scale=0.8,
             color=header_color,
             flatness=1.0,
@@ -202,12 +212,20 @@ class TournamentButton:
             position=(x + 380 + xo2 + x_offs, y + scly - 93),
             size=(0, 0),
             h_align='left',
-            text='-',
+            text='',
             v_align='center',
             maxwidth=100,
-            scale=prize_value_scale,
             color=value_color,
             flatness=1.0,
+        )
+        self._chestsz = 50
+        self.prize_chest_1_image = bui.imagewidget(
+            parent=parent,
+            draw_controller=btn,
+            texture=bui.gettexture('white'),
+            position=(x + 380 + xo2 + x_offs, y + scly - 93),
+            size=(self._chestsz, self._chestsz),
+            opacity=0.0,
         )
 
         self.prize_range_2_text = bui.textwidget(
@@ -216,6 +234,7 @@ class TournamentButton:
             position=(x + 355 + xo2 + x_offs, y + scly - 93),
             size=(0, 0),
             h_align='right',
+            text='',
             v_align='center',
             maxwidth=50,
             scale=0.8,
@@ -231,9 +250,16 @@ class TournamentButton:
             text='',
             v_align='center',
             maxwidth=100,
-            scale=prize_value_scale,
             color=value_color,
             flatness=1.0,
+        )
+        self.prize_chest_2_image = bui.imagewidget(
+            parent=parent,
+            draw_controller=btn,
+            texture=bui.gettexture('white'),
+            position=(x + 380 + xo2 + x_offs, y + scly - 93),
+            size=(self._chestsz, self._chestsz),
+            opacity=0.0,
         )
 
         self.prize_range_3_text = bui.textwidget(
@@ -242,6 +268,7 @@ class TournamentButton:
             position=(x + 355 + xo2 + x_offs, y + scly - 93),
             size=(0, 0),
             h_align='right',
+            text='',
             v_align='center',
             maxwidth=50,
             scale=0.8,
@@ -257,15 +284,22 @@ class TournamentButton:
             text='',
             v_align='center',
             maxwidth=100,
-            scale=prize_value_scale,
             color=value_color,
             flatness=1.0,
+        )
+        self.prize_chest_3_image = bui.imagewidget(
+            parent=parent,
+            draw_controller=btn,
+            texture=bui.gettexture('white'),
+            position=(x + 380 + xo2 + x_offs, y + scly - 93),
+            size=(self._chestsz, self._chestsz),
+            opacity=0.0,
         )
 
         bui.textwidget(
             parent=parent,
             draw_controller=btn,
-            position=(x + 620 + x_offs, y + scly - 20),
+            position=(x + 625 + x_offs, y + scly - 20),
             size=(0, 0),
             h_align='center',
             text=bui.Lstr(resource=f'{self._r}.currentBestText'),
@@ -279,7 +313,7 @@ class TournamentButton:
             parent=parent,
             draw_controller=btn,
             position=(
-                x + 620 + x_offs - (170 / 1.4) * 0.5,
+                x + 625 + x_offs - (170 / 1.4) * 0.5,
                 y + scly - 60 - 40 * 0.5,
             ),
             selectable=True,
@@ -299,7 +333,7 @@ class TournamentButton:
         self.current_leader_score_text = bui.textwidget(
             parent=parent,
             draw_controller=btn,
-            position=(x + 620 + x_offs, y + scly - 113 + 10),
+            position=(x + 625 + x_offs, y + scly - 113 + 10),
             size=(0, 0),
             h_align='center',
             text='-',
@@ -312,7 +346,7 @@ class TournamentButton:
 
         self.more_scores_button = bui.buttonwidget(
             parent=parent,
-            position=(x + 620 + x_offs - 60, y + scly - 50 - 125),
+            position=(x + 625 + x_offs - 60, y + scly - 50 - 125),
             color=(0.5, 0.5, 0.6),
             textcolor=(0.7, 0.7, 0.8),
             label='-',
@@ -330,7 +364,7 @@ class TournamentButton:
         bui.textwidget(
             parent=parent,
             draw_controller=btn,
-            position=(x + 820 + x_offs, y + scly - 20),
+            position=(x + 840 + x_offs, y + scly - 20),
             size=(0, 0),
             h_align='center',
             text=bui.Lstr(resource=f'{self._r}.timeRemainingText'),
@@ -343,7 +377,7 @@ class TournamentButton:
         self.time_remaining_value_text = bui.textwidget(
             parent=parent,
             draw_controller=btn,
-            position=(x + 820 + x_offs, y + scly - 68),
+            position=(x + 840 + x_offs, y + scly - 68),
             size=(0, 0),
             h_align='center',
             text='-',
@@ -356,7 +390,7 @@ class TournamentButton:
         self.time_remaining_out_of_text = bui.textwidget(
             parent=parent,
             draw_controller=btn,
-            position=(x + 820 + x_offs, y + scly - 110),
+            position=(x + 840 + x_offs, y + scly - 110),
             size=(0, 0),
             h_align='center',
             text='-',
@@ -415,26 +449,26 @@ class TournamentButton:
         plus = bui.app.plus
         assert plus is not None
 
-        assert bui.app.classic is not None
+        classic = bui.app.classic
+        assert classic is not None
+
         prize_y_offs = (
             34
             if 'prizeRange3' in entry
             else 20 if 'prizeRange2' in entry else 12
         )
-        x_offs = 90
+        x_offs = self._base_x_offs + 90
 
-        # pylint: disable=useless-suppression
-        # pylint: disable=unbalanced-tuple-unpacking
-        (
-            pr1,
-            pv1,
-            pr2,
-            pv2,
-            pr3,
-            pv3,
-        ) = bui.app.classic.get_tournament_prize_strings(entry)
-        # pylint: enable=unbalanced-tuple-unpacking
-        # pylint: enable=useless-suppression
+        # Special offset for prize ranges/vals.
+        x_offs2 = x_offs - 20.0
+
+        # Special offset for prize chests.
+        x_offs2c = x_offs2 + 50
+
+        # Fetch prize range and trophy strings.
+        (pr1, pv1, pr2, pv2, pr3, pv3) = classic.get_tournament_prize_strings(
+            entry, include_tickets=False
+        )
 
         enabled = 'requiredLeague' not in entry
         bui.buttonwidget(
@@ -446,74 +480,91 @@ class TournamentButton:
             edit=self.prize_range_1_text,
             text='-' if pr1 == '' else pr1,
             position=(
-                self.button_x + 365 + x_offs,
+                self.button_x + 365 + x_offs2,
                 self.button_y + self.button_scale_y - 93 + prize_y_offs,
             ),
         )
-
-        # We want to draw values containing tickets a bit smaller
-        # (scratch that; we now draw medals a bit bigger).
-        ticket_char = bui.charstr(bui.SpecialChar.TICKET_BACKING)
-        prize_value_scale_large = 1.0
-        prize_value_scale_small = 1.0
 
         bui.textwidget(
             edit=self.prize_value_1_text,
             text='-' if pv1 == '' else pv1,
-            scale=(
-                prize_value_scale_large
-                if ticket_char not in pv1
-                else prize_value_scale_small
-            ),
             position=(
-                self.button_x + 380 + x_offs,
+                self.button_x + 380 + x_offs2,
                 self.button_y + self.button_scale_y - 93 + prize_y_offs,
             ),
         )
+        bui.imagewidget(
+            edit=self.prize_chest_1_image,
+            position=(
+                self.button_x + 380 + x_offs2c,
+                self.button_y
+                + self.button_scale_y
+                - 93
+                + prize_y_offs
+                - 0.5 * self._chestsz,
+            ),
+        )
+        classic.set_tournament_prize_image(entry, 0, self.prize_chest_1_image)
 
         bui.textwidget(
             edit=self.prize_range_2_text,
             text=pr2,
             position=(
-                self.button_x + 365 + x_offs,
+                self.button_x + 365 + x_offs2,
                 self.button_y + self.button_scale_y - 93 - 45 + prize_y_offs,
             ),
         )
         bui.textwidget(
             edit=self.prize_value_2_text,
             text=pv2,
-            scale=(
-                prize_value_scale_large
-                if ticket_char not in pv2
-                else prize_value_scale_small
-            ),
             position=(
-                self.button_x + 380 + x_offs,
+                self.button_x + 380 + x_offs2,
                 self.button_y + self.button_scale_y - 93 - 45 + prize_y_offs,
             ),
         )
+        bui.imagewidget(
+            edit=self.prize_chest_2_image,
+            position=(
+                self.button_x + 380 + x_offs2c,
+                self.button_y
+                + self.button_scale_y
+                - 93
+                - 45
+                + prize_y_offs
+                - 0.5 * self._chestsz,
+            ),
+        )
+        classic.set_tournament_prize_image(entry, 1, self.prize_chest_2_image)
 
         bui.textwidget(
             edit=self.prize_range_3_text,
             text=pr3,
             position=(
-                self.button_x + 365 + x_offs,
+                self.button_x + 365 + x_offs2,
                 self.button_y + self.button_scale_y - 93 - 90 + prize_y_offs,
             ),
         )
         bui.textwidget(
             edit=self.prize_value_3_text,
             text=pv3,
-            scale=(
-                prize_value_scale_large
-                if ticket_char not in pv3
-                else prize_value_scale_small
-            ),
             position=(
-                self.button_x + 380 + x_offs,
+                self.button_x + 380 + x_offs2,
                 self.button_y + self.button_scale_y - 93 - 90 + prize_y_offs,
             ),
         )
+        bui.imagewidget(
+            edit=self.prize_chest_3_image,
+            position=(
+                self.button_x + 380 + x_offs2c,
+                self.button_y
+                + self.button_scale_y
+                - 93
+                - 90
+                + prize_y_offs
+                - 0.5 * self._chestsz,
+            ),
+        )
+        classic.set_tournament_prize_image(entry, 2, self.prize_chest_3_image)
 
         leader_name = '-'
         leader_score: str | bui.Lstr = '-'
@@ -599,6 +650,7 @@ class TournamentButton:
             )
 
         fee = entry['fee']
+        assert isinstance(fee, int | None)
 
         if fee is None:
             fee_var = None
@@ -610,18 +662,23 @@ class TournamentButton:
             fee_var = 'price.tournament_entry_2'
         elif fee == 1:
             fee_var = 'price.tournament_entry_1'
+        elif fee == -1:
+            fee_var = None
         else:
             if fee != 0:
                 print('Unknown fee value:', fee)
             fee_var = 'price.tournament_entry_0'
 
-        self.allow_ads = allow_ads = entry['allowAds']
+        self.allow_ads = allow_ads = (
+            entry['allowAds'] if USE_ENTRY_FEES else False
+        )
 
-        final_fee: int | None = (
+        final_fee = (
             None
             if fee_var is None
             else plus.get_v1_account_misc_read_val(fee_var, '?')
         )
+        assert isinstance(final_fee, int | None)
 
         final_fee_str: str | bui.Lstr
         if fee_var is None:
@@ -638,72 +695,77 @@ class TournamentButton:
         ad_tries_remaining = bui.app.classic.accounts.tournament_info[
             self.tournament_id
         ]['adTriesRemaining']
+        assert isinstance(ad_tries_remaining, int | None)
         free_tries_remaining = bui.app.classic.accounts.tournament_info[
             self.tournament_id
         ]['freeTriesRemaining']
+        assert isinstance(free_tries_remaining, int | None)
 
         # Now, if this fee allows ads and we support video ads, show
         # the 'or ad' version.
-        if allow_ads and plus.has_video_ads():
-            ads_enabled = plus.have_incentivized_ad()
-            bui.imagewidget(
-                edit=self.entry_fee_ad_image,
-                opacity=1.0 if ads_enabled else 0.25,
-            )
-            or_text = (
-                bui.Lstr(resource='orText', subs=[('${A}', ''), ('${B}', '')])
-                .evaluate()
-                .strip()
-            )
-            bui.textwidget(edit=self.entry_fee_text_or, text=or_text)
-            bui.textwidget(
-                edit=self.entry_fee_text_top,
-                position=(
-                    self.button_x + 360,
-                    self.button_y + self.button_scale_y - 60,
-                ),
-                scale=1.3,
-                text=final_fee_str,
-            )
+        if USE_ENTRY_FEES:
+            if allow_ads and plus.has_video_ads():
+                ads_enabled = plus.have_incentivized_ad()
+                bui.imagewidget(
+                    edit=self.entry_fee_ad_image,
+                    opacity=1.0 if ads_enabled else 0.25,
+                )
+                or_text = (
+                    bui.Lstr(
+                        resource='orText', subs=[('${A}', ''), ('${B}', '')]
+                    )
+                    .evaluate()
+                    .strip()
+                )
+                bui.textwidget(edit=self.entry_fee_text_or, text=or_text)
+                bui.textwidget(
+                    edit=self.entry_fee_text_top,
+                    position=(
+                        self.button_x + 360,
+                        self.button_y + self.button_scale_y - 60,
+                    ),
+                    scale=1.3,
+                    text=final_fee_str,
+                )
 
-            # Possibly show number of ad-plays remaining.
-            bui.textwidget(
-                edit=self.entry_fee_text_remaining,
-                position=(
-                    self.button_x + 360,
-                    self.button_y + self.button_scale_y - 146,
-                ),
-                text=(
-                    ''
-                    if ad_tries_remaining in [None, 0]
-                    else ('' + str(ad_tries_remaining))
-                ),
-                color=(0.6, 0.6, 0.6, 1 if ads_enabled else 0.2),
-            )
-        else:
-            bui.imagewidget(edit=self.entry_fee_ad_image, opacity=0.0)
-            bui.textwidget(edit=self.entry_fee_text_or, text='')
-            bui.textwidget(
-                edit=self.entry_fee_text_top,
-                position=(
-                    self.button_x + 360,
-                    self.button_y + self.button_scale_y - 80,
-                ),
-                scale=1.3,
-                text=final_fee_str,
-            )
+                # Possibly show number of ad-plays remaining.
+                bui.textwidget(
+                    edit=self.entry_fee_text_remaining,
+                    position=(
+                        self.button_x + 360,
+                        self.button_y + self.button_scale_y - 146,
+                    ),
+                    text=(
+                        ''
+                        if ad_tries_remaining in [None, 0]
+                        else ('' + str(ad_tries_remaining))
+                    ),
+                    color=(0.6, 0.6, 0.6, 1 if ads_enabled else 0.2),
+                )
+            else:
+                bui.imagewidget(edit=self.entry_fee_ad_image, opacity=0.0)
+                bui.textwidget(edit=self.entry_fee_text_or, text='')
+                bui.textwidget(
+                    edit=self.entry_fee_text_top,
+                    position=(
+                        self.button_x + 360,
+                        self.button_y + self.button_scale_y - 80,
+                    ),
+                    scale=1.3,
+                    text=final_fee_str,
+                )
 
-            # Possibly show number of free-plays remaining.
-            bui.textwidget(
-                edit=self.entry_fee_text_remaining,
-                position=(
-                    self.button_x + 360,
-                    self.button_y + self.button_scale_y - 100,
-                ),
-                text=(
-                    ''
-                    if (free_tries_remaining in [None, 0] or final_fee != 0)
-                    else ('' + str(free_tries_remaining))
-                ),
-                color=(0.6, 0.6, 0.6, 1),
-            )
+                # Possibly show number of free-plays remaining.
+                bui.textwidget(
+                    edit=self.entry_fee_text_remaining,
+                    position=(
+                        self.button_x + 360,
+                        self.button_y + self.button_scale_y - 100,
+                    ),
+                    text=(
+                        ''
+                        if (free_tries_remaining in [None, 0] or final_fee != 0)
+                        else ('' + str(free_tries_remaining))
+                    ),
+                    color=(0.6, 0.6, 0.6, 1),
+                )

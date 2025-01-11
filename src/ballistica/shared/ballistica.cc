@@ -39,7 +39,7 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 22155;
+const int kEngineBuildNumber = 22178;
 const char* kEngineVersion = "1.7.37";
 const int kEngineApiVersion = 9;
 
@@ -53,7 +53,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
   core::BaseSoftInterface* l_base{};
 
   try {
-    auto time1 = core::CorePlatform::GetCurrentMillisecs();
+    auto time1 = core::CorePlatform::TimeMonotonicMillisecs();
 
     // Even at the absolute start of execution we should be able to
     // reasonably log errors. Set env var BA_CRASH_TEST=1 to test this.
@@ -68,7 +68,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // import it first thing even if we don't explicitly use it.
     l_core = core::CoreFeatureSet::Import(&core_config);
 
-    auto time2 = core::CorePlatform::GetCurrentMillisecs();
+    auto time2 = core::CorePlatform::TimeMonotonicMillisecs();
 
     // If a command was passed, simply run it and exit. We want to act
     // simply as a Python interpreter in that case; we don't do any
@@ -98,7 +98,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // those modules get loaded from in the first place.
     l_core->python->MonolithicModeBaEnvConfigure();
 
-    auto time3 = core::CorePlatform::GetCurrentMillisecs();
+    auto time3 = core::CorePlatform::TimeMonotonicMillisecs();
 
     // We need the base feature-set to run a full app but we don't have a hard
     // dependency to it. Let's see if it's available.
@@ -107,7 +107,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
       FatalError("Base module unavailable; can't run app.");
     }
 
-    auto time4 = core::CorePlatform::GetCurrentMillisecs();
+    auto time4 = core::CorePlatform::TimeMonotonicMillisecs();
 
     // -------------------------------------------------------------------------
     // Phase 2: "The pieces are moving."
@@ -126,7 +126,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // environment do that part).
 
     // Make noise if it takes us too long to get to this point.
-    auto time5 = core::CorePlatform::GetCurrentMillisecs();
+    auto time5 = core::CorePlatform::TimeMonotonicMillisecs();
     auto total_duration = time5 - time1;
     if (total_duration > 5000) {
       auto core_import_duration = time2 - time1;

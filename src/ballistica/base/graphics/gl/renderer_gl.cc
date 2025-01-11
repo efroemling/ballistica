@@ -90,12 +90,12 @@ void RendererGL::CheckGLError(const char* file, int line) {
     BA_PRECONDITION_FATAL(vendor);
     const char* renderer = (const char*)glGetString(GL_RENDERER);
     BA_PRECONDITION_FATAL(renderer);
-    g_core->Log(
-        LogName::kBaGraphics, LogLevel::kError,
-        "OpenGL Error at " + std::string(file) + " line " + std::to_string(line)
-            + ": " + GLErrorToString(err) + "\nrenderer: " + renderer
-            + "\nvendor: " + vendor + "\nversion: " + version
-            + "\ntime: " + std::to_string(g_core->GetAppTimeMillisecs()));
+    g_core->Log(LogName::kBaGraphics, LogLevel::kError,
+                "OpenGL Error at " + std::string(file) + " line "
+                    + std::to_string(line) + ": " + GLErrorToString(err)
+                    + "\nrenderer: " + renderer + "\nvendor: " + vendor
+                    + "\nversion: " + version
+                    + "\ntime: " + std::to_string(g_core->AppTimeMillisecs()));
   }
 }
 

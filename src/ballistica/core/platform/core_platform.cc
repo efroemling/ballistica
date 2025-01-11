@@ -116,7 +116,8 @@ void CorePlatform::LowLevelDebugLog(const std::string& msg) {
   HandleLowLevelDebugLog(msg);
 }
 
-CorePlatform::CorePlatform() : start_time_millisecs_(GetCurrentMillisecs()) {}
+CorePlatform::CorePlatform()
+    : start_time_millisecs_(TimeMonotonicMillisecs()) {}
 
 void CorePlatform::PostInit() {
   // Hmm; we seem to get some funky invalid utf8 out of
@@ -960,8 +961,8 @@ auto CorePlatform::SetSocketNonBlocking(int sd) -> bool {
 #endif
 }
 
-auto CorePlatform::GetTicks() const -> millisecs_t {
-  return GetCurrentMillisecs() - start_time_millisecs_;
+auto CorePlatform::TimeSinceLaunchMillisecs() const -> millisecs_t {
+  return TimeMonotonicMillisecs() - start_time_millisecs_;
 }
 
 auto CorePlatform::GetPlatformName() -> std::string {
@@ -1072,27 +1073,27 @@ void CorePlatform::SetDebugKey(const std::string& key,
 
 void CorePlatform::HandleLowLevelDebugLog(const std::string& msg) {}
 
-auto CorePlatform::GetCurrentMillisecs() -> millisecs_t {
+auto CorePlatform::TimeMonotonicMillisecs() -> millisecs_t {
   return std::chrono::time_point_cast<std::chrono::milliseconds>(
              std::chrono::steady_clock::now())
       .time_since_epoch()
       .count();
 }
 
-auto CorePlatform::GetCurrentMicrosecs() -> millisecs_t {
+auto CorePlatform::TimeMonotonicMicrosecs() -> millisecs_t {
   return std::chrono::time_point_cast<std::chrono::microseconds>(
              std::chrono::steady_clock::now())
       .time_since_epoch()
       .count();
 }
 
-auto CorePlatform::GetSecondsSinceEpoch() -> double {
+auto CorePlatform::TimeSinceEpochSeconds() -> double {
   return std::chrono::duration<double>(
              std::chrono::system_clock::now().time_since_epoch())
       .count();
 }
 
-auto CorePlatform::GetCurrentWholeSeconds() -> int64_t {
+auto CorePlatform::TimeMonotonicWholeSeconds() -> int64_t {
   return std::chrono::time_point_cast<std::chrono::seconds>(
              std::chrono::steady_clock::now())
       .time_since_epoch()

@@ -1015,7 +1015,7 @@ void ClientSession::HandleSessionMessage(const std::vector<uint8_t>& buffer) {
           // let's also use this opportunity to graph our command-buffer size
           // for network debugging... if (NetGraph *graph =
           // g_graphics->GetClientSessionStepBufferGraph()) {
-          //   graph->addSample(GetAppTimeMillisecs(), steps_on_list_);
+          //   graph->addSample(AppTimeMillisecs(), steps_on_list_);
           // }
 
           break;

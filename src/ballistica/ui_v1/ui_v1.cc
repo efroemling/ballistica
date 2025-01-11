@@ -278,7 +278,6 @@ void UIV1FeatureSet::ConfirmQuit(QuitType quit_type) {
 }
 
 UIV1FeatureSet::UILock::UILock(bool write) {
-  assert(g_base->ui);
   assert(g_base->InLogicThread());
 
   if (write && g_ui_v1->ui_lock_count_ != 0) {

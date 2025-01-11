@@ -12,6 +12,7 @@ import _baplus
 if TYPE_CHECKING:
     from typing import Callable, Any
 
+    import bacommon.bs
     from babase import AccountV2Subsystem
 
     from baplus._cloud import CloudSubsystem

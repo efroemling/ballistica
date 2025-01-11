@@ -100,16 +100,19 @@ class AccountViewerWindow(PopupWindow):
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
 
+        # Note to self: Make sure to always update loading text and
+        # spinner visibility together.
         self._loading_text = bui.textwidget(
             parent=self._scrollwidget,
             scale=0.5,
-            text=bui.Lstr(
-                value='${A}...',
-                subs=[('${A}', bui.Lstr(resource='loadingText'))],
-            ),
+            text='',
             size=(self._width - 60, 100),
             h_align='center',
             v_align='center',
+        )
+        self._loading_spinner = bui.spinnerwidget(
+            parent=self.root_widget,
+            position=(self._width * 0.5, self._height * 0.5),
         )
 
         # In cases where the user most likely has a browser/email, lets
@@ -227,9 +230,11 @@ class AccountViewerWindow(PopupWindow):
                 edit=self._loading_text,
                 text=bui.Lstr(resource='internal.unavailableNoConnectionText'),
             )
+            bui.spinnerwidget(edit=self._loading_spinner, visible=False)
         else:
             try:
                 self._loading_text.delete()
+                self._loading_spinner.delete()
                 trophystr = ''
                 try:
                     trophystr = data['trophies']

@@ -17,6 +17,8 @@ if TYPE_CHECKING:
 
     from bauiv1lib.play import PlaylistSelectContext
 
+REQUIRE_PRO = False
+
 
 class PlayOptionsWindow(PopupWindow):
     """A popup window for configuring play options."""
@@ -316,7 +318,7 @@ class PlayOptionsWindow(PopupWindow):
                 label=bui.Lstr(resource='teamNamesColorText'),
             )
             assert bui.app.classic is not None
-            if not bui.app.classic.accounts.have_pro():
+            if REQUIRE_PRO and not bui.app.classic.accounts.have_pro():
                 bui.imagewidget(
                     parent=self.root_widget,
                     size=(30, 30),
@@ -440,7 +442,7 @@ class PlayOptionsWindow(PopupWindow):
         assert plus is not None
 
         assert bui.app.classic is not None
-        if not bui.app.classic.accounts.have_pro():
+        if REQUIRE_PRO and not bui.app.classic.accounts.have_pro():
             if plus.get_v1_account_state() != 'signed_in':
                 show_sign_in_prompt()
             else:

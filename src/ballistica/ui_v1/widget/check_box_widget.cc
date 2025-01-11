@@ -46,7 +46,7 @@ void CheckBoxWidget::SetHeight(float height_in) {
 }
 
 void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   have_drawn_ = true;
   float l = 0.0f;
@@ -236,7 +236,7 @@ void CheckBoxWidget::SetValue(bool value) {
 
   // Don't animate if we're setting initial values.
   if (checked_ != value && have_drawn_) {
-    last_change_time_ = g_core->GetAppTimeMillisecs();
+    last_change_time_ = g_core->AppTimeMillisecs();
   }
   checked_ = value;
 }
@@ -245,7 +245,7 @@ void CheckBoxWidget::Activate() {
   g_base->audio->SafePlaySysSound(base::SysSoundID::kSwish3);
   checked_ = !checked_;
   check_dirty_ = true;
-  last_change_time_ = g_core->GetAppTimeMillisecs();
+  last_change_time_ = g_core->AppTimeMillisecs();
   if (auto* call = on_value_change_call_.get()) {
     PythonRef args(Py_BuildValue("(O)", checked_ ? Py_True : Py_False),
                    PythonRef::kSteal);

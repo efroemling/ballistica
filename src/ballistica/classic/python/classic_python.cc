@@ -4,6 +4,7 @@
 
 #include <string>
 
+#include "ballistica/base/python/base_python.h"
 #include "ballistica/classic/python/methods/python_methods_classic.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/shared/python/python_command.h"  // IWYU pragma: keep.
@@ -30,6 +31,60 @@ extern "C" auto PyInit__baclassic() -> PyObject* {
 
 void ClassicPython::ImportPythonObjs() {
 #include "ballistica/classic/mgen/pyembed/binding_classic.inc"
+
+  // Cache some basic display values for chests from the Python layer. This
+  // way C++ UI stuff doesn't have to call out to Python when drawing the
+  // root UI/etc.
+
+  // Pull default chest display info.
+  chest_display_default_ = {ChestDisplayFromPython(
+      objs().Get(ObjID::kChestAppearanceDisplayInfoDefault))};
+
+  // And overrides.
+  for (auto&& item :
+       objs().Get(ObjID::kChestAppearanceDisplayInfos).DictItems()) {
+    chest_displays_[item.first.GetAttr("value").ValueAsString()] =
+        ChestDisplayFromPython(item.second);
+  }
+}
+
+auto ClassicPython::ChestDisplayFromPython(const PythonRef& ref)
+    -> ChestDisplay_ {
+  ChestDisplay_ out;
+
+  out.texclosed = ref.GetAttr("texclosed").ValueAsString().c_str();
+  out.texclosedtint = ref.GetAttr("texclosedtint").ValueAsString().c_str();
+  out.color = base::BasePython::GetPyVector3f(ref.GetAttr("color").get());
+  out.tint = base::BasePython::GetPyVector3f(ref.GetAttr("tint").get());
+  out.tint2 = base::BasePython::GetPyVector3f(ref.GetAttr("tint2").get());
+
+  return out;
+}
+
+void ClassicPython::GetClassicChestDisplayInfo(const std::string& id,
+                                               std::string* texclosed,
+                                               std::string* texclosedtint,
+                                               Vector3f* color, Vector3f* tint,
+                                               Vector3f* tint2) {
+  assert(texclosed);
+  assert(texclosedtint);
+  assert(color);
+  assert(tint);
+  assert(tint2);
+  auto&& display{chest_displays_.find(id)};
+  if (display != chest_displays_.end()) {
+    *texclosed = display->second.texclosed;
+    *texclosedtint = display->second.texclosedtint;
+    *color = display->second.color;
+    *tint = display->second.tint;
+    *tint2 = display->second.tint2;
+  } else {
+    *texclosed = chest_display_default_.texclosed;
+    *texclosedtint = chest_display_default_.texclosedtint;
+    *color = chest_display_default_.color;
+    *tint = chest_display_default_.tint;
+    *tint2 = chest_display_default_.tint2;
+  }
 }
 
 void ClassicPython::PlayMusic(const std::string& music_type, bool continuous) {

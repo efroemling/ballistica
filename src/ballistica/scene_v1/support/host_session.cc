@@ -27,7 +27,7 @@
 namespace ballistica::scene_v1 {
 
 HostSession::HostSession(PyObject* session_type_obj)
-    : last_kick_idle_players_decrement_time_(g_core->GetAppTimeMillisecs()) {
+    : last_kick_idle_players_decrement_time_(g_core->AppTimeMillisecs()) {
   assert(g_base->logic);
   assert(g_base->InLogicThread());
   assert(session_type_obj != nullptr);
@@ -327,7 +327,7 @@ void HostSession::SetKickIdlePlayers(bool enable) {
   // If this has changed, reset our disconnect-time reporting.
   assert(g_base->InLogicThread());
   if (enable != kick_idle_players_) {
-    last_kick_idle_players_decrement_time_ = g_core->GetAppTimeMillisecs();
+    last_kick_idle_players_decrement_time_ = g_core->AppTimeMillisecs();
   }
   kick_idle_players_ = enable;
 }
@@ -456,7 +456,7 @@ void HostSession::DecrementPlayerTimeOuts(millisecs_t millisecs) {
 }
 
 void HostSession::ProcessPlayerTimeOuts() {
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   if (foreground_host_activity_.exists()
       && foreground_host_activity_->game_speed() > 0.0
@@ -487,7 +487,7 @@ void HostSession::StepScene() {
 void HostSession::Update(int time_advance_millisecs, double time_advance) {
   assert(g_base->InLogicThread());
 
-  millisecs_t update_time_start = core::CorePlatform::GetCurrentMillisecs();
+  millisecs_t update_time_start = core::CorePlatform::TimeMonotonicMillisecs();
 
   // HACK: we used to do a bunch of fudging to try and advance time by
   // exactly 16 milliseconds per frame which would give us a clean 2 sim
@@ -546,7 +546,7 @@ void HostSession::Update(int time_advance_millisecs, double time_advance) {
     // slow down if we're overloaded and have a better chance at maintaining
     // a reasonable frame-rate/etc.
     auto elapsed =
-        core::CorePlatform::GetCurrentMillisecs() - update_time_start;
+        core::CorePlatform::TimeMonotonicMillisecs() - update_time_start;
     if (elapsed >= 1000 / 30) {
       too_slow = true;
       break;

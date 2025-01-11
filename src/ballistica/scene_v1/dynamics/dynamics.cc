@@ -514,7 +514,7 @@ void Dynamics::ProcessCollision_() {
 void Dynamics::Process() {
   in_process_ = true;
   // Update this once so we can recycle results.
-  real_time_ = g_core->GetAppTimeMillisecs();
+  real_time_ = g_core->AppTimeMillisecs();
   ProcessCollision_();
   dWorldQuickStep(ode_world_, kGameStepSeconds);
   dJointGroupEmpty(ode_contact_group_);

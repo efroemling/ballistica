@@ -206,6 +206,8 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/_appmode.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_benchmark.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_chest.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_clienteffect.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_input.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_music.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_net.py \
@@ -486,6 +488,8 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_appmode.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_appsubsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_benchmark.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_chest.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_clienteffect.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_input.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_music.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_net.cpython-312.opt-1.pyc \
@@ -738,6 +742,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/app.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assets.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bacloud.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/bs.py \
   $(BUILD_DIR)/ba_data/python/bacommon/build.py \
   $(BUILD_DIR)/ba_data/python/bacommon/cloud.py \
   $(BUILD_DIR)/ba_data/python/bacommon/loggercontrol.py \
@@ -759,6 +764,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/efro/dataclassio/_pathcapture.py \
   $(BUILD_DIR)/ba_data/python/efro/dataclassio/_prep.py \
   $(BUILD_DIR)/ba_data/python/efro/dataclassio/extras.py \
+  $(BUILD_DIR)/ba_data/python/efro/dataclassio/templatemultitype.py \
   $(BUILD_DIR)/ba_data/python/efro/debug.py \
   $(BUILD_DIR)/ba_data/python/efro/error.py \
   $(BUILD_DIR)/ba_data/python/efro/logging.py \
@@ -778,6 +784,7 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/app.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/assets.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/bacloud.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/bs.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/build.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/cloud.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/loggercontrol.cpython-312.opt-1.pyc \
@@ -799,6 +806,7 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/_pathcapture.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/_prep.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/extras.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/templatemultitype.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/debug.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/error.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/logging.cpython-312.opt-1.pyc \
@@ -5259,6 +5267,7 @@ AUDIO_TARGETS = \
   $(BUILD_DIR)/ba_data/audio/assassinFall.ogg \
   $(BUILD_DIR)/ba_data/audio/assassinHit1.ogg \
   $(BUILD_DIR)/ba_data/audio/assassinHit2.ogg \
+  $(BUILD_DIR)/ba_data/audio/aww.ogg \
   $(BUILD_DIR)/ba_data/audio/bear1.ogg \
   $(BUILD_DIR)/ba_data/audio/bear2.ogg \
   $(BUILD_DIR)/ba_data/audio/bear3.ogg \
@@ -5301,6 +5310,7 @@ AUDIO_TARGETS = \
   $(BUILD_DIR)/ba_data/audio/cheer.ogg \
   $(BUILD_DIR)/ba_data/audio/click01.ogg \
   $(BUILD_DIR)/ba_data/audio/corkPop.ogg \
+  $(BUILD_DIR)/ba_data/audio/corkPop2.ogg \
   $(BUILD_DIR)/ba_data/audio/cowboy1.ogg \
   $(BUILD_DIR)/ba_data/audio/cowboy2.ogg \
   $(BUILD_DIR)/ba_data/audio/cowboy3.ogg \
@@ -5327,6 +5337,7 @@ AUDIO_TARGETS = \
   $(BUILD_DIR)/ba_data/audio/dingSmallHigh.ogg \
   $(BUILD_DIR)/ba_data/audio/dripity.ogg \
   $(BUILD_DIR)/ba_data/audio/drumRoll.ogg \
+  $(BUILD_DIR)/ba_data/audio/drumRollShort.ogg \
   $(BUILD_DIR)/ba_data/audio/error.ogg \
   $(BUILD_DIR)/ba_data/audio/explosion01.ogg \
   $(BUILD_DIR)/ba_data/audio/explosion02.ogg \
@@ -5353,6 +5364,7 @@ AUDIO_TARGETS = \
   $(BUILD_DIR)/ba_data/audio/frostyHit02.ogg \
   $(BUILD_DIR)/ba_data/audio/frostyHit03.ogg \
   $(BUILD_DIR)/ba_data/audio/fuse01.ogg \
+  $(BUILD_DIR)/ba_data/audio/gasp.ogg \
   $(BUILD_DIR)/ba_data/audio/gladiator1.ogg \
   $(BUILD_DIR)/ba_data/audio/gladiator2.ogg \
   $(BUILD_DIR)/ba_data/audio/gladiator3.ogg \
@@ -5424,6 +5436,7 @@ AUDIO_TARGETS = \
   $(BUILD_DIR)/ba_data/audio/menuMusic.ogg \
   $(BUILD_DIR)/ba_data/audio/metalHit.ogg \
   $(BUILD_DIR)/ba_data/audio/metalSkid.ogg \
+  $(BUILD_DIR)/ba_data/audio/nice.ogg \
   $(BUILD_DIR)/ba_data/audio/ninjaAttack1.ogg \
   $(BUILD_DIR)/ba_data/audio/ninjaAttack2.ogg \
   $(BUILD_DIR)/ba_data/audio/ninjaAttack3.ogg \
@@ -5493,6 +5506,7 @@ AUDIO_TARGETS = \
   $(BUILD_DIR)/ba_data/audio/raceBeep1.ogg \
   $(BUILD_DIR)/ba_data/audio/raceBeep2.ogg \
   $(BUILD_DIR)/ba_data/audio/refWhistle.ogg \
+  $(BUILD_DIR)/ba_data/audio/revUp.ogg \
   $(BUILD_DIR)/ba_data/audio/robot1.ogg \
   $(BUILD_DIR)/ba_data/audio/robot2.ogg \
   $(BUILD_DIR)/ba_data/audio/robot3.ogg \
@@ -5601,7 +5615,11 @@ AUDIO_TARGETS = \
   $(BUILD_DIR)/ba_data/audio/wizardFall.ogg \
   $(BUILD_DIR)/ba_data/audio/wizardHit1.ogg \
   $(BUILD_DIR)/ba_data/audio/wizardHit2.ogg \
+  $(BUILD_DIR)/ba_data/audio/woo.ogg \
+  $(BUILD_DIR)/ba_data/audio/woo2.ogg \
+  $(BUILD_DIR)/ba_data/audio/woo3.ogg \
   $(BUILD_DIR)/ba_data/audio/woodDebrisFall.ogg \
+  $(BUILD_DIR)/ba_data/audio/wow.ogg \
   $(BUILD_DIR)/ba_data/audio/wrestler1.ogg \
   $(BUILD_DIR)/ba_data/audio/wrestler2.ogg \
   $(BUILD_DIR)/ba_data/audio/wrestler3.ogg \
@@ -5610,6 +5628,7 @@ AUDIO_TARGETS = \
   $(BUILD_DIR)/ba_data/audio/wrestlerFall.ogg \
   $(BUILD_DIR)/ba_data/audio/wrestlerHit1.ogg \
   $(BUILD_DIR)/ba_data/audio/wrestlerHit2.ogg \
+  $(BUILD_DIR)/ba_data/audio/yeah.ogg \
   $(BUILD_DIR)/ba_data/audio/zoeAttack01.ogg \
   $(BUILD_DIR)/ba_data/audio/zoeAttack02.ogg \
   $(BUILD_DIR)/ba_data/audio/zoeAttack03.ogg \
@@ -5723,7 +5742,9 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/chestIcon.dds \
   $(BUILD_DIR)/ba_data/textures/chestIconEmpty.dds \
   $(BUILD_DIR)/ba_data/textures/chestIconMulti.dds \
+  $(BUILD_DIR)/ba_data/textures/chestIconTint.dds \
   $(BUILD_DIR)/ba_data/textures/chestOpenIcon.dds \
+  $(BUILD_DIR)/ba_data/textures/chestOpenIconTint.dds \
   $(BUILD_DIR)/ba_data/textures/circle.dds \
   $(BUILD_DIR)/ba_data/textures/circleNoAlpha.dds \
   $(BUILD_DIR)/ba_data/textures/circleOutline.dds \
@@ -5972,6 +5993,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/softRect2.dds \
   $(BUILD_DIR)/ba_data/textures/softRectVertical.dds \
   $(BUILD_DIR)/ba_data/textures/sparks.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner.dds \
   $(BUILD_DIR)/ba_data/textures/star.dds \
   $(BUILD_DIR)/ba_data/textures/startButton.dds \
   $(BUILD_DIR)/ba_data/textures/stepRightUpLevelColor.dds \
@@ -6135,7 +6157,9 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/chestIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/chestIconEmpty.pvr \
   $(BUILD_DIR)/ba_data/textures/chestIconMulti.pvr \
+  $(BUILD_DIR)/ba_data/textures/chestIconTint.pvr \
   $(BUILD_DIR)/ba_data/textures/chestOpenIcon.pvr \
+  $(BUILD_DIR)/ba_data/textures/chestOpenIconTint.pvr \
   $(BUILD_DIR)/ba_data/textures/circle.pvr \
   $(BUILD_DIR)/ba_data/textures/circleNoAlpha.pvr \
   $(BUILD_DIR)/ba_data/textures/circleOutline.pvr \
@@ -6384,6 +6408,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/softRect2.pvr \
   $(BUILD_DIR)/ba_data/textures/softRectVertical.pvr \
   $(BUILD_DIR)/ba_data/textures/sparks.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner.pvr \
   $(BUILD_DIR)/ba_data/textures/star.pvr \
   $(BUILD_DIR)/ba_data/textures/startButton.pvr \
   $(BUILD_DIR)/ba_data/textures/stepRightUpLevelColor.pvr \
@@ -6547,7 +6572,9 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/chestIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/chestIconEmpty.ktx \
   $(BUILD_DIR)/ba_data/textures/chestIconMulti.ktx \
+  $(BUILD_DIR)/ba_data/textures/chestIconTint.ktx \
   $(BUILD_DIR)/ba_data/textures/chestOpenIcon.ktx \
+  $(BUILD_DIR)/ba_data/textures/chestOpenIconTint.ktx \
   $(BUILD_DIR)/ba_data/textures/circle.ktx \
   $(BUILD_DIR)/ba_data/textures/circleNoAlpha.ktx \
   $(BUILD_DIR)/ba_data/textures/circleOutline.ktx \
@@ -6796,6 +6823,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/softRect2.ktx \
   $(BUILD_DIR)/ba_data/textures/softRectVertical.ktx \
   $(BUILD_DIR)/ba_data/textures/sparks.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner.ktx \
   $(BUILD_DIR)/ba_data/textures/star.ktx \
   $(BUILD_DIR)/ba_data/textures/startButton.ktx \
   $(BUILD_DIR)/ba_data/textures/stepRightUpLevelColor.ktx \
@@ -6958,7 +6986,9 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/characterIconMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/chestIconEmpty_preview.png \
   $(BUILD_DIR)/ba_data/textures/chestIconMulti_preview.png \
+  $(BUILD_DIR)/ba_data/textures/chestIconTint_preview.png \
   $(BUILD_DIR)/ba_data/textures/chestIcon_preview.png \
+  $(BUILD_DIR)/ba_data/textures/chestOpenIconTint_preview.png \
   $(BUILD_DIR)/ba_data/textures/chestOpenIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/circleNoAlpha_preview.png \
   $(BUILD_DIR)/ba_data/textures/circleOutlineNoAlpha_preview.png \
@@ -7208,6 +7238,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/softRectVertical_preview.png \
   $(BUILD_DIR)/ba_data/textures/softRect_preview.png \
   $(BUILD_DIR)/ba_data/textures/sparks_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner_preview.png \
   $(BUILD_DIR)/ba_data/textures/star_preview.png \
   $(BUILD_DIR)/ba_data/textures/startButton_preview.png \
   $(BUILD_DIR)/ba_data/textures/stepRightUpLevelColor_preview.png \

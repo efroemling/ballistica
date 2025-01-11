@@ -1683,7 +1683,7 @@ auto DevConsole::PasteFromClipboard() -> bool {
 }
 
 void DevConsole::UpdateCarat_() {
-  last_carat_x_change_time_ = g_core->GetAppTimeMillisecs();
+  last_carat_x_change_time_ = g_core->AppTimeMillisecs();
   auto unichars = Utils::UnicodeFromUTF8(input_string_, "fjfwef");
   auto unichars_clamped = unichars;
 

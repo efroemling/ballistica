@@ -143,11 +143,8 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   Object::Ref<RootWidget> root_widget_;
   int ui_lock_count_{};
   int language_state_{};
-  // int party_icon_number_{};
   bool always_use_internal_on_screen_keyboard_{};
   bool party_window_open_{};
-  // bool account_signed_in_{};
-  // std::string account_name_{};
 };
 
 }  // namespace ballistica::ui_v1

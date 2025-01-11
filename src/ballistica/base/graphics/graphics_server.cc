@@ -147,7 +147,7 @@ auto GraphicsServer::TryRender() -> bool {
 
 auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
   assert(g_base->app_adapter->InGraphicsContext());
-  millisecs_t start_time = g_core->GetAppTimeMillisecs();
+  millisecs_t start_time = g_core->AppTimeMillisecs();
 
   // Spin and wait for a short bit for a frame_def to appear.
   while (true) {
@@ -176,7 +176,7 @@ auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
     }
 
     // If there's no frame_def for us, sleep for a bit and wait for it.
-    millisecs_t t = g_core->GetAppTimeMillisecs() - start_time;
+    millisecs_t t = g_core->AppTimeMillisecs() - start_time;
     if (t >= 1000) {
       if (g_buildconfig.debug_build()) {
         g_core->Log(LogName::kBaGraphics, LogLevel::kWarning,

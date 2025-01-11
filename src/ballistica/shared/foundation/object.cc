@@ -24,7 +24,7 @@ Object::Object() {
 #if BA_DEBUG_BUILD
   // Mark when we were born.
   assert(g_core);
-  object_birth_time_ = g_core->GetAppTimeMillisecs();
+  object_birth_time_ = g_core->AppTimeMillisecs();
 
   // Add ourself to the global object list.
   {
@@ -126,7 +126,7 @@ void Object::LsObjects() {
   {
     std::scoped_lock lock(g_core->object_list_mutex);
     s = std::to_string(g_core->object_count) + " Objects at time "
-        + std::to_string(g_core->GetAppTimeMillisecs()) + ";";
+        + std::to_string(g_core->AppTimeMillisecs()) + ";";
 
     if (explicit_bool(true)) {
       std::unordered_map<std::string, int> obj_map;

@@ -122,7 +122,7 @@ void FatalError::ReportFatalError(const std::string& message,
   Logging::V1CloudLog(logmsg);
 
   Logging::EmitLog("root", LogLevel::kCritical,
-                   core::CorePlatform::GetSecondsSinceEpoch(), logmsg);
+                   core::CorePlatform::TimeSinceEpochSeconds(), logmsg);
   fprintf(stderr, "%s\n", logmsg.c_str());
 
   std::string prefix = "FATAL-ERROR-LOG:";
@@ -182,9 +182,9 @@ void FatalError::DoBlockingFatalErrorDialog(const std::string& message) {
     // There's a chance that it can't (if threads are suspended, if it is
     // blocked on a synchronous call to another thread, etc.) so if we don't
     // see something happening soon, just give up on showing a dialog.
-    auto starttime = core::CorePlatform::GetCurrentMillisecs();
+    auto starttime = core::CorePlatform::TimeMonotonicMillisecs();
     while (!started) {
-      if (core::CorePlatform::GetCurrentMillisecs() - starttime > 3000) {
+      if (core::CorePlatform::TimeMonotonicMillisecs() - starttime > 3000) {
         return;
       }
       core::CorePlatform::SleepMillisecs(10);
@@ -211,7 +211,7 @@ auto FatalError::HandleFatalError(bool exit_cleanly,
   if (!in_top_level_exception_handler) {
     if (exit_cleanly) {
       Logging::EmitLog("root", LogLevel::kCritical,
-                       core::CorePlatform::GetSecondsSinceEpoch(),
+                       core::CorePlatform::TimeSinceEpochSeconds(),
                        "Calling exit(1)...");
 
       // Inform anyone who cares that the engine is going down NOW.
@@ -223,7 +223,7 @@ auto FatalError::HandleFatalError(bool exit_cleanly,
       exit(1);
     } else {
       Logging::EmitLog("root", LogLevel::kCritical,
-                       core::CorePlatform::GetSecondsSinceEpoch(),
+                       core::CorePlatform::TimeSinceEpochSeconds(),
                        "Calling abort()...");
       abort();
     }

@@ -236,7 +236,7 @@ void Logic::OnAppShutdown() {
   assert(shutting_down_);
 
   // Nuke the app from orbit if we get stuck while shutting down.
-  g_core->StartSuicideTimer("shutdown", 10000);
+  g_core->StartSuicideTimer("shutdown", 15000);
 
   // Tell base to disallow shutdown-suppressors from here on out.
   g_base->ShutdownSuppressDisallow();
@@ -402,7 +402,7 @@ void Logic::UpdateDisplayTimeForHeadlessMode_() {
   // scheduled (or at least close enough so we can fudge it and tell them
   // its that exact time).
 
-  auto app_time_microsecs = g_core->GetAppTimeMicrosecs();
+  auto app_time_microsecs = g_core->AppTimeMicrosecs();
 
   // Set our int based time vals so we can exactly hit timers.
   auto old_display_time_microsecs = display_time_microsecs_;
@@ -438,7 +438,7 @@ void Logic::PostUpdateDisplayTimeForHeadlessMode_() {
       [headless_display_step_microsecs] {
         auto sleepsecs =
             static_cast<double>(headless_display_step_microsecs) / 1000000.0;
-        auto apptimesecs = g_core->GetAppTimeSeconds();
+        auto apptimesecs = g_core->AppTimeSeconds();
         char buffer[256];
         snprintf(buffer, sizeof(buffer),
                  "will try to sleep for %.4f at app-time %.4f (until %.4f)",
@@ -467,7 +467,7 @@ void Logic::UpdateDisplayTimeForFrameDraw_() {
   // - 'current' should mostly show '(avg)'; rarely '(sample)'.
   // - these can vary briefly during load spikes/etc. but should quickly
   //   reconverge to stability. If not, this may need further calibration.
-  auto current_app_time = g_core->GetAppTimeSeconds();
+  auto current_app_time = g_core->AppTimeSeconds();
 
   // We handle the first measurement specially.
   if (last_display_time_update_app_time_ < 0) {

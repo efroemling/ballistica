@@ -330,8 +330,8 @@ static auto PyAppTime(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  return PyFloat_FromDouble(
-      0.001 * static_cast<double>(g_core->GetAppTimeMillisecs()));
+  return PyFloat_FromDouble(0.001
+                            * static_cast<double>(g_core->AppTimeMillisecs()));
   BA_PYTHON_CATCH;
 }
 

@@ -10,8 +10,8 @@
 
 namespace ballistica::core {
 
-/// Collection of low level options for a run of the engine; passed
-/// when initing the core feature-set.
+/// A collection of low level options for a run of the engine; passed when
+/// initing the core feature-set.
 class CoreConfig {
  public:
   static auto ForArgsAndEnvVars(int argc, char** argv) -> CoreConfig;

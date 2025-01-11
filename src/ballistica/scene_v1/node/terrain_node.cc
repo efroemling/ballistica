@@ -104,7 +104,7 @@ TerrainNode::~TerrainNode() {
   // without our reference.
   if (collision_mesh_.exists()) {
     collision_mesh_->collision_mesh_data()->set_last_used_time(
-        g_core->GetAppTimeMillisecs());
+        g_core->AppTimeMillisecs());
   }
 }
 
@@ -123,7 +123,7 @@ void TerrainNode::set_collision_mesh(SceneCollisionMesh* val) {
   // if we had an old one, mark its last-used time so caching works properly..
   if (collision_mesh_.exists()) {
     collision_mesh_->collision_mesh_data()->set_last_used_time(
-        g_core->GetAppTimeMillisecs());
+        g_core->AppTimeMillisecs());
   }
   collision_mesh_ = val;
 

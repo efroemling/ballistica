@@ -62,7 +62,7 @@ class PrivateGatherTab(GatherTab):
         self._state: State = State()
         self._last_datacode_refresh_time: float | None = None
         self._hostingstate = PrivateHostingState()
-        self._v2state: bacommon.cloud.BSPrivatePartyResponse | None = None
+        self._v2state: bacommon.bs.PrivatePartyResponse | None = None
         self._join_sub_tab_text: bui.Widget | None = None
         self._host_sub_tab_text: bui.Widget | None = None
         self._update_timer: bui.AppTimer | None = None
@@ -339,7 +339,7 @@ class PrivateGatherTab(GatherTab):
                     if plus.accounts.primary is not None:
                         with plus.accounts.primary:
                             plus.cloud.send_message_cb(
-                                bacommon.cloud.BSPrivatePartyMessage(
+                                bacommon.bs.PrivatePartyMessage(
                                     need_datacode=(
                                         self._last_datacode_refresh_time is None
                                         or time.monotonic()
@@ -355,7 +355,7 @@ class PrivateGatherTab(GatherTab):
                     self._last_v2_state_query_time = now
 
     def _on_private_party_query_response(
-        self, response: bacommon.cloud.BSPrivatePartyResponse | Exception
+        self, response: bacommon.bs.PrivatePartyResponse | Exception
     ) -> None:
         if isinstance(response, Exception):
             self._debug_server_comm('got pp v2 state response (err)')

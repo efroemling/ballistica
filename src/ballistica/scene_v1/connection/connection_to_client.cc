@@ -95,7 +95,7 @@ ConnectionToClient::~ConnectionToClient() {
 void ConnectionToClient::Update() {
   Connection::Update();  // Handles common stuff.
 
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   // If we're waiting for handshake response still, keep sending out handshake
   // attempts.
@@ -246,7 +246,7 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
 
         // Don't allow fresh clients to start kick votes for a while.
         next_kick_vote_allow_time_ =
-            g_core->GetAppTimeMillisecs() + kNewClientKickVoteDelay;
+            g_core->AppTimeMillisecs() + kNewClientKickVoteDelay;
 
         // At this point we have their name, so lets announce their arrival.
         if (appmode->ShouldAnnouncePartyJoinsAndLeaves()) {
@@ -263,7 +263,7 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
         // Also mark the time for flashing the 'someone just joined your
         // party' message in the corner.
         appmode->set_last_connection_to_client_join_time(
-            g_core->GetAppTimeMillisecs());
+            g_core->AppTimeMillisecs());
 
         // Added midway through protocol 29:
         // We now send a json dict of info about ourself first thing. This
@@ -338,8 +338,7 @@ void ConnectionToClient::SendScreenMessage(const std::string& s, float r,
   // Older clients don't support the screen-message message, so in that case
   // we just send it as a chat-message from <HOST>.
   if (build_number() < 14248) {
-    std::string value =
-        g_base->assets->CompileResourceString(s, "sendScreenMessage");
+    std::string value = g_base->assets->CompileResourceString(s);
     std::string our_spec_string =
         PlayerSpec::GetDummyPlayerSpec("<HOST>").GetSpecString();
     std::vector<uint8_t> msg_out(1 + 1 + our_spec_string.size() + value.size());
@@ -500,7 +499,7 @@ void ConnectionToClient::HandleMessagePacket(
 
     case BA_MESSAGE_CHAT: {
       // We got a chat message from a client.
-      millisecs_t now = g_core->GetAppTimeMillisecs();
+      millisecs_t now = g_core->AppTimeMillisecs();
 
       // Ignore this if they're chat blocked.
       if (now >= chat_block_time_) {
@@ -636,7 +635,7 @@ void ConnectionToClient::HandleMessagePacket(
     }
 
     case BA_MESSAGE_REMOVE_REMOTE_PLAYER: {
-      last_remove_player_time_ = g_core->GetAppTimeMillisecs();
+      last_remove_player_time_ = g_core->AppTimeMillisecs();
       if (buffer.size() != 2) {
         g_core->Log(LogName::kBaNetworking, LogLevel::kError,
                     "Error: invalid remove-remote-player packet");
@@ -693,7 +692,7 @@ void ConnectionToClient::HandleMessagePacket(
           // master-server info for this client, delay their join (we'll
           // eventually give up and just give them a blank slate).
           if (still_waiting_for_auth
-              && (g_core->GetAppTimeMillisecs() - creation_time() < 10000)) {
+              && (g_core->AppTimeMillisecs() - creation_time() < 10000)) {
             SendScreenMessage(
                 "{\"v\":\"${A}...\",\"s\":[[\"${A}\",{\"r\":"
                 "\"loadingTryAgainText\",\"f\":\"loadingText\"}]]}",

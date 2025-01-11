@@ -197,9 +197,9 @@ class ClassicAppMode(babase.AppMode):
         if account is None:
             self._account_data_sub = None
             _baclassic.set_root_ui_account_values(
-                tickets_text='',
-                tokens_text='',
-                league_rank_text='',
+                tickets=-1,
+                tokens=-1,
+                league_rank=-1,
                 league_type='',
                 achievements_percent_text='',
                 level_text='',
@@ -250,7 +250,7 @@ class ClassicAppMode(babase.AppMode):
         print(f'GOT SUB TEST UPDATE: {val}')
 
     def _on_classic_account_data_change(
-        self, val: bacommon.cloud.BSClassicAccountLiveData
+        self, val: bacommon.bs.ClassicAccountLiveData
     ) -> None:
         # print('ACCOUNT CHANGED:', val)
         achp = round(val.achievements / max(val.achievements_total, 1) * 100.0)
@@ -264,11 +264,9 @@ class ClassicAppMode(babase.AppMode):
         chest3 = val.chests.get('3')
 
         _baclassic.set_root_ui_account_values(
-            tickets_text=str(val.tickets),
-            tokens_text=str(val.tokens),
-            league_rank_text=(
-                '-' if val.league_rank is None else f'#{val.league_rank}'
-            ),
+            tickets=val.tickets,
+            tokens=val.tokens,
+            league_rank=(-1 if val.league_rank is None else val.league_rank),
             league_type=(
                 '' if val.league_type is None else val.league_type.value
             ),
@@ -292,17 +290,35 @@ class ClassicAppMode(babase.AppMode):
             chest_0_unlock_time=(
                 -1.0 if chest0 is None else chest0.unlock_time.timestamp()
             ),
-            chest_1_unlock_time=-1.0,
-            chest_2_unlock_time=-1.0,
-            chest_3_unlock_time=-1.0,
+            chest_1_unlock_time=(
+                -1.0 if chest1 is None else chest1.unlock_time.timestamp()
+            ),
+            chest_2_unlock_time=(
+                -1.0 if chest2 is None else chest2.unlock_time.timestamp()
+            ),
+            chest_3_unlock_time=(
+                -1.0 if chest3 is None else chest3.unlock_time.timestamp()
+            ),
             chest_0_ad_allow_time=(
                 -1.0
                 if chest0 is None or chest0.ad_allow_time is None
                 else chest0.ad_allow_time.timestamp()
             ),
-            chest_1_ad_allow_time=-1.0,
-            chest_2_ad_allow_time=-1.0,
-            chest_3_ad_allow_time=-1.0,
+            chest_1_ad_allow_time=(
+                -1.0
+                if chest1 is None or chest1.ad_allow_time is None
+                else chest1.ad_allow_time.timestamp()
+            ),
+            chest_2_ad_allow_time=(
+                -1.0
+                if chest2 is None or chest2.ad_allow_time is None
+                else chest2.ad_allow_time.timestamp()
+            ),
+            chest_3_ad_allow_time=(
+                -1.0
+                if chest3 is None or chest3.ad_allow_time is None
+                else chest3.ad_allow_time.timestamp()
+            ),
         )
 
         # Note that we have values and updated faded state accordingly.

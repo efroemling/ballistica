@@ -3,7 +3,6 @@
 #include "ballistica/classic/python/methods/python_methods_classic.h"
 
 #include <algorithm>
-#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -296,9 +295,9 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
                                      PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
-  const char* tickets_text;
-  const char* tokens_text;
-  const char* league_rank_text;
+  int tickets;
+  int tokens;
+  int league_rank;
   const char* league_type;
   const char* achievements_percent_text;
   const char* level_text;
@@ -308,19 +307,19 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
   const char* chest_1_appearance;
   const char* chest_2_appearance;
   const char* chest_3_appearance;
-  float chest_0_unlock_time;
-  float chest_1_unlock_time;
-  float chest_2_unlock_time;
-  float chest_3_unlock_time;
-  float chest_0_ad_allow_time;
-  float chest_1_ad_allow_time;
-  float chest_2_ad_allow_time;
-  float chest_3_ad_allow_time;
+  double chest_0_unlock_time;
+  double chest_1_unlock_time;
+  double chest_2_unlock_time;
+  double chest_3_unlock_time;
+  double chest_0_ad_allow_time;
+  double chest_1_ad_allow_time;
+  double chest_2_ad_allow_time;
+  double chest_3_ad_allow_time;
   int gold_pass{};
 
-  static const char* kwlist[] = {"tickets_text",
-                                 "tokens_text",
-                                 "league_rank_text",
+  static const char* kwlist[] = {"tickets",
+                                 "tokens",
+                                 "league_rank",
                                  "league_type",
                                  "achievements_percent_text",
                                  "level_text",
@@ -341,8 +340,8 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
                                  "chest_3_ad_allow_time",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "sssssssspssssffffffff", const_cast<char**>(kwlist),
-          &tickets_text, &tokens_text, &league_rank_text, &league_type,
+          args, keywds, "iiissssspssssdddddddd", const_cast<char**>(kwlist),
+          &tickets, &tokens, &league_rank, &league_type,
           &achievements_percent_text, &level_text, &xp_text, &inbox_count_text,
           &gold_pass, &chest_0_appearance, &chest_1_appearance,
           &chest_2_appearance, &chest_3_appearance, &chest_0_unlock_time,
@@ -357,20 +356,21 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
 
   // Pass these all along to the app-mode which will store them and forward
   // them to any existing UI.
-  appmode->SetRootUITicketsMeterText(tickets_text);
-  appmode->SetRootUITokensMeterText(tokens_text);
-  appmode->SetRootUILeagueRankText(league_rank_text);
+  appmode->SetRootUITicketsMeterValue(tickets);
+  appmode->SetRootUITokensMeterValue(tokens);
+  appmode->SetRootUILeagueRankValue(league_rank);
   appmode->SetRootUILeagueType(league_type);
   appmode->SetRootUIAchievementsPercentText(achievements_percent_text);
   appmode->SetRootUILevelText(level_text);
   appmode->SetRootUIXPText(xp_text);
   appmode->SetRootUIInboxCountText(inbox_count_text);
   appmode->SetRootUIGoldPass(gold_pass);
-  appmode->SetRootUIChests(chest_0_appearance, chest_1_appearance,
-                           chest_2_appearance, chest_3_appearance);
+  appmode->SetRootUIChests(
+      chest_0_appearance, chest_1_appearance, chest_2_appearance,
+      chest_3_appearance, chest_0_unlock_time, chest_1_unlock_time,
+      chest_2_unlock_time, chest_3_unlock_time, chest_0_ad_allow_time,
+      chest_1_ad_allow_time, chest_2_ad_allow_time, chest_3_ad_allow_time);
 
-  printf("WOULD SET TIMES TO %.2f %.2f\n", chest_0_unlock_time,
-         chest_0_ad_allow_time);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -381,9 +381,9 @@ static PyMethodDef PySetRootUIAccountValuesDef = {
     METH_VARARGS | METH_KEYWORDS,           // flags
 
     "set_root_ui_account_values(*,\n"
-    "      tickets_text: str,\n"
-    "      tokens_text: str,\n"
-    "      league_rank_text: str,\n"
+    "      tickets: int,\n"
+    "      tokens: int,\n"
+    "      league_rank: int,\n"
     "      league_type: str,\n"
     "      achievements_percent_text: str,\n"
     "      level_text: str,\n"

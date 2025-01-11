@@ -4,6 +4,7 @@
 
 #include <list>
 #include <string>
+#include <vector>
 
 #include "ballistica/core/core.h"
 #include "ballistica/core/support/base_soft.h"
@@ -251,6 +252,7 @@ auto PythonRef::GetAttr(const char* name) const -> PythonRef {
 auto PythonRef::DictGetItem(const char* name) const -> PythonRef {
   assert(Python::HaveGIL());
   ThrowIfUnset();
+  assert(PyDict_Check(obj_));  // Caller's job to ensure this.
   PyObject* key = PyUnicode_FromString(name);
   PyObject* out = PyDict_GetItemWithError(obj_, key);
   Py_DECREF(key);
@@ -268,6 +270,26 @@ auto PythonRef::DictGetItem(const char* name) const -> PythonRef {
   }
   // Must be because dict key didn't exist. Return empty ref.
   return {};
+}
+
+auto PythonRef::DictItems() const
+    -> std::vector<std::pair<PythonRef, PythonRef>> {
+  assert(Python::HaveGIL());
+  ThrowIfUnset();
+
+  assert(PyDict_Check(obj_));  // Caller's job to ensure this.
+
+  Py_ssize_t pos{};
+  PyObject *key, *value;
+  std::vector<std::pair<PythonRef, PythonRef>> out;
+  out.resize(PyDict_Size(obj_));
+  size_t i = 0;
+  while (PyDict_Next(obj_, &pos, &key, &value)) {
+    out[i].first.Acquire(key);
+    out[i].second.Acquire(value);
+    i++;
+  }
+  return out;
 }
 
 auto PythonRef::NewRef() const -> PyObject* {

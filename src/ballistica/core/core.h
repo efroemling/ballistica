@@ -73,21 +73,21 @@ class CoreFeatureSet {
   /// App-time is basically the total time that the engine has been actively
   /// running. (The 'App' here is a slight misnomer). It will stop
   /// progressing while the app is suspended and will never go backwards.
-  auto GetAppTimeMillisecs() -> millisecs_t;
+  auto AppTimeMillisecs() -> millisecs_t;
 
   /// Return current app-time in microseconds.
   ///
   /// App-time is basically the total time that the engine has been actively
   /// running. (The 'App' here is a slight misnomer). It will stop
   /// progressing while the app is suspended and will never go backwards.
-  auto GetAppTimeMicrosecs() -> microsecs_t;
+  auto AppTimeMicrosecs() -> microsecs_t;
 
   /// Return current app-time in seconds.
   ///
   /// App-time is basically the total time that the engine has been actively
   /// running. (The 'App' here is a slight misnomer). It will stop
   /// progressing while the app is suspended and will never go backwards.
-  auto GetAppTimeSeconds() -> seconds_t;
+  auto AppTimeSeconds() -> seconds_t;
 
   /// Are we in the 'main' thread? The thread that first inited Core is
   /// considered the 'main' thread; on most platforms it is the one where

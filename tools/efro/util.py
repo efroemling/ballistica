@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import os
 import time
+import random
 import weakref
 import functools
 import datetime
@@ -75,8 +76,6 @@ def explicit_bool(val: bool) -> bool:
     # pylint: disable=no-else-return
     if TYPE_CHECKING:
         # infer this! <boom>
-        import random
-
         return random.random() < 0.5
     else:
         return val
@@ -982,3 +981,15 @@ def extract_arg(
     del args[argindex : argindex + 2]
 
     return val
+
+
+def weighted_choice(*args: tuple[T, float]) -> T:
+    """Given object/weight pairs as args, returns a random object.
+
+    Intended as a shorthand way to call random.choices on a few explicit
+    options.
+    """
+    items: tuple[T]
+    weights: tuple[float]
+    items, weights = zip(*args)
+    return random.choices(items, weights=weights)[0]

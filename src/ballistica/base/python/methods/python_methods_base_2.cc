@@ -497,7 +497,7 @@ static auto PyEvaluateLstr(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   return PyUnicode_FromString(
-      g_base->assets->CompileResourceString(value, "evaluate_lstr").c_str());
+      g_base->assets->CompileResourceString(value).c_str());
   BA_PYTHON_CATCH;
 }
 
@@ -533,7 +533,7 @@ static auto PyGetStringHeight(PyObject* self, PyObject* args, PyObject* keywds)
   }
   s = g_base->python->GetPyLString(s_obj);
 #if BA_DEBUG_BUILD
-  if (g_base->assets->CompileResourceString(s, "get_string_height test") != s) {
+  if (g_base->assets->CompileResourceString(s) != s) {
     BA_LOG_PYTHON_TRACE(
         "resource-string passed to get_string_height; this should be avoided");
   }
@@ -579,8 +579,7 @@ static auto PyGetStringWidth(PyObject* self, PyObject* args, PyObject* keywds)
   }
   s = g_base->python->GetPyLString(s_obj);
 #if BA_DEBUG_BUILD
-  if (g_base->assets->CompileResourceString(s, "get_string_width debug test")
-      != s) {
+  if (g_base->assets->CompileResourceString(s) != s) {
     BA_LOG_PYTHON_TRACE(
         "resource-string passed to get_string_width; this should be avoided");
   }

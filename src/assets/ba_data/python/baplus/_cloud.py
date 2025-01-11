@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
     from efro.message import Message, Response
     import bacommon.cloud
+    import bacommon.bs
 
 
 # TODO: Should make it possible to define a protocol in bacommon.cloud and
@@ -120,45 +121,45 @@ class CloudSubsystem(babase.AppSubsystem):
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.cloud.BSPrivatePartyMessage,
+        msg: bacommon.bs.PrivatePartyMessage,
         on_response: Callable[
-            [bacommon.cloud.BSPrivatePartyResponse | Exception], None
+            [bacommon.bs.PrivatePartyResponse | Exception], None
         ],
     ) -> None: ...
 
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.cloud.BSInboxRequestMessage,
+        msg: bacommon.bs.InboxRequestMessage,
         on_response: Callable[
-            [bacommon.cloud.BSInboxRequestResponse | Exception], None
+            [bacommon.bs.InboxRequestResponse | Exception], None
         ],
     ) -> None: ...
 
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.cloud.BSInboxEntryProcessMessage,
+        msg: bacommon.bs.ClientUIActionMessage,
         on_response: Callable[
-            [bacommon.cloud.BSInboxEntryProcessResponse | Exception], None
+            [bacommon.bs.ClientUIActionResponse | Exception], None
         ],
     ) -> None: ...
 
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.cloud.BSChestInfoMessage,
+        msg: bacommon.bs.ChestInfoMessage,
         on_response: Callable[
-            [bacommon.cloud.BSChestInfoResponse | Exception], None
+            [bacommon.bs.ChestInfoResponse | Exception], None
         ],
     ) -> None: ...
 
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.cloud.BSChestActionMessage,
+        msg: bacommon.bs.ChestActionMessage,
         on_response: Callable[
-            [bacommon.cloud.BSChestActionResponse | Exception], None
+            [bacommon.bs.ChestActionResponse | Exception], None
         ],
     ) -> None: ...
 
@@ -229,7 +230,7 @@ class CloudSubsystem(babase.AppSubsystem):
 
     def subscribe_classic_account_data(
         self,
-        updatecall: Callable[[bacommon.cloud.BSClassicAccountLiveData], None],
+        updatecall: Callable[[bacommon.bs.ClassicAccountLiveData], None],
     ) -> babase.CloudSubscription:
         """Subscribe to classic account data."""
         raise NotImplementedError(

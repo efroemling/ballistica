@@ -547,8 +547,7 @@ void TextWidget::SetText(const std::string& text_in_raw) {
 
   if (do_format_check) {
     bool valid;
-    g_base->assets->CompileResourceString(
-        text_in_raw, "TextWidget::set_text format check", &valid);
+    g_base->assets->CompileResourceString(text_in_raw, &valid);
     if (!valid) {
       BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                   "Invalid resource string: '" + text_in_raw + "'");
@@ -951,8 +950,7 @@ void TextWidget::UpdateTranslation_() {
     if (editable()) {
       text_translated_ = text_raw_;
     } else {
-      text_translated_ = g_base->assets->CompileResourceString(
-          text_raw_, "TextWidget::UpdateTranslation");
+      text_translated_ = g_base->assets->CompileResourceString(text_raw_);
     }
     text_translation_dirty_ = false;
     text_group_dirty_ = true;

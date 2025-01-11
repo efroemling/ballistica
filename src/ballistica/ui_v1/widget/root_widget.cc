@@ -3,6 +3,7 @@
 #include "ballistica/ui_v1/widget/root_widget.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <string>
 #include <vector>
 
@@ -10,9 +11,12 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/renderer/render_pass.h"
 #include "ballistica/base/graphics/support/frame_def.h"
+#include "ballistica/base/support/classic_soft.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/foundation/inline.h"
+#include "ballistica/shared/foundation/types.h"
+#include "ballistica/shared/generic/utils.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/button_widget.h"
 #include "ballistica/ui_v1/widget/image_widget.h"
@@ -849,10 +853,35 @@ void RootWidget::Setup() {
       chest_3_lock_icon_ = AddImage_(imgd);
     }
 
+    // TV icons.
+    {
+      ImageDef_ imgd;
+      imgd.x = -34.0f;
+      imgd.y = -27.0f;
+      imgd.width = 32.0f;
+      imgd.height = 32.0f;
+      imgd.img = "tv";
+      imgd.depth_min = 0.3f;
+      imgd.color_r = 1.5f;
+      imgd.color_g = 1.0f;
+      imgd.color_b = 2.0f;
+
+      imgd.button = chest_0_button_;
+      chest_0_tv_icon_ = AddImage_(imgd);
+
+      imgd.button = chest_1_button_;
+      chest_1_tv_icon_ = AddImage_(imgd);
+
+      imgd.button = chest_2_button_;
+      chest_2_tv_icon_ = AddImage_(imgd);
+
+      imgd.button = chest_3_button_;
+      chest_3_tv_icon_ = AddImage_(imgd);
+    }
+
     // Lock times.
     {
       TextDef_ td;
-      // td.width = 0.0f;
       td.text = "3h 2m";
       td.x = 0.0f;
       td.y = 55.0f;
@@ -895,6 +924,11 @@ void RootWidget::Setup() {
     b.disable_offset_scale = 1.5f;
     b.pre_buffer = 20.0f;
     b.allow_in_game = false;
+
+    // This is a very big icon that can interfere with clicking stuff near
+    // it, so suck target area in a bit.
+    b.target_extra_left = -20.0f;
+    b.target_extra_right = -20.0f;
     inventory_button_ = AddButton_(b);
     bottom_right_buttons_.push_back(inventory_button_);
   }
@@ -925,13 +959,23 @@ void RootWidget::Setup() {
 void RootWidget::Draw(base::RenderPass* pass, bool transparent) {
   // Opaque pass gets drawn first; use that as an opportunity to step up our
   // motion.
-
   if (!transparent) {
-    millisecs_t current_time = pass->frame_def()->display_time_millisecs();
-    millisecs_t time_diff =
-        std::min(millisecs_t{100}, current_time - update_time_);
+    seconds_t current_time = pass->frame_def()->display_time();
+    seconds_t time_diff = std::min(seconds_t{0.1}, current_time - update_time_);
 
-    StepChildWidgets_(static_cast<float>(time_diff));
+    // millisecs_t current_time = pass->frame_def()->display_time_millisecs();
+    // millisecs_t time_diff =
+    //     std::min(millisecs_t{100}, current_time - update_time_);
+
+    StepChildWidgets_(time_diff);
+    StepChests_();
+
+    if (update_pause_count_ != 0) {
+      // update_pause_time_ +=
+    } else {
+      update_pause_time_ = 0.0;
+    }
+
     update_time_ = current_time;
   }
   ContainerWidget::Draw(pass, transparent);
@@ -977,6 +1021,7 @@ auto RootWidget::AddButton_(const ButtonDef_& def) -> RootWidget::Button_* {
   } else {
     b.widget->SetUpWidget(screen_stack_widget_);
   }
+
   // We wanna prevent anyone from redirecting these to point to outside
   // widgets since we'll probably outlive those outside widgets.
   b.widget->set_neighbors_locked(true);
@@ -1067,11 +1112,23 @@ void RootWidget::UpdateForFocusedWindow_(Widget* widget) {
   MarkForUpdate();
 }
 
-void RootWidget::StepChildWidgets_(float dt) {
+void RootWidget::StepChests_() {
+  // Aim to run this once per second.
+  auto now = g_core->AppTimeSeconds();
+  if (now - last_chests_step_time_ < 1.0) {
+    return;
+  }
+  last_chests_step_time_ = now;
+  UpdateChests_();
+}
+
+void RootWidget::StepChildWidgets_(seconds_t dt) {
   // Hitches tend to break our math and cause buttons to overshoot on their
   // transitions in and then back up. So let's limit our max dt to about
   // what ~30fps would give us.
-  dt = std::min(dt, 1000.0f / 30.0f);
+  dt = std::min(dt, 1.0 / 30.0);
+
+  float dt_ms = dt * 1000.0;
 
   if (!child_widgets_dirty_) {
     return;
@@ -1110,7 +1167,7 @@ void RootWidget::StepChildWidgets_(float dt) {
   float xpos = 0.0f;
   for (auto* btn : top_left_buttons_) {
     auto enabled = btn->enabled;
-    float bwidthhalf = btn->width * 0.5;
+    float bwidthhalf = btn->width * 0.5f;
     if (enabled) {
       xpos += bwidthhalf + btn->pre_buffer;
     }
@@ -1190,8 +1247,8 @@ void RootWidget::StepChildWidgets_(float dt) {
     }
 
     // Now push our smooth value towards our target value.
-    b.x_smoothed += (b.x_target - b.x_smoothed) * 0.015f * dt;
-    b.y_smoothed += (b.y_target - b.y_smoothed) * 0.015f * dt;
+    b.x_smoothed += (b.x_target - b.x_smoothed) * 0.015f * dt_ms;
+    b.y_smoothed += (b.y_target - b.y_smoothed) * 0.015f * dt_ms;
 
     // Snap in place once we reach the target; otherwise note that we need
     // to keep going.
@@ -1296,7 +1353,7 @@ void RootWidget::UpdateLayout() {
 
   // Run an immediate step to update things; (avoids jumpy positions if
   // resizing game window))
-  StepChildWidgets_(0.0f);
+  StepChildWidgets_(0.0);
 }
 
 void RootWidget::OnUIScaleChange() { MarkForUpdate(); }
@@ -1419,12 +1476,12 @@ void RootWidget::SetSquadSizeLabel(int val) {
   }
 }
 
-void RootWidget::SetTicketsMeterText(const std::string& val) {
+void RootWidget::SetTicketsMeterValue(int val) {
   assert(tickets_meter_text_);
-  tickets_meter_text_->widget->SetText(val);
+  tickets_meter_text_->widget->SetText(val >= 0 ? std::to_string(val) : "");
 }
 
-void RootWidget::SetTokensMeterText(const std::string& val, bool gold_pass) {
+void RootWidget::SetTokensMeterValue(int val, bool gold_pass) {
   assert(tokens_meter_text_);
   assert(get_tokens_button_);
   gold_pass_ = gold_pass;
@@ -1436,7 +1493,7 @@ void RootWidget::SetTokensMeterText(const std::string& val, bool gold_pass) {
         g_buildconfig.enable_os_font_rendering() ? "\xE2\x88\x9E" : "inf");
   } else {
     get_tokens_button_->force_hide = false;
-    tokens_meter_text_->widget->SetText(val);
+    tokens_meter_text_->widget->SetText(val >= 0 ? std::to_string(val) : "");
   }
   UpdateTokensMeterTextColor_();
   // May need to animate in/out.
@@ -1452,9 +1509,10 @@ void RootWidget::UpdateTokensMeterTextColor_() {
   }
 }
 
-void RootWidget::SetLeagueRankText(const std::string& val) {
+void RootWidget::SetLeagueRankValue(int val) {
   assert(league_rank_text_);
-  league_rank_text_->widget->SetText(val);
+  league_rank_text_->widget->SetText(val > 0 ? ("#" + std::to_string(val))
+                                             : "");
 }
 
 void RootWidget::SetLeagueType(const std::string& val) {
@@ -1553,74 +1611,249 @@ void RootWidget::SetHaveLiveValues(bool have_live_values) {
   chest_backing_->widget->set_opacity(have_live_values ? 1.0f : 0.5f);
 }
 
-void RootWidget::SetChests(const std::string& chest_0_appearance,
-                           const std::string& chest_1_appearance,
-                           const std::string& chest_2_appearance,
-                           const std::string& chest_3_appearance) {
+void RootWidget::SetChests(
+    const std::string& chest_0_appearance,
+    const std::string& chest_1_appearance,
+    const std::string& chest_2_appearance,
+    const std::string& chest_3_appearance, seconds_t chest_0_unlock_time,
+    seconds_t chest_1_unlock_time, seconds_t chest_2_unlock_time,
+    seconds_t chest_3_unlock_time, seconds_t chest_0_ad_allow_time,
+    seconds_t chest_1_ad_allow_time, seconds_t chest_2_ad_allow_time,
+    seconds_t chest_3_ad_allow_time) {
   chest_0_appearance_ = chest_0_appearance;
   chest_1_appearance_ = chest_1_appearance;
   chest_2_appearance_ = chest_2_appearance;
   chest_3_appearance_ = chest_3_appearance;
+  chest_0_unlock_time_ = chest_0_unlock_time;
+  chest_1_unlock_time_ = chest_1_unlock_time;
+  chest_2_unlock_time_ = chest_2_unlock_time;
+  chest_3_unlock_time_ = chest_3_unlock_time;
+  chest_0_ad_allow_time_ = chest_0_ad_allow_time;
+  chest_1_ad_allow_time_ = chest_1_ad_allow_time;
+  chest_2_ad_allow_time_ = chest_2_ad_allow_time;
+  chest_3_ad_allow_time_ = chest_3_ad_allow_time;
   UpdateChests_();
 }
 
+void RootWidget::OnLanguageChange() {
+  ContainerWidget::OnLanguageChange();
+  translations_dirty_ = true;
+}
+
 void RootWidget::UpdateChests_() {
-  std::vector<std::tuple<const std::string&, Button_*, Image_*, Text_*>> slots =
-      // NOLINTNEXTLINE (clang-format's formatting here upsets cpplint).
+  // Make sure we've got the latest translated strings for open times.
+  if (translations_dirty_) {
+    time_suffix_hours_ =
+        g_base->assets->CompileResourceString(R"({"r":"timeSuffixHoursText"})");
+    time_suffix_minutes_ = g_base->assets->CompileResourceString(
+        R"({"r":"timeSuffixMinutesText"})");
+    time_suffix_seconds_ = g_base->assets->CompileResourceString(
+        R"({"r":"timeSuffixSecondsText"})");
+    translations_dirty_ = false;
+  }
+
+  std::vector<std::tuple<const std::string&, Button_*, Image_*, Image_*, Text_*,
+                         seconds_t, seconds_t>>
+      slots =
+          // NOLINTNEXTLINE (clang-format's formatting here upsets cpplint).
       {
           {chest_0_appearance_, chest_0_button_, chest_0_lock_icon_,
-           chest_0_time_text_},
+           chest_0_tv_icon_, chest_0_time_text_, chest_0_unlock_time_,
+           chest_0_ad_allow_time_},
           {chest_1_appearance_, chest_1_button_, chest_1_lock_icon_,
-           chest_1_time_text_},
+           chest_1_tv_icon_, chest_1_time_text_, chest_1_unlock_time_,
+           chest_1_ad_allow_time_},
           {chest_2_appearance_, chest_2_button_, chest_2_lock_icon_,
-           chest_2_time_text_},
+           chest_2_tv_icon_, chest_2_time_text_, chest_2_unlock_time_,
+           chest_2_ad_allow_time_},
           {chest_3_appearance_, chest_3_button_, chest_3_lock_icon_,
-           chest_3_time_text_},
+           chest_3_tv_icon_, chest_3_time_text_, chest_3_unlock_time_,
+           chest_3_ad_allow_time_},
       };
 
   // We drop the backing/slots down a bit if we have no chests.
   auto have_chests{false};
-  for (const auto& [appearance, b, l, t] : slots) {
+
+  // clang-format off
+  for (const auto& [appearance,
+                    b,
+                    l,
+                    tv,
+                    t,
+                    ut,
+                    aat] : slots) {
+    // clang-format on
+
     if (appearance != "") {
       have_chests = true;
     }
   }
 
-  for (const auto& [appearance, b, l, t] : slots) {
-    assert(b);
-    assert(l);
+  auto now{g_base->TimeSinceEpochCloudSeconds()};
+
+  // clang-format off
+  for (const auto& [appearance,
+                    btn,
+                    lock_img,
+                    tv_img,
+                    txt,
+                    unlocktm,
+                    adallowtm] : slots) {
+    // clang-format on
+
+    assert(btn);
+    assert(lock_img);
     Object::Ref<base::TextureAsset> tex;
     if (appearance == "") {
       // Empty slot.
-      b->widget->set_color(0.473f, 0.44f, 0.583f);
-      b->width = b->height = 80.0f;
-      b->y = have_chests ? 44.0f : -2.0f;
+      btn->widget->set_color(0.473f, 0.44f, 0.583f);
+      btn->width = btn->height = 80.0f;
+      btn->y = have_chests ? 44.0f : -2.0f;
       {
         base::Assets::AssetListLock lock;
         tex = g_base->assets->GetTexture("chestIconEmpty");
       }
-      l->visible = false;
-      t->visible = false;
+      lock_img->visible = false;
+      tv_img->visible = false;
+      txt->visible = false;
+
+      btn->widget->SetTintTexture(nullptr);
+      btn->widget->set_tint_color(1.0f, 1.0f, 1.0f);
+      btn->widget->set_tint2_color(1.0f, 1.0f, 1.0f);
+
     } else {
+      Object::Ref<base::TextureAsset> textint;
+
       // Chest in slot.
       have_chests = true;
-      b->widget->set_color(1.0f, 1.0f, 1.0f);
-      b->width = b->height = 110.0f;
-      b->y = 44.0f;
+      btn->width = btn->height = 110.0f;
+      btn->y = 44.0f;
+      std::string chest_tex_closed;
+      std::string chest_tex_closed_tint;
+      Vector3f chest_color;
+      Vector3f chest_tint;
+      Vector3f chest_tint2;
+      if (auto* classic = g_base->classic()) {
+        classic->GetClassicChestDisplayInfo(
+            appearance, &chest_tex_closed, &chest_tex_closed_tint, &chest_color,
+            &chest_tint, &chest_tint2);
+      } else {
+        chest_tex_closed = "chestIcon";
+        chest_tex_closed_tint = "white";
+        chest_color = Vector3f{1.0f, 1.0f, 1.0f};
+        chest_tint = Vector3f{1.0f, 1.0f, 1.0f};
+        chest_tint2 = Vector3f{1.0f, 1.0f, 1.0f};
+      }
       {
         base::Assets::AssetListLock lock;
-        tex = g_base->assets->GetTexture("chestIcon");
+        tex = g_base->assets->GetTexture(chest_tex_closed);
+        textint = g_base->assets->GetTexture(chest_tex_closed_tint);
       }
-      l->visible = true;
-      t->visible = true;
+      btn->widget->set_color(chest_color.x, chest_color.y, chest_color.z);
+      btn->widget->SetTintTexture(textint.get());
+      btn->widget->set_tint_color(chest_tint.x, chest_tint.y, chest_tint.z);
+      btn->widget->set_tint2_color(chest_tint2.x, chest_tint2.y, chest_tint2.z);
+
+      auto to_unlock{gold_pass_ ? 0
+                                : static_cast<int>(std::ceil(unlocktm - now))};
+
+      if (to_unlock > 0) {
+        // Show the ad-available tag IF the ad provides an allow-ad time AND
+        // that time has passed AND we've got an ad ready to go.
+        auto allow_ad{adallowtm > 0.0 && adallowtm <= now
+                      && g_core->have_incentivized_ad};
+
+        lock_img->visible = true;
+        txt->visible = true;
+        tv_img->visible = allow_ad;
+        txt->widget->SetText(GetTimeStr_(to_unlock));
+      } else {
+        lock_img->visible = false;
+        tv_img->visible = false;
+        txt->visible = false;
+      }
     }
-    b->widget->SetTexture(tex.get());
+    btn->widget->SetTexture(tex.get());
   }
 
   assert(chest_backing_);
   chest_backing_->y = have_chests ? 41.0f : -15.0f;
 
   child_widgets_dirty_ = true;
+}
+
+auto RootWidget::GetTimeStr_(seconds_t diff) -> std::string {
+  // NOTE: Adapted from time_display_node.cc. Not sure if it would make
+  // sense to share this code somewhere?..
+  std::string output;
+  auto show_sub_seconds{false};
+
+  auto t{static_cast<millisecs_t>(diff * 1000.0)};
+  bool is_negative = false;
+  if (t < 0) {
+    t = -t;
+    is_negative = true;
+  }
+
+  // Hours
+  int h = static_cast_check_fit<int>(((t / 1000) / (60 * 60)));
+  if (h != 0) {
+    std::string s = time_suffix_hours_;
+    char buffer[100];
+    snprintf(buffer, sizeof(buffer), "%d", h);
+    Utils::StringReplaceOne(&s, "${COUNT}", buffer);
+    if (!output.empty()) {
+      output += " ";
+    }
+    output += s;
+  }
+
+  // Minutes.
+  int m = static_cast_check_fit<int>(((t / 1000) / 60) % 60);
+  if (m != 0) {
+    std::string s = time_suffix_minutes_;
+    char buffer[100];
+    snprintf(buffer, sizeof(buffer), "%d", m);
+    Utils::StringReplaceOne(&s, "${COUNT}", buffer);
+    if (!output.empty()) {
+      output += " ";
+    }
+    output += s;
+  }
+
+  // Only show seconds when within a few minutes.
+  if (m < 2) {
+    if (show_sub_seconds) {
+      float sec = fmod(static_cast<float>(t) / 1000.0f, 60.0f);
+      if (sec >= 0.005f || output.empty()) {
+        std::string s = time_suffix_seconds_;
+        char buffer[100];
+        snprintf(buffer, sizeof(buffer), "%.2f", sec);
+        Utils::StringReplaceOne(&s, "${COUNT}", buffer);
+        if (!output.empty()) {
+          output += " ";
+        }
+        output += s;
+      }
+    } else {
+      // Seconds (integer).
+      int sec = static_cast_check_fit<int>(t / 1000 % 60);
+      if (sec != 0 || output.empty()) {
+        std::string s = time_suffix_seconds_;
+        char buffer[100];
+        snprintf(buffer, sizeof(buffer), "%d", sec);
+        Utils::StringReplaceOne(&s, "${COUNT}", buffer);
+        if (!output.empty()) {
+          output += " ";
+        }
+        output += s;
+      }
+    }
+  }
+  if (is_negative) {
+    output = "-" + output;
+  }
+  return output;
 }
 
 void RootWidget::SetInboxCountText(const std::string& val) {
@@ -1636,6 +1869,20 @@ void RootWidget::SetInboxCountText(const std::string& val) {
     inbox_count_text_->visible = backing_is_visible;
     child_widgets_dirty_ = true;
   }
+}
+
+void RootWidget::PauseUpdates() {
+  assert(g_base->InLogicThread());
+  // TODO(ericf): wire this up.
+  // printf("HELLO PAUSING\n");
+  update_pause_count_ += 1;
+}
+
+void RootWidget::ResumeUpdates() {
+  assert(g_base->InLogicThread());
+  // TODO(ericf): wire this up.
+  // printf("HELLO RESUMING\n");
+  update_pause_count_ -= 1;
 }
 
 }  // namespace ballistica::ui_v1

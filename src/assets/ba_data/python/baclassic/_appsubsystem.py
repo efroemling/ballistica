@@ -3,10 +3,10 @@
 """Provides classic app subsystem."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
 import random
 import logging
 import weakref
+from typing import TYPE_CHECKING, override, assert_never
 
 from efro.dataclassio import dataclass_from_dict
 import babase
@@ -26,6 +26,7 @@ from baclassic import _input
 if TYPE_CHECKING:
     from typing import Callable, Any, Sequence
 
+    import bacommon.bs
     from bascenev1lib.actor import spazappearance
     from bauiv1lib.party import PartyWindow
 
@@ -509,11 +510,36 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             request, 'post', data, callback, response_type
         ).start()
 
-    def get_tournament_prize_strings(self, entry: dict[str, Any]) -> list[str]:
+    def set_tournament_prize_image(
+        self, entry: dict[str, Any], index: int, image: bauiv1.Widget
+    ) -> None:
         """Given a tournament entry, return strings for its prize levels."""
         from baclassic import _tournament
 
-        return _tournament.get_tournament_prize_strings(entry)
+        return _tournament.set_tournament_prize_chest_image(entry, index, image)
+
+    def create_in_game_tournament_prize_image(
+        self,
+        entry: dict[str, Any],
+        index: int,
+        position: tuple[float, float],
+    ) -> None:
+        """Given a tournament entry, return strings for its prize levels."""
+        from baclassic import _tournament
+
+        _tournament.create_in_game_tournament_prize_image(
+            entry, index, position
+        )
+
+    def get_tournament_prize_strings(
+        self, entry: dict[str, Any], include_tickets: bool
+    ) -> list[str]:
+        """Given a tournament entry, return strings for its prize levels."""
+        from baclassic import _tournament
+
+        return _tournament.get_tournament_prize_strings(
+            entry, include_tickets=include_tickets
+        )
 
     def getcampaign(self, name: str) -> bascenev1.Campaign:
         """Return a campaign by name."""
@@ -852,3 +878,48 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                             is_top_level=True,
                             suppress_warning=True,
                         )
+
+    @staticmethod
+    def run_bs_client_effects(effects: list[bacommon.bs.ClientEffect]) -> None:
+        """Run client effects sent from the master server."""
+        from baclassic._clienteffect import run_bs_client_effects
+
+        run_bs_client_effects(effects)
+
+    @staticmethod
+    def basic_client_ui_button_label_str(
+        label: bacommon.bs.BasicClientUI.ButtonLabel,
+    ) -> babase.Lstr:
+        """Given a client-ui label, return an Lstr."""
+        import bacommon.bs
+
+        cls = bacommon.bs.BasicClientUI.ButtonLabel
+        if label is cls.UNKNOWN:
+            # Server should not be sending us unknown stuff; make noise
+            # if they do.
+            logging.error(
+                'Got BasicClientUI.ButtonLabel.UNKNOWN; should not happen.'
+            )
+            return babase.Lstr(value='<error>')
+
+        rsrc: str | None = None
+        if label is cls.OK:
+            rsrc = 'okText'
+        elif label is cls.APPLY:
+            rsrc = 'applyText'
+        elif label is cls.CANCEL:
+            rsrc = 'cancelText'
+        elif label is cls.ACCEPT:
+            rsrc = 'gatherWindow.partyInviteAcceptText'
+        elif label is cls.DECLINE:
+            rsrc = 'gatherWindow.partyInviteDeclineText'
+        elif label is cls.IGNORE:
+            rsrc = 'gatherWindow.partyInviteIgnoreText'
+        elif label is cls.CLAIM:
+            rsrc = 'claimText'
+        elif label is cls.DISCARD:
+            rsrc = 'discardText'
+        else:
+            assert_never(label)
+
+        return babase.Lstr(resource=rsrc)

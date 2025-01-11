@@ -294,7 +294,14 @@ class MessageProtocol:
             raise UnregisteredMessageIDError(
                 f'Got unregistered {opname} id of {m_id}.'
             )
-        return dataclass_from_dict(msgtype, msgdict)
+
+        # Explicitly allow any fallbacks we define for our enums and
+        # multitypes. This allows us to build message types that remain
+        # loadable even when containing unrecognized future
+        # enums/multitype data. Be aware that this flags the object as
+        # 'lossy' however which prevents it from being reserialized by
+        # default.
+        return dataclass_from_dict(msgtype, msgdict, lossy=True)
 
     def _get_module_header(
         self,

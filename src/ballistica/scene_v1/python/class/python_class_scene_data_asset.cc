@@ -115,7 +115,7 @@ auto PythonClassSceneDataAsset::GetValue(PythonClassSceneDataAsset* self)
   // haha really need to rename this class.
   base::DataAsset* datadata = data->data_data();
   datadata->Load();
-  datadata->set_last_used_time(g_core->GetAppTimeMillisecs());
+  datadata->set_last_used_time(g_core->AppTimeMillisecs());
   PyObject* obj = datadata->object().get();
   assert(obj);
   Py_INCREF(obj);

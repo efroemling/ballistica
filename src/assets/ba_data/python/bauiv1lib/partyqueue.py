@@ -579,6 +579,10 @@ class PartyQueueWindow(bui.Window):
 
         if plus.get_v1_account_ticket_count() < self._boost_tickets:
             bui.getsound('error').play()
+            bui.screenmessage(
+                bui.Lstr(resource='notEnoughTicketsText'),
+                color=(1, 0, 0),
+            )
             # gettickets.show_get_tickets_prompt()
             return
 

@@ -174,6 +174,11 @@ void BaseFeatureSet::ErrorScreenMessage() {
 }
 
 auto BaseFeatureSet::GetV2AccountID() -> std::optional<std::string> {
+  // Guard against this getting called early.
+  if (!IsAppStarted()) {
+    return {};
+  }
+
   auto gil = Python::ScopedInterpreterLock();
   auto result =
       python->objs().Get(BasePython::ObjID::kGetV2AccountIdCall).Call();
@@ -199,7 +204,7 @@ void BaseFeatureSet::StartApp() {
   BA_PRECONDITION(g_core->InMainThread());
   BA_PRECONDITION(g_base);
 
-  auto start_time = g_core->GetAppTimeSeconds();
+  auto start_time = g_core->AppTimeSeconds();
 
   // Currently limiting this to once per process.
   BA_PRECONDITION(!called_start_app_);
@@ -253,7 +258,7 @@ void BaseFeatureSet::StartApp() {
   // Make some noise if this takes more than a few seconds. If we pass 5
   // seconds or so we start to trigger App-Not-Responding reports which
   // isn't good.
-  auto duration = g_core->GetAppTimeSeconds() - start_time;
+  auto duration = g_core->AppTimeSeconds() - start_time;
   if (duration > 3.0) {
     char buffer[128];
     snprintf(buffer, sizeof(buffer),
@@ -272,7 +277,7 @@ void BaseFeatureSet::SuspendApp() {
     return;
   }
 
-  millisecs_t start_time{core::CorePlatform::GetCurrentMillisecs()};
+  millisecs_t start_time{core::CorePlatform::TimeMonotonicMillisecs()};
 
   // Apple mentioned 5 seconds to run stuff once backgrounded or they bring
   // down the hammer. Let's aim to stay under 2.
@@ -280,7 +285,7 @@ void BaseFeatureSet::SuspendApp() {
 
   g_core->platform->LowLevelDebugLog(
       "SuspendApp@"
-      + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
+      + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()));
   app_suspended_ = true;
 
   // IMPORTANT: Any pause related stuff that event-loop-threads need to do
@@ -311,13 +316,13 @@ void BaseFeatureSet::SuspendApp() {
         g_core->Log(
             LogName::kBa, LogLevel::kDebug,
             "SuspendApp() completed in "
-                + std::to_string(core::CorePlatform::GetCurrentMillisecs()
+                + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()
                                  - start_time)
                 + "ms.");
       }
       return;
     }
-  } while (std::abs(core::CorePlatform::GetCurrentMillisecs() - start_time)
+  } while (std::abs(core::CorePlatform::TimeMonotonicMillisecs() - start_time)
            < max_duration);
 
   // If we made it here, we timed out. Complain.
@@ -325,7 +330,8 @@ void BaseFeatureSet::SuspendApp() {
       std::string("SuspendApp() took too long; ")
       + std::to_string(running_loops.size())
       + " event-loops not yet suspended after "
-      + std::to_string(core::CorePlatform::GetCurrentMillisecs() - start_time)
+      + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()
+                       - start_time)
       + " ms: (";
   bool first = true;
   for (auto* loop : running_loops) {
@@ -383,10 +389,10 @@ void BaseFeatureSet::UnsuspendApp() {
         "AppAdapter::UnsuspendApp() called with app not in suspendedstate.");
     return;
   }
-  millisecs_t start_time{core::CorePlatform::GetCurrentMillisecs()};
+  millisecs_t start_time{core::CorePlatform::TimeMonotonicMillisecs()};
   g_core->platform->LowLevelDebugLog(
       "UnsuspendApp@"
-      + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
+      + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()));
   app_suspended_ = false;
 
   // Spin all event-loops back up.
@@ -397,11 +403,12 @@ void BaseFeatureSet::UnsuspendApp() {
   g_base->networking->OnAppUnsuspend();
 
   if (g_buildconfig.debug_build()) {
-    g_core->Log(LogName::kBa, LogLevel::kDebug,
-                "UnsuspendApp() completed in "
-                    + std::to_string(core::CorePlatform::GetCurrentMillisecs()
-                                     - start_time)
-                    + "ms.");
+    g_core->Log(
+        LogName::kBa, LogLevel::kDebug,
+        "UnsuspendApp() completed in "
+            + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()
+                             - start_time)
+            + "ms.");
   }
 }
 
@@ -571,7 +578,7 @@ auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
       g_core->Log(LogName::kBa, LogLevel::kWarning,
                   "GetSessionUUID() using rand fallback.");
       srand(static_cast<unsigned int>(
-          core::CorePlatform::GetCurrentMillisecs()));  // NOLINT
+          core::CorePlatform::TimeMonotonicMillisecs()));  // NOLINT
       app_instance_uuid =
           std::to_string(static_cast<uint32_t>(rand()));  // NOLINT
       have_app_instance_uuid = true;
@@ -966,7 +973,7 @@ void BaseFeatureSet::SetAppActive(bool active) {
 
   g_core->platform->LowLevelDebugLog(
       "SetAppActive(" + std::to_string(active) + ")@"
-      + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
+      + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()));
 
   // Issue a gentle warning if they are feeding us the same state twice in a
   // row; might imply faulty logic on an app-adapter or whatnot.
@@ -988,6 +995,12 @@ void BaseFeatureSet::Reset() {
   graphics->Reset();
   python->Reset();
   audio->Reset();
+}
+
+auto BaseFeatureSet::TimeSinceEpochCloudSeconds() -> seconds_t {
+  // TODO(ericf): wire this up. Just using local time for now. And make sure
+  // that this and utc_now_cloud() in the Python layer are synced up.
+  return core::CorePlatform::TimeSinceEpochSeconds();
 }
 
 void BaseFeatureSet::SetUIScale(UIScale scale) {

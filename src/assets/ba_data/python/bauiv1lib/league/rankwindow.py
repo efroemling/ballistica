@@ -39,6 +39,7 @@ class LeagueRankWindow(bui.MainWindow):
         self._league_text: bui.Widget | None = None
         self._league_number_text: bui.Widget | None = None
         self._your_power_ranking_text: bui.Widget | None = None
+        self._loading_spinner: bui.Widget | None = None
         self._season_ends_text: bui.Widget | None = None
         self._power_ranking_rank_text: bui.Widget | None = None
         self._to_ranked_text: bui.Widget | None = None
@@ -150,7 +151,7 @@ class LeagueRankWindow(bui.MainWindow):
         self._doing_power_ranking_query = False
 
         self._subcontainer: bui.Widget | None = None
-        self._subcontainerwidth = 800
+        self._subcontainerwidth = max(800, self._scroll_width)
         self._subcontainerheight = 483
         self._power_ranking_score_widgets: list[bui.Widget] = []
 
@@ -330,13 +331,8 @@ class LeagueRankWindow(bui.MainWindow):
                     bui.textwidget(edit=self._league_title_text, text='')
                     bui.textwidget(edit=self._league_text, text='')
                     bui.textwidget(edit=self._league_number_text, text='')
-                    bui.textwidget(
-                        edit=self._your_power_ranking_text,
-                        text=bui.Lstr(
-                            value='${A}...',
-                            subs=[('${A}', bui.Lstr(resource='loadingText'))],
-                        ),
-                    )
+                    bui.textwidget(edit=self._your_power_ranking_text, text='')
+                    bui.spinnerwidget(edit=self._loading_spinner, visible=True)
                     bui.textwidget(edit=self._to_ranked_text, text='')
                     bui.textwidget(edit=self._power_ranking_rank_text, text='')
                     bui.textwidget(edit=self._season_ends_text, text='')
@@ -618,6 +614,14 @@ class LeagueRankWindow(bui.MainWindow):
             flatness=1.0,
         )
 
+        self._loading_spinner = bui.spinnerwidget(
+            parent=w_parent,
+            position=(
+                self._subcontainerwidth * 0.5,
+                self._subcontainerheight * 0.5,
+            ),
+            size=64,
+        )
         self._your_power_ranking_text = bui.textwidget(
             parent=w_parent,
             position=(self._xoffs + 470, v - 142 - 70),
@@ -968,6 +972,7 @@ class LeagueRankWindow(bui.MainWindow):
                 else ''
             ),
         )
+        bui.spinnerwidget(edit=self._loading_spinner, visible=False)
 
         bui.textwidget(
             edit=self._power_ranking_rank_text,

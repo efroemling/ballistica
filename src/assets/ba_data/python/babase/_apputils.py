@@ -30,7 +30,9 @@ def utc_now_cloud() -> datetime.datetime:
 
     Applies offsets pulled from server communication/etc.
     """
-    # FIXME - do something smart here.
+    # TODO: wire this up. Just using local time for now. Make sure that
+    # BaseFeatureSet::TimeSinceEpochCloudSeconds() and this are synced
+    # up.
     return utc_now()
 
 

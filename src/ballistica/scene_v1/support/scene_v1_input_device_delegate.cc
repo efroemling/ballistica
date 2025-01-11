@@ -201,7 +201,7 @@ void SceneV1InputDeviceDelegate::ShipBufferIfFull() {
   ConnectionToHost* hc = remote_player_.get();
 
   // Ship the buffer once it gets big enough or once enough time has passed.
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   size_t size = remote_input_commands_buffer_.size();
   if (size > 2

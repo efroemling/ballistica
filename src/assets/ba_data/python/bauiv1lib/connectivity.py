@@ -57,7 +57,7 @@ class WaitForConnectivityWindow(bui.Window):
         )
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height * 0.65),
+            position=(self._width * 0.5, self._height * 0.7),
             size=(0, 0),
             scale=1.2,
             h_align='center',
@@ -65,9 +65,15 @@ class WaitForConnectivityWindow(bui.Window):
             text=bui.Lstr(resource='internal.connectingToPartyText'),
             maxwidth=self._width * 0.9,
         )
+
+        self._spinner = bui.spinnerwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, self._height * 0.54),
+        )
+
         self._info_text = bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height * 0.45),
+            position=(self._width * 0.5, self._height * 0.4),
             size=(0, 0),
             color=(0.6, 0.5, 0.6),
             flatness=1.0,
@@ -115,6 +121,15 @@ class WaitForConnectivityWindow(bui.Window):
     def _connected(self) -> None:
         if not self._root_widget or self._root_widget.transitioning_out:
             return
+
+        # Show 'connected.' and kill the spinner for the brief moment
+        # we're visible on our way out.
+        bui.textwidget(
+            edit=self._info_text, text=bui.Lstr(resource='remote_app.connected')
+        )
+        if self._spinner:
+            self._spinner.delete()
+
         bui.containerwidget(
             edit=self._root_widget,
             transition=('out_scale'),

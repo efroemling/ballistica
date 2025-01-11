@@ -374,7 +374,7 @@ void SessionStream::ShipSessionCommandsMessage() {
     AddMessageToReplay(out_message_);
   }
   out_message_.clear();
-  last_send_time_ = g_core->GetAppTimeMillisecs();
+  last_send_time_ = g_core->AppTimeMillisecs();
 }
 
 void SessionStream::AddMessageToReplay(const std::vector<uint8_t>& message) {
@@ -441,7 +441,7 @@ void SessionStream::EndCommand(bool is_time_set) {
   if (host_session_) {
     auto* appmode = classic::ClassicAppMode::GetSingleton();
     // Now if its been long enough *AND* this is a time-step command, send.
-    millisecs_t real_time = g_core->GetAppTimeMillisecs();
+    millisecs_t real_time = g_core->AppTimeMillisecs();
     millisecs_t diff = real_time - last_send_time_;
     if (is_time_set && diff >= app_mode_->buffer_time()) {
       ShipSessionCommandsMessage();

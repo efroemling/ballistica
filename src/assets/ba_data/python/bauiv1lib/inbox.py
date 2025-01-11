@@ -6,30 +6,100 @@ from __future__ import annotations
 
 import weakref
 from dataclasses import dataclass
-from typing import override
+from typing import override, assert_never
 
 from efro.error import CommunicationError
-import bacommon.cloud
+import bacommon.bs
 import bauiv1 as bui
 
-# Messages with format versions higher than this will show up as
-# 'app needs to be updated to view this'
-SUPPORTED_INBOX_MESSAGE_FORMAT_VERSION = 1
+
+class _Section:
+    def get_height(self) -> float:
+        """Return section height."""
+        raise NotImplementedError()
+
+    def draw(self, subcontainer: bui.Widget, y: float) -> None:
+        """Draw the section."""
+
+
+class _TextSection(_Section):
+
+    def __init__(
+        self,
+        sub_width: float,
+        text: str,
+        *,
+        subs: list[str],
+        spacing_top: float = 0.0,
+        spacing_bottom: float = 0.0,
+        scale: float = 0.6,
+        color: tuple[float, float, float, float] = (1.0, 1.0, 1.0, 1.0),
+    ) -> None:
+        self.sub_width = sub_width
+        self.spacing_top = spacing_top
+        self.spacing_bottom = spacing_bottom
+        self.color = color
+
+        self.textfin = bui.Lstr(translate=('serverResponses', text)).evaluate()
+        assert len(subs) % 2 == 0  # Should always be even.
+        for j in range(0, len(subs) - 1, 2):
+            self.textfin = self.textfin.replace(subs[j], subs[j + 1])
+
+        # Calc scale to fit width and then see what height we need at
+        # that scale.
+        t_width = max(
+            10.0,
+            bui.get_string_width(self.textfin, suppress_warning=True) * scale,
+        )
+        self.text_scale = scale * min(1.0, (sub_width * 0.9) / t_width)
+
+        self.text_height = (
+            0.0
+            if not self.textfin
+            else bui.get_string_height(self.textfin, suppress_warning=True)
+        ) * self.text_scale
+
+        self.full_height = self.text_height + spacing_top + spacing_bottom
+
+    @override
+    def get_height(self) -> float:
+        return self.full_height
+
+    @override
+    def draw(self, subcontainer: bui.Widget, y: float) -> None:
+        bui.textwidget(
+            parent=subcontainer,
+            position=(
+                self.sub_width * 0.5,
+                y - self.spacing_top - self.text_height * 0.5,
+                # y - self.height * 0.5 - 23.0,
+            ),
+            color=self.color,
+            scale=self.text_scale,
+            flatness=1.0,
+            shadow=0.0,
+            text=self.textfin,
+            size=(0, 0),
+            h_align='center',
+            v_align='center',
+        )
 
 
 @dataclass
-class _MessageEntry:
-    type: bacommon.cloud.BSInboxEntryType
+class _EntryDisplay:
+    interaction_style: bacommon.bs.BasicClientUI.InteractionStyle
+    button_label_positive: bacommon.bs.BasicClientUI.ButtonLabel
+    button_label_negative: bacommon.bs.BasicClientUI.ButtonLabel
+    sections: list[_Section]
     id: str
-    height: float
-    text_height: float
-    scale: float
-    text: str
+    total_height: float
     color: tuple[float, float, float]
     backing: bui.Widget | None = None
     button_positive: bui.Widget | None = None
+    button_spinner_positive: bui.Widget | None = None
     button_negative: bui.Widget | None = None
-    message_text: bui.Widget | None = None
+    button_spinner_negative: bui.Widget | None = None
+    # message_text: bui.Widget | None = None
     processing_complete: bool = False
 
 
@@ -45,15 +115,15 @@ class InboxWindow(bui.MainWindow):
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
 
-        self._message_entries: list[_MessageEntry] = []
+        self._entry_displays: list[_EntryDisplay] = []
 
-        self._width = 600 if uiscale is bui.UIScale.SMALL else 450
+        self._width = 800 if uiscale is bui.UIScale.SMALL else 500
         self._height = (
-            375
+            455
             if uiscale is bui.UIScale.SMALL
             else 370 if uiscale is bui.UIScale.MEDIUM else 450
         )
-        yoffs = -47 if uiscale is bui.UIScale.SMALL else 0
+        yoffs = -42 if uiscale is bui.UIScale.SMALL else 0
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -62,9 +132,9 @@ class InboxWindow(bui.MainWindow):
                     'menu_full' if uiscale is bui.UIScale.SMALL else 'menu_full'
                 ),
                 scale=(
-                    2.3
+                    1.7
                     if uiscale is bui.UIScale.SMALL
-                    else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
+                    else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.15
                 ),
                 stack_offset=(
                     (0, 0)
@@ -101,7 +171,7 @@ class InboxWindow(bui.MainWindow):
             position=(
                 self._width * 0.5,
                 self._height
-                - (27 if uiscale is bui.UIScale.SMALL else 20)
+                - (24 if uiscale is bui.UIScale.SMALL else 20)
                 + yoffs,
             ),
             size=(0, 0),
@@ -122,10 +192,14 @@ class InboxWindow(bui.MainWindow):
             flatness=1.0,
             color=(0.4, 0.4, 0.5),
             shadow=0.0,
-            text=bui.Lstr(resource='loadingText'),
+            text='',
             size=(0, 0),
             h_align='center',
             v_align='center',
+        )
+        self._loading_spinner = bui.spinnerwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, self._height * 0.5),
         )
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
@@ -141,6 +215,7 @@ class InboxWindow(bui.MainWindow):
             simple_culling_v=200,
             claims_left_right=True,
             claims_up_down=True,
+            center_small_content_horizontally=True,
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
         if uiscale is bui.UIScale.SMALL:
@@ -163,7 +238,7 @@ class InboxWindow(bui.MainWindow):
 
         with plus.accounts.primary:
             plus.cloud.send_message_cb(
-                bacommon.cloud.BSInboxRequestMessage(),
+                bacommon.bs.InboxRequestMessage(),
                 on_response=bui.WeakCall(self._on_inbox_request_response),
             )
 
@@ -179,26 +254,33 @@ class InboxWindow(bui.MainWindow):
 
     def _error(self, errmsg: bui.Lstr | str) -> None:
         """Put ourself in a permanent error state."""
+        bui.spinnerwidget(edit=self._loading_spinner, visible=False)
         bui.textwidget(
             edit=self._infotext,
             color=(1, 0, 0),
             text=errmsg,
         )
 
-    def _on_message_entry_press(
+    def _on_entry_display_press(
         self,
-        entry_weak: weakref.ReferenceType[_MessageEntry],
-        process_type: bacommon.cloud.BSInboxEntryProcessType,
+        display_weak: weakref.ReferenceType[_EntryDisplay],
+        action: bacommon.bs.ClientUIAction,
     ) -> None:
-        entry = entry_weak()
-        if entry is None:
+        display = display_weak()
+        if display is None:
             return
 
-        self._neuter_message_entry(entry)
+        bui.getsound('click01').play()
 
-        # We don't do anything for invalid messages.
-        if entry.type is bacommon.cloud.BSInboxEntryType.UNKNOWN:
-            entry.processing_complete = True
+        self._neuter_entry_display(display)
+
+        # We currently only recognize basic entries and their possible
+        # interaction types.
+        if (
+            display.interaction_style
+            is bacommon.bs.BasicClientUI.InteractionStyle.UNKNOWN
+        ):
+            display.processing_complete = True
             self._close_soon_if_all_processed()
             return
 
@@ -211,38 +293,43 @@ class InboxWindow(bui.MainWindow):
             bui.getsound('error').play()
             return
 
-        # Message the master-server to process the entry.
+        # Ask the master-server to run our action.
         with plus.accounts.primary:
             plus.cloud.send_message_cb(
-                bacommon.cloud.BSInboxEntryProcessMessage(
-                    entry.id, process_type
-                ),
+                bacommon.bs.ClientUIActionMessage(display.id, action),
                 on_response=bui.WeakCall(
-                    self._on_inbox_entry_process_response,
-                    entry_weak,
-                    process_type,
+                    self._on_client_ui_action_response,
+                    display_weak,
+                    action,
                 ),
             )
 
-        # Tweak the button to show this is in progress.
+        # Tweak the UI to show that things are in motion.
         button = (
-            entry.button_positive
-            if process_type is bacommon.cloud.BSInboxEntryProcessType.POSITIVE
-            else entry.button_negative
+            display.button_positive
+            if action is bacommon.bs.ClientUIAction.BUTTON_PRESS_POSITIVE
+            else display.button_negative
+        )
+        button_spinner = (
+            display.button_spinner_positive
+            if action is bacommon.bs.ClientUIAction.BUTTON_PRESS_POSITIVE
+            else display.button_spinner_negative
         )
         if button is not None:
-            bui.buttonwidget(edit=button, label='...')
+            bui.buttonwidget(edit=button, label='')
+        if button_spinner is not None:
+            bui.spinnerwidget(edit=button_spinner, visible=True)
 
     def _close_soon_if_all_processed(self) -> None:
         bui.apptimer(0.25, bui.WeakCall(self._close_if_all_processed))
 
     def _close_if_all_processed(self) -> None:
-        if not all(m.processing_complete for m in self._message_entries):
+        if not all(m.processing_complete for m in self._entry_displays):
             return
 
         self.main_window_back()
 
-    def _neuter_message_entry(self, entry: _MessageEntry) -> None:
+    def _neuter_entry_display(self, entry: _EntryDisplay) -> None:
         errsound = bui.getsound('error')
         if entry.button_positive is not None:
             bui.buttonwidget(
@@ -260,22 +347,20 @@ class InboxWindow(bui.MainWindow):
             )
         if entry.backing is not None:
             bui.imagewidget(edit=entry.backing, color=(0.4, 0.4, 0.4))
-        if entry.message_text is not None:
-            bui.textwidget(edit=entry.message_text, color=(0.5, 0.5, 0.5, 0.5))
 
-    def _on_inbox_entry_process_response(
+    def _on_client_ui_action_response(
         self,
-        entry_weak: weakref.ReferenceType[_MessageEntry],
-        process_type: bacommon.cloud.BSInboxEntryProcessType,
-        response: bacommon.cloud.BSInboxEntryProcessResponse | Exception,
+        display_weak: weakref.ReferenceType[_EntryDisplay],
+        action: bacommon.bs.ClientUIAction,
+        response: bacommon.bs.ClientUIActionResponse | Exception,
     ) -> None:
         # pylint: disable=too-many-branches
-        entry = entry_weak()
-        if entry is None:
+        display = display_weak()
+        if display is None:
             return
 
-        assert not entry.processing_complete
-        entry.processing_complete = True
+        assert not display.processing_complete
+        display.processing_complete = True
         self._close_soon_if_all_processed()
 
         # No-op if our UI is dead or on its way out.
@@ -284,10 +369,18 @@ class InboxWindow(bui.MainWindow):
 
         # Tweak the button to show results.
         button = (
-            entry.button_positive
-            if process_type is bacommon.cloud.BSInboxEntryProcessType.POSITIVE
-            else entry.button_negative
+            display.button_positive
+            if action is bacommon.bs.ClientUIAction.BUTTON_PRESS_POSITIVE
+            else display.button_negative
         )
+        button_spinner = (
+            display.button_spinner_positive
+            if action is bacommon.bs.ClientUIAction.BUTTON_PRESS_POSITIVE
+            else display.button_spinner_negative
+        )
+        # Always hide spinner at this point.
+        if button_spinner is not None:
+            bui.spinnerwidget(edit=button_spinner, visible=False)
 
         # See if we should show an error message.
         if isinstance(response, Exception):
@@ -297,9 +390,11 @@ class InboxWindow(bui.MainWindow):
                 )
             else:
                 error_message = bui.Lstr(resource='errorText')
-        elif response.error is not None:
+        elif response.error_type is not None:
+            # If error_type is set, error should be also.
+            assert response.error_message is not None
             error_message = bui.Lstr(
-                translate=('serverResponses', response.error)
+                translate=('serverResponses', response.error_message)
             )
         else:
             error_message = None
@@ -314,6 +409,13 @@ class InboxWindow(bui.MainWindow):
                 )
             return
 
+        # Success!
+        assert not isinstance(response, Exception)
+
+        # Run any bundled effects.
+        assert bui.app.classic is not None
+        bui.app.classic.run_bs_client_effects(response.effects)
+
         # Whee; no error. Mark as done.
         if button is not None:
             # If we have full unicode, just show a checkmark in all cases.
@@ -321,24 +423,11 @@ class InboxWindow(bui.MainWindow):
             if bui.supports_unicode_display():
                 label = '✓'
             else:
-                # For positive claim buttons, say 'success'.
-                # Otherwise default to 'done.'
-                if (
-                    entry.type
-                    in {
-                        bacommon.cloud.BSInboxEntryType.CLAIM,
-                        bacommon.cloud.BSInboxEntryType.CLAIM_DISCARD,
-                    }
-                    and process_type
-                    is bacommon.cloud.BSInboxEntryProcessType.POSITIVE
-                ):
-                    label = bui.Lstr(resource='successText')
-                else:
-                    label = bui.Lstr(resource='doneText')
+                label = bui.Lstr(resource='doneText')
             bui.buttonwidget(edit=button, label=label)
 
     def _on_inbox_request_response(
-        self, response: bacommon.cloud.BSInboxRequestResponse | Exception
+        self, response: bacommon.bs.InboxRequestResponse | Exception
     ) -> None:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
@@ -364,11 +453,12 @@ class InboxWindow(bui.MainWindow):
             self._error(errmsg)
             return
 
-        assert isinstance(response, bacommon.cloud.BSInboxRequestResponse)
+        assert isinstance(response, bacommon.bs.InboxRequestResponse)
 
         # If we got no messages, don't touch anything. This keeps
         # keyboard control working in the empty case.
-        if not response.entries:
+        if not response.wrappers:
+            bui.spinnerwidget(edit=self._loading_spinner, visible=False)
             bui.textwidget(
                 edit=self._infotext,
                 color=(0.4, 0.4, 0.5),
@@ -376,63 +466,96 @@ class InboxWindow(bui.MainWindow):
             )
             return
 
+        bui.spinnerwidget(edit=self._loading_spinner, visible=False)
         bui.textwidget(edit=self._infotext, text='')
 
-        sub_width = self._width - 90
+        # Even though our window size varies with uiscale, we want
+        # notifications to target a fixed width.
+        sub_width = 400.0
         sub_height = 0.0
 
-        # Run the math on row heights/etc.
-        for i, entry in enumerate(response.entries):
+        # Construct entries for everything we'll display.
+        for i, wrapper in enumerate(response.wrappers):
+
             # We need to flatten text here so we can measure it.
-            textfin: str
+            # textfin: str
             color: tuple[float, float, float]
 
-            # Messages with either newer formatting or unrecognized
-            # types show up as 'upgrade your app to see this'.
-            if (
-                entry.format_version > SUPPORTED_INBOX_MESSAGE_FORMAT_VERSION
-                or entry.type is bacommon.cloud.BSInboxEntryType.UNKNOWN
-            ):
-                textfin = bui.Lstr(
-                    translate=(
-                        'serverResponses',
-                        'You must update the app to view this.',
-                    )
-                ).evaluate()
-                color = (0.6, 0.6, 0.6)
-            else:
-                # Translate raw response and apply any replacements.
-                textfin = bui.Lstr(
-                    translate=('serverResponses', entry.message)
-                ).evaluate()
-                assert len(entry.subs) % 2 == 0  # Should always be even.
-                for j in range(0, len(entry.subs) - 1, 2):
-                    textfin = textfin.replace(entry.subs[j], entry.subs[j + 1])
-                color = (0.55, 0.5, 0.7)
+            interaction_style: bacommon.bs.BasicClientUI.InteractionStyle
+            button_label_positive: bacommon.bs.BasicClientUI.ButtonLabel
+            button_label_negative: bacommon.bs.BasicClientUI.ButtonLabel
 
-            # Calc scale to fit width and then see what height we need
-            # at that scale.
-            t_width = max(
-                10.0, bui.get_string_width(textfin, suppress_warning=True)
-            )
-            scale = min(0.6, (sub_width * 0.9) / t_width)
-            t_height = (
-                max(10.0, bui.get_string_height(textfin, suppress_warning=True))
-                * scale
-            )
-            entry_height = 90.0 + t_height
-            self._message_entries.append(
-                _MessageEntry(
-                    type=entry.type,
-                    id=entry.id,
-                    height=entry_height,
-                    text_height=t_height,
-                    scale=scale,
-                    text=textfin,
+            sections: list[_Section] = []
+            total_height = 90.0
+
+            # Display only entries where we recognize all style/label
+            # values and ui component types.
+            if (
+                isinstance(wrapper.ui, bacommon.bs.BasicClientUI)
+                and not wrapper.ui.contains_unknown_elements()
+            ):
+                color = (0.55, 0.5, 0.7)
+                interaction_style = wrapper.ui.interaction_style
+                button_label_positive = wrapper.ui.button_label_positive
+                button_label_negative = wrapper.ui.button_label_negative
+
+                idcls = bacommon.bs.BasicClientUIComponentTypeID
+                for component in wrapper.ui.components:
+                    ctypeid = component.get_type_id()
+                    if ctypeid is idcls.TEXT:
+                        assert isinstance(
+                            component, bacommon.bs.BasicClientUIComponentText
+                        )
+                        section = _TextSection(
+                            sub_width=sub_width,
+                            text=component.text,
+                            subs=component.subs,
+                            color=component.color,
+                            scale=component.scale,
+                            spacing_top=component.spacing_top,
+                            spacing_bottom=component.spacing_bottom,
+                        )
+                        total_height += section.get_height()
+                        sections.append(section)
+
+                    elif ctypeid is idcls.UNKNOWN:
+                        raise RuntimeError('Should not get here.')
+                    else:
+                        # Make sure we handle all types.
+                        assert_never(ctypeid)
+            else:
+
+                # Display anything with unknown components as an
+                # 'upgrade your app to see this' message.
+                color = (0.6, 0.6, 0.6)
+                interaction_style = (
+                    bacommon.bs.BasicClientUI.InteractionStyle.UNKNOWN
+                )
+                button_label_positive = bacommon.bs.BasicClientUI.ButtonLabel.OK
+                button_label_negative = (
+                    bacommon.bs.BasicClientUI.ButtonLabel.CANCEL
+                )
+
+                section = _TextSection(
+                    sub_width=sub_width,
+                    text='You must update the app to view this.',
+                    subs=[],
+                )
+                total_height += section.get_height()
+                sections.append(section)
+
+            self._entry_displays.append(
+                _EntryDisplay(
+                    interaction_style=interaction_style,
+                    button_label_positive=button_label_positive,
+                    button_label_negative=button_label_negative,
+                    id=wrapper.id,
+                    sections=sections,
+                    total_height=total_height,
                     color=color,
                 )
             )
-            sub_height += entry_height
+            sub_height += total_height
 
         subcontainer = bui.containerwidget(
             id='inboxsub',
@@ -446,98 +569,116 @@ class InboxWindow(bui.MainWindow):
 
         backing_tex = bui.gettexture('buttonSquareWide')
 
+        assert bui.app.classic is not None
+
         buttonrows: list[list[bui.Widget]] = []
         y = sub_height
-        for i, _entry in enumerate(response.entries):
-            message_entry = self._message_entries[i]
-            message_entry_weak = weakref.ref(message_entry)
+        for i, _wrapper in enumerate(response.wrappers):
+            entry_display = self._entry_displays[i]
+            entry_display_weak = weakref.ref(entry_display)
             bwidth = 140
             bheight = 40
 
+            ysection = y - 23.0
+
             # Backing.
-            message_entry.backing = img = bui.imagewidget(
+            entry_display.backing = img = bui.imagewidget(
                 parent=subcontainer,
-                position=(-0.022 * sub_width, y - message_entry.height * 1.09),
+                position=(
+                    -0.022 * sub_width,
+                    y - entry_display.total_height * 1.09,
+                ),
                 texture=backing_tex,
-                size=(sub_width * 1.07, message_entry.height * 1.15),
-                color=message_entry.color,
+                size=(sub_width * 1.07, entry_display.total_height * 1.15),
+                color=entry_display.color,
                 opacity=0.9,
             )
             bui.widget(edit=img, depth_range=(0, 0.1))
 
+            # Section contents.
+            for sec in entry_display.sections:
+                sec.draw(subcontainer, ysection)
+                ysection -= sec.get_height()
+
             buttonrow: list[bui.Widget] = []
             have_negative_button = (
-                message_entry.type
-                is bacommon.cloud.BSInboxEntryType.CLAIM_DISCARD
+                entry_display.interaction_style
+                is (
+                    bacommon.bs.BasicClientUI
+                ).InteractionStyle.BUTTON_POSITIVE_NEGATIVE
             )
 
-            message_entry.button_positive = btn = bui.buttonwidget(
+            bpos = (
+                (
+                    (sub_width - bwidth - 25)
+                    if have_negative_button
+                    else ((sub_width - bwidth) * 0.5)
+                ),
+                y - entry_display.total_height + 15.0,
+            )
+            entry_display.button_positive = btn = bui.buttonwidget(
                 parent=subcontainer,
-                position=(
-                    (
-                        (sub_width - bwidth - 25)
-                        if have_negative_button
-                        else ((sub_width - bwidth) * 0.5)
-                    ),
-                    y - message_entry.height + 15.0,
-                ),
+                position=bpos,
                 size=(bwidth, bheight),
-                label=bui.Lstr(
-                    resource=(
-                        'claimText'
-                        if message_entry.type
-                        in {
-                            bacommon.cloud.BSInboxEntryType.CLAIM,
-                            bacommon.cloud.BSInboxEntryType.CLAIM_DISCARD,
-                        }
-                        else 'okText'
-                    )
+                label=bui.app.classic.basic_client_ui_button_label_str(
+                    entry_display.button_label_positive
                 ),
-                color=message_entry.color,
+                color=entry_display.color,
                 textcolor=(0, 1, 0),
                 on_activate_call=bui.WeakCall(
-                    self._on_message_entry_press,
-                    message_entry_weak,
-                    bacommon.cloud.BSInboxEntryProcessType.POSITIVE,
+                    self._on_entry_display_press,
+                    entry_display_weak,
+                    bacommon.bs.ClientUIAction.BUTTON_PRESS_POSITIVE,
                 ),
+                enable_sound=False,
             )
             bui.widget(edit=btn, depth_range=(0.1, 1.0))
             buttonrow.append(btn)
+            spinner = entry_display.button_spinner_positive = bui.spinnerwidget(
+                parent=subcontainer,
+                position=(
+                    bpos[0] + 0.5 * bwidth,
+                    bpos[1] + 0.5 * bheight,
+                ),
+                visible=False,
+            )
+            bui.widget(edit=spinner, depth_range=(0.1, 1.0))
 
             if have_negative_button:
-                message_entry.button_negative = btn2 = bui.buttonwidget(
+                bpos = (25, y - entry_display.total_height + 15.0)
+                entry_display.button_negative = btn2 = bui.buttonwidget(
                     parent=subcontainer,
-                    position=(25, y - message_entry.height + 15.0),
+                    position=bpos,
                     size=(bwidth, bheight),
-                    label=bui.Lstr(resource='discardText'),
+                    label=bui.app.classic.basic_client_ui_button_label_str(
+                        entry_display.button_label_negative
+                    ),
                     color=(0.85, 0.5, 0.7),
                     textcolor=(1, 0.4, 0.4),
                     on_activate_call=bui.WeakCall(
-                        self._on_message_entry_press,
-                        message_entry_weak,
-                        bacommon.cloud.BSInboxEntryProcessType.NEGATIVE,
+                        self._on_entry_display_press,
+                        entry_display_weak,
+                        (bacommon.bs.ClientUIAction).BUTTON_PRESS_NEGATIVE,
                     ),
+                    enable_sound=False,
                 )
                 bui.widget(edit=btn2, depth_range=(0.1, 1.0))
                 buttonrow.append(btn2)
+                spinner = entry_display.button_spinner_negative = (
+                    bui.spinnerwidget(
+                        parent=subcontainer,
+                        position=(
+                            bpos[0] + 0.5 * bwidth,
+                            bpos[1] + 0.5 * bheight,
+                        ),
+                        visible=False,
+                    )
+                )
+                bui.widget(edit=spinner, depth_range=(0.1, 1.0))
 
             buttonrows.append(buttonrow)
 
-            message_entry.message_text = bui.textwidget(
-                parent=subcontainer,
-                position=(
-                    sub_width * 0.5,
-                    y - message_entry.text_height * 0.5 - 23.0,
-                ),
-                scale=message_entry.scale,
-                flatness=1.0,
-                shadow=0.0,
-                text=message_entry.text,
-                size=(0, 0),
-                h_align='center',
-                v_align='center',
-            )
-            y -= message_entry.height
+            y -= entry_display.total_height
 
         uiscale = bui.app.ui_v1.uiscale
         above_widget = (

@@ -476,7 +476,8 @@ enum class SysTextureID : uint8_t {
   kFontExtras4,
   kCharacterIconMask,
   kBlack,
-  kWings
+  kWings,
+  kSpinner
 };
 
 enum class SysCubeMapTextureID : uint8_t {
@@ -761,8 +762,8 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   void PushMainThreadRunnable(Runnable* runnable) override;
 
-  /// Return the currently signed in V2 account id as
-  /// reported by the Python layer.
+  /// Return the currently signed in V2 account id as reported by the Python
+  /// layer.
   auto GetV2AccountID() -> std::optional<std::string>;
 
   /// Return whether clipboard operations are supported at all. This gets
@@ -783,6 +784,10 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   /// Set overall ui scale for the app.
   void SetUIScale(UIScale scale);
+
+  /// Time since epoch on the master-server. Tries to
+  /// be correct even if local time is set wrong.
+  auto TimeSinceEpochCloudSeconds() -> seconds_t;
 
   // Const subsystems.
   AppAdapter* const app_adapter;

@@ -32,6 +32,10 @@ class ScrollWidget : public ContainerWidget {
     center_small_content_ = val;
     MarkForUpdate();
   }
+  auto set_center_small_content_horizontally(bool val) {
+    center_small_content_horizontally_ = val;
+    MarkForUpdate();
+  }
   void OnTouchDelayTimerExpired();
   auto set_color(float r, float g, float b) {
     color_red_ = r;
@@ -106,6 +110,7 @@ class ScrollWidget : public ContainerWidget {
   bool glow_dirty_{true};
   bool thumb_dirty_{true};
   bool center_small_content_{};
+  bool center_small_content_horizontally_{};
   bool touch_held_{};
   bool highlight_{true};
   bool capture_arrows_{false};
