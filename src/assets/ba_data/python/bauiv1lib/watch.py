@@ -160,6 +160,7 @@ class WatchWindow(bui.MainWindow):
             ),
             texture=bui.gettexture('scrollWidget'),
             mesh_transparent=bui.getmesh('softEdgeOutside'),
+            opacity=0.4,
         )
         self._tab_container: bui.Widget | None = None
 

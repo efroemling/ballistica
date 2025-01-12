@@ -725,7 +725,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             c.ScopedScissor({l + border_width_, b + border_height_ + 1,
                              l + (width()), b + (height() * 0.995f)});
         auto xf = c.ScopedTransform();
-        c.Translate(thumb_center_x_, thumb_center_y_, 0.8f);
+        c.Translate(thumb_center_x_, thumb_center_y_, 0.75f);
         c.Scale(-thumb_width_, thumb_height_, 0.1f);
         c.FlipCullFace();
         c.Rotate(-90, 0, 0, 1);

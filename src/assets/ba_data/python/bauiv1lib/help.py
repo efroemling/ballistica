@@ -89,6 +89,7 @@ class HelpWindow(bui.MainWindow):
                 height - (150 if uiscale is bui.UIScale.SMALL else 120),
             ),
             capture_arrows=True,
+            border_opacity=0.4,
         )
 
         bui.widget(

@@ -162,6 +162,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
             highlight=False,
             size=(self._scroll_width, self._scroll_height),
             selection_loops_to_parent=True,
+            border_opacity=0.4,
         )
         bui.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
         self._subcontainer = bui.containerwidget(

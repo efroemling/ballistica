@@ -350,6 +350,7 @@ class StoreBrowserWindow(bui.MainWindow):
             size=(self._scroll_width, self._scroll_height),
             claims_left_right=True,
             selection_loops_to_parent=True,
+            border_opacity=0.4,
         )
 
         # NOTE: this stuff is modified by the _Store class.

@@ -683,50 +683,52 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     base::EmptyComponent c(pass);
     c.SetTransparent(draw_transparent);
     auto scissor = c.ScopedScissor({l + border_width_, b + border_height_ + 1,
-                                    l + (width() - border_width_ - 0),
+                                    l + (width() - border_width_),
                                     b + (height() - border_height_) - 1});
     c.Submit();  // Get out of the way for children drawing.
 
     set_simple_culling_bottom(b + border_height_ + 1);
     set_simple_culling_top(b + (height() - border_height_) - 1);
 
+    // Scroll trough (depth 0.05 to 0.15).
+    if (explicit_bool(true)) {
+      if (draw_transparent) {
+        if (trough_dirty_) {
+          float r2 = l + width();
+          float l2 = r2 - scroll_bar_width_;
+          float b2;
+          float t2;
+          b2 = b + (border_height_);
+          t2 = t - (border_height_);
+          float l_border, r_border, b_border, t_border;
+          l_border = 3;
+          r_border = 0;
+          b_border = height() * 0.006f;
+          t_border = height() * 0.002f;
+          trough_width_ = r2 - l2 + l_border + r_border;
+          trough_height_ = t2 - b2 + b_border + t_border;
+          trough_center_x_ = l2 - l_border + trough_width_ * 0.5f;
+          trough_center_y_ = b2 - b_border + trough_height_ * 0.5f;
+          trough_dirty_ = false;
+        }
+        base::SimpleComponent c(pass);
+        c.SetTransparent(true);
+        c.SetColor(1.0f, 1.0f, 1.0f, border_opacity_);
+        c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kUIAtlas));
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(trough_center_x_, trough_center_y_, 0.05f);
+          c.Scale(trough_width_, trough_height_, 0.1f);
+          c.DrawMeshAsset(g_base->assets->SysMesh(
+              base::SysMeshID::kScrollBarTroughTransparent));
+        }
+        c.Submit();
+      }
+    }
+
     // Draw all our widgets at our z level.
     DrawChildren(pass, draw_transparent, l + extra_offs_x, b + extra_offs_y,
                  1.0f);
-  }
-
-  // Scroll trough (depth 0.7 to 0.8).
-  if (draw_transparent) {
-    if (trough_dirty_) {
-      float r2 = l + width();
-      float l2 = r2 - scroll_bar_width_;
-      float b2;
-      float t2;
-      b2 = b + (border_height_);
-      t2 = t - (border_height_);
-      float l_border, r_border, b_border, t_border;
-      l_border = 3;
-      r_border = 0;
-      b_border = height() * 0.006f;
-      t_border = height() * 0.002f;
-      trough_width_ = r2 - l2 + l_border + r_border;
-      trough_height_ = t2 - b2 + b_border + t_border;
-      trough_center_x_ = l2 - l_border + trough_width_ * 0.5f;
-      trough_center_y_ = b2 - b_border + trough_height_ * 0.5f;
-      trough_dirty_ = false;
-    }
-    base::SimpleComponent c(pass);
-    c.SetTransparent(true);
-    c.SetColor(1, 1, 1, border_opacity_);
-    c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kUIAtlas));
-    {
-      auto xf = c.ScopedTransform();
-      c.Translate(trough_center_x_, trough_center_y_, 0.7f);
-      c.Scale(trough_width_, trough_height_, 0.1f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(
-          base::SysMeshID::kScrollBarTroughTransparent));
-    }
-    c.Submit();
   }
 
   // Scroll bars.

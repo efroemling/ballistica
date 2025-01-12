@@ -110,6 +110,7 @@ class AchievementsWindow(bui.MainWindow):
             ),
             capture_arrows=True,
             simple_culling_v=10,
+            border_opacity=0.4,
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
         if uiscale is bui.UIScale.SMALL:

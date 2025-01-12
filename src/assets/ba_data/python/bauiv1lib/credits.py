@@ -107,6 +107,7 @@ class CreditsWindow(bui.MainWindow):
                 height - (160 if uiscale is bui.UIScale.SMALL else 100),
             ),
             capture_arrows=True,
+            border_opacity=0.4,
         )
 
         bui.widget(

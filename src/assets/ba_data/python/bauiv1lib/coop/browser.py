@@ -253,7 +253,10 @@ class CoopBrowserWindow(bui.MainWindow):
 
         self._scroll_width = self._width - (130 + 2 * x_inset)
         self._scroll_height = self._height - (
-            219 if uiscale is bui.UIScale.SMALL else 160
+            # 219 if uiscale is bui.UIScale.SMALL else 160
+            170
+            if uiscale is bui.UIScale.SMALL
+            else 160
         )
 
         self._subcontainerwidth = 800.0
@@ -263,7 +266,8 @@ class CoopBrowserWindow(bui.MainWindow):
             parent=self._root_widget,
             highlight=False,
             position=(
-                (65 + x_inset, 120)
+                # (65 + x_inset, 120)
+                (65 + x_inset, 70)
                 if uiscale is bui.UIScale.SMALL
                 else (65 + x_inset, 70)
             ),
@@ -273,6 +277,29 @@ class CoopBrowserWindow(bui.MainWindow):
             selection_loops_to_parent=True,
             border_opacity=0.3 if uiscale is bui.UIScale.SMALL else 1.0,
         )
+
+        if uiscale is bui.UIScale.SMALL:
+            bimg = bui.imagewidget(
+                parent=self._root_widget,
+                texture=bui.gettexture('uiAtlas'),
+                mesh_transparent=bui.getmesh('windowBGBlotch'),
+                position=(x_inset + 10.0, -20),
+                size=(500.0, 200.0),
+                color=(0.4, 0.37, 0.49),
+                # color=(1, 0, 0),
+            )
+            bui.widget(edit=bimg, depth_range=(0.9, 1.0))
+            bimg = bui.imagewidget(
+                parent=self._root_widget,
+                texture=bui.gettexture('uiAtlas'),
+                mesh_transparent=bui.getmesh('windowBGBlotch'),
+                position=(x_inset + self._scroll_width - 270, -20),
+                size=(500.0, 200.0),
+                color=(0.4, 0.37, 0.49),
+                # color=(1, 0, 0),
+            )
+            bui.widget(edit=bimg, depth_range=(0.9, 1.0))
+
         self._subcontainer: bui.Widget | None = None
 
         # Take note of our account state; we'll refresh later if this changes.
@@ -742,7 +769,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         h_scroll = bui.hscrollwidget(
             parent=w_parent,
-            size=(self._scroll_width - 10, 205),
+            size=(self._scroll_width, 205),
             position=(-5, v),
             simple_culling_h=70,
             highlight=False,
@@ -836,7 +863,7 @@ class CoopBrowserWindow(bui.MainWindow):
             for i in range(self._tournament_button_count):
                 tournament_h_scroll = h_scroll = bui.hscrollwidget(
                     parent=w_parent,
-                    size=(self._scroll_width - 10, 205),
+                    size=(self._scroll_width, 205),
                     position=(-5, v),
                     highlight=False,
                     border_opacity=0.0,
@@ -918,7 +945,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         self._custom_h_scroll = custom_h_scroll = h_scroll = bui.hscrollwidget(
             parent=w_parent,
-            size=(self._scroll_width - 10, 205),
+            size=(self._scroll_width, 205),
             position=(-5, v),
             highlight=False,
             border_opacity=0.0,

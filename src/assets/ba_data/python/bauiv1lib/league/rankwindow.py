@@ -143,6 +143,7 @@ class LeagueRankWindow(bui.MainWindow):
             position=(65 + x_inset, 70),
             size=(self._scroll_width, self._scroll_height),
             center_small_content=True,
+            border_opacity=0.4,
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
         bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)

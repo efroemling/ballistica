@@ -163,6 +163,7 @@ class AccountSettingsWindow(bui.MainWindow):
             size=(self._scroll_width, self._scroll_height),
             claims_left_right=True,
             selection_loops_to_parent=True,
+            border_opacity=0.4,
         )
         self._subcontainer: bui.Widget | None = None
         self._refresh()

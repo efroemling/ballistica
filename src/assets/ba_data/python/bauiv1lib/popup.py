@@ -203,6 +203,7 @@ class PopupMenuWindow(PopupWindow):
                 highlight=False,
                 color=(0.35, 0.55, 0.15),
                 size=(self._width - 40, self._height - 40),
+                border_opacity=0.5,
             )
             self._columnwidget = bui.columnwidget(
                 parent=self._scrollwidget, border=2, margin=0

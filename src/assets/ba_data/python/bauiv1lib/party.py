@@ -126,6 +126,7 @@ class PartyWindow(bui.Window):
             size=(self._scroll_width, self._height - 200),
             position=(30, 80),
             color=(0.4, 0.6, 0.3),
+            border_opacity=0.6,
         )
         self._columnwidget = bui.columnwidget(
             parent=self._scrollwidget, border=2, left_border=-200, margin=0

@@ -119,7 +119,7 @@ class InboxWindow(bui.MainWindow):
 
         self._width = 800 if uiscale is bui.UIScale.SMALL else 500
         self._height = (
-            455
+            485
             if uiscale is bui.UIScale.SMALL
             else 370 if uiscale is bui.UIScale.MEDIUM else 450
         )
@@ -132,7 +132,7 @@ class InboxWindow(bui.MainWindow):
                     'menu_full' if uiscale is bui.UIScale.SMALL else 'menu_full'
                 ),
                 scale=(
-                    1.7
+                    1.74
                     if uiscale is bui.UIScale.SMALL
                     else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.15
                 ),
@@ -171,7 +171,7 @@ class InboxWindow(bui.MainWindow):
             position=(
                 self._width * 0.5,
                 self._height
-                - (24 if uiscale is bui.UIScale.SMALL else 20)
+                - (45 if uiscale is bui.UIScale.SMALL else 20)
                 + yoffs,
             ),
             size=(0, 0),
@@ -209,13 +209,14 @@ class InboxWindow(bui.MainWindow):
             ),
             position=(
                 30,
-                (133 if uiscale is bui.UIScale.SMALL else 30) + yoffs,
+                (110 if uiscale is bui.UIScale.SMALL else 30) + yoffs,
             ),
             capture_arrows=True,
             simple_culling_v=200,
             claims_left_right=True,
             claims_up_down=True,
             center_small_content_horizontally=True,
+            border_opacity=0.4,
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
         if uiscale is bui.UIScale.SMALL:
@@ -465,6 +466,8 @@ class InboxWindow(bui.MainWindow):
                 text=bui.Lstr(resource='noMessagesText'),
             )
             return
+
+        bui.scrollwidget(edit=self._scrollwidget, highlight=False)
 
         bui.spinnerwidget(edit=self._loading_spinner, visible=False)
         bui.textwidget(edit=self._infotext, text='')
