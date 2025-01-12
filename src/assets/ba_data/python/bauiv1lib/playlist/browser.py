@@ -75,7 +75,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     else 'menu_full'
                 ),
                 scale=(
-                    1.83
+                    1.85
                     if uiscale is bui.UIScale.SMALL
                     else 1.05 if uiscale is bui.UIScale.MEDIUM else 0.9
                 ),
@@ -144,6 +144,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                 (self._width - self._scroll_width) * 0.5,
                 65 + scroll_offs,
             ),
+            border_opacity=0.4 if uiscale is bui.UIScale.SMALL else 1.0,
         )
         bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)
         self._subcontainer: bui.Widget | None = None

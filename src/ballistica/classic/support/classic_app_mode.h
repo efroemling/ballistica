@@ -315,9 +315,9 @@ class ClassicAppMode : public base::AppMode {
   int public_party_max_size_{8};
   int public_party_player_count_{0};
   int public_party_max_player_count_{8};
-  int root_ui_tickets_meter_value_;
-  int root_ui_tokens_meter_value_;
-  int root_ui_league_rank_value_;
+  int root_ui_tickets_meter_value_{-1};
+  int root_ui_tokens_meter_value_{-1};
+  int root_ui_league_rank_value_{-1};
   float debug_speed_mult_{1.0f};
   float replay_speed_mult_{1.0f};
   std::set<std::string> admin_public_ids_;
