@@ -40,13 +40,13 @@ def get_public_legal_notice(
 def get_non_public_legal_notice() -> str:
     """Return the one line legal notice we expect private repo files to have."""
     # TODO: Move this to project config or somewhere not hard-coded.
-    return 'Copyright (c) 2011-2024 Eric Froemling'
+    return 'Copyright (c) 2011-2025 Eric Froemling'
 
 
 def get_non_public_legal_notice_prev() -> str:
     """Allows us to auto-update."""
     # TODO: Move this to project config or somewhere not hard-coded.
-    return 'Copyright (c) 2011-2023 Eric Froemling'
+    return 'Copyright (c) 2011-2025 Eric Froemling'
 
 
 def getlocalconfig(projroot: Path | str) -> dict[str, Any]:
