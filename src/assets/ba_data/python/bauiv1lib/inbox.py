@@ -205,11 +205,11 @@ class InboxWindow(bui.MainWindow):
             parent=self._root_widget,
             size=(
                 self._width - 60,
-                self._height - (170 if uiscale is bui.UIScale.SMALL else 70),
+                self._height - (170 if uiscale is bui.UIScale.SMALL else 80),
             ),
             position=(
                 30,
-                (110 if uiscale is bui.UIScale.SMALL else 30) + yoffs,
+                (110 if uiscale is bui.UIScale.SMALL else 34) + yoffs,
             ),
             capture_arrows=True,
             simple_culling_v=200,
@@ -472,10 +472,19 @@ class InboxWindow(bui.MainWindow):
         bui.spinnerwidget(edit=self._loading_spinner, visible=False)
         bui.textwidget(edit=self._infotext, text='')
 
+        uiscale = bui.app.ui_v1.uiscale
+
+        margin_top = 0.0 if uiscale is bui.UIScale.SMALL else 10.0
+        margin_v = 0.0 if uiscale is bui.UIScale.SMALL else 5.0
+
+        # Need this to avoid the dock blocking access to buttons on our
+        # bottom message.
+        margin_bottom = 60.0 if uiscale is bui.UIScale.SMALL else 10.0
+
         # Even though our window size varies with uiscale, we want
         # notifications to target a fixed width.
         sub_width = 400.0
-        sub_height = 0.0
+        sub_height = margin_top
 
         # Construct entries for everything we'll display.
         for i, wrapper in enumerate(response.wrappers):
@@ -558,7 +567,9 @@ class InboxWindow(bui.MainWindow):
                     color=color,
                 )
             )
-            sub_height += total_height
+            sub_height += margin_v + total_height
+
+        sub_height += margin_bottom
 
         subcontainer = bui.containerwidget(
             id='inboxsub',
@@ -575,7 +586,7 @@ class InboxWindow(bui.MainWindow):
         assert bui.app.classic is not None
 
         buttonrows: list[list[bui.Widget]] = []
-        y = sub_height
+        y = sub_height - margin_top
         for i, _wrapper in enumerate(response.wrappers):
             entry_display = self._entry_displays[i]
             entry_display_weak = weakref.ref(entry_display)
@@ -681,7 +692,7 @@ class InboxWindow(bui.MainWindow):
 
             buttonrows.append(buttonrow)
 
-            y -= entry_display.total_height
+            y -= margin_v + entry_display.total_height
 
         uiscale = bui.app.ui_v1.uiscale
         above_widget = (
