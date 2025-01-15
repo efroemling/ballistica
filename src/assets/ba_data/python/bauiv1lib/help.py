@@ -8,6 +8,8 @@ from typing import override
 
 import bauiv1 as bui
 
+import random
+
 
 class HelpWindow(bui.MainWindow):
     """A window providing help on how to play."""
@@ -402,7 +404,7 @@ class HelpWindow(bui.MainWindow):
             color=(1, 0.7, 0.3),
             selectable=False,
             enable_sound=False,
-            on_activate_call=bui.getsound('spazAttack01').play,
+            on_activate_call=bui.WeakCall(self._play_sound, 'spazAttack0', 4),
         )
 
         txt_scale = getres(f'{self._r}.punchInfoTextScale')
@@ -430,7 +432,7 @@ class HelpWindow(bui.MainWindow):
             color=(1, 0.3, 0.3),
             selectable=False,
             enable_sound=False,
-            on_activate_call=bui.getsound('explosion01').play,
+            on_activate_call=bui.WeakCall(self._play_sound, 'explosion0', 5),
         )
 
         txt = bui.Lstr(resource=f'{self._r}.bombInfoText').evaluate()
@@ -459,7 +461,7 @@ class HelpWindow(bui.MainWindow):
             color=(0.5, 0.5, 1),
             selectable=False,
             enable_sound=False,
-            on_activate_call=bui.getsound('spazPickup01').play,
+            on_activate_call=bui.WeakCall(self._play_sound, 'spazPickup0', 1),
         )
 
         txtl = bui.Lstr(resource=f'{self._r}.pickUpInfoText')
@@ -487,7 +489,7 @@ class HelpWindow(bui.MainWindow):
             color=(0.4, 1, 0.4),
             selectable=False,
             enable_sound=False,
-            on_activate_call=bui.getsound('spazJump01').play,
+            on_activate_call=bui.WeakCall(self._play_sound, 'spazJump0', 4),
         )
 
         txt = bui.Lstr(resource=f'{self._r}.jumpInfoText').evaluate()
@@ -642,6 +644,9 @@ class HelpWindow(bui.MainWindow):
                 v_align='center',
                 res_scale=0.5,
             )
+
+    def _play_sound(self, text: str, num: int):
+        bui.getsound(text + str(random.randint(1, num))).play()
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
