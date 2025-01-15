@@ -401,6 +401,8 @@ class HelpWindow(bui.MainWindow):
             texture=bui.gettexture('buttonPunch'),
             color=(1, 0.7, 0.3),
             selectable=False,
+            enable_sound=False,
+            on_activate_call=bui.getsound('spazAttack01').play,
         )
 
         txt_scale = getres(f'{self._r}.punchInfoTextScale')
@@ -427,6 +429,8 @@ class HelpWindow(bui.MainWindow):
             texture=bui.gettexture('buttonBomb'),
             color=(1, 0.3, 0.3),
             selectable=False,
+            enable_sound=False,
+            on_activate_call=bui.getsound('explosion01').play,
         )
 
         txt = bui.Lstr(resource=f'{self._r}.bombInfoText').evaluate()
@@ -454,6 +458,8 @@ class HelpWindow(bui.MainWindow):
             texture=bui.gettexture('buttonPickUp'),
             color=(0.5, 0.5, 1),
             selectable=False,
+            enable_sound=False,
+            on_activate_call=bui.getsound('spazPickup01').play,
         )
 
         txtl = bui.Lstr(resource=f'{self._r}.pickUpInfoText')
@@ -480,6 +486,8 @@ class HelpWindow(bui.MainWindow):
             texture=bui.gettexture('buttonJump'),
             color=(0.4, 1, 0.4),
             selectable=False,
+            enable_sound=False,
+            on_activate_call=bui.getsound('spazJump01').play,
         )
 
         txt = bui.Lstr(resource=f'{self._r}.jumpInfoText').evaluate()
