@@ -6,9 +6,9 @@ from __future__ import annotations
 
 from typing import override
 
-import bauiv1 as bui
-
 import random
+
+import bauiv1 as bui
 
 
 class HelpWindow(bui.MainWindow):
@@ -645,7 +645,7 @@ class HelpWindow(bui.MainWindow):
                 res_scale=0.5,
             )
 
-    def _play_sound(self, text: str, num: int):
+    def _play_sound(self, text: str, num: int) -> None:
         bui.getsound(text + str(random.randint(1, num))).play()
 
     @override
