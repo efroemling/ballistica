@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """Small handy bits of functionality."""
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ from typing import TYPE_CHECKING, cast, TypeVar, Generic, overload, ParamSpec
 
 if TYPE_CHECKING:
     import asyncio
-    from typing import Any, Callable, Literal
+    from typing import Any, Callable, Literal, Sequence
 
 T = TypeVar('T')
 ValT = TypeVar('ValT')
@@ -981,6 +982,21 @@ def extract_arg(
     del args[argindex : argindex + 2]
 
     return val
+
+
+def pairs_to_flat(pairs: Sequence[tuple[T, T]]) -> list[T]:
+    """Given a sequence of same-typed pairs, flattens to a list."""
+    return [item for pair in pairs for item in pair]
+
+
+def pairs_from_flat(flat: Sequence[T]) -> list[tuple[T, T]]:
+    """Given a flat even numbered sequence, returns pairs."""
+    if len(flat) % 2 != 0:
+        raise ValueError('Provided sequence has an odd number of elements.')
+    out: list[tuple[T, T]] = []
+    for i in range(0, len(flat) - 1, 2):
+        out.append((flat[i], flat[i + 1]))
+    return out
 
 
 def weighted_choice(*args: tuple[T, float]) -> T:

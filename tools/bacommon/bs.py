@@ -9,6 +9,7 @@ from enum import Enum
 from dataclasses import dataclass, field
 from typing import Annotated, override, assert_never
 
+from efro.util import pairs_to_flat
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 from efro.message import Message, Response
 
@@ -102,6 +103,8 @@ class DisplayItemTypeID(Enum):
     UNKNOWN = 'u'
     TICKETS = 't'
     TOKENS = 'k'
+    TEST = 's'
+    CHEST = 'c'
 
 
 class DisplayItem(IOMultiType[DisplayItemTypeID]):
@@ -123,19 +126,21 @@ class DisplayItem(IOMultiType[DisplayItemTypeID]):
     def get_type(cls, type_id: DisplayItemTypeID) -> type[DisplayItem]:
         """Return the subclass for each of our type-ids."""
         # pylint: disable=cyclic-import
-        out: type[DisplayItem]
 
         t = DisplayItemTypeID
         if type_id is t.UNKNOWN:
-            out = UnknownDisplayItem
-        elif type_id is t.TICKETS:
-            out = TicketsDisplayItem
-        elif type_id is t.TOKENS:
-            out = TokensDisplayItem
-        else:
-            # Important to make sure we provide all types.
-            assert_never(type_id)
-        return out
+            return UnknownDisplayItem
+        if type_id is t.TICKETS:
+            return TicketsDisplayItem
+        if type_id is t.TOKENS:
+            return TokensDisplayItem
+        if type_id is t.TEST:
+            return TestDisplayItem
+        if type_id is t.CHEST:
+            return ChestDisplayItem
+
+        # Important to make sure we provide all types.
+        assert_never(type_id)
 
     def get_description(self) -> tuple[str, list[tuple[str, str]]]:
         """Return a string description and subs for the item.
@@ -213,6 +218,38 @@ class TokensDisplayItem(DisplayItem):
 
 @ioprepped
 @dataclass
+class TestDisplayItem(DisplayItem):
+    """Fills usable space for a display-item - good for calibration."""
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> DisplayItemTypeID:
+        return DisplayItemTypeID.TEST
+
+    @override
+    def get_description(self) -> tuple[str, list[tuple[str, str]]]:
+        return 'Test Display Item Here', []
+
+
+@ioprepped
+@dataclass
+class ChestDisplayItem(DisplayItem):
+    """Display a chest."""
+
+    appearance: Annotated[ClassicChestAppearance, IOAttrs('a')]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> DisplayItemTypeID:
+        return DisplayItemTypeID.CHEST
+
+    @override
+    def get_description(self) -> tuple[str, list[tuple[str, str]]]:
+        return '${TYPE} Chest', [('${TYPE}', self.appearance.name.capitalize())]
+
+
+@ioprepped
+@dataclass
 class DisplayItemWrapper:
     """Wraps a DisplayItem and common info."""
 
@@ -224,9 +261,7 @@ class DisplayItemWrapper:
     def for_display_item(cls, item: DisplayItem) -> DisplayItemWrapper:
         """Convenience method to wrap a DisplayItem."""
         desc, subs = item.get_description()
-        # Flatten subs to single list.
-        flat_subs = [item for pair in subs for item in pair]
-        return DisplayItemWrapper(item, desc, flat_subs)
+        return DisplayItemWrapper(item, desc, pairs_to_flat(subs))
 
 
 @ioprepped
@@ -263,10 +298,10 @@ class ChestInfoResponse(Response):
             IOAttrs('a', enum_fallback=ClassicChestAppearance.UNKNOWN),
         ]
 
-        # How much to unlock *now*.
+        # How much it costs to unlock *now*.
         unlock_tokens: Annotated[int, IOAttrs('tk')]
 
-        # When unlocks on its own.
+        # When it unlocks on its own.
         unlock_time: Annotated[datetime.datetime, IOAttrs('t')]
 
         # Possible prizes we contain.
@@ -396,6 +431,9 @@ class BasicClientUIComponentTypeID(Enum):
 
     UNKNOWN = 'u'
     TEXT = 't'
+    LINK = 'l'
+    BS_CLASSIC_TOURNEY_RESULT = 'ct'
+    DISPLAY_ITEMS = 'di'
 
 
 class BasicClientUIComponent(IOMultiType[BasicClientUIComponentTypeID]):
@@ -422,8 +460,12 @@ class BasicClientUIComponent(IOMultiType[BasicClientUIComponentTypeID]):
             return BasicClientUIComponentUnknown
         if type_id is t.TEXT:
             return BasicClientUIComponentText
-        # if type_id is t.SCREEN_MESSAGE:
-        #     return BasicClientUIComponentScreenMessage
+        if type_id is t.LINK:
+            return BasicClientUIComponentLink
+        if type_id is t.BS_CLASSIC_TOURNEY_RESULT:
+            return BasicClientUIBsClassicTourneyResult
+        if type_id is t.DISPLAY_ITEMS:
+            return BasicClientUIDisplayItems
 
         # Important to make sure we provide all types.
         assert_never(type_id)
@@ -464,12 +506,7 @@ class BasicClientUIComponentText(BasicClientUIComponent):
     scale: Annotated[float, IOAttrs('sc', store_default=False)] = 1.0
     color: Annotated[
         tuple[float, float, float, float], IOAttrs('c', store_default=False)
-    ] = (
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-    )
+    ] = (1.0, 1.0, 1.0, 1.0)
     spacing_top: Annotated[float, IOAttrs('st', store_default=False)] = 0.0
     spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
 
@@ -477,6 +514,59 @@ class BasicClientUIComponentText(BasicClientUIComponent):
     @classmethod
     def get_type_id(cls) -> BasicClientUIComponentTypeID:
         return BasicClientUIComponentTypeID.TEXT
+
+
+@ioprepped
+@dataclass
+class BasicClientUIComponentLink(BasicClientUIComponent):
+    """Show a link in the inbox message."""
+
+    url: Annotated[str, IOAttrs('u')]
+    label: Annotated[str, IOAttrs('l')]
+    subs: Annotated[list[str], IOAttrs('s', store_default=False)] = field(
+        default_factory=list
+    )
+    spacing_top: Annotated[float, IOAttrs('st', store_default=False)] = 0.0
+    spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> BasicClientUIComponentTypeID:
+        return BasicClientUIComponentTypeID.LINK
+
+
+@ioprepped
+@dataclass
+class BasicClientUIBsClassicTourneyResult(BasicClientUIComponent):
+    """Show info about a classic tourney."""
+
+    tournament_id: Annotated[str, IOAttrs('t')]
+    game: Annotated[str, IOAttrs('g')]
+    players: Annotated[int, IOAttrs('p')]
+    rank: Annotated[int, IOAttrs('r')]
+    trophy: Annotated[str | None, IOAttrs('tr')]
+    prizes: Annotated[list[DisplayItemWrapper], IOAttrs('pr')]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> BasicClientUIComponentTypeID:
+        return BasicClientUIComponentTypeID.BS_CLASSIC_TOURNEY_RESULT
+
+
+@ioprepped
+@dataclass
+class BasicClientUIDisplayItems(BasicClientUIComponent):
+    """Show some display-items."""
+
+    items: Annotated[list[DisplayItemWrapper], IOAttrs('d')]
+    width: Annotated[float, IOAttrs('w')] = 100.0
+    spacing_top: Annotated[float, IOAttrs('st', store_default=False)] = 0.0
+    spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> BasicClientUIComponentTypeID:
+        return BasicClientUIComponentTypeID.DISPLAY_ITEMS
 
 
 @ioprepped
@@ -642,9 +732,6 @@ class ClientEffectScreenMessage(ClientEffect):
     """Display a screen-message."""
 
     message: Annotated[str, IOAttrs('m')]
-
-    # Note: Firestore can't store arrays of arrays so we flatten it to a
-    # single dimension.
     subs: Annotated[list[str], IOAttrs('s')]
     color: Annotated[tuple[float, float, float], IOAttrs('c')] = (1.0, 1.0, 1.0)
 

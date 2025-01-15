@@ -88,7 +88,7 @@ class AccountViewerWindow(PopupWindow):
             scale=0.6,
             text=bui.Lstr(resource='playerInfoText'),
             maxwidth=200,
-            color=(0.7, 0.7, 0.7, 0.7),
+            color=bui.app.ui_v1.title_color,
         )
 
         self._scrollwidget = bui.scrollwidget(
@@ -97,6 +97,7 @@ class AccountViewerWindow(PopupWindow):
             position=(30, 30),
             capture_arrows=True,
             simple_culling_v=10,
+            border_opacity=0.4,
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
 

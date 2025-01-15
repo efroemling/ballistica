@@ -274,6 +274,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             position=(140 + x_inset, v - self._scroll_height),
             size=(self._width - (180 + 2 * x_inset), self._scroll_height + 10),
             highlight=False,
+            border_opacity=0.4,
         )
         if self._back_button is not None:
             bui.widget(edit=self._back_button, right_widget=scrollwidget)

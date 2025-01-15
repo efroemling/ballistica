@@ -146,7 +146,8 @@ class TournamentEntryWindow(PopupWindow):
             scale=0.6,
             text=bui.Lstr(resource='tournamentEntryText'),
             maxwidth=180,
-            color=(1, 1, 1, 0.4),
+            # color=(1, 1, 1, 0.4),
+            color=bui.app.ui_v1.title_color,
         )
 
         btn = self._pay_with_tickets_button = bui.buttonwidget(

@@ -778,9 +778,10 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   if (draw_transparent && IsHierarchySelected()
       && g_base->ui->ShouldHighlightWidgets() && highlight_
       && border_opacity_ > 0.0f) {
-    float m = 0.8f
-              + std::abs(sinf(static_cast<float>(current_time_ms) * 0.006467f))
-                    * 0.2f * border_opacity_;
+    float m = (0.8f
+               + std::abs(sinf(static_cast<float>(current_time_ms) * 0.006467f))
+                     * 0.2f)
+              * border_opacity_;
 
     if (glow_dirty_) {
       float r2 = l + width();

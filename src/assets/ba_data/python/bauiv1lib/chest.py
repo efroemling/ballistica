@@ -9,6 +9,7 @@ import math
 import random
 from typing import override, TYPE_CHECKING
 
+from efro.util import strict_partial
 import bacommon.bs
 import bauiv1 as bui
 
@@ -29,8 +30,6 @@ class ChestWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # print('ChestWindow()')
-
         self._index = index
 
         assert bui.app.classic is not None
@@ -514,7 +513,6 @@ class ChestWindow(bui.MainWindow):
             )
 
         self._show_odds(initial_highlighted_row=-1)
-        # bui.textwidget(edit=self._infotext, text='')
 
     def _highlight_odds_row(self, row: int, extra: bool = False) -> None:
 
@@ -702,8 +700,6 @@ class ChestWindow(bui.MainWindow):
 
         # Convey that something is in progress.
         if self._open_now_button:
-            # bui.buttonwidget(edit=self._open_now_button,
-            # color=(0.4, 1.0, 0.4))
             bui.spinnerwidget(edit=self._open_now_spinner, visible=True)
             for twidget in self._open_now_texts:
                 bui.textwidget(edit=twidget, color=(1, 1, 1, 0.2))
@@ -788,7 +784,7 @@ class ChestWindow(bui.MainWindow):
         self._reset()
         msg = (
             'This slot can hold a treasure chest.\n\n'
-            'Earn chests by beating campaing levels,\n'
+            'Earn chests by playing campaign levels,\n'
             'placing in tournaments, and completing\n'
             'achievements.'
         )
@@ -799,11 +795,21 @@ class ChestWindow(bui.MainWindow):
     ) -> None:
         # pylint: disable=too-many-locals
 
+        from baclassic import show_display_item
+
         # No-op if our ui is dead.
         if not self._root_widget:
             return
 
         assert response.contents is not None
+
+        # Insert test items for testing.
+        if bool(False):
+            response.contents += [
+                bacommon.bs.DisplayItemWrapper.for_display_item(
+                    bacommon.bs.TestDisplayItem()
+                )
+            ]
 
         tincr = 0.4
         tendoffs = tincr * 4.0
@@ -861,7 +867,7 @@ class ChestWindow(bui.MainWindow):
                 ),
             )
 
-        xspacing = 150
+        xspacing = 100
         xoffs = -0.5 * (len(response.contents) - 1) * xspacing
         bui.apptimer(
             toffs - 0.2, lambda: bui.getsound('corkPop2').play(volume=4.0)
@@ -898,14 +904,25 @@ class ChestWindow(bui.MainWindow):
         toffsopen = toffs
         bui.apptimer(toffs, bui.WeakCall(self._show_chest_opening))
         toffs += tincr * 1.0
-        width = xspacing * 0.75
-        for obj in response.contents:
+        width = xspacing * 0.95
+
+        for item in response.contents:
             toffs += tincr
             bui.apptimer(
                 toffs - 0.1, lambda: bui.getsound('cashRegister').play()
             )
             bui.apptimer(
-                toffs, bui.WeakCall(self._show_chest_item, obj, xoffs, width)
+                toffs,
+                strict_partial(
+                    show_display_item,
+                    item,
+                    self._root_widget,
+                    pos=(
+                        self._width * 0.5 + xoffs,
+                        self._height - 250.0 + self._yoffs,
+                    ),
+                    width=width,
+                ),
             )
             xoffs += xspacing
         toffs += tincr
@@ -1001,61 +1018,6 @@ class ChestWindow(bui.MainWindow):
         self._show_odds(
             initial_highlighted_row=self._prizeindex,
             initial_highlighted_extra=True,
-        )
-
-    def _show_chest_item(
-        self,
-        itemwrapper: bacommon.bs.DisplayItemWrapper,
-        xoffs: float,
-        width: float,
-    ) -> None:
-        # No-op if our ui is dead.
-        if not self._root_widget:
-            return
-
-        img: str | None = None
-        if isinstance(itemwrapper.item, bacommon.bs.TicketsDisplayItem):
-            img = 'tickets'
-        elif isinstance(itemwrapper.item, bacommon.bs.TokensDisplayItem):
-            img = 'coin'
-
-        # Translate the wrapper description and apply any subs.
-        descfin = bui.Lstr(
-            translate=('serverResponses', itemwrapper.description)
-        ).evaluate()
-        subs = (
-            []
-            if itemwrapper.description_subs is None
-            else itemwrapper.description_subs
-        )
-        assert len(subs) % 2 == 0  # Should always be even.
-        for j in range(0, len(subs) - 1, 2):
-            descfin = descfin.replace(subs[j], subs[j + 1])
-
-        imgsize = 34
-        if img is not None:
-            bui.imagewidget(
-                parent=self._root_widget,
-                position=(
-                    self._width * 0.5 + xoffs - imgsize * 0.5,
-                    self._height - 252 + 14.0 + self._yoffs - imgsize * 0.5,
-                ),
-                size=(imgsize, imgsize),
-                texture=bui.gettexture(img),
-            )
-        bui.textwidget(
-            parent=self._root_widget,
-            position=(
-                self._width * 0.5 + xoffs,
-                self._height - 252 - 14.0 + self._yoffs,
-            ),
-            scale=0.65,
-            size=(0, 0),
-            text=f'+ {descfin}',
-            maxwidth=width,
-            color=(0.0, 1.0, 0.0),
-            h_align='center',
-            v_align='center',
         )
 
     def _show_done_button(self) -> None:

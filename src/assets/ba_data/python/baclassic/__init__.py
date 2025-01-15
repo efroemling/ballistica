@@ -27,6 +27,7 @@ from baclassic._chest import (
     CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT,
     CHEST_APPEARANCE_DISPLAY_INFOS,
 )
+from baclassic._displayitem import show_display_item
 
 __all__ = [
     'ChestAppearanceDisplayInfo',
@@ -36,6 +37,7 @@ __all__ = [
     'ClassicAppSubsystem',
     'Achievement',
     'AchievementSubsystem',
+    'show_display_item',
 ]
 
 # We want stuff here to show up as packagename.Foo instead of

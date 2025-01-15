@@ -535,7 +535,7 @@ static auto PyGetStringHeight(PyObject* self, PyObject* args, PyObject* keywds)
 #if BA_DEBUG_BUILD
   if (g_base->assets->CompileResourceString(s) != s) {
     BA_LOG_PYTHON_TRACE(
-        "resource-string passed to get_string_height; this should be avoided");
+        "Resource-string passed to get_string_height; this should be avoided.");
   }
 #endif
   assert(g_base->graphics);

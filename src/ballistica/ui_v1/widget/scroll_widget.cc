@@ -836,9 +836,10 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // If selected, do glow at depth 0.9 - 1.0.
   if (draw_transparent && IsHierarchySelected()
       && g_base->ui->ShouldHighlightWidgets() && highlight_) {
-    float m = 0.8f
-              + std::abs(sinf(static_cast<float>(current_time) * 0.006467f))
-                    * 0.2f * border_opacity_;
+    float m =
+        (0.8f
+         + std::abs(sinf(static_cast<float>(current_time) * 0.006467f)) * 0.2f)
+        * border_opacity_;
     if (glow_dirty_) {
       float r2 = l + width();
       float l2 = l;

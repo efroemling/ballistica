@@ -208,6 +208,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/_benchmark.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_chest.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_clienteffect.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_displayitem.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_input.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_music.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_net.py \
@@ -490,6 +491,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_benchmark.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_chest.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_clienteffect.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_displayitem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_input.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_music.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_net.cpython-312.opt-1.pyc \

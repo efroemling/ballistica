@@ -126,6 +126,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
             position=(x_inset + 61, v - scroll_height),
             size=(self._scroll_width, scroll_height),
             highlight=False,
+            border_opacity=0.4,
         )
         bui.widget(
             edit=self._scrollwidget,

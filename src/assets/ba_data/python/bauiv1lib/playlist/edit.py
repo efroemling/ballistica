@@ -232,6 +232,7 @@ class PlaylistEditWindow(bui.MainWindow):
             highlight=False,
             on_select_call=bui.Call(self._set_ui_selection, 'gameList'),
             size=(self._scroll_width, (scroll_height - 15)),
+            border_opacity=0.4,
         )
         bui.widget(
             edit=scrollwidget,

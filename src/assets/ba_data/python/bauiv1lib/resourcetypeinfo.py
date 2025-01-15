@@ -30,7 +30,7 @@ class ResourceTypeInfoWindow(PopupWindow):
         )
         self._transitioning_out = False
         self._width = 570
-        self._height = 350
+        self._height = 400
         bg_color = (0.5, 0.4, 0.6)
         super().__init__(
             size=(self._width, self._height),
@@ -56,6 +56,7 @@ class ResourceTypeInfoWindow(PopupWindow):
         yoffs = self._height - 145
 
         if resource_type == 'tickets':
+            yoffs -= 20
             rdesc = (
                 'Tickets can be used to unlock characters,\n'
                 'maps, minigames, and more in the store.\n'
@@ -70,8 +71,8 @@ class ResourceTypeInfoWindow(PopupWindow):
                 'and for other game and account features.\n'
                 '\n'
                 'You can win tokens in the game or buy them\n'
-                'in packs. Or buy a Gold Pass to get infinite\n'
-                'tokens forever and never hear of them again.'
+                'in packs. Or buy a Gold Pass for infinite\n'
+                'tokens and never hear about them again.'
             )
             texname = 'coin'
         elif resource_type == 'trophies':

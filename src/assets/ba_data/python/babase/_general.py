@@ -176,6 +176,7 @@ class _WeakCall:
                     'Warning: callable passed to babase.WeakCall() is not'
                     ' weak-referencable (%s); use functools.partial instead'
                     ' to avoid this warning.',
+                    args[0],
                     stack_info=True,
                 )
                 type(self)._did_invalid_call_warning = True

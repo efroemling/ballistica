@@ -93,7 +93,7 @@ class AllSettingsWindow(bui.MainWindow):
         all_buttons_width = 4.0 * bwidth + 3.0 * margin
 
         x = width * 0.5 - all_buttons_width * 0.5
-        y = height + yoffs - 320.0
+        y = height + yoffs - 335.0
 
         def _button(
             position: tuple[float, float],

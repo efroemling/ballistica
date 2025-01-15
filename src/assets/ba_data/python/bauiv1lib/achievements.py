@@ -20,7 +20,7 @@ class AchievementsWindow(bui.MainWindow):
         # pylint: disable=too-many-locals
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 600 if uiscale is bui.UIScale.SMALL else 450
+        self._width = 600 if uiscale is bui.UIScale.SMALL else 500
         self._height = (
             380
             if uiscale is bui.UIScale.SMALL
@@ -102,11 +102,11 @@ class AchievementsWindow(bui.MainWindow):
             parent=self._root_widget,
             size=(
                 self._width - 60,
-                self._height - (150 if uiscale is bui.UIScale.SMALL else 70),
+                self._height - (150 if uiscale is bui.UIScale.SMALL else 80),
             ),
             position=(
                 30,
-                (110 if uiscale is bui.UIScale.SMALL else 30) + yoffs,
+                (110 if uiscale is bui.UIScale.SMALL else 35) + yoffs,
             ),
             capture_arrows=True,
             simple_culling_v=10,

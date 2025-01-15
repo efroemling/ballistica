@@ -41,8 +41,8 @@ def is_browser_likely_available() -> bool:
 
     category: General Utility Functions
 
-    If this returns False you may want to avoid calling babase.show_url()
-    with any lengthy addresses. (ba.show_url() will display an address
+    If this returns False you may want to avoid calling babase.open_url()
+    with any lengthy addresses. (babase.open_url() will display an address
     as a string in a window if unable to bring up a browser, but that
     is only useful for simple URLs.)
     """

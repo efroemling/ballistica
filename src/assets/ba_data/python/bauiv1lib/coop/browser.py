@@ -275,7 +275,7 @@ class CoopBrowserWindow(bui.MainWindow):
             simple_culling_v=10.0,
             claims_left_right=True,
             selection_loops_to_parent=True,
-            border_opacity=0.3 if uiscale is bui.UIScale.SMALL else 1.0,
+            border_opacity=0.4,
         )
 
         if uiscale is bui.UIScale.SMALL:

@@ -627,6 +627,10 @@ class TournamentButton:
             max_players = bui.app.classic.accounts.tournament_info[
                 self.tournament_id
             ]['maxPlayers']
+
+            print('GOT GAME', game)
+            print('GOT ID', self.tournament_id)
+            print('GOT PLAYERS', max_players)
             txt = bui.Lstr(
                 value='${A} ${B}',
                 subs=[

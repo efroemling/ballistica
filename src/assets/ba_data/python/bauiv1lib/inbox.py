@@ -1,16 +1,22 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """Provides a popup window to view achievements."""
 
 from __future__ import annotations
 
 import weakref
+from functools import partial
 from dataclasses import dataclass
-from typing import override, assert_never
+from typing import override, assert_never, TYPE_CHECKING
 
+from efro.util import strict_partial, pairs_from_flat
 from efro.error import CommunicationError
 import bacommon.bs
 import bauiv1 as bui
+
+if TYPE_CHECKING:
+    from typing import Callable
 
 
 class _Section:
@@ -18,8 +24,12 @@ class _Section:
         """Return section height."""
         raise NotImplementedError()
 
-    def draw(self, subcontainer: bui.Widget, y: float) -> None:
-        """Draw the section."""
+    def get_button_row(self) -> list[bui.Widget]:
+        """Return rows of selectable controls."""
+        return []
+
+    def emit(self, subcontainer: bui.Widget, y: float) -> None:
+        """Emit the section."""
 
 
 class _TextSection(_Section):
@@ -27,9 +37,8 @@ class _TextSection(_Section):
     def __init__(
         self,
         sub_width: float,
-        text: str,
+        text: bui.Lstr | str,
         *,
-        subs: list[str],
         spacing_top: float = 0.0,
         spacing_bottom: float = 0.0,
         scale: float = 0.6,
@@ -40,23 +49,22 @@ class _TextSection(_Section):
         self.spacing_bottom = spacing_bottom
         self.color = color
 
-        self.textfin = bui.Lstr(translate=('serverResponses', text)).evaluate()
-        assert len(subs) % 2 == 0  # Should always be even.
-        for j in range(0, len(subs) - 1, 2):
-            self.textfin = self.textfin.replace(subs[j], subs[j + 1])
+        # We need to bake this down since we plug its final size into
+        # our math.
+        self.textbaked = text.evaluate() if isinstance(text, bui.Lstr) else text
 
         # Calc scale to fit width and then see what height we need at
         # that scale.
         t_width = max(
             10.0,
-            bui.get_string_width(self.textfin, suppress_warning=True) * scale,
+            bui.get_string_width(self.textbaked, suppress_warning=True) * scale,
         )
         self.text_scale = scale * min(1.0, (sub_width * 0.9) / t_width)
 
         self.text_height = (
             0.0
-            if not self.textfin
-            else bui.get_string_height(self.textfin, suppress_warning=True)
+            if not self.textbaked
+            else bui.get_string_height(self.textbaked, suppress_warning=True)
         ) * self.text_scale
 
         self.full_height = self.text_height + spacing_top + spacing_bottom
@@ -66,23 +74,135 @@ class _TextSection(_Section):
         return self.full_height
 
     @override
-    def draw(self, subcontainer: bui.Widget, y: float) -> None:
+    def emit(self, subcontainer: bui.Widget, y: float) -> None:
         bui.textwidget(
             parent=subcontainer,
             position=(
                 self.sub_width * 0.5,
                 y - self.spacing_top - self.text_height * 0.5,
-                # y - self.height * 0.5 - 23.0,
             ),
             color=self.color,
             scale=self.text_scale,
             flatness=1.0,
             shadow=0.0,
-            text=self.textfin,
+            text=self.textbaked,
             size=(0, 0),
             h_align='center',
             v_align='center',
         )
+
+
+class _ButtonSection(_Section):
+
+    def __init__(
+        self,
+        sub_width: float,
+        label: bui.Lstr | str,
+        *,
+        color: tuple[float, float, float],
+        label_color: tuple[float, float, float],
+        call: Callable[[_ButtonSection], None],
+        spacing_top: float = 0.0,
+        spacing_bottom: float = 0.0,
+    ) -> None:
+        self.sub_width = sub_width
+        self.spacing_top = spacing_top
+        self.spacing_bottom = spacing_bottom
+        self.color = color
+        self.label_color = label_color
+        self.button: bui.Widget | None = None
+        self.call = call
+        self.labelfin = label
+        self.button_width = 130
+        self.button_height = 30
+        self.full_height = self.button_height + spacing_top + spacing_bottom
+
+    @override
+    def get_height(self) -> float:
+        return self.full_height
+
+    @staticmethod
+    def weak_call(section: weakref.ref[_ButtonSection]) -> None:
+        """Call button section call if section still exists."""
+        section_strong = section()
+        if section_strong is None:
+            return
+
+        section_strong.call(section_strong)
+
+    @override
+    def emit(self, subcontainer: bui.Widget, y: float) -> None:
+        self.button = bui.buttonwidget(
+            parent=subcontainer,
+            position=(
+                self.sub_width * 0.5 - self.button_width * 0.5,
+                y - self.spacing_top - self.button_height,
+            ),
+            autoselect=True,
+            label=self.labelfin,
+            textcolor=self.label_color,
+            text_scale=0.55,
+            size=(self.button_width, self.button_height),
+            color=self.color,
+            on_activate_call=strict_partial(self.weak_call, weakref.ref(self)),
+        )
+        bui.widget(edit=self.button, depth_range=(0.1, 1.0))
+
+    @override
+    def get_button_row(self) -> list[bui.Widget]:
+        """Return rows of selectable controls."""
+        assert self.button is not None
+        return [self.button]
+
+
+class _DisplayItemsSection(_Section):
+
+    def __init__(
+        self,
+        sub_width: float,
+        items: list[bacommon.bs.DisplayItemWrapper],
+        width: float = 100.0,
+        *,
+        spacing_top: float = 0.0,
+        spacing_bottom: float = 0.0,
+    ) -> None:
+        self.display_item_width = width
+
+        # FIXME - ask for this somewhere in case it changes.
+        self.display_item_height = self.display_item_width * 0.666
+        self.items = items
+        self.sub_width = sub_width
+        self.spacing_top = spacing_top
+        self.spacing_bottom = spacing_bottom
+        self.full_height = (
+            self.display_item_height + spacing_top + spacing_bottom
+        )
+
+    @override
+    def get_height(self) -> float:
+        return self.full_height
+
+    @override
+    def emit(self, subcontainer: bui.Widget, y: float) -> None:
+        # pylint: disable=cyclic-import
+        from baclassic import show_display_item
+
+        xspacing = 1.1 * self.display_item_width
+        total_width = (
+            0 if not self.items else ((len(self.items) - 1) * xspacing)
+        )
+        x = -0.5 * total_width
+        for item in self.items:
+            show_display_item(
+                item,
+                subcontainer,
+                pos=(
+                    self.sub_width * 0.5 + x,
+                    y - self.spacing_top - self.display_item_height * 0.5,
+                ),
+                width=self.display_item_width,
+            )
+            x += xspacing
 
 
 @dataclass
@@ -99,7 +219,6 @@ class _EntryDisplay:
     button_spinner_positive: bui.Widget | None = None
     button_negative: bui.Widget | None = None
     button_spinner_negative: bui.Widget | None = None
-    # message_text: bui.Widget | None = None
     processing_complete: bool = False
 
 
@@ -498,7 +617,7 @@ class InboxWindow(bui.MainWindow):
             button_label_negative: bacommon.bs.BasicClientUI.ButtonLabel
 
             sections: list[_Section] = []
-            total_height = 90.0
+            total_height = 80.0
 
             # Display only entries where we recognize all style/label
             # values and ui component types.
@@ -514,14 +633,18 @@ class InboxWindow(bui.MainWindow):
                 idcls = bacommon.bs.BasicClientUIComponentTypeID
                 for component in wrapper.ui.components:
                     ctypeid = component.get_type_id()
+                    section: _Section
+
                     if ctypeid is idcls.TEXT:
                         assert isinstance(
                             component, bacommon.bs.BasicClientUIComponentText
                         )
                         section = _TextSection(
                             sub_width=sub_width,
-                            text=component.text,
-                            subs=component.subs,
+                            text=bui.Lstr(
+                                translate=('serverResponses', component.text),
+                                subs=pairs_from_flat(component.subs),
+                            ),
                             color=component.color,
                             scale=component.scale,
                             spacing_top=component.spacing_top,
@@ -530,8 +653,209 @@ class InboxWindow(bui.MainWindow):
                         total_height += section.get_height()
                         sections.append(section)
 
+                    elif ctypeid is idcls.LINK:
+                        assert isinstance(
+                            component, bacommon.bs.BasicClientUIComponentLink
+                        )
+
+                        def _do_open_url(url: str, sec: _ButtonSection) -> None:
+                            del sec  # Unused.
+                            bui.open_url(url)
+
+                        section = _ButtonSection(
+                            sub_width=sub_width,
+                            label=bui.Lstr(
+                                translate=('serverResponses', component.label),
+                                subs=pairs_from_flat(component.subs),
+                            ),
+                            color=color,
+                            call=partial(_do_open_url, component.url),
+                            label_color=(0.5, 0.7, 0.6),
+                            spacing_top=component.spacing_top,
+                            spacing_bottom=component.spacing_bottom,
+                        )
+                        total_height += section.get_height()
+                        sections.append(section)
+
+                    elif ctypeid is idcls.DISPLAY_ITEMS:
+                        assert isinstance(
+                            component,
+                            bacommon.bs.BasicClientUIDisplayItems,
+                        )
+                        section = _DisplayItemsSection(
+                            sub_width=sub_width,
+                            items=component.items,
+                            width=component.width,
+                            spacing_top=component.spacing_top,
+                            spacing_bottom=component.spacing_bottom,
+                        )
+                        total_height += section.get_height()
+                        sections.append(section)
+
+                    elif ctypeid is idcls.BS_CLASSIC_TOURNEY_RESULT:
+                        from bascenev1 import get_trophy_string
+
+                        assert isinstance(
+                            component,
+                            bacommon.bs.BasicClientUIBsClassicTourneyResult,
+                        )
+                        campaignname, levelname = component.game.split(':')
+                        assert bui.app.classic is not None
+                        campaign = bui.app.classic.getcampaign(campaignname)
+
+                        tourney_name = bui.Lstr(
+                            value='${A} ${B}',
+                            subs=[
+                                (
+                                    '${A}',
+                                    campaign.getlevel(levelname).displayname,
+                                ),
+                                (
+                                    '${B}',
+                                    bui.Lstr(
+                                        resource='playerCountAbbreviatedText',
+                                        subs=[
+                                            ('${COUNT}', str(component.players))
+                                        ],
+                                    ),
+                                ),
+                            ],
+                        )
+
+                        if component.trophy is not None:
+                            trophy_prefix = (
+                                get_trophy_string(component.trophy) + ' '
+                            )
+                        else:
+                            trophy_prefix = ''
+
+                        section = _TextSection(
+                            sub_width=sub_width,
+                            # text=bui.Lstr(
+                            #     translate=(
+                            #         'serverResponses',
+                            #         'You placed #${RANK}' ' in a tournament!',
+                            #         # 'You placed in a tournament!',
+                            #     ),
+                            #     subs=[('${RANK}', str(component.rank))],
+                            # ),
+                            text=bui.Lstr(
+                                value='${P}${V}',
+                                subs=[
+                                    ('${P}', trophy_prefix),
+                                    (
+                                        '${V}',
+                                        bui.Lstr(
+                                            translate=(
+                                                'serverResponses',
+                                                'You placed #${RANK}'
+                                                ' in a tournament!',
+                                                # 'You placed in a tournament!',
+                                            ),
+                                            subs=[
+                                                ('${RANK}', str(component.rank))
+                                            ],
+                                        ),
+                                    ),
+                                ],
+                            ),
+                            color=(1.0, 1.0, 1.0, 1.0),
+                            scale=0.6,
+                        )
+                        total_height += section.get_height()
+                        sections.append(section)
+
+                        section = _TextSection(
+                            sub_width=sub_width,
+                            # text=bui.Lstr(
+                            #     value='${P}${V}',
+                            #     subs=[
+                            #         ('${P}', trophy_prefix),
+                            #         ('${V}', tourney_name),
+                            #     ],
+                            # ),
+                            text=tourney_name,
+                            spacing_top=5,
+                            color=(0.7, 0.7, 1.0, 1.0),
+                            scale=0.7,
+                        )
+                        total_height += section.get_height()
+                        sections.append(section)
+
+                        # rank_trophy_str = f'#{component.rank}'
+                        # if component.trophy is not None:
+                        #     rank_trophy_str = get_trophy_string(
+                        #         component.trophy
+                        #     )
+                        #     section = _TextSection(
+                        #         sub_width=sub_width,
+                        #         text=rank_trophy_str,
+                        #         spacing_top=10,
+                        #         scale=1.0,
+                        #     )
+                        #     total_height += section.get_height()
+                        #     sections.append(section)
+
+                        def _do_tourney_scores(
+                            tournament_id: str, sec: _ButtonSection
+                        ) -> None:
+                            from bauiv1lib.tournamentscores import (
+                                TournamentScoresWindow,
+                            )
+
+                            assert sec.button is not None
+                            _ = (
+                                TournamentScoresWindow(
+                                    tournament_id=tournament_id,
+                                    position=(
+                                        sec.button
+                                    ).get_screen_space_center(),
+                                ),
+                            )
+
+                        section = _ButtonSection(
+                            sub_width=sub_width,
+                            label=bui.Lstr(
+                                translate=('serverResponses', 'Final Standings')
+                            ),
+                            color=color,
+                            call=partial(
+                                _do_tourney_scores, component.tournament_id
+                            ),
+                            label_color=(0.5, 0.7, 0.6),
+                            spacing_top=7.0,
+                        )
+                        total_height += section.get_height()
+                        sections.append(section)
+
+                        section = _TextSection(
+                            sub_width=sub_width,
+                            text=bui.Lstr(
+                                translate=(
+                                    'serverResponses',
+                                    'Your prize:',
+                                )
+                            ),
+                            spacing_top=6,
+                            color=(1.0, 1.0, 1.0, 0.4),
+                            scale=0.35,
+                        )
+                        total_height += section.get_height()
+                        sections.append(section)
+
+                        section = _DisplayItemsSection(
+                            sub_width=sub_width,
+                            items=component.prizes,
+                            width=70.0,
+                            spacing_top=0.0,
+                            spacing_bottom=0.0,
+                        )
+                        total_height += section.get_height()
+                        sections.append(section)
+
                     elif ctypeid is idcls.UNKNOWN:
                         raise RuntimeError('Should not get here.')
+
                     else:
                         # Make sure we handle all types.
                         assert_never(ctypeid)
@@ -550,8 +874,9 @@ class InboxWindow(bui.MainWindow):
 
                 section = _TextSection(
                     sub_width=sub_width,
-                    text='You must update the app to view this.',
-                    subs=[],
+                    text=bui.Lstr(
+                        value='You must update the app to view this.'
+                    ),
                 )
                 total_height += section.get_height()
                 sections.append(section)
@@ -611,7 +936,11 @@ class InboxWindow(bui.MainWindow):
 
             # Section contents.
             for sec in entry_display.sections:
-                sec.draw(subcontainer, ysection)
+                sec.emit(subcontainer, ysection)
+                # Wire up any widgets created by this section.
+                sec_button_row = sec.get_button_row()
+                if sec_button_row:
+                    buttonrows.append(sec_button_row)
                 ysection -= sec.get_height()
 
             buttonrow: list[bui.Widget] = []
@@ -633,6 +962,7 @@ class InboxWindow(bui.MainWindow):
             entry_display.button_positive = btn = bui.buttonwidget(
                 parent=subcontainer,
                 position=bpos,
+                autoselect=True,
                 size=(bwidth, bheight),
                 label=bui.app.classic.basic_client_ui_button_label_str(
                     entry_display.button_label_positive
@@ -663,6 +993,7 @@ class InboxWindow(bui.MainWindow):
                 entry_display.button_negative = btn2 = bui.buttonwidget(
                     parent=subcontainer,
                     position=bpos,
+                    autoselect=True,
                     size=(bwidth, bheight),
                     label=bui.app.classic.basic_client_ui_button_label_str(
                         entry_display.button_label_negative
@@ -712,11 +1043,16 @@ class InboxWindow(bui.MainWindow):
                 bui.widget(
                     edit=button,
                     up_widget=above_widget,
-                    down_widget=(
-                        button if below_widget is None else below_widget
-                    ),
+                    down_widget=below_widget,
+                    # down_widget=(
+                    #     button if below_widget is None else below_widget
+                    # ),
                     right_widget=buttons[max(j - 1, 0)],
                     left_widget=buttons[min(j + 1, len(buttons) - 1)],
                 )
 
             above_widget = buttons[0]
+
+
+def _get_bs_classic_tourney_results_sections() -> list[_Section]:
+    return []

@@ -142,9 +142,9 @@ class PlaylistBrowserWindow(bui.MainWindow):
             size=(self._scroll_width, self._scroll_height),
             position=(
                 (self._width - self._scroll_width) * 0.5,
-                65 + scroll_offs,
+                65 + scroll_offs + (0 if uiscale is bui.UIScale.SMALL else -5),
             ),
-            border_opacity=0.4 if uiscale is bui.UIScale.SMALL else 1.0,
+            border_opacity=0.4,
         )
         bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)
         self._subcontainer: bui.Widget | None = None
