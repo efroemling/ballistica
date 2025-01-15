@@ -824,34 +824,36 @@ class InboxWindow(bui.MainWindow):
                             ),
                             label_color=(0.5, 0.7, 0.6),
                             spacing_top=7.0,
+                            spacing_bottom=0.0 if component.prizes else 7.0,
                         )
                         total_height += section.get_height()
                         sections.append(section)
 
-                        section = _TextSection(
-                            sub_width=sub_width,
-                            text=bui.Lstr(
-                                translate=(
-                                    'serverResponses',
-                                    'Your prize:',
-                                )
-                            ),
-                            spacing_top=6,
-                            color=(1.0, 1.0, 1.0, 0.4),
-                            scale=0.35,
-                        )
-                        total_height += section.get_height()
-                        sections.append(section)
+                        if component.prizes:
+                            section = _TextSection(
+                                sub_width=sub_width,
+                                text=bui.Lstr(
+                                    translate=(
+                                        'serverResponses',
+                                        'Your prize:',
+                                    )
+                                ),
+                                spacing_top=6,
+                                color=(1.0, 1.0, 1.0, 0.4),
+                                scale=0.35,
+                            )
+                            total_height += section.get_height()
+                            sections.append(section)
 
-                        section = _DisplayItemsSection(
-                            sub_width=sub_width,
-                            items=component.prizes,
-                            width=70.0,
-                            spacing_top=0.0,
-                            spacing_bottom=0.0,
-                        )
-                        total_height += section.get_height()
-                        sections.append(section)
+                            section = _DisplayItemsSection(
+                                sub_width=sub_width,
+                                items=component.prizes,
+                                width=70.0,
+                                spacing_top=0.0,
+                                spacing_bottom=0.0,
+                            )
+                            total_height += section.get_height()
+                            sections.append(section)
 
                     elif ctypeid is idcls.UNKNOWN:
                         raise RuntimeError('Should not get here.')
