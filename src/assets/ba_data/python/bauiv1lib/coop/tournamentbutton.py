@@ -628,9 +628,6 @@ class TournamentButton:
                 self.tournament_id
             ]['maxPlayers']
 
-            print('GOT GAME', game)
-            print('GOT ID', self.tournament_id)
-            print('GOT PLAYERS', max_players)
             txt = bui.Lstr(
                 value='${A} ${B}',
                 subs=[
@@ -705,8 +702,8 @@ class TournamentButton:
         ]['freeTriesRemaining']
         assert isinstance(free_tries_remaining, int | None)
 
-        # Now, if this fee allows ads and we support video ads, show
-        # the 'or ad' version.
+        # Now, if this fee allows ads and we support video ads, show the
+        # 'or ad' version.
         if USE_ENTRY_FEES:
             if allow_ads and plus.has_video_ads():
                 ads_enabled = plus.have_incentivized_ad()

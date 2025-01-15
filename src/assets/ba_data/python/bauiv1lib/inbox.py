@@ -84,7 +84,7 @@ class _TextSection(_Section):
             color=self.color,
             scale=self.text_scale,
             flatness=1.0,
-            shadow=0.0,
+            shadow=1.0,
             text=self.textbaked,
             size=(0, 0),
             h_align='center',
