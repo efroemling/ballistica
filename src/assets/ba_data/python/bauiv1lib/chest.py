@@ -329,23 +329,26 @@ class ChestWindow(bui.MainWindow):
             )
 
         # Time string.
-        self._time_string_text = bui.textwidget(
-            parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 85 + self._yoffs),
-            size=(0, 0),
-            text='',
-            maxwidth=700,
-            scale=0.6,
-            color=(0.6, 1.0, 0.6),
-            h_align='center',
-            v_align='center',
-        )
-        self._update_time_display(chest.unlock_time)
-        self._time_string_timer = bui.AppTimer(
-            1.0,
-            repeat=True,
-            call=bui.WeakCall(self._update_time_display, chest.unlock_time),
-        )
+        if chest.unlock_tokens != 0:
+            self._time_string_text = bui.textwidget(
+                parent=self._root_widget,
+                position=(self._width * 0.5, self._height - 85 + self._yoffs),
+                size=(0, 0),
+                text='',
+                maxwidth=700,
+                scale=0.6,
+                color=(0.6, 1.0, 0.6),
+                h_align='center',
+                v_align='center',
+            )
+            self._update_time_display(chest.unlock_time)
+            self._time_string_timer = bui.AppTimer(
+                1.0,
+                repeat=True,
+                call=bui.WeakCall(
+                    self._update_time_display, chest.unlock_time
+                ),
+            )
 
         # Allow watching an ad IF the server tells us we can AND we have
         # an ad ready to show.
