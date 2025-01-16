@@ -87,3 +87,17 @@ PlayStation / My toaster??**
   Downloads](https://ballistica.net/downloads) page for early test builds on
   some platforms.
 
+### Cloning And Contributing
+
+This repository can be cloned and accepts issues and pull requests from the
+following sources
+
+* **GitHub**
+  * Link: https://github.com/efroemling/ballistica
+  * Cloning via [git](https://git-scm.com):
+  `git clone https://github.com/efroemling/ballistica.git`
+
+* **Codeberg**:
+  * Link: https://codeberg.org/3ra/ballistica
+  * Cloning via [git](https://git-scm.com):
+  `git clone https://codeberg.org/3ra/ballistica.git`
