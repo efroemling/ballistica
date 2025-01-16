@@ -343,9 +343,9 @@ class Flag(bs.Actor):
                 self.node.delete()
                 if not msg.immediate:
                     self.activity.handlemessage(
-                        FlagDiedMessage(self, (
-                            msg.how is bs.DeathType.LEFT_GAME
-                        ))
+                        FlagDiedMessage(
+                            self, (msg.how is bs.DeathType.LEFT_GAME)
+                        )
                     )
         elif isinstance(msg, bs.HitMessage):
             assert self.node

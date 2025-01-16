@@ -126,7 +126,7 @@ class ChestWindow(bui.MainWindow):
             size=(0, 0),
             text='',
             maxwidth=700,
-            scale=0.7,
+            scale=0.8,
             color=(0.6, 0.5, 0.6),
             h_align='center',
             v_align='center',
@@ -203,7 +203,9 @@ class ChestWindow(bui.MainWindow):
 
         if isinstance(response, Exception):
             self._error(
-                bui.Lstr(resource='internal.unavailableNoConnectionText')
+                # bui.Lstr(resource='internal.unavailableNoConnectionText')
+                'Unable to complete this right now.\nPlease try again.',
+                minor=True,
             )
             return
 
@@ -223,7 +225,9 @@ class ChestWindow(bui.MainWindow):
         # Communication/local error:
         if isinstance(response, Exception):
             self._error(
-                bui.Lstr(resource='internal.unavailableNoConnectionText')
+                # bui.Lstr(resource='internal.unavailableNoConnectionText')
+                'Unable to complete this right now.\nPlease try again.',
+                minor=True,
             )
             return
 
@@ -771,10 +775,14 @@ class ChestWindow(bui.MainWindow):
                 widget.delete()
         bui.textwidget(edit=self._infotext, text='', color=(1, 1, 1))
 
-    def _error(self, msg: str | bui.Lstr) -> None:
+    def _error(self, msg: str | bui.Lstr, minor: bool = False) -> None:
         """Put ourself in an error state with a visible error message."""
         self._reset()
-        bui.textwidget(edit=self._infotext, text=msg, color=(1, 0, 0))
+        bui.textwidget(
+            edit=self._infotext,
+            text=msg,
+            color=(1, 0.5, 0.5) if minor else (1, 0, 0),
+        )
 
     def _show_about_chest_slots(self) -> None:
         # No-op if our ui is dead.
