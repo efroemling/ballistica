@@ -345,9 +345,7 @@ class ChestWindow(bui.MainWindow):
             self._time_string_timer = bui.AppTimer(
                 1.0,
                 repeat=True,
-                call=bui.WeakCall(
-                    self._update_time_display, chest.unlock_time
-                ),
+                call=bui.WeakCall(self._update_time_display, chest.unlock_time),
             )
 
         # Allow watching an ad IF the server tells us we can AND we have
