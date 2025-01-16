@@ -4,9 +4,6 @@
 ### Eric Froemling
 - Original BombSquad/Ballistica author and BDFL (benevolent dictator for life).
 
-### MatiasMGz
-- Bugfixes.
-
 ### Dmitry450
 - Modder
 - Fixed some game modes
@@ -47,6 +44,9 @@
 - Community Suggestions Implementer
 - QoL and Bug Fixer
 - Modder
+
+### MatiasMGz
+- Bugfixes everywhere!
 
 ### VinniTR
 - Fixes
