@@ -26,7 +26,7 @@ class ResourceTypeInfoWindow(PopupWindow):
         scale = (
             2.0
             if uiscale is bui.UIScale.SMALL
-            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
+            else 1.3 if uiscale is bui.UIScale.MEDIUM else 0.7
         )
         self._transitioning_out = False
         self._width = 570

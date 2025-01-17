@@ -153,70 +153,6 @@ class CoopBrowserWindow(bui.MainWindow):
                 edit=self._root_widget, cancel_button=self._back_button
             )
 
-        # self._league_rank_button: LeagueRankButton | None
-        # self._store_button: StoreButton | None
-        # self._store_button_widget: bui.Widget | None
-        # self._league_rank_button_widget: bui.Widget | None
-
-        # if not app.ui_v1.use_toolbars:
-        #     prb = self._league_rank_button = LeagueRankButton(
-        #         parent=self._root_widget,
-        #         position=(
-        #             self._width - (282 + x_inset),
-        #             self._height
-        #             - 85
-        #             - (4 if uiscale is bui.UIScale.SMALL else 0),
-        #         ),
-        #         size=(100, 60),
-        #         color=(0.4, 0.4, 0.9),
-        #         textcolor=(0.9, 0.9, 2.0),
-        #         scale=1.05,
-        #         on_activate_call=bui.WeakCall(
-        # self._switch_to_league_rankings),
-        #     )
-        #     self._league_rank_button_widget = prb.get_button()
-
-        #     sbtn = self._store_button = StoreButton(
-        #         parent=self._root_widget,
-        #         position=(
-        #             self._width - (170 + x_inset),
-        #             self._height
-        #             - 85
-        #             - (4 if uiscale is bui.UIScale.SMALL else 0),
-        #         ),
-        #         size=(100, 60),
-        #         color=(0.6, 0.4, 0.7),
-        #         show_tickets=True,
-        #         button_type='square',
-        #         sale_scale=0.85,
-        #         textcolor=(0.9, 0.7, 1.0),
-        #         scale=1.05,
-        #         on_activate_call=bui.WeakCall(self._switch_to_score, None),
-        #     )
-        #     self._store_button_widget = sbtn.get_button()
-        #     assert self._back_button is not None
-        #     bui.widget(
-        #         edit=self._back_button,
-        #         right_widget=self._league_rank_button_widget,
-        #     )
-        #     bui.widget(
-        #         edit=self._league_rank_button_widget,
-        #         left_widget=self._back_button,
-        #     )
-        # else:
-        # self._league_rank_button = None
-        # self._store_button = None
-        # self._store_button_widget = None
-        # self._league_rank_button_widget = None
-
-        # Move our corner buttons dynamically to keep them out of the way of
-        # the party icon :-(
-        # self._update_corner_button_positions()
-        # self._update_corner_button_positions_timer = bui.AppTimer(
-        #     1.0, bui.WeakCall(
-        # self._update_corner_button_positions), repeat=True
-        # )
-
         self._last_tournament_query_time: float | None = None
         self._last_tournament_query_response_time: float | None = None
         self._doing_tournament_query = False
@@ -1076,24 +1012,21 @@ class CoopBrowserWindow(bui.MainWindow):
             )
             return
 
-        # Infinite onslaught/runaround require pro; bring up a store link
-        # if need be.
+        required_purchase: str | None
+
+        # Infinite onslaught requires pro or the newer standalone
+        # upgrade.
         if (
-            game
-            in (
-                'Challenges:Infinite Runaround',
-                'Challenges:Infinite Onslaught',
-            )
+            game in ['Challenges:Infinite Runaround']
             and not bui.app.classic.accounts.have_pro()
         ):
-            if plus.get_v1_account_state() != 'signed_in':
-                show_sign_in_prompt()
-            else:
-                PurchaseWindow(items=['pro'])
-            return
-
-        required_purchase: str | None
-        if game in ['Challenges:Meteor Shower']:
+            required_purchase = 'upgrades.infinite_runaround'
+        elif (
+            game in ['Challenges:Infinite Onslaught']
+            and not bui.app.classic.accounts.have_pro()
+        ):
+            required_purchase = 'upgrades.infinite_onslaught'
+        elif game in ['Challenges:Meteor Shower']:
             required_purchase = 'games.meteor_shower'
         elif game in [
             'Challenges:Target Practice',

@@ -234,12 +234,22 @@ class GameButton:
         assert bui.app.classic is not None
         if (
             (
-                game
-                in (
-                    'Challenges:Infinite Runaround',
-                    'Challenges:Infinite Onslaught',
+                game in ('Challenges:Infinite Runaround',)
+                and not (
+                    bui.app.classic.accounts.have_pro()
+                    or plus.get_v1_account_product_purchased(
+                        'upgrades.infinite_runaround'
+                    )
                 )
-                and not bui.app.classic.accounts.have_pro()
+            )
+            or (
+                game in ('Challenges:Infinite Onslaught',)
+                and not (
+                    bui.app.classic.accounts.have_pro()
+                    or plus.get_v1_account_product_purchased(
+                        'upgrades.infinite_onslaught'
+                    )
+                )
             )
             or (
                 game in ('Challenges:Meteor Shower',)

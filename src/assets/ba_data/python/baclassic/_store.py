@@ -26,6 +26,7 @@ class StoreSubsystem:
     def get_store_item_name_translated(self, item_name: str) -> babase.Lstr:
         """Return a babase.Lstr for a store item name."""
         # pylint: disable=cyclic-import
+        # pylint: disable=too-many-return-statements
         item_info = self.get_store_item(item_name)
         if item_name.startswith('characters.'):
             return babase.Lstr(
@@ -46,6 +47,14 @@ class StoreSubsystem:
             return gametype.get_display_string()
         if item_name.startswith('icons.'):
             return babase.Lstr(resource='editProfileWindow.iconText')
+        if item_name == 'upgrades.infinite_runaround':
+            return babase.Lstr(
+                translate=('coopLevelNames', 'Infinite Runaround')
+            )
+        if item_name == 'upgrades.infinite_onslaught':
+            return babase.Lstr(
+                translate=('coopLevelNames', 'Infinite Onslaught')
+            )
         raise ValueError('unrecognized item: ' + item_name)
 
     def get_store_item_display_size(
@@ -89,6 +98,8 @@ class StoreSubsystem:
             # IMPORTANT - need to keep this synced with the master server.
             # (doing so manually for now)
             babase.app.classic.store_items = {
+                'upgrades.infinite_runaround': {},
+                'upgrades.infinite_onslaught': {},
                 'characters.kronk': {'character': 'Kronk'},
                 'characters.zoe': {'character': 'Zoe'},
                 'characters.jackmorgan': {'character': 'Jack Morgan'},
@@ -116,6 +127,10 @@ class StoreSubsystem:
                     'previewTex': 'courtyardPreview',
                 },
                 'games.meteor_shower': {
+                    'gametype': meteorshower.MeteorShowerGame,
+                    'previewTex': 'rampagePreview',
+                },
+                'games.infinite_onslaught': {
                     'gametype': meteorshower.MeteorShowerGame,
                     'previewTex': 'rampagePreview',
                 },
@@ -368,6 +383,8 @@ class StoreSubsystem:
                     'games.ninja_fight',
                     'games.meteor_shower',
                     'games.target_practice',
+                    'upgrades.infinite_onslaught',
+                    'upgrades.infinite_runaround',
                 ]
             }
         ]
@@ -567,6 +584,10 @@ class StoreSubsystem:
             if babase.app.env.gui:
                 for section in self.get_store_layout()['minigames']:
                     for mname in section['items']:
+                        if mname.startswith('upgrades.'):
+                            # Ignore things like infinite onslaught which
+                            # aren't actually game types.
+                            continue
                         if (
                             plus is None
                             or not plus.get_v1_account_product_purchased(mname)
