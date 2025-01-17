@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import override
 
+import random
+
 import bauiv1 as bui
 
 
@@ -393,12 +395,16 @@ class HelpWindow(bui.MainWindow):
         # icon_size_2 = 30
         hval2 = h - sep
         vval2 = v
-        bui.imagewidget(
+        bui.buttonwidget(
             parent=self._subcontainer,
+            label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
             texture=bui.gettexture('buttonPunch'),
             color=(1, 0.7, 0.3),
+            selectable=False,
+            enable_sound=False,
+            on_activate_call=bui.WeakCall(self._play_sound, 'spazAttack0', 4),
         )
 
         txt_scale = getres(f'{self._r}.punchInfoTextScale')
@@ -417,12 +423,16 @@ class HelpWindow(bui.MainWindow):
 
         hval2 = h + sep
         vval2 = v
-        bui.imagewidget(
+        bui.buttonwidget(
             parent=self._subcontainer,
+            label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
             texture=bui.gettexture('buttonBomb'),
             color=(1, 0.3, 0.3),
+            selectable=False,
+            enable_sound=False,
+            on_activate_call=bui.WeakCall(self._play_sound, 'explosion0', 5),
         )
 
         txt = bui.Lstr(resource=f'{self._r}.bombInfoText').evaluate()
@@ -442,12 +452,16 @@ class HelpWindow(bui.MainWindow):
 
         hval2 = h
         vval2 = v + sep
-        bui.imagewidget(
+        bui.buttonwidget(
             parent=self._subcontainer,
+            label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
             texture=bui.gettexture('buttonPickUp'),
             color=(0.5, 0.5, 1),
+            selectable=False,
+            enable_sound=False,
+            on_activate_call=bui.WeakCall(self._play_sound, 'spazPickup0', 1),
         )
 
         txtl = bui.Lstr(resource=f'{self._r}.pickUpInfoText')
@@ -466,12 +480,16 @@ class HelpWindow(bui.MainWindow):
 
         hval2 = h
         vval2 = v - sep
-        bui.imagewidget(
+        bui.buttonwidget(
             parent=self._subcontainer,
+            label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
             texture=bui.gettexture('buttonJump'),
             color=(0.4, 1, 0.4),
+            selectable=False,
+            enable_sound=False,
+            on_activate_call=bui.WeakCall(self._play_sound, 'spazJump0', 4),
         )
 
         txt = bui.Lstr(resource=f'{self._r}.jumpInfoText').evaluate()
@@ -626,6 +644,9 @@ class HelpWindow(bui.MainWindow):
                 v_align='center',
                 res_scale=0.5,
             )
+
+    def _play_sound(self, text: str, num: int) -> None:
+        bui.getsound(text + str(random.randint(1, num))).play()
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
