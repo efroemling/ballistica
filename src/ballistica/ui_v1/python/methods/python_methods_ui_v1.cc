@@ -913,12 +913,13 @@ static auto PySpinnerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* size_obj{Py_None};
   PyObject* pos_obj{Py_None};
   PyObject* visible_obj{Py_None};
+  PyObject* style_obj{Py_None};
 
-  static const char* kwlist[] = {"edit",     "parent",  "size",
-                                 "position", "visible", nullptr};
+  static const char* kwlist[] = {"edit",    "parent", "size", "position",
+                                 "visible", "style",  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOO", const_cast<char**>(kwlist), &edit_obj,
-          &parent_obj, &size_obj, &pos_obj, &visible_obj))
+          args, keywds, "|OOOOOO", const_cast<char**>(kwlist), &edit_obj,
+          &parent_obj, &size_obj, &pos_obj, &visible_obj, &style_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -958,6 +959,16 @@ static auto PySpinnerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (visible_obj != Py_None) {
     b->set_visible(Python::GetPyBool(visible_obj));
   }
+  if (style_obj != Py_None) {
+    auto style_str = Python::GetPyString(style_obj);
+    if (style_str == "bomb") {
+      b->set_style(SpinnerWidget::Style::kBomb);
+    } else if (style_str == "simple") {
+      b->set_style(SpinnerWidget::Style::kSimple);
+    } else {
+      throw Exception("Invalid style value '" + style_str + "'");
+    }
+  }
 
   // If making a new widget, add it at the end.
   if (edit_obj == Py_None) {
@@ -981,6 +992,7 @@ static PyMethodDef PySpinnerWidgetDef = {
     "  parent: bauiv1.Widget | None = None,\n"
     "  size: float | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
+    "  style: Literal['bomb', 'simple'] | None = None,\n"
     "  visible: bool | None = None,\n"
     ")\n"
     "  -> bauiv1.Widget\n"

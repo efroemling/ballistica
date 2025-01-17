@@ -11,6 +11,10 @@ namespace ballistica::ui_v1 {
 
 class SpinnerWidget : public Widget {
  public:
+  enum class Style : uint8_t {
+    kBomb,
+    kSimple,
+  };
   SpinnerWidget();
   ~SpinnerWidget() override;
   void Draw(base::RenderPass* pass, bool transparent) override;
@@ -25,9 +29,12 @@ class SpinnerWidget : public Widget {
   auto GetHeight() -> float override;
   auto GetWidgetTypeName() -> std::string override { return "spinner"; }
 
+  void set_style(Style val) { style_ = val; }
+
  private:
   float size_{32.0f};
   float presence_{};
+  Style style_{Style::kBomb};
   bool visible_{true};
 };
 

@@ -5996,6 +5996,18 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/softRectVertical.dds \
   $(BUILD_DIR)/ba_data/textures/sparks.dds \
   $(BUILD_DIR)/ba_data/textures/spinner.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner0.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner1.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner10.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner11.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner2.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner3.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner4.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner5.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner6.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner7.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner8.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner9.dds \
   $(BUILD_DIR)/ba_data/textures/star.dds \
   $(BUILD_DIR)/ba_data/textures/startButton.dds \
   $(BUILD_DIR)/ba_data/textures/stepRightUpLevelColor.dds \
@@ -6411,6 +6423,18 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/softRectVertical.pvr \
   $(BUILD_DIR)/ba_data/textures/sparks.pvr \
   $(BUILD_DIR)/ba_data/textures/spinner.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner0.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner1.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner10.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner11.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner2.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner3.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner4.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner5.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner6.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner7.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner8.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner9.pvr \
   $(BUILD_DIR)/ba_data/textures/star.pvr \
   $(BUILD_DIR)/ba_data/textures/startButton.pvr \
   $(BUILD_DIR)/ba_data/textures/stepRightUpLevelColor.pvr \
@@ -6826,6 +6850,18 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/softRectVertical.ktx \
   $(BUILD_DIR)/ba_data/textures/sparks.ktx \
   $(BUILD_DIR)/ba_data/textures/spinner.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner0.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner1.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner10.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner11.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner2.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner3.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner4.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner5.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner6.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner7.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner8.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner9.ktx \
   $(BUILD_DIR)/ba_data/textures/star.ktx \
   $(BUILD_DIR)/ba_data/textures/startButton.ktx \
   $(BUILD_DIR)/ba_data/textures/stepRightUpLevelColor.ktx \
@@ -7240,6 +7276,18 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/softRectVertical_preview.png \
   $(BUILD_DIR)/ba_data/textures/softRect_preview.png \
   $(BUILD_DIR)/ba_data/textures/sparks_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner0_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner10_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner11_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner1_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner2_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner3_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner4_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner5_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner6_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner7_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner8_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner9_preview.png \
   $(BUILD_DIR)/ba_data/textures/spinner_preview.png \
   $(BUILD_DIR)/ba_data/textures/star_preview.png \
   $(BUILD_DIR)/ba_data/textures/startButton_preview.png \

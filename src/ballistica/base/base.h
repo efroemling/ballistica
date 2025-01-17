@@ -477,7 +477,19 @@ enum class SysTextureID : uint8_t {
   kCharacterIconMask,
   kBlack,
   kWings,
-  kSpinner
+  kSpinner,
+  kSpinner0,
+  kSpinner1,
+  kSpinner2,
+  kSpinner3,
+  kSpinner4,
+  kSpinner5,
+  kSpinner6,
+  kSpinner7,
+  kSpinner8,
+  kSpinner9,
+  kSpinner10,
+  kSpinner11,
 };
 
 enum class SysCubeMapTextureID : uint8_t {

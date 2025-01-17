@@ -166,6 +166,18 @@ void Assets::StartLoading() {
   LoadSystemTexture(SysTextureID::kBlack, "black");
   LoadSystemTexture(SysTextureID::kWings, "wings");
   LoadSystemTexture(SysTextureID::kSpinner, "spinner");
+  LoadSystemTexture(SysTextureID::kSpinner0, "spinner0");
+  LoadSystemTexture(SysTextureID::kSpinner1, "spinner1");
+  LoadSystemTexture(SysTextureID::kSpinner2, "spinner2");
+  LoadSystemTexture(SysTextureID::kSpinner3, "spinner3");
+  LoadSystemTexture(SysTextureID::kSpinner4, "spinner4");
+  LoadSystemTexture(SysTextureID::kSpinner5, "spinner5");
+  LoadSystemTexture(SysTextureID::kSpinner6, "spinner6");
+  LoadSystemTexture(SysTextureID::kSpinner7, "spinner7");
+  LoadSystemTexture(SysTextureID::kSpinner8, "spinner8");
+  LoadSystemTexture(SysTextureID::kSpinner9, "spinner9");
+  LoadSystemTexture(SysTextureID::kSpinner10, "spinner10");
+  LoadSystemTexture(SysTextureID::kSpinner11, "spinner11");
 
   // System cube map textures:
   LoadSystemCubeMapTexture(SysCubeMapTextureID::kReflectionChar,
