@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
 
 def register_all_maps() -> None:
+    """Registering all maps."""
     for maptype in [
         HockeyStadium,
         FootballStadium,
