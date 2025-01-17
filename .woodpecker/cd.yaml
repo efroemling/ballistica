@@ -1,0 +1,22 @@
+when:
+  - event: tag
+
+steps:
+  - name: build
+    image: 3ra0/ballistica:dev
+    pull: true
+    commands:
+      - make prefab-linux-x86-64-gui-debug-build
+      - mv -v build/prefab/full/linux_x86_64_gui/debug build/prefab/full/linux_x86_64_gui/ballisticakit_linux_x86_64_debug
+      - tar cvzfC ballisticakit_linux_x86_64_debug.tar.xz build/prefab/full/linux_x86_64_gui ballisticakit_linux_x86_64_debug
+  - name: publish
+    image: woodpeckerci/plugin-release
+    settings:
+      api_key:
+        from_secret: ACCESS_TOKEN
+      files:
+        - 'ballisticakit_linux_x86_64.tar.xz'
+      prerelease: true
+      note: 'These are automated debug prefab builds; use them for testing purposes only.'
+      title: 'auto pre-release'
+    depends_on: [build]
