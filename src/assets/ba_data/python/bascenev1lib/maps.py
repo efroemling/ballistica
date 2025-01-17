@@ -14,6 +14,29 @@ from bascenev1lib.gameutils import SharedObjects
 if TYPE_CHECKING:
     from typing import Any
 
+ALL_MAPS = [
+    HockeyStadium,
+    FootballStadium,
+    Bridgit,
+    BigG,
+    Roundabout,
+    MonkeyFace,
+    ZigZag,
+    ThePad,
+    DoomShroom,
+    LakeFrigid,
+    TipTop,
+    CragCastle,
+    TowerD,
+    HappyThoughts,
+    StepRightUp,
+    Courtyard,
+    Rampage,
+]
+
+def register_all_maps():
+    for maptype in ALL_MAPS:
+        bascenev1.register_map(maptype)
 
 class HockeyStadium(bs.Map):
     """Stadium map used for ice hockey games."""

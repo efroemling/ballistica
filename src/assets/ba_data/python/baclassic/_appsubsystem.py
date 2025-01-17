@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 import random
-import inspect
 import logging
 import weakref
 
@@ -178,9 +177,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         if not env.debug and not env.test and not plus.is_blessed():
             babase.screenmessage('WARNING: NON-BLESSED BUILD', color=(1, 0, 0))
 
-        for _, maptype in inspect.getmembers(stdmaps, inspect.isclass):
-            if issubclass(maptype, bascenev1.Map):
-                bascenev1.register_map(maptype)
+        stdmaps.register_all_maps()
 
         spazappearance.register_appearances()
         bascenev1.init_campaigns()
