@@ -31,6 +31,7 @@ class ResourceTypeInfoWindow(PopupWindow):
         self._transitioning_out = False
         self._width = 570
         self._height = 400
+        self._get_tokens_button: bui.Widget | None = None
         bg_color = (0.5, 0.4, 0.6)
         super().__init__(
             size=(self._width, self._height),
@@ -55,6 +56,8 @@ class ResourceTypeInfoWindow(PopupWindow):
 
         yoffs = self._height - 145
 
+        max_rdesc_height = 160
+
         if resource_type == 'tickets':
             yoffs -= 20
             rdesc = (
@@ -75,6 +78,23 @@ class ResourceTypeInfoWindow(PopupWindow):
                 'tokens and never hear about them again.'
             )
             texname = 'coin'
+            bwidth = 200
+            bheight = 50
+
+            self._get_tokens_button = bui.buttonwidget(
+                parent=self.root_widget,
+                position=(
+                    self._width * 0.5 - bwidth * 0.5,
+                    yoffs - 15.0 - bheight - max_rdesc_height,
+                ),
+                color=bg_color,
+                textcolor=(0.8, 0.8, 0.8),
+                label=bui.Lstr(resource='tokens.getTokensText'),
+                size=(bwidth, bheight),
+                autoselect=True,
+                on_activate_call=bui.WeakCall(self._on_get_tokens_press),
+            )
+
         elif resource_type == 'trophies':
             rdesc = 'TODO: Will show trophies & league rankings.'
             texname = 'crossOut'
@@ -98,9 +118,18 @@ class ResourceTypeInfoWindow(PopupWindow):
             v_align='top',
             size=(0, 0),
             maxwidth=self._width * 0.8,
+            max_height=max_rdesc_height,
             position=(self._width * 0.5, yoffs - 5.0),
             text=rdesc,
             scale=0.8,
+        )
+
+    def _on_get_tokens_press(self) -> None:
+        from bauiv1lib.gettokens import show_get_tokens_window
+
+        self._transition_out()
+        show_get_tokens_window(
+            origin_widget=bui.existing(self._get_tokens_button)
         )
 
     def _on_cancel_press(self) -> None:

@@ -63,7 +63,7 @@ def existing(obj: ExistableT | None) -> ExistableT | None:
     For more info, see notes on 'existables' here:
     https://ballistica.net/wiki/Coding-Style-Guide
     """
-    assert obj is None or hasattr(obj, 'exists'), f'No "exists" on {obj}'
+    assert obj is None or hasattr(obj, 'exists'), f'No "exists" attr on {obj}.'
     return obj if obj is not None and obj.exists() else None
 
 

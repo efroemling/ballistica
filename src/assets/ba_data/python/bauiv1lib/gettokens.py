@@ -863,7 +863,7 @@ def show_get_tokens_prompt() -> None:
     if bool(True):
         ConfirmWindow(
             bui.Lstr(resource='tokens.notEnoughTokensText'),
-            _show_get_tokens,
+            show_get_tokens_window,
             ok_text=bui.Lstr(resource='tokens.getTokensText'),
             width=460,
             height=130,
@@ -877,7 +877,8 @@ def show_get_tokens_prompt() -> None:
         )
 
 
-def _show_get_tokens() -> None:
+def show_get_tokens_window(origin_widget: bui.Widget | None = None) -> None:
+    """Show the window allowing token purchases."""
 
     # NOTE TO USERS: The code below is not the proper way to do things;
     # whenever possible one should use a MainWindow's
@@ -893,7 +894,7 @@ def _show_get_tokens() -> None:
 
     # Set our new main window.
     bui.app.ui_v1.set_main_window(
-        GetTokensWindow(),
+        GetTokensWindow(origin_widget=origin_widget),
         from_window=False,
         is_auxiliary=True,
         suppress_warning=True,
