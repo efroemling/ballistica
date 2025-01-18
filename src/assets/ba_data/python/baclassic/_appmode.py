@@ -177,6 +177,9 @@ class ClassicAppMode(babase.AppMode):
 
         assert plus is not None
 
+        classic = babase.app.classic
+        assert classic is not None
+
         if account is not None:
             babase.set_ui_account_state(True, account.tag)
         else:
@@ -195,6 +198,8 @@ class ClassicAppMode(babase.AppMode):
             self._test_sub = None
 
         if account is None:
+            classic.gold_pass = False
+            classic.remove_ads = False
             self._account_data_sub = None
             _baclassic.set_root_ui_account_values(
                 tickets=-1,
@@ -262,6 +267,13 @@ class ClassicAppMode(babase.AppMode):
         chest1 = val.chests.get('1')
         chest2 = val.chests.get('2')
         chest3 = val.chests.get('3')
+
+        # Keep a few handy values on classic updated with the latest
+        # data.
+        classic = babase.app.classic
+        assert classic is not None
+        classic.remove_ads = val.remove_ads
+        classic.gold_pass = val.gold_pass
 
         _baclassic.set_root_ui_account_values(
             tickets=val.tickets,

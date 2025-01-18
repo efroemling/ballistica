@@ -839,8 +839,9 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   auto app_active() -> bool const { return app_active_; }
 
-  /// Reset the engine to a default state. App-modes generally call this
-  /// when activating.
+  /// Reset the engine to a default state. Should only be called by the
+  /// active app-mode. App-modes generally call this when first activating,
+  /// but may opt to call it at other times.
   void Reset();
 
  private:

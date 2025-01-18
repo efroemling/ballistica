@@ -72,9 +72,12 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self.stress_test_update_timer: babase.AppTimer | None = None
         self.stress_test_update_timer_2: babase.AppTimer | None = None
         self.value_test_defaults: dict = {}
-        self.special_offer: dict | None = None
         self.ping_thread_count = 0
         self.allow_ticket_purchases: bool = True
+
+        # Classic-specific account state.
+        self.remove_ads = False
+        self.gold_pass = False
 
         # Main Menu.
         self.main_menu_did_initial_transition = False

@@ -79,6 +79,7 @@ class ClassicAccountLiveData:
 
     tokens: Annotated[int, IOAttrs('to')]
     gold_pass: Annotated[bool, IOAttrs('g')]
+    remove_ads: Annotated[bool, IOAttrs('r')]
 
     achievements: Annotated[int, IOAttrs('a')]
     achievements_total: Annotated[int, IOAttrs('at')]

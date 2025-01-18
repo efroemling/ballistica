@@ -26,7 +26,7 @@ class ResourceTypeInfoWindow(PopupWindow):
         scale = (
             2.0
             if uiscale is bui.UIScale.SMALL
-            else 1.3 if uiscale is bui.UIScale.MEDIUM else 0.7
+            else 1.4 if uiscale is bui.UIScale.MEDIUM else 0.8
         )
         self._transitioning_out = False
         self._width = 570
@@ -81,19 +81,23 @@ class ResourceTypeInfoWindow(PopupWindow):
             bwidth = 200
             bheight = 50
 
-            self._get_tokens_button = bui.buttonwidget(
-                parent=self.root_widget,
-                position=(
-                    self._width * 0.5 - bwidth * 0.5,
-                    yoffs - 15.0 - bheight - max_rdesc_height,
-                ),
-                color=bg_color,
-                textcolor=(0.8, 0.8, 0.8),
-                label=bui.Lstr(resource='tokens.getTokensText'),
-                size=(bwidth, bheight),
-                autoselect=True,
-                on_activate_call=bui.WeakCall(self._on_get_tokens_press),
-            )
+            # Show 'Get Tokens' button if we don't have a gold pass
+            # (in case a user doesn't notice the '+' button or we have
+            # it disabled for some reason).
+            if not bui.app.classic.gold_pass:
+                self._get_tokens_button = bui.buttonwidget(
+                    parent=self.root_widget,
+                    position=(
+                        self._width * 0.5 - bwidth * 0.5,
+                        yoffs - 15.0 - bheight - max_rdesc_height,
+                    ),
+                    color=bg_color,
+                    textcolor=(0.8, 0.8, 0.8),
+                    label=bui.Lstr(resource='tokens.getTokensText'),
+                    size=(bwidth, bheight),
+                    autoselect=True,
+                    on_activate_call=bui.WeakCall(self._on_get_tokens_press),
+                )
 
         elif resource_type == 'trophies':
             rdesc = 'TODO: Will show trophies & league rankings.'

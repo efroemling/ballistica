@@ -69,7 +69,6 @@ class GetTokensWindow(bui.MainWindow):
         self,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
-        # restore_previous_call: Callable[[bui.Widget], None] | None = None,
     ):
         bwidthstd = 170
         bwidthwide = 300
@@ -302,7 +301,6 @@ class GetTokensWindow(bui.MainWindow):
         ]
 
         self._transitioning_out = False
-        # self._restore_previous_call = restore_previous_call
         self._textcolor = (0.92, 0.92, 2.0)
 
         self._query_in_flight = False
@@ -311,39 +309,26 @@ class GetTokensWindow(bui.MainWindow):
             None
         )
 
-        # If they provided an origin-widget, scale up from that.
-        # scale_origin: tuple[float, float] | None
-        # if origin_widget is not None:
-        #     self._transition_out = 'out_scale'
-        #     scale_origin = origin_widget.get_screen_space_center()
-        #     transition = 'in_scale'
-        # else:
-        #     self._transition_out = 'out_right'
-        #     scale_origin = None
-
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 1000.0 if uiscale is bui.UIScale.SMALL else 800.0
+        self._width = 1000.0 if uiscale is bui.UIScale.SMALL else 1070.0
         self._x_inset = 25.0 if uiscale is bui.UIScale.SMALL else 0.0
-        self._height = 550 if uiscale is bui.UIScale.SMALL else 480.0
-        self._y_offset = -60 if uiscale is bui.UIScale.SMALL else 0
+        self._height = 550 if uiscale is bui.UIScale.SMALL else 520.0
+        self._y_offset = -60 if uiscale is bui.UIScale.SMALL else -30
 
         self._r = 'getTokensWindow'
 
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                # transition=transition,
-                # scale_origin_stack_offset=scale_origin,
                 color=(0.3, 0.23, 0.36),
                 scale=(
                     1.5
                     if uiscale is bui.UIScale.SMALL
-                    else 1.2 if uiscale is bui.UIScale.MEDIUM else 1.0
+                    else 1.1 if uiscale is bui.UIScale.MEDIUM else 0.95
                 ),
                 stack_offset=(
                     (0, -3) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-                # toolbar_visibility='menu_minimal',
                 toolbar_visibility=(
                     'get_tokens'
                     if uiscale is bui.UIScale.SMALL
@@ -366,33 +351,13 @@ class GetTokensWindow(bui.MainWindow):
                     55 + self._x_inset,
                     self._height - 80 + self._y_offset,
                 ),
-                size=(
-                    # (140, 60)
-                    # if self._restore_previous_call is None
-                    # else
-                    (60, 60)
-                ),
+                size=((60, 60)),
                 scale=1.0,
                 autoselect=True,
-                label=(
-                    # bui.Lstr(resource='doneText')
-                    # if self._restore_previous_call is None
-                    # else
-                    bui.charstr(bui.SpecialChar.BACK)
-                ),
-                button_type=(
-                    # 'regular'
-                    # if self._restore_previous_call is None
-                    # else
-                    'backSmall'
-                ),
+                label=(bui.charstr(bui.SpecialChar.BACK)),
+                button_type=('backSmall'),
                 on_activate_call=self.main_window_back,
             )
-            # if uiscale is bui.UIScale.SMALL:
-            #     bui.widget(
-            #         edit=self._back_button,
-            #         up_widget=bui.get_special_widget('tokens_meter'),
-            #     )
             bui.containerwidget(
                 edit=self._root_widget, cancel_button=self._back_button
             )
@@ -428,13 +393,6 @@ class GetTokensWindow(bui.MainWindow):
             self._status_text,
         ]
 
-        # self._token_count_widget: bui.Widget | None = None
-        # self._smooth_update_timer: bui.AppTimer | None = None
-        # self._smooth_token_count: float | None = None
-        # self._token_count: int = 0
-        # self._smooth_increase_speed = 1.0
-        # self._ticking_sound: bui.Sound | None = None
-
         # Get all textures used by our buttons preloading so hopefully
         # they'll be in place by the time we show them.
         for bdef in self._buttondefs:
@@ -447,11 +405,6 @@ class GetTokensWindow(bui.MainWindow):
             0.789, bui.WeakCall(self._update), repeat=True
         )
         self._update()
-
-    # def __del__(self) -> None:
-    #     if self._ticking_sound is not None:
-    #         self._ticking_sound.stop()
-    #         self._ticking_sound = None
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
@@ -561,6 +514,7 @@ class GetTokensWindow(bui.MainWindow):
     ) -> None:
         # pylint: disable=too-many-locals
         plus = bui.app.plus
+        classic = bui.app.classic
 
         uiscale = bui.app.ui_v1.uiscale
 
@@ -578,6 +532,7 @@ class GetTokensWindow(bui.MainWindow):
         assert self._buttondefs
 
         sidepad = 10.0
+        xfudge = 6.0
         total_button_width = (
             sum(b.width + b.prepad for b in self._buttondefs)
             + buttonpadding * (len(self._buttondefs) - 1)
@@ -593,22 +548,24 @@ class GetTokensWindow(bui.MainWindow):
             ),
             claims_left_right=True,
             highlight=False,
-            border_opacity=0.3 if uiscale is bui.UIScale.SMALL else 1.0,
+            border_opacity=0.4,
+            center_small_content=True,
         )
         subcontainer = bui.containerwidget(
             parent=h_scroll,
             background=False,
-            size=(max(total_button_width, scrollwidth), scrollheight),
+            size=(total_button_width, scrollheight),
         )
         tinfobtn = bui.buttonwidget(
             parent=self._root_widget,
             autoselect=True,
             label=bui.Lstr(resource='learnMoreText'),
+            text_scale=0.7,
             position=(
                 self._width * 0.5 - 75,
-                self._height - 125 + self._y_offset,
+                self._height - 100 + self._y_offset,
             ),
-            size=(180, 43),
+            size=(180, 40),
             scale=0.8,
             color=(0.4, 0.25, 0.5),
             textcolor=self._textcolor,
@@ -628,7 +585,7 @@ class GetTokensWindow(bui.MainWindow):
             right_widget=bui.get_special_widget('tokens_meter'),
         )
 
-        x = sidepad
+        x = sidepad + xfudge
         bwidgets: list[bui.Widget] = []
         for i, buttondef in enumerate(self._buttondefs):
 
@@ -704,46 +661,43 @@ class GetTokensWindow(bui.MainWindow):
             x += buttondef.width + buttonpadding
         bui.containerwidget(edit=subcontainer, visible_child=bwidgets[0])
 
-        _tinfotxt = bui.textwidget(
-            parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 70 + self._y_offset),
-            color=self._textcolor,
-            shadow=1.0,
-            scale=0.7,
-            size=(0, 0),
-            h_align='center',
-            v_align='center',
-            text=bui.Lstr(resource='tokens.shinyNewCurrencyText'),
-        )
-        # self._token_count_widget = bui.textwidget(
-        #     parent=self._root_widget,
-        #     position=(
-        #         self._width - self._x_inset - 120.0,
-        #         self._height - 48 + self._y_offset,
-        #     ),
-        #     color=(2.0, 0.7, 0.0),
-        #     shadow=1.0,
-        #     flatness=0.0,
-        #     size=(0, 0),
-        #     h_align='left',
-        #     v_align='center',
-        #     text='',
-        # )
-        # self._token_count = response.tokens
-        # self._smooth_token_count = float(self._token_count)
-        # self._smooth_update()  # will set the text widget.
+        if bool(False):
+            _tinfotxt = bui.textwidget(
+                parent=self._root_widget,
+                position=(
+                    self._width * 0.5,
+                    self._height - 70 + self._y_offset,
+                ),
+                color=self._textcolor,
+                shadow=1.0,
+                scale=0.7,
+                size=(0, 0),
+                h_align='center',
+                v_align='center',
+                text=bui.Lstr(resource='tokens.shinyNewCurrencyText'),
+            )
 
-        # _tlabeltxt = bui.textwidget(
-        #     parent=self._root_widget,
-        #     position=(
-        #         self._width - self._x_inset - 123.0,
-        #         self._height - 48 + self._y_offset,
-        #     ),
-        #     size=(0, 0),
-        #     h_align='right',
-        #     v_align='center',
-        #     text=bui.charstr(bui.SpecialChar.TOKEN),
-        # )
+        has_removed_ads = classic is not None and (
+            classic.gold_pass
+            or classic.remove_ads
+            or classic.accounts.have_pro()
+        )
+        if plus is not None and plus.has_video_ads() and not has_removed_ads:
+            _tinfotxt = bui.textwidget(
+                parent=self._root_widget,
+                position=(
+                    self._width * 0.5,
+                    self._height - 120 + self._y_offset,
+                ),
+                color=(0.4, 1.0, 0.4),
+                shadow=1.0,
+                scale=0.5,
+                size=(0, 0),
+                h_align='center',
+                v_align='center',
+                maxwidth=scrollwidth * 0.9,
+                text=bui.Lstr(resource='removeInGameAdsTokenPurchaseText'),
+            )
 
     def _purchase_press(self, itemid: str) -> None:
         plus = bui.app.plus
@@ -767,83 +721,7 @@ class GetTokensWindow(bui.MainWindow):
 
     def _update_store_state(self) -> None:
         """Called to make minor updates to an already shown store."""
-        # assert self._token_count_widget is not None
         assert self._last_query_response is not None
-
-        # self._token_count = self._last_query_response.tokens
-
-        # Kick off new smooth update if need be.
-        # assert self._smooth_token_count is not None
-        # if (
-        #     self._token_count != int(self._smooth_token_count)
-        #     and self._smooth_update_timer is None
-        # ):
-        #     self._smooth_update_timer = bui.AppTimer(
-        #         0.05, bui.WeakCall(self._smooth_update), repeat=True
-        #     )
-        #     diff = abs(float(self._token_count) - self._smooth_token_count)
-        #     self._smooth_increase_speed = (
-        #         diff / 100.0
-        #         if diff >= 5000
-        #         else (
-        #             diff / 50.0
-        #             if diff >= 1500
-        #             else diff / 30.0 if diff >= 500 else diff / 15.0
-        #         )
-        #     )
-
-    # def _smooth_update(self) -> None:
-
-    #     # Stop if the count widget disappears.
-    #     if not self._token_count_widget:
-    #         self._smooth_update_timer = None
-    #         return
-
-    #     finished = False
-
-    #     # If we're going down, do it immediately.
-    #     assert self._smooth_token_count is not None
-    #     if int(self._smooth_token_count) >= self._token_count:
-    #         self._smooth_token_count = float(self._token_count)
-    #         finished = True
-    #     else:
-    #         # We're going up; start a sound if need be.
-    #         self._smooth_token_count = min(
-    #             self._smooth_token_count + 1.0 * self._smooth_increase_speed,
-    #             self._token_count,
-    #         )
-    #         if int(self._smooth_token_count) >= self._token_count:
-    #             finished = True
-    #             self._smooth_token_count = float(self._token_count)
-    #         elif self._ticking_sound is None:
-    #             self._ticking_sound = bui.getsound('scoreIncrease')
-    #             self._ticking_sound.play()
-
-    #     bui.textwidget(
-    #         edit=self._token_count_widget,
-    #         text=str(int(self._smooth_token_count)),
-    #     )
-
-    #     # If we've reached the target, kill the timer/sound/etc.
-    #     if finished:
-    #         self._smooth_update_timer = None
-    #         if self._ticking_sound is not None:
-    #             self._ticking_sound.stop()
-    #             self._ticking_sound = None
-    #             bui.getsound('cashRegister2').play()
-
-    # def _back(self) -> None:
-
-    #     self.main_
-    # No-op if our underlying widget is dead or on its way out.
-    # if not self._root_widget or self._root_widget.transitioning_out:
-    #     return
-
-    # bui.containerwidget(
-    #     edit=self._root_widget, transition=self._transition_out
-    # )
-    # if self._restore_previous_call is not None:
-    #     self._restore_previous_call(self._root_widget)
 
     def _on_learn_more_press(self, url: str) -> None:
         bui.open_url(url)
@@ -878,17 +756,16 @@ def show_get_tokens_prompt() -> None:
 
 
 def show_get_tokens_window(origin_widget: bui.Widget | None = None) -> None:
-    """Show the window allowing token purchases."""
+    """Transition to the get-tokens main-window from anywhere."""
 
     # NOTE TO USERS: The code below is not the proper way to do things;
     # whenever possible one should use a MainWindow's
     # main_window_replace() or main_window_back() methods. We just need
-    # to do things a bit more manually in this case.
+    # to do things a bit more manually in this particular case.
 
     prev_main_window = bui.app.ui_v1.get_main_window()
 
-    # Special-case: If it seems we're already in the account window, do
-    # nothing.
+    # Special-case: If it seems we're already in the window, do nothing.
     if isinstance(prev_main_window, GetTokensWindow):
         return
 
