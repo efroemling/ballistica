@@ -7,15 +7,15 @@ steps:
     image: codeberg.org/3ra/ballistica-dev:latest
     pull: true
     commands:
-      - make prefab-linux-x86-64-gui-debug-build
-      - mv -v build/prefab/full/linux_x86_64_gui/debug build/prefab/full/linux_x86_64_gui/ballisticakit_linux_x86_64_debug
-      - tar cvzfC ballisticakit_linux_x86_64_debug.tar.xz build/prefab/full/linux_x86_64_gui ballisticakit_linux_x86_64_debug
+      - make prefab-linux-x86-64-gui-release-build
+      - mv -v build/prefab/full/linux_x86_64_gui/release build/prefab/full/linux_x86_64_gui/ballisticakit_linux_x86_64
+      - tar cvzfC ballisticakit_linux_x86_64.tar.gz build/prefab/full/linux_x86_64_gui ballisticakit_linux_x86_64
   - name: publish
     image: woodpeckerci/plugin-release
     settings:
       api_key:
         from_secret: ACCESS_TOKEN
       files:
-        - 'ballisticakit_linux_x86_64.tar.xz'
+        - 'ballisticakit_linux_x86_64.tar.gz'
       title: ${CI_COMMIT_TAG}
     depends_on: [build]
