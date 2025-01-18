@@ -4,7 +4,7 @@ when:
 
 steps:
   - name: build
-    image: codeberg.org/3ra/ballistica-dev:latest
+    image: codeberg.org/3ra/ballistica:latest
     pull: true
     commands:
       - make prefab-linux-x86-64-gui-debug-build

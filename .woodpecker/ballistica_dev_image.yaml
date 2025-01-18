@@ -7,7 +7,7 @@ steps:
     settings:
       dockerfile: .woodpecker/Dockerfile
       registry: codeberg.org
-      repo: ${CI_REPO}-dev
+      repo: ${CI_REPO}
       tag: latest
       username: ${CI_REPO_OWNER}
       password:
