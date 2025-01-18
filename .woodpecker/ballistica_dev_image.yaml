@@ -3,7 +3,7 @@ when:
 
 steps:
   - name: buildx
-    image: woodpeckerci/plugin-kaniko
+    image: woodpeckerci/plugin-docker-buildx
     settings:
       dockerfile: .woodpecker/Dockerfile
       registry: codeberg.org
