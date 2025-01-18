@@ -125,7 +125,11 @@ class AccountV1Subsystem:
         if subset is not None:
             raise ValueError('invalid subset value: ' + str(subset))
 
-        if data['p']:
+        # We used to give this bonus for pro, but on recent versions of
+        # the game give it for everyone (since we are phasing out Pro).
+
+        # if data['p']:
+        if bool(True):
             if babase.app.plus is None:
                 pro_mult = 1.0
             else:

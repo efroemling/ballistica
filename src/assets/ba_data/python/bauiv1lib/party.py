@@ -112,9 +112,22 @@ class PartyWindow(bui.Window):
 
         self._empty_str = bui.textwidget(
             parent=self._root_widget,
-            scale=0.75,
+            scale=0.6,
             size=(0, 0),
-            position=(self._width * 0.5, self._height - 65),
+            # color=(0.5, 1.0, 0.5),
+            shadow=0.3,
+            position=(self._width * 0.5, self._height - 57),
+            maxwidth=self._width * 0.85,
+            h_align='center',
+            v_align='center',
+        )
+        self._empty_str_2 = bui.textwidget(
+            parent=self._root_widget,
+            scale=0.5,
+            size=(0, 0),
+            color=(0.5, 1.0, 0.5),
+            shadow=0.1,
+            position=(self._width * 0.5, self._height - 75),
             maxwidth=self._width * 0.85,
             h_align='center',
             v_align='center',
@@ -297,6 +310,10 @@ class PartyWindow(bui.Window):
                     edit=self._empty_str,
                     text=bui.Lstr(resource=f'{self._r}.emptyText'),
                 )
+                bui.textwidget(
+                    edit=self._empty_str_2,
+                    text=bui.Lstr(resource='gatherWindow.descriptionShortText'),
+                )
                 bui.scrollwidget(
                     edit=self._scrollwidget,
                     size=(
@@ -437,6 +454,7 @@ class PartyWindow(bui.Window):
                                     )
                                 )
                 bui.textwidget(edit=self._empty_str, text='')
+                bui.textwidget(edit=self._empty_str_2, text='')
                 bui.scrollwidget(
                     edit=self._scrollwidget,
                     size=(

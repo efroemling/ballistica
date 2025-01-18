@@ -33,7 +33,7 @@ class LeagueRankWindow(bui.MainWindow):
         self._league_rank_data: dict[str, Any] | None = None
 
         self._power_ranking_achievements_button: bui.Widget | None = None
-        self._pro_mult_button: bui.Widget | None = None
+        self._up_to_date_bonus_button: bui.Widget | None = None
         self._power_ranking_trophies_button: bui.Widget | None = None
         self._league_title_text: bui.Widget | None = None
         self._league_text: bui.Widget | None = None
@@ -160,13 +160,14 @@ class LeagueRankWindow(bui.MainWindow):
         self._requested_season: str | None = None
         self._season: str | None = None
 
-        # take note of our account state; we'll refresh later if this changes
+        # Take note of our account state; we'll refresh later if this
+        # changes.
         self._account_state = plus.get_v1_account_state()
 
         self._refresh()
         self._restore_state()
 
-        # if we've got cached power-ranking data already, display it
+        # If we've got cached power-ranking data already, display it.
         assert bui.app.classic is not None
         info = bui.app.classic.accounts.get_cached_league_rank_data()
         if info is not None:
@@ -239,14 +240,14 @@ class LeagueRankWindow(bui.MainWindow):
             origin_widget=self._activity_mult_button,
         )
 
-    def _on_pro_mult_press(self) -> None:
+    def _on_up_to_date_bonus_press(self) -> None:
         from bauiv1lib import confirm
 
         plus = bui.app.plus
         assert plus is not None
 
         txt = bui.Lstr(
-            resource='coopSelectWindow.proMultInfoText',
+            resource='league.upToDateBonusDescriptionText',
             subs=[
                 (
                     '${PERCENT}',
@@ -256,13 +257,6 @@ class LeagueRankWindow(bui.MainWindow):
                         )
                     ),
                 ),
-                (
-                    '${PRO}',
-                    bui.Lstr(
-                        resource='store.bombSquadProNameText',
-                        subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
-                    ),
-                ),
             ],
         )
         confirm.ConfirmWindow(
@@ -270,7 +264,7 @@ class LeagueRankWindow(bui.MainWindow):
             cancel_button=False,
             width=460,
             height=130,
-            origin_widget=self._pro_mult_button,
+            origin_widget=self._up_to_date_bonus_button,
         )
 
     def _on_trophies_press(self) -> None:
@@ -292,7 +286,8 @@ class LeagueRankWindow(bui.MainWindow):
     ) -> None:
         self._doing_power_ranking_query = False
 
-        # Important: *only* cache this if we requested the current season.
+        # Important: *only* cache this if we requested the current
+        # season.
         if data is not None and data.get('s', None) is None:
             assert bui.app.classic is not None
             bui.app.classic.accounts.cache_league_rank_data(data)
@@ -321,8 +316,8 @@ class LeagueRankWindow(bui.MainWindow):
             if not self._doing_power_ranking_query:
                 self._last_power_ranking_query_time = None
 
-        # Send off a new power-ranking query if its been long enough or our
-        # requested season has changed or whatnot.
+        # Send off a new power-ranking query if its been long enough or
+        # our requested season has changed or whatnot.
         if not self._doing_power_ranking_query and (
             self._last_power_ranking_query_time is None
             or cur_time - self._last_power_ranking_query_time > 30.0
@@ -354,7 +349,7 @@ class LeagueRankWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        # (re)create the sub-container if need be..
+        # (Re)create the sub-container if need be.
         if self._subcontainer is not None:
             self._subcontainer.delete()
         self._subcontainer = bui.containerwidget(
@@ -497,24 +492,26 @@ class LeagueRankWindow(bui.MainWindow):
         else:
             self._activity_mult_button = None
 
-        self._pro_mult_button = bui.buttonwidget(
+        self._up_to_date_bonus_button = bui.buttonwidget(
             parent=w_parent,
             position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 60),
             icon=bui.gettexture('logo'),
             icon_color=(0.3, 0, 0.3),
-            label=bui.Lstr(
-                resource='store.bombSquadProNameText',
-                subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
-            ),
+            # label='Up-To-Date Bonus',
+            label=bui.Lstr(resource='league.upToDateBonusText'),
+            # label=bui.Lstr(
+            #     resource='store.bombSquadProNameText',
+            #     subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
+            # ),
             autoselect=True,
-            on_activate_call=bui.WeakCall(self._on_pro_mult_press),
+            on_activate_call=bui.WeakCall(self._on_up_to_date_bonus_press),
             left_widget=self._back_button,
             color=(0.5, 0.5, 0.6),
             textcolor=(0.7, 0.7, 0.8),
         )
 
-        self._pro_mult_text = bui.textwidget(
+        self._up_to_date_bonus_text = bui.textwidget(
             parent=w_parent,
             position=(self._xoffs + h2 + h_offs_tally, v2 + 40),
             size=(0, 0),
@@ -712,8 +709,6 @@ class LeagueRankWindow(bui.MainWindow):
         assert plus is not None
 
         our_login_id = plus.get_v1_account_public_login_id()
-        # our_login_id = _bs.get_account_misc_read_val_2(
-        #     'resolvedAccountID', None)
         if not self._can_do_more_button or our_login_id is None:
             bui.getsound('error').play()
             bui.screenmessage(
@@ -767,8 +762,8 @@ class LeagueRankWindow(bui.MainWindow):
             status_text = num_text.replace('${NUMBER}', str(data['rank']))
         elif data is not None:
             try:
-                # handle old seasons where we didn't wind up ranked
-                # at the end..
+                # Handle old seasons where we didn't wind up ranked at
+                # the end.
                 if not data['scores']:
                     status_text = (
                         self._rdict.powerRankingFinishedSeasonUnrankedText
@@ -811,7 +806,7 @@ class LeagueRankWindow(bui.MainWindow):
         did_first = False
         self._is_current_season = False
         if data is not None:
-            # build our list of seasons we have available
+            # Build our list of seasons we have available.
             for ssn in data['sl']:
                 season_choices.append(ssn)
                 if ssn != 'a' and not did_first:
@@ -822,8 +817,9 @@ class LeagueRankWindow(bui.MainWindow):
                         )
                     )
                     did_first = True
-                    # if we either did not specify a season or specified the
-                    # first, we're looking at the current..
+
+                    # If we either did not specify a season or specified
+                    # the first, we're looking at the current.
                     if self._season in [ssn, None]:
                         self._is_current_season = True
                 elif ssn == 'a':
@@ -1007,7 +1003,12 @@ class LeagueRankWindow(bui.MainWindow):
                     text='x ' + ('%.2f' % data['act']),
                 )
 
-        have_pro = False if data is None else data['p']
+        # This used to be a bonus for 'BombSquad Pro' holders, but since
+        # we're transitioning away from that it is now a bonus for
+        # everyone running a recent-ish version of the game.
+
+        # have_pro = False if data is None else data['p']
+        have_up_to_date_bonus = data is not None
         pro_mult = (
             1.0
             + float(
@@ -1015,19 +1016,20 @@ class LeagueRankWindow(bui.MainWindow):
             )
             * 0.01
         )
-        # pylint: disable=consider-using-f-string
         bui.textwidget(
-            edit=self._pro_mult_text,
+            edit=self._up_to_date_bonus_text,
             text=(
                 '     -'
-                if (data is None or not have_pro)
-                else 'x ' + ('%.2f' % pro_mult)
+                if (data is None or not have_up_to_date_bonus)
+                else f'x {pro_mult:.2f}'
             ),
         )
         bui.buttonwidget(
-            edit=self._pro_mult_button,
-            textcolor=(0.7, 0.7, 0.8, (1.0 if have_pro else 0.5)),
-            icon_color=(0.5, 0, 0.5) if have_pro else (0.5, 0, 0.5, 0.2),
+            edit=self._up_to_date_bonus_button,
+            textcolor=(0.7, 0.7, 0.8, (1.0 if have_up_to_date_bonus else 0.5)),
+            icon_color=(
+                (0.5, 0, 0.5) if have_up_to_date_bonus else (0.5, 0, 0.5, 0.2)
+            ),
         )
         bui.buttonwidget(
             edit=self._power_ranking_achievements_button,
@@ -1035,8 +1037,8 @@ class LeagueRankWindow(bui.MainWindow):
             + bui.Lstr(resource='achievementsText').evaluate(),
         )
 
-        # for the achievement value, use the number they gave us for
-        # non-current seasons; otherwise calc our own
+        # For the achievement value, use the number they gave us for
+        # non-current seasons; otherwise calc our own.
         total_ach_value = 0
         for ach in bui.app.classic.ach.achievements:
             if ach.complete:
@@ -1168,7 +1170,7 @@ class LeagueRankWindow(bui.MainWindow):
 
     def _on_season_change(self, value: str) -> None:
         self._requested_season = value
-        self._last_power_ranking_query_time = None  # make sure we update asap
+        self._last_power_ranking_query_time = None  # Update asap.
         self._update(show=True)
 
     def _save_state(self) -> None:
