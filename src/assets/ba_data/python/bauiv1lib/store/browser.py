@@ -32,7 +32,7 @@ class StoreBrowserWindow(bui.MainWindow):
     class TabID(Enum):
         """Our available tab types."""
 
-        EXTRAS = 'extras'
+        # EXTRAS = 'extras'
         MAPS = 'maps'
         MINIGAMES = 'minigames'
         CHARACTERS = 'characters'
@@ -164,7 +164,7 @@ class StoreBrowserWindow(bui.MainWindow):
         tab_buffer_h = 250 + 2 * x_inset
 
         tabs_def = [
-            (self.TabID.EXTRAS, bui.Lstr(resource=f'{self._r}.extrasText')),
+            # (self.TabID.EXTRAS, bui.Lstr(resource=f'{self._r}.extrasText')),
             (self.TabID.MAPS, bui.Lstr(resource=f'{self._r}.mapsText')),
             (
                 self.TabID.MINIGAMES,
@@ -1125,7 +1125,7 @@ class StoreBrowserWindow(bui.MainWindow):
                     self._store_window.update_buttons()
 
             if self._current_tab in (
-                self.TabID.EXTRAS,
+                # self.TabID.EXTRAS,
                 self.TabID.MINIGAMES,
                 self.TabID.CHARACTERS,
                 self.TabID.MAPS,
