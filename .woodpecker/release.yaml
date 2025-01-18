@@ -1,9 +1,10 @@
 when:
   - event: tag
+    ref: refs/tags/v*
 
 steps:
   - name: build
-    image: 3ra0/ballistica:dev
+    image: codeberg.org/3ra/ballistica-dev:latest
     pull: true
     commands:
       - make prefab-linux-x86-64-gui-debug-build
@@ -16,7 +17,5 @@ steps:
         from_secret: ACCESS_TOKEN
       files:
         - 'ballisticakit_linux_x86_64.tar.xz'
-      prerelease: true
-      note: 'These are automated debug prefab builds; use them for testing purposes only.'
-      title: 'auto pre-release'
+      title: ${CI_COMMIT_TAG}
     depends_on: [build]

@@ -1,0 +1,14 @@
+when:
+  - event: manual
+
+steps:
+  - name: buildx
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      dockerfile: .woodpecker/Dockerfile
+      registry: codeberg.org
+      repo: ${CI_REPO}-dev
+      tag: latest
+      username: ${CI_REPO_OWNER}
+      password:
+        from_secret: ACCESS_TOKEN
