@@ -326,8 +326,10 @@ class CoopBrowserWindow(bui.MainWindow):
         ):
             self._tourney_data_up_to_date = False
 
-        # If our account state has changed, do a full request.
+        # If our account login state has changed, do a
+        # full request.
         account_state_num = plus.get_v1_account_state_num()
+
         if account_state_num != self._account_state_num:
             self._account_state_num = account_state_num
             self._save_state()
@@ -405,6 +407,7 @@ class CoopBrowserWindow(bui.MainWindow):
             logging.exception('Error updating campaign lock.')
 
     def _update_for_data(self, data: list[dict[str, Any]] | None) -> None:
+
         # If the number of tournaments or challenges in the data differs
         # from our current arrangement, refresh with the new number.
         if (data is None and self._tournament_button_count != 0) or (
@@ -985,9 +988,10 @@ class CoopBrowserWindow(bui.MainWindow):
         """Return whether our tourney data is up to date."""
         return self._tourney_data_up_to_date
 
-    def run_game(self, game: str) -> None:
+    def run_game(
+        self, game: str, origin_widget: bui.Widget | None = None
+    ) -> None:
         """Run the provided game."""
-        # pylint: disable=too-many-branches
         # pylint: disable=cyclic-import
         from bauiv1lib.confirm import ConfirmWindow
         from bauiv1lib.purchase import PurchaseWindow
@@ -1012,38 +1016,7 @@ class CoopBrowserWindow(bui.MainWindow):
             )
             return
 
-        required_purchase: str | None
-
-        # Infinite onslaught requires pro or the newer standalone
-        # upgrade.
-        if (
-            game in ['Challenges:Infinite Runaround']
-            and not bui.app.classic.accounts.have_pro()
-        ):
-            required_purchase = 'upgrades.infinite_runaround'
-        elif (
-            game in ['Challenges:Infinite Onslaught']
-            and not bui.app.classic.accounts.have_pro()
-        ):
-            required_purchase = 'upgrades.infinite_onslaught'
-        elif game in ['Challenges:Meteor Shower']:
-            required_purchase = 'games.meteor_shower'
-        elif game in [
-            'Challenges:Target Practice',
-            'Challenges:Target Practice B',
-        ]:
-            required_purchase = 'games.target_practice'
-        elif game in ['Challenges:Ninja Fight']:
-            required_purchase = 'games.ninja_fight'
-        elif game in ['Challenges:Pro Ninja Fight']:
-            required_purchase = 'games.ninja_fight'
-        elif game in [
-            'Challenges:Easter Egg Hunt',
-            'Challenges:Pro Easter Egg Hunt',
-        ]:
-            required_purchase = 'games.easter_egg_hunt'
-        else:
-            required_purchase = None
+        required_purchase = bui.app.classic.required_purchase_for_game(game)
 
         if (
             required_purchase is not None
@@ -1052,7 +1025,9 @@ class CoopBrowserWindow(bui.MainWindow):
             if plus.get_v1_account_state() != 'signed_in':
                 show_sign_in_prompt()
             else:
-                PurchaseWindow(items=[required_purchase])
+                PurchaseWindow(
+                    items=[required_purchase], origin_widget=origin_widget
+                )
             return
 
         self._save_state()
@@ -1062,11 +1037,17 @@ class CoopBrowserWindow(bui.MainWindow):
 
     def run_tournament(self, tournament_button: TournamentButton) -> None:
         """Run the provided tournament game."""
+        # pylint: disable=too-many-return-statements
+
+        from bauiv1lib.purchase import PurchaseWindow
         from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.tournamententry import TournamentEntryWindow
 
         plus = bui.app.plus
         assert plus is not None
+
+        classic = bui.app.classic
+        assert classic is not None
 
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
@@ -1117,6 +1098,22 @@ class CoopBrowserWindow(bui.MainWindow):
             bui.getsound('error').play()
             return
 
+        if tournament_button.game is not None and not classic.is_game_unlocked(
+            tournament_button.game
+        ):
+            required_purchase = classic.required_purchase_for_game(
+                tournament_button.game
+            )
+            assert required_purchase is not None
+            if plus.get_v1_account_state() != 'signed_in':
+                show_sign_in_prompt()
+            else:
+                PurchaseWindow(
+                    items=[required_purchase],
+                    origin_widget=tournament_button.button,
+                )
+            return
+
         if tournament_button.time_remaining <= 0:
             bui.screenmessage(
                 bui.Lstr(resource='tournamentEndedText'), color=(1, 0, 0)
@@ -1138,10 +1135,6 @@ class CoopBrowserWindow(bui.MainWindow):
             sel = self._root_widget.get_selected_child()
             if sel == self._back_button:
                 sel_name = 'Back'
-            # elif sel == self._store_button_widget:
-            #     sel_name = 'Store'
-            # elif sel == self._league_rank_button_widget:
-            #     sel_name = 'PowerRanking'
             elif sel == self._scrollwidget:
                 sel_name = 'Scroll'
             else:

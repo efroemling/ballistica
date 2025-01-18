@@ -39,6 +39,7 @@ class TournamentButton:
         self.lsbo = bui.getmesh('level_select_button_opaque')
         self.allow_ads = False
         self.tournament_id: str | None = None
+        self.game: str | None = None
         self.time_remaining: int = 0
         self.has_time_remaining: bool = False
         self.leader: Any = None
@@ -400,6 +401,9 @@ class TournamentButton:
             color=(0.4, 0.4, 0.5),
             flatness=1.0,
         )
+        self._lock_update_timer = bui.AppTimer(
+            1.03, bui.WeakCall(self._update_lock_state), repeat=True
+        )
 
     def _pressed(self) -> None:
         self.on_pressed(self)
@@ -440,6 +444,33 @@ class TournamentButton:
             position=self.more_scores_button.get_screen_space_center(),
         )
 
+    def _update_lock_state(self) -> None:
+
+        if self.game is None:
+            return
+
+        assert bui.app.classic is not None
+
+        campaignname, levelname = self.game.split(':')
+        campaign = bui.app.classic.getcampaign(campaignname)
+
+        enabled = (
+            self.required_league is None
+            and bui.app.classic.is_game_unlocked(self.game)
+        )
+        bui.buttonwidget(
+            edit=self.button,
+            color=(0.5, 0.7, 0.2) if enabled else (0.5, 0.5, 0.5),
+        )
+        bui.imagewidget(edit=self.lock_image, opacity=0.0 if enabled else 1.0)
+        bui.imagewidget(
+            edit=self.image,
+            texture=bui.gettexture(
+                campaign.getlevel(levelname).preview_texture_name
+            ),
+            opacity=1.0 if enabled else 0.5,
+        )
+
     def update_for_data(self, entry: dict[str, Any]) -> None:
         """Update for new incoming data."""
         # pylint: disable=too-many-statements
@@ -470,12 +501,22 @@ class TournamentButton:
             entry, include_tickets=False
         )
 
-        enabled = 'requiredLeague' not in entry
-        bui.buttonwidget(
-            edit=self.button,
-            color=(0.5, 0.7, 0.2) if enabled else (0.5, 0.5, 0.5),
-        )
-        bui.imagewidget(edit=self.lock_image, opacity=0.0 if enabled else 1.0)
+        self.time_remaining = entry['timeRemaining']
+        self.has_time_remaining = entry is not None
+        self.tournament_id = entry['tournamentID']
+        self.required_league = entry.get('requiredLeague')
+
+        assert bui.app.classic is not None
+        self.game = bui.app.classic.accounts.tournament_info[
+            self.tournament_id
+        ]['game']
+        assert isinstance(self.game, str)
+
+        campaignname, levelname = self.game.split(':')
+        campaign = bui.app.classic.getcampaign(campaignname)
+
+        self._update_lock_state()
+
         bui.textwidget(
             edit=self.prize_range_1_text,
             text='-' if pr1 == '' else pr1,
@@ -604,51 +645,30 @@ class TournamentButton:
             edit=self.time_remaining_out_of_text, text=out_of_time_text
         )
 
-        self.time_remaining = entry['timeRemaining']
-        self.has_time_remaining = entry is not None
-        self.tournament_id = entry['tournamentID']
-        self.required_league = (
-            None if 'requiredLeague' not in entry else entry['requiredLeague']
-        )
+        # if self.game is None:
+        #     bui.textwidget(edit=self.button_text, text='-')
+        #     bui.imagewidget(
+        #         edit=self.image, texture=bui.gettexture('black'), opacity=0.2
+        #     )
+        # else:
+        max_players = bui.app.classic.accounts.tournament_info[
+            self.tournament_id
+        ]['maxPlayers']
 
-        assert bui.app.classic is not None
-        game = bui.app.classic.accounts.tournament_info[self.tournament_id][
-            'game'
-        ]
-
-        if game is None:
-            bui.textwidget(edit=self.button_text, text='-')
-            bui.imagewidget(
-                edit=self.image, texture=bui.gettexture('black'), opacity=0.2
-            )
-        else:
-            campaignname, levelname = game.split(':')
-            campaign = bui.app.classic.getcampaign(campaignname)
-            max_players = bui.app.classic.accounts.tournament_info[
-                self.tournament_id
-            ]['maxPlayers']
-
-            txt = bui.Lstr(
-                value='${A} ${B}',
-                subs=[
-                    ('${A}', campaign.getlevel(levelname).displayname),
-                    (
-                        '${B}',
-                        bui.Lstr(
-                            resource='playerCountAbbreviatedText',
-                            subs=[('${COUNT}', str(max_players))],
-                        ),
+        txt = bui.Lstr(
+            value='${A} ${B}',
+            subs=[
+                ('${A}', campaign.getlevel(levelname).displayname),
+                (
+                    '${B}',
+                    bui.Lstr(
+                        resource='playerCountAbbreviatedText',
+                        subs=[('${COUNT}', str(max_players))],
                     ),
-                ],
-            )
-            bui.textwidget(edit=self.button_text, text=txt)
-            bui.imagewidget(
-                edit=self.image,
-                texture=bui.gettexture(
-                    campaign.getlevel(levelname).preview_texture_name
                 ),
-                opacity=1.0 if enabled else 0.5,
-            )
+            ],
+        )
+        bui.textwidget(edit=self.button_text, text=txt)
 
         fee = entry['fee']
         assert isinstance(fee, int | None)
