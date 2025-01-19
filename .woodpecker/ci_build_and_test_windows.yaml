@@ -6,8 +6,7 @@ when:
 
 steps:
   - name: build-and-test
-    image: python:3.12-windowsservercore
-    pull: true
+    image: python:3.12-windowsservercore-ltsc2022
     commands:
       - $env:PYTHONPATH = "tools"
       - python -m efrotools.genwrapper pcommand batools.pcommandmain tools/pcommand
