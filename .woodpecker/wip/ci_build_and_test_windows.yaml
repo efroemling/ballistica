@@ -1,5 +1,8 @@
 when:
-  - event: manual
+  - event: push
+  - event: pull_request
+  - event: cron
+    cron: ci
 
 steps:
   - name: build-and-test
