@@ -36,8 +36,8 @@ steps:
       - cd build/prefab/full/windows_x86_server
       - zip -rv ../../../../ballisticakit_windows_server.zip ballisticakit_windows_server
       - cd ../../../..
-      - mv -v build/sphinx build/ballisticakit_sphinx
-      - tar -cvfC ballisticakit_sphinx_docs.tar build ballisticakit_sphinx
+      - mv -v build/sphinx build/ballisticakit_sphinx_docs
+      - tar -cvfC ballisticakit_sphinx_docs.tar build/ ballisticakit_sphinx_docs
   - name: build-gui-docker
     image: woodpeckerci/plugin-docker-buildx
     settings:

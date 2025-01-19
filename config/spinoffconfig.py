@@ -200,6 +200,7 @@ ctx.filter_file_names = {
     'release.yml',
     'ballistica_dev_dockerfile',
     'ballistica_dev_image.yaml',
+    'ci.yaml',
     'ci_check_linux.yaml',
     'ci_build_and_test_linux.yaml',
     'ci_spinoff_test_linux.yaml',
