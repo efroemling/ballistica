@@ -10,6 +10,9 @@ steps:
     pull: true
     commands:
       - make env
+      - make assets
+      - make resources
+      - make meta
       - cd ..
       - cp -r -v $CI_REPO_NAME check_linux
       - cp -r -v $CI_REPO_NAME build_and_test_linux
