@@ -22,7 +22,7 @@ steps:
       - mv -v build/prefab/full/mac_arm64_gui/debug build/prefab/full/mac_arm64_gui/ballisticakit_mac
       - tar cvzfC ballisticakit_mac.tar.gz build/prefab/full/mac_arm64_gui ballisticakit_mac
       - mv -v build/prefab/full/windows_x86_gui/debug build/prefab/full/windows_x86_gui/ballisticakit_windows
-      - zip -r ballisticakit_windows.zip build/prefab/full/windows_x86_gui
+      - zip -jr ballisticakit_windows.zip build/prefab/full/windows_x86_gui
       - mv -v build/prefab/full/linux_arm64_server/debug build/prefab/full/linux_arm64_server/ballisticakit_linux_arm64_server
       - tar cvzfC ballisticakit_linux_arm64_server.tar.gz build/prefab/full/linux_arm64_server ballisticakit_linux_arm64_server
       - mv -v build/prefab/full/linux_x86_64_server/debug build/prefab/full/linux_x86_64_server/ballisticakit_linux_x86_64_server
@@ -30,7 +30,7 @@ steps:
       - mv -v build/prefab/full/mac_arm64_server/debug build/prefab/full/mac_arm64_server/ballisticakit_mac_server
       - tar cvzfC ballisticakit_mac_server.tar.gz build/prefab/full/mac_arm64_server ballisticakit_mac_server
       - mv -v build/prefab/full/windows_x86_server/debug build/prefab/full/windows_x86_server/ballisticakit_windows_server
-      - zip -r ballisticakit_windows_server.zip build/prefab/full/windows_x86_server
+      - zip -jr ballisticakit_windows_server.zip build/prefab/full/windows_x86_server
   - name: publish
     image: woodpeckerci/plugin-release
     settings:
