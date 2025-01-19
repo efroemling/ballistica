@@ -93,6 +93,8 @@ class TournamentScoresWindow(PopupWindow):
         self._loading_spinner = bui.spinnerwidget(
             parent=self.root_widget,
             position=(self._width * 0.5, self._height * 0.5),
+            style='bomb',
+            size=48,
         )
         self._loading_text = bui.textwidget(
             parent=self._scrollwidget,

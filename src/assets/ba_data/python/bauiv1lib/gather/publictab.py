@@ -683,7 +683,10 @@ class PublicGatherTab(GatherTab):
             position=(c_width * 0.5, c_height * 0.5),
         )
         self._join_status_spinner = bui.spinnerwidget(
-            parent=self._container, position=(c_width * 0.5, c_height * 0.5)
+            parent=self._container,
+            position=(c_width * 0.5, c_height * 0.5),
+            style='bomb',
+            size=64,
         )
 
         self._no_servers_found_text = bui.textwidget(

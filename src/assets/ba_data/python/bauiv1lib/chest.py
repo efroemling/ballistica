@@ -118,6 +118,8 @@ class ChestWindow(bui.MainWindow):
         self._loadingspinner = bui.spinnerwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height * 0.5),
+            size=48,
+            style='bomb',
         )
 
         self._infotext = bui.textwidget(

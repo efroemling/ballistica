@@ -319,6 +319,8 @@ class InboxWindow(bui.MainWindow):
         self._loading_spinner = bui.spinnerwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height * 0.5),
+            style='bomb',
+            size=48,
         )
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,

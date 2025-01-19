@@ -69,6 +69,8 @@ class WaitForConnectivityWindow(bui.Window):
         self._spinner = bui.spinnerwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height * 0.54),
+            style='bomb',
+            size=48,
         )
 
         self._info_text = bui.textwidget(

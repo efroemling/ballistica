@@ -618,6 +618,7 @@ class LeagueRankWindow(bui.MainWindow):
                 self._subcontainerwidth * 0.5,
                 self._subcontainerheight * 0.5,
             ),
+            style='bomb',
             size=64,
         )
         self._your_power_ranking_text = bui.textwidget(
