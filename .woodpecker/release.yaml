@@ -3,7 +3,7 @@ when:
     ref: refs/tags/v*
 
 steps:
-  - name: build
+  - name: build-general
     image: codeberg.org/3ra/ballistica-dev:latest
     pull: true
     commands:
@@ -15,10 +15,6 @@ steps:
       - make prefab-linux-x86-64-server-debug-build
       - make prefab-mac-arm64-server-debug-build
       - make prefab-windows-x86-server-debug-build
-      - make docker-gui-release
-      - make docker-save
-      - make docker-server-release
-      - make docker-save
       - make docs-sphinx
       - mv -v build/prefab/full/linux_arm64_gui/debug build/prefab/full/linux_arm64_gui/ballisticakit_linux_arm64
       - tar cvzfC ballisticakit_linux_arm64.tar.gz build/prefab/full/linux_arm64_gui ballisticakit_linux_arm64
@@ -40,10 +36,30 @@ steps:
       - cd build/prefab/full/windows_x86_server
       - zip -rv ../../../../ballisticakit_windows_server.zip ballisticakit_windows_server
       - cd ../../../..
-      - mv -v build/docker/bombsquad_gui_release_docker.tar ballisticakit_docker.tar
-      - mv -v build/docker/bombsquad_server_release_docker.tar ballisticakit_server_docker.tar
       - mv -v build/sphinx build/ballisticakit_sphinx
       - tar -cvfC ballisticakit_sphinx_docs.tar build ballisticakit_sphinx
+  - name: build-gui-docker
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      dry-run: true
+      dockerfile: config/docker/Dockerfile
+      build_args:
+        - cmake_build_type=Debug
+        - headless_build=1
+      platforms:
+        - linux/amd64
+      output: type=docker,dest=ballisticakit_docker.tar
+  - name: build-server-docker
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      dry-run: true
+      dockerfile: config/docker/Dockerfile
+      build_args:
+        - cmake_build_type=Debug
+        - headless_build=1
+      platforms:
+        - linux/amd64
+      output: type=docker,dest=ballisticakit_server_docker.tar
   - name: publish
     image: woodpeckerci/plugin-release
     settings:
