@@ -7,40 +7,44 @@ steps:
     image: codeberg.org/3ra/ballistica-dev:latest
     pull: true
     commands:
-      - make prefab-windows-x86-gui-debug-build
-      - make prefab-linux-x86-64-gui-debug-build
       - make prefab-linux-arm64-gui-debug-build
+      - make prefab-linux-x86-64-gui-debug-build
       - make prefab-mac-arm64-gui-debug-build
-      - make prefab-windows-x86-server-debug-build
-      - make prefab-linux-x86-64-server-debug-build
+      - make prefab-windows-x86-gui-debug-build
       - make prefab-linux-arm64-server-debug-build
+      - make prefab-linux-x86-64-server-debug-build
       - make prefab-mac-arm64-server-debug-build
-      - mv -v build/prefab/full/linux_x86_64_gui/debug build/prefab/full/linux_x86_64_gui/ballisticakit_linux_x86_64
-      - tar cvzfC ballisticakit_linux_x86_64.tar.gz build/prefab/full/linux_x86_64_gui ballisticakit_linux_x86_64
+      - make prefab-windows-x86-server-debug-build
       - mv -v build/prefab/full/linux_arm64_gui/debug build/prefab/full/linux_arm64_gui/ballisticakit_linux_arm64
       - tar cvzfC ballisticakit_linux_arm64.tar.gz build/prefab/full/linux_arm64_gui ballisticakit_linux_arm64
-      - mv -v build/prefab/full/mac_arm64_gui/debug build/prefab/full/mac_arm64_gui/ballisticakit_mac_arm64
-      - tar cvzfC ballisticakit_mac_arm64.tar.gz build/prefab/full/mac_arm64_gui ballisticakit_mac_arm64
-      - mv -v build/prefab/full/linux_x86_64_server/debug build/prefab/full/linux_x86_64_server/ballisticakit_linux_x86_64_server
-      - tar cvzfC ballisticakit_linux_x86_64_server.tar.gz build/prefab/full/linux_x86_64_server ballisticakit_linux_x86_64_server
+      - mv -v build/prefab/full/linux_x86_64_gui/debug build/prefab/full/linux_x86_64_gui/ballisticakit_linux_x86_64
+      - tar cvzfC ballisticakit_linux_x86_64.tar.gz build/prefab/full/linux_x86_64_gui ballisticakit_linux_x86_64
+      - mv -v build/prefab/full/mac_arm64_gui/debug build/prefab/full/mac_arm64_gui/ballisticakit_mac
+      - tar cvzfC ballisticakit_mac.tar.gz build/prefab/full/mac_arm64_gui ballisticakit_mac
+      - mv -v build/prefab/full/windows_x86_gui/debug build/prefab/full/windows_x86_gui/ballisticakit_windows
+      - zip -r ballisticakit_windows.zip build/prefab/full/windows_x86_gui
       - mv -v build/prefab/full/linux_arm64_server/debug build/prefab/full/linux_arm64_server/ballisticakit_linux_arm64_server
       - tar cvzfC ballisticakit_linux_arm64_server.tar.gz build/prefab/full/linux_arm64_server ballisticakit_linux_arm64_server
-      - mv -v build/prefab/full/mac_arm64_server/debug build/prefab/full/mac_arm64_server/ballisticakit_mac_arm64_server
-      - tar cvzfC ballisticakit_mac_arm64_server.tar.gz build/prefab/full/mac_arm64_server ballisticakit_mac_arm64_server
+      - mv -v build/prefab/full/linux_x86_64_server/debug build/prefab/full/linux_x86_64_server/ballisticakit_linux_x86_64_server
+      - tar cvzfC ballisticakit_linux_x86_64_server.tar.gz build/prefab/full/linux_x86_64_server ballisticakit_linux_x86_64_server
+      - mv -v build/prefab/full/mac_arm64_server/debug build/prefab/full/mac_arm64_server/ballisticakit_mac_server
+      - tar cvzfC ballisticakit_mac_server.tar.gz build/prefab/full/mac_arm64_server ballisticakit_mac_server
+      - mv -v build/prefab/full/windows_x86_server/debug build/prefab/full/windows_x86_server/ballisticakit_windows_server
+      - zip -r ballisticakit_windows_server.zip build/prefab/full/windows_x86_server
   - name: publish
     image: woodpeckerci/plugin-release
     settings:
       api_key:
         from_secret: ACCESS_TOKEN
       files:
-        - 'ballisticakit_linux_x86_64.tar.gz'
-        - 'ballisticakit_mac_x86_64.tar.gz'
         - 'ballisticakit_linux_arm64.tar.gz'
-        - 'ballisticakit_mac_arm64.tar.gz'
-        - 'ballisticakit_linux_x86_64_server.tar.gz'
-        - 'ballisticakit_mac_x86_64_server.tar.gz'
+        - 'ballisticakit_linux_x86_64.tar.gz'
+        - 'ballisticakit_mac.tar.gz'
+        - 'ballisticakit_windows.zip'
         - 'ballisticakit_linux_arm64_server.tar.gz'
-        - 'ballisticakit_mac_arm64_server.tar.gz'
+        - 'ballisticakit_linux_x86_64_server.tar.gz'
+        - 'ballisticakit_mac_server.tar.gz'
+        - 'ballisticakit_windows_server.zip'
       note: 'These are debug prefab builds; use them for testing purposes only. Check out https://ballistica.net/downloads for official/blessed release builds'
       title: ${CI_COMMIT_TAG}
     depends_on: [build]
