@@ -1,0 +1,14 @@
+when:
+  - event: push
+  - event: pull_request
+  - event: cron
+    cron: ci
+
+steps:
+  - name: linux
+    image: codeberg.org/3ra/ballistica-dev:latest
+    pull: true
+    commands:
+      - make env
+      - make cmake-server-build
+      - BA_PCOMMANDBATCH_BUILD_REQUIRE=1 BA_APP_RUN_ENABLE_BUILDS=1 BA_APP_RUN_BUILD_HEADLESS=1 make test

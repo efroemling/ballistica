@@ -2,7 +2,7 @@ when:
   - event: manual
 
 steps:
-  - name: buildx
+  - name: build_and_publish
     image: woodpeckerci/plugin-kaniko
     settings:
       dockerfile: .woodpecker/Dockerfile
