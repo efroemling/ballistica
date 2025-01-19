@@ -34,7 +34,7 @@ class SpinnerWidget : public Widget {
  private:
   float size_{32.0f};
   float presence_{};
-  Style style_{Style::kSimple};
+  Style style_{Style::kBomb};
   bool visible_{true};
 };
 
