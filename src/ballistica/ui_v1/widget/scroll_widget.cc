@@ -476,9 +476,11 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         float child_h = (**i).GetHeight();
         float s_top = height() - border_height_;
         float s_bottom = border_height_;
-        float rate =
-            (child_h - (s_top - s_bottom))
-            / ((1.0f - ((s_top - s_bottom) / child_h)) * (s_top - s_bottom));
+        // Note: need a max on denominator here or we can get nan due to
+        // divide-by-zero.
+        float rate = (child_h - (s_top - s_bottom))
+                     / std::max(1.0f, ((1.0f - ((s_top - s_bottom) / child_h))
+                                       * (s_top - s_bottom)));
         child_offset_v_ = thumb_click_start_child_offset_v_
                           - rate * (y - thumb_click_start_v_);
         ClampThumb_(false, true);

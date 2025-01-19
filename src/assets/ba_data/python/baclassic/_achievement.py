@@ -6,7 +6,11 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-# from bacommon.bs import ClassicChestAppearance
+from bacommon.bs import ClassicChestAppearance
+from baclassic._chest import (
+    CHEST_APPEARANCE_DISPLAY_INFOS,
+    CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT,
+)
 import babase
 import bascenev1
 import bauiv1
@@ -93,56 +97,56 @@ class AchievementSubsystem:
                 'achievementInControl',
                 (1, 1, 1),
                 '',
-                ticket_award=5,
+                award=5,
             ),
             Achievement(
                 'Sharing is Caring',
                 'achievementSharingIsCaring',
                 (1, 1, 1),
                 '',
-                ticket_award=15,
+                award=15,
             ),
             Achievement(
                 'Dual Wielding',
                 'achievementDualWielding',
                 (1, 1, 1),
                 '',
-                ticket_award=10,
+                award=10,
             ),
             Achievement(
                 'Free Loader',
                 'achievementFreeLoader',
                 (1, 1, 1),
                 '',
-                ticket_award=10,
+                award=10,
             ),
             Achievement(
                 'Team Player',
                 'achievementTeamPlayer',
                 (1, 1, 1),
                 '',
-                ticket_award=20,
+                award=20,
             ),
             Achievement(
                 'Onslaught Training Victory',
                 'achievementOnslaught',
                 (1, 1, 1),
                 'Default:Onslaught Training',
-                ticket_award=5,
+                award=5,
             ),
             Achievement(
                 'Off You Go Then',
                 'achievementOffYouGo',
                 (1, 1.1, 1.3),
                 'Default:Onslaught Training',
-                ticket_award=5,
+                award=5,
             ),
             Achievement(
                 'Boxer',
                 'achievementBoxer',
                 (1, 0.6, 0.6),
                 'Default:Onslaught Training',
-                ticket_award=10,
+                award=10,
                 hard_mode_only=True,
             ),
             Achievement(
@@ -150,21 +154,21 @@ class AchievementSubsystem:
                 'achievementOnslaught',
                 (0.5, 1.4, 0.6),
                 'Default:Rookie Onslaught',
-                ticket_award=10,
+                award=10,
             ),
             Achievement(
                 'Mine Games',
                 'achievementMine',
                 (1, 1, 1.4),
                 'Default:Rookie Onslaught',
-                ticket_award=10,
+                award=10,
             ),
             Achievement(
                 'Flawless Victory',
                 'achievementFlawlessVictory',
                 (1, 1, 1),
                 'Default:Rookie Onslaught',
-                ticket_award=15,
+                award=15,
                 hard_mode_only=True,
             ),
             Achievement(
@@ -172,21 +176,21 @@ class AchievementSubsystem:
                 'achievementFootballVictory',
                 (1.0, 1, 0.6),
                 'Default:Rookie Football',
-                ticket_award=10,
+                award=10,
             ),
             Achievement(
                 'Super Punch',
                 'achievementSuperPunch',
                 (1, 1, 1.8),
                 'Default:Rookie Football',
-                ticket_award=10,
+                award=10,
             ),
             Achievement(
                 'Rookie Football Shutout',
                 'achievementFootballShutout',
                 (1, 1, 1),
                 'Default:Rookie Football',
-                ticket_award=15,
+                award=15,
                 hard_mode_only=True,
             ),
             Achievement(
@@ -194,21 +198,21 @@ class AchievementSubsystem:
                 'achievementOnslaught',
                 (0.3, 1, 2.0),
                 'Default:Pro Onslaught',
-                ticket_award=15,
+                award=15,
             ),
             Achievement(
                 'Boom Goes the Dynamite',
                 'achievementTNT',
                 (1.4, 1.2, 0.8),
                 'Default:Pro Onslaught',
-                ticket_award=15,
+                award=15,
             ),
             Achievement(
                 'Pro Boxer',
                 'achievementBoxer',
                 (2, 2, 0),
                 'Default:Pro Onslaught',
-                ticket_award=20,
+                award=20,
                 hard_mode_only=True,
             ),
             Achievement(
@@ -216,21 +220,21 @@ class AchievementSubsystem:
                 'achievementFootballVictory',
                 (1.3, 1.3, 2.0),
                 'Default:Pro Football',
-                ticket_award=15,
+                award=15,
             ),
             Achievement(
                 'Super Mega Punch',
                 'achievementSuperPunch',
                 (2, 1, 0.6),
                 'Default:Pro Football',
-                ticket_award=15,
+                award=15,
             ),
             Achievement(
                 'Pro Football Shutout',
                 'achievementFootballShutout',
                 (0.7, 0.7, 2.0),
                 'Default:Pro Football',
-                ticket_award=20,
+                award=20,
                 hard_mode_only=True,
             ),
             Achievement(
@@ -238,14 +242,14 @@ class AchievementSubsystem:
                 'achievementRunaround',
                 (1, 1, 1),
                 'Default:Pro Runaround',
-                ticket_award=15,
+                award=15,
             ),
             Achievement(
                 'Precision Bombing',
                 'achievementCrossHair',
                 (1, 1, 1.3),
                 'Default:Pro Runaround',
-                ticket_award=20,
+                award=20,
                 hard_mode_only=True,
             ),
             Achievement(
@@ -253,7 +257,7 @@ class AchievementSubsystem:
                 'achievementWall',
                 (1, 0.7, 0.7),
                 'Default:Pro Runaround',
-                ticket_award=25,
+                award=25,
                 hard_mode_only=True,
             ),
             Achievement(
@@ -261,14 +265,14 @@ class AchievementSubsystem:
                 'achievementOnslaught',
                 (2, 2, 1),
                 'Default:Uber Onslaught',
-                ticket_award=30,
+                award=30,
             ),
             Achievement(
                 'Gold Miner',
                 'achievementMine',
                 (2, 1.6, 0.2),
                 'Default:Uber Onslaught',
-                ticket_award=30,
+                award=30,
                 hard_mode_only=True,
             ),
             Achievement(
@@ -276,7 +280,7 @@ class AchievementSubsystem:
                 'achievementTNT',
                 (2, 1.8, 0.3),
                 'Default:Uber Onslaught',
-                ticket_award=30,
+                award=30,
                 hard_mode_only=True,
             ),
             Achievement(
@@ -284,14 +288,14 @@ class AchievementSubsystem:
                 'achievementFootballVictory',
                 (1.8, 1.4, 0.3),
                 'Default:Uber Football',
-                ticket_award=30,
+                award=30,
             ),
             Achievement(
                 'Got the Moves',
                 'achievementGotTheMoves',
                 (2, 1, 0),
                 'Default:Uber Football',
-                ticket_award=30,
+                award=30,
                 hard_mode_only=True,
             ),
             Achievement(
@@ -299,7 +303,7 @@ class AchievementSubsystem:
                 'achievementFootballShutout',
                 (2, 2, 0),
                 'Default:Uber Football',
-                ticket_award=40,
+                award=40,
                 hard_mode_only=True,
             ),
             Achievement(
@@ -307,14 +311,14 @@ class AchievementSubsystem:
                 'achievementRunaround',
                 (1.5, 1.2, 0.2),
                 'Default:Uber Runaround',
-                ticket_award=30,
+                award=30,
             ),
             Achievement(
                 'The Great Wall',
                 'achievementWall',
                 (2, 1.7, 0.4),
                 'Default:Uber Runaround',
-                ticket_award=40,
+                award=40,
                 hard_mode_only=True,
             ),
             Achievement(
@@ -322,7 +326,7 @@ class AchievementSubsystem:
                 'achievementStayinAlive',
                 (2, 2, 1),
                 'Default:Uber Runaround',
-                ticket_award=40,
+                award=40,
                 hard_mode_only=True,
             ),
             Achievement(
@@ -330,7 +334,7 @@ class AchievementSubsystem:
                 'achievementMedalSmall',
                 (2, 1.5, 0.3),
                 'Default:The Last Stand',
-                ticket_award=20,
+                award=20,
                 hard_mode_only=True,
             ),
             Achievement(
@@ -338,7 +342,7 @@ class AchievementSubsystem:
                 'achievementMedalMedium',
                 (2, 1.5, 0.3),
                 'Default:The Last Stand',
-                ticket_award=40,
+                award=40,
                 hard_mode_only=True,
             ),
             Achievement(
@@ -346,7 +350,7 @@ class AchievementSubsystem:
                 'achievementMedalLarge',
                 (2, 1.5, 0.3),
                 'Default:The Last Stand',
-                ticket_award=60,
+                award=60,
                 hard_mode_only=True,
             ),
             Achievement(
@@ -354,42 +358,42 @@ class AchievementSubsystem:
                 'achievementMedalSmall',
                 (0.7, 1, 0.7),
                 'Challenges:Infinite Onslaught',
-                ticket_award=5,
+                award=5,
             ),
             Achievement(
                 'Onslaught Wizard',
                 'achievementMedalMedium',
                 (0.7, 1.0, 0.7),
                 'Challenges:Infinite Onslaught',
-                ticket_award=15,
+                award=15,
             ),
             Achievement(
                 'Onslaught God',
                 'achievementMedalLarge',
                 (0.7, 1.0, 0.7),
                 'Challenges:Infinite Onslaught',
-                ticket_award=30,
+                award=30,
             ),
             Achievement(
                 'Runaround Master',
                 'achievementMedalSmall',
                 (1.0, 1.0, 1.2),
                 'Challenges:Infinite Runaround',
-                ticket_award=5,
+                award=5,
             ),
             Achievement(
                 'Runaround Wizard',
                 'achievementMedalMedium',
                 (1.0, 1.0, 1.2),
                 'Challenges:Infinite Runaround',
-                ticket_award=15,
+                award=15,
             ),
             Achievement(
                 'Runaround God',
                 'achievementMedalLarge',
                 (1.0, 1.0, 1.2),
                 'Challenges:Infinite Runaround',
-                ticket_award=30,
+                award=30,
             ),
         ]
 
@@ -538,8 +542,7 @@ class Achievement:
         icon_color: tuple[float, float, float],
         level_name: str,
         *,
-        ticket_award: int,
-        # chest_award: ClassicChestAppearance,
+        award: int,
         hard_mode_only: bool = False,
     ):
         self._name = name
@@ -548,7 +551,7 @@ class Achievement:
         self._icon_color = icon_color + (1.0,)
         self._level_name = level_name
         self._completion_banner_slot: int | None = None
-        self._ticket_award = ticket_award
+        self._award = award
         self._hard_mode_only = hard_mode_only
 
     @property
@@ -728,13 +731,45 @@ class Achievement:
             ],
         )
 
+    def get_award_chest_type(self) -> ClassicChestAppearance:
+        """Return the type of chest given for this achievement."""
+
+        # For now just map our old ticket values to chest types.
+        # Can add distinct values if need be later.
+        plus = babase.app.plus
+        assert plus is not None
+        t = plus.get_v1_account_misc_read_val(
+            f'achAward.{self.name}', self._award
+        )
+        return (
+            ClassicChestAppearance.L6
+            if t >= 30
+            else (
+                ClassicChestAppearance.L5
+                if t >= 25
+                else (
+                    ClassicChestAppearance.L4
+                    if t >= 20
+                    else (
+                        ClassicChestAppearance.L3
+                        if t >= 15
+                        else (
+                            ClassicChestAppearance.L2
+                            if t >= 10
+                            else ClassicChestAppearance.L1
+                        )
+                    )
+                )
+            )
+        )
+
     # def get_award_ticket_value(self, include_pro_bonus: bool = False) -> int:
     #     """Get the ticket award value for this achievement."""
     #     plus = babase.app.plus
     #     if plus is None:
     #         return 0
     #     val: int = plus.get_v1_account_misc_read_val(
-    #         'achAward.' + self._name, self._ticket_award
+    #         'achAward.' + self._name, self._award
     #     ) * _get_ach_mult(include_pro_bonus)
     #     assert isinstance(val, int)
     #     return val
@@ -746,7 +781,7 @@ class Achievement:
         if plus is None:
             return 0
         val: int = plus.get_v1_account_misc_read_val(
-            'achLeaguePoints.' + self._name, self._ticket_award
+            'achLeaguePoints.' + self._name, self._award
         )
         assert isinstance(val, int)
         return val
@@ -902,9 +937,38 @@ class Achievement:
                 txtactor.node.rotate = 10
                 objs.append(txtactor)
 
-            # Ticket-award.
+            # Chest award.
             award_x = -100
-            # print('FIXME SHOW ACH CHEST VAL')
+            chesttype = self.get_award_chest_type()
+            chestdisplayinfo = CHEST_APPEARANCE_DISPLAY_INFOS.get(
+                chesttype, CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT
+            )
+            objs.append(
+                Image(
+                    # Provide magical extended dict version of texture
+                    # that Image actor supports.
+                    texture={
+                        'texture': bascenev1.gettexture(
+                            chestdisplayinfo.texclosed
+                        ),
+                        'tint_texture': bascenev1.gettexture(
+                            chestdisplayinfo.texclosedtint
+                        ),
+                        'tint_color': chestdisplayinfo.tint,
+                        'tint2_color': chestdisplayinfo.tint2,
+                        'mask_texture': None,
+                    },
+                    color=chestdisplayinfo.color + (0.5 if hmo else 1.0,),
+                    position=(x + award_x + 37, y + 12),
+                    scale=(32.0, 32.0),
+                    transition=Image.Transition.FADE_IN,
+                    transition_delay=delay + 0.05,
+                    transition_out_delay=out_delay_fin,
+                    host_only=True,
+                    attach=Image.Attach.TOP_LEFT,
+                ).autoretain()
+            )
+
             # objs.append(
             #     Text(
             #         babase.charstr(babase.SpecialChar.TICKET),
@@ -980,23 +1044,53 @@ class Achievement:
             else:
                 if not complete:
                     award_x = -100
+                    # objs.append(
+                    #     Text(
+                    #         babase.charstr(babase.SpecialChar.TICKET),
+                    #         host_only=True,
+                    #         position=(x + award_x + 33, y + 7),
+                    #         transition=Text.Transition.IN_RIGHT,
+                    #         scale=1.5,
+                    #         h_attach=h_attach,
+                    #         v_attach=v_attach,
+                    #         h_align=Text.HAlign.CENTER,
+                    #         v_align=Text.VAlign.CENTER,
+                    #         color=(1, 1, 1, (0.1 if hmo else 0.2)),
+                    #         transition_delay=delay + 0.05,
+                    #         transition_out_delay=None,
+                    #     ).autoretain()
+                    # )
+                    chesttype = self.get_award_chest_type()
+                    chestdisplayinfo = CHEST_APPEARANCE_DISPLAY_INFOS.get(
+                        chesttype, CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT
+                    )
                     objs.append(
-                        Text(
-                            babase.charstr(babase.SpecialChar.TICKET),
-                            host_only=True,
-                            position=(x + award_x + 33, y + 7),
-                            transition=Text.Transition.IN_RIGHT,
-                            scale=1.5,
-                            h_attach=h_attach,
-                            v_attach=v_attach,
-                            h_align=Text.HAlign.CENTER,
-                            v_align=Text.VAlign.CENTER,
-                            color=(1, 1, 1, (0.1 if hmo else 0.2)),
+                        Image(
+                            # Provide magical extended dict version of texture
+                            # that Image actor supports.
+                            texture={
+                                'texture': bascenev1.gettexture(
+                                    chestdisplayinfo.texclosed
+                                ),
+                                'tint_texture': bascenev1.gettexture(
+                                    chestdisplayinfo.texclosedtint
+                                ),
+                                'tint_color': chestdisplayinfo.tint,
+                                'tint2_color': chestdisplayinfo.tint2,
+                                'mask_texture': None,
+                            },
+                            color=chestdisplayinfo.color
+                            + (0.5 if hmo else 1.0,),
+                            position=(x + award_x + 38, y + 14),
+                            scale=(32.0, 32.0),
+                            transition=Image.Transition.IN_RIGHT,
                             transition_delay=delay + 0.05,
                             transition_out_delay=None,
+                            host_only=True,
+                            attach=attach,
                         ).autoretain()
                     )
-                    # print('FIXME SHOW ACH CHEST2')
+
                     # objs.append(
                     #     Text(
                     #         '+' + str(self.get_award_ticket_value()),
@@ -1346,24 +1440,24 @@ class Achievement:
         assert objt.node
         objt.node.host_only = True
 
-        objt = Text(
-            babase.charstr(babase.SpecialChar.TICKET),
-            position=(-120 - 170 + 5, 75 + y_offs - 20),
-            front=True,
-            v_attach=Text.VAttach.BOTTOM,
-            h_align=Text.HAlign.CENTER,
-            v_align=Text.VAlign.CENTER,
-            transition=Text.Transition.IN_BOTTOM,
-            vr_depth=base_vr_depth,
-            transition_delay=in_time,
-            transition_out_delay=out_time,
-            flash=True,
-            color=(0.5, 0.5, 0.5, 1),
-            scale=3.0,
-        ).autoretain()
-        objs.append(objt)
-        assert objt.node
-        objt.node.host_only = True
+        # objt = Text(
+        #     babase.charstr(babase.SpecialChar.TICKET),
+        #     position=(-120 - 170 + 5, 75 + y_offs - 20),
+        #     front=True,
+        #     v_attach=Text.VAttach.BOTTOM,
+        #     h_align=Text.HAlign.CENTER,
+        #     v_align=Text.VAlign.CENTER,
+        #     transition=Text.Transition.IN_BOTTOM,
+        #     vr_depth=base_vr_depth,
+        #     transition_delay=in_time,
+        #     transition_out_delay=out_time,
+        #     flash=True,
+        #     color=(0.5, 0.5, 0.5, 1),
+        #     scale=3.0,
+        # ).autoretain()
+        # objs.append(objt)
+        # assert objt.node
+        # objt.node.host_only = True
 
         # print('FIXME SHOW ACH CHEST3')
         # objt = Text(

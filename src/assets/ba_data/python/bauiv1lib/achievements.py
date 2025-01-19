@@ -18,9 +18,15 @@ class AchievementsWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=too-many-locals
+        # pylint: disable=cyclic-import
+        from baclassic import (
+            CHEST_APPEARANCE_DISPLAY_INFOS,
+            CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT,
+        )
+
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 600 if uiscale is bui.UIScale.SMALL else 500
+        self._width = 600 if uiscale is bui.UIScale.SMALL else 550
         self._height = (
             380
             if uiscale is bui.UIScale.SMALL
@@ -39,7 +45,7 @@ class AchievementsWindow(bui.MainWindow):
                 scale=(
                     2.3
                     if uiscale is bui.UIScale.SMALL
-                    else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
+                    else 1.6 if uiscale is bui.UIScale.MEDIUM else 1.23
                 ),
                 stack_offset=(
                     (0, 0)
@@ -206,6 +212,25 @@ class AchievementsWindow(bui.MainWindow):
                 size=(0, 0),
                 h_align='left',
                 v_align='center',
+            )
+            chest_type = ach.get_award_chest_type()
+            chestdisplayinfo = CHEST_APPEARANCE_DISPLAY_INFOS.get(
+                chest_type, CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT
+            )
+            chestsize = 24.0
+            bui.imagewidget(
+                parent=self._subcontainer,
+                opacity=0.0 if complete else 1.0,
+                position=(
+                    sub_width * 0.92 - 40.0 - chestsize * 0.5,
+                    sub_height - 20 - incr * i - chestsize * 0.5,
+                ),
+                size=(chestsize, chestsize),
+                color=chestdisplayinfo.color,
+                texture=bui.gettexture(chestdisplayinfo.texclosed),
+                tint_texture=bui.gettexture(chestdisplayinfo.texclosedtint),
+                tint_color=chestdisplayinfo.tint,
+                tint2_color=chestdisplayinfo.tint2,
             )
 
             pts = ach.power_ranking_value

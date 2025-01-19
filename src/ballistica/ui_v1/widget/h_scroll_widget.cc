@@ -252,11 +252,13 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           break;
         }
         float child_w = (**i).GetWidth();
-        float sRight = width() - border_width_;
-        float sLeft = border_width_;
-        float rate =
-            (child_w - (sRight - sLeft))
-            / ((1.0f - ((sRight - sLeft) / child_w)) * (sRight - sLeft));
+        float s_right = width() - border_width_;
+        float s_left = border_width_;
+        // Note: need a max on denominator here or we can get nan due to
+        // divide-by-zero.
+        float rate = (child_w - (s_right - s_left))
+                     / std::max(1.0f, ((1.0f - ((s_right - s_left) / child_w))
+                                       * (s_right - s_left)));
         child_offset_h_ = thumb_click_start_child_offset_h_
                           - rate * (x - thumb_click_start_h_);
 
