@@ -15,30 +15,31 @@ steps:
       - cp -r -v $CI_REPO_NAME build_and_test_linux
       - cp -r -v $CI_REPO_NAME spinoff_test_linux
       - cp -r -v $CI_REPO_NAME feature_set_copy_test_linux
+      - cd $CI_REPO_NAME
   - name: check-linux
     image: codeberg.org/3ra/ballistica-dev:latest
     commands:
-      - cd check_linux
+      - cd ../check_linux
       - BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make check
     depends_on: [parallel-prepare]
   - name: build-and-test-linux
     image: codeberg.org/3ra/ballistica-dev:latest
     commands:
-      - cd build_and_test_linux
+      - cd ../build_and_test_linux
       - make cmake-server-build
       - BA_PCOMMANDBATCH_BUILD_REQUIRE=1 BA_APP_RUN_ENABLE_BUILDS=1 BA_APP_RUN_BUILD_HEADLESS=1 make test
     depends_on: [parallel-prepare]
   - name: spinoff-test-linux
     image: codeberg.org/3ra/ballistica-dev:latest
     commands:
-      - cd spinoff_test_linux
+      - cd ../spinoff_test_linux
       - make spinoff-test-core
       - make spinoff-test-base
     depends_on: [parallel-prepare]
   - name: feature-set-copy-test-linux
     image: codeberg.org/3ra/ballistica-dev:latest
     commands:
-      - cd feature_set_copy_test_linux
+      - cd ../feature_set_copy_test_linux
       - tools/spinoff fset-copy template_fs poo
       - make update
       - make cmake-modular-server-build
