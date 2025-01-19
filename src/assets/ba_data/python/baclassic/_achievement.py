@@ -6,6 +6,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+# from bacommon.bs import ClassicChestAppearance
 import babase
 import bascenev1
 import bauiv1
@@ -86,429 +87,311 @@ class AchievementSubsystem:
     def _init_achievements(self) -> None:
         """Fill in available achievements."""
 
-        achs = self.achievements
-
-        # 5
-        achs.append(
-            Achievement('In Control', 'achievementInControl', (1, 1, 1), '', 5)
-        )
-        # 15
-        achs.append(
+        self.achievements += [
+            Achievement(
+                'In Control',
+                'achievementInControl',
+                (1, 1, 1),
+                '',
+                ticket_award=5,
+            ),
             Achievement(
                 'Sharing is Caring',
                 'achievementSharingIsCaring',
                 (1, 1, 1),
                 '',
-                15,
-            )
-        )
-        # 10
-        achs.append(
+                ticket_award=15,
+            ),
             Achievement(
-                'Dual Wielding', 'achievementDualWielding', (1, 1, 1), '', 10
-            )
-        )
-
-        # 10
-        achs.append(
+                'Dual Wielding',
+                'achievementDualWielding',
+                (1, 1, 1),
+                '',
+                ticket_award=10,
+            ),
             Achievement(
-                'Free Loader', 'achievementFreeLoader', (1, 1, 1), '', 10
-            )
-        )
-        # 20
-        achs.append(
+                'Free Loader',
+                'achievementFreeLoader',
+                (1, 1, 1),
+                '',
+                ticket_award=10,
+            ),
             Achievement(
-                'Team Player', 'achievementTeamPlayer', (1, 1, 1), '', 20
-            )
-        )
-
-        # 5
-        achs.append(
+                'Team Player',
+                'achievementTeamPlayer',
+                (1, 1, 1),
+                '',
+                ticket_award=20,
+            ),
             Achievement(
                 'Onslaught Training Victory',
                 'achievementOnslaught',
                 (1, 1, 1),
                 'Default:Onslaught Training',
-                5,
-            )
-        )
-        # 5
-        achs.append(
+                ticket_award=5,
+            ),
             Achievement(
                 'Off You Go Then',
                 'achievementOffYouGo',
                 (1, 1.1, 1.3),
                 'Default:Onslaught Training',
-                5,
-            )
-        )
-        # 10
-        achs.append(
+                ticket_award=5,
+            ),
             Achievement(
                 'Boxer',
                 'achievementBoxer',
                 (1, 0.6, 0.6),
                 'Default:Onslaught Training',
-                10,
+                ticket_award=10,
                 hard_mode_only=True,
-            )
-        )
-
-        # 10
-        achs.append(
+            ),
             Achievement(
                 'Rookie Onslaught Victory',
                 'achievementOnslaught',
                 (0.5, 1.4, 0.6),
                 'Default:Rookie Onslaught',
-                10,
-            )
-        )
-        # 10
-        achs.append(
+                ticket_award=10,
+            ),
             Achievement(
                 'Mine Games',
                 'achievementMine',
                 (1, 1, 1.4),
                 'Default:Rookie Onslaught',
-                10,
-            )
-        )
-        # 15
-        achs.append(
+                ticket_award=10,
+            ),
             Achievement(
                 'Flawless Victory',
                 'achievementFlawlessVictory',
                 (1, 1, 1),
                 'Default:Rookie Onslaught',
-                15,
+                ticket_award=15,
                 hard_mode_only=True,
-            )
-        )
-
-        # 10
-        achs.append(
+            ),
             Achievement(
                 'Rookie Football Victory',
                 'achievementFootballVictory',
                 (1.0, 1, 0.6),
                 'Default:Rookie Football',
-                10,
-            )
-        )
-        # 10
-        achs.append(
+                ticket_award=10,
+            ),
             Achievement(
                 'Super Punch',
                 'achievementSuperPunch',
                 (1, 1, 1.8),
                 'Default:Rookie Football',
-                10,
-            )
-        )
-        # 15
-        achs.append(
+                ticket_award=10,
+            ),
             Achievement(
                 'Rookie Football Shutout',
                 'achievementFootballShutout',
                 (1, 1, 1),
                 'Default:Rookie Football',
-                15,
+                ticket_award=15,
                 hard_mode_only=True,
-            )
-        )
-
-        # 15
-        achs.append(
+            ),
             Achievement(
                 'Pro Onslaught Victory',
                 'achievementOnslaught',
                 (0.3, 1, 2.0),
                 'Default:Pro Onslaught',
-                15,
-            )
-        )
-        # 15
-        achs.append(
+                ticket_award=15,
+            ),
             Achievement(
                 'Boom Goes the Dynamite',
                 'achievementTNT',
                 (1.4, 1.2, 0.8),
                 'Default:Pro Onslaught',
-                15,
-            )
-        )
-        # 20
-        achs.append(
+                ticket_award=15,
+            ),
             Achievement(
                 'Pro Boxer',
                 'achievementBoxer',
                 (2, 2, 0),
                 'Default:Pro Onslaught',
-                20,
+                ticket_award=20,
                 hard_mode_only=True,
-            )
-        )
-
-        # 15
-        achs.append(
+            ),
             Achievement(
                 'Pro Football Victory',
                 'achievementFootballVictory',
                 (1.3, 1.3, 2.0),
                 'Default:Pro Football',
-                15,
-            )
-        )
-        # 15
-        achs.append(
+                ticket_award=15,
+            ),
             Achievement(
                 'Super Mega Punch',
                 'achievementSuperPunch',
                 (2, 1, 0.6),
                 'Default:Pro Football',
-                15,
-            )
-        )
-        # 20
-        achs.append(
+                ticket_award=15,
+            ),
             Achievement(
                 'Pro Football Shutout',
                 'achievementFootballShutout',
                 (0.7, 0.7, 2.0),
                 'Default:Pro Football',
-                20,
+                ticket_award=20,
                 hard_mode_only=True,
-            )
-        )
-
-        # 15
-        achs.append(
+            ),
             Achievement(
                 'Pro Runaround Victory',
                 'achievementRunaround',
                 (1, 1, 1),
                 'Default:Pro Runaround',
-                15,
-            )
-        )
-        # 20
-        achs.append(
+                ticket_award=15,
+            ),
             Achievement(
                 'Precision Bombing',
                 'achievementCrossHair',
                 (1, 1, 1.3),
                 'Default:Pro Runaround',
-                20,
+                ticket_award=20,
                 hard_mode_only=True,
-            )
-        )
-        # 25
-        achs.append(
+            ),
             Achievement(
                 'The Wall',
                 'achievementWall',
                 (1, 0.7, 0.7),
                 'Default:Pro Runaround',
-                25,
+                ticket_award=25,
                 hard_mode_only=True,
-            )
-        )
-
-        # 30
-        achs.append(
+            ),
             Achievement(
                 'Uber Onslaught Victory',
                 'achievementOnslaught',
                 (2, 2, 1),
                 'Default:Uber Onslaught',
-                30,
-            )
-        )
-        # 30
-        achs.append(
+                ticket_award=30,
+            ),
             Achievement(
                 'Gold Miner',
                 'achievementMine',
                 (2, 1.6, 0.2),
                 'Default:Uber Onslaught',
-                30,
+                ticket_award=30,
                 hard_mode_only=True,
-            )
-        )
-        # 30
-        achs.append(
+            ),
             Achievement(
                 'TNT Terror',
                 'achievementTNT',
                 (2, 1.8, 0.3),
                 'Default:Uber Onslaught',
-                30,
+                ticket_award=30,
                 hard_mode_only=True,
-            )
-        )
-
-        # 30
-        achs.append(
+            ),
             Achievement(
                 'Uber Football Victory',
                 'achievementFootballVictory',
                 (1.8, 1.4, 0.3),
                 'Default:Uber Football',
-                30,
-            )
-        )
-        # 30
-        achs.append(
+                ticket_award=30,
+            ),
             Achievement(
                 'Got the Moves',
                 'achievementGotTheMoves',
                 (2, 1, 0),
                 'Default:Uber Football',
-                30,
+                ticket_award=30,
                 hard_mode_only=True,
-            )
-        )
-        # 40
-        achs.append(
+            ),
             Achievement(
                 'Uber Football Shutout',
                 'achievementFootballShutout',
                 (2, 2, 0),
                 'Default:Uber Football',
-                40,
+                ticket_award=40,
                 hard_mode_only=True,
-            )
-        )
-
-        # 30
-        achs.append(
+            ),
             Achievement(
                 'Uber Runaround Victory',
                 'achievementRunaround',
                 (1.5, 1.2, 0.2),
                 'Default:Uber Runaround',
-                30,
-            )
-        )
-        # 40
-        achs.append(
+                ticket_award=30,
+            ),
             Achievement(
                 'The Great Wall',
                 'achievementWall',
                 (2, 1.7, 0.4),
                 'Default:Uber Runaround',
-                40,
+                ticket_award=40,
                 hard_mode_only=True,
-            )
-        )
-        # 40
-        achs.append(
+            ),
             Achievement(
                 'Stayin\' Alive',
                 'achievementStayinAlive',
                 (2, 2, 1),
                 'Default:Uber Runaround',
-                40,
+                ticket_award=40,
                 hard_mode_only=True,
-            )
-        )
-
-        # 20
-        achs.append(
+            ),
             Achievement(
                 'Last Stand Master',
                 'achievementMedalSmall',
                 (2, 1.5, 0.3),
                 'Default:The Last Stand',
-                20,
+                ticket_award=20,
                 hard_mode_only=True,
-            )
-        )
-        # 40
-        achs.append(
+            ),
             Achievement(
                 'Last Stand Wizard',
                 'achievementMedalMedium',
                 (2, 1.5, 0.3),
                 'Default:The Last Stand',
-                40,
+                ticket_award=40,
                 hard_mode_only=True,
-            )
-        )
-        # 60
-        achs.append(
+            ),
             Achievement(
                 'Last Stand God',
                 'achievementMedalLarge',
                 (2, 1.5, 0.3),
                 'Default:The Last Stand',
-                60,
+                ticket_award=60,
                 hard_mode_only=True,
-            )
-        )
-
-        # 5
-        achs.append(
+            ),
             Achievement(
                 'Onslaught Master',
                 'achievementMedalSmall',
                 (0.7, 1, 0.7),
                 'Challenges:Infinite Onslaught',
-                5,
-            )
-        )
-        # 15
-        achs.append(
+                ticket_award=5,
+            ),
             Achievement(
                 'Onslaught Wizard',
                 'achievementMedalMedium',
                 (0.7, 1.0, 0.7),
                 'Challenges:Infinite Onslaught',
-                15,
-            )
-        )
-        # 30
-        achs.append(
+                ticket_award=15,
+            ),
             Achievement(
                 'Onslaught God',
                 'achievementMedalLarge',
                 (0.7, 1.0, 0.7),
                 'Challenges:Infinite Onslaught',
-                30,
-            )
-        )
-
-        # 5
-        achs.append(
+                ticket_award=30,
+            ),
             Achievement(
                 'Runaround Master',
                 'achievementMedalSmall',
                 (1.0, 1.0, 1.2),
                 'Challenges:Infinite Runaround',
-                5,
-            )
-        )
-        # 15
-        achs.append(
+                ticket_award=5,
+            ),
             Achievement(
                 'Runaround Wizard',
                 'achievementMedalMedium',
                 (1.0, 1.0, 1.2),
                 'Challenges:Infinite Runaround',
-                15,
-            )
-        )
-        # 30
-        achs.append(
+                ticket_award=15,
+            ),
             Achievement(
                 'Runaround God',
                 'achievementMedalLarge',
                 (1.0, 1.0, 1.2),
                 'Challenges:Infinite Runaround',
-                30,
-            )
-        )
+                ticket_award=30,
+            ),
+        ]
 
     def award_local_achievement(self, achname: str) -> None:
         """For non-game-based achievements such as controller-connection."""
@@ -652,18 +535,20 @@ class Achievement:
         self,
         name: str,
         icon_name: str,
-        icon_color: Sequence[float],
+        icon_color: tuple[float, float, float],
         level_name: str,
-        award: int,
+        *,
+        ticket_award: int,
+        # chest_award: ClassicChestAppearance,
         hard_mode_only: bool = False,
     ):
-        # pylint: disable=too-many-positional-arguments
         self._name = name
         self._icon_name = icon_name
-        self._icon_color: Sequence[float] = list(icon_color) + [1]
+        assert len(icon_color) == 3
+        self._icon_color = icon_color + (1.0,)
         self._level_name = level_name
         self._completion_banner_slot: int | None = None
-        self._award = award
+        self._ticket_award = ticket_award
         self._hard_mode_only = hard_mode_only
 
     @property
@@ -843,16 +728,16 @@ class Achievement:
             ],
         )
 
-    def get_award_ticket_value(self, include_pro_bonus: bool = False) -> int:
-        """Get the ticket award value for this achievement."""
-        plus = babase.app.plus
-        if plus is None:
-            return 0
-        val: int = plus.get_v1_account_misc_read_val(
-            'achAward.' + self._name, self._award
-        ) * _get_ach_mult(include_pro_bonus)
-        assert isinstance(val, int)
-        return val
+    # def get_award_ticket_value(self, include_pro_bonus: bool = False) -> int:
+    #     """Get the ticket award value for this achievement."""
+    #     plus = babase.app.plus
+    #     if plus is None:
+    #         return 0
+    #     val: int = plus.get_v1_account_misc_read_val(
+    #         'achAward.' + self._name, self._ticket_award
+    #     ) * _get_ach_mult(include_pro_bonus)
+    #     assert isinstance(val, int)
+    #     return val
 
     @property
     def power_ranking_value(self) -> int:
@@ -861,7 +746,7 @@ class Achievement:
         if plus is None:
             return 0
         val: int = plus.get_v1_account_misc_read_val(
-            'achLeaguePoints.' + self._name, self._award
+            'achLeaguePoints.' + self._name, self._ticket_award
         )
         assert isinstance(val, int)
         return val
@@ -1019,39 +904,40 @@ class Achievement:
 
             # Ticket-award.
             award_x = -100
-            objs.append(
-                Text(
-                    babase.charstr(babase.SpecialChar.TICKET),
-                    host_only=True,
-                    position=(x + award_x + 33, y + 7),
-                    transition=Text.Transition.FADE_IN,
-                    scale=1.5,
-                    h_attach=h_attach,
-                    v_attach=v_attach,
-                    h_align=Text.HAlign.CENTER,
-                    v_align=Text.VAlign.CENTER,
-                    color=(1, 1, 1, 0.2 if hmo else 0.4),
-                    transition_delay=delay + 0.05,
-                    transition_out_delay=out_delay_fin,
-                ).autoretain()
-            )
-            objs.append(
-                Text(
-                    '+' + str(self.get_award_ticket_value()),
-                    host_only=True,
-                    position=(x + award_x + 28, y + 16),
-                    transition=Text.Transition.FADE_IN,
-                    scale=0.7,
-                    flatness=1,
-                    h_attach=h_attach,
-                    v_attach=v_attach,
-                    h_align=Text.HAlign.CENTER,
-                    v_align=Text.VAlign.CENTER,
-                    color=cl2,
-                    transition_delay=delay + 0.05,
-                    transition_out_delay=out_delay_fin,
-                ).autoretain()
-            )
+            # print('FIXME SHOW ACH CHEST VAL')
+            # objs.append(
+            #     Text(
+            #         babase.charstr(babase.SpecialChar.TICKET),
+            #         host_only=True,
+            #         position=(x + award_x + 33, y + 7),
+            #         transition=Text.Transition.FADE_IN,
+            #         scale=1.5,
+            #         h_attach=h_attach,
+            #         v_attach=v_attach,
+            #         h_align=Text.HAlign.CENTER,
+            #         v_align=Text.VAlign.CENTER,
+            #         color=(1, 1, 1, 0.2 if hmo else 0.4),
+            #         transition_delay=delay + 0.05,
+            #         transition_out_delay=out_delay_fin,
+            #     ).autoretain()
+            # )
+            # objs.append(
+            #     Text(
+            #         '+' + str(self.get_award_ticket_value()),
+            #         host_only=True,
+            #         position=(x + award_x + 28, y + 16),
+            #         transition=Text.Transition.FADE_IN,
+            #         scale=0.7,
+            #         flatness=1,
+            #         h_attach=h_attach,
+            #         v_attach=v_attach,
+            #         h_align=Text.HAlign.CENTER,
+            #         v_align=Text.VAlign.CENTER,
+            #         color=cl2,
+            #         transition_delay=delay + 0.05,
+            #         transition_out_delay=out_delay_fin,
+            #     ).autoretain()
+            # )
 
         else:
             complete = self.complete
@@ -1110,23 +996,24 @@ class Achievement:
                             transition_out_delay=None,
                         ).autoretain()
                     )
-                    objs.append(
-                        Text(
-                            '+' + str(self.get_award_ticket_value()),
-                            host_only=True,
-                            position=(x + award_x + 28, y + 16),
-                            transition=Text.Transition.IN_RIGHT,
-                            scale=0.7,
-                            flatness=1,
-                            h_attach=h_attach,
-                            v_attach=v_attach,
-                            h_align=Text.HAlign.CENTER,
-                            v_align=Text.VAlign.CENTER,
-                            color=(0.6, 0.6, 0.6, (0.2 if hmo else 0.4)),
-                            transition_delay=delay + 0.05,
-                            transition_out_delay=None,
-                        ).autoretain()
-                    )
+                    # print('FIXME SHOW ACH CHEST2')
+                    # objs.append(
+                    #     Text(
+                    #         '+' + str(self.get_award_ticket_value()),
+                    #         host_only=True,
+                    #         position=(x + award_x + 28, y + 16),
+                    #         transition=Text.Transition.IN_RIGHT,
+                    #         scale=0.7,
+                    #         flatness=1,
+                    #         h_attach=h_attach,
+                    #         v_attach=v_attach,
+                    #         h_align=Text.HAlign.CENTER,
+                    #         v_align=Text.VAlign.CENTER,
+                    #         color=(0.6, 0.6, 0.6, (0.2 if hmo else 0.4)),
+                    #         transition_delay=delay + 0.05,
+                    #         transition_out_delay=None,
+                    #     ).autoretain()
+                    # )
 
                     # Show 'hard-mode-only' only over incomplete achievements
                     # when that's the case.
@@ -1478,49 +1365,51 @@ class Achievement:
         assert objt.node
         objt.node.host_only = True
 
-        objt = Text(
-            '+' + str(self.get_award_ticket_value()),
-            position=(-120 - 180 + 5, 80 + y_offs - 20),
-            v_attach=Text.VAttach.BOTTOM,
-            front=True,
-            h_align=Text.HAlign.CENTER,
-            v_align=Text.VAlign.CENTER,
-            transition=Text.Transition.IN_BOTTOM,
-            vr_depth=base_vr_depth,
-            flatness=0.5,
-            shadow=1.0,
-            transition_delay=in_time,
-            transition_out_delay=out_time,
-            flash=True,
-            color=(0, 1, 0, 1),
-            scale=1.5,
-        ).autoretain()
-        objs.append(objt)
+        # print('FIXME SHOW ACH CHEST3')
+        # objt = Text(
+        #     '+' + str(self.get_award_ticket_value()),
+        #     position=(-120 - 180 + 5, 80 + y_offs - 20),
+        #     v_attach=Text.VAttach.BOTTOM,
+        #     front=True,
+        #     h_align=Text.HAlign.CENTER,
+        #     v_align=Text.VAlign.CENTER,
+        #     transition=Text.Transition.IN_BOTTOM,
+        #     vr_depth=base_vr_depth,
+        #     flatness=0.5,
+        #     shadow=1.0,
+        #     transition_delay=in_time,
+        #     transition_out_delay=out_time,
+        #     flash=True,
+        #     color=(0, 1, 0, 1),
+        #     scale=1.5,
+        # ).autoretain()
+        # objs.append(objt)
+
         assert objt.node
         objt.node.host_only = True
 
         # Add the 'x 2' if we've got pro.
-        if app.classic.accounts.have_pro():
-            objt = Text(
-                'x 2',
-                position=(-120 - 180 + 45, 80 + y_offs - 50),
-                v_attach=Text.VAttach.BOTTOM,
-                front=True,
-                h_align=Text.HAlign.CENTER,
-                v_align=Text.VAlign.CENTER,
-                transition=Text.Transition.IN_BOTTOM,
-                vr_depth=base_vr_depth,
-                flatness=0.5,
-                shadow=1.0,
-                transition_delay=in_time,
-                transition_out_delay=out_time,
-                flash=True,
-                color=(0.4, 0, 1, 1),
-                scale=0.9,
-            ).autoretain()
-            objs.append(objt)
-            assert objt.node
-            objt.node.host_only = True
+        # if app.classic.accounts.have_pro():
+        #     objt = Text(
+        #         'x 2',
+        #         position=(-120 - 180 + 45, 80 + y_offs - 50),
+        #         v_attach=Text.VAttach.BOTTOM,
+        #         front=True,
+        #         h_align=Text.HAlign.CENTER,
+        #         v_align=Text.VAlign.CENTER,
+        #         transition=Text.Transition.IN_BOTTOM,
+        #         vr_depth=base_vr_depth,
+        #         flatness=0.5,
+        #         shadow=1.0,
+        #         transition_delay=in_time,
+        #         transition_out_delay=out_time,
+        #         flash=True,
+        #         color=(0.4, 0, 1, 1),
+        #         scale=0.9,
+        #     ).autoretain()
+        #     objs.append(objt)
+        #     assert objt.node
+        #     objt.node.host_only = True
 
         objt = Text(
             self.description_complete,

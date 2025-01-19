@@ -68,7 +68,7 @@ class GameButton:
             position=(x + 23, y + 4),
             size=(sclx, scly),
             label='',
-            on_activate_call=bui.WeakCall(self._on_press),
+            on_activate_call=self._on_press,
             button_type='square',
             autoselect=True,
             on_select_call=bui.Call(window.sel_change, row, game),

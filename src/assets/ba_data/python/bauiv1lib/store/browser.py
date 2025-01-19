@@ -198,8 +198,8 @@ class StoreBrowserWindow(bui.MainWindow):
             center = (pos[0] + 0.1 * size[0], pos[1] + 0.9 * size[1])
             img = bui.imagewidget(
                 parent=self._root_widget,
-                position=(center[0] - rad * 1.04, center[1] - rad * 1.15),
-                size=(rad * 2.2, rad * 2.2),
+                position=(center[0] - rad * 1.1, center[1] - rad * 1.2),
+                size=(rad * 2.4, rad * 2.4),
                 texture=bui.gettexture('circleShadow'),
                 color=(1, 0, 0),
             )
