@@ -3,7 +3,7 @@ when:
 
 steps:
   - name: build-and-publish
-    image: woodpeckerci/plugin-kaniko
+    image: woodpeckerci/plugin-docker-buildx
     settings:
       dockerfile: .woodpecker/ballistica_dev_dockerfile
       registry: codeberg.org
