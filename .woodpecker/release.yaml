@@ -46,7 +46,7 @@ steps:
       - cd ../../../..
     depends_on: [parallel-prepare]
   - name: build-and-publish-gui-docker
-    image: woodpeckerci/plugin-kaniko
+    image: woodpeckerci/plugin-docker-buildx
     settings:
       registry: codeberg.org
       repo: ${CI_REPO}
@@ -66,7 +66,7 @@ steps:
         - linux/amd64
     depends_on: [parallel-prepare]
   - name: build-and-publish-server-docker
-    image: woodpeckerci/plugin-kaniko
+    image: woodpeckerci/plugin-docker-buildx
     settings:
       registry: codeberg.org
       repo: ${CI_REPO}
