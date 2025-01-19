@@ -10,8 +10,6 @@ steps:
       - make env
       - cd ..
       - cp -r -v $CI_REPO_NAME build_prefabs
-      - cp -r -v $CI_REPO_NAME build_gui_docker
-      - cp -r -v $CI_REPO_NAME build_server_docker
       - cp -r -v $CI_REPO_NAME build_sphinx_docs
       - cd $CI_REPO_NAME
   - name: build-prefabs
@@ -51,7 +49,7 @@ steps:
     image: woodpeckerci/plugin-docker-buildx
     settings:
       dry-run: true
-      dockerfile: ../build_gui_docker/config/docker/Dockerfile
+      dockerfile: config/docker/Dockerfile
       build_args:
         - cmake_build_type=Debug
         - headless_build=1
@@ -74,9 +72,10 @@ steps:
   - name: build-sphinx-docs
     image: codeberg.org/3ra/ballistica-dev:latest
     commands:
+      - cd ../build_sphinx_docs
       - make docs-sphinx
       - mv -v build/sphinx build/ballisticakit_sphinx_docs
-      - tar -cvfC ballisticakit_sphinx_docs.tar build/ ballisticakit_sphinx_docs
+      - tar cvfC ballisticakit_sphinx_docs.tar build ballisticakit_sphinx_docs
     depends_on: [parallel-prepare]
   - name: publish
     image: woodpeckerci/plugin-release
