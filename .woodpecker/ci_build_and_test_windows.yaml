@@ -1,12 +1,9 @@
 when:
-  - event: push
-  - event: pull_request
-  - event: cron
-    cron: ci
+  - event: manual
 
 steps:
   - name: build-and-test
-    image: python:3.12-windowsservercore-ltsc2022
+    image: python:3.12-windowsservercore
     commands:
       - $env:PYTHONPATH = "tools"
       - python -m efrotools.genwrapper pcommand batools.pcommandmain tools/pcommand
