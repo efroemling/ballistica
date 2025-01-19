@@ -15,6 +15,11 @@ steps:
       - make prefab-linux-x86-64-server-debug-build
       - make prefab-mac-arm64-server-debug-build
       - make prefab-windows-x86-server-debug-build
+      - make docker-gui-release
+      - make docker-save
+      - make docker-server-release
+      - make docker-save
+      - make docs-sphinx
       - mv -v build/prefab/full/linux_arm64_gui/debug build/prefab/full/linux_arm64_gui/ballisticakit_linux_arm64
       - tar cvzfC ballisticakit_linux_arm64.tar.gz build/prefab/full/linux_arm64_gui ballisticakit_linux_arm64
       - mv -v build/prefab/full/linux_x86_64_gui/debug build/prefab/full/linux_x86_64_gui/ballisticakit_linux_x86_64
@@ -23,7 +28,7 @@ steps:
       - tar cvzfC ballisticakit_mac.tar.gz build/prefab/full/mac_arm64_gui ballisticakit_mac
       - mv -v build/prefab/full/windows_x86_gui/debug build/prefab/full/windows_x86_gui/ballisticakit_windows
       - cd build/prefab/full/windows_x86_gui
-      - zip -r ../../../../ballisticakit_windows.zip ballisticakit_windows
+      - zip -rv ../../../../ballisticakit_windows.zip ballisticakit_windows
       - cd ../../../..
       - mv -v build/prefab/full/linux_arm64_server/debug build/prefab/full/linux_arm64_server/ballisticakit_linux_arm64_server
       - tar cvzfC ballisticakit_linux_arm64_server.tar.gz build/prefab/full/linux_arm64_server ballisticakit_linux_arm64_server
@@ -33,8 +38,12 @@ steps:
       - tar cvzfC ballisticakit_mac_server.tar.gz build/prefab/full/mac_arm64_server ballisticakit_mac_server
       - mv -v build/prefab/full/windows_x86_server/debug build/prefab/full/windows_x86_server/ballisticakit_windows_server
       - cd build/prefab/full/windows_x86_server
-      - zip -r ../../../../ballisticakit_windows_server.zip ballisticakit_windows_server
+      - zip -rv ../../../../ballisticakit_windows_server.zip ballisticakit_windows_server
       - cd ../../../..
+      - mv -v build/docker/bombsquad_gui_release_docker.tar ballisticakit_docker.tar
+      - mv -v build/docker/bombsquad_server_release_docker.tar ballisticakit_server_docker.tar
+      - mv -v build/sphinx build/ballisticakit_sphinx
+      - tar -cvfC ballisticakit_sphinx_docs.tar build ballisticakit_sphinx
   - name: publish
     image: woodpeckerci/plugin-release
     settings:
@@ -49,5 +58,8 @@ steps:
         - 'ballisticakit_linux_x86_64_server.tar.gz'
         - 'ballisticakit_mac_server.tar.gz'
         - 'ballisticakit_windows_server.zip'
+        - 'ballisticakit_docker.tar'
+        - 'ballisticakit_server_docker.tar'
+        - 'ballisticakit_sphinx_docs.tar'
       note: 'These are debug prefab builds; use them for testing purposes only. Check out https://ballistica.net/downloads for official/blessed release builds'
       title: ${CI_COMMIT_TAG}

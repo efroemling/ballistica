@@ -198,6 +198,15 @@ ctx.filter_file_names = {
     'deploy_docs.yml',
     'nightly.yml',
     'release.yml',
+    'ballistica_dev_dockerfile',
+    'ballistica_dev_image.yaml',
+    'ci_check_linux.yaml',
+    'ci_build_and_test_linux.yaml',
+    'ci_spinoff_test_linux.yaml'
+    'ci_feature_set_copy_test_linux.yaml',
+    'ci_build_and_test_windows.yaml',
+    'deploy_docs.yaml'
+    'release.yaml'
     'LICENSE',
     'cloudtool',
     'bacloud',

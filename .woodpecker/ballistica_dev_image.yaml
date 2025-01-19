@@ -2,10 +2,10 @@ when:
   - event: manual
 
 steps:
-  - name: build_and_publish
+  - name: build-and-publish
     image: woodpeckerci/plugin-kaniko
     settings:
-      dockerfile: .woodpecker/Dockerfile
+      dockerfile: .woodpecker/ballistica_dev_dockerfile
       registry: codeberg.org
       repo: ${CI_REPO}-dev
       tag: latest

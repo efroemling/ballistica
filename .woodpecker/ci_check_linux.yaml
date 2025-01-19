@@ -5,10 +5,9 @@ when:
     cron: ci
 
 steps:
-  - name: linux
+  - name: check
     image: codeberg.org/3ra/ballistica-dev:latest
     pull: true
     commands:
       - make env
-      - make spinoff-test-core
-      - make spinoff-test-base
+      - BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make check

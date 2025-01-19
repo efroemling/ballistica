@@ -5,7 +5,7 @@ when:
     cron: ci
 
 steps:
-  - name: linux
+  - name: build_and_test
     image: codeberg.org/3ra/ballistica-dev:latest
     pull: true
     commands:
