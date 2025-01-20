@@ -86,7 +86,10 @@ class ChestWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(0, self._height - 50 + self._yoffs),
             size=(self._width, 25),
-            text=f'Chest Slot {self._index + 1}',
+            text=bui.Lstr(
+                resource='chests.slotText',
+                subs=[('${NUM}', str(index + 1))],
+            ),
             color=bui.app.ui_v1.title_color,
             maxwidth=150.0,
             h_align='center',
@@ -796,13 +799,11 @@ class ChestWindow(bui.MainWindow):
             return
 
         self._reset()
-        msg = (
-            'This slot can hold a treasure chest.\n\n'
-            'Earn chests by playing campaign levels,\n'
-            'placing in tournaments, and completing\n'
-            'achievements.'
+        bui.textwidget(
+            edit=self._infotext,
+            text=bui.Lstr(resource='chests.slotDescriptionText'),
+            color=(1, 1, 1),
         )
-        bui.textwidget(edit=self._infotext, text=msg, color=(1, 1, 1))
 
     def _show_chest_contents(
         self, response: bacommon.bs.ChestActionResponse

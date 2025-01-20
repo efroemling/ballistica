@@ -986,6 +986,31 @@ static PyMethodDef PySetUIAccountStateDef = {
     "\n"
     "(internal)\n",
 };
+
+// ------------------------ get_virtual_screen_size ----------------------------
+
+static auto PyGetVirtualScreenSize(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  float x{g_base->graphics->screen_virtual_width()};
+  float y{g_base->graphics->screen_virtual_height()};
+  return Py_BuildValue("(ff)", x, y);
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetVirtualScreenSizeDef = {
+    "get_virtual_screen_size",            // name
+    (PyCFunction)PyGetVirtualScreenSize,  // method
+    METH_NOARGS,                          // flags
+
+    "get_virtual_screen_size() -> tuple[float, float]\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Return the current virtual size of the display.",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
@@ -1021,6 +1046,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyFullscreenControlGetDef,
       PyFullscreenControlSetDef,
       PySetUIAccountStateDef,
+      PyGetVirtualScreenSizeDef,
   };
 }
 
