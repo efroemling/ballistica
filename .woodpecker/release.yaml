@@ -48,6 +48,12 @@ steps:
   - name: build-and-publish-gui-docker
     image: woodpeckerci/plugin-docker-buildx
     settings:
+      dockerfile: config/docker/Dockerfile
+      build_args:
+        - cmake_build_type=Debug
+        - headless_build=0
+      platforms:
+        - linux/amd64
       registry: codeberg.org
       repo: codeberg.org/${CI_REPO}
       tags:
@@ -58,16 +64,16 @@ steps:
       username: ${CI_REPO_OWNER}
       password:
         from_secret: ACCESS_TOKEN
-      dockerfile: config/docker/Dockerfile
-      build_args:
-        - cmake_build_type=Debug
-        - headless_build=0
-      platforms:
-        - linux/amd64
     depends_on: [parallel-prepare]
   - name: build-and-publish-server-docker
     image: woodpeckerci/plugin-docker-buildx
     settings:
+      dockerfile: config/docker/Dockerfile
+      build_args:
+        - cmake_build_type=Debug
+        - headless_build=1
+      platforms:
+        - linux/amd64
       registry: codeberg.org
       repo: codeberg.org/${CI_REPO}
       tags:
@@ -76,12 +82,6 @@ steps:
       username: ${CI_REPO_OWNER}
       password:
         from_secret: ACCESS_TOKEN
-      dockerfile: config/docker/Dockerfile
-      build_args:
-        - cmake_build_type=Debug
-        - headless_build=1
-      platforms:
-        - linux/amd64
     depends_on: [parallel-prepare]
   - name: build-sphinx-docs
     image: codeberg.org/3ra/ballistica-dev:latest
