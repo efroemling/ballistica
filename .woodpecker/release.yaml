@@ -49,7 +49,7 @@ steps:
     image: woodpeckerci/plugin-docker-buildx
     settings:
       registry: codeberg.org
-      repo: ${CI_REPO}
+      repo: codeberg.org/${CI_REPO}
       tags:
         - latest-debug
         - latest-gui-debug
@@ -69,7 +69,7 @@ steps:
     image: woodpeckerci/plugin-docker-buildx
     settings:
       registry: codeberg.org
-      repo: ${CI_REPO}
+      repo: codeberg.org/${CI_REPO}
       tags:
         - latest-server-debug
         - ${CI_COMMIT_TAG}-server-debug

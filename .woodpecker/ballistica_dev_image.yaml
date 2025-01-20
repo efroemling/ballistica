@@ -7,7 +7,7 @@ steps:
     settings:
       dockerfile: .woodpecker/ballistica_dev_dockerfile
       registry: codeberg.org
-      repo: ${CI_REPO}-dev
+      repo: codeberg.org/${CI_REPO}-dev
       tag: latest
       username: ${CI_REPO_OWNER}
       password:
