@@ -50,6 +50,31 @@ class ClassicChestAppearance(Enum):
     L5 = 'l5'
     L6 = 'l6'
 
+    @property
+    def pretty_name(self) -> str:
+        """Pretty name for the chest in English."""
+        # pylint: disable=too-many-return-statements
+        cls = type(self)
+
+        if self is cls.UNKNOWN:
+            return 'Unknown Chest'
+        if self is cls.DEFAULT:
+            return 'Chest'
+        if self is cls.L1:
+            return 'L1 Chest'
+        if self is cls.L2:
+            return 'L2 Chest'
+        if self is cls.L3:
+            return 'L3 Chest'
+        if self is cls.L4:
+            return 'L4 Chest'
+        if self is cls.L5:
+            return 'L5 Chest'
+        if self is cls.L6:
+            return 'L6 Chest'
+
+        assert_never(self)
+
 
 @ioprepped
 @dataclass
@@ -147,8 +172,9 @@ class DisplayItem(IOMultiType[DisplayItemTypeID]):
         """Return a string description and subs for the item.
 
         These decriptions are baked into the DisplayItemWrapper and
-        should be accessed from there by the client. This should only be
-        called on the server side when doing said baking.
+        should be accessed from there when available. This allows
+        clients to give descriptions even for newer display items they
+        don't recognize.
         """
         raise NotImplementedError()
 
@@ -246,7 +272,7 @@ class ChestDisplayItem(DisplayItem):
 
     @override
     def get_description(self) -> tuple[str, list[tuple[str, str]]]:
-        return '${TYPE} Chest', [('${TYPE}', self.appearance.name.capitalize())]
+        return self.appearance.pretty_name, []
 
 
 @ioprepped

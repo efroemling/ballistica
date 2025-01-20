@@ -917,11 +917,7 @@ class StoreBrowserWindow(bui.MainWindow):
                             subs=[
                                 (
                                     '${SETTINGS}',
-                                    bui.Lstr(
-                                        resource=(
-                                            'accountSettingsWindow.titleText'
-                                        )
-                                    ),
+                                    bui.Lstr(resource='inventoryText'),
                                 ),
                                 (
                                     '${PLAYER_PROFILES}',

@@ -99,7 +99,7 @@ def show_display_item(
             scale=width * 0.006,
             size=(0, 0),
             text=bauiv1.Lstr(
-                translate=('serverResponses', itemwrapper.description),
+                translate=('displayItemNames', itemwrapper.description),
                 subs=pairs_from_flat(subs),
             ),
             maxwidth=width * 0.9,

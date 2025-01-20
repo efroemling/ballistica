@@ -58,25 +58,14 @@ class ResourceTypeInfoWindow(PopupWindow):
 
         max_rdesc_height = 160
 
+        rdesc: bui.Lstr | str
+
         if resource_type == 'tickets':
             yoffs -= 20
-            rdesc = (
-                'Tickets can be used to unlock characters,\n'
-                'maps, minigames, and more in the store.\n'
-                '\n'
-                'Tickets can be found in chests won through\n'
-                'campaigns, tournaments, and achievements.'
-            )
+            rdesc = bui.Lstr(resource='ticketsDescriptionText')
             texname = 'tickets'
         elif resource_type == 'tokens':
-            rdesc = (
-                'Tokens are used to speed up chest unlocks\n'
-                'and for other game and account features.\n'
-                '\n'
-                'You can win tokens in the game or buy them\n'
-                'in packs. Or buy a Gold Pass for infinite\n'
-                'tokens and never hear about them again.'
-            )
+            rdesc = bui.Lstr(resource='tokens.tokensDescriptionText')
             texname = 'coin'
             bwidth = 200
             bheight = 50

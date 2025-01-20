@@ -58,7 +58,7 @@ class InventoryWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(0, height - 45 + yoffs),
             size=(width, 25),
-            text='INVENTORY',
+            text=bui.Lstr(resource='inventoryText'),
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',

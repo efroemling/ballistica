@@ -294,7 +294,10 @@ class ChestWindow(bui.MainWindow):
         )
 
         bui.textwidget(
-            edit=self._title_text, text=f'{chest.appearance.name} Chest'
+            edit=self._title_text,
+            text=bui.Lstr(
+                translate=('displayItemNames', chest.appearance.pretty_name)
+            ),
         )
 
         imgsize = 145
@@ -387,7 +390,7 @@ class ChestWindow(bui.MainWindow):
             self._open_now_texts.append(
                 bui.textwidget(
                     parent=self._root_widget,
-                    text='Open',
+                    text=bui.Lstr(resource='openText'),
                     position=(
                         self._width * 0.5 + boffsx,
                         self._height + bposy + self._yoffs + bheight * 0.5,
@@ -405,7 +408,7 @@ class ChestWindow(bui.MainWindow):
             self._open_now_texts.append(
                 bui.textwidget(
                     parent=self._root_widget,
-                    text='Open Now',
+                    text=bui.Lstr(resource='openNowText'),
                     position=(
                         self._width * 0.5 + boffsx,
                         self._height + bposy + self._yoffs + bheight * 1.15,
@@ -562,7 +565,7 @@ class ChestWindow(bui.MainWindow):
         # Title.
         bui.textwidget(
             parent=self._root_widget,
-            text='Prize Odds',
+            text=bui.Lstr(resource='chests.prizeOddsText'),
             color=(0.7, 0.65, 1, 0.5),
             flatness=1.0,
             shadow=1.0,
@@ -625,10 +628,12 @@ class ChestWindow(bui.MainWindow):
             # Show decimals only if we get very small percentages (looks
             # better than rounding as '0%').
             percenttxt = (
-                f'{percent:.2f}'
-                if percent < 0.1
+                f'{percent:.2f}%:'
+                if percent < 0.095
                 else (
-                    f'{percent:.1f}' if percent < 1.0 else f'{round(percent)}%:'
+                    f'{percent:.1f}%:'
+                    if percent < 0.95
+                    else f'{round(percent)}%:'
                 )
             )
 
