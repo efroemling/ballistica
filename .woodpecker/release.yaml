@@ -57,10 +57,8 @@ steps:
       registry: codeberg.org
       repo: codeberg.org/${CI_REPO}
       tags:
-        - latest-debug
-        - latest-gui-debug
-        - ${CI_COMMIT_TAG}-debug
-        - ${CI_COMMIT_TAG}-gui-debug
+        - ${CI_COMMIT_TAG##v}-debug
+        - ${CI_COMMIT_TAG##v}-gui-debug
       username: ${CI_REPO_OWNER}
       password:
         from_secret: ACCESS_TOKEN
@@ -77,8 +75,7 @@ steps:
       registry: codeberg.org
       repo: codeberg.org/${CI_REPO}
       tags:
-        - latest-server-debug
-        - ${CI_COMMIT_TAG}-server-debug
+        - ${CI_COMMIT_TAG##v}-server-debug
       username: ${CI_REPO_OWNER}
       password:
         from_secret: ACCESS_TOKEN

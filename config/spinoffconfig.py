@@ -202,6 +202,7 @@ ctx.filter_file_names = {
     'ballistica_dev_image.yaml',
     'ci.yaml',
     'ci_build_and_test_windows.yaml',
+    'cd.yaml',
     'deploy_docs.yaml',
     'release.yaml',
     'LICENSE',

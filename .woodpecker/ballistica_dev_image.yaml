@@ -6,8 +6,6 @@ steps:
     image: woodpeckerci/plugin-docker-buildx
     settings:
       dockerfile: .woodpecker/ballistica_dev_dockerfile
-      platforms:
-        - linux/amd64
       registry: codeberg.org
       repo: codeberg.org/${CI_REPO}-dev
       tags:
