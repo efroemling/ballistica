@@ -1,0 +1,108 @@
+when:
+  - event: tag
+    ref: refs/tags/v*
+
+steps:
+  - name: parallel-prepare
+    image: codeberg.org/3ra/ballistica-dev:latest
+    pull: true
+    commands:
+      - make env
+      - cd ..
+      - cp -r -v $CI_REPO_NAME build_prefabs
+      - cp -r -v $CI_REPO_NAME build_sphinx_docs
+      - cd $CI_REPO_NAME
+  - name: build-prefabs
+    image: codeberg.org/3ra/ballistica-dev:latest
+    commands:
+      - cd ../build_prefabs
+      - make prefab-linux-arm64-gui-debug-build
+      - make prefab-linux-x86-64-gui-debug-build
+      - make prefab-mac-arm64-gui-debug-build
+      - make prefab-windows-x86-gui-debug-build
+      - make prefab-linux-arm64-server-debug-build
+      - make prefab-linux-x86-64-server-debug-build
+      - make prefab-mac-arm64-server-debug-build
+      - make prefab-windows-x86-server-debug-build
+      - mv -v build/prefab/full/linux_arm64_gui/debug build/prefab/full/linux_arm64_gui/ballisticakit_linux_arm64
+      - tar cvzfC ballisticakit_linux_arm64.tar.gz build/prefab/full/linux_arm64_gui ballisticakit_linux_arm64
+      - mv -v build/prefab/full/linux_x86_64_gui/debug build/prefab/full/linux_x86_64_gui/ballisticakit_linux_x86_64
+      - tar cvzfC ballisticakit_linux_x86_64.tar.gz build/prefab/full/linux_x86_64_gui ballisticakit_linux_x86_64
+      - mv -v build/prefab/full/mac_arm64_gui/debug build/prefab/full/mac_arm64_gui/ballisticakit_mac
+      - tar cvzfC ballisticakit_mac.tar.gz build/prefab/full/mac_arm64_gui ballisticakit_mac
+      - mv -v build/prefab/full/windows_x86_gui/debug build/prefab/full/windows_x86_gui/ballisticakit_windows
+      - cd build/prefab/full/windows_x86_gui
+      - zip -rv ../../../../ballisticakit_windows.zip ballisticakit_windows
+      - cd ../../../..
+      - mv -v build/prefab/full/linux_arm64_server/debug build/prefab/full/linux_arm64_server/ballisticakit_linux_arm64_server
+      - tar cvzfC ballisticakit_linux_arm64_server.tar.gz build/prefab/full/linux_arm64_server ballisticakit_linux_arm64_server
+      - mv -v build/prefab/full/linux_x86_64_server/debug build/prefab/full/linux_x86_64_server/ballisticakit_linux_x86_64_server
+      - tar cvzfC ballisticakit_linux_x86_64_server.tar.gz build/prefab/full/linux_x86_64_server ballisticakit_linux_x86_64_server
+      - mv -v build/prefab/full/mac_arm64_server/debug build/prefab/full/mac_arm64_server/ballisticakit_mac_server
+      - tar cvzfC ballisticakit_mac_server.tar.gz build/prefab/full/mac_arm64_server ballisticakit_mac_server
+      - mv -v build/prefab/full/windows_x86_server/debug build/prefab/full/windows_x86_server/ballisticakit_windows_server
+      - cd build/prefab/full/windows_x86_server
+      - zip -rv ../../../../ballisticakit_windows_server.zip ballisticakit_windows_server
+      - cd ../../../..
+    depends_on: [parallel-prepare]
+  - name: build-and-publish-gui-docker
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      dockerfile: config/docker/Dockerfile
+      build_args:
+        - cmake_build_type=Debug
+        - headless_build=0
+      platforms:
+        - linux/amd64
+      registry: codeberg.org
+      repo: codeberg.org/${CI_REPO}
+      tags:
+        - ${CI_COMMIT_TAG##v}-debug
+        - ${CI_COMMIT_TAG##v}-gui-debug
+      username: ${CI_REPO_OWNER}
+      password:
+        from_secret: ACCESS_TOKEN
+    depends_on: [parallel-prepare]
+  - name: build-and-publish-server-docker
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      dockerfile: config/docker/Dockerfile
+      build_args:
+        - cmake_build_type=Debug
+        - headless_build=1
+      platforms:
+        - linux/amd64
+      registry: codeberg.org
+      repo: codeberg.org/${CI_REPO}
+      tags:
+        - ${CI_COMMIT_TAG##v}-server-debug
+      username: ${CI_REPO_OWNER}
+      password:
+        from_secret: ACCESS_TOKEN
+    depends_on: [parallel-prepare]
+  - name: build-sphinx-docs
+    image: codeberg.org/3ra/ballistica-dev:latest
+    commands:
+      - cd ../build_sphinx_docs
+      - make docs-sphinx
+      - mv -v build/sphinx build/ballistica_sphinx_docs
+      - tar cvfC ballistica_sphinx_docs.tar build ballistica_sphinx_docs
+    depends_on: [parallel-prepare]
+  - name: release
+    image: woodpeckerci/plugin-release
+    settings:
+      api_key:
+        from_secret: ACCESS_TOKEN
+      files:
+        - '../build_prefabs/ballisticakit_linux_arm64.tar.gz'
+        - '../build_prefabs/ballisticakit_linux_x86_64.tar.gz'
+        - '../build_prefabs/ballisticakit_mac.tar.gz'
+        - '../build_prefabs/ballisticakit_windows.zip'
+        - '../build_prefabs/ballisticakit_linux_arm64_server.tar.gz'
+        - '../build_prefabs/ballisticakit_linux_x86_64_server.tar.gz'
+        - '../build_prefabs/ballisticakit_mac_server.tar.gz'
+        - '../build_prefabs/ballisticakit_windows_server.zip'
+        - '../build_sphinx_docs/ballistica_sphinx_docs.tar'
+      note: 'These are debug prefab builds; use them for testing purposes only. Docker versions of this release also exist at https://codeberg.org/3ra/-/packages/container/ballistica. Check out https://ballistica.net/downloads for official/blessed release builds.'
+      title: ${CI_COMMIT_TAG}
+    depends_on: [build-prefabs, build-sphinx-docs]

@@ -1,0 +1,47 @@
+when:
+  - event: push
+  - event: pull_request
+  - event: cron
+    cron: ci
+
+steps:
+  - name: parallel-prepare
+    image: codeberg.org/3ra/ballistica-dev:latest
+    pull: true
+    commands:
+      - make env
+      - cd ..
+      - cp -r -v $CI_REPO_NAME check_linux
+      - cp -r -v $CI_REPO_NAME build_and_test_linux
+      - cp -r -v $CI_REPO_NAME spinoff_test_linux
+      - cp -r -v $CI_REPO_NAME feature_set_copy_test_linux
+      - cd $CI_REPO_NAME
+  - name: check-linux
+    image: codeberg.org/3ra/ballistica-dev:latest
+    commands:
+      - cd ../check_linux
+      - BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make check
+    depends_on: [parallel-prepare]
+  - name: build-and-test-linux
+    image: codeberg.org/3ra/ballistica-dev:latest
+    commands:
+      - cd ../build_and_test_linux
+      - make cmake-server-build
+      - BA_PCOMMANDBATCH_BUILD_REQUIRE=1 BA_APP_RUN_ENABLE_BUILDS=1 BA_APP_RUN_BUILD_HEADLESS=1 make test
+    depends_on: [parallel-prepare]
+  - name: spinoff-test-linux
+    image: codeberg.org/3ra/ballistica-dev:latest
+    commands:
+      - cd ../spinoff_test_linux
+      - make spinoff-test-core
+      - make spinoff-test-base
+    depends_on: [parallel-prepare]
+  - name: feature-set-copy-test-linux
+    image: codeberg.org/3ra/ballistica-dev:latest
+    commands:
+      - cd ../feature_set_copy_test_linux
+      - tools/spinoff fset-copy template_fs poo
+      - make update
+      - make cmake-modular-server-build
+      - cd build/cmake/modular-server-debug/staged/dist && PYTHONPATH=ba_data/python ./ballisticakit_headless -c "import baenv; baenv.configure(); import bapoo; print(bapoo)"
+    depends_on: [parallel-prepare]
