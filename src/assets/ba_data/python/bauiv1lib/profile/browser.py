@@ -239,7 +239,8 @@ class ProfileBrowserWindow(bui.MainWindow):
         assert self._profiles is not None
         assert bui.app.classic is not None
         if (
-            not bui.app.classic.accounts.have_pro_options()
+            bool(False)  # Phasing out pro.
+            and not bui.app.classic.accounts.have_pro_options()
             and len(self._profiles) >= max_non_pro_profiles
         ):
             PurchaseWindow(
