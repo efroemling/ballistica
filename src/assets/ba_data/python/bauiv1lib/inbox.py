@@ -333,15 +333,15 @@ class InboxWindow(bui.MainWindow):
         # size changes under us. Currently one must navigate out and
         # back in to properly reflect such changes.
         screensize = bui.get_virtual_screen_size()
-        smallscale = (
+        scale = (
             1.74
             if uiscale is bui.UIScale.SMALL
             else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
         # Calc screen size in our local container space and clamp to a
         # bit smaller than our container size.
-        target_width = min(self._width - 60, screensize[0] / smallscale)
-        target_height = min(self._height - 70, screensize[1] / smallscale)
+        target_width = min(self._width - 60, screensize[0] / scale)
+        target_height = min(self._height - 70, screensize[1] / scale)
 
         # To get top/left coords, go to the center of our window and offset
         # by half the width/height of our target area.
@@ -357,7 +357,7 @@ class InboxWindow(bui.MainWindow):
                 toolbar_visibility=(
                     'menu_full' if uiscale is bui.UIScale.SMALL else 'menu_full'
                 ),
-                scale=smallscale,
+                scale=scale,
             ),
             transition=transition,
             origin_widget=origin_widget,
