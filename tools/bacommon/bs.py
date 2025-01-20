@@ -461,6 +461,7 @@ class BasicClientUIComponentTypeID(Enum):
     LINK = 'l'
     BS_CLASSIC_TOURNEY_RESULT = 'ct'
     DISPLAY_ITEMS = 'di'
+    EXPIRE_TIME = 'd'
 
 
 class BasicClientUIComponent(IOMultiType[BasicClientUIComponentTypeID]):
@@ -493,6 +494,8 @@ class BasicClientUIComponent(IOMultiType[BasicClientUIComponentTypeID]):
             return BasicClientUIBsClassicTourneyResult
         if type_id is t.DISPLAY_ITEMS:
             return BasicClientUIDisplayItems
+        if type_id is t.EXPIRE_TIME:
+            return BasicClientUIExpireTime
 
         # Important to make sure we provide all types.
         assert_never(type_id)
@@ -594,6 +597,21 @@ class BasicClientUIDisplayItems(BasicClientUIComponent):
     @classmethod
     def get_type_id(cls) -> BasicClientUIComponentTypeID:
         return BasicClientUIComponentTypeID.DISPLAY_ITEMS
+
+
+@ioprepped
+@dataclass
+class BasicClientUIExpireTime(BasicClientUIComponent):
+    """Show expire-time."""
+
+    time: Annotated[datetime.datetime, IOAttrs('d')]
+    spacing_top: Annotated[float, IOAttrs('st', store_default=False)] = 0.0
+    spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> BasicClientUIComponentTypeID:
+        return BasicClientUIComponentTypeID.EXPIRE_TIME
 
 
 @ioprepped

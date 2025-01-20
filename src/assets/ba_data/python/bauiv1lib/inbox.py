@@ -16,6 +16,7 @@ import bacommon.bs
 import bauiv1 as bui
 
 if TYPE_CHECKING:
+    import datetime
     from typing import Callable
 
 
@@ -36,9 +37,9 @@ class _TextSection(_Section):
 
     def __init__(
         self,
+        *,
         sub_width: float,
         text: bui.Lstr | str,
-        *,
         spacing_top: float = 0.0,
         spacing_bottom: float = 0.0,
         scale: float = 0.6,
@@ -96,9 +97,9 @@ class _ButtonSection(_Section):
 
     def __init__(
         self,
+        *,
         sub_width: float,
         label: bui.Lstr | str,
-        *,
         color: tuple[float, float, float],
         label_color: tuple[float, float, float],
         call: Callable[[_ButtonSection], None],
@@ -159,10 +160,10 @@ class _DisplayItemsSection(_Section):
 
     def __init__(
         self,
+        *,
         sub_width: float,
         items: list[bacommon.bs.DisplayItemWrapper],
         width: float = 100.0,
-        *,
         spacing_top: float = 0.0,
         spacing_bottom: float = 0.0,
     ) -> None:
@@ -203,6 +204,88 @@ class _DisplayItemsSection(_Section):
                 width=self.display_item_width,
             )
             x += xspacing
+
+
+class _ExpireTimeSection(_Section):
+
+    def __init__(
+        self,
+        *,
+        sub_width: float,
+        time: datetime.datetime,
+        spacing_top: float = 0.0,
+        spacing_bottom: float = 0.0,
+    ) -> None:
+        self.time = time
+        self.sub_width = sub_width
+        self.spacing_top = spacing_top
+        self.spacing_bottom = spacing_bottom
+        self.color = (1.0, 0.0, 1.0)
+        self._timer: bui.AppTimer | None = None
+        self._widget: bui.Widget | None = None
+        self.text_scale = 0.4
+        self.text_height = 30.0 * self.text_scale
+        self.full_height = self.text_height + spacing_top + spacing_bottom
+
+    @override
+    def get_height(self) -> float:
+        return self.full_height
+
+    def _update(self) -> None:
+        if not self._widget:
+            return
+
+        now = bui.utc_now_cloud()
+
+        val: bui.Lstr
+        if now < self.time:
+            color = (1.0, 1.0, 1.0, 0.3)
+            val = bui.Lstr(
+                resource='expiresInText',
+                subs=[
+                    (
+                        '${T}',
+                        bui.timestring(
+                            (self.time - now).total_seconds(), centi=False
+                        ),
+                    ),
+                ],
+            )
+        else:
+            color = (1.0, 0.3, 0.3, 0.5)
+            val = bui.Lstr(
+                resource='expiredAgoText',
+                subs=[
+                    (
+                        '${T}',
+                        bui.timestring(
+                            (now - self.time).total_seconds(), centi=False
+                        ),
+                    ),
+                ],
+            )
+        bui.textwidget(edit=self._widget, text=val, color=color)
+
+    @override
+    def emit(self, subcontainer: bui.Widget, y: float) -> None:
+        self._widget = bui.textwidget(
+            parent=subcontainer,
+            position=(
+                self.sub_width * 0.5,
+                y - self.spacing_top - self.text_height * 0.5,
+            ),
+            color=self.color,
+            scale=self.text_scale,
+            flatness=1.0,
+            shadow=1.0,
+            text='',
+            maxwidth=self.sub_width * 0.7,
+            size=(0, 0),
+            h_align='center',
+            v_align='center',
+        )
+        self._timer = bui.AppTimer(1.0, bui.WeakCall(self._update), repeat=True)
+        self._update()
 
 
 @dataclass
@@ -821,6 +904,19 @@ class InboxWindow(bui.MainWindow):
                             )
                             total_height += section.get_height()
                             sections.append(section)
+
+                    elif ctypeid is idcls.EXPIRE_TIME:
+                        assert isinstance(
+                            component, bacommon.bs.BasicClientUIExpireTime
+                        )
+                        section = _ExpireTimeSection(
+                            sub_width=sub_width,
+                            time=component.time,
+                            spacing_top=component.spacing_top,
+                            spacing_bottom=component.spacing_bottom,
+                        )
+                        total_height += section.get_height()
+                        sections.append(section)
 
                     elif ctypeid is idcls.UNKNOWN:
                         raise RuntimeError('Should not get here.')
