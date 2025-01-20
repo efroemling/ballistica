@@ -227,10 +227,6 @@ class ProfileBrowserWindow(bui.MainWindow):
         if not self.main_window_has_control():
             return
 
-        # no-op if our underlying widget is dead or on its way out.
-        # if not self._root_widget or self._root_widget.transitioning_out:
-        #     return
-
         plus = bui.app.plus
         assert plus is not None
 
@@ -315,7 +311,7 @@ class ProfileBrowserWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.profile.edit import EditProfileWindow
 
-        # no-op if we're not in control.
+        # No-op if we're not in control.
         if not self.main_window_has_control():
             return
 

@@ -45,7 +45,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
     # pylint: disable=too-many-public-methods
 
-    # noinspection PyUnresolvedReferences
     from baclassic._music import MusicPlayMode
 
     def __init__(self) -> None:
@@ -96,17 +95,17 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
         # We include this extra hash with shared input-mapping names so
         # that we don't share mappings between differently-configured
-        # systems. For instance, different android devices may give different
-        # key values for the same controller type so we keep their mappings
-        # distinct.
+        # systems. For instance, different android devices may give
+        # different key values for the same controller type so we keep
+        # their mappings distinct.
         self.input_map_hash: str | None = None
 
         # Maps.
         self.maps: dict[str, type[bascenev1.Map]] = {}
 
         # Gameplay.
-        self.teams_series_length = 7  # deprecated, left for old mods
-        self.ffa_series_length = 24  # deprecated, left for old mods
+        self.teams_series_length = 7  # Deprecated, left for old mods.
+        self.ffa_series_length = 24  # Deprecated, left for old mods.
         self.coop_session_args: dict = {}
 
         # UI.
@@ -176,8 +175,9 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
         self.music.on_app_loading()
 
-        # Non-test, non-debug builds should generally be blessed; warn if not.
-        # (so I don't accidentally release a build that can't play tourneys)
+        # Non-test, non-debug builds should generally be blessed; warn
+        # if not (so I don't accidentally release a build that can't
+        # play tourneys).
         if not env.debug and not env.test and not plus.is_blessed():
             babase.screenmessage('WARNING: NON-BLESSED BUILD', color=(1, 0, 0))
 
@@ -233,8 +233,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             from babase import Lstr
             from bascenev1 import NodeActor
 
-            # FIXME: Shouldn't be touching scene stuff here;
-            #  should just pass the request on to the host-session.
+            # FIXME: Shouldn't be touching scene stuff here; should just
+            #  pass the request on to the host-session.
             with activity.context:
                 globs = activity.globalsnode
                 if not globs.paused:
@@ -261,8 +261,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         to resume.
         """
 
-        # FIXME: Shouldn't be touching scene stuff here;
-        #  should just pass the request on to the host-session.
+        # FIXME: Shouldn't be touching scene stuff here; should just
+        #  pass the request on to the host-session.
         activity = bascenev1.get_foreground_host_activity()
         if activity is not None:
             with activity.context:
@@ -352,21 +352,21 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             babase.app.ui_v1.clear_main_window()
 
         if isinstance(bascenev1.get_foreground_host_session(), MainMenuSession):
-            # It may be possible we're on the main menu but the screen is faded
-            # so fade back in.
+            # It may be possible we're on the main menu but the screen
+            # is faded so fade back in.
             babase.fade_screen(True)
             return
 
         _benchmark.stop_stress_test()  # Stop stress-test if in progress.
 
-        # If we're in a host-session, tell them to end.
-        # This lets them tear themselves down gracefully.
+        # If we're in a host-session, tell them to end. This lets them
+        # tear themselves down gracefully.
         host_session: bascenev1.Session | None = (
             bascenev1.get_foreground_host_session()
         )
         if host_session is not None:
-            # Kick off a little transaction so we'll hopefully have all the
-            # latest account state when we get back to the menu.
+            # Kick off a little transaction so we'll hopefully have all
+            # the latest account state when we get back to the menu.
             plus.add_v1_account_transaction(
                 {'type': 'END_SESSION', 'sType': str(type(host_session))}
             )
@@ -679,14 +679,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 babase.Call(ServerDialogWindow, sddata),
             )
 
-    # def root_ui_ticket_icon_press(self) -> None:
-    #     """(internal)"""
-    #     from bauiv1lib.resourcetypeinfo import ResourceTypeInfoWindow
-
-    #     ResourceTypeInfoWindow(
-    #         origin_widget=bauiv1.get_special_widget('tickets_meter')
-    #     )
-
     def show_url_window(self, address: str) -> None:
         """(internal)"""
         from bauiv1lib.url import ShowURLWindow
@@ -733,7 +725,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self,
         transition: str = 'in_right',
         origin_widget: bauiv1.Widget | None = None,
-        # in_main_menu: bool = True,
         selected_profile: str | None = None,
     ) -> None:
         """(internal)"""
@@ -831,7 +822,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         app = bauiv1.app
         env = app.env
         with bascenev1.ContextRef.empty():
-            # from bauiv1lib import specialoffer
 
             assert app.classic is not None
             if app.env.headless:
@@ -969,4 +959,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         if purchase is None:
             return True
 
-        return plus.get_v1_account_product_purchased(purchase)
+        out = plus.get_v1_account_product_purchased(purchase)
+        assert isinstance(out, bool)
+        return out

@@ -205,8 +205,7 @@ class ChestWindow(bui.MainWindow):
 
         if isinstance(response, Exception):
             self._error(
-                # bui.Lstr(resource='internal.unavailableNoConnectionText')
-                'Unable to complete this right now.\nPlease try again.',
+                bui.Lstr(resource='internal.unableToCompleteTryAgainText'),
                 minor=True,
             )
             return
@@ -227,8 +226,7 @@ class ChestWindow(bui.MainWindow):
         # Communication/local error:
         if isinstance(response, Exception):
             self._error(
-                # bui.Lstr(resource='internal.unavailableNoConnectionText')
-                'Unable to complete this right now.\nPlease try again.',
+                bui.Lstr(resource='internal.unableToCompleteTryAgainText'),
                 minor=True,
             )
             return

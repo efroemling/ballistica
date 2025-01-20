@@ -82,8 +82,8 @@ class TournamentButton:
         self.lock_image = bui.imagewidget(
             parent=parent,
             draw_controller=btn,
-            position=(x + 21 + sclx * 0.5 - image_width * 0.25, y + scly - 150),
-            size=(image_width * 0.5, image_width * 0.5),
+            position=(x + 21 + sclx * 0.5 - image_width * 0.15, y + scly - 130),
+            size=(image_width * 0.3, image_width * 0.3),
             texture=bui.gettexture('lock'),
             opacity=0.0,
         )

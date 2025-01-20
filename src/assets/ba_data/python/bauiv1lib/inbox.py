@@ -733,14 +733,6 @@ class InboxWindow(bui.MainWindow):
 
                         section = _TextSection(
                             sub_width=sub_width,
-                            # text=bui.Lstr(
-                            #     translate=(
-                            #         'serverResponses',
-                            #         'You placed #${RANK}' ' in a tournament!',
-                            #         # 'You placed in a tournament!',
-                            #     ),
-                            #     subs=[('${RANK}', str(component.rank))],
-                            # ),
                             text=bui.Lstr(
                                 value='${P}${V}',
                                 subs=[
@@ -752,7 +744,6 @@ class InboxWindow(bui.MainWindow):
                                                 'serverResponses',
                                                 'You placed #${RANK}'
                                                 ' in a tournament!',
-                                                # 'You placed in a tournament!',
                                             ),
                                             subs=[
                                                 ('${RANK}', str(component.rank))
@@ -769,13 +760,6 @@ class InboxWindow(bui.MainWindow):
 
                         section = _TextSection(
                             sub_width=sub_width,
-                            # text=bui.Lstr(
-                            #     value='${P}${V}',
-                            #     subs=[
-                            #         ('${P}', trophy_prefix),
-                            #         ('${V}', tourney_name),
-                            #     ],
-                            # ),
                             text=tourney_name,
                             spacing_top=5,
                             color=(0.7, 0.7, 1.0, 1.0),
@@ -783,20 +767,6 @@ class InboxWindow(bui.MainWindow):
                         )
                         total_height += section.get_height()
                         sections.append(section)
-
-                        # rank_trophy_str = f'#{component.rank}'
-                        # if component.trophy is not None:
-                        #     rank_trophy_str = get_trophy_string(
-                        #         component.trophy
-                        #     )
-                        #     section = _TextSection(
-                        #         sub_width=sub_width,
-                        #         text=rank_trophy_str,
-                        #         spacing_top=10,
-                        #         scale=1.0,
-                        #     )
-                        #     total_height += section.get_height()
-                        #     sections.append(section)
 
                         def _do_tourney_scores(
                             tournament_id: str, sec: _ButtonSection
@@ -818,7 +788,7 @@ class InboxWindow(bui.MainWindow):
                         section = _ButtonSection(
                             sub_width=sub_width,
                             label=bui.Lstr(
-                                translate=('serverResponses', 'Final Standings')
+                                resource='tournamentFinalStandingsText'
                             ),
                             color=color,
                             call=partial(
@@ -834,12 +804,7 @@ class InboxWindow(bui.MainWindow):
                         if component.prizes:
                             section = _TextSection(
                                 sub_width=sub_width,
-                                text=bui.Lstr(
-                                    translate=(
-                                        'serverResponses',
-                                        'Your prize:',
-                                    )
-                                ),
+                                text=bui.Lstr(resource='yourPrizeText'),
                                 spacing_top=6,
                                 color=(1.0, 1.0, 1.0, 0.4),
                                 scale=0.35,
