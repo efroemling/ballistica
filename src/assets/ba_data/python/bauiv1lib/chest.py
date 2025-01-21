@@ -466,7 +466,7 @@ class ChestWindow(bui.MainWindow):
         if show_ad_button:
             bui.textwidget(
                 parent=self._root_widget,
-                text='Reduce Wait',
+                text=bui.Lstr(resource='chests.reduceWaitText'),
                 position=(
                     self._width * 0.5 + hspace * 0.5 + bwidth * 0.5,
                     self._height + bposy + self._yoffs + bheight * 1.15,

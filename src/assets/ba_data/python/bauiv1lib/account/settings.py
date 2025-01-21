@@ -849,10 +849,8 @@ class AccountSettingsWindow(bui.MainWindow):
                 position=((self._sub_width - button_width) * 0.5, v - 30),
                 autoselect=True,
                 size=(button_width, 60),
-                # label=bui.Lstr(resource=f'{self._r}.createAccountText'),
-                label='Create an Account',
+                label=bui.Lstr(resource=f'{self._r}.createAnAccountText'),
                 color=(0.55, 0.5, 0.6),
-                # icon=bui.gettexture('settingsIcon'),
                 textcolor=(0.75, 0.7, 0.8),
                 on_activate_call=bui.WeakCall(self._on_create_account_press),
             )

@@ -18,6 +18,7 @@ class AchievementsWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from baclassic import (
             CHEST_APPEARANCE_DISPLAY_INFOS,
@@ -26,13 +27,38 @@ class AchievementsWindow(bui.MainWindow):
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 600 if uiscale is bui.UIScale.SMALL else 550
+
+        self._width = 700 if uiscale is bui.UIScale.SMALL else 550
         self._height = (
-            380
+            450
             if uiscale is bui.UIScale.SMALL
             else 370 if uiscale is bui.UIScale.MEDIUM else 450
         )
-        yoffs = -45 if uiscale is bui.UIScale.SMALL else 0
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container.
+        #
+        # TODO: We need an auto-refresh mechanism for cases where screen
+        # size changes under us. Currently one must navigate out and
+        # back in to properly reflect such changes.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            2.3
+            if uiscale is bui.UIScale.SMALL
+            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.2
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 60, screensize[0] / scale)
+        target_height = min(self._height - 70, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and offset
+        # by half the width/height of our target area.
+        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
+
+        scroll_width = target_width
+        scroll_height = target_height - 25
+        scroll_y = yoffs - 54 - scroll_height
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -42,16 +68,7 @@ class AchievementsWindow(bui.MainWindow):
                     if uiscale is bui.UIScale.SMALL
                     else 'menu_full'
                 ),
-                scale=(
-                    2.3
-                    if uiscale is bui.UIScale.SMALL
-                    else 1.6 if uiscale is bui.UIScale.MEDIUM else 1.23
-                ),
-                stack_offset=(
-                    (0, 0)
-                    if uiscale is bui.UIScale.SMALL
-                    else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
-                ),
+                scale=scale,
             ),
             transition=transition,
             origin_widget=origin_widget,
@@ -66,7 +83,7 @@ class AchievementsWindow(bui.MainWindow):
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
                 autoselect=True,
-                position=(50, self._height - 38 + yoffs),
+                position=(50, yoffs - 48),
                 size=(60, 60),
                 scale=0.6,
                 label=bui.charstr(bui.SpecialChar.BACK),
@@ -91,9 +108,7 @@ class AchievementsWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(
                 self._width * 0.5,
-                self._height
-                - (27 if uiscale is bui.UIScale.SMALL else 20)
-                + yoffs,
+                yoffs - (42 if uiscale is bui.UIScale.SMALL else 30),
             ),
             size=(0, 0),
             h_align='center',
@@ -106,14 +121,8 @@ class AchievementsWindow(bui.MainWindow):
 
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
-            size=(
-                self._width - 60,
-                self._height - (150 if uiscale is bui.UIScale.SMALL else 80),
-            ),
-            position=(
-                30,
-                (110 if uiscale is bui.UIScale.SMALL else 35) + yoffs,
-            ),
+            size=(scroll_width, scroll_height),
+            position=(self._width * 0.5 - scroll_width * 0.5, scroll_y),
             capture_arrows=True,
             simple_culling_v=10,
             border_opacity=0.4,
@@ -130,7 +139,7 @@ class AchievementsWindow(bui.MainWindow):
         )
 
         incr = 36
-        sub_width = self._width - 90
+        sub_width = scroll_width - 25
         sub_height = 40 + len(achievements) * incr
 
         eq_rsrc = 'coopSelectWindow.powerRankingPointsEqualsText'
