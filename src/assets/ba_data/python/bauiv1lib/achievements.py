@@ -52,8 +52,8 @@ class AchievementsWindow(bui.MainWindow):
         target_width = min(self._width - 60, screensize[0] / scale)
         target_height = min(self._height - 70, screensize[1] / scale)
 
-        # To get top/left coords, go to the center of our window and offset
-        # by half the width/height of our target area.
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
         yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
 
         scroll_width = target_width
