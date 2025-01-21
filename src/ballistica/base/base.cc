@@ -507,13 +507,13 @@ auto BaseFeatureSet::HavePlus() -> bool {
   return plus_soft_ != nullptr;
 }
 
-void BaseFeatureSet::set_plus(PlusSoftInterface* plus) {
+void BaseFeatureSet::SetPlus(PlusSoftInterface* plus) {
   assert(plus_soft_ == nullptr);
   plus_soft_ = plus;
 }
 
 /// Access the plus feature-set. Will throw an exception if not present.
-auto BaseFeatureSet::plus() -> PlusSoftInterface* {
+auto BaseFeatureSet::Plus() -> PlusSoftInterface* {
   if (!plus_soft_ && !tried_importing_plus_) {
     python->SoftImportPlus();
     // Important to set this *after* import attempt, or a second import
@@ -615,7 +615,7 @@ auto BaseFeatureSet::FeatureSetFromData(PyObject* obj)
 auto BaseFeatureSet::IsUnmodifiedBlessedBuild() -> bool {
   // If we've got plus present, ask them. Otherwise assume no.
   if (HavePlus()) {
-    return plus()->IsUnmodifiedBlessedBuild();
+    return Plus()->IsUnmodifiedBlessedBuild();
   }
   return false;
 }
@@ -731,7 +731,7 @@ void BaseFeatureSet::DoV1CloudLog(const std::string& msg) {
   if (g_core == nullptr) {
     logsuffix = msg;
   }
-  plus()->DirectSendV1CloudLogs(logprefix, logsuffix, false, nullptr);
+  Plus()->DirectSendV1CloudLogs(logprefix, logsuffix, false, nullptr);
 }
 
 void BaseFeatureSet::PushDevConsolePrintCall(const std::string& msg,

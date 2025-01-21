@@ -155,7 +155,35 @@ void BasePython::OnAppShutdownComplete() {
 
 void BasePython::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
 
-void BasePython::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
+void BasePython::OnScreenSizeChange() {
+  assert(g_base->InLogicThread());
+
+  float screen_res_x{g_base->graphics->screen_virtual_width()};
+  float screen_res_y{g_base->graphics->screen_virtual_height()};
+
+  // This call runs for all screen sizes including the initial one. However
+  // we only want to inform the Python layer of *changes*, so we only store
+  // the initial one and don't pass it on.
+  if (last_screen_res_x_ < 0.0) {
+    last_screen_res_x_ = screen_res_x;
+    last_screen_res_y_ = g_base->graphics->screen_virtual_height();
+    return;
+  }
+
+  // Ignore any redundant values that might come through.
+  if (last_screen_res_x_ == screen_res_x
+      && last_screen_res_y_ == screen_res_y) {
+    return;
+  }
+
+  // Aight; we got a fresh, non-initial value. Store it and inform Python.
+  last_screen_res_x_ = screen_res_x;
+  last_screen_res_y_ = screen_res_y;
+
+  g_base->python->objs()
+      .Get(BasePython::ObjID::kAppOnScreenSizeChangeCall)
+      .Call();
+}
 
 void BasePython::StepDisplayTime() { assert(g_base->InLogicThread()); }
 

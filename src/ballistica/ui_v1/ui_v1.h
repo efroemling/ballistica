@@ -121,7 +121,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   void DeleteWidget(Widget* widget);
 
   void OnScreenSizeChange() override;
-  void OnScreenChange();
+  void OnUIScaleChange();
 
   void OnLanguageChange() override;
   auto GetRootWidget() -> ui_v1::Widget* override;

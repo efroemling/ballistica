@@ -195,7 +195,7 @@ void V1Account::SetLogin(V1AccountType account_type, V1LoginState login_state,
   }
   if (call_login_did_change) {
     // Inform a few subsystems of the change.
-    g_base->plus()->V1LoginDidChange();
+    g_base->Plus()->V1LoginDidChange();
     g_core->platform->V1LoginDidChange();
   }
 }

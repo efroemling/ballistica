@@ -54,8 +54,17 @@ class AppSubsystem:
     def do_apply_app_config(self) -> None:
         """Called when the app config should be applied."""
 
-    def on_screen_change(self) -> None:
-        """Called when screen dimensions or ui-scale changes."""
+    def on_ui_scale_change(self) -> None:
+        """Called when screen ui-scale changes.
+
+        Will not be called for the initial ui scale.
+        """
+
+    def on_screen_size_change(self) -> None:
+        """Called when the screen size changes.
+
+        Will not be called for the initial screen size.
+        """
 
     def reset(self) -> None:
         """Reset the subsystem to a default state.

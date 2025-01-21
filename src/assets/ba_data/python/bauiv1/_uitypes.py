@@ -58,9 +58,11 @@ class MainWindow(Window):
     def __init__(
         self,
         root_widget: bauiv1.Widget,
+        *,
         transition: str | None,
         origin_widget: bauiv1.Widget | None,
         cleanupcheck: bool = True,
+        refresh_on_screen_size_changes: bool = False,
     ):
         """Create a MainWindow given a root widget and transition info.
 
@@ -71,6 +73,12 @@ class MainWindow(Window):
         self.main_window_back_state: MainWindowState | None = None
 
         self.main_window_is_top_level: bool = False
+
+        # Windows that size tailor themselves to exact screen dimensions
+        # can pass True for this. Generally this only applies to small
+        # ui scale and at larger scales windows simply fit in the
+        # virtual safe area.
+        self.refreshes_on_screen_size_changes = refresh_on_screen_size_changes
 
         # Windows can be flagged as auxiliary when not related to the
         # main UI task at hand. UI code may choose to handle auxiliary

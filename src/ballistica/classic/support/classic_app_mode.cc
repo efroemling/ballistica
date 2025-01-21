@@ -1307,7 +1307,7 @@ void ClassicAppMode::SetPublicPartyEnabled(bool val) {
     return;
   }
   public_party_enabled_ = val;
-  g_base->plus()->PushPublicPartyState();
+  g_base->Plus()->PushPublicPartyState();
 }
 
 void ClassicAppMode::SetPublicPartySize(int count) {
@@ -1320,7 +1320,7 @@ void ClassicAppMode::SetPublicPartySize(int count) {
   // Push our new state to the server *ONLY* if public-party is turned on
   // (wasteful otherwise).
   if (public_party_enabled_) {
-    g_base->plus()->PushPublicPartyState();
+    g_base->Plus()->PushPublicPartyState();
   }
 }
 
@@ -1334,7 +1334,7 @@ void ClassicAppMode::SetPublicPartyQueueEnabled(bool enabled) {
   // Push our new state to the server *ONLY* if public-party is turned on
   // (wasteful otherwise).
   if (public_party_enabled_) {
-    g_base->plus()->PushPublicPartyState();
+    g_base->Plus()->PushPublicPartyState();
   }
 }
 
@@ -1348,7 +1348,7 @@ void ClassicAppMode::SetPublicPartyMaxSize(int count) {
   // Push our new state to the server *ONLY* if public-party is turned on
   // (wasteful otherwise).
   if (public_party_enabled_) {
-    g_base->plus()->PushPublicPartyState();
+    g_base->Plus()->PushPublicPartyState();
   }
 }
 
@@ -1362,7 +1362,7 @@ void ClassicAppMode::SetPublicPartyName(const std::string& name) {
   // Push our new state to the server *ONLY* if public-party is turned on
   // (wasteful otherwise).
   if (public_party_enabled_) {
-    g_base->plus()->PushPublicPartyState();
+    g_base->Plus()->PushPublicPartyState();
   }
 }
 
@@ -1376,7 +1376,7 @@ void ClassicAppMode::SetPublicPartyStatsURL(const std::string& url) {
   // Push our new state to the server *ONLY* if public-party is turned on
   // (wasteful otherwise).
   if (public_party_enabled_) {
-    g_base->plus()->PushPublicPartyState();
+    g_base->Plus()->PushPublicPartyState();
   }
 }
 
@@ -1390,7 +1390,7 @@ void ClassicAppMode::SetPublicPartyPlayerCount(int count) {
   // Push our new state to the server *ONLY* if public-party is turned on
   // (wasteful otherwise).
   if (public_party_enabled_) {
-    g_base->plus()->PushPublicPartyState();
+    g_base->Plus()->PushPublicPartyState();
   }
 }
 

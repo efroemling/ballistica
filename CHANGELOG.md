@@ -1,4 +1,4 @@
-### 1.7.37 (build 22222, api 9, 2025-01-20)
+### 1.7.37 (build 22226, api 9, 2025-01-21)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -191,6 +191,12 @@
   in various places.
 - Tournament now award chests instead of tickets.
 - Tournaments are now free to enter if you are running this build or newer.
+- (build 22225) Added `babase.get_virtual_screen_size()` to get the current
+  virtual screen size, and added a `refresh_on_screen_size_changes` arg to the
+  `MainWindow` class. This can be used to fit windows to the exact screen size,
+  which is especially useful at the small ui-scale. Generally medium and large
+  ui-scale windows don't fill the entire screen and can simply stay within the
+  virtual safe area and don't need to refresh.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these

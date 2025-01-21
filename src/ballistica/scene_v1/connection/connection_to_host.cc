@@ -202,7 +202,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
           set_peer_spec(PlayerSpec(string_buffer.data()));
         }
 
-        peer_hash_ = g_base->plus()->CalcV1PeerHash(peer_hash_input_);
+        peer_hash_ = g_base->Plus()->CalcV1PeerHash(peer_hash_input_);
 
         set_can_communicate(true);
         appmode->LaunchClientSession();
@@ -227,7 +227,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
           JsonDict dict;
           dict.AddNumber("b", kEngineBuildNumber);
 
-          g_base->plus()->V1SetClientInfo(&dict);
+          g_base->Plus()->V1SetClientInfo(&dict);
 
           // Pass the hash we generated from their handshake; they can use
           // this to make sure we're who we say we are.

@@ -36,11 +36,8 @@ class AchievementsWindow(bui.MainWindow):
         )
 
         # Do some fancy math to fill all available screen area up to the
-        # size of our backing container.
-        #
-        # TODO: We need an auto-refresh mechanism for cases where screen
-        # size changes under us. Currently one must navigate out and
-        # back in to properly reflect such changes.
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
         scale = (
             2.3
@@ -72,6 +69,8 @@ class AchievementsWindow(bui.MainWindow):
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
         if uiscale is bui.UIScale.SMALL:

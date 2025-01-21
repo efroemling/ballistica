@@ -2752,23 +2752,23 @@ static PyMethodDef PyIsAvailableDef = {
     "(internal)",
 };
 
-// --------------------------- on_screen_change --------------------------------
+// --------------------------- on_ui_scale_change ------------------------------
 
-static auto PyOnScreenChange(PyObject* self) -> PyObject* {
+static auto PyOnUIScaleChange(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
 
-  g_ui_v1->OnScreenChange();
+  g_ui_v1->OnUIScaleChange();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyOnScreenChangeDef = {
-    "on_screen_change",             // name
-    (PyCFunction)PyOnScreenChange,  // method
-    METH_NOARGS,                    // flags
+static PyMethodDef PyOnUIScaleChangeDef = {
+    "on_ui_scale_change",            // name
+    (PyCFunction)PyOnUIScaleChange,  // method
+    METH_NOARGS,                     // flags
 
-    "on_screen_change() -> None\n"
+    "on_ui_scale_change() -> None\n"
     "\n"
     "(internal)",
 };
@@ -2844,7 +2844,7 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
           PyGetQRCodeTextureDef,
           PyGetMeshDef,
           PyIsAvailableDef,
-          PyOnScreenChangeDef,
+          PyOnUIScaleChangeDef,
           PyRootUIPauseUpdatesDef,
           PyRootUIResumeUpdatesDef};
 }

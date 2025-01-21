@@ -604,8 +604,8 @@ class App:
     def set_ui_scale(self, scale: babase.UIScale) -> None:
         """Change ui-scale on the fly.
 
-        Currently this is mainly for debugging and will not
-        be called as part of normal app operation.
+        Currently this is mainly for debugging and will not be called as
+        part of normal app operation.
         """
         assert _babase.in_logic_thread()
 
@@ -618,10 +618,25 @@ class App:
         assert self._subsystem_registration_ended
         for subsystem in self._subsystems:
             try:
-                subsystem.on_screen_change()
+                subsystem.on_ui_scale_change()
             except Exception:
                 logging.exception(
-                    'Error in on_screen_change() for subsystem %s.', subsystem
+                    'Error in on_ui_scale_change() for subsystem %s.', subsystem
+                )
+
+    def on_screen_size_change(self) -> None:
+        """Screen size has changed."""
+
+        # Inform all app subsystems in the same order they were inited.
+        # Operate on a copy of the list here because this can be called
+        # while subsystems are still being added.
+        for subsystem in self._subsystems.copy():
+            try:
+                subsystem.on_screen_size_change()
+            except Exception:
+                logging.exception(
+                    'Error in on_screen_size_change() for subsystem %s.',
+                    subsystem,
                 )
 
     def _set_intent(self, intent: AppIntent) -> None:

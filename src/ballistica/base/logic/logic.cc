@@ -70,7 +70,7 @@ void Logic::OnAppStart() {
   g_base->ui->OnAppStart();
   g_base->app_mode()->OnAppStart();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnAppStart();
+    g_base->Plus()->OnAppStart();
   }
   g_base->python->OnAppStart();
 
@@ -191,7 +191,7 @@ void Logic::OnAppSuspend() {
   // Note: keep these in opposite order of OnAppStart.
   g_base->python->OnAppSuspend();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnAppSuspend();
+    g_base->Plus()->OnAppSuspend();
   }
   g_base->app_mode()->OnAppSuspend();
   g_base->ui->OnAppSuspend();
@@ -215,7 +215,7 @@ void Logic::OnAppUnsuspend() {
   g_base->ui->OnAppUnsuspend();
   g_base->app_mode()->OnAppUnsuspend();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnAppUnsuspend();
+    g_base->Plus()->OnAppUnsuspend();
   }
   g_base->python->OnAppUnsuspend();
 }
@@ -247,7 +247,7 @@ void Logic::OnAppShutdown() {
   // should be registered as shutdown-tasks
   g_base->python->OnAppShutdown();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnAppShutdown();
+    g_base->Plus()->OnAppShutdown();
   }
   g_base->app_mode()->OnAppShutdown();
   g_base->ui->OnAppShutdown();
@@ -280,7 +280,7 @@ void Logic::OnAppShutdownComplete() {
   // should be registered as shutdown-tasks.
   g_base->python->OnAppShutdownComplete();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnAppShutdownComplete();
+    g_base->Plus()->OnAppShutdownComplete();
   }
   g_base->app_mode()->OnAppShutdownComplete();
   g_base->ui->OnAppShutdownComplete();
@@ -307,7 +307,7 @@ void Logic::DoApplyAppConfig() {
   g_base->ui->DoApplyAppConfig();
   g_base->app_mode()->DoApplyAppConfig();
   if (g_base->HavePlus()) {
-    g_base->plus()->DoApplyAppConfig();
+    g_base->Plus()->DoApplyAppConfig();
   }
   g_base->python->DoApplyAppConfig();
 
@@ -323,6 +323,7 @@ void Logic::OnScreenSizeChange(float virtual_width, float virtual_height,
   assert(g_base->InLogicThread());
 
   // Inform all subsystems.
+  //
   // Note: keep these in the same order as OnAppStart.
   g_base->app_adapter->OnScreenSizeChange();
   g_base->platform->OnScreenSizeChange();
@@ -333,7 +334,7 @@ void Logic::OnScreenSizeChange(float virtual_width, float virtual_height,
   g_core->platform->OnScreenSizeChange();
   g_base->app_mode()->OnScreenSizeChange();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnScreenSizeChange();
+    g_base->Plus()->OnScreenSizeChange();
   }
   g_base->python->OnScreenSizeChange();
 }
@@ -363,7 +364,7 @@ void Logic::StepDisplayTime_() {
   g_core->platform->StepDisplayTime();
   g_base->app_mode()->StepDisplayTime();
   if (g_base->HavePlus()) {
-    g_base->plus()->StepDisplayTime();
+    g_base->Plus()->StepDisplayTime();
   }
   g_base->python->StepDisplayTime();
 

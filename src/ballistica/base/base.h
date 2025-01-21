@@ -686,9 +686,9 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   auto HavePlus() -> bool;
 
   /// Access the plus feature-set. Will throw an exception if not present.
-  auto plus() -> PlusSoftInterface*;
+  auto Plus() -> PlusSoftInterface*;
 
-  void set_plus(PlusSoftInterface* plus);
+  void SetPlus(PlusSoftInterface* plus);
 
   /// Try to load the classic feature-set and return whether it is available.
   auto HaveClassic() -> bool;

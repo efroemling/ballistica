@@ -223,7 +223,7 @@ void UIV1FeatureSet::OnScreenSizeChange() {
   }
 }
 
-void UIV1FeatureSet::OnScreenChange() {
+void UIV1FeatureSet::OnUIScaleChange() {
   // This gets called by the Python layer when UIScale or window size
   // changes.
   assert(g_base->InLogicThread());
