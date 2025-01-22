@@ -47,37 +47,56 @@ class LeagueRankWindow(bui.MainWindow):
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 1490 if uiscale is bui.UIScale.SMALL else 1120
+        self._width = 1500 if uiscale is bui.UIScale.SMALL else 1120
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            660
+            1000
             if uiscale is bui.UIScale.SMALL
             else 710 if uiscale is bui.UIScale.MEDIUM else 800
         )
         self._r = 'coopSelectWindow'
         self._rdict = bui.app.lang.get_resource(self._r)
-        top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
+        # top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
 
-        self._xoffs = 80.0 if uiscale is bui.UIScale.SMALL else 0
+        # self._xoffs = 80.0 if uiscale is bui.UIScale.SMALL else 0
+        self._xoffs = 40
 
         self._league_url_arg = ''
 
         self._is_current_season = False
         self._can_do_more_button = True
 
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            1.08
+            if uiscale is bui.UIScale.SMALL
+            else 0.93 if uiscale is bui.UIScale.MEDIUM else 0.8
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 130, screensize[0] / scale)
+        target_height = min(self._height - 130, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
+
+        self._scroll_width = target_width
+        self._scroll_height = target_height - 35
+        scroll_bottom = yoffs - 80 - self._scroll_height
+
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(self._width, self._height + top_extra),
+                size=(self._width, self._height),
                 stack_offset=(
                     (0, 0)
                     if uiscale is bui.UIScale.SMALL
                     else (0, 10) if uiscale is bui.UIScale.MEDIUM else (0, 0)
                 ),
-                scale=(
-                    1.08
-                    if uiscale is bui.UIScale.SMALL
-                    else 0.93 if uiscale is bui.UIScale.MEDIUM else 0.8
-                ),
+                scale=scale,
                 toolbar_visibility=(
                     'menu_minimal'
                     if uiscale is bui.UIScale.SMALL
@@ -86,6 +105,8 @@ class LeagueRankWindow(bui.MainWindow):
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
         if uiscale is bui.UIScale.SMALL:
@@ -94,22 +115,15 @@ class LeagueRankWindow(bui.MainWindow):
                 edit=self._root_widget, on_cancel_call=self.main_window_back
             )
         else:
-            self._back_button = btn = bui.buttonwidget(
+            self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(75 + x_inset, self._height - 87),
-                size=(120, 60),
+                position=(75 + x_inset, yoffs - 60),
+                size=(60, 55),
                 scale=1.2,
                 autoselect=True,
-                label=bui.Lstr(resource='backText'),
-                button_type='back',
-                on_activate_call=self.main_window_back,
-            )
-            bui.buttonwidget(
-                edit=btn,
-                button_type='backSmall',
-                position=(75 + x_inset, self._height - 87),
-                size=(60, 55),
                 label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
+                on_activate_call=self.main_window_back,
             )
             bui.containerwidget(
                 edit=self._root_widget,
@@ -121,7 +135,7 @@ class LeagueRankWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(
                 self._width * 0.5,
-                self._height - (66 if uiscale is bui.UIScale.SMALL else 56),
+                yoffs - (55 if uiscale is bui.UIScale.SMALL else 30),
             ),
             size=(0, 0),
             text=bui.Lstr(
@@ -130,19 +144,21 @@ class LeagueRankWindow(bui.MainWindow):
             ),
             h_align='center',
             color=bui.app.ui_v1.title_color,
-            scale=1.4,
+            scale=1.2 if uiscale is bui.UIScale.SMALL else 1.3,
             maxwidth=600,
             v_align='center',
         )
 
-        self._scroll_width = self._width - (130 + 2 * x_inset)
-        self._scroll_height = self._height - 160
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=False,
-            position=(65 + x_inset, 70),
             size=(self._scroll_width, self._scroll_height),
+            position=(
+                self._width * 0.5 - self._scroll_width * 0.5,
+                scroll_bottom,
+            ),
             center_small_content=True,
+            center_small_content_horizontally=True,
             border_opacity=0.4,
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
@@ -152,7 +168,7 @@ class LeagueRankWindow(bui.MainWindow):
         self._doing_power_ranking_query = False
 
         self._subcontainer: bui.Widget | None = None
-        self._subcontainerwidth = max(800, self._scroll_width)
+        self._subcontainerwidth = 1024
         self._subcontainerheight = 483
         self._power_ranking_score_widgets: list[bui.Widget] = []
 
@@ -195,8 +211,9 @@ class LeagueRankWindow(bui.MainWindow):
     def _on_achievements_press(self) -> None:
         from bauiv1lib.achievements import AchievementsWindow
 
-        # only allow this for all-time or the current season
-        # (we currently don't keep specific achievement data for old seasons)
+        # Only allow this for all-time or the current season (we
+        # currently don't keep specific achievement data for old
+        # seasons).
         if self._season == 'a' or self._is_current_season:
             prab = self._power_ranking_achievements_button
             assert prab is not None
@@ -498,12 +515,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(200, 60),
             icon=bui.gettexture('logo'),
             icon_color=(0.3, 0, 0.3),
-            # label='Up-To-Date Bonus',
             label=bui.Lstr(resource='league.upToDateBonusText'),
-            # label=bui.Lstr(
-            #     resource='store.bombSquadProNameText',
-            #     subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
-            # ),
             autoselect=True,
             on_activate_call=bui.WeakCall(self._on_up_to_date_bonus_press),
             left_widget=self._back_button,
@@ -998,17 +1010,15 @@ class LeagueRankWindow(bui.MainWindow):
                     textcolor=(0.7, 0.7, 0.8, 1.0),
                     icon_color=(0.5, 0, 0.5, 1.0),
                 )
-                # pylint: disable=consider-using-f-string
                 bui.textwidget(
                     edit=self._activity_mult_text,
-                    text='x ' + ('%.2f' % data['act']),
+                    text=f'x {data['act']:.2f}',
                 )
 
         # This used to be a bonus for 'BombSquad Pro' holders, but since
         # we're transitioning away from that it is now a bonus for
         # everyone running a recent-ish version of the game.
 
-        # have_pro = False if data is None else data['p']
         have_up_to_date_bonus = data is not None
         pro_mult = (
             1.0

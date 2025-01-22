@@ -162,7 +162,6 @@ class UIRow:
                     Selection(party.get_key(), SelectionComponent.STATS_BUTTON),
                 ),
                 size=(120, 40),
-                # position=(sub_scroll_width * 0.66 + hpos, 1 + vpos),
                 position=(sub_scroll_width - 270.0, 1 + vpos),
                 scale=0.9,
             )
@@ -177,8 +176,7 @@ class UIRow:
             text=str(party.size) + '/' + str(party.size_max),
             parent=columnwidget,
             size=(0, 0),
-            # position=(sub_scroll_width * 0.86 + hpos, 20 + vpos),
-            position=(sub_scroll_width - 100, 20 + vpos),
+            position=(sub_scroll_width - 90, 20 + vpos),
             scale=0.7,
             color=(0.8, 0.8, 0.8),
             h_align='right',
@@ -193,8 +191,7 @@ class UIRow:
         self._ping_widget = bui.textwidget(
             parent=columnwidget,
             size=(0, 0),
-            # position=(sub_scroll_width * 0.94 + hpos, 20 + vpos),
-            position=(sub_scroll_width - 30.0, 20 + vpos),
+            position=(sub_scroll_width - 25.0, 20 + vpos),
             scale=0.7,
             h_align='right',
             v_align='center',
