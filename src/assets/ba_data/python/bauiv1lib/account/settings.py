@@ -32,6 +32,7 @@ class AccountSettingsWindow(bui.MainWindow):
         close_once_signed_in: bool = False,
     ):
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-locals
 
         plus = bui.app.plus
         assert plus is not None
@@ -62,18 +63,37 @@ class AccountSettingsWindow(bui.MainWindow):
         uiscale = app.ui_v1.uiscale
 
         self._width = 980 if uiscale is bui.UIScale.SMALL else 660
-        x_offs = 70 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            430
+            600
             if uiscale is bui.UIScale.SMALL
             else 430 if uiscale is bui.UIScale.MEDIUM else 490
         )
 
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            1.72
+            if uiscale is bui.UIScale.SMALL
+            else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 80, screensize[0] / scale)
+        target_height = min(self._height - 80, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
+
+        self._scroll_width = target_width
+        self._scroll_height = target_height - 33
+        scroll_y = yoffs - 61 - self._scroll_height
+
         self._sign_in_button = None
         self._sign_in_text = None
 
-        self._scroll_width = self._width - (100 + x_offs * 2)
-        self._scroll_height = self._height - 120
         self._sub_width = self._scroll_width - 20
 
         # Determine which sign-in/sign-out buttons we should show.
@@ -93,26 +113,20 @@ class AccountSettingsWindow(bui.MainWindow):
         if bui.app.config.resolve('Show Deprecated Login Types'):
             self._show_sign_in_buttons.append('Device')
 
-        top_extra = 26 if uiscale is bui.UIScale.SMALL else 0
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(self._width, self._height + top_extra),
+                size=(self._width, self._height),
                 toolbar_visibility=(
                     'menu_minimal'
                     if uiscale is bui.UIScale.SMALL
                     else 'menu_full'
                 ),
-                scale=(
-                    1.72
-                    if uiscale is bui.UIScale.SMALL
-                    else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
-                ),
-                stack_offset=(
-                    (0, 8) if uiscale is bui.UIScale.SMALL else (0, 0)
-                ),
+                scale=scale,
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
         if uiscale is bui.UIScale.SMALL:
             self._back_button = None
@@ -122,7 +136,7 @@ class AccountSettingsWindow(bui.MainWindow):
         else:
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(51 + x_offs, self._height - 62),
+                position=(51, yoffs - 52.0),
                 size=(120, 60),
                 scale=0.8,
                 text_scale=1.2,
@@ -139,11 +153,14 @@ class AccountSettingsWindow(bui.MainWindow):
                 label=bui.charstr(bui.SpecialChar.BACK),
             )
 
-        titleyoffs = -9 if uiscale is bui.UIScale.SMALL else 0
+        titleyoffs = -45.0 if uiscale is bui.UIScale.SMALL else -28.0
         titlescale = 0.7 if uiscale is bui.UIScale.SMALL else 1.0
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 41 + titleyoffs),
+            position=(
+                self._width * 0.5,
+                yoffs + titleyoffs,
+            ),
             size=(0, 0),
             text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=app.ui_v1.title_color,
@@ -156,11 +173,8 @@ class AccountSettingsWindow(bui.MainWindow):
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=False,
-            position=(
-                (self._width - self._scroll_width) * 0.5,
-                self._height - 65 - self._scroll_height,
-            ),
             size=(self._scroll_width, self._scroll_height),
+            position=(self._width * 0.5 - self._scroll_width * 0.5, scroll_y),
             claims_left_right=True,
             selection_loops_to_parent=True,
             border_opacity=0.4,
