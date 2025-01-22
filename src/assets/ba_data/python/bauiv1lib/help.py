@@ -105,6 +105,7 @@ class HelpWindow(bui.MainWindow):
                 resource=f'{self._r}.titleText',
                 subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
             ),
+            scale=0.9,
             maxwidth=scroll_width * 0.7,
             color=bui.app.ui_v1.title_color,
             h_align='center',
