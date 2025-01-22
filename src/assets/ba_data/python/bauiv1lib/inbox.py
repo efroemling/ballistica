@@ -391,7 +391,7 @@ class InboxWindow(bui.MainWindow):
             size=(0, 0),
             h_align='center',
             v_align='center',
-            scale=0.6,
+            scale=0.6 if uiscale is bui.UIScale.SMALL else 0.8,
             text=bui.Lstr(resource='inboxText'),
             maxwidth=200,
             color=bui.app.ui_v1.title_color,
