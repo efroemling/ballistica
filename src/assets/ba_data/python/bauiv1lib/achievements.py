@@ -55,7 +55,7 @@ class AchievementsWindow(bui.MainWindow):
 
         scroll_width = target_width
         scroll_height = target_height - 25
-        scroll_y = yoffs - 54 - scroll_height
+        scroll_bottom = yoffs - 54 - scroll_height
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -121,7 +121,7 @@ class AchievementsWindow(bui.MainWindow):
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             size=(scroll_width, scroll_height),
-            position=(self._width * 0.5 - scroll_width * 0.5, scroll_y),
+            position=(self._width * 0.5 - scroll_width * 0.5, scroll_bottom),
             capture_arrows=True,
             simple_culling_v=10,
             border_opacity=0.4,

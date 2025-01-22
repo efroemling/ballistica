@@ -89,7 +89,7 @@ class AccountSettingsWindow(bui.MainWindow):
 
         self._scroll_width = target_width
         self._scroll_height = target_height - 33
-        scroll_y = yoffs - 61 - self._scroll_height
+        scroll_bottom = yoffs - 61 - self._scroll_height
 
         self._sign_in_button = None
         self._sign_in_text = None
@@ -174,7 +174,10 @@ class AccountSettingsWindow(bui.MainWindow):
             parent=self._root_widget,
             highlight=False,
             size=(self._scroll_width, self._scroll_height),
-            position=(self._width * 0.5 - self._scroll_width * 0.5, scroll_y),
+            position=(
+                self._width * 0.5 - self._scroll_width * 0.5,
+                scroll_bottom,
+            ),
             claims_left_right=True,
             selection_loops_to_parent=True,
             border_opacity=0.4,

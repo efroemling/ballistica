@@ -84,7 +84,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
 
         self._scroll_width = target_width
         self._scroll_height = target_height - 31
-        scroll_y = yoffs - 60 - self._scroll_height
+        scroll_bottom = yoffs - 60 - self._scroll_height
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -145,7 +145,10 @@ class PlaylistBrowserWindow(bui.MainWindow):
             parent=self._root_widget,
             highlight=False,
             size=(self._scroll_width, self._scroll_height),
-            position=(self._width * 0.5 - self._scroll_width * 0.5, scroll_y),
+            position=(
+                self._width * 0.5 - self._scroll_width * 0.5,
+                scroll_bottom,
+            ),
             border_opacity=0.4,
             center_small_content_horizontally=True,
         )

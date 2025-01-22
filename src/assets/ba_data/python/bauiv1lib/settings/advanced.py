@@ -70,7 +70,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
 
         self._scroll_width = target_width
         self._scroll_height = target_height - 25
-        scroll_y = yoffs - 56 - self._scroll_height
+        scroll_bottom = yoffs - 56 - self._scroll_height
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -162,7 +162,10 @@ class AdvancedSettingsWindow(bui.MainWindow):
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             size=(self._scroll_width, self._scroll_height),
-            position=(self._width * 0.5 - self._scroll_width * 0.5, scroll_y),
+            position=(
+                self._width * 0.5 - self._scroll_width * 0.5,
+                scroll_bottom,
+            ),
             simple_culling_v=20.0,
             highlight=False,
             center_small_content_horizontally=True,

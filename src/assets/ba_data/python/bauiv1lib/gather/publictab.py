@@ -162,7 +162,8 @@ class UIRow:
                     Selection(party.get_key(), SelectionComponent.STATS_BUTTON),
                 ),
                 size=(120, 40),
-                position=(sub_scroll_width * 0.66 + hpos, 1 + vpos),
+                # position=(sub_scroll_width * 0.66 + hpos, 1 + vpos),
+                position=(sub_scroll_width - 270.0, 1 + vpos),
                 scale=0.9,
             )
             if existing_selection == Selection(
@@ -176,7 +177,8 @@ class UIRow:
             text=str(party.size) + '/' + str(party.size_max),
             parent=columnwidget,
             size=(0, 0),
-            position=(sub_scroll_width * 0.86 + hpos, 20 + vpos),
+            # position=(sub_scroll_width * 0.86 + hpos, 20 + vpos),
+            position=(sub_scroll_width - 100, 20 + vpos),
             scale=0.7,
             color=(0.8, 0.8, 0.8),
             h_align='right',
@@ -191,7 +193,8 @@ class UIRow:
         self._ping_widget = bui.textwidget(
             parent=columnwidget,
             size=(0, 0),
-            position=(sub_scroll_width * 0.94 + hpos, 20 + vpos),
+            # position=(sub_scroll_width * 0.94 + hpos, 20 + vpos),
+            position=(sub_scroll_width - 30.0, 20 + vpos),
             scale=0.7,
             h_align='right',
             v_align='center',
@@ -372,6 +375,7 @@ class PublicGatherTab(GatherTab):
         self._host_max_party_size_value: bui.Widget | None = None
         self._host_max_party_size_minus_button: bui.Widget | None = None
         self._host_max_party_size_plus_button: bui.Widget | None = None
+        self._join_sub_scroll_width: float | None = None
         self._host_status_text: bui.Widget | None = None
         self._signed_in = False
         self._ui_rows: list[UIRow] = []
@@ -474,7 +478,8 @@ class PublicGatherTab(GatherTab):
         )
         bui.widget(edit=self._join_text, right_widget=self._host_text)
 
-        # Attempt to fetch our local address so we have it for error messages.
+        # Attempt to fetch our local address so we have it for error
+        # messages.
         if self._local_address is None:
             AddrFetchThread(bui.WeakCall(self._fetch_local_addr_cb)).start()
 
@@ -491,9 +496,9 @@ class PublicGatherTab(GatherTab):
     @override
     def save_state(self) -> None:
         # Save off a small number of parties with the lowest ping; we'll
-        # display these immediately when our UI comes back up which should
-        # be enough to make things feel nice and crisp while we do a full
-        # server re-query or whatnot.
+        # display these immediately when our UI comes back up which
+        # should be enough to make things feel nice and crisp while we
+        # do a full server re-query or whatnot.
         assert bui.app.classic is not None
         bui.app.ui_v1.window_states[type(self)] = State(
             sub_tab=self._sub_tab,
@@ -523,7 +528,7 @@ class PublicGatherTab(GatherTab):
 
             self._next_entry_index = state.next_entry_index
 
-            # FIXME: should save/restore these too?..
+            # FIXME: should save/restore these too?
             self._have_server_list_response = state.have_server_list_response
             self._have_valid_server_list = state.have_valid_server_list
         self._filter_value = state.filter_value
@@ -539,9 +544,8 @@ class PublicGatherTab(GatherTab):
         if playsound:
             bui.getsound('click01').play()
 
-        # Reset our selection.
-        # (prevents selecting something way down the list if we switched away
-        # and came back)
+        # Reset our selection (prevents selecting something way down the
+        # list if we switched away and came back).
         self._selection = None
         self._have_user_selected_row = False
 
@@ -579,7 +583,9 @@ class PublicGatherTab(GatherTab):
         c_width = region_width
         c_height = region_height - 20
         sub_scroll_height = c_height - 125
-        sub_scroll_width = 830
+        self._join_sub_scroll_width = sub_scroll_width = min(
+            1200, region_width - 80
+        )
         v = c_height - 35
         v -= 60
         filter_txt = bui.Lstr(resource='filterText')
@@ -726,6 +732,9 @@ class PublicGatherTab(GatherTab):
         )
         v -= 30
 
+        # Nudge party name and size values to be mostly centered.
+        xoffs = region_width * 0.5 - 500
+
         party_name_text = bui.Lstr(
             resource='gatherWindow.partyNameText',
             fallback_resource='editGameListWindow.nameText',
@@ -739,14 +748,14 @@ class PublicGatherTab(GatherTab):
             maxwidth=200,
             scale=0.8,
             color=bui.app.ui_v1.infotextcolor,
-            position=(210, v - 9),
+            position=(210 + xoffs, v - 9),
             text=party_name_text,
         )
         self._host_name_text = bui.textwidget(
             parent=self._container,
             editable=True,
             size=(535, 40),
-            position=(230, v - 30),
+            position=(230 + xoffs, v - 30),
             text=bui.app.config.get('Public Party Name', ''),
             maxwidth=494,
             shadow=0.3,
@@ -766,7 +775,7 @@ class PublicGatherTab(GatherTab):
             maxwidth=200,
             scale=0.8,
             color=bui.app.ui_v1.infotextcolor,
-            position=(210, v - 9),
+            position=(210 + xoffs, v - 9),
             text=bui.Lstr(
                 resource='maxPartySizeText',
                 fallback_resource='maxConnectionsText',
@@ -779,7 +788,7 @@ class PublicGatherTab(GatherTab):
             v_align='center',
             scale=1.2,
             color=(1, 1, 1),
-            position=(240, v - 9),
+            position=(240 + xoffs, v - 9),
             text=str(bs.get_public_party_max_size()),
         )
         btn1 = self._host_max_party_size_minus_button = bui.buttonwidget(
@@ -788,7 +797,7 @@ class PublicGatherTab(GatherTab):
             on_activate_call=bui.WeakCall(
                 self._on_max_public_party_size_minus_press
             ),
-            position=(280, v - 26),
+            position=(280 + xoffs, v - 26),
             label='-',
             autoselect=True,
         )
@@ -798,7 +807,7 @@ class PublicGatherTab(GatherTab):
             on_activate_call=bui.WeakCall(
                 self._on_max_public_party_size_plus_press
             ),
-            position=(350, v - 26),
+            position=(350 + xoffs, v - 26),
             label='+',
             autoselect=True,
         )
@@ -859,8 +868,8 @@ class PublicGatherTab(GatherTab):
             position=(c_width * 0.5, v),
         )
 
-        # If public sharing is already on,
-        # launch a status-check immediately.
+        # If public sharing is already on, launch a status-check
+        # immediately.
         if bs.get_public_party_enabled():
             self._do_status_check()
 
@@ -884,9 +893,9 @@ class PublicGatherTab(GatherTab):
         self._pending_party_infos += parties_in
 
         # To avoid causing a stutter here, we do most processing of
-        # these entries incrementally in our _update() method.
-        # The one thing we do here is prune parties not contained in
-        # this result.
+        # these entries incrementally in our _update() method. The one
+        # thing we do here is prune parties not contained in this
+        # result.
         for partyval in list(self._parties.values()):
             partyval.claimed = False
         for party_in in parties_in:
@@ -904,7 +913,6 @@ class PublicGatherTab(GatherTab):
         self._parties_sorted = [p for p in self._parties_sorted if p[1].claimed]
         self._party_lists_dirty = True
 
-        # self._update_server_list()
         if DEBUG_PROCESSING:
             print(
                 f'Handled public party query results in '
@@ -926,10 +934,10 @@ class PublicGatherTab(GatherTab):
                     self._filter_value = filter_value
                     self._party_lists_dirty = True
 
-                    # Also wipe out party clean-row states.
-                    # (otherwise if a party disappears from a row due to
-                    # filtering and then reappears on that same row when
-                    # the filter is removed it may not update)
+                    # Also wipe out party clean-row states (otherwise if
+                    # a party disappears from a row due to filtering and
+                    # then reappears on that same row when the filter is
+                    # removed it may not update).
                     for party in self._parties.values():
                         party.clean_display_index = None
 
@@ -965,9 +973,9 @@ class PublicGatherTab(GatherTab):
                 )
                 bui.spinnerwidget(edit=self._join_status_spinner, visible=False)
             else:
-                # If we have a valid list, show no status; just the list.
-                # Otherwise show either 'loading...' or 'error' depending
-                # on whether this is our first go-round.
+                # If we have a valid list, show no status; just the
+                # list. Otherwise show either 'loading...' or 'error'
+                # depending on whether this is our first go-round.
                 if self._have_valid_server_list:
                     bui.textwidget(edit=self._join_status_text, text='')
                     bui.spinnerwidget(
@@ -985,19 +993,6 @@ class PublicGatherTab(GatherTab):
                     else:
                         # Show our loading spinner.
                         bui.textwidget(edit=self._join_status_text, text='')
-                        # bui.textwidget(
-                        #     edit=self._join_status_text,
-                        #     text=bui.Lstr(
-                        #         value='${A}...',
-                        #         subs=[
-                        #             (
-                        #                 '${A}',
-                        #
-                        # bui.Lstr(resource='store.loadingText'),
-                        #             )
-                        #         ],
-                        #     ),
-                        # )
                         bui.spinnerwidget(
                             edit=self._join_status_spinner, visible=True
                         )
@@ -1037,7 +1032,8 @@ class PublicGatherTab(GatherTab):
             )
             return
 
-        sub_scroll_width = 830
+        assert self._join_sub_scroll_width is not None
+        sub_scroll_width = self._join_sub_scroll_width
         lineheight = 42
         sub_scroll_height = lineheight * len(self._parties_displayed) + 50
         bui.containerwidget(
@@ -1045,27 +1041,27 @@ class PublicGatherTab(GatherTab):
         )
 
         # Any time our height changes, reset the refresh back to the top
-        # so we don't see ugly empty spaces appearing during initial list
-        # filling.
+        # so we don't see ugly empty spaces appearing during initial
+        # list filling.
         if sub_scroll_height != self._last_sub_scroll_height:
             self._refresh_ui_row = 0
             self._last_sub_scroll_height = sub_scroll_height
 
-            # Also note that we need to redisplay everything since its pos
-            # will have changed.. :(
+            # Also note that we need to redisplay everything since its
+            # pos will have changed.. :(
             for party in self._parties.values():
                 party.clean_display_index = None
 
-        # Ew; this rebuilding generates deferred selection callbacks
-        # so we need to push deferred notices so we know to ignore them.
+        # Ew; this rebuilding generates deferred selection callbacks so
+        # we need to push deferred notices so we know to ignore them.
         def refresh_on() -> None:
             self._refreshing_list = True
 
         bui.pushcall(refresh_on)
 
-        # Ok, now here's the deal: we want to avoid creating/updating this
-        # entire list at one time because it will lead to hitches. So we
-        # refresh individual rows quickly in a loop.
+        # Ok, now here's the deal: we want to avoid creating/updating
+        # this entire list at one time because it will lead to hitches.
+        # So we refresh individual rows quickly in a loop.
         rowcount = min(12, len(self._parties_displayed))
 
         party_vals_displayed = list(self._parties_displayed.values())
@@ -1075,9 +1071,10 @@ class PublicGatherTab(GatherTab):
                 self._ui_rows.append(UIRow())
                 refresh_row = len(self._ui_rows) - 1
 
-            # For the first few seconds after getting our first server-list,
-            # refresh only the top section of the list; this allows the lowest
-            # ping servers to show up more quickly.
+            # For the first few seconds after getting our first
+            # server-list, refresh only the top section of the list;
+            # this allows the lowest ping servers to show up more
+            # quickly.
             if self._first_valid_server_list_time is not None:
                 if time.time() - self._first_valid_server_list_time < 4.0:
                     if refresh_row > 40:
@@ -1107,7 +1104,8 @@ class PublicGatherTab(GatherTab):
     def _process_pending_party_infos(self) -> None:
         starttime = time.time()
 
-        # We want to do this in small enough pieces to not cause UI hitches.
+        # We want to do this in small enough pieces to not cause UI
+        # hitches.
         chunksize = 30
         parties_in = self._pending_party_infos[:chunksize]
         self._pending_party_infos = self._pending_party_infos[chunksize:]
@@ -1191,16 +1189,16 @@ class PublicGatherTab(GatherTab):
             else:
                 self._parties_displayed = dict(self._parties_sorted)
 
-        # Any time our selection disappears from the displayed list, go back to
-        # auto-selecting the top entry.
+        # Any time our selection disappears from the displayed list, go
+        # back to auto-selecting the top entry.
         if (
             self._selection is not None
             and self._selection.entry_key not in self._parties_displayed
         ):
             self._have_user_selected_row = False
 
-        # Whenever the user hasn't selected something, keep the first visible
-        # row selected.
+        # Whenever the user hasn't selected something, keep the first
+        # visible row selected.
         if not self._have_user_selected_row and self._parties_displayed:
             firstpartykey = next(iter(self._parties_displayed))
             self._selection = Selection(firstpartykey, SelectionComponent.NAME)
@@ -1252,8 +1250,8 @@ class PublicGatherTab(GatherTab):
                 party.next_ping_time <= now
                 and bui.app.classic.ping_thread_count < 15
             ):
-                # Crank the interval up for high-latency or non-responding
-                # parties to save us some useless work.
+                # Crank the interval up for high-latency or
+                # non-responding parties to save us some useless work.
                 mult = 1
                 if party.ping_responses == 0:
                     if party.ping_attempts > 4:
@@ -1283,16 +1281,16 @@ class PublicGatherTab(GatherTab):
     def _ping_callback(
         self, address: str, port: int | None, result: float | None
     ) -> None:
-        # Look for a widget corresponding to this target.
-        # If we find one, update our list.
+        # Look for a widget corresponding to this target. If we find
+        # one, update our list.
         party_key = f'{address}_{port}'
         party = self._parties.get(party_key)
         if party is not None:
             if result is not None:
                 party.ping_responses += 1
 
-            # We now smooth ping a bit to reduce jumping around in the list
-            # (only where pings are relatively good).
+            # We now smooth ping a bit to reduce jumping around in the
+            # list (only where pings are relatively good).
             current_ping = party.ping
             if current_ping is not None and result is not None and result < 150:
                 smoothing = 0.7
@@ -1419,8 +1417,8 @@ class PublicGatherTab(GatherTab):
         bui.getsound('shieldUp').play()
         bs.set_public_party_enabled(True)
 
-        # In GUI builds we want to authenticate clients only when hosting
-        # public parties.
+        # In GUI builds we want to authenticate clients only when
+        # hosting public parties.
         bs.set_authenticate_clients(True)
 
         self._do_status_check()
@@ -1436,8 +1434,8 @@ class PublicGatherTab(GatherTab):
     def _on_stop_advertising_press(self) -> None:
         bs.set_public_party_enabled(False)
 
-        # In GUI builds we want to authenticate clients only when hosting
-        # public parties.
+        # In GUI builds we want to authenticate clients only when
+        # hosting public parties.
         bs.set_authenticate_clients(False)
         bui.getsound('shieldDown').play()
         text = self._host_status_text

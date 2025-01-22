@@ -58,7 +58,7 @@ class HelpWindow(bui.MainWindow):
 
         scroll_width = target_width
         scroll_height = target_height - 36
-        scroll_y = yoffs - 64 - scroll_height
+        scroll_bottom = yoffs - 64 - scroll_height
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -114,7 +114,7 @@ class HelpWindow(bui.MainWindow):
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             size=(scroll_width, scroll_height),
-            position=(width * 0.5 - scroll_width * 0.5, scroll_y),
+            position=(width * 0.5 - scroll_width * 0.5, scroll_bottom),
             simple_culling_v=100.0,
             capture_arrows=True,
             border_opacity=0.4,
