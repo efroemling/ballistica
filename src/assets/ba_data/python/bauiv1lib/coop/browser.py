@@ -28,6 +28,7 @@ class CoopBrowserWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
 
         plus = bui.app.plus
@@ -74,10 +75,9 @@ class CoopBrowserWindow(bui.MainWindow):
         self._campaign_percent_text: bui.Widget | None = None
 
         uiscale = app.ui_v1.uiscale
-        self._width = 1520 if uiscale is bui.UIScale.SMALL else 1120
-        self._x_inset = x_inset = 200 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 1600 if uiscale is bui.UIScale.SMALL else 1120
         self._height = (
-            585
+            1200
             if uiscale is bui.UIScale.SMALL
             else 730 if uiscale is bui.UIScale.MEDIUM else 800
         )
@@ -104,15 +104,32 @@ class CoopBrowserWindow(bui.MainWindow):
             )
             self._campaign_difficulty = 'easy'
 
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            1.31
+            if uiscale is bui.UIScale.SMALL
+            else 0.8 if uiscale is bui.UIScale.MEDIUM else 0.75
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 120, screensize[0] / scale)
+        target_height = min(self._height - 120, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
+
+        self._scroll_width = target_width
+        self._scroll_height = target_height - 40
+        self._scroll_bottom = yoffs - 70 - self._scroll_height
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
                 toolbar_visibility='menu_full',
-                stack_offset=(
-                    (0, -8)
-                    if uiscale is bui.UIScale.SMALL
-                    else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
-                ),
                 scale=(
                     1.31
                     if uiscale is bui.UIScale.SMALL
@@ -121,6 +138,8 @@ class CoopBrowserWindow(bui.MainWindow):
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
         if uiscale is bui.UIScale.SMALL:
@@ -131,23 +150,13 @@ class CoopBrowserWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(75 + x_inset, self._height - 87),
-                size=(120, 60),
+                position=(75, yoffs - 48.0),
+                size=(60, 50),
                 scale=1.2,
                 autoselect=True,
-                label=bui.Lstr(resource='backText'),
-                button_type='back',
-                on_activate_call=self.main_window_back,
-            )
-            bui.buttonwidget(
-                edit=self._back_button,
-                button_type='backSmall',
-                size=(60, 50),
-                position=(
-                    75 + x_inset,
-                    self._height - 87 + 6,
-                ),
                 label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
+                on_activate_call=self.main_window_back,
             )
             bui.containerwidget(
                 edit=self._root_widget, cancel_button=self._back_button
@@ -166,12 +175,11 @@ class CoopBrowserWindow(bui.MainWindow):
 
         # Don't want initial construction affecting our last-selected.
         self._do_selection_callbacks = False
-        v = self._height - 95
         bui.textwidget(
             parent=self._root_widget,
             position=(
                 self._width * 0.5,
-                v + 40 - (25 if uiscale is bui.UIScale.SMALL else 0),
+                yoffs - (50 if uiscale is bui.UIScale.SMALL else 24),
             ),
             size=(0, 0),
             text=bui.Lstr(
@@ -187,27 +195,17 @@ class CoopBrowserWindow(bui.MainWindow):
 
         self._selected_row = cfg.get('Selected Coop Row', None)
 
-        self._scroll_width = self._width - (130 + 2 * x_inset)
-        self._scroll_height = self._height - (
-            # 219 if uiscale is bui.UIScale.SMALL else 160
-            170
-            if uiscale is bui.UIScale.SMALL
-            else 160
-        )
-
         self._subcontainerwidth = 800.0
         self._subcontainerheight = 1400.0
 
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=False,
-            position=(
-                # (65 + x_inset, 120)
-                (65 + x_inset, 70)
-                if uiscale is bui.UIScale.SMALL
-                else (65 + x_inset, 70)
-            ),
             size=(self._scroll_width, self._scroll_height),
+            position=(
+                self._width * 0.5 - self._scroll_width * 0.5,
+                self._scroll_bottom,
+            ),
             simple_culling_v=10.0,
             claims_left_right=True,
             selection_loops_to_parent=True,
@@ -215,12 +213,20 @@ class CoopBrowserWindow(bui.MainWindow):
         )
 
         if uiscale is bui.UIScale.SMALL:
+            blotchwidth = 500.0
+            blotchheight = 200.0
             bimg = bui.imagewidget(
                 parent=self._root_widget,
                 texture=bui.gettexture('uiAtlas'),
                 mesh_transparent=bui.getmesh('windowBGBlotch'),
-                position=(x_inset + 10.0, -20),
-                size=(500.0, 200.0),
+                position=(
+                    self._width * 0.5
+                    - self._scroll_width * 0.5
+                    + 60.0
+                    - blotchwidth * 0.5,
+                    self._scroll_bottom - blotchheight * 0.5,
+                ),
+                size=(blotchwidth, blotchheight),
                 color=(0.4, 0.37, 0.49),
                 # color=(1, 0, 0),
             )
@@ -229,8 +235,14 @@ class CoopBrowserWindow(bui.MainWindow):
                 parent=self._root_widget,
                 texture=bui.gettexture('uiAtlas'),
                 mesh_transparent=bui.getmesh('windowBGBlotch'),
-                position=(x_inset + self._scroll_width - 270, -20),
-                size=(500.0, 200.0),
+                position=(
+                    self._width * 0.5
+                    + self._scroll_width * 0.5
+                    - 60.0
+                    - blotchwidth * 0.5,
+                    self._scroll_bottom - blotchheight * 0.5,
+                ),
+                size=(blotchwidth, blotchheight),
                 color=(0.4, 0.37, 0.49),
                 # color=(1, 0, 0),
             )
@@ -604,8 +616,6 @@ class CoopBrowserWindow(bui.MainWindow):
 
         bui.widget(edit=campaign_buttons[0], left_widget=self._easy_button)
 
-        # bui.widget(edit=self._easy_button)
-        # if self._back_button is not None:
         bui.widget(
             edit=self._easy_button,
             left_widget=self._back_button,
@@ -1159,10 +1169,6 @@ class CoopBrowserWindow(bui.MainWindow):
                 sel = self._back_button
             elif sel_name == 'Scroll':
                 sel = self._scrollwidget
-            # elif sel_name == 'PowerRanking':
-            #     sel = self._league_rank_button_widget
-            # elif sel_name == 'Store':
-            #     sel = self._store_button_widget
             else:
                 sel = self._scrollwidget
             bui.containerwidget(edit=self._root_widget, selected_child=sel)
