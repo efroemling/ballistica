@@ -43,7 +43,7 @@ class HelpWindow(bui.MainWindow):
         # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
         scale = (
-            1.55
+            1.8
             if uiscale is bui.UIScale.SMALL
             else 1.15 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
@@ -119,6 +119,7 @@ class HelpWindow(bui.MainWindow):
             simple_culling_v=100.0,
             capture_arrows=True,
             border_opacity=0.4,
+            center_small_content_horizontally=True,
         )
 
         if uiscale is bui.UIScale.SMALL:
@@ -135,7 +136,8 @@ class HelpWindow(bui.MainWindow):
             edit=self._root_widget, selected_child=self._scrollwidget
         )
 
-        self._sub_width = 810 if uiscale is bui.UIScale.SMALL else 660
+        # self._sub_width = 810 if uiscale is bui.UIScale.SMALL else 660
+        self._sub_width = 660
         self._sub_height = (
             1590
             + bui.app.lang.get_resource(f'{self._r}.someDaysExtraSpace')

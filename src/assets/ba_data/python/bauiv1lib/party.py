@@ -48,7 +48,7 @@ class PartyWindow(bui.Window):
                 on_outside_click_call=self.close_with_sound,
                 scale_origin_stack_offset=origin,
                 scale=(
-                    1.6
+                    1.8
                     if uiscale is bui.UIScale.SMALL
                     else 1.3 if uiscale is bui.UIScale.MEDIUM else 0.9
                 ),

@@ -748,8 +748,8 @@ void Graphics::DrawUI(FrameDef* frame_def) {
   // Special variants like GraphicsVR may do fancier stuff here.
   g_base->ui->Draw(frame_def);
 
-  // We may want to see the bounds of our virtual screen.
-  DrawUIBounds(frame_def->overlay_pass());
+  // We may want to see the virtual screen safe area.
+  DrawVirtualSafeAreaBounds(frame_def->overlay_pass());
 }
 
 void Graphics::DrawDevUI(FrameDef* frame_def) {
@@ -1527,13 +1527,13 @@ void Graphics::GetBaseVirtualRes(float* x, float* y) {
   assert(y);
   float base_virtual_res_x;
   float base_virtual_res_y;
-  if (g_base->ui->scale() == UIScale::kSmall) {
-    base_virtual_res_x = kBaseVirtualResSmallX;
-    base_virtual_res_y = kBaseVirtualResSmallY;
-  } else {
-    base_virtual_res_x = kBaseVirtualResX;
-    base_virtual_res_y = kBaseVirtualResY;
-  }
+  // if (g_base->ui->scale() == UIScale::kSmall) {
+  //   base_virtual_res_x = kBaseVirtualResSmallX;
+  //   base_virtual_res_y = kBaseVirtualResSmallY;
+  // } else {
+  base_virtual_res_x = kBaseVirtualResX;
+  base_virtual_res_y = kBaseVirtualResY;
+  // }
   *x = base_virtual_res_x;
   *y = base_virtual_res_y;
 }
@@ -1760,9 +1760,9 @@ void Graphics::UpdatePlaceholderSettings() {
       settings()->texture_quality, client_context()->auto_texture_quality);
 }
 
-void Graphics::DrawUIBounds(RenderPass* pass) {
+void Graphics::DrawVirtualSafeAreaBounds(RenderPass* pass) {
   // We can optionally draw a guide to show the edges of the overlay pass
-  if (draw_ui_bounds_) {
+  if (draw_virtual_safe_area_bounds_) {
     SimpleComponent c(pass);
     c.SetColor(1, 0, 0);
     {

@@ -1333,7 +1333,7 @@ void RootWidget::UpdateLayout() {
       base_scale_ = 0.8f;
       break;
     default:
-      base_scale_ = 1.0f;
+      base_scale_ = 1.18f;
       break;
   }
 

@@ -109,7 +109,7 @@ class CoopBrowserWindow(bui.MainWindow):
         # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
         scale = (
-            1.31
+            1.5
             if uiscale is bui.UIScale.SMALL
             else 0.8 if uiscale is bui.UIScale.MEDIUM else 0.75
         )
@@ -130,11 +130,7 @@ class CoopBrowserWindow(bui.MainWindow):
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
                 toolbar_visibility='menu_full',
-                scale=(
-                    1.31
-                    if uiscale is bui.UIScale.SMALL
-                    else 0.8 if uiscale is bui.UIScale.MEDIUM else 0.75
-                ),
+                scale=scale,
             ),
             transition=transition,
             origin_widget=origin_widget,

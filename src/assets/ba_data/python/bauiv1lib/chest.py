@@ -34,7 +34,7 @@ class ChestWindow(bui.MainWindow):
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 1050 if uiscale is bui.UIScale.SMALL else 650
+        self._width = 1200 if uiscale is bui.UIScale.SMALL else 650
         self._height = 550 if uiscale is bui.UIScale.SMALL else 450
         self._xoffs = 70 if uiscale is bui.UIScale.SMALL else 0
         self._yoffs = -50 if uiscale is bui.UIScale.SMALL else -35
@@ -62,14 +62,14 @@ class ChestWindow(bui.MainWindow):
                 size=(self._width, self._height),
                 toolbar_visibility='menu_full',
                 scale=(
-                    1.45
+                    1.8
                     if uiscale is bui.UIScale.SMALL
                     else 1.1 if uiscale is bui.UIScale.MEDIUM else 0.9
                 ),
                 stack_offset=(
                     (0, 0)
                     if uiscale is bui.UIScale.SMALL
-                    else (0, 15) if uiscale is bui.UIScale.MEDIUM else (0, 0)
+                    else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
                 ),
             ),
             transition=transition,

@@ -105,7 +105,7 @@ class GatherWindow(bui.MainWindow):
         # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
         scale = (
-            1.15
+            1.4
             if uiscale is bui.UIScale.SMALL
             else 0.88 if uiscale is bui.UIScale.MEDIUM else 0.66
         )
@@ -163,20 +163,20 @@ class GatherWindow(bui.MainWindow):
                 (
                     self._width * 0.5
                     + (
-                        (self._scroll_width * -0.5 + 170.0)
+                        (self._scroll_width * -0.5 + 170.0 - 70.0)
                         if uiscale is bui.UIScale.SMALL
                         else 0.0
                     )
                 ),
-                yoffs - (61 if uiscale is bui.UIScale.SMALL else 4),
+                yoffs - (64 if uiscale is bui.UIScale.SMALL else 4),
             ),
             size=(0, 0),
             color=bui.app.ui_v1.title_color,
-            scale=1.2 if uiscale is bui.UIScale.SMALL else 1.0,
-            h_align='center',
+            scale=1.3 if uiscale is bui.UIScale.SMALL else 1.0,
+            h_align='left' if uiscale is bui.UIScale.SMALL else 'center',
             v_align='center',
             text=(bui.Lstr(resource=f'{self._r}.titleText')),
-            maxwidth=140 if uiscale is bui.UIScale.SMALL else 320,
+            maxwidth=135 if uiscale is bui.UIScale.SMALL else 320,
         )
 
         # Build up the set of tabs we want.

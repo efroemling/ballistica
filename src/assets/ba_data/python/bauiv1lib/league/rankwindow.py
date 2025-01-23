@@ -71,7 +71,7 @@ class LeagueRankWindow(bui.MainWindow):
         # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
         scale = (
-            1.08
+            1.3
             if uiscale is bui.UIScale.SMALL
             else 0.93 if uiscale is bui.UIScale.MEDIUM else 0.8
         )

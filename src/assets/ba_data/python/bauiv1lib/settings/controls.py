@@ -91,7 +91,7 @@ class ControlsSettingsWindow(bui.MainWindow):
             height += spacing
 
         assert bui.app.classic is not None
-        smallscale = 1.7
+        smallscale = 2.0
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),

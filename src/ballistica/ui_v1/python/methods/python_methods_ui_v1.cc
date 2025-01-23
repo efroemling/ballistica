@@ -2594,13 +2594,13 @@ auto PyUIBounds(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
   // current (which can be bigger).
   float x, virtual_res_y;
 
-  if (g_base->ui->scale() == UIScale::kSmall) {
-    x = 0.5f * kBaseVirtualResSmallX;
-    virtual_res_y = kBaseVirtualResSmallY;
-  } else {
-    x = 0.5f * kBaseVirtualResX;
-    virtual_res_y = kBaseVirtualResY;
-  }
+  // if (g_base->ui->scale() == UIScale::kSmall) {
+  //   x = 0.5f * kBaseVirtualResSmallX;
+  //   virtual_res_y = kBaseVirtualResSmallY;
+  // } else {
+  x = 0.5f * kBaseVirtualResX;
+  virtual_res_y = kBaseVirtualResY;
+  // }
   float y = 0.5f * virtual_res_y;
   return Py_BuildValue("(ffff)", -x, x, -y, y);
   BA_PYTHON_CATCH;

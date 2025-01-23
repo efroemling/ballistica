@@ -671,8 +671,8 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
     // A reasonable default window size.
     int width, height;
     if (g_base->ui->scale() == UIScale::kSmall) {
-      width = static_cast<int>(kBaseVirtualResSmallX * 0.8f);
-      height = static_cast<int>(kBaseVirtualResSmallY * 0.8f);
+      width = static_cast<int>(1300.0f * 0.8f);
+      height = static_cast<int>(600.0f * 0.8f);
     } else {
       width = static_cast<int>(kBaseVirtualResX * 0.8f);
       height = static_cast<int>(kBaseVirtualResY * 0.8f);

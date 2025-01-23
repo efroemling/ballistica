@@ -131,7 +131,7 @@ class DevConsoleTabUI(DevConsoleTab):
             v_align='center',
         )
 
-        ui_overlay = _babase.get_draw_ui_bounds()
+        ui_overlay = _babase.get_draw_virtual_safe_area_bounds()
         self.button(
             'Virtual Safe Area ON' if ui_overlay else 'Virtual Safe Area OFF',
             pos=(xoffs + 10, 10),
@@ -167,7 +167,9 @@ class DevConsoleTabUI(DevConsoleTab):
 
     def toggle_ui_overlay(self) -> None:
         """Toggle UI overlay drawing."""
-        _babase.set_draw_ui_bounds(not _babase.get_draw_ui_bounds())
+        _babase.set_draw_virtual_safe_area_bounds(
+            not _babase.get_draw_virtual_safe_area_bounds()
+        )
         self.request_refresh()
 
 

@@ -63,8 +63,15 @@ class PlayWindow(bui.MainWindow):
         # size of our backing container. This lets us fit to the exact
         # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
+        safesize = bui.get_virtual_safe_area_size()
+
+        # We're a generally widescreen shaped window, so bump our
+        # overall scale up a bit when screen width is wider than safe
+        # bounds to take advantage of the extra space.
+        smallscale = min(1.6, 1.35 * screensize[0] / safesize[0])
+
         scale = (
-            1.35
+            smallscale
             if uiscale is bui.UIScale.SMALL
             else 0.9 if uiscale is bui.UIScale.MEDIUM else 0.8
         )

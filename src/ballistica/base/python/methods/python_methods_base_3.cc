@@ -1949,13 +1949,13 @@ static PyMethodDef PyGetInputIdleTimeDef = {
     "Return seconds since any local input occurred (touch, keypress, etc.).",
 };
 
-// --------------------------- get_draw_ui_bounds -----------------------------
+// ------------------ get_draw_virtual_safe_area_bounds ------------------------
 
-static auto PyGetDrawUIBounds(PyObject* self) -> PyObject* {
+static auto PyGetDrawVirtualSafeAreaBounds(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());
-  if (g_base->graphics->draw_ui_bounds()) {
+  if (g_base->graphics->draw_virtual_safe_area_bounds()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -1963,12 +1963,12 @@ static auto PyGetDrawUIBounds(PyObject* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyGetDrawUIBoundsDef = {
-    "get_draw_ui_bounds",            // name
-    (PyCFunction)PyGetDrawUIBounds,  // method
-    METH_NOARGS,                     // flags
+static PyMethodDef PyGetDrawVirtualSafeAreaBoundsDef = {
+    "get_draw_virtual_safe_area_bounds",          // name
+    (PyCFunction)PyGetDrawVirtualSafeAreaBounds,  // method
+    METH_NOARGS,                                  // flags
 
-    "get_draw_ui_bounds() -> bool\n"
+    "get_draw_virtual_safe_area_bounds() -> bool\n"
     "\n"
     "(internal)",
 };
@@ -1993,10 +1993,10 @@ static PyMethodDef PyGetInitialAppConfigDef = {
     "(internal)",
 };
 
-// --------------------------- set_draw_ui_bounds -----------------------------
+// ------------------ set_draw_virtual_safe_area_bounds ------------------------
 
-static auto PySetDrawUIBounds(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PySetDrawVirtualSafeAreaBounds(PyObject* self, PyObject* args,
+                                           PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());
@@ -2008,18 +2008,18 @@ static auto PySetDrawUIBounds(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
 
-  g_base->graphics->set_draw_ui_bounds(value);
+  g_base->graphics->set_draw_virtual_safe_area_bounds(value);
   Py_RETURN_NONE;
 
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PySetDrawUIBoundsDef = {
-    "set_draw_ui_bounds",            // name
-    (PyCFunction)PySetDrawUIBounds,  // method
-    METH_VARARGS | METH_KEYWORDS,    // flags
+static PyMethodDef PySetDrawVirtualSafeAreaBoundsDef = {
+    "set_draw_virtual_safe_area_bounds",          // name
+    (PyCFunction)PySetDrawVirtualSafeAreaBounds,  // method
+    METH_VARARGS | METH_KEYWORDS,                 // flags
 
-    "set_draw_ui_bounds(value: bool) -> None\n"
+    "set_draw_virtual_safe_area_bounds(value: bool) -> None\n"
     "\n"
     "(internal)",
 };
@@ -2163,8 +2163,8 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyOpenFileExternallyDef,
       PyGetInputIdleTimeDef,
       PyPushBackPressDef,
-      PyGetDrawUIBoundsDef,
-      PySetDrawUIBoundsDef,
+      PyGetDrawVirtualSafeAreaBoundsDef,
+      PySetDrawVirtualSafeAreaBoundsDef,
       PyGetInitialAppConfigDef,
       PySetAppConfigDef,
       PyUpdateInternalLoggerLevelsDef,

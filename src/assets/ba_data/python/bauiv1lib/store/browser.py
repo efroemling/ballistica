@@ -83,7 +83,7 @@ class StoreBrowserWindow(bui.MainWindow):
         # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
         scale = (
-            1.3
+            1.5
             if uiscale is bui.UIScale.SMALL
             else 0.9 if uiscale is bui.UIScale.MEDIUM else 0.8
         )
@@ -109,11 +109,7 @@ class StoreBrowserWindow(bui.MainWindow):
                     if (uiscale is bui.UIScale.SMALL or minimal_toolbars)
                     else 'menu_full'
                 ),
-                scale=(
-                    1.3
-                    if uiscale is bui.UIScale.SMALL
-                    else 0.9 if uiscale is bui.UIScale.MEDIUM else 0.8
-                ),
+                scale=scale,
             ),
             transition=transition,
             origin_widget=origin_widget,
@@ -164,17 +160,17 @@ class StoreBrowserWindow(bui.MainWindow):
                 (
                     self._width * 0.5
                     + (
-                        (self._scroll_width * -0.5 + 140.0)
+                        (self._scroll_width * -0.5 + 90.0)
                         if uiscale is bui.UIScale.SMALL
                         else 0.0
                     )
                 ),
-                yoffs - (58 if uiscale is bui.UIScale.SMALL else -3.0),
+                yoffs - (62 if uiscale is bui.UIScale.SMALL else -3.0),
             ),
             size=(0, 0),
             color=app.ui_v1.title_color,
-            scale=1.0 if uiscale is bui.UIScale.SMALL else 1.3,
-            h_align='center',
+            scale=1.1 if uiscale is bui.UIScale.SMALL else 1.3,
+            h_align='left' if uiscale is bui.UIScale.SMALL else 'center',
             v_align='center',
             text=bui.Lstr(resource='storeText'),
             maxwidth=100 if uiscale is bui.UIScale.SMALL else 290,

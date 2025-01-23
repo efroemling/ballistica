@@ -1,4 +1,4 @@
-### 1.7.37 (build 22236, api 9, 2025-01-22)
+### 1.7.37 (build 22238, api 9, 2025-01-23)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -191,12 +191,26 @@
   in various places.
 - Tournament now award chests instead of tickets.
 - Tournaments are now free to enter if you are running this build or newer.
-- (build 22225) Added `babase.get_virtual_screen_size()` to get the current
-  virtual screen size, and added a `refresh_on_screen_size_changes` arg to the
-  `MainWindow` class. This can be used to fit windows to the exact screen size,
-  which is especially useful at the small ui-scale. Generally medium and large
-  ui-scale windows don't fill the entire screen and can simply stay within the
-  virtual safe area and don't need to refresh.
+- (build 22225) Added `babase.get_virtual_screen_size()` and to get the current
+  virtual screen size, `babase.get_virtual_safe_area_size()` to get the size of
+  the area where things are guaranteed to be visible no matter how the window is
+  resized, and added a `refresh_on_screen_size_changes` arg to the `MainWindow`
+  class to automatically recreate the window when the screen is resized. This
+  combined functionality can be used to custom fit UI elements to the exact
+  screen size, which is especially useful at the small ui-scale with its limited
+  screen real-estate. Generally medium and large ui-scale windows don't fill the
+  entire screen and can simply stay within the virtual safe area and thus don't
+  need to refresh.
+- (build 22237) Reverted the change from earlier in this release where small
+  ui-scale would have its own distinct widescreen virtual-safe-area. The virtual
+  safe area is now always 1280x720 (16:9). I came to realize there were
+  significant downsides to having safe-area be inconsistent; for instance
+  onscreen elements designed for one safe area might be out of frame for players
+  using the other, and things would effectively need to be limited to the
+  intersection of the two safe areas to work everywhere. Since it is now
+  possible to take advantage of the full screen area using the
+  `get_virtual_screen_size()` and whatnot mentioned above, it makes sense to
+  return to a single consistent safe area.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these

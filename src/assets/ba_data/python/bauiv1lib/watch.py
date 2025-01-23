@@ -57,7 +57,7 @@ class WatchWindow(bui.MainWindow):
         # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
         scale = (
-            1.32
+            1.5
             if uiscale is bui.UIScale.SMALL
             else 0.85 if uiscale is bui.UIScale.MEDIUM else 0.65
         )

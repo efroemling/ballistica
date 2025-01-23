@@ -38,7 +38,7 @@ class CreditsWindow(bui.MainWindow):
         # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
         scale = (
-            1.8
+            2.0
             if uiscale is bui.UIScale.SMALL
             else 1.2 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
@@ -113,6 +113,7 @@ class CreditsWindow(bui.MainWindow):
             position=(width * 0.5 - scroll_width * 0.5, scroll_y),
             capture_arrows=True,
             border_opacity=0.4,
+            center_small_content_horizontally=True,
         )
 
         bui.widget(
@@ -330,7 +331,7 @@ class CreditsWindow(bui.MainWindow):
         line_height = 20
 
         scale = 0.55
-        self._sub_width = width - 80
+        self._sub_width = min(700, width - 80)
         self._sub_height = line_height * len(lines) + 40
 
         container = self._subcontainer = bui.containerwidget(

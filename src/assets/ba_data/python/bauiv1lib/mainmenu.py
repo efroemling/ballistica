@@ -30,6 +30,8 @@ class MainMenuWindow(bui.MainWindow):
         bui.set_analytics_screen('Main Menu')
         self._show_remote_app_info_on_first_launch()
 
+        uiscale = bui.app.ui_v1.uiscale
+
         # Make a vanilla container; we'll modify it to our needs in
         # refresh.
         super().__init__(
@@ -38,6 +40,8 @@ class MainMenuWindow(bui.MainWindow):
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
         # Grab this stuff in case it changes.
@@ -213,7 +217,12 @@ class MainMenuWindow(bui.MainWindow):
         side_button_2_scale = 0.5
 
         if uiscale is bui.UIScale.SMALL:
-            root_widget_scale = 1.3
+            # We're a generally widescreen shaped window, so bump our
+            # overall scale up a bit when screen width is wider than safe
+            # bounds to take advantage of the extra space.
+            screensize = bui.get_virtual_screen_size()
+            safesize = bui.get_virtual_safe_area_size()
+            root_widget_scale = min(1.55, 1.3 * screensize[0] / safesize[0])
             button_y_offs = -20.0
             self._button_height *= 1.3
         elif uiscale is bui.UIScale.MEDIUM:

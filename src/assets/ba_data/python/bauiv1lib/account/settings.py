@@ -73,8 +73,9 @@ class AccountSettingsWindow(bui.MainWindow):
         # size of our backing container. This lets us fit to the exact
         # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
+
         scale = (
-            1.72
+            1.9
             if uiscale is bui.UIScale.SMALL
             else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
         )

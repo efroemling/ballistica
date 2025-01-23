@@ -152,7 +152,7 @@ class Graphics {
                  r, g, b, a);
   }
 
-  void DrawUIBounds(RenderPass* pass);
+  void DrawVirtualSafeAreaBounds(RenderPass* pass);
   static void GetBaseVirtualRes(float* x, float* y);
 
   // Enable progress bar drawing locally.
@@ -362,8 +362,12 @@ class Graphics {
     assert(client_context_snapshot_.exists());
     return client_context_snapshot_.get()->get();
   }
-  auto draw_ui_bounds() const { return draw_ui_bounds_; }
-  void set_draw_ui_bounds(bool val) { draw_ui_bounds_ = val; }
+  auto draw_virtual_safe_area_bounds() const {
+    return draw_virtual_safe_area_bounds_;
+  }
+  void set_draw_virtual_safe_area_bounds(bool val) {
+    draw_virtual_safe_area_bounds_ = val;
+  }
 
   ScreenMessages* const screenmessages;
 
@@ -424,7 +428,7 @@ class Graphics {
   bool applied_app_config_{};
   bool sent_initial_graphics_settings_{};
   bool got_screen_resolution_{};
-  bool draw_ui_bounds_{};
+  bool draw_virtual_safe_area_bounds_{};
   Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
   Vector2f shadow_scale_{1.0f, 1.0f};
   Vector3f tint_{1.0f, 1.0f, 1.0f};
