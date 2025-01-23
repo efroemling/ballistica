@@ -472,7 +472,16 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     ),
                     on_select_call=bui.Call(self._on_playlist_select, name),
                 )
-                bui.widget(edit=btn, show_buffer_top=30, show_buffer_bottom=30)
+
+                # Top row biases things up more to show header above it.
+                if y == 0:
+                    bui.widget(
+                        edit=btn, show_buffer_top=60, show_buffer_bottom=5
+                    )
+                else:
+                    bui.widget(
+                        edit=btn, show_buffer_top=30, show_buffer_bottom=30
+                    )
 
                 if self._selected_playlist == name:
                     bui.containerwidget(

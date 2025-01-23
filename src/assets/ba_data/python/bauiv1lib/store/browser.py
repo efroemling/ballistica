@@ -61,14 +61,18 @@ class StoreBrowserWindow(bui.MainWindow):
         self._status_textwidget_update_timer = None
 
         self._show_tab = show_tab
-        self._width = 1800 if uiscale is bui.UIScale.SMALL else 1040
+        self._width = (
+            1800
+            if uiscale is bui.UIScale.SMALL
+            else 1000 if uiscale is bui.UIScale.MEDIUM else 1120
+        )
         self._height = (
             1200
             if uiscale is bui.UIScale.SMALL
-            else 645 if uiscale is bui.UIScale.MEDIUM else 800
+            else 700 if uiscale is bui.UIScale.MEDIUM else 800
         )
         self._current_tab: StoreBrowserWindow.TabID | None = None
-        extra_top = 30 if uiscale is bui.UIScale.SMALL else 0
+        # extra_top = 30 if uiscale is bui.UIScale.SMALL else 0
 
         self.request: Any = None
         self._r = 'store'
@@ -94,12 +98,12 @@ class StoreBrowserWindow(bui.MainWindow):
         yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
 
         self._scroll_width = target_width
-        self._scroll_height = target_height - 50
-        self._scroll_bottom = yoffs - 80 - self._scroll_height
+        self._scroll_height = target_height - 59
+        self._scroll_bottom = yoffs - 87 - self._scroll_height
 
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(self._width, self._height + extra_top),
+                size=(self._width, self._height),
                 toolbar_visibility=(
                     'menu_store'
                     if (uiscale is bui.UIScale.SMALL or minimal_toolbars)
@@ -165,11 +169,11 @@ class StoreBrowserWindow(bui.MainWindow):
                         else 0.0
                     )
                 ),
-                yoffs - (48 if uiscale is bui.UIScale.SMALL else -3.0),
+                yoffs - (58 if uiscale is bui.UIScale.SMALL else -3.0),
             ),
             size=(0, 0),
             color=app.ui_v1.title_color,
-            scale=1.1 if uiscale is bui.UIScale.SMALL else 1.3,
+            scale=1.0 if uiscale is bui.UIScale.SMALL else 1.3,
             h_align='center',
             v_align='center',
             text=bui.Lstr(resource='storeText'),
@@ -194,12 +198,10 @@ class StoreBrowserWindow(bui.MainWindow):
         self._tab_row = TabRow(
             self._root_widget,
             tabs_def,
-            # pos=(tab_buffer_h * 0.5, self._height - 130),
-            # size=(self._width - tab_buffer_h, 50),
             size=(self._scroll_width - 2.0 * tab_inset, 50),
             pos=(
                 self._width * 0.5 - self._scroll_width * 0.5 + tab_inset,
-                self._scroll_bottom + self._scroll_height,
+                self._scroll_bottom + self._scroll_height - 4.0,
             ),
             on_select_call=self._set_tab,
         )

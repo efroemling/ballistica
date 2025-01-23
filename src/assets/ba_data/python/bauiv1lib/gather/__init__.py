@@ -120,8 +120,8 @@ class GatherWindow(bui.MainWindow):
         yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
 
         self._scroll_width = target_width
-        self._scroll_height = target_height - 57
-        self._scroll_bottom = yoffs - 90 - self._scroll_height
+        self._scroll_height = target_height - 65
+        self._scroll_bottom = yoffs - 93 - self._scroll_height
         self._scroll_left = (self._width - self._scroll_width) * 0.5
 
         super().__init__(
@@ -161,20 +161,23 @@ class GatherWindow(bui.MainWindow):
         bui.textwidget(
             parent=self._root_widget,
             position=(
-                self._width * 0.5,
-                yoffs - (53 if uiscale is bui.UIScale.SMALL else 4),
+                (
+                    self._width * 0.5
+                    + (
+                        (self._scroll_width * -0.5 + 170.0)
+                        if uiscale is bui.UIScale.SMALL
+                        else 0.0
+                    )
+                ),
+                yoffs - (61 if uiscale is bui.UIScale.SMALL else 4),
             ),
             size=(0, 0),
             color=bui.app.ui_v1.title_color,
-            scale=1.0,
+            scale=1.2 if uiscale is bui.UIScale.SMALL else 1.0,
             h_align='center',
             v_align='center',
-            text=(
-                ''
-                if uiscale is bui.UIScale.SMALL
-                else bui.Lstr(resource=f'{self._r}.titleText')
-            ),
-            maxwidth=320,
+            text=(bui.Lstr(resource=f'{self._r}.titleText')),
+            maxwidth=140 if uiscale is bui.UIScale.SMALL else 320,
         )
 
         # Build up the set of tabs we want.
@@ -198,15 +201,17 @@ class GatherWindow(bui.MainWindow):
             (self.TabID.MANUAL, bui.Lstr(resource=f'{self._r}.manualText'))
         )
 
-        tab_inset = 100.0
-        tab_inset_extra_r = 150 if uiscale is bui.UIScale.SMALL else 0
+        tab_inset = 250.0 if uiscale is bui.UIScale.SMALL else 100.0
+        # tab_inset_extra_r = 150 if uiscale is bui.UIScale.SMALL else 0
+        tab_inset_extra_r = 0
+
         self._tab_row = TabRow(
             self._root_widget,
             tabdefs,
             size=(self._scroll_width - 2.0 * tab_inset - tab_inset_extra_r, 50),
             pos=(
                 self._scroll_left + tab_inset,
-                self._scroll_bottom + self._scroll_height,
+                self._scroll_bottom + self._scroll_height - 4.0,
             ),
             on_select_call=bui.WeakCall(self._set_tab),
         )
