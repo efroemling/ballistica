@@ -75,7 +75,7 @@ class EditProfileWindow(
         yoffs = -42 if uiscale is bui.UIScale.SMALL else 0
         spacing = 40
         self._base_scale = (
-            1.6
+            2.0
             if uiscale is bui.UIScale.SMALL
             else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
         )

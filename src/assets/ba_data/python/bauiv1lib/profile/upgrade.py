@@ -37,7 +37,7 @@ class ProfileUpgradeWindow(bui.Window):
         self._height = 450 if uiscale is bui.UIScale.SMALL else 350
         assert bui.app.classic is not None
         self._base_scale = (
-            1.9
+            1.92
             if uiscale is bui.UIScale.SMALL
             else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.2
         )

@@ -60,7 +60,7 @@ class ProfileBrowserWindow(bui.MainWindow):
                     else 'menu_full'
                 ),
                 scale=(
-                    2.0
+                    2.5
                     if uiscale is bui.UIScale.SMALL
                     else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
