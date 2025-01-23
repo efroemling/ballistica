@@ -71,8 +71,8 @@ class WatchWindow(bui.MainWindow):
         self.yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
 
         self._scroll_width = target_width
-        self._scroll_height = target_height - 60
-        self._scroll_y = self.yoffs - 90 - self._scroll_height
+        self._scroll_height = target_height - 55
+        self._scroll_y = self.yoffs - 85 - self._scroll_height
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -111,20 +111,23 @@ class WatchWindow(bui.MainWindow):
         bui.textwidget(
             parent=self._root_widget,
             position=(
-                self._width * 0.5,
-                self.yoffs - (44 if uiscale is bui.UIScale.SMALL else 10),
+                (
+                    self._width * 0.5
+                    + (
+                        (self._scroll_width * -0.5 + 93)
+                        if uiscale is bui.UIScale.SMALL
+                        else 0
+                    )
+                ),
+                self.yoffs - (63 if uiscale is bui.UIScale.SMALL else 10),
             ),
             size=(0, 0),
             color=bui.app.ui_v1.title_color,
-            scale=0.6 if uiscale is bui.UIScale.SMALL else 1.5,
-            h_align='center',
+            scale=1.3 if uiscale is bui.UIScale.SMALL else 1.5,
+            h_align='left' if uiscale is bui.UIScale.SMALL else 'center',
             v_align='center',
-            text=(
-                ''
-                if uiscale is bui.UIScale.SMALL
-                else bui.Lstr(resource=f'{self._r}.titleText')
-            ),
-            maxwidth=400,
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
+            maxwidth=200,
         )
 
         tabdefs = [
@@ -142,7 +145,7 @@ class WatchWindow(bui.MainWindow):
             tabdefs,
             pos=(
                 self._width * 0.5 - self._scroll_width * 0.5 + tab_bar_inset,
-                self._scroll_y + self._scroll_height,
+                self._scroll_y + self._scroll_height - 4.0,
             ),
             size=(self._scroll_width - 2.0 * tab_bar_inset, 50),
             on_select_call=self._set_tab,

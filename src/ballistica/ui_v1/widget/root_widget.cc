@@ -646,7 +646,7 @@ void RootWidget::Setup() {
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    b.pre_buffer = 25.0f;
+    b.pre_buffer = 20.0f;
     b.allow_in_game = false;
     inbox_button_ = AddButton_(b);
 
@@ -703,7 +703,7 @@ void RootWidget::Setup() {
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    b.pre_buffer = 25.0f;
+    b.pre_buffer = 20.0f;
     b.allow_in_game = false;
     achievements_button_ = AddButton_(b);
     bottom_left_buttons_.push_back(achievements_button_);
@@ -763,7 +763,7 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuInGame));
-    b.pre_buffer = 25.0f;
+    b.pre_buffer = 20.0f;
     settings_button_ = AddButton_(b);
     bottom_left_buttons_.push_back(settings_button_);
   }
@@ -922,7 +922,7 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     b.disable_offset_scale = 1.5f;
-    b.pre_buffer = 20.0f;
+    b.pre_buffer = 10.0f;
     b.allow_in_game = false;
 
     // This is a very big icon that can interfere with clicking stuff near
@@ -946,7 +946,7 @@ void RootWidget::Setup() {
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    b.pre_buffer = 20.0f;
+    b.pre_buffer = 10.0f;
     b.allow_in_game = false;
 
     store_button_ = AddButton_(b);
