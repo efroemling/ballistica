@@ -937,7 +937,7 @@ class AccountSettingsWindow(bui.MainWindow):
         self._leaderboards_button: bui.Widget | None
         if show_leaderboards_button:
             button_width = 300
-            v -= leaderboards_button_space * 0.85
+            v -= leaderboards_button_space
             self._leaderboards_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
                 position=((self._sub_width - button_width) * 0.5, v),
@@ -956,7 +956,6 @@ class AccountSettingsWindow(bui.MainWindow):
                 edit=btn, right_widget=bui.get_special_widget('squad_button')
             )
             bui.widget(edit=btn, left_widget=bbtn)
-            v -= leaderboards_button_space * 0.15
         else:
             self._leaderboards_button = None
 

@@ -74,7 +74,6 @@ class GatherWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from bauiv1lib.gather.abouttab import AboutGatherTab
@@ -202,13 +201,11 @@ class GatherWindow(bui.MainWindow):
         )
 
         tab_inset = 250.0 if uiscale is bui.UIScale.SMALL else 100.0
-        # tab_inset_extra_r = 150 if uiscale is bui.UIScale.SMALL else 0
-        tab_inset_extra_r = 0
 
         self._tab_row = TabRow(
             self._root_widget,
             tabdefs,
-            size=(self._scroll_width - 2.0 * tab_inset - tab_inset_extra_r, 50),
+            size=(self._scroll_width - 2.0 * tab_inset, 50),
             pos=(
                 self._scroll_left + tab_inset,
                 self._scroll_bottom + self._scroll_height - 4.0,
