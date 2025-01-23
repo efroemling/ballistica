@@ -61,10 +61,9 @@ class StoreBrowserWindow(bui.MainWindow):
         self._status_textwidget_update_timer = None
 
         self._show_tab = show_tab
-        self._width = 1670 if uiscale is bui.UIScale.SMALL else 1040
-        self._x_inset = x_inset = 310 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 1800 if uiscale is bui.UIScale.SMALL else 1040
         self._height = (
-            538
+            1200
             if uiscale is bui.UIScale.SMALL
             else 645 if uiscale is bui.UIScale.MEDIUM else 800
         )
@@ -74,6 +73,29 @@ class StoreBrowserWindow(bui.MainWindow):
         self.request: Any = None
         self._r = 'store'
         self._last_buy_time: float | None = None
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            1.3
+            if uiscale is bui.UIScale.SMALL
+            else 0.9 if uiscale is bui.UIScale.MEDIUM else 0.8
+        )
+
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 120, screensize[0] / scale)
+        target_height = min(self._height - 140, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
+
+        self._scroll_width = target_width
+        self._scroll_height = target_height - 50
+        self._scroll_bottom = yoffs - 80 - self._scroll_height
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -88,24 +110,21 @@ class StoreBrowserWindow(bui.MainWindow):
                     if uiscale is bui.UIScale.SMALL
                     else 0.9 if uiscale is bui.UIScale.MEDIUM else 0.8
                 ),
-                stack_offset=(
-                    (0, 10)
-                    if uiscale is bui.UIScale.SMALL
-                    else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
-                ),
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
         self._back_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(70 + x_inset, self._height - 74),
-            size=(140, 60),
+            position=(70, yoffs - 37),
+            size=(60, 60),
             scale=1.1,
             autoselect=True,
-            label=bui.Lstr(resource='backText'),
-            button_type='back',
+            label=bui.charstr(SpecialChar.BACK),
+            button_type='backSmall',
             on_activate_call=self.main_window_back,
         )
 
@@ -114,10 +133,8 @@ class StoreBrowserWindow(bui.MainWindow):
             bui.containerwidget(
                 edit=self._root_widget, on_cancel_call=self.main_window_back
             )
-            backbuttonspecial = True
         else:
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
-            backbuttonspecial = False
 
         if (
             app.classic.platform in ['mac', 'ios']
@@ -140,28 +157,24 @@ class StoreBrowserWindow(bui.MainWindow):
         bui.textwidget(
             parent=self._root_widget,
             position=(
-                self._width * 0.5,
-                self._height - (55 if uiscale is bui.UIScale.SMALL else 44),
+                (
+                    self._width * 0.5
+                    + (
+                        (self._scroll_width * -0.5 + 140.0)
+                        if uiscale is bui.UIScale.SMALL
+                        else 0.0
+                    )
+                ),
+                yoffs - (48 if uiscale is bui.UIScale.SMALL else -3.0),
             ),
             size=(0, 0),
             color=app.ui_v1.title_color,
-            scale=1.1 if uiscale is bui.UIScale.SMALL else 1.5,
+            scale=1.1 if uiscale is bui.UIScale.SMALL else 1.3,
             h_align='center',
             v_align='center',
             text=bui.Lstr(resource='storeText'),
-            maxwidth=290,
+            maxwidth=100 if uiscale is bui.UIScale.SMALL else 290,
         )
-
-        if not backbuttonspecial:
-            bui.buttonwidget(
-                edit=self._back_button,
-                button_type='backSmall',
-                size=(60, 60),
-                label=bui.charstr(SpecialChar.BACK),
-            )
-
-        scroll_buffer_h = 130 + 2 * x_inset
-        tab_buffer_h = 250 + 2 * x_inset
 
         tabs_def = [
             # (self.TabID.EXTRAS, bui.Lstr(resource=f'{self._r}.extrasText')),
@@ -177,11 +190,17 @@ class StoreBrowserWindow(bui.MainWindow):
             (self.TabID.ICONS, bui.Lstr(resource=f'{self._r}.iconsText')),
         ]
 
+        tab_inset = 200 if uiscale is bui.UIScale.SMALL else 100
         self._tab_row = TabRow(
             self._root_widget,
             tabs_def,
-            pos=(tab_buffer_h * 0.5, self._height - 130),
-            size=(self._width - tab_buffer_h, 50),
+            # pos=(tab_buffer_h * 0.5, self._height - 130),
+            # size=(self._width - tab_buffer_h, 50),
+            size=(self._scroll_width - 2.0 * tab_inset, 50),
+            pos=(
+                self._width * 0.5 - self._scroll_width * 0.5 + tab_inset,
+                self._scroll_bottom + self._scroll_height,
+            ),
             on_select_call=self._set_tab,
         )
 
@@ -267,14 +286,16 @@ class StoreBrowserWindow(bui.MainWindow):
             bui.widget(
                 edit=first_tab_button,
                 left_widget=bui.get_special_widget('back_button'),
+                up_widget=bui.get_special_widget('back_button'),
             )
             bui.widget(
                 edit=last_tab_button,
-                right_widget=bui.get_special_widget('squad_button'),
+                up_widget=bui.get_special_widget('tickets_meter'),
+                right_widget=bui.get_special_widget('tickets_meter'),
             )
 
-        self._scroll_width = self._width - scroll_buffer_h
-        self._scroll_height = self._height - 180
+        # self._scroll_width = self._width - scroll_buffer_h
+        # self._scroll_height = self._height - 180
 
         self._scrollwidget: bui.Widget | None = None
         self._status_textwidget: bui.Widget | None = None
@@ -343,11 +364,11 @@ class StoreBrowserWindow(bui.MainWindow):
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=False,
-            position=(
-                (self._width - self._scroll_width) * 0.5,
-                self._height - self._scroll_height - 79 - 48,
-            ),
             size=(self._scroll_width, self._scroll_height),
+            position=(
+                self._width * 0.5 - self._scroll_width * 0.5,
+                self._scroll_bottom,
+            ),
             claims_left_right=True,
             selection_loops_to_parent=True,
             border_opacity=0.4,
@@ -837,11 +858,12 @@ class StoreBrowserWindow(bui.MainWindow):
                         )
                         if 'title' not in section:
                             section['title'] = ''
-                        section['x_offs'] = (
-                            130
-                            if self._tab == 'extras'
-                            else 270 if self._tab == 'maps' else 0
-                        )
+                        section['x_offs'] = 0.0
+                        # section['x_offs'] = (
+                        #     130
+                        #     if self._tab == 'extras'
+                        #     else 270 if self._tab == 'maps' else 0
+                        # )
                         section['y_offs'] = (
                             20
                             if (
@@ -873,7 +895,7 @@ class StoreBrowserWindow(bui.MainWindow):
                     title_spacing = 40
                     button_border = 20
                     button_spacing = 4
-                    boffs_h = 40
+                    boffs_h = 0.0
                     self._height = 80.0
 
                     # Calc total height.
@@ -882,17 +904,16 @@ class StoreBrowserWindow(bui.MainWindow):
                             assert self._height is not None
                             self._height += title_spacing
                         b_width, b_height = section['button_size']
-                        b_column_count = int(
-                            math.floor(
-                                (self._width - boffs_h - 20)
-                                / (b_width + button_spacing)
-                            )
+                        b_count = len(section['items'])
+                        b_column_count = min(
+                            b_count,
+                            int(
+                                math.floor(
+                                    self._width / (b_width + button_spacing)
+                                )
+                            ),
                         )
-                        b_row_count = int(
-                            math.ceil(
-                                float(len(section['items'])) / b_column_count
-                            )
-                        )
+                        b_row_count = int(math.ceil(b_count / b_column_count))
                         b_height_total = (
                             2 * button_border
                             + b_row_count * b_height
@@ -1017,12 +1038,15 @@ class StoreBrowserWindow(bui.MainWindow):
                         v -= button_border
                         b_width, b_height = section['button_size']
                         b_count = len(section['items'])
-                        b_column_count = int(
-                            math.floor(
-                                (self._width - boffs_h - 20)
-                                / (b_width + button_spacing)
-                            )
+                        b_column_count = min(
+                            b_count,
+                            int(
+                                math.floor(
+                                    self._width / (b_width + button_spacing)
+                                )
+                            ),
                         )
+
                         col = 0
                         item: dict[str, Any]
                         assert self._store_window.button_infos is not None
@@ -1033,15 +1057,17 @@ class StoreBrowserWindow(bui.MainWindow):
                             item['call'] = bui.WeakCall(
                                 self._store_window.buy, item_name
                             )
-                            if 'x_offs' in section:
-                                boffs_h2 = section['x_offs']
-                            else:
-                                boffs_h2 = 0
+                            boffs_h2 = section.get('x_offs', 0.0)
+                            boffs_v2 = section.get('y_offs', 0.0)
 
-                            if 'y_offs' in section:
-                                boffs_v2 = section['y_offs']
-                            else:
-                                boffs_v2 = 0
+                            # Calc the diff between the space we use and
+                            # the space available and nudge us right by
+                            # half that to center things.
+                            boffs_h2 += 0.5 * (
+                                self._width
+                                - ((b_width + button_spacing) * b_column_count)
+                            )
+
                             b_pos = (
                                 boffs_h
                                 + boffs_h2

@@ -139,7 +139,7 @@ class PlayWindow(bui.MainWindow):
         )
 
         scl = 0.75 if self._playlist_select_context is None else 0.68
-        v = height * 0.5 - button_height * scl * 0.5
+        v = height * 0.5 - button_height * scl * 0.5 - 20.0
         clr = (0.6, 0.7, 0.6, 1.0)
 
         bcount = 3 if self._playlist_select_context is None else 2
