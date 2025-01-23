@@ -184,7 +184,6 @@ class ChestWindow(bui.MainWindow):
             )
 
     def __del__(self) -> None:
-        # print('~ChestWindow()')
 
         # Make sure UI updates are resumed if we haven't done so.
         if self._root_ui_updates_paused:
