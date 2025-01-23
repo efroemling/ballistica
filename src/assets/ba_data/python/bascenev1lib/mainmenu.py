@@ -86,7 +86,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         # Throw in test build info.
         self.beta_info = self.beta_info_2 = None
         if env.test:
-            pos = (230, -5)
+            pos = (230, 35)
             self.beta_info = bs.NodeActor(
                 bs.newnode(
                     'text',
