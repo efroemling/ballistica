@@ -413,7 +413,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         # avoid overlapping with tips at bottom. Could look nicer to
         # rework things in the middle to get more space, but would
         # rather not touch this old code more than necessary.
-        small_buttons = True
+        small_buttons = False
 
         if small_buttons:
             menu_button = bui.buttonwidget(
@@ -730,7 +730,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             color=(0.5, 1, 0.5, 1),
             h_align='center',
             scale=0.4,
-            position=(0, 260),
+            position=(0, 292),
             jitter=1.0,
         ).autoretain()
         Text(
