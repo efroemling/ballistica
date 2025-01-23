@@ -142,7 +142,11 @@ class PlayWindow(bui.MainWindow):
         v = height * 0.5 - button_height * scl * 0.5
         clr = (0.6, 0.7, 0.6, 1.0)
 
-        total_b_width = 3 * button_width * scl + 2 * button_spacing
+        bcount = 3 if self._playlist_select_context is None else 2
+
+        total_b_width = (
+            bcount * button_width * scl + (bcount - 1) * button_spacing
+        )
         hoffs = (width - total_b_width) * 0.5
 
         self._lineup_tex = bui.gettexture('playerLineup')
@@ -265,8 +269,7 @@ class PlayWindow(bui.MainWindow):
                 color=clr,
             )
 
-        hoffs += scl * button_width + button_spacing
-        # v += 0 if self._playlist_select_context is None else -68
+            hoffs += scl * button_width + button_spacing
 
         self._teams_button = btn = bui.buttonwidget(
             parent=self._root_widget,
