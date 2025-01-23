@@ -163,6 +163,15 @@ class CloudSubsystem(babase.AppSubsystem):
         ],
     ) -> None: ...
 
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.bs.ScoreSubmitMessage,
+        on_response: Callable[
+            [bacommon.bs.ScoreSubmitResponse | Exception], None
+        ],
+    ) -> None: ...
+
     def send_message_cb(
         self,
         msg: Message,

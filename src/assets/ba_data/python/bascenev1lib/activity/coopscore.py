@@ -9,6 +9,7 @@ import random
 import logging
 from typing import TYPE_CHECKING, override
 
+import bacommon.bs
 from bacommon.login import LoginType
 import bascenev1 as bs
 import bauiv1 as bui
@@ -1201,6 +1202,18 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 transition_delay=tdelay2,
             ).autoretain()
 
+    def _on_v2_score_results(
+        self, response: bacommon.bs.ScoreSubmitResponse | Exception
+    ) -> None:
+
+        if isinstance(response, Exception):
+            logging.debug('Got error score-submit response: %s', response)
+            return
+        assert isinstance(response, bacommon.bs.ScoreSubmitResponse)
+
+        assert bui.app.classic is not None
+        bui.app.classic.run_bs_client_effects(response.effects)
+
     def _got_score_results(self, results: dict[str, Any] | None) -> None:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
@@ -1208,6 +1221,8 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
         plus = bs.app.plus
         assert plus is not None
+        classic = bs.app.classic
+        assert classic is not None
 
         # We need to manually run this in the context of our activity
         # and only if we aren't shutting down.
@@ -1230,6 +1245,21 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     scale=0.7,
                 )
             else:
+
+                # If there's a score-uuid bundled, ship it along to the
+                # v2 master server to ask about any rewards from that
+                # end.
+                score_token = results.get('token')
+                if (
+                    isinstance(score_token, str)
+                    and plus.accounts.primary is not None
+                ):
+                    with plus.accounts.primary:
+                        plus.cloud.send_message_cb(
+                            bacommon.bs.ScoreSubmitMessage(score_token),
+                            on_response=bui.WeakCall(self._on_v2_score_results),
+                        )
+
                 self._score_link = results['link']
                 assert self._score_link is not None
                 # Prepend our master-server addr if its a relative addr.

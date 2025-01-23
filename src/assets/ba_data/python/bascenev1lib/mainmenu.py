@@ -15,6 +15,8 @@ import bauiv1 as bui
 if TYPE_CHECKING:
     from typing import Any
 
+    import bacommon.bs
+
 
 class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
     """Activity showing the rotating main menu bg stuff."""

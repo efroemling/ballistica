@@ -863,3 +863,25 @@ class ClientUIActionResponse(Response):
     error_message: Annotated[str | None, IOAttrs('em')]
 
     effects: Annotated[list[ClientEffect], IOAttrs('fx')]
+
+
+@ioprepped
+@dataclass
+class ScoreSubmitMessage(Message):
+    """Let the server know we got some score in something."""
+
+    score_token: Annotated[str, IOAttrs('t')]
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [ScoreSubmitResponse]
+
+
+@ioprepped
+@dataclass
+class ScoreSubmitResponse(Response):
+    """Did something to that inbox entry, boss."""
+
+    # Things we should show on our end.
+    effects: Annotated[list[ClientEffect], IOAttrs('fx')]
