@@ -247,7 +247,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         lang = app.lang.language
         if lang != self._language:
             self._language = lang
-            y = -15
+            y = 20
             base_scale = 1.1
             self._word_actors = []
             base_delay = 0.8
@@ -341,7 +341,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     self._make_word(
                         'B',
                         x - 50,
-                        y - 14 + 0.8 * y_extra,
+                        y - 23 + 0.8 * y_extra,
                         scale=1.3 * base_scale,
                         delay=delay,
                         vr_depth_offset=3,
@@ -373,7 +373,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     self._make_word(
                         'S',
                         x,
-                        y - 15 + 0.8 * y_extra,
+                        y - 25 + 0.8 * y_extra,
                         scale=1.35 * base_scale,
                         delay=delay,
                         vr_depth_offset=14,
