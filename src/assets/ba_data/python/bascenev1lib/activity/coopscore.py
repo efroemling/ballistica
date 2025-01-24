@@ -9,6 +9,7 @@ import random
 import logging
 from typing import TYPE_CHECKING, override
 
+from efro.util import strict_partial
 import bacommon.bs
 from bacommon.login import LoginType
 import bascenev1 as bs
@@ -1209,10 +1210,22 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         if isinstance(response, Exception):
             logging.debug('Got error score-submit response: %s', response)
             return
+
         assert isinstance(response, bacommon.bs.ScoreSubmitResponse)
 
-        assert bui.app.classic is not None
-        bui.app.classic.run_bs_client_effects(response.effects)
+        # Aim to have these effects run shortly after the final rating
+        # hit happens.
+        with self.context:
+            assert self._begin_time is not None
+            delay = max(0, 5.5 - (bs.time() - self._begin_time))
+
+            assert bui.app.classic is not None
+            bs.timer(
+                delay,
+                strict_partial(
+                    bui.app.classic.run_bs_client_effects, response.effects
+                ),
+            )
 
     def _got_score_results(self, results: dict[str, Any] | None) -> None:
         # pylint: disable=too-many-locals
@@ -1229,6 +1242,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         # (really should make the submit_score call handle that stuff itself)
         if self.expired:
             return
+
         with self.context:
             # Delay a bit if results come in too fast.
             assert self._begin_time is not None
