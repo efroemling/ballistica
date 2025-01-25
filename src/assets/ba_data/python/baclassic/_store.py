@@ -90,10 +90,11 @@ class StoreSubsystem:
         assert babase.app.classic is not None
 
         if babase.app.classic.store_items is None:
-            from bascenev1lib.game import ninjafight
-            from bascenev1lib.game import meteorshower
-            from bascenev1lib.game import targetpractice
-            from bascenev1lib.game import easteregghunt
+            from bascenev1lib.game.race import RaceGame
+            from bascenev1lib.game.ninjafight import NinjaFightGame
+            from bascenev1lib.game.meteorshower import MeteorShowerGame
+            from bascenev1lib.game.targetpractice import TargetPracticeGame
+            from bascenev1lib.game.easteregghunt import EasterEggHuntGame
 
             # IMPORTANT - need to keep this synced with the master server.
             # (doing so manually for now)
@@ -122,24 +123,28 @@ class StoreSubsystem:
                 'merch': {},
                 'pro': {},
                 'maps.lake_frigid': {'map_type': maps.LakeFrigid},
+                'games.race': {
+                    'gametype': RaceGame,
+                    'previewTex': 'bigGPreview',
+                },
                 'games.ninja_fight': {
-                    'gametype': ninjafight.NinjaFightGame,
+                    'gametype': NinjaFightGame,
                     'previewTex': 'courtyardPreview',
                 },
                 'games.meteor_shower': {
-                    'gametype': meteorshower.MeteorShowerGame,
+                    'gametype': MeteorShowerGame,
                     'previewTex': 'rampagePreview',
                 },
                 'games.infinite_onslaught': {
-                    'gametype': meteorshower.MeteorShowerGame,
+                    'gametype': MeteorShowerGame,
                     'previewTex': 'rampagePreview',
                 },
                 'games.target_practice': {
-                    'gametype': targetpractice.TargetPracticeGame,
+                    'gametype': TargetPracticeGame,
                     'previewTex': 'doomShroomPreview',
                 },
                 'games.easter_egg_hunt': {
-                    'gametype': easteregghunt.EasterEggHuntGame,
+                    'gametype': EasterEggHuntGame,
                     'previewTex': 'towerDPreview',
                 },
                 'icons.flag_us': {
@@ -380,6 +385,7 @@ class StoreSubsystem:
         store_layout['minigames'] = [
             {
                 'items': [
+                    'games.race',
                     'games.ninja_fight',
                     'games.meteor_shower',
                     'games.target_practice',

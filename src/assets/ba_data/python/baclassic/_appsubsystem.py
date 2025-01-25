@@ -897,7 +897,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
         return babase.Lstr(resource=rsrc)
 
-    def required_purchase_for_game(self, game: str) -> str | None:
+    def required_purchases_for_game(self, game: str) -> list[str]:
         """Return which purchase (if any) is required for a game."""
         # pylint: disable=too-many-return-statements
 
@@ -907,9 +907,9 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         ):
             # Special case: Pro used to unlock this.
             return (
-                None
+                []
                 if self.accounts.have_pro()
-                else 'upgrades.infinite_runaround'
+                else ['upgrades.infinite_runaround']
             )
         if game in (
             'Challenges:Infinite Onslaught',
@@ -917,48 +917,52 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         ):
             # Special case: Pro used to unlock this.
             return (
-                None
+                []
                 if self.accounts.have_pro()
-                else 'upgrades.infinite_onslaught'
+                else ['upgrades.infinite_onslaught']
             )
         if game in (
             'Challenges:Meteor Shower',
             'Challenges:Epic Meteor Shower',
         ):
-            return 'games.meteor_shower'
+            return ['games.meteor_shower']
 
         if game in (
             'Challenges:Target Practice',
             'Challenges:Target Practice B',
         ):
-            return 'games.target_practice'
+            return ['games.target_practice']
 
         if game in (
             'Challenges:Ninja Fight',
             'Challenges:Pro Ninja Fight',
         ):
-            return 'games.ninja_fight'
+            return ['games.ninja_fight']
+
+        if game in ('Challenges:Race', 'Challenges:Pro Race'):
+            return ['games.race']
 
         if game in ('Challenges:Lake Frigid Race',):
-            return 'maps.lake_frigid'
+            return ['games.race', 'maps.lake_frigid']
 
         if game in (
             'Challenges:Easter Egg Hunt',
             'Challenges:Pro Easter Egg Hunt',
         ):
-            return 'games.easter_egg_hunt'
+            return ['games.easter_egg_hunt']
 
-        return None
+        return []
 
     def is_game_unlocked(self, game: str) -> bool:
         """Is a particular game unlocked?"""
         plus = babase.app.plus
         assert plus is not None
 
-        purchase = self.required_purchase_for_game(game)
-        if purchase is None:
+        purchases = self.required_purchases_for_game(game)
+        if not purchases:
             return True
 
-        out = plus.get_v1_account_product_purchased(purchase)
-        assert isinstance(out, bool)
-        return out
+        for purchase in purchases:
+            if not plus.get_v1_account_product_purchased(purchase):
+                return False
+        return True

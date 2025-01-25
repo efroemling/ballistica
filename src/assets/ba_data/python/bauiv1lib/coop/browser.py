@@ -1022,19 +1022,33 @@ class CoopBrowserWindow(bui.MainWindow):
             )
             return
 
-        required_purchase = bui.app.classic.required_purchase_for_game(game)
+        required_purchases = bui.app.classic.required_purchases_for_game(game)
 
-        if (
-            required_purchase is not None
-            and not plus.get_v1_account_product_purchased(required_purchase)
-        ):
-            if plus.get_v1_account_state() != 'signed_in':
-                show_sign_in_prompt()
-            else:
-                PurchaseWindow(
-                    items=[required_purchase], origin_widget=origin_widget
-                )
-            return
+        # Show pop-up to allow purchasing any required stuff we don't have.
+        for purchase in required_purchases:
+            if not plus.get_v1_account_product_purchased(purchase):
+                if plus.get_v1_account_state() != 'signed_in':
+                    show_sign_in_prompt()
+                else:
+                    PurchaseWindow(
+                        items=[purchase], origin_widget=origin_widget
+                    )
+                return
+
+        # if required_purchases and not all(
+        #     plus.get_v1_account_product_purchased(p)
+        # for p in required_purchases
+        # ):
+        #     if plus.get_v1_account_state() != 'signed_in':
+        #         show_sign_in_prompt()
+        #     else:
+        #         # Hmm just ask about the first I guess.. They can pop
+        #         # this window back up to the next if they purchase the
+        #         # first.
+        #         PurchaseWindow(
+        #             items=[required_purchases[0]], origin_widget=origin_widget
+        #         )
+        #     return
 
         self._save_state()
 
@@ -1107,18 +1121,34 @@ class CoopBrowserWindow(bui.MainWindow):
         if tournament_button.game is not None and not classic.is_game_unlocked(
             tournament_button.game
         ):
-            required_purchase = classic.required_purchase_for_game(
+            required_purchases = classic.required_purchases_for_game(
                 tournament_button.game
             )
-            assert required_purchase is not None
-            if plus.get_v1_account_state() != 'signed_in':
-                show_sign_in_prompt()
-            else:
-                PurchaseWindow(
-                    items=[required_purchase],
-                    origin_widget=tournament_button.button,
-                )
-            return
+            # We gotta be missing *something* if its locked.
+            assert required_purchases
+
+            for purchase in required_purchases:
+                if not plus.get_v1_account_product_purchased(purchase):
+                    if plus.get_v1_account_state() != 'signed_in':
+                        show_sign_in_prompt()
+                    else:
+                        PurchaseWindow(
+                            items=[purchase],
+                            origin_widget=tournament_button.button,
+                        )
+                    return
+
+            # assert required_purchases
+            # if plus.get_v1_account_state() != 'signed_in':
+            #     show_sign_in_prompt()
+            # else:
+            #     # Hmm; just show the first requirement. They can come
+            #     # back to see more after they purchase the first.
+            #     PurchaseWindow(
+            #         items=[required_purchases[0]],
+            #         origin_widget=tournament_button.button,
+            #     )
+            # return
 
         if tournament_button.time_remaining <= 0:
             bui.screenmessage(
