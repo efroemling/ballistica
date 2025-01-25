@@ -212,7 +212,6 @@ class AccountV1Subsystem:
             'Player Profiles' not in config
             or '__account__' not in config['Player Profiles']
         ):
-            print('CREATING INITIAL')
             # Create a spaz with a nice default purply color.
             plus.add_v1_account_transaction(
                 {
