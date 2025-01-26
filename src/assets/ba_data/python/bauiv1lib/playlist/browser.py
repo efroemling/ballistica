@@ -409,11 +409,20 @@ class PlaylistBrowserWindow(bui.MainWindow):
         for child in children:
             child.delete()
 
+        # On small ui-scale, nudge 'Playlists' text to the right when
+        # we're small enough so that the back button doesn't partly
+        # obscure it.
+        uiscale = bui.app.ui_v1.uiscale
+        screensize = bui.get_virtual_screen_size()
+        xoffs = (
+            40 if uiscale is bui.UIScale.SMALL and screensize[0] < 1400 else 0
+        )
+
         assert bui.app.classic is not None
         bui.textwidget(
             parent=self._subcontainer,
             text=bui.Lstr(resource='playlistsText'),
-            position=(40, self._sub_height - 26),
+            position=(40 + xoffs, self._sub_height - 26),
             size=(0, 0),
             scale=1.0,
             maxwidth=400,
@@ -429,7 +438,8 @@ class PlaylistBrowserWindow(bui.MainWindow):
         mesh_transparent = bui.getmesh('level_select_button_transparent')
         mask_tex = bui.gettexture('mapPreviewMask')
 
-        h_offs = 225 if count == 1 else 115 if count == 2 else 0
+        # h_offs = 225 if count == 1 else 115 if count == 2 else 0
+        h_offs = 2
         h_offs_bottom = 0
 
         uiscale = bui.app.ui_v1.uiscale

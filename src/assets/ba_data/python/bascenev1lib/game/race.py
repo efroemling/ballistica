@@ -138,7 +138,9 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
     @override
     @classmethod
     def supports_session_type(cls, sessiontype: type[bs.Session]) -> bool:
-        return issubclass(sessiontype, bs.MultiTeamSession)
+        return issubclass(sessiontype, bs.MultiTeamSession) or issubclass(
+            sessiontype, bs.CoopSession
+        )
 
     @override
     @classmethod
