@@ -128,7 +128,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             root_widget=bui.containerwidget(
                 size=(width, height + top_extra),
                 scale=(
-                    1.95
+                    2.3
                     if uiscale is bui.UIScale.SMALL
                     else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),

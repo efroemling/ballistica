@@ -169,6 +169,11 @@ class CoopBrowserWindow(bui.MainWindow):
             'Selected Coop Custom Level', None
         )
 
+        if uiscale is bui.UIScale.SMALL:
+            tmaxw = 130 if bui.get_virtual_screen_size()[0] < 1320 else 175
+        else:
+            tmaxw = 300
+
         # Don't want initial construction affecting our last-selected.
         self._do_selection_callbacks = False
         bui.textwidget(
@@ -185,7 +190,7 @@ class CoopBrowserWindow(bui.MainWindow):
             h_align='center',
             color=app.ui_v1.title_color,
             scale=0.85 if uiscale is bui.UIScale.SMALL else 1.5,
-            maxwidth=280 if uiscale is bui.UIScale.SMALL else 500,
+            maxwidth=tmaxw,
             v_align='center',
         )
 
