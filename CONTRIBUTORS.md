@@ -70,3 +70,5 @@
 ### komasio71
 - Retired Discord server moderator
 - Small contributor
+### MatiasMGz
+- Contributing by doing bugfixes!
