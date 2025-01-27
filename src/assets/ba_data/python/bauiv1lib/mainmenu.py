@@ -252,8 +252,8 @@ class MainMenuWindow(bui.MainWindow):
             color=(1, 1, 1, 0.3),
             text=(
                 f'{app.env.engine_version}'
-                f' build {app.env.engine_build_number}.'
-                f' Copyright 2025 Eric Froemling.'
+                f' Build {app.env.engine_build_number}.'
+                f' Copyright (C) 2025, Eric Froemling.'
             ),
             h_align='center',
             v_align='center',

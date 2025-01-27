@@ -925,10 +925,10 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
                 + "]]}",
             1, 1, 0);
         client->SendScreenMessage(R"({"r":"kickWithChatText","s":)"
-                                  R"([["${YES}","'1'"],["${NO}","'0'"]]})",
+                                  R"([["${YES}","'1'"],["${NO}","'2'"]]})",
                                   1, 1, 0);
       } else {
-        // For the kicker/kickee, simply print that a kick vote has been
+        // For the kicker, simply print that a kick vote has been
         // started.
         client->SendScreenMessage(
             R"({"r":"kickVoteStartedText","s":[["${NAME}",)"

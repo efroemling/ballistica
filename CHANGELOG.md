@@ -1,8 +1,8 @@
-### 1.7.37 (build 22257, api 9, 2025-01-26)
-- Bumping api version to 9. As you'll see below, there's some UI changes that
+### 1.7.37 (Build 22257, API 9, 2025-01-26)
+- Bumping API version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
-  I'm hopeful that api version won't need to be bumped again for along time (if
+  I'm hopeful that the API version won't need to be bumped again for a long time (if
   ever).
 - I am pleased to announce that after years of hard work from many members of
   the community, PirateSpeak is now complete and available as a language choice.
@@ -127,25 +127,24 @@
 - There is now a `ba*.app.classic.save_ui_state()` method that should be called
   right before jumping into a game/replay/etc. This will save a state that will
   automatically be restored the next time the main menu activity is entered.
-- (build 22010) Added the concept of 'auxiliary' windows and used them to make
+- (Build 22010) Added the concept of 'auxiliary' windows and used them to make
   various window navigation more intuitive. Example: previously, if you were on
   the co-op screen and pressed the trophy toolbar icon to see your league rank
   and then pressed back, you would be taken back to the top level main menu. Now
   it will take you back to the co-op screen.
-- (build 22018) Hardened SDL joystick handling code so the app won't crash if
+- (Build 22018) Hardened SDL joystick handling code so the app won't crash if
   SDL_JoystickOpen() returns nullptr for whatever reason.
-- (build 22028) Fixed a longstanding issue that could cause logic thread
+- (Build 22028) Fixed a longstanding issue that could cause logic thread
   bg-dynamics message overflows.
 - Added a close button to the dev-console as an alternate to using key presses
   to close it.
-- (build 22063) Added a 'Copy History' button in the Python tab in the
+- (Build 22063) Added a 'Copy History' button in the Python tab in the
   dev-console. Note that this will copy all cached log history; not just what is
   displayed in the dev-console. This should be handy for diagnosing problems in
   the future.
-- (build 22072) Added a 'Use insecure connections' option in settings ->
-  advanced. This may make it possible to play from places such as Iran where ssl
+- (Build 22072) Added a 'Use insecure connections' option in Settings->Advanced. This may make it possible to play from places such as Iran where SSL
   connections are being blocked. Do not enable this if you don't need to.
-- (build 22085) Added protection against an attack consisting of spamming
+- (Build 22085) Added protection against an attack consisting of spamming
   invalid game-query packets.
 - Using prefab builds on a Mac now requires an Apple Silicon machine (M1 or
   newer). Mac x86 prefab builds were becoming a major bottleneck in pushing out
@@ -191,7 +190,7 @@
   in various places.
 - Tournament now award chests instead of tickets.
 - Tournaments are now free to enter if you are running this build or newer.
-- (build 22225) Added `babase.get_virtual_screen_size()` and to get the current
+- (Build 22225) Added `babase.get_virtual_screen_size()` and to get the current
   virtual screen size, `babase.get_virtual_safe_area_size()` to get the size of
   the area where things are guaranteed to be visible no matter how the window is
   resized, and added a `refresh_on_screen_size_changes` arg to the `MainWindow`
@@ -201,7 +200,7 @@
   screen real-estate. Generally medium and large ui-scale windows don't fill the
   entire screen and can simply stay within the virtual safe area and thus don't
   need to refresh.
-- (build 22237) Reverted the change from earlier in this release where small
+- (Build 22237) Reverted the change from earlier in this release where small
   ui-scale would have its own distinct widescreen virtual-safe-area. The virtual
   safe area is now always 1280x720 (16:9). I came to realize there were
   significant downsides to having safe-area be inconsistent; for instance
@@ -258,8 +257,8 @@
   incompatibilities with the older sys scripts. This should help with that
   problem.
   
-### 1.7.35 (build 21889, api 8, 2024-06-20)
-- Fixed an issue where the engine would block at exit on some version of Linux
+### 1.7.35 (Nuild 21889, API 8, 2024-06-20)
+- Fixed an issue where the engine would block at exit on some distro of Linux
   until Ctrl-D was pressed in the calling terminal.
 - V2 accounts have been around for a while now, so the old V1 device login
   button is no longer visible in the account panel. It is currently possible to
@@ -292,8 +291,8 @@
   anywhere for a long time). The existing half-hearted state of ipv6 support was
   starting to cause problems when testing in certain ipv6-only environments, so
   it was time to clean it up.
-- The engine will now establish its persistent v2-transport connections to
-  regional servers using ipv6 when that is the fastest option based on ping
+- The engine will now establish its persistent V2-transport connections to
+  regional servers using IPV6 when that is the fastest option based on ping
   tests.
 - Improved the efficiency of the `connectivity` system which determines which
   regional ballistica server to establish a connection to (All V2 server
@@ -332,7 +331,7 @@
 - Added github workflow for making docker image and sphinx docs nightly
 - Added github workflow for making build release on tag creation
   
-### 1.7.34 (build 21823, api 8, 2024-04-26)
+### 1.7.34 (Build 21823, API 8, 2024-04-26)
 - Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
   of the things this means is that we can use `typing.override` instead of the
   `typing_extensions.override` version so the annoying requirement of installing
@@ -376,7 +375,7 @@
 - Renamed the `prereqs` Makefile target to `env`. This is more concise and feels
   more accurate now that the target sets up things such as the Python virtual
   environment and generally gets the project environment ready to use.
-- (build 21810) Fixed an issue where AppSubsystems could get inited multiple
+- (Build 21810) Fixed an issue where AppSubsystems could get inited multiple
   times (due to functools.cached_property no longer being thread-safe in Python
   3.12).
 - The server config file is now in `toml` format instead of `yaml`. Python has
@@ -389,7 +388,7 @@
   configs. If no `--config` path is explicitly passed, it will look for
   `config.json` and `config.toml` in the same dir as the script in that order.
   
-### 1.7.33 (build 21795, api 8, 2024-03-24)
+### 1.7.33 (Build 21795, API 8, 2024-03-24)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).
 - Added a 'Show Demos When Idle' option in advanced settings. If enabled, the
@@ -443,8 +442,8 @@
 - Added an `allow_clear_button` arg to bauiv1.textwidget() which can be used to
   disable the 'X' button that clears editable text widgets.
 
-### 1.7.32 (build 21741, api 8, 2023-12-20)
-- Fixed a screen message that no one will ever see (Thanks vishal332008?...)
+### 1.7.32 (Build 21741, API 8, 2023-12-20)
+- Fixed a screen message that no one will ever see (Thanks vishal332008?)
 - Plugins window now displays 'No Plugins Installed' when no plugins are present
   (Thanks vishal332008!)
 - Old messages are now displayed as soon as you press 'Unmute Chat' (Thanks
@@ -476,7 +475,7 @@
   This means that it also applies to other platforms when the app reaches the
   'inactive' state; for instance when minimizing the window on the SDL build.
 
-### 1.7.31 (build 21727, api 8, 2023-12-17)
+### 1.7.31 (Build 21727, API 8, 2023-12-17)
 - Added `bascenev1.get_connection_to_host_info_2()` which is an improved
   type-safe version of `bascenev1.get_connection_to_host_info()`.
 - There is now a link to the official Discord server in the About section

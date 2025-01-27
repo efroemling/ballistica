@@ -1,6 +1,6 @@
 ---
-name: Bug report
-about: Create a report to help us improve
+name: Bug Report
+about: Create a report to help us improve!
 title: Bug
 labels: bug
 assignees: ''
@@ -8,8 +8,8 @@ assignees: ''
 ---
 
 ### Description
-Describe the bug. Do not forget to fill the title.
-Make sure you're running game without any modifications.
+Describe the bug.
+Make sure you're running the game without any modifications.
 
 ### Steps to reproduce
 1. Launch BombSquad
@@ -21,8 +21,8 @@ Make sure you're running game without any modifications.
 Describe what you think should happen if it's not obvious.
 
 ### Machine
-**Platform**: Windows 11 / Ubuntu 22.04 LTS / Android 12 / MyToasterOS 7.3 / ... \
-**BombSquad version**: [1.7.32](https://github.com/efroemling/ballistica/tree/v1.7.32) \
+**Platform**: Windows 10 / Ubuntu 22.04 LTS / Android 12 / MyToasterOS 7.3 / ... \
+**BombSquad Version**: [1.7.32](https://github.com/efroemling/ballistica/tree/v1.7.32) \
 **Commit**: https://github.com/efroemling/ballistica/tree/978f32f9f098bd0ff1dc64b496ec31cf493ded09
 
 You may specify BombSquad version you're running or refer to the latest commit.
