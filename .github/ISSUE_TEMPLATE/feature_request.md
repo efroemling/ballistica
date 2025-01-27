@@ -1,6 +1,6 @@
 ---
-name: Feature request
-about: Suggest an idea for BombSquad
+name: Feature Request
+about: Suggest an idea for BombSquad.
 title: Feature Request
 labels: enhancement
 assignees: ''
@@ -8,10 +8,7 @@ assignees: ''
 ---
 
 ## Description
-Describe feature that you want.
-
-## Solution
-A clear and concise description of what you want to happen.
+A clear and concise description of the feature that you want.
 
 ## Alternatives
 A clear and concise description of any alternative solutions or features you've considered.
