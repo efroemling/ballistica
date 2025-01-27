@@ -2,14 +2,14 @@
 src="https://files.ballistica.net/ballistica_media/ballistica_logo_half.png"
 height="50" alt="logo">
 
-***bal·lis·tic***: physics of an object in motion; behaving like a projectile.
+***bal·lis·tic***: Physics of an object in motion; behaving like a projectile.
 
-***-ica***: collection of things relating to a specific theme.
+***-ica***: Collection of things related to a specific theme.
 
 [![](https://github.com/efroemling/ballistica/actions/workflows/ci.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/ci.yml) [![](https://github.com/efroemling/ballistica/actions/workflows/cd.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/cd.yml)
 
-The Ballistica project is the foundation for
-[BombSquad](https://www.froemling.net/apps/bombsquad) and potentially other
+The Ballistica project is the foundation for the game
+[BombSquad](https://www.froemling.net/apps/bombsquad) and (potentially) other
 future projects.
 
 [Head to the project wiki to get started
@@ -67,9 +67,9 @@ play some games. Or make them. Maybe both.
   includes assets and prebuilt libraries/binaries. So in a nutshell: create and
   share mods or use any of this code in your own projects, but please don't
   distribute your own complete copies of BombSquad without permission. Please
-  email support@froemling.net if you have any questions about this.
+  email me at support@froemling.net if you have any questions about this.
 
-* **Q: When are you adding more maps/characters/minigames/etc.  to
+* **Q: When are you adding more maps / characters / minigames / etc. to
   BombSquad!?!?**
   * A: Check out the [Ballistica
   Roadmap](https://github.com/efroemling/ballistica/wiki/Roadmap) to get a sense
@@ -78,7 +78,7 @@ play some games. Or make them. Maybe both.
 
 * **Q: When will BombSquad be released on iOS / Steam / Switch / Xbox /
 PlayStation / My toaster??**
-  * A: The 2.0 update will be the big 'relaunch' release and the plan is to
+  * A: The 2.0 update will be the big 'Re-launch' release and the plan is to
   launch on at least iOS and Steam at that time. I'm trying to get there as fast
   as I can. As far as consoles, I'd love to and hope to at some point but have
   nothing to announce just yet.
