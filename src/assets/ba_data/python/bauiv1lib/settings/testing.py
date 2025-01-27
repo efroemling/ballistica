@@ -79,18 +79,12 @@ class TestingWindow(bui.MainWindow):
                 parent=self._root_widget,
                 autoselect=True,
                 position=(35, yoffs - 59),
-                size=(130, 60),
+                size=(60, 60),
                 scale=0.8,
                 text_scale=1.2,
-                label=bui.Lstr(resource='backText'),
-                button_type='back',
-                on_activate_call=self.main_window_back,
-            )
-            bui.buttonwidget(
-                edit=self._back_button,
-                button_type='backSmall',
-                size=(60, 60),
                 label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
+                on_activate_call=self.main_window_back,
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 

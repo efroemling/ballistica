@@ -42,7 +42,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
         self._height = (
             490.0
             if uiscale is bui.UIScale.SMALL
-            else 450.0 if uiscale is bui.UIScale.MEDIUM else 550.0
+            else 450.0 if uiscale is bui.UIScale.MEDIUM else 600.0
         )
         self._lang_status_text: bui.Widget | None = None
 
@@ -56,7 +56,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
         scale = (
             2.2
             if uiscale is bui.UIScale.SMALL
-            else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
+            else 1.3 if uiscale is bui.UIScale.MEDIUM else 0.9
         )
 
         # Calc screen size in our local container space and clamp to a
