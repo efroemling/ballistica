@@ -220,9 +220,9 @@ def generate_sphinxdoc() -> None:
 
 
 def _run_sphinx(
-    project_name: str = 'ballistica',
+    project_name: str = 'Ballistica',
     project_author: str = 'Efroemling',
-    copyright_text: str = '2024, Efroemling',
+    copyright_text: str = '2025, Efroemling',
     generate_dummymodules_doc: bool = True,
     generate_tools_doc: bool = True,
 ) -> None:
