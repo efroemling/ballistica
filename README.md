@@ -9,7 +9,7 @@ height="50" alt="logo">
 [![](https://github.com/efroemling/ballistica/actions/workflows/ci.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/ci.yml) [![](https://github.com/efroemling/ballistica/actions/workflows/cd.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/cd.yml)
 
 The Ballistica project is the foundation for the game
-[BombSquad](https://www.froemling.net/apps/bombsquad) and (potentially) other
+BombSquad and (potentially) other
 future projects.
 
 [Head to the project wiki to get started
