@@ -1,15 +1,15 @@
 # Ballistica Contributors
-(please add your name and info here if you have contributed to the project)
+(Please add your name and info here if you have contributed to the project.)
 
 ### Eric Froemling
-- Original BombSquad/Ballistica author and BDFL (benevolent dictator for life).
+- Original BombSquad/Ballistica author and BDFL (Benevolent Dictator For Life.)
 
 ### Dmitry450
 - Modder
 - Fixed some game modes
 
 ### Dliwk
-- Bug fixes and a few features.
+- Bug fixes and a few features
 
 ### Benefit-Zebra
 - Unofficial BombSquad Bug Finder
@@ -70,5 +70,6 @@
 ### komasio71
 - Retired Discord server moderator
 - Small contributor
+
 ### MatiasMGz
 - Contributing by doing bugfixes!
