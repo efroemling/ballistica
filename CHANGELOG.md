@@ -1,8 +1,8 @@
-### 1.7.37 (build 22257, api 9, 2025-01-26)
+### 1.7.37 (build 22258, api 9, 2025-01-27)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
-  I'm hopeful that api version won't need to be bumped again for along time (if
+  I'm hopeful that api version won't need to be bumped again for a long time (if
   ever).
 - I am pleased to announce that after years of hard work from many members of
   the community, PirateSpeak is now complete and available as a language choice.
@@ -78,7 +78,7 @@
   back-button handling are more automatic and windows don't have to hard-code
   where their back button goes to. There are also other benefits such as better
   state saving/restoring. When writing a MainWindow, pretty much all navigation
-  should only need too use methods: `main_window_has_control()`,
+  should only need to use methods: `main_window_has_control()`,
   `main_window_back()`, and `main_window_replace()`.
 - Finally got things updated so language testing works again, and made it a bit
   spiffier while at it. You now simply point the game at your test language and
