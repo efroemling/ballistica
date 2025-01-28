@@ -7435,7 +7435,6 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/SDL2.dll \
   $(BUILD_DIR)/windows/Win32/libvorbis.dll \
   $(BUILD_DIR)/windows/Win32/libvorbisfile.dll \
-  $(BUILD_DIR)/windows/Win32/msvcp140d.dll \
   $(BUILD_DIR)/windows/Win32/ogg.dll \
   $(BUILD_DIR)/windows/Win32/python.exe \
   $(BUILD_DIR)/windows/Win32/python312.dll \
@@ -7443,9 +7442,7 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/python_d.exe \
   $(BUILD_DIR)/windows/Win32/pythonw.exe \
   $(BUILD_DIR)/windows/Win32/pythonw_d.exe \
-  $(BUILD_DIR)/windows/Win32/ucrtbased.dll \
-  $(BUILD_DIR)/windows/Win32/vc_redist.x86.exe \
-  $(BUILD_DIR)/windows/Win32/vcruntime140d.dll
+  $(BUILD_DIR)/windows/Win32/vc_redist.x86.exe
 
 # Rule to copy src extras to build.
 $(EXTRAS_TARGETS_WIN_WIN32) : ../../.efrocachemap
@@ -7530,7 +7527,6 @@ EXTRAS_TARGETS_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/SDL2.dll \
   $(BUILD_DIR)/windows/x64/libvorbis.dll \
   $(BUILD_DIR)/windows/x64/libvorbisfile.dll \
-  $(BUILD_DIR)/windows/x64/msvcp140d.dll \
   $(BUILD_DIR)/windows/x64/ogg.dll \
   $(BUILD_DIR)/windows/x64/python.exe \
   $(BUILD_DIR)/windows/x64/python312.dll \
@@ -7538,10 +7534,7 @@ EXTRAS_TARGETS_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/python_d.exe \
   $(BUILD_DIR)/windows/x64/pythonw.exe \
   $(BUILD_DIR)/windows/x64/pythonw_d.exe \
-  $(BUILD_DIR)/windows/x64/ucrtbased.dll \
-  $(BUILD_DIR)/windows/x64/vc_redist.x64.exe \
-  $(BUILD_DIR)/windows/x64/vcruntime140_1d.dll \
-  $(BUILD_DIR)/windows/x64/vcruntime140d.dll
+  $(BUILD_DIR)/windows/x64/vc_redist.x64.exe
 
 # Rule to copy src extras to build.
 $(EXTRAS_TARGETS_WIN_X64) : ../../.efrocachemap

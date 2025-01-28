@@ -1,4 +1,4 @@
-### 1.7.37 (build 22258, api 9, 2025-01-27)
+### 1.7.37 (build 22259, api 9, 2025-01-28)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -211,6 +211,17 @@
   possible to take advantage of the full screen area using the
   `get_virtual_screen_size()` and whatnot mentioned above, it makes sense to
   return to a single consistent safe area.
+- (build 22258) Updated the Windows redist installers to the latest versions. If
+  anyone is getting release builds of the game silently failing to launch,
+  install the bundled redist libs and try again.
+- (build 22258) Removed Windows debug redist libs such as `ucrtbased.dll` and
+  `vcruntime140d.dll`. Technically these are not supposed to be bundled with
+  software anyway and should instead be installed by installing Visual Studio. I
+  was shipping outdated versions which was causing extra problems, so I've
+  decided that I should follow the rules here and remove them. This means that
+  if you want to run debug builds on Windows you'll need to install Visual
+  Studio. Most people should be fine with release builds and don't need to worry
+  about this.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these

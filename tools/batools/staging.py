@@ -407,7 +407,11 @@ class AssetStager:
             toplevelfiles += [f'python{dbgsfx}.exe']
 
         # Include debug dlls so folks without msvc can run them.
-        if self.debug:
+        #
+        # UPDATE: No longer doing this as of build 22258. If people need
+        # to run debug builds they should do things the 'right' way and
+        # install VS.
+        if self.debug and bool(False):
             if self.win_platform == 'x64':
                 toplevelfiles += [
                     'msvcp140d.dll',

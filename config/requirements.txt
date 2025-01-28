@@ -6,7 +6,7 @@ mypy==1.14.1
 pbxproj==4.2.1
 pdoc==15.0.1
 pur==7.3.3
-pylint==3.3.3
+pylint==3.3.4
 pylsp-mypy==0.7.0
 pytest==8.3.4
 python-daemon==3.1.2

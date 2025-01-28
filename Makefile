@@ -1451,5 +1451,8 @@ _windows-wsl-rebuild: env
    $(VISUAL_STUDIO_VERSION)
 	@$(PCOMMAND) echo BLU BLD Built build/windows/BallisticaKit$(WINPRJ).exe.
 
+_windows-update-dlls: env
+	@$(PCOMMAND) windows_update_dlls
+
 # Tell make which of these targets don't represent files.
 .PHONY: _windows-wsl-build _windows-wsl-rebuild
